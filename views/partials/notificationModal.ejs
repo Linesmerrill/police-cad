@@ -71,38 +71,28 @@
 <!-- Toast Container for Live Notifications -->
 <div id="toast-container"></div>
 
-<!-- Ellipsis Menu Modal -->
+<!-- Notification Context Menu (Dropdown) -->
 <div
-  id="notificationMenuModal"
-  class="modal fade"
-  tabindex="-1"
-  role="dialog"
-  aria-hidden="true"
+  id="notificationContextMenu"
+  style="display: none; position: fixed; z-index: 9999; background: #1e2028; border: 1px solid #35385a; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); min-width: 160px; overflow: hidden;"
 >
-  <div class="modal-dialog modal-sm">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button
-          type="button"
-          class="close"
-          data-dismiss="modal"
-          aria-label="Close"
-        >
-          <span aria-hidden="true">×</span>
-        </button>
-        <h4 class="modal-title">Notification Options</h4>
-      </div>
-      <div class="modal-body">
-        <button
-          class="btn btn-default btn-block"
-          onclick="markNotificationAsRead()"
-        >
-          Mark as Read
-        </button>
-        <button class="btn btn-danger btn-block" onclick="deleteNotification()">
-          Delete
-        </button>
-      </div>
-    </div>
-  </div>
+  <button
+    id="notificationMarkReadBtn"
+    onclick="markNotificationAsRead()"
+    style="display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.75rem 1rem; background: none; border: none; color: #e2e8f0; font-size: 0.875rem; cursor: pointer; text-align: left; transition: background 0.15s;"
+    onmouseover="this.style.background='#35385a'"
+    onmouseout="this.style.background='none'"
+  >
+    <i class="fa fa-check" style="color: #48bb78; width: 16px;"></i>
+    Mark as Read
+  </button>
+  <button
+    onclick="deleteNotification()"
+    style="display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.75rem 1rem; background: none; border: none; color: #f56565; font-size: 0.875rem; cursor: pointer; text-align: left; transition: background 0.15s;"
+    onmouseover="this.style.background='#35385a'"
+    onmouseout="this.style.background='none'"
+  >
+    <i class="fa fa-trash" style="width: 16px;"></i>
+    Delete
+  </button>
 </div>

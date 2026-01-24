@@ -5,21 +5,52 @@
 (function() {
   'use strict';
 
-  // Add CSS for reaction tooltips and emoji picker
+  // Add CSS for announcement cards, reactions, and emoji picker
   const style = document.createElement('style');
   style.textContent = `
+    /* Glass Card Styling for Announcements */
+    .announcement-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 1rem;
+      padding: 1rem;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .announcement-card:hover {
+      border-color: rgba(244, 114, 182, 0.4);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .announcement-card.unread {
+      border-left: 3px solid #3b82f6;
+    }
+
+    /* Priority badge colors */
+    .priority-urgent { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .priority-high { background: rgba(249, 115, 22, 0.15); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.3); }
+    .priority-medium { background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+    .priority-low { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+
+    /* Type badge colors */
+    .type-main { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .type-session { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .type-training { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+
     .reaction-button:hover .reaction-tooltip {
       opacity: 1 !important;
     }
-    
+
     .reaction-button {
       position: relative;
     }
-    
+
     .reaction-tooltip {
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
-    
+
     .emoji-picker {
       position: absolute;
       background: #1e2028;
@@ -31,7 +62,7 @@
       min-width: 320px;
       max-width: 360px;
     }
-    
+
     .emoji-picker-search {
       width: 100%;
       padding: 12px 16px;
@@ -42,13 +73,13 @@
       font-size: 16px;
       margin-bottom: 12px;
     }
-    
+
     .emoji-picker-search:focus {
       outline: none;
       border-color: #3b82f6;
       box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
     }
-    
+
     .emoji-grid {
       display: grid;
       grid-template-columns: repeat(8, 1fr);
@@ -56,7 +87,7 @@
       margin-bottom: 12px;
       padding: 0 16px 0 4px;
     }
-    
+
     .emoji-option {
       display: flex;
       align-items: center;
@@ -68,16 +99,16 @@
       transition: all 0.2s;
       font-size: 20px;
     }
-    
+
     .emoji-option:hover {
       background: #4a5568;
       transform: scale(1.1);
     }
-    
+
     .emoji-category {
       margin-bottom: 12px;
     }
-    
+
     .emoji-category-title {
       color: #a0aec0;
       font-size: 14px;
@@ -85,6 +116,66 @@
       text-transform: uppercase;
       margin-bottom: 8px;
       letter-spacing: 0.5px;
+    }
+
+    .announcement-content {
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      line-clamp: 3;
+    }
+
+    .announcement-content.expanded {
+      -webkit-line-clamp: unset;
+      line-clamp: unset;
+    }
+
+    .comment-content-preview {
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+    }
+
+    .comment-content-preview.expanded {
+      -webkit-line-clamp: unset;
+      line-clamp: unset;
+    }
+
+    .show-more-btn {
+      color: #f472b6;
+      font-size: 0.75rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      margin-top: 0.25rem;
+    }
+
+    .show-more-btn:hover {
+      color: #f9a8d4;
+      text-decoration: underline;
+    }
+
+    .comments-collapsed {
+      display: none;
+    }
+
+    .announcement-action-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 0.375rem 0.5rem;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .announcement-action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
     }
   `;
   document.head.appendChild(style);
@@ -94,58 +185,57 @@
 
   // Global variables for pagination and state management
   let currentAnnouncementPage = 1;
-  const announcementsPerPage = 10;
+  const announcementsPerPage = 4;
   let totalAnnouncements = 0;
   let totalPages = 0;
   let currentFilterType = 'all';
-  let seenAnnouncements = new Set();
+  let markedAsReadIds = new Set(); // Track IDs we've already sent to API this session
 
-  // Load seen announcements from localStorage
-  function loadSeenAnnouncements() {
-    try {
-      const stored = localStorage.getItem(`seen-announcements-${window.communityId}`);
-      if (stored && stored.trim() !== '') {
-        // Additional validation to ensure it's valid JSON
-        if (stored.trim().startsWith('[') && stored.trim().endsWith(']')) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) {
-            seenAnnouncements = new Set(parsed);
-            return;
-          }
-        }
-        // If we get here, the data is corrupted
-        console.warn('Corrupted localStorage data detected, clearing...');
-        localStorage.removeItem(`seen-announcements-${window.communityId}`);
-        seenAnnouncements = new Set();
+  // Check if announcement is unread (based on isRead flag from backend)
+  function isAnnouncementUnread(announcement) {
+    if (!announcement) return true;
+    return !announcement.isRead;
+  }
+
+  // Mark announcement as seen via backend API
+  async function markAnnouncementAsSeen(announcementId) {
+    // Prevent duplicate API calls in the same session
+    if (markedAsReadIds.has(announcementId)) return;
+    markedAsReadIds.add(announcementId);
+
+    // Update the UI immediately (optimistic update)
+    const card = document.querySelector(`[data-announcement-id="${announcementId}"]`);
+    if (card && card.classList.contains('unread')) {
+      card.classList.remove('unread');
+      // Remove the NEW badge if it exists
+      const newBadge = card.querySelector('span[style*="background: rgba(59, 130, 246"]');
+      if (newBadge && newBadge.textContent.trim() === 'NEW') {
+        newBadge.remove();
       }
-    } catch (error) {
-      console.error('Error loading seen announcements:', error);
-      localStorage.removeItem(`seen-announcements-${window.communityId}`);
-      seenAnnouncements = new Set();
-    }
-  }
 
-  // Save seen announcements to localStorage
-  function saveSeenAnnouncements() {
+      // Increment interaction count in UI
+      const interactionCountEl = card.querySelector('.text-slate-500.text-xs');
+      if (interactionCountEl) {
+        const currentCount = parseInt(interactionCountEl.textContent.trim()) || 0;
+        interactionCountEl.innerHTML = `<i class="fas fa-chart-simple"></i>${currentCount + 1}`;
+      }
+
+      // Update unread count in header
+      updateUnreadCount();
+    }
+
+    // Call API to mark as read (fire and forget)
     try {
-      localStorage.setItem(`seen-announcements-${window.communityId}`, JSON.stringify(Array.from(seenAnnouncements)));
-    } catch (error) {
-      console.error('Error saving seen announcements:', error);
+      if (window.dbUser && window.dbUser._id) {
+        await fetch(`${API_URL}/api/v1/announcement/${announcementId}/read`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: window.dbUser._id })
+        });
+      }
+    } catch (err) {
+      console.error('Error marking announcement as read:', err);
     }
-  }
-
-  // Mark announcement as seen
-  // TODO: Integrate with backend API to persist seen status in user profile
-  // Currently using localStorage for client-side tracking only
-  function markAnnouncementAsSeen(announcementId) {
-    seenAnnouncements.add(announcementId);
-    saveSeenAnnouncements();
-    updateUnreadCount();
-  }
-
-  // Check if announcement is unread
-  function isAnnouncementUnread(announcementId) {
-    return !seenAnnouncements.has(announcementId);
   }
 
   // Update a specific announcement card with fresh data from the API
@@ -188,7 +278,8 @@
 
   // Update unread count and badges
   function updateUnreadCount() {
-    const unreadCount = document.querySelectorAll('.announcement-card').length - seenAnnouncements.size;
+    // Count unread cards directly from the DOM (cards with .unread class)
+    const unreadCount = document.querySelectorAll('.announcement-card.unread').length;
     const unreadBadge = document.getElementById('unread-count');
     const unreadNumber = document.getElementById('unread-number');
     const navBadge = document.getElementById('nav-announcements-badge');
@@ -293,6 +384,50 @@
     return div.innerHTML;
   }
 
+  // Generate a consistent color based on username (deterministic hash)
+  function getUsernameColor(username) {
+    if (!username) return '#6366f1'; // default indigo
+
+    // Simple hash function
+    let hash = 0;
+    for (let i = 0; i < username.length; i++) {
+      hash = username.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    // Predefined colors that look good on dark backgrounds
+    const colors = [
+      '#f472b6', // pink
+      '#a78bfa', // purple
+      '#60a5fa', // blue
+      '#34d399', // emerald
+      '#fbbf24', // amber
+      '#fb923c', // orange
+      '#f87171', // red
+      '#2dd4bf', // teal
+      '#a3e635', // lime
+      '#e879f9', // fuchsia
+      '#38bdf8', // sky
+      '#4ade80', // green
+    ];
+
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  // Generate avatar HTML (profile picture or colored initial)
+  function getAvatarHtml(user, size = 32) {
+    const username = user?.username || 'Unknown';
+    const profilePicture = user?.profilePicture;
+    const initial = username.charAt(0).toUpperCase();
+    const color = getUsernameColor(username);
+
+    if (profilePicture && !profilePicture.includes('ui-avatars')) {
+      return `<img src="${profilePicture}" alt="${escapeHtml(username)}" class="rounded-full object-cover" style="width: ${size}px; height: ${size}px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div class="rounded-full flex items-center justify-center text-white font-semibold" style="width: ${size}px; height: ${size}px; background: ${color}; display: none; font-size: ${size * 0.4}px;">${initial}</div>`;
+    }
+
+    return `<div class="rounded-full flex items-center justify-center text-white font-semibold" style="width: ${size}px; height: ${size}px; background: ${color}; font-size: ${size * 0.4}px;">${initial}</div>`;
+  }
+
   // Create announcement card
   function createAnnouncementCard(announcement) {
     
@@ -316,10 +451,11 @@
       updatedAt: announcement.updatedAt || new Date().toISOString(),
       creator: announcement.creator || { username: 'Unknown User' },
       reactions: (announcement.reactions && Array.isArray(announcement.reactions)) ? announcement.reactions : [],
-      comments: (announcement.comments && Array.isArray(announcement.comments)) ? announcement.comments : []
+      comments: (announcement.comments && Array.isArray(announcement.comments)) ? announcement.comments : [],
+      isRead: announcement.isRead || false
     };
 
-    const isUnread = isAnnouncementUnread(safeAnnouncement._id);
+    const isUnread = isAnnouncementUnread(safeAnnouncement);
     const unreadClass = isUnread ? 'border-l-4 border-blue-500' : '';
     
     // Use safe arrays from the safeAnnouncement object
@@ -347,14 +483,16 @@
       const count = usernames.length;
       const tooltipText = `${emoji} reacted by ${usernames.join(', ')}`;
       const isCurrentUserReacted = currentUserReactions.has(emoji);
-      
+      const activeStyle = isCurrentUserReacted ? 'background: rgba(244, 114, 182, 0.2); border-color: rgba(244, 114, 182, 0.4); color: #f472b6;' : '';
+
       return `
-        <button onclick="toggleReaction('${safeAnnouncement._id}', '${emoji}')" 
-                class="reaction-button relative inline-flex items-center px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded-full transition-all duration-200 border border-gray-600 hover:border-gray-500 ${isCurrentUserReacted ? 'bg-blue-500/60 border-blue-500/60 text-white' : ''}"
+        <button onclick="toggleReaction('${safeAnnouncement._id}', '${emoji}')"
+                class="reaction-button relative inline-flex items-center gap-1 announcement-action-btn"
+                style="${activeStyle}"
                 title="${tooltipText}">
-          <span class="text-base mr-1">${emoji}</span>
-          <span class="text-sm font-medium">${count}</span>
-          <div class="reaction-tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-10">
+          <span style="font-size: 0.875rem;">${emoji}</span>
+          <span class="text-xs font-medium">${count}</span>
+          <div class="reaction-tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-10">
             ${tooltipText}
             <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
           </div>
@@ -362,112 +500,139 @@
       `;
     }).join('');
 
-    const commentsHtml = comments.length > 0 
-      ? comments.map(comment => {
-          const isCurrentUserComment = comment.user._id === window.dbUser._id;
-          return `
-            <div class="bg-gray-700 p-3 rounded-lg mb-2">
-              <div class="flex items-center justify-between mb-1">
-                <span class="font-medium text-lg text-gray-200">${escapeHtml(comment.user.username)}</span>
-                <div class="flex items-center space-x-2">
-                  <span class="text-base text-gray-400">${formatDate(comment.timestamp)}</span>
-                                   ${isCurrentUserComment ? `
-                   <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openEditCommentModal('${safeAnnouncement._id}', '${comment._id}', '${escapeHtml(comment.content)}')"
-                           class="text-blue-400 hover:text-blue-300 text-base transition-colors">
-                     <i class="fas fa-edit"></i>
-                   </button>
-                   <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openDeleteCommentModal('${safeAnnouncement._id}', '${comment._id}', '${escapeHtml(comment.content)}')"
-                           class="text-red-400 hover:text-red-300 text-base transition-colors">
-                     <i class="fas fa-trash"></i>
-                   </button>
-                 ` : ''}
+    // Generate comment HTML helper
+    const generateCommentHtml = (comment, announcementId, showTruncated = false) => {
+      const isCurrentUserComment = comment.user._id === window.dbUser._id;
+      const contentClass = showTruncated ? 'comment-content-preview' : '';
+      const userColor = getUsernameColor(comment.user.username);
+      return `
+        <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid rgba(255,255,255,0.05);">
+          <div class="flex items-start gap-2">
+            <div class="flex-shrink-0" style="margin-top: 2px;">
+              ${getAvatarHtml(comment.user, 24)}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between mb-0.5">
+                <span style="font-weight: 500; font-size: 0.75rem; color: ${userColor};">${escapeHtml(comment.user.username)}</span>
+                <div class="flex items-center gap-2">
+                  <span style="font-size: 0.625rem; color: #64748b;">${formatDate(comment.timestamp)}</span>
+                  ${isCurrentUserComment ? `
+                    <button onclick="markAnnouncementAsSeen('${announcementId}'); openEditCommentModal('${announcementId}', '${comment._id}', '${escapeHtml(comment.content)}')"
+                            style="color: #60a5fa; font-size: 0.625rem; background: none; border: none; cursor: pointer; padding: 0;">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="markAnnouncementAsSeen('${announcementId}'); openDeleteCommentModal('${announcementId}', '${comment._id}', '${escapeHtml(comment.content)}')"
+                            style="color: #f87171; font-size: 0.625rem; background: none; border: none; cursor: pointer; padding: 0;">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  ` : ''}
                 </div>
               </div>
-              <p class="text-lg text-gray-300">${escapeHtml(comment.content)}</p>
-              ${comment.edited ? '<span class="text-base text-gray-500">(edited)</span>' : ''}
+              <p style="font-size: 0.75rem; color: #94a3b8;" class="${contentClass}">${escapeHtml(comment.content)}</p>
+              ${comment.edited ? '<span style="font-size: 0.625rem; color: #64748b;">(edited)</span>' : ''}
             </div>
-          `;
-        }).join('')
+          </div>
+        </div>
+      `;
+    };
+
+    // First comment preview (always visible if comments exist)
+    const firstCommentPreview = comments.length > 0
+      ? generateCommentHtml(comments[0], safeAnnouncement._id, true)
       : '';
 
+    // All comments (hidden by default)
+    const allCommentsHtml = comments.map(comment =>
+      generateCommentHtml(comment, safeAnnouncement._id, false)
+    ).join('');
+
          return `
-       <div class="announcement-card bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-6 mb-4 ${unreadClass}" data-announcement-id="${safeAnnouncement._id}">
-         ${isUnread ? '<div class="new-badge absolute -top-2 -left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">NEW</div>' : ''}
-         
-         <div class="flex items-start justify-between mb-4">
-           <div class="flex items-center space-x-3">
-             <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-               ${safeAnnouncement.creator.username.charAt(0).toUpperCase()}
-             </div>
-             <div>
-               <h3 class="font-semibold text-2xl text-white">${escapeHtml(safeAnnouncement.title)}</h3>
-               <p class="text-lg text-gray-300">by ${escapeHtml(safeAnnouncement.creator.username)} • ${formatDate(safeAnnouncement.createdAt)}</p>
-             </div>
+       <div class="announcement-card ${isUnread ? 'unread' : ''}" data-announcement-id="${safeAnnouncement._id}" data-type="${safeAnnouncement.type}" onclick="markAnnouncementAsSeen('${safeAnnouncement._id}')" style="cursor: pointer;">
+         <!-- Header Row: Badges + Actions -->
+         <div class="flex items-center justify-between mb-2">
+           <div class="flex items-center gap-2 flex-wrap">
+             ${safeAnnouncement.isPinned ? '<span style="font-size: 0.625rem; padding: 0.15rem 0.4rem; border-radius: 4px; background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-weight: 600;"><i class="fas fa-thumbtack mr-1"></i>Pinned</span>' : ''}
+             <span class="type-${safeAnnouncement.type}" style="font-size: 0.625rem; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; text-transform: uppercase;">${safeAnnouncement.type}</span>
+             <span class="priority-${safeAnnouncement.priority}" style="font-size: 0.625rem; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; text-transform: uppercase;">${safeAnnouncement.priority}</span>
+             ${isUnread ? '<span style="font-size: 0.625rem; padding: 0.15rem 0.4rem; border-radius: 4px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 600;">NEW</span>' : ''}
            </div>
-           <div class="flex items-center space-x-2">
-             <span class="px-2 py-1 text-xs font-medium rounded-full ${
-               safeAnnouncement.priority === 'urgent' ? 'bg-red-100 text-red-800' :
-               safeAnnouncement.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-               safeAnnouncement.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-               'bg-green-100 text-green-800'
-             }">${safeAnnouncement.priority.toUpperCase()}</span>
-             <span class="px-2 py-1 text-xs font-medium rounded-full ${
-               safeAnnouncement.type === 'main' ? 'bg-blue-100 text-blue-800' :
-               safeAnnouncement.type === 'session' ? 'bg-purple-100 text-purple-800' :
-               'bg-green-100 text-green-800'
-             }">${safeAnnouncement.type.toUpperCase()}</span>
-             ${safeAnnouncement.isPinned ? '<span class="text-yellow-500"><i class="fas fa-thumbtack"></i></span>' : ''}
+           <div class="flex items-center gap-1">
+             <span class="text-slate-500 text-xs flex items-center gap-1" title="Interactions">
+               <i class="fas fa-chart-simple"></i>${safeAnnouncement.viewCount}
+             </span>
              ${(safeAnnouncement.creator._id === window.dbUser._id || window.canManageAnnouncements) ? `
-               <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openEditAnnouncementModal('${safeAnnouncement._id}', '${escapeHtml(safeAnnouncement.title)}', '${escapeHtml(safeAnnouncement.content)}', '${safeAnnouncement.type}', '${safeAnnouncement.priority}')" 
-                       class="text-blue-400 hover:text-blue-300 transition-colors ml-2" 
-                       title="Edit announcement">
-                 <i class="fas fa-edit"></i>
+               <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openEditAnnouncementModal('${safeAnnouncement._id}', '${escapeHtml(safeAnnouncement.title)}', '${escapeHtml(safeAnnouncement.content)}', '${safeAnnouncement.type}', '${safeAnnouncement.priority}')"
+                       class="announcement-action-btn" title="Edit">
+                 <i class="fas fa-pencil text-xs"></i>
                </button>
-               <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openDeleteAnnouncementModal('${safeAnnouncement._id}', '${escapeHtml(safeAnnouncement.title)}')" 
-                       class="text-red-400 hover:text-red-300 transition-colors ml-2" 
-                       title="Delete announcement">
-                 <i class="fas fa-trash"></i>
+               <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openDeleteAnnouncementModal('${safeAnnouncement._id}', '${escapeHtml(safeAnnouncement.title)}')"
+                       class="announcement-action-btn" style="color: #f87171;" title="Delete">
+                 <i class="fas fa-trash text-xs"></i>
                </button>
              ` : ''}
            </div>
          </div>
 
-         <div class="prose max-w-none mb-4">
-           <p class="text-gray-200 text-lg leading-relaxed">${escapeHtml(safeAnnouncement.content)}</p>
-         </div>
-
-         <div class="flex items-center justify-between mb-4">
-           <div class="flex items-center space-x-2">
-             ${reactionsHtml}
-             <button onclick="openEmojiPicker('${safeAnnouncement._id}', event)" class="emoji-picker-trigger inline-flex items-center px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-white rounded-full transition-all duration-200 border border-gray-600 hover:border-gray-500">
-               <i class="fas fa-plus text-base"></i>
-             </button>
-             <button onclick="toggleComments('${safeAnnouncement._id}')" class="flex items-center space-x-1 text-gray-400 hover:text-green-400 transition-colors px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-full transition-all duration-200 border border-gray-600 hover:border-gray-500">
-               <i class="fas fa-comment text-xl"></i>
-               <span class="text-lg">${comments.length}</span>
-             </button>
+         <!-- Title & Author -->
+         <div class="flex items-start gap-3 mb-2">
+           <div class="flex-shrink-0">
+             ${getAvatarHtml(safeAnnouncement.creator, 32)}
            </div>
-           <div class="flex items-center space-x-2 text-lg text-gray-400">
-             <i class="fas fa-eye"></i>
-             <span>${safeAnnouncement.viewCount}</span>
+           <div class="flex-1 min-w-0">
+             <h3 class="font-bold text-white text-sm leading-tight">${escapeHtml(safeAnnouncement.title)}</h3>
+             <p class="text-xs" style="color: ${getUsernameColor(safeAnnouncement.creator.username)};">${escapeHtml(safeAnnouncement.creator.username)} • ${formatDate(safeAnnouncement.createdAt)}</p>
            </div>
          </div>
 
+         <!-- Content -->
+         <div class="mb-3">
+           <p id="content-${safeAnnouncement._id}" class="announcement-content text-slate-300 text-xs leading-relaxed">${escapeHtml(safeAnnouncement.content)}</p>
+           <button onclick="toggleAnnouncementContent('${safeAnnouncement._id}')" id="content-toggle-${safeAnnouncement._id}" class="show-more-btn" style="display: none;">Show more</button>
+         </div>
 
+         <!-- Reactions & Actions Row -->
+         <div class="flex items-center gap-2 flex-wrap">
+           ${reactionsHtml}
+           <button onclick="event.stopPropagation(); openEmojiPicker('${safeAnnouncement._id}', event)" class="emoji-picker-trigger announcement-action-btn flex items-center justify-center" style="min-width: 28px; height: 28px;" title="Add reaction">
+             <i class="fas fa-smile text-xs"></i>
+           </button>
+           <button onclick="toggleComments('${safeAnnouncement._id}')" class="announcement-action-btn flex items-center justify-center gap-1" style="min-width: 28px; height: 28px; padding-left: 0.5rem; padding-right: 0.5rem;" title="Comments">
+             <i class="fas fa-comment text-xs"></i>
+             <span class="text-xs">${comments.length}</span>
+           </button>
+         </div>
 
-                          <div id="comments-${safeAnnouncement._id}" class="comments-section ${comments.length > 0 ? '' : 'hidden'}">
-           <div class="mb-4">
-             <h4 class="text-lg font-medium text-gray-200 mb-2">Comments</h4>
-             <div class="space-y-2">
-               ${commentsHtml}
+         ${comments.length > 0 ? `
+         <!-- Comments Preview -->
+         <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.5rem; margin-top: 0.5rem;">
+           <div id="comment-preview-${safeAnnouncement._id}">
+             ${firstCommentPreview}
+             ${comments.length > 1 ? `
+               <button onclick="toggleAllComments('${safeAnnouncement._id}')" class="show-more-btn">
+                 Show all ${comments.length} comments
+               </button>
+             ` : ''}
+           </div>
+           <div id="comments-all-${safeAnnouncement._id}" class="comments-collapsed">
+             <div class="space-y-2 mb-2">
+               ${allCommentsHtml}
              </div>
+             <button onclick="toggleAllComments('${safeAnnouncement._id}')" class="show-more-btn">
+               Show less
+             </button>
            </div>
-           <div class="flex space-x-2">
-             <input type="text" id="comment-input-${safeAnnouncement._id}" placeholder="Add a comment..." 
-                    class="flex-1 px-3 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg">
-             <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); addComment('${safeAnnouncement._id}')" 
-                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-lg">
-               Comment
+         </div>
+         ` : ''}
+
+         <!-- Add Comment Input (hidden by default) -->
+         <div id="comments-${safeAnnouncement._id}" class="comments-section hidden" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.5rem; margin-top: 0.5rem;">
+           <div class="flex gap-2">
+             <input type="text" id="comment-input-${safeAnnouncement._id}" placeholder="Add a comment..."
+                    style="flex: 1; padding: 0.375rem 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #e2e8f0; font-size: 0.75rem;"
+                    class="focus:outline-none focus:border-pink-400">
+             <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); addComment('${safeAnnouncement._id}')"
+                     style="padding: 0.375rem 0.75rem; background: linear-gradient(135deg, #f472b6 0%, #db2777 100%); color: white; border-radius: 6px; font-size: 0.75rem; font-weight: 500; border: none; cursor: pointer;">
+               Post
              </button>
            </div>
          </div>
@@ -479,20 +644,33 @@
   function filterAnnouncements(type) {
     currentAnnouncementPage = 1;
     currentFilterType = type;
-    
+
+    // Tab color configurations
+    const tabColors = {
+      all: { bg: 'rgba(244, 114, 182, 0.15)', border: 'rgba(244, 114, 182, 0.5)', color: '#f472b6' },
+      main: { bg: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.5)', color: '#60a5fa' },
+      session: { bg: 'rgba(168, 85, 247, 0.15)', border: 'rgba(168, 85, 247, 0.5)', color: '#c084fc' },
+      training: { bg: 'rgba(34, 197, 94, 0.15)', border: 'rgba(34, 197, 94, 0.5)', color: '#4ade80' }
+    };
+
     // Update tab styles
     const tabs = ['all', 'main', 'session', 'training'];
     tabs.forEach(tabType => {
       const tab = document.getElementById(`tab-${tabType}`);
       if (tab) {
         if (tabType === type) {
-          tab.className = 'px-4 py-2 rounded-lg font-semibold transition-colors bg-blue-600 text-white';
+          const colors = tabColors[tabType];
+          tab.style.background = colors.bg;
+          tab.style.borderColor = colors.border;
+          tab.style.color = colors.color;
         } else {
-          tab.className = 'px-4 py-2 rounded-lg font-semibold transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600';
+          tab.style.background = 'transparent';
+          tab.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+          tab.style.color = '#94a3b8';
         }
       }
     });
-    
+
     loadAnnouncements();
   }
 
@@ -516,10 +694,15 @@
         page: currentAnnouncementPage,
         limit: announcementsPerPage
       });
-      
+
       // Add filter parameter if not 'all'
       if (currentFilterType && currentFilterType !== 'all') {
         params.append('type', currentFilterType);
+      }
+
+      // Add userId to get read status
+      if (window.dbUser && window.dbUser._id) {
+        params.append('userId', window.dbUser._id);
       }
 
       
@@ -590,10 +773,27 @@
       updatePagination();
       updateUnreadCount();
 
+      // Check content truncation for each announcement after DOM is rendered
+      setTimeout(() => {
+        announcements.forEach(announcement => {
+          if (announcement && announcement._id) {
+            checkContentTruncation(announcement._id);
+          }
+        });
+      }, 0);
+
+      // Update tab counts from pagination data if available
+      if (pagination.counts) {
+        updateTabCounts(pagination.counts);
+      } else {
+        // Fetch counts separately if not in response
+        fetchAnnouncementCounts();
+      }
+
       // Update the announcements count in the metrics card
       const announcementsCountElement = document.getElementById('announcements-count');
       if (announcementsCountElement) {
-        announcementsCountElement.textContent = announcements.length;
+        announcementsCountElement.textContent = totalAnnouncements || announcements.length;
       }
 
     } catch (error) {
@@ -621,61 +821,85 @@
     loadAnnouncements();
   }
 
-  // Update pagination controls
+  // Update tab counts display
+  function updateTabCounts(counts) {
+    const allCount = (counts.main || 0) + (counts.session || 0) + (counts.training || 0);
+
+    const tabAllCount = document.getElementById('tab-all-count');
+    const tabMainCount = document.getElementById('tab-main-count');
+    const tabSessionCount = document.getElementById('tab-session-count');
+    const tabTrainingCount = document.getElementById('tab-training-count');
+
+    if (tabAllCount) tabAllCount.textContent = `(${allCount})`;
+    if (tabMainCount) tabMainCount.textContent = `(${counts.main || 0})`;
+    if (tabSessionCount) tabSessionCount.textContent = `(${counts.session || 0})`;
+    if (tabTrainingCount) tabTrainingCount.textContent = `(${counts.training || 0})`;
+  }
+
+  // Fetch announcement counts by type
+  async function fetchAnnouncementCounts() {
+    try {
+      if (!window.communityId || !window.API_URL) return;
+
+      // Build params with userId for read status
+      const params = new URLSearchParams({ limit: 1000 });
+      if (window.dbUser && window.dbUser._id) {
+        params.append('userId', window.dbUser._id);
+      }
+
+      // Fetch all announcements to count by type (lightweight request)
+      const response = await fetch(`${API_URL}/api/v1/community/${window.communityId}/announcements?${params}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+      if (!data.success) return;
+
+      const announcements = data.announcements || data.data?.announcements || [];
+      if (!Array.isArray(announcements)) return;
+
+      // Count by type
+      const counts = { main: 0, session: 0, training: 0 };
+      announcements.forEach(a => {
+        if (a.type && counts.hasOwnProperty(a.type)) {
+          counts[a.type]++;
+        }
+      });
+
+      updateTabCounts(counts);
+    } catch (error) {
+      console.error('Error fetching announcement counts:', error);
+    }
+  }
+
+  // Update pagination controls (matches events pagination style)
   function updatePagination() {
     const paginationContainer = document.getElementById('announcements-pagination');
     if (!paginationContainer) return;
 
     if (totalPages <= 1) {
       paginationContainer.innerHTML = '';
+      paginationContainer.style.display = 'none';
       return;
     }
 
-    let paginationHtml = `
-      <div class="flex items-center justify-center space-x-2">
-        <button onclick="goToPage(${currentAnnouncementPage - 1})" 
-                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 ${currentAnnouncementPage <= 1 ? 'opacity-50 cursor-not-allowed' : ''}"
-                ${currentAnnouncementPage <= 1 ? 'disabled' : ''}>
-          Previous
-        </button>
+    paginationContainer.style.display = 'flex';
+
+    const prevDisabled = currentAnnouncementPage <= 1;
+    const nextDisabled = currentAnnouncementPage >= totalPages;
+
+    paginationContainer.innerHTML = `
+      <button onclick="goToPage(${currentAnnouncementPage - 1})" class="btn-secondary text-sm" ${prevDisabled ? 'disabled' : ''} style="${prevDisabled ? 'opacity:0.5;cursor:not-allowed;' : ''}">
+        <i class="fa fa-chevron-left mr-1"></i>Prev
+      </button>
+      <span class="text-slate-400 text-sm">Page ${currentAnnouncementPage} of ${totalPages}</span>
+      <button onclick="goToPage(${currentAnnouncementPage + 1})" class="btn-secondary text-sm" ${nextDisabled ? 'disabled' : ''} style="${nextDisabled ? 'opacity:0.5;cursor:not-allowed;' : ''}">
+        Next<i class="fa fa-chevron-right ml-1"></i>
+      </button>
     `;
-
-    const startPage = Math.max(1, currentAnnouncementPage - 2);
-    const endPage = Math.min(totalPages, currentAnnouncementPage + 2);
-
-    if (startPage > 1) {
-      paginationHtml += `<button onclick="goToPage(1)" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">1</button>`;
-      if (startPage > 2) {
-        paginationHtml += `<span class="px-3 py-2 text-sm text-gray-500">...</span>`;
-      }
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      paginationHtml += `
-        <button onclick="goToPage(${i})" 
-                class="px-3 py-2 text-sm font-medium ${i === currentAnnouncementPage ? 'text-blue-600 bg-blue-50 border-blue-500' : 'text-gray-500 bg-white border-gray-300'} border rounded-lg hover:bg-gray-50">
-          ${i}
-        </button>
-      `;
-    }
-
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        paginationHtml += `<span class="px-3 py-2 text-sm text-gray-500">...</span>`;
-      }
-      paginationHtml += `<button onclick="goToPage(${totalPages})" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">${totalPages}</button>`;
-    }
-
-    paginationHtml += `
-        <button onclick="goToPage(${currentAnnouncementPage + 1})" 
-                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 ${currentAnnouncementPage >= totalPages ? 'opacity-50 cursor-not-allowed' : ''}"
-                ${currentAnnouncementPage >= totalPages ? 'disabled' : ''}>
-          Next
-        </button>
-      </div>
-    `;
-
-    paginationContainer.innerHTML = paginationHtml;
   }
 
   // Toggle reaction
@@ -726,12 +950,45 @@
     }
   }
 
-  // Toggle comments visibility
+  // Toggle comments visibility (input section)
   function toggleComments(announcementId) {
     const commentsSection = document.getElementById(`comments-${announcementId}`);
     if (commentsSection) {
       commentsSection.classList.toggle('hidden');
       markAnnouncementAsSeen(announcementId);
+    }
+  }
+
+  // Toggle announcement content expansion
+  function toggleAnnouncementContent(announcementId) {
+    const contentEl = document.getElementById(`content-${announcementId}`);
+    const toggleBtn = document.getElementById(`content-toggle-${announcementId}`);
+    if (contentEl && toggleBtn) {
+      const isExpanded = contentEl.classList.toggle('expanded');
+      toggleBtn.textContent = isExpanded ? 'Show less' : 'Show more';
+    }
+  }
+
+  // Toggle all comments visibility
+  function toggleAllComments(announcementId) {
+    const previewEl = document.getElementById(`comment-preview-${announcementId}`);
+    const allEl = document.getElementById(`comments-all-${announcementId}`);
+    if (previewEl && allEl) {
+      previewEl.classList.toggle('comments-collapsed');
+      allEl.classList.toggle('comments-collapsed');
+      markAnnouncementAsSeen(announcementId);
+    }
+  }
+
+  // Check if content is truncated and show toggle button
+  function checkContentTruncation(announcementId) {
+    const contentEl = document.getElementById(`content-${announcementId}`);
+    const toggleBtn = document.getElementById(`content-toggle-${announcementId}`);
+    if (contentEl && toggleBtn) {
+      // Check if content is actually truncated
+      if (contentEl.scrollHeight > contentEl.clientHeight) {
+        toggleBtn.style.display = 'inline';
+      }
     }
   }
 
@@ -867,12 +1124,16 @@
 
   // Open delete comment modal
   function openDeleteCommentModal(announcementId, commentId, commentContent) {
+    // Truncate long comments for the preview
+    const maxLength = 100;
+    const truncatedContent = commentContent.length > maxLength
+      ? commentContent.substring(0, maxLength) + '...'
+      : commentContent;
 
-    
     // Set the form values
     document.getElementById('delete-comment-announcement-id').value = announcementId;
     document.getElementById('delete-comment-id').value = commentId;
-    document.getElementById('delete-comment-content').textContent = commentContent;
+    document.getElementById('delete-comment-content').textContent = truncatedContent;
     
     // Show the modal
     const modal = document.getElementById('deleteCommentModal');
@@ -959,6 +1220,9 @@
       if (!data.success) {
         throw new Error(data.message || 'Failed to delete announcement');
       }
+
+      // Close the modal first
+      closeDeleteAnnouncementModal();
 
       // Remove the card from the DOM since it's deleted
       const card = document.querySelector(`[data-announcement-id="${announcementId}"]`);
@@ -1125,15 +1389,49 @@
         throw new Error('User data not found');
       }
       
-      const title = document.getElementById('announcement-title').value.trim();
-      const content = document.getElementById('announcement-content').value.trim();
-      const type = document.getElementById('announcement-type').value;
-      const priority = document.getElementById('announcement-priority').value;
-      
+      const titleEl = document.getElementById('announcement-title');
+      const contentEl = document.getElementById('announcement-content');
+      const typeEl = document.getElementById('announcement-type');
+      const priorityEl = document.getElementById('announcement-priority');
 
+      const title = titleEl ? titleEl.value.trim() : '';
+      const content = contentEl ? contentEl.value.trim() : '';
+      const type = typeEl ? typeEl.value : '';
+      const priority = priorityEl ? priorityEl.value : 'medium';
 
-      if (!title || !content) {
-        showError('Please fill in all required fields');
+      // Clear previous error highlights
+      [titleEl, typeEl, contentEl].forEach(el => {
+        if (el) el.style.cssText = 'border: 1px solid transparent;';
+      });
+
+      // Validate and highlight empty required fields
+      let hasErrors = false;
+      const errorFields = [];
+
+      if (!title) {
+        if (titleEl) titleEl.style.cssText = 'border: 2px solid #f87171 !important; box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.25) !important;';
+        errorFields.push('Title');
+        hasErrors = true;
+      }
+      if (!type) {
+        if (typeEl) typeEl.style.cssText = 'border: 2px solid #f87171 !important; box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.25) !important;';
+        errorFields.push('Type');
+        hasErrors = true;
+      }
+      if (!content) {
+        if (contentEl) contentEl.style.cssText = 'border: 2px solid #f87171 !important; box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.25) !important;';
+        errorFields.push('Content');
+        hasErrors = true;
+      }
+
+      if (hasErrors) {
+        showError('Please fill in the required fields: ' + errorFields.join(', '));
+        // Remove highlights after 4 seconds
+        setTimeout(() => {
+          [titleEl, typeEl, contentEl].forEach(el => {
+            if (el) el.style.cssText = 'border: 1px solid transparent;';
+          });
+        }, 4000);
         return;
       }
 
@@ -1182,11 +1480,7 @@
 
   // Initialize announcements
   function initAnnouncements() {
-    loadSeenAnnouncements();
     loadAnnouncements();
-    
-    // Clear seen announcements for testing (remove this in production)
-    localStorage.removeItem(`seen-announcements-${window.communityId}`);
     
     // Add event listeners for modal close buttons and form submission
     document.addEventListener('DOMContentLoaded', function() {
@@ -1287,7 +1581,9 @@
   let currentAnnouncementId = null;
 
   function openEmojiPicker(announcementId, event) {
-    
+    event.preventDefault();
+    event.stopPropagation();
+
     // Close any existing picker
     closeEmojiPicker();
     
@@ -1418,6 +1714,9 @@
   window.goToPage = goToPage;
   window.toggleReaction = toggleReaction;
   window.toggleComments = toggleComments;
+  window.toggleAnnouncementContent = toggleAnnouncementContent;
+  window.toggleAllComments = toggleAllComments;
+  window.checkContentTruncation = checkContentTruncation;
   window.addComment = addComment;
   window.editComment = editComment;
   window.deleteComment = deleteComment;
@@ -1444,6 +1743,7 @@
   window.selectEmoji = selectEmoji;
   window.filterEmojis = filterEmojis;
   window.markAnnouncementAsSeen = markAnnouncementAsSeen;
+  window.filterAnnouncements = filterAnnouncements;
   
 
 
@@ -1452,17 +1752,6 @@
     document.addEventListener('DOMContentLoaded', initAnnouncements);
   } else {
     initAnnouncements();
-  }
-
-  // Clear corrupted localStorage data on script load
-  try {
-    const stored = localStorage.getItem(`seen-announcements-${window.communityId}`);
-    if (stored && (!stored.trim().startsWith('[') || !stored.trim().endsWith(']'))) {
-      console.warn('Clearing corrupted localStorage data on script load');
-      localStorage.removeItem(`seen-announcements-${window.communityId}`);
-    }
-  } catch (error) {
-    console.warn('Error checking localStorage on script load:', error);
   }
 
 })(); 
