@@ -274,6 +274,7 @@ export default function ContentCreatorsPage() {
   const [creators, setCreators] = useState<ContentCreator[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<{ activeCount: number; combinedReach: number } | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -318,6 +319,31 @@ export default function ContentCreatorsPage() {
     };
 
     fetchCreators();
+  }, []);
+
+  // Fetch creator stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/v1/content-creators/stats', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setStats({
+              activeCount: data.activeCount,
+              combinedReach: data.combinedReach
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching stats:', err);
+        // Silently fail - we'll just show fallback values
+      }
+    };
+
+    fetchStats();
   }, []);
 
   const featuredCreators = creators.filter(c => c.featured);
@@ -662,8 +688,24 @@ export default function ContentCreatorsPage() {
             }}
           >
             {[
-              { value: '25+', label: 'Active Creators' },
-              { value: '500K+', label: 'Combined Reach' },
+              {
+                value: stats
+                  ? (stats.activeCount > 0 ? stats.activeCount.toString() : 'Be first!')
+                  : '...',
+                label: 'Active Creators'
+              },
+              {
+                value: stats
+                  ? (stats.combinedReach > 0
+                      ? (stats.combinedReach >= 1000000
+                          ? `${(stats.combinedReach / 1000000).toFixed(1)}M`
+                          : stats.combinedReach >= 1000
+                            ? `${(stats.combinedReach / 1000).toFixed(0)}K`
+                            : stats.combinedReach.toString())
+                      : 'Growing!')
+                  : '...',
+                label: 'Combined Reach'
+              },
               { value: '$72', label: 'Yearly Value' }
             ].map((stat, i) => (
               <div key={i} style={{ textAlign: 'center', minWidth: '120px' }}>
