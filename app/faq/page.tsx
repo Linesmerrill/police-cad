@@ -218,6 +218,48 @@ const faqData = [
         answer: (<>There are several ways to contribute: use the service and provide feedback, contribute code on our <a href="https://github.com/linesmerrill/police-cad" target="_blank" rel="noopener noreferrer" style={linkStyle}>GitHub repository</a>, support us on <a href="https://www.patreon.com/linespolicecad" target="_blank" rel="noopener noreferrer" style={linkStyle}>Patreon</a>, or help other users in our <a href="https://discord.gg/3ECFhqe" target="_blank" rel="noopener noreferrer" style={linkStyle}>Discord community</a>.</>)
       }
     ]
+  },
+  {
+    category: 'Content Creator Program',
+    icon: 'fa-video',
+    color: '#fbbf24',
+    questions: [
+      {
+        question: 'What is the Content Creator Program?',
+        answer: (<>The Content Creator Program is designed for streamers, YouTubers, and content creators who feature Lines Police CAD in their content. Accepted creators receive exclusive benefits including a free Base Plan subscription and a featured profile on our <a href="/content-creators" style={linkStyle}>Content Creators directory</a>.</>)
+      },
+      {
+        question: 'What are the benefits of joining the Content Creator Program?',
+        answer: (<>As a content creator, you&apos;ll receive:
+          <ul style={{ marginTop: '0.75rem', marginBottom: '0.5rem', paddingLeft: '1.5rem', listStyleType: 'disc' }}>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Free Base Plan</strong> — A personal Base Plan subscription for your account</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Community Base Plan</strong> — Apply a free Base Plan to one of your communities</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Featured Profile</strong> — Your own profile page in our Content Creators directory</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Prestige</strong> — Recognition in our community and Discord</li>
+          </ul>
+        </>)
+      },
+      {
+        question: 'How do I apply to the Content Creator Program?',
+        answer: (<>Visit our <a href="/content-creators/apply" style={linkStyle}>Content Creator Application page</a> and fill out the application form. You&apos;ll need to provide information about your content platforms, follower counts, and a description of your content. Applications are reviewed by our team and you&apos;ll receive an email notification about the decision.</>)
+      },
+      {
+        question: 'What are the requirements to join?',
+        answer: 'We look for creators who actively produce content featuring Lines Police CAD. While there\'s no strict minimum follower count, we consider the quality and consistency of your content, your engagement with the community, and your platform presence when reviewing applications.'
+      },
+      {
+        question: 'How long does it take to get approved?',
+        answer: 'Applications typically require two admin approvals and are usually reviewed within a few days. You\'ll receive an email notification once a decision has been made on your application.'
+      },
+      {
+        question: 'Can I apply the community benefit to any community?',
+        answer: 'You can apply your free community Base Plan to any community that you own. Note that this is a one-time choice and cannot be changed later, so choose carefully! Communities with existing paid subscriptions are not eligible for this benefit.'
+      },
+      {
+        question: 'Where can I see all the content creators?',
+        answer: (<>Visit our <a href="/content-creators" style={linkStyle}>Content Creators directory</a> to browse all approved content creators in the program. Each creator has their own profile page showcasing their platforms and content.</>)
+      }
+    ]
   }
 ];
 

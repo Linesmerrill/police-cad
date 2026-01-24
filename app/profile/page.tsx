@@ -1416,6 +1416,84 @@ export default function Profile() {
           </div>
         )}
 
+        {/* Content Creator Interest Card - Show if user is NOT a creator and has NOT applied */}
+        {creatorStatus && !creatorStatus.hasCreatorProfile && !creatorStatus.hasApplication && (
+          <div style={{
+            backgroundColor: 'rgba(15, 15, 20, 0.6)',
+            border: '1px solid rgba(59, 130, 246, 0.2)',
+            borderRadius: '1rem',
+            padding: '2rem',
+            marginBottom: '2rem',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem'
+              }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(251, 191, 36, 0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <VideoCameraIcon style={{ width: '24px', height: '24px', color: '#fbbf24' }} />
+                </div>
+                <div>
+                  <h2 style={{
+                    fontSize: '1.125rem',
+                    fontWeight: '700',
+                    color: '#ffffff',
+                    marginBottom: '0.25rem',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                  }}>
+                    Are you a content creator?
+                  </h2>
+                  <p style={{
+                    fontSize: '0.875rem',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                  }}>
+                    Join our program and get free benefits for streaming or creating content
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/content-creators/apply"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: 'rgba(251, 191, 36, 0.15)',
+                  border: '1px solid rgba(251, 191, 36, 0.3)',
+                  borderRadius: '0.5rem',
+                  color: '#fbbf24',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                }}
+              >
+                Learn More
+                <ArrowRightIcon style={{ width: '16px', height: '16px' }} />
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Danger Zone Card */}
         <div style={{
           backgroundColor: 'rgba(239, 68, 68, 0.05)',
