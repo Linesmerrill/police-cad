@@ -24,7 +24,7 @@ import {
 import { StarIcon } from '@heroicons/react/24/solid';
 
 type ApplicationStatus = 'submitted' | 'under_review' | 'approved' | 'rejected' | 'withdrawn';
-type CreatorStatus = 'active' | 'warned' | 'pending_removal' | 'removed';
+type CreatorStatus = 'active' | 'warned' | 'pending_removal' | 'removed' | 'approved';
 
 interface ContentCreatorPlatform {
   type: string;
@@ -107,6 +107,11 @@ const statusConfig: Record<ApplicationStatus, { color: string; bgColor: string; 
 
 const creatorStatusConfig: Record<CreatorStatus, { color: string; bgColor: string; label: string }> = {
   active: {
+    color: '#22c55e',
+    bgColor: 'rgba(34, 197, 94, 0.15)',
+    label: 'Active'
+  },
+  approved: {
     color: '#22c55e',
     bgColor: 'rgba(34, 197, 94, 0.15)',
     label: 'Active'
