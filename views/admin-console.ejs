@@ -4864,7 +4864,7 @@
           ${app.firstApprovalBy ? `
             <div style="margin-top: 1.5rem;">
               <h5 style="color: ${status === 'approved' ? '#10b981' : '#f59e0b'}; margin-bottom: 1rem;">
-                <i class="fas fa-user-check" style="margin-right: 8px;"></i>First Approval
+                <i class="fas fa-user-check" style="margin-right: 8px;"></i>First Approval${app.firstApprovalByName ? ' (' + app.firstApprovalByName + ')' : ''}
               </h5>
               <div style="background: rgba(${status === 'approved' ? '16, 185, 129' : '245, 158, 11'}, 0.1); border: 1px solid rgba(${status === 'approved' ? '16, 185, 129' : '245, 158, 11'}, 0.3); border-radius: 8px; padding: 1rem;">
                 <p style="margin-bottom: 0; color: #e5e7eb;">
@@ -4879,7 +4879,7 @@
           ${status === 'approved' && app.reviewedAt ? `
             <div style="margin-top: 1rem;">
               <h5 style="color: #10b981; margin-bottom: 1rem;">
-                <i class="fas fa-check-double" style="margin-right: 8px;"></i>Second Approval
+                <i class="fas fa-check-double" style="margin-right: 8px;"></i>Second Approval${app.reviewedByName ? ' (' + app.reviewedByName + ')' : ''}
               </h5>
               <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 1rem;">
                 <p style="margin-bottom: 0; color: #e5e7eb;">
