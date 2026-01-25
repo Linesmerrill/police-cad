@@ -4863,14 +4863,28 @@
 
           ${app.firstApprovalBy ? `
             <div style="margin-top: 1.5rem;">
-              <h5 style="color: #f59e0b; margin-bottom: 1rem;">
+              <h5 style="color: ${status === 'approved' ? '#10b981' : '#f59e0b'}; margin-bottom: 1rem;">
                 <i class="fas fa-user-check" style="margin-right: 8px;"></i>First Approval
               </h5>
-              <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 1rem;">
+              <div style="background: rgba(${status === 'approved' ? '16, 185, 129' : '245, 158, 11'}, 0.1); border: 1px solid rgba(${status === 'approved' ? '16, 185, 129' : '245, 158, 11'}, 0.3); border-radius: 8px; padding: 1rem;">
                 <p style="margin-bottom: 0; color: #e5e7eb;">
                   <i class="fas fa-check" style="color: #10b981; margin-right: 8px;"></i>
                   First approval received${app.firstApprovalAt ? ' on ' + new Date(app.firstApprovalAt).toLocaleString([], { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}.
-                  <strong style="color: #f59e0b;">Awaiting second approval from a different admin.</strong>
+                  ${status !== 'approved' ? '<strong style="color: #f59e0b;">Awaiting second approval from a different admin.</strong>' : ''}
+                </p>
+              </div>
+            </div>
+          ` : ''}
+
+          ${status === 'approved' && app.reviewedAt ? `
+            <div style="margin-top: 1rem;">
+              <h5 style="color: #10b981; margin-bottom: 1rem;">
+                <i class="fas fa-check-double" style="margin-right: 8px;"></i>Second Approval
+              </h5>
+              <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 1rem;">
+                <p style="margin-bottom: 0; color: #e5e7eb;">
+                  <i class="fas fa-check" style="color: #10b981; margin-right: 8px;"></i>
+                  Second approval received on ${new Date(app.reviewedAt).toLocaleString([], { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}.
                 </p>
               </div>
             </div>
