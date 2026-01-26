@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { UserIcon, EnvelopeIcon, CalendarIcon, CurrencyDollarIcon, LockClosedIcon, SpeakerWaveIcon, BellIcon, TrashIcon, EyeIcon, EyeSlashIcon, IdentificationIcon, CameraIcon } from '@heroicons/react/24/solid';
-import { ArrowPathIcon, ArrowRightIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, ArrowRightIcon, ArrowLeftIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid, CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import { DISCORD_COMMUNITY } from '@/constants/discord';
@@ -682,6 +682,40 @@ export default function Profile() {
           background: 'radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 70%)',
           zIndex: 0
         }} />
+
+        {/* Back Button */}
+        <button
+          onClick={() => window.history.back()}
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            left: 'clamp(1rem, 4vw, 2rem)',
+            zIndex: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            borderRadius: '8px',
+            padding: '0.5rem 1rem',
+            color: 'rgba(255, 255, 255, 0.7)',
+            cursor: 'pointer',
+            fontSize: '0.875rem',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+            e.currentTarget.style.color = '#ffffff';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+            e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+          }}
+        >
+          <ArrowLeftIcon style={{ width: '16px', height: '16px' }} />
+          Back
+        </button>
 
         {/* Profile Picture */}
         <div style={{ position: 'relative', zIndex: 1, marginBottom: '1.5rem' }}>
