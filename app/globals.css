@@ -154,6 +154,46 @@
   }
 }
 
+/* Profile glow animations per subscription tier */
+@keyframes glowPremiumPlus {
+  0%, 100% { box-shadow: 0 0 4px rgba(251, 191, 36, 0.4), 0 0 8px rgba(251, 191, 36, 0.2); }
+  50% { box-shadow: 0 0 8px rgba(251, 191, 36, 0.7), 0 0 16px rgba(251, 191, 36, 0.35); }
+}
+@keyframes glowPremium {
+  0%, 100% { box-shadow: 0 0 4px rgba(168, 85, 247, 0.4), 0 0 8px rgba(168, 85, 247, 0.2); }
+  50% { box-shadow: 0 0 8px rgba(168, 85, 247, 0.7), 0 0 16px rgba(168, 85, 247, 0.35); }
+}
+@keyframes glowBasic {
+  0%, 100% { box-shadow: 0 0 4px rgba(59, 130, 246, 0.4), 0 0 8px rgba(59, 130, 246, 0.2); }
+  50% { box-shadow: 0 0 8px rgba(59, 130, 246, 0.7), 0 0 16px rgba(59, 130, 246, 0.35); }
+}
+@keyframes glowFree {
+  0%, 100% { box-shadow: 0 0 4px rgba(156, 163, 175, 0.3), 0 0 8px rgba(156, 163, 175, 0.15); }
+  50% { box-shadow: 0 0 6px rgba(156, 163, 175, 0.5), 0 0 12px rgba(156, 163, 175, 0.25); }
+}
+.navbar-profile-pic {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.navbar-profile-pic.tier-premium-plus {
+  border: 2px solid rgba(251, 191, 36, 0.7);
+  animation: glowPremiumPlus 3s ease-in-out infinite;
+}
+.navbar-profile-pic.tier-premium {
+  border: 2px solid rgba(168, 85, 247, 0.7);
+  animation: glowPremium 3s ease-in-out infinite;
+}
+.navbar-profile-pic.tier-basic {
+  border: 2px solid rgba(59, 130, 246, 0.7);
+  animation: glowBasic 3s ease-in-out infinite;
+}
+.navbar-profile-pic.tier-free {
+  border: 2px solid rgba(156, 163, 175, 0.5);
+  animation: glowFree 3s ease-in-out infinite;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

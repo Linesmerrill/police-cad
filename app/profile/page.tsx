@@ -498,6 +498,36 @@ export default function Profile() {
     }
   };
 
+  const deleteProfilePicture = async () => {
+    if (!user) return;
+    setUploadingPicture(true);
+    try {
+      const params = new URLSearchParams();
+      params.append('action', 'updateProfilePicture');
+      params.append('userID', user.id);
+      params.append('profilePicture', '');
+
+      const saveResponse = await fetch('/manageAccount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+        credentials: 'include'
+      });
+
+      if (saveResponse.ok) {
+        setUser({ ...user, profilePicture: '' });
+        showMessage('success', 'Profile picture removed');
+      } else {
+        showMessage('error', 'Failed to remove profile picture');
+      }
+    } catch (error) {
+      console.error('Error removing profile picture:', error);
+      showMessage('error', 'Failed to remove profile picture');
+    } finally {
+      setUploadingPicture(false);
+    }
+  };
+
   const getSubscriptionBadge = () => {
     const subscription = user?.subscription;
     const isActive = subscription?.active === true;
@@ -718,7 +748,8 @@ export default function Profile() {
         </button>
 
         {/* Profile Picture */}
-        <div style={{ position: 'relative', zIndex: 1, marginBottom: '1.5rem' }}>
+        <div style={{ position: 'relative', zIndex: 1, marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ position: 'relative', width: '120px', height: '120px' }}>
           <div
             onClick={() => {
               if (!uploadingPicture) {
@@ -742,7 +773,6 @@ export default function Profile() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto',
               border: '3px solid rgba(139, 92, 246, 0.5)',
               cursor: uploadingPicture ? 'wait' : 'pointer',
               position: 'relative',
@@ -788,6 +818,43 @@ export default function Profile() {
             >
               <CameraIcon style={{ width: '28px', height: '28px', color: '#ffffff' }} />
             </div>
+          </div>
+          {/* Delete photo button */}
+          {user.profilePicture && !uploadingPicture && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteProfilePicture();
+              }}
+              title="Remove photo"
+              style={{
+                position: 'absolute',
+                bottom: '2px',
+                right: '-4px',
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                border: '2px solid rgba(15, 15, 20, 0.9)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s, transform 0.2s',
+                zIndex: 2
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 1)';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.9)';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              <TrashIcon style={{ width: '14px', height: '14px', color: '#ffffff' }} />
+            </button>
+          )}
           </div>
           <p style={{
             color: 'rgba(255, 255, 255, 0.5)',
