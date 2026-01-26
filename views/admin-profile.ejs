@@ -394,8 +394,11 @@
         }, 5000);
       }
 
-      // Profile picture upload
-      $('#profilePictureInput').on('change', async function(e) {
+      $(document).ready(function() {
+        console.log('Admin Profile page loaded', { API_BASE, adminId });
+
+        // Profile picture upload
+        $('#profilePictureInput').on('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -520,6 +523,7 @@
           $btn.html(originalText).prop('disabled', false);
         }
       });
+      }); // End $(document).ready()
     </script>
   </body>
 </html>
