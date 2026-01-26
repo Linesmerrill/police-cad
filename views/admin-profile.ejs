@@ -395,8 +395,6 @@
       }
 
       $(document).ready(function() {
-        console.log('Admin Profile page loaded', { API_BASE, adminId });
-
         // Profile picture upload
         $('#profilePictureInput').on('change', async function(e) {
         const file = e.target.files[0];
@@ -450,9 +448,6 @@
           return;
         }
 
-        // Debug logging
-        console.log('Saving profile...', { API_BASE, adminId, firstName, lastName, email });
-
         if (!adminId) {
           showAlert('Error: Admin ID not found. Please log out and log back in.', 'error');
           return;
@@ -469,10 +464,7 @@
         $btn.html('<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Saving...').prop('disabled', true);
 
         try {
-          const url = `${API_BASE}/api/v1/admin/admins/${adminId}/profile`;
-          console.log('Fetching:', url);
-
-          const response = await fetch(url, {
+          const response = await fetch(`${API_BASE}/api/v1/admin/admins/${adminId}/profile`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json'
@@ -486,9 +478,7 @@
             })
           });
 
-          console.log('Response status:', response.status);
           const data = await response.json();
-          console.log('Response data:', data);
 
           if (data.success) {
             showAlert('Profile updated successfully!', 'success');
