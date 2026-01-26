@@ -1322,7 +1322,11 @@ const QuickNav = () => {
 // WELCOME MODAL (First-time visitor onboarding)
 // ============================================================================
 
-const WELCOME_MODAL_STORAGE_KEY = 'lpc_welcome_modal_seen';
+const WELCOME_MODAL_STORAGE_KEY_PREFIX = 'lpc_welcome_modal_seen';
+function getWelcomeModalStorageKey() {
+  const userId = window.dbUser && window.dbUser._id;
+  return userId ? `${WELCOME_MODAL_STORAGE_KEY_PREFIX}_${userId}` : WELCOME_MODAL_STORAGE_KEY_PREFIX;
+}
 
 const WelcomeModal = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -1438,7 +1442,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
   ];
 
   const handleClose = () => {
-    localStorage.setItem(WELCOME_MODAL_STORAGE_KEY, 'true');
+    localStorage.setItem(getWelcomeModalStorageKey(), 'true');
     onClose();
   };
 
@@ -1478,6 +1482,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: 'rgba(10, 10, 15, 0.95)', backdropFilter: 'blur(10px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
     >
       <div
         className="w-full max-w-md rounded-2xl shadow-2xl relative"
@@ -2021,7 +2026,7 @@ const App = () => {
 
   // Check if first-time visitor for welcome modal
   useEffect(() => {
-    const hasSeenWelcome = localStorage.getItem(WELCOME_MODAL_STORAGE_KEY);
+    const hasSeenWelcome = localStorage.getItem(getWelcomeModalStorageKey());
     if (!hasSeenWelcome) {
       // Small delay to let the page load first
       const timer = setTimeout(() => {

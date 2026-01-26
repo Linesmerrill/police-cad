@@ -319,6 +319,20 @@
     
     <!-- Search and Create Community Group -->
     
+    <!-- Clean up any stuck Bootstrap modal backdrops on page load -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Remove any lingering Bootstrap modal backdrops from previous sessions
+        var backdrops = document.querySelectorAll('.modal-backdrop');
+        for (var i = 0; i < backdrops.length; i++) {
+          backdrops[i].parentNode.removeChild(backdrops[i]);
+        }
+        // Ensure body is not stuck with modal-open class or hidden overflow
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+      });
+    </script>
     <script>
       function setPromoBarCookie() {
         document.cookie = 'hidePromoBarCommunities=true; path=/; max-age=31536000'; // 1 year
