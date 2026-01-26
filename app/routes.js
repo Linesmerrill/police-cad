@@ -265,7 +265,17 @@ module.exports = function (app, passport, server, nextApp, handle) {
         return res.redirect("/admin?error=" + encodeURIComponent("Invalid credentials"));
       }
 
-      // Update lastLoginAt in backend API if API token is configured
+      // Update lastLoginAt directly in MongoDB
+      try {
+        await mongoose.connection.db.collection("admin_users").updateOne(
+          { _id: adminUser._id },
+          { $set: { lastLoginAt: new Date() } }
+        );
+      } catch (err) {
+        console.log("Failed to update lastLoginAt in MongoDB:", err.message);
+      }
+
+      // Also update lastLoginAt in backend API if API token is configured
       const apiToken = process.env.POLICE_CAD_API_TOKEN;
       const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
       
