@@ -367,16 +367,16 @@
     <script src="/static/js/cloudinary-upload.js"></script>
     <script>
       // Cloudinary config
-      window.CLOUDINARY_CLOUD_NAME = '<%= typeof CLOUDINARY_CLOUD_NAME !== "undefined" ? CLOUDINARY_CLOUD_NAME : "" %>';
-      window.CLOUDINARY_API_KEY = '<%= typeof CLOUDINARY_API_KEY !== "undefined" ? CLOUDINARY_API_KEY : "" %>';
-      window.CLOUDINARY_UPLOAD_PRESET = '<%= typeof CLOUDINARY_UPLOAD_PRESET !== "undefined" ? CLOUDINARY_UPLOAD_PRESET : "" %>';
+      window.CLOUDINARY_CLOUD_NAME = <%- JSON.stringify(CLOUDINARY_CLOUD_NAME || '') %>;
+      window.CLOUDINARY_API_KEY = <%- JSON.stringify(CLOUDINARY_API_KEY || '') %>;
+      window.CLOUDINARY_UPLOAD_PRESET = <%- JSON.stringify(CLOUDINARY_UPLOAD_PRESET || '') %>;
 
-      const API_BASE = '<%= typeof POLICE_CAD_API_URL !== "undefined" ? POLICE_CAD_API_URL : "" %>';
-      const adminId = '<%= admin && admin.id ? admin.id : "" %>';
+      const API_BASE = <%- JSON.stringify(POLICE_CAD_API_URL || '') %>;
+      const adminId = <%- JSON.stringify(admin && admin.id ? String(admin.id) : '') %>;
       const adminData = {
-        id: '<%= admin && admin.id ? admin.id : "" %>',
-        email: '<%= admin && admin.email ? admin.email : "" %>',
-        roles: <%= admin && admin.roles ? JSON.stringify(admin.roles) : '[]' %>
+        id: <%- JSON.stringify(admin && admin.id ? String(admin.id) : '') %>,
+        email: <%- JSON.stringify(admin && admin.email ? admin.email : '') %>,
+        roles: <%- JSON.stringify(admin && admin.roles ? admin.roles : []) %>
       };
 
       function showAlert(message, type) {
