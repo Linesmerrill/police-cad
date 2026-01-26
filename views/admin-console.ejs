@@ -789,16 +789,28 @@
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
-            <li>
-              <span style="color: #9aa0b4;">
-                <i class="fas fa-user" style="margin-right: 8px;"></i>
-                <%= admin && admin.email ? admin.email : 'Admin' %>
-              </span>
-            </li>
-            <li>
-              <button type="button" class="btn btn-link" onclick="adminLogout()">
-                <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>Logout
-              </button>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" style="color: #9aa0b4; display: flex; align-items: center; height: 60px; padding: 15px;">
+                <% if (admin && admin.profilePicture) { %>
+                  <img src="<%= admin.profilePicture %>" style="width: 28px; height: 28px; border-radius: 50%; margin-right: 8px; object-fit: cover; border: 2px solid #667eea;" />
+                <% } else { %>
+                  <i class="fas fa-user-circle" style="margin-right: 8px; font-size: 1.2rem;"></i>
+                <% } %>
+                <%= admin && admin.firstName && admin.lastName ? admin.firstName + ' ' + admin.lastName : (admin && admin.email ? admin.email : 'Admin') %>
+                <span class="caret" style="margin-left: 8px;"></span>
+              </a>
+              <ul class="dropdown-menu" style="background: #1e2028; border: 1px solid #35385a; border-radius: 8px; margin-top: 0;">
+                <li>
+                  <a href="/admin/profile" style="color: #e5e7eb; padding: 10px 20px; display: block;">
+                    <i class="fas fa-user-edit" style="margin-right: 8px; color: #667eea;"></i>Edit Profile
+                  </a>
+                </li>
+                <li style="border-top: 1px solid #35385a;">
+                  <a href="#" onclick="adminLogout(); return false;" style="color: #e5e7eb; padding: 10px 20px; display: block;">
+                    <i class="fas fa-sign-out-alt" style="margin-right: 8px; color: #ef4444;"></i>Logout
+                  </a>
+                </li>
+              </ul>
             </li>
           </ul>
         </div>

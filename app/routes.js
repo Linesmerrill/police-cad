@@ -320,16 +320,24 @@ module.exports = function (app, passport, server, nextApp, handle) {
         });
       }
 
-      // Create admin session
+      // Check if profile is complete (has firstName and lastName)
+      const profileComplete = adminUser.firstName && adminUser.lastName;
+
+      // Create admin session with profile fields
       req.session.adminToken = "local-admin-" + Date.now();
-      req.session.admin = { 
+      req.session.admin = {
         email: adminUser.email,
-        name: adminUser.name || adminUser.email.split('@')[0],
+        name: adminUser.firstName && adminUser.lastName
+          ? `${adminUser.firstName} ${adminUser.lastName}`
+          : (adminUser.name || adminUser.email.split('@')[0]),
+        firstName: adminUser.firstName || '',
+        lastName: adminUser.lastName || '',
+        profilePicture: adminUser.profilePicture || '',
         id: adminUser._id,
         role: adminUser.role,
         roles: adminUser.roles
       };
-      
+
       // Store login time for session duration calculation
       req.session.loginTime = new Date();
 
@@ -337,10 +345,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
       if (apiToken) {
         // Get roles from adminUser for the currentUser object
         const adminRoles = adminUser.roles || (adminUser.role ? [adminUser.role] : ['admin']);
-        
+
         // First find admin ID in backend API
-        axios.post(`${apiUrl}/api/v1/admin/search/admins`, 
-          { 
+        axios.post(`${apiUrl}/api/v1/admin/search/admins`,
+          {
             query: email,
             currentUser: {
               email: email,
@@ -360,9 +368,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
         ).then(function(searchResponse) {
           if (searchResponse.status === 200 && searchResponse.data.admins && searchResponse.data.admins.length > 0) {
             const adminId = searchResponse.data.admins[0].id || searchResponse.data.admins[0]._id;
-            
+
             // Log login activity
-            axios.post(`${apiUrl}/api/v1/admin/activity/log`, 
+            axios.post(`${apiUrl}/api/v1/admin/activity/log`,
               {
                 adminId: adminId,
                 type: 'login',
@@ -393,6 +401,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         });
       }
 
+      // Redirect based on profile completeness
+      if (!profileComplete) {
+        return res.redirect("/admin/profile?setup=true");
+      }
       return res.redirect("/admin/console");
     } catch (err) {
       const message = "Authentication failed. Please try again.";
@@ -411,14 +423,73 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.get("/admin/console", requireAdminSession, function (req, res) {
     const success = req.query.success || null;
     const error = req.query.error || null;
-    
-    res.render("admin-console", { 
+
+    res.render("admin-console", {
       admin: req.session.admin,
       POLICE_CAD_API_URL: process.env.POLICE_CAD_API_URL,
       POLICE_CAD_API_TOKEN: process.env.POLICE_CAD_API_TOKEN,
       success: success,
       error: error
     });
+  });
+
+  // Admin Profile page
+  app.get("/admin/profile", requireAdminSession, async function (req, res) {
+    const setup = req.query.setup === 'true';
+    let adminData = req.session.admin;
+
+    // Fetch full admin data from API to get profile fields
+    const apiToken = process.env.POLICE_CAD_API_TOKEN;
+    const apiUrl = process.env.POLICE_CAD_API_URL;
+
+    if (apiToken && adminData && adminData.id) {
+      try {
+        const axios = require("axios");
+        const response = await axios.get(`${apiUrl}/api/v1/admin/admins/${adminData.id}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiToken}`
+          },
+          timeout: 5000
+        });
+        if (response.data.success && response.data.admin) {
+          // Merge API data with session data
+          adminData = { ...adminData, ...response.data.admin };
+        }
+      } catch (err) {
+        console.log("Failed to fetch admin profile from API, using session data");
+      }
+    }
+
+    res.render("admin-profile", {
+      admin: adminData,
+      setup: setup,
+      POLICE_CAD_API_URL: process.env.POLICE_CAD_API_URL,
+      POLICE_CAD_API_TOKEN: process.env.POLICE_CAD_API_TOKEN,
+      CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+      CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+      CLOUDINARY_UPLOAD_PRESET: process.env.CLOUDINARY_UPLOAD_PRESET
+    });
+  });
+
+  // Update session after profile save (called from frontend)
+  app.post("/admin/profile/update-session", requireAdminSession, function (req, res) {
+    const { firstName, lastName, email, profilePicture } = req.body;
+
+    // Update session with new profile data
+    if (req.session.admin) {
+      if (firstName) req.session.admin.firstName = firstName;
+      if (lastName) req.session.admin.lastName = lastName;
+      if (email) req.session.admin.email = email;
+      if (profilePicture) req.session.admin.profilePicture = profilePicture;
+
+      // Update the name field for display
+      if (firstName && lastName) {
+        req.session.admin.name = `${firstName} ${lastName}`;
+      }
+    }
+
+    res.json({ success: true });
   });
 
   app.post("/admin/logout", function (req, res) {
