@@ -447,8 +447,29 @@
           return;
         }
 
+        // Debug logging
+        console.log('Saving profile...', { API_BASE, adminId, firstName, lastName, email });
+
+        if (!adminId) {
+          showAlert('Error: Admin ID not found. Please log out and log back in.', 'error');
+          return;
+        }
+
+        if (!API_BASE) {
+          showAlert('Error: API URL not configured.', 'error');
+          return;
+        }
+
+        // Show saving state
+        const $btn = $('#profileForm button[type="submit"]');
+        const originalText = $btn.html();
+        $btn.html('<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Saving...').prop('disabled', true);
+
         try {
-          const response = await fetch(`${API_BASE}/api/v1/admin/admins/${adminId}/profile`, {
+          const url = `${API_BASE}/api/v1/admin/admins/${adminId}/profile`;
+          console.log('Fetching:', url);
+
+          const response = await fetch(url, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json'
@@ -462,7 +483,9 @@
             })
           });
 
+          console.log('Response status:', response.status);
           const data = await response.json();
+          console.log('Response data:', data);
 
           if (data.success) {
             showAlert('Profile updated successfully!', 'success');
@@ -493,6 +516,8 @@
         } catch (error) {
           console.error('Profile update failed:', error);
           showAlert('Failed to update profile. Please try again.', 'error');
+        } finally {
+          $btn.html(originalText).prop('disabled', false);
         }
       });
     </script>

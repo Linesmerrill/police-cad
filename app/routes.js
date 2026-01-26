@@ -333,7 +333,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         firstName: adminUser.firstName || '',
         lastName: adminUser.lastName || '',
         profilePicture: adminUser.profilePicture || '',
-        id: adminUser._id,
+        id: adminUser._id.toString(), // Ensure ID is a string for API calls
         role: adminUser.role,
         roles: adminUser.roles
       };
