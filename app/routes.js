@@ -2789,7 +2789,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
           discordConnected: user.discordConnected || false,
           panicButtonSound: user.panicButtonSound || false,
           alertVolumeLevel: user.alertVolumeLevel || 10,
-          createdAt: user.createdAt
+          createdAt: user.createdAt,
+          profilePicture: user.profilePicture || '',
+          subscription: user.subscription || null
         }
       });
     }
@@ -4916,6 +4918,34 @@ module.exports = function (app, passport, server, nextApp, handle) {
               );
             }
           );
+        }
+      );
+    } else if (req.body.action === "updateProfilePicture") {
+      var isValid = isValidObjectIdLength(
+        req.body.userID,
+        "cannot lookup invalid length userID, route: /manageAccount"
+      );
+      if (!isValid) {
+        return res.status(400).json({ error: 'Invalid user ID' });
+      }
+      var profilePicture = req.body.profilePicture || '';
+      User.findOneAndUpdate(
+        {
+          _id: ObjectId(req.body.userID),
+        },
+        {
+          $set: {
+            "user.profilePicture": profilePicture,
+            "user.updatedAt": new Date(),
+          },
+        },
+        { new: true },
+        function (err, updatedUser) {
+          if (err) {
+            console.error(err);
+            return res.status(500).json({ error: 'Failed to update profile picture' });
+          }
+          return res.json({ success: true, profilePicture: updatedUser.user.profilePicture });
         }
       );
     } else {

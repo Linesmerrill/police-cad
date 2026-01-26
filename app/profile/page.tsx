@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { UserIcon, EnvelopeIcon, CalendarIcon, CurrencyDollarIcon, LockClosedIcon, SpeakerWaveIcon, BellIcon, TrashIcon, EyeIcon, EyeSlashIcon, IdentificationIcon } from '@heroicons/react/24/solid';
+import { UserIcon, EnvelopeIcon, CalendarIcon, CurrencyDollarIcon, LockClosedIcon, SpeakerWaveIcon, BellIcon, TrashIcon, EyeIcon, EyeSlashIcon, IdentificationIcon, CameraIcon } from '@heroicons/react/24/solid';
 import { ArrowPathIcon, ArrowRightIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
+import { StarIcon as StarIconSolid, CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import { DISCORD_COMMUNITY } from '@/constants/discord';
 
@@ -25,6 +26,8 @@ export default function Profile() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [emailModalError, setEmailModalError] = useState<string | null>(null);
   const [creatorStatus, setCreatorStatus] = useState<{ hasCreatorProfile: boolean; hasApplication: boolean; status?: string } | null>(null);
+  const [uploadingPicture, setUploadingPicture] = useState(false);
+  const [cloudinaryConfig, setCloudinaryConfig] = useState<{ cloudName: string; apiKey: string; uploadPreset: string } | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -67,6 +70,20 @@ export default function Profile() {
     };
 
     fetchUser();
+
+    // Fetch Cloudinary config for profile picture uploads
+    const fetchCloudinaryConfig = async () => {
+      try {
+        const response = await fetch('/api/v1/cloudinary-config', { credentials: 'include' });
+        if (response.ok) {
+          const data = await response.json();
+          setCloudinaryConfig(data);
+        }
+      } catch (error) {
+        console.error('Error fetching Cloudinary config:', error);
+      }
+    };
+    fetchCloudinaryConfig();
   }, []);
 
   const formatDate = (dateString: string | Date) => {
@@ -402,6 +419,106 @@ export default function Profile() {
     }
   };
 
+  const uploadProfilePicture = async (file: File) => {
+    if (!user || !cloudinaryConfig) return;
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showMessage('error', 'Image must be less than 5MB');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showMessage('error', 'Please select an image file');
+      return;
+    }
+
+    setUploadingPicture(true);
+    try {
+      // Step 1: Get signature from server
+      const signatureResponse = await fetch('/api/v1/generate-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+        credentials: 'include'
+      });
+
+      if (!signatureResponse.ok) {
+        throw new Error('Failed to get upload signature');
+      }
+
+      const { timestamp, signature } = await signatureResponse.json();
+
+      // Step 2: Upload to Cloudinary
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', cloudinaryConfig.apiKey);
+      formData.append('timestamp', timestamp);
+      formData.append('signature', signature);
+      formData.append('upload_preset', cloudinaryConfig.uploadPreset);
+
+      const cloudinaryResponse = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
+        { method: 'POST', body: formData }
+      );
+
+      const result = await cloudinaryResponse.json();
+
+      if (result.error) {
+        throw new Error(result.error.message || 'Upload failed');
+      }
+
+      const imageUrl = result.secure_url;
+
+      // Step 3: Save to user profile
+      const params = new URLSearchParams();
+      params.append('action', 'updateProfilePicture');
+      params.append('userID', user.id);
+      params.append('profilePicture', imageUrl);
+
+      const saveResponse = await fetch('/manageAccount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+        credentials: 'include'
+      });
+
+      if (saveResponse.ok) {
+        setUser({ ...user, profilePicture: imageUrl });
+        showMessage('success', 'Profile picture updated successfully');
+      } else {
+        showMessage('error', 'Failed to save profile picture');
+      }
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      showMessage('error', 'Failed to upload profile picture. Please try again.');
+    } finally {
+      setUploadingPicture(false);
+    }
+  };
+
+  const getSubscriptionBadge = () => {
+    const subscription = user?.subscription;
+    const isActive = subscription?.active === true;
+    const plan = subscription?.plan?.toLowerCase() || 'free';
+
+    if (!isActive) {
+      return { label: 'Free', color: '#718096', bgColor: 'rgba(113, 128, 150, 0.2)', borderColor: 'rgba(113, 128, 150, 0.4)', icon: 'user' };
+    }
+
+    switch (plan) {
+      case 'premium_plus':
+        return { label: 'Premium+', color: '#fbbf24', bgColor: 'rgba(251, 191, 36, 0.2)', borderColor: 'rgba(251, 191, 36, 0.4)', icon: 'star' };
+      case 'premium':
+        return { label: 'Premium', color: '#667eea', bgColor: 'rgba(102, 126, 234, 0.2)', borderColor: 'rgba(102, 126, 234, 0.4)', icon: 'star' };
+      case 'basic':
+        return { label: 'Basic', color: '#48bb78', bgColor: 'rgba(72, 187, 120, 0.2)', borderColor: 'rgba(72, 187, 120, 0.4)', icon: 'check' };
+      default:
+        return { label: 'Free', color: '#718096', bgColor: 'rgba(113, 128, 150, 0.2)', borderColor: 'rgba(113, 128, 150, 0.4)', icon: 'user' };
+    }
+  };
+
   if (loading) {
     return (
       <main style={{ 
@@ -565,6 +682,89 @@ export default function Profile() {
           background: 'radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 70%)',
           zIndex: 0
         }} />
+
+        {/* Profile Picture */}
+        <div style={{ position: 'relative', zIndex: 1, marginBottom: '1.5rem' }}>
+          <div
+            onClick={() => {
+              if (!uploadingPicture) {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  if (file) uploadProfilePicture(file);
+                };
+                input.click();
+              }
+            }}
+            style={{
+              width: '120px',
+              height: '120px',
+              borderRadius: '50%',
+              background: user.profilePicture
+                ? `url(${user.profilePicture}) center/cover no-repeat`
+                : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto',
+              border: '3px solid rgba(139, 92, 246, 0.5)',
+              cursor: uploadingPicture ? 'wait' : 'pointer',
+              position: 'relative',
+              transition: 'border-color 0.2s, box-shadow 0.2s',
+              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              if (!uploadingPicture) {
+                e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.8)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(139, 92, 246, 0.4)';
+                const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement;
+                if (overlay) overlay.style.opacity = '1';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+              const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement;
+              if (overlay) overlay.style.opacity = '0';
+            }}
+          >
+            {!user.profilePicture && !uploadingPicture && (
+              <UserIcon style={{ width: '48px', height: '48px', color: '#ffffff' }} />
+            )}
+            {uploadingPicture && (
+              <ArrowPathIcon style={{ width: '32px', height: '32px', color: '#ffffff', animation: 'spin 1s linear infinite' }} />
+            )}
+            {/* Hover overlay */}
+            <div
+              data-overlay
+              style={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: 0,
+                transition: 'opacity 0.2s',
+                pointerEvents: 'none'
+              }}
+            >
+              <CameraIcon style={{ width: '28px', height: '28px', color: '#ffffff' }} />
+            </div>
+          </div>
+          <p style={{
+            color: 'rgba(255, 255, 255, 0.5)',
+            fontSize: '0.75rem',
+            marginTop: '0.5rem',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+          }}>
+            Click to change photo
+          </p>
+        </div>
+
         <h1 style={{
           fontSize: 'clamp(2.5rem, 8vw, 4rem)',
           fontWeight: '700',
@@ -741,6 +941,62 @@ export default function Profile() {
                 </div>
               </div>
             </div>
+
+            {/* Subscription Tier */}
+            {(() => {
+              const badge = getSubscriptionBadge();
+              return (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  padding: '1rem',
+                  backgroundColor: badge.bgColor,
+                  borderRadius: '0.5rem',
+                  border: `1px solid ${badge.borderColor}`
+                }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    backgroundColor: badge.bgColor,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    border: `1px solid ${badge.borderColor}`
+                  }}>
+                    {badge.icon === 'star' && (
+                      <StarIconSolid style={{ width: '20px', height: '20px', color: badge.color }} />
+                    )}
+                    {badge.icon === 'check' && (
+                      <CheckCircleIconSolid style={{ width: '20px', height: '20px', color: badge.color }} />
+                    )}
+                    {badge.icon === 'user' && (
+                      <UserIcon style={{ width: '20px', height: '20px', color: badge.color }} />
+                    )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: '0.875rem',
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      marginBottom: '0.25rem',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                    }}>
+                      Subscription
+                    </div>
+                    <div style={{
+                      fontSize: '1.125rem',
+                      fontWeight: '600',
+                      color: badge.color,
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                    }}>
+                      {badge.label}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
 

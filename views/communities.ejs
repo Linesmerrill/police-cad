@@ -284,12 +284,24 @@
               <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
             </button>
             
-            <!-- Account Button -->
-            <button id="accountBtn" class="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors" style="background: none; border: none; cursor: pointer;">
-              
-              <span class="font-medium"><%= user.user.username || 'User' %></span>
-              <i class="fa fa-chevron-down text-sm"></i>
-            </button>
+            <!-- Account Dropdown -->
+            <div id="accountDropdownWrapper" style="position: relative;">
+              <button id="accountBtn" class="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors" style="background: none; border: none; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                <i class="fa fa-user text-sm"></i>
+                <span class="font-medium"><%= user.user.username || 'User' %></span>
+                <i id="accountChevron" class="fa fa-chevron-down text-xs" style="transition: transform 0.2s;"></i>
+              </button>
+              <div id="accountDropdown" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 0.5rem; background: rgba(15, 15, 20, 0.98); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem; min-width: 200px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); z-index: 10001;">
+                <a href="/profile" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; color: rgba(255, 255, 255, 0.9); text-decoration: none; border-radius: 4px; font-size: 0.875rem; transition: background-color 0.2s;" onmouseenter="this.style.backgroundColor='rgba(255,255,255,0.1)'" onmouseleave="this.style.backgroundColor='transparent'">
+                  <i class="fa fa-cog" style="width: 18px; text-align: center;"></i>
+                  Account Settings
+                </a>
+                <a href="/logout" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; color: #ef4444; text-decoration: none; border-radius: 4px; font-size: 0.875rem; margin-top: 0.25rem; transition: background-color 0.2s;" onmouseenter="this.style.backgroundColor='rgba(239,68,68,0.1)'" onmouseleave="this.style.backgroundColor='transparent'">
+                  <i class="fa fa-sign-out-alt" style="width: 18px; text-align: center;"></i>
+                  Logout
+                </a>
+              </div>
+            </div>
           </div>
         <% } else { %>
           <!-- User is not logged in - show login button -->
@@ -433,9 +445,6 @@
 
 
     <% if (user && user._doc) { %>
-      <!-- Account Management Modal -->
-      <% include account-management %>
-      
       <!-- Notification Modal -->
       <% include partials/notificationModal %>
       
@@ -470,20 +479,25 @@
       <!-- Modal Event Listeners -->
       <script>
         document.addEventListener('DOMContentLoaded', function() {
-          // Account button click handler
+          // Account dropdown toggle
           const accountBtn = document.getElementById('accountBtn');
-          if (accountBtn) {
-            accountBtn.addEventListener('click', function() {
-              fillAccountDetails();
-              document.getElementById('accountModal').style.display = 'flex';
+          const accountDropdown = document.getElementById('accountDropdown');
+          const accountChevron = document.getElementById('accountChevron');
+          if (accountBtn && accountDropdown) {
+            accountBtn.addEventListener('click', function(e) {
+              e.stopPropagation();
+              const isOpen = accountDropdown.style.display === 'block';
+              accountDropdown.style.display = isOpen ? 'none' : 'block';
+              if (accountChevron) {
+                accountChevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+              }
             });
-          }
-          
-          // Account modal close button
-          const accountModalClose = document.getElementById('accountModalClose');
-          if (accountModalClose) {
-            accountModalClose.addEventListener('click', function() {
-              document.getElementById('accountModal').style.display = 'none';
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+              if (!document.getElementById('accountDropdownWrapper').contains(e.target)) {
+                accountDropdown.style.display = 'none';
+                if (accountChevron) accountChevron.style.transform = '';
+              }
             });
           }
           
@@ -512,14 +526,9 @@
             });
           }
           
-          // Close modals when clicking outside
+          // Close notification modal when clicking outside
           window.addEventListener('click', function(event) {
-            const accountModal = document.getElementById('accountModal');
             const notificationModal = document.getElementById('notificationModal');
-            
-            if (event.target === accountModal) {
-              accountModal.style.display = 'none';
-            }
             if (event.target === notificationModal) {
               notificationModal.style.display = 'none';
             }
@@ -532,29 +541,6 @@
           }
         });
         
-        // Fill account details function (same as community dashboard)
-        function fillAccountDetails() {
-          if (dbUser && dbUser.user) {
-            const emailField = document.getElementById('accountEmail');
-            const usernameField = document.getElementById('accountUsername');
-            const callSignField = document.getElementById('accountCallSign');
-            const profilePicture = document.getElementById('profilePicture');
-            
-            if (emailField) emailField.value = dbUser.user.email;
-            if (usernameField) {
-              usernameField.value = dbUser.user.username;
-              usernameField.defaultValue = dbUser.user.username; // Set default for change detection
-            }
-            if (callSignField) {
-              callSignField.value = dbUser.user.callSign;
-              callSignField.defaultValue = dbUser.user.callSign; // Set default for change detection
-            }
-            if (profilePicture) {
-              const profileImageUrl = dbUser.user.profilePicture || '/static/images/civ-unknown-user.png';
-              profilePicture.style.backgroundImage = `url(${profileImageUrl})`;
-            }
-          }
-        }
       </script>
     <% } %>
   </body>
