@@ -803,17 +803,29 @@ export default function ApplyPage() {
                     <button
                       type="button"
                       onClick={addPlatform}
+                      className="add-platform-btn"
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px',
-                        background: 'transparent',
-                        border: 'none',
+                        gap: '6px',
+                        background: 'rgba(251, 191, 36, 0.08)',
+                        border: '1px solid rgba(251, 191, 36, 0.5)',
+                        borderRadius: '6px',
                         color: '#fbbf24',
                         fontSize: '13px',
                         fontWeight: '600',
                         cursor: 'pointer',
-                        padding: '4px 8px'
+                        padding: '6px 14px',
+                        transition: 'all 0.2s ease',
+                        animation: 'addPlatformGlow 3s ease-in-out infinite'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(251, 191, 36, 0.15)';
+                        e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.8)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(251, 191, 36, 0.08)';
+                        e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.5)';
                       }}
                     >
                       <PlusIcon style={{ width: '16px', height: '16px' }} />

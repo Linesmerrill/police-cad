@@ -154,6 +154,12 @@
   }
 }
 
+/* Add Platform button glow */
+@keyframes addPlatformGlow {
+  0%, 100% { box-shadow: 0 0 4px rgba(251, 191, 36, 0.2), 0 0 8px rgba(251, 191, 36, 0.1); }
+  50% { box-shadow: 0 0 8px rgba(251, 191, 36, 0.4), 0 0 16px rgba(251, 191, 36, 0.2); }
+}
+
 /* Profile glow animations per subscription tier */
 @keyframes glowPremiumPlus {
   0%, 100% { box-shadow: 0 0 4px rgba(251, 191, 36, 0.4), 0 0 8px rgba(251, 191, 36, 0.2); }
