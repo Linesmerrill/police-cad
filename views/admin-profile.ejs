@@ -382,11 +382,10 @@
       function showAlert(message, type) {
         const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
         const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-        $('#alertContainer').html(`
-          <div class="alert ${alertClass}">
-            <i class="fas ${icon}" style="margin-right: 8px;"></i>${message}
-          </div>
-        `);
+        const $alert = $('<div>').addClass('alert ' + alertClass);
+        $('<i>').addClass('fas ' + icon).css('margin-right', '8px').appendTo($alert);
+        $alert.append(document.createTextNode(message));
+        $('#alertContainer').empty().append($alert);
 
         // Auto-hide after 5 seconds
         setTimeout(() => {
@@ -428,9 +427,13 @@
         } catch (error) {
           console.error('Upload failed:', error);
           showAlert('Failed to upload image. Please try again.', 'error');
-          // Revert preview
+          // Revert preview - validate URL before using as src
           const currentUrl = $('#profilePicture').val();
-          $('#profilePicturePreview').attr('src', currentUrl || '/static/images/civ-unknown-user.png');
+          if (currentUrl && /^https?:\/\//i.test(currentUrl)) {
+            $('#profilePicturePreview').attr('src', currentUrl);
+          } else {
+            $('#profilePicturePreview').attr('src', '/static/images/civ-unknown-user.png');
+          }
         }
       });
 
