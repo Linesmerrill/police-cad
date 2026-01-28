@@ -272,6 +272,7 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
   const [current, setCurrent] = useState(0);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+  const [timerKey, setTimerKey] = useState(0);
 
   useEffect(() => {
     if (!isLoading && communities.length > 1) {
@@ -280,7 +281,15 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
       }, 6000);
       return () => clearInterval(interval);
     }
-  }, [communities, isLoading]);
+  }, [communities, isLoading, timerKey]);
+
+  const goToSlide = (index) => {
+    setCurrent(index);
+    setTimerKey((prev) => prev + 1); // Reset the timer
+  };
+
+  const goNext = () => goToSlide((current + 1) % communities.length);
+  const goPrev = () => goToSlide((current - 1 + communities.length) % communities.length);
 
   const handleTouchStart = (e) => setTouchStart(e.touches[0].clientX);
   const handleTouchMove = (e) => setTouchEnd(e.touches[0].clientX);
@@ -289,9 +298,9 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
     const distance = touchStart - touchEnd;
     if (Math.abs(distance) > 50) {
       if (distance > 0) {
-        setCurrent((prev) => (prev + 1) % communities.length);
+        goNext();
       } else {
-        setCurrent((prev) => (prev - 1 + communities.length) % communities.length);
+        goPrev();
       }
     }
     setTouchStart(null);
@@ -372,31 +381,36 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
             }} />
           </div>
 
-          {/* Content */}
-          <div className="text-center">
-            <h3 className="text-xl font-bold text-white mb-2 line-clamp-2" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.2)' }}>{community.name}</h3>
+          {/* Content - Fixed height to prevent layout shift */}
+          <div className="text-center" style={{ height: '240px', display: 'flex', flexDirection: 'column' }}>
+            <h3 className="text-xl font-bold text-white mb-2 line-clamp-1" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.2)', minHeight: '28px' }}>{community.name}</h3>
 
             {/* Tags */}
-            {community.tags?.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-2 mb-3">
-                {community.tags.map((tag) => (
-                  <Badge key={tag} variant="tag">{tag}</Badge>
-                ))}
-              </div>
-            )}
+            <div className="flex flex-wrap justify-center gap-2 mb-3" style={{ height: '28px', overflow: 'hidden' }}>
+              {community.tags?.length > 0 && community.tags.map((tag) => (
+                <Badge key={tag} variant="tag">{tag}</Badge>
+              ))}
+            </div>
 
             {/* Promotional Text */}
-            {community.promotionalText && (
-              <p className="text-sm font-medium mb-2 flex items-center justify-center gap-1.5" style={{ color: '#fbbf24' }}>
-                <i className="fa fa-star" style={{ color: '#fbbf24' }}></i>
-                {community.promotionalText}
-              </p>
-            )}
+            <div style={{ height: '24px', overflow: 'hidden' }}>
+              {community.promotionalText && (
+                <p className="text-sm font-medium flex items-center justify-center gap-1.5 line-clamp-1" style={{ color: '#fbbf24' }}>
+                  <i className="fa fa-star" style={{ color: '#fbbf24' }}></i>
+                  {community.promotionalText}
+                </p>
+              )}
+            </div>
 
             {/* Description */}
-            {community.promotionalDescription && (
-              <p className="text-slate-400 text-sm mb-4 line-clamp-2">{community.promotionalDescription}</p>
-            )}
+            <div style={{ height: '48px', overflow: 'hidden' }} className="mb-2">
+              {community.promotionalDescription && (
+                <p className="text-slate-400 text-sm line-clamp-2">{community.promotionalDescription}</p>
+              )}
+            </div>
+
+            {/* Spacer to push stats and button to bottom */}
+            <div style={{ flex: 1 }} />
 
             {/* Stats */}
             <div className="flex items-center justify-center gap-4 mb-4 text-xs">
@@ -425,7 +439,7 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
           {communities.length > 1 && (
             <>
               <button
-                onClick={() => setCurrent((current - 1 + communities.length) % communities.length)}
+                onClick={goPrev}
                 className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white rounded-full transition-all duration-300"
                 style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)' }}
                 aria-label="Previous"
@@ -433,7 +447,7 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
                 <i className="fa fa-chevron-left"></i>
               </button>
               <button
-                onClick={() => setCurrent((current + 1) % communities.length)}
+                onClick={goNext}
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white rounded-full transition-all duration-300"
                 style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)' }}
                 aria-label="Next"
@@ -450,7 +464,7 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
             {communities.map((_, idx) => (
               <button
                 key={idx}
-                onClick={() => setCurrent(idx)}
+                onClick={() => goToSlide(idx)}
                 className={`h-2 rounded-full transition-all duration-300`}
                 style={{
                   width: idx === current ? '24px' : '8px',
@@ -1308,7 +1322,11 @@ const QuickNav = () => {
 // WELCOME MODAL (First-time visitor onboarding)
 // ============================================================================
 
-const WELCOME_MODAL_STORAGE_KEY = 'lpc_welcome_modal_seen';
+const WELCOME_MODAL_STORAGE_KEY_PREFIX = 'lpc_welcome_modal_seen';
+function getWelcomeModalStorageKey() {
+  const userId = window.dbUser && window.dbUser._id;
+  return userId ? `${WELCOME_MODAL_STORAGE_KEY_PREFIX}_${userId}` : WELCOME_MODAL_STORAGE_KEY_PREFIX;
+}
 
 const WelcomeModal = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -1424,7 +1442,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
   ];
 
   const handleClose = () => {
-    localStorage.setItem(WELCOME_MODAL_STORAGE_KEY, 'true');
+    localStorage.setItem(getWelcomeModalStorageKey(), 'true');
     onClose();
   };
 
@@ -1464,6 +1482,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: 'rgba(10, 10, 15, 0.95)', backdropFilter: 'blur(10px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
     >
       <div
         className="w-full max-w-md rounded-2xl shadow-2xl relative"
@@ -2007,7 +2026,7 @@ const App = () => {
 
   // Check if first-time visitor for welcome modal
   useEffect(() => {
-    const hasSeenWelcome = localStorage.getItem(WELCOME_MODAL_STORAGE_KEY);
+    const hasSeenWelcome = localStorage.getItem(getWelcomeModalStorageKey());
     if (!hasSeenWelcome) {
       // Small delay to let the page load first
       const timer = setTimeout(() => {

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>LPC - Admin Profile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/images/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/static/images/android-chrome-512x512.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
+    <link rel="manifest" href="/static/images/site.webmanifest">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/static/css/styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+      html, body {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0b1220 100%);
+        background-attachment: fixed;
+        background-size: cover;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      html {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0b1220 100%);
+        background-attachment: fixed;
+        background-size: cover;
+      }
+
+      body {
+        color: #e5e7eb;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .admin-navbar {
+        background: rgba(30, 32, 40, 0.95) !important;
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid #35385a;
+        min-height: 60px;
+      }
+      .admin-navbar .navbar-brand {
+        color: #fff !important;
+        font-weight: 600;
+        display: flex !important;
+        align-items: center !important;
+        height: 60px;
+        padding: 15px 15px;
+      }
+      .admin-navbar .btn-link {
+        color: #9aa0b4 !important;
+        display: flex !important;
+        align-items: center !important;
+        height: 60px;
+        padding: 15px 15px;
+      }
+      .admin-navbar .btn-link:hover { color: #c7cbe2 !important; }
+      .admin-navbar .navbar-nav > li > span {
+        display: flex !important;
+        align-items: center !important;
+        height: 60px;
+        padding: 15px 15px;
+      }
+
+      .admin-container {
+        margin-top: 80px;
+        padding: 2rem 0;
+        flex: 1;
+      }
+      .profile-card {
+        background: #1e2028;
+        border: 1px solid #35385a;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #9aa0b4;
+        font-weight: 500;
+        font-size: 0.9rem;
+      }
+      .form-input {
+        background: #11131a;
+        border: 1px solid #2a2d45;
+        color: #e5e7eb;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .form-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102,126,234,0.25);
+        outline: none;
+      }
+      .btn-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        color: #fff;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+      .btn-gradient:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        color: #fff;
+      }
+      .btn-secondary {
+        background: #2a2d45;
+        border: 1px solid #35385a;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        color: #9aa0b4;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+      .btn-secondary:hover {
+        background: #35385a;
+        color: #e5e7eb;
+      }
+
+      .profile-picture-section {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      .profile-picture-container {
+        position: relative;
+        display: inline-block;
+      }
+      .profile-picture {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #667eea;
+        background: #11131a;
+      }
+      .profile-picture-overlay {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: 2px solid #1e2028;
+        transition: all 0.2s;
+      }
+      .profile-picture-overlay:hover {
+        transform: scale(1.1);
+      }
+      .profile-picture-overlay i {
+        color: #fff;
+        font-size: 14px;
+      }
+      #profilePictureInput {
+        display: none;
+      }
+
+      .setup-banner {
+        background: linear-gradient(135deg, rgba(102,126,234,0.2) 0%, rgba(118,75,162,0.2) 100%);
+        border: 1px solid rgba(102,126,234,0.3);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .setup-banner i {
+        color: #667eea;
+        font-size: 1.5rem;
+      }
+      .setup-banner p {
+        margin: 0;
+        color: #e5e7eb;
+      }
+
+      .form-row {
+        display: flex;
+        gap: 1rem;
+      }
+      .form-row .form-group {
+        flex: 1;
+      }
+
+      .password-section {
+        background: #11131a;
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .password-section span {
+        color: #9aa0b4;
+      }
+
+      .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+      }
+      .alert-success {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: #10b981;
+      }
+      .alert-error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+      }
+
+      .back-link {
+        color: #9aa0b4;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 1rem;
+        transition: color 0.2s;
+      }
+      .back-link:hover {
+        color: #667eea;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-fixed-top admin-navbar">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/admin/console">
+            <img src="/static/images/dispatch-logo-512.png" style="width:32px; height:32px; margin-right:10px; border-radius:8px;" />
+            LPC Admin Console
+          </a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li>
+              <span style="color: #9aa0b4;">
+                <% if (admin && admin.profilePicture) { %>
+                  <img src="<%= admin.profilePicture %>" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px; object-fit: cover;" />
+                <% } else { %>
+                  <i class="fas fa-user" style="margin-right: 8px;"></i>
+                <% } %>
+                <%= admin && admin.firstName && admin.lastName ? admin.firstName + ' ' + admin.lastName : (admin && admin.email ? admin.email : 'Admin') %>
+              </span>
+            </li>
+            <li>
+              <form id="logoutForm" action="/admin/logout" method="POST" style="display: inline;">
+                <button type="submit" class="btn btn-link">
+                  <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>Logout
+                </button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container admin-container">
+      <a href="/admin/console" class="back-link">
+        <i class="fas fa-arrow-left"></i>
+        Back to Console
+      </a>
+
+      <div class="profile-card">
+        <h2 style="margin-bottom: 1.5rem; color: #fff; font-weight: 700; text-align: center;">
+          <i class="fas fa-user-edit" style="margin-right: 12px; color: #667eea;"></i>
+          Admin Profile
+        </h2>
+
+        <% if (typeof setup !== 'undefined' && setup) { %>
+          <div class="setup-banner">
+            <i class="fas fa-info-circle"></i>
+            <p>Please complete your profile by adding your first and last name.</p>
+          </div>
+        <% } %>
+
+        <div id="alertContainer"></div>
+
+        <form id="profileForm">
+          <div class="profile-picture-section">
+            <div class="profile-picture-container">
+              <img id="profilePicturePreview"
+                   src="<%= admin && admin.profilePicture ? admin.profilePicture : '/static/images/civ-unknown-user.png' %>"
+                   class="profile-picture"
+                   alt="Profile Picture" />
+              <label for="profilePictureInput" class="profile-picture-overlay">
+                <i class="fas fa-camera"></i>
+              </label>
+              <input type="file" id="profilePictureInput" accept="image/*" />
+            </div>
+            <p style="margin-top: 0.5rem; color: #9aa0b4; font-size: 0.85rem;">Click to upload a new photo</p>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First Name <span style="color: #ef4444;">*</span></label>
+              <input type="text" id="firstName" name="firstName" class="form-input"
+                     value="<%= admin && admin.firstName ? admin.firstName : '' %>"
+                     placeholder="Enter your first name" required />
+            </div>
+            <div class="form-group">
+              <label for="lastName">Last Name <span style="color: #ef4444;">*</span></label>
+              <input type="text" id="lastName" name="lastName" class="form-input"
+                     value="<%= admin && admin.lastName ? admin.lastName : '' %>"
+                     placeholder="Enter your last name" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" class="form-input"
+                   value="<%= admin && admin.email ? admin.email : '' %>"
+                   placeholder="Enter your email" />
+          </div>
+
+          <div class="form-group">
+            <label>Password</label>
+            <div class="password-section">
+              <span><i class="fas fa-lock" style="margin-right: 8px;"></i>Password is encrypted</span>
+              <a href="/admin/forgot-password" class="btn-secondary" style="text-decoration: none;">
+                <i class="fas fa-key" style="margin-right: 8px;"></i>Reset Password
+              </a>
+            </div>
+          </div>
+
+          <input type="hidden" id="profilePicture" name="profilePicture"
+                 value="<%= admin && admin.profilePicture ? admin.profilePicture : '' %>" />
+
+          <div style="text-align: center; margin-top: 2rem;">
+            <button type="submit" class="btn-gradient" style="min-width: 200px;">
+              <i class="fas fa-save" style="margin-right: 8px;"></i>Save Profile
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/cloudinary-upload.js"></script>
+    <script>
+      // Cloudinary config
+      window.CLOUDINARY_CLOUD_NAME = <%- JSON.stringify(CLOUDINARY_CLOUD_NAME || '') %>;
+      window.CLOUDINARY_API_KEY = <%- JSON.stringify(CLOUDINARY_API_KEY || '') %>;
+      window.CLOUDINARY_UPLOAD_PRESET = <%- JSON.stringify(CLOUDINARY_UPLOAD_PRESET || '') %>;
+
+      const API_BASE = <%- JSON.stringify(POLICE_CAD_API_URL || '') %>;
+      const adminId = <%- JSON.stringify(admin && admin.id ? String(admin.id) : '') %>;
+      const adminData = {
+        id: <%- JSON.stringify(admin && admin.id ? String(admin.id) : '') %>,
+        email: <%- JSON.stringify(admin && admin.email ? admin.email : '') %>,
+        roles: <%- JSON.stringify(admin && admin.roles ? admin.roles : []) %>
+      };
+
+      function showAlert(message, type) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        const $alert = $('<div>').addClass('alert ' + alertClass);
+        $('<i>').addClass('fas ' + icon).css('margin-right', '8px').appendTo($alert);
+        $alert.append(document.createTextNode(message));
+        $('#alertContainer').empty().append($alert);
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          $('#alertContainer').html('');
+        }, 5000);
+      }
+
+      $(document).ready(function() {
+        // Profile picture upload
+        $('#profilePictureInput').on('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          showAlert('Image must be less than 5MB', 'error');
+          return;
+        }
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          showAlert('Please select an image file', 'error');
+          return;
+        }
+
+        // Show preview immediately
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          $('#profilePicturePreview').attr('src', e.target.result);
+        };
+        reader.readAsDataURL(file);
+
+        // Upload to Cloudinary
+        try {
+          showAlert('Uploading image...', 'success');
+          const imageUrl = await window.uploadToCloudinary(file, API_BASE);
+          $('#profilePicture').val(imageUrl);
+          showAlert('Image uploaded successfully!', 'success');
+        } catch (error) {
+          console.error('Upload failed:', error);
+          showAlert('Failed to upload image. Please try again.', 'error');
+          // Revert preview - validate URL before using as src
+          const currentUrl = $('#profilePicture').val();
+          if (currentUrl && /^https?:\/\//i.test(currentUrl)) {
+            $('#profilePicturePreview').attr('src', currentUrl);
+          } else {
+            $('#profilePicturePreview').attr('src', '/static/images/civ-unknown-user.png');
+          }
+        }
+      });
+
+      // Form submission
+      $('#profileForm').on('submit', async function(e) {
+        e.preventDefault();
+
+        const firstName = $('#firstName').val().trim();
+        const lastName = $('#lastName').val().trim();
+        const email = $('#email').val().trim();
+        const profilePicture = $('#profilePicture').val();
+
+        if (!firstName || !lastName) {
+          showAlert('First name and last name are required', 'error');
+          return;
+        }
+
+        if (!adminId) {
+          showAlert('Error: Admin ID not found. Please log out and log back in.', 'error');
+          return;
+        }
+
+        if (!API_BASE) {
+          showAlert('Error: API URL not configured.', 'error');
+          return;
+        }
+
+        // Show saving state
+        const $btn = $('#profileForm button[type="submit"]');
+        const originalText = $btn.html();
+        $btn.html('<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Saving...').prop('disabled', true);
+
+        try {
+          const response = await fetch(`${API_BASE}/api/v1/admin/admins/${adminId}/profile`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              firstName,
+              lastName,
+              email,
+              profilePicture,
+              currentUser: adminData
+            })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showAlert('Profile updated successfully!', 'success');
+
+            // Update session by posting to server
+            await fetch('/admin/profile/update-session', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                firstName,
+                lastName,
+                email,
+                profilePicture
+              })
+            });
+
+            // If this was setup, redirect to console after a delay
+            <% if (typeof setup !== 'undefined' && setup) { %>
+              setTimeout(() => {
+                window.location.href = '/admin/console';
+              }, 1500);
+            <% } %>
+          } else {
+            showAlert(data.error || 'Failed to update profile', 'error');
+          }
+        } catch (error) {
+          console.error('Profile update failed:', error);
+          showAlert('Failed to update profile. Please try again.', 'error');
+        } finally {
+          $btn.html(originalText).prop('disabled', false);
+        }
+      });
+      }); // End $(document).ready()
+    </script>
+  </body>
+</html>

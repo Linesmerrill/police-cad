@@ -137,6 +137,46 @@
     <style>
       * { -webkit-tap-highlight-color: transparent; }
 
+      /* Profile glow animations per subscription tier */
+      @keyframes glowPremiumPlus {
+        0%, 100% { box-shadow: 0 0 4px rgba(251, 191, 36, 0.4), 0 0 8px rgba(251, 191, 36, 0.2); }
+        50% { box-shadow: 0 0 8px rgba(251, 191, 36, 0.7), 0 0 16px rgba(251, 191, 36, 0.35); }
+      }
+      @keyframes glowPremium {
+        0%, 100% { box-shadow: 0 0 4px rgba(168, 85, 247, 0.4), 0 0 8px rgba(168, 85, 247, 0.2); }
+        50% { box-shadow: 0 0 8px rgba(168, 85, 247, 0.7), 0 0 16px rgba(168, 85, 247, 0.35); }
+      }
+      @keyframes glowBasic {
+        0%, 100% { box-shadow: 0 0 4px rgba(59, 130, 246, 0.4), 0 0 8px rgba(59, 130, 246, 0.2); }
+        50% { box-shadow: 0 0 8px rgba(59, 130, 246, 0.7), 0 0 16px rgba(59, 130, 246, 0.35); }
+      }
+      @keyframes glowFree {
+        0%, 100% { box-shadow: 0 0 4px rgba(156, 163, 175, 0.3), 0 0 8px rgba(156, 163, 175, 0.15); }
+        50% { box-shadow: 0 0 6px rgba(156, 163, 175, 0.5), 0 0 12px rgba(156, 163, 175, 0.25); }
+      }
+      .navbar-profile-pic {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      .navbar-profile-pic.tier-premium-plus {
+        border: 2px solid rgba(251, 191, 36, 0.7);
+        animation: glowPremiumPlus 3s ease-in-out infinite;
+      }
+      .navbar-profile-pic.tier-premium {
+        border: 2px solid rgba(168, 85, 247, 0.7);
+        animation: glowPremium 3s ease-in-out infinite;
+      }
+      .navbar-profile-pic.tier-basic {
+        border: 2px solid rgba(59, 130, 246, 0.7);
+        animation: glowBasic 3s ease-in-out infinite;
+      }
+      .navbar-profile-pic.tier-free {
+        border: 2px solid rgba(156, 163, 175, 0.5);
+        animation: glowFree 3s ease-in-out infinite;
+      }
+
       html {
         scroll-behavior: smooth;
         background: #0a0a0f;
@@ -477,11 +517,31 @@
               <span id="notificationBadge" class="notification-badge">0</span>
             </button>
 
-            <!-- Account Button -->
-            <button id="accountBtn" class="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors" style="background: none; border: none; cursor: pointer;">
-              <span class="font-medium"><%= user.user.username || 'User' %></span>
-              <i class="fa fa-chevron-down text-sm"></i>
-            </button>
+            <!-- Account Dropdown -->
+            <div id="accountDropdownWrapper" style="position: relative;">
+              <button id="accountBtn" class="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors" style="background: none; border: none; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                <% if (user.user.profilePicture) { %>
+                  <% var sub = user._doc && user._doc.user && user._doc.user.subscription; %>
+                  <% var subPlan = (sub && sub.active && sub.plan) ? sub.plan : 'free'; %>
+                  <% var tierClass = subPlan === 'premium_plus' ? 'tier-premium-plus' : subPlan === 'premium' ? 'tier-premium' : subPlan === 'basic' ? 'tier-basic' : 'tier-free'; %>
+                  <img src="<%= user.user.profilePicture %>" alt="" class="navbar-profile-pic <%= tierClass %>">
+                <% } else { %>
+                  <i class="fa fa-user text-sm"></i>
+                <% } %>
+                <span class="font-medium"><%= user.user.username || 'User' %></span>
+                <i id="accountChevron" class="fa fa-chevron-down text-xs" style="transition: transform 0.2s;"></i>
+              </button>
+              <div id="accountDropdown" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 0.5rem; background: rgba(15, 15, 20, 0.98); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem; min-width: 200px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); z-index: 10001;">
+                <a href="/profile" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; color: rgba(255, 255, 255, 0.9); text-decoration: none; border-radius: 4px; font-size: 0.875rem; transition: background-color 0.2s;" onmouseenter="this.style.backgroundColor='rgba(255,255,255,0.1)'" onmouseleave="this.style.backgroundColor='transparent'">
+                  <i class="fa fa-cog" style="width: 18px; text-align: center;"></i>
+                  Account Settings
+                </a>
+                <a href="/logout" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; color: #ef4444; text-decoration: none; border-radius: 4px; font-size: 0.875rem; margin-top: 0.25rem; transition: background-color 0.2s;" onmouseenter="this.style.backgroundColor='rgba(239,68,68,0.1)'" onmouseleave="this.style.backgroundColor='transparent'">
+                  <i class="fa fa-sign-out-alt" style="width: 18px; text-align: center;"></i>
+                  Logout
+                </a>
+              </div>
+            </div>
           </div>
         <% } else { %>
           <!-- User is not logged in - show login button -->
@@ -1836,7 +1896,6 @@
     <% } %>
 
     <% if (user && user._doc) { %>
-      <% include account-management %>
       <% include partials/notificationModal %>
       <script src="/static/js/notifications.js"></script>
     <% } %>
@@ -1908,18 +1967,25 @@
       }
 
       document.addEventListener('DOMContentLoaded', function() {
+        // Account dropdown toggle
         const accountBtn = document.getElementById('accountBtn');
-        if (accountBtn) {
-          accountBtn.addEventListener('click', function() {
-            fillAccountDetails();
-            document.getElementById('accountModal').style.display = 'flex';
+        const accountDropdown = document.getElementById('accountDropdown');
+        const accountChevron = document.getElementById('accountChevron');
+        if (accountBtn && accountDropdown) {
+          accountBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isOpen = accountDropdown.style.display === 'block';
+            accountDropdown.style.display = isOpen ? 'none' : 'block';
+            if (accountChevron) {
+              accountChevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+            }
           });
-        }
-
-        const accountModalClose = document.getElementById('accountModalClose');
-        if (accountModalClose) {
-          accountModalClose.addEventListener('click', function() {
-            document.getElementById('accountModal').style.display = 'none';
+          // Close dropdown when clicking outside
+          document.addEventListener('click', function(e) {
+            if (!document.getElementById('accountDropdownWrapper').contains(e.target)) {
+              accountDropdown.style.display = 'none';
+              if (accountChevron) accountChevron.style.transform = '';
+            }
           });
         }
 
@@ -1939,7 +2005,7 @@
         }
 
         window.addEventListener('click', function(event) {
-          const modals = ['accountModal', 'notificationModal', 'requestJoinModal', 'leaveCommunityModal', 'ownerCannotLeaveModal'];
+          const modals = ['notificationModal', 'requestJoinModal', 'leaveCommunityModal', 'ownerCannotLeaveModal'];
           modals.forEach(modalId => {
             const modal = document.getElementById(modalId);
             if (event.target === modal) {
@@ -1952,28 +2018,6 @@
           fetchNotificationCount();
         }
       });
-
-      function fillAccountDetails() {
-        if (dbUser && dbUser.user) {
-          const emailField = document.getElementById('accountEmail');
-          const usernameField = document.getElementById('accountUsername');
-          const callSignField = document.getElementById('accountCallSign');
-          const profilePicture = document.getElementById('profilePicture');
-          if (emailField) emailField.value = dbUser.user.email;
-          if (usernameField) {
-            usernameField.value = dbUser.user.username;
-            usernameField.defaultValue = dbUser.user.username;
-          }
-          if (callSignField) {
-            callSignField.value = dbUser.user.callSign;
-            callSignField.defaultValue = dbUser.user.callSign;
-          }
-          if (profilePicture) {
-            const profileImageUrl = dbUser.user.profilePicture || '/static/images/civ-unknown-user.png';
-            profilePicture.style.backgroundImage = `url(${profileImageUrl})`;
-          }
-        }
-      }
 
       (function() {
         try {
