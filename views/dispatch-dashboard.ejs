@@ -1155,9 +1155,17 @@
 
         </div>
       </header>
+      <%
+        var subPlan = (user && user.user && user.user.subscription && user.user.subscription.plan) || 'free';
+        var subActive = !!(user && user.user && user.user.subscription && user.user.subscription.active);
+        var isPremiumPlus = subActive && subPlan === 'premium_plus';
+        var isPremium = subActive && subPlan === 'premium';
+      %>
+      <% if (!isPremiumPlus && !(isPremium && Math.random() >= 0.5)) { %>
       <div class="adsbygoogle">
         <% include ad-body %>
       </div>
+      <% } %>
       <section style='background-image: url("/static/images/blue-clouds.jpg"); padding: 0;'>
         <div class="container">
           <div class="col-lg-10 col-lg-offset-1 margin-top-1">

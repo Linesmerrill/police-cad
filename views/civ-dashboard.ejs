@@ -22,8 +22,7 @@
   <!-- Department Background System -->
   <link rel="stylesheet" href="/static/css/department-backgrounds.css">
   
-  <!-- Google AdSense -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3842696805773142" crossorigin="anonymous"></script>
+  <!-- Google AdSense (loaded conditionally via ad-header based on subscription) -->
   
   <!-- Custom Styles -->
   <style>
@@ -54,7 +53,7 @@
       padding: 1.5rem;
       box-shadow: 0 2px 8px 0 rgba(30,32,44,0.10);
       border: 1px solid #35385a;
-      display: none; /* Hidden by default, shown by JavaScript based on subscription */
+      /* Visibility controlled by EJS conditionals based on subscription tier */
     }
     
     .heroui-ad-label {
@@ -1316,7 +1315,14 @@
         });
       </script>
 
-      <!-- Display Ad - Top Banner -->
+      <%
+        var subPlan = (user && user.user && user.user.subscription && user.user.subscription.plan) || 'free';
+        var subActive = !!(user && user.user && user.user.subscription && user.user.subscription.active);
+        var isPremiumPlus = subActive && subPlan === 'premium_plus';
+        var isPremium = subActive && subPlan === 'premium';
+      %>
+      <!-- Display Ad - Top Banner (hidden for Premium Plus) -->
+      <% if (!isPremiumPlus) { %>
       <div class="heroui-ad-container" style="margin: 2rem 0; text-align: center; background: #23263a; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px 0 rgba(30,32,44,0.10); border: 1px solid #35385a;">
         <div style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 12px; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Advertisement</div>
         <div style="width: 100%; min-height: 90px; display: flex; align-items: center; justify-content: center;">
@@ -1328,7 +1334,8 @@
                (adsbygoogle = window.adsbygoogle || []).push({});
           </script>
         </div>
-      </div>       
+      </div>
+      <% } %>       
 
       <!-- Civilians Section -->
       <div class="content-section" id="civiliansSection">
@@ -1463,7 +1470,8 @@
     </div>
   </div>
 
-  <!-- Display Ad - Bottom Banner -->
+  <!-- Display Ad - Bottom Banner (hidden for Premium and Premium Plus) -->
+  <% if (!isPremium && !isPremiumPlus) { %>
   <div class="heroui-ad-container" style="margin: 3rem 0 2rem 0; text-align: center; background: #23263a; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px 0 rgba(30,32,44,0.10); border: 1px solid #35385a;">
     <div style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 12px; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Advertisement</div>
     <div style="width: 100%; min-height: 90px; display: flex; align-items: center; justify-content: center;">
@@ -1476,6 +1484,7 @@
       </script>
     </div>
   </div>
+  <% } %>
 
   <!-- Modals -->
 
