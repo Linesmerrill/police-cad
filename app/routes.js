@@ -3382,7 +3382,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Get user's owned communities (requires auth)
   app.get("/api/v1/communities/:userId", apiAuthCheck, async function (req, res) {
     try {
-      const response = await axios.get(`${policeCadApiUrl}/api/v1/communities/${req.params.userId}`, {
+      const userId = req.params.userId;
+      if (!ObjectId.isValid(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/communities/${userId}`, {
         headers: config.headers
       });
       res.json(response.data);
