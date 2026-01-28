@@ -133,6 +133,23 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         });
       }
+      // Update lastAccessedCommunity when the user is an approved member
+      if (isMemberApproved && userId && community && community._id) {
+        User.findOneAndUpdate(
+          { _id: ObjectId(userId) },
+          {
+            $set: {
+              "user.lastAccessedCommunity": {
+                communityID: String(community._id),
+                createdAt: new Date(),
+              },
+            },
+          },
+          function (err) {
+            if (err) console.error("[LPS] [level=error] Failed to update lastAccessedCommunity on community access:", err);
+          }
+        );
+      }
       if (community && community._id && userId) {
         // Use v2 paginated API - fetch only first page
         const deptsApiUrl = `${policeCadApiUrl}/api/v2/community/${community._id}/departments?userId=${userId}&page=1&limit=${deptPerPage}`;
@@ -4621,6 +4638,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         {
           $set: {
             "user.activeCommunity": result._id,
+            "user.lastAccessedCommunity": {
+              communityID: String(result._id),
+              createdAt: new Date(),
+            },
           },
         },
         function (err) {
@@ -4651,6 +4672,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         {
           $set: {
             "user.activeCommunity": result._id,
+            "user.lastAccessedCommunity": {
+              communityID: String(result._id),
+              createdAt: new Date(),
+            },
           },
         },
         function (err) {
@@ -4681,6 +4706,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         {
           $set: {
             "user.activeCommunity": result._id,
+            "user.lastAccessedCommunity": {
+              communityID: String(result._id),
+              createdAt: new Date(),
+            },
           },
         },
         function (err) {
