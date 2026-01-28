@@ -3366,6 +3366,23 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Get user's owned communities (requires auth)
+  app.get("/api/v1/communities/:userId", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/communities/${req.params.userId}`, {
+        headers: config.headers
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error fetching user communities:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch communities" });
+      }
+    }
+  });
+
   // Request removal from program
   app.post("/api/v1/content-creators/me/removal-request", apiAuthCheck, async function (req, res) {
     try {
