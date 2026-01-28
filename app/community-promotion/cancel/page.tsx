@@ -67,13 +67,13 @@ export default function CommunityPromotionCancelPage() {
               color: '#fff',
               marginBottom: '8px'
             }}>
-              Purchase Cancelled
+              Boost Cancelled
             </h2>
             <p style={{
               color: 'rgba(255, 255, 255, 0.6)',
               marginBottom: '32px'
             }}>
-              Your community promotion purchase was cancelled. No charges have been made.
+              Your community boost purchase was cancelled. No charges have been made.
             </p>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -89,7 +89,7 @@ export default function CommunityPromotionCancelPage() {
                   fontWeight: 600
                 }}
               >
-                View Promotion Plans
+                View Boost Plans
               </Link>
               <Link
                 href="/"

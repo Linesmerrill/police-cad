@@ -141,12 +141,25 @@ module.exports = function (app, passport, server, nextApp, handle) {
         departmentsTotalCount = deptsResponse.data.totalCount || departments.length;
         departmentTemplateTypes = deptsResponse.data.templateTypes || [];
       }
+      // Resolve booster username from user ID if community has an active boost
+      let boosterUsername = null;
+      const boosterId = community && community.community && community.community.subscriptionCreatedBy;
+      const hasActiveBoost = community && community.community && community.community.subscription && community.community.subscription.active;
+      if (boosterId && hasActiveBoost) {
+        try {
+          const boosterResponse = await axios.get(`${policeCadApiUrl}/api/v1/user/${boosterId}`, config);
+          boosterUsername = boosterResponse.data && boosterResponse.data.user && boosterResponse.data.user.username;
+        } catch (e) {
+          // Silently fail - booster badge just won't show
+        }
+      }
       res.render("community-details", {
         user: req.user,
         community,
         departments,
         departmentsTotalCount,
         departmentTemplateTypes,
+        boosterUsername,
         query: req.query,
         referer: encodeURIComponent(`/community/${hash}`),
         redirect: encodeURIComponent(redirect),

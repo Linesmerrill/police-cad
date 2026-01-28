@@ -67,13 +67,13 @@ export default function CommunityPromotionSuccessPage() {
               color: '#fff',
               marginBottom: '8px'
             }}>
-              Promotion Activated!
+              Community Boosted!
             </h2>
             <p style={{
               color: 'rgba(255, 255, 255, 0.6)',
               marginBottom: '32px'
             }}>
-              Your community promotion is now live. Users will see your community featured based on your selected tier.
+              Your community boost is now live. Users will see your community featured based on your selected tier.
             </p>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -103,7 +103,7 @@ export default function CommunityPromotionSuccessPage() {
                   fontWeight: 500
                 }}
               >
-                Promote Another
+                Boost Another Community
               </Link>
             </div>
           </div>

@@ -100,8 +100,54 @@
             </div>
           </div>
           
+          <!-- Promotional Text (Standard, Premium, Elite boosts) -->
+          <% var activePlan = (community.community.subscription && community.community.subscription.active) ? community.community.subscription.plan : null; %>
+          <% var hasPromoText = ['standard','premium','elite'].includes(activePlan); %>
+          <% var hasPromoDesc = activePlan === 'elite'; %>
+          <div style="margin-top:1.5rem; position:relative;">
+            <% if (!hasPromoText) { %>
+            <div style="position:absolute; inset:0; background:rgba(15,15,20,0.7); border-radius:8px; z-index:2; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(2px);">
+              <div style="text-align:center; padding:0.5rem;">
+                <i class="fa fa-lock" style="color:#f97316; font-size:1.25rem; margin-bottom:0.25rem; display:block;"></i>
+                <span style="color:#f97316; font-size:0.8rem; font-weight:500;">Requires Standard+ Boost</span>
+              </div>
+            </div>
+            <% } %>
+            <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem;">
+              <i class="fa fa-rocket" style="color:#f97316;"></i>
+              Promotional Text
+              <span style="color:#a0aec0; font-size:0.75rem; font-weight:400;">(Standard, Premium &amp; Elite)</span>
+            </label>
+            <input type="text" id="communityPromotionalText" value="<%= community.community.promotionalText || '' %>" maxlength="50"
+                   style="width:100%; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:8px; padding:0.75rem; font-size:1rem;"
+                   placeholder="e.g., Join our active community!"
+                   <%= hasPromoText ? '' : 'disabled' %> />
+            <p style="color:#a0aec0; font-size:0.75rem; margin:0.25rem 0 0 0;">Max 50 characters. Displayed when your community appears in search and featured listings.</p>
+          </div>
+
+          <div style="margin-top:1rem; position:relative;">
+            <% if (!hasPromoDesc) { %>
+            <div style="position:absolute; inset:0; background:rgba(15,15,20,0.7); border-radius:8px; z-index:2; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(2px);">
+              <div style="text-align:center; padding:0.5rem;">
+                <i class="fa fa-lock" style="color:#fbbf24; font-size:1.25rem; margin-bottom:0.25rem; display:block;"></i>
+                <span style="color:#fbbf24; font-size:0.8rem; font-weight:500;">Requires Elite Boost</span>
+              </div>
+            </div>
+            <% } %>
+            <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem;">
+              <i class="fa fa-align-left" style="color:#f97316;"></i>
+              Promotional Description
+              <span style="color:#a0aec0; font-size:0.75rem; font-weight:400;">(Elite boosts only)</span>
+            </label>
+            <textarea id="communityPromotionalDescription" maxlength="200"
+                      style="width:100%; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:8px; padding:0.75rem; font-size:1rem; min-height:60px; resize:vertical;"
+                      placeholder="Describe what makes your community special..."
+                      <%= hasPromoDesc ? '' : 'disabled' %>><%= community.community.promotionalDescription || '' %></textarea>
+            <p style="color:#a0aec0; font-size:0.75rem; margin:0.25rem 0 0 0;">Max 200 characters. Only displayed for Elite boost tier.</p>
+          </div>
+
           <div style="margin-top:1rem; text-align:right;">
-            <button id="saveProfileBtn" onclick="saveCommunityProfile()" 
+            <button id="saveProfileBtn" onclick="saveCommunityProfile()"
                     style="background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
               Save Profile
             </button>
@@ -1175,6 +1221,8 @@ function saveCommunityProfile() {
   const communityId = '<%= community._id %>';
   const name = document.getElementById('communityName').value;
   const description = document.getElementById('communityDescription').value;
+  const promotionalText = document.getElementById('communityPromotionalText').value;
+  const promotionalDescription = document.getElementById('communityPromotionalDescription').value;
 
   if (!name.trim()) {
     showToast('Community name is required.', 3000, 'error');
@@ -1199,7 +1247,9 @@ function saveCommunityProfile() {
       name: name.trim(),
       description: description.trim(),
       visibility: window.selectedPrivacy || '<%= (community && community.community && community.community.visibility) || "public" %>',
-      tags: window.selectedPlatforms || []
+      tags: window.selectedPlatforms || [],
+      promotionalText: promotionalText.trim(),
+      promotionalDescription: promotionalDescription.trim()
     })
   })
   .then(res => {

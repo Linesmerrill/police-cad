@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { CheckIcon, StarIcon, BuildingOffice2Icon } from '@heroicons/react/24/solid';
+import { CheckIcon, StarIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 
 interface CommunityTier {
@@ -21,27 +21,113 @@ interface Community {
   community: {
     name: string;
     hash?: string;
+    subscription?: {
+      active?: boolean;
+      plan?: string;
+      expirationDate?: string;
+      purchaseDate?: string;
+      durationMonths?: number;
+    };
   };
 }
 
-export default function CommunityPricingPage() {
+const DURATION_OPTIONS = [
+  { months: 1, label: '1 Month' },
+  { months: 3, label: '3 Months' },
+  { months: 6, label: '6 Months' },
+];
+
+// Discounted pricing per tier per duration (total price, not per-month)
+const PRICING: Record<string, Record<number, number>> = {
+  basic:    { 1: 3,  3: 7,   6: 12  },
+  standard: { 1: 5,  3: 12,  6: 20  },
+  premium:  { 1: 8,  3: 19,  6: 32  },
+  elite:    { 1: 15, 3: 36,  6: 60  },
+};
+
+function getPrice(tierKey: string, months: number, monthlyPrice: number): number {
+  return PRICING[tierKey]?.[months] ?? monthlyPrice * months;
+}
+
+function getFullPrice(monthlyPrice: number, months: number): number {
+  return monthlyPrice * months;
+}
+
+function getSavingsPercent(tierKey: string, months: number, monthlyPrice: number): number {
+  const full = getFullPrice(monthlyPrice, months);
+  const discounted = getPrice(tierKey, months, monthlyPrice);
+  if (full <= discounted) return 0;
+  return Math.round(((full - discounted) / full) * 100);
+}
+
+const TIER_RANK: Record<string, number> = {
+  basic: 1,
+  standard: 2,
+  premium: 3,
+  elite: 4,
+};
+
+function encodeId(id: string): string {
+  return btoa(id).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function calculateProrationCredit(
+  subscription: NonNullable<Community['community']['subscription']>,
+  newTierKey: string,
+  newDurationMonths: number
+): { creditDollars: number; proratedPrice: number; remainingDays: number; totalDays: number } | null {
+  const { purchaseDate, expirationDate, plan, durationMonths, active } = subscription;
+  if (!active || !purchaseDate || !expirationDate || !plan || !durationMonths) return null;
+
+  const currentPlan = plan.toLowerCase();
+  if ((TIER_RANK[newTierKey] || 0) <= (TIER_RANK[currentPlan] || 0)) return null;
+
+  const purchaseTime = new Date(purchaseDate).getTime();
+  const expirationTime = new Date(expirationDate).getTime();
+  const now = Date.now();
+  if (isNaN(purchaseTime) || isNaN(expirationTime) || now >= expirationTime || now < purchaseTime) return null;
+
+  const totalDuration = expirationTime - purchaseTime;
+  if (totalDuration <= 0) return null;
+
+  const remainingDuration = expirationTime - now;
+  const unusedFraction = remainingDuration / totalDuration;
+
+  const originalPrice = PRICING[currentPlan]?.[durationMonths];
+  if (!originalPrice || originalPrice <= 0) return null;
+
+  const rawCredit = Math.floor(originalPrice * unusedFraction * 100) / 100;
+  const newPrice = PRICING[newTierKey]?.[newDurationMonths];
+  if (!newPrice || newPrice <= 0) return null;
+
+  const maxCredit = Math.max(0, newPrice - 0.50);
+  const creditDollars = Math.min(rawCredit, maxCredit);
+  const proratedPrice = Math.round((newPrice - creditDollars) * 100) / 100;
+
+  return {
+    creditDollars,
+    proratedPrice,
+    remainingDays: Math.round(remainingDuration / (1000 * 60 * 60 * 24)),
+    totalDays: Math.round(totalDuration / (1000 * 60 * 60 * 24)),
+  };
+}
+
+function CommunityPricingContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectedCommunityId = searchParams.get('communityId') || '';
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [tiers, setTiers] = useState<CommunityTier[]>([]);
-  const [durations] = useState([1, 3, 6]);
   const [selectedTier, setSelectedTier] = useState<CommunityTier | null>(null);
-  const [selectedDuration, setSelectedDuration] = useState(1);
+  const [selectedMonths, setSelectedMonths] = useState(1);
   const [communities, setCommunities] = useState<Community[]>([]);
-  const [selectedCommunity, setSelectedCommunity] = useState<string>('');
-  const [promotionalText, setPromotionalText] = useState('');
-  const [promotionalDescription, setPromotionalDescription] = useState('');
+  const [selectedCommunity, setSelectedCommunity] = useState<string>(preselectedCommunityId);
   const [subscribing, setSubscribing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
   useEffect(() => {
-    // Fetch user
     const fetchUser = async () => {
       try {
         const response = await fetch('/api/user/current', {
@@ -51,7 +137,6 @@ export default function CommunityPricingPage() {
           const userData = await response.json();
           if (userData.user) {
             setUser(userData.user);
-            // Fetch user's communities
             fetchCommunities(userData.user.id);
           }
         }
@@ -62,7 +147,6 @@ export default function CommunityPricingPage() {
       }
     };
 
-    // Fetch tiers
     const fetchTiers = async () => {
       try {
         const response = await fetch('/api/v1/subscription/community-tiers');
@@ -72,34 +156,33 @@ export default function CommunityPricingPage() {
         }
       } catch (error) {
         console.error('Error fetching tiers:', error);
-        // Fallback tiers
         setTiers([
           {
             name: 'Basic',
             key: 'basic',
-            monthlyPrice: 5,
-            features: ['Promotional text in search'],
+            monthlyPrice: 3,
+            features: ['Boosted in search results'],
             color: '#3b82f6',
           },
           {
             name: 'Standard',
             key: 'standard',
-            monthlyPrice: 10,
-            features: ['Promotional text in search', 'Verified community badge', 'Short description (100 chars)'],
+            monthlyPrice: 5,
+            features: ['Boosted in search results', 'Promotional text in search', 'Verified community badge'],
             color: '#10b981',
           },
           {
             name: 'Premium',
             key: 'premium',
-            monthlyPrice: 20,
-            features: ['Promotional text in search', 'Verified community badge', 'Boost on Discover page'],
+            monthlyPrice: 8,
+            features: ['Boosted in search results', 'Promotional text in search', 'Verified community badge', 'Boost on Discover page'],
             color: '#667eea',
           },
           {
             name: 'Elite',
             key: 'elite',
-            monthlyPrice: 50,
-            features: ['Promotional text in search', 'Verified community badge', 'Boost on Discover page', 'Featured on Home Page', 'Long description (200 chars)'],
+            monthlyPrice: 15,
+            features: ['Boosted in search results', 'Promotional text in search', 'Verified community badge', 'Boost on Discover page', 'Featured on Home Page', 'Promotional description (200 chars)'],
             color: '#fbbf24',
             popular: true,
           },
@@ -113,7 +196,6 @@ export default function CommunityPricingPage() {
 
   const fetchCommunities = async (userId: string) => {
     try {
-      // Fetch communities owned by user
       const response = await fetch(`/api/v1/communities/${userId}`, {
         credentials: 'include'
       });
@@ -126,12 +208,11 @@ export default function CommunityPricingPage() {
     }
   };
 
-  const getTotalPrice = () => {
-    if (!selectedTier) return 0;
-    return selectedTier.monthlyPrice * selectedDuration;
+  const getSelectedCommunityData = (): Community | undefined => {
+    return communities.find(c => c._id === selectedCommunity);
   };
 
-  const handleSelectTier = (tier: CommunityTier) => {
+  const handleSelectBoost = (tier: CommunityTier) => {
     if (!user) {
       router.push('/login?redirect=/community-pricing');
       return;
@@ -154,16 +235,14 @@ export default function CommunityPricingPage() {
           userId: user.id,
           communityId: selectedCommunity,
           tier: selectedTier.key,
-          durationMonths: selectedDuration,
-          promotionalText: promotionalText,
-          promotionalDescription: promotionalDescription
+          durationMonths: selectedMonths
         }),
         credentials: 'include'
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create checkout session');
+        throw new Error(errorData.error || errorData.Response?.Error || 'Failed to create checkout session');
       }
 
       const data = await response.json();
@@ -181,10 +260,24 @@ export default function CommunityPricingPage() {
     }
   };
 
-  const getMaxDescriptionLength = () => {
-    if (!selectedTier) return 0;
-    return selectedTier.key === 'elite' ? 200 : selectedTier.key === 'standard' ? 100 : 0;
-  };
+  const selectedCommunityData = getSelectedCommunityData();
+  const hasActiveBoost = selectedCommunityData?.community?.subscription?.active === true;
+  const currentPlan = hasActiveBoost ? (selectedCommunityData?.community?.subscription?.plan || '').toLowerCase() : '';
+  const currentTierRank = TIER_RANK[currentPlan] || 0;
+  const selectedTierRank = selectedTier ? (TIER_RANK[selectedTier.key] || 0) : 0;
+  const boostAction: 'new' | 'upgrade' | 'extend' | 'downgrade' = !hasActiveBoost
+    ? 'new'
+    : selectedTierRank > currentTierRank
+      ? 'upgrade'
+      : selectedTierRank === currentTierRank
+        ? 'extend'
+        : 'downgrade';
+  const isDowngrade = boostAction === 'downgrade';
+  const totalPrice = selectedTier ? getPrice(selectedTier.key, selectedMonths, selectedTier.monthlyPrice) : 0;
+  const prorationInfo = (boostAction === 'upgrade' && selectedCommunityData?.community?.subscription && selectedTier)
+    ? calculateProrationCredit(selectedCommunityData.community.subscription, selectedTier.key, selectedMonths)
+    : null;
+  const displayPrice = prorationInfo ? prorationInfo.proratedPrice : totalPrice;
 
   return (
     <main style={{
@@ -223,15 +316,35 @@ export default function CommunityPricingPage() {
           padding: '40px 20px',
           minHeight: 'calc(100vh - 80px)'
         }}>
+          {/* Back Link */}
+          <Link
+            href={preselectedCommunityId ? `/community/${encodeId(preselectedCommunityId)}` : '/'}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: 'rgba(255, 255, 255, 0.6)',
+              fontSize: '14px',
+              textDecoration: 'none',
+              marginBottom: '24px',
+              transition: 'color 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#fff'}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'}
+          >
+            <ArrowLeftIcon style={{ width: '16px', height: '16px' }} />
+            {preselectedCommunityId ? 'Back to Community' : 'Back'}
+          </Link>
+
           {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <h1 style={{
               fontSize: '2.5rem',
               fontWeight: 700,
               color: '#fff',
               marginBottom: '16px'
             }}>
-              Promote Your Community
+              Boost a Community
             </h1>
             <p style={{
               fontSize: '1.125rem',
@@ -239,8 +352,64 @@ export default function CommunityPricingPage() {
               maxWidth: '600px',
               margin: '0 auto'
             }}>
-              Boost your community&apos;s visibility and attract more members with our promotional packages
+              Give any community you&apos;re a part of a visibility boost and help it attract more members
             </p>
+          </div>
+
+          {/* Duration Toggle */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginBottom: '40px'
+          }}>
+            <div style={{
+              display: 'inline-flex',
+              background: 'rgba(255, 255, 255, 0.06)',
+              borderRadius: '12px',
+              padding: '4px',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              {DURATION_OPTIONS.map((opt) => {
+                const isActive = selectedMonths === opt.months;
+                const savingsForElite = opt.months > 1 ? getSavingsPercent('elite', opt.months, 15) : 0;
+                return (
+                  <button
+                    key={opt.months}
+                    onClick={() => setSelectedMonths(opt.months)}
+                    style={{
+                      padding: '10px 24px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: isActive
+                        ? 'rgba(255, 255, 255, 0.12)'
+                        : 'transparent',
+                      color: isActive ? '#fff' : 'rgba(255, 255, 255, 0.5)',
+                      cursor: 'pointer',
+                      fontWeight: isActive ? 600 : 400,
+                      fontSize: '0.9rem',
+                      transition: 'all 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    {opt.label}
+                    {savingsForElite > 0 && (
+                      <span style={{
+                        fontSize: '0.7rem',
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        color: '#10b981',
+                        padding: '2px 8px',
+                        borderRadius: '9999px',
+                        fontWeight: 600
+                      }}>
+                        Save up to {savingsForElite}%
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Error Message */}
@@ -258,16 +427,19 @@ export default function CommunityPricingPage() {
             </div>
           )}
 
-          {/* Pricing Cards */}
+          {/* Tier Cards */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
             gap: '24px',
             maxWidth: '1100px',
             margin: '0 auto'
           }}>
             {tiers.map((tier) => {
               const isPopular = tier.popular;
+              const price = getPrice(tier.key, selectedMonths, tier.monthlyPrice);
+              const fullPrice = getFullPrice(tier.monthlyPrice, selectedMonths);
+              const savings = getSavingsPercent(tier.key, selectedMonths, tier.monthlyPrice);
 
               return (
                 <div
@@ -304,7 +476,7 @@ export default function CommunityPricingPage() {
                       gap: '4px'
                     }}>
                       <StarIcon style={{ width: '12px', height: '12px' }} />
-                      Best Value
+                      Most Popular
                     </div>
                   )}
 
@@ -313,26 +485,52 @@ export default function CommunityPricingPage() {
                     fontSize: '1.25rem',
                     fontWeight: 600,
                     color: tier.color,
-                    marginBottom: '8px'
+                    marginBottom: '20px'
                   }}>
-                    {tier.name}
+                    {tier.name} Boost
                   </h3>
 
                   {/* Price */}
-                  <div style={{ marginBottom: '24px' }}>
-                    <span style={{
-                      fontSize: '2.5rem',
-                      fontWeight: 700,
-                      color: '#fff'
+                  <div style={{ marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      <span style={{
+                        fontSize: '2.5rem',
+                        fontWeight: 700,
+                        color: '#fff'
+                      }}>
+                        ${price}
+                      </span>
+                      {savings > 0 && (
+                        <span style={{
+                          fontSize: '1rem',
+                          color: 'rgba(255, 255, 255, 0.35)',
+                          textDecoration: 'line-through'
+                        }}>
+                          ${fullPrice}
+                        </span>
+                      )}
+                    </div>
+                    <p style={{
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      fontSize: '0.85rem',
+                      marginTop: '4px'
                     }}>
-                      ${tier.monthlyPrice}
-                    </span>
-                    <span style={{
-                      fontSize: '1rem',
-                      color: 'rgba(255, 255, 255, 0.5)'
-                    }}>
-                      /month
-                    </span>
+                      {selectedMonths} {selectedMonths === 1 ? 'month' : 'months'} of {tier.name} features
+                    </p>
+                    {savings > 0 && (
+                      <span style={{
+                        display: 'inline-block',
+                        marginTop: '8px',
+                        fontSize: '0.75rem',
+                        background: 'rgba(16, 185, 129, 0.12)',
+                        color: '#10b981',
+                        padding: '3px 10px',
+                        borderRadius: '9999px',
+                        fontWeight: 600
+                      }}>
+                        Save {savings}%
+                      </span>
+                    )}
                   </div>
 
                   {/* Features */}
@@ -366,23 +564,28 @@ export default function CommunityPricingPage() {
                     ))}
                   </ul>
 
-                  {/* CTA Button */}
+                  {/* Boost Button */}
                   <button
-                    onClick={() => handleSelectTier(tier)}
+                    onClick={() => handleSelectBoost(tier)}
                     style={{
-                      padding: '12px 24px',
-                      borderRadius: '8px',
+                      width: '100%',
+                      padding: '14px',
+                      borderRadius: '10px',
                       border: 'none',
                       background: isPopular
                         ? `linear-gradient(135deg, ${tier.color} 0%, ${tier.color}cc 100%)`
-                        : 'rgba(255, 255, 255, 0.1)',
+                        : `${tier.color}20`,
                       color: isPopular ? '#000' : '#fff',
-                      fontSize: '0.9rem',
+                      cursor: 'pointer',
                       fontWeight: 600,
-                      cursor: 'pointer'
+                      fontSize: '0.95rem',
+                      transition: 'opacity 0.2s',
+                      borderWidth: isPopular ? 0 : 1,
+                      borderStyle: 'solid',
+                      borderColor: `${tier.color}40`
                     }}
                   >
-                    Select Plan
+                    Boost for ${price}
                   </button>
                 </div>
               );
@@ -396,7 +599,7 @@ export default function CommunityPricingPage() {
             color: 'rgba(255, 255, 255, 0.5)',
             fontSize: '0.875rem'
           }}>
-            <p>Community promotions are one-time purchases for 1, 3, or 6 months. Prices shown are per month.</p>
+            <p>Community boosts are one-time purchases. All prices shown are for the full selected duration.</p>
           </div>
         </div>
 
@@ -421,7 +624,7 @@ export default function CommunityPricingPage() {
             borderRadius: '16px',
             border: '1px solid rgba(255, 255, 255, 0.1)',
             padding: '32px',
-            maxWidth: '500px',
+            maxWidth: '460px',
             width: '100%',
             maxHeight: '90vh',
             overflowY: 'auto'
@@ -432,12 +635,13 @@ export default function CommunityPricingPage() {
               color: '#fff',
               marginBottom: '24px'
             }}>
-              Complete Your Purchase
+              Select a Community
             </h3>
 
-            {/* Selected Plan */}
+            {/* Selected Boost Summary */}
             <div style={{
-              background: 'rgba(255, 255, 255, 0.05)',
+              background: `${selectedTier.color}15`,
+              border: `1px solid ${selectedTier.color}40`,
               borderRadius: '12px',
               padding: '16px',
               marginBottom: '24px'
@@ -447,48 +651,34 @@ export default function CommunityPricingPage() {
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <span style={{ color: selectedTier.color, fontWeight: 600 }}>
-                  {selectedTier.name} Promotion
-                </span>
-                <span style={{ color: '#fff', fontWeight: 700 }}>
-                  ${selectedTier.monthlyPrice}/mo
-                </span>
-              </div>
-            </div>
-
-            {/* Duration Select */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                color: 'rgba(255, 255, 255, 0.7)',
-                marginBottom: '8px',
-                fontSize: '0.9rem'
-              }}>
-                Duration
-              </label>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {durations.map((d) => (
-                  <button
-                    key={d}
-                    onClick={() => setSelectedDuration(d)}
-                    style={{
-                      flex: 1,
-                      padding: '12px',
-                      borderRadius: '8px',
-                      border: selectedDuration === d
-                        ? `2px solid ${selectedTier.color}`
-                        : '1px solid rgba(255, 255, 255, 0.2)',
-                      background: selectedDuration === d
-                        ? `${selectedTier.color}20`
-                        : 'transparent',
-                      color: selectedDuration === d ? selectedTier.color : 'rgba(255, 255, 255, 0.7)',
-                      cursor: 'pointer',
-                      fontWeight: 500
-                    }}
-                  >
-                    {d} {d === 1 ? 'Month' : 'Months'}
-                  </button>
-                ))}
+                <div>
+                  <span style={{ color: selectedTier.color, fontWeight: 600 }}>
+                    {selectedTier.name} Boost
+                  </span>
+                  <span style={{
+                    display: 'block',
+                    fontSize: '0.8rem',
+                    color: 'rgba(255, 255, 255, 0.5)',
+                    marginTop: '2px'
+                  }}>
+                    {selectedMonths} {selectedMonths === 1 ? 'month' : 'months'} of {selectedTier.name} features
+                  </span>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  {prorationInfo && prorationInfo.creditDollars > 0 && (
+                    <span style={{
+                      color: 'rgba(255, 255, 255, 0.4)',
+                      textDecoration: 'line-through',
+                      fontSize: '0.9rem',
+                      marginRight: '8px'
+                    }}>
+                      ${totalPrice.toFixed(2)}
+                    </span>
+                  )}
+                  <span style={{ color: '#fff', fontWeight: 700, fontSize: '1.25rem' }}>
+                    ${displayPrice.toFixed(2)}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -500,7 +690,7 @@ export default function CommunityPricingPage() {
                 marginBottom: '8px',
                 fontSize: '0.9rem'
               }}>
-                Select Community
+                Community to Boost
               </label>
               {communities.length > 0 ? (
                 <select
@@ -525,90 +715,75 @@ export default function CommunityPricingPage() {
                 </select>
               ) : (
                 <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.9rem' }}>
-                  You don&apos;t have any communities. Create one first!
+                  You&apos;re not a member of any communities yet. Join one first!
                 </p>
               )}
             </div>
 
-            {/* Promotional Text */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                color: 'rgba(255, 255, 255, 0.7)',
-                marginBottom: '8px',
-                fontSize: '0.9rem'
+            {/* Active Boost Info */}
+            {selectedCommunity && hasActiveBoost && boostAction === 'downgrade' && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '20px'
               }}>
-                Promotional Text (shown in search)
-              </label>
-              <input
-                type="text"
-                value={promotionalText}
-                onChange={(e) => setPromotionalText(e.target.value)}
-                maxLength={50}
-                placeholder="e.g., Join our active community!"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  color: '#fff',
-                  fontSize: '0.9rem'
-                }}
-              />
-            </div>
-
-            {/* Description (for Standard/Elite) */}
-            {getMaxDescriptionLength() > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{
-                  display: 'block',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  marginBottom: '8px',
-                  fontSize: '0.9rem'
-                }}>
-                  Description ({getMaxDescriptionLength()} chars max)
-                </label>
-                <textarea
-                  value={promotionalDescription}
-                  onChange={(e) => setPromotionalDescription(e.target.value)}
-                  maxLength={getMaxDescriptionLength()}
-                  placeholder="Describe your community..."
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    color: '#fff',
-                    fontSize: '0.9rem',
-                    resize: 'none'
-                  }}
-                />
+                <p style={{ color: '#ef4444', fontSize: '0.85rem', margin: 0 }}>
+                  This community currently has a <strong>{currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}</strong> boost
+                  {selectedCommunityData?.community?.subscription?.expirationDate && (
+                    <> (expires {new Date(selectedCommunityData.community.subscription.expirationDate).toLocaleDateString()})</>
+                  )}
+                  . You cannot downgrade to a lower tier. Choose {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)} or higher.
+                </p>
               </div>
             )}
-
-            {/* Total */}
-            <div style={{
-              background: 'rgba(251, 191, 36, 0.1)',
-              borderRadius: '12px',
-              padding: '16px',
-              marginBottom: '24px'
-            }}>
+            {selectedCommunity && hasActiveBoost && boostAction === 'extend' && (
               <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '20px'
               }}>
-                <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                  Total ({selectedDuration} {selectedDuration === 1 ? 'month' : 'months'})
-                </span>
-                <span style={{ color: '#fbbf24', fontWeight: 700, fontSize: '1.25rem' }}>
-                  ${getTotalPrice()}
-                </span>
+                <p style={{ color: '#10b981', fontSize: '0.85rem', margin: 0 }}>
+                  This will extend your <strong>{currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}</strong> boost by {selectedMonths} {selectedMonths === 1 ? 'month' : 'months'}
+                  {selectedCommunityData?.community?.subscription?.expirationDate && (
+                    <> from the current expiration date ({new Date(selectedCommunityData.community.subscription.expirationDate).toLocaleDateString()})</>
+                  )}
+                  .
+                </p>
               </div>
-            </div>
+            )}
+            {selectedCommunity && hasActiveBoost && boostAction === 'upgrade' && (
+              <div style={{
+                background: 'rgba(251, 191, 36, 0.1)',
+                border: '1px solid rgba(251, 191, 36, 0.3)',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '20px'
+              }}>
+                <p style={{ color: '#fbbf24', fontSize: '0.85rem', margin: 0 }}>
+                  Upgrading from <strong>{currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}</strong> to <strong>{selectedTier.name}</strong> for {selectedMonths} {selectedMonths === 1 ? 'month' : 'months'}.
+                </p>
+                {prorationInfo && prorationInfo.creditDollars > 0 && (
+                  <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(251, 191, 36, 0.2)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginBottom: '4px' }}>
+                      <span>{selectedTier.name} Boost ({selectedMonths}mo)</span>
+                      <span>${totalPrice.toFixed(2)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#10b981', marginBottom: '4px' }}>
+                      <span>Credit ({prorationInfo.remainingDays} of {prorationInfo.totalDays} days unused)</span>
+                      <span>-${prorationInfo.creditDollars.toFixed(2)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem', color: '#fff', fontWeight: 600, marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                      <span>You pay</span>
+                      <span>${prorationInfo.proratedPrice.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Buttons */}
             <div style={{ display: 'flex', gap: '12px' }}>
@@ -616,9 +791,9 @@ export default function CommunityPricingPage() {
                 onClick={() => {
                   setShowCheckoutModal(false);
                   setSelectedTier(null);
-                  setSelectedCommunity('');
-                  setPromotionalText('');
-                  setPromotionalDescription('');
+                  if (!preselectedCommunityId) {
+                    setSelectedCommunity('');
+                  }
                   setError(null);
                 }}
                 style={{
@@ -636,27 +811,47 @@ export default function CommunityPricingPage() {
               </button>
               <button
                 onClick={handlePurchase}
-                disabled={subscribing || !selectedCommunity}
+                disabled={subscribing || !selectedCommunity || isDowngrade}
                 style={{
                   flex: 1,
                   padding: '14px',
                   borderRadius: '8px',
                   border: 'none',
-                  background: selectedCommunity
-                    ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'
-                    : 'rgba(255, 255, 255, 0.1)',
-                  color: selectedCommunity ? '#000' : 'rgba(255, 255, 255, 0.5)',
-                  cursor: subscribing || !selectedCommunity ? 'not-allowed' : 'pointer',
+                  background: isDowngrade
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : selectedCommunity
+                      ? `linear-gradient(135deg, ${selectedTier.color} 0%, ${selectedTier.color}cc 100%)`
+                      : 'rgba(255, 255, 255, 0.1)',
+                  color: isDowngrade
+                    ? 'rgba(255, 255, 255, 0.3)'
+                    : selectedCommunity ? (selectedTier.color === '#fbbf24' ? '#000' : '#fff') : 'rgba(255, 255, 255, 0.5)',
+                  cursor: subscribing || !selectedCommunity || isDowngrade ? 'not-allowed' : 'pointer',
                   fontWeight: 600,
                   opacity: subscribing ? 0.7 : 1
                 }}
               >
-                {subscribing ? 'Processing...' : 'Proceed to Payment'}
+                {subscribing
+                  ? 'Processing...'
+                  : isDowngrade
+                    ? 'Cannot Downgrade'
+                    : boostAction === 'extend'
+                      ? `Extend for $${totalPrice.toFixed(2)}`
+                      : boostAction === 'upgrade'
+                        ? `Upgrade for $${displayPrice.toFixed(2)}`
+                        : `Boost for $${totalPrice.toFixed(2)}`}
               </button>
             </div>
           </div>
         </div>
       )}
     </main>
+  );
+}
+
+export default function CommunityPricingPage() {
+  return (
+    <Suspense fallback={<div />}>
+      <CommunityPricingContent />
+    </Suspense>
   );
 }
