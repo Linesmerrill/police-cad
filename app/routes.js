@@ -3403,7 +3403,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       if (!ObjectId.isValid(userId)) {
         return res.status(400).json({ error: "Invalid user ID" });
       }
-      const response = await axios.get(`${policeCadApiUrl}/api/v1/communities/${userId}`, {
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/communities/${encodeURIComponent(userId)}`, {
         headers: config.headers
       });
       res.json(response.data);
