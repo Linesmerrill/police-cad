@@ -83,7 +83,7 @@ export default function PricingPage() {
             key: 'premium_plus',
             monthlyPrice: 19.99,
             annualPrice: 209,
-            features: ['Unlimited communities', 'Custom departments', 'No ads', 'Verified badge'],
+            features: ['Unlimited communities', 'No ads', 'Verified badge'],
             color: '#fbbf24',
           },
         ]);
@@ -232,7 +232,7 @@ export default function PricingPage() {
               maxWidth: '600px',
               margin: '0 auto 32px'
             }}>
-              Subscriptions are completely optional — upgrade only if you want additional communities, custom departments, or an ad-free experience.
+              Subscriptions are completely optional — upgrade only if you want additional communities or an ad-free experience.
             </p>
 
             {/* Billing Toggle */}
