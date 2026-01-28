@@ -549,6 +549,52 @@ export default function Profile() {
     }
   };
 
+  // Upgrade button with border animation
+  const UpgradeButton = () => {
+    const [isAnimating, setIsAnimating] = useState(true);
+
+    useEffect(() => {
+      // Initial animation plays for 1.5s then stops
+      const initialTimeout = setTimeout(() => setIsAnimating(false), 1500);
+
+      // Set up interval to play animation every 25 seconds
+      const interval = setInterval(() => {
+        setIsAnimating(true);
+        setTimeout(() => setIsAnimating(false), 1500);
+      }, 25000);
+
+      return () => {
+        clearTimeout(initialTimeout);
+        clearInterval(interval);
+      };
+    }, []);
+
+    return (
+      <div
+        className={`upgrade-btn-wrapper ${isAnimating ? 'animating' : ''}`}
+        onMouseEnter={() => setIsAnimating(true)}
+      >
+        <Link
+          href="/pricing"
+          style={{
+            display: 'block',
+            padding: '0.5rem 1rem',
+            borderRadius: '0.3rem',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: '#fff',
+            fontSize: '0.875rem',
+            fontWeight: '600',
+            textDecoration: 'none',
+            textAlign: 'center',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          Upgrade
+        </Link>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <main style={{ 
@@ -1046,56 +1092,103 @@ export default function Profile() {
             {/* Subscription Tier */}
             {(() => {
               const badge = getSubscriptionBadge();
+              const isActive = user?.subscription?.active === true;
               return (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem',
-                  padding: '1rem',
-                  backgroundColor: badge.bgColor,
-                  borderRadius: '0.5rem',
-                  border: `1px solid ${badge.borderColor}`
-                }}>
+                <>
+                  <style>{`
+                    @keyframes borderRotate {
+                      0% { --angle: 0deg; }
+                      100% { --angle: 360deg; }
+                    }
+                    @property --angle {
+                      syntax: '<angle>';
+                      initial-value: 0deg;
+                      inherits: false;
+                    }
+                    .upgrade-btn-wrapper {
+                      position: relative;
+                      border-radius: 0.375rem;
+                      padding: 2px;
+                      background: rgba(102, 126, 234, 0.3);
+                    }
+                    .upgrade-btn-wrapper.animating {
+                      background: conic-gradient(from var(--angle), #667eea, #764ba2, #667eea, transparent, transparent, #667eea);
+                      animation: borderRotate 1.5s linear;
+                    }
+                    .upgrade-btn-wrapper:hover {
+                      background: conic-gradient(from var(--angle), #667eea, #764ba2, #667eea, transparent, transparent, #667eea);
+                      animation: borderRotate 1.5s linear infinite;
+                    }
+                  `}</style>
                   <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    backgroundColor: badge.bgColor,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
+                    gap: '1rem',
+                    padding: '1rem',
+                    backgroundColor: badge.bgColor,
+                    borderRadius: '0.5rem',
                     border: `1px solid ${badge.borderColor}`
                   }}>
-                    {badge.icon === 'star' && (
-                      <StarIconSolid style={{ width: '20px', height: '20px', color: badge.color }} />
-                    )}
-                    {badge.icon === 'check' && (
-                      <CheckCircleIconSolid style={{ width: '20px', height: '20px', color: badge.color }} />
-                    )}
-                    {badge.icon === 'user' && (
-                      <UserIcon style={{ width: '20px', height: '20px', color: badge.color }} />
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      backgroundColor: badge.bgColor,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      border: `1px solid ${badge.borderColor}`
+                    }}>
+                      {badge.icon === 'star' && (
+                        <StarIconSolid style={{ width: '20px', height: '20px', color: badge.color }} />
+                      )}
+                      {badge.icon === 'check' && (
+                        <CheckCircleIconSolid style={{ width: '20px', height: '20px', color: badge.color }} />
+                      )}
+                      {badge.icon === 'user' && (
+                        <UserIcon style={{ width: '20px', height: '20px', color: badge.color }} />
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontSize: '0.875rem',
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        marginBottom: '0.25rem',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                      }}>
+                        Subscription
+                      </div>
+                      <div style={{
+                        fontSize: '1.125rem',
+                        fontWeight: '600',
+                        color: badge.color,
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                      }}>
+                        {badge.label}
+                      </div>
+                    </div>
+                    {isActive ? (
+                      <Link
+                        href="/manage-subscription"
+                        style={{
+                          padding: '0.5rem 1rem',
+                          borderRadius: '0.375rem',
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          color: 'rgba(255, 255, 255, 0.8)',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                          textDecoration: 'none',
+                          transition: 'background-color 0.2s'
+                        }}
+                      >
+                        Manage
+                      </Link>
+                    ) : (
+                      <UpgradeButton />
                     )}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontSize: '0.875rem',
-                      color: 'rgba(255, 255, 255, 0.6)',
-                      marginBottom: '0.25rem',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-                    }}>
-                      Subscription
-                    </div>
-                    <div style={{
-                      fontSize: '1.125rem',
-                      fontWeight: '600',
-                      color: badge.color,
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-                    }}>
-                      {badge.label}
-                    </div>
-                  </div>
-                </div>
+                </>
               );
             })()}
           </div>

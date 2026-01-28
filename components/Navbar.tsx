@@ -8,6 +8,7 @@ import { DISCORD_COMMUNITY } from '@/constants/discord';
 
 const navigation = [
   { name: 'Home', href: '/' },
+  { name: 'Pricing', href: '/pricing' },
   { name: 'About', href: '/about-us' },
   { name: 'FAQ', href: '/faq' },
   { name: 'Contact Us', href: '/contact-us' },

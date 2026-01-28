@@ -3228,6 +3228,144 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // ============================================
+  // Stripe Subscription Routes
+  // ============================================
+
+  // Get subscription tiers (public - no auth required)
+  app.get("/api/v1/subscription/tiers", async function (req, res) {
+    try {
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/subscription/tiers`, {
+        headers: config.headers
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error fetching tiers:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch subscription tiers" });
+      }
+    }
+  });
+
+  // Get community promotion tiers (public - no auth required)
+  app.get("/api/v1/subscription/community-tiers", async function (req, res) {
+    try {
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/subscription/community-tiers`, {
+        headers: config.headers
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error fetching community tiers:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch community tiers" });
+      }
+    }
+  });
+
+  // Check subscription source (requires auth)
+  app.post("/api/v1/user/check-subscription-source", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/user/check-subscription-source`, req.body, {
+        headers: {
+          ...config.headers,
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error checking subscription source:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to check subscription source" });
+      }
+    }
+  });
+
+  // Create user checkout session (requires auth)
+  app.post("/api/v1/user/create-checkout-session", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/user/create-checkout-session`, req.body, {
+        headers: {
+          ...config.headers,
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error creating checkout session:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to create checkout session" });
+      }
+    }
+  });
+
+  // Verify subscription (requires auth)
+  app.post("/api/v1/user/verify-subscription", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/user/verify-subscription`, req.body, {
+        headers: {
+          ...config.headers,
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error verifying subscription:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to verify subscription" });
+      }
+    }
+  });
+
+  // Create portal session (requires auth)
+  app.post("/api/v1/user/create-portal-session", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/user/create-portal-session`, req.body, {
+        headers: {
+          ...config.headers,
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error creating portal session:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to create portal session" });
+      }
+    }
+  });
+
+  // Create community checkout session (requires auth)
+  app.post("/api/v1/community/create-checkout-session", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/community/create-checkout-session`, req.body, {
+        headers: {
+          ...config.headers,
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error creating community checkout session:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to create community checkout session" });
+      }
+    }
+  });
+
   // Request removal from program
   app.post("/api/v1/content-creators/me/removal-request", apiAuthCheck, async function (req, res) {
     try {
@@ -3282,7 +3420,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Exclude Next.js internal routes
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/') || req.path.startsWith('/content-creators')) {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/') || req.path.startsWith('/content-creators') || req.path === '/pricing' || req.path === '/community-pricing' || req.path === '/manage-subscription' || req.path.startsWith('/subscription/') || req.path.startsWith('/community-promotion/')) {
       return handle(req, res);
     }
     res.render("page-not-found");
