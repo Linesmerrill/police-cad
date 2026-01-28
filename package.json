@@ -39,7 +39,7 @@
     "mongoose": "^5.13.14",
     "mpromise": "^0.5.5",
     "mquery": "^3.2.3",
-    "next": "^14.2.0",
+    "next": "^15.5.10",
     "nodemailer": "^6.6.1",
     "nodemailer-sendgrid": "^1.0.3",
     "now": "^19.1.1",
