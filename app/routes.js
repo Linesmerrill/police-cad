@@ -265,7 +265,17 @@ module.exports = function (app, passport, server, nextApp, handle) {
         return res.redirect("/admin?error=" + encodeURIComponent("Invalid credentials"));
       }
 
-      // Update lastLoginAt in backend API if API token is configured
+      // Update lastLoginAt directly in MongoDB
+      try {
+        await mongoose.connection.db.collection("admin_users").updateOne(
+          { _id: adminUser._id },
+          { $set: { lastLoginAt: new Date() } }
+        );
+      } catch (err) {
+        console.log("Failed to update lastLoginAt in MongoDB:", err.message);
+      }
+
+      // Also update lastLoginAt in backend API if API token is configured
       const apiToken = process.env.POLICE_CAD_API_TOKEN;
       const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
       
@@ -320,16 +330,24 @@ module.exports = function (app, passport, server, nextApp, handle) {
         });
       }
 
-      // Create admin session
+      // Check if profile is complete (has firstName and lastName)
+      const profileComplete = adminUser.firstName && adminUser.lastName;
+
+      // Create admin session with profile fields
       req.session.adminToken = "local-admin-" + Date.now();
-      req.session.admin = { 
+      req.session.admin = {
         email: adminUser.email,
-        name: adminUser.name || adminUser.email.split('@')[0],
-        id: adminUser._id,
+        name: adminUser.firstName && adminUser.lastName
+          ? `${adminUser.firstName} ${adminUser.lastName}`
+          : (adminUser.name || adminUser.email.split('@')[0]),
+        firstName: adminUser.firstName || '',
+        lastName: adminUser.lastName || '',
+        profilePicture: adminUser.profilePicture || '',
+        id: adminUser._id.toString(), // Ensure ID is a string for API calls
         role: adminUser.role,
         roles: adminUser.roles
       };
-      
+
       // Store login time for session duration calculation
       req.session.loginTime = new Date();
 
@@ -337,10 +355,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
       if (apiToken) {
         // Get roles from adminUser for the currentUser object
         const adminRoles = adminUser.roles || (adminUser.role ? [adminUser.role] : ['admin']);
-        
+
         // First find admin ID in backend API
-        axios.post(`${apiUrl}/api/v1/admin/search/admins`, 
-          { 
+        axios.post(`${apiUrl}/api/v1/admin/search/admins`,
+          {
             query: email,
             currentUser: {
               email: email,
@@ -360,9 +378,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
         ).then(function(searchResponse) {
           if (searchResponse.status === 200 && searchResponse.data.admins && searchResponse.data.admins.length > 0) {
             const adminId = searchResponse.data.admins[0].id || searchResponse.data.admins[0]._id;
-            
+
             // Log login activity
-            axios.post(`${apiUrl}/api/v1/admin/activity/log`, 
+            axios.post(`${apiUrl}/api/v1/admin/activity/log`,
               {
                 adminId: adminId,
                 type: 'login',
@@ -393,6 +411,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         });
       }
 
+      // Redirect based on profile completeness
+      if (!profileComplete) {
+        return res.redirect("/admin/profile?setup=true");
+      }
       return res.redirect("/admin/console");
     } catch (err) {
       const message = "Authentication failed. Please try again.";
@@ -411,14 +433,73 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.get("/admin/console", requireAdminSession, function (req, res) {
     const success = req.query.success || null;
     const error = req.query.error || null;
-    
-    res.render("admin-console", { 
+
+    res.render("admin-console", {
       admin: req.session.admin,
       POLICE_CAD_API_URL: process.env.POLICE_CAD_API_URL,
       POLICE_CAD_API_TOKEN: process.env.POLICE_CAD_API_TOKEN,
       success: success,
       error: error
     });
+  });
+
+  // Admin Profile page
+  app.get("/admin/profile", requireAdminSession, async function (req, res) {
+    const setup = req.query.setup === 'true';
+    let adminData = req.session.admin;
+
+    // Fetch full admin data from API to get profile fields
+    const apiToken = process.env.POLICE_CAD_API_TOKEN;
+    const apiUrl = process.env.POLICE_CAD_API_URL;
+
+    if (apiToken && adminData && adminData.id) {
+      try {
+        const axios = require("axios");
+        const response = await axios.get(`${apiUrl}/api/v1/admin/admins/${adminData.id}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiToken}`
+          },
+          timeout: 5000
+        });
+        if (response.data.success && response.data.admin) {
+          // Merge API data with session data
+          adminData = { ...adminData, ...response.data.admin };
+        }
+      } catch (err) {
+        console.log("Failed to fetch admin profile from API, using session data");
+      }
+    }
+
+    res.render("admin-profile", {
+      admin: adminData,
+      setup: setup,
+      POLICE_CAD_API_URL: process.env.POLICE_CAD_API_URL,
+      POLICE_CAD_API_TOKEN: process.env.POLICE_CAD_API_TOKEN,
+      CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+      CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+      CLOUDINARY_UPLOAD_PRESET: process.env.CLOUDINARY_UPLOAD_PRESET
+    });
+  });
+
+  // Update session after profile save (called from frontend)
+  app.post("/admin/profile/update-session", requireAdminSession, function (req, res) {
+    const { firstName, lastName, email, profilePicture } = req.body;
+
+    // Update session with new profile data
+    if (req.session.admin) {
+      if (firstName) req.session.admin.firstName = firstName;
+      if (lastName) req.session.admin.lastName = lastName;
+      if (email) req.session.admin.email = email;
+      if (profilePicture) req.session.admin.profilePicture = profilePicture;
+
+      // Update the name field for display
+      if (firstName && lastName) {
+        req.session.admin.name = `${firstName} ${lastName}`;
+      }
+    }
+
+    res.json({ success: true });
   });
 
   app.post("/admin/logout", function (req, res) {
@@ -2708,7 +2789,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
           discordConnected: user.discordConnected || false,
           panicButtonSound: user.panicButtonSound || false,
           alertVolumeLevel: user.alertVolumeLevel || 10,
-          createdAt: user.createdAt
+          createdAt: user.createdAt,
+          profilePicture: user.profilePicture || '',
+          subscription: user.subscription || null
         }
       });
     }
@@ -2900,11 +2983,306 @@ module.exports = function (app, passport, server, nextApp, handle) {
     );
   });
 
+  // ===========================================
+  // CONTENT CREATOR API ROUTES
+  // These MUST be defined BEFORE the catch-all below
+  // ===========================================
+
+  // JSON-specific auth check for API routes (returns 401 JSON instead of rendering login page)
+  function apiAuthCheck(req, res, next) {
+    if (req.isAuthenticated()) {
+      return next();
+    } else {
+      console.log('[apiAuthCheck] Authentication failed for', req.method, req.path);
+      return res.status(401).json({ error: "Unauthorized", message: "Please log in to continue" });
+    }
+  }
+
+  // Get all content creators (public)
+  app.get("/api/v1/content-creators", async function (req, res) {
+    try {
+      const { page = 1, limit = 12, featured, platform, search } = req.query;
+      let url = `${policeCadApiUrl}/api/v1/content-creators?page=${page}&limit=${limit}`;
+      if (featured) url += `&featured=${featured}`;
+      if (platform) url += `&platform=${platform}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+
+      const response = await axios.get(url, config);
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error fetching content creators:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch content creators" });
+      }
+    }
+  });
+
+  // Check if slug is available (public) - MUST be before /:slug route
+  app.get("/api/v1/content-creators/check-slug", async function (req, res) {
+    try {
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/content-creators/check-slug`, {
+        ...config,
+        params: req.query
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error checking slug:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to check slug" });
+      }
+    }
+  });
+
+  // Get content creator by slug (public) - MUST be after /me routes to avoid matching "me" as slug
+  app.get("/api/v1/content-creators/:slug", async function (req, res) {
+    try {
+      const { slug } = req.params;
+      // Validate slug to prevent path traversal or malformed paths reaching the upstream API
+      const slugPattern = /^[a-zA-Z0-9_-]{1,100}$/;
+      if (!slugPattern.test(slug)) {
+        console.warn('Invalid content creator slug received:', slug);
+        return res.status(400).json({ error: "Invalid content creator identifier" });
+      }
+
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/content-creators/${slug}`, config);
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error fetching content creator:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch content creator" });
+      }
+    }
+  });
+
+  // Get current user's application/creator status
+  app.get("/api/v1/content-creator-applications/me", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      console.log('[ContentCreator /me] Fetching status for user:', userId);
+      console.log('[ContentCreator /me] Calling Go API at:', `${policeCadApiUrl}/api/v1/content-creator-applications/me`);
+
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/content-creator-applications/me`, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString()
+        }
+      });
+      console.log('[ContentCreator /me] Got response:', JSON.stringify(response.data));
+      res.json(response.data);
+    } catch (error) {
+      console.error('[ContentCreator /me] Error fetching creator status:', error.message);
+      if (error.response) {
+        console.error('[ContentCreator /me] Go API response status:', error.response.status);
+        console.error('[ContentCreator /me] Go API response data:', JSON.stringify(error.response.data));
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        console.error('[ContentCreator /me] No response from Go API');
+        res.status(500).json({ error: "Failed to fetch creator status" });
+      }
+    }
+  });
+
+  // Submit content creator application
+  app.post("/api/v1/content-creator-applications", apiAuthCheck, async function (req, res) {
+    try {
+      if (!policeCadApiUrl) {
+        console.error('[ContentCreator] POLICE_CAD_API_URL is not configured');
+        return res.status(500).json({ error: "Server configuration error", message: "API URL not configured" });
+      }
+
+      const userId = req.user._id || req.user.id;
+      console.log('[ContentCreator] Submitting application for user:', userId);
+      console.log('[ContentCreator] Calling Go API at:', `${policeCadApiUrl}/api/v1/content-creator-applications`);
+
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/content-creator-applications`, req.body, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString(),
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[ContentCreator] Error submitting application:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to submit application", message: "Could not connect to API server" });
+      }
+    }
+  });
+
+  // Withdraw content creator application
+  app.delete("/api/v1/content-creator-applications/me", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      console.log('[ContentCreator] Withdrawing application for user:', userId);
+
+      const response = await axios.delete(`${policeCadApiUrl}/api/v1/content-creator-applications/me`, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString()
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[ContentCreator] Error withdrawing application:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to withdraw application", message: "Could not connect to API server" });
+      }
+    }
+  });
+
+  // Update content creator profile (self)
+  app.put("/api/v1/content-creators/me", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.put(`${policeCadApiUrl}/api/v1/content-creators/me`, req.body, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString(),
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error updating creator profile:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to update profile" });
+      }
+    }
+  });
+
+  // Sync follower counts for content creator
+  app.post("/api/v1/content-creators/me/sync", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/content-creators/me/sync`, req.body, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString(),
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error syncing followers:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ success: false, message: "Failed to sync followers" });
+      }
+    }
+  });
+
+  // Get owned communities for content creator (for community promotion)
+  app.get("/api/v1/content-creators/me/owned-communities", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/content-creators/me/owned-communities`, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString()
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error fetching owned communities:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ success: false, message: "Failed to fetch owned communities" });
+      }
+    }
+  });
+
+  // Apply community promotion (give free Base Plan to a community)
+  app.post("/api/v1/content-creators/me/community-promotion", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/content-creators/me/community-promotion`, req.body, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString(),
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error applying community promotion:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ success: false, message: "Failed to apply community promotion" });
+      }
+    }
+  });
+
+  // Request removal from program
+  app.post("/api/v1/content-creators/me/removal-request", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/content-creators/me/removal-request`, req.body, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString(),
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error requesting removal:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ success: false, message: "Failed to request removal" });
+      }
+    }
+  });
+
+  // Get Cloudinary config for uploads
+  app.get("/api/v1/cloudinary-config", function (req, res) {
+    res.json({
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+      apiKey: process.env.CLOUDINARY_API_KEY || '',
+      uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET || ''
+    });
+  });
+
+  // Generate Cloudinary signature for uploads
+  app.post("/api/v1/generate-signature", async function (req, res) {
+    try {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/generate-signature`, req.body, config);
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error generating signature:', error.message, error.response?.data);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data || { error: "Signature generation failed" });
+      } else {
+        res.status(500).json({ error: "Failed to generate signature" });
+      }
+    }
+  });
+
+  // ===========================================
+  // END CONTENT CREATOR API ROUTES
+  // ===========================================
+
   // Be sure to place all GET requests above this catchall
   // Exclude Next.js internal routes
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/')) {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/') || req.path.startsWith('/content-creators')) {
       return handle(req, res);
     }
     res.render("page-not-found");
@@ -4540,6 +4918,34 @@ module.exports = function (app, passport, server, nextApp, handle) {
               );
             }
           );
+        }
+      );
+    } else if (req.body.action === "updateProfilePicture") {
+      var isValid = isValidObjectIdLength(
+        req.body.userID,
+        "cannot lookup invalid length userID, route: /manageAccount"
+      );
+      if (!isValid) {
+        return res.status(400).json({ error: 'Invalid user ID' });
+      }
+      var profilePicture = req.body.profilePicture || '';
+      User.findOneAndUpdate(
+        {
+          _id: ObjectId(req.body.userID),
+        },
+        {
+          $set: {
+            "user.profilePicture": profilePicture,
+            "user.updatedAt": new Date(),
+          },
+        },
+        { new: true },
+        function (err, updatedUser) {
+          if (err) {
+            console.error(err);
+            return res.status(500).json({ error: 'Failed to update profile picture' });
+          }
+          return res.json({ success: true, profilePicture: updatedUser.user.profilePicture });
         }
       );
     } else {

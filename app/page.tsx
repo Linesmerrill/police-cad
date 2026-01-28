@@ -3,12 +3,13 @@ import Hero from '@/components/Hero';
 import Stats from '@/components/Stats';
 import WhatWeDo from '@/components/WhatWeDo';
 import Features from '@/components/Features';
+import ContentCreators from '@/components/ContentCreators';
 import Feedback from '@/components/Feedback';
 import Footer from '@/components/Footer';
 
 export default function Home() {
   return (
-    <main 
+    <main
       className="min-h-screen"
       style={{
         minHeight: '100vh',
@@ -27,6 +28,7 @@ export default function Home() {
       <Stats />
       <WhatWeDo />
       <Features />
+      <ContentCreators />
       <Feedback />
       <Footer />
     </main>

@@ -15,6 +15,10 @@ const footerLinks = {
     { name: 'Privacy Policy', href: '/privacy-policy' },
     { name: 'Terms & Conditions', href: '/terms-and-conditions' },
   ],
+  programs: [
+    { name: 'Content Creators', href: '/content-creators' },
+    { name: 'Apply to Program', href: '/content-creators/apply' },
+  ],
   contribute: [
     { name: 'Patreon', href: 'https://www.patreon.com/linespolicecad', external: true },
     { name: 'Police-CAD on Github', href: 'https://github.com/linesmerrill/police-cad', external: true },
@@ -273,6 +277,42 @@ export default function Footer() {
             </h3>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {footerLinks.about.map((item) => (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    style={{
+                      fontSize: '0.875rem',
+                      lineHeight: '1.5',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      textDecoration: 'none',
+                      transition: 'color 0.2s',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#fbbf24'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)'}
+                  >
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Programs */}
+          <div>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: '600',
+              color: '#fbbf24',
+              marginBottom: '1rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+            }}>
+              Programs
+            </h3>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {footerLinks.programs.map((item) => (
                 <li key={item.name}>
                   <Link
                     href={item.href}

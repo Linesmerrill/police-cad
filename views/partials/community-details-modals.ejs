@@ -671,23 +671,6 @@
     <script>
       // Modal Event Listeners
       document.addEventListener('DOMContentLoaded', function() {
-        // Account button click handler
-        const accountBtn = document.getElementById('accountBtn');
-        if (accountBtn) {
-          accountBtn.addEventListener('click', function() {
-            fillAccountDetails();
-            document.getElementById('accountModal').style.display = 'flex';
-          });
-        }
-        
-        // Account modal close button
-        const accountModalClose = document.getElementById('accountModalClose');
-        if (accountModalClose) {
-          accountModalClose.addEventListener('click', function() {
-            document.getElementById('accountModal').style.display = 'none';
-          });
-        }
-        
         // Notification button click handler
         const notificationBtn = document.getElementById('notificationBtn');
         if (notificationBtn) {
@@ -696,7 +679,7 @@
             fetchNotifications(0);
           });
         }
-        
+
         // Notification modal close button
         const notificationModalClose = document.getElementById('notificationModalClose');
         if (notificationModalClose) {
@@ -704,7 +687,7 @@
             document.getElementById('notificationModal').style.display = 'none';
           });
         }
-        
+
         // Notification modal cancel button
         const notificationModalCancel = document.getElementById('notificationModalCancel');
         if (notificationModalCancel) {
@@ -712,21 +695,15 @@
             document.getElementById('notificationModal').style.display = 'none';
           });
         }
-        
+
         // Close modals when clicking outside
         window.addEventListener('click', function(event) {
-          const accountModal = document.getElementById('accountModal');
           const notificationModal = document.getElementById('notificationModal');
-          const deactivateModal = document.getElementById('deactivateAccountModal');
-          
-          if (event.target === accountModal && (!deactivateModal || deactivateModal.style.display === 'none')) {
-            accountModal.style.display = 'none';
-          }
           if (event.target === notificationModal) {
             notificationModal.style.display = 'none';
           }
         });
-        
+
         // Initialize notification count on page load
         if (dbUser && dbUser._id) {
           // Initialize notification count using the function from notifications.js
@@ -735,29 +712,6 @@
       });
       
       // Fill account details function (same as community dashboard)
-      function fillAccountDetails() {
-        if (dbUser && dbUser.user) {
-          const emailField = document.getElementById('accountEmail');
-          const usernameField = document.getElementById('accountUsername');
-          const callSignField = document.getElementById('accountCallSign');
-          const profilePicture = document.getElementById('profilePicture');
-          
-          if (emailField) emailField.value = dbUser.user.email;
-          if (usernameField) {
-            usernameField.value = dbUser.user.username;
-            usernameField.defaultValue = dbUser.user.username; // Set default for change detection
-          }
-          if (callSignField) {
-            callSignField.value = dbUser.user.callSign;
-            callSignField.defaultValue = dbUser.user.callSign; // Set default for change detection
-          }
-          if (profilePicture) {
-            const profileImageUrl = dbUser.user.profilePicture || '/static/images/civ-unknown-user.png';
-            profilePicture.style.backgroundImage = `url(${profileImageUrl})`;
-          }
-        }
-      }
-      
       // Modal open functions
       function openPromoteModal() {
         document.getElementById('promoteModal').style.display = 'flex';
@@ -7414,23 +7368,6 @@ async function saveEditEvent() {
       <!-- Modal Event Listeners -->
       <script>
         document.addEventListener('DOMContentLoaded', function() {
-          // Account button click handler
-          const accountBtn = document.getElementById('accountBtn');
-          if (accountBtn) {
-            accountBtn.addEventListener('click', function() {
-              fillAccountDetails();
-              document.getElementById('accountModal').style.display = 'flex';
-            });
-          }
-          
-          // Account modal close button
-          const accountModalClose = document.getElementById('accountModalClose');
-          if (accountModalClose) {
-            accountModalClose.addEventListener('click', function() {
-              document.getElementById('accountModal').style.display = 'none';
-            });
-          }
-          
           // Notification button click handler
           const notificationBtn = document.getElementById('notificationBtn');
           if (notificationBtn) {
@@ -7439,7 +7376,7 @@ async function saveEditEvent() {
               fetchNotifications(0);
             });
           }
-          
+
           // Notification modal close button
           const notificationModalClose = document.getElementById('notificationModalClose');
           if (notificationModalClose) {
@@ -7447,7 +7384,7 @@ async function saveEditEvent() {
               document.getElementById('notificationModal').style.display = 'none';
             });
           }
-          
+
           // Notification modal cancel button
           const notificationModalCancel = document.getElementById('notificationModalCancel');
           if (notificationModalCancel) {
@@ -7455,17 +7392,12 @@ async function saveEditEvent() {
               document.getElementById('notificationModal').style.display = 'none';
             });
           }
-          
+
           // Close modals when clicking outside
           window.addEventListener('click', function(event) {
-            const accountModal = document.getElementById('accountModal');
             const notificationModal = document.getElementById('notificationModal');
-            const deactivateModal = document.getElementById('deactivateAccountModal');
             const generalSettingsModal = document.getElementById('generalSettingsModal');
-            
-            if (event.target === accountModal && (!deactivateModal || deactivateModal.style.display === 'none')) {
-              accountModal.style.display = 'none';
-            }
+
             if (event.target === notificationModal) {
               notificationModal.style.display = 'none';
             }
@@ -7596,29 +7528,6 @@ async function saveEditEvent() {
           }
         });
         
-        // Fill account details function (same as community dashboard)
-        function fillAccountDetails() {
-          if (dbUser && dbUser.user) {
-            const emailField = document.getElementById('accountEmail');
-            const usernameField = document.getElementById('accountUsername');
-            const callSignField = document.getElementById('accountCallSign');
-            const profilePicture = document.getElementById('profilePicture');
-            
-            if (emailField) emailField.value = dbUser.user.email;
-            if (usernameField) {
-              usernameField.value = dbUser.user.username;
-              usernameField.defaultValue = dbUser.user.username; // Set default for change detection
-            }
-            if (callSignField) {
-              callSignField.value = dbUser.user.callSign;
-              callSignField.defaultValue = dbUser.user.callSign; // Set default for change detection
-            }
-            if (profilePicture) {
-              const profileImageUrl = dbUser.user.profilePicture || '/static/images/civ-unknown-user.png';
-              profilePicture.style.backgroundImage = `url(${profileImageUrl})`;
-            }
-          }
-        }
       </script>
     <% } %> 
     

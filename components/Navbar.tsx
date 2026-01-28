@@ -182,7 +182,20 @@ export default function Navbar() {
               e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
-            <UserIcon style={{ width: '16px', height: '16px' }} />
+            {user.profilePicture ? (
+              <img
+                src={user.profilePicture}
+                alt=""
+                className={`navbar-profile-pic ${
+                  user.subscription?.active && user.subscription?.plan === 'premium_plus' ? 'tier-premium-plus' :
+                  user.subscription?.active && user.subscription?.plan === 'premium' ? 'tier-premium' :
+                  user.subscription?.active && user.subscription?.plan === 'basic' ? 'tier-basic' :
+                  'tier-free'
+                }`}
+              />
+            ) : (
+              <UserIcon style={{ width: '16px', height: '16px' }} />
+            )}
             <span style={{ fontWeight: '700' }}>{user.username || user.email?.split('@')[0] || 'User'}</span>
             {userMenuOpen ? (
               <ChevronUpIcon style={{ width: '14px', height: '14px' }} />
