@@ -10421,15 +10421,15 @@ async function saveEditEvent() {
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
             <div>
               <label style="display:block; color:#a0aec0; font-size:0.875rem; margin-bottom:0.25rem;">Plate <span style="color:#ef4444;">*</span></label>
-              <input type="text" id="editVehiclePlate" required style="width:100%; padding:0.5rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:0.875rem;">
+              <input type="text" id="editVehiclePlate" required maxlength="8" style="width:100%; padding:0.5rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:0.875rem; text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
             </div>
             <div>
-              <label style="display:block; color:#a0aec0; font-size:0.875rem; margin-bottom:0.25rem;">License Plate State</label>
-              <input type="text" id="editVehiclePlateState" style="width:100%; padding:0.5rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:0.875rem;">
+              <label style="display:block; color:#a0aec0; font-size:0.875rem; margin-bottom:0.25rem;">License Plate State <span style="color:#6b7280; font-size:0.75rem;">(XX)</span></label>
+              <input type="text" id="editVehiclePlateState" maxlength="2" style="width:100%; padding:0.5rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:0.875rem; text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
             </div>
             <div>
               <label style="display:block; color:#a0aec0; font-size:0.875rem; margin-bottom:0.25rem;">VIN <span style="color:#ef4444;">*</span></label>
-              <input type="text" id="editVehicleVin" required style="width:100%; padding:0.5rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:0.875rem;">
+              <input type="text" id="editVehicleVin" required placeholder="VIN" minlength="17" maxlength="17" style="width:100%; padding:0.5rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:0.875rem;">
             </div>
             <div>
               <label style="display:block; color:#a0aec0; font-size:0.875rem; margin-bottom:0.25rem;">Type <span style="color:#ef4444;">*</span></label>
@@ -10444,8 +10444,8 @@ async function saveEditEvent() {
               <input type="text" id="editVehicleModel" style="width:100%; padding:0.5rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:0.875rem;">
             </div>
             <div>
-              <label style="display:block; color:#a0aec0; font-size:0.875rem; margin-bottom:0.25rem;">Year</label>
-              <input type="text" id="editVehicleYear" style="width:100%; padding:0.5rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:0.875rem;">
+              <label style="display:block; color:#a0aec0; font-size:0.875rem; margin-bottom:0.25rem;">Year <span style="color:#6b7280; font-size:0.75rem;">(YYYY)</span></label>
+              <input type="text" id="editVehicleYear" inputmode="numeric" pattern="\d{4}" minlength="4" maxlength="4" placeholder="YYYY" oninput="this.value=this.value.replace(/\D/g,'')" style="width:100%; padding:0.5rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:0.875rem;">
             </div>
             <div>
               <label style="display:block; color:#a0aec0; font-size:0.875rem; margin-bottom:0.25rem;">Color</label>
@@ -10499,7 +10499,7 @@ async function saveEditEvent() {
         </div>
         <div style="margin-bottom:1.5rem;">
           <div style="position:relative;">
-            <input type="text" id="firearmsSearchInput" placeholder="Search firearms by name or serial number..." style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem; padding-right:3rem;" oninput="searchFirearms(this.value)">
+            <input type="text" id="firearmsSearchInput" placeholder="Search by name, serial number, or type..." style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem; padding-right:3rem;" oninput="searchFirearms(this.value)">
             <button id="firearmsSearchClear" onclick="clearFirearmsSearch()" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:#a0aec0; cursor:pointer; display:none; font-size:1.125rem;">
               <i class="fa fa-times"></i>
             </button>

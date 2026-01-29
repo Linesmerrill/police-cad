@@ -2046,6 +2046,52 @@ function updateDepartmentJoinButton(departmentId, status) {
   };
 
   // ==========================================
+  // FORM DIRTY-TRACKING HELPER
+  // ==========================================
+  // Snapshots form field values and enables/disables the save button based on changes
+  function setupFormDirtyTracking(fieldIds, saveButtonId) {
+    const snapshot = {};
+    fieldIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      snapshot[id] = el.type === 'checkbox' ? el.checked : el.value;
+    });
+
+    function checkDirty() {
+      const changed = fieldIds.some(id => {
+        const el = document.getElementById(id);
+        if (!el) return false;
+        const current = el.type === 'checkbox' ? el.checked : el.value;
+        return current !== snapshot[id];
+      });
+      const btn = document.getElementById(saveButtonId);
+      if (btn) {
+        btn.disabled = !changed;
+        btn.style.opacity = changed ? '1' : '0.5';
+        btn.style.cursor = changed ? 'pointer' : 'not-allowed';
+      }
+    }
+
+    // Attach listeners
+    const handlers = [];
+    fieldIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const event = el.type === 'checkbox' ? 'change' : 'input';
+      el.addEventListener(event, checkDirty);
+      handlers.push({ el, event, handler: checkDirty });
+    });
+
+    // Disable button initially
+    checkDirty();
+
+    // Return cleanup function
+    return function cleanup() {
+      handlers.forEach(({ el, event, handler }) => el.removeEventListener(event, handler));
+    };
+  }
+
+  // ==========================================
   // VEHICLES MANAGEMENT
   // ==========================================
   let vehiclesData = [];
@@ -2054,6 +2100,7 @@ function updateDepartmentJoinButton(departmentId, status) {
   let vehiclesSearchTimeout = null;
   let currentEditVehicleId = null;
   let vehicleToDelete = null;
+  let cleanupVehicleDirtyTracking = null;
 
   window.openVehiclesModal = function() {
     document.getElementById('vehiclesModal').style.display = 'flex';
@@ -2231,6 +2278,14 @@ function updateDepartmentJoinButton(departmentId, status) {
       document.getElementById('editVehicleIsStolen').checked = v.isStolen === 'true' || v.isStolen === true;
 
       document.getElementById('editVehicleModal').style.display = 'flex';
+
+      // Setup dirty tracking — disable Save until a field changes
+      if (cleanupVehicleDirtyTracking) cleanupVehicleDirtyTracking();
+      cleanupVehicleDirtyTracking = setupFormDirtyTracking([
+        'editVehiclePlate', 'editVehiclePlateState', 'editVehicleVin', 'editVehicleType',
+        'editVehicleMake', 'editVehicleModel', 'editVehicleYear', 'editVehicleColor',
+        'editVehicleValidRegistration', 'editVehicleValidInsurance', 'editVehicleIsStolen'
+      ], 'saveVehicleBtn');
     } catch (err) {
       console.error('Error fetching vehicle:', err);
       showCustomToast('Failed to load vehicle details', 'error');
@@ -2240,6 +2295,7 @@ function updateDepartmentJoinButton(departmentId, status) {
   window.closeEditVehicleModal = function() {
     document.getElementById('editVehicleModal').style.display = 'none';
     currentEditVehicleId = null;
+    if (cleanupVehicleDirtyTracking) { cleanupVehicleDirtyTracking(); cleanupVehicleDirtyTracking = null; }
   };
 
   window.saveVehicle = async function() {
@@ -2299,6 +2355,8 @@ function updateDepartmentJoinButton(departmentId, status) {
       showCustomToast('Failed to update vehicle', 'error');
     } finally {
       btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
       btn.textContent = 'Save Changes';
     }
   };
@@ -2338,6 +2396,7 @@ function updateDepartmentJoinButton(departmentId, status) {
   let firearmsSearchTimeout = null;
   let currentEditFirearmId = null;
   let firearmToDelete = null;
+  let cleanupFirearmDirtyTracking = null;
 
   window.openFirearmsModal = function() {
     document.getElementById('firearmsModal').style.display = 'flex';
@@ -2463,7 +2522,7 @@ function updateDepartmentJoinButton(departmentId, status) {
 
       try {
         const encoded = encodeURIComponent(query.trim());
-        const res = await fetch(`${API_URL}/api/v1/firearms/search?name=${encoded}&serialNumber=${encoded}&communityId=${communityId}&limit=50`);
+        const res = await fetch(`${API_URL}/api/v1/firearms/search?name=${encoded}&serialNumber=${encoded}&weaponType=${encoded}&communityId=${communityId}&limit=50`);
         if (!res.ok) throw new Error('Search failed');
         const data = await res.json();
         firearmsData = (data.firearms || []).map(f => ({
@@ -2504,6 +2563,13 @@ function updateDepartmentJoinButton(departmentId, status) {
       document.getElementById('editFirearmIsStolen').checked = f.isStolen === 'true' || f.isStolen === true;
 
       document.getElementById('editFirearmModal').style.display = 'flex';
+
+      // Setup dirty tracking — disable Save until a field changes
+      if (cleanupFirearmDirtyTracking) cleanupFirearmDirtyTracking();
+      cleanupFirearmDirtyTracking = setupFormDirtyTracking([
+        'editFirearmName', 'editFirearmWeaponType', 'editFirearmCaliber',
+        'editFirearmSerialNumber', 'editFirearmIsStolen'
+      ], 'saveFirearmBtn');
     } catch (err) {
       console.error('Error fetching firearm:', err);
       showCustomToast('Failed to load firearm details', 'error');
@@ -2513,6 +2579,7 @@ function updateDepartmentJoinButton(departmentId, status) {
   window.closeEditFirearmModal = function() {
     document.getElementById('editFirearmModal').style.display = 'none';
     currentEditFirearmId = null;
+    if (cleanupFirearmDirtyTracking) { cleanupFirearmDirtyTracking(); cleanupFirearmDirtyTracking = null; }
   };
 
   window.saveFirearm = async function() {
@@ -2566,6 +2633,8 @@ function updateDepartmentJoinButton(departmentId, status) {
       showCustomToast('Failed to update firearm', 'error');
     } finally {
       btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
       btn.textContent = 'Save Changes';
     }
   };
