@@ -72,48 +72,56 @@ function renderNotifications() {
   $list.empty();
 
   allNotifications.forEach((notification) => {
-    const isUnseen = !notification.seen ? "background: rgba(102,126,234,0.1); border-left: 3px solid #667eea;" : "";
+    const isUnseen = !notification.seen;
+    const unseenStyle = isUnseen ? "background: rgba(59, 130, 246, 0.06);" : "";
+    const unseenDot = isUnseen ? '<div style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; flex-shrink: 0;"></div>' : '';
+
     let actionButtons = "";
     if (
       ["friend_request", "join_request"].includes(notification.type) &&
       !notification.status
     ) {
+      const isLoading = notificationLoading[notification.notificationId];
       actionButtons = `
-          <div style="display: flex; gap: 0.5rem; margin-left: 1rem;">
-            <button style="background: #48bb78; color: #fff; border: none; border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;" onclick="handleNotificationAction('${
-              notification.notificationId
-            }', 'approved')" 
-              ${
-                notificationLoading[notification.notificationId]
-                  ? "disabled"
-                  : ""
-              }>
-              ${
-                notificationLoading[notification.notificationId]
-                  ? "Processing..."
-                  : "Approve"
-              }
-            </button>
-            <button style="background: #f56565; color: #fff; border: none; border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;" onclick="handleNotificationAction('${
-              notification.notificationId
-            }', 'declined')" 
-              ${
-                notificationLoading[notification.notificationId]
-                  ? "disabled"
-                  : ""
-              }>
-              ${
-                notificationLoading[notification.notificationId]
-                  ? "Processing..."
-                  : "Deny"
-              }
-            </button>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.65rem;">
+            <button style="
+              background: rgba(34, 197, 94, 0.12);
+              color: #4ade80;
+              border: 1px solid rgba(34, 197, 94, 0.2);
+              border-radius: 8px;
+              padding: 0.45rem 1rem;
+              font-size: 0.8rem;
+              font-weight: 500;
+              cursor: pointer;
+              transition: all 0.15s;
+            " onclick="handleNotificationAction('${notification.notificationId}', 'approved')"
+              ${isLoading ? "disabled" : ""}
+              onmouseover="if(!this.disabled){this.style.background='rgba(34,197,94,0.22)'}"
+              onmouseout="this.style.background='rgba(34,197,94,0.12)'"
+            >${isLoading ? "Processing..." : "Approve"}</button>
+            <button style="
+              background: rgba(239, 68, 68, 0.1);
+              color: #f87171;
+              border: 1px solid rgba(239, 68, 68, 0.2);
+              border-radius: 8px;
+              padding: 0.45rem 1rem;
+              font-size: 0.8rem;
+              font-weight: 500;
+              cursor: pointer;
+              transition: all 0.15s;
+            " onclick="handleNotificationAction('${notification.notificationId}', 'declined')"
+              ${isLoading ? "disabled" : ""}
+              onmouseover="if(!this.disabled){this.style.background='rgba(239,68,68,0.2)'}"
+              onmouseout="this.style.background='rgba(239,68,68,0.1)'"
+            >${isLoading ? "Processing..." : "Deny"}</button>
           </div>
         `;
     } else if (notification.status) {
-      actionButtons = `<p style="color: #a0aec0; margin: 0; font-size: 0.9rem;">${
+      const statusColor = notification.status === "approved" ? "#4ade80" : "#f87171";
+      const statusBg = notification.status === "approved" ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)";
+      actionButtons = `<span style="display: inline-block; margin-top: 0.5rem; color: ${statusColor}; background: ${statusBg}; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 6px; font-weight: 500;">${
         notification.status === "approved" ? "Accepted" : "Declined"
-      } request</p>`;
+      }</span>`;
     }
 
     let message = "";
@@ -128,32 +136,34 @@ function renderNotifications() {
     }
 
     $list.append(`
-        <div class="notification-item" style="padding: 1.2rem; border-bottom: 1px solid #35385a; ${isUnseen}; transition: all 0.2s;">
-          <div style="display: flex; align-items: flex-start; gap: 1rem;">
-            <div style="flex-shrink: 0;">
+        <div class="notification-item" style="padding: 0.85rem 1.25rem; ${unseenStyle} transition: background 0.15s;">
+          <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+            <div style="flex-shrink: 0; margin-top: 2px;">
               <img src="${
                 notification.senderProfilePic ||
                 "https://ui-avatars.com/api/?name=" +
                   encodeURIComponent(notification.senderUsername || "Unknown") +
-                  "&background=808080&color=fff&size=256"
-              }" 
-                alt="${
-                  notification.senderUsername || "Unknown"
-                }" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #35385a;">
+                  "&background=1e293b&color=94a3b8&size=256"
+              }"
+                alt="${notification.senderUsername || "Unknown"}"
+                style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); object-fit: cover;">
             </div>
             <div style="flex: 1; min-width: 0;">
-              <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;">
-                <div style="flex: 1; min-width: 0;">
-                  <p style="margin: 0 0 0.5rem 0; color: #f7fafc; font-size: 1rem; line-height: 1.4;">${message}</p>
-                  <small style="color: #a0aec0; font-size: 0.9rem;">${notification.timeAgo}</small>
-                </div>
-                ${actionButtons}
+              <p style="margin: 0; color: #e2e8f0; font-size: 0.875rem; line-height: 1.45; word-wrap: break-word;">${message}</p>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem;">
+                <span style="color: #64748b; font-size: 0.75rem;">${notification.timeAgo}</span>
+                ${unseenDot}
               </div>
+              ${actionButtons}
             </div>
             <div style="flex-shrink: 0;">
-              <button style="background: none; border: none; color: #a0aec0; font-size: 1.2rem; cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: all 0.2s;" onclick="openNotificationMenu('${
-                notification.notificationId
-              }', event)" onmouseover="this.style.color='#f7fafc'" onmouseout="this.style.color='#a0aec0'">
+              <button style="
+                width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+                background: rgba(255, 255, 255, 0.04); border: none; color: #64748b; font-size: 0.85rem;
+                cursor: pointer; border-radius: 8px; transition: all 0.15s;
+              " onclick="openNotificationMenu('${notification.notificationId}', event)"
+                onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#e2e8f0'"
+                onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.color='#64748b'">
                 <i class="fas fa-ellipsis-v"></i>
               </button>
             </div>

@@ -1,70 +1,108 @@
 <div
   id="notificationModal"
   class="heroui-modal"
-  style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;"
+  style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); align-items:flex-end; justify-content:center;"
+  onclick="if(event.target===this){this.style.display='none';}"
 >
-  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; position:relative; border:1px solid #35385a;">
-    <button
-      id="notificationModalClose"
-      aria-label="Close"
-      style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"
-    >
-      <i class="fa fa-times"></i>
-    </button>
-    
-    <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
-      <i class="fa fa-bell" style="margin-right:0.5rem; color:#667eea;"></i>
-      Notifications
-    </h3>
-    
+  <div id="notificationPanel" style="
+    background: rgba(15, 15, 25, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    border-bottom: none;
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.4);
+    animation: notif-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  ">
+    <!-- Drag handle for mobile -->
+    <div style="display: flex; justify-content: center; padding: 10px 0 4px 0; flex-shrink: 0;">
+      <div style="width: 36px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.2);"></div>
+    </div>
+
+    <!-- Header -->
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1.25rem 1rem 1.25rem; flex-shrink: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(59, 130, 246, 0.15); display: flex; align-items: center; justify-content: center;">
+          <i class="fa fa-bell" style="color: #60a5fa; font-size: 0.95rem;"></i>
+        </div>
+        <h3 style="color: #f1f5f9; margin: 0; font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em;">Notifications</h3>
+      </div>
+      <button
+        id="notificationModalClose"
+        aria-label="Close"
+        style="width: 34px; height: 34px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); color: #94a3b8; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s;"
+        onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.color='#fff'"
+        onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.color='#94a3b8'"
+      >
+        <i class="fa fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Error -->
     <div
       id="notification-error"
-      style="display:none; background:#f56565; color:#fff; border-radius:8px; padding:1rem; margin-bottom:1.5rem; border:1px solid #e53e3e;"
+      style="display:none; margin: 0.75rem 1rem 0 1rem; background: rgba(239, 68, 68, 0.12); color: #fca5a5; border-radius: 10px; padding: 0.75rem 1rem; border: 1px solid rgba(239, 68, 68, 0.2); font-size: 0.875rem;"
     >
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <strong>Error!</strong> <span id="notification-error-message"></span>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap: 0.5rem;">
+        <span><i class="fa fa-exclamation-circle" style="margin-right: 0.4rem;"></i><span id="notification-error-message"></span></span>
         <button
           type="button"
           onclick="document.getElementById('notification-error').style.display='none'"
-          style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;"
+          style="background:none; border:none; color:#fca5a5; font-size:1rem; cursor:pointer; flex-shrink: 0; padding: 0.25rem;"
         >
           <i class="fa fa-times"></i>
         </button>
       </div>
     </div>
-    
+
+    <!-- Loading state -->
     <div
       id="notification-loading"
-      style="display:flex; justify-content:center; align-items:center; padding:3rem;"
+      style="display:flex; justify-content:center; align-items:center; padding:3rem 1rem; flex-shrink: 0;"
     >
-      <div style="color:#a0aec0; font-style:italic;">Loading notifications...</div>
+      <div style="color:#64748b; font-size: 0.9rem;">Loading notifications...</div>
     </div>
-    
-    <div id="notification-list" style="display:none; max-height:60vh; overflow-y:auto;"></div>
-    
-    <div id="no-notifications" style="display:none; text-align:center; padding:3rem; color:#a0aec0;">
-      <i class="fa fa-bell-slash" style="font-size:3rem; margin-bottom:1rem; opacity:0.5;"></i>
-      <p style="font-style:italic; font-size:1.1rem; margin:0;">No notifications found.</p>
+
+    <!-- Notification list (scrollable) -->
+    <div id="notification-list" style="display:none; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0.5rem 0;"></div>
+
+    <!-- Empty state -->
+    <div id="no-notifications" style="display:none; text-align:center; padding: 3rem 1.5rem; flex-shrink: 0;">
+      <div style="width: 56px; height: 56px; border-radius: 16px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto;">
+        <i class="fa fa-bell-slash" style="font-size: 1.4rem; color: #475569;"></i>
+      </div>
+      <p style="color: #64748b; font-size: 0.9rem; margin: 0;">No notifications yet</p>
     </div>
-    
+
+    <!-- Load more -->
     <div
       id="notification-load-more"
-      style="display:none; text-align:center; margin-top:1.5rem;"
+      style="display:none; text-align:center; padding: 0.75rem 1rem 1rem 1rem; flex-shrink: 0; border-top: 1px solid rgba(255, 255, 255, 0.04);"
     >
-      <button onclick="loadMoreNotifications()" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:all 0.2s;">
+      <button onclick="loadMoreNotifications()" style="
+        background: rgba(59, 130, 246, 0.1);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 10px;
+        padding: 0.6rem 1.5rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s;
+        width: 100%;
+      " onmouseover="this.style.background='rgba(59,130,246,0.2)'" onmouseout="this.style.background='rgba(59,130,246,0.1)'">
         Load More
       </button>
     </div>
-    
-    <div style="margin-top:2rem; text-align:center;">
-      <button
-        id="notificationModalCancel"
-        type="button"
-        style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;"
-      >
-        Close
-      </button>
-    </div>
+
+    <!-- Bottom safe area spacer for mobile -->
+    <div style="flex-shrink: 0; height: env(safe-area-inset-bottom, 0);"></div>
   </div>
 </div>
 
@@ -74,25 +112,98 @@
 <!-- Notification Context Menu (Dropdown) -->
 <div
   id="notificationContextMenu"
-  style="display: none; position: fixed; z-index: 9999; background: #1e2028; border: 1px solid #35385a; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); min-width: 160px; overflow: hidden;"
+  style="display: none; position: fixed; z-index: 9999; background: rgba(15, 15, 25, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); min-width: 170px; overflow: hidden; padding: 4px;"
 >
   <button
     id="notificationMarkReadBtn"
     onclick="markNotificationAsRead()"
-    style="display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.75rem 1rem; background: none; border: none; color: #e2e8f0; font-size: 0.875rem; cursor: pointer; text-align: left; transition: background 0.15s;"
-    onmouseover="this.style.background='#35385a'"
+    style="display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.65rem 0.85rem; background: none; border: none; color: #e2e8f0; font-size: 0.85rem; cursor: pointer; text-align: left; transition: background 0.15s; border-radius: 8px;"
+    onmouseover="this.style.background='rgba(255,255,255,0.08)'"
     onmouseout="this.style.background='none'"
   >
-    <i class="fa fa-check" style="color: #48bb78; width: 16px;"></i>
+    <i class="fa fa-check" style="color: #34d399; width: 16px;"></i>
     Mark as Read
   </button>
   <button
     onclick="deleteNotification()"
-    style="display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.75rem 1rem; background: none; border: none; color: #f56565; font-size: 0.875rem; cursor: pointer; text-align: left; transition: background 0.15s;"
-    onmouseover="this.style.background='#35385a'"
+    style="display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.65rem 0.85rem; background: none; border: none; color: #f87171; font-size: 0.85rem; cursor: pointer; text-align: left; transition: background 0.15s; border-radius: 8px;"
+    onmouseover="this.style.background='rgba(239,68,68,0.1)'"
     onmouseout="this.style.background='none'"
   >
     <i class="fa fa-trash" style="width: 16px;"></i>
     Delete
   </button>
 </div>
+
+<style>
+  @keyframes notif-slide-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  /* Desktop: centered modal instead of bottom sheet */
+  @media (min-width: 640px) {
+    #notificationModal {
+      align-items: center !important;
+    }
+    #notificationPanel {
+      border-radius: 20px !important;
+      border-bottom: 1px solid rgba(59, 130, 246, 0.15) !important;
+      max-width: 480px !important;
+      max-height: 75vh !important;
+      width: 90% !important;
+      animation: notif-fade-in 0.2s ease-out !important;
+    }
+  }
+
+  @keyframes notif-fade-in {
+    from { opacity: 0; transform: scale(0.97) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  /* Toast styles */
+  #toast-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9998;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 340px;
+  }
+  .custom-toast {
+    background: rgba(15, 15, 25, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    display: none;
+  }
+  .custom-toast-header {
+    display: flex;
+    align-items: center;
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    color: #e2e8f0;
+    font-size: 0.85rem;
+  }
+  .custom-toast-header strong { flex: 1; }
+  .custom-toast-header small { color: #64748b; margin-right: 0.5rem; }
+  .custom-toast-header .close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+  .custom-toast-body {
+    padding: 0.65rem 0.85rem;
+    color: #cbd5e1;
+    font-size: 0.85rem;
+  }
+</style>
