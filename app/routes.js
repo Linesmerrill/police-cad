@@ -3417,6 +3417,31 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Get user's boost-eligible communities with search support (requires auth)
+  app.get("/api/v2/user/:userId/boost-communities", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.params.userId;
+      if (!ObjectId.isValid(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      const params = new URLSearchParams();
+      if (req.query.search) params.set('search', req.query.search);
+      if (req.query.limit) params.set('limit', req.query.limit);
+      const qs = params.toString();
+      const response = await axios.get(`${policeCadApiUrl}/api/v2/user/${encodeURIComponent(userId)}/boost-communities${qs ? '?' + qs : ''}`, {
+        headers: config.headers
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[BoostCommunities] Error fetching boost communities:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch boost communities" });
+      }
+    }
+  });
+
   // Request removal from program
   app.post("/api/v1/content-creators/me/removal-request", apiAuthCheck, async function (req, res) {
     try {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -126,6 +126,11 @@ function CommunityPricingContent() {
   const [subscribing, setSubscribing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [communitySearch, setCommunitySearch] = useState('');
+  const [showCommunityDropdown, setShowCommunityDropdown] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -194,19 +199,47 @@ function CommunityPricingContent() {
     fetchTiers();
   }, []);
 
-  const fetchCommunities = async (userId: string) => {
+  const fetchCommunities = useCallback(async (userId: string, search?: string) => {
     try {
-      const response = await fetch(`/api/v1/communities/${userId}`, {
+      if (search !== undefined) setSearchLoading(true);
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      params.set('limit', '20');
+      const qs = params.toString();
+      const response = await fetch(`/api/v2/user/${userId}/boost-communities${qs ? '?' + qs : ''}`, {
         credentials: 'include'
       });
       if (response.ok) {
         const data = await response.json();
-        setCommunities(data.communities || data || []);
+        setCommunities(data || []);
       }
     } catch (error) {
       console.error('Error fetching communities:', error);
+    } finally {
+      setSearchLoading(false);
     }
-  };
+  }, []);
+
+  const handleCommunitySearch = useCallback((value: string) => {
+    setCommunitySearch(value);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    if (user) {
+      searchTimeoutRef.current = setTimeout(() => {
+        fetchCommunities(user.id, value);
+      }, 300);
+    }
+  }, [user, fetchCommunities]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowCommunityDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const getSelectedCommunityData = (): Community | undefined => {
     return communities.find(c => c._id === selectedCommunity);
@@ -683,7 +716,7 @@ function CommunityPricingContent() {
             </div>
 
             {/* Community Select */}
-            <div style={{ marginBottom: '20px' }}>
+            <div style={{ marginBottom: '20px' }} ref={dropdownRef}>
               <label style={{
                 display: 'block',
                 color: 'rgba(255, 255, 255, 0.7)',
@@ -692,10 +725,16 @@ function CommunityPricingContent() {
               }}>
                 Community to Boost
               </label>
-              {communities.length > 0 ? (
-                <select
-                  value={selectedCommunity}
-                  onChange={(e) => setSelectedCommunity(e.target.value)}
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  placeholder={selectedCommunity ? (communities.find(c => c._id === selectedCommunity)?.community?.name || 'Search communities...') : 'Search communities...'}
+                  value={communitySearch}
+                  onChange={(e) => {
+                    handleCommunitySearch(e.target.value);
+                    setShowCommunityDropdown(true);
+                  }}
+                  onFocus={() => setShowCommunityDropdown(true)}
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -703,21 +742,91 @@ function CommunityPricingContent() {
                     border: '1px solid rgba(255, 255, 255, 0.2)',
                     background: 'rgba(255, 255, 255, 0.05)',
                     color: '#fff',
-                    fontSize: '0.9rem'
+                    fontSize: '0.9rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
                   }}
-                >
-                  <option value="">Choose a community...</option>
-                  {communities.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.community?.name || 'Unnamed Community'}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.9rem' }}>
-                  You&apos;re not a member of any communities yet. Join one first!
-                </p>
-              )}
+                />
+                {selectedCommunity && !communitySearch && (
+                  <div style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#fff',
+                    fontSize: '0.9rem',
+                    pointerEvents: 'none'
+                  }}>
+                    {communities.find(c => c._id === selectedCommunity)?.community?.name || ''}
+                  </div>
+                )}
+                {searchLoading && (
+                  <div style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'rgba(255, 255, 255, 0.4)',
+                    fontSize: '0.75rem'
+                  }}>
+                    ...
+                  </div>
+                )}
+                {showCommunityDropdown && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    background: 'rgba(20, 20, 30, 0.98)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '8px',
+                    marginTop: '4px',
+                    zIndex: 10
+                  }}>
+                    {communities.length > 0 ? (
+                      communities.map((c) => (
+                        <div
+                          key={c._id}
+                          onClick={() => {
+                            setSelectedCommunity(c._id);
+                            setCommunitySearch('');
+                            setShowCommunityDropdown(false);
+                          }}
+                          style={{
+                            padding: '10px 12px',
+                            cursor: 'pointer',
+                            color: c._id === selectedCommunity ? '#fff' : 'rgba(255, 255, 255, 0.7)',
+                            background: c._id === selectedCommunity ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                            fontSize: '0.9rem',
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = c._id === selectedCommunity ? 'rgba(255, 255, 255, 0.1)' : 'transparent'}
+                        >
+                          {c.community?.name || 'Unnamed Community'}
+                          {c.community?.subscription?.active && (
+                            <span style={{
+                              marginLeft: '8px',
+                              fontSize: '0.75rem',
+                              color: 'rgba(251, 191, 36, 0.8)',
+                              textTransform: 'capitalize'
+                            }}>
+                              {c.community.subscription.plan} boost
+                            </span>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: '10px 12px', color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.85rem' }}>
+                        {communitySearch ? 'No communities found' : 'No communities available'}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Active Boost Info */}
