@@ -2141,7 +2141,7 @@ function updateDepartmentJoinButton(departmentId, status) {
   function displayVehicles() {
     const container = document.getElementById('vehiclesList');
     if (!vehiclesData || vehiclesData.length === 0) {
-      container.innerHTML = '<div style="padding:2rem; text-align:center; color:#a0aec0;">No vehicles found</div>';
+      container.innerHTML = '<div style="padding:3rem; text-align:center;"><i class="fa fa-car" style="font-size:3rem; color:#4a5568; margin-bottom:1rem; display:block;"></i><div style="color:#6b7280; font-size:1.1rem; font-weight:500;">No vehicles found</div><div style="color:#4a5568; font-size:0.9rem; margin-top:0.25rem;">Try adjusting your search or check back later</div></div>';
       return;
     }
 
@@ -2437,7 +2437,7 @@ function updateDepartmentJoinButton(departmentId, status) {
   function displayFirearms() {
     const container = document.getElementById('firearmsList');
     if (!firearmsData || firearmsData.length === 0) {
-      container.innerHTML = '<div style="padding:2rem; text-align:center; color:#a0aec0;">No firearms found</div>';
+      container.innerHTML = '<div style="padding:3rem; text-align:center;"><i class="fa fa-crosshairs" style="font-size:3rem; color:#4a5568; margin-bottom:1rem; display:block;"></i><div style="color:#6b7280; font-size:1.1rem; font-weight:500;">No firearms found</div><div style="color:#4a5568; font-size:0.9rem; margin-top:0.25rem;">Try adjusting your search or check back later</div></div>';
       return;
     }
 
