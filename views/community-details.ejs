@@ -730,6 +730,12 @@
             deptTotalCount = data.totalCount || 0;
             deptTotalPages = Math.max(1, Math.ceil(deptTotalCount / deptPerPage));
 
+            // Update the department count badge
+            var countBadge = document.getElementById('dept-count-badge');
+            if (countBadge && !deptCurrentFilter) {
+              countBadge.textContent = deptTotalCount;
+            }
+
             // Update template types if returned (only on first fetch without filter)
             if (data.templateTypes && !deptCurrentFilter) {
               deptTemplateTypes = data.templateTypes;
@@ -746,7 +752,12 @@
 
             // Append new department cards
             if (departments.length === 0 && clearContainer) {
-              container.innerHTML = '<div class="col-span-full dashboard-card text-center py-8"><i class="fa fa-building text-3xl text-slate-600 mb-3"></i><p class="text-slate-400">No departments found</p></div>';
+              var emptyHtml = '<div id="no-departments-empty-state" class="col-span-full dashboard-card text-center py-8"><i class="fa fa-building text-3xl text-slate-600 mb-3"></i><p class="text-slate-400">No departments yet</p>';
+              if (window.canManageDepartments) {
+                emptyHtml += '<button onclick="openCreateDepartmentModal()" class="btn-primary mt-4 text-sm"><i class="fa fa-plus mr-1"></i>Create First Department</button>';
+              }
+              emptyHtml += '</div>';
+              container.innerHTML = emptyHtml;
             } else {
               departments.forEach(function(dept, i) {
                 var globalIdx = startIdx + i;
@@ -1479,9 +1490,9 @@
             <h2 class="section-title text-white flex items-center gap-2">
               <i class="fa fa-building" style="color: #fbbf24;"></i>
               Departments
-              <% if (isMemberApproved && community.community.departments) { %>
-                <span class="text-xs px-2 py-0.5 rounded-full" style="color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
-                  <%= community.community.departments.length %>
+              <% if (isMemberApproved) { %>
+                <span id="dept-count-badge" class="text-xs px-2 py-0.5 rounded-full" style="color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+                  <%= community.community.departments ? community.community.departments.length : 0 %>
                 </span>
               <% } %>
             </h2>
