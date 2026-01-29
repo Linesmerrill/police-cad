@@ -1278,7 +1278,7 @@ function updateDepartmentJoinButton(departmentId, status) {
               <button onclick="copyInviteLink('${inviteCode.code}')" style="background:#4a5568; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:1rem; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;" title="Copy Link">
                 <i class="fa fa-copy"></i>
               </button>
-              <button onclick="deleteInviteCode('${inviteCode._id}', '${inviteCode.code}')" style="background:#e53e3e; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:1rem; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;" title="Delete Code">
+              <button onclick="confirmDeleteInviteCode('${inviteCode._id}')" style="background:#e53e3e; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:1rem; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;" title="Delete Code">
                 <i class="fa fa-trash"></i>
               </button>
             </div>
@@ -1362,68 +1362,10 @@ function updateDepartmentJoinButton(departmentId, status) {
     }
   };
   
-  // Global variables for delete confirmation
-  let pendingDeleteId = null;
-  let pendingDeleteCode = null;
-
-  // Show delete confirmation modal
-  window.deleteInviteCode = function(inviteCodeId, code) {
-    pendingDeleteId = inviteCodeId;
-    pendingDeleteCode = code;
-    
-    // Update modal content
-    document.getElementById('deleteCodeName').textContent = code;
-    
-    // Show modal
-    const modal = document.getElementById('deleteConfirmModal');
-    if (modal) {
-      modal.style.display = 'flex';
-      document.body.classList.add('modal-open');
-    }
-  };
-
-  // Close delete confirmation modal
-  window.closeDeleteConfirmModal = function() {
-    const modal = document.getElementById('deleteConfirmModal');
-    if (modal) {
-      modal.style.display = 'none';
-      document.body.classList.remove('modal-open');
-    }
-    // Clear pending delete data
-    pendingDeleteId = null;
-    pendingDeleteCode = null;
-  };
-
-  // Confirm delete invite code
-  window.confirmDeleteInviteCode = async function() {
-    if (!pendingDeleteId || !pendingDeleteCode) {
-      console.error('No pending delete data');
-      return;
-    }
-    
-    try {
-      const response = await fetch(`${API_URL}/api/v1/invite-code/${pendingDeleteId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${window.dbUser?.token || ''}`
-        }
-      });
-      
-      if (response.ok) {
-        showCustomToast(`Invite code "${pendingDeleteCode}" deleted successfully`, 'info');
-        // Close modal
-        closeDeleteConfirmModal();
-        // Reload the invite codes list
-        loadInviteCodes();
-      } else {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete invite code');
-      }
-    } catch (error) {
-      console.error('Error deleting invite code:', error);
-      showCustomToast(`Failed to delete invite code: ${error.message}`, 'error');
-    }
-  };
+  // Delete invite code functions are defined in community-details-modals.ejs
+  // confirmDeleteInviteCode(codeId) - shows confirmation modal
+  // deleteInviteCode() - performs the DELETE API call
+  // closeDeleteConfirmModal() - closes the modal
 
   // ========================================
   // CIVILIANS MANAGEMENT FUNCTIONS
