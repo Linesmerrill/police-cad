@@ -2101,7 +2101,7 @@ function updateDepartmentJoinButton(departmentId, status) {
     container.innerHTML = vehiclesData.map(item => {
       const v = item.vehicle || {};
       const user = item.user || {};
-      const displayName = [v.year, v.make, v.model].filter(Boolean).join(' ') || 'Unknown Vehicle';
+      const displayName = [v.year, v.make, v.model].filter(Boolean).join(' ') || (v.plate ? `Plate: ${v.plate}` : v.type || 'Vehicle');
       const plate = v.plate || 'N/A';
       const username = user.username ? `@${user.username}` : '';
       const createdAt = v.createdAt ? new Date(v.createdAt).toLocaleDateString() : '';
@@ -2184,7 +2184,7 @@ function updateDepartmentJoinButton(departmentId, status) {
 
       try {
         const encoded = encodeURIComponent(query.trim());
-        const res = await fetch(`${API_URL}/api/v1/vehicles/search?plate=${encoded}&make=${encoded}&model=${encoded}&active_community_id=${communityId}&limit=50`);
+        const res = await fetch(`${API_URL}/api/v1/vehicles/search?plate=${encoded}&vin=${encoded}&make=${encoded}&model=${encoded}&active_community_id=${communityId}&limit=50`);
         if (!res.ok) throw new Error('Search failed');
         const data = await res.json();
         vehiclesData = (data.vehicles || []).map(v => ({
@@ -2244,6 +2244,15 @@ function updateDepartmentJoinButton(departmentId, status) {
 
   window.saveVehicle = async function() {
     if (!currentEditVehicleId) return;
+
+    // Validate required fields
+    const plate = document.getElementById('editVehiclePlate').value.trim();
+    if (!plate) {
+      showCustomToast('Plate is required', 'error');
+      document.getElementById('editVehiclePlate').focus();
+      return;
+    }
+
     const btn = document.getElementById('saveVehicleBtn');
     btn.disabled = true;
     btn.textContent = 'Saving...';
@@ -2496,6 +2505,15 @@ function updateDepartmentJoinButton(departmentId, status) {
 
   window.saveFirearm = async function() {
     if (!currentEditFirearmId) return;
+
+    // Validate required fields
+    const name = document.getElementById('editFirearmName').value.trim();
+    if (!name) {
+      showCustomToast('Name is required', 'error');
+      document.getElementById('editFirearmName').focus();
+      return;
+    }
+
     const btn = document.getElementById('saveFirearmBtn');
     btn.disabled = true;
     btn.textContent = 'Saving...';

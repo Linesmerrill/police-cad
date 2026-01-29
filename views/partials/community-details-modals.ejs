@@ -10420,8 +10420,8 @@ async function saveEditEvent() {
         <form onsubmit="event.preventDefault(); saveVehicle();">
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
             <div>
-              <label style="display:block; color:#a0aec0; font-size:0.875rem; margin-bottom:0.25rem;">Plate</label>
-              <input type="text" id="editVehiclePlate" style="width:100%; padding:0.5rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:0.875rem;">
+              <label style="display:block; color:#a0aec0; font-size:0.875rem; margin-bottom:0.25rem;">Plate <span style="color:#ef4444;">*</span></label>
+              <input type="text" id="editVehiclePlate" required style="width:100%; padding:0.5rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:0.875rem;">
             </div>
             <div>
               <label style="display:block; color:#a0aec0; font-size:0.875rem; margin-bottom:0.25rem;">License Plate State</label>
@@ -10526,8 +10526,8 @@ async function saveEditEvent() {
         <form onsubmit="event.preventDefault(); saveFirearm();">
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
             <div>
-              <label style="display:block; color:#a0aec0; font-size:0.875rem; margin-bottom:0.25rem;">Name</label>
-              <input type="text" id="editFirearmName" style="width:100%; padding:0.5rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:0.875rem;">
+              <label style="display:block; color:#a0aec0; font-size:0.875rem; margin-bottom:0.25rem;">Name <span style="color:#ef4444;">*</span></label>
+              <input type="text" id="editFirearmName" required style="width:100%; padding:0.5rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:0.875rem;">
             </div>
             <div>
               <label style="display:block; color:#a0aec0; font-size:0.875rem; margin-bottom:0.25rem;">Weapon Type</label>
