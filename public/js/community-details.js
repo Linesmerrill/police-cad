@@ -2247,9 +2247,21 @@ function updateDepartmentJoinButton(departmentId, status) {
 
     // Validate required fields
     const plate = document.getElementById('editVehiclePlate').value.trim();
+    const vin = document.getElementById('editVehicleVin').value.trim();
+    const type = document.getElementById('editVehicleType').value.trim();
     if (!plate) {
       showCustomToast('Plate is required', 'error');
       document.getElementById('editVehiclePlate').focus();
+      return;
+    }
+    if (!vin) {
+      showCustomToast('VIN is required', 'error');
+      document.getElementById('editVehicleVin').focus();
+      return;
+    }
+    if (!type) {
+      showCustomToast('Type is required', 'error');
+      document.getElementById('editVehicleType').focus();
       return;
     }
 
@@ -2511,6 +2523,18 @@ function updateDepartmentJoinButton(departmentId, status) {
     if (!name) {
       showCustomToast('Name is required', 'error');
       document.getElementById('editFirearmName').focus();
+      return;
+    }
+    const serialNumber = document.getElementById('editFirearmSerialNumber').value.trim();
+    if (!serialNumber) {
+      showCustomToast('Serial Number is required', 'error');
+      document.getElementById('editFirearmSerialNumber').focus();
+      return;
+    }
+    const weaponType = document.getElementById('editFirearmWeaponType').value.trim();
+    if (!weaponType) {
+      showCustomToast('Weapon Type is required', 'error');
+      document.getElementById('editFirearmWeaponType').focus();
       return;
     }
 
