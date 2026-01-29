@@ -1514,7 +1514,7 @@
                 </button>
               <% } %>
             </div>
-          <% } else if (departments && departments.length) { %>
+          <% } else { %>
             <!-- Department Filter Tabs -->
             <div id="dept-filter-tabs" class="flex flex-wrap gap-2 mb-4" style="display: none;"></div>
 
@@ -1522,6 +1522,19 @@
               <%
               // Use community.community.departments which has full member data
               var allDepts = community.community.departments || [];
+              if (allDepts.length === 0) {
+              %>
+                <div id="no-departments-empty-state" class="col-span-full dashboard-card text-center py-8">
+                  <i class="fa fa-building text-3xl text-slate-600 mb-3"></i>
+                  <p class="text-slate-400">No departments yet</p>
+                  <% if (canManageDepartments) { %>
+                    <button onclick="openCreateDepartmentModal()" class="btn-primary mt-4 text-sm">
+                      <i class="fa fa-plus mr-1"></i>Create First Department
+                    </button>
+                  <% } %>
+                </div>
+              <%
+              } else {
               allDepts.forEach(function(dept, deptIndex) {
                 var templateName = (dept.template && dept.template.name) ? dept.template.name : '';
                 var approvalRequired = dept.approvalRequired;
@@ -1650,7 +1663,8 @@
                     </div>
                   </div>
                 </div>
-              <% }); %>
+              <% });
+              } %>
             </div>
 
             <% var totalDepts = allDepts.length; %>
@@ -1658,20 +1672,10 @@
               <button id="dept-prev-btn" onclick="changeDeptPage(-1)" class="btn-secondary text-sm" disabled style="opacity:0.5;cursor:not-allowed;">
                 <i class="fa fa-chevron-left mr-1"></i>Prev
               </button>
-              <span id="dept-page-info" class="text-slate-400 text-sm">Page 1 of <%= Math.ceil(totalDepts / 6) %></span>
+              <span id="dept-page-info" class="text-slate-400 text-sm">Page 1 of <%= Math.max(1, Math.ceil(totalDepts / 6)) %></span>
               <button id="dept-next-btn" onclick="changeDeptPage(1)" class="btn-secondary text-sm">
                 Next<i class="fa fa-chevron-right ml-1"></i>
               </button>
-            </div>
-          <% } else { %>
-            <div class="dashboard-card text-center py-8">
-              <i class="fa fa-building text-3xl text-slate-600 mb-3"></i>
-              <p class="text-slate-400">No departments yet</p>
-              <% if (canManageDepartments) { %>
-                <button onclick="openCreateDepartmentModal()" class="btn-primary mt-4 text-sm">
-                  <i class="fa fa-plus mr-1"></i>Create First Department
-                </button>
-              <% } %>
             </div>
           <% } %>
         </section>
