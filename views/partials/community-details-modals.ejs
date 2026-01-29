@@ -6210,6 +6210,83 @@ window.expandTemplateCard = function(idx) {
 
 <script>
 let currentEditDepartment = null;
+
+// Component display metadata: maps component key -> { label, icon, color }
+var editDeptComponentMeta = {
+  createCivilians:      { label: 'Create Civilians',             icon: 'fa-id-card',              color: 'text-blue-400' },
+  createVehicles:       { label: 'Create Vehicles',              icon: 'fa-car',                  color: 'text-green-400' },
+  createFirearms:       { label: 'Create Firearms',              icon: 'fa-crosshairs',           color: 'text-red-400' },
+  call911:              { label: 'Call 911',                      icon: 'fa-exclamation-triangle', color: 'text-yellow-400' },
+  '10CodesInterface':   { label: '10-Codes Interface',           icon: 'fa-list-ol',              color: 'text-purple-400' },
+  personSearch:         { label: 'Person Search & Actions',      icon: 'fa-search',               color: 'text-blue-400' },
+  vehicleSearch:        { label: 'Vehicle Search & Actions',     icon: 'fa-car',                  color: 'text-green-400' },
+  firearmSearch:        { label: 'Firearm Search & Actions',     icon: 'fa-crosshairs',           color: 'text-red-400' },
+  createBolos:          { label: 'Create Bolos',                 icon: 'fa-bullhorn',             color: 'text-orange-400' },
+  viewBolosAndWarrants: { label: 'View Calls, Bolos & Warrants', icon: 'fa-eye',                  color: 'text-cyan-400' },
+  notepad:              { label: 'Notepad',                      icon: 'fa-sticky-note',          color: 'text-purple-400' },
+  dispatchUnits:        { label: 'Dispatch Units',               icon: 'fa-headset',              color: 'text-blue-400' },
+  createAndManageCalls: { label: 'Create & Manage Calls',        icon: 'fa-phone',                color: 'text-green-400' },
+  manage911Calls:       { label: 'Manage 911 Calls',             icon: 'fa-ambulance',            color: 'text-red-400' },
+  nameSearch:           { label: 'Name Search',                  icon: 'fa-search',               color: 'text-blue-400' }
+};
+
+function renderEditDeptComponents(components) {
+  var container = document.getElementById('editDeptComponentsContainer');
+  if (!components || components.length === 0) {
+    container.innerHTML = '<div class="text-gray-500 text-sm">No components configured</div>';
+    return;
+  }
+  container.innerHTML = components.map(function(comp) {
+    var meta = editDeptComponentMeta[comp.name] || { label: comp.name, icon: 'fa-puzzle-piece', color: 'text-gray-400' };
+    return '<div class="flex items-center justify-between">'
+      + '<div class="flex items-center gap-2">'
+      + '<i class="fa ' + meta.icon + ' ' + meta.color + ' text-sm"></i>'
+      + '<span class="text-gray-300 text-sm">' + meta.label + '</span>'
+      + '</div>'
+      + '<label class="relative inline-flex items-center cursor-pointer">'
+      + '<input type="checkbox" data-component-name="' + comp.name + '" class="sr-only peer edit-dept-component-toggle"' + (comp.enabled ? ' checked' : '') + '>'
+      + '<div class="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>'
+      + '<div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-4"></div>'
+      + '</label>'
+      + '</div>';
+  }).join('');
+}
+
+function populateEditDeptModal(dept) {
+  // Set basic department info
+  document.getElementById('editDeptId').value = dept._id || '';
+  document.getElementById('editDeptImageUrl').value = dept.image || '';
+  document.getElementById('editDeptName').value = dept.name || '';
+  document.getElementById('editDeptDescription').value = dept.description || '';
+  document.getElementById('editDeptApprovalRequired').checked = !!dept.approvalRequired;
+
+  // Update image preview
+  var preview = document.getElementById('editDeptImagePreview');
+  var placeholder = document.getElementById('editDeptImagePlaceholder');
+  var deleteBtn = document.getElementById('editDeptImageDeleteBtn');
+  if (dept.image) {
+    preview.src = dept.image;
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+    if (deleteBtn) deleteBtn.style.display = 'flex';
+  } else {
+    preview.src = '';
+    preview.style.display = 'none';
+    placeholder.style.display = 'flex';
+    if (deleteBtn) deleteBtn.style.display = 'none';
+  }
+
+  // Dynamically render components from template
+  if (dept.template && dept.template.components) {
+    renderEditDeptComponents(dept.template.components);
+  } else {
+    renderEditDeptComponents([]);
+  }
+
+  updateEditDeptVisibilityLabel();
+  document.getElementById('editDepartmentModal').style.display = 'flex';
+}
+
 function openEditDepartmentModal(departmentId) {
   currentEditDepartment = departmentId;
   const communityId = '<%= community._id %>';
@@ -6217,83 +6294,12 @@ function openEditDepartmentModal(departmentId) {
   fetch(`${API_URL}/api/v1/community/${communityId}/departments/${departmentId}`)
     .then(res => res.json())
     .then(data => {
-      const dept = data.department || {};
-      
-      // Set basic department info
-      document.getElementById('editDeptId').value = dept._id || '';
-      document.getElementById('editDeptImageUrl').value = dept.image || '';
-      document.getElementById('editDeptName').value = dept.name || '';
-      document.getElementById('editDeptDescription').value = dept.description || '';
-      document.getElementById('editDeptApprovalRequired').checked = !!dept.approvalRequired;
-
-      // Update image preview
-      const preview = document.getElementById('editDeptImagePreview');
-      const placeholder = document.getElementById('editDeptImagePlaceholder');
-      const deleteBtn = document.getElementById('editDeptImageDeleteBtn');
-      if (dept.image) {
-        preview.src = dept.image;
-        preview.style.display = 'block';
-        placeholder.style.display = 'none';
-        if (deleteBtn) deleteBtn.style.display = 'flex';
-      } else {
-        preview.src = '';
-        preview.style.display = 'none';
-        placeholder.style.display = 'flex';
-        if (deleteBtn) deleteBtn.style.display = 'none';
-      }
-
-      // Populate components
-      if (dept.template && dept.template.components) {
-        dept.template.components.forEach(component => {
-          const checkbox = document.getElementById(`editDeptComponent${component.name.charAt(0).toUpperCase() + component.name.slice(1)}`);
-          if (checkbox) {
-            checkbox.checked = component.enabled;
-          }
-        });
-      }
-
-      updateEditDeptVisibilityLabel();
-      document.getElementById('editDepartmentModal').style.display = 'flex';
+      populateEditDeptModal(data.department || {});
     })
     .catch(() => {
       // fallback to local data if API fails
       const dept = (window.departmentsListData || []).find(d => d._id === departmentId) || {};
-
-      // Set basic department info
-      document.getElementById('editDeptId').value = dept._id || '';
-      document.getElementById('editDeptImageUrl').value = dept.image || '';
-      document.getElementById('editDeptName').value = dept.name || '';
-      document.getElementById('editDeptDescription').value = dept.description || '';
-      document.getElementById('editDeptApprovalRequired').checked = !!dept.approvalRequired;
-
-      // Update image preview
-      const preview = document.getElementById('editDeptImagePreview');
-      const placeholder = document.getElementById('editDeptImagePlaceholder');
-      const deleteBtn = document.getElementById('editDeptImageDeleteBtn');
-      if (dept.image) {
-        preview.src = dept.image;
-        preview.style.display = 'block';
-        placeholder.style.display = 'none';
-        if (deleteBtn) deleteBtn.style.display = 'flex';
-      } else {
-        preview.src = '';
-        preview.style.display = 'none';
-        placeholder.style.display = 'flex';
-        if (deleteBtn) deleteBtn.style.display = 'none';
-      }
-
-      // Populate components
-      if (dept.template && dept.template.components) {
-        dept.template.components.forEach(component => {
-          const checkbox = document.getElementById(`editDeptComponent${component.name.charAt(0).toUpperCase() + component.name.slice(1)}`);
-          if (checkbox) {
-            checkbox.checked = component.enabled;
-          }
-        });
-      }
-
-      updateEditDeptVisibilityLabel();
-      document.getElementById('editDepartmentModal').style.display = 'flex';
+      populateEditDeptModal(dept);
     });
 }
 function closeEditDepartmentModal() {
@@ -6421,57 +6427,11 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
         <textarea id="editDeptDescription" rows="2" class="w-full text-gray-200 bg-gray-800 border border-gray-600 rounded p-2.5 text-sm focus:border-blue-500 focus:outline-none"></textarea>
       </div>
       
-      <!-- Components Section -->
+      <!-- Components Section (dynamically populated) -->
       <div class="mb-4">
         <label class="block text-gray-300 mb-1 text-sm font-medium">Components</label>
-        <div class="bg-gray-800 border border-gray-600 rounded-lg p-3 space-y-2">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <i class="fa fa-id-card text-blue-400 text-sm"></i>
-              <span class="text-gray-300 text-sm">Create Civilians</span>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" id="editDeptComponentCreateCivilians" class="sr-only peer">
-              <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-              <div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-4"></div>
-            </label>
-          </div>
-
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <i class="fa fa-car text-green-400 text-sm"></i>
-              <span class="text-gray-300 text-sm">Create Vehicles</span>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" id="editDeptComponentCreateVehicles" class="sr-only peer">
-              <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-              <div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-4"></div>
-            </label>
-          </div>
-
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <i class="fa fa-crosshairs text-red-400 text-sm"></i>
-              <span class="text-gray-300 text-sm">Create Firearms</span>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" id="editDeptComponentCreateFirearms" class="sr-only peer">
-              <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-              <div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-4"></div>
-            </label>
-          </div>
-
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <i class="fa fa-exclamation-triangle text-yellow-400 text-sm"></i>
-              <span class="text-gray-300 text-sm">Call 911</span>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" id="editDeptComponentCall911" class="sr-only peer">
-              <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-              <div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-4"></div>
-            </label>
-          </div>
+        <div id="editDeptComponentsContainer" class="bg-gray-800 border border-gray-600 rounded-lg p-3 space-y-2">
+          <div class="text-gray-500 text-sm">Loading components...</div>
         </div>
       </div>
 
@@ -6556,24 +6516,16 @@ async function saveEditDepartment() {
 
     // Update the template components if template exists - include in the same PATCH request
     if (currentDept.template && currentDept.template.components) {
+      // Read toggle states from the dynamically rendered checkboxes
+      const toggleStates = {};
+      document.querySelectorAll('.edit-dept-component-toggle').forEach(function(cb) {
+        toggleStates[cb.getAttribute('data-component-name')] = cb.checked;
+      });
+
       const updatedComponents = currentDept.template.components.map(component => {
         const componentName = component.name;
-        let isEnabled = component.enabled; // Default to current value
-
-        // Override with form values for the components we're managing
-        const checkboxMap = {
-          'createCivilians': 'editDeptComponentCreateCivilians',
-          'createVehicles': 'editDeptComponentCreateVehicles',
-          'createFirearms': 'editDeptComponentCreateFirearms',
-          'call911': 'editDeptComponentCall911'
-        };
-
-        if (checkboxMap[componentName]) {
-          const checkbox = document.getElementById(checkboxMap[componentName]);
-          if (checkbox) {
-            isEnabled = checkbox.checked;
-          }
-        }
+        // Use the toggle value if present, otherwise keep the current value
+        const isEnabled = toggleStates.hasOwnProperty(componentName) ? toggleStates[componentName] : component.enabled;
 
         // Extract component ID - handle both string and {$oid: ...} formats
         let componentId = component._id;
