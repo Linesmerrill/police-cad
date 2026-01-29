@@ -2045,6 +2045,515 @@ function updateDepartmentJoinButton(departmentId, status) {
     }
   };
 
+  // ==========================================
+  // VEHICLES MANAGEMENT
+  // ==========================================
+  let vehiclesData = [];
+  let currentVehiclesPage = 1;
+  let vehiclesTotalPages = 1;
+  let vehiclesSearchTimeout = null;
+  let currentEditVehicleId = null;
+  let vehicleToDelete = null;
+
+  window.openVehiclesModal = function() {
+    document.getElementById('vehiclesModal').style.display = 'flex';
+    loadVehicles();
+  };
+
+  window.closeVehiclesModal = function() {
+    document.getElementById('vehiclesModal').style.display = 'none';
+    document.getElementById('vehiclesSearchInput').value = '';
+    document.getElementById('vehiclesSearchClear').style.display = 'none';
+  };
+
+  async function loadVehicles(page = 1, limit = 10) {
+    currentVehiclesPage = page;
+    const communityId = window.communityId;
+    const container = document.getElementById('vehiclesList');
+    container.innerHTML = '<div style="padding:2rem; text-align:center; color:#a0aec0;"><i class="fa fa-spinner fa-spin" style="font-size:2rem; margin-bottom:1rem;"></i><p>Loading vehicles...</p></div>';
+
+    try {
+      const res = await fetch(`${API_URL}/api/v2/community/${communityId}/vehicles?page=${page}&limit=${limit}`);
+      if (!res.ok) throw new Error('Failed to load vehicles');
+      const data = await res.json();
+      vehiclesData = data.vehicles || [];
+      const pagination = data.pagination || {};
+      vehiclesTotalPages = pagination.totalPages || 1;
+
+      document.getElementById('vehiclesCount').textContent = pagination.totalCount || 0;
+      document.getElementById('vehiclesCountText').textContent = (pagination.totalCount === 1) ? 'vehicle found' : 'vehicles found';
+
+      displayVehicles();
+      renderVehiclesPagination(pagination);
+    } catch (err) {
+      console.error('Error loading vehicles:', err);
+      container.innerHTML = '<div style="padding:2rem; text-align:center; color:#e53e3e;">Failed to load vehicles</div>';
+    }
+  }
+
+  function displayVehicles() {
+    const container = document.getElementById('vehiclesList');
+    if (!vehiclesData || vehiclesData.length === 0) {
+      container.innerHTML = '<div style="padding:2rem; text-align:center; color:#a0aec0;">No vehicles found</div>';
+      return;
+    }
+
+    container.innerHTML = vehiclesData.map(item => {
+      const v = item.vehicle || {};
+      const user = item.user || {};
+      const displayName = [v.year, v.make, v.model].filter(Boolean).join(' ') || 'Unknown Vehicle';
+      const plate = v.plate || 'N/A';
+      const username = user.username ? `@${user.username}` : '';
+      const createdAt = v.createdAt ? new Date(v.createdAt).toLocaleDateString() : '';
+      const isStolen = v.isStolen === 'true' || v.isStolen === true;
+      const validReg = v.validRegistration === 'true' || v.validRegistration === true;
+      const validIns = v.validInsurance === 'true' || v.validInsurance === true;
+
+      return `
+        <div style="background:#1e2028; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; margin-bottom:1rem; transition:all 0.2s; cursor:pointer;" onclick="editVehicle('${item._id}')">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
+            <div style="flex:1; min-width:200px;">
+              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                <div style="width:40px; height:40px; border-radius:8px; background:linear-gradient(135deg, #3b82f6, #1d4ed8); display:flex; align-items:center; justify-content:center;">
+                  <i class="fa fa-car" style="color:#fff; font-size:1rem;"></i>
+                </div>
+                <div>
+                  <div style="color:#fff; font-weight:600; font-size:1rem;">${displayName}</div>
+                  <div style="color:#a0aec0; font-size:0.8rem;">${username}</div>
+                </div>
+                ${isStolen ? '<span style="background:#e53e3e; color:#fff; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:600;">STOLEN</span>' : ''}
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:0.5rem; margin-bottom:0.75rem;">
+                <div style="color:#a0aec0; font-size:0.8rem;"><strong>Plate:</strong> ${plate}</div>
+                <div style="color:#a0aec0; font-size:0.8rem;"><strong>Color:</strong> ${v.color || 'N/A'}</div>
+                <div style="color:#a0aec0; font-size:0.8rem;"><strong>VIN:</strong> ${v.vin || 'N/A'}</div>
+                <div style="color:#a0aec0; font-size:0.8rem;"><strong>Registration:</strong> ${validReg ? '<span style="color:#10b981;">Valid</span>' : '<span style="color:#ef4444;">Invalid</span>'}</div>
+                <div style="color:#a0aec0; font-size:0.8rem;"><strong>Insurance:</strong> ${validIns ? '<span style="color:#10b981;">Valid</span>' : '<span style="color:#ef4444;">Invalid</span>'}</div>
+              </div>
+              ${createdAt ? `<div style="color:#6b7280; font-size:0.75rem;">Created: ${createdAt}</div>` : ''}
+            </div>
+            <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+              <button onclick="event.stopPropagation(); editVehicle('${item._id}')" style="background:#3b82f6; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
+                <i class="fa fa-pencil"></i> Edit
+              </button>
+              <button onclick="event.stopPropagation(); deleteVehicle('${item._id}', '${plate.replace(/'/g, "\\'")}')" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
+                <i class="fa fa-trash"></i> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderVehiclesPagination(pagination) {
+    const container = document.getElementById('vehiclesPagination');
+    if (!pagination || pagination.totalPages <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+    const currentPage = pagination.currentPage;
+    const totalPages = pagination.totalPages;
+    let html = '';
+    html += `<button onclick="loadVehicles(${currentPage - 1})" style="background:${currentPage > 1 ? '#3b82f6' : '#4a5568'}; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:${currentPage > 1 ? 'pointer' : 'not-allowed'}; font-size:0.875rem;" ${currentPage <= 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+        html += `<button onclick="loadVehicles(${i})" style="background:${i === currentPage ? '#3b82f6' : '#2d3748'}; color:#fff; border:1px solid ${i === currentPage ? '#3b82f6' : '#4a5568'}; border-radius:6px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.875rem; min-width:2.5rem;">${i}</button>`;
+      } else if (i === currentPage - 3 || i === currentPage + 3) {
+        html += '<span style="color:#a0aec0; padding:0.5rem;">...</span>';
+      }
+    }
+    html += `<button onclick="loadVehicles(${currentPage + 1})" style="background:${currentPage < totalPages ? '#3b82f6' : '#4a5568'}; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:${currentPage < totalPages ? 'pointer' : 'not-allowed'}; font-size:0.875rem;" ${currentPage >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+    container.innerHTML = html;
+  }
+
+  window.searchVehicles = function(query) {
+    clearTimeout(vehiclesSearchTimeout);
+    const clearBtn = document.getElementById('vehiclesSearchClear');
+    clearBtn.style.display = query ? 'block' : 'none';
+
+    if (!query.trim()) {
+      loadVehicles(1);
+      return;
+    }
+
+    vehiclesSearchTimeout = setTimeout(async () => {
+      const communityId = window.communityId;
+      const container = document.getElementById('vehiclesList');
+      container.innerHTML = '<div style="padding:2rem; text-align:center; color:#a0aec0;"><i class="fa fa-spinner fa-spin"></i> Searching...</div>';
+
+      try {
+        const encoded = encodeURIComponent(query.trim());
+        const res = await fetch(`${API_URL}/api/v1/vehicles/search?plate=${encoded}&make=${encoded}&model=${encoded}&active_community_id=${communityId}&limit=50`);
+        if (!res.ok) throw new Error('Search failed');
+        const data = await res.json();
+        vehiclesData = (data.vehicles || []).map(v => ({
+          _id: v._id,
+          vehicle: v.vehicle || v.Details || {},
+          user: v.user || {},
+          __v: v.__v
+        }));
+        document.getElementById('vehiclesCount').textContent = vehiclesData.length;
+        document.getElementById('vehiclesCountText').textContent = vehiclesData.length === 1 ? 'vehicle found' : 'vehicles found';
+        document.getElementById('vehiclesPagination').innerHTML = '';
+        displayVehicles();
+      } catch (err) {
+        console.error('Vehicle search error:', err);
+        container.innerHTML = '<div style="padding:2rem; text-align:center; color:#e53e3e;">Search failed</div>';
+      }
+    }, 300);
+  };
+
+  window.clearVehiclesSearch = function() {
+    document.getElementById('vehiclesSearchInput').value = '';
+    document.getElementById('vehiclesSearchClear').style.display = 'none';
+    loadVehicles(1);
+  };
+
+  window.editVehicle = async function(vehicleId) {
+    currentEditVehicleId = vehicleId;
+    try {
+      const res = await fetch(`${API_URL}/api/v1/vehicle/${vehicleId}`);
+      if (!res.ok) throw new Error('Failed to fetch vehicle');
+      const data = await res.json();
+      const v = data.vehicle || data.Details || {};
+
+      document.getElementById('editVehiclePlate').value = v.plate || '';
+      document.getElementById('editVehiclePlateState').value = v.licensePlateState || '';
+      document.getElementById('editVehicleVin').value = v.vin || '';
+      document.getElementById('editVehicleType').value = v.type || '';
+      document.getElementById('editVehicleMake').value = v.make || '';
+      document.getElementById('editVehicleModel').value = v.model || '';
+      document.getElementById('editVehicleYear').value = v.year || '';
+      document.getElementById('editVehicleColor').value = v.color || '';
+      document.getElementById('editVehicleValidRegistration').checked = v.validRegistration === 'true' || v.validRegistration === true;
+      document.getElementById('editVehicleValidInsurance').checked = v.validInsurance === 'true' || v.validInsurance === true;
+      document.getElementById('editVehicleIsStolen').checked = v.isStolen === 'true' || v.isStolen === true;
+
+      document.getElementById('editVehicleModal').style.display = 'flex';
+    } catch (err) {
+      console.error('Error fetching vehicle:', err);
+      showCustomToast('Failed to load vehicle details', 'error');
+    }
+  };
+
+  window.closeEditVehicleModal = function() {
+    document.getElementById('editVehicleModal').style.display = 'none';
+    currentEditVehicleId = null;
+  };
+
+  window.saveVehicle = async function() {
+    if (!currentEditVehicleId) return;
+    const btn = document.getElementById('saveVehicleBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    try {
+      const payload = {
+        plate: document.getElementById('editVehiclePlate').value.trim(),
+        licensePlateState: document.getElementById('editVehiclePlateState').value.trim(),
+        vin: document.getElementById('editVehicleVin').value.trim(),
+        type: document.getElementById('editVehicleType').value.trim(),
+        make: document.getElementById('editVehicleMake').value.trim(),
+        model: document.getElementById('editVehicleModel').value.trim(),
+        year: document.getElementById('editVehicleYear').value.trim(),
+        color: document.getElementById('editVehicleColor').value.trim(),
+        validRegistration: document.getElementById('editVehicleValidRegistration').checked ? 'true' : 'false',
+        validInsurance: document.getElementById('editVehicleValidInsurance').checked ? 'true' : 'false',
+        isStolen: document.getElementById('editVehicleIsStolen').checked ? 'true' : 'false'
+      };
+
+      const res = await fetch(`${API_URL}/api/v1/vehicle/${currentEditVehicleId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('Failed to update vehicle');
+
+      closeEditVehicleModal();
+      showCustomToast('Vehicle updated successfully');
+      loadVehicles(currentVehiclesPage);
+    } catch (err) {
+      console.error('Error saving vehicle:', err);
+      showCustomToast('Failed to update vehicle', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save Changes';
+    }
+  };
+
+  window.deleteVehicle = function(vehicleId, plate) {
+    vehicleToDelete = vehicleId;
+    document.getElementById('deleteVehicleName').textContent = plate;
+    document.getElementById('deleteVehicleConfirmModal').style.display = 'flex';
+  };
+
+  window.closeDeleteVehicleConfirmModal = function() {
+    document.getElementById('deleteVehicleConfirmModal').style.display = 'none';
+    vehicleToDelete = null;
+  };
+
+  window.confirmDeleteVehicle = async function() {
+    if (!vehicleToDelete) return;
+    try {
+      const res = await fetch(`${API_URL}/api/v1/vehicle/${vehicleToDelete}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete vehicle');
+      closeDeleteVehicleConfirmModal();
+      showCustomToast('Vehicle deleted successfully');
+      loadVehicles(currentVehiclesPage);
+    } catch (err) {
+      console.error('Error deleting vehicle:', err);
+      showCustomToast(`Failed to delete vehicle: ${err.message}`, 'error');
+    }
+  };
+
+
+  // ==========================================
+  // FIREARMS MANAGEMENT
+  // ==========================================
+  let firearmsData = [];
+  let currentFirearmsPage = 1;
+  let firearmsTotalPages = 1;
+  let firearmsSearchTimeout = null;
+  let currentEditFirearmId = null;
+  let firearmToDelete = null;
+
+  window.openFirearmsModal = function() {
+    document.getElementById('firearmsModal').style.display = 'flex';
+    loadFirearms();
+  };
+
+  window.closeFirearmsModal = function() {
+    document.getElementById('firearmsModal').style.display = 'none';
+    document.getElementById('firearmsSearchInput').value = '';
+    document.getElementById('firearmsSearchClear').style.display = 'none';
+  };
+
+  async function loadFirearms(page = 1, limit = 10) {
+    currentFirearmsPage = page;
+    const communityId = window.communityId;
+    const container = document.getElementById('firearmsList');
+    container.innerHTML = '<div style="padding:2rem; text-align:center; color:#a0aec0;"><i class="fa fa-spinner fa-spin" style="font-size:2rem; margin-bottom:1rem;"></i><p>Loading firearms...</p></div>';
+
+    try {
+      const res = await fetch(`${API_URL}/api/v2/community/${communityId}/firearms?page=${page}&limit=${limit}`);
+      if (!res.ok) throw new Error('Failed to load firearms');
+      const data = await res.json();
+      firearmsData = data.firearms || [];
+      const pagination = data.pagination || {};
+      firearmsTotalPages = pagination.totalPages || 1;
+
+      document.getElementById('firearmsCount').textContent = pagination.totalCount || 0;
+      document.getElementById('firearmsCountText').textContent = (pagination.totalCount === 1) ? 'firearm found' : 'firearms found';
+
+      displayFirearms();
+      renderFirearmsPagination(pagination);
+    } catch (err) {
+      console.error('Error loading firearms:', err);
+      container.innerHTML = '<div style="padding:2rem; text-align:center; color:#e53e3e;">Failed to load firearms</div>';
+    }
+  }
+
+  function displayFirearms() {
+    const container = document.getElementById('firearmsList');
+    if (!firearmsData || firearmsData.length === 0) {
+      container.innerHTML = '<div style="padding:2rem; text-align:center; color:#a0aec0;">No firearms found</div>';
+      return;
+    }
+
+    container.innerHTML = firearmsData.map(item => {
+      const f = item.firearm || {};
+      const user = item.user || {};
+      const displayName = f.name || 'Unknown Firearm';
+      const username = user.username ? `@${user.username}` : '';
+      const createdAt = f.createdAt ? new Date(f.createdAt).toLocaleDateString() : '';
+      const isStolen = f.isStolen === 'true' || f.isStolen === true;
+
+      return `
+        <div style="background:#1e2028; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; margin-bottom:1rem; transition:all 0.2s; cursor:pointer;" onclick="editFirearm('${item._id}')">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
+            <div style="flex:1; min-width:200px;">
+              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                <div style="width:40px; height:40px; border-radius:8px; background:linear-gradient(135deg, #ef4444, #b91c1c); display:flex; align-items:center; justify-content:center;">
+                  <i class="fa fa-crosshairs" style="color:#fff; font-size:1rem;"></i>
+                </div>
+                <div>
+                  <div style="color:#fff; font-weight:600; font-size:1rem;">${displayName}</div>
+                  <div style="color:#a0aec0; font-size:0.8rem;">${username}</div>
+                </div>
+                ${isStolen ? '<span style="background:#e53e3e; color:#fff; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:600;">STOLEN</span>' : ''}
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:0.5rem; margin-bottom:0.75rem;">
+                <div style="color:#a0aec0; font-size:0.8rem;"><strong>Type:</strong> ${f.weaponType || 'N/A'}</div>
+                <div style="color:#a0aec0; font-size:0.8rem;"><strong>Caliber:</strong> ${f.caliber || 'N/A'}</div>
+                <div style="color:#a0aec0; font-size:0.8rem;"><strong>Serial:</strong> ${f.serialNumber || 'N/A'}</div>
+              </div>
+              ${createdAt ? `<div style="color:#6b7280; font-size:0.75rem;">Created: ${createdAt}</div>` : ''}
+            </div>
+            <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+              <button onclick="event.stopPropagation(); editFirearm('${item._id}')" style="background:#3b82f6; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
+                <i class="fa fa-pencil"></i> Edit
+              </button>
+              <button onclick="event.stopPropagation(); deleteFirearm('${item._id}', '${displayName.replace(/'/g, "\\'")}')" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
+                <i class="fa fa-trash"></i> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderFirearmsPagination(pagination) {
+    const container = document.getElementById('firearmsPagination');
+    if (!pagination || pagination.totalPages <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+    const currentPage = pagination.currentPage;
+    const totalPages = pagination.totalPages;
+    let html = '';
+    html += `<button onclick="loadFirearms(${currentPage - 1})" style="background:${currentPage > 1 ? '#ef4444' : '#4a5568'}; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:${currentPage > 1 ? 'pointer' : 'not-allowed'}; font-size:0.875rem;" ${currentPage <= 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+        html += `<button onclick="loadFirearms(${i})" style="background:${i === currentPage ? '#ef4444' : '#2d3748'}; color:#fff; border:1px solid ${i === currentPage ? '#ef4444' : '#4a5568'}; border-radius:6px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.875rem; min-width:2.5rem;">${i}</button>`;
+      } else if (i === currentPage - 3 || i === currentPage + 3) {
+        html += '<span style="color:#a0aec0; padding:0.5rem;">...</span>';
+      }
+    }
+    html += `<button onclick="loadFirearms(${currentPage + 1})" style="background:${currentPage < totalPages ? '#ef4444' : '#4a5568'}; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:${currentPage < totalPages ? 'pointer' : 'not-allowed'}; font-size:0.875rem;" ${currentPage >= totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
+    container.innerHTML = html;
+  }
+
+  window.searchFirearms = function(query) {
+    clearTimeout(firearmsSearchTimeout);
+    const clearBtn = document.getElementById('firearmsSearchClear');
+    clearBtn.style.display = query ? 'block' : 'none';
+
+    if (!query.trim()) {
+      loadFirearms(1);
+      return;
+    }
+
+    firearmsSearchTimeout = setTimeout(async () => {
+      const communityId = window.communityId;
+      const container = document.getElementById('firearmsList');
+      container.innerHTML = '<div style="padding:2rem; text-align:center; color:#a0aec0;"><i class="fa fa-spinner fa-spin"></i> Searching...</div>';
+
+      try {
+        const encoded = encodeURIComponent(query.trim());
+        const res = await fetch(`${API_URL}/api/v1/firearms/search?name=${encoded}&serialNumber=${encoded}&communityId=${communityId}&limit=50`);
+        if (!res.ok) throw new Error('Search failed');
+        const data = await res.json();
+        firearmsData = (data.firearms || []).map(f => ({
+          _id: f._id,
+          firearm: f.firearm || f.Details || {},
+          user: f.user || {},
+          __v: f.__v
+        }));
+        document.getElementById('firearmsCount').textContent = firearmsData.length;
+        document.getElementById('firearmsCountText').textContent = firearmsData.length === 1 ? 'firearm found' : 'firearms found';
+        document.getElementById('firearmsPagination').innerHTML = '';
+        displayFirearms();
+      } catch (err) {
+        console.error('Firearm search error:', err);
+        container.innerHTML = '<div style="padding:2rem; text-align:center; color:#e53e3e;">Search failed</div>';
+      }
+    }, 300);
+  };
+
+  window.clearFirearmsSearch = function() {
+    document.getElementById('firearmsSearchInput').value = '';
+    document.getElementById('firearmsSearchClear').style.display = 'none';
+    loadFirearms(1);
+  };
+
+  window.editFirearm = async function(firearmId) {
+    currentEditFirearmId = firearmId;
+    try {
+      const res = await fetch(`${API_URL}/api/v1/firearm/${firearmId}`);
+      if (!res.ok) throw new Error('Failed to fetch firearm');
+      const data = await res.json();
+      const f = data.firearm || data.Details || {};
+
+      document.getElementById('editFirearmName').value = f.name || '';
+      document.getElementById('editFirearmWeaponType').value = f.weaponType || '';
+      document.getElementById('editFirearmCaliber').value = f.caliber || '';
+      document.getElementById('editFirearmSerialNumber').value = f.serialNumber || '';
+      document.getElementById('editFirearmIsStolen').checked = f.isStolen === 'true' || f.isStolen === true;
+
+      document.getElementById('editFirearmModal').style.display = 'flex';
+    } catch (err) {
+      console.error('Error fetching firearm:', err);
+      showCustomToast('Failed to load firearm details', 'error');
+    }
+  };
+
+  window.closeEditFirearmModal = function() {
+    document.getElementById('editFirearmModal').style.display = 'none';
+    currentEditFirearmId = null;
+  };
+
+  window.saveFirearm = async function() {
+    if (!currentEditFirearmId) return;
+    const btn = document.getElementById('saveFirearmBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    try {
+      const payload = {
+        name: document.getElementById('editFirearmName').value.trim(),
+        weaponType: document.getElementById('editFirearmWeaponType').value.trim(),
+        caliber: document.getElementById('editFirearmCaliber').value.trim(),
+        serialNumber: document.getElementById('editFirearmSerialNumber').value.trim(),
+        isStolen: document.getElementById('editFirearmIsStolen').checked ? 'true' : 'false'
+      };
+
+      const res = await fetch(`${API_URL}/api/v1/firearm/${currentEditFirearmId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('Failed to update firearm');
+
+      closeEditFirearmModal();
+      showCustomToast('Firearm updated successfully');
+      loadFirearms(currentFirearmsPage);
+    } catch (err) {
+      console.error('Error saving firearm:', err);
+      showCustomToast('Failed to update firearm', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save Changes';
+    }
+  };
+
+  window.deleteFirearm = function(firearmId, name) {
+    firearmToDelete = firearmId;
+    document.getElementById('deleteFirearmName').textContent = name;
+    document.getElementById('deleteFirearmConfirmModal').style.display = 'flex';
+  };
+
+  window.closeDeleteFirearmConfirmModal = function() {
+    document.getElementById('deleteFirearmConfirmModal').style.display = 'none';
+    firearmToDelete = null;
+  };
+
+  window.confirmDeleteFirearm = async function() {
+    if (!firearmToDelete) return;
+    try {
+      const res = await fetch(`${API_URL}/api/v1/firearm/${firearmToDelete}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete firearm');
+      closeDeleteFirearmConfirmModal();
+      showCustomToast('Firearm deleted successfully');
+      loadFirearms(currentFirearmsPage);
+    } catch (err) {
+      console.error('Error deleting firearm:', err);
+      showCustomToast(`Failed to delete firearm: ${err.message}`, 'error');
+    }
+  };
+
+
   // Toggle height classification inputs - match modern dashboard behavior
   window.toggleHeightInputs = function(button) {
     // Wait a bit to ensure modal is fully loaded
