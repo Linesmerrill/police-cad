@@ -128,6 +128,7 @@ export default function Features() {
             {features.map((feature, index) => (
               <div
                 key={feature.name}
+                role="listitem"
                 style={{
                   opacity: 1,
                   padding: '2rem',
