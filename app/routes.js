@@ -158,12 +158,25 @@ module.exports = function (app, passport, server, nextApp, handle) {
         departmentsTotalCount = deptsResponse.data.totalCount || departments.length;
         departmentTemplateTypes = deptsResponse.data.templateTypes || [];
       }
+      // Resolve booster username from user ID if community has an active boost
+      let boosterUsername = null;
+      const boosterId = community && community.community && community.community.subscriptionCreatedBy;
+      const hasActiveBoost = community && community.community && community.community.subscription && community.community.subscription.active;
+      if (boosterId && hasActiveBoost) {
+        try {
+          const boosterResponse = await axios.get(`${policeCadApiUrl}/api/v1/user/${boosterId}`, config);
+          boosterUsername = boosterResponse.data && boosterResponse.data.user && boosterResponse.data.user.username;
+        } catch (e) {
+          // Silently fail - booster badge just won't show
+        }
+      }
       res.render("community-details", {
         user: req.user,
         community,
         departments,
         departmentsTotalCount,
         departmentTemplateTypes,
+        boosterUsername,
         query: req.query,
         referer: encodeURIComponent(`/community/${hash}`),
         redirect: encodeURIComponent(redirect),
@@ -1000,9 +1013,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
 
 
-  app.get("/penal-code", function (req, res) {
-    res.render("penal-code");
-  });
+  // now handled by Next.js
+  // app.get("/penal-code", function (req, res) {
+  //   res.render("penal-code");
+  // });
 
   app.get("/ads.txt", (req, res) => {
     res.set("Content-Type", "text");
@@ -3245,6 +3259,190 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // ============================================
+  // Stripe Subscription Routes
+  // ============================================
+
+  // Get subscription tiers (public - no auth required)
+  app.get("/api/v1/subscription/tiers", async function (req, res) {
+    try {
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/subscription/tiers`, {
+        headers: config.headers
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error fetching tiers:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch subscription tiers" });
+      }
+    }
+  });
+
+  // Get community promotion tiers (public - no auth required)
+  app.get("/api/v1/subscription/community-tiers", async function (req, res) {
+    try {
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/subscription/community-tiers`, {
+        headers: config.headers
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error fetching community tiers:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch community tiers" });
+      }
+    }
+  });
+
+  // Check subscription source (requires auth)
+  app.post("/api/v1/user/check-subscription-source", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/user/check-subscription-source`, req.body, {
+        headers: {
+          ...config.headers,
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error checking subscription source:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to check subscription source" });
+      }
+    }
+  });
+
+  // Create user checkout session (requires auth)
+  app.post("/api/v1/user/create-checkout-session", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/user/create-checkout-session`, req.body, {
+        headers: {
+          ...config.headers,
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error creating checkout session:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to create checkout session" });
+      }
+    }
+  });
+
+  // Verify subscription (requires auth)
+  app.post("/api/v1/user/verify-subscription", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/user/verify-subscription`, req.body, {
+        headers: {
+          ...config.headers,
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error verifying subscription:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to verify subscription" });
+      }
+    }
+  });
+
+  // Create portal session (requires auth)
+  app.post("/api/v1/user/create-portal-session", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/user/create-portal-session`, req.body, {
+        headers: {
+          ...config.headers,
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error creating portal session:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to create portal session" });
+      }
+    }
+  });
+
+  // Create community checkout session (requires auth)
+  app.post("/api/v1/community/create-checkout-session", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/community/create-checkout-session`, req.body, {
+        headers: {
+          ...config.headers,
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error creating community checkout session:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to create community checkout session" });
+      }
+    }
+  });
+
+  // Get user's owned communities (requires auth)
+  app.get("/api/v1/communities/:userId", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.params.userId;
+      if (!ObjectId.isValid(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/communities/${encodeURIComponent(userId)}`, {
+        headers: config.headers
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[Subscription] Error fetching user communities:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch communities" });
+      }
+    }
+  });
+
+  // Get user's boost-eligible communities with search support (requires auth)
+  app.get("/api/v2/user/:userId/boost-communities", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.params.userId;
+      if (!ObjectId.isValid(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      const params = new URLSearchParams();
+      if (req.query.search) params.set('search', req.query.search);
+      if (req.query.limit) params.set('limit', req.query.limit);
+      const qs = params.toString();
+      const response = await axios.get(`${policeCadApiUrl}/api/v2/user/${encodeURIComponent(userId)}/boost-communities${qs ? '?' + qs : ''}`, {
+        headers: config.headers
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[BoostCommunities] Error fetching boost communities:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch boost communities" });
+      }
+    }
+  });
+
   // Request removal from program
   app.post("/api/v1/content-creators/me/removal-request", apiAuthCheck, async function (req, res) {
     try {
@@ -3299,7 +3497,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Exclude Next.js internal routes
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/') || req.path.startsWith('/content-creators')) {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/') || req.path.startsWith('/content-creators') || req.path === '/pricing' || req.path === '/community-pricing' || req.path === '/manage-subscription' || req.path.startsWith('/subscription/') || req.path.startsWith('/community-promotion/') || req.path === '/penal-code') {
       return handle(req, res);
     }
     res.render("page-not-found");

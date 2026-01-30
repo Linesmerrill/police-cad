@@ -179,7 +179,8 @@
 
       html {
         scroll-behavior: smooth;
-        background: #0a0a0f;
+        background-color: #0a0a0f !important;
+        color-scheme: dark;
         height: 100%;
         height: 100dvh;
         font-size: 16px !important;
@@ -187,7 +188,8 @@
       }
 
       body {
-        background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+        background-color: #0a0a0f !important;
+        background-image: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
         background-attachment: fixed;
         background-size: cover;
         color: #e2e8f0;
@@ -728,6 +730,12 @@
             deptTotalCount = data.totalCount || 0;
             deptTotalPages = Math.max(1, Math.ceil(deptTotalCount / deptPerPage));
 
+            // Update the department count badge
+            var countBadge = document.getElementById('dept-count-badge');
+            if (countBadge && !deptCurrentFilter) {
+              countBadge.textContent = deptTotalCount;
+            }
+
             // Update template types if returned (only on first fetch without filter)
             if (data.templateTypes && !deptCurrentFilter) {
               deptTemplateTypes = data.templateTypes;
@@ -744,7 +752,12 @@
 
             // Append new department cards
             if (departments.length === 0 && clearContainer) {
-              container.innerHTML = '<div class="col-span-full dashboard-card text-center py-8"><i class="fa fa-building text-3xl text-slate-600 mb-3"></i><p class="text-slate-400">No departments found</p></div>';
+              var emptyHtml = '<div id="no-departments-empty-state" class="col-span-full dashboard-card text-center py-8"><i class="fa fa-building text-3xl text-slate-600 mb-3"></i><p class="text-slate-400">No departments yet</p>';
+              if (window.canManageDepartments) {
+                emptyHtml += '<button onclick="openCreateDepartmentModal()" class="btn-primary mt-4 text-sm"><i class="fa fa-plus mr-1"></i>Create First Department</button>';
+              }
+              emptyHtml += '</div>';
+              container.innerHTML = emptyHtml;
             } else {
               departments.forEach(function(dept, i) {
                 var globalIdx = startIdx + i;
@@ -1307,6 +1320,11 @@
                       <i class="fa fa-clock mr-1"></i>Pending Approval
                     </span>
                   <% } %>
+                  <% if (community.community.subscription && community.community.subscription.active) { %>
+                    <span class="badge" style="background: rgba(249, 115, 22, 0.1); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.3);">
+                      <i class="fa fa-rocket mr-1"></i><%= (community.community.subscription.plan || 'Boost').charAt(0).toUpperCase() + (community.community.subscription.plan || 'boost').slice(1) %> Boost<% if (boosterUsername) { %> by @<%= boosterUsername %><% } %>
+                    </span>
+                  <% } %>
                   <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.1);">
                     <i class="fa fa-users mr-1"></i><%= community.community.membersCount || 0 %> members
                   </span>
@@ -1457,6 +1475,11 @@
                 <i class="fa fa-calendar"></i>
                 <span>Events</span>
               </button>
+
+              <a href="/community-pricing?communityId=<%= community.community._id || community._id %>" class="action-btn" style="color: #f97316; text-decoration: none;">
+                <i class="fa fa-rocket"></i>
+                <span>Boost</span>
+              </a>
             </div>
           </section>
         <% } %>
@@ -1467,9 +1490,9 @@
             <h2 class="section-title text-white flex items-center gap-2">
               <i class="fa fa-building" style="color: #fbbf24;"></i>
               Departments
-              <% if (isMemberApproved && community.community.departments) { %>
-                <span class="text-xs px-2 py-0.5 rounded-full" style="color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
-                  <%= community.community.departments.length %>
+              <% if (isMemberApproved) { %>
+                <span id="dept-count-badge" class="text-xs px-2 py-0.5 rounded-full" style="color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+                  <%= community.community.departments ? community.community.departments.length : 0 %>
                 </span>
               <% } %>
             </h2>
@@ -1502,7 +1525,7 @@
                 </button>
               <% } %>
             </div>
-          <% } else if (departments && departments.length) { %>
+          <% } else { %>
             <!-- Department Filter Tabs -->
             <div id="dept-filter-tabs" class="flex flex-wrap gap-2 mb-4" style="display: none;"></div>
 
@@ -1510,6 +1533,19 @@
               <%
               // Use community.community.departments which has full member data
               var allDepts = community.community.departments || [];
+              if (allDepts.length === 0) {
+              %>
+                <div id="no-departments-empty-state" class="col-span-full dashboard-card text-center py-8">
+                  <i class="fa fa-building text-3xl text-slate-600 mb-3"></i>
+                  <p class="text-slate-400">No departments yet</p>
+                  <% if (canManageDepartments) { %>
+                    <button onclick="openCreateDepartmentModal()" class="btn-primary mt-4 text-sm">
+                      <i class="fa fa-plus mr-1"></i>Create First Department
+                    </button>
+                  <% } %>
+                </div>
+              <%
+              } else {
               allDepts.forEach(function(dept, deptIndex) {
                 var templateName = (dept.template && dept.template.name) ? dept.template.name : '';
                 var approvalRequired = dept.approvalRequired;
@@ -1638,7 +1674,8 @@
                     </div>
                   </div>
                 </div>
-              <% }); %>
+              <% });
+              } %>
             </div>
 
             <% var totalDepts = allDepts.length; %>
@@ -1646,20 +1683,10 @@
               <button id="dept-prev-btn" onclick="changeDeptPage(-1)" class="btn-secondary text-sm" disabled style="opacity:0.5;cursor:not-allowed;">
                 <i class="fa fa-chevron-left mr-1"></i>Prev
               </button>
-              <span id="dept-page-info" class="text-slate-400 text-sm">Page 1 of <%= Math.ceil(totalDepts / 6) %></span>
+              <span id="dept-page-info" class="text-slate-400 text-sm">Page 1 of <%= Math.max(1, Math.ceil(totalDepts / 6)) %></span>
               <button id="dept-next-btn" onclick="changeDeptPage(1)" class="btn-secondary text-sm">
                 Next<i class="fa fa-chevron-right ml-1"></i>
               </button>
-            </div>
-          <% } else { %>
-            <div class="dashboard-card text-center py-8">
-              <i class="fa fa-building text-3xl text-slate-600 mb-3"></i>
-              <p class="text-slate-400">No departments yet</p>
-              <% if (canManageDepartments) { %>
-                <button onclick="openCreateDepartmentModal()" class="btn-primary mt-4 text-sm">
-                  <i class="fa fa-plus mr-1"></i>Create First Department
-                </button>
-              <% } %>
             </div>
           <% } %>
         </section>

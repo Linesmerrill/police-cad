@@ -29,6 +29,13 @@
   gtag("config", "UA-107735203-1");
 </script>
 
-<!-- AdSense base script for all users -->
+<!-- AdSense base script (skipped for Premium and Premium Plus subscribers to reduce/remove ads) -->
+<%
+  var _adSubPlan = (typeof user !== 'undefined' && user && user.user && user.user.subscription && user.user.subscription.plan) || 'free';
+  var _adSubActive = !!(typeof user !== 'undefined' && user && user.user && user.user.subscription && user.user.subscription.active);
+  var _skipAdsense = _adSubActive && (_adSubPlan === 'premium' || _adSubPlan === 'premium_plus');
+%>
+<% if (!_skipAdsense) { %>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3842696805773142"
      crossorigin="anonymous"></script>
+<% } %>

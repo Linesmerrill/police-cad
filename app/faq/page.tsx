@@ -91,7 +91,7 @@ const faqData = [
             <li style={{ marginBottom: '0.25rem' }}><strong>Free</strong> — 1 community</li>
             <li style={{ marginBottom: '0.25rem' }}><strong>Base</strong> — Up to 5 communities</li>
             <li style={{ marginBottom: '0.25rem' }}><strong>Premium</strong> — Up to 10 communities, verified checkmark, 50% fewer ads</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Premium+</strong> — Unlimited communities, verified checkmark, custom departments, no ads</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Premium+</strong> — Unlimited communities, verified checkmark, no ads</li>
           </ul>
         </>)
       },

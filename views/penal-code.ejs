@@ -853,7 +853,16 @@
         
     </div><!--//page-wrapper-->
     <footer id="footer">
+      <%
+        var _user = (typeof user !== 'undefined') ? user : null;
+        var subPlan = (_user && _user.user && _user.user.subscription && _user.user.subscription.plan) || 'free';
+        var subActive = !!(_user && _user.user && _user.user.subscription && _user.user.subscription.active);
+        var isPremiumPlus = subActive && subPlan === 'premium_plus';
+        var isPremium = subActive && subPlan === 'premium';
+      %>
+      <% if (!isPremiumPlus && !(isPremium && Math.random() >= 0.5)) { %>
       <% include ad-body %>
+      <% } %>
         <div class="container-fluid">
             <div class="row">
                 <div class="col-xs-6 col-sm-3 column">

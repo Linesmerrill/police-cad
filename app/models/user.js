@@ -38,6 +38,10 @@ var userSchema = mongoose.Schema({
     profilePicture: String,
     panicButtonSound: Boolean,
     alertVolumeLevel: String,
+    subscription: {
+      plan: String,
+      active: Boolean,
+    },
     createdAt: Date,
     updatedAt: Date,
   },
