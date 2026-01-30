@@ -1013,9 +1013,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
 
 
-  app.get("/penal-code", function (req, res) {
-    res.render("penal-code");
-  });
+  // now handled by Next.js
+  // app.get("/penal-code", function (req, res) {
+  //   res.render("penal-code");
+  // });
 
   app.get("/ads.txt", (req, res) => {
     res.set("Content-Type", "text");
