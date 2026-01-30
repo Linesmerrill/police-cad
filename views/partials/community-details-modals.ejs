@@ -1657,6 +1657,13 @@ function openCreateRoleModal() {
   document.getElementById('createRoleModal').style.display = 'flex';
   document.getElementById('newRoleName').value = '';
   document.getElementById('createRoleError').style.display = 'none';
+
+  // Reset the create button in case it was left in loading state from a previous creation
+  var createBtn = document.getElementById('createRoleBtn');
+  if (createBtn) {
+    createBtn.innerHTML = 'Create';
+    createBtn.disabled = false;
+  }
 }
 
 function closeCreateRoleModal() {
