@@ -1,10 +1,13 @@
 import { test, expect } from '../fixtures/test-fixtures';
 
 test.describe('Terms and Conditions Page', () => {
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page, mockApi }) => {
     await mockApi.mockUnauthenticated();
     await mockApi.blockExternalApis();
-    await page.goto('/terms-and-conditions', { waitUntil: 'domcontentloaded' });
+    await page.goto('/terms-and-conditions', { waitUntil: 'commit' });
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 30000 });
   });
 
   test('renders the page without errors', async ({ page }) => {
@@ -55,19 +58,19 @@ test.describe('Terms and Conditions Page', () => {
 
   test('displays community boost section', async ({ page }) => {
     await expect(
-      page.getByText('Community Boost & Promotion')
+      page.getByText('Community Boost & Promotion').first()
     ).toBeVisible();
     await expect(
-      page.getByText('Web Community Boosts')
+      page.getByRole('heading', { name: 'Web Community Boosts' })
     ).toBeVisible();
   });
 
   test('displays content creator program section', async ({ page }) => {
     await expect(
-      page.getByText('Content Creator Program', { exact: true })
+      page.getByText('Content Creator Program', { exact: true }).first()
     ).toBeVisible();
-    await expect(page.getByText('Eligibility Requirements')).toBeVisible();
-    await expect(page.getByText('Program Benefits')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Eligibility Requirements' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Program Benefits' })).toBeVisible();
   });
 
   test('displays the you must not list', async ({ page }) => {
@@ -78,7 +81,7 @@ test.describe('Terms and Conditions Page', () => {
   });
 
   test('has a link to Privacy Policy', async ({ page }) => {
-    const privacyLink = page.locator('a[href="/privacy-policy"]');
+    const privacyLink = page.locator('a[href="/privacy-policy"]').first();
     await expect(privacyLink).toBeVisible();
   });
 

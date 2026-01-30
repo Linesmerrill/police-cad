@@ -1,6 +1,8 @@
 import { test, expect } from '../fixtures/test-fixtures';
 
 test.describe('Content Creators Page', () => {
+  test.setTimeout(60000);
+
   test.describe('with creators loaded', () => {
     test.beforeEach(async ({ page, mockApi }) => {
       await mockApi.mockUnauthenticated();
@@ -20,7 +22,8 @@ test.describe('Content Creators Page', () => {
         })
       );
 
-      await page.goto('/content-creators', { waitUntil: 'domcontentloaded' });
+      await page.goto('/content-creators', { waitUntil: 'commit' });
+      await page.locator('h1').first().waitFor({ state: 'visible', timeout: 30000 });
     });
 
     test('renders the page without errors', async ({ page }) => {
@@ -38,7 +41,7 @@ test.describe('Content Creators Page', () => {
 
     test('displays the Content Creator Program badge', async ({ page }) => {
       await expect(
-        page.getByText('Content Creator Program')
+        page.getByText('Content Creator Program').first()
       ).toBeVisible();
     });
 
@@ -88,12 +91,12 @@ test.describe('Content Creators Page', () => {
     });
 
     test('displays the total value', async ({ page }) => {
-      await expect(page.getByText('$72')).toBeVisible();
-      await expect(page.getByText('/year')).toBeVisible();
+      await expect(page.getByText('$72').first()).toBeVisible();
+      await expect(page.getByText('/year').first()).toBeVisible();
     });
 
     test('displays Our Creators section', async ({ page }) => {
-      await expect(page.getByText('Our Creators')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Our Creators' })).toBeVisible();
     });
 
     test('displays Ready to Join section', async ({ page }) => {
@@ -134,7 +137,8 @@ test.describe('Content Creators Page', () => {
         })
       );
 
-      await page.goto('/content-creators', { waitUntil: 'domcontentloaded' });
+      await page.goto('/content-creators', { waitUntil: 'commit' });
+      await page.locator('h1').first().waitFor({ state: 'visible', timeout: 30000 });
     });
 
     test('shows empty state when no creators exist', async ({ page }) => {

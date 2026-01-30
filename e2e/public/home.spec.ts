@@ -1,11 +1,15 @@
 import { test, expect } from '../fixtures/test-fixtures';
 
 test.describe('Home Page', () => {
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page, mockApi }) => {
     await mockApi.mockUnauthenticated();
     await mockApi.mockContentCreators();
     await mockApi.blockExternalApis();
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await page.goto('/', { waitUntil: 'commit' });
+    // Wait for the main element to be present (Next.js hydration)
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 30000 });
   });
 
   test('renders the page without errors', async ({ page }) => {
@@ -54,7 +58,8 @@ test.describe('Home Page', () => {
   test('displays the Stats section', async ({ page }) => {
     // Stats section should have visible numeric content
     const main = page.locator('main');
-    const mainText = await main.textContent();
+    await expect(main).toBeVisible({ timeout: 15000 });
+    const mainText = await main.textContent({ timeout: 15000 });
     // Stats section typically displays numbers/stats about the platform
     expect(mainText).toBeTruthy();
   });
@@ -88,7 +93,8 @@ test.describe('Home Page', () => {
     page.on('pageerror', (err) => errors.push(err.message));
 
     // Navigate fresh to capture all errors
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await page.goto('/', { waitUntil: 'commit' });
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 30000 });
 
     expect(errors).toEqual([]);
   });

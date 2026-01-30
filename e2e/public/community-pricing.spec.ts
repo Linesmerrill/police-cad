@@ -1,11 +1,33 @@
 import { test, expect } from '../fixtures/test-fixtures';
 
+// Helper to wait for React hydration on a specific element
+async function waitForHydration(page: any, selector: string) {
+  await page.waitForFunction(
+    (sel: string) => {
+      const el = document.querySelector(sel);
+      return (
+        el &&
+        Object.keys(el).some(
+          (k) =>
+            k.startsWith('__reactFiber$') ||
+            k.startsWith('__reactInternalInstance$')
+        )
+      );
+    },
+    selector,
+    { timeout: 30000 }
+  );
+}
+
 test.describe('Community Pricing Page', () => {
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page, mockApi }) => {
     await mockApi.mockUnauthenticated();
     await mockApi.mockCommunityTiers();
     await mockApi.blockExternalApis();
-    await page.goto('/community-pricing', { waitUntil: 'domcontentloaded' });
+    await page.goto('/community-pricing', { waitUntil: 'commit' });
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 30000 });
   });
 
   test('renders the page without errors', async ({ page }) => {
@@ -59,6 +81,9 @@ test.describe('Community Pricing Page', () => {
     await expect(
       page.getByRole('button', { name: /Boost for \$/ }).first()
     ).toBeVisible({ timeout: 10000 });
+
+    // Wait for React hydration so button handlers are attached
+    await waitForHydration(page, 'button');
 
     // Get the initial price text of the first boost button
     const firstButton = page.getByRole('button', { name: /Boost for \$/ }).first();

@@ -2,6 +2,8 @@ import { test, expect } from '../fixtures/test-fixtures';
 import { MOCK_USER_RESPONSE } from '../fixtures/test-data';
 
 test.describe('Content Creator Apply Page', () => {
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ mockApi }) => {
     await mockApi.blockExternalApis();
   });
@@ -18,35 +20,48 @@ test.describe('Content Creator Apply Page', () => {
         body: JSON.stringify({ success: true, creator: null, application: null }),
       })
     );
+
+    // Mock slug availability check (the form calls this when display name changes)
+    await page.route('**/api/v1/content-creators/check-slug**', (route: any) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, available: true, slug: 'testuser', message: '' }),
+      })
+    );
+  }
+
+  /** Navigate and wait for form to load */
+  async function gotoApplyPage(page: any) {
+    await page.goto('/content-creators/apply', { waitUntil: 'domcontentloaded' });
+    // Wait for the heading to appear (indicates auth check and loading is done)
+    await expect(page.getByText('Apply to Creator Program')).toBeVisible({ timeout: 30000 });
   }
 
   test.describe('page load and layout', () => {
     test('loads successfully for authenticated user', async ({ page, mockApi }) => {
       await setupFreshApplicant(page, mockApi);
 
-      const response = await page.goto('/content-creators/apply');
+      const response = await page.goto('/content-creators/apply', { waitUntil: 'domcontentloaded' });
       expect(response?.status()).toBeLessThan(500);
       await expect(page.locator('body')).not.toBeEmpty();
     });
 
     test('displays the Apply to Creator Program heading', async ({ page, mockApi }) => {
       await setupFreshApplicant(page, mockApi);
-
-      await page.goto('/content-creators/apply');
+      await gotoApplyPage(page);
       await expect(page.getByText('Apply to Creator Program')).toBeVisible();
     });
 
     test('displays the application instructions', async ({ page, mockApi }) => {
       await setupFreshApplicant(page, mockApi);
-
-      await page.goto('/content-creators/apply');
+      await gotoApplyPage(page);
       await expect(page.getByText(/complete the form below/i)).toBeVisible();
     });
 
     test('displays review timeline information', async ({ page, mockApi }) => {
       await setupFreshApplicant(page, mockApi);
-
-      await page.goto('/content-creators/apply');
+      await gotoApplyPage(page);
       await expect(page.getByText(/5-7 business days/i)).toBeVisible();
     });
 
@@ -56,8 +71,8 @@ test.describe('Content Creator Apply Page', () => {
       const errors: string[] = [];
       page.on('pageerror', (err: Error) => errors.push(err.message));
 
-      await page.goto('/content-creators/apply');
-      await page.waitForLoadState('networkidle');
+      await page.goto('/content-creators/apply', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByText('Apply to Creator Program')).toBeVisible({ timeout: 30000 });
 
       expect(errors).toEqual([]);
     });
@@ -66,18 +81,17 @@ test.describe('Content Creator Apply Page', () => {
   test.describe('application form fields', () => {
     test.beforeEach(async ({ page, mockApi }) => {
       await setupFreshApplicant(page, mockApi);
-      await page.goto('/content-creators/apply');
+      await gotoApplyPage(page);
     });
 
     test('displays the Display Name field pre-filled with username', async ({ page }) => {
-      // The form pre-fills the display name with the user's username
       const displayNameInput = page.locator('input[type="text"]').first();
       await expect(displayNameInput).toBeVisible();
     });
 
     test('has a platform selection section', async ({ page }) => {
-      // The form includes platform type options (Twitch, YouTube, TikTok, Other)
-      await expect(page.getByText(/twitch/i).first()).toBeVisible();
+      // The form has a "Platforms" label for adding streaming platforms
+      await expect(page.getByText(/platforms/i).first()).toBeVisible();
     });
 
     test('has a Submit Application button', async ({ page }) => {
@@ -85,7 +99,6 @@ test.describe('Content Creator Apply Page', () => {
     });
 
     test('has terms agreement checkbox', async ({ page }) => {
-      // The form requires agreeing to terms
       const checkbox = page.locator('input[type="checkbox"]').first();
       await expect(checkbox).toBeAttached();
     });
@@ -94,7 +107,7 @@ test.describe('Content Creator Apply Page', () => {
   test.describe('form validation', () => {
     test('Submit Application button exists and is initially present', async ({ page, mockApi }) => {
       await setupFreshApplicant(page, mockApi);
-      await page.goto('/content-creators/apply');
+      await gotoApplyPage(page);
 
       const submitBtn = page.getByText('Submit Application');
       await expect(submitBtn).toBeVisible();
@@ -126,8 +139,8 @@ test.describe('Content Creator Apply Page', () => {
         })
       );
 
-      await page.goto('/content-creators/apply');
-      await page.waitForURL('**/content-creators/me', { timeout: 10000 });
+      await page.goto('/content-creators/apply', { waitUntil: 'domcontentloaded' });
+      await page.waitForURL('**/content-creators/me', { timeout: 30000 });
       expect(page.url()).toContain('/content-creators/me');
     });
 
@@ -162,8 +175,8 @@ test.describe('Content Creator Apply Page', () => {
         })
       );
 
-      await page.goto('/content-creators/apply');
-      await page.waitForURL('**/content-creators/me', { timeout: 10000 });
+      await page.goto('/content-creators/apply', { waitUntil: 'domcontentloaded' });
+      await page.waitForURL('**/content-creators/me', { timeout: 30000 });
       expect(page.url()).toContain('/content-creators/me');
     });
   });
@@ -181,10 +194,10 @@ test.describe('Content Creator Apply Page', () => {
         })
       );
 
-      await page.goto('/content-creators/apply');
+      await page.goto('/content-creators/apply', { waitUntil: 'domcontentloaded' });
 
-      // The page shows a message about needing to be signed in
-      await expect(page.getByText(/signed in/i)).toBeVisible();
+      // The page shows "Sign In Required" and "You need to be signed in..."
+      await expect(page.getByText(/signed in/i)).toBeVisible({ timeout: 30000 });
     });
   });
 
@@ -208,6 +221,14 @@ test.describe('Content Creator Apply Page', () => {
         })
       );
 
+      await page.route('**/api/v1/content-creators/check-slug**', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, available: true, slug: 'testuser', message: '' }),
+        })
+      );
+
       await page.route('**/police-cad-app-api**', (route) =>
         route.fulfill({
           status: 200,
@@ -216,8 +237,9 @@ test.describe('Content Creator Apply Page', () => {
         })
       );
 
-      await page.goto('/content-creators/apply');
-      await page.waitForLoadState('networkidle');
+      await page.goto('/content-creators/apply', { waitUntil: 'domcontentloaded' });
+      // Wait for auth check to complete (form or "Submit Application" appears after auth resolves)
+      await expect(page.getByText('Submit Application')).toBeVisible({ timeout: 30000 });
 
       expect(apiCalled).toBe(true);
     });
@@ -235,8 +257,17 @@ test.describe('Content Creator Apply Page', () => {
         });
       });
 
-      await page.goto('/content-creators/apply');
-      await page.waitForLoadState('networkidle');
+      await page.route('**/api/v1/content-creators/check-slug**', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, available: true, slug: 'testuser', message: '' }),
+        })
+      );
+
+      await page.goto('/content-creators/apply', { waitUntil: 'domcontentloaded' });
+      // Wait for auth check to complete (form appears after auth + application check resolves)
+      await expect(page.getByText('Submit Application')).toBeVisible({ timeout: 30000 });
 
       expect(applicationCheckCalled).toBe(true);
     });

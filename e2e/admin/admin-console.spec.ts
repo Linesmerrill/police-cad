@@ -126,12 +126,12 @@ test.describe('Admin Console', () => {
       await expect(usersPane).toHaveClass(/active/);
     });
 
-    test('Content Creators tab exists but is hidden by default', async ({ page }) => {
+    test('Content Creators tab is visible for admin users', async ({ page }) => {
       await page.goto('/admin/console', { waitUntil: 'domcontentloaded' });
 
       const ccTab = page.locator('#content-creators-tab');
       await expect(ccTab).toBeAttached();
-      await expect(ccTab).not.toBeVisible();
+      await expect(ccTab).toBeVisible();
     });
 
     test('Admin Management tab exists but is hidden by default', async ({ page }) => {

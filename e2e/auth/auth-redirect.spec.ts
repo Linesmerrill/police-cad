@@ -2,20 +2,28 @@ import { test, expect } from '../fixtures/test-fixtures';
 import { PROTECTED_ROUTES } from '../fixtures/test-data';
 
 test.describe('Auth Redirect - Protected Routes', () => {
-  test.describe('Unauthenticated users are redirected to login', () => {
+  test.setTimeout(60000);
+
+  test.describe('Unauthenticated users see login page on protected routes', () => {
     for (const route of PROTECTED_ROUTES) {
-      test(`${route} redirects to login when not authenticated`, async ({ page, mockApi }) => {
+      test(`${route} shows login page when not authenticated`, async ({ page, mockApi }) => {
         await mockApi.mockUnauthenticated();
         await mockApi.blockExternalApis();
 
-        await page.goto(route, { waitUntil: 'domcontentloaded' });
+        const response = await page.goto(route, { waitUntil: 'domcontentloaded' });
 
-        // The user should be redirected to a login or home page
-        await page.waitForURL(/\/(login|$)/, { timeout: 15000 });
+        // The authCheck middleware renders the login-civ EJS template at the same URL.
+        // It does NOT redirect - so the URL may still be the original route.
+        // Check that:
+        // 1. The page did not return a server error
+        expect(response?.status()).toBeLessThan(500);
 
+        // 2. The page shows a login form (either redirected to /login or rendered login-civ inline)
         const url = page.url();
-        const wasRedirected = url.includes('/login') || url.endsWith('/');
-        expect(wasRedirected).toBe(true);
+        const hasLoginContent =
+          url.includes('/login') ||
+          (await page.getByRole('button', { name: /Login|Sign In/i }).isVisible().catch(() => false));
+        expect(hasLoginContent).toBe(true);
       });
     }
   });
@@ -52,11 +60,10 @@ test.describe('Auth Redirect - Protected Routes', () => {
       const errors: string[] = [];
       page.on('pageerror', (err) => errors.push(err.message));
 
-      await page.goto('/civ-dashboard', { waitUntil: 'domcontentloaded' });
+      const response = await page.goto('/civ-dashboard', { waitUntil: 'domcontentloaded' });
 
-      // Wait for potential redirect
-      await page.waitForURL(/\/(login|$)/, { timeout: 15000 });
-
+      // Should not have server errors
+      expect(response?.status()).toBeLessThan(500);
       expect(errors).toEqual([]);
     });
   });

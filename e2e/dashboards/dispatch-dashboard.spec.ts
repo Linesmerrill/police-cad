@@ -185,14 +185,7 @@ test.describe('Dispatch Dashboard', () => {
     });
   });
 
-  test.describe('Fire/EMS List', () => {
-    test('has a Fire/EMS list table', async ({ page }) => {
-      await page.goto('/dispatch-dashboard', { waitUntil: 'domcontentloaded' });
-
-      const fireEmsTable = page.locator('#fireEmsListTable');
-      await expect(fireEmsTable).toBeAttached();
-    });
-  });
+  // Note: Fire/EMS list table (#fireEmsListTable) is currently commented out in the template
 
   test.describe('BOLO Section', () => {
     test('has an active BOLO container', async ({ page }) => {
@@ -310,7 +303,7 @@ test.describe('Dispatch Dashboard', () => {
     test('page includes a footer', async ({ page }) => {
       await page.goto('/dispatch-dashboard', { waitUntil: 'domcontentloaded' });
 
-      const footer = page.locator('footer').first();
+      const footer = page.locator('.footer1-wrapper').first();
       await expect(footer).toBeAttached();
     });
   });

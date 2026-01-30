@@ -1,10 +1,13 @@
 import { test, expect } from '../fixtures/test-fixtures';
 
 test.describe('Penal Code Page', () => {
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page, mockApi }) => {
     await mockApi.mockUnauthenticated();
     await mockApi.blockExternalApis();
-    await page.goto('/penal-code', { waitUntil: 'domcontentloaded' });
+    await page.goto('/penal-code', { waitUntil: 'commit' });
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 30000 });
   });
 
   test('renders the page without errors', async ({ page }) => {
@@ -65,17 +68,28 @@ test.describe('Penal Code Page', () => {
 
   test('search filters violations and shows result count', async ({ page }) => {
     const searchInput = page.getByPlaceholder('Search violations...');
+    await searchInput.waitFor({ state: 'visible' });
+    // Wait for React hydration by checking for React fiber on the element
+    await page.waitForFunction(() => {
+      const el = document.querySelector('input[placeholder="Search violations..."]');
+      return el && Object.keys(el).some(k => k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$'));
+    }, { timeout: 30000 });
     await searchInput.fill('assault');
 
     // Should display a result count
-    await expect(page.getByText(/Found \d+ result/)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/Found \d+ result/)).toBeVisible({ timeout: 10000 });
   });
 
   test('search with no results shows empty state', async ({ page }) => {
     const searchInput = page.getByPlaceholder('Search violations...');
-    await searchInput.fill('xyznonexistentviolation123');
+    await searchInput.waitFor({ state: 'visible' });
+    await page.waitForFunction(() => {
+      const el = document.querySelector('input[placeholder="Search violations..."]');
+      return el && Object.keys(el).some(k => k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$'));
+    }, { timeout: 30000 });
+    await searchInput.fill('xyznonexistent');
 
-    await expect(page.getByText('No results found')).toBeVisible();
+    await expect(page.getByText('No violations match')).toBeVisible({ timeout: 10000 });
   });
 
   test('has a Back button', async ({ page }) => {

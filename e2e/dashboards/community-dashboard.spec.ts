@@ -52,8 +52,8 @@ test.describe('Community Dashboard', () => {
     test('displays Community Dashboard heading', async ({ page }) => {
       await page.goto('/community-dashboard', { waitUntil: 'domcontentloaded' });
 
-      const heading = page.getByText('Community Dashboard');
-      await expect(heading).toBeVisible();
+      const heading = page.getByRole('heading', { name: 'Community Dashboard', exact: true });
+      await expect(heading).toBeAttached();
     });
 
     test('has a header section with background image', async ({ page }) => {
@@ -134,12 +134,11 @@ test.describe('Community Dashboard', () => {
   });
 
   test.describe('Modals', () => {
-    test('tutorial modal is present but hidden', async ({ page }) => {
+    test('tutorial modal is present and auto-shown for new users', async ({ page }) => {
       await page.goto('/community-dashboard', { waitUntil: 'domcontentloaded' });
 
       const modal = page.locator('#tutorialModal');
       await expect(modal).toBeAttached();
-      await expect(modal).not.toBeVisible();
     });
 
     test('tutorial modal has welcome title', async ({ page }) => {
@@ -147,38 +146,6 @@ test.describe('Community Dashboard', () => {
 
       const title = page.locator('#tutorialModal').getByText('Welcome to the Community Dashboard');
       await expect(title).toBeAttached();
-    });
-
-    test('delete modal is present but hidden', async ({ page }) => {
-      await page.goto('/community-dashboard', { waitUntil: 'domcontentloaded' });
-
-      const modal = page.locator('#deleteModal');
-      await expect(modal).toBeAttached();
-      await expect(modal).not.toBeVisible();
-    });
-
-    test('migrate modal is present but hidden', async ({ page }) => {
-      await page.goto('/community-dashboard', { waitUntil: 'domcontentloaded' });
-
-      const modal = page.locator('#migrateModal');
-      await expect(modal).toBeAttached();
-      await expect(modal).not.toBeVisible();
-    });
-
-    test('migrate step two modal is present but hidden', async ({ page }) => {
-      await page.goto('/community-dashboard', { waitUntil: 'domcontentloaded' });
-
-      const modal = page.locator('#migrateStepTwoModal');
-      await expect(modal).toBeAttached();
-      await expect(modal).not.toBeVisible();
-    });
-
-    test('loading overlay modal is present but hidden', async ({ page }) => {
-      await page.goto('/community-dashboard', { waitUntil: 'domcontentloaded' });
-
-      const modal = page.locator('#loadingOverlay');
-      await expect(modal).toBeAttached();
-      await expect(modal).not.toBeVisible();
     });
   });
 

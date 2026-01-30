@@ -623,6 +623,7 @@ function SignupForm() {
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                   style={{
                     position: 'absolute',
                     right: '0.75rem',
@@ -728,6 +729,7 @@ function SignupForm() {
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                   style={{
                     position: 'absolute',
                     right: '0.75rem',

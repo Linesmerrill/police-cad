@@ -1,11 +1,33 @@
 import { test, expect } from '../fixtures/test-fixtures';
 
+// Helper to wait for React hydration on a specific element
+async function waitForHydration(page: any, selector: string) {
+  await page.waitForFunction(
+    (sel: string) => {
+      const el = document.querySelector(sel);
+      return (
+        el &&
+        Object.keys(el).some(
+          (k) =>
+            k.startsWith('__reactFiber$') ||
+            k.startsWith('__reactInternalInstance$')
+        )
+      );
+    },
+    selector,
+    { timeout: 30000 }
+  );
+}
+
 test.describe('Pricing Page', () => {
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page, mockApi }) => {
     await mockApi.mockUnauthenticated();
     await mockApi.mockSubscriptionTiers();
     await mockApi.blockExternalApis();
-    await page.goto('/pricing', { waitUntil: 'domcontentloaded' });
+    await page.goto('/pricing', { waitUntil: 'commit' });
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 30000 });
   });
 
   test('renders the page without errors', async ({ page }) => {
@@ -28,8 +50,8 @@ test.describe('Pricing Page', () => {
   });
 
   test('displays the free tier info', async ({ page }) => {
-    await expect(page.getByText('100% free')).toBeVisible();
-    await expect(page.getByText('Free Forever')).toBeVisible();
+    await expect(page.getByText('100% free').first()).toBeVisible();
+    await expect(page.getByText('Free Forever').first()).toBeVisible();
   });
 
   test('displays billing toggle buttons', async ({ page }) => {
@@ -52,26 +74,30 @@ test.describe('Pricing Page', () => {
   });
 
   test('displays subscribe buttons on tier cards', async ({ page }) => {
-    // Wait for the pricing cards to load
+    // Wait for the pricing cards to load by waiting for the first subscribe button
     const subscribeButtons = page.getByRole('button', { name: 'Subscribe' });
-    // There should be at least one subscribe button (unauthenticated users see subscribe)
+    await expect(subscribeButtons.first()).toBeVisible({ timeout: 10000 });
     const count = await subscribeButtons.count();
     expect(count).toBeGreaterThan(0);
   });
 
   test('switching to annual billing updates the UI', async ({ page }) => {
+    // Wait for React hydration so button handlers are attached
+    await waitForHydration(page, 'button');
     const annualButton = page.getByRole('button', { name: /Annual/ });
     await annualButton.click();
 
     // After clicking annual, the price display should show /year
-    await expect(page.getByText('/year').first()).toBeVisible();
+    await expect(page.getByText('/year').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('switching to monthly billing shows /month', async ({ page }) => {
+    // Wait for React hydration so button handlers are attached
+    await waitForHydration(page, 'button');
     const monthlyButton = page.getByRole('button', { name: 'Monthly' });
     await monthlyButton.click();
 
-    await expect(page.getByText('/month').first()).toBeVisible();
+    await expect(page.getByText('/month').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('displays manage subscription link', async ({ page }) => {

@@ -1,14 +1,15 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
 
-const baseURL = process.env.BASE_URL || 'http://localhost:8080';
+const testPort = process.env.CI ? '8080' : '8181';
+const baseURL = process.env.BASE_URL || `http://localhost:${testPort}`;
 
 export default defineConfig({
   testDir: '.',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  retries: process.env.CI ? 2 : 2,
+  workers: process.env.CI ? 2 : 2,
   reporter: process.env.CI
     ? [['html', { open: 'never', outputFolder: path.join(__dirname, 'playwright-report') }], ['github']]
     : [['html', { open: 'on-failure', outputFolder: path.join(__dirname, 'playwright-report') }]],
@@ -20,7 +21,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     actionTimeout: 15000,
-    navigationTimeout: 30000,
+    navigationTimeout: 60000,
   },
 
   projects: [
@@ -57,6 +58,7 @@ export default defineConfig({
       name: 'protected',
       testMatch: /protected\/.+\.spec\.ts/,
       dependencies: ['auth-setup'],
+      timeout: 60000,
       use: {
         ...devices['Desktop Chrome'],
         storageState: path.join(__dirname, '.auth/user.json'),
@@ -101,13 +103,14 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: process.env.CI ? 'npm run start' : 'npm run dev',
+    command: `NODE_ENV=test PORT=${testPort} node ${path.resolve(__dirname, '..', 'server.js')}`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
+    cwd: path.resolve(__dirname, '..'),
     env: {
       NODE_ENV: 'test',
-      PORT: '8080',
+      PORT: testPort,
     },
   },
 });

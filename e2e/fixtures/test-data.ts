@@ -22,27 +22,18 @@ export const TEST_COMMUNITY = {
 
 export const MOCK_USER_RESPONSE = {
   user: {
-    _id: '507f1f77bcf86cd799439001',
-    user: {
-      email: TEST_USER.email,
-      username: TEST_USER.username,
-      callSign: TEST_USER.callSign,
-      createdAt: '2024-01-01T00:00:00.000Z',
-      activeCommunity: TEST_COMMUNITY.id,
-      lastAccessedCommunity: TEST_COMMUNITY.id,
-      communities: [
-        {
-          uniqueId: TEST_COMMUNITY.id,
-          communityName: TEST_COMMUNITY.name,
-          communityCode: TEST_COMMUNITY.code,
-        },
-      ],
-      subscription: {
-        plan: 'free',
-        active: false,
-      },
-      dispatchStatus: 'offline',
-      isDeactivated: false,
+    id: '507f1f77bcf86cd799439001',
+    email: TEST_USER.email,
+    username: TEST_USER.username,
+    callSign: TEST_USER.callSign,
+    createdAt: '2024-01-01T00:00:00.000Z',
+    discordConnected: false,
+    panicButtonSound: false,
+    alertVolumeLevel: 10,
+    profilePicture: '',
+    subscription: {
+      plan: 'free',
+      active: false,
     },
   },
 };
@@ -61,57 +52,93 @@ export const MOCK_COMMUNITIES_RESPONSE = [
   },
 ];
 
-export const MOCK_SUBSCRIPTION_TIERS = [
-  {
-    id: 'free',
-    name: 'Free',
-    price: 0,
-    features: ['Basic CAD access', 'Up to 5 civilians', 'Community access'],
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: 4.99,
-    features: ['Unlimited civilians', 'Priority support', 'Custom departments'],
-  },
-  {
-    id: 'premium',
-    name: 'Premium',
-    price: 9.99,
-    features: ['All Pro features', 'Custom branding', 'API access'],
-  },
-];
-
-export const MOCK_COMMUNITY_TIERS = [
-  {
-    id: 'community-free',
-    name: 'Free',
-    price: 0,
-    features: ['Up to 25 members', 'Basic features'],
-  },
-  {
-    id: 'community-pro',
-    name: 'Pro',
-    price: 9.99,
-    features: ['Up to 100 members', 'Custom roles'],
-  },
-];
-
-export const MOCK_CONTENT_CREATORS = [
-  {
-    _id: '507f1f77bcf86cd799439021',
-    slug: 'test-creator',
-    displayName: 'Test Creator',
-    bio: 'A test content creator',
-    socialLinks: {
-      youtube: 'https://youtube.com/test',
+export const MOCK_SUBSCRIPTION_TIERS = {
+  tiers: [
+    {
+      name: 'Base',
+      key: 'base',
+      monthlyPrice: 3,
+      annualPrice: 32,
+      features: ['5 communities', 'Default departments', 'Full ads'],
+      color: '#3b82f6',
     },
-    community: {
-      name: 'Creator Community',
-      code: 'CC123',
+    {
+      name: 'Premium',
+      key: 'premium',
+      monthlyPrice: 8,
+      annualPrice: 85,
+      features: ['10 communities', 'Verified badge', '50% fewer ads'],
+      color: '#667eea',
+      popular: true,
     },
-  },
-];
+    {
+      name: 'Premium +',
+      key: 'premiumplus',
+      monthlyPrice: 19.99,
+      annualPrice: 210,
+      features: ['Unlimited communities', 'Verified badge', 'Ad-free'],
+      color: '#fbbf24',
+    },
+  ],
+};
+
+export const MOCK_COMMUNITY_TIERS = {
+  tiers: [
+    {
+      name: 'Basic',
+      key: 'basic',
+      monthlyPrice: 3,
+      features: ['Boosted in search results'],
+      color: '#3b82f6',
+    },
+    {
+      name: 'Standard',
+      key: 'standard',
+      monthlyPrice: 5,
+      features: ['Boosted in search results', 'Promotional text in search', 'Verified community badge'],
+      color: '#10b981',
+    },
+    {
+      name: 'Premium',
+      key: 'premium',
+      monthlyPrice: 8,
+      features: ['Boosted in search results', 'Promotional text in search', 'Verified community badge', 'Boost on Discover page'],
+      color: '#667eea',
+    },
+    {
+      name: 'Elite',
+      key: 'elite',
+      monthlyPrice: 15,
+      features: ['Boosted in search results', 'Promotional text in search', 'Verified community badge', 'Boost on Discover page', 'Featured on Home Page', 'Promotional description (200 chars)'],
+      color: '#fbbf24',
+      popular: true,
+    },
+  ],
+};
+
+export const MOCK_CONTENT_CREATORS = {
+  success: true,
+  creators: [
+    {
+      _id: '507f1f77bcf86cd799439021',
+      slug: 'test-creator',
+      displayName: 'Test Creator',
+      bio: 'A test content creator for Lines Police CAD',
+      platforms: [
+        {
+          type: 'youtube',
+          url: 'https://youtube.com/test',
+          handle: '@testcreator',
+          followerCount: 1500,
+          verifiedByAdmin: true,
+        },
+      ],
+      primaryPlatform: 'youtube',
+      featured: true,
+      joinedAt: '2024-06-15T00:00:00.000Z',
+    },
+  ],
+};
 
 export const MOCK_PENAL_CODES = [
   {

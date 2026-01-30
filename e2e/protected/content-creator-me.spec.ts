@@ -2,6 +2,8 @@ import { test, expect } from '../fixtures/test-fixtures';
 import { MOCK_USER_RESPONSE } from '../fixtures/test-data';
 
 test.describe('Content Creator Me Page', () => {
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ mockApi }) => {
     await mockApi.blockExternalApis();
   });
@@ -62,7 +64,7 @@ test.describe('Content Creator Me Page', () => {
       status: 'rejected',
       createdAt: '2024-05-01T00:00:00.000Z',
       reviewedAt: '2024-05-10T00:00:00.000Z',
-      rejectionReason: 'Insufficient follower count on provided platforms.',
+      feedback: 'Insufficient follower count on provided platforms.',
       platforms: [
         { type: 'youtube', url: 'https://youtube.com/@rejected', handle: 'rejected', followerCount: 200 },
       ],
@@ -93,7 +95,7 @@ test.describe('Content Creator Me Page', () => {
       await mockApi.mockUserCurrent();
       await setupCreatorMock(page, MOCK_ACTIVE_CREATOR);
 
-      const response = await page.goto('/content-creators/me');
+      const response = await page.goto('/content-creators/me', { waitUntil: 'domcontentloaded' });
       expect(response?.status()).toBeLessThan(500);
       await expect(page.locator('body')).not.toBeEmpty();
     });
@@ -102,8 +104,8 @@ test.describe('Content Creator Me Page', () => {
       await mockApi.mockUserCurrent();
       await setupCreatorMock(page, MOCK_ACTIVE_CREATOR);
 
-      await page.goto('/content-creators/me');
-      await expect(page.getByText('Creator Status')).toBeVisible();
+      await page.goto('/content-creators/me', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByText('Creator Status')).toBeVisible({ timeout: 30000 });
     });
 
     test('no uncaught JS errors on load', async ({ page, mockApi }) => {
@@ -113,8 +115,8 @@ test.describe('Content Creator Me Page', () => {
       const errors: string[] = [];
       page.on('pageerror', (err: Error) => errors.push(err.message));
 
-      await page.goto('/content-creators/me');
-      await page.waitForLoadState('networkidle');
+      await page.goto('/content-creators/me', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByText('Creator Status')).toBeVisible({ timeout: 30000 });
 
       expect(errors).toEqual([]);
     });
@@ -124,7 +126,8 @@ test.describe('Content Creator Me Page', () => {
     test.beforeEach(async ({ page, mockApi }) => {
       await mockApi.mockUserCurrent();
       await setupCreatorMock(page, MOCK_ACTIVE_CREATOR);
-      await page.goto('/content-creators/me');
+      await page.goto('/content-creators/me', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByText('Creator Status')).toBeVisible({ timeout: 30000 });
     });
 
     test('displays the creator display name', async ({ page }) => {
@@ -136,7 +139,6 @@ test.describe('Content Creator Me Page', () => {
     });
 
     test('displays platform information', async ({ page }) => {
-      // The page should show the creator's linked platforms
       await expect(page.getByText(/twitch/i).first()).toBeVisible();
     });
   });
@@ -145,7 +147,9 @@ test.describe('Content Creator Me Page', () => {
     test.beforeEach(async ({ page, mockApi }) => {
       await mockApi.mockUserCurrent();
       await setupCreatorMock(page, MOCK_PENDING_APPLICATION);
-      await page.goto('/content-creators/me');
+      await page.goto('/content-creators/me', { waitUntil: 'domcontentloaded' });
+      // Wait for the page to load past the loading spinner
+      await expect(page.getByText('Aspiring Creator').first()).toBeVisible({ timeout: 30000 });
     });
 
     test('displays the application status as Submitted', async ({ page }) => {
@@ -162,16 +166,16 @@ test.describe('Content Creator Me Page', () => {
       await mockApi.mockUserCurrent();
       await setupCreatorMock(page, MOCK_REJECTED_APPLICATION);
 
-      await page.goto('/content-creators/me');
-      await expect(page.getByText('Rejected').first()).toBeVisible();
+      await page.goto('/content-creators/me', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByText('Rejected').first()).toBeVisible({ timeout: 30000 });
     });
 
     test('displays rejection reason', async ({ page, mockApi }) => {
       await mockApi.mockUserCurrent();
       await setupCreatorMock(page, MOCK_REJECTED_APPLICATION);
 
-      await page.goto('/content-creators/me');
-      await expect(page.getByText(/insufficient follower count/i)).toBeVisible();
+      await page.goto('/content-creators/me', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByText(/insufficient follower count/i)).toBeVisible({ timeout: 30000 });
     });
   });
 
@@ -180,8 +184,8 @@ test.describe('Content Creator Me Page', () => {
       await mockApi.mockUserCurrent();
       await setupCreatorMock(page, MOCK_NO_APPLICATION);
 
-      await page.goto('/content-creators/me');
-      await expect(page.getByText(/haven.*t applied/i)).toBeVisible();
+      await page.goto('/content-creators/me', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByText(/haven.*t applied/i)).toBeVisible({ timeout: 30000 });
     });
   });
 
@@ -202,8 +206,8 @@ test.describe('Content Creator Me Page', () => {
 
       await setupCreatorMock(page, warnedCreator);
 
-      await page.goto('/content-creators/me');
-      await expect(page.getByText('Warning').first()).toBeVisible();
+      await page.goto('/content-creators/me', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByText('Warning').first()).toBeVisible({ timeout: 30000 });
     });
   });
 
@@ -222,13 +226,13 @@ test.describe('Content Creator Me Page', () => {
 
       await setupCreatorMock(page, removedCreator);
 
-      await page.goto('/content-creators/me');
-      await expect(page.getByText(/removed from the Content Creator Program/i)).toBeVisible();
+      await page.goto('/content-creators/me', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByText(/removed from the Content Creator Program/i)).toBeVisible({ timeout: 30000 });
     });
   });
 
   test.describe('authentication guard', () => {
-    test('redirects to login when user is not authenticated', async ({ page, mockApi }) => {
+    test('shows sign-in prompt when user is not authenticated', async ({ page, mockApi }) => {
       await mockApi.mockUnauthenticated();
 
       await page.route('**/api/v1/content-creator-applications/me', (route) =>
@@ -239,11 +243,10 @@ test.describe('Content Creator Me Page', () => {
         })
       );
 
-      await page.goto('/content-creators/me');
+      await page.goto('/content-creators/me', { waitUntil: 'domcontentloaded' });
 
-      // The page should redirect to login
-      await page.waitForURL('**/login**', { timeout: 10000 });
-      expect(page.url()).toContain('/login');
+      // The page shows "Sign In Required" / "Please sign in to view your creator status."
+      await expect(page.getByText(/sign in/i).first()).toBeVisible({ timeout: 30000 });
     });
   });
 
@@ -275,8 +278,9 @@ test.describe('Content Creator Me Page', () => {
         })
       );
 
-      await page.goto('/content-creators/me');
-      await page.waitForLoadState('networkidle');
+      await page.goto('/content-creators/me', { waitUntil: 'domcontentloaded' });
+      // Wait for page to show content (not loading spinner)
+      await expect(page.getByText(/haven.*t applied/i)).toBeVisible({ timeout: 30000 });
 
       expect(apiCalled).toBe(true);
     });
@@ -294,8 +298,8 @@ test.describe('Content Creator Me Page', () => {
         });
       });
 
-      await page.goto('/content-creators/me');
-      await page.waitForLoadState('networkidle');
+      await page.goto('/content-creators/me', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByText('Creator Status')).toBeVisible({ timeout: 30000 });
 
       expect(applicationCheckCalled).toBe(true);
     });

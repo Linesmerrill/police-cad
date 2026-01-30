@@ -1,10 +1,13 @@
 import { test, expect } from '../fixtures/test-fixtures';
 
 test.describe('Contact Us Page', () => {
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page, mockApi }) => {
     await mockApi.mockUnauthenticated();
     await mockApi.blockExternalApis();
-    await page.goto('/contact-us', { waitUntil: 'domcontentloaded' });
+    await page.goto('/contact-us', { waitUntil: 'commit' });
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 30000 });
   });
 
   test('renders the page without errors', async ({ page }) => {
@@ -80,12 +83,12 @@ test.describe('Contact Us Page', () => {
   });
 
   test('has an About Us link in the Need More Help section', async ({ page }) => {
-    const aboutLink = page.locator('a[href="/about-us"]');
+    const aboutLink = page.locator('a[href="/about-us"]').first();
     await expect(aboutLink).toBeVisible();
   });
 
   test('has a GitHub link in the Need More Help section', async ({ page }) => {
-    const githubLink = page.locator('a[href="https://github.com/linesmerrill/police-cad"]');
+    const githubLink = page.locator('a[href="https://github.com/linesmerrill/police-cad"]').first();
     await expect(githubLink).toBeVisible();
   });
 });

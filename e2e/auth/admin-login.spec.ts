@@ -2,13 +2,15 @@ import { test, expect } from '../fixtures/test-fixtures';
 import { TEST_ADMIN } from '../fixtures/test-data';
 
 test.describe('Admin Login Page', () => {
+  test.setTimeout(60000);
+
   test.describe('Page rendering', () => {
     test('displays admin login page with correct headings', async ({ page, mockApi }) => {
       await mockApi.blockExternalApis();
 
       await page.goto('/admin', { waitUntil: 'domcontentloaded' });
 
-      await expect(page.locator('h2')).toContainText('Admin Console');
+      await expect(page.getByRole('heading', { name: 'Admin Console' })).toBeVisible();
       await expect(page.getByText('Sign in with your admin credentials')).toBeVisible();
     });
 

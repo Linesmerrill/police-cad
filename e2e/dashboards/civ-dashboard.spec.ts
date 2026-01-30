@@ -222,12 +222,13 @@ test.describe('Civilian Dashboard', () => {
     test('civilian details modal has tab buttons', async ({ page }) => {
       await page.goto('/civ-dashboard', { waitUntil: 'domcontentloaded' });
 
-      const editTab = page.locator('.heroui-tab[data-tab="edit"]');
-      const vehiclesTab = page.locator('.heroui-tab[data-tab="vehicles"]');
-      const firearmsTab = page.locator('.heroui-tab[data-tab="firearms"]');
-      const licensesTab = page.locator('.heroui-tab[data-tab="licenses"]');
-      const medicalTab = page.locator('.heroui-tab[data-tab="medical"]');
-      const recordsTab = page.locator('.heroui-tab[data-tab="records"]');
+      const modal = page.locator('#civDetailsModal');
+      const editTab = modal.locator('.heroui-tab[data-tab="edit"]');
+      const vehiclesTab = modal.locator('.heroui-tab[data-tab="vehicles"]');
+      const firearmsTab = modal.locator('.heroui-tab[data-tab="firearms"]');
+      const licensesTab = modal.locator('.heroui-tab[data-tab="licenses"]');
+      const medicalTab = modal.locator('.heroui-tab[data-tab="medical"]');
+      const recordsTab = modal.locator('.heroui-tab[data-tab="records"]');
 
       await expect(editTab).toBeAttached();
       await expect(vehiclesTab).toBeAttached();

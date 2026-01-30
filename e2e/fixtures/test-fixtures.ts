@@ -15,7 +15,7 @@ class MockApiHelper {
   /** Mock the /api/user/current endpoint to return an authenticated user */
   async mockUserCurrent(overrides?: Record<string, unknown>) {
     const response = overrides
-      ? { ...MOCK_USER_RESPONSE, user: { ...MOCK_USER_RESPONSE.user, user: { ...MOCK_USER_RESPONSE.user.user, ...overrides } } }
+      ? { user: { ...MOCK_USER_RESPONSE.user, ...overrides } }
       : MOCK_USER_RESPONSE;
 
     await this.page.route('**/api/user/current', (route) =>

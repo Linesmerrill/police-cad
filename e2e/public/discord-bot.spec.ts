@@ -1,10 +1,13 @@
 import { test, expect } from '../fixtures/test-fixtures';
 
 test.describe('Discord Bot Page', () => {
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page, mockApi }) => {
     await mockApi.mockUnauthenticated();
     await mockApi.blockExternalApis();
-    await page.goto('/discord-bot', { waitUntil: 'domcontentloaded' });
+    await page.goto('/discord-bot', { waitUntil: 'commit' });
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 30000 });
   });
 
   test('renders the page without errors', async ({ page }) => {
@@ -47,7 +50,7 @@ test.describe('Discord Bot Page', () => {
   });
 
   test('displays step 3 - Connect Your Account', async ({ page }) => {
-    await expect(page.getByText('Connect Your Account')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Connect Your Account' })).toBeVisible();
     await expect(
       page.getByText('go to your profile page and click')
     ).toBeVisible();
@@ -71,7 +74,7 @@ test.describe('Discord Bot Page', () => {
   test('displays Important Notes section', async ({ page }) => {
     await expect(page.getByText('Important Notes')).toBeVisible();
     await expect(
-      page.getByText('You must have "Manage Server" permissions')
+      page.getByText('You must have "Manage Server" permissions').first()
     ).toBeVisible();
   });
 

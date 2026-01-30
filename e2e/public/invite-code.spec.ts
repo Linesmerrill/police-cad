@@ -1,10 +1,32 @@
 import { test, expect } from '../fixtures/test-fixtures';
 
+// Helper to wait for React hydration on a specific element
+async function waitForHydration(page: any, selector: string) {
+  await page.waitForFunction(
+    (sel: string) => {
+      const el = document.querySelector(sel);
+      return (
+        el &&
+        Object.keys(el).some(
+          (k) =>
+            k.startsWith('__reactFiber$') ||
+            k.startsWith('__reactInternalInstance$')
+        )
+      );
+    },
+    selector,
+    { timeout: 30000 }
+  );
+}
+
 test.describe('Invite Code Page', () => {
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page, mockApi }) => {
     await mockApi.mockUnauthenticated();
     await mockApi.blockExternalApis();
-    await page.goto('/invite-code', { waitUntil: 'domcontentloaded' });
+    await page.goto('/invite-code', { waitUntil: 'commit' });
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 30000 });
   });
 
   test('renders the page without errors', async ({ page }) => {
@@ -54,13 +76,23 @@ test.describe('Invite Code Page', () => {
   });
 
   test('shows error when submitting empty invite code', async ({ page }) => {
+    // Wait for React hydration so event handlers are attached
+    await waitForHydration(page, '#inviteCode');
+    const input = page.locator('#inviteCode');
+
+    // Remove native required validation
+    await input.evaluate((el) => el.removeAttribute('required'));
+
+    // Fill with whitespace (React onChange will set inviteCode to '   ')
+    await input.fill('   ');
+
     const submitButton = page.getByRole('button', { name: 'Join Community' });
     await submitButton.click();
 
-    // The form should show an error for empty code
+    // The form should show an error for empty/whitespace code
     await expect(
       page.getByText('Please enter an invite code.')
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 5000 });
   });
 
   test('has a Browse Communities link', async ({ page }) => {
@@ -85,14 +117,18 @@ test.describe('Invite Code Page', () => {
     await mockApi.blockExternalApis();
 
     await page.goto('/invite-code?code=TEST123', {
-      waitUntil: 'domcontentloaded',
+      waitUntil: 'commit',
     });
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 30000 });
 
     const input = page.locator('#inviteCode');
-    await expect(input).toHaveValue('TEST123');
+    // Wait for React hydration and useEffect to populate the value
+    await expect(input).toHaveValue('TEST123', { timeout: 15000 });
   });
 
   test('submitting a code triggers a request', async ({ page }) => {
+    // Wait for React hydration
+    await waitForHydration(page, '#inviteCode');
     // Fill in a code
     const input = page.locator('#inviteCode');
     await input.fill('TESTCODE');
@@ -127,22 +163,39 @@ test.describe('Invite Code Page', () => {
   });
 
   test('input clears error state when typing', async ({ page }) => {
-    // Trigger an error first
+    // Trigger an error first - remove required attribute and submit empty form
+    const input = page.locator('#inviteCode');
+
+    // Remove native required validation so we can submit empty
+    await input.evaluate((el) => el.removeAttribute('required'));
+
+    // Set whitespace value using native setter to trigger React state
+    await page.evaluate(() => {
+      const el = document.getElementById('inviteCode') as HTMLInputElement;
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!;
+      nativeInputValueSetter.call(el, '   ');
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
     const submitButton = page.getByRole('button', { name: 'Join Community' });
     await submitButton.click();
 
     // Error should be visible
     await expect(
       page.getByText('Please enter an invite code.')
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 5000 });
 
-    // Start typing to clear the error
-    const input = page.locator('#inviteCode');
-    await input.fill('A');
+    // Type new value to trigger onChange which clears error
+    await page.evaluate(() => {
+      const el = document.getElementById('inviteCode') as HTMLInputElement;
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!;
+      nativeInputValueSetter.call(el, 'A');
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
 
-    // Error should be cleared
+    // Error should be cleared (onChange sets error to '')
     await expect(
       page.getByText('Please enter an invite code.')
-    ).not.toBeVisible();
+    ).not.toBeVisible({ timeout: 5000 });
   });
 });

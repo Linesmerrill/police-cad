@@ -1,10 +1,13 @@
 import { test, expect } from '../fixtures/test-fixtures';
 
 test.describe('Privacy Policy Page', () => {
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page, mockApi }) => {
     await mockApi.mockUnauthenticated();
     await mockApi.blockExternalApis();
-    await page.goto('/privacy-policy', { waitUntil: 'domcontentloaded' });
+    await page.goto('/privacy-policy', { waitUntil: 'commit' });
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 30000 });
   });
 
   test('renders the page without errors', async ({ page }) => {
@@ -69,7 +72,7 @@ test.describe('Privacy Policy Page', () => {
   });
 
   test('has a link to Terms and Conditions', async ({ page }) => {
-    const termsLink = page.locator('a[href="/terms-and-conditions"]');
+    const termsLink = page.locator('a[href="/terms-and-conditions"]').first();
     await expect(termsLink).toBeVisible();
     await expect(termsLink).toContainText('Terms and Conditions');
   });
@@ -92,7 +95,7 @@ test.describe('Privacy Policy Page', () => {
   });
 
   test('has a Google Analytics section', async ({ page }) => {
-    await expect(page.getByText('Google Analytics')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Google Analytics' })).toBeVisible();
     const googleLink = page.locator('a[href="https://policies.google.com/privacy?hl=en"]');
     await expect(googleLink).toBeVisible();
   });

@@ -112,8 +112,9 @@ export default function Features() {
             width: '100%'
           }}
         >
-          <dl 
+          <div
             className="features-grid"
+            role="list"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
@@ -219,7 +220,7 @@ export default function Features() {
                 </div>
               </div>
             ))}
-          </dl>
+          </div>
         </div>
       </div>
     </div>

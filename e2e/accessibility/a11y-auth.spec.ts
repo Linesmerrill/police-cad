@@ -2,8 +2,11 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 test.describe('Accessibility - Auth Pages', () => {
+  test.setTimeout(60000);
+
   test('login page form is accessible', async ({ page }) => {
-    await page.goto('/login', { waitUntil: 'domcontentloaded' });
+    await page.goto('/login', { waitUntil: 'commit' });
+    await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
     const results = await new AxeBuilder({ page })
@@ -20,7 +23,8 @@ test.describe('Accessibility - Auth Pages', () => {
   });
 
   test('login page has proper labels for form inputs', async ({ page }) => {
-    await page.goto('/login', { waitUntil: 'domcontentloaded' });
+    await page.goto('/login', { waitUntil: 'commit' });
+    await page.waitForLoadState('networkidle');
 
     // Email field should have an associated label
     const emailInput = page.locator('#email');
@@ -36,7 +40,8 @@ test.describe('Accessibility - Auth Pages', () => {
   });
 
   test('signup page form is accessible', async ({ page }) => {
-    await page.goto('/signup', { waitUntil: 'domcontentloaded' });
+    await page.goto('/signup', { waitUntil: 'commit' });
+    await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
     const results = await new AxeBuilder({ page })
@@ -53,7 +58,8 @@ test.describe('Accessibility - Auth Pages', () => {
   });
 
   test('signup page has proper labels for all form inputs', async ({ page }) => {
-    await page.goto('/signup', { waitUntil: 'domcontentloaded' });
+    await page.goto('/signup', { waitUntil: 'commit' });
+    await page.waitForLoadState('networkidle');
 
     const fields = ['username', 'callSign', 'email', 'password', 'confirmPassword'];
     for (const fieldId of fields) {

@@ -119,7 +119,7 @@ test.describe('EMS Dashboard', () => {
     test('displays EMS STATUS CODES label', async ({ page }) => {
       await page.goto('/ems-dashboard', { waitUntil: 'domcontentloaded' });
 
-      const label = page.getByText('EMS STATUS CODES');
+      const label = page.getByText('EMS STATUS CODES', { exact: true });
       await expect(label).toBeAttached();
     });
 
@@ -194,7 +194,7 @@ test.describe('EMS Dashboard', () => {
     test('has Add New Vehicle button', async ({ page }) => {
       await page.goto('/ems-dashboard', { waitUntil: 'domcontentloaded' });
 
-      const addVehicleBtn = page.locator('button').filter({ hasText: /Add.*New.*Vehicle/ }).first();
+      const addVehicleBtn = page.getByRole('button', { name: /Add New Vehicle/ }).first();
       await expect(addVehicleBtn).toBeAttached();
     });
 
@@ -233,14 +233,14 @@ test.describe('EMS Dashboard', () => {
     test('has Add New Persona button in header', async ({ page }) => {
       await page.goto('/ems-dashboard', { waitUntil: 'domcontentloaded' });
 
-      const personaBtn = page.locator('header button').filter({ hasText: /Add New.*Persona/ }).first();
+      const personaBtn = page.locator('header#second').getByRole('button', { name: /Add New Persona/ });
       await expect(personaBtn).toBeAttached();
     });
 
     test('has Add New Vehicle button in header', async ({ page }) => {
       await page.goto('/ems-dashboard', { waitUntil: 'domcontentloaded' });
 
-      const vehicleBtn = page.locator('header button').filter({ hasText: /Add New.*Vehicle/ }).first();
+      const vehicleBtn = page.locator('header#second').getByRole('button', { name: /Add New Vehicle/ });
       await expect(vehicleBtn).toBeAttached();
     });
   });

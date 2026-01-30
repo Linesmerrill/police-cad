@@ -295,7 +295,7 @@ test.describe('Police Dashboard', () => {
     test('page includes a footer', async ({ page }) => {
       await page.goto('/police-dashboard', { waitUntil: 'domcontentloaded' });
 
-      const footer = page.locator('footer').first();
+      const footer = page.locator('.footer1-wrapper').first();
       await expect(footer).toBeAttached();
     });
   });

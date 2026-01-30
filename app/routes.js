@@ -82,8 +82,77 @@ module.exports = function (app, passport, server, nextApp, handle) {
     });
 
     app.post('/test/admin-login', function (req, res) {
-      req.session.adminAuthenticated = true;
-      req.session.adminEmail = req.body.email || 'admin@test.com';
+      var email = req.body.email || 'admin@test.com';
+      req.session.adminToken = 'test-admin-token-' + Date.now();
+      req.session.admin = {
+        email: email,
+        name: 'Test Admin',
+        firstName: 'Test',
+        lastName: 'Admin',
+        profilePicture: '',
+        id: 'test-admin-id',
+        role: 'admin',
+        roles: ['admin']
+      };
+      req.session.loginTime = new Date();
+      res.json({ success: true });
+    });
+
+    // GET versions for browser-based auth (Playwright navigates here directly)
+    app.get('/test/login', function (req, res) {
+      var email = req.query.email || 'testuser@test.com';
+      User.findOne({ 'user.email': email }, function (err, user) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!user) {
+          var newUser = new User();
+          newUser.user.email = email;
+          newUser.user.username = req.query.username || 'testuser';
+          newUser.user.callSign = req.query.callSign || 'T-1';
+          newUser.user.createdAt = new Date();
+          newUser.user.communities = [];
+          newUser.save(function (err) {
+            if (err) return res.status(500).json({ error: 'Failed to create test user' });
+            req.login(newUser, function (err) {
+              if (err) return res.status(500).json({ error: 'Login failed' });
+              res.json({ success: true, userId: newUser._id });
+            });
+          });
+        } else {
+          req.login(user, function (err) {
+            if (err) return res.status(500).json({ error: 'Login failed' });
+            res.json({ success: true, userId: user._id });
+          });
+        }
+      });
+    });
+
+    app.get('/test/admin-login', function (req, res) {
+      var email = req.query.email || 'admin@test.com';
+      req.session.adminToken = 'test-admin-token-' + Date.now();
+      req.session.admin = {
+        email: email,
+        name: 'Test Admin',
+        firstName: 'Test',
+        lastName: 'Admin',
+        profilePicture: '',
+        id: 'test-admin-id',
+        role: 'admin',
+        roles: ['admin']
+      };
+      req.session.loginTime = new Date();
+      res.json({ success: true });
+    });
+
+    // Set up session with department context so dashboard routes render instead of redirecting
+    app.post('/test/set-department', function (req, res) {
+      req.session.departmentId = req.body.departmentId || 'test-department-id';
+      req.session.departmentName = req.body.departmentName || 'Test Department';
+      res.json({ success: true });
+    });
+
+    app.get('/test/set-department', function (req, res) {
+      req.session.departmentId = req.query.departmentId || 'test-department-id';
+      req.session.departmentName = req.query.departmentName || 'Test Department';
       res.json({ success: true });
     });
   }
@@ -1340,25 +1409,25 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
       
       // If no department context is provided, redirect to community or communities
-      if (!departmentId && !departmentName) {
+      if (!(departmentId || req.session.departmentId) && !departmentName) {
         const communityId = (req.user && req.user.user && (req.user.user.lastAccessedCommunity && req.user.user.lastAccessedCommunity.communityID)) || (req.user && req.user.user && req.user.user.activeCommunity);
         if (communityId) {
           return res.redirect(`/community/${encodeId(communityId)}?notice=selectDepartment#departments-section`);
         }
         return res.redirect('/communities');
       }
-      
+
       // If a specific department is requested, verify user access
       if (departmentId && departmentName) {
         const communityId = req.user.user.lastAccessedCommunity?.communityID || req.user.user.activeCommunity;
-        
+
         if (!communityId) {
           return res.status(403).render("error", {
             message: "No active community found. Please select a community first.",
             redirect: "/communities",
           });
         }
-        
+
         // --- ADMIN CHECK USING COMMUNITY ROLES API ---
         let isAdmin = false;
         try {
@@ -1380,7 +1449,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           console.error('Error fetching community roles:', err.message);
         }
         // --- END ADMIN CHECK ---
-        
+
         if (!isAdmin) {
           // Check if user has access to this department by fetching user's departments
           const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
@@ -1400,7 +1469,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         }
       }
-      
+
       res.render("civ-dashboard", {
         user: req.user,
         // userId,
@@ -1409,7 +1478,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         referer: encodeURIComponent("/civ-dashboard"),
         redirect: encodeURIComponent(redirect),
         departmentName: departmentName,
-        departmentId: departmentId,
+        departmentId: departmentId || req.session.departmentId || null,
       });
     } catch (error) {
       console.error('🚨 Error in civ-dashboard route:', error);

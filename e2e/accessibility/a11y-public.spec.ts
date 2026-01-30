@@ -16,9 +16,12 @@ const PUBLIC_PAGES_FOR_A11Y = [
 ];
 
 test.describe('Accessibility - Public Pages', () => {
+  test.setTimeout(60000);
+
   for (const pagePath of PUBLIC_PAGES_FOR_A11Y) {
     test(`${pagePath} has no critical accessibility violations`, async ({ page }) => {
-      await page.goto(pagePath, { waitUntil: 'domcontentloaded' });
+      await page.goto(pagePath, { waitUntil: 'commit' });
+      await page.waitForLoadState('networkidle');
 
       // Allow page JS to settle
       await page.waitForTimeout(1000);
