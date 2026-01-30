@@ -5,7 +5,9 @@ test.describe('Navigation Smoke Tests', () => {
   test.setTimeout(60000);
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await page.goto('/', { waitUntil: 'commit' });
+    // Wait for nav to be present before each test
+    await page.locator('nav').first().waitFor({ state: 'attached', timeout: 45000 });
   });
 
   test('navbar is visible on the home page', async ({ page }) => {
