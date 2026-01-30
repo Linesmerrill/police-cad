@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { penalCodeCategories, columnLabels, type PenalCodeCategory } from './data';
 
 const fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -137,6 +138,37 @@ export default function PenalCodePage() {
               boxSizing: 'border-box',
             }}
           >
+            {/* Back Button */}
+            <button
+              onClick={() => window.history.back()}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '8px',
+                padding: '0.5rem 1rem',
+                color: 'rgba(255, 255, 255, 0.7)',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                fontFamily,
+                transition: 'all 0.2s',
+                marginBottom: '1.5rem',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                e.currentTarget.style.color = '#ffffff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+              }}
+            >
+              <ArrowLeftIcon style={{ width: '16px', height: '16px' }} />
+              Back
+            </button>
+
             {/* Hero Section */}
             <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
               <div
