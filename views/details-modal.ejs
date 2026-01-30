@@ -1,0 +1,448 @@
+<div
+  id="detailsModal"
+  class="modal fade"
+  tabindex="-1"
+  role="dialog"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-body">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <a href="javascript:void(0)" onclick="goBack()">
+            <i class="fa fa-chevron-left text-white"></i>
+          </a>
+          <h4 id="detailsTitle" class="m-0">Details</h4>
+          <button
+            type="button"
+            class="btn btn-primary btn-md"
+            data-dismiss="modal"
+            aria-hidden="true"
+            onPress="hideModal('searchDatabaseModal');hideModal('detailsModal')"
+          >
+            X
+          </button>
+        </div>
+        <hr style="width: 88%; max-width: 100rem; border-color: #444" />
+
+        <!-- Loading Indicator -->
+        <div id="detailsLoading" class="text-center">
+          <div id="loadingStatuses" class="list-group"></div>
+        </div>
+
+        <!-- Content -->
+        <div id="detailsContent" style="display: none">
+          <!-- Image -->
+          <div class="text-center mb-4">
+            <img
+              id="detailsImage"
+              class="rounded-circle"
+              style="width: 160px; height: 160px; border: 4px solid #000"
+              alt="Profile"
+            />
+          </div>
+
+          <!-- Details -->
+          <div id="detailsInfo"></div>
+
+          <!-- Linked Items (Civilian Only) -->
+          <div id="linkedItems" class="mt-4"></div>
+
+          <!-- Main Tabs -->
+          <div id="mainTabs" class="mb-3" style="display: flex; gap: 1.5rem; border-bottom: 1px solid #444;">
+            <button id="tabCriminalHistory" class="records-tab-btn active" type="button" style="background: none; border: none; color: #fff; font-weight: 600; font-size: 1.1rem; padding: 0.5rem 1rem; border-bottom: 3px solid #667eea;">Criminal History</button>
+            <button id="tabLicenses" class="records-tab-btn" type="button" style="background: none; border: none; color: #a0aec0; font-weight: 600; font-size: 1.1rem; padding: 0.5rem 1rem; border-bottom: 3px solid transparent;">Licenses</button>
+            <button id="tabVehicles" class="records-tab-btn" type="button" style="background: none; border: none; color: #a0aec0; font-weight: 600; font-size: 1.1rem; padding: 0.5rem 1rem; border-bottom: 3px solid transparent;">Vehicles</button>
+            <button id="tabFirearms" class="records-tab-btn" type="button" style="background: none; border: none; color: #a0aec0; font-weight: 600; font-size: 1.1rem; padding: 0.5rem 1rem; border-bottom: 3px solid transparent;">Firearms</button>
+          </div>
+          
+          <!-- Criminal History Tab Content -->
+          <div id="tabContentCriminal" class="records-tab-content" style="display: block;">
+            <!-- Criminal History (Civilian Only) -->
+            <div id="criminalHistory" class="mt-4"></div>
+            <!-- Arrest Reports (Civilian Only) -->
+            <div id="arrestReports" class="mt-4"></div>
+          </div>
+          
+          <!-- Licenses Tab Content -->
+          <div id="tabContentLicenses" class="records-tab-content" style="display: none;">
+            <div id="licensesContent" class="mt-4">
+              <h5 class="text-white mb-2">Licenses</h5>
+              <div id="licensesList"></div>
+            </div>
+          </div>
+          
+          <!-- Vehicles Tab Content -->
+          <div id="tabContentVehicles" class="records-tab-content" style="display: none;">
+            <div id="vehiclesContent" class="mt-4">
+              <h5 class="text-white mb-2">Registered Vehicles</h5>
+              <div id="vehiclesList"></div>
+            </div>
+          </div>
+          
+          <!-- Firearms Tab Content -->
+          <div id="tabContentFirearms" class="records-tab-content" style="display: none;">
+            <div id="firearmsContent" class="mt-4">
+              <h5 class="text-white mb-2">Registered Firearms</h5>
+              <div id="firearmsList"></div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div id="actionButtons" class="mt-4"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .details-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #444;
+    cursor: pointer;
+  }
+  .details-item:hover {
+    background-color: #3b82f6;
+  }
+  .badge {
+    display: inline-block;
+    padding: 0.25em 0.6em;
+    font-size: 0.85em;
+    font-weight: 600;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.5rem;
+    margin-top: 0.1rem;
+  }
+  .badge-status {
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-size: 1rem;
+  }
+  .badge-revoked {
+    background-color: #dc3545;
+    color: white;
+  }
+  .badge-expired {
+    background-color: #fd7e14;
+    color: white;
+  }
+  .badge-stolen {
+    background-color: #dc3545;
+    color: white;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+  }
+  .text-gray {
+    color: #adb5bd;
+  }
+  .loading-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    background-color: #333;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+  }
+  .loading-item .spinner-border {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+  }
+  .loading-item .fa-check {
+    color: #28a745;
+    margin-right: 0.5rem;
+  }
+  .loading-item .fa-times {
+    color: #dc3545;
+    margin-right: 0.5rem;
+  }
+  .records-tab-btn.active {
+    color: #fff !important;
+    border-bottom: 3px solid #667eea !important;
+  }
+  .records-tab-btn {
+    color: #a0aec0;
+    border-bottom: 3px solid transparent;
+    background: none;
+    outline: none;
+    transition: color 0.2s, border-bottom 0.2s;
+    cursor: pointer;
+  }
+  .records-tab-btn:hover {
+    color: #fff;
+  }
+  .records-tab-content {
+    width: 100%;
+  }
+</style>
+
+<!-- Arrest Report Detail Modal -->
+<div
+  id="arrestReportDetailModal"
+  class="modal fade"
+  tabindex="-1"
+  role="dialog"
+  aria-hidden="true"
+  style="z-index: 1060;"
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-body">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <a href="javascript:void(0)" onclick="closeArrestReportDetail()">
+            <i class="fa fa-chevron-left text-white"></i>
+          </a>
+          <h4 id="arrestReportDetailTitle" class="m-0">Arrest Report</h4>
+          <button
+            type="button"
+            class="btn btn-primary btn-md"
+            data-dismiss="modal"
+            aria-hidden="true"
+          >
+            X
+          </button>
+        </div>
+        <hr style="width: 88%; max-width: 100rem; border-color: #444" />
+
+        <!-- Content -->
+        <div id="arrestReportDetailContent" style="max-height: 70vh; overflow-y: auto;">
+          <!-- Arrest Details Section -->
+          <div class="arrest-detail-section">
+            <h5 class="section-title"><i class="fa fa-handcuffs mr-2"></i>Arrest Details</h5>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <span class="detail-label">Date & Time</span>
+                <span id="arrestDateTime" class="detail-value">-</span>
+              </div>
+              <div class="detail-field">
+                <span class="detail-label">Location</span>
+                <span id="arrestLocation" class="detail-value">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Incident Details Section -->
+          <div class="arrest-detail-section">
+            <h5 class="section-title"><i class="fa fa-exclamation-triangle mr-2"></i>Incident Details</h5>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <span class="detail-label">Date & Time</span>
+                <span id="incidentDateTime" class="detail-value">-</span>
+              </div>
+              <div class="detail-field">
+                <span class="detail-label">Location</span>
+                <span id="incidentLocation" class="detail-value">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Arrestee Information Section -->
+          <div class="arrest-detail-section">
+            <h5 class="section-title"><i class="fa fa-user mr-2"></i>Arrestee Information</h5>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <span class="detail-label">Name</span>
+                <span id="arresteeName" class="detail-value">-</span>
+              </div>
+              <div class="detail-field">
+                <span class="detail-label">Date of Birth</span>
+                <span id="arresteeDob" class="detail-value">-</span>
+              </div>
+              <div class="detail-field">
+                <span class="detail-label">Address</span>
+                <span id="arresteeAddress" class="detail-value">-</span>
+              </div>
+              <div class="detail-field-row">
+                <div class="detail-field half">
+                  <span class="detail-label">Height</span>
+                  <span id="arresteeHeight" class="detail-value">-</span>
+                </div>
+                <div class="detail-field half">
+                  <span class="detail-label">Weight</span>
+                  <span id="arresteeWeight" class="detail-value">-</span>
+                </div>
+              </div>
+              <div class="detail-field-row">
+                <div class="detail-field half">
+                  <span class="detail-label">Eye Color</span>
+                  <span id="arresteeEyeColor" class="detail-value">-</span>
+                </div>
+                <div class="detail-field half">
+                  <span class="detail-label">Hair Color</span>
+                  <span id="arresteeHairColor" class="detail-value">-</span>
+                </div>
+              </div>
+              <div class="detail-field">
+                <span class="detail-label">Phone</span>
+                <span id="arresteePhone" class="detail-value">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Arresting Officer Section -->
+          <div class="arrest-detail-section">
+            <h5 class="section-title"><i class="fa fa-shield-alt mr-2"></i>Arresting Officer</h5>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <span class="detail-label">Name</span>
+                <span id="officerName" class="detail-value">-</span>
+              </div>
+              <div class="detail-field">
+                <span class="detail-label">Badge/Call Sign</span>
+                <span id="officerBadge" class="detail-value">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charges Section -->
+          <div class="arrest-detail-section">
+            <h5 class="section-title"><i class="fa fa-gavel mr-2"></i>Charges</h5>
+            <div id="chargesContainer" class="charges-list">
+              <!-- Charges will be populated here -->
+            </div>
+          </div>
+
+          <!-- Narrative Section -->
+          <div class="arrest-detail-section">
+            <h5 class="section-title"><i class="fa fa-file-alt mr-2"></i>Narrative</h5>
+            <div class="narrative-box">
+              <p id="arrestNarrative" class="mb-0">-</p>
+            </div>
+          </div>
+
+          <!-- Witnesses Section -->
+          <div class="arrest-detail-section" id="witnessesSection" style="display: none;">
+            <h5 class="section-title"><i class="fa fa-users mr-2"></i>Witnesses</h5>
+            <div class="narrative-box">
+              <p id="arrestWitnesses" class="mb-0">-</p>
+            </div>
+          </div>
+
+          <!-- Force Used Section -->
+          <div class="arrest-detail-section">
+            <h5 class="section-title"><i class="fa fa-bolt mr-2"></i>Force Used</h5>
+            <div id="forceUsedBadge" class="force-badge">
+              <!-- Badge will be populated here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Arrest Report Detail Modal Styles */
+  #arrestReportDetailModal .modal-body {
+    font-size: 18px;
+    padding: 1.5rem;
+  }
+  .arrest-detail-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #444;
+  }
+  .arrest-detail-section:last-child {
+    border-bottom: none;
+  }
+  .section-title {
+    color: #667eea;
+    font-weight: 700;
+    font-size: 20px;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+  }
+  .section-title i {
+    width: 28px;
+    font-size: 18px;
+  }
+  .detail-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .detail-field {
+    display: flex;
+    flex-direction: column;
+  }
+  .detail-field-row {
+    display: flex;
+    gap: 2rem;
+  }
+  .detail-field.half {
+    flex: 1;
+  }
+  .detail-label {
+    color: #a0aec0;
+    font-size: 13px;
+    margin-bottom: 0.35rem;
+    font-weight: 500;
+  }
+  .detail-value {
+    color: #fff;
+    font-size: 17px;
+    font-weight: 400;
+  }
+  .charges-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .charge-item {
+    background-color: #2d3748;
+    padding: 1rem 1.25rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid #667eea;
+  }
+  .charge-name {
+    color: #fff;
+    font-weight: 600;
+    font-size: 18px;
+  }
+  .charge-category {
+    color: #a0aec0;
+    font-size: 16px;
+    margin-top: 0.25rem;
+  }
+  .charge-fine {
+    color: #48bb78;
+    font-size: 16px;
+    margin-top: 0.25rem;
+  }
+  .narrative-box {
+    background-color: #2d3748;
+    padding: 1.25rem;
+    border-radius: 0.5rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+  .force-badge {
+    display: inline-block;
+  }
+  .force-badge-yes {
+    background-color: #dc3545;
+    color: white;
+    padding: 0.6rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 18px;
+  }
+  .force-badge-no {
+    background-color: #28a745;
+    color: white;
+    padding: 0.6rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 18px;
+  }
+</style>

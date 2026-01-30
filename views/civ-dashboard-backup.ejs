@@ -1,0 +1,3434 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <% include ad-header %>
+  <title>LPC - Civilian Dashboard</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Codeply">
+
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <!-- import stylesheet libraries -->
+  <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap.min.css" />
+  <link rel="stylesheet" href="/static/css/animate.min.css" />
+  <link rel="stylesheet" href="/static/css/ionicons.min.css" />
+  <link rel="stylesheet" href="/static/css/tail.select-dark.min.css" />
+  <link rel="stylesheet" href="/static/css/awesomplete.css" />
+  <link rel="stylesheet" href="static/css/style.css">
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <script type="module" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule="" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"></script>
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
+  <script type="text/javascript" src="static/js/tail.select.min.js"></script>
+  <!-- To hide google translate header bar on each page -->
+  <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
+  <style type='text/css'> body {position: static !important; top:0px !important;}</style>
+  <style>
+  /* Center and set width for search bar */
+  .search-container {
+    width: 75%;
+    margin: 20px auto;
+    max-width: 900px; /* Constrain width on large screens */
+    display: flex;
+    flex-direction: column; /* Stack label and input vertically on mobile */
+    align-items: center; /* Center contents */
+  }
+  /* Ensure input fills container */
+  .search-container input.form-control {
+    width: 100%;
+    max-width: 100%; /* Prevent overflow */
+    box-sizing: border-box; /* Include padding/border in width */
+  }
+  /* Label styling */
+  .search-container label {
+    width: 100%;
+    text-align: left;
+    font-size: 16px;
+    margin-bottom: 5px; /* Space between label and input */
+  }
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    .search-container {
+      width: 100%; /* Full width on mobile for usability */
+      padding: 60px 15px; /* Match Bootstrap container padding */
+      margin: 15px auto;
+    }
+    .search-container label {
+      font-size: 14px; /* Slightly smaller label on mobile */
+    }
+    .search-container input.form-control {
+      font-size: 14px; /* Adjust input text size */
+    }
+  }
+  /* Extra small screens */
+  @media (max-width: 576px) {
+    .search-container {
+      padding: 0 10px;
+    }
+    .search-container input.form-control {
+      padding: 8px; /* Smaller padding for compact look */
+    }
+    .pager li a {
+  color: #fff !important; /* White text to match thumbnail cards */
+  background-color: #343a40; /* Dark gray to match .thumbnail-box */
+  border: 1px solid #007bff; /* Blue border for consistency with primary color */
+  border-radius: 4px; /* Rounded corners */
+  padding: 8px 16px; /* Comfortable padding */
+  text-decoration: none; /* Keep no underline */
+  transition: background-color 0.2s, border-color 0.2s; /* Smooth hover transition */
+}
+
+.pager li a:hover {
+  background-color: #007bff; /* Blue background on hover */
+  border-color: #0056b3; /* Darker blue border */
+  color: #fff;
+}
+
+.pager li.disabled a {
+  background-color: #6c757d; /* Gray for disabled state */
+  border-color: #6c757d;
+  color: #adb5bd; /* Lighter gray text */
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+/* Ensure FontAwesome icons align properly */
+.pager li a i {
+  vertical-align: middle;
+  margin-right: 5px; /* Space for Previous */
+}
+.pager li a i.pl-1 {
+  margin-left: 5px; /* Space for Next */
+  margin-right: 0;
+}
+
+/* Adjust pager layout for consistency */
+.pager {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: space-between; /* Space buttons evenly */
+}
+  }
+
+  .vehicle-card-btn {
+    margin-top: 5px;
+    width: 100%;
+    font-size: 12px;
+  }
+
+  #pills-vehicles .civ-thumbnails,
+  #pills-vehicles .flex-li-wrapper,
+  #pills-vehicles .thumbnail {
+    cursor: default !important;
+    pointer-events: none !important;
+  }
+  #pills-vehicles .thumbnail .vehicle-card-btn {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+  }
+
+  #manage-vehicles-thumbnail .thumbnail-box {
+  background-color: #343a40; /* Match firearm thumbnail */
+  color: white;
+}
+#manage-vehicles-thumbnail .firearm-card-btn {
+  width: 100%;
+  margin-top: 10px;
+}
+
+  #manage-firearms-thumbnail .thumbnail-box {
+  background-color: #343a40; /* Match vehicle thumbnail */
+  color: white;
+}
+#manage-firearms-thumbnail .firearm-card-btn {
+  width: 100%;
+  margin-top: 10px;
+}
+.margin-top-2 {
+  margin-top: 2rem;
+}
+.margin-bottom-1 {
+  margin-bottom: 1rem;
+}
+.margin-right-1 {
+  margin-right: 1rem;
+}
+.text-align-center {
+  text-align: center;
+}
+/* Reset and global styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: url('path-to-wave-pattern.jpg') repeat; /* Replace with your wave pattern image */
+  background-color: #1a1a1a; /* Dark background */
+  color: #fff;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Prevent horizontal overflow */
+}
+
+.dashboard-header {
+  background-color: #222;
+  padding: 10px 0;
+  border-bottom: 1px solid #007bff;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #007bff;
+}
+
+.search-section {
+  padding: 15px;
+  background-color: #2a2a2a;
+  margin: 10px 0;
+  border: 1px solid #333;
+  border-radius: 4px;
+}
+
+.search-section label {
+  margin-right: 10px;
+  color: #007bff;
+}
+
+.search-section .form-control {
+  background-color: #333;
+  border: 1px solid #444;
+  color: #fff;
+  width: 100%;
+  max-width: 100%; /* Ensure it doesn't overflow */
+}
+
+.civilians-section {
+  padding: 15px;
+}
+
+.civilians-section h3 {
+  color: #007bff;
+  margin-bottom: 10px;
+}
+
+.civilian-card {
+  background-color: #222;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  height: 100px; /* Placeholder height, adjust based on content */
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .dashboard-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .search-section {
+    padding: 10px;
+  }
+
+  .search-section .form-control {
+    font-size: 14px;
+  }
+
+  .row .col-xs-12 {
+    width: 100%;
+    padding: 0 5px;
+  }
+
+  .civilian-card {
+    height: 80px; /* Reduce height on very small screens */
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .row .col-sm-6 {
+    width: 50%;
+    padding: 0 5px;
+  }
+}
+
+/* Override problematic pager rule (from previous context) */
+a:not([href]):not([tabindex]):not(.pager a) {
+  color: inherit;
+  text-decoration: none;
+}
+
+.disabled-department {
+  opacity: 0.6;
+  background-color: rgba(0, 0, 0, 0.3);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+#newLicenseModal {
+      z-index: 1060 !important;
+    }
+    #newLicenseModal .modal-backdrop {
+      z-index: 1055 !important;
+    }
+    /* notification styles */
+  .notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -7px;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    font-size: 10px;
+    line-height: 14px;
+    text-align: center;
+    display: none;
+}
+    .notification-badge.show {
+      display: block;
+    }
+  .btn>.btn-success>.btn-sm {
+    
+    padding: 5px 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    border-radius: 3px;
+
+  }
+  #toast-container {
+    position: fixed;
+    top: 60px; /* Adjusted from 20px to avoid navbar overlap */
+    right: 20px;
+    z-index: 1070;
+  }
+  .custom-toast {
+    position: relative;
+    min-width: 250px;
+    max-width: 350px;
+    background: #2d3748;
+    color: #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    display: none; /* Initially hidden for fadeIn */
+  }
+  .custom-toast-header {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: #1f2937;
+    border-bottom: 1px solid #4b5563;
+  }
+  .custom-toast-header strong {
+    flex: 1;
+    font-size: 14px;
+  }
+  .custom-toast-header small {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-right: 10px;
+  }
+  .custom-toast-header .close {
+    color: #e2e8f0;
+    font-size: 14px;
+    padding: 0 5px;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+  .custom-toast-body {
+    padding: 10px;
+    font-size: 14px;
+  }
+  /* end of notification styles */
+</style>
+</head>
+
+<body>
+  <div class="wrapper d-flex align-items-stretch">
+
+    <nav id="sidebar" style="z-index: 9;">
+      <div class="img bg-wrap text-center py-4" style="background-image: url(/static/images/civ-corner-bg1.png);">
+        <div class="user-logo">
+          <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()">
+            <div class="img profile-picture"></div>
+          </a>
+          <h3>
+            <%=user.user.username%>
+          </h3>
+          <h5>Logged in as: Civilian</h5>
+        </div>
+      </div>
+      <ul class="list-unstyled components mb-5">
+        <li>
+          <a href="/"><span class="fa fa-home mr-3"></span> <img style="display: inline; margin-top: -9px; vertical-align: text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD</a>
+        </li>
+        <li class="background-color-222">
+          <a type="button" data-toggle="collapse" data-target="#toggleSearch" aria-expanded="true"
+            aria-controls="toggleSearch" onclick="toggleCaret()"> Operations <i class="fa fa-caret-right pull-right rotate"
+              style="margin-top: 0.3em;"></i></a>
+        </li>
+        <div class="collapse in" id="toggleSearch">
+          <li>
+            <a data-toggle="modal" href="#newCivChoiceModal"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Civilian</a>
+          </li>
+        </div>
+        <li class="background-color-222">
+          <a type="button" data-toggle="collapse" data-target="#toggleUtilities" aria-expanded="false"
+            aria-controls="toggleUtilities" onclick="toggleCaret()"> Utilities <i
+              class="fa fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
+        </li>
+        <div class="collapse in" id="toggleUtilities">
+          <li>
+            
+              <a data-toggle="modal" href="#call911Modal"><span
+                  class="fa fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
+            
+          </li>
+          <li>
+            <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
+                class="fa fa-external-link-alt"></i></a>
+          </li>
+        </div>
+
+        <% include departments-sidebar %>
+        <% include community-sidebar %>
+        <% include other-sidebar %>
+      </ul>
+
+    </nav>
+
+    <!-- Page Content  -->
+    <div id="content" class="" style="width:auto;">
+
+      <nav id="topNav" class="topNav" style="z-index: 8; margin-bottom: 0; position: fixed;">
+        <div class="container-fluid" style="height: 70px;">
+          <div class="custom-menu" style="position: absolute; top: 10px;">
+            <button type="button" id="sidebarCollapse" class="btn btn-primary btn-lg"
+              style="z-index: 9;color: white;background: transparent;border-radius: unset;padding-right: 2em; border: transparent;">
+              <i class="fa fa-bars" aria-hidden="true" style="z-index: 9; font-size: 1.5em;"></i>
+            </button>
+          </div>
+          <div class="navbar-header" style="position: absolute; left: 85px;">
+            <h1 class="cursive"><a href="/civ-dashboard"><i class="fa fa-user"></i> Civilian Dashboard</a></h1>
+          </div>
+        </div>
+        <!-- imports the community specific alerts -->
+        <% include community-alerts %>
+        <div id="911CallCreatedAlert" class="alert alert-success alert-dismissible hide" role="alert">
+          <strong>Success!</strong> 911 Call has been placed
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+      </nav>
+
+      <section style='background-image: url("/static/images/blue-clouds.jpg");'>
+        <div class="container">
+          <div class="search-container" style="padding: 60px 15px;">
+      <label>Search:
+        <input id="civilian-search" type="search" class="form-control input-sm" placeholder="Search Civilians, Vehicles, Firearms" aria-controls="thumbnail" style="padding: 2em; font-size: medium;">
+      </label>
+    </div>
+          <!--Table for Personas  -->
+          <div class="col-md-12 col-md-offset-0.75 margin-top-5">
+            <div class="margin-bottom-2">
+              <span id="active-bolos margin-right-1" style="font-size: 18px;">Civilians:</span> <button data-toggle="modal" href="#newCivChoiceModal"  class="btn btn-primary btn-md pull-right">Add New Civilian</button>
+            </div>
+              
+
+              <!-- List of civilians -->
+              <div id="personas-thumbnail" class="row flex-main" style="margin-top: 0.5em; width: 90rem;">
+                <div id="civilians-loading" class="text-align-center" style="width: 100%;">
+                  <div class="lds-facebook"><div></div><div></div><div></div></div>
+                </div>
+              </div> 
+              
+              <!-- Loading error -->
+              <div id="issue-loading-personnel-alert" style="display:none">
+                <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading civilians, try refreshing the page...</p>
+              </div>
+
+              <div id="no-civilians-found-alert" style="display:none">
+                <p class="text-center" style="font-style: italic; font-size: 14px">No civilians found, try adding one...</p>
+              </div>
+
+              <!-- Paginated navigation list -->
+              <div>
+                <nav aria-label="...">
+                  <ul class="pager">
+                    <li><a id="prev-civ-page-btn" class="" onclick="getPrevCivPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                    <li><a id="next-civ-page-btn" onclick="getNextCivPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                  </ul>
+                </nav>
+              </div>
+          </div>
+
+          <!-- Vehicles Section -->
+          <div class="col-md-12 col-md-offset-0.75 margin-top-5">
+  <div class="margin-bottom-2">
+    <span id="active-vehicles" class="margin-right-1" style="font-size: 18px;">Vehicles:</span>
+    <button data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-md pull-right">Add New Vehicle</button>
+  </div>
+  <!-- <div>
+    <label>Search:
+      <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+    </label>
+  </div> -->
+  <!-- List of vehicles -->
+  <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em; width: 90rem;">
+    <div id="vehicles-loading" class="text-align-center" style="width: 100%;">
+      <div class="lds-facebook"><div></div><div></div><div></div></div>
+    </div>
+  </div>
+  <!-- Loading error -->
+  <div id="issue-loading-vehicles-alert" style="display:none">
+    <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading vehicles, try refreshing the page...</p>
+  </div>
+  <div id="no-vehicles-found-alert" style="display:none">
+    <p class="text-center" style="font-style: italic; font-size: 14px">No vehicles found, try adding one...</p>
+  </div>
+  <!-- Paginated navigation list -->
+  <div>
+    <nav aria-label="...">
+      <ul class="pager">
+        <li><a id="prev-veh-page-btn" class="" onclick="getPrevVehPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+        <li><a id="next-veh-page-btn" onclick="getNextVehPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+          <!-- Firearms Section -->
+          <div class="col-md-12 col-md-offset-0.75 margin-top-5">
+      <div class="margin-bottom-2">
+        <span id="active-firearms" class="margin-right-1" style="font-size: 18px;">Firearms:</span>
+        <button data-toggle="modal" href="#newFirearmModal" class="btn btn-primary btn-md pull-right">Add New Firearm</button>
+      </div>
+      <div id="firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em; width: 90rem;">
+        <div id="firearms-loading" class="text-align-center" style="width: 100%;">
+          <div class="lds-facebook"><div></div><div></div><div></div></div>
+        </div>
+      </div>
+      <div id="issue-loading-firearms-alert" style="display:none">
+        <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading firearms, try refreshing the page...</p>
+      </div>
+      <div id="no-firearms-found-alert" style="display:none">
+        <p class="text-center" style="font-style: italic; font-size: 14px">No firearms found, try adding one...</p>
+      </div>
+      <div>
+        <nav aria-label="...">
+          <ul class="pager">
+            <li><a id="prev-gun-page-btn" class="" onclick="getPrevGunPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+            <li><a id="next-gun-page-btn" onclick="getNextGunPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+        </div>
+      </section>
+      <div class="google-ad"></div>
+      
+    </div>
+    <% include footer %>
+  </div>
+
+  <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-body">
+          <img src="" id="galleryImage" class="img-responsive" />
+          <p>
+            <br/>
+            <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close <i class="ion-android-close"></i></button>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newCivChoiceModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+        <div class="modal-body">
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4>New Civilian Choice</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+            <div class="text-align-center margin-bottom-1">
+              <!-- <button data-toggle="modal" href="#newAutoCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true"><i class="fa fa-magic"></i> Auto</button> -->
+              <button data-toggle="modal" href="#newCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true"><i class="fa fa-hammer"></i> Manual</button>
+            </div>
+            <div>
+              <!-- <span> <i class="fa fa-magic"></i></span> <strong>Auto:</strong> We will generate a new civilian for you <br/> -->
+              <span> <i class="fa fa-hammer"></i></span> <strong>Manual:</strong> You specify the details for your new civilian
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newCivModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="create-civ-form" class="form-horizontal" action="#" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <h4>Add a New Civilian</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5><ion-icon name="person-add-outline"></ion-icon> Details</h5>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="civ-first-name">Civilian Name</label>
+              <div class="col-md-4">
+                <input id="civ-first-name" name="civFirstName" type="text" placeholder="Name" class="form-control input-md" data-trigger="first-name-popover" data-content="" required="">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="birthday">Date of Birth</label>
+              <div class="col-md-4">
+              <input id="birthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="address">Address</label>
+              <div class="col-md-4">
+                <input id="address" name="address" type="text" placeholder="Address (optional)" class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="occupation">Job</label>
+              <div class="col-md-4">
+                <input id="occupation" name="occupation" type="text" placeholder="Occupation (optional)" class="form-control input-md">
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5><ion-icon name="brush-outline"></ion-icon> Advanced Details (optional)</h5>
+
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="gender">Gender</label>
+              <div class="col-md-4">
+                <select id="gender" name="gender" class="form-control">
+                  <option value="Other">Other</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Non-Binary">Non-Binary</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Radio -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="height">Height</label>
+              <div class="col-md-1">
+                <input id="imperial" value="imperial" type="radio" name="heightClassification"  class="form-control" checked onclick="toggleInput('height-imperial', 'height-metric')"> Imperial <span class="color-gray">ft.in.</span>
+              </div>
+              <div class="col-md-1 col-md-offset-1">
+                <input id="metric" value="metric" type="radio" name="heightClassification"  class="form-control" onclick="toggleInput('height-metric', 'height-imperial')"> Metric <span class="color-gray">cm.</span>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group height-imperial">
+              <label class="col-md-4 control-label" for="height">Height</label>
+              <div class="col-md-2">
+                <input id="foot" name="heightFoot" type="number" min="0" max="15" placeholder="ft." class="form-control input-md">
+              </div>
+              <div class="col-md-2">
+                <input id="inches" name="heightInches" type="number" min="0" max="12" placeholder="in." class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group height-metric hide">
+              <label class="col-md-4 control-label" for="height">Height</label>
+              <div class="col-md-2">
+                <input id="centimeters" name="heightCentimeters" min="0" max="457" type="number" placeholder="cm." class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Radio -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="weight">Weight</label>
+              <div class="col-md-1">
+                <input id="imperial-weight" value="imperial" type="radio" name="weightClassification"  class="form-control" checked onclick="toggleInput('weight-imperial', 'weight-metric')"> Imperial <span class="color-gray">lbs.</span>
+              </div>
+              <div class="col-md-1 col-md-offset-1">
+                <input id="metric-weight" value="metric" type="radio" name="weightClassification"  class="form-control" onclick="toggleInput('weight-metric', 'weight-imperial')"> Metric <span class="color-gray">kgs.</span>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group weight-imperial">
+              <label class="col-md-4 control-label" for="weight">Weight</label>
+              <div class="col-md-2">
+                <input id="pounds" name="weightImperial" min="0" max="1000" type="number" placeholder="lbs." class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group weight-metric hide">
+              <label class="col-md-4 control-label" for="weight">Weight</label>
+              <div class="col-md-2">
+                <input id="kilos" name="weightMetric" min="0" max="453" type="number" placeholder="kgs." class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="eyeColor">Eye Color</label>
+              <div class="col-md-4">
+                <input id="eyeColor" name="eyeColor" type="text" placeholder="Eye Color (optional)" class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="hairColor">Hair Color</label>
+              <div class="col-md-4">
+                <input id="hairColor" name="hairColor" type="text" placeholder="Hair Color (optional)" class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Checkbox -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="organDonor">Organ Donor?</label>
+              <div class="col-md-1">
+                <input id="organDonor" type="checkbox" name="organDonor" class="form-control">
+              </div>
+            </div>
+
+            <!-- Checkbox -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="veteran">Veteran?</label>
+              <div class="col-md-1">
+                <input id="veteran" type="checkbox" name="veteran" class="form-control">
+              </div>
+            </div>
+
+            <!-- Checkbox -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="onParole">On Parole?</label>
+              <div class="col-md-1">
+                <input id="onParole" type="checkbox" name="onParole" class="form-control">
+              </div>
+            </div>
+
+            <!-- Checkbox -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="onProbation">On Probation?</label>
+              <div class="col-md-1">
+                <input id="onProbation" type="checkbox" name="onProbation" class="form-control">
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5><ion-icon name="id-card-outline"></ion-icon> License Details</h5>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="submitNewCiv"></label>
+              <div class="col-md-4 text-align-center">
+                <input type="hidden" name="route" value="civ-dashboard">
+                <input id="ageAmount" type="hidden" name="ageView" value="">
+                <input id="newCivUserID" type="hidden" name="userID" value="<%= user._id %>">
+                <input id="new-civ-activeCommunityID-new-civ" type="hidden" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submitNewCiv" type="submit" name="submitNewCivForm" value="submit" class="btn btn-info">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newAutoCivModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="create-auto-civ-form" class="form-horizontal" action="#" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <h4>Automatically Generate a New Civilian</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5><ion-icon name="person-add-outline"></ion-icon> Details</h5>
+
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="genderAuto">Gender</label>
+              <div class="col-md-4">
+                <select id="genderAuto" name="genderAuto" class="form-control">
+                  <option value="unspecified">Unspecified</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="non-binary">Non-Binary</option>
+                </select>
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+    
+            <h5><ion-icon name="id-card-outline"></ion-icon> License Details</h5>
+
+            <!-- Select Basic -->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="firearmLicenseAuto">Firearm License:</label>
+              <div class="col-md-4">
+                <select id="firearmLicenseAuto" name="firearmLicenseAuto" class="form-control">
+                  <option value="1">None</option>
+                  <option value="2">Valid</option>
+                  <option value="3">Revoked</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="submitNewAutoCiv"></label>
+              <div class="col-md-4 text-align-center">
+                <input type="hidden" name="route" value="civ-dashboard">
+                <input id="newCivUserID" type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-civ-activeCommunityID-new-civ" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submitNewAutoCiv" type="submit" name="submitNewAutoCivForm" value="submit" class="btn btn-info">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newVehicleModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <form id="create-vehicle-form" class="form-horizontal">
+          <fieldset>
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Add a New Vehicle</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="vin">Vin #</label>
+              <div class="col-md-4">
+                <input id="vin" name="vin" type="text" minlength="17" maxlength="17" placeholder="Vin" class="form-control input-md" required>
+              </div>
+              <div class="col-md-4">
+                <button type="button" class="btn btn-info btn-md" onclick="generateSerialNumber(17, 'vin')">Regenerate</button>
+              </div>
+            </div>
+            <!-- Search input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="vehicle-type">Type</label>
+              <div class="col-md-4">
+                <input id="vehicle-type" name="vehicleType" type="text" placeholder="Type" class="form-control input-md capitalize" required>
+              </div>
+            </div>
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="plate">Plate</label>
+              <div class="col-md-4">
+                <input id="plate" name="plate" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
+              </div>
+            </div>
+            <!-- Search input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="make">Make</label>
+              <div class="col-md-4">
+                <input id="make" name="make" type="search" placeholder="Make" class="form-control input-md">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="model">Model</label>
+              <div class="col-md-4">
+                <input id="model" name="model" type="search" placeholder="Model" class="form-control input-md">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="year">Year</label>
+              <div class="col-md-4">
+                <input id="year" name="year" type="number" placeholder="Year" class="form-control input-md">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="licensePlateState">License Plate State</label>
+              <div class="col-md-4">
+                <input id="licensePlateState" name="licensePlateState" type="search" placeholder="License Plate State" class="form-control input-md">
+              </div>
+            </div>
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="color">Color</label>
+              <div class="col-md-4">
+                <input id="color" name="color" type="text" placeholder="Color" class="form-control input-md">
+              </div>
+            </div>
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="valid-registration">Valid Registration?</label>
+              <div class="col-md-4">
+                <select id="valid-registration" name="validRegistration" class="form-control">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </div>
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="valid-insurance">Valid Insurance?</label>
+              <div class="col-md-4">
+                <select id="valid-insurance" name="validInsurance" class="form-control">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </div>
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="vehicle-is-stolen">Marked Stolen?</label>
+              <div class="col-md-4">
+                <select id="vehicle-is-stolen" name="isStolen" class="form-control">
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+            </div>
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="create-vehicle"></label>
+              <div class="col-md-4">
+                <input id="create-vehicle-user-id" type="hidden" name="userID" value="<%= user._id %>">
+                <input id="new-veh-activeCommunityID-new-veh" type="hidden" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
+                <button type="button" id="create-vehicle" onclick="createVehicle()" class="btn btn-primary">Create</button>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div id="newFirearmModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <form id="create-firearm-form" class="form-horizontal">
+          <fieldset>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Add a New Firearm</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="add-firearm-name">Name</label>
+              <div class="col-md-6">
+                <input id="add-firearm-name" name="add-firearm-name" type="text" placeholder="Enter a firearm name (e.g. Glock 9)" class="form-control input-md" required>
+              </div>
+            </div>
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="serial-number-new">Serial Number:</label>
+              <div class="col-md-4">
+                <input id="serial-number-new" name="serialNumber" type="text" placeholder="Serial number" class="form-control input-md" required>
+              </div>
+              <div class="col-md-4">
+                <button type="button" class="btn btn-info btn-md" onclick="generateSerialNumber(8, 'serial-number-new')">Regenerate</button>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="add-firearm-caliber">Caliber</label>
+              <div class="col-md-6">
+                <input id="add-firearm-caliber" name="add-firearm-caliber" type="text" placeholder="Enter caliber (e.g. 9mm)" class="form-control input-md">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="firearm-is-stolen">Marked Stolen?</label>
+              <div class="col-md-6">
+                <select id="firearm-is-stolen" name="isStolen" class="form-control">
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="create-firearm"></label>
+              <div class="col-md-6">
+                <input id="create-firearm-user-id" type="hidden" name="userID" value="<%= user._id %>">
+                <input id="create-firearm-community-id" type="hidden" name="communityID" value="<%= user.user.activeCommunity %>">
+                <button type="button" id="create-firearm" onclick="createFirearm()" class="btn btn-primary">Create</button>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div id="newLicenseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4 class="modal-title">Add New License</h4>
+        </div>
+        <div class="modal-body">
+          <form id="create-license-form">
+            <div class="form-group">
+              <label for="license-type-new">License Type *</label>
+              <input type="text" id="license-type-new" class="form-control" required placeholder="e.g., Driver's License">
+            </div>
+            <div class="form-group">
+              <label for="license-status-new">Status *</label>
+              <select id="license-status-new" class="form-control" required>
+                <option value="Pending">Pending</option>
+                <option value="Valid">Valid</option>
+                <option value="Approved">Approved</option>
+                <option value="Suspended">Suspended</option>
+                <option value="Revoked">Revoked</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="license-issued-new">Issued Date *</label>
+              <input type="date" id="license-issued-new" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label for="license-expiry-new">Expiry Date *</label>
+              <input type="date" id="license-expiry-new" class="form-control" required>
+            </div>
+            <div class="form-group">
+                  <label for="license-additional-notes-new">Additional Notes</label>
+                  <input type="text" id="license-additional-notes-new" class="form-control" placeholder="Additional notes (optional)">
+                </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="createLicense()">Create</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="addMedicationModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/create-medication" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <h4>Add a New Medication</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="startDate">Start Date</label>
+              <div class="col-md-4">
+              <input id="startDate" name="startDate" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="medicationName">Medication Name</label>
+              <div class="col-md-4">
+                <input id="medicationName" name="name" type="text" placeholder="medication name" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="dosage">Dosage</label>
+              <div class="col-md-4">
+                <input id="dosage" name="dosage" type="text" placeholder="dosage (e.g. 2 pills)" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="frequency">Frequency of Dosage</label>
+              <div class="col-md-4">
+                <input id="frequency" name="frequency" type="text" placeholder="frequency (e.g. twice a day)" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="submit-new-civ"></label>
+              <div class="col-md-4">
+                <input type="hidden" id="medication-civilian-id" name="civilianID" value="">
+                <input type="hidden" id="medication-civ-first-name" name="firstName" value="">
+                <input type="hidden" id="medication-civ-last-name" name="lastName" value="">
+                <input type="hidden" id="medication-civ-date-of-birth" name="dateOfBirth" value="">
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-civ-activeCommunityID-add-medication" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submit-new-civ-add-med" class="btn btn-primary" onclick="createNewCiv()">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="addConditionModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/create-condition" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Add a New Medication</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="dateOccurred">Date Occurred</label>
+              <div class="col-md-4">
+              <input id="dateOccurred" name="dateOccurred" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="conditionName">Condition Name</label>
+              <div class="col-md-4">
+                <input id="conditionName" name="name" type="text" placeholder="condition name" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="details">Details</label>
+              <div class="col-md-4">
+                <input id="details" name="details" type="text" placeholder="details" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="submit-new-civ"></label>
+              <div class="col-md-4">
+                <input type="hidden" id="condition-civilian-id" name="civilianID" value="">
+                <input type="hidden" id="condition-civ-first-name" name="firstName" value="">
+                <input type="hidden" id="condition-civ-last-name" name="lastName" value="">
+                <input type="hidden" id="condition-civ-date-of-birth" name="dateOfBirth" value="">
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-civ-activeCommunityID-add-condition" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submit-new-civ-add-cond" class="btn btn-primary">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="viewCiv" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-full-screen">
+      <div class="modal-content modal-content-full-screen">
+        <div class="modal-body">
+          <!-- Modal Name -->
+          <div id="successfully-updated-alert" class="alert alert-success alert-dismissible hide" role="alert">
+            Successfully updated!
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="clearHelpText();updateUserBtnValue('')">X</button>
+                      
+          <ul class="nav nav-pills margin-bottom-1">
+            <li role="presentation" class="active">
+              <a data-toggle="pill" href="#pills-edit-civ">Edit Civilian</a>
+            </li>
+            <li>
+              <a class="nav-link" id="pills-vehicles-tab" data-toggle="pill" href="#pills-vehicles" role="tab" aria-controls="pills-vehicles" aria-selected="false" onclick="getLinkedVehicles(0)">Manage Vehicles</a>
+            </li>
+            <li>
+    <a class="nav-link" id="pills-firearms-tab" data-toggle="pill" href="#pills-firearms" role="tab" aria-controls="pills-firearms" aria-selected="false" onclick="getLinkedFirearms(0)">Manage Firearms</a>
+  </li>
+            <li>
+              <a class="nav-link" id="pills-dmv-tab" data-toggle="pill" href="#pills-dmv" role="tab" aria-controls="pills-dmv" aria-selected="false" onclick="getLicenses(0)">Licenses</a>
+            </li>
+            <li>
+              <a data-toggle="pill" href="#pills-records">Records</a>
+            </li>
+          </ul>
+
+          <hr style="width: 88%;max-width: 100rem;">
+          <div class="tab-content">
+            <div class="tab-pane fade in active" id="pills-edit-civ">
+              <form id="update-delete-civ-form" action="#" method="post">
+                <fieldset>
+
+                  <h4>Details about your Civilian</h4>
+                  <div id="civilian-details-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                  <div id="civilian-details" style="display:none">
+                  <!-- Image of civilian -->
+                  <hr style="width: 88%;max-width: 100rem;">
+                  <h5><ion-icon name="camera-outline"></ion-icon> <span>Image</span></h5>
+                  <div class="col-md-12 text-align-center">
+                    <img
+                      id="civilianImageView"
+                      style="width: 10em; height: 10em; border-radius: 50%; background-color: #2d2d2d; border: 4px solid #2d2d2d; margin: 0 auto; margin-bottom: 2em;"
+                      src="https://ui-avatars.com/api/?name=00&background=808080&color=fff&size=256"
+                      
+                    />
+                    
+                  </div>
+
+                  <!-- Details about civilian -->
+                  <hr style="width: 88%;max-width: 100rem;">
+                  <h5><ion-icon name="person-outline"></ion-icon> Details</h5>
+
+                  <div class="form-group" hidden>
+                    <label class="col-md-4 control-label" for="civilianIDView">ID #:</label>
+                    <div class="col-md-4">
+                      <label id="civilianIDView" class="form-label uppercase"></label>
+                    </div>
+                  </div>
+
+                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15 required">
+                    <label class="control-label" for="firstName">Name:</label>
+                    <input id="firstName" name="firstName" type="text" placeholder="Name" class="form-control input-md" data-trigger="first-name-popover" data-content="" required="">
+                  </div>
+
+                  
+
+                  
+
+                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15 required">
+                    <label class="control-label" for="birthdayView">Date of Birth:</label>
+                    <input id="delBirthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+                  </div>
+
+                  <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                    <label class="control-label" for="ageView">Age:</label>
+                    <input id="ageView" name="age" type="text" class="form-control input-md disabled-color" required readonly="readonly">
+                  </div>
+
+                  <div class="form-group col-xs-6 col-md-6 margin-left-neg-15">
+                    <label class="control-label" for="addressView">Address:</label>
+                    <input id="addressView" name="address" type="text" placeholder="Address" class="form-control input-md capitalize"></input>
+                  </div>
+
+                  
+
+                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                    <label class="control-label" for="occupationView">Occupation:</label>
+                    <input id="occupationView" name="occupation" type="text" placeholder="Occupation" class="form-control input-md capitalize">
+                  </div>
+
+                <hr style="width: 88%;max-width: 100rem;">
+                <h5><ion-icon name="brush-outline"></ion-icon> Advanced Details <span class="color-gray">(Optional)</span></h5>
+
+                <!-- Select Basic -->
+                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <label class="control-label" for="genderView">Gender</label>
+                    <select id="gender-view" name="gender" class="form-control">
+                      <option value="Other">Other</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Non-Binary">Non-Binary</option>
+                    </select>
+                </div>
+
+                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                  <label class="control-label" for="heightView">Height:</label>
+                  <input id="heightView" name="height" type="text" placeholder="Height" class="form-control input-md">
+                </div>
+
+                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                  <label class="control-label" for="weightView">Weight:</label>
+                  <input id="weightView" name="weight" type="text" placeholder="Weight" class="form-control input-md">
+                </div>
+
+                <!-- Text input-->
+                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                  <label class="control-label" for="eyeColor">Eye Color:</label>
+                  <input id="eye-color-view" name="eyeColor" type="text" placeholder="Eye Color" class="form-control input-md">
+                </div>
+
+                <!-- Text input-->
+                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                  <label class="control-label" for="hairColor">Hair Color</label>
+                  <input id="hair-color-view" name="hairColor" type="text" placeholder="Hair Color (optional)" class="form-control input-md">
+                </div>
+
+                <!-- Checkbox -->
+                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <label class="control-label" for="organDonor">Organ Donor?</label>
+                    <input id="organ-donor-view" style="width: 2em;" type="checkbox" name="organDonor" class="form-control">
+                </div>
+
+                <!-- Checkbox -->
+                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <label class="control-label" for="veteran">Veteran?</label>
+                    <input id="veteran-view" style="width: 2em;" type="checkbox" name="veteran" class="form-control">
+                </div>
+
+                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <label class="control-label" for="onParole">On Parole?</label>
+                    <input id="onParole-view" style="width: 2em;" type="checkbox" name="onParole" class="form-control">
+                </div>
+
+                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <label class="control-label" for="onProbation">On Probation?</label>
+                    <input id="onProbation-view" style="width: 2em;" type="checkbox" name="onProbation" class="form-control">
+                </div>
+
+                <hr style="width: 88%;max-width: 100rem;">
+
+                <div class="row col-xs-3 col-md-12 margin-left-neg-15">
+                  <div class="col-md-12 text-align-center margin-bottom-1">
+                    <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
+                    <input type="hidden" id="userBtnValue" value="">
+                    <button type="submit" value="update" name="action" style="cursor: pointer" class="btn btn-info" onclick="updateUserBtnValue('update')">Update Civilian</button>
+                    <button type="submit" value="delete" name="action" style="cursor: pointer" class="btn btn-danger" onclick="updateUserBtnValue('delete')">Delete Civilian</button>
+                  </div>
+                </div>
+              </div>
+                  </fieldset>
+                </form>
+            </div>
+            <div class="tab-pane fade" id="pills-vehicles">
+                        <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+                          <div class="margin-bottom-1">
+                            <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Manage Vehicles:</span>
+                          </div>
+                          <div>
+                            <label>Search:
+                              <input id="manage-vehicle-search" type="search" class="form-control input-sm" placeholder="Search Vehicles" aria-controls="thumbnail">
+                            </label>
+                          </div>
+                          <div id="manage-vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                            <div id="manage-vehicles-loading" class="text-align-center" style="width: 100%;">
+                              <div class="lds-facebook"><div></div><div></div><div></div></div>
+                            </div>
+                          </div>
+                          <div id="issue-loading-vehicles-alert" style="display:none">
+                            <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading vehicles, try refreshing the page...</p>
+                          </div>
+                          <div id="manage-no-vehicles-message" style="display:none">
+                            <p class="text-center" style="font-style: italic; font-size: 14px">No registered Vehicles, try registering one...</p>
+                          </div>
+                          <div>
+                            <nav aria-label="...">
+                              <ul class="pager">
+                                <li><a id="manage-prev-veh-page-btn" class="" onclick="getPrevVehiclePage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                                <li><a id="manage-next-veh-page-btn" onclick="getNextVehiclePage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                              </ul>
+                            </nav>
+                          </div>
+                        </div>
+                      </div>
+            <div class="tab-pane fade" id="pills-firearms">
+    <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+      <div class="margin-bottom-1">
+        <span id="active-firearms" class="margin-right-1" style="font-size: 18px;">Manage Firearms:</span>
+      </div>
+      <div>
+        <label>Search:
+          <input id="manage-firearm-search" type="search" class="form-control input-sm" placeholder="Search Firearms" aria-controls="thumbnail">
+        </label>
+      </div>
+      <div id="manage-firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+        <div id="manage-firearms-loading" class="text-align-center" style="width: 100%;">
+          <div class="lds-facebook"><div></div><div></div><div></div></div>
+        </div>
+      </div>
+      <div id="issue-loading-firearms-alert" style="display:none">
+        <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading firearms, try refreshing the page...</p>
+      </div>
+      <div id="manage-no-firearms-message" style="display:none">
+        <p class="text-center" style="font-style: italic; font-size: 14px">No registered Firearms, try registering one...</p>
+      </div>
+      <div>
+        <nav aria-label="...">
+          <ul class="pager">
+            <li><a id="manage-prev-firearm-page-btn" class="" onclick="getPrevFirearmPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+            <li><a id="manage-next-firearm-page-btn" onclick="getNextFirearmPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+            <!-- dmv tab (showing all of the users licenses)-->
+            <div class="tab-pane fade" id="pills-dmv">
+    <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+      <div class="margin-bottom-1">
+        <span id="active-licenses" class="margin-right-1" style="font-size: 18px;">Licenses:</span>
+        <button class="btn btn-primary btn-md pull-right" onclick="showNewLicenseModal()">Add License</button>
+      </div>
+      <div>
+        <label>Search:
+          <input id="license-search" type="search" class="form-control input-sm" placeholder="Search Licenses" aria-controls="thumbnail">
+        </label>
+      </div>
+      <div id="licenses-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+        <div id="licenses-loading" class="text-align-center" style="width: 100%;">
+          <div class="lds-facebook"><div></div><div></div><div></div></div>
+        </div>
+      </div>
+      <div id="issue-loading-licenses-alert" style="display:none">
+        <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading licenses, try refreshing the page...</p>
+      </div>
+      <div id="no-licenses-message" style="display:none">
+        <p class="text-center" style="font-style: italic; font-size: 14px">No registered licenses, try adding one...</p>
+      </div>
+      <div>
+        <nav aria-label="...">
+          <ul class="pager">
+            <li><a id="prev-license-page-btn" class="" onclick="getPrevLicensePage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+            <li><a id="next-license-page-btn" onclick="getNextLicensePage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+            </div>
+
+            <div class="tab-pane fade" id="pills-records">
+              <h4>Criminal History</h4>
+                    <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-citations-tab" data-toggle="pill" href="#pills-citations" role="tab" aria-controls="pills-citations" aria-selected="true">Citations</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-warnings-tab" data-toggle="pill" href="#pills-warnings" role="tab" aria-controls="pills-warnings" aria-selected="false">Warnings</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-arrests-tab" data-toggle="pill" href="#pills-arrests" role="tab" aria-controls="pills-arrests" aria-selected="false">Arrests</a>
+                      </li>
+                    </ul>
+                    <div class="tab-content" id="pills-tabContent">
+                      <div class="tab-pane fade" id="pills-citations" role="tabpanel" aria-labelledby="pills-citations-tab">
+                          <table id="citationTable" class="table table-hover" border="1" frame="box">
+                            <thead>
+                              <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Violation</td><td>Amount</td></tr>
+                            </thead>
+                              <tbody>
+                              </tbody>
+                          </table>
+                      </div>
+                      <div class="tab-pane fade" id="pills-warnings" role="tabpanel" aria-labelledby="pills-warnings-tab">
+                        <table id="warningTable" class="table table-hover" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Warning</td></tr>
+                          </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                      </div>
+                      <div class="tab-pane fade" id="pills-arrests" role="tabpanel" aria-labelledby="pills-arrests-tab">
+                        <table id="arrestTable" class="table table-hover" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Arrest Charges</td><td>Summary</td></tr>
+                          </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <hr style="width: 88%;max-width: 100rem;">
+                    <h4>Medical History</h4>
+                    <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-reports-tab" data-toggle="pill" href="#pills-reports" role="tab" aria-controls="pills-reports" aria-selected="true">Reports</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-medications-tab" data-toggle="pill" href="#pills-medications" role="tab" aria-controls="pills-medications" aria-selected="false">Medications</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-pre-existing-conditions-tab" data-toggle="pill" href="#pills-pre-existing-conditions" role="tab" aria-controls="pills-pre-existing-conditions" aria-selected="false">Pre-Existing Conditions</a>
+                      </li>
+                    </ul>
+                    <div class="tab-content" id="pills-tabContent">
+                      <div class="tab-pane fade" id="pills-reports" role="tabpanel" aria-labelledby="pills-reports-tab">
+                        <table id="reportsTable" class="table" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td><td>Delete</td></tr>
+                          </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                      </div>
+                      <div class="tab-pane fade" id="pills-medications" role="tabpanel" aria-labelledby="pills-medications-tab">
+                        <button data-toggle="modal" href="#addMedicationModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Medication</button>
+                        <br/><br/>
+                        <table id="medicationsTable" class="table" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Dosage</td><td>Frequency</td><td>Delete</td></tr>
+                          </thead>
+                            <tbody></tbody>
+                        </table>
+                      </div>
+                      <div class="tab-pane fade" id="pills-pre-existing-conditions" role="tabpanel" aria-labelledby="pills-pre-existing-conditions-tab">
+                        <button data-toggle="modal" href="#addConditionModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Condition</button>
+                        <br/><br/>
+                        <table id="conditionsTable" class="table" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td><td>Delete</td></tr>
+                          </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="viewVeh" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <form class="form-horizontal" id="view-vehicle-form">
+          <fieldset>
+            
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Details about your Vehicle</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+            
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="vinVeh">Vin #</label>
+              <div class="col-md-4">
+                <input id="vinVeh" name="vinVeh" type="text" minlength="17" maxlength="17" class="form-control input-md" required>
+              </div>
+              <div id="no-existing-vin" class="col-md-4">
+                <button type="button" class="btn btn-info btn-md" onclick="generateSerialNumber(17, 'vinVeh')">Generate</button>
+              </div>
+            </div>
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="typeVeh">Type:</label>
+              <div class="col-md-4">
+                <input id="typeVeh" name="typeVeh" type="text" class="form-control input-md capitalize" required >
+              </div>
+            </div>
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="plateVeh">Plate:</label>
+              <div class="col-md-4">
+                <input id="plateVeh" name="plateVeh" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="makeVeh">Make:</label>
+              <div class="col-md-4">
+                <input id="makeVeh" name="makeVeh" type="search" placeholder="Make" class="form-control input-md">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="modelVeh">Model:</label>
+              <div class="col-md-4">
+                <input id="modelVeh" name="modelVeh" type="search" placeholder="Model" class="form-control input-md">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="yearVeh">Year:</label>
+              <div class="col-md-4">
+                <input id="yearVeh" name="yearVeh" type="text" placeholder="Year" class="form-control input-md">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="plateStateVeh">License Plate State:</label>
+              <div class="col-md-4">
+                <input id="plateStateVeh" name="plateStateVeh" type="text" placeholder="License Plate State" class="form-control input-md">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="colorView">Color:</label>
+              <div class="col-md-4">
+                <input id="colorView" name="colorView" type="text" placeholder="Color" class="form-control input-md">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="validRegView">Valid Registration?</label>
+              <div class="col-md-4">
+                <select id="validRegView" name="validRegView" class="form-control" selected="selected">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="validInsView">Valid Insurance?</label>
+              <div class="col-md-4">
+                <select id="validInsView" name="validInsView" class="form-control" selected="selected">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="stolenView">Marked Stolen?</label>
+              <div class="col-md-4">
+                <select id="stolenView" name="stolenView" class="form-control" selected="selected">
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-12 text-align-center">
+              <input type="hidden" id="vehicleID" name="vehicleID">
+              <button type="button" onclick="updateVehicle()" class="btn btn-info">Update Vehicle</button>
+              <button type="button" onclick="deleteVehicle()" class="btn btn-danger">Delete Vehicle</button>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div id="viewFirearm" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <form class="form-horizontal" id="view-firearm-form">
+          <fieldset>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Firearm Details</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="name">Name:</label>
+              <div class="col-md-6">
+                <input id="name-details" name="name" type="text" placeholder="Name" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="serial-number">Serial Number:</label>
+              <div class="col-md-6">
+                <input id="serial-number-details" name="serialNumber" type="text" placeholder="Serial number" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="caliber-details">Caliber:</label>
+              <div class="col-md-6">
+                <input id="caliber-details" name="caliber" placeholder="Caliber" type="text" class="form-control input-md capitalize">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
+              <div class="col-md-6">
+                <select id="is-stolen-details" name="isStolen" class="form-control">
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-12 text-align-center">
+              <input type="hidden" id="firearmID" name="firearmID">
+              <input type="hidden" id="firearmOwnerID" name="firearmOwnerID">
+              <button type="button" onclick="updateFirearm()" class="btn btn-info">Update Firearm</button>
+              <button type="button" onclick="deleteFirearm()" class="btn btn-danger">Delete Firearm</button>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div id="nonCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="modal-body">
+            <h2 class="text-center">I'm sorry! 😥</h2>
+            <p class="text-center">Looks like you are not in a community yet, so this feature is not enabled.
+            </p>
+            <p>To join or
+              create a community for free, click on the communities button in the Left Menu.</p>
+            <p>Or just click here: <a href="/community-dashboard">Communities</a>
+            </p>
+            <br />
+            <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK <i
+                class="ion-android-close"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <div id="viewLicenseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4 class="modal-title">License Details</h4>
+        </div>
+        <div class="modal-body">
+          <form id="view-license-form">
+            <input type="hidden" id="licenseID">
+            <div class="form-group">
+              <label for="license-type-details">License Type *</label>
+              <input type="text" id="license-type-details" class="form-control" required placeholder="e.g., Driver's License">
+            </div>
+            <div class="form-group">
+              <label for="license-status-details">Status *</label>
+              <select id="license-status-details" class="form-control" required>
+                <option value="Pending">Pending</option>
+                <option value="Valid">Valid</option>
+                <option value="Approved">Approved</option>
+                <option value="Suspended">Suspended</option>
+                <option value="Revoked">Revoked</option>
+                
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="license-expiry-details">Expiry Date *</label>
+              <input type="date" id="license-expiry-details" class="form-control" required>
+            </div>
+            <div class="form-group">
+                  <label for="license-additional-notes-details">Additional Notes</label>
+                  <input type="text" id="license-additional-notes-details" class="form-control" placeholder="Additional notes (optional)">
+                </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" onclick="deleteLicense()">Delete</button>
+          <button type="button" class="btn btn-primary" onclick="updateLicense()">Update</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newLicenseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4 class="modal-title">Add New License</h4>
+        </div>
+        <div class="modal-body">
+          <form id="create-license-form">
+            <div class="form-group">
+              <label for="license-type-new">License Type *</label>
+              <input type="text" id="license-type-new" class="form-control" required placeholder="e.g., Driver's License">
+            </div>
+            <div class="form-group">
+              <label for="license-status-new">Status *</label>
+              <select id="license-status-new" class="form-control" required>
+                <option value="Pending">Pending</option>
+                <option value="Valid">Valid</option>
+                <option value="Approved">Approved</option>
+                <option value="Suspended">Suspended</option>
+                <option value="Revoked">Revoked</option>
+              </select>
+            </div>
+           
+            <div class="form-group">
+              <label for="license-expiry-new">Expiry Date *</label>
+              <input type="date" id="license-expiry-new" class="form-control" required>
+            </div>
+            <div class="form-group">
+                  <label for="license-additional-notes-new">Additional Notes</label>
+                  <input type="text" id="license-additional-notes-new" class="form-control" placeholder="Additional notes (optional)">
+                </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="createLicense()">Create</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="call911Modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="call911Form" class="form-horizontal" action="/#" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Place a Call to 911</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="911CallName">Your Name:</label>
+              <div class="col-md-4">
+              <input id="911CallName" name="name" style="text-transform: capitalize;" type="text" placeholder="name: John Smith" class="form-control input-md" maxlength="100" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="911CallLocation">Location:</label>
+              <div class="col-md-4">
+              <input id="911CallLocation" name="location" style="text-transform: capitalize;" type="text" placeholder="location: Landmark, St Address" class="form-control input-md" maxlength="100" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="911CallPeopleDescription">Description of people involved:</label>
+              <div class="col-md-10 col-md-offset-1">
+                <textarea id="911CallPeopleDescription" name="peopleDescription" type="text" maxlength="500"
+                  placeholder="description: Names or physical description of people involved" class="form-control input-md" required></textarea>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="911CallDescription">Description of what is/was happening:</label>
+              <div class="col-md-10 col-md-offset-1">
+                <textarea id="911CallDescription" name="callDescription" type="text" maxlength="500"
+                  placeholder="description: Summary of what is/was happening" class="form-control input-md" required></textarea>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="create911Call"></label>
+              <div class="col-md-4 text-align-center">
+                <input type="hidden" id="911CallCommunityID" name="communityID" value="<%= user.user.activeCommunity %>">
+                <input type="hidden" id="911CallUsername" name="communityID" value="<%= user.user.username %>">
+                <button id="create911Call" value="<%= user._id %>" name="userID"  class="btn btn-primary">Submit</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% include account-management %>
+  <% include partials/notificationModal %>
+  <!-- <% include notification-modal %> -->
+
+  <!--scripts loaded here -->
+  <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+  <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>
+  <script src="/static/js/bootstrap.min.js"></script>
+  <script src="/static/js/jquery.easing.min.js"></script>
+  <script src="/static/js/wow.js"></script>
+  <script src="/static/js/popper.js"></script>
+  <script src="/static/js/main.js"></script>
+  <script src="/static/js/scripts.js"></script>
+  <script src="/static/js/faker.js"></script>
+  <script src="/static/js/moment.js"></script>
+  <script src="/static/js/civ-dashboard.js"></script>
+  <script src="/static/js/departments.js"></script>
+  <script src="/static/js/notifications.js"></script>
+  <script src="/static/js/ads.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
+  <script type="module" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule="" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"></script>
+  
+  <script>if (window.module) module = window.module;</script>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+
+</html>
+
+<script type="text/javascript">
+  // all global router vars declared here to reduce duplication
+  var dbUser = <%- JSON.stringify(user) %>;
+  const API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+  var page = 0;
+  var pageVeh = 0;
+  var pageGun = 0;
+  var pageLicense = 0;
+  var userId = dbUser._id;
+  var communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+
+  // Fetch civilians via API
+function fetchCivilians(page) {
+  $('#civilians-loading').show();
+  $('#issue-loading-personnel-alert').hide();
+  $('#no-civilians-found-alert').hide();
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/civilians/user/${userId}?active_community_id=${communityId}&limit=8&page=${page}`,
+    method: 'GET',
+    success: function(res) {
+      $('#personas-thumbnail').empty();
+      if (!res || res.length === 0) {
+        $('#no-civilians-found-alert').show();
+        $('#civilians-loading').hide();
+        $("#prev-civ-page-btn").addClass("isDisabled");
+        $("#next-civ-page-btn").addClass("isDisabled");
+        return;
+      }
+      res.forEach(civ => {
+        $('#personas-thumbnail').append(`
+          <div id="personas-thumbnail-${civ._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+            <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${civ._id}');loadArrests('${civ._id}');loadReports('${civ._id}');loadMedications('${civ._id}');loadConditions('${civ._id}')">
+              <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+              <div class="caption capitalize">
+                <h4 id="personas-thumbnail-name-${civ._id}" class="color-white capitalize">${civ.civilian.name}</h4>
+                <h5 id="personas-thumbnail-dob-${civ._id}" class="color-white">${civ.civilian.birthday}</h5>
+              </div>
+            </div>
+          </div>
+        `);
+      });
+      $('#civilians-loading').hide();
+      $('#prev-civ-page-btn').toggleClass('isDisabled', page === 0).attr('onclick', page === 0 ? '' : 'getPrevCivPage()');
+      $('#next-civ-page-btn').toggleClass('isDisabled', res.length < 8).attr('onclick', res.length < 8 ? '' : 'getNextCivPage()');
+    },
+    error: function(xhr) {
+      console.error('Error fetching civilians:', xhr.responseText);
+      $('#issue-loading-personnel-alert').show();
+      $('#civilians-loading').hide();
+    }
+  });
+}
+
+// Pagination functions
+function getPrevCivPage() {
+  if (page > 0) {
+    page--;
+    fetchCivilians(page);
+  }
+}
+
+function getNextCivPage() {
+  page++;
+  fetchCivilians(page);
+}
+
+// Create new civilian
+function createNewCiv() {
+  const form = $('#create-civ-form');
+  const data = {
+    name: $('#civ-first-name').val().trim(),
+    birthday: $('#birthday').val(),
+    address: $('#address').val().trim() || undefined,
+    occupation: $('#occupation').val().trim() || undefined,
+    gender: $('#gender').val(),
+    height: $('#imperial').is(':checked') ? 
+      `${parseInt($('#foot').val() || 0) * 12 + parseInt($('#inches').val() || 0)}`: 
+      `${$('#centimeters').val() || 0}`,
+    heightClassification: $('#imperial').is(':checked') ? 
+      "Imperial": "Metric",
+    weight: $('#imperial-weight').is(':checked') ? 
+      `${$('#pounds').val()}` : 
+      `${$('#kilos').val()}`,
+    weightClassification: $('#imperial-weight').is(':checked') ? 
+      "lbs": "kg",
+    eyeColor: $('#eyeColor').val().trim() || undefined,
+    hairColor: $('#hairColor').val().trim() || undefined,
+    organDonor: $('#organDonor').is(':checked'),
+    veteran: $('#veteran').is(':checked'),
+    onParole: $('#onParole').is(':checked'),
+    onProbation: $('#onProbation').is(':checked'),
+    userID: userId,
+    activeCommunityID: communityId
+  };
+
+  $.ajax({
+    url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/civilian',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(data),
+    success: function(civ) {
+      $('#personas-thumbnail').prepend(`
+        <div id="personas-thumbnail-${civ.id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+          <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${civ.id}');loadTicketsAndWarnings('${civ.id}');loadArrests('${civ.id}');loadReports('${civ.id}');loadMedications('${civ.id}');loadConditions('${civ.id}')">
+            <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+            <div class="caption capitalize">
+              <h4 id="personas-thumbnail-name-${civ.id}" class="color-white capitalize">${data.name}</h4>
+              <h5 id="personas-thumbnail-dob-${civ.id}" class="color-white">${data.birthday}</h5>
+            </div>
+          </div>
+        </div>
+      `);
+      $('#newCivModal').modal('hide');
+      $('#no-civilians-found-alert').hide();
+      form[0].reset();
+      $('#successfully-updated-alert').removeClass('hide').addClass('show').text('Civilian created successfully!').delay(2000).fadeOut(1000, function() {
+        $(this).addClass('hide').removeClass('show');
+      });
+    },
+    error: function(xhr) {
+      console.error('Error creating civilian:', xhr.responseText);
+      alert('Failed to create civilian: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
+function loadTicketsAndWarnings(civId) {
+  // TODO: Implement this function
+}
+
+// Update civilian
+function updateCiv() {
+  const form = $('#update-delete-civ-form');
+  const civId = $('#civilianIDView').text();
+  const action = $('#userBtnValue').val();
+  if (action !== 'update') return;
+
+  const data = {
+    name: $('#firstName').val().trim(),
+    birthday: $('#delBirthday').val(),
+    address: $('#addressView').val().trim() || undefined,
+    occupation: $('#occupationView').val().trim() || undefined,
+    gender: $('#gender-view').val(),
+    height: $('#heightView').val().trim() || undefined,
+    // heightClassification: $('#height-classification-view').val(),
+    weight: $('#weightView').val().trim() || undefined,
+    // weightClassification: $('#weight-classification-view').val(),
+    eyeColor: $('#eye-color-view').val().trim() || undefined,
+    hairColor: $('#hair-color-view').val().trim() || undefined,
+    organDonor: $('#organ-donor-view').is(':checked'),
+    veteran: $('#veteran-view').is(':checked'),
+    onParole: $('#onParole-view').is(':checked'),
+    onProbation: $('#onProbation-view').is(':checked'),
+    userID: dbUser._id,
+    activeCommunityID: dbUser?.user?.lastAccessedCommunity?.communityID
+  };
+
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/civilian/${civId}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify(data),
+    success: function(civ) {
+      $(`#personas-thumbnail-${civId}`).replaceWith(`
+        <div id="personas-thumbnail-${civId}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+          <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${civId}');loadTicketsAndWarnings('${civId}');loadArrests('${civId}');loadReports('${civId}');loadMedications('${civId}');loadConditions('${civId}')">
+            <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+            <div class="caption capitalize">
+              <h4 id="personas-thumbnail-name-${civId}" class="color-white capitalize">${data.name}</h4>
+              <h5 id="personas-thumbnail-dob-${civId}" class="color-white">${data.birthday}</h5>
+            </div>
+          </div>
+        </div>
+      `);
+      $('#viewCiv').modal('hide');
+      $('#successfully-updated-alert').removeClass('hide').addClass('show').text('Civilian updated successfully!').delay(2000).fadeOut(1000, function() {
+        $(this).addClass('hide').removeClass('show');
+      });
+    },
+    error: function(xhr) {
+      console.error('Error updating civilian:', xhr.responseText);
+      alert('Failed to update civilian: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
+// Fetch dispatch departments
+function fetchDispatchDepartments(communityId) {
+  return $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/departments`,
+    method: 'GET',
+    headers: {
+      
+    }
+  }).then(function(data) {
+    const dispatchDepartments = data.departments.filter(dept => dept.template.name === 'Dispatch');
+    return dispatchDepartments.map(dept => dept._id);
+  }).catch(function(xhr) {
+    console.error('Error fetching departments:', xhr.responseText);
+    throw new Error('Failed to fetch dispatch departments');
+  });
+}
+
+function submit911Call() {
+  const form = $('#call911Form');
+  const name = $('#911CallName').val().trim();
+  const location = $('#911CallLocation').val().trim();
+  const peopleDescription = $('#911CallPeopleDescription').val().trim();
+  const whatHappening = $('#911CallDescription').val().trim();
+
+  // Validation
+  if (!name || !location || !peopleDescription || !whatHappening) {
+    alert('Please fill in all required fields.');
+    return;
+  }
+
+  // Show loading
+  $('#create911Call').prop('disabled', true).text('Submitting...');
+
+  // Fetch dispatch departments
+  fetchDispatchDepartments(communityId)
+    .then(function(departmentIds) {
+      const callData = {
+        title: `911: ${location}`,
+        details: `911 Caller ${name} at ${location}. ${peopleDescription} ${whatHappening}`,
+        departments: departmentIds,
+        status: true,
+        communityID: communityId
+      };
+
+      // Send call data
+      return $.ajax({
+        url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/calls',
+        method: 'POST',
+        contentType: 'application/json',
+        headers: {
+          
+        },
+        data: JSON.stringify(callData)
+      });
+    })
+    .then(function() {
+      $('#call911Modal').modal('hide');
+      form[0].reset();
+      $('#successfully-updated-alert').removeClass('hide').addClass('show').text('911 call submitted successfully!').delay(2000).fadeOut(1000, function() {
+        $(this).addClass('hide').removeClass('show');
+      });
+    })
+    .catch(function(xhr) {
+      console.error('Error submitting 911 call:', xhr.responseText);
+      alert('Failed to submit 911 call: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    })
+    .always(function() {
+      $('#create911Call').prop('disabled', false).text('Submit');
+    });
+}
+
+// Vehicles Section
+let vehiclePage = 0;
+const vehiclesPerPage = 8;
+let allVehicles = [];
+
+function getVehicles(page) {
+  $('#vehicles-loading').show();
+  $('#issue-loading-vehicles-alert').hide();
+  $('#no-vehicles-found-alert').hide();
+  
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicles/user/${userId}?active_community_id=${communityId}&limit=${vehiclesPerPage}&page=${page}`,
+    method: 'GET',
+    data: {
+      
+      
+    },
+    success: function(response) {
+      allVehicles = response || [];
+      renderVehicles(allVehicles);
+      updateVehiclePagination(response.totalPages, page);
+      $('#vehicles-loading').hide();
+      if (allVehicles.length === 0) {
+        $('#no-vehicles-found-alert').show();
+      }
+    },
+    error: function() {
+      $('#vehicles-loading').hide();
+      $('#issue-loading-vehicles-alert').show();
+    }
+  });
+}
+
+function renderVehicles(vehicles) {
+  const $thumbnail = $('#vehicles-thumbnail');
+  $thumbnail.empty();
+  
+  vehicles.forEach(vehicle => {
+    $thumbnail.append(`
+      <div id="vehicles-thumbnail-${vehicle._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+        <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="viewVehicle('${vehicle._id}')">
+          <ion-icon class="font-size-4-vmax" name="car-outline"></ion-icon>
+          <div class="caption capitalize">
+            <h4 id="vehicles-thumbnail-name-${vehicle._id}" class="color-white capitalize">${vehicle?.vehicle?.make} ${vehicle?.vehicle?.model}</h4>
+            <h5 id="vehicles-thumbnail-plate-${vehicle._id}" class="color-white">${vehicle?.vehicle?.plate}</h5>
+          </div>
+        </div>
+      </div>
+    `);
+  });
+}
+
+function updateVehiclePagination(totalPages, currentPage) {
+  $('#prev-veh-page-btn').toggleClass('disabled', currentPage === 0);
+  $('#next-veh-page-btn').toggleClass('disabled', currentPage >= totalPages);
+}
+
+function getPrevVehPage() {
+  if (vehiclePage > 0) {
+    vehiclePage--;
+    getVehicles(vehiclePage);
+  }
+}
+
+function getNextVehPage() {
+  vehiclePage++;
+  getVehicles(vehiclePage);
+}
+
+// Vehicle Search
+$('#vehicle-search').on('input', function() {
+  const query = $(this).val().toLowerCase();
+  const filteredVehicles = allVehicles.filter(vehicle => 
+    vehicle.make.toLowerCase().includes(query) ||
+    vehicle.model.toLowerCase().includes(query) ||
+    vehicle.plate.toLowerCase().includes(query)
+  );
+  renderVehicles(filteredVehicles);
+});
+
+// Create Vehicle
+function createVehicle() {
+  if ($('#vin').val().trim() === '') {
+    alert('Please enter a VIN.');
+    return;
+  }
+  if ($('#vehicle-type').val().trim() === '') {
+    alert('Please select a vehicle type.');
+    return;
+  }
+  if ($('#plate').val().trim() === '') {
+    alert('Please enter a license plate.');
+    return;
+  }
+
+  // Additional validation
+  const vin = $('#vin').val().trim();
+  if (vin.length !== 17) {
+    alert('VIN must be exactly 17 characters long.');
+    return;
+  }
+
+  const plate = $('#plate').val().trim();
+  if (plate.length > 8) {
+    alert('License plate must be 8 characters or less.');
+    return;
+  }
+  const vehicleData = {
+    vin: $('#vin').val().trim(),
+    type: $('#vehicle-type').val().trim(),
+    plate: $('#plate').val().trim().toUpperCase(),
+    make: $('#make').val().trim(),
+    model: $('#model').val().trim(),
+    year: $('#year').val().trim(),
+    licensePlateState: $('#licensePlateState').val().trim(),
+    color: $('#color').val().trim(),
+    validRegistration: $('#valid-registration').val(),
+    validInsurance: $('#valid-insurance').val(),
+    isStolen: $('#vehicle-is-stolen').val(),
+    userID: userId,
+    activeCommunityID: communityId
+  };
+
+  $.ajax({
+    url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(vehicleData),
+    success: function(response) {
+      alert('Vehicle created successfully!');
+      $('#newVehicleModal').modal('hide');
+      $('#create-vehicle-form')[0].reset(); // Clear form
+      getVehicles(vehiclePage); // Refresh vehicle list
+    },
+    error: function(xhr) {
+      alert('Error creating vehicle: ' + (xhr.responseJSON?.message || 'Please try again.'));
+    }
+  });
+}
+
+// View Vehicle Details
+function viewVehicle(vehicleId) {
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle/${vehicleId}`,
+    method: 'GET',
+    success: function(vehicle) {
+      // Populate modal fields
+      $('#vehicleID').val(vehicle._id);
+      $('#vinVeh').val(vehicle?.vehicle?.vin);
+      // $('#roVeh').val(vehicle.ownerName); // Assuming ownerName is a field like civilian firstName + lastName
+      $('#typeVeh').val(vehicle?.vehicle?.type);
+      $('#makeVeh').val(vehicle?.vehicle?.make);
+      $('#modelVeh').val(vehicle?.vehicle?.model);
+      $('#yearVeh').val(vehicle?.vehicle?.year);
+      $('#plateVeh').val(vehicle?.vehicle?.plate);
+      $('#plateStateVeh').val(vehicle?.vehicle?.licensePlateState);
+      $('#colorView').val(vehicle?.vehicle?.color);
+      $('#validRegView').val(vehicle?.vehicle?.validRegistration ? 'true' : 'false');
+      $('#validInsView').val(vehicle?.vehicle?.validInsurance ? 'true' : 'false');
+      // Convert to string "true"/"false" system
+const isStolen = vehicle?.vehicle?.isStolen === 'true' || vehicle?.vehicle?.isStolen === '2';
+$('#stolenView').val(isStolen ? 'true' : 'false');
+      
+      // Show the modal
+      $('#viewVeh').modal('show');
+    },
+    error: function() {
+      alert('Error loading vehicle details. Please try again.');
+    }
+  });
+}
+
+// Update Vehicle
+function updateVehicle() {
+  const vehicleId = $('#vehicleID').val();
+  const vehicleData = {
+    vin: $('#vinVeh').val().trim(),
+    // ownerName: $('#roVeh').val(),
+    type : $('#typeVeh').val().trim(),
+    plate: $('#plateVeh').val().trim(),
+    make: $('#makeVeh').val().trim(),
+    model: $('#modelVeh').val().trim(),
+    year: $('#yearVeh').val().trim(),
+    licensePlateState: $('#plateStateVeh').val().trim(),
+    color: $('#colorView').val().trim(),
+    validRegistration: $('#validRegView').val(),
+    validInsurance: $('#validInsView').val(),
+    isStolen: $('#stolenView').val(),
+    // communityID: '<%= user.user.activeCommunity %>',
+    activeCommunityID: communityId,
+    userID: userId
+  };
+
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle/${vehicleId}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify(vehicleData),
+    success: function(response) {
+      alert('Vehicle updated successfully!');
+      $('#viewVeh').modal('hide');
+      getVehicles(vehiclePage); // Refresh vehicle list
+    },
+    error: function() {
+      alert('Error updating vehicle. Please try again.');
+    }
+  });
+}
+
+// Delete Vehicle
+function deleteVehicle() {
+  if (!confirm('Are you sure you want to delete this vehicle?')) return;
+
+  const vehicleId = $('#vehicleID').val();
+  
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle/${vehicleId}`,
+    method: 'DELETE',
+    success: function(response) {
+      alert('Vehicle deleted successfully!');
+      $('#viewVeh').modal('hide');
+      getVehicles(vehiclePage); // Refresh vehicle list
+    },
+    error: function() {
+      alert('Error deleting vehicle. Please try again.');
+    }
+  });
+}
+
+// Linked Vehicles (in #pills-vehicles tab)
+let linkedVehiclePage = 0;
+const linkedVehiclesPerPage = 8;
+let allLinkedVehicles = [];
+
+function getLinkedVehicles(page) {
+  const civilianId = $('#civilianIDView').text();
+  if (!civilianId) return;
+
+  $('#manage-vehicles-loading').show();
+  $('#manage-vehicles-thumbnail').show();
+  $('#manage-no-vehicles-message').hide();
+  $('#issue-loading-vehicles-alert').hide();
+  $('#manage-prev-veh-page-btn').parent().toggleClass('disabled', page === 0);
+
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicles/user/${userId}?active_community_id=${communityId}&limit=${linkedVehiclesPerPage}&page=${page}`,
+    method: 'GET',
+    success: function(data) {
+      if ($('#civilianIDView').text() !== civilianId) return;
+
+      linkedVehiclePage = page;
+      hasMoreVehicles = true;
+
+      renderLinkedVehicles(data || [], civilianId);
+      $('#manage-vehicles-loading').hide();
+      $('#manage-prev-veh-page-btn').parent().toggleClass('disabled', page === 0);
+      $('#manage-next-veh-page-btn').parent().toggleClass('disabled', !hasMoreVehicles);
+      if (data.length === 0) {
+        $('#manage-no-vehicles-message').show();
+      }
+    },
+    error: function(xhr) {
+      if ($('#civilianIDView').text() !== civilianId) return;
+      console.error('Error fetching vehicles:', xhr.responseText);
+      $('#manage-vehicles-loading').hide();
+      $('#issue-loading-vehicles-alert').show();
+      $('#manage-no-vehicles-message').hide();
+      alert('Failed to load vehicles: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
+function fetchCivName(civId) {
+  return $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/civilian/${civId}`,
+    method: 'GET',
+  }).then(function(data) {
+    return data?.civilian?.name || 'Unknown';
+  }).catch(function(xhr, status, error) {
+    console.error(`Error fetching civilian name for ID ${civId}:`, xhr.responseText);
+    // Don't show alert for deleted civilians, just return 'Unknown'
+    return 'Unknown';
+  });
+}
+
+function renderLinkedVehicles(vehicles, civilianId) {
+  if ($('#civilianIDView').text() !== civilianId) return;
+
+  const $thumbnail = $('#manage-vehicles-thumbnail');
+  $thumbnail.empty();
+
+  if (vehicles.length === 0) {
+    $('#manage-no-vehicles-message').show();
+    $('#manage-vehicles-loading').hide();
+    return;
+  }
+
+  const namePromises = vehicles.map(vehicle => {
+    if (vehicle?.vehicle?.linkedCivilianID && vehicle?.vehicle?.linkedCivilianID !== civilianId && vehicle?.vehicle?.linkedCivilianID !== "") {
+      return fetchCivName(vehicle?.vehicle?.linkedCivilianID).then(name => ({
+        vehicle,
+        linkedCivName: name
+      }));
+    }
+    return Promise.resolve({ vehicle, linkedCivName: '' });
+  });
+
+  Promise.all(namePromises).then(results => {
+    if ($('#civilianIDView').text() !== civilianId) return;
+    results.forEach(({ vehicle, linkedCivName }) => {
+      const isLinkedToCurrent = vehicle?.vehicle?.linkedCivilianID === civilianId;
+      const isLinkedToOther = vehicle?.vehicle?.linkedCivilianID && !isLinkedToCurrent;
+
+      let buttonHtml = '';
+      let linkedInfo = '';
+
+      if (isLinkedToCurrent) {
+        buttonHtml = `<button class="btn btn-danger vehicle-card-btn" onclick="delinkVehicle('${vehicle._id}')" aria-label="Delink vehicle ${vehicle?.vehicle?.make} ${vehicle?.vehicle?.model}">Delink</button>`;
+      } else {
+        buttonHtml = `<button class="btn btn-success vehicle-card-btn" onclick="linkVehicle('${vehicle._id}')" aria-label="Link vehicle ${vehicle?.vehicle?.make} ${vehicle?.vehicle?.model}">Link</button>`;
+        if (isLinkedToOther && vehicle?.vehicle?.linkedCivilianID !== "") {
+          linkedInfo = `<p class="text-muted" style="font-size: 12px; margin: 5px 0 0;">Linked to ${linkedCivName}</p>`;
+        }
+      }
+
+      $thumbnail.append(`
+        <div id="manage-vehicles-thumbnail-${vehicle._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+          <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center;">
+            <ion-icon class="font-size-4-vmax" name="car-outline"></ion-icon>
+            <div class="caption capitalize">
+              <h4 id="manage-vehicles-thumbnail-name-${vehicle._id}" class="color-white capitalize">${vehicle?.vehicle?.make} ${vehicle?.vehicle?.model}</h4>
+              <h5 id="manage-vehicles-thumbnail-plate-${vehicle._id}" class="color-white">${vehicle?.vehicle?.plate}</h5>
+              ${linkedInfo}
+              ${buttonHtml}
+            </div>
+          </div>
+        </div>
+      `);
+    });
+    $('#manage-vehicles-loading').hide();
+  }).catch(error => {
+    if ($('#civilianIDView').text() !== civilianId) return;
+    console.error('Error rendering linked vehicles:', error);
+    $('#manage-vehicles-loading').hide();
+    $('#issue-loading-vehicles-alert').show();
+    alert('Error rendering vehicle data: ' + error.message);
+  });
+}
+
+function updateLinkedVehiclePagination(totalPages, currentPage) {
+  $('#manage-prev-veh-page-btn').toggleClass('disabled', currentPage === 1);
+  $('#manage-next-veh-page-btn').toggleClass('disabled', currentPage >= totalPages);
+}
+
+function getPrevVehiclePage() {
+  if (linkedVehiclePage > 0) {
+    getLinkedVehicles(linkedVehiclePage - 1);
+  }
+}
+
+function getNextVehiclePage() {
+  // if (hasMoreVehicles) {
+    getLinkedVehicles(linkedVehiclePage + 1);
+  // }
+}
+
+function linkVehicle(vehicleId) {
+  const civilianId = $('#civilianIDView').text();
+  
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle/${vehicleId}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      linkedCivilianID: civilianId,
+      // communityID: '<%= user.user.activeCommunity %>'
+    }),
+    success: function(response) {
+      getLinkedVehicles(linkedVehiclePage);
+    },
+    error: function(xhr) {
+      alert('Error linking vehicle: ' + (xhr.responseJSON?.message || 'Please try again.'));
+    }
+  });
+}
+
+function delinkVehicle(vehicleId) {
+  if (!confirm('Are you sure you want to delink this vehicle?')) return;
+  
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle/${vehicleId}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      linkedCivilianID: "",
+      // communityID: '<%= user.user.activeCommunity %>'
+    }),
+    success: function(response) {
+      getLinkedVehicles(linkedVehiclePage);
+    },
+    error: function(xhr) {
+      alert('Error delinking vehicle: ' + (xhr.responseJSON?.message || 'Please try again.'));
+    }
+  });
+}
+
+// Vehicle Search (for #pills-vehicles)
+$('#manage-vehicle-search').on('input', function() {
+  const query = $(this).val().toLowerCase();
+  const civilianId = $('#civilianIDView').text();
+  const filteredVehicles = allLinkedVehicles.filter(vehicle => 
+    vehicle?.vehicle?.make.toLowerCase().includes(query) ||
+    vehicle?.vehicle?.model.toLowerCase().includes(query) ||
+    vehicle?.vehicle?.plate.toLowerCase().includes(query)
+  );
+  renderLinkedVehicles(filteredVehicles, civilianId);
+});
+
+// Global variables for firearms
+let linkedFirearmPage = 0;
+let allLinkedFirearms = [];
+let hasMoreFirearms = false;
+const linkedFirearmsPerPage = 8;
+
+// Fetch firearms for a civilian
+function getLinkedFirearms(page) {
+  const civilianId = $('#civilianIDView').text();
+  if (!civilianId) return;
+
+  $('#manage-firearms-loading').show();
+  $('#manage-firearms-thumbnail').show();
+  $('#manage-no-firearms-message').hide();
+  $('#issue-loading-firearms-alert').hide();
+  $('#manage-prev-firearm-page-btn').parent().toggleClass('disabled', page === 0);
+
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearms/user/${userId}?active_community_id=${communityId}&limit=${linkedFirearmsPerPage}&page=${page}`,
+    method: 'GET',
+    success: function(data) {
+      if ($('#civilianIDView').text() !== civilianId) return;
+
+      linkedFirearmPage = page;
+      hasMoreFirearms = true;
+
+      renderLinkedFirearms(data || [], civilianId);
+      $('#manage-firearms-loading').hide();
+      $('#manage-prev-firearm-page-btn').parent().toggleClass('disabled', page === 0);
+      $('#manage-next-firearm-page-btn').parent().toggleClass('disabled', !hasMoreFirearms);
+      if (data.length === 0) {
+        $('#manage-no-firearms-message').show();
+      }
+    },
+    error: function(xhr) {
+      if ($('#civilianIDView').text() !== civilianId) return;
+      console.error('Error fetching firearms:', xhr.responseText);
+      $('#manage-firearms-loading').hide();
+      $('#issue-loading-firearms-alert').show();
+      $('#manage-no-firearms-message').hide();
+      alert('Failed to load firearms: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
+// Pagination functions
+function getPrevFirearmPage() {
+  if (linkedFirearmPage > 0) {
+    getLinkedFirearms(linkedFirearmPage - 1);
+  }
+}
+
+function getNextFirearmPage() {
+  // if (hasMoreFirearms) {
+    getLinkedFirearms(linkedFirearmPage + 1);
+  // }
+}
+
+// Render firearms in the thumbnail grid
+function renderLinkedFirearms(firearms, civilianId) {
+  if ($('#civilianIDView').text() !== civilianId) return;
+
+  const $thumbnail = $('#manage-firearms-thumbnail');
+  $thumbnail.empty();
+
+  if (firearms.length === 0) {
+    $('#manage-no-firearms-message').show();
+    $('#manage-firearms-loading').hide();
+    return;
+  }
+
+  const namePromises = firearms.map(firearm => {
+    if (firearm?.firearm?.linkedCivilianID && firearm?.firearm?.linkedCivilianID !== civilianId && firearm?.firearm?.linkedCivilianID !== "") {
+      return fetchCivName(firearm?.firearm?.linkedCivilianID).then(name => ({
+        firearm,
+        linkedCivName: name
+      }));
+    }
+    return Promise.resolve({ firearm, linkedCivName: '' });
+  });
+
+  Promise.all(namePromises).then(results => {
+    if ($('#civilianIDView').text() !== civilianId) return;
+    results.forEach(({ firearm, linkedCivName }) => {
+      const isLinkedToCurrent = firearm?.firearm?.linkedCivilianID === civilianId;
+      const isLinkedToOther = firearm?.firearm?.linkedCivilianID && !isLinkedToCurrent;
+
+      let buttonHtml = '';
+      let linkedInfo = '';
+
+      if (isLinkedToCurrent) {
+        buttonHtml = `<button class="btn btn-danger firearm-card-btn" onclick="delinkFirearm('${firearm._id}')" aria-label="Delink firearm ${firearm?.firearm?.name} ${firearm?.firearm?.weaponType}">Delink</button>`;
+      } else {
+        buttonHtml = `<button class="btn btn-success firearm-card-btn" onclick="linkFirearm('${firearm._id}')" aria-label="Link firearm ${firearm?.firearm?.name} ${firearm?.firearm?.weaponType}">Link</button>`;
+        if (isLinkedToOther && firearm?.firearm?.linkedCivilianID !== "") {
+          linkedInfo = `<p class="text-muted" style="font-size: 12px; margin: 5px 0 0;">Linked to ${linkedCivName}</p>`;
+        }
+      }
+
+      $thumbnail.append(`
+        <div id="manage-firearms-thumbnail-${firearm._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+          <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center;">
+            <ion-icon class="font-size-4-vmax" name="megaphone-outline"></ion-icon>
+            <div class="caption capitalize">
+              <h4 id="manage-firearms-thumbnail-name-${firearm._id}" class="color-white capitalize">${firearm?.firearm?.name} ${firearm?.firearm?.weaponType}</h4>
+              <h5 id="manage-firearms-thumbnail-serial-${firearm._id}" class="color-white">${firearm?.firearm?.serialNumber}</h5>
+              ${linkedInfo}
+              ${buttonHtml}
+            </div>
+          </div>
+        </div>
+      `);
+    });
+    $('#manage-firearms-loading').hide();
+  }).catch(error => {
+    if ($('#civilianIDView').text() !== civilianId) return;
+    console.error('Error rendering linked firearms:', error);
+    $('#manage-firearms-loading').hide();
+    $('#issue-loading-firearms-alert').show();
+    alert('Error rendering firearm data: ' + error.message);
+  });
+}
+
+// Link a firearm to the civilian
+function linkFirearm(firearmId) {
+  const civilianId = $('#civilianIDView').text();
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearm/${firearmId}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      linkedCivilianID: civilianId,
+    }),
+    success: function() {
+      getLinkedFirearms(linkedFirearmPage); // Refresh current page
+    },
+    error: function(xhr) {
+      console.error('Error linking firearm:', xhr.responseText);
+      alert('Failed to link firearm: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
+// Delink a firearm from the civilian
+function delinkFirearm(firearmId) {
+  if (!confirm('Are you sure you want to delink this firearm?')) return;
+  const civilianId = $('#civilianIDView').text();
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearm/${firearmId}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      linkedCivilianID: "",
+    }),
+    success: function() {
+      getLinkedFirearms(linkedFirearmPage); // Refresh current page
+    },
+    error: function(xhr) {
+      console.error('Error delinking firearm:', xhr.responseText);
+      alert('Failed to delink firearm: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
+// Search functionality for firearms
+$('#manage-firearm-search').on('input', function() {
+  const query = $(this).val().toLowerCase();
+  const civilianId = $('#civilianIDView').text();
+  const filteredFirearms = allLinkedFirearms.filter(firearm =>
+    firearm?.firearm?.name?.toLowerCase().includes(query) ||
+    firearm?.firearm?.weaponType?.toLowerCase().includes(query) ||
+    firearm?.firearm?.serialNumber?.toLowerCase().includes(query)
+  );
+  renderLinkedFirearms(filteredFirearms, civilianId);
+});
+
+// Reusable debounce function (if not already defined)
+// function debounce(func, wait) {
+//   let timeout;
+//   return function executedFunction(...args) {
+//     const later = () => {
+//       clearTimeout(timeout);
+//       func(...args);
+//     };
+//     clearTimeout(timeout);
+//     timeout = setTimeout(later, wait);
+//   };
+// }
+
+// Firearms Section
+let firearmPage = 0;
+const firearmsPerPage = 8;
+let allFirearms = [];
+
+function getFirearms(page) {
+  $('#firearms-loading').show();
+  $('#issue-loading-firearms-alert').hide();
+  $('#no-firearms-found-alert').hide();
+  
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearms/user/${userId}?active_community_id=${communityId}&limit=${firearmsPerPage}&page=${page}`,
+    method: 'GET',
+    data: {
+    },
+    success: function(response) {
+      allFirearms = response || [];
+      renderFirearms(allFirearms);
+      updateFirearmPagination(response.totalPages, page);
+      $('#firearms-loading').hide();
+      if (allFirearms.length === 0) {
+        $('#no-firearms-found-alert').show();
+      }
+    },
+    error: function() {
+      $('#firearms-loading').hide();
+      $('#issue-loading-firearms-alert').show();
+    }
+  });
+}
+
+function renderFirearms(firearms) {
+  const $thumbnail = $('#firearms-thumbnail');
+  $thumbnail.empty();
+  
+  firearms.forEach(firearm => {
+    $thumbnail.append(`
+      <div id="firearms-thumbnail-${firearm._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+        <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="viewFirearm('${firearm._id}')">
+          <ion-icon class="font-size-4-vmax" name="megaphone-outline"></ion-icon>
+          <div class="caption capitalize">
+            <h4 id="firearms-thumbnail-name-${firearm._id}" class="color-white capitalize">${firearm?.firearm?.name}</h4>
+            <h5 id="firearms-thumbnail-serial-${firearm._id}" class="color-white">${firearm?.firearm?.serialNumber}</h5>
+          </div>
+        </div>
+      </div>
+    `);
+  });
+}
+
+function updateFirearmPagination(totalPages, currentPage) {
+  $('#prev-gun-page-btn').toggleClass('disabled', currentPage === 0);
+  $('#next-gun-page-btn').toggleClass('disabled', currentPage >= totalPages);
+}
+
+function getPrevGunPage() {
+  if (firearmPage > 0) {
+    firearmPage--;
+    getFirearms(firearmPage);
+  }
+}
+
+function getNextGunPage() {
+  firearmPage++;
+  getFirearms(firearmPage);
+}
+
+// Firearm Search
+$('#firearm-search').on('input', function() {
+  const query = $(this).val().toLowerCase();
+  const filteredFirearms = allFirearms.filter(firearm => 
+    firearm.make.toLowerCase().includes(query) ||
+    firearm.model.toLowerCase().includes(query) ||
+    firearm.serialNumber.toLowerCase().includes(query)
+  );
+  renderFirearms(filteredFirearms);
+});
+
+function viewFirearm(firearmId) {
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearm/${firearmId}`,
+    method: 'GET',
+    success: function(firearm) {
+      $('#firearmID').val(firearm._id);
+      $('#name-details').val(firearm?.firearm?.name);
+      $('#serial-number-details').val(firearm?.firearm?.serialNumber);
+      $('#caliber-details').val(firearm?.firearm?.caliber);
+      $('#is-stolen-details').val(firearm?.firearm?.isStolen ? 'true' : 'false');
+      $('#viewFirearm').modal('show');
+    },
+    error: function() {
+      alert('Error loading firearm details. Please try again.');
+    }
+  });
+}
+
+function createFirearm() {
+  if ($('#add-firearm-name').val().trim() === '') {
+    alert('Please enter a firearm name.');
+    return;
+  }
+  if ($('#serial-number-new').val().trim() === '') {
+    alert('Please enter a serial number.');
+    return;
+  }
+  const firearmData = {
+    name: $('#add-firearm-name').val().trim(),
+    serialNumber: $('#serial-number-new').val().trim(),
+    caliber: $('#add-firearm-caliber').val().trim(),
+    isStolen: $('#firearm-is-stolen').val() === 'true',
+    userID: userId,
+    activeCommunityID: communityId
+  };
+
+  $.ajax({
+    url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearm',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(firearmData),
+    success: function(response) {
+      alert('Firearm created successfully!');
+      $('#newFirearmModal').modal('hide');
+      $('#create-firearm-form')[0].reset();
+      getFirearms(firearmPage);
+    },
+    error: function(xhr) {
+      alert('Error creating firearm: ' + (xhr.responseJSON?.message || 'Please try again.'));
+    }
+  });
+}
+
+function updateFirearm() {
+  const firearmId = $('#firearmID').val();
+  if ($('#name-details').val().trim() === '') {
+    alert('Please enter a firearm name.');
+    return;
+  }
+  if ($('#serial-number-details').val().trim() === '') {
+    alert('Please enter a serial number.');
+    return;
+  }
+  const firearmData = {
+    name: $('#name-details').val().trim(),
+    serialNumber: $('#serial-number-details').val().trim(),
+    caliber: $('#caliber-details').val().trim(),
+    isStolen: $('#is-stolen-details').val() === 'true',
+    userID: userId,
+    activeCommunityID: communityId
+  };
+
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearm/${firearmId}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify(firearmData),
+    success: function(response) {
+      alert('Firearm updated successfully!');
+      $('#viewFirearm').modal('hide');
+      getFirearms(firearmPage);
+    },
+    error: function() {
+      alert('Error updating firearm. Please try again.');
+    }
+  });
+}
+
+function deleteFirearm() {
+  if (!confirm('Are you sure you want to delete this firearm?')) return;
+
+  const firearmId = $('#firearmID').val();
+  
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearm/${firearmId}`,
+    method: 'DELETE',
+    success: function(response) {
+      alert('Firearm deleted successfully!');
+      $('#viewFirearm').modal('hide');
+      getFirearms(firearmPage);
+    },
+    error: function() {
+      alert('Error deleting firearm. Please try again.');
+    }
+  });
+}
+
+// Global variables for licenses
+  let licensePage = 0;
+  let allLicenses = [];
+  let hasMoreLicenses = false;
+  const licensesPerPage = 8;
+
+  // Fetch licenses for a civilian
+  function getLicenses(page) {
+    const civilianId = $('#civilianIDView').text();
+    if (!civilianId) return;
+
+    $('#licenses-loading').show();
+    $('#licenses-thumbnail').show();
+    $('#no-licenses-message').hide();
+    $('#issue-loading-licenses-alert').hide();
+    $('#prev-license-page-btn').parent().toggleClass('disabled', page === 0);
+
+    $.ajax({
+      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/licenses/civilian/${civilianId}?limit=${licensesPerPage}&page=${page}`,
+      method: 'GET',
+      success: function(data) {
+        if ($('#civilianIDView').text() !== civilianId) return;
+
+        licensePage = page;
+        hasMoreLicenses = data.data.length === licensesPerPage;
+
+        renderLicenses(data?.data || [], civilianId);
+        $('#licenses-loading').hide();
+        $('#prev-license-page-btn').parent().toggleClass('disabled', page === 0);
+        $('#next-license-page-btn').parent().toggleClass('disabled', !hasMoreLicenses || data.totalCount <= (page + 1) * licensesPerPage);
+        if (data.data.length === 0) {
+          $('#no-licenses-message').show();
+        }
+      },
+      error: function(xhr) {
+        if ($('#civilianIDView').text() !== civilianId) return;
+        console.error('Error fetching licenses:', xhr.responseText);
+        $('#licenses-loading').hide();
+        $('#issue-loading-licenses-alert').show();
+        alert('Failed to load licenses: ' + (xhr.responseJSON?.message || 'Unknown error'));
+      }
+    });
+  }
+  
+  // Pagination functions
+  function getPrevLicensePage() {
+    if (licensePage > 0) {
+      getLicenses(licensePage - 1);
+    }
+  }
+
+  function getNextLicensePage() {
+    getLicenses(licensePage + 1);
+  }
+
+  // Render licenses in the thumbnail grid
+  function renderLicenses(licenses, civilianId) {
+    if ($('#civilianIDView').text() !== civilianId) return;
+
+    const $thumbnail = $('#licenses-thumbnail');
+    $thumbnail.empty();
+
+    if (licenses.length === 0) {
+      $('#no-licenses-message').show();
+      $('#licenses-loading').hide();
+      return;
+    }
+
+    allLicenses = licenses;
+    licenses.forEach(license => {
+      $thumbnail.append(`
+        <div id="licenses-thumbnail-${license._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+          <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center;" data-toggle="modal" data-target="#viewLicenseModal" onclick="viewLicense('${license._id}')">
+            <ion-icon class="font-size-4-vmax" name="card-outline"></ion-icon>
+            <div class="caption capitalize">
+              <h4 id="licenses-thumbnail-type-${license._id}" class="color-white capitalize">${license?.license?.type}</h4>
+              <h5 id="licenses-thumbnail-status-${license._id}" class="color-white">${license?.license?.status}</h5>
+              <h5 id="licenses-thumbnail-expiry-${license._id}" class="color-white">EXP: ${license?.license?.expirationDate}</h5>
+            </div>
+          </div>
+        </div>
+      `);
+    });
+    $('#licenses-loading').hide();
+  }
+
+  // Search functionality for licenses
+  $('#license-search').on('input', function() {
+    const query = $(this).val().toLowerCase();
+    const civilianId = $('#civilianIDView').text();
+    const filteredLicenses = allLicenses.filter(license =>
+      license.type?.toLowerCase().includes(query) ||
+      license.status?.toLowerCase().includes(query)
+    );
+    renderLicenses(filteredLicenses, civilianId);
+  });
+
+  // View license details
+  function viewLicense(licenseId) {
+    $.ajax({
+      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/license/${licenseId}`,
+      method: 'GET',
+      success: function(license) {
+        $('#licenseID').val(license._id);
+        $('#license-type-details').val(license?.license?.type);
+        $('#license-status-details').val(license?.license?.status);
+        $('#license-expiry-details').val(license?.license?.expirationDate ? new Date(license?.license?.expirationDate).toISOString().split('T')[0] : '');
+        $('#license-additional-notes-details').val(license?.license?.notes);
+        $('#viewLicenseModal').modal('show');
+      },
+      error: function() {
+        alert('Error loading license details. Please try again.');
+      }
+    });
+  }
+
+  // Create a new license
+  function createLicense() {
+    const civilianId = $('#civilianIDView').text();
+    if ($('#license-type-new').val().trim() === '') {
+      alert('Please enter a license type.');
+      return;
+    }
+    if ($('#license-status-new').val().trim() === '') {
+      alert('Please select a status.');
+      return;
+    }
+    if ($('#license-expiry-new').val().trim() === '') {
+      alert('Please select an expiry date.');
+      return;
+    }
+
+    const licenseData = {
+      type: $('#license-type-new').val().trim(),
+      status: $('#license-status-new').val(),
+      expirationDate: $('#license-expiry-new').val(),
+      notes: $('#license-additional-notes-new').val().trim(),
+      civilianID: civilianId,
+    };
+
+
+    $.ajax({
+      url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/license',
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(licenseData),
+      success: function() {
+        alert('License created successfully!');
+        $('#newLicenseModal').modal('hide');
+        $('#create-license-form')[0].reset();
+        getLicenses(licensePage);
+      },
+      error: function(xhr) {
+        alert('Error creating license: ' + (xhr.responseJSON?.message || 'Please try again.'));
+      }
+    });
+  }
+
+  // Update an existing license
+  function updateLicense() {
+    const licenseId = $('#licenseID').val();
+    if ($('#license-type-details').val().trim() === '') {
+      alert('Please enter a license type.');
+      return;
+    }
+    if ($('#license-status-details').val().trim() === '') {
+      alert('Please select a status.');
+      return;
+    }
+    if ($('#license-expiry-details').val().trim() === '') {
+      alert('Please select an expiry date.');
+      return;
+    }
+
+    const licenseData = {
+      type: $('#license-type-details').val().trim(),
+      status: $('#license-status-details').val(),
+      expirationDate: $('#license-expiry-details').val(),
+      notes: $('#license-additional-notes-details').val(),
+    };
+
+    $.ajax({
+      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/license/${licenseId}`,
+      method: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify(licenseData),
+      success: function() {
+        alert('License updated successfully!');
+        $('#viewLicenseModal').modal('hide');
+        getLicenses(licensePage);
+      },
+      error: function() {
+        alert('Error updating license. Please try again.');
+      }
+    });
+  }
+
+  // Delete a license
+  function deleteLicense() {
+    if (!confirm('Are you sure you want to delete this license?')) return;
+
+    const licenseId = $('#licenseID').val();
+
+    $.ajax({
+      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/license/${licenseId}`,
+      method: 'DELETE',
+      success: function() {
+        alert('License deleted successfully!');
+        $('#viewLicenseModal').modal('hide');
+        getLicenses(licensePage);
+      },
+      error: function() {
+        alert('Error deleting license. Please try again.');
+      }
+    });
+  }
+
+  function showNewLicenseModal() {
+    // Hide viewLicenseModal to prevent overlap
+    $('#viewLicenseModal').modal('hide');
+    
+    // Ensure any existing newLicenseModal is removed
+    $('#newLicenseModal').remove();
+    
+    // Re-append and show newLicenseModal
+    $('body').append(`
+      <div id="newLicenseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4 class="modal-title">Add New License</h4>
+            </div>
+            <div class="modal-body">
+              <form id="create-license-form">
+                <div class="form-group">
+                  <label for="license-type-new">License Type *</label>
+                  <input type="text" id="license-type-new" class="form-control" required placeholder="e.g., Driver's License">
+                </div>
+                <div class="form-group">
+                  <label for="license-status-new">Status *</label>
+                  <select id="license-status-new" class="form-control" required>
+                    <option value="Pending">Pending</option>
+                    <option value="Valid">Valid</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Suspended">Suspended</option>
+                    <option value="Revoked">Revoked</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="license-expiry-new">Expiry Date *</label>
+                  <input type="date" id="license-expiry-new" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label for="license-additional-notes-new">Additional Notes</label>
+                  <input type="text" id="license-additional-notes-new" class="form-control" placeholder="Additional notes (optional)">
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" onclick="createLicense()">Create</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+    $('#newLicenseModal').modal('show');
+  }
+
+  var socket = io();
+  var myObj = {
+    dbUser: dbUser,
+    page: page,
+  };
+  var myCivObj = {
+    civID: $("#civilianIDView").text(),
+    page: page
+  }
+ 
+
+  $(document).ready(function(){
+    fetchCivilians(page);
+    fetchAndRenderDepartments();
+    getVehicles(vehiclePage);
+    getFirearms(firearmPage);
+
+    //on page load, lets disable to previous buttons
+    $('#prev-veh-page-btn').toggleClass('disabled', true);
+    $('#manage-prev-veh-page-btn').toggleClass('disabled', true);
+
+    $('#create-civ-form').on('submit', function(e) {
+    e.preventDefault();
+    createNewCiv();
+  });
+
+  $('#update-delete-civ-form').on('submit', function(e) {
+    e.preventDefault();
+    const action = $('#userBtnValue').val();
+    if (action === 'update') {
+      updateCiv();
+    } else if (action === 'delete') {
+      deleteCiv();
+    }
+  });
+
+  $('#call911Form').on('submit', function(e) {
+    e.preventDefault();
+    submit911Call();
+  });
+
+    // Civilian search filter
+  // Combined Search (for single search bar)
+$('#civilian-search').on('input', function() {
+  const query = $(this).val().toLowerCase();
+  
+  // Filter Civilians
+  const filteredCivilians = allCivilians.filter(civilian => 
+    `${civilian.firstName} ${civilian.lastName}`.toLowerCase().includes(query) ||
+    civilian.birthday.toLowerCase().includes(query)
+  );
+  renderCivilians(filteredCivilians);
+  
+  // Filter Vehicles
+  const filteredVehicles = allVehicles.filter(vehicle => 
+    vehicle.make.toLowerCase().includes(query) ||
+    vehicle.model.toLowerCase().includes(query) ||
+    vehicle.plate.toLowerCase().includes(query)
+  );
+  renderVehicles(filteredVehicles);
+  
+  // Filter Firearms
+  const filteredFirearms = allFirearms.filter(firearm => 
+    firearm.make.toLowerCase().includes(query) ||
+    firearm.model.toLowerCase().includes(query) ||
+    firearm.serialNumber.toLowerCase().includes(query)
+  );
+  renderFirearms(filteredFirearms);
+});
+
+    $("#delBirthday").focusout(function(){
+      var value = $("#delBirthday").val()
+      var today = new Date(),
+      dob = new Date(value),
+      age = new Date(today - dob).getFullYear() - 1970;
+      $('#ageView').val(age);
+    });
+
+    $("#birthday").focusout(function(){
+      var value = $("#birthday").val()
+      var today = new Date(),
+      dob = new Date(value),
+      age = new Date(today - dob).getFullYear() - 1970;
+      $('#ageAmount').val(age);
+    });
+
+    //used to filter the persona cards
+    var personasDataTable = $('#personas-table').DataTable({
+    "bLengthChange": false,
+    })
+    $('#civilian-search').on("keyup", function() {
+      personasDataTable.search(this.value).draw();
+      var value = $(this).val().toLowerCase();
+      $(".civ-thumbnails").filter(function() {
+        $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+      });
+    })
+
+    // used to filter the vehicle cards
+    var vehicleDataTable = $('#vehicle-table').DataTable({
+      "bLengthChange": false,
+    })
+    $('#vehicle-search').on("keyup", function() {
+      vehicleDataTable.search(this.value).draw();
+      var value = $(this).val().toLowerCase();
+      $(".veh-thumbnails").filter(function() {
+        $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+      });
+    })
+
+  // used to filter the firearm cards
+  var firearmDataTable = $('#firearm-table').DataTable({
+    "bLengthChange": false,
+  })
+  $('#firearm-search').on("keyup", function() {
+    firearmDataTable.search(this.value).draw();
+    var value = $(this).val().toLowerCase();
+    $(".firearm-thumbnails").filter(function() {
+      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+    });
+  })
+
+
+
+  // check for license-notification
+  if (document.cookie.split(';').some((item) => item.includes('license_notice=hidden'))) {
+      hideLicenseNotice()
+    } else {
+      $('#license-notice').show();
+    }
+
+// displays the Update Username and Cancel buttons for updating the username
+$('#accountUsername').on('keyup', function(e) {
+  if(e.target.value != dbUser.user.username && e.target.value != '') {
+    $('#updateUsernameBtns').show();
+  } else {
+    $('#updateUsernameBtns').hide();
+  }
+})
+
+$('#accountCallSign').on('keyup', function(e) {
+  if(e.target.value != dbUser.user.callSign && e.target.value != '') {
+    $('#updateCallSignBtns').show();
+  } else {
+    $('#updateCallSignBtns').hide();
+  }
+})
+
+$('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
+$('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 10);
+
+  //load gravatar image
+  // var MD5 = function(d){var r = M(V(Y(X(d),8*d.length)));return r.toLowerCase()};function M(d){for(var _,m="0123456789ABCDEF",f="",r=0;r<d.length;r++)_=d.charCodeAt(r),f+=m.charAt(_>>>4&15)+m.charAt(15&_);return f}function X(d){for(var _=Array(d.length>>2),m=0;m<_.length;m++)_[m]=0;for(m=0;8*d.length;m+=8)_[m>>5]|=(255&d.charCodeAt(m/8))<<m%32;return _}function V(d){for(var _="",m=0;m<32*d.length;m+=8)_+=String.fromCharCode(d[m>>5]>>>m%32&255);return _}function Y(d,_){d[_>>5]|=128<<_%32,d[14+(_+64>>>9<<4)]=_;for(var m=1732584193,f=-271733879,r=-1732584194,i=271733878,n=0;n<d.length;n+=16){var h=m,t=f,g=r,e=i;f=md5_ii(f=md5_ii(f=md5_ii(f=md5_ii(f=md5_hh(f=md5_hh(f=md5_hh(f=md5_hh(f=md5_gg(f=md5_gg(f=md5_gg(f=md5_gg(f=md5_ff(f=md5_ff(f=md5_ff(f=md5_ff(f,r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+0],7,-680876936),f,r,d[n+1],12,-389564586),m,f,d[n+2],17,606105819),i,m,d[n+3],22,-1044525330),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+4],7,-176418897),f,r,d[n+5],12,1200080426),m,f,d[n+6],17,-1473231341),i,m,d[n+7],22,-45705983),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+8],7,1770035416),f,r,d[n+9],12,-1958414417),m,f,d[n+10],17,-42063),i,m,d[n+11],22,-1990404162),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+12],7,1804603682),f,r,d[n+13],12,-40341101),m,f,d[n+14],17,-1502002290),i,m,d[n+15],22,1236535329),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+1],5,-165796510),f,r,d[n+6],9,-1069501632),m,f,d[n+11],14,643717713),i,m,d[n+0],20,-373897302),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+5],5,-701558691),f,r,d[n+10],9,38016083),m,f,d[n+15],14,-660478335),i,m,d[n+4],20,-405537848),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+9],5,568446438),f,r,d[n+14],9,-1019803690),m,f,d[n+3],14,-187363961),i,m,d[n+8],20,1163531501),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+13],5,-1444681467),f,r,d[n+2],9,-51403784),m,f,d[n+7],14,1735328473),i,m,d[n+12],20,-1926607734),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+5],4,-378558),f,r,d[n+8],11,-2022574463),m,f,d[n+11],16,1839030562),i,m,d[n+14],23,-35309556),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+1],4,-1530992060),f,r,d[n+4],11,1272893353),m,f,d[n+7],16,-155497632),i,m,d[n+10],23,-1094730640),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+13],4,681279174),f,r,d[n+0],11,-358537222),m,f,d[n+3],16,-722521979),i,m,d[n+6],23,76029189),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+9],4,-640364487),f,r,d[n+12],11,-421815835),m,f,d[n+15],16,530742520),i,m,d[n+2],23,-995338651),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+0],6,-198630844),f,r,d[n+7],10,1126891415),m,f,d[n+14],15,-1416354905),i,m,d[n+5],21,-57434055),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+12],6,1700485571),f,r,d[n+3],10,-1894986606),m,f,d[n+10],15,-1051523),i,m,d[n+1],21,-2054922799),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+8],6,1873313359),f,r,d[n+15],10,-30611744),m,f,d[n+6],15,-1560198380),i,m,d[n+13],21,1309151649),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+4],6,-145523070),f,r,d[n+11],10,-1120210379),m,f,d[n+2],15,718787259),i,m,d[n+9],21,-343485551),m=safe_add(m,h),f=safe_add(f,t),r=safe_add(r,g),i=safe_add(i,e)}return Array(m,f,r,i)}function md5_cmn(d,_,m,f,r,i){return safe_add(bit_rol(safe_add(safe_add(_,d),safe_add(f,i)),r),m)}function md5_ff(d,_,m,f,r,i,n){return md5_cmn(_&m|~_&f,d,_,r,i,n)}function md5_gg(d,_,m,f,r,i,n){return md5_cmn(_&f|m&~f,d,_,r,i,n)}function md5_hh(d,_,m,f,r,i,n){return md5_cmn(_^m^f,d,_,r,i,n)}function md5_ii(d,_,m,f,r,i,n){return md5_cmn(m^(_|~f),d,_,r,i,n)}function safe_add(d,_){var m=(65535&d)+(65535&_);return(d>>16)+(_>>16)+(m>>16)<<16|65535&m}function bit_rol(d,_){return d<<_|d>>>32-_}
+  // let hash = MD5(dbUser.user.email.trim().toLowerCase())
+  $('.profile-picture').css("background-image", `url(${dbUser?.user?.profilePicture || 'https://ui-avatars.com/api/?name='+dbUser?.user?.username+'&background=808080&color=fff&size=256'})`)
+
+
+
+}); /* End of document.ready */
+
+ 
+
+   function fillAccountDetails() {
+     $('#accountEmail').val(dbUser.user.email)
+     $('#accountUsername').val(dbUser.user.username)
+     $('#accountCallSign').val(dbUser.user.callSign)
+   }
+
+   function cancelUsername() {
+     $('#accountUsername').val(dbUser.user.username)
+     $('#updateUsernameBtns').hide();
+   }
+
+   function cancelCallSign() {
+     $('#accountCallSign').val(dbUser.user.callSign)
+     $('#updateCallSignBtns').hide();
+   }
+
+   function togglePanicBtnSound() {
+     var socket = io();
+     socket.emit('update_panic_btn_sound', dbUser)
+     socket.on('load_panic_btn_result', (res) => {
+       $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
+       $('#successfully-updated-alert').removeClass('hide').addClass('show').delay(2000).fadeOut(1000, function () {
+        $(this).addClass('hide').removeClass('show');
+   });
+     })
+   }
+
+   function adjustAlertVolumeSlider() {
+    var socket=io();
+    var volumeAmount = $('#alert-volume-slider').val()
+    var myObj = {
+      dbUser: dbUser,
+      volume: volumeAmount
+    }
+    socket.emit('update_alert_volume_slider', myObj)
+    socket.on('load_alert_volume_result', (res) => {
+      $('#successfully-updated-alert').removeClass('hide').addClass('show').delay(2000).fadeOut(1000, function () {
+        $(this).addClass('hide').removeClass('show');
+      });
+    })
+  }
+
+    function deleteCiv() {
+      const civId = $('#civilianIDView').text();
+      if (!civId) {
+        alert('No civilian selected.');
+        return;
+      }
+      if (!confirm('Are you sure you want to delete this civilian?')) return;
+
+      $.ajax({
+        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/civilian/${civId}`,
+        method: 'DELETE',
+        success: function () {
+          $(`#personas-thumbnail-${civId}`).remove();
+          $('#viewCiv').modal('hide');
+          $('#successfully-updated-alert').removeClass('hide').addClass('show').text('Civilian deleted successfully!').delay(2000).fadeOut(1000, function () {
+            $(this).addClass('hide').removeClass('show');
+          });
+        },
+        error: function (xhr) {
+          alert('Failed to delete civilian: ' + (xhr.responseJSON?.message || 'Unknown error'));
+        }
+      });
+    }
+
+</script>
+
+</script>

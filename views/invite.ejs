@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <% include ad-header %>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invite to <%= communityName %></title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .bg-invite {
+        background-image: url("https://zos.alipayobjects.com/rmsportal/hzPBTkqtFpLlWCi.jpg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: 100vh;
+        position: relative; /* Ensure proper layering */
+      }
+      /* .bg-invite::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #1a202c;
+        z-index: -1;
+      } */
+      .overlay {
+        background-color: rgba(0, 0, 0, 0.7); /* Dark overlay for readability */
+      }
+      .hidden {
+        display: none !important;
+      }
+      
+      /* Loading state styles */
+      .spinner {
+        display: inline-block;
+      }
+      
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background-color: #4a5568 !important;
+      }
+      
+      button:disabled:hover {
+        background-color: #4a5568 !important;
+      }
+    </style>
+  </head>
+  <body class="bg-invite text-white flex flex-col min-h-screen">
+    <!-- Header -->
+    <header class="bg-gray-800 p-4 shadow-md">
+      <div class="container mx-auto">
+        <a href="/"><h2 class="text-xl font-bold">Lines Police CAD</h2></a>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex items-center justify-center flex-1">
+      <div class="overlay p-6 rounded-lg max-w-md w-full mx-4">
+        <script type="text/javascript">
+          // Pass server-side variables to JavaScript
+          var dbUser = <%- JSON.stringify(user) || 'null' %>;
+          var inviteCode = <%- JSON.stringify(inviteCode) || 'null' %>;
+          var communityName = <%- JSON.stringify(communityName) || 'null' %>;
+          var redirect = <%- JSON.stringify(redirect) || 'null' %>;
+        </script>
+        <h1 class="text-4xl font-extrabold mb-4 text-center text-blue-400">
+          Invite to <%= communityName %>
+        </h1>
+        <p class="text-lg mb-6 text-center text-gray-300">
+          You’ve been invited to join <%= communityName %>!
+        </p>
+        <% if (user) { %>
+        <div class="text-center">
+          <div id="error-message" class="hidden mb-4 p-3 bg-red-900/20 border border-red-700 rounded-lg">
+            <p class="text-red-400 text-sm"></p>
+          </div>
+          <button
+            id="join-button"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300"
+            aria-label="Join Community"
+          >
+            <span class="spinner hidden">⏳ Loading...</span>
+            <span class="text">Join Community</span>
+          </button>
+        </div>
+        <p class="mt-4 text-center text-sm text-gray-400">
+          You are logged in as <%= user.user.username %>
+        </p>
+        <% } else { %>
+        <p class="text-md mb-4 text-center text-gray-400">
+          Please log in to join the community. You will be redirected after
+          login.
+        </p>
+        <div class="text-center">
+          <a
+            href="/login?redirect=<%= redirect %>"
+            class="text-lg font-medium text-blue-400 hover:text-blue-300 underline transition duration-200"
+            aria-label="Log in"
+            >Log In</a
+          >
+        </div>
+        <% } %>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 p-4 mt-auto">
+      <div class="container mx-auto text-center text-gray-400">
+        <p>© 2025 Lines Police CAD. All rights reserved.</p>
+      </div>
+    </footer>
+    <script>
+      document.getElementById("join-button")?.addEventListener("click", async function () {
+        const button = this;
+        const spinner = button.querySelector(".spinner");
+        const text = button.querySelector(".text");
+        const errorMessage = document.getElementById("error-message");
+        const errorText = errorMessage.querySelector("p");
+        
+        // Show loading state
+        spinner.classList.remove("hidden");
+        text.classList.add("hidden");
+        errorMessage.classList.add("hidden");
+        button.disabled = true;
+        
+        // Force a reflow to ensure the changes are visible
+        button.offsetHeight;
+        
+        try {
+          const response = await fetch("/community/join", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              inviteCode: inviteCode,
+              userId: dbUser._id
+            })
+          });
+          
+          if (response.redirected) {
+            // Success - redirect to the new location
+            window.location.href = response.url;
+            return;
+          }
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            // Success - redirect to community page
+            if (data.communityId) {
+              window.location.href = `/community/${data.communityId}`;
+            } else if (data.redirectUrl) {
+              window.location.href = data.redirectUrl;
+            } else {
+              window.location.href = "/communities?success=true";
+            }
+          } else {
+            // Error - show error message
+            let errorMessageText = data.message || "Failed to join community. Please try again.";
+            
+            // Provide more specific error messages based on status code
+            if (response.status === 400) {
+              errorMessageText = data.message || "Invalid invite code. Please check the link and try again.";
+            } else if (response.status === 401) {
+              errorMessageText = "Your session has expired. Please log in again.";
+            } else if (response.status === 403) {
+              errorMessageText = data.message || "You are banned from this community.";
+            } else if (response.status === 404) {
+              errorMessageText = "Community not found or invite code is invalid.";
+            } else if (response.status === 409) {
+              errorMessageText = data.message || "You are already a member of this community.";
+            } else if (response.status === 422) {
+              errorMessageText = data.message || "Invalid request. Please check your information and try again.";
+            } else if (response.status === 429) {
+              errorMessageText = "Too many requests. Please wait a moment and try again.";
+            } else if (response.status >= 500) {
+              errorMessageText = "Server error. Please try again later.";
+            }
+            
+            errorText.textContent = errorMessageText;
+            errorMessage.classList.remove("hidden");
+          }
+        } catch (error) {
+          console.error("Error joining community:", error);
+          
+          // Handle different types of errors with specific messages
+          let errorMessageText = "Network error. Please try again.";
+          
+          if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            errorMessageText = "Unable to connect to server. Please check your internet connection and try again.";
+          } else if (error.message) {
+            errorMessageText = error.message;
+          }
+          
+          errorText.textContent = errorMessageText;
+          errorMessage.classList.remove("hidden");
+        } finally {
+          // Reset button state
+          spinner.classList.add("hidden");
+          text.classList.remove("hidden");
+          button.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

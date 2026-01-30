@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Verify Your Email - Lines Police CAD</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body {width: 600px;margin: 0 auto;}
+    table {border-collapse: collapse;}
+    table, td {mso-table-lspace: 0pt;mso-table-rspace: 0pt;}
+    img {-ms-interpolation-mode: bicubic;}
+  </style>
+  <![endif]-->
+  <style type="text/css">
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #0a0a0f;
+      color: #ffffff;
+      line-height: 1.6;
+    }
+    .email-wrapper {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #1a1a2e;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    .email-header {
+      background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+      padding: 40px 30px;
+      text-align: center;
+      border-bottom: 2px solid rgba(251, 191, 36, 0.2);
+    }
+    .logo {
+      max-width: 200px;
+      height: auto;
+      margin-bottom: 20px;
+    }
+    .email-body {
+      padding: 40px 30px;
+      background-color: #1a1a2e;
+    }
+    .email-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fbbf24;
+      margin: 0 0 20px 0;
+      text-align: center;
+    }
+    .email-content {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 16px;
+      margin: 0 0 30px 0;
+    }
+    .button-container {
+      text-align: center;
+      margin: 30px 0;
+    }
+    .verify-button {
+      display: inline-block;
+      padding: 16px 32px;
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      color: #000000;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+      transition: all 0.3s ease;
+    }
+    .verify-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+    }
+    .link-fallback {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+      margin-top: 20px;
+      word-break: break-all;
+    }
+    .link-fallback a {
+      color: #fbbf24;
+      text-decoration: underline;
+    }
+    .email-footer {
+      padding: 30px;
+      background-color: #0a0a0f;
+      text-align: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .footer-text {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 14px;
+      margin: 10px 0;
+    }
+    .footer-links {
+      margin-top: 20px;
+    }
+    .footer-links a {
+      color: #fbbf24;
+      text-decoration: none;
+      margin: 0 10px;
+      font-size: 14px;
+    }
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+    .security-note {
+      background-color: rgba(251, 191, 36, 0.1);
+      border-left: 4px solid #fbbf24;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="email-header">
+      <img src="https://www.linespolice-cad.com/static/images/lines-police-cad-discord-logo-2024-github-profile.png" alt="Lines Police CAD" class="logo">
+    </div>
+    <div class="email-body">
+      <h1 class="email-title">Welcome to Lines Police CAD!</h1>
+      <div class="email-content">
+        <p>Hi {{username}},</p>
+        <p>Thank you for signing up! We're excited to have you join our community.</p>
+        <p>To complete your registration, please verify your email address by clicking the button below:</p>
+      </div>
+      
+      <div class="button-container">
+        <a href="{{verificationUrl}}" class="verify-button">Verify Email Address</a>
+      </div>
+      
+      <div class="link-fallback">
+        <p>If the button doesn't work, copy and paste this link into your browser:</p>
+        <p><a href="{{verificationUrl}}">{{verificationUrl}}</a></p>
+      </div>
+      
+      <div class="security-note">
+        <strong>Security Note:</strong> This verification link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.
+      </div>
+      
+      <div class="email-content">
+        <p>Once verified, you'll be automatically logged in and can start using Lines Police CAD!</p>
+        <p>If you have any questions, feel free to reach out to our support team.</p>
+      </div>
+    </div>
+    <div class="email-footer">
+      <p class="footer-text">© 2025 Lines Police CAD. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="https://www.linespolice-cad.com">Website</a>
+        <a href="https://www.linespolice-cad.com/contact-us">Contact Us</a>
+        <a href="https://www.linespolice-cad.com/privacy-policy">Privacy Policy</a>
+        <a href="https://www.linespolice-cad.com/terms-and-conditions">Terms & Conditions</a>
+      </div>
+      <p class="footer-text" style="margin-top: 20px;">
+        Follow us: 
+        <a href="https://x.com/linespolicecad" style="color: #fbbf24; text-decoration: none;">X (Twitter)</a> | 
+        <a href="https://discord.gg/linespolicecad" style="color: #fbbf24; text-decoration: none;">Discord</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+

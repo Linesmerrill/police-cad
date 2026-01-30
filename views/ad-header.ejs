@@ -1,25 +1,41 @@
-<!-- Media Ads -->
-<script async type="text/javascript">
-  window._mNHandle=window._mNHandle||{};
-  window._mNHandle.queue=window._mNHandle.queue||[];
-  medianet_versionId="3121199";
-</script>
-<script src="https://contextual.media.net/dmedianet.js?cid=8CUYN5T3R" async="async"></script>
+<!-- Always include app prompt and Google Analytics -->
+<script src="/static/js/app-prompt-modal.js"></script>
 
-<!-- Google Ads -->
-<script data-ad-client="ca-pub-3842696805773142" async
-  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-
-<!-- Global Site Tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-107735203-1"></script>
+<!-- Google tag (gtag.js) - Google Analytics GA4 -->
+<script
+  async
+  src="https://www.googletagmanager.com/gtag/js?id=G-1L40PLRXWM"
+></script>
 <script>
-  window.dataLayer=window.dataLayer||[];
-
+  window.dataLayer = window.dataLayer || [];
   function gtag() {
     dataLayer.push(arguments);
   }
-  gtag('js', new Date());
-
-  gtag('config', 'UA-107735203-1');
+  gtag("js", new Date());
+  gtag("config", "G-1L40PLRXWM");
 </script>
+
+<!-- Google tag (gtag.js) - Google Analytics UA Legacy -->
+<script
+  async
+  src="https://www.googletagmanager.com/gtag/js?id=UA-107735203-1"
+></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+  gtag("js", new Date());
+  gtag("config", "UA-107735203-1");
+</script>
+
+<!-- AdSense base script (skipped for Premium and Premium Plus subscribers to reduce/remove ads) -->
+<%
+  var _adSubPlan = (typeof user !== 'undefined' && user && user.user && user.user.subscription && user.user.subscription.plan) || 'free';
+  var _adSubActive = !!(typeof user !== 'undefined' && user && user.user && user.user.subscription && user.user.subscription.active);
+  var _skipAdsense = _adSubActive && (_adSubPlan === 'premium' || _adSubPlan === 'premium_plus');
+%>
+<% if (!_skipAdsense) { %>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3842696805773142"
+     crossorigin="anonymous"></script>
+<% } %>

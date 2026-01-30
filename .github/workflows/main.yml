@@ -38,7 +38,7 @@ jobs:
           # An optional buildpack to use when creating the heroku application
           #buildpack: # optional
           # The branch that you would like to deploy to Heroku
-          branch: master
+          branch: main
           # Set this to true if you don't want to use --force when switching branches
           #dontuseforce: # optional, default is false
           # Set this to true if you don't want to automatically create the Heroku app

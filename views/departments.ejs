@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <% include ad-header %>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LPC - Departments</title>
+    <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/animate.min.css" />
+    <link rel="stylesheet" href="/static/css/ionicons.min.css" />
+    <link rel="stylesheet" href="/static/css/styles.css" />
+    <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"></script>
+    <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
+    <style type='text/css'> body {position: static !important; top:0px !important;}</style>
+    <style>
+      body {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+        color: #e2e8f0;
+      }
+      .department-card { 
+        border: 1px solid #ddd; 
+        padding: 10px; 
+        margin: 10px; 
+        text-align: center; 
+        background-color: #2d3748; 
+        border-radius: 8px;
+      }
+      .department-card img { 
+        max-width: 100%; 
+        height: auto; 
+        width: 5em; 
+        height: 5em; 
+        border-radius: 50%; 
+      }
+      .section-header { 
+        text-align: center; 
+        margin-bottom: 20px; 
+      }
+      .pagination-controls { 
+        text-align: center; 
+        margin-top: 20px; 
+      }
+      .create-button {
+        color: #3b82f6;
+        cursor: pointer;
+      }
+      .create-button:hover {
+        color: #2563eb;
+      }
+      .loading-overlay, .error-overlay {
+        text-align: center;
+        padding: 20px;
+      }
+      #notification-symbol { font-size: 1.5em; }
+      .modal-body .form-group {
+        margin-bottom: 15px;
+      }
+      .template-card {
+        border: 2px solid #4b5563;
+        border-radius: 8px;
+        padding: 15px;
+        margin-right: 15px;
+        background-color: #1f2937;
+        min-width: 300px;
+      }
+      .template-card input[type="checkbox"] {
+        margin-right: 10px;
+      }
+      .member-list {
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      .selected-members {
+        display: flex;
+        overflow-x: auto;
+        padding: 10px 0;
+      }
+      .selected-member {
+        background-color: #4b5563;
+        border-radius: 20px;
+        padding: 5px 10px;
+        margin-right: 10px;
+        display: flex;
+        align-items: center;
+      }
+      .selected-member img {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        margin-right: 5px;
+      }
+      /* notification styles */
+  .notification-badge {
+      position: absolute;
+      top: 10px;
+      right: 8px;
+      background-color: #dc3545;
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
+      line-height: 18px;
+      text-align: center;
+      display: none;
+    }
+    .notification-badge.show {
+      display: block;
+    }
+  #toast-container {
+    position: fixed;
+    top: 60px; /* Adjusted from 20px to avoid navbar overlap */
+    right: 20px;
+    z-index: 1070;
+  }
+  .custom-toast {
+    position: relative;
+    min-width: 250px;
+    max-width: 350px;
+    background: #2d3748;
+    color: #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    display: none; /* Initially hidden for fadeIn */
+  }
+  .custom-toast-header {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: #1f2937;
+    border-bottom: 1px solid #4b5563;
+  }
+  .custom-toast-header strong {
+    flex: 1;
+    font-size: 14px;
+  }
+  .custom-toast-header small {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-right: 10px;
+  }
+  .custom-toast-header .close {
+    color: #e2e8f0;
+    font-size: 14px;
+    padding: 0 5px;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+  .custom-toast-body {
+    padding: 10px;
+    font-size: 14px;
+  }
+  /* end of notification styles */
+    </style>
+  </head>
+  <body>
+    <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand page-scroll" href="/">
+            <img style="display: inline; margin-top: -9px; vertical-align: text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD
+          </a>
+        <a id="active-community-name" href="/community-dashboard" class="navbar-brand page-scroll"></a>
+        </div>
+        <div class="navbar-collapse collapse" id="bs-navbar">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="/community-dashboard">Community Dashboard</a></li>
+            <li>
+    <a data-toggle="modal" href="#notificationModal" onclick="fetchNotifications(0)">
+      <span id="notification-symbol" class="fa fa-bell notif">
+        <small id="notification-count" class="notification-badge" ></small>
+      </span>
+    </a>
+  </li>
+            <li>
+              <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()">
+                <ion-icon class="nav-user-icon" name="person-circle-outline"></ion-icon>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <header id="third" style='background-image: url("/static/images/monitors2.jpg"); min-height: 100%;'>
+      <div class="inner">
+        <br/><br/><br/><br/>
+        <div class="col-md-offset-3 col-md-7">
+          <div id="successCopyMessage" class="alert alert-success alert-dismissible" role="alert" style="display:none">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+            <strong>Success!</strong> Copied to your clipboard
+          </div>
+          <h2 class="text-center">Departments</h2>
+          <h4 id="create-department-button" class="text-center" style="display: none;">
+            <a href="#" onclick="showCreateDepartmentModal()"><span class="fa fa-square-plus"></span> Add New Department</a>
+          </h4>
+          <hr style="width: 88%;max-width: 100rem;">
+          <div id="departments-content">
+            <!-- Loading State -->
+            <div id="loading-overlay" class="loading-overlay" style="display: none;">
+              <i class="fas fa-spinner fa-spin fa-2x"></i>
+              <p>Loading departments...</p>
+            </div>
+            <!-- Error State -->
+            <div id="error-overlay" class="error-overlay" style="display: none;">
+              <i class="fas fa-info-circle fa-2x"></i>
+              <p id="error-message"></p>
+              <button class="btn btn-primary" onclick="loadDepartments()">Retry</button>
+            </div>
+            <!-- No Membership State -->
+            <div id="no-membership" class="error-overlay" style="display: none;">
+              <i class="fas fa-info-circle fa-2x"></i>
+              <p>You are not a member of this community. Request to join to view Departments.</p>
+            </div>
+            <!-- No Active Community State -->
+            <div id="no-active-community" class="error-overlay" style="display: none;">
+              <i class="fas fa-info-circle fa-2x"></i>
+              <p>No active community selected. Please select a community from the <a href="/community-dashboard">Community Dashboard</a>.</p>
+            </div>
+            <!-- Departments Content -->
+            <div id="departments-sections" style="display: none;">
+              <div class="section-header">
+                <h3>Your Departments</h3>
+                <div class="row" id="your-departments"></div>
+                <div class="pagination-controls" id="your-departments-pagination">
+                  <button class="btn btn-primary" id="your-prev-page" disabled>Previous</button>
+                  <span id="your-page-info">Page 1 of 1</span>
+                  <button class="btn btn-primary" id="your-next-page" disabled>Next</button>
+                </div>
+              </div>
+              <hr style="width: 88%;max-width: 100rem;">
+              <div class="section-header">
+                <h3>Other Departments</h3>
+                <div class="row" id="other-departments"></div>
+                <div class="pagination-controls" id="other-departments-pagination">
+                  <button class="btn btn-primary" id="other-prev-page" disabled>Previous</button>
+                  <span id="other-page-info">Page 1 of 1</span>
+                  <button class="btn btn-primary" id="other-next-page" disabled>Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+    <% include account-management %>
+    <% include partials/notificationModal %>
+    <% include footer %>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/jquery.easing.min.js"></script>
+    <script src="/static/js/wow.js"></script>
+    <script src="/static/js/scripts.js"></script>
+    <script src="/static/js/notifications.js"></script>
+    <script src="/static/js/ads.js"></script>
+    </body>
+  </html>
+  <script type="text/javascript">
+    var dbUser = <%- JSON.stringify(user || {}) %>;
+    const API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+    let yourPage = 1;
+    let otherPage = 1;
+    const limit = 4;
+
+    function loadDepartments(retryCount = 0) {
+      const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+      if (!communityId) {
+        $('#no-active-community').show();
+        $('#loading-overlay, #error-overlay, #no-membership, #departments-sections, #create-department-button').hide();
+        return;
+      }
+
+      $('#loading-overlay').show();
+      $('#error-overlay, #no-membership, #no-active-community, #departments-sections, #create-department-button').hide();
+
+      // Fetch permissions
+      $.ajax({
+        url: `${API_URL}/api/v2/departments-screen-data?communityId=${communityId}&userId=${dbUser._id}`,
+        method: 'GET',
+        timeout: 10000,
+        success: function(permissions) {
+          if (!permissions.isMember) {
+            $('#no-membership').show();
+            $('#loading-overlay, #error-overlay, #departments-sections, #create-department-button').hide();
+            return;
+          }
+
+          // Fetch Your Departments
+          $.ajax({
+            url: `${API_URL}/api/v2/community/${communityId}/departments?userId=${dbUser._id}&page=${yourPage}&limit=${limit}`,
+            method: 'GET',
+            timeout: 10000,
+            success: function(yourData) {
+              // Fetch Other Departments
+              $.ajax({
+                url: `${API_URL}/api/v2/community/${communityId}/all-departments?userId=${dbUser._id}&page=${otherPage}&limit=${limit}`,
+                method: 'GET',
+                timeout: 10000,
+                success: function(otherData) {
+                  renderDepartmentsWithTemplates(communityId, yourData.data, '#your-departments');
+                  renderDepartmentsWithTemplates(communityId, otherData.data, '#other-departments');
+                  updatePagination(yourData, 'your', yourPage);
+                  updatePagination(otherData, 'other', otherPage);
+                  $('#departments-sections').show();
+                  $('#loading-overlay, #error-overlay, #no-membership, #no-active-community').hide();
+
+                  if (permissions.canManageDepartments) {
+                    $('#create-department-button').show();
+                  }
+                },
+                error: function(xhr, status, error) {
+                  handleError(xhr, status, error, retryCount);
+                }
+              });
+            },
+            error: function(xhr, status, error) {
+              handleError(xhr, status, error, retryCount);
+            }
+          });
+        },
+        error: function(xhr, status, error) {
+          handleError(xhr, status, error, retryCount);
+        }
+      });
+    }
+
+    function handleError(xhr, status, error, retryCount) {
+      console.error('Error fetching data:', { status: xhr.status, responseText: xhr.responseText, error });
+      if (status === 'timeout' && retryCount < 2) {
+        console.warn('Retrying fetch departments...');
+        loadDepartments(retryCount + 1);
+        return;
+      }
+      const errorMsg = xhr.responseText || error || 'Unknown error';
+      $('#error-message').text(`Failed to load departments: ${errorMsg}`);
+      $('#error-overlay').show();
+      $('#loading-overlay, #no-membership, #no-active-community, #departments-sections, #create-department-button').hide();
+    }
+
+    function renderDepartmentsWithTemplates(communityId, departments, containerId) {
+    const container = $(containerId);
+    container.empty();
+    if (departments === null || departments.length === 0) {
+      container.append('<p class="text-center">No departments found.</p>');
+      return;
+    }
+
+    // Fetch templates for all departments
+    const templatePromises = departments.map(dept => 
+      $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}/departments/${dept._id}`,
+        method: 'GET',
+        timeout: 5000
+      }).then(result => ({
+        deptId: dept._id,
+        templateName: result?.department?.template?.name || ''
+      })).catch(err => {
+        console.error(`Error fetching template for department ${dept._id}:`, err);
+        return { deptId: dept._id, templateName: '' };
+      })
+    );
+
+    Promise.all(templatePromises).then(templates => {
+      departments.forEach(dept => {
+        const template = templates.find(t => t.deptId === dept._id);
+        const dashboardUrl = getDashboardUrl(template?.templateName?.toLowerCase() || '');
+        const isOtherDepartments = containerId === '#other-departments';
+        container.append(`
+          <div class="col-md-3 department-card">
+            <img src="${dept.image || 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1746915829/temp-community-image_ebspfe.jpg'}" alt="${dept.name}" />
+            <h5 style="min-height: 2em;">
+              ${dept.name || 'N/A'}
+            </h5>
+            <h5>
+              (${template?.templateName || 'N/A'})
+            </h5>
+            ${isOtherDepartments ? `
+              <button class="btn btn-primary btn-sm" onclick="showRequestJoinModal()">Request to Join</button>
+            ` : dashboardUrl ? `
+              <button class="btn btn-primary btn-sm" onclick="goToDepartment('${dept._id}', '${dashboardUrl}', '${dept.name || ''}')">Go to Dashboard</button>
+            ` : `
+              <p class="text-gray-400">No dashboard available</p>
+            `}
+          </div>
+        `);
+      });
+    });
+  }
+
+   function showRequestJoinModal() {
+    const modal = `
+      <div id="requestJoinModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+              <h4 class="modal-title">Request to Join</h4>
+            </div>
+            <div class="modal-body">
+              <p>Request to join in the mobile app - coming soon to the website.</p>
+              <div class="text-center">
+                <a href="https://apps.apple.com/us/app/lpc-app/id6503307483" target="_blank" class="btn btn-primary btn-sm">App Store</a>
+                <a href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp" target="_blank" class="btn btn-primary btn-sm">Google Play</a>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    $('body').append(modal);
+    $('#requestJoinModal').modal('show');
+    $('#requestJoinModal').on('hidden.bs.modal', function() {
+      $(this).remove();
+    });
+  }
+
+    function updatePagination(data, type, currentPage) {
+      const totalPages = Math.ceil(data.totalCount / limit);
+      $(`#${type}-page-info`).text(`Page ${currentPage} of ${totalPages}`);
+      $(`#${type}-prev-page`).prop('disabled', currentPage === 1);
+      $(`#${type}-next-page`).prop('disabled', currentPage >= totalPages);
+    }
+
+    function getDashboardUrl(templateName) {
+      if (templateName.includes('civilian')) return '/civ-dashboard';
+      if (templateName.includes('police')) return '/police-dashboard';
+      if (templateName.includes('ems') || templateName.includes('fire')) return '/ems-dashboard';
+      if (templateName.includes('dispatch')) return '/dispatch-dashboard';
+      return '';
+    }
+
+    function encodeDepartmentId(departmentId) {
+      // Simple reversible encoding: convert to base64 and replace some characters
+      const base64 = btoa(departmentId);
+      return base64
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+    }
+
+    function goToDepartment(departmentId, dashboardUrl, departmentName) {
+      // For all departments, navigate directly with parameters
+      const encodedDeptId = encodeDepartmentId(departmentId);
+      const url = `${dashboardUrl}?dept=${encodeURIComponent(departmentName)}&d=${encodedDeptId}`;
+      window.location.href = url;
+    }
+
+    function fillAccountDetails() {
+      $('#accountEmail').val(dbUser.user?.email || '');
+      $('#accountUsername').val(dbUser.user?.username || '');
+      $('#accountCallSign').val(dbUser.user?.callSign || '');
+    }
+
+    // Department Creation Modal Logic
+    const templates = [
+      {
+        name: "Civilian",
+        description: "Basic civilian department with basic components and permissions.",
+        permissions: [
+          { key: "createCivilians", label: "Create Civilians", default: true },
+          { key: "createVehicles", label: "Create Vehicles", default: true },
+          { key: "createFirearms", label: "Create Firearms", default: true },
+          { key: "call911", label: "Call 911", default: true }
+        ]
+      },
+      {
+        name: "Police",
+        description: "Basic police department with typical components and permissions.",
+        permissions: [
+          { key: "10CodesInterface", label: "10-codes interface", default: true },
+          { key: "personSearch", label: "Person Search & Actions", default: true },
+          { key: "vehicleSearch", label: "Vehicle Search & Actions", default: true },
+          { key: "firearmSearch", label: "Firearm Search & Actions", default: true },
+          { key: "createBolos", label: "Create Bolos", default: true },
+          { key: "viewBolosAndWarrants", label: "View Calls, Bolos & Warrants", default: true },
+          { key: "notepad", label: "Notepad", default: true }
+        ]
+      },
+      {
+        name: "Dispatch",
+        description: "Can manage calls, dispatch units create bolos and more.",
+        permissions: [
+          { key: "dispatchUnits", label: "Dispatch Units", default: true },
+          { key: "createAndManageCalls", label: "Create & Manage Calls", default: true },
+          { key: "createBolos", label: "Create Bolos", default: true },
+          { key: "manage911Calls", label: "Manage 911 Calls", default: true },
+          { key: "nameSearch", label: "Name Search", default: true },
+          { key: "vehicleSearch", label: "Vehicle Search", default: true },
+          { key: "firearmSearch", label: "Firearm Search", default: true }
+        ]
+      },
+      {
+        name: "Fire",
+        description: "Basic fire department with basic components and permissions.",
+        permissions: [
+          { key: "10CodesInterface", label: "10-codes interface", default: true },
+          { key: "personSearch", label: "Person Search & Actions", default: true },
+          { key: "vehicleSearch", label: "Vehicle Search & Actions", default: true },
+          { key: "createBolos", label: "Create Bolos", default: true },
+          { key: "viewBolosAndWarrants", label: "View Calls, Bolos & Warrants", default: true },
+          { key: "notepad", label: "Notepad", default: true }
+        ]
+      },
+      {
+        name: "EMS",
+        description: "Basic EMS department with basic components and permissions.",
+        permissions: [
+          { key: "10CodesInterface", label: "10-codes interface", default: true },
+          { key: "personSearch", label: "Person Search & Actions", default: true },
+          { key: "vehicleSearch", label: "Vehicle Search & Actions", default: true },
+          { key: "createBolos", label: "Create Bolos", default: true },
+          { key: "viewBolosAndWarrants", label: "View Calls, Bolos & Warrants", default: true },
+          { key: "notepad", label: "Notepad", default: true }
+        ]
+      },
+      {
+        name: "Custom",
+        description: "(Coming Soon!) Add a new department with custom components and permissions.",
+        permissions: [
+          { key: "talkInChannels", label: "Create your own components (Coming soon)", default: true },
+          { key: "inviteFriends", label: "Custom features for a new department (Coming soon)", default: true }
+        ]
+      }
+    ];
+
+    let departmentData = {
+      name: '',
+      description: '',
+      image: '',
+      visibility: 'public',
+      template: { name: '', components: [] },
+      members: [{ userID: dbUser._id, status: 'approved' }]
+    };
+    let selectedMembers = [{ _id: dbUser._id, user: dbUser.user || { username: 'You', profilePicture: '' } }];
+
+    // Initialize permissions state
+    let permissionsState = {};
+    templates.forEach(template => {
+      let permAcc = {};
+      template.permissions.forEach(perm => {
+        permAcc[perm.key] = perm.default;
+      });
+      permissionsState[template.name] = permAcc;
+    });
+
+    function showCreateDepartmentModal() {
+      const modal = `
+        <div id="createDepartmentStep1Modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                <h4 class="modal-title">Create a Department - Step 1 of 3</h4>
+              </div>
+              <div class="modal-body">
+                <form id="create-department-form">
+                  <div class="form-group">
+                    <label for="dept-photo">Upload Photo (Optional)</label>
+                    <input type="file" id="dept-photo" class="form-control" accept="image/*">
+                  </div>
+                  <div class="form-group">
+                    <label for="dept-name">Department Name *</label>
+                    <input type="text" id="dept-name" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="dept-description">Description (Optional)</label>
+                    <textarea id="dept-description" class="form-control" rows="4"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label>Visibility</label>
+                    <div>
+                      <label class="radio-inline">
+                        <input type="radio" name="visibility" value="public" checked> Public
+                      </label>
+                      <label class="radio-inline">
+                        <input type="radio" name="visibility" value="private"> Private (Approval required, e.g., Police, Dispatch)
+                      </label>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="goToStepTwo()">Next</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      $('body').append(modal);
+      $('#createDepartmentStep1Modal').modal('show');
+    }
+
+    function goToStepTwo() {
+      const name = $('#dept-name').val().trim();
+      if (!name) {
+        $('#successCopyMessage').html('<strong>Error!</strong> Department name is required.').show().delay(2000).fadeOut();
+        return;
+      }
+
+      departmentData.name = name;
+      departmentData.description = $('#dept-description').val().trim();
+      departmentData.image = $('#dept-photo')[0].files[0] ? 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1747054441/upload_placeholder.jpg' : '';
+      departmentData.visibility = $('input[name="visibility"]:checked').val();
+
+      $('#createDepartmentStep1Modal').modal('hide');
+      showTemplateModal();
+    }
+
+    function showTemplateModal() {
+      const modal = `
+        <div id="createDepartmentStep2Modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                <h4 class="modal-title">Create a Department - Step 2 of 3</h4>
+              </div>
+              <div class="modal-body">
+                <p>Select a template to quickly create a department. You can customize each template by toggling components.</p>
+                <div style="display: flex; overflow-x: auto; padding: 10px 0;">
+                  ${templates.map(template => `
+                    <div class="template-card">
+                      <h5>${template.name}</h5>
+                      <p class="text-gray-400">${template.description}</p>
+                      ${template.permissions.map(perm => `
+                        <div>
+                          <input type="checkbox" id="${template.name}-${perm.key}" 
+                            ${perm.default ? 'checked' : ''} 
+                            onchange="updatePermission('${template.name}', '${perm.key}', this.checked)">
+                          <label for="${template.name}-${perm.key}">${perm.label}</label>
+                        </div>
+                      `).join('')}
+                      <button class="btn btn-primary btn-sm mt-3" 
+                        ${template.name === 'Custom' ? 'disabled' : ''} 
+                        onclick="selectTemplate('${template.name}')">
+                        Select
+                      </button>
+                    </div>
+                  `).join('')}
+                </div>
+                <div style="display: flex; justify-content: space-evenly;">
+                <span class="fa fa-arrow-left"></span><span class="fa fa-arrow-right"></span>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal" onclick="showCreateDepartmentModal()">Back</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      $('body').append(modal);
+      $('#createDepartmentStep2Modal').modal('show');
+    }
+
+    function updatePermission(templateName, key, enabled) {
+      permissionsState[templateName][key] = enabled;
+    }
+
+    function selectTemplate(templateName) {
+      const components = Object.keys(permissionsState[templateName]).map(key => ({
+        name: key,
+        enabled: permissionsState[templateName][key]
+      }));
+      departmentData.template = { name: templateName, components };
+      
+      // Show loading state instead of hiding modal
+      $('#createDepartmentStep2Modal .modal-body').html(`
+        <div class="text-center">
+          <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+          <p>Loading members...</p>
+        </div>
+      `);
+      $('#createDepartmentStep2Modal .modal-footer').hide();
+      
+      // Add a small delay to ensure loading state is visible
+      setTimeout(() => {
+        showMembersModal();
+      }, 100);
+    }
+
+    function showMembersModal() {
+    const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${communityId}/members?limit=100`,
+      method: 'GET',
+      success: function(data) {
+        const members = data.members || [];
+        
+        // Ensure current user is always selected and can't be deselected
+        const currentUser = members.find(m => m._id === dbUser._id);
+        if (currentUser && !selectedMembers.some(m => m._id === dbUser._id)) {
+          selectedMembers.unshift(currentUser); // Add to beginning of array
+        }
+        
+        const modal = `
+          <div id="createDepartmentStep3Modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                  <h4 class="modal-title">Create a Department - Step 3 of 3</h4>
+                </div>
+                <div class="modal-body">
+                  <div id="step3-error-alert" class="alert alert-danger alert-dismissible" role="alert" style="display: none;">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+                    <strong>Error!</strong> <span id="step3-error-message"></span>
+                  </div>
+                  <p>Add members to the department. Members can have multiple roles.</p>
+                  <div class="form-group">
+                    <div class="input-group">
+                      <span class="input-group-addon"><i class="fas fa-search"></i></span>
+                      <input type="text" id="member-search" class="form-control" placeholder="Search Members">
+                    </div>
+                  </div>
+                  <div class="selected-members" id="selected-members">
+                    ${selectedMembers.map(member => `
+                      <div class="selected-member" data-id="${member._id}">
+                        <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" alt="${member.user.username}">
+                        <span>${member.user.username}</span>
+                        ${member._id !== dbUser._id ? `<i class="fas fa-times" style="cursor: pointer;" onclick="removeMember('${member._id}')"></i>` : ''}
+                      </div>
+                    `).join('')}
+                  </div>
+                  <div class="member-list">
+                    ${members.map(member => `
+                      <div>
+                        <input type="checkbox" id="member-${member._id}" 
+                          ${member._id === dbUser._id ? 'checked' : (selectedMembers.some(m => m._id === member._id) ? 'checked' : '')} 
+                          ${member._id === dbUser._id ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} 
+                          onchange="toggleMember('${member._id}', '${member.user.username}', '${member.user.profilePicture || ''}')">
+                        <label for="member-${member._id}" ${member._id === dbUser._id ? 'style="color: #6c757d; font-style: italic; cursor: not-allowed;"' : ''}>${member.user.username}${member._id === dbUser._id ? ' (You - Required)' : ''}</label>
+                        ${['premium', 'premium_plus'].includes(member.user?.subscription?.plan) && member.user?.subscription?.active ? '<i class="fas fa-check-circle text-blue-500"></i>' : ''}
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-default" data-dismiss="modal" onclick="showTemplateModal()">Back</button>
+                  <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="finishDepartmentCreation()">Finish</button>
+                  <button type="button" class="btn btn-default" data-dismiss="modal" onclick="finishDepartmentCreation(true)">Skip</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // Hide step 2 modal and show step 3
+        $('#createDepartmentStep2Modal').modal('hide');
+        $('body').append(modal);
+        $('#createDepartmentStep3Modal').modal('show');
+
+        $('#member-search').on('input', function() {
+          const query = $(this).val().toLowerCase();
+          $('.member-list div').each(function() {
+            const username = $(this).find('label').text().toLowerCase();
+            $(this).toggle(username.includes(query));
+          });
+        });
+      },
+      error: function(err) {
+        console.error('Error fetching members:', err);
+        // Restore step 2 modal content on error
+        $('#createDepartmentStep2Modal .modal-body').html(`
+          <p>Select a template to quickly create a department. You can customize each template by toggling components.</p>
+          <div style="display: flex; overflow-x: auto; padding: 10px 0;">
+            ${templates.map(template => `
+              <div class="template-card">
+                <h5>${template.name}</h5>
+                <p class="text-gray-400">${template.description}</p>
+                ${template.permissions.map(perm => `
+                  <div>
+                    <input type="checkbox" id="${template.name}-${perm.key}" 
+                      ${perm.default ? 'checked' : ''} 
+                      onchange="updatePermission('${template.name}', '${perm.key}', this.checked)">
+                    <label for="${template.name}-${perm.key}">${perm.label}</label>
+                  </div>
+                `).join('')}
+                <button class="btn btn-primary btn-sm mt-3" 
+                  ${template.name === 'Custom' ? 'disabled' : ''} 
+                  onclick="selectTemplate('${template.name}')">
+                  Select
+                </button>
+              </div>
+            `).join('')}
+          </div>
+          <div style="display: flex; justify-content: space-evenly;">
+          <span class="fa fa-arrow-left"></span><span class="fa fa-arrow-right"></span>
+          </div>
+        `);
+        $('#createDepartmentStep2Modal .modal-footer').show();
+        $('#successCopyMessage').html('<strong>Error!</strong> Failed to load members.').show().delay(2000).fadeOut();
+      }
+    });
+  }
+
+  function finishDepartmentCreation(skipMembers = false) {
+    const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+    if (!skipMembers && selectedMembers.length === 0) {
+      $('#step3-error-alert').show();
+      $('#step3-error-message').text('At least one member is required.');
+      return;
+    }
+
+    departmentData.members = selectedMembers.map(member => ({
+      userID: member._id,
+      status: 'approved'
+    }));
+
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${communityId}/departments`,
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(departmentData),
+      success: function(response) {
+        const departmentId = response.department_id;
+        if (!skipMembers) {
+          $.ajax({
+            url: `${API_URL}/api/v1/community/${communityId}/departments/${departmentId}/members`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ memberIds: selectedMembers.map(m => m._id) }),
+            success: function() {
+              $('.modal').modal('hide');
+              $('.modal').remove();
+              $('#successCopyMessage').html('<strong>Success!</strong> Department created successfully.').show().delay(2000).fadeOut();
+              loadDepartments();
+            },
+            error: function(xhr, status, error) {
+              console.error('Error adding members:', { status: xhr.status, responseText: xhr.responseText, error });
+              $('#step3-error-alert').show();
+              $('#step3-error-message').text('Failed to add members: ' + (xhr.responseText || error));
+            }
+          });
+        } else {
+          $('.modal').modal('hide');
+          $('.modal').remove();
+          $('#successCopyMessage').html('<strong>Success!</strong> Department created successfully.').show().delay(2000).fadeOut();
+          loadDepartments();
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Error creating department:', { status: xhr.status, responseText: xhr.responseText, error });
+        $('#step3-error-alert').show();
+        $('#step3-error-message').text('Failed to create department: ' + (xhr.responseText || error));
+      }
+    });
+  }
+
+    function toggleMember(memberId, username, profilePicture) {
+      // Prevent current user from being deselected
+      if (memberId === dbUser._id) {
+        return;
+      }
+      
+      const isChecked = $(`#member-${memberId}`).is(':checked');
+      if (isChecked) {
+        if (!selectedMembers.some(m => m._id === memberId)) {
+          selectedMembers.push({ _id: memberId, user: { username, profilePicture } });
+        }
+      } else {
+        selectedMembers = selectedMembers.filter(m => m._id !== memberId);
+      }
+      updateSelectedMembers();
+    }
+
+    function removeMember(memberId) {
+      selectedMembers = selectedMembers.filter(m => m._id !== memberId);
+      $(`#member-${memberId}`).prop('checked', false);
+      updateSelectedMembers();
+    }
+
+    function updateSelectedMembers() {
+      const container = $('#selected-members');
+      container.empty();
+      selectedMembers.forEach(member => {
+        container.append(`
+          <div class="selected-member" data-id="${member._id}">
+            <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" alt="${member.user.username}">
+            <span>${member.user.username}</span>
+            ${member._id !== dbUser._id ? `<i class="fas fa-times" style="cursor: pointer;" onclick="removeMember('${member._id}')"></i>` : ''}
+          </div>
+        `);
+      });
+    }
+
+    function finishDepartmentCreation(skipMembers = false) {
+      const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+      if (!skipMembers && selectedMembers.length === 0) {
+        $('#successCopyMessage').html('<strong>Error!</strong> At least one member is required.').show().delay(2000).fadeOut();
+        return;
+      }
+
+      departmentData.members = selectedMembers.map(member => ({
+        userID: member._id,
+        status: 'approved'
+      }));
+
+      $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}/departments`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(departmentData),
+        success: function(response) {
+          const departmentId = response.department_id;
+          if (!skipMembers) {
+            $.ajax({
+              url: `${API_URL}/api/v1/community/${communityId}/departments/${departmentId}/members`,
+              method: 'POST',
+              contentType: 'application/json',
+              data: JSON.stringify({ memberIds: selectedMembers.map(m => m._id) }),
+              success: function() {
+                $('.modal').modal('hide');
+                $('.modal').remove();
+                $('#successCopyMessage').html('<strong>Success!</strong> Department created successfully.').show().delay(2000).fadeOut();
+                loadDepartments();
+              },
+              error: function(xhr, status, error) {
+                console.error('Error adding members:', { status: xhr.status, responseText: xhr.responseText, error });
+                $('#successCopyMessage').html('<strong>Error!</strong> Failed to add members: ' + (xhr.responseText || error) + '.').show().delay(2000).fadeOut();
+              }
+            });
+          } else {
+            $('.modal').modal('hide');
+            $('.modal').remove();
+            $('#successCopyMessage').html('<strong>Success!</strong> Department created successfully.').show().delay(2000).fadeOut();
+            loadDepartments();
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error('Error creating department:', { status: xhr.status, responseText: xhr.responseText, error });
+          $('#successCopyMessage').html('<strong>Error!</strong> Failed to create department: ' + (xhr.responseText || error) + '.').show().delay(2000).fadeOut();
+        }
+      });
+    }
+
+    function loadActiveCommunity(){
+        const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+        if (!communityId) {
+            $('#no-active-community').show();
+            $('#loading-overlay, #error-overlay, #no-membership, #departments-sections, #create-department-button').hide();
+            return;
+        }
+    
+        $.ajax({
+            url: `${API_URL}/api/v1/community/${communityId}`,
+            method: 'GET',
+            timeout: 10000,
+            success: function(community) {
+            if (community) {
+                $('#active-community-name').text(community?.community?.name || 'N/A');
+            } else {
+                $('#no-active-community').show();
+            }
+            },
+            error: function(xhr, status, error) {
+            console.error('Error loading active community:', { status: xhr.status, responseText: xhr.responseText, error });
+            $('#no-active-community').show();
+            }
+        });
+    }
+
+    $(document).ready(function() {
+      loadDepartments();
+      loadActiveCommunity();
+
+      $('#your-prev-page').click(function() {
+        if (yourPage > 1) {
+          yourPage--;
+          loadDepartments();
+        }
+      });
+
+      $('#your-next-page').click(function() {
+        yourPage++;
+        loadDepartments();
+      });
+
+      $('#other-prev-page').click(function() {
+        if (otherPage > 1) {
+          otherPage--;
+          loadDepartments();
+        }
+      });
+
+      $('#other-next-page').click(function() {
+        otherPage++;
+        loadDepartments();
+      });
+    });
+  </script>
+  

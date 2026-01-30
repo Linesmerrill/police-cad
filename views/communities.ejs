@@ -1,286 +1,596 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <title>LPC - Communities</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
-    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap.min.css" />
-    <link rel="stylesheet" href="/static/css/animate.min.css" />
-    <link rel="stylesheet" href="/static/css/ionicons.min.css" />
-    <link rel="stylesheet" href="/static/css/styles.css" />
-    <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule="" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"></script>
-    <!-- To hide google translate header bar on each page -->
-    <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
-    <style type='text/css'> body {position: static !important; top:0px !important;}</style>
+  <head>
     <% include ad-header %>
-</head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>LPC - Communities</title>
+    <link
+      rel="shortcut icon"
+      type="image/png"
+      href="/static/images/lines-police-cad-discord-logo-2024-github-profile.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="/static/images/lines-police-cad-discord-logo-2024-github-profile.png"
+    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      * {
+        -webkit-tap-highlight-color: transparent;
+      }
 
-<body>
-    <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand page-scroll" href="/">
-                  <img style="display: inline; margin-top: -9px; vertical-align: text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD</a>
-            </div>
-            <div class="navbar-collapse collapse" id="bs-navbar">
+      /* Profile glow animations per subscription tier */
+      @keyframes glowPremiumPlus {
+        0%, 100% { box-shadow: 0 0 4px rgba(251, 191, 36, 0.4), 0 0 8px rgba(251, 191, 36, 0.2); }
+        50% { box-shadow: 0 0 8px rgba(251, 191, 36, 0.7), 0 0 16px rgba(251, 191, 36, 0.35); }
+      }
+      @keyframes glowPremium {
+        0%, 100% { box-shadow: 0 0 4px rgba(168, 85, 247, 0.4), 0 0 8px rgba(168, 85, 247, 0.2); }
+        50% { box-shadow: 0 0 8px rgba(168, 85, 247, 0.7), 0 0 16px rgba(168, 85, 247, 0.35); }
+      }
+      @keyframes glowBasic {
+        0%, 100% { box-shadow: 0 0 4px rgba(59, 130, 246, 0.4), 0 0 8px rgba(59, 130, 246, 0.2); }
+        50% { box-shadow: 0 0 8px rgba(59, 130, 246, 0.7), 0 0 16px rgba(59, 130, 246, 0.35); }
+      }
+      @keyframes glowFree {
+        0%, 100% { box-shadow: 0 0 4px rgba(156, 163, 175, 0.3), 0 0 8px rgba(156, 163, 175, 0.15); }
+        50% { box-shadow: 0 0 6px rgba(156, 163, 175, 0.5), 0 0 12px rgba(156, 163, 175, 0.25); }
+      }
+      .navbar-profile-pic {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      .navbar-profile-pic.tier-premium-plus {
+        border: 2px solid rgba(251, 191, 36, 0.7);
+        animation: glowPremiumPlus 3s ease-in-out infinite;
+      }
+      .navbar-profile-pic.tier-premium {
+        border: 2px solid rgba(168, 85, 247, 0.7);
+        animation: glowPremium 3s ease-in-out infinite;
+      }
+      .navbar-profile-pic.tier-basic {
+        border: 2px solid rgba(59, 130, 246, 0.7);
+        animation: glowBasic 3s ease-in-out infinite;
+      }
+      .navbar-profile-pic.tier-free {
+        border: 2px solid rgba(156, 163, 175, 0.5);
+        animation: glowFree 3s ease-in-out infinite;
+      }
 
-                <ul class="nav navbar-nav navbar-right">
-                    <li>
-                        <a href="/civ-dashboard">Civilian</a>
-                    </li>
-                    <li>
-                        <a href="/police-dashboard">Police</a>
-                    </li>
-                    <li>
-                        <a href="/ems-dashboard">Fire/EMS</a>
-                    </li>
-                    <li>
-                        <a href="/dispatch-dashboard">Dispatch</a>
-                    </li>
-                    <li>
-                        <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"><ion-icon class="nav-user-icon" name="person-circle-outline"></ion-icon></a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+      html {
+        scroll-behavior: smooth;
+        background-color: #0a0a0f !important;
+        color-scheme: dark;
+        height: 100%;
+        height: 100dvh;
+        -webkit-overflow-scrolling: touch;
+      }
 
-    <header id="third" style='background-image: url("/static/images/monitors2.jpg"); min-height: 100%;'>
-        <div class="inner">
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <div class="col-md-offset-3 col-md-7">
-                <div id="successCopyMessage" class="alert alert-success alert-dismissible" role="alert" style="display:none">
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <strong>Success!</strong> Copied to your clipboard
-                  </div>
-            <h2 class="text-center">Communities</h2>
-            <hr>
-            <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
-                <li class="nav-item">
-                  <a class="nav-link" href="/community-dashboard">Community Dashboard</a>
-              </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/owned-communities">Owned Communities</a>
-                </li>
-                <li class="nav-item active">
-                  <a class="nav-link active" id="pills-manage-community-tab" data-toggle="pill" href="#pills-manage-community" role="tab" aria-controls="pills-manage-community" aria-selected="true">Manage Community</a>
-                </li>
-              </ul>
-              <div class="tab-content" id="pills-tabContent">
-                <div class="tab-pane fade active in" id="pills-manage-community" role="tabpanel" aria-labelledby="pills-manage-community-tab">
-                    </br>
-                    <h2 style="text-transform: capitalize;" class="text-align-center"><%=communities['community']['name']%> <span data-toggle="modal" href="#communityNameModal" class="iconify" style="color:#337ab7;cursor:pointer" data-icon="jam:write" data-inline="false" data-width="20" data-height="20"></span></h2>
-                    <input id="link" type="text" name="communityID" value="<%=communities['community']['code']%>" style="opacity: 0;">
-                    <h2 class="text-align-center"><%=communities['community']['code']%><span class="iconify" data-icon="ant-design:copy-outlined" data-inline="false" style="color:#337ab7;cursor:pointer" data-width="25" data-height="25" onclick="copyText('#link')"></span></h2>
-                        
-                    <hr>
-                    <h4>Member List:</h4>
-                    <form id="actionForm" class="row" action="/community" method="post">
-                    <table id="example" class="table table-bordered" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>Username</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                          <% if(members != undefined && members != null) {%>
-                            <% for(var i=0; i<members.length; i++) {%>
-                                    <tr>
-                                        <td><%=members[i].user.username%></td>
-                                        <td class="text-align-center">
-                                            <input type="hidden" name="communityID" value="<%= communities._id %>">
-                                            <button type="submit" value="<%= members[i]._id %>" name="memberID" class="btn btn-md btn-danger">Remove</button>
-                                        </td>
-                                    </tr>
-                            <%}%>
-                          <%}%>
-                        </tbody>
-                    </table>
-                    </form>
-                </div>
-                <div class="tab-pane fade" id="pills-owned-communities" role="tabpanel" aria-labelledby="pills-owned-communities-tab">
-                  <table id="warningTable" class="table table-hover" border="1" frame="box">
-                    <thead>
-                      <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Warning</td></tr>
-                    </thead>
-                      <tbody>
-                      </tbody>
-                  </table>
-                </div>
-                <div class="tab-pane fade" id="pills-arrests" role="tabpanel" aria-labelledby="pills-arrests-tab">
-                  <table id="arrestTable" class="table table-hover" border="1" frame="box">
-                    <thead>
-                      <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Arrest Charges</td><td>Summary</td></tr>
-                    </thead>
-                      <tbody>
-                      </tbody>
-                  </table>
-                </div>
-              </div>
-        </div>
-        <div>
+      body {
+        background-color: #0a0a0f !important;
+        background-image: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+        background-attachment: fixed;
+        background-size: cover;
+        color: #e2e8f0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        margin: 0;
+        padding: 0;
+        -webkit-overflow-scrolling: touch;
+        /* Prevent overscroll bounce showing white */
+        overscroll-behavior: none;
+      }
+
+      /* Ensure root element also has background */
+      #root {
+        background: transparent;
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
+
+      /* Fix for mobile overscroll - create a background layer that extends beyond viewport */
+      body::before {
+        content: '';
+        position: fixed;
+        top: -100px;
+        bottom: -100px;
+        left: 0;
+        right: 0;
+        background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+        z-index: -9999;
+        pointer-events: none;
+      }
+
+      /* Breathing glow animation */
+      @keyframes breathe {
+        0%, 100% {
+          opacity: 0.5;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.8;
+          transform: scale(1.1);
+        }
+      }
+
+      /* Shimmer animation for text */
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 50%;
+        }
+        100% {
+          background-position: -200% 50%;
+        }
+      }
+
+      /* Pulse animation for backgrounds */
+      @keyframes pulse-bg {
+        0%, 100% {
+          opacity: 0.5;
+        }
+        50% {
+          opacity: 0.8;
+        }
+      }
+
+      .animate-breathe {
+        animation: breathe 5s ease-in-out infinite;
+      }
+
+      .animate-shimmer {
+        animation: shimmer 12s linear infinite;
+      }
+
+      .animate-pulse-bg {
+        animation: pulse-bg 8s ease-in-out infinite;
+      }
+
+      /* Hide scrollbar utility */
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Line clamp utilities */
+      .line-clamp-1 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+      }
+      .line-clamp-2 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+      }
+      .line-clamp-3 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+      }
+
+      /* Safe area for mobile notch/home indicator */
+      .safe-area-top {
+        padding-top: env(safe-area-inset-top, 0);
+      }
+      .safe-area-bottom {
+        padding-bottom: env(safe-area-inset-bottom, 0);
+      }
+
+      /* Toast animation */
+      @keyframes slide-in {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      .animate-slide-in {
+        animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      /* Backdrop blur fallback for older browsers */
+      @supports not (backdrop-filter: blur(8px)) {
+        .backdrop-blur-sm {
+          background-color: rgba(15, 23, 42, 0.95) !important;
+        }
+      }
+
+      /* Custom scrollbar for desktop */
+      @media (min-width: 768px) {
+        ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+          background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #475569;
+          border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: #64748b;
+        }
+      }
+
+      /* Aspect ratio fallback */
+      @supports not (aspect-ratio: 4/3) {
+        .aspect-\[4\/3\]::before {
+          content: '';
+          float: left;
+          padding-top: 75%;
+        }
+        .aspect-\[4\/3\]::after {
+          content: '';
+          display: block;
+          clear: both;
+        }
+        .aspect-square::before {
+          content: '';
+          float: left;
+          padding-top: 100%;
+        }
+        .aspect-square::after {
+          content: '';
+          display: block;
+          clear: both;
+        }
+        .aspect-\[2\/1\]::before {
+          content: '';
+          float: left;
+          padding-top: 50%;
+        }
+        .aspect-\[2\/1\]::after {
+          content: '';
+          display: block;
+          clear: both;
+        }
+      }
+
+      /* Focus visible for accessibility */
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible {
+        outline: 2px solid #06b6d4;
+        outline-offset: 2px;
+      }
+
+      /* Override Bootstrap styles that conflict with Tailwind */
+      html {
+        font-size: 16px !important;
+      }
+      body {
+        font-size: 1rem !important;
+        line-height: 1.5 !important;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+      }
+      #root {
+        font-size: 1rem;
+      }
+      #root * {
+        box-sizing: border-box;
+      }
+      /* Reset Bootstrap's tiny text */
+      #root p, #root span, #root div, #root h1, #root h2, #root h3, #root h4, #root h5, #root h6, #root a, #root button, #root input, #root textarea, #root label {
+        font-size: inherit;
+        line-height: inherit;
+      }
+      /* Ensure text sizes are correct in the React app */
+      #root .text-xs { font-size: 0.75rem !important; line-height: 1rem !important; }
+      #root .text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+      #root .text-base { font-size: 1rem !important; line-height: 1.5rem !important; }
+      #root .text-lg { font-size: 1.125rem !important; line-height: 1.75rem !important; }
+      #root .text-xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+      #root .text-2xl { font-size: 1.5rem !important; line-height: 2rem !important; }
+      #root .text-3xl { font-size: 1.875rem !important; line-height: 2.25rem !important; }
+      #root .text-4xl { font-size: 2.25rem !important; line-height: 2.5rem !important; }
+      /* Fix button and input styles */
+      #root button, #root input, #root textarea {
+        font-family: inherit !important;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header Bar - matches home page style -->
+    <nav class="flex items-center justify-between px-6 h-16 sticky top-0 z-30" style="background: rgba(15, 15, 20, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(59, 130, 246, 0.2); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+      <div class="flex items-center">
+        <a href="/" class="flex items-center">
+          <img src="/static/images/lines-police-cad-discord-logo-2024-github-profile.png" alt="Lines Police CAD" style="height: 36px; width: auto;" />
+        </a>
+      </div>
+      <div class="flex items-center space-x-4">
+        <% if (user && user._doc) { %>
+          <!-- User is logged in - show account and notification buttons -->
+          <div class="flex items-center space-x-3">
+            <!-- Notification Button -->
+            <button id="notificationBtn" class="relative p-2 text-gray-300 hover:text-white transition-colors" style="background: none; border: none; cursor: pointer;">
+              <i class="fa fa-bell text-xl"></i>
+              <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+            </button>
             
-        </div>
-        
-    </header>
-    <!-- Modify Community Name Modal -->
-    <div id="communityNameModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-body">
-              <form class="form-horizontal" action="/updateCommunityName" method="post">
-                <fieldset>
-    
-                <!-- Form Name -->
-                <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-                <h4>Modify Community Name</h4>
-                <hr style="width: 88%;max-width: 100rem;">
-    
-                <!-- Text input-->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="communityName">Community Name:<br><small>Max 25 characters</small></label>
-                    <div class="col-md-6">
-                    <input id="communityName" value="<%= communities.community.name %>" name="updatedName" type="text" class="form-control input-md" style="text-transform: capitalize;" maxlength="25" autocomplete="off" required>
-                    <div id="updateCommunityNameBtns" class="margin-top-1" style="display: none">
-                      <button id="updateCommunityName" value="<%= communities._id%>" name="communityID" class="btn btn-info">Update Name</button> <button type="button" class="btn btn-primary" onclick="cancelCommunityName()">Cancel</button>
-                    </div>
-                    </div>
-                  </div>
-                </fieldset>
-              </form>
+            <!-- Account Dropdown -->
+            <div id="accountDropdownWrapper" style="position: relative;">
+              <button id="accountBtn" class="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors" style="background: none; border: none; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                <% if (user.user.profilePicture) { %>
+                  <% var sub = user._doc && user._doc.user && user._doc.user.subscription; %>
+                  <% var subPlan = (sub && sub.active && sub.plan) ? sub.plan : 'free'; %>
+                  <% var tierClass = subPlan === 'premium_plus' ? 'tier-premium-plus' : subPlan === 'premium' ? 'tier-premium' : subPlan === 'basic' ? 'tier-basic' : 'tier-free'; %>
+                  <img src="<%= user.user.profilePicture %>" alt="" class="navbar-profile-pic <%= tierClass %>">
+                <% } else { %>
+                  <i class="fa fa-user text-sm"></i>
+                <% } %>
+                <span class="font-medium"><%= user.user.username || 'User' %></span>
+                <i id="accountChevron" class="fa fa-chevron-down text-xs" style="transition: transform 0.2s;"></i>
+              </button>
+              <div id="accountDropdown" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 0.5rem; background: rgba(15, 15, 20, 0.98); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem; min-width: 200px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); z-index: 10001;">
+                <a href="/profile" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; color: rgba(255, 255, 255, 0.9); text-decoration: none; border-radius: 4px; font-size: 0.875rem; transition: background-color 0.2s;" onmouseenter="this.style.backgroundColor='rgba(255,255,255,0.1)'" onmouseleave="this.style.backgroundColor='transparent'">
+                  <i class="fa fa-cog" style="width: 18px; text-align: center;"></i>
+                  Account Settings
+                </a>
+                <a href="/logout" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; color: #ef4444; text-decoration: none; border-radius: 4px; font-size: 0.875rem; margin-top: 0.25rem; transition: background-color 0.2s;" onmouseenter="this.style.backgroundColor='rgba(239,68,68,0.1)'" onmouseleave="this.style.backgroundColor='transparent'">
+                  <i class="fa fa-sign-out-alt" style="width: 18px; text-align: center;"></i>
+                  Logout
+                </a>
+              </div>
             </div>
           </div>
+        <% } else { %>
+          <!-- User is not logged in - show login button -->
+          <a href="/login-civ?redirect=<%= encodeURIComponent('/communities') %>" class="inline-flex items-center px-4 py-2 text-black font-semibold rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);">
+            <i class="fa fa-sign-in-alt mr-2"></i>
+            Login
+          </a>
+        <% } %>
+      </div>
+    </nav>
+    <!-- Promo Bar - Compact version with home page styling -->
+    <div id="promo-bar" class="mx-3 mt-3 rounded-xl relative" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(59, 130, 246, 0.2); color: #fff; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); padding: 0.75rem 2.5rem 0.75rem 1rem;">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <i class="fa fa-lightbulb" style="font-size: 1.25rem; color: #fbbf24;"></i>
+        <div>
+          <span style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.9);">
+            Search for a community or browse below. <a href="#" id="create-community-link" style="color: #fbbf24; text-decoration: underline; font-weight: 600;">Create your own</a>
+          </span>
         </div>
       </div>
-      <div class="google-ad"></div>
+      <a id="promo-bar-hide" href="#" class="hidden sm:inline" style="color: #fbbf24; font-size: 0.8rem; text-decoration: underline; font-weight: 500; opacity: 0.9; white-space: nowrap;">Don't show again</a>
+      <button id="promo-bar-x" aria-label="Close banner" style="position:absolute; top:50%; right:0.75rem; transform: translateY(-50%); background: none; border: none; color: #fff; font-size: 1rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; z-index: 10;">
+        <i class="fa fa-times"></i>
+      </button>
     </div>
-    <% include account-management %>
-    <% include footer %>
-    <div id="alertModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <h2 class="text-center">Coming Soon!</h2>
-                    <p class="text-center">This is still being developed. Please check back later ;)</p>
-                    <br />
-                    <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK
-                        <i class="ion-android-close"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!--scripts loaded here -->
-    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>
-    <script src="/static/js/bootstrap.min.js"></script>
-    <script src="/static/js/jquery.easing.min.js"></script>
-    <script src="/static/js/wow.js"></script>
-    <script src="/static/js/scripts.js"></script>
-    <script>if (window.module) module = window.module;</script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-</body>
 
-</html>
-<script type="text/javascript">
-  // all global router vars declared here to reduce duplication
-  var dbCommunities = <%- JSON.stringify(communities) %>;
-  var dbUser = <%- JSON.stringify(user) %>;
-
-$(document).ready(function () {
-    $('#example').DataTable();
-
-    // displays the Update and Cancel buttons for updating the community name
-    $('#communityName').on('keyup', function(e) {
-      if(e.target.value != dbCommunities.community.name && e.target.value != '') {
-        $('#updateCommunityNameBtns').show();
-      } else {
-        $('#updateCommunityNameBtns').hide();
-      }
-    })
-
-    // displays the Update Username and Cancel buttons for updating the username
-    $('#accountUsername').on('keyup', function(e) {
-    if(e.target.value != dbUser.user.username && e.target.value != '') {
-        $('#updateUsernameBtns').show();
-    } else {
-        $('#updateUsernameBtns').hide();
-    }
-    })
-
-    $('#accountCallSign').on('keyup', function(e) {
-        if(e.target.value != dbUser.user.callSign && e.target.value != '') {
-            $('#updateCallSignBtns').show();
-        } else {
-            $('#updateCallSignBtns').hide();
+    
+    <!-- Search and Create Community Group -->
+    
+    <!-- Clean up any stuck Bootstrap modal backdrops on page load -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Remove any lingering Bootstrap modal backdrops from previous sessions
+        var backdrops = document.querySelectorAll('.modal-backdrop');
+        for (var i = 0; i < backdrops.length; i++) {
+          backdrops[i].parentNode.removeChild(backdrops[i]);
         }
-    })
+        // Ensure body is not stuck with modal-open class or hidden overflow
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+      });
+    </script>
+    <script>
+      function setPromoBarCookie() {
+        document.cookie = 'hidePromoBarCommunities=true; path=/; max-age=31536000'; // 1 year
+      }
+      function getPromoBarCookie() {
+        return document.cookie.split(';').some(c => c.trim().startsWith('hidePromoBarCommunities='));
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        if (getPromoBarCookie()) {
+          var bar = document.getElementById('promo-bar');
+          if (bar) bar.style.display = 'none';
+          return;
+        }
+        var closeBtn = document.getElementById('promo-bar-x');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', function() {
+            var bar = document.getElementById('promo-bar');
+            if (bar) bar.style.display = 'none';
+          });
+        }
+        var hideBtn = document.getElementById('promo-bar-hide');
+        if (hideBtn) {
+          hideBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            setPromoBarCookie();
+            var bar = document.getElementById('promo-bar');
+            if (bar) bar.style.display = 'none';
+          });
+        }
+        
+      });
+    </script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var link = document.getElementById('create-community-link');
+        if (link) {
+          link.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (!dbUser || !dbUser._id) {
+              // User not logged in, redirect to login with return URL
+              window.location.href = '/login-civ?redirect=' + encodeURIComponent('/communities');
+              return;
+            }
+            // User is logged in, dispatch the modal event
+            window.dispatchEvent(new Event('open-create-community-modal'));
+          });
+        }
+      });
+    </script>
+    <div id="root"></div>
+    <script
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+      defer
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+      defer
+    ></script>
+    <script
+      src="https://unpkg.com/@babel/standalone/babel.min.js"
+      defer
+    ></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js" defer></script>
+    <!-- jQuery and Bootstrap for modals -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/static/js/cloudinary-upload.js"></script>
+    <script>
+      var dbUser = <%- JSON.stringify(user || {}) %>;
+      // Global API_URL for notifications.js
+      window.API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 
-    $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
-});
+      // Build version for footer
+      window.buildVersion = '<%= typeof buildVersion !== "undefined" ? buildVersion : "unknown" %>';
 
-function copyText(element) {
-    $(element).select();
-    document.execCommand("copy");
-    $('#successCopyMessage').show();
-}
+      // Set up Cloudinary configuration from environment variables
+      window.CLOUDINARY_CLOUD_NAME = '<%= process.env.CLOUDINARY_CLOUD_NAME || "" %>';
+      window.CLOUDINARY_API_KEY = '<%= process.env.CLOUDINARY_API_KEY || "" %>';
+      window.CLOUDINARY_UPLOAD_PRESET = '<%= process.env.CLOUDINARY_UPLOAD_PRESET || "" %>';
+    </script>
+    <script
+      data-cfasync="false"
+      type="text/babel"
+      src="/static/js/communities.js"
+      defer
+    ></script>
+    <script
+      type="module"
+      src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"
+      defer
+    ></script>
+    <script
+      nomodule
+      src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"
+      defer
+    ></script>
 
-function cancelCommunityName() {
-    $('#communityName').val(dbCommunities.community.name)
-    $('#updateCommunityNameBtns').hide();
-  }
 
-  function fillAccountDetails() {
-    $('#accountEmail').val(dbUser.user.email)
-    $('#accountUsername').val(dbUser.user.username)
-    $('#accountCallSign').val(dbUser.user.callSign)
-  }
-  
-  function cancelUsername() {
-    $('#accountUsername').val(dbUser.user.username)
-    $('#updateUsernameBtns').hide();
-  }
-
-  function cancelCallSign() {
-    $('#accountCallSign').val(dbUser.user.callSign)
-    $('#updateCallSignBtns').hide();
-  }
-
-  function togglePanicBtnSound() {
-    var socket = io();
-    socket.emit('update_panic_btn_sound', dbUser)
-    socket.on('load_panic_btn_result', (res) => {
-      $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
-      $('#successfully-updated-alert').removeClass('hide').delay(2000).fadeOut(1000, function() {
-    $(this).hide();
-  });
-    })
-  }
-</script>
-
-<!--  added for google translate --> 
-<script type="text/javascript">
-function googleTranslateElementInit() {
-  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
-}
-</script>
-<!-- IE needs 512+ bytes: https://blogs.msdn.microsoft.com/ieinternals/2010/08/18/friendly-http-error-pages/ -->
+    <% if (user && user._doc) { %>
+      <!-- Notification Modal -->
+      <% include partials/notificationModal %>
+      
+      <!-- Include notifications.js for notification functionality -->
+      <script src="/static/js/notifications.js"></script>
+      
+      <!-- Notification Badge Styles -->
+      <style>
+        .notification-badge {
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          background-color: #dc3545;
+          color: white;
+          border-radius: 50%;
+          width: 16px;
+          height: 16px;
+          font-size: 9px;
+          line-height: 16px;
+          text-align: center;
+          display: none;
+          font-weight: bold;
+          border: 1px solid #1a202c;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+          min-width: 16px;
+        }
+        .notification-badge.show {
+          display: block;
+        }
+      </style>
+      
+      <!-- Modal Event Listeners -->
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          // Account dropdown toggle
+          const accountBtn = document.getElementById('accountBtn');
+          const accountDropdown = document.getElementById('accountDropdown');
+          const accountChevron = document.getElementById('accountChevron');
+          if (accountBtn && accountDropdown) {
+            accountBtn.addEventListener('click', function(e) {
+              e.stopPropagation();
+              const isOpen = accountDropdown.style.display === 'block';
+              accountDropdown.style.display = isOpen ? 'none' : 'block';
+              if (accountChevron) {
+                accountChevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+              }
+            });
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+              if (!document.getElementById('accountDropdownWrapper').contains(e.target)) {
+                accountDropdown.style.display = 'none';
+                if (accountChevron) accountChevron.style.transform = '';
+              }
+            });
+          }
+          
+          // Notification button click handler
+          const notificationBtn = document.getElementById('notificationBtn');
+          if (notificationBtn) {
+            notificationBtn.addEventListener('click', function() {
+              document.getElementById('notificationModal').style.display = 'flex';
+              fetchNotifications(0);
+            });
+          }
+          
+          // Notification modal close button
+          const notificationModalClose = document.getElementById('notificationModalClose');
+          if (notificationModalClose) {
+            notificationModalClose.addEventListener('click', function() {
+              document.getElementById('notificationModal').style.display = 'none';
+            });
+          }
+          
+          // Notification modal cancel button
+          const notificationModalCancel = document.getElementById('notificationModalCancel');
+          if (notificationModalCancel) {
+            notificationModalCancel.addEventListener('click', function() {
+              document.getElementById('notificationModal').style.display = 'none';
+            });
+          }
+          
+          // Close notification modal when clicking outside
+          window.addEventListener('click', function(event) {
+            const notificationModal = document.getElementById('notificationModal');
+            if (event.target === notificationModal) {
+              notificationModal.style.display = 'none';
+            }
+          });
+          
+          // Initialize notification count on page load
+          if (dbUser && dbUser._id) {
+            // Initialize notification count using the function from notifications.js
+            fetchNotificationCount();
+          }
+        });
+        
+      </script>
+    <% } %>
+  </body>
+</html>

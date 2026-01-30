@@ -14,8 +14,6 @@ var communitySchema = mongoose.Schema({
 });
 
 communitySchema.methods.createCommunity = function (req, res) {
-  // console.debug("community req body: ", req.body)
-
   if (exists(req.body.communityName)) {
     this.community.name = req.body.communityName.trim().toLowerCase();
   }
@@ -29,8 +27,6 @@ communitySchema.methods.createCommunity = function (req, res) {
 };
 
 communitySchema.methods.createPoliceCommunity = function (req, res) {
-  // console.debug("community req body: ", req.body)
-
   if (exists(req.body.communityName)) {
     this.community.name = req.body.communityName.trim().toLowerCase();
   }
@@ -44,8 +40,6 @@ communitySchema.methods.createPoliceCommunity = function (req, res) {
 };
 
 communitySchema.methods.createEmsCommunity = function (req, res) {
-  // console.debug("community req body: ", req.body)
-
   if (exists(req.body.communityName)) {
     this.community.name = req.body.communityName.trim().toLowerCase();
   }

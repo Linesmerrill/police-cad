@@ -1,223 +1,587 @@
-<div id="accountModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-body">
-        <!-- Modal Name -->
-        <div id="successfully-updated-alert" class="alert alert-success alert-dismissible hide" role="alert">
-          Successfully updated!
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-          aria-hidden="true">X</button>
-
-
-        <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
-          <li class="nav-item active">
-            <a class="nav-link active" id="pills-account-tab" data-toggle="pill" href="#pills-account" role="tab"
-              aria-controls="pills-account" aria-selected="true">Manage Account</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" id="pills-settings-tab" data-toggle="pill" href="#pills-settings" role="tab"
-              aria-controls="pills-settings" aria-selected="false">Settings</a>
-          </li>
-        </ul>
-        <hr style="width: 88%;max-width: 100rem;">
-        <div class="tab-content" id="pills-tabContent">
-          <div class="tab-pane fade active in" id="pills-account" role="tabpanel" aria-labelledby="pills-account-tab">
-            <form class="form-horizontal" action="/manageAccount" method="post">
-              <fieldset>
-
-                <!-- Form Name -->
-                <h5>Profile</h5>
-                <div class="img bg-wrap text-center py-4" style="background: transparent;">
-                  <div class="user-logo">
-                    <div class="img profile-picture"
-                      style="background-image: url(/static/images/civ-unknown-user.png);"></div>
-                  </div>
-                </div>
-
-                <!-- Text input-->
-                <div class="form-group">
-                  <label class="col-md-4 control-label" for="profileImage">Profile Image:</label>
-                  <div class="col-md-6" style="margin-top: 7px;">
-                    <a href="https://en.gravatar.com/support/activating-your-account/" target="_blank">Update <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
-                  </div>
-                </div>
-
-                <!-- Text input-->
-                <div class="form-group">
-                  <label class="col-md-4 control-label" for="accountEmail">Email:</label>
-                  <div class="col-md-6">
-                    <input id="accountEmail" name="accountEmail" type="email" class="form-control input-md"
-                      readonly="readonly">
-                  </div>
-                </div>
-
-                <!-- Update Username input-->
-                <div class="form-group">
-                  <label class="col-md-4 control-label" for="accountUsername">Username:<br><small>Max 20
-                      characters</small></label>
-                  <div class="col-md-6">
-                    <input id="accountUsername" name="accountUsername" type="text" class="form-control input-md"
-                      maxlength="20" autocomplete="off" required>
-                    <div id="updateUsernameBtns" class="margin-top-1" style="display: none">
-                      <input type="hidden" name="userID" value="<%= user._id %>">
-                      <input type="hidden" name="page" value="/civ-dashboard">
-                      <button id="updateUsername" value="updateUsername" name="action" class="btn btn-info">Update
-                        Username</button> <button type="button" class="btn btn-primary"
-                        onclick="cancelUsername()">Cancel</button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Update Call Sign input-->
-                <div class="form-group">
-                  <label class="col-md-4 control-label" for="accountCallSign">Call Sign:<br><small>Max 10
-                      characters</small></label>
-                  <div class="col-md-6">
-                    <input id="accountCallSign" name="accountCallSign" type="text" class="form-control input-md"
-                      maxlength="10" autocomplete="off" required>
-                    <div id="updateCallSignBtns" class="margin-top-1" style="display: none">
-                      <input type="hidden" name="page" value="/civ-dashboard">
-                      <button id="updateCallSign" value="updateCallSign" name="action" class="btn btn-info">Update Call
-                        Sign</button> <button type="button" class="btn btn-primary"
-                        onclick="cancelCallSign()">Cancel</button>
-                    </div>
-                  </div>
-                </div>
-
-                <hr style="width: 88%;max-width: 100rem;">
-
-                <h5>
-                  <ion-icon name="lock-closed-outline"></ion-icon> Password
-                </h5>
-
-                <!-- Button -->
-                <div class="form-group text-align-center">
-                  <div class="col-md-12">
-                    <button id="updatePassword" type="button" class="btn btn-primary"
-                      onclick="document.location.href='forgot-password'">Update Password</button>
-                  </div>
-                </div>
-
-                <hr style="width: 88%;max-width: 100rem;">
-                
-                <h5>
-                  <ion-icon name="person-outline"></ion-icon> Discord
-                </h5>
-
-                <!-- Button -->
-                <div class="form-group text-align-center">
-                  <input id="link" type="text" name="discordToken" value="<%= user.user.discordLoginToken %>" style="display: none;">
-                  <div class="col-md-12">
-                    <img alt="discord" class="margin-bottom-2" style="width: 40px;" src="./static/images/discord-icon.svg">
-                  </br>
-                    <% if (user.user.discordConnected) { %>
-                      <h5 class="margin-bottom-1"><i style="color: #57C567" class="fas fa-check"></i> Discord account connected</h5>
-                      <button name="action" value="disconnectDiscord" class="btn btn-danger" type="submit">Disconnect your Discord account</button>
-                    <% } else { %>
-                      <h5 class="margin-bottom-1"><i style="color: #F8564E" class="fas fa-times"></i> Discord account not connected</h5>
-                        <a class="btn btn-primary" 
-                          href="https://discord.com/api/oauth2/authorize?client_id=860298681047056434&redirect_uri=<%=redirect%>&response_type=code&scope=identify&state=<%=referer%>">
-                          Connect your Discord account <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
-                    <% } %>
-                  </div>
-                </div>
-
-                <hr style="width: 88%;max-width: 100rem;">
-
-                <h5>
-                  <ion-icon name="log-out-outline"></ion-icon> Sign out
-                </h5>
-
-                <!-- Button -->
-                <div class="form-group text-align-center">
-                  <div class="col-md-12">
-                    <button id="sign-out" type="button" class="btn btn-primary"
-                      onclick="document.location.href='logout'">Sign out</button>
-                  </div>
-                </div>
-
-                <hr style="width: 88%;max-width: 100rem;">
-
-                <h5 class="color-red">
-                  <ion-icon name="trash-outline"></ion-icon> Close Account
-                </h5>
-
-                <h6><strong>Warning:</strong> Deleting your account is irreversible.</h6>
-                <!-- Button -->
-                <div class="form-group text-align-center">
-                  <div class="col-md-12">
-                    <button data-toggle="modal" type="button" href="#deleteAccountConfirmModal"
-                      class="btn btn-danger">Delete account</button>
-                  </div>
-                </div>
-              </fieldset>
-            </form>
-          </div>
-          <div class="tab-pane fade" id="pills-settings" role="tabpanel" aria-labelledby="pills-settings-tab">
-            <form class="form-horizontal" action="/updateSettings" method="post">
-              <fieldset>
-
-                <!-- Form Name -->
-                <h5>Panic Button</h5>
-
-                <!-- checkbox input-->
-                <div class="form-group">
-                  <label class="col-md-4 control-label" for="enableSound">Enable Sound:</label>
-                  <div class="col-md-1">
-                    <input id="panic-button-check-sound" type="checkbox" name="enableSound" class="form-control"
-                      onclick="togglePanicBtnSound()">
-                  </div>
-                </div>
-              </fieldset>
-            </form>
-          </div>
-        </div>
+<div id="accountModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:90%; max-height:90vh; overflow-y:auto; position:relative; border:1px solid #35385a;">
+    <button id="accountModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    
+    <!-- Success Alert -->
+    <div id="successfully-updated-alert" style="display:none; background:#48bb78; color:#fff; border-radius:8px; padding:1rem; margin-bottom:1.5rem; border:1px solid #38a169;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong>Success!</strong> Account updated successfully!
+        <button type="button" onclick="document.getElementById('successfully-updated-alert').style.display='none'" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">
+          <i class="fa fa-times"></i>
+        </button>
       </div>
     </div>
-  </div>
-</div>
 
-<div id="deleteAccountConfirmModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-body">
-        <form class="form-horizontal" action="/deleteAccount" method="post">
-          <fieldset>
+    <!-- Tab Navigation -->
+    <div style="display:flex; border-bottom:1px solid #35385a; margin-bottom:2rem;">
+      <button id="account-tab" class="tab-button active" style="background:none; border:none; color:#fff; padding:1rem 2rem; border-bottom:2px solid #667eea; cursor:pointer; font-weight:500;">Manage Account</button>
+      <button id="settings-tab" class="tab-button" style="background:none; border:none; color:#a0aec0; padding:1rem 2rem; cursor:pointer; font-weight:500;">Settings</button>
+    </div>
 
-            <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-              aria-hidden="true">X</button>
-            <h4>Delete Account</h4>
-            <hr style="width: 88%;max-width: 100rem;">
+    <!-- Account Tab Content -->
+    <div id="account-content" class="tab-content">
+      <form action="/manageAccount" method="post">
+        <fieldset>
+          <!-- Profile Section -->
+          <div style="margin-bottom:2rem;">
+            <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
+              <i class="fa fa-user" style="margin-right:0.5rem; color:#667eea;"></i>
+              Profile
+            </h3>
+            
+            <!-- Profile Image -->
+            <div style="text-align:center; margin-bottom:2rem;">
+              <div id="profilePicture" onclick="showProfileImageModal()" style="width:80px; height:80px; border-radius:50%; background-image:url(<%= user.user.profilePicture || '/static/images/civ-unknown-user.png' %>); background-size:cover; background-position:center; margin:0 auto 1rem; border:3px solid #35385a; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></div>
+              <a href="#" onclick="showProfileImageModal()" style="color:#667eea; text-decoration:none; font-size:0.9rem; cursor:pointer;">
+                Update Profile Image
+              </a>
+            </div>
 
-            <p>Warning: Once your account is deleted all created communities, civilians, vehicles, and citations
-              from this account will be deleted. This is non-reversible.
-            </p>
-            <p>Are you sure you want to delete your account?</p>
+            <!-- Email Field -->
+            <div style="margin-bottom:1.5rem;">
+              <label style="display:block; color:#e2e8f0; margin-bottom:0.5rem; font-weight:500;">Email:</label>
+              <input id="accountEmail" name="accountEmail" type="email" style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#e2e8f0; font-size:0.9rem;" readonly>
+            </div>
 
-            <!-- Button -->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="deleteAccount"></label>
-              <div class="col-md-4 text-align-center">
+            <!-- Username Field -->
+            <div style="margin-bottom:1.5rem;">
+              <label style="display:block; color:#e2e8f0; margin-bottom:0.5rem; font-weight:500;">Username: <small style="color:#a0aec0; font-size:0.8rem;">Max 20 characters</small></label>
+              <input id="accountUsername" name="accountUsername" type="text" maxlength="20" autocomplete="off" required style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#e2e8f0; font-size:0.9rem;">
+              <div id="updateUsernameBtns" style="display:none; margin-top:1rem;">
+                <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" name="page" value="/civ-dashboard">
-                <button id="deleteAccount" value="<%= user._id %>" name="userID" class="btn btn-danger">Delete
-                  account</button>
+                <button id="updateUsername" value="updateUsername" name="action" style="background:#667eea; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; margin-right:0.5rem; cursor:pointer;">Update Username</button>
+                <button type="button" onclick="cancelUsername()" style="background:#4a5568; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:pointer;">Cancel</button>
               </div>
             </div>
-          </fieldset>
-        </form>
+
+            <!-- Call Sign Field -->
+            <div style="margin-bottom:1.5rem;">
+              <label style="display:block; color:#e2e8f0; margin-bottom:0.5rem; font-weight:500;">Call Sign: <small style="color:#a0aec0; font-size:0.8rem;">Max 10 characters</small></label>
+              <input id="accountCallSign" name="accountCallSign" type="text" maxlength="10" autocomplete="off" required style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#e2e8f0; font-size:0.9rem;">
+              <div id="updateCallSignBtns" style="display:none; margin-top:1rem;">
+                <input type="hidden" name="page" value="/civ-dashboard">
+                <button id="updateCallSign" value="updateCallSign" name="action" style="background:#667eea; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; margin-right:0.5rem; cursor:pointer;">Update Call Sign</button>
+                <button type="button" onclick="cancelCallSign()" style="background:#4a5568; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:pointer;">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Password Section -->
+          <div style="margin-bottom:2rem; padding-top:1.5rem; border-top:1px solid #35385a;">
+            <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
+              <i class="fa fa-lock" style="margin-right:0.5rem; color:#667eea;"></i>
+              Password
+            </h3>
+            <div style="text-align:center;">
+              <button id="updatePassword" type="button" onclick="document.location.href='/forgot-password'" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:all 0.2s;">
+                Update Password
+              </button>
+            </div>
+          </div>
+
+          <!-- Discord Section -->
+          <div style="margin-bottom:2rem; padding-top:1.5rem; border-top:1px solid #35385a;">
+            <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
+              <i class="fa fa-discord" style="margin-right:0.5rem; color:#667eea;"></i>
+              Discord
+            </h3>
+            <div style="text-align:center;">
+              <input id="link" type="text" name="discordToken" value="<%= user.user.discordLoginToken %>" style="display:none;">
+              <img alt="discord" style="width:40px; margin-bottom:1rem;" src="/static/images/discord-icon.svg">
+              <br>
+              <% if (user.user.discordConnected) { %>
+                <h5 style="color:#fff; margin-bottom:1rem;"><i style="color:#57C567" class="fa fa-check"></i> Discord account connected</h5>
+                <button name="action" value="disconnectDiscord" style="background:#e53e3e; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer;">Disconnect Discord</button>
+              <% } else { %>
+                <h5 style="color:#fff; margin-bottom:1rem;"><i style="color:#F8564E" class="fa fa-times"></i> Discord account not connected</h5>
+                <a href="https://discord.com/api/oauth2/authorize?client_id=1005557484271976569&redirect_uri=<%=redirect%>&response_type=code&scope=identify&state=<%=referer%>" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; text-decoration:none; display:inline-block;">
+                  Connect Discord <i class="fa fa-external-link-alt"></i>
+                </a>
+              <% } %>
+            </div>
+          </div>
+
+          <!-- Sign Out Section -->
+          <div style="margin-bottom:2rem; padding-top:1.5rem; border-top:1px solid #35385a;">
+            <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
+              <i class="fa fa-sign-out-alt" style="margin-right:0.5rem; color:#667eea;"></i>
+              Sign Out
+            </h3>
+            <div style="text-align:center;">
+              <button id="sign-out" type="button" onclick="document.location.href='/logout'" style="background:#4a5568; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer;">
+                Sign Out
+              </button>
+            </div>
+          </div>
+
+          <!-- Deactivate Account Section -->
+          <div style="margin-bottom:2rem; padding-top:1.5rem; border-top:1px solid #35385a;">
+            <h3 style="color:#f56565; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
+              <i class="fa fa-user-times" style="margin-right:0.5rem; color:#f56565;"></i>
+              Deactivate Account
+            </h3>
+            <p style="color:#e2e8f0; margin-bottom:1rem; font-size:0.9rem;"><strong>Warning:</strong> Deactivating your account will hide your profile but can be restored within 30 days.</p>
+            <div style="text-align:center;">
+              <button onclick="openDeactivateModal(event)" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer;">
+                Deactivate Account
+              </button>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+
+    <!-- Settings Tab Content -->
+    <div id="settings-content" class="tab-content" style="display:none;">
+      <form action="/updateSettings" method="post">
+        <fieldset>
+          <!-- Panic Button Section -->
+          <div style="margin-bottom:2rem;">
+            <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
+              <i class="fa fa-exclamation-triangle" style="margin-right:0.5rem; color:#667eea;"></i>
+              Panic Button
+            </h3>
+            <div style="margin-bottom:1.5rem;">
+              <label style="display:flex; align-items:center; color:#e2e8f0; font-weight:500;">
+                <input id="panic-button-check-sound" type="checkbox" name="enableSound" onclick="togglePanicBtnSound()" style="margin-right:0.5rem;">
+                Enable Sound
+              </label>
+            </div>
+          </div>
+
+          <!-- Alert Volume Section -->
+          <div style="margin-bottom:2rem; padding-top:1.5rem; border-top:1px solid #35385a;">
+            <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
+              <i class="fa fa-volume-up" style="margin-right:0.5rem; color:#667eea;"></i>
+              Alert Volume
+              <a href="#alertVolumeHelpModal" style="color:#667eea; margin-left:0.5rem; text-decoration:none;">
+                <i class="fa fa-question-circle"></i>
+              </a>
+            </h3>
+            <div style="margin-bottom:1.5rem;">
+              <label style="display:block; color:#e2e8f0; margin-bottom:0.5rem; font-weight:500;">Adjust Sound Level:</label>
+              <input type="range" id="alert-volume-slider" onclick="adjustAlertVolumeSlider()" style="width:100%; height:6px; border-radius:3px; background:#4a5568; outline:none; -webkit-appearance:none;">
+            </div>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Deactivate Account Modal -->
+<div id="deactivateAccountModal" class="heroui-modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:480px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2.5rem 2rem 2rem 2rem; position:relative; max-height:90vh; overflow-y:auto;">
+    <button id="deactivateAccountModalClose" aria-label="Close" onclick="closeDeactivateModal()" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:1.2rem; margin-bottom:1.5rem;">
+      <div style="width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:#fff; border:3px solid #35385a;">
+        <i class="fa fa-user"></i>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:1.2rem; font-weight:600; color:#f7fafc;">Deactivate your account</div>
+        <div style="color:#a0aec0; font-size:1rem; margin-top:0.2rem;">@<%= user.user.username %></div>
+      </div>
+    </div>
+    <div style="margin-bottom:1.5rem;">
+      <div style="color:#f7fafc; font-size:1.05rem; font-weight:600; margin-bottom:0.5rem;">This will deactivate your account</div>
+      <div style="color:#a0aec0; font-size:0.98rem; margin-bottom:1rem;">You're about to start the process of deactivating your account. Your display name, username, and public profile will no longer be viewable on linespolice-cad.com, LPC-APP for iOS, or LPC-APP for Android.</div>
+      <div style="color:#f7fafc; font-size:1.05rem; font-weight:600; margin-bottom:0.5rem;">What else you should know</div>
+      <div style="color:#a0aec0; font-size:0.98rem; margin-bottom:0.5rem;">You can restore your LPC account if it was accidentally or wrongfully deactivated for up to 30 days after deactivation.</div>
+      <div style="color:#a0aec0; font-size:0.98rem; margin-bottom:0.5rem;">If you have any active paid subscriptions (e.g., Premium) purchased through the LPC app, they will remain active. You can manage these subscriptions through the platform where you originally subscribed. Subscriptions purchased on linespolice-cad.com will automatically cancel after you deactivate your account. <a href="/terms-and-conditions" style="color:#667eea; text-decoration:underline;">Learn more about subscriptions</a></div>
+      <div style="color:#a0aec0; font-size:0.98rem; margin-bottom:0.5rem;">Upon deactivating your account, your data will be processed per our <a href="/privacy-policy" style="color:#667eea; text-decoration:underline;">Privacy Policy</a>.</div>
+      <div style="color:#a0aec0; font-size:0.98rem; margin-bottom:0.5rem;">If you just want to change your username, you don't need to deactivate your account — edit it in your settings on your <a href="/profile" style="color:#667eea; text-decoration:underline;">Profile Page</a>.</div>
+      <div style="color:#a0aec0; font-size:0.98rem;">To use your current email address with a different LPC account, <a href="/profile" style="color:#667eea; text-decoration:underline;">change that</a> before you deactivate this account.</div>
+    </div>
+    <button id="deactivateAccountBtn" onclick="handleDeactivateAccount()" style="width:100%; background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.85rem 0; font-weight:600; font-size:1.1rem; margin-top:1.2rem; cursor:pointer; transition:all 0.2s;">
+      <span id="deactivateAccountBtnText">Deactivate</span>
+      <span id="deactivateAccountBtnSpinner" style="display:none; margin-left:0.5rem;"><i class="fa fa-spinner fa-spin"></i></span>
+    </button>
+  </div>
+</div>
+
+<div id="alertVolumeHelpModal" class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title" style="font-size: 18px;">Alert Volume Help</span>
+        <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+          aria-hidden="true">X</button>
+      </div>
+      <div class="modal-footer text-align-left">
+        <p>If the volume does not seem to be updating, try refreshing your page or updating the value again.</p>
+        <p> Also make sure that you have 'Enable Sound' checked
+          or you will not hear any of the alerts. 👍
+        </p>
       </div>
     </div>
   </div>
 </div>
+
 <script type="text/javascript">
   function copyText(element) {
     $(element).select();
     document.execCommand("copy");
     $('#successCopyMessage').show();
   }
+
+  // Tab switching functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const accountTab = document.getElementById('account-tab');
+    const settingsTab = document.getElementById('settings-tab');
+    const accountContent = document.getElementById('account-content');
+    const settingsContent = document.getElementById('settings-content');
+
+    if (accountTab && settingsTab) {
+      accountTab.addEventListener('click', function() {
+        accountTab.classList.add('active');
+        accountTab.style.color = '#fff';
+        accountTab.style.borderBottom = '2px solid #667eea';
+        settingsTab.classList.remove('active');
+        settingsTab.style.color = '#a0aec0';
+        settingsTab.style.borderBottom = 'none';
+        accountContent.style.display = 'block';
+        settingsContent.style.display = 'none';
+      });
+
+      settingsTab.addEventListener('click', function() {
+        settingsTab.classList.add('active');
+        settingsTab.style.color = '#fff';
+        settingsTab.style.borderBottom = '2px solid #667eea';
+        accountTab.classList.remove('active');
+        accountTab.style.color = '#a0aec0';
+        accountTab.style.borderBottom = 'none';
+        settingsContent.style.display = 'block';
+        accountContent.style.display = 'none';
+      });
+    }
+
+    // Field change detection for username and call sign
+    const usernameField = document.getElementById('accountUsername');
+    const callSignField = document.getElementById('accountCallSign');
+    const usernameBtns = document.getElementById('updateUsernameBtns');
+    const callSignBtns = document.getElementById('updateCallSignBtns');
+
+    if (usernameField) {
+      usernameField.addEventListener('input', function() {
+        if (this.value !== this.defaultValue) {
+          usernameBtns.style.display = 'block';
+        } else {
+          usernameBtns.style.display = 'none';
+        }
+      });
+    }
+
+    if (callSignField) {
+      callSignField.addEventListener('input', function() {
+        if (this.value !== this.defaultValue) {
+          callSignBtns.style.display = 'block';
+        } else {
+          callSignBtns.style.display = 'none';
+        }
+      });
+    }
+  });
+
+  // Cancel functions
+  function cancelUsername() {
+    const usernameField = document.getElementById('accountUsername');
+    const usernameBtns = document.getElementById('updateUsernameBtns');
+    if (usernameField && usernameBtns) {
+      usernameField.value = usernameField.defaultValue;
+      usernameBtns.style.display = 'none';
+    }
+  }
+
+  function cancelCallSign() {
+    const callSignField = document.getElementById('accountCallSign');
+    const callSignBtns = document.getElementById('updateCallSignBtns');
+    if (callSignField && callSignBtns) {
+      callSignField.value = callSignField.defaultValue;
+      callSignBtns.style.display = 'none';
+    }
+  }
+
+  // Profile Image Modal
+  function showProfileImageModal() {
+    document.getElementById('profileImageModal').style.display = 'flex';
+    // Update preview with current profile picture
+    updateProfilePreview();
+    // Show/hide remove button based on current profile picture
+    updateRemoveButtonVisibility();
+  }
+
+  function closeProfileImageModal() {
+    document.getElementById('profileImageModal').style.display = 'none';
+    // Reset upload progress
+    document.getElementById('uploadProgress').style.display = 'none';
+    document.getElementById('progressBar').style.width = '0%';
+  }
+
+  // Update profile preview
+  function updateProfilePreview() {
+    const currentProfilePreview = document.getElementById('currentProfilePreview');
+    const profilePicture = document.getElementById('profilePicture');
+    if (currentProfilePreview && profilePicture) {
+      const currentImage = profilePicture.style.backgroundImage;
+      currentProfilePreview.style.backgroundImage = currentImage;
+    }
+  }
+
+  // Update remove button visibility based on current profile picture
+  function updateRemoveButtonVisibility() {
+    const removeButton = document.querySelector('button[onclick="removeProfilePicture()"]');
+    const profilePicture = document.getElementById('profilePicture');
+    
+    if (removeButton && profilePicture) {
+      const currentImage = profilePicture.style.backgroundImage;
+      const isDefaultImage = currentImage.includes('/static/images/civ-unknown-user.png') || 
+                           currentImage === 'none' || 
+                           currentImage === '' ||
+                           !currentImage;
+      
+      if (isDefaultImage) {
+        removeButton.style.display = 'none';
+      } else {
+        removeButton.style.display = 'inline-block';
+      }
+    }
+  }
+
+  // Handle profile image upload
+  async function handleProfileImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file.');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB.');
+      return;
+    }
+
+    // Show upload progress
+    document.getElementById('uploadProgress').style.display = 'block';
+    document.getElementById('progressBar').style.width = '0%';
+
+    try {
+      // Simulate progress
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 30;
+        if (progress > 90) progress = 90;
+        document.getElementById('progressBar').style.width = progress + '%';
+      }, 200);
+
+      // Use existing Cloudinary upload function
+      const imageUrl = await window.uploadToCloudinary(file, 'profile-pictures');
+
+      clearInterval(progressInterval);
+      document.getElementById('progressBar').style.width = '100%';
+
+      // Update user profile picture in database
+      await updateUserProfilePicture(imageUrl);
+
+      // Update UI
+      updateProfilePictureInUI(imageUrl);
+      
+      // Hide progress
+      setTimeout(() => {
+        document.getElementById('uploadProgress').style.display = 'none';
+        document.getElementById('progressBar').style.width = '0%';
+      }, 1000);
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload image. Please try again.');
+      document.getElementById('uploadProgress').style.display = 'none';
+      document.getElementById('progressBar').style.width = '0%';
+    }
+  }
+
+  // Remove profile picture
+  function removeProfilePicture() {
+    showCustomConfirm(
+      'Remove Profile Picture',
+      'Are you sure you want to remove your profile picture? This action cannot be undone.',
+      async () => {
+        try {
+          // Update user profile picture to empty string
+          await updateUserProfilePicture('');
+
+          // Update UI
+          updateProfilePictureInUI('/static/images/civ-unknown-user.png');
+          
+        } catch (error) {
+          console.error('Remove error:', error);
+          showCustomToast('Failed to remove profile picture. Please try again.', 'error');
+        }
+      },
+      null, // onDiscard (not needed for this case)
+      'Yes, Remove', // confirmText
+      'No, Keep Current' // cancelText
+    );
+  }
+
+  // Update user profile picture in database
+  async function updateUserProfilePicture(imageUrl) {
+    const response = await fetch(`${window.API_URL}/api/v1/user/<%= user._id %>`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        profilePicture: imageUrl
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update profile picture');
+    }
+
+    return response.json();
+  }
+
+  // Update profile picture in UI
+  function updateProfilePictureInUI(imageUrl) {
+    // Update main profile picture
+    const profilePicture = document.getElementById('profilePicture');
+    if (profilePicture) {
+      profilePicture.style.backgroundImage = `url(${imageUrl})`;
+    }
+
+    // Update preview
+    const currentProfilePreview = document.getElementById('currentProfilePreview');
+    if (currentProfilePreview) {
+      currentProfilePreview.style.backgroundImage = `url(${imageUrl})`;
+    }
+
+    // Update user object
+    if (window.dbUser && window.dbUser.user) {
+      window.dbUser.user.profilePicture = imageUrl;
+    }
+
+    // Update remove button visibility
+    updateRemoveButtonVisibility();
+
+    // Show success message
+    const successAlert = document.getElementById('successfully-updated-alert');
+    if (successAlert) {
+      successAlert.style.display = 'block';
+      setTimeout(() => {
+        successAlert.style.display = 'none';
+      }, 3000);
+    }
+  }
+
+  // Deactivate Account Modal
+  function openDeactivateModal(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    document.getElementById('deactivateAccountModal').style.display = 'flex';
+  }
+
+  function closeDeactivateModal() {
+    document.getElementById('deactivateAccountModal').style.display = 'none';
+  }
+
+  async function handleDeactivateAccount() {
+    var btn = document.getElementById('deactivateAccountBtn');
+    var text = document.getElementById('deactivateAccountBtnText');
+    var spinner = document.getElementById('deactivateAccountBtnSpinner');
+    btn.disabled = true;
+    text.style.display = 'none';
+    spinner.style.display = 'inline-block';
+    try {
+      const response = await fetch(`${window.API_URL}/api/v1/user/<%= user._id %>/deactivate`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.ok) {
+        alert('Your account has been deactivated. You can reactivate it within 30 days by contacting us.');
+        window.location.href = '/logout';
+      } else {
+        const data = await response.json().catch(() => ({}));
+        alert(data.message || 'There was an error deactivating your account. Please try again later.');
+      }
+    } catch (e) {
+      alert('There was an error deactivating your account. Please try again later.');
+    } finally {
+      btn.disabled = false;
+      text.style.display = 'inline';
+      spinner.style.display = 'none';
+    }
+  }
+
+  // Add event listener to prevent deactivate modal from closing when clicking inside it
+  document.addEventListener('DOMContentLoaded', function() {
+    const deactivateModal = document.getElementById('deactivateAccountModal');
+    if (deactivateModal) {
+      deactivateModal.addEventListener('click', function(event) {
+        event.stopPropagation();
+      });
+    }
+  });
 </script>
+
+<!-- Profile Image Modal -->
+<div id="profileImageModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
+  <div style="background: #1a202c; border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%; text-align: center; border: 1px solid #35385a;">
+    <button onclick="closeProfileImageModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; opacity: 0.7;">
+      <i class="fa fa-times"></i>
+    </button>
+    
+    <div style="margin-bottom: 1.5rem;">
+      <i class="fa fa-camera" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i>
+      <h3 style="color: #fff; margin: 0 0 1rem 0; font-size: 1.5rem; font-weight: 600;">Update Profile Picture</h3>
+      <p style="color: #e2e8f0; margin: 0 0 1.5rem 0; font-size: 1rem; line-height: 1.5;">
+        Upload a new profile picture or remove your current one.
+      </p>
+    </div>
+
+    <!-- Current Profile Picture Preview -->
+    <div style="margin-bottom: 1.5rem;">
+      <div id="currentProfilePreview" style="width: 100px; height: 100px; border-radius: 50%; background-image: url(<%= user.user.profilePicture || '/static/images/civ-unknown-user.png' %>); background-size: cover; background-position: center; margin: 0 auto; border: 3px solid #35385a;"></div>
+    </div>
+
+    <!-- Upload Section -->
+    <div style="margin-bottom: 1.5rem;">
+      <input type="file" id="profileImageInput" accept="image/*" style="display: none;" onchange="handleProfileImageUpload(event)">
+      <button onclick="document.getElementById('profileImageInput').click()" style="background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color: #fff; border: none; border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 500; cursor: pointer; margin-right: 0.5rem; transition: all 0.2s;">
+        <i class="fa fa-upload" style="margin-right: 0.5rem;"></i> Upload New Image
+      </button>
+      <button onclick="removeProfilePicture()" style="background: #e53e3e; color: #fff; border: none; border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+        <i class="fa fa-trash" style="margin-right: 0.5rem;"></i> Remove Picture
+      </button>
+    </div>
+
+    <!-- Upload Progress -->
+    <div id="uploadProgress" style="display: none; margin-bottom: 1.5rem;">
+      <div style="background: #2d3748; border-radius: 8px; padding: 1rem;">
+        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem;">
+          <i class="fa fa-spinner fa-spin" style="color: #667eea; margin-right: 0.5rem;"></i>
+          <span style="color: #fff;">Uploading...</span>
+        </div>
+        <div style="background: #4a5568; border-radius: 4px; height: 6px;">
+          <div id="progressBar" style="background: #667eea; height: 100%; border-radius: 4px; width: 0%; transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: 1rem; justify-content: center;">
+      <button onclick="closeProfileImageModal()" style="background: #4a5568; color: #fff; border: none; border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>

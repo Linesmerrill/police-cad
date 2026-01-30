@@ -2,34 +2,1613 @@
 <html>
 
 <head>
+  <% include ad-header %>
   <title>LPC - Fire/EMS Dashboard</title>
   <meta charset="utf-8">
   <meta name="description"
     content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="Codeply">
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-  <script src="https://kit.fontawesome.com/e048807041.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap.min.css" />
   <link rel="stylesheet" href="/static/css/animate.min.css" />
   <link rel="stylesheet" href="/static/css/ionicons.min.css" />
   <link rel="stylesheet" href="/static/css/tail.select-dark.min.css" />
-  <link rel="stylesheet" href="/static/css/awesomplete.css" />
   <link rel="stylesheet" href="static/css/style.css">
   <link rel="stylesheet" href="/static/css/styles.css" />
-  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
-  <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+  <!-- Department Background System -->
+  <link rel="stylesheet" href="/static/css/department-backgrounds.css">
   <script type="module" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule="" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"></script>
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
+  <script type="text/javascript" src="static/js/tail.select.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+  <script src="/static/js/jquery.min.js"></script>
+  <script src="/static/js/jquery.easing.min.js"></script>
+  <script src="/static/js/wow.js"></script>
+  <script src="/static/js/popper.js"></script>
+      <script src="/static/js/main.js"></script>
+    <script src="/static/js/notepad.js"></script>
+    <script src="/static/js/notifications.js"></script>
+    <script src="/static/js/departments.js"></script>
+    <script src="/static/js/ems-dashboard.js"></script>
+    <script src="/static/js/department-backgrounds.js"></script>
+  <script src="/static/js/bootstrap.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
   <!-- To hide google translate header bar on each page -->
   <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
   <style type='text/css'> body {position: static !important; top:0px !important;}</style>
-  <% include ad-header %>
+  <style>
+    /* Signal 100 Banner - Modern Mobile-Friendly Design */
+    .signal-100-banner {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      right: 0;
+      z-index: 1050;
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      padding: 12px 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4);
+      transition: all 0.3s ease;
+      animation: signal100Glow 1.5s ease-in-out infinite;
+    }
+    .signal-100-banner:hover {
+      background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    }
+    .signal-100-banner.hide {
+      display: none;
+    }
+    .signal-100-banner.show {
+      display: block;
+    }
+    @keyframes signal100Glow {
+      0%, 100% { box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4); }
+      50% { box-shadow: 0 4px 30px rgba(220, 38, 38, 0.7); }
+    }
+    .signal-100-content {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .signal-100-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .signal-100-icon {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .signal-100-icon i {
+      color: #fef08a;
+      font-size: 1.5rem;
+      z-index: 1;
+    }
+    .signal-100-pulse {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: rgba(254, 240, 138, 0.3);
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(0.8); opacity: 0.5; }
+      50% { transform: scale(1.2); opacity: 0; }
+    }
+    .signal-100-title {
+      color: white;
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .signal-100-details {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    /* Toast animation keyframes */
+    @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+
+    #persona-table tbody tr {
+      cursor: pointer;
+    }
+    #persona-table tbody tr:hover {
+      background-color: #3b82f6;
+    }
+    #vehicle-table tbody tr {
+      cursor: pointer;
+    }
+    #vehicle-table tbody tr:hover {
+      background-color: #3b82f6;
+    }
+    .rotate {
+      transition: transform 0.3s ease;
+    }
+    .rotate.expanded {
+      transform: rotate(90deg);
+    }
+    
+    /* Medical Database Styles */
+    .list-group-item-action {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .list-group-item-action:hover {
+      background-color: #f8f9fa;
+      border-left: 4px solid #007bff;
+    }
+    
+    .list-group-item-action h6 {
+      margin-bottom: 0.5rem;
+    }
+    
+    .list-group-item-action small {
+      color: #6c757d;
+    }
+    
+    .lds-facebook {
+      display: inline-block;
+      position: relative;
+      width: 80px;
+      height: 80px;
+    }
+    
+    .lds-facebook div {
+      display: inline-block;
+      position: absolute;
+      left: 8px;
+      width: 16px;
+      background: #007bff;
+      animation: lds-facebook 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
+    }
+    
+    .lds-facebook div:nth-child(1) {
+      left: 8px;
+      animation-delay: -0.24s;
+    }
+    
+    .lds-facebook div:nth-child(2) {
+      left: 32px;
+      animation-delay: -0.12s;
+    }
+    
+    .lds-facebook div:nth-child(3) {
+      left: 56px;
+      animation-delay: 0;
+    }
+    
+    @keyframes lds-facebook {
+      0% {
+        top: 8px;
+        height: 64px;
+      }
+      50%, 100% {
+        top: 24px;
+        height: 32px;
+      }
+    }
+
+    /* HeroUI Pro Status Code Styles */
+    :root {
+      --primary-color: #667eea;
+      --primary-dark: #5a67d8;
+      --secondary-color: #764ba2;
+      --accent-color: #f093fb;
+      --success-color: #48bb78;
+      --warning-color: #ed8936;
+      --danger-color: #f56565;
+      --dark-bg: #1a202c;
+      --darker-bg: #171923;
+      --card-bg: #2d3748;
+      --text-primary: #f7fafc;
+      --text-secondary: #a0aec0;
+      --border-color: #4a5568;
+      --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Status Panel Styles (matching Police Dashboard) */
+    .status-panel {
+      background: linear-gradient(135deg, #1a1f2e 0%, #2d3548 100%);
+      border-radius: 12px;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      margin: 1.5rem auto;
+      max-width: 800px;
+      overflow: hidden;
+    }
+
+    .status-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      background: rgba(239, 68, 68, 0.1);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .status-panel-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: #ef4444;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.05em;
+    }
+
+    .status-panel-title i {
+      font-size: 1.25rem;
+    }
+
+    .current-status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(16, 185, 129, 0.2);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    /* Emergency badge state - pulsing red */
+    .current-status-badge.emergency {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: rgba(239, 68, 68, 0.6);
+      animation: pulse-emergency-badge 1.5s ease-in-out infinite;
+    }
+
+    .current-status-badge.emergency .status-code {
+      color: #ef4444;
+    }
+
+    @keyframes pulse-emergency-badge {
+      0%, 100% {
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+        background: rgba(239, 68, 68, 0.2);
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(239, 68, 68, 0.7), 0 0 40px rgba(239, 68, 68, 0.3);
+        background: rgba(239, 68, 68, 0.35);
+      }
+    }
+
+    .status-label {
+      color: #9ca3af;
+      font-size: 0.85rem;
+    }
+
+    .status-code {
+      color: #10b981;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .quick-status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.75rem;
+      padding: 1.25rem;
+    }
+
+    .status-card {
+      background: rgba(30, 41, 59, 0.8);
+      border: 2px solid rgba(71, 85, 105, 0.5);
+      border-radius: 10px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .status-card:hover {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .status-card.active {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.2);
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    }
+
+    .status-card.active .status-card-code {
+      color: #10b981;
+    }
+
+    .status-card-code {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 0.25rem;
+    }
+
+    .status-card-desc {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Category Colors for EMS */
+    .status-card.available { border-left: 4px solid #10b981; }
+    .status-card.busy { border-left: 4px solid #f59e0b; }
+    .status-card.emergency { border-left: 4px solid #ef4444; }
+    .status-card.offline { border-left: 4px solid #6b7280; }
+
+    /* Emergency active state - pulsing red animation */
+    .status-card.emergency.active {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.25);
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+      animation: pulse-emergency-card 1.5s ease-in-out infinite;
+    }
+
+    .status-card.emergency.active .status-card-code {
+      color: #ef4444;
+    }
+
+    @keyframes pulse-emergency-card {
+      0%, 100% {
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        background: rgba(239, 68, 68, 0.2);
+      }
+      50% {
+        box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4);
+        background: rgba(239, 68, 68, 0.35);
+      }
+    }
+
+    .view-all-codes-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: calc(100% - 2.5rem);
+      margin: 0 1.25rem 1.25rem;
+      padding: 0.75rem;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px dashed rgba(239, 68, 68, 0.4);
+      border-radius: 8px;
+      color: #ef4444;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .view-all-codes-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+    }
+
+    .view-all-codes-btn.expanded i {
+      transform: rotate(180deg);
+    }
+
+    .all-codes-section {
+      border-top: 1px solid rgba(71, 85, 105, 0.3);
+      padding: 1.25rem;
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    .codes-search-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(71, 85, 105, 0.5);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .codes-search-container i {
+      color: #64748b;
+    }
+
+    .codes-search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #f1f5f9;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .codes-search-input::placeholder {
+      color: #64748b;
+    }
+
+    .all-codes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.5rem;
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+
+    .all-codes-grid::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .all-codes-grid::-webkit-scrollbar-track {
+      background: rgba(30, 41, 59, 0.5);
+      border-radius: 3px;
+    }
+
+    .all-codes-grid::-webkit-scrollbar-thumb {
+      background: rgba(239, 68, 68, 0.5);
+      border-radius: 3px;
+    }
+
+    .code-list-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(71, 85, 105, 0.3);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .code-list-item:hover {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+
+    .code-list-item.active {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.5);
+    }
+
+    .code-list-code {
+      font-weight: 700;
+      color: #ef4444;
+      min-width: 50px;
+    }
+
+    .code-list-item.active .code-list-code {
+      color: #10b981;
+    }
+
+    /* Emergency codes in the list - red styling */
+    .code-list-item.emergency {
+      border-left: 3px solid #ef4444;
+    }
+
+    .code-list-item.emergency .code-list-code {
+      color: #ef4444;
+    }
+
+    .code-list-item.emergency.active {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.5);
+      border-left: 3px solid #ef4444;
+      animation: pulse-emergency-list 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-emergency-list {
+      0%, 100% {
+        background: rgba(239, 68, 68, 0.15);
+      }
+      50% {
+        background: rgba(239, 68, 68, 0.25);
+      }
+    }
+
+    .code-list-desc {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .heroui-codes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .heroui-code-card {
+      background: #1e2028;
+      border: 1px solid #35385a;
+      border-radius: 12px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .heroui-code-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .heroui-code-card:hover::before {
+      opacity: 1;
+    }
+
+    .heroui-code-card:hover {
+      border-color: #667eea;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    }
+
+    .heroui-code-number {
+      color: #667eea;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .heroui-code-description {
+      color: #f7fafc;
+      font-size: 1.1rem;
+      line-height: 1.4;
+    }
+
+    .heroui-search-container {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    .heroui-search-input {
+      width: 100%;
+      background: #1e2028;
+      border: 1px solid #35385a;
+      border-radius: 12px;
+      padding: 1rem 1rem 1rem 2.5rem;
+      color: #f7fafc;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .heroui-search-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .heroui-search-input::placeholder {
+      color: #a0aec0;
+    }
+
+    .heroui-search-icon {
+      position: absolute;
+      left: 0.875rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #a0aec0;
+      font-size: 1rem;
+    }
+
+    @media (min-width: 768px) {
+      header {
+        min-height: 15%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .heroui-codes-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .quick-status-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .status-panel-header {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+    }
+    
+    .text-align-center {
+      text-align: center;
+    }
+    
+    .margin-bottom-1 {
+      margin-bottom: 0.5rem;
+    }
+    
+    .margin-bottom-2 {
+      margin-bottom: 1rem;
+    }
+    
+    .margin-top-2 {
+      margin-top: 1rem;
+    }
+    
+    .margin-right-1 {
+      margin-right: 0.5rem;
+    }
+    
+    .disabled-color {
+      background-color: #e9ecef !important;
+      color: #6c757d !important;
+    }
+    
+    .capitalize {
+      text-transform: capitalize;
+    }
+    
+    .text-danger {
+      color: #dc3545 !important;
+    }
+    
+    .text-success {
+      color: #28a745 !important;
+    }
+    
+    .text-muted {
+      color: #6c757d !important;
+    }
+    
+    .text-center {
+      text-align: center !important;
+    }
+    
+    .d-flex {
+      display: flex !important;
+    }
+    
+    .w-100 {
+      width: 100% !important;
+    }
+    
+    .justify-content-between {
+      justify-content: space-between !important;
+    }
+    
+    .mb-1 {
+      margin-bottom: 0.25rem !important;
+    }
+    
+    .mb-2 {
+      margin-bottom: 0.5rem !important;
+    }
+    
+    .btn-block {
+      display: block;
+      width: 100%;
+    }
+    
+    .modal-lg {
+      max-width: 800px;
+    }
+    
+    /* Dark theme for medical database modal */
+    #medicalDatabaseModal .modal-content {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      border: 1px solid #404040;
+    }
+    
+    #medicalDatabaseModal .modal-header {
+      background-color: #2d2d2d;
+      border-bottom: 1px solid #404040;
+      padding: 15px 20px;
+    }
+    
+    #medicalDatabaseModal .modal-header .close {
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: bold;
+      opacity: 0.9;
+      text-shadow: none;
+      margin-top: -5px;
+      line-height: 1;
+    }
+    
+    #medicalDatabaseModal .modal-header .close:hover {
+      opacity: 1;
+      color: #ff6b6b;
+    }
+    
+    #medicalDatabaseModal .modal-title {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .modal-body {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      padding: 20px;
+    }
+    
+    /* Form controls with proper contrast */
+    #medicalDatabaseModal .form-control {
+      background-color: #2d2d2d;
+      border: 1px solid #404040;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .form-control:focus {
+      background-color: #2d2d2d;
+      border-color: #4a9eff;
+      color: #ffffff;
+      box-shadow: 0 0 0 0.2rem rgba(74, 158, 255, 0.25);
+    }
+    
+    #medicalDatabaseModal .form-control::placeholder {
+      color: #b0b0b0;
+    }
+    
+    /* Labels with high contrast */
+    #medicalDatabaseModal label {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    /* Buttons with proper contrast */
+    #medicalDatabaseModal .btn-primary {
+      background-color: #4a9eff;
+      border-color: #4a9eff;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .btn-primary:hover {
+      background-color: #3a8eef;
+      border-color: #3a8eef;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .btn-info {
+      background-color: #17a2b8;
+      border-color: #17a2b8;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .btn-info:hover {
+      background-color: #138496;
+      border-color: #117a8b;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .btn-success {
+      background-color: #28a745;
+      border-color: #28a745;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .btn-success:hover {
+      background-color: #218838;
+      border-color: #1e7e34;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .btn-warning {
+      background-color: #ffc107;
+      border-color: #ffc107;
+      color: #212529;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .btn-warning:hover {
+      background-color: #e0a800;
+      border-color: #d39e00;
+      color: #212529;
+    }
+    
+    #medicalDatabaseModal .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+      color: #ffffff;
+    }
+    
+    /* Panels with proper contrast */
+    #medicalDatabaseModal .panel {
+      background-color: #2d2d2d;
+      border: 1px solid #404040;
+    }
+    
+    #medicalDatabaseModal .panel-heading {
+      background-color: #1a1a1a;
+      border-bottom: 1px solid #404040;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .panel-title {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .panel-body {
+      background-color: #2d2d2d;
+      color: #ffffff;
+    }
+    
+    /* Panel info styling with better contrast */
+    #medicalDatabaseModal .panel-info > .panel-heading {
+      background-color: #0c5460;
+      border-color: #0c5460;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .panel-info > .panel-body {
+      background-color: #2d2d2d;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .panel-info strong {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .panel-info span {
+      color: #e6f3ff;
+    }
+    
+    /* List items with proper contrast */
+    #medicalDatabaseModal .list-group-item {
+      background-color: #2d2d2d;
+      border: 1px solid #404040;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .list-group-item:hover {
+      background-color: #404040;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .list-group-item h6 {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .list-group-item small {
+      color: #e6f3ff;
+    }
+    
+    /* Navigation tabs with proper contrast */
+    #medicalDatabaseModal .nav-tabs {
+      border-bottom: 1px solid #404040;
+    }
+    
+    #medicalDatabaseModal .nav-tabs > li > a {
+      background-color: #2d2d2d;
+      border: 1px solid #404040;
+      color: #e6f3ff;
+    }
+    
+    #medicalDatabaseModal .nav-tabs > li.active > a,
+    #medicalDatabaseModal .nav-tabs > li.active > a:focus,
+    #medicalDatabaseModal .nav-tabs > li.active > a:hover {
+      background-color: #1a1a1a;
+      border: 1px solid #404040;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    /* View content styling */
+    #medicalDatabaseModal .view-content {
+      min-height: 300px;
+    }
+    
+    /* Headings with proper contrast */
+    #medicalDatabaseModal h4, #medicalDatabaseModal h5, #medicalDatabaseModal h6 {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    /* Horizontal rules with better visibility */
+    #medicalDatabaseModal hr {
+      border-color: #404040;
+      background-color: #404040;
+    }
+    
+    /* Alerts with proper contrast */
+    #medicalDatabaseModal .alert {
+      background-color: #2d2d2d;
+      border: 1px solid #404040;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .alert-warning {
+      background-color: #3d2d1a;
+      border-color: #8a6d3b;
+      color: #fcf8e3;
+    }
+    
+    #medicalDatabaseModal .alert-info {
+      background-color: #1a3d2d;
+      border-color: #3b8a6d;
+      color: #d1ecf1;
+    }
+    
+    #medicalDatabaseModal .alert-danger {
+      background-color: #3d1a1a;
+      border-color: #8a3b3b;
+      color: #f2dede;
+    }
+    
+    /* Text utilities for better contrast */
+    #medicalDatabaseModal .text-muted {
+      color: #b0b0b0 !important;
+    }
+    
+    #medicalDatabaseModal .text-center {
+      text-align: center;
+    }
+    
+    /* Modal backdrop styling */
+    .modal-backdrop {
+      background-color: rgba(0, 0, 0, 0.8);
+    }
+    
+    .modal-backdrop.show {
+      opacity: 0.8;
+    }
+    
+    /* Table styling for medical reports */
+    #medicalDatabaseModal .table {
+      background-color: #2d2d2d;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .table > thead > tr > th {
+      background-color: #1a1a1a;
+      border-bottom: 1px solid #404040;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .table > tbody > tr > td {
+      border-top: 1px solid #404040;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .table-striped > tbody > tr:nth-of-type(odd) {
+      background-color: #333333;
+    }
+    
+    #medicalDatabaseModal .table-hover > tbody > tr:hover {
+      background-color: #404040;
+      color: #ffffff;
+    }
+    
+    /* Badge styling for medical reports */
+    #medicalDatabaseModal .badge {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .badge-success {
+      background-color: #28a745;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .badge-warning {
+      background-color: #ffc107;
+      color: #212529;
+    }
+    
+    #medicalDatabaseModal .badge-danger {
+      background-color: #dc3545;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .badge-info {
+      background-color: #17a2b8;
+      color: #ffffff;
+    }
+    
+    /* Button styling for action buttons */
+    #medicalDatabaseModal .btn-sm {
+      padding: 4px 8px;
+      font-size: 12px;
+      margin: 2px;
+    }
+    
+    /* Table responsive styling */
+    #medicalDatabaseModal .table-responsive {
+      border: 1px solid #404040;
+      border-radius: 4px;
+    }
+    
+    /* Patient Information Panel Styling */
+    #createReportModal .panel-info {
+      background-color: #1e3a5f;
+      border-color: #4a9eff;
+    }
+    
+    #createReportModal .panel-info > .panel-heading {
+      background-color: #2980b9;
+      border-color: #4a9eff;
+      color: #ffffff;
+    }
+    
+    #createReportModal .panel-info > .panel-body {
+      background-color: #1e3a5f;
+      color: #ffffff;
+      padding: 15px;
+    }
+    
+    #createReportModal .panel-info strong {
+      color: #4a9eff;
+      font-weight: 600;
+    }
+    
+    #createReportModal .panel-info span {
+      color: #ffffff;
+      margin-left: 5px;
+    }
+    
+    /* Toast Styling */
+    .toast {
+      display: none;
+      opacity: 1;
+      margin-bottom: 15px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      border-radius: 10px;
+      min-width: 300px;
+      max-width: 400px;
+      font-size: 16px;
+    }
+    
+    .toast.bg-success {
+      background-color: #28a745 !important;
+    }
+    
+    .toast.bg-danger {
+      background-color: #dc3545 !important;
+    }
+    
+    .toast-body {
+      padding: 16px 20px;
+      font-weight: 600;
+      flex-grow: 1;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+    
+    .btn-close-toast {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 18px;
+      padding: 8px 12px;
+      margin-right: 8px;
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+    }
+    
+    .btn-close-toast:hover {
+      opacity: 1;
+    }
+    
+    .btn-close-toast:focus {
+      outline: none;
+      box-shadow: none;
+    }
+    
+    #toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+    
+    /* Table responsive styling */
+    #medicalDatabaseModal .table-responsive {
+      border: 1px solid #404040;
+      border-radius: 4px;
+    }
+    
+    /* Force medical reports content to be visible */
+    #medicalDatabaseModal #medicalReportsContent {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      height: auto !important;
+      overflow: visible !important;
+      position: relative !important;
+      z-index: 1 !important;
+    }
+    
+    /* Ensure tab content is visible */
+    #medicalDatabaseModal .tab-pane.active {
+      display: block !important;
+      visibility: visible !important;
+    }
+    
+    #medicalDatabaseModal #reports-content {
+      display: block !important;
+      visibility: visible !important;
+    }
+    
+    /* Bootstrap 3 tab fixes */
+    #medicalDatabaseModal .tab-content > .tab-pane {
+      display: block;
+      height: auto;
+      overflow: visible;
+    }
+    
+    #medicalDatabaseModal .tab-content > .tab-pane.active {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    /* Override any Bootstrap 3 fade transitions */
+    #medicalDatabaseModal .tab-pane.fade {
+      opacity: 1 !important;
+      transition: none !important;
+    }
+    
+    #medicalDatabaseModal .tab-pane.fade.in {
+      opacity: 1 !important;
+    }
+    
+    /* Ensure inactive tab panes are completely hidden */
+    #medicalDatabaseModal .tab-pane:not(.active) {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      position: absolute !important;
+      left: -9999px !important;
+    }
+    
+    /* Recent searches dropdown styling */
+    .recent-searches-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #2d2d2d;
+      border: 1px solid #404040;
+      border-top: none;
+      border-radius: 0 0 5px 5px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      z-index: 1050;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .recent-searches-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #404040;
+      font-weight: 600;
+      color: #ffffff;
+    }
+    
+    .recent-searches-header .btn-link {
+      color: #ff6b6b !important;
+      text-decoration: none;
+      padding: 2px 8px;
+    }
+    
+    .recent-searches-header .btn-link:hover {
+      color: #ff5252 !important;
+      background: rgba(255, 107, 107, 0.1);
+      border-radius: 3px;
+    }
+    
+    .recent-searches-list {
+      padding: 0;
+    }
+    
+    .recent-search-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+      border-bottom: 1px solid #404040;
+      transition: background-color 0.2s;
+    }
+    
+    .recent-search-item:last-child {
+      border-bottom: none;
+    }
+    
+    .recent-search-item:hover {
+      background: #404040;
+    }
+    
+    .recent-search-term {
+      flex: 1;
+      color: #ffffff;
+      cursor: pointer;
+      font-weight: 500;
+      padding: 5px 0;
+    }
+    
+    .recent-search-term:hover {
+      color: #4fc3f7;
+    }
+    
+    .recent-search-date {
+      color: #b0b0b0;
+      margin: 0 15px;
+      font-size: 12px;
+    }
+    
+    .recent-search-item .btn-link {
+      color: #ff6b6b !important;
+      text-decoration: none;
+      padding: 2px 6px;
+      margin: 0;
+      min-width: auto;
+    }
+    
+    .recent-search-item .btn-link:hover {
+      color: #ff5252 !important;
+      background: rgba(255, 107, 107, 0.1);
+      border-radius: 3px;
+    }
+    
+    /* Position the search field container relatively for dropdown positioning */
+    #searchView .form-group {
+      position: relative;
+    }
+    
+    /* Utility classes for button spacing */
+    .margin-left-1 {
+      margin-left: 0.5rem !important;
+    }
+    
+    .margin-top-2 {
+      margin-top: 1rem !important;
+    }
+    
+    /* Delete Confirmation Modal Styling */
+    #deleteConfirmModal .modal-content {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      border: 1px solid #404040;
+    }
+    
+    #deleteConfirmModal .modal-header {
+      background-color: #2d2d2d;
+      border-bottom: 1px solid #404040;
+      padding: 15px 20px;
+    }
+    
+    #deleteConfirmModal .modal-header .close {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: bold;
+      opacity: 0.9;
+      text-shadow: none;
+      margin-top: -5px;
+      line-height: 1;
+    }
+    
+    #deleteConfirmModal .modal-header .close:hover {
+      opacity: 1;
+      color: #ff6b6b;
+    }
+    
+    #deleteConfirmModal .modal-title {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    #deleteConfirmModal .modal-body {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      padding: 20px;
+    }
+    
+    #deleteConfirmModal .modal-footer {
+      background-color: #1a1a1a;
+      border-top: 1px solid #404040;
+      padding: 15px 20px;
+    }
+    
+    #deleteConfirmModal .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      color: #ffffff;
+    }
+    
+    #deleteConfirmModal .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    #deleteConfirmModal .btn-danger {
+      background-color: #dc3545;
+      border-color: #dc3545;
+      color: #ffffff;
+    }
+    
+    #deleteConfirmModal .btn-danger:hover {
+      background-color: #c82333;
+      border-color: #bd2130;
+    }
+    
+    .margin-left-1 { margin-left: 0.5rem !important; }
+    .margin-top-2 { margin-top: 1rem !important; }
+    .margin-bottom-2 { margin-bottom: 1rem !important; }
+    
+    /* Accordion Styling */
+    .civilian-accordion-item {
+      margin-bottom: 10px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .civilian-header {
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      border: none;
+      border-radius: 8px;
+    }
+    
+    .civilian-header:hover {
+      background-color: #2d2d2d !important;
+    }
+    
+    .civilian-accordion-content {
+      background-color: #1a1a1a;
+      border: 1px solid #404040;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+    }
+    
+    .accordion-body {
+      padding: 20px;
+    }
+    
+    .accordion-icon {
+      transition: transform 0.3s ease;
+      font-size: 16px;
+      color: #6c757d;
+    }
+    
+    .accordion-icon.fa-chevron-up {
+      transform: rotate(180deg);
+    }
+    
+    /* Remove the old medical information section styling */
+    #medicalDetails {
+      display: none !important;
+    }
+    
+    /* Medications Delete Confirmation Modal Styling */
+    #deleteMedicationConfirmModal .modal-content {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      border: 1px solid #404040;
+    }
+    
+    #deleteMedicationConfirmModal .modal-header {
+      background-color: #2d2d2d;
+      border-bottom: 1px solid #404040;
+      padding: 15px 20px;
+    }
+    
+    #deleteMedicationConfirmModal .modal-header .close {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: bold;
+      opacity: 0.9;
+      text-shadow: none;
+      margin-top: -5px;
+      line-height: 1;
+    }
+    
+    #deleteMedicationConfirmModal .modal-header .close:hover {
+      opacity: 1;
+      color: #ff6b6b;
+    }
+    
+    #deleteMedicationConfirmModal .modal-title {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    #deleteMedicationConfirmModal .modal-body {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      padding: 20px;
+    }
+    
+    #deleteMedicationConfirmModal .modal-footer {
+      background-color: #1a1a1a;
+      border-top: 1px solid #404040;
+      padding: 15px 20px;
+    }
+    
+    #deleteMedicationConfirmModal .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      color: #ffffff;
+    }
+    
+    #deleteMedicationConfirmModal .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    #deleteMedicationConfirmModal .btn-danger {
+      background-color: #dc3545;
+      border-color: #dc3545;
+      color: #ffffff;
+    }
+    
+    #deleteMedicationConfirmModal .btn-danger:hover {
+      background-color: #c82333;
+      border-color: #bd2130;
+    }
+    
+    /* Declare Alive and Pronounce Dead Confirmation Modals Styling */
+    #declareAliveConfirmModal .modal-content,
+    #pronounceDeadConfirmModal .modal-content {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      border: 1px solid #404040;
+    }
+    
+    #declareAliveConfirmModal .modal-header,
+    #pronounceDeadConfirmModal .modal-header {
+      background-color: #2d2d2d;
+      border-bottom: 1px solid #404040;
+      padding: 15px 20px;
+    }
+    
+    #declareAliveConfirmModal .modal-header .close,
+    #pronounceDeadConfirmModal .modal-header .close {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: bold;
+      opacity: 0.9;
+      text-shadow: none;
+      margin-top: -5px;
+      line-height: 1;
+    }
+    
+    #declareAliveConfirmModal .modal-header .close:hover,
+    #pronounceDeadConfirmModal .modal-header .close:hover {
+      opacity: 1;
+      color: #ff6b6b;
+    }
+    
+    #declareAliveConfirmModal .modal-title,
+    #pronounceDeadConfirmModal .modal-title {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    #declareAliveConfirmModal .modal-body,
+    #pronounceDeadConfirmModal .modal-body {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      padding: 20px;
+    }
+    
+    #declareAliveConfirmModal .modal-footer,
+    #pronounceDeadConfirmModal .modal-footer {
+      background-color: #1a1a1a;
+      border-top: 1px solid #404040;
+      padding: 15px 20px;
+    }
+    
+    #declareAliveConfirmModal .btn-secondary,
+    #pronounceDeadConfirmModal .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      color: #ffffff;
+    }
+    
+    #declareAliveConfirmModal .btn-secondary:hover,
+    #pronounceDeadConfirmModal .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    #declareAliveConfirmModal .btn-success {
+      background-color: #28a745;
+      border-color: #28a745;
+      color: #ffffff;
+    }
+    
+    #declareAliveConfirmModal .btn-success:hover {
+      background-color: #218838;
+      border-color: #1e7e34;
+    }
+    
+    #pronounceDeadConfirmModal .btn-warning {
+      background-color: #ffc107;
+      border-color: #ffc107;
+      color: #212529;
+    }
+    
+    #pronounceDeadConfirmModal .btn-warning:hover {
+      background-color: #e0a800;
+      border-color: #d39e00;
+    }
+    
+    .margin-left-1 { margin-left: 0.5rem !important; }
+    
+    /* Ensure delete confirmation modals appear on top */
+    #deleteConfirmModal,
+    #deleteMedicationConfirmModal,
+    #pronounceDeadConfirmModal,
+    #declareAliveConfirmModal {
+      z-index: 9999 !important;
+    }
+    
+    #deleteConfirmModal .modal-backdrop,
+    #deleteMedicationConfirmModal .modal-backdrop,
+    #pronounceDeadConfirmModal .modal-backdrop,
+    #declareAliveConfirmModal .modal-backdrop {
+      z-index: 9998 !important;
+    }
+  </style>
 </head>
 <body>
+  <!-- Signal 100 Banner (hidden by default) -->
+  <div id="signal-100-banner" class="signal-100-banner hide">
+    <div class="signal-100-content">
+      <div class="signal-100-row">
+        <div class="signal-100-icon">
+          <span class="signal-100-pulse"></span>
+          <i class="fa fa-exclamation-triangle"></i>
+        </div>
+        <span class="signal-100-title">SIGNAL 100 - HOLD ALL TRAFFIC</span>
+      </div>
+      <div id="signal-100-details" class="signal-100-details"></div>
+    </div>
+  </div>
 
   <div class="wrapper d-flex align-items-stretch">
     <nav id="sidebar" style="z-index: 9;">
@@ -53,58 +1632,41 @@
         </li>
         <li class="background-color-222">
           <a type="button" data-toggle="collapse" data-target="#toggleSearch" aria-expanded="true"
-            aria-controls="toggleSearch" onclick="toggleCaret()"> Search <i class="fas fa-caret-right pull-right rotate"
+            aria-controls="toggleSearch" onclick="toggleCaret()"> Search <i class="fa fa-caret-right pull-right rotate"
               style="margin-top: 0.3em;"></i></a>
         </li>
         <div class="collapse in" id="toggleSearch">
           <li>
-            <a data-toggle="modal" href="#searchMedicalRecords"><span class="fa fa-database ml-3 mr-3"></span> Medical
-              Database</a>
+                                  <a data-toggle="modal" href="#medicalDatabaseModal"><span class="fa fa-database ml-3 mr-3"></span> Medical
+                        Database</a>
           </li>
           <li>
-            <a data-toggle="modal" href="#newCivModal"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Persona</a>
+            <a href="#" onclick="openNewPersonaModal()"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Persona</a>
           </li>
           <li>
-            <a data-toggle="modal" href="#newVehicleModal"><span class="fa fa-car ml-3 mr-3"></span> Add New Vehicle</a>
+            <a href="#" onclick="openNewVehicleModal()"><span class="fa fa-car ml-3 mr-3"></span> Add New Vehicle</a>
           </li>
         </div>
         <li class="background-color-222">
           <a type="button" data-toggle="collapse" data-target="#toggleUtilities" aria-expanded="false"
             aria-controls="toggleUtilities" onclick="toggleCaret()"> Utilities <i
-              class="fas fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
+              class="fa fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
         </li>
         <div class="collapse in" id="toggleUtilities">
           <li>
-            <a data-toggle="modal" href="#10codesModal"><span class="fas fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
+            <a data-toggle="modal" href="#10codesModal"><span class="fa fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
           </li>
           <li>
-          <li>
-            <a data-toggle="modal" href="#notepadModal"><span class="fas fa-clipboard ml-3 mr-3"></span> Notepad</a>
+            <a data-toggle="modal" href="#notepadModal"><span class="fa fa-clipboard ml-3 mr-3"></span> Notepad</a>
           </li>
           <li>
             <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
-                class="fas fa-external-link-alt"></i></a>
+                class="fa fa-external-link-alt"></i></a>
           </li>
         </div>
-        <li>
-          <a data-toggle="modal" href="/community-dashboard"><span class="fa fa-users mr-3"></span> Communities <i
-            class="fas fa-external-link-alt"></i></a>
-        </li>
-        <li>
-          <a data-toggle="modal" href="#notificationModal" onclick="markAsRead()"><span id="notification-symbol" class="fa fa-bell mr-3 notif"><small
-                class="d-flex align-items-center justify-content-center" id="notification-count"></small></span> Notifications</a>
-        </li>
-        <li>
-          <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"><span
-              class="fa fa-cog mr-3"></span> Settings</a>
-        </li>
-        <li>
-          <a href="/contact-us"><span class="fa fa-support mr-3"></span> Support <i
-              class="fas fa-external-link-alt"></i></a>
-        </li>
-        <li>
-          <a href="/logout"><span class="fa fa-sign-out mr-3"></span> Sign Out</a>
-        </li>
+        <% include departments-sidebar %>
+        <% include community-sidebar %>
+        <% include other-sidebar %>
       </ul>
 
     </nav>
@@ -119,7 +1681,12 @@
             </button>
           </div>
           <div class="navbar-header" style="position: absolute; left: 85px;">
-            <h1 class="cursive"><a href="/ems-dashboard"><i class="fas fa-star"></i> Fire/EMS Operations</a></h1>
+            <h1 class="cursive">
+              <a href="#" id="ems-nav-link" data-community-id="<%= user.user.lastAccessedCommunity?.communityID || '' %>"><i class="fa fa-star"></i> EMS</a>
+              <span style="font-size: 0.8em; margin-left: 10px; color: #ccc;">
+                | <a href="/community-dashboard" style="color: #ccc; text-decoration: none;">Lines Police CAD</a>
+              </span>
+            </h1>
           </div>
         </div>
       </nav>
@@ -127,17 +1694,22 @@
       <header id="second" style='background-image: url("/static/images/ems-bkground.jpg");'>
         <div class="header-content">
           <div class="inner">
-            <h1 class="cursive"><a href="/ems-dashboard">San Andreas - Fire/EMS Operations</a></h1>
+            <h1 class="cursive">
+              <a href="#" id="ems-header-link" data-community-id="<%= user.user.lastAccessedCommunity?.communityID || '' %>">EMS</a>
+              <span style="font-size: 0.8em; margin-left: 10px; color: #ccc;">
+                | <a href="/community-dashboard" style="color: #ccc; text-decoration: none;">Lines Police CAD</a>
+              </span>
+            </h1>
 
             <!-- imports the community specific alerts -->
             <% include community-alerts %>
 
             <div class="col-lg-10 col-lg-offset-1 text-center">
-              <button data-toggle="modal" href="#searchMedicalRecords" class="btn btn-primary btn-lg margin-top-2">Medical
-                Database</button>
-              <button data-toggle="modal" href="#newCivModal" class="btn btn-primary btn-lg margin-top-2">Add New
+              <button data-toggle="modal" href="#medicalDatabaseModal" class="btn btn-primary btn-lg">Medical
+                  Database</button>
+              <button onclick="openNewPersonaModal()" class="btn btn-primary btn-lg">Add New
                 Persona</button>
-              <button data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-lg margin-top-2">Add New
+              <button onclick="openNewVehicleModal()" class="btn btn-primary btn-lg">Add New
                 Vehicle</button>
             </div>
           </div>
@@ -146,37 +1718,85 @@
       <section style='background-image: url("/static/images/blue-clouds.jpg");'>
         <div class="container">
 
+          <!-- Status Code Component - Modern Status Panel -->
+          <div class="col-md-12 col-md-offset-0.75">
+            <!-- Modern 10-Codes Status Panel (matching Police Dashboard) -->
+            <div id="statusPanel" class="status-panel">
+              <div class="status-panel-header">
+                <div class="status-panel-title">
+                  <i class="fa fa-ambulance"></i>
+                  <span>EMS STATUS CODES</span>
+                </div>
+                <div id="currentStatusBadge" class="current-status-badge">
+                  <span class="status-label">Current:</span>
+                  <span id="currentStatusCode" class="status-code">--</span>
+                </div>
+              </div>
+
+              <div id="noTenCodes" class="alert alert-info" style="display: none; margin: 1rem;">
+                No status codes available for this community.
+              </div>
+
+              <!-- Quick Status Grid - Most Common Codes -->
+              <div id="quickStatusGrid" class="quick-status-grid">
+                <!-- Populated by JavaScript -->
+              </div>
+
+              <!-- View All Button -->
+              <button id="viewAllCodesBtn" class="view-all-codes-btn" onclick="toggleAllCodes()">
+                <i class="fa fa-chevron-down"></i>
+                <span>View All Codes</span>
+              </button>
+
+              <!-- Expanded All Codes Section -->
+              <div id="allCodesSection" class="all-codes-section" style="display: none;">
+                <div class="codes-search-container">
+                  <i class="fa fa-search"></i>
+                  <input id="tenCodeSearch" type="text" placeholder="Search codes..." class="codes-search-input">
+                </div>
+                <div id="allCodesGrid" class="all-codes-grid">
+                  <!-- Populated by JavaScript -->
+                </div>
+                <nav aria-label="Status Codes Pagination">
+                  <ul id="tenCodesPagination" class="pagination justify-content-center"></ul>
+                </nav>
+              </div>
+            </div>
+
+            <!-- Status Set By info (hidden, for compatibility) -->
+            <div id="statusSetBy" style="display: none;"></div>
+          </div>
+
           <!--Table for Personas  -->
           <div class="col-md-12 col-md-offset-0.75">
             <div class="margin-bottom-1">
-              <span id="active-bolos margin-right-1" style="font-size: 18px;">Personnel:</span> <button data-toggle="modal"
-                href="#newCivModal" class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Persona</button>
+              <span id="active-bolos margin-right-1" style="font-size: 18px;">Personnel:</span>               <button onclick="openNewPersonaModal()" class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Persona</button>
             </div>
-            <table id="persona-table" class="table table-hover table-bordered">
-              <thead>
-                <tr>
-                  <th>Persona Name</th>
-                  <th>Department</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% if(personas != undefined && personas != null) {%>
-                  <% for(var i=0; i<personas.length; i++) {%>
-                  <tr data-toggle="modal" data-id=<%=i%> data-target="#viewEms" onclick="loadEmsData(<%=i%>)">
-                    <td><%= personas[i].ems.firstName%> <%= personas[i].ems.lastName%></td>
-                    <td><%= personas[i].ems.department%></td>
+            <div id="issue-loading-personnel-alert" style="display:none">
+              <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading personnel, try refreshing the page...</p>
+            </div>
+            <div id="persona-table-div">
+              <table id="persona-table" class="table table-hover table-bordered">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Location</th>
+                    <th>Station</th>
+                    <th>Callsign</th>
                   </tr>
-                  <% } %>
-                <% } %>
-              </tbody>
-            </table>
+                </thead>
+                <tbody id="persona-body">
+                  <!-- populated by JavaScript API -->
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <!--Table for Vehicles  -->
           <div class="col-md-12 col-md-offset-0.75 margin-top-2">
             <div class="margin-bottom-1">
-              <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button
-                data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-md pull-right margin-bottom-1">Add
+              <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span>               <button onclick="openNewVehicleModal()" class="btn btn-primary btn-md pull-right margin-bottom-1">Add
                 New Vehicle</button>
             </div>
             <table id="vehicle-table" class="table table-hover table-bordered">
@@ -185,70 +1805,125 @@
                   <th>Plate</th>
                   <th>Model</th>
                   <th>Engine #</th>
-                  <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
-                    <th>Status</th>
-                  <% } %>
+                  <th>Color</th>
                 </tr>
               </thead>
-              <tbody>
-                <% if(vehicles != undefined && vehicles != null) {%>
-                  <% for(var i=0; i<vehicles.length; i++) {%>
-                  <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewVeh"
-                    onclick="loadVehData(<%=i%>)">
-                    <td><%= vehicles[i].emsVehicle.plate%></td>
-                    <td> <%= vehicles[i].emsVehicle.model%></td>
-                    <td> <%= vehicles[i].emsVehicle.engineNumber%></td>
-                    <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
-                      <td> <%= vehicles[i].emsVehicle.dispatchStatus%></td>
-                    <% } %>
-                  </tr>
-                  <% } %>
-                <% } %>
+              <tbody id="vehicle-body">
+                <!-- populated by JavaScript API -->
               </tbody>
             </table>
           </div>
         </div>
-        <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+
+      </section>
+      
+      <!-- Active Calls Section -->
+      <section style='background-image: url("/static/images/blue-clouds.jpg"); padding:0'>
+        <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
         <div class="container">
           <div id="assigned-call-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
-            <!-- active calls -->
-            <h4>Assigned Calls: </h4>
-            <h5>Click for details</h5>
-            <% if (calls !=null && calls != undefined) { %>
-              <% for(var i=0; i<calls.length; i++) { %>
-                <% if (calls[i].call.status==true) { %>
-                  <% if (calls[i].call.assignedFireEms !=null && calls[i].call.assignedFireEms !='' ) { %>
-                    <% if(vehicles != undefined && vehicles != null) {%>
-                      <% for (let j=0; j < vehicles.length; j++) { %>
-                        <% if (calls[i].call.assignedFireEms.includes(vehicles[j]._id)) { %>
-                          <a id="<%=calls[i]._id%>" data-toggle="modal" href="#callDetailModal"
-                            onclick="populateCallDetails('<%=calls[i]._id%>')">
-                            <div class="alert alert-success alert-dismissible show" role="alert">
-                              Opened: <span id="<%=calls[i]._id%>-createdAt" style="text-transform:capitalize"><time>
-                                  <%=calls[i].call.createdAtReadable%>
-                                </time> | Description:
-                                <span id="<%=calls[i]._id%>-description">
-                                  <%=calls[i].call.shortDescription%>
-                                </span>%></span>
-                            </div>
-                          </a>
-                          <% break %>
-                        <% } %>
-                      <% } %>
-                    <% } %>
-                  <% } %>
-                <% } %>
-              <% } %>
-            <% } %>
-
+            <!-- Calls will be loaded here dynamically -->
           </div>
         </div>
-        <% } %>
       </section>
+      
       <div class="google-ad"></div>
       <% include footer %>
 </div>
   </div>
+
+  <!-- Include all the modals and scripts -->
+  <% include account-management %>
+          <% include partials/notificationModal %>
+    
+    <!-- Delete Confirmation Modal for Medical Reports -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true" style="z-index: 9999;">
+      <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Delete</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to delete this medical report? This action cannot be undone.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" onclick="confirmDeleteMedicalReport()">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal for Medications -->
+    <div class="modal fade" id="deleteMedicationConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteMedicationConfirmModalLabel" aria-hidden="true" style="z-index: 9999;">
+      <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteMedicationConfirmModalLabel">Confirm Delete</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to delete this medication? This action cannot be undone.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteMedicationBtn">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Pronounce Dead Confirmation Modal -->
+    <div class="modal fade" id="pronounceDeadConfirmModal" tabindex="-1" role="dialog" aria-labelledby="pronounceDeadConfirmModalLabel" aria-hidden="true" style="z-index: 9999;">
+      <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="pronounceDeadConfirmModalLabel">Confirm Pronounce Dead</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to pronounce this person as deceased? This action will mark them as deceased in the system.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" onclick="executeDeceasedStatusChange()">Pronounce Dead</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Declare Alive Confirmation Modal -->
+    <div class="modal fade" id="declareAliveConfirmModal" tabindex="-1" role="dialog" aria-labelledby="declareAliveConfirmModalLabel" aria-hidden="true" style="z-index: 9999;">
+      <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="declareAliveConfirmModalLabel">Confirm Declare Alive</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to declare this person as alive? This action will mark them as alive in the system.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-success" onclick="executeDeceasedStatusChange()">Declare Alive</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <% include 10-codes %>
+    <% include notepad %>
+
+  <!-- EMS Dashboard Modals -->
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -264,20 +1939,20 @@
     </div>
   </div>
 
+  <!-- Call Detail Modal - Temporarily Hidden for Rework
   <div id="callDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
           <form id="update-call-form" class="form-horizontal" action="/" method="get">
             <fieldset>
-
-              <!-- Form Name -->
+              
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
                 aria-hidden="true">X</button>
               <h4>Call Details</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
-              <!-- Text input-->
+              
               <div class="form-group">
                 <label class="col-md-4 control-label" for="createdBy">Created At:</label>
                 <div class="col-md-4">
@@ -285,7 +1960,7 @@
                 </div>
               </div>
 
-              <!-- Text input-->
+              
               <div class="form-group">
                 <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
                 <div class="col-md-4">
@@ -293,7 +1968,7 @@
                 </div>
               </div>
 
-              <!-- Text input-->
+              
               <div class="form-group">
                 <label class="col-md-4 control-label" for="createdBy">Classifier:</label>
                 <div class="col-md-4">
@@ -301,7 +1976,7 @@
                 </div>
               </div>
 
-              <!-- Text input-->
+              
               <div class="form-group">
                 <label class="col-md-4 control-label" for="createdBy">Engines:</label>
                 <div class="col-md-8 margin-left-neg-2">
@@ -309,7 +1984,7 @@
                 </div>
               </div>
 
-              <!-- Text input-->
+              
               <div class="form-group">
                 <label class="col-md-4 control-label" for="description">Description:</label>
                 <div class="col-md-4">
@@ -317,7 +1992,7 @@
                 </div>
               </div>
 
-              <!-- Text Area input-->
+              
               <div class="form-group">
                 <label class="col-md-4 control-label" for="callNotes">Call Notes:</label>
                 <div class="col-md-8 col-md-offset-2">
@@ -331,14 +2006,14 @@
       </div>
     </div>
   </div>
+  -->
 
   <div id="newCivModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/create-ems" method="post">
+          <form class="form-horizontal" onsubmit="return false;">
             <fieldset>
-
               <!-- Form Name -->
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
                 aria-hidden="true">X</button>
@@ -410,7 +2085,7 @@
                   <input type="hidden" name="userID" value="<%= user._id %>">
                   <input type="hidden" id="activeCommunityID" name="activeCommunityID" ,
                     value="<%=user.user.activeCommunity%>">
-                  <button id="submit-new-ems" class="btn btn-primary" onclick="createNewEms()">Create</button>
+                  <button id="submit-new-ems" class="btn btn-primary" type="button" onclick="createNewEms()">Create</button>
                 </div>
               </div>
             </fieldset>
@@ -421,164 +2096,259 @@
   </div>
 
   <div id="newVehicleModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-md">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/create-ems-vehicle" method="post">
-            <fieldset>
+          <form id="newVehicleForm" onsubmit="return false;">
+            <!-- Form Header -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h4 class="mb-0">Add a New Vehicle</h4>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            </div>
+            
+            <hr class="mb-4">
 
-              <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                aria-hidden="true">X</button>
-              <h4>Add a New Vehicle</h4>
-              <hr style="width: 88%;max-width: 100rem;">
+            <!-- Plate Number -->
+            <div class="form-group mb-3">
+              <label for="new-vehicle-plate" class="form-label">Plate Number <span class="text-danger">*</span></label>
+              <input id="new-vehicle-plate" name="plate" type="text" maxlength="8" 
+                     placeholder="Enter plate number" class="form-control" required>
+            </div>
 
-              <!-- Text input-->
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="plate">Plate</label>
-                <div class="col-md-4">
-                  <input id="plate" name="plate" type="text" maxlength="8" placeholder="plate"
-                    class="form-control input-md" required="">
+            <!-- Model -->
+            <div class="form-group mb-3">
+              <label for="new-vehicle-model" class="form-label">Model <span class="text-danger">*</span></label>
+              <select class="form-control" name="model" id="new-vehicle-model" required>
+                <option value="">Select a model...</option>
+                <option value="FireTruck">FireTruck</option>
+                <option value="Fire Dept. Vehicle">Fire Dept. Vehicle</option>
+                <option value="Fire Dept. Chief Vehicle">Fire Dept. Chief Vehicle</option>
+                <option value="Ambulance">Ambulance</option>
+                <option value="Medical Dept. Vehicle">Medical Dept. Vehicle</option>
+                <option value="Medical Dept. Chief Vehicle">Medical Dept. Chief Vehicle</option>
+                <option value="LifeGuard Patrol Vehicle">LifeGuard Patrol Vehicle</option>
+                <option value="LifeGuard Boat">LifeGuard Boat</option>
+              </select>
+            </div>
 
-                </div>
-              </div>
+            <!-- Engine Number -->
+            <div class="form-group mb-3">
+              <label for="new-vehicle-engineNumber" class="form-label">Engine Number <span class="text-danger">*</span></label>
+              <input id="new-vehicle-engineNumber" name="engineNumber" type="text" maxlength="10" 
+                     placeholder="Enter engine number" class="form-control" required>
+            </div>
 
-              <!-- Select input-->
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="model">Model</label>
-                <div class="col-md-4">
-                  <select class="form-control" name="model" id="model" required="">
-                    <option value="FireTruck">FireTruck</option>
-                    <option value="Fire Dept. Vehicle">Fire Dept. Vehicle</option>
-                    <option value="Fire Dept. Chief Vehicle">Fire Dept. Chief Vehicle</option>
-                    <option value="Ambulance">Ambulance</option>
-                    <option value="Medical Dept. Vehicle">Medical Dept. Vehicle</option>
-                    <option value="Medical Dept. Chief Vehicle">Medical Dept. Chief Vehicle</option>
-                    <option value="LifeGuard Patrol Vehicle">LifeGuard Patrol Vehicle</option>
-                    <option value="LifeGuard Boat">LifeGuard Boat</option>
-                  </select>
-                </div>
-              </div>
+            <!-- Color -->
+            <div class="form-group mb-3">
+              <label for="new-vehicle-color" class="form-label">Color</label>
+              <input id="new-vehicle-color" name="color" type="text" 
+                     placeholder="Enter color (optional)" class="form-control">
+            </div>
 
-              <!-- Text input -->
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="engineNumber">Engine #</label>
-                <div class="col-md-4">
-                  <input id="engineNumber" name="engineNumber" type="text" maxlength="10" placeholder="engine #"
-                    class="form-control input-md" required="">
-                </div>
-              </div>
-
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="color">Color</label>
-                <div class="col-md-4">
-                  <input id="color" name="color" type="text" placeholder="color (optional)"
-                    class="form-control input-md">
-                </div>
-              </div>
-
-              <!-- Search input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
-                <div class="col-md-4">
-                  <select id="registeredOwner" name="registeredOwner" class="form-control">
-                    <option value="N/A">N/A</option>
-                    <% if(personas != undefined && personas != null) {%>
-                      <% for(var i=0; i<personas.length; i++) {%>
-                      <option value="<%= personas[i].ems.firstName %> <%= personas[i].ems.lastName%>">
-                        <%= personas[i].ems.firstName %> <%= personas[i].ems.lastName%></option>
-                      <% } %>
-                    <% } %>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Button -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="create-vehicle"></label>
-                <div class="col-md-4">
-                  <input type="hidden" name="userID" value="<%= user._id %>">
-                  <input type="hidden" id="activeCommunityID" name="activeCommunityID" ,
-                    value="<%=user.user.activeCommunity%>">
-                  <button id="create-vehicle" class="btn btn-primary">Create</button>
-                </div>
-              </div>
-            </fieldset>
+            <!-- Submit Button -->
+            <div class="form-group text-center mt-4">
+              <button id="createVehicleBtn" type="button" class="btn btn-primary btn-lg px-4" onclick="createEmsVehicle()">
+                Create Vehicle
+              </button>
+            </div>
           </form>
         </div>
       </div>
     </div>
   </div>
 
-  <div id="searchMedicalRecords" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div id="personNotFound" class="alert alert-warning" style="display:none">
-        <strong>Not Found!</strong> Person not found in medical database.
-      </div>
-      <div id="firstNameRequired" class="alert alert-warning" style="display:none">
-        <strong>First Name is Required!</strong>
-      </div>
-      <div id="lastNameRequired" class="alert alert-warning" style="display:none">
-        <strong>Last Name is Required!</strong>
-      </div>
-      <div id="dateOfBirthRequired" class="alert alert-warning" style="display:none">
-        <strong>Date of Birth is Required!</strong>
-      </div>
+  <!-- Medical Database Modal with Dynamic Content -->
+  <div id="medicalDatabaseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
       <div class="modal-content">
-        <div class="modal-body">
-          <!-- <form class="form-horizontal" name="findFirearm" action="/medical-search" method="get"> -->
-          <fieldset>
-            <div class="">
-              <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                aria-hidden="true">X</button>
-              <h4>Medical Database</h4>
-              <hr style="width: 88%;max-width: 100rem;">
+        <!-- Dynamic Modal Header -->
+        <div class="modal-header">
+          <h4 id="modalTitle" class="modal-title">Medical Database Search</h4>
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        </div>
+        
+        <!-- Dynamic Modal Body -->
+        <div id="modalBody" class="modal-body">
+          <!-- Search View -->
+          <div id="searchView" class="view-content">
+            <div id="personNotFound" class="alert alert-warning" style="display:none">
+              <strong>Not Found!</strong> Person not found in medical database.
+            </div>
+            <div id="nameRequired" class="alert alert-warning" style="display:none">
+              <strong>Name is Required!</strong> Please enter a name to search.
+            </div>
+            
+            <fieldset>
+              <div class="">
+                <!-- Form Name -->
+                <hr style="width: 88%;max-width: 100rem;">
 
-              <!-- Text input-->
-              <div id="medical-input-area" class="form-group">
-                <div class="col-md-12">
+                <!-- Single name input field -->
+                <div id="medical-input-area" class="form-group">
+                  <div class="col-md-12">
+                    <div class="col-md-8">
+                      <label class="col-md-12" for="medical-search-name">Search by Name</label>
+                      <input id="medical-search-name" name="searchName" type="text" placeholder="Enter first name, last name, or full name"
+                        class="form-control input-md" required>
+                    </div>
+                    <div class="col-md-4">
+                      <br>
+                      <input type="hidden" id="activeCommunityID" name="activeCommunityID" ,
+                        value="<%=user.user.activeCommunity%>">
+                      <button type="submit" class="btn btn-info btn-block" onclick="searchMedicalByName()">Search</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Search Results -->
+              <div id="medicalSearchResults" class="col-md-12 margin-top-2" style="display:none;">
+                <h5>Search Results:</h5>
+                <div id="civiliansList" class="list-group">
+                  <!-- Civilians will be populated here -->
+                </div>
+              </div>
+
+
+            </fieldset>
+          </div>
+
+          <!-- Create Report View -->
+          <div id="createReportView" class="view-content" style="display:none;">
+            <h5>Create Medical Report</h5>
+            <p class="text-muted"><small>Fields marked with <span class="text-danger">*</span> are required</small></p>
+            <hr>
+            
+            <!-- Patient Information Panel -->
+            <div class="panel panel-info margin-bottom-2">
+              <div class="panel-heading">
+                <h6 class="panel-title">Patient Information</h6>
+              </div>
+              <div class="panel-body">
+                <div class="row">
                   <div class="col-md-4">
-                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-first-name">First Name</label>
-                    <input id="civ-first-name" name="firstName" type="text" placeholder="First Name"
-                      class="form-control input-md col-md-offset-1" data-trigger="first-name-popover"
-                      data-content="* First name cannot contain spaces." required>
+                    <strong>Name:</strong> <span id="display-patient-name">-</span>
                   </div>
                   <div class="col-md-4">
-                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-last-name">Last Name</label>
-                    <input id="civ-last-name" name="lastName" type="text" placeholder="Last Name"
-                      class="form-control input-md col-md-offset-1" data-trigger="last-name-popover"
-                      data-content="* Last name cannot contain spaces." required>
+                    <strong>Date of Birth:</strong> <span id="display-patient-dob">-</span>
                   </div>
-                  <% if (user.user.activeCommunity == '' || user.user.activeCommunity == null) { %>
                   <div class="col-md-4">
-                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-dob">Date of Birth</label>
-                    <input id="civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy"
-                      class="form-control input-md col-md-offset-1" required="">
-                  </div>
-                  <% } %>
-                  <div class="col-md-4">
-                    <br>
-                    <input type="hidden" id="activeCommunityID" name="activeCommunityID" ,
-                      value="<%=user.user.activeCommunity%>">
-                    <button type="submit" class="btn btn-info" onclick="searchMedicalNames()">Search</button>
+                    <strong>License #:</strong> <span id="display-patient-license">-</span>
                   </div>
                 </div>
               </div>
             </div>
-            <!-- List of Plates -->
-            <div id="medicalDetails" class="col-md-12 margin-top-2">
-              <div class="panel-group" id="accordion">
-                <div></div>
+
+            <!-- Create Report Form -->
+            <form id="createReportForm">
+              <input type="hidden" id="new-report-civilianID" name="civilianID">
+              <input type="hidden" id="new-report-name" name="name">
+              <input type="hidden" id="new-report-dateOfBirth" name="dateOfBirth">
+              <input type="hidden" id="new-report-license" name="license">
+              <input type="hidden" id="new-report-reportingEmsID" name="reportingEmsID">
+              <input type="hidden" id="new-report-userID" name="userID">
+              <input type="hidden" id="new-report-activeCommunityID" name="activeCommunityID">
+              
+              <div class="form-group">
+                <label for="new-report-date">Date: <span class="text-danger">*</span></label>
+                <input type="date" id="new-report-date" name="date" class="form-control" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="new-report-details">Details: <span class="text-danger">*</span></label>
+                <textarea id="new-report-details" name="details" class="form-control" rows="4" placeholder="Enter medical report details..." required></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label for="new-report-hospitalized">Hospitalized: <span class="text-danger">*</span></label>
+                <select id="new-report-hospitalized" name="hospitalized" class="form-control" required>
+                  <option value="">Select...</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+              
+
+              
+              <!-- Error Display -->
+              <div id="create-report-errors" class="alert alert-danger" style="display:none;"></div>
+              
+              <div class="text-center">
+                <button type="button" class="btn btn-secondary margin-right-1" onclick="showSearchView()">
+                  <i class="fa fa-arrow-left"></i> Back to Search
+                </button>
+                <button type="submit" class="btn btn-primary">
+                  <i class="fa fa-save"></i> Create Report
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Add Medication View -->
+          <div id="addMedicationView" class="view-content" style="display:none;">
+            <h5>Add Medication</h5>
+            <hr>
+            
+            <!-- Patient Information Panel -->
+            <div class="panel panel-info margin-bottom-2">
+              <div class="panel-heading">
+                <h6 class="panel-title">Patient Information</h6>
+              </div>
+              <div class="panel-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <strong>Name:</strong> <span id="med-name">-</span>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>Start Date:</strong> <span id="medicationStartDate">-</span>
+                  </div>
+                </div>
               </div>
             </div>
+
+            <!-- Add Medication Form -->
+            <form id="addMedicationForm">
+              <input type="hidden" id="med-civilianID" name="civilianID">
+              <input type="hidden" id="med-name-hidden" name="name">
+              <input type="hidden" id="med-activeCommunityID" name="activeCommunityID">
+              <input type="hidden" id="med-userID" name="userID">
+              <input type="hidden" id="med-firstName" name="firstName">
+              <input type="hidden" id="med-lastName" name="lastName">
+              <input type="hidden" id="med-dateOfBirth" name="dateOfBirth">
+              
+              <div class="form-group">
+                <label for="med-startDate">Start Date: <span class="text-danger">*</span></label>
+                <input type="date" id="med-startDate" name="startDate" class="form-control" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="med-medicationName">Medication Name: <span class="text-danger">*</span></label>
+                <input type="text" id="med-medicationName" name="medicationName" class="form-control" placeholder="Enter medication name..." required>
+              </div>
+              
+              <div class="form-group">
+                <label for="med-dosage">Dosage: <span class="text-danger">*</span></label>
+                <input type="text" id="med-dosage" name="dosage" class="form-control" placeholder="e.g., 100mg" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="med-frequency">Frequency: <span class="text-danger">*</span></label>
+                <input type="text" id="med-frequency" name="frequency" class="form-control" placeholder="e.g., daily, twice daily, mon,friday" required>
+              </div>
+              
+              <div class="text-center">
+                <button type="button" class="btn btn-secondary margin-right-1" onclick="showSearchView()">
+                  <i class="fa fa-arrow-left"></i> Back to Search
+                </button>
+                <button type="submit" class="btn btn-success">
+                  <i class="fa fa-plus"></i> Add Medication
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-        </fieldset>
-        <!-- </form> -->
       </div>
     </div>
-  </div>
   </div>
 
   <div id="viewEms" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
@@ -591,40 +2361,47 @@
                 aria-hidden="true">X</button>
               <h4>Details about your Persona</h4>
               <hr style="width: 88%;max-width: 100rem;">
-
-              <div class="col-md-9">
-                <label class="col-md-4 control-label margin-bottom-1" for="first-name">First Name:</label>
-                <label id="firstNameView" class="col-md-5">FirstName here</label>
+              <div id="issue-loading-persona-details-alert" style="display:none">
+                <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading persona details, try refreshing the page...</p>
               </div>
-
-              <div class="col-md-9">
-                <label class="col-md-4 control-label margin-bottom-1" for="last-name">Last Name:</label>
-                <label id="lastNameView" class="col-md-5">LastName here</label>
+              <div id="persona-details-loading" class="text-align-center">
+                <div class="lds-facebook"><div></div><div></div><div></div></div>
               </div>
+              <div id="persona-details-div" style="display:none">
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="first-name">First Name:</label>
+                  <label id="firstNameView" class="col-md-5"></label>
+                </div>
 
-              <div class="col-md-9">
-                <label class="col-md-4 control-label margin-bottom-1" for="department">Department:</label>
-                <label id="departmentView" class="col-md-5">department here</label>
-              </div>
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="last-name">Last Name:</label>
+                  <label id="lastNameView" class="col-md-5"></label>
+                </div>
 
-              <div class="col-md-9">
-                <label class="col-md-4 control-label margin-bottom-1" for="assignment-area">Assignment Area:</label>
-                <label id="assignmentAreaView" class="col-md-5">assignment area here</label>
-              </div>
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="department">Department:</label>
+                  <label id="departmentView" class="col-md-5"></label>
+                </div>
 
-              <div class="col-md-9">
-                <label class="col-md-4 control-label margin-bottom-1" for="station">Station:</label>
-                <label id="stationView" class="col-md-5">station here</label>
-              </div>
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="assignment-area">Assignment Area:</label>
+                  <label id="assignmentAreaView" class="col-md-5"></label>
+                </div>
 
-              <div class="col-md-9">
-                <label class="col-md-4 control-label margin-bottom-1" for="call-sign">Call Sign:</label>
-                <label id="callSignView" class="col-md-5">call sign here</label>
-              </div>
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="station">Station:</label>
+                  <label id="stationView" class="col-md-5"></label>
+                </div>
 
-              <div class="col-md-12 text-align-center">
-                <button id="removeEms" type="submit" name="removeEms" class="btn btn-danger">Delete Persona</button>
-              </div>
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="call-sign">Call Sign:</label>
+                  <label id="callSignView" class="col-md-5"></label>
+                </div>
+
+                <div class="col-md-12 text-align-center">
+                  <button id="removeEms" type="submit" name="removeEms" class="btn btn-danger">Delete Persona</button>
+                </div>
+            </div>
             </fieldset>
           </form>
         </div>
@@ -636,8 +2413,6 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-
-          <!-- <form action="/updateOrDeleteEmsVeh" method="POST"> -->
             <fieldset>
               <!-- Form Name -->
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
@@ -729,140 +2504,100 @@
     </div>
   </div>
 
-  <div id="createReportModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+
+
+  <div id="addMedicationModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/create-medical-report" method="post">
+          <form id="addMedicationForm" class="form-horizontal" action="/create-medication" method="post">
             <fieldset>
-
               <!-- Form Name -->
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-              <h4>Create a New Report</h4>
+              <h4>Add New Medication</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
               <h5>Patient Info:</h5>
 
-
-
               <!-- Text input-->
               <div class="form-group required">
-                <label class="col-md-4 control-label" for="civilianID">Drivers License #</label>
+                <label class="col-md-4 control-label" for="med-civilianID">Drivers License #</label>
                 <div class="col-md-6">
-                  <input id="new-report-civilianID" name="civilianID" type="text"
+                  <input id="med-civilianID" name="civilianID" type="text"
                     class="form-control input-md disabled-color" required readonly="readonly">
                 </div>
               </div>
 
               <!-- Text input-->
               <div class="form-group required">
-                <label class="col-md-4 control-label" for="firstName">First Name</label>
+                <label class="col-md-4 control-label" for="med-name">Name</label>
                 <div class="col-md-6">
-                  <input id="new-report-firstName" name="firstName" type="text"
+                  <input id="med-name" name="name" type="text"
                     class="form-control input-md disabled-color capitalize" required readonly="readonly">
                 </div>
               </div>
 
               <!-- Text input-->
               <div class="form-group required">
-                <label class="col-md-4 control-label" for="lastName">Last Name</label>
+                <label class="col-md-4 control-label" for="med-dateOfBirth">Date of Birth</label>
                 <div class="col-md-6">
-                  <input id="new-report-lastName" name="lastName" type="text"
-                    class="form-control input-md disabled-color capitalize" required readonly="readonly">
-                </div>
-              </div>
-
-              <!-- Text input-->
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="dateOfBirth">Date of Birth</label>
-                <div class="col-md-6">
-                  <input id="new-report-dateOfBirth" name="dateOfBirth" type="date" max="2999-12-31" min="1900-01-01"
+                  <input id="med-dateOfBirth" name="dateOfBirth" type="date" max="2999-12-31" min="1900-01-01"
                     class="form-control input-md disabled-color" required readonly="readonly">
                 </div>
               </div>
 
               <hr style="width: 88%;max-width: 100rem;">
 
-              <h5>Incident Information:</h5>
+              <h5>Medication Information:</h5>
 
               <!-- Text input-->
               <div class="form-group required">
-                <label class="col-md-4 control-label" for="reportDate">Date</label>
+                <label class="col-md-4 control-label" for="medicationName">Medication Name</label>
                 <div class="col-md-6">
-                  <input id="new-report-reportDate" name="reportDate" type="date" max="2999-12-31" min="1900-01-01"
+                  <input id="medicationName" name="name" type="text" placeholder="e.g., Aspirin, Insulin"
                     class="form-control input-md" required>
                 </div>
               </div>
 
               <!-- Text input-->
               <div class="form-group required">
-                <label class="col-md-4 control-label" for="reportTime">Time</label>
+                <label class="col-md-4 control-label" for="medicationDosage">Dosage</label>
                 <div class="col-md-6">
-                  <input id="new-report-reportTime" name="reportTime" type="time" placeholder="hh:mm"
-                  class="form-control input-md" required>
+                  <input id="medicationDosage" name="dosage" type="text" placeholder="e.g., 100mg, 2 tablets"
+                    class="form-control input-md" required>
                 </div>
               </div>
 
               <!-- Text input-->
               <div class="form-group required">
-                <label class="col-md-4 control-label" for="reportingEmsID">Fire/EMS ID</label>
+                <label class="col-md-4 control-label" for="medicationFrequency">Frequency</label>
                 <div class="col-md-6">
-                  <input id="new-report-reportingEmsID" name="reportingEmsID" type="text"
-                    class="form-control input-md disabled-color" required readonly="readonly">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="hospitalized">Hospitalized</label>
-                <div class="col-md-6">
-                  <select id="new-report-hospitalized" name="hospitalized" class="form-control" selected="selected">
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="deceased">Deceased</label>
-                <div class="col-md-6">
-                  <select id="deceased" name="deceased" class="form-control" selected="selected">
-                    <option value="false" selected>No</option>
-                    <option value="true">Yes</option>
-                  </select>
+                  <input id="medicationFrequency" name="frequency" type="text" placeholder="e.g., Twice daily, Every 8 hours"
+                    class="form-control input-md" required>
                 </div>
               </div>
 
               <!-- Text input-->
               <div class="form-group required">
-                <label class="col-md-4 control-label" for="details">Details</label>
-                <div class="col-md-10 col-md-offset-1">
-                  <textarea id="new-report-details" name="details" type="text" maxlength="500"
-                    placeholder="incident details" class="form-control input-md" required></textarea>
+                <label class="col-md-4 control-label" for="medicationStartDate">Start Date</label>
+                <div class="col-md-6">
+                  <input id="medicationStartDate" name="startDate" type="date" max="2999-12-31" min="1900-01-01"
+                    class="form-control input-md" required>
                 </div>
               </div>
 
               <!-- Button -->
               <div class="form-group">
-                <label class="col-md-4 control-label" for="submit-new-medical-report"></label>
+                <label class="col-md-4 control-label" for="submit-new-medication"></label>
                 <div class="col-md-4 text-center">
                   <input type="hidden" name="userID" value="<%= user._id %>">
-                  <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID" ,
+                  <input type="hidden" id="med-activeCommunityID" name="activeCommunityID" ,
                     value="<%=user.user.activeCommunity%>">
-                  <button id="submit-new-medical-report" class="btn btn-primary">Create</button>
+                  <button id="submit-new-medication" class="btn btn-success">Add Medication</button>
                 </div>
               </div>
             </fieldset>
           </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="communitiesModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <% include community-management %>
         </div>
       </div>
     </div>
@@ -874,7 +2609,6 @@
         <div class="modal-body">
           <form class="form-horizontal" action="/joinEmsCommunity" method="post">
             <fieldset>
-
               <!-- Form Name -->
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
                 aria-hidden="true">X</button>
@@ -911,7 +2645,6 @@
         <div class="modal-body">
           <form class="form-horizontal" action="/leaveEmsActiveCommunity" method="post">
             <fieldset>
-
               <!-- Form Name -->
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
                 aria-hidden="true">X</button>
@@ -945,7 +2678,6 @@
         <div class="modal-body">
           <form class="form-horizontal" action="/createEmsCommunity" method="post">
             <fieldset>
-
               <!-- Form Name -->
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
                 aria-hidden="true">X</button>
@@ -977,30 +2709,10 @@
     </div>
   </div>
 
-  <div id="communitiesInfoModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <fieldset>
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-              aria-hidden="true">X</button>
-            <h4>Check out the New Communities Section!</h4>
-            <hr style="width: 88%;max-width: 100rem;">
-            <a data-toggle="modal" href="#communitiesModal" onclick="dismissCommunitiesInfoModal()"><img
-                src="/images/communities-example.png" class="diagonal-arrow float-right"
-                alt="communities example screenshot"></a>
-            <img src="/static/images/diagonal-arrow-white.png" class="diagonal-arrow"
-              alt="diagonal arrow pointing to top right of page">
-          </fieldset>
-        </div>
-      </div>
-    </div>
+  <!-- Toast Container for Notifications -->
+  <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    <!-- Toasts will be dynamically added here -->
   </div>
-
-  <% include account-management %>
-  <% include notification-modal %>
-  <% include 10-codes %>
-  <% include notepad %>
 
   <!--scripts loaded here -->
   <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
@@ -1016,565 +2728,374 @@
   <script src="/static/js/main.js"></script>
   <script>if (window.module) module = window.module;</script>
   <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+  <!-- EMS Personas Modals -->
+
+  <!-- View Persona Modal -->
+  <div class="modal fade" id="viewPersonaModal" tabindex="-1" role="dialog" aria-labelledby="viewPersonaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="viewPersonaModalLabel">Personnel Details</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Content will be loaded dynamically -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Persona Modal -->
+  <div class="modal fade" id="editPersonaModal" tabindex="-1" role="dialog" aria-labelledby="editPersonaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editPersonaModalLabel">Edit Personnel</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="editPersonaForm">
+            <input type="hidden" id="edit-persona-id">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="edit-persona-firstName">First Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="edit-persona-firstName" required>
+                </div>
+                <div class="form-group">
+                  <label for="edit-persona-lastName">Last Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="edit-persona-lastName" required>
+                </div>
+                <div class="form-group">
+                  <label for="edit-persona-department">Department <span class="text-danger">*</span></label>
+                  <select class="form-control" id="edit-persona-department" required>
+                    <option value="EMS">EMS</option>
+                    <option value="Fire">Fire</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="edit-persona-assignmentArea">Assignment Area <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="edit-persona-assignmentArea" maxlength="50" required>
+                </div>
+                <div class="form-group">
+                  <label for="edit-persona-station">Station</label>
+                  <input type="text" class="form-control" id="edit-persona-station" maxlength="5">
+                </div>
+                <div class="form-group">
+                  <label for="edit-persona-callSign">Call Sign</label>
+                  <input type="text" class="form-control" id="edit-persona-callSign" maxlength="10">
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="updatePersonaBtn" onclick="updateEmsPersona()">Update Personnel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Persona Confirmation Modal -->
+  <div class="modal fade" id="deletePersonaConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deletePersonaConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deletePersonaConfirmModalLabel">Confirm Delete</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete this personnel? This action cannot be undone.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDeletePersonaBtn">Delete Personnel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMS Vehicles Modals -->
+
+  <!-- View Vehicle Modal -->
+  <div class="modal fade" id="viewVehicleModal" tabindex="-1" role="dialog" aria-labelledby="viewVehicleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="viewVehicleModalLabel">Vehicle Details</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Content will be loaded dynamically -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Vehicle Modal -->
+  <div class="modal fade" id="editVehicleModal" tabindex="-1" role="dialog" aria-labelledby="editVehicleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editVehicleModalLabel">Edit Vehicle</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="editVehicleForm">
+            <input type="hidden" id="edit-vehicle-id">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="edit-vehicle-plate">Plate Number <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="edit-vehicle-plate" maxlength="8" required>
+                </div>
+                <div class="form-group">
+                  <label for="edit-vehicle-model">Model <span class="text-danger">*</span></label>
+                  <select class="form-control" id="edit-vehicle-model" required>
+                    <option value="FireTruck">FireTruck</option>
+                    <option value="Fire Dept. Vehicle">Fire Dept. Vehicle</option>
+                    <option value="Fire Dept. Chief Vehicle">Fire Dept. Chief Vehicle</option>
+                    <option value="Ambulance">Ambulance</option>
+                    <option value="Medical Dept. Vehicle">Medical Dept. Vehicle</option>
+                    <option value="Medical Dept. Chief Vehicle">Medical Dept. Chief Vehicle</option>
+                    <option value="LifeGuard Patrol Vehicle">LifeGuard Patrol Vehicle</option>
+                    <option value="LifeGuard Boat">LifeGuard Boat</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="edit-vehicle-engineNumber">Engine Number <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="edit-vehicle-engineNumber" maxlength="10" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="edit-vehicle-color">Color</label>
+                  <input type="text" class="form-control" id="edit-vehicle-color">
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="updateVehicleBtn" onclick="updateEmsVehicle()">Update Vehicle</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Vehicle Confirmation Modal -->
+  <div class="modal fade" id="deleteVehicleConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteVehicleConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteVehicleConfirmModalLabel">Confirm Delete</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete this vehicle? This action cannot be undone.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteVehicleBtn">Delete Vehicle</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Call Detail Modal -->
+  <div id="callDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="update-call-form" class="form-horizontal" onsubmit="event.preventDefault(); handleUpdateCall();">
+            <fieldset>
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-label="Close">X</button>
+              <h4>Call Details</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <!-- Read-only fields -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdAtCallDetail">Created At:</label>
+                <div class="col-md-4">
+                  <h5 id="createdAtCallDetail"></h5>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="updatedAtCallDetail">Updated At:</label>
+                <div class="col-md-4">
+                  <h5 id="updatedAtCallDetail"></h5>
+                </div>
+              </div>
+
+              <!-- Editable fields -->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="callTitleDetail">Title:</label>
+                <div class="col-md-8">
+                  <input id="callTitleDetail" name="title" type="text" placeholder="Title"
+                    class="form-control input-md" maxlength="100" required>
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="callDetailsDetail">Details:</label>
+                <div class="col-md-8">
+                  <textarea id="callDetailsDetail" name="details" rows="4" maxlength="500"
+                    placeholder="Details" class="form-control input-md" required></textarea>
+                </div>
+              </div>
+
+              <!-- Dynamic department list -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="callDepartmentsDetail">Departments:</label>
+                <div class="col-md-8" id="callDepartmentsDetail"></div>
+              </div>
+
+              <!-- Dynamic assigned to list -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="callAssignedToDetail">Assigned To:</label>
+                <div class="col-md-8" id="callAssignedToDetail"></div>
+              </div>
+
+                          <!-- Call notes display -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="callNotesDetail">
+                Call Notes 
+                <a href="#" onclick="toggleAddNoteSection()" style="margin-left: 8px; color: #17a2b8;">
+                  <i class="fa fa-plus" id="addNoteIcon"></i>
+                </a>
+              </label>
+              <div class="col-md-8 col-md-offset-2" id="callNotesDetail" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+            
+            <!-- Add new call note (collapsible) -->
+            <div class="form-group" id="addNoteSection" style="display: none;">
+              <label class="col-md-4 control-label" for="newCallNote">Add Note:</label>
+              <div class="col-md-8">
+                <textarea id="newCallNote" name="newCallNote" rows="3" maxlength="500" 
+                  placeholder="Enter your note here..." class="form-control input-md"></textarea>
+              </div>
+            </div>
+            
+            <!-- Add Note Button (collapsible) -->
+            <div class="form-group" id="addNoteButtonSection" style="display: none;">
+              <label class="col-md-4 control-label" for="addCallNote"></label>
+              <div class="col-md-8 text-center">
+                <button id="addCallNote" type="button" class="btn btn-success" onclick="handleAddCallNote()">Add Note</button>
+              </div>
+            </div>
+
+              <!-- Hidden input for callId -->
+              <input id="callIdDetail" type="hidden" name="callId" value="">
+
+              <!-- Update Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="updateCall"></label>
+                <div class="col-md-4 text-align-center">
+                  <button id="updateCall" type="submit" class="btn btn-info">Update</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+          <form id="delete-call-form" onsubmit="event.preventDefault(); handleDeleteCall();">
+            <fieldset>
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="deleteCall"></label>
+                <div class="col-md-4 text-align-center">
+                  <button id="deleteCall" type="submit" class="btn btn-danger">Delete</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Codes Modal -->
+  <div id="statusCodesModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">
+            <i class="fas fa-broadcast-tower" style="margin-right: 0.5rem; color: #667eea;"></i>
+            EMS Status Codes
+          </h4>
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="heroui-search-container">
+            <i class="fas fa-search heroui-search-icon"></i>
+            <input type="text" id="statusCodeSearch" class="heroui-search-input" placeholder="Search by code or description...">
+          </div>
+          
+          <div id="noStatusCodes" class="alert alert-info" style="display: none; background: #1e2028; border: 1px solid #35385a; color: #a0aec0;">
+            <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+            No status codes available for this community.
+          </div>
+          
+          <div id="statusCodesContent">
+            <div class="heroui-codes-grid" id="statusCodesGrid">
+              <!-- Status codes will be loaded here dynamically -->
+            </div>
+          </div>
+          
+          <div style="color: #a0aec0; margin-top: 1.5rem; padding-top: 1rem; font-size: 1rem; text-align: center; border-top: 1px solid #35385a;">
+            <i class="fas fa-mouse-pointer" style="margin-right: 0.5rem;"></i>
+            Click on a code to set as your status
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            <i class="fas fa-times" style="margin-right: 0.5rem;"></i>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Initialize global variables for EMS Dashboard -->
+  <script type="text/javascript">
+    // all global router vars declared here to reduce duplication
+    var dbUser = <%-JSON.stringify(user)%>;
+    var dbVehicles = <%-JSON.stringify(vehicles)%>;
+    var departmentId = <%- JSON.stringify(departmentId || null) %>;
+    var departmentName = <%- JSON.stringify(departmentName || null) %>;
+    var POLICE_CAD_API_URL = '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    var API_URL = POLICE_CAD_API_URL; // For notifications.js compatibility
+  </script>
 </body>
 
 </html>
-
-<script type="text/javascript">
-  // all global router vars declared here to reduce duplication
-  var dbUser = <%-JSON.stringify(user)%>;
-  var dbVehicles = <%-JSON.stringify(vehicles)%>;
-  var dbPersonas = <%- JSON.stringify(personas)%>;
-  $(function () {
-    var socket=io()
-    socket.on('updated_ems_status', res => {
-      location.reload();
-    });
-    socket.on('deleted_ems_vehicle', req => {
-      location.reload();
-    })
-
-    
-
-    socket.on('created_call', res => {
-      if (res.call.communityID === dbUser.user.activeCommunity) {
-        let containsVeh = false;
-        if (dbVehicles != null && dbVehicles != undefined) {
-          for (let i=0; i < dbVehicles.length; i++) {
-            if (res.call.assignedFireEms.includes(dbVehicles[i]._id)) {
-              containsVeh = true;
-              break;
-            }
-          }
-        }
-        if (containsVeh) {
-          $('#assigned-call-container').append(
-              `<a id="${res._id}" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails('${res._id}')">
-                <div class="alert alert-success alert-dismissible show" role="alert">
-                  Opened: <span id="${res._id}-createdAt" style="text-transform:capitalize">
-                    <time>${res.call.createdAtReadable}</time> |  Description: <span id="${res._id}-description">${res.call.shortDescription}</span></span>
-              </div>
-              </a>`
-            ).fadeTo(1, function () {
-              $(this).add();
-            })
-        }
-      }
-    })
-
-    socket.on('cleared_call', res => {
-      if (res.communityID==dbUser.user.activeCommunity) {
-        $('#'+res.callID+'-row').remove().fadeOut(5, function () {
-          $(this).remove();
-        })
-      }
-    })
-  })
-
-  $.delete=function (url, data, callback, type) {
-    if ($.isFunction(data)) {
-      type=type||callback,
-        callback=data,
-        data={}
-    }
-
-    return $.ajax({
-      url: url,
-      type: 'DELETE',
-      success: callback,
-      data: data,
-      contentType: type
-    });
-  }
-
-  function populateCallDetails(callID) {
-    var socket=io();
-    socket.emit('get_call_by_id', callID)
-    socket.on('load_call_by_id_result', (res) => {
-      //debug log
-      //console.log(res)
-      var createdDate=new Date(res.call.createdAt)
-      if (res.call.updatedAt===""||res.call.updatedAt===undefined||res.call.updatedAt==='undefined') {
-        $('#updatedAtCallDetail').empty().text("N/A")
-      } else {
-        var updatedDate=new Date(res.call.updatedAt)
-        $('#updatedAtCallDetail').empty().text(updatedDate.toLocaleString())
-      }
-      $('#createdAtCallDetail').empty().text(createdDate.toLocaleString())
-      $('#descriptionCallDetail').empty().text(res.call.shortDescription)
-      $('#callNotesDetail').empty().text(res.call.callNotes)
-      let selectedClassifiers = ""
-      if (res.call.classifier != undefined && res.call.classifier != null) {
-        for (let i=0; i<res.call.classifier.length; i++) {
-          switch (res.call.classifier[i].toLowerCase()) {
-            case "police":
-              selectedClassifiers += `<span class="badge badge-primary">${res.call.classifier[i]}</span>  `    
-              break;
-            case "fire":
-              selectedClassifiers += `<span class="badge badge-danger">${res.call.classifier[i]}</span>  `
-              break;
-            case "ems":
-              selectedClassifiers += `<span class="badge badge-success">${res.call.classifier[i]}</span>  `
-              break;
-            default:
-              selectedClassifiers += `<span class="badge badge-secondary">${res.call.classifier[i]}</span>  `
-              break;
-          }
-        }
-      }
-      $('#classifier').empty().html(selectedClassifiers)
-      let assignedFireEms = ""
-      if (res.call.assignedFireEms != undefined && res.call.assignedFireEms != null) {
-        for (let i=0; i<res.call.assignedFireEms.length; i++) {
-          if (dbVehicles != null && dbVehicles != undefined) {
-            for (let j=0; j<dbVehicles.length; j++) {
-              if (dbVehicles[j]._id==res.call.assignedFireEms[i]) {
-                assignedFireEms = assignedFireEms + `<li>Engine - ${dbVehicles[i].emsVehicle.engineNumber} (${dbVehicles[i].emsVehicle.model})</li>`
-              }
-            }
-          }
-        }
-      }
-      $('#engines').empty().html(`<ul>${assignedFireEms}</ul>`)
-    })
-  }
-
-  function loadEmsData(index) {
-    var firstName=dbPersonas[index].ems.firstName
-    var lastName=dbPersonas[index].ems.lastName
-    var department=dbPersonas[index].ems.department
-    var assignmentArea=dbPersonas[index].ems.assignmentArea
-    var station=dbPersonas[index].ems.station
-    var callSign=dbPersonas[index].ems.callSign
-
-    $('#firstNameView').text(firstName)
-    $('#lastNameView').text(lastName)
-    $('#departmentView').text(department)
-    $('#assignmentAreaView').text(assignmentArea)
-    $('#stationView').text(station)
-    $('#callSignView').text(callSign)
-    emsFullName=firstName+' '+lastName
-    $('#removeEms').val(emsFullName)
-  }
-
-  function deleteEmsVeh() {
-    var socket=io()
-    myReq={
-      vehicleID: $('#vehicle-id').val()
-    }
-    socket.emit('delete_ems_vehicle', myReq)
-  }
-
-  function updateStatus(status) {
-    var socket=io();
-    var onDuty=null
-    var updateDuty=false
-    if (status=='10-41') {
-      onDuty=true
-      updateDuty=true
-      status="Online"
-    } else if (status=='10-42') {
-      onDuty=false
-      updateDuty=true
-      status="Offline"
-    }
-    myReq={
-      vehicleID: $('#vehicle-id').val(),
-      status: status,
-      setBy: 'Self',
-      onDuty: onDuty,
-      updateDuty: updateDuty
-    }
-    socket.emit('update_ems_status', myReq)
-  }
-
-  function loadVehData(index) {
-    var color=dbVehicles[index].emsVehicle.color
-    var plate=dbVehicles[index].emsVehicle.plate.toUpperCase()
-    var model=dbVehicles[index].emsVehicle.model
-    var engineNumber=dbVehicles[index].emsVehicle.engineNumber
-    var registeredOwner=dbVehicles[index].emsVehicle.registeredOwner
-    var status=dbVehicles[index].emsVehicle.dispatchStatus
-    var statusSetBy=dbVehicles[index].emsVehicle.dispatchStatusSetBy
-    // If emsVehicle was created before fire_ems_update
-    // This converts the undefined values to blank spaces for UI
-    if (statusSetBy==undefined) statusSetBy="";
-    if (status==undefined) status="";
-    $('#vehicle-id').val(dbVehicles[index]._id)
-    $('#plateView').text(plate)
-    $('#modelView').text(model)
-    $('#engineNumView').text(engineNumber)
-    $('#colorView').text(color)
-    $('#roView').text(registeredOwner)
-    $('#modelVeh').val(model)
-    $('#engineNumVeh').val(engineNumber)
-    $('#roVeh').val(registeredOwner)
-    $('#plateVeh').val(plate)
-    $('#statusDispatch').text(status)
-    $('#statusDispatchSetBy').text(statusSetBy)
-  }
-
-  function createNewEms() {
-    $('#first-name').popover('hide')
-    $('#last-name').popover('hide')
-  }
-
-  function clearTextarea() {
-    $('#notepad-textarea').val('')
-  }
-
-  function fillAccountDetails() {
-    $('#accountEmail').val(dbUser.user.email)
-    $('#accountUsername').val(dbUser.user.username)
-    $('#accountCallSign').val(dbUser.user.callSign)
-  }
-
-  function cancelUsername() {
-    $('#accountUsername').val(dbUser.user.username)
-    $('#updateUsernameBtns').hide();
-  }
-
-  function cancelCallSign() {
-    $('#accountCallSign').val(dbUser.user.callSign)
-    $('#updateCallSignBtns').hide();
-  }
-
-  function setDateAndTime(dateElement, timeElement) {
-    $(dateElement)[0].valueAsDate=new Date();
-    $(timeElement)[0].value=new Date().toLocaleTimeString('en-GB', {
-      hour: "2-digit",
-      minute: "2-digit"
-    })
-  }
-
-  function CreateReport(firstName, lastName, civilianID, dateOfBirth, deceased) {
-    $('#new-report-civilianID').val(civilianID);
-    $('#new-report-firstName').val(firstName);
-    $('#new-report-lastName').val(lastName);
-    $('#new-report-dateOfBirth').val(dateOfBirth);
-    $('#new-report-reportingEmsID').val(dbUser._id);
-    $('#deceased').val(deceased);
-  }
-
-  function searchMedicalNames() {
-    if (!document.getElementById('civ-first-name').validity.valid) {
-      $('#firstNameRequired').show()
-      return
-    } else {
-      $('#firstNameRequired').hide()
-    }
-    if (!document.getElementById('civ-last-name').validity.valid) {
-      $('#lastNameRequired').show()
-      return
-    } else {
-      $('#lastNameRequired').hide()
-    }
-    if (document.getElementById('civ-dob') != null) {
-      if (!document.getElementById('civ-dob').validity.valid) {
-        $('#dateOfBirthRequired').show()
-        return
-      } else {
-        $('#dateOfBirthRequired').hide()
-      }
-    }
-    var activeCommunityID
-    $("#accordion").empty()
-    if (dbUser.user.activeCommunity!=""&&dbUser.user.activeCommunity!=null) {
-      activeCommunityID=dbUser.user.activeCommunity
-    }
-    var parameters={
-      firstName: $('#civ-first-name').val(),
-      lastName: $('#civ-last-name').val(),
-      dateOfBirth: $('#civ-dob').val(),
-      activeCommunityID: activeCommunityID
-    };
-    $.get('/medical-database', parameters, function (data) {
-      var i=0
-      if (data.civilians != null && data.civilians != undefined) {
-        if (data.civilians.length<1) {
-          $('#personNotFound').show()
-          return
-        }
-        $('#personNotFound').hide()
-        data.civilians.forEach(function (e) {
-          var collapsed
-          if (i==0) {
-            collapsed="in"
-          } else {
-            collapsed=""
-          }
-          let deceasedState
-          e.civilian.deceased? deceasedState = 'Yes <i class="fas fa-skull-crossbones color-alert-red"></i>': deceasedState = 'No <i class="fas fa-user color-green"></i>'
-          var newRowContent
-          newRowContent=`
-            <!-- List of Civilians -->
-
-                        <div class="panel panel-default background-transparent">
-                            <div class="panel-heading" data-toggle="collapse" data-id="`+i+`" data-parent="#accordion" href="#collapse`+i+`"
-                              <h4 class="panel-title">
-                                <a class="blue-hover capitalize">
-                                    `+e.civilian.firstName+` `+e.civilian.lastName+` | `+e._id+`</a>
-                              </h4>
-                            </div>
-
-                              <div id="collapse`+i+`" class="panel-collapse collapse `+collapsed+`">
-
-                              <div class="panel-body">
-                                  <div class="text-align-center">
-                                    <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`', 'false');setDateAndTime('#new-report-reportDate', '#new-report-reportTime');">Create Report</button>
-                                    <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`', 'true');setDateAndTime('#new-report-reportDate', '#new-report-reportTime')">Pronounce Dead</button>
-                                  </div>
-                                  <hr/>
-                                  Driver's ID #: ${e._id}<br/>
-                                  Date of Birth: ${e.civilian.birthday}<br/>
-                                  Address: ${e.civilian.address}<br/>
-                                  Occupation: ${e.civilian.occupation}<br/>
-                                  Deceased: ${deceasedState}<br/>
-                                  <hr style="width: 88%;max-width: 100rem;">
-                                  <h4>Medical History</h4>
-                                  <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
-                                    <li class="nav-item active">
-                                      <a class="nav-link active" id="pills-reports-tab-`+e._id+`" data-toggle="pill" href="#pills-reports-`+e._id+`" role="tab" aria-controls="pills-reports-`+e._id+`" aria-selected="true">Reports</a>
-                                    </li>
-                                    <li class="nav-item">
-                                      <a class="nav-link" id="pills-medications-tab-`+e._id+`" data-toggle="pill" href="#pills-medications-`+e._id+`" role="tab" aria-controls="pills-medications-`+e._id+`" aria-selected="false">Medications</a>
-                                    </li>
-                                    <li class="nav-item">
-                                      <a class="nav-link" id="pills-conditions-tab-`+e._id+`" data-toggle="pill" href="#pills-conditions-`+e._id+`" role="tab" aria-controls="pills-conditions-`+e._id+`" aria-selected="false">Pre-Existing Conditions</a>
-                                    </li>
-                                  </ul>
-                                  <div class="tab-content" id="pills-tabContent">
-                                    <div class="tab-pane fade active in" id="pills-reports-`+e._id+`" role="tabpanel" aria-labelledby="pills-reports-tab-`+e._id+`">
-                                      <table id="reports-table-`+e._id+`" class="table" border="1" frame="box">
-                                        <thead>
-                                          <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td><td>Delete</td></tr>
-                                          </thead>
-                                          <tbody>
-                                            <!-- List of Reports -->
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div class="tab-pane fade" id="pills-medications-`+e._id+`" role="tabpanel" aria-labelledby="pills-medications-tab-`+e._id+`">
-                                      <table id="medications-table-`+e._id+`" class="table" border="1" frame="box">
-                                        <thead>
-                                          <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Dosage</td><td>Frequency</td><td>Delete</td></tr>
-                                        </thead>
-                                        <tbody>
-                                          <!-- List of Medications -->
-                                          </tbody>
-                                      </table>
-                                    </div>
-                                    <div class="tab-pane fade" id="pills-conditions-`+e._id+`" role="tabpanel" aria-labelledby="pills-conditions-tab-`+e._id+`">
-                                      <table id="conditions-table-`+e._id+`" class="table" border="1" frame="box">
-                                        <thead>
-                                          <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td><td>Delete</td></tr>
-                                        </thead>
-                                        <tbody>
-                                          <!-- List of Pre-Existing Conditions -->
-                                          </tbody>
-                                      </table>
-                                    </div>
-                                  </div>
-                              </div>
-                            </div>
-                          </div>
-            `
-          $("#accordion").append(newRowContent)
-          i++
-        });
-        //loop through all reports, medications and conditions for this civ
-        data.civilians.forEach(function (e) {
-          data.reports.forEach(function (r) {
-            if (e._id==r.report.civilianID) {
-              var newReportContent
-              newReportContent=`
-              <tr id="`+r._id+`"><td>`+r.report.date+`</td><td style='text-transform: capitalize;'>`+r.report.hospitalized+`</td><td style='text-transform: capitalize;'>`+r.report.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteReport('`+r._id+`', '`+r.report.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
-              `
-              $("#reports-table-"+r.report.civilianID+" tbody").append(newReportContent)
-            }
-          });
-          if (data.medications != null && data.medications != undefined) {
-            data.medications.forEach(function (m) {
-              if (e._id==m.medication.civilianID) {
-                var newReportContent
-                newReportContent=`
-                <tr id="`+m._id+`"><td>`+m.medication.startDate+`</td><td style='text-transform: capitalize;'>`+m.medication.name+`</td><td>`+m.medication.dosage+`</td><td style='text-transform: capitalize;'>`+m.medication.frequency+`</td><td class="text-align-center"><a class='clickable' onclick="deleteMedication('`+m._id+`', '`+m.medication.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
-                `
-                $("#medications-table-"+m.medication.civilianID+" tbody").append(newReportContent)
-              }
-            });
-          }
-
-          if (data.conditions != null && data.conditions != undefined) {
-            data.conditions.forEach(function (c) {
-              if (e._id==c.condition.civilianID) {
-                var newReportContent
-                newReportContent=`
-                <tr id="`+c._id+`"><td>`+c.condition.dateOccurred+`</td><td style='text-transform: capitalize;'>`+c.condition.name+`</td><td style='text-transform: capitalize;'>`+c.condition.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteCondition('`+c._id+`', '`+c.condition.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
-                `
-                $("#conditions-table-"+c.condition.civilianID+" tbody").append(newReportContent)
-              }
-            });
-          }
-
-        });
-      }
-    });
-  }
-
-  function deleteReport(id, civilianID) {
-    var parameters={ reportID: id };
-    $.delete('/reports/'+id, parameters, function (data) {
-      $(`table#reports-table-`+civilianID+` tr#`+id).remove()
-    })
-  }
-
-  function deleteMedication(id, civilianID) {
-    var parameters={ medicationID: id };
-    $.delete('/medications/'+id, parameters, function (data) {
-      $(`table#medications-table-`+civilianID+` tr#`+id).remove()
-    })
-  }
-
-
-  function deleteCondition(id, civilianID) {
-    var parameters={ conditionID: id };
-    $.delete('/conditions/'+id, parameters, function (data) {
-      $(`table#conditions-table-`+civilianID+` tr#`+id).remove()
-    })
-  }
-
-  $("#civ-first-name").keydown(function (event) {
-    if (event.keyCode==32) {
-      event.preventDefault();
-      $('#civ-first-name').popover('show')
-    } else {
-      $('#civ-first-name').popover('hide')
-    }
-  });
-
-  $("#civ-last-name").keydown(function (event) {
-    if (event.keyCode==32) {
-      event.preventDefault();
-      $('#civ-last-name').popover('show')
-    } else {
-      $('#civ-last-name').popover('hide')
-    }
-  });
-
-  function togglePanicBtnSound() {
-    var socket=io();
-    socket.emit('update_panic_btn_sound', dbUser)
-    socket.on('load_panic_btn_result', (res) => {
-      $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
-      $('#successfully-updated-alert').removeClass('hide').delay(2000).fadeOut(1000, function () {
-        $(this).hide();
-      });
-    })
-  }
-
-  function markAsRead() {
-    document.cookie ="notification-symbol=v2.32.0";
-    $('#notification-symbol').removeClass('notif');
-    $('#notification-count').text('');
-  }
-
-  $(document).ready(function () {
-
-    $('#persona-table').DataTable({
-      "bLengthChange": false,
-    })
-    $('#vehicle-table').DataTable({
-      "bLengthChange": false,
-    })
-
-    // displays the Update Username and Cancel buttons for updating the username
-    $('#accountUsername').on('keyup', function (e) {
-      if (e.target.value!=dbUser.user.username&&e.target.value!='') {
-        $('#updateUsernameBtns').show();
-      } else {
-        $('#updateUsernameBtns').hide();
-      }
-    })
-
-    $('#accountCallSign').on('keyup', function (e) {
-      if (e.target.value!=dbUser.user.callSign&&e.target.value!='') {
-        $('#updateCallSignBtns').show();
-      } else {
-        $('#updateCallSignBtns').hide();
-      }
-    })
-
-    $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
-
-    $("#first-name").keydown(function (event) {
-      if (event.keyCode==32) {
-        event.preventDefault();
-        $('#first-name').popover('show')
-      } else {
-        $('#first-name').popover('hide')
-      }
-    });
-    $("#last-name").keydown(function (event) {
-      if (event.keyCode==32) {
-        event.preventDefault();
-        $('#last-name').popover('show')
-      } else {
-        $('#last-name').popover('hide')
-      }
-    });
-
-    //CURRENT_VERSION
-    //the current version in production
-    let CURRENT_VERSION = "v2.32.0"
-    let MINOR_VERSION = CURRENT_VERSION.split(".")[1]
-
-    //check for notification cookie
-    let cookieVersion = undefined
-    let cookieValueSplit = document.cookie.split('; ')
-    if (cookieValueSplit != null && cookieValueSplit != undefined) {
-      if (cookieValueSplit.length > 0) {
-        let cookieValueNotifSymbol = cookieValueSplit.find(row => row.startsWith('notification-symbol='))
-        if (cookieValueNotifSymbol != undefined) {
-          let cookieVersionSplit = cookieValueNotifSymbol.split('=');
-          if (cookieVersionSplit != null && cookieVersionSplit != undefined) {
-            if (cookieVersionSplit.length > 1) {
-              cookieVersion = cookieVersionSplit[1];
-            }
-          }
-        }
-      }
-    }
-
-    // if we cannot find the cookie, then we will set it to be 1
-    if (cookieVersion === undefined) {
-      $('#notification-count').text(1)
-    } else if (cookieVersion == CURRENT_VERSION) {
-      // else if cookie version is equal to current version, then we don't set anything :mark-all-as-read:
-      $('#notification-symbol').removeClass('notif')
-      $('#notification-count').text('')
-    } else {
-      // else if we can find the cookie, then we will subtract whatever the cookie value is from the current version
-      let specificVersionSplit = cookieVersion.split(".")
-      if (specificVersionSplit != null && specificVersionSplit != undefined) {
-        if (specificVersionSplit.length == 3) {
-          let versionDifference = parseInt(MINOR_VERSION) - parseInt(specificVersionSplit[1])
-          $('#notification-count').text(versionDifference)
-        }
-      }
-    }
-
-    //load gravatar image
-  var MD5 = function(d){var r = M(V(Y(X(d),8*d.length)));return r.toLowerCase()};function M(d){for(var _,m="0123456789ABCDEF",f="",r=0;r<d.length;r++)_=d.charCodeAt(r),f+=m.charAt(_>>>4&15)+m.charAt(15&_);return f}function X(d){for(var _=Array(d.length>>2),m=0;m<_.length;m++)_[m]=0;for(m=0;m<8*d.length;m+=8)_[m>>5]|=(255&d.charCodeAt(m/8))<<m%32;return _}function V(d){for(var _="",m=0;m<32*d.length;m+=8)_+=String.fromCharCode(d[m>>5]>>>m%32&255);return _}function Y(d,_){d[_>>5]|=128<<_%32,d[14+(_+64>>>9<<4)]=_;for(var m=1732584193,f=-271733879,r=-1732584194,i=271733878,n=0;n<d.length;n+=16){var h=m,t=f,g=r,e=i;f=md5_ii(f=md5_ii(f=md5_ii(f=md5_ii(f=md5_hh(f=md5_hh(f=md5_hh(f=md5_hh(f=md5_gg(f=md5_gg(f=md5_gg(f=md5_gg(f=md5_ff(f=md5_ff(f=md5_ff(f=md5_ff(f,r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+0],7,-680876936),f,r,d[n+1],12,-389564586),m,f,d[n+2],17,606105819),i,m,d[n+3],22,-1044525330),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+4],7,-176418897),f,r,d[n+5],12,1200080426),m,f,d[n+6],17,-1473231341),i,m,d[n+7],22,-45705983),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+8],7,1770035416),f,r,d[n+9],12,-1958414417),m,f,d[n+10],17,-42063),i,m,d[n+11],22,-1990404162),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+12],7,1804603682),f,r,d[n+13],12,-40341101),m,f,d[n+14],17,-1502002290),i,m,d[n+15],22,1236535329),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+1],5,-165796510),f,r,d[n+6],9,-1069501632),m,f,d[n+11],14,643717713),i,m,d[n+0],20,-373897302),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+5],5,-701558691),f,r,d[n+10],9,38016083),m,f,d[n+15],14,-660478335),i,m,d[n+4],20,-405537848),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+9],5,568446438),f,r,d[n+14],9,-1019803690),m,f,d[n+3],14,-187363961),i,m,d[n+8],20,1163531501),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+13],5,-1444681467),f,r,d[n+2],9,-51403784),m,f,d[n+7],14,1735328473),i,m,d[n+12],20,-1926607734),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+5],4,-378558),f,r,d[n+8],11,-2022574463),m,f,d[n+11],16,1839030562),i,m,d[n+14],23,-35309556),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+1],4,-1530992060),f,r,d[n+4],11,1272893353),m,f,d[n+7],16,-155497632),i,m,d[n+10],23,-1094730640),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+13],4,681279174),f,r,d[n+0],11,-358537222),m,f,d[n+3],16,-722521979),i,m,d[n+6],23,76029189),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+9],4,-640364487),f,r,d[n+12],11,-421815835),m,f,d[n+15],16,530742520),i,m,d[n+2],23,-995338651),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+0],6,-198630844),f,r,d[n+7],10,1126891415),m,f,d[n+14],15,-1416354905),i,m,d[n+5],21,-57434055),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+12],6,1700485571),f,r,d[n+3],10,-1894986606),m,f,d[n+10],15,-1051523),i,m,d[n+1],21,-2054922799),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+8],6,1873313359),f,r,d[n+15],10,-30611744),m,f,d[n+6],15,-1560198380),i,m,d[n+13],21,1309151649),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+4],6,-145523070),f,r,d[n+11],10,-1120210379),m,f,d[n+2],15,718787259),i,m,d[n+9],21,-343485551),m=safe_add(m,h),f=safe_add(f,t),r=safe_add(r,g),i=safe_add(i,e)}return Array(m,f,r,i)}function md5_cmn(d,_,m,f,r,i){return safe_add(bit_rol(safe_add(safe_add(_,d),safe_add(f,i)),r),m)}function md5_ff(d,_,m,f,r,i,n){return md5_cmn(_&m|~_&f,d,_,r,i,n)}function md5_gg(d,_,m,f,r,i,n){return md5_cmn(_&f|m&~f,d,_,r,i,n)}function md5_hh(d,_,m,f,r,i,n){return md5_cmn(_^m^f,d,_,r,i,n)}function md5_ii(d,_,m,f,r,i,n){return md5_cmn(m^(_|~f),d,_,r,i,n)}function safe_add(d,_){var m=(65535&d)+(65535&_);return(d>>16)+(_>>16)+(m>>16)<<16|65535&m}function bit_rol(d,_){return d<<_|d>>>32-_}
-  let hash = MD5(dbUser.user.email.trim().toLowerCase())
-  $('.profile-picture').css("background-image", `url(https://www.gravatar.com/avatar/${hash}?s=200)`)
-
-  }); /* End of document.ready */
-</script>
-
 <!--  added for google translate -->
 <script type="text/javascript">
 function googleTranslateElementInit() {
   new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
 }
 </script>
+

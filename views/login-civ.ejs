@@ -1,23 +1,393 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8">
-    <title>LPC - Login as Civilian</title>
-    <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="generator" content="Codeply">
-    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="/static/css/animate.min.css" />
-    <link rel="stylesheet" href="/static/css/ionicons.min.css" />
-    <link rel="stylesheet" href="/static/css/styles.css" />
-    <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
-    <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
-    <!-- To hide google translate header bar on each page -->
-    <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
-    <style type='text/css'> body {position: static !important; top:0px !important;}</style>
     <% include ad-header %>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LPC - Login as Civilian</title>
+    <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/static/css/fontawesome/css/all.min.css" />
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: rgba(0, 0, 0, 0.8);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Header - Bootstrap Navbar Override */
+        .navbar-default {
+            background: linear-gradient(135deg, rgba(25, 30, 50, 0.98) 0%, rgba(30, 20, 40, 0.98) 100%) !important;
+            backdrop-filter: blur(10px);
+            border: none !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+            min-height: 60px;
+        }
+
+        .navbar-default .navbar-brand {
+            color: #fff !important;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .navbar-default .navbar-brand:hover {
+            color: #667eea !important;
+        }
+
+        .navbar-default .navbar-nav > li > a {
+            color: #fff !important;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .navbar-default .navbar-nav > li > a:hover {
+            color: #667eea !important;
+        }
+
+        .navbar-default .navbar-toggle {
+            border-color: rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .navbar-default .navbar-toggle:hover,
+        .navbar-default .navbar-toggle:focus {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .navbar-default .navbar-toggle .icon-bar {
+            background-color: #fff !important;
+        }
+
+        /* Main content */
+        .main-content {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: 100px;
+            position: relative;
+        }
+
+        /* Background */
+        .bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('/static/images/gta-landing-page.jpg') center/cover;
+            z-index: -1;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        /* Login Container */
+        .login-container {
+            background: linear-gradient(135deg, rgba(25, 30, 50, 0.98) 0%, rgba(30, 20, 40, 0.98) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            z-index: 1;
+            margin-top: 20px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: #fff;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            color: #fff;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-control.error {
+            border-color: #e74c3c;
+        }
+
+        /* Button Styles */
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-login:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-login .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error Message */
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #e74c3c;
+            display: none;
+            font-size: 14px;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Links */
+        .login-links {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .login-links a {
+            color: #8fa4f3;
+            text-decoration: none;
+            font-size: 14px;
+            margin: 0 10px;
+            transition: color 0.3s ease;
+        }
+
+        .login-links a:hover {
+            color: #a8b8ff;
+            text-decoration: underline;
+        }
+
+
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                padding-top: 80px;
+                min-height: calc(100vh - 80px);
+                padding-bottom: 20px;
+            }
+
+            .login-container {
+                margin: 20px;
+                padding: 30px 20px;
+                max-width: calc(100vw - 40px);
+            }
+
+            /* Prevent keyboard from covering content */
+            .main-content {
+                display: flex;
+                align-items: flex-start;
+                padding-top: 20px;
+            }
+
+            .login-container {
+                margin-top: auto;
+                margin-bottom: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 10px;
+                padding: 20px 15px;
+                max-width: calc(100vw - 20px);
+            }
+            
+            .header-logo {
+                height: 35px;
+            }
+
+            .main-content {
+                padding-top: 10px;
+            }
+        }
+
+        /* Footer */
+        .footer {
+            background: linear-gradient(135deg, rgba(25, 30, 50, 0.95) 0%, rgba(30, 20, 40, 0.95) 100%);
+            color: #fff;
+            padding: 30px 0;
+            margin-top: auto;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .footer-logo img {
+            height: 30px;
+            margin-right: 10px;
+        }
+
+        .footer-logo span {
+            font-size: 18px;
+            font-weight: 600;
+            color: #8fa4f3;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 15px;
+        }
+
+        .footer-links a {
+            color: #ccc;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #8fa4f3;
+            text-decoration: none;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #999;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .footer-links {
+                justify-content: center;
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .footer-links {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+
+    </style>
   </head>
   <body>
+    <!-- Header -->
     <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
         <div class="container-fluid">
             <div class="navbar-header">
@@ -27,133 +397,289 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand page-scroll" href="/"><img style="display: inline; margin-top: -9px; vertical-align: text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD</a>
+                <a class="navbar-brand page-scroll" href="/">
+                    <img style="display: inline; margin-top: -9px; vertical-align: text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD
+                </a>
             </div>
             <div class="navbar-collapse collapse" id="bs-navbar">
                 <ul class="nav navbar-nav">
-
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
-                  <li>
-                    <a href="/release-log">Release Log</a>
-                  </li>
-                    <li>
-                        <a class="page-scroll" data-toggle="modal" title="Lines Police CAD" href="#aboutModal">About</a>
-                    </li>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about-us">About</a></li>
+                    <li><a href="/contact-us">Contact</a></li>
+                    <li><a href="/login">Login</a></li>
                 </ul>
             </div>
         </div>
     </nav>
-    <header id="first">
 
-        <div class="header-content">
-            <div class="inner">
-                <h4>Log in as a Civilian</h4>
-                <hr>
-                 <div class="col-lg-10 col-lg-offset-1 text-center">
-                <form id="signInForm" class="contact-form row" action="/login-civ" method="post">
-                  <% if(message != undefined && message != null) {%>
-                    <% if (message.length > 0) { %>
-                    <div class="alert alert-danger col-md-4 col-md-offset-4">
-                      <strong>Incorrect <%= message %> </strong>
-                    </div>
-                    <% } %>
-                  <% } %>
-                  <div class="col-md-12">
-                    <div class="col-md-4 col-md-offset-4">
-                        <label>Email</label>
-                        <input id="inputEmail" type="email" name="email" class="form-control" placeholder="Email Address" required>
-                    </div>
-                  </div>
-                    <div class="col-md-12">
-                      <div class="col-md-4 col-md-offset-4">
-                          <label>Password</label>
-                          <input id="inputPassword" type="password" name="password" class="form-control" placeholder="Password" required>
-                      </div>
-                    </div>
-                </div>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Background Animation -->
+        <div class="bg-animation"></div>
 
-                 <button type="submit" value="SignUp" class="btn btn-primary btn-xl margin-top-2 g-recaptcha"
-                 data-sitekey="6LflPdwZAAAAANsUIdfCJMxTv1r0ZobOS7PgcWN7" 
-                 data-callback='onSubmit'
-                 data-action='submit'>Sign In</button>
-                 <div class="signup-text">
-                   <a href="/signup-civ"><u>Don't have an account?</u></a><br>
-                   <a href="/forgot-password"><u>Forgot Password?</u></a>
-                 </div>
-              </form>
-            </div>
+        <!-- Login Container -->
+        <div class="login-container">
+        <div class="login-header">
+            <h1>Welcome Back</h1>
+            <p>Sign in to your account</p>
         </div>
 
-    </header>
-    <div class="google-ad"></div>
-    <% include footer %>
-    <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-        	<div class="modal-body">
-        		<img src="" id="galleryImage" class="img-responsive" />
-        		<p>
-        		    <br/>
-        		    <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close <i class="ion-android-close"></i></button>
-        		</p>
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="errorText"></span>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    class="form-control" 
+                    placeholder="Enter your email"
+                    required
+                    autocomplete="email"
+                >
+        </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="form-control" 
+                    placeholder="Enter your password"
+                    required
+                    autocomplete="current-password"
+                >
+    </div>
+
+            <button type="submit" id="loginBtn" class="btn-login">
+                <span class="spinner"></span>
+                <span class="btn-text">Sign In</span>
+            </button>
+        </form>
+
+            <div class="login-links">
+                <a href="/signup-civ">Don't have an account?</a>
+                <a href="/forgot-password">Forgot Password?</a>
         	</div>
         </div>
-        </div>
-    </div>
-    <div id="aboutModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog">
-        <div class="modal-content">
-        	<div class="modal-body">
-        		<h2 class="text-center">Lines Police CAD</h2>
-        		<h5 class="text-center">
-        		   CAD (Computer Aided Dispatch)
-        		</h5>
-        		<p class="text-justify">
-        		    Developed with users in mind. Easy to log in and create an account. From there you can take the
-                freedom of playing with a certain persona in GTA V. Buy cars, apartments, make a living online.
-                Or join the law, become a police officer and patrol the streets. You decide your own fate.
-        		</p>
-
-        		<br/>
-        		<button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true"> OK </button>
-        	</div>
-        </div>
-        </div>
-    </div>
-    <div id="alertModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-        	<div class="modal-body">
-        		<h2 class="text-center">Nice Job!</h2>
-        		<p class="text-center">You clicked the button, this is just one of the many easter eggs on this site ;)</p>
-        		<br/>
-        		<button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK <i class="ion-android-close"></i></button>
-        	</div>
-        </div>
-        </div>
-    </div>
-    <!--scripts loaded here -->
-    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
-    <script src="/static/js/jquery.min.js"></script>
-    <script src="/static/js/bootstrap.min.js"></script>
-    <script src="/static/js/jquery.easing.min.js"></script>
-    <script src="/static/js/wow.js"></script>
-    <script src="/static/js/scripts.js"></script>
-    <script>if (window.module) module = window.module;</script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-  </body>
-</html>
+    </main>
 
 <script>
-  function onSubmit(token) {
-    document.getElementById("signInForm").submit();
-  }
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('loginForm');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const loginBtn = document.getElementById('loginBtn');
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            const spinner = loginBtn.querySelector('.spinner');
+            const btnText = loginBtn.querySelector('.btn-text');
+            
+            // Check for flash messages from Passport authentication failure
+            <% if (typeof message !== 'undefined' && message && message.length > 0) { %>
+                showError('Invalid email or password. Please check your credentials and try again.');
+            <% } %>
+
+            // Handle form submission
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Clear previous errors
+                hideError();
+                
+                // Get form data
+                const email = emailInput.value.trim().toLowerCase();
+                const password = passwordInput.value.trim();
+                
+                // Validate inputs
+                if (!email) {
+                    showError('Please enter your email address.');
+                    emailInput.classList.add('error');
+                    return;
+                }
+                
+                if (!password) {
+                    showError('Please enter your password.');
+                    passwordInput.classList.add('error');
+                    return;
+                }
+                
+                // Remove error styling
+                emailInput.classList.remove('error');
+                passwordInput.classList.remove('error');
+                
+                // Show loading state
+                setLoading(true);
+                
+                try {
+                    // Get the API URL with fallback
+                    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+                    
+                    // Function to submit login form
+                    const submitLoginForm = () => {
+                        fetch('/set-redirect', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ redirect: '/communities' }),
+                            credentials: 'same-origin'
+                        }).then(() => {
+                            // Now submit the login form
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = '/login-civ';
+                            form.style.display = 'none';
+                            
+                            const emailInput = document.createElement('input');
+                            emailInput.type = 'hidden';
+                            emailInput.name = 'email';
+                            emailInput.value = email;
+                            
+                            const passwordInput = document.createElement('input');
+                            passwordInput.type = 'hidden';
+                            passwordInput.name = 'password';
+                            passwordInput.value = password;
+                            
+                            form.appendChild(emailInput);
+                            form.appendChild(passwordInput);
+                            document.body.appendChild(form);
+                            form.submit();
+                        }).catch(() => {
+                            // Fallback: submit form without setting redirect
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = '/login-civ';
+                            form.style.display = 'none';
+                            
+                            const emailInput = document.createElement('input');
+                            emailInput.type = 'hidden';
+                            emailInput.name = 'email';
+                            emailInput.value = email;
+                            
+                            const passwordInput = document.createElement('input');
+                            passwordInput.type = 'hidden';
+                            passwordInput.name = 'password';
+                            passwordInput.value = password;
+                            
+                            form.appendChild(emailInput);
+                            form.appendChild(passwordInput);
+                            document.body.appendChild(form);
+                            form.submit();
+                        });
+                    };
+                    
+                    // Validate credentials with the API first
+                    // Email is already lowercased on line 500
+                    const apiResponse = await fetch(`${apiUrl}/api/v1/auth/token`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Basic ' + btoa(email + ':' + password)
+                        }
+                    });
+                    
+                    // Check if we got a valid token response
+                    const apiData = await apiResponse.json().catch(() => ({}));
+                    
+                    if (apiResponse.ok && apiData.token) {
+                        // API validation successful, proceed with login
+                        submitLoginForm();
+                        return;
+                    } else {
+                        // API validation failed - show error and stop
+                        showError('Invalid email or password. Please check your credentials and try again.');
+                        setLoading(false);
+                        return;
+                    }
+                    
+                } catch (error) {
+                    console.error('Login error:', error);
+                    showError('An error occurred. Please try again.');
+                    setLoading(false);
+                }
+            });
+            
+            // Helper functions
+            function showError(message) {
+                errorText.textContent = message;
+                errorMessage.classList.add('show');
+            }
+            
+            function hideError() {
+                errorMessage.classList.remove('show');
+            }
+            
+            function setLoading(loading) {
+                if (loading) {
+                    loginBtn.disabled = true;
+                    spinner.style.display = 'inline-block';
+                    btnText.textContent = 'Signing In...';
+                } else {
+                    loginBtn.disabled = false;
+                    spinner.style.display = 'none';
+                    btnText.textContent = 'Sign In';
+                }
+            }
+            
+            // Clear error styling on input and lowercase email
+            emailInput.addEventListener('input', function() {
+                this.value = this.value.trim().toLowerCase();
+                this.classList.remove('error');
+                hideError();
+            });
+            
+            passwordInput.addEventListener('input', function() {
+                this.classList.remove('error');
+                hideError();
+            });
+            
+            // Mobile keyboard handling
+            if (window.innerWidth <= 768) {
+                // Scroll to login form when input is focused
+                emailInput.addEventListener('focus', function() {
+                    setTimeout(() => {
+                        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300);
+                });
+                
+                passwordInput.addEventListener('focus', function() {
+                    setTimeout(() => {
+                        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300);
+                });
+    }
+      });
 </script>
 
-<!--  added for google translate --> 
-<script type="text/javascript">
-function googleTranslateElementInit() {
-  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
-}
-</script>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <img src="/static/images/favicon-32x32.png" alt="LPC Logo">
+                <span>Lines Police CAD</span>
+            </div>
+            <div class="footer-links">
+                <a href="/login-civ">Login</a>
+                <a href="/signup-civ">Sign Up</a>
+                <a href="/forgot-password">Forgot Password</a>
+                <a href="/communities">Communities</a>
+                <a href="/about">About</a>
+                <a href="/contact">Contact</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 TLPS LLC. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

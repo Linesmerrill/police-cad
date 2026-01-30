@@ -1,0 +1,2069 @@
+<!DOCTYPE html>
+<%
+  // Global permission logic - defined at the very beginning for use throughout the template
+  let canManageAnnouncements = false;
+  let canManageDepartments = false;
+  const userId = user && user._doc ? String(user._doc._id) : null;
+  if (userId && community.community && Array.isArray(community.community.roles)) {
+    community.community.roles.forEach(function(role) {
+      if (Array.isArray(role.members) && role.members.includes(userId)) {
+        if (Array.isArray(role.permissions)) {
+          role.permissions.forEach(function(perm) {
+            if (
+              (perm.name === "administrator" && perm.enabled === true) ||
+              (perm.name === "manage community settings" && perm.enabled === true)
+            ) {
+              canManageAnnouncements = true;
+            }
+            if (
+              (perm.name === "administrator" && perm.enabled === true) ||
+              (perm.name === "manage departments" && perm.enabled === true)
+            ) {
+              canManageDepartments = true;
+            }
+          });
+        }
+      }
+    });
+  }
+%>
+<html lang="en">
+  <head>
+    <% include ad-header %>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title><%= community.community.name %> - Community Dashboard</title>
+    <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/static/js/cloudinary-upload.js"></script>
+    <script src="/static/js/community-details.js"></script>
+    <script>
+      window.CLOUDINARY_CLOUD_NAME = '<%= process.env.CLOUDINARY_CLOUD_NAME || "" %>';
+      window.CLOUDINARY_API_KEY = '<%= process.env.CLOUDINARY_API_KEY || "" %>';
+      window.CLOUDINARY_UPLOAD_PRESET = '<%= process.env.CLOUDINARY_UPLOAD_PRESET || "" %>';
+
+      function encodeDepartmentId(departmentId) {
+        const base64 = btoa(departmentId);
+        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+      }
+
+      function navigateToDepartment(departmentId, departmentName, templateName) {
+        const templateType = templateName.toLowerCase();
+        let dashboardUrl = '';
+
+        if (templateType.includes('civilian')) {
+          dashboardUrl = `/civ-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}`;
+        } else if (templateType.includes('police')) {
+          dashboardUrl = `/police-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}`;
+        } else if (templateType.includes('fire') || templateType.includes('ems')) {
+          dashboardUrl = `/ems-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}`;
+        } else if (templateType.includes('dispatch')) {
+          dashboardUrl = `/dispatch-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}`;
+        }
+
+        if (dashboardUrl) {
+          const communityId = '<%= community._id %>';
+          const userId = '<%= user && user._doc ? user._doc._id : "" %>';
+
+          if (communityId && userId) {
+            fetch('<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>/api/v1/user/last-accessed-community', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: userId,
+                communityId: communityId,
+                createdAt: new Date().toISOString()
+              })
+            }).then(() => {
+              window.location.href = dashboardUrl;
+            }).catch(error => {
+              window.location.href = dashboardUrl;
+            });
+          } else {
+            window.location.href = dashboardUrl;
+          }
+        } else {
+          alert('Unknown department type: ' + departmentName);
+        }
+      }
+
+      document.addEventListener('click', function(event) {
+        const deptCard = event.target.closest('[data-dept-id]');
+        if (deptCard && !event.target.closest('button')) {
+          const accessStatus = deptCard.getAttribute('data-access-status');
+          // Only allow navigation if user has approved access
+          if (accessStatus !== 'approved') {
+            // Don't navigate - show appropriate message or modal
+            if (accessStatus === 'pending') {
+              // Show pending toast using the toast element directly
+              var pendingToast = document.getElementById('toast');
+              if (pendingToast) {
+                pendingToast.style.background = '#1e3a8a';
+                pendingToast.style.border = '1px solid #3b82f6';
+                pendingToast.style.color = '#fff';
+                pendingToast.textContent = 'Your request to join this department is pending approval.';
+                pendingToast.style.display = 'block';
+                setTimeout(function() { pendingToast.style.display = 'none'; }, 3000);
+              } else {
+                alert('Your request to join this department is pending approval.');
+              }
+            } else {
+              // Locked - open the request to join modal
+              const deptId = deptCard.getAttribute('data-dept-id');
+              const deptName = deptCard.getAttribute('data-dept-name');
+              if (deptId && deptName && typeof openRequestJoinDepartmentModal === 'function') {
+                openRequestJoinDepartmentModal(deptId, deptName);
+              } else {
+                showToast('You need to request access to this department first.', 3000, 'info');
+              }
+            }
+            return;
+          }
+          const deptId = deptCard.getAttribute('data-dept-id');
+          const deptName = deptCard.getAttribute('data-dept-name');
+          const templateName = deptCard.getAttribute('data-template-name');
+          if (deptId && deptName && templateName) {
+            navigateToDepartment(deptId, deptName, templateName);
+          }
+        }
+      });
+    </script>
+    <style>
+      * { -webkit-tap-highlight-color: transparent; }
+
+      /* Profile glow animations per subscription tier */
+      @keyframes glowPremiumPlus {
+        0%, 100% { box-shadow: 0 0 4px rgba(251, 191, 36, 0.4), 0 0 8px rgba(251, 191, 36, 0.2); }
+        50% { box-shadow: 0 0 8px rgba(251, 191, 36, 0.7), 0 0 16px rgba(251, 191, 36, 0.35); }
+      }
+      @keyframes glowPremium {
+        0%, 100% { box-shadow: 0 0 4px rgba(168, 85, 247, 0.4), 0 0 8px rgba(168, 85, 247, 0.2); }
+        50% { box-shadow: 0 0 8px rgba(168, 85, 247, 0.7), 0 0 16px rgba(168, 85, 247, 0.35); }
+      }
+      @keyframes glowBasic {
+        0%, 100% { box-shadow: 0 0 4px rgba(59, 130, 246, 0.4), 0 0 8px rgba(59, 130, 246, 0.2); }
+        50% { box-shadow: 0 0 8px rgba(59, 130, 246, 0.7), 0 0 16px rgba(59, 130, 246, 0.35); }
+      }
+      @keyframes glowFree {
+        0%, 100% { box-shadow: 0 0 4px rgba(156, 163, 175, 0.3), 0 0 8px rgba(156, 163, 175, 0.15); }
+        50% { box-shadow: 0 0 6px rgba(156, 163, 175, 0.5), 0 0 12px rgba(156, 163, 175, 0.25); }
+      }
+      .navbar-profile-pic {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      .navbar-profile-pic.tier-premium-plus {
+        border: 2px solid rgba(251, 191, 36, 0.7);
+        animation: glowPremiumPlus 3s ease-in-out infinite;
+      }
+      .navbar-profile-pic.tier-premium {
+        border: 2px solid rgba(168, 85, 247, 0.7);
+        animation: glowPremium 3s ease-in-out infinite;
+      }
+      .navbar-profile-pic.tier-basic {
+        border: 2px solid rgba(59, 130, 246, 0.7);
+        animation: glowBasic 3s ease-in-out infinite;
+      }
+      .navbar-profile-pic.tier-free {
+        border: 2px solid rgba(156, 163, 175, 0.5);
+        animation: glowFree 3s ease-in-out infinite;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        background-color: #0a0a0f !important;
+        color-scheme: dark;
+        height: 100%;
+        height: 100dvh;
+        font-size: 16px !important;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      body {
+        background-color: #0a0a0f !important;
+        background-image: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+        background-attachment: fixed;
+        background-size: cover;
+        color: #e2e8f0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        margin: 0;
+        padding: 0;
+        font-size: 1rem !important;
+        line-height: 1.5 !important;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: none;
+      }
+
+      body::before {
+        content: '';
+        position: fixed;
+        top: -100px;
+        bottom: -100px;
+        left: 0;
+        right: 0;
+        background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+        z-index: -9999;
+        pointer-events: none;
+      }
+
+      /* Override Bootstrap styles that conflict with Tailwind */
+      p, span, div, h1, h2, h3, h4, h5, h6, a, button, input, textarea, label {
+        font-size: inherit;
+        line-height: inherit;
+      }
+
+      /* Ensure text sizes are correct */
+      .text-xs { font-size: 0.75rem !important; line-height: 1rem !important; }
+      .text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+      .text-base { font-size: 1rem !important; line-height: 1.5rem !important; }
+      .text-lg { font-size: 1.125rem !important; line-height: 1.75rem !important; }
+      .text-xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+      .text-2xl { font-size: 1.5rem !important; line-height: 2rem !important; }
+      .text-3xl { font-size: 1.875rem !important; line-height: 2.25rem !important; }
+      .text-4xl { font-size: 2.25rem !important; line-height: 2.5rem !important; }
+
+      /* Fix button and input styles */
+      button, input, textarea {
+        font-family: inherit !important;
+      }
+
+      @keyframes breathe {
+        0%, 100% { opacity: 0.5; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.05); }
+      }
+
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes slide-in {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+
+      .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
+      .animate-slide-in { animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+      .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+      .line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+      .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+      .line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+
+      .safe-area-top { padding-top: env(safe-area-inset-top, 0); }
+      .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
+
+      /* Custom scrollbar for desktop */
+      @media (min-width: 768px) {
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+      }
+
+      /* Focus visible for accessibility */
+      button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
+        outline: 2px solid #06b6d4;
+        outline-offset: 2px;
+      }
+
+      .notification-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background-color: #dc3545;
+        color: white;
+        border-radius: 10px;
+        min-width: 18px;
+        height: 18px;
+        font-size: 10px;
+        font-weight: bold;
+        border: 1px solid #1a202c;
+        padding: 1px 5px 0 5px;
+        box-sizing: border-box;
+        display: none;
+      }
+      .notification-badge.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Dashboard Card - responsive */
+      .dashboard-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 1rem;
+        padding: 1.25rem;
+        transition: all 0.3s ease;
+      }
+      @media (min-width: 640px) {
+        .dashboard-card { padding: 1.5rem; }
+      }
+      @media (min-width: 1024px) {
+        .dashboard-card { padding: 2rem; }
+      }
+      .dashboard-card:hover {
+        border-color: rgba(59, 130, 246, 0.4);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Department Card - responsive */
+      .dept-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 1rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+      .dept-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(251, 191, 36, 0.5);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      }
+      .dept-card.locked { cursor: not-allowed; opacity: 0.7; }
+      .dept-card.locked:hover { transform: none; border-color: rgba(59, 130, 246, 0.2); box-shadow: none; }
+
+      /* Action Button - responsive */
+      .action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.875rem;
+        border-radius: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+        min-width: 72px;
+        flex-shrink: 0;
+      }
+      @media (min-width: 640px) {
+        .action-btn { padding: 1rem 1.25rem; min-width: 90px; }
+      }
+      @media (min-width: 1024px) {
+        .action-btn { padding: 1.25rem 1.5rem; min-width: 100px; }
+      }
+      .action-btn:hover:not(.disabled) {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(251, 191, 36, 0.5);
+        transform: translateY(-2px);
+      }
+      .action-btn.disabled { opacity: 0.5; cursor: not-allowed; }
+      .action-btn i { font-size: 1.25rem; margin-bottom: 0.375rem; }
+      .action-btn span { font-size: 0.6875rem; font-weight: 500; white-space: nowrap; }
+      @media (min-width: 640px) {
+        .action-btn i { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .action-btn span { font-size: 0.75rem; }
+      }
+      @media (min-width: 1024px) {
+        .action-btn i { font-size: 1.75rem; }
+        .action-btn span { font-size: 0.875rem; }
+      }
+
+      /* Primary Button - responsive */
+      .btn-primary {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: #0a0a0f;
+        font-weight: 700;
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.75rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+        font-size: 0.9375rem;
+      }
+      @media (min-width: 640px) {
+        .btn-primary { padding: 0.875rem 1.5rem; font-size: 1rem; }
+      }
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+      }
+
+      /* Secondary Button - responsive */
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+        font-weight: 600;
+        padding: 0.625rem 1rem;
+        border-radius: 0.75rem;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.875rem;
+      }
+      @media (min-width: 640px) {
+        .btn-secondary { padding: 0.75rem 1.25rem; font-size: 0.9375rem; }
+      }
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(59, 130, 246, 0.5);
+      }
+
+      /* Badge - responsive */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.625rem;
+        border-radius: 9999px;
+        font-size: 0.6875rem;
+        font-weight: 600;
+      }
+      @media (min-width: 640px) {
+        .badge { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+      }
+      @media (min-width: 1024px) {
+        .badge { padding: 0.3125rem 0.875rem; font-size: 0.8125rem; }
+      }
+      .badge-elite { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #0a0a0f; }
+      .badge-tag { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+      .badge-member { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+      .badge-pending { background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+
+      /* Section headers - responsive */
+      .section-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+      }
+      @media (min-width: 640px) {
+        .section-title { font-size: 1.25rem; }
+      }
+      @media (min-width: 1024px) {
+        .section-title { font-size: 1.375rem; }
+      }
+
+      /* Desktop enhancements */
+      @media (min-width: 1024px) {
+        .dashboard-card:hover {
+          transform: translateY(-2px);
+        }
+      }
+
+      /* Private indicator with tooltip */
+      .private-indicator {
+        position: relative;
+      }
+      .private-indicator:hover {
+        background: rgba(239, 68, 68, 0.2) !important;
+        border-color: rgba(239, 68, 68, 0.5) !important;
+      }
+      .private-indicator::after {
+        content: attr(title);
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: #1e2028;
+        color: #fca5a5;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        white-space: nowrap;
+        max-width: 280px;
+        white-space: normal;
+        border-radius: 0.5rem;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        z-index: 50;
+        pointer-events: none;
+      }
+      .private-indicator:hover::after {
+        opacity: 1;
+        visibility: visible;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="deptToast" style="display:none; position:fixed; top:20px; right:20px; background:#2563eb; color:#fff; padding:12px 16px; border-radius:8px; box-shadow:0 8px 16px rgba(0,0,0,.25); border:1px solid #93c5fd; z-index:9999;">Please select the department you want to access first.</div>
+
+    <!-- Header Bar -->
+    <nav class="flex items-center justify-between px-4 md:px-6 h-16 sticky top-0 z-30" style="background: rgba(15, 15, 20, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(59, 130, 246, 0.2); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+      <div class="flex items-center gap-3">
+        <a href="/communities" class="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+          <i class="fa fa-arrow-left"></i>
+          <span class="hidden sm:inline">Communities</span>
+        </a>
+        <a href="/" class="flex items-center">
+          <img src="/static/images/lines-police-cad-discord-logo-2024-github-profile.png" alt="Lines Police CAD" style="height: 36px; width: auto;" />
+        </a>
+      </div>
+      <div class="flex items-center space-x-4">
+        <% if (user && user._doc) { %>
+          <!-- User is logged in - show account and notification buttons -->
+          <div class="flex items-center space-x-3">
+            <!-- Notification Button -->
+            <button id="notificationBtn" class="relative p-2 text-gray-300 hover:text-white transition-colors" style="background: none; border: none; cursor: pointer;">
+              <i class="fa fa-bell text-xl"></i>
+              <span id="notificationBadge" class="notification-badge">0</span>
+            </button>
+
+            <!-- Account Dropdown -->
+            <div id="accountDropdownWrapper" style="position: relative;">
+              <button id="accountBtn" class="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors" style="background: none; border: none; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                <% if (user.user.profilePicture) { %>
+                  <% var sub = user._doc && user._doc.user && user._doc.user.subscription; %>
+                  <% var subPlan = (sub && sub.active && sub.plan) ? sub.plan : 'free'; %>
+                  <% var tierClass = subPlan === 'premium_plus' ? 'tier-premium-plus' : subPlan === 'premium' ? 'tier-premium' : subPlan === 'basic' ? 'tier-basic' : 'tier-free'; %>
+                  <img src="<%= user.user.profilePicture %>" alt="" class="navbar-profile-pic <%= tierClass %>">
+                <% } else { %>
+                  <i class="fa fa-user text-sm"></i>
+                <% } %>
+                <span class="font-medium"><%= user.user.username || 'User' %></span>
+                <i id="accountChevron" class="fa fa-chevron-down text-xs" style="transition: transform 0.2s;"></i>
+              </button>
+              <div id="accountDropdown" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 0.5rem; background: rgba(15, 15, 20, 0.98); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem; min-width: 200px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); z-index: 10001;">
+                <a href="/profile" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; color: rgba(255, 255, 255, 0.9); text-decoration: none; border-radius: 4px; font-size: 0.875rem; transition: background-color 0.2s;" onmouseenter="this.style.backgroundColor='rgba(255,255,255,0.1)'" onmouseleave="this.style.backgroundColor='transparent'">
+                  <i class="fa fa-cog" style="width: 18px; text-align: center;"></i>
+                  Account Settings
+                </a>
+                <a href="/logout" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; color: #ef4444; text-decoration: none; border-radius: 4px; font-size: 0.875rem; margin-top: 0.25rem; transition: background-color 0.2s;" onmouseenter="this.style.backgroundColor='rgba(239,68,68,0.1)'" onmouseleave="this.style.backgroundColor='transparent'">
+                  <i class="fa fa-sign-out-alt" style="width: 18px; text-align: center;"></i>
+                  Logout
+                </a>
+              </div>
+            </div>
+          </div>
+        <% } else { %>
+          <!-- User is not logged in - show login button -->
+          <a href="/login-civ?redirect=<%= encodeURIComponent('/community/' + community._id) %>" class="inline-flex items-center px-4 py-2 text-black font-semibold rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);">
+            <i class="fa fa-sign-in-alt mr-2"></i>
+            Login
+          </a>
+        <% } %>
+      </div>
+    </nav>
+
+    <% if (community.community) { %>
+      <%
+        let isMemberApproved = false;
+        let isMemberPending = false;
+        let memberSinceYear = null;
+        let communityId = community._id;
+        if (communityId && typeof communityId === 'object' && communityId.$oid) {
+          communityId = communityId.$oid;
+        }
+
+        if (user && user._doc && user._doc.user && Array.isArray(user._doc.user.communities) && communityId) {
+          user._doc.user.communities.forEach(function(c) {
+            if (String(c.communityId) === String(communityId) && c.status === 'approved') {
+              isMemberApproved = true;
+              if (c._id && typeof c._id === 'string') {
+                const objectId = c._id;
+                const timestamp = parseInt(objectId.substring(0, 8), 16) * 1000;
+                const date = new Date(timestamp);
+                memberSinceYear = date.getFullYear().toString().slice(-2);
+              }
+            }
+            if (String(c.communityId) === String(communityId) && c.status === 'pending') {
+              isMemberPending = true;
+            }
+          });
+        }
+
+        let isOwner = false;
+        if (user && user._doc && community.community && community.community.ownerID) {
+          isOwner = String(community.community.ownerID) === String(user._doc._id);
+        }
+      %>
+
+      <script>
+        window.communityId = '<%= communityId %>';
+        window.userId = '<%= userId %>';
+        // Store all events for edit modal
+        window.allEvents = <%- JSON.stringify(community.community.events || []) %>;
+        // Store permission for dynamic UI updates
+        window.canManageEvents = false;
+        window.canManageDepartments = <%= canManageDepartments %>;
+
+        // Department pagination and filtering - all departments are server-rendered
+        var deptCurrentPage = 1;
+        var deptPerPage = 6;
+        var deptOriginalCount = <%= community.community.departments ? community.community.departments.length : 0 %>;
+        var deptTotalCount = deptOriginalCount;
+        var deptTotalPages = Math.max(1, Math.ceil(deptTotalCount / deptPerPage));
+        var deptLoadedPages = { '': { 1: true } }; // Track which pages have been loaded per filter
+        var deptIsLoading = false;
+        var deptCurrentFilter = ''; // Current template filter (empty = all)
+        // Build template types from server-side department data
+        var deptTemplateTypes = <%- JSON.stringify((function() {
+          var allDepts = community.community.departments || [];
+          var typeMap = {};
+          allDepts.forEach(function(dept) {
+            var templateName = (dept.template && dept.template.name) ? dept.template.name : '';
+            if (templateName) {
+              if (!typeMap[templateName]) {
+                typeMap[templateName] = { name: templateName, count: 0 };
+              }
+              typeMap[templateName].count++;
+            }
+          });
+          return Object.values(typeMap);
+        })()) %>;
+
+        function changeDeptPage(delta) {
+          var newPage = deptCurrentPage + delta;
+          if (newPage < 1 || newPage > deptTotalPages) return;
+
+          deptCurrentPage = newPage;
+
+          // All departments are already rendered server-side, just show/hide based on page
+          var startIdx = (deptCurrentPage - 1) * deptPerPage;
+          var endIdx = startIdx + deptPerPage;
+          var cards = document.querySelectorAll('#departments-grid .dept-card');
+
+          if (deptCurrentFilter) {
+            // When filtered, use filtered index (cards without data-filtered-index stay hidden)
+            cards.forEach(function(card) {
+              var filteredIdx = card.getAttribute('data-filtered-index');
+              if (filteredIdx !== null && filteredIdx !== '') {
+                var idx = parseInt(filteredIdx, 10);
+                card.style.display = (idx >= startIdx && idx < endIdx) ? '' : 'none';
+              } else {
+                card.style.display = 'none';
+              }
+            });
+          } else {
+            // No filter - use original index
+            cards.forEach(function(card) {
+              var idx = parseInt(card.getAttribute('data-dept-index'), 10);
+              card.style.display = (idx >= startIdx && idx < endIdx) ? '' : 'none';
+            });
+          }
+
+          updateDeptPaginationUI();
+        }
+
+        function filterDepartments(templateFilter) {
+          deptCurrentFilter = templateFilter || '';
+          deptCurrentPage = 1;
+
+          // Update filter button states
+          var filterBtns = document.querySelectorAll('#dept-filter-tabs button');
+          filterBtns.forEach(function(btn) {
+            var btnFilter = btn.getAttribute('data-filter') || '';
+            if (btnFilter === deptCurrentFilter) {
+              btn.style.background = '#3b82f6';
+              btn.style.color = 'white';
+            } else {
+              btn.style.background = 'rgba(255,255,255,0.05)';
+              btn.style.color = '#94a3b8';
+            }
+          });
+
+          // Filter and paginate the server-rendered departments
+          var cards = document.querySelectorAll('#departments-grid .dept-card');
+
+          if (!deptCurrentFilter) {
+            // No filter - show all cards by their original index
+            cards.forEach(function(card) {
+              var idx = parseInt(card.getAttribute('data-dept-index'), 10);
+              card.style.display = (idx < deptPerPage) ? '' : 'none';
+              card.removeAttribute('data-filtered-index');
+            });
+            deptTotalCount = deptOriginalCount;
+          } else {
+            // Filter active - show only matching cards
+            var visibleIdx = 0;
+            var matchingCount = 0;
+
+            cards.forEach(function(card) {
+              var cardTemplate = (card.getAttribute('data-template-name') || '').toLowerCase();
+              var filterLower = deptCurrentFilter.toLowerCase();
+              var matchesFilter = cardTemplate.includes(filterLower);
+
+              if (matchesFilter) {
+                // Show only first page of matching departments
+                if (visibleIdx < deptPerPage) {
+                  card.style.display = '';
+                } else {
+                  card.style.display = 'none';
+                }
+                card.setAttribute('data-filtered-index', visibleIdx);
+                visibleIdx++;
+                matchingCount++;
+              } else {
+                card.style.display = 'none';
+                card.removeAttribute('data-filtered-index');
+              }
+            });
+            deptTotalCount = matchingCount;
+          }
+
+          deptTotalPages = Math.max(1, Math.ceil(deptTotalCount / deptPerPage));
+          updateDeptPaginationUI();
+        }
+
+        async function fetchDepartmentsPage(page, clearContainer) {
+          deptIsLoading = true;
+          var container = document.getElementById('departments-grid');
+
+          try {
+            var filterParam = deptCurrentFilter ? '&templateFilter=' + encodeURIComponent(deptCurrentFilter) : '';
+            var response = await fetch(window.API_URL + '/api/v2/community/' + window.communityId + '/departments?userId=' + window.userId + '&page=' + page + '&limit=' + deptPerPage + filterParam);
+            if (!response.ok) throw new Error('Failed to fetch departments');
+            var data = await response.json();
+            var departments = data.data || [];
+
+            // Update total count and pages for this filter
+            deptTotalCount = data.totalCount || 0;
+            deptTotalPages = Math.max(1, Math.ceil(deptTotalCount / deptPerPage));
+
+            // Update the department count badge
+            var countBadge = document.getElementById('dept-count-badge');
+            if (countBadge && !deptCurrentFilter) {
+              countBadge.textContent = deptTotalCount;
+            }
+
+            // Update template types if returned (only on first fetch without filter)
+            if (data.templateTypes && !deptCurrentFilter) {
+              deptTemplateTypes = data.templateTypes;
+              renderDeptFilterTabs();
+            }
+
+            // Clear container if requested (filter change)
+            if (clearContainer) {
+              container.innerHTML = '';
+            }
+
+            // Calculate the starting index for these departments
+            var startIdx = (page - 1) * deptPerPage;
+
+            // Append new department cards
+            if (departments.length === 0 && clearContainer) {
+              var emptyHtml = '<div id="no-departments-empty-state" class="col-span-full dashboard-card text-center py-8"><i class="fa fa-building text-3xl text-slate-600 mb-3"></i><p class="text-slate-400">No departments yet</p>';
+              if (window.canManageDepartments) {
+                emptyHtml += '<button onclick="openCreateDepartmentModal()" class="btn-primary mt-4 text-sm"><i class="fa fa-plus mr-1"></i>Create First Department</button>';
+              }
+              emptyHtml += '</div>';
+              container.innerHTML = emptyHtml;
+            } else {
+              departments.forEach(function(dept, i) {
+                var globalIdx = startIdx + i;
+                var card = createDepartmentCard(dept, globalIdx);
+                container.appendChild(card);
+              });
+            }
+
+            var filterKey = deptCurrentFilter || '';
+            if (!deptLoadedPages[filterKey]) deptLoadedPages[filterKey] = {};
+            deptLoadedPages[filterKey][page] = true;
+
+            updateDeptPaginationUI();
+          } catch (err) {
+            console.error('Error fetching departments:', err);
+            if (clearContainer) {
+              container.innerHTML = '<div class="col-span-full dashboard-card text-center py-8"><i class="fa fa-exclamation-triangle text-3xl text-red-500 mb-3"></i><p class="text-slate-400">Failed to load departments</p></div>';
+            }
+          } finally {
+            deptIsLoading = false;
+          }
+        }
+
+        function createDepartmentCard(dept, idx) {
+          var card = document.createElement('div');
+          var approvalRequired = dept.approvalRequired;
+          // accessStatus: "approved" (can access), "pending" (request sent), "locked" (needs to request)
+          var accessStatus = dept.accessStatus || 'approved';
+          var canAccess = accessStatus === 'approved';
+          var isPending = accessStatus === 'pending';
+          var isLocked = accessStatus === 'locked';
+
+          card.className = 'dept-card' + (canAccess ? '' : ' locked');
+          card.setAttribute('data-dept-index', idx);
+          card.setAttribute('data-dept-id', dept._id);
+          card.setAttribute('data-dept-name', (dept.name || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'"));
+          card.setAttribute('data-template-name', (dept.templateName || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'"));
+          card.setAttribute('data-access-status', accessStatus);
+
+          var templateName = dept.templateName || '';
+          var lowerTemplate = templateName.toLowerCase();
+          var deptIcon = 'fa-building';
+          var deptColor = '#60a5fa';
+          if (lowerTemplate.includes('police')) {
+            deptIcon = 'fa-shield-halved';
+            deptColor = '#3b82f6';
+          } else if (lowerTemplate.includes('sheriff')) {
+            deptIcon = 'fa-star';
+            deptColor = '#fbbf24';
+          } else if (lowerTemplate.includes('civilian')) {
+            deptIcon = 'fa-user';
+            deptColor = '#10b981';
+          } else if (lowerTemplate.includes('fire')) {
+            deptIcon = 'fa-fire';
+            deptColor = '#ef4444';
+          } else if (lowerTemplate.includes('ems')) {
+            deptIcon = 'fa-truck-medical';
+            deptColor = '#ef4444';
+          } else if (lowerTemplate.includes('dispatch')) {
+            deptIcon = 'fa-headset';
+            deptColor = '#f59e0b';
+          }
+
+          // For locked departments, show blurred/overlay image
+          var imageHtml;
+          if (isLocked || isPending) {
+            imageHtml = dept.image
+              ? '<div class="aspect-[2/1] overflow-hidden relative"><img src="' + escapeHtml(dept.image) + '" alt="' + escapeHtml(dept.name) + '" class="w-full h-full object-cover" style="pointer-events: none; filter: blur(4px);" /><div class="absolute inset-0" style="background: rgba(10, 10, 15, 0.7);"></div><div class="absolute inset-0 flex items-center justify-center"><i class="fa fa-lock text-2xl text-slate-400"></i></div></div>'
+              : '<div class="aspect-[2/1] flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);"><i class="fa fa-lock text-4xl" style="color: #64748b; opacity: 0.5;"></i></div>';
+          } else {
+            imageHtml = dept.image
+              ? '<div class="aspect-[2/1] overflow-hidden"><img src="' + escapeHtml(dept.image) + '" alt="' + escapeHtml(dept.name) + '" class="w-full h-full object-cover" style="pointer-events: none;" /><div class="absolute inset-0" style="background: linear-gradient(to top, rgba(10, 10, 15, 0.95) 0%, transparent 60%);"></div></div>'
+              : '<div class="aspect-[2/1] flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);"><i class="fa ' + deptIcon + ' text-4xl" style="color: ' + deptColor + '; opacity: 0.5;"></i></div>';
+          }
+
+          var privateBadgeHtml = approvalRequired
+            ? '<div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full z-10" style="background: rgba(0, 0, 0, 0.6);"><i class="fa fa-lock text-xs" style="color: #fbbf24;"></i><span class="text-xs font-medium" style="color: #fbbf24;">Private</span></div>'
+            : '';
+
+          var editBtnHtml = window.canManageDepartments
+            ? '<button class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full transition-colors z-10" style="background: rgba(0, 0, 0, 0.5); color: #94a3b8;" onclick="event.stopPropagation(); openEditDepartmentModal(\'' + dept._id + '\');"><i class="fa fa-pencil text-sm"></i></button>'
+            : '';
+
+          // Bottom action based on access status
+          var actionHtml = '';
+          if (canAccess) {
+            actionHtml = '<span class="text-xs" style="color: #fbbf24;">Enter <i class="fa fa-arrow-right ml-1"></i></span>';
+          } else if (isPending) {
+            actionHtml = '<span class="text-xs px-2 py-1 rounded" style="color: #94a3b8; background: rgba(148, 163, 184, 0.1);">Request Pending</span>';
+          } else if (isLocked) {
+            actionHtml = '<button class="text-xs px-2 py-1 rounded transition-colors" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);" onclick="event.stopPropagation(); openRequestJoinDepartmentModal(\'' + dept._id + '\', \'' + escapeHtml(dept.name).replace(/\\/g, "\\\\").replace(/'/g, "\\'") + '\');">Request to Join</button>';
+          }
+
+          card.innerHTML = '<div class="relative">' + imageHtml + privateBadgeHtml + editBtnHtml + '</div>' +
+            '<div class="p-4 flex flex-col justify-between" style="min-height: 88px;">' +
+              '<div>' +
+                '<div class="flex items-center gap-2 mb-1">' +
+                  '<i class="fa ' + deptIcon + ' text-sm" style="color: ' + deptColor + ';"></i>' +
+                  '<h3 class="font-bold text-white text-base line-clamp-1">' + escapeHtml(dept.name) + '</h3>' +
+                '</div>' +
+                (dept.description ? '<p class="text-slate-400 text-xs line-clamp-2">' + escapeHtml(dept.description) + '</p>' : '') +
+              '</div>' +
+              '<div class="flex items-center justify-between mt-2">' +
+                '<span class="text-xs text-slate-500">' + escapeHtml(templateName || 'Department') + '</span>' +
+                actionHtml +
+              '</div>' +
+            '</div>';
+
+          return card;
+        }
+
+        function updateDeptPaginationUI() {
+          var prevBtn = document.getElementById('dept-prev-btn');
+          var nextBtn = document.getElementById('dept-next-btn');
+          var pageInfo = document.getElementById('dept-page-info');
+          var paginationContainer = document.getElementById('dept-pagination');
+
+          if (prevBtn) {
+            prevBtn.disabled = deptCurrentPage <= 1;
+            prevBtn.style.opacity = deptCurrentPage <= 1 ? '0.5' : '1';
+            prevBtn.style.cursor = deptCurrentPage <= 1 ? 'not-allowed' : 'pointer';
+          }
+          if (nextBtn) {
+            nextBtn.disabled = deptCurrentPage >= deptTotalPages;
+            nextBtn.style.opacity = deptCurrentPage >= deptTotalPages ? '0.5' : '1';
+            nextBtn.style.cursor = deptCurrentPage >= deptTotalPages ? 'not-allowed' : 'pointer';
+          }
+          if (pageInfo) {
+            pageInfo.textContent = 'Page ' + deptCurrentPage + ' of ' + deptTotalPages;
+          }
+          // Show/hide pagination based on total pages
+          if (paginationContainer) {
+            paginationContainer.style.display = deptTotalPages > 1 ? 'flex' : 'none';
+          }
+        }
+
+        function getDeptIconAndColor(templateName) {
+          var lowerTemplate = (templateName || '').toLowerCase();
+          var deptIcon = 'fa-building';
+          var deptColor = '#60a5fa';
+          if (lowerTemplate.includes('police')) {
+            deptIcon = 'fa-shield-halved';
+            deptColor = '#3b82f6';
+          } else if (lowerTemplate.includes('sheriff')) {
+            deptIcon = 'fa-star';
+            deptColor = '#fbbf24';
+          } else if (lowerTemplate.includes('civilian')) {
+            deptIcon = 'fa-user';
+            deptColor = '#10b981';
+          } else if (lowerTemplate.includes('fire')) {
+            deptIcon = 'fa-fire';
+            deptColor = '#ef4444';
+          } else if (lowerTemplate.includes('ems')) {
+            deptIcon = 'fa-truck-medical';
+            deptColor = '#ef4444';
+          } else if (lowerTemplate.includes('dispatch')) {
+            deptIcon = 'fa-headset';
+            deptColor = '#f59e0b';
+          }
+          return { icon: deptIcon, color: deptColor };
+        }
+
+        function renderDeptFilterTabs() {
+          var container = document.getElementById('dept-filter-tabs');
+          if (!container || !deptTemplateTypes || deptTemplateTypes.length < 2) {
+            // Don't show filters if less than 2 types
+            if (container) container.style.display = 'none';
+            return;
+          }
+
+          container.style.display = 'flex';
+          container.innerHTML = '';
+
+          // Add "All" button with total count
+          var allBtn = document.createElement('button');
+          allBtn.setAttribute('data-filter', '');
+          allBtn.className = 'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5';
+          allBtn.style.background = deptCurrentFilter === '' ? '#3b82f6' : 'rgba(255,255,255,0.05)';
+          allBtn.style.color = deptCurrentFilter === '' ? 'white' : '#94a3b8';
+          allBtn.innerHTML = 'All <span class="text-xs opacity-60">(' + deptTotalCount + ')</span>';
+          allBtn.onclick = function() { filterDepartments(''); };
+          container.appendChild(allBtn);
+
+          // Sort by count descending
+          var sortedTypes = deptTemplateTypes.slice().sort(function(a, b) { return b.count - a.count; });
+
+          // Add button for each template type
+          sortedTypes.forEach(function(type) {
+            var iconData = getDeptIconAndColor(type.name);
+            var btn = document.createElement('button');
+            btn.setAttribute('data-filter', type.name);
+            btn.className = 'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5';
+            btn.style.background = deptCurrentFilter === type.name ? '#3b82f6' : 'rgba(255,255,255,0.05)';
+            btn.style.color = deptCurrentFilter === type.name ? 'white' : '#94a3b8';
+            btn.innerHTML = '<i class="fa ' + iconData.icon + '" style="color: ' + iconData.color + ';"></i>' + escapeHtml(type.name) + ' <span class="text-xs opacity-60">(' + type.count + ')</span>';
+            btn.onclick = function() { filterDepartments(type.name); };
+            container.appendChild(btn);
+          });
+        }
+
+        // Initialize filter tabs on page load
+        document.addEventListener('DOMContentLoaded', function() {
+          renderDeptFilterTabs();
+        });
+
+        // Client-side event pagination and filtering
+        var eventCurrentPage = 1;
+        var eventPerPage = 4;
+        var eventTotalCount = window.allEvents.length;
+        var eventTotalPages = Math.max(1, Math.ceil(eventTotalCount / eventPerPage));
+        var currentEventFilter = 'all';
+
+        function filterEvents(filter) {
+          currentEventFilter = filter;
+          eventCurrentPage = 1;
+
+          // Update tab styles
+          var tabs = document.querySelectorAll('.event-filter-tab');
+          tabs.forEach(function(tab) {
+            var tabFilter = tab.getAttribute('data-filter');
+            if (tabFilter === filter) {
+              tab.classList.add('active');
+              if (filter === 'all') {
+                tab.style.background = 'rgba(251, 191, 36, 0.15)';
+                tab.style.borderColor = 'rgba(251, 191, 36, 0.5)';
+                tab.style.color = '#fbbf24';
+              } else if (filter === 'required') {
+                tab.style.background = 'rgba(239, 68, 68, 0.15)';
+                tab.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+                tab.style.color = '#f87171';
+              } else if (filter === 'optional') {
+                tab.style.background = 'rgba(59, 130, 246, 0.15)';
+                tab.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                tab.style.color = '#60a5fa';
+              }
+            } else {
+              tab.classList.remove('active');
+              tab.style.background = 'transparent';
+              tab.style.color = '#94a3b8';
+              if (tabFilter === 'all') {
+                tab.style.borderColor = 'rgba(251, 191, 36, 0.3)';
+              } else if (tabFilter === 'required') {
+                tab.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+              } else if (tabFilter === 'optional') {
+                tab.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+              }
+            }
+          });
+
+          // Filter and paginate events
+          applyEventFilter();
+        }
+
+        function applyEventFilter() {
+          var cards = document.querySelectorAll('#events-list .event-card');
+
+          // First pass: count filtered items to validate current page
+          var totalFiltered = 0;
+          cards.forEach(function(card) {
+            var isRequired = card.getAttribute('data-event-required') === 'true';
+            var matchesFilter = currentEventFilter === 'all' ||
+              (currentEventFilter === 'required' && isRequired) ||
+              (currentEventFilter === 'optional' && !isRequired);
+            if (matchesFilter) totalFiltered++;
+          });
+
+          // Calculate total pages and validate current page
+          eventTotalPages = Math.max(1, Math.ceil(totalFiltered / eventPerPage));
+          if (eventCurrentPage > eventTotalPages) {
+            eventCurrentPage = eventTotalPages;
+          }
+
+          var startIdx = (eventCurrentPage - 1) * eventPerPage;
+          var endIdx = startIdx + eventPerPage;
+          var filteredCount = 0;
+
+          // Second pass: show/hide cards based on filter and pagination
+          cards.forEach(function(card) {
+            var isRequired = card.getAttribute('data-event-required') === 'true';
+            var matchesFilter = currentEventFilter === 'all' ||
+              (currentEventFilter === 'required' && isRequired) ||
+              (currentEventFilter === 'optional' && !isRequired);
+
+            if (matchesFilter) {
+              if (filteredCount >= startIdx && filteredCount < endIdx) {
+                card.style.display = '';
+              } else {
+                card.style.display = 'none';
+              }
+              filteredCount++;
+            } else {
+              card.style.display = 'none';
+            }
+          });
+
+          // Update pagination UI
+          updateEventPagination();
+
+          // Show "no events" message if filtered list is empty
+          var noEventsMsg = document.getElementById('no-filtered-events');
+          if (filteredCount === 0 && cards.length > 0) {
+            if (!noEventsMsg) {
+              noEventsMsg = document.createElement('div');
+              noEventsMsg.id = 'no-filtered-events';
+              noEventsMsg.className = 'dashboard-card text-center py-8';
+              noEventsMsg.innerHTML = '<i class="fa fa-calendar-xmark text-2xl text-slate-500 mb-3"></i><p class="text-slate-400 text-sm">No ' + (currentEventFilter === 'required' ? 'required' : 'optional') + ' events</p>';
+              document.getElementById('events-list').appendChild(noEventsMsg);
+            }
+            noEventsMsg.style.display = '';
+          } else if (noEventsMsg) {
+            noEventsMsg.style.display = 'none';
+          }
+        }
+
+        function updateEventFilterTabs() {
+          var events = window.allEvents || [];
+          var requiredCount = events.filter(function(e) { return e.required; }).length;
+          var optionalCount = events.length - requiredCount;
+
+          var tabs = document.querySelectorAll('.event-filter-tab');
+          tabs.forEach(function(tab) {
+            var filter = tab.getAttribute('data-filter');
+            var countSpan = tab.querySelector('span');
+            if (countSpan) {
+              if (filter === 'all') {
+                countSpan.textContent = '(' + events.length + ')';
+              } else if (filter === 'required') {
+                countSpan.textContent = '(' + requiredCount + ')';
+              } else if (filter === 'optional') {
+                countSpan.textContent = '(' + optionalCount + ')';
+              }
+            }
+          });
+        }
+
+        function updateEventPagination() {
+          var prevBtn = document.getElementById('event-prev-btn');
+          var nextBtn = document.getElementById('event-next-btn');
+          var pageInfo = document.getElementById('event-page-info');
+          var paginationContainer = document.getElementById('event-pagination');
+
+          if (paginationContainer) {
+            paginationContainer.style.display = eventTotalPages > 1 ? 'flex' : 'none';
+          }
+          if (prevBtn) {
+            prevBtn.disabled = eventCurrentPage <= 1;
+            prevBtn.style.opacity = eventCurrentPage <= 1 ? '0.5' : '1';
+            prevBtn.style.cursor = eventCurrentPage <= 1 ? 'not-allowed' : 'pointer';
+          }
+          if (nextBtn) {
+            nextBtn.disabled = eventCurrentPage >= eventTotalPages;
+            nextBtn.style.opacity = eventCurrentPage >= eventTotalPages ? '0.5' : '1';
+            nextBtn.style.cursor = eventCurrentPage >= eventTotalPages ? 'not-allowed' : 'pointer';
+          }
+          if (pageInfo) {
+            pageInfo.textContent = 'Page ' + eventCurrentPage + ' of ' + eventTotalPages;
+          }
+        }
+
+        function changeEventPage(delta) {
+          var newPage = eventCurrentPage + delta;
+          if (newPage < 1 || newPage > eventTotalPages) return;
+
+          eventCurrentPage = newPage;
+          applyEventFilter();
+        }
+
+        // Refresh events UI after create/edit/delete
+        // Pass preservePage=true to keep current page (for edits), false to reset to page 1 (for creates)
+        function refreshEventsUI(preservePage) {
+          var events = window.allEvents || [];
+          var container = document.getElementById('events-list');
+          var paginationContainer = document.getElementById('event-pagination');
+          var eventsSection = document.getElementById('events-section');
+          var eventCountBadge = eventsSection ? eventsSection.querySelector('.section-title span') : null;
+
+          // Update the count badge
+          if (eventCountBadge) {
+            eventCountBadge.textContent = events.length;
+          }
+
+          // If no container exists, we need to create the structure
+          if (!container && events.length > 0) {
+            // Reload page if we don't have the container structure
+            window.location.reload();
+            return;
+          }
+
+          if (!container) return;
+
+          // Update pagination counts
+          eventTotalCount = events.length;
+          eventTotalPages = Math.max(1, Math.ceil(eventTotalCount / eventPerPage));
+
+          // Preserve current page or reset to 1
+          if (!preservePage) {
+            eventCurrentPage = 1;
+          } else {
+            // Make sure current page is still valid
+            if (eventCurrentPage > eventTotalPages) {
+              eventCurrentPage = eventTotalPages;
+            }
+          }
+
+          var startIdx = (eventCurrentPage - 1) * eventPerPage;
+          var endIdx = startIdx + eventPerPage;
+
+          // Clear existing cards
+          container.innerHTML = '';
+
+          // Create new event cards
+          events.forEach(function(evt, idx) {
+            var card = document.createElement('div');
+            card.className = 'dashboard-card event-card';
+            card.setAttribute('data-event-index', idx);
+            card.setAttribute('data-event-required', evt.required ? 'true' : 'false');
+
+            var imageHtml = evt.image
+              ? '<img src="' + evt.image + '" alt="Event" class="w-20 h-20 rounded-lg object-cover flex-shrink-0" />'
+              : '<div class="w-20 h-20 rounded-lg flex-shrink-0 flex items-center justify-center" style="background: rgba(251, 191, 36, 0.1);"><i class="fa fa-calendar text-2xl" style="color: #fbbf24; opacity: 0.5;"></i></div>';
+
+            var editBtn = window.canManageEvents
+              ? '<button onclick="event.stopPropagation(); openEditEventModal(\'' + getEventIdString(evt._id) + '\')" class="text-slate-400 hover:text-white transition-colors flex-shrink-0"><i class="fa fa-pencil text-sm"></i></button>'
+              : '';
+
+            var requiredBadge = evt.required
+              ? '<span style="font-size: 0.625rem; padding: 0.15rem 0.4rem; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 600; white-space: nowrap;">Required</span>'
+              : '';
+
+            var descHtml = evt.description ? '<p class="text-slate-400 text-xs line-clamp-2">' + escapeHtml(evt.description) + '</p>' : '';
+            var locHtml = evt.location ? '<p class="text-slate-500 text-xs mt-1"><i class="fa fa-location-dot mr-1"></i>' + escapeHtml(evt.location) + '</p>' : '';
+
+            card.innerHTML = '<div class="flex gap-4">' +
+              imageHtml +
+              '<div class="flex-1 min-w-0">' +
+                '<div class="flex items-start justify-between gap-2">' +
+                  '<div class="flex items-center gap-2">' +
+                    '<h3 class="font-bold text-white text-base line-clamp-1">' + escapeHtml(evt.title) + '</h3>' +
+                    requiredBadge +
+                  '</div>' +
+                  editBtn +
+                '</div>' +
+                '<p class="text-xs mb-1" style="color: #fbbf24;">' + new Date(evt.scheduledDate).toLocaleString() + '</p>' +
+                descHtml +
+                locHtml +
+              '</div>' +
+            '</div>';
+
+            container.appendChild(card);
+          });
+
+          // Update filter tab counts and apply current filter
+          updateEventFilterTabs();
+          applyEventFilter();
+
+          // Update pagination UI
+          if (paginationContainer) {
+            if (eventTotalPages > 1) {
+              paginationContainer.style.display = 'flex';
+              var pageInfo = document.getElementById('event-page-info');
+              var prevBtn = document.getElementById('event-prev-btn');
+              var nextBtn = document.getElementById('event-next-btn');
+              if (pageInfo) pageInfo.textContent = 'Page ' + eventCurrentPage + ' of ' + eventTotalPages;
+              if (prevBtn) {
+                prevBtn.disabled = eventCurrentPage <= 1;
+                prevBtn.style.opacity = eventCurrentPage <= 1 ? '0.5' : '1';
+                prevBtn.style.cursor = eventCurrentPage <= 1 ? 'not-allowed' : 'pointer';
+              }
+              if (nextBtn) {
+                nextBtn.disabled = eventCurrentPage >= eventTotalPages;
+                nextBtn.style.opacity = eventCurrentPage >= eventTotalPages ? '0.5' : '1';
+                nextBtn.style.cursor = eventCurrentPage >= eventTotalPages ? 'not-allowed' : 'pointer';
+              }
+            } else {
+              paginationContainer.style.display = 'none';
+            }
+          }
+
+          // Show empty state if no events
+          if (events.length === 0) {
+            container.innerHTML = '<div class="dashboard-card text-center py-8">' +
+              '<i class="fa fa-calendar text-3xl text-slate-600 mb-3"></i>' +
+              '<p class="text-slate-400">No upcoming events</p>' +
+              '</div>';
+            if (paginationContainer) paginationContainer.style.display = 'none';
+          }
+        }
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+          if (!text) return '';
+          var div = document.createElement('div');
+          div.textContent = text;
+          return div.innerHTML;
+        }
+
+        // Helper to extract ID string from various formats (handles MongoDB ObjectId)
+        function getEventIdString(id) {
+          if (!id) return '';
+          if (typeof id === 'object') return id.$oid || id.toString();
+          return String(id);
+        }
+      </script>
+
+      <!-- Main Content -->
+      <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 safe-area-bottom">
+
+        <!-- Hero Section - Community Overview -->
+        <section id="community-overview" class="mb-6 animate-fade-in-up" style="animation-delay: 0.1s;">
+          <div class="dashboard-card" style="position: relative;">
+            <% if (community.community.visibility === 'private') { %>
+              <div class="private-indicator" title="This community is private and will not appear in searches across the CAD" style="position: absolute; top: 1rem; right: 1rem; display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0.75rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; cursor: help; transition: all 0.2s ease;">
+                <i class="fa fa-lock text-sm" style="color: #ef4444;"></i>
+                <span class="text-xs font-medium hidden sm:inline" style="color: #fca5a5;">Private</span>
+              </div>
+            <% } %>
+            <div class="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+              <div class="relative flex-shrink-0">
+                <img
+                  id="community-overview-image"
+                  src="<%= community.community.imageLink || '/static/images/default-logo.png' %>"
+                  alt="<%= community.community.name %>"
+                  class="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-xl object-cover border-2"
+                  style="border-color: rgba(59, 130, 246, 0.3);"
+                />
+                <% if ((['elite','premium','standard'].includes(community.community.subscription?.plan)) && community.community.subscription?.active) { %>
+                  <div class="absolute -top-2 -right-2 badge badge-elite">
+                    <i class="fa fa-crown mr-1"></i>
+                  </div>
+                <% } %>
+              </div>
+
+              <div class="flex-1 text-center sm:text-left">
+                <h1 id="community-overview-name" class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2" style="text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);">
+                  <%= community.community.name %>
+                </h1>
+
+                <div id="community-overview-tags" class="flex flex-wrap justify-center sm:justify-start gap-2 mb-3" <% if (!community.community.tags || !community.community.tags.length) { %>style="display: none;"<% } %>>
+                  <% if (community.community.tags && community.community.tags.length) { %>
+                    <%
+                      // Format platform tags for display
+                      function formatTag(tag) {
+                        var displayMap = { 'xbox': 'Xbox', 'playstation': 'PlayStation', 'pc': 'PC' };
+                        return displayMap[tag.toLowerCase()] || tag;
+                      }
+                    %>
+                    <% community.community.tags.forEach(function(tag) { %>
+                      <span class="badge badge-tag"><%= formatTag(tag) %></span>
+                    <% }); %>
+                  <% } %>
+                </div>
+
+                <div class="flex flex-wrap justify-center sm:justify-start gap-2 mb-3">
+                  <% if (isMemberApproved) { %>
+                    <span class="badge badge-member">
+                      <i class="fa fa-check-circle mr-1"></i>Member<% if (memberSinceYear) { %> since '<%= memberSinceYear %><% } %>
+                    </span>
+                  <% } else if (isMemberPending) { %>
+                    <span class="badge badge-pending">
+                      <i class="fa fa-clock mr-1"></i>Pending Approval
+                    </span>
+                  <% } %>
+                  <% if (community.community.subscription && community.community.subscription.active) { %>
+                    <span class="badge" style="background: rgba(249, 115, 22, 0.1); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.3);">
+                      <i class="fa fa-rocket mr-1"></i><%= (community.community.subscription.plan || 'Boost').charAt(0).toUpperCase() + (community.community.subscription.plan || 'boost').slice(1) %> Boost<% if (boosterUsername) { %> by @<%= boosterUsername %><% } %>
+                    </span>
+                  <% } %>
+                  <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <i class="fa fa-users mr-1"></i><%= community.community.membersCount || 0 %> members
+                  </span>
+                </div>
+
+                <% if (community.community.description) { %>
+                  <div id="community-description-container" class="relative">
+                    <p id="community-overview-description" class="text-slate-400 text-sm line-clamp-3" style="white-space: pre-line;"><%= community.community.description %></p>
+                    <button id="description-toggle-btn" onclick="toggleDescription()" class="text-xs mt-1 hidden" style="color: #60a5fa; background: none; border: none; cursor: pointer; padding: 0;">
+                      <span id="description-toggle-text">Show more</span>
+                      <i id="description-toggle-icon" class="fa fa-chevron-down ml-1"></i>
+                    </button>
+                  </div>
+                  <script>
+                    (function() {
+                      var desc = document.getElementById('community-overview-description');
+                      var btn = document.getElementById('description-toggle-btn');
+                      if (desc && btn) {
+                        // Check if text is truncated (scrollHeight > clientHeight)
+                        setTimeout(function() {
+                          if (desc.scrollHeight > desc.clientHeight) {
+                            btn.classList.remove('hidden');
+                          }
+                        }, 100);
+                      }
+                    })();
+                    function toggleDescription() {
+                      var desc = document.getElementById('community-overview-description');
+                      var btn = document.getElementById('description-toggle-btn');
+                      var text = document.getElementById('description-toggle-text');
+                      var icon = document.getElementById('description-toggle-icon');
+                      if (desc.classList.contains('line-clamp-3')) {
+                        desc.classList.remove('line-clamp-3');
+                        desc.style.maxHeight = '200px';
+                        desc.style.overflowY = 'auto';
+                        text.textContent = 'Show less';
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-up');
+                      } else {
+                        desc.classList.add('line-clamp-3');
+                        desc.style.maxHeight = '';
+                        desc.style.overflowY = '';
+                        text.textContent = 'Show more';
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                      }
+                    }
+                  </script>
+                <% } %>
+              </div>
+            </div>
+
+            <% if (user && !isMemberApproved && !isMemberPending) { %>
+              <div class="mt-4 pt-4" style="border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <button id="requestJoinBtn" onclick="openRequestJoinModal()" class="btn-primary w-full text-center">
+                  <i class="fa fa-user-plus mr-2"></i>Request to Join Community
+                </button>
+              </div>
+            <% } %>
+
+            <% if (isMemberApproved) { %>
+              <div class="mt-4 pt-4 flex flex-wrap gap-2 justify-center sm:justify-end" style="border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <% if (isOwner) { %>
+                  <button onclick="openOwnerCannotLeaveModal()" class="btn-secondary text-sm opacity-50 cursor-not-allowed">
+                    <i class="fa fa-sign-out-alt mr-2"></i>Leave
+                  </button>
+                <% } else { %>
+                  <button onclick="openLeaveCommunityModal()" class="btn-secondary text-sm text-red-400 hover:text-red-300">
+                    <i class="fa fa-sign-out-alt mr-2"></i>Leave
+                  </button>
+                <% } %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+
+        <!-- Quick Actions -->
+        <% if (isMemberApproved) { %>
+          <section id="community-actions" class="mt-2 mb-6 animate-fade-in-up" style="animation-delay: 0.15s; position: relative; z-index: 10;">
+            <div class="flex gap-3 overflow-x-auto pb-2 pt-1 scrollbar-hide">
+              <%
+                let canManageSettings = false;
+                if (userId && community.community && Array.isArray(community.community.roles)) {
+                  community.community.roles.forEach(function(role) {
+                    if (Array.isArray(role.members) && role.members.includes(userId)) {
+                      if (Array.isArray(role.permissions)) {
+                        role.permissions.forEach(function(perm) {
+                          if ((perm.name === "administrator" && perm.enabled === true) || (perm.name === "manage community settings" && perm.enabled === true)) {
+                            canManageSettings = true;
+                          }
+                        });
+                      }
+                    }
+                  });
+                }
+
+                let canManageMembers = false;
+                if (userId && community.community && Array.isArray(community.community.roles)) {
+                  community.community.roles.forEach(function(role) {
+                    if (Array.isArray(role.members) && role.members.includes(userId)) {
+                      if (Array.isArray(role.permissions)) {
+                        role.permissions.forEach(function(perm) {
+                          if ((perm.name === "administrator" && perm.enabled === true) || (perm.name === "manage members" && perm.enabled === true)) {
+                            canManageMembers = true;
+                          }
+                        });
+                      }
+                    }
+                  });
+                }
+              %>
+
+              <% if (canManageSettings) { %>
+                <button onclick="openSettingsModal()" class="action-btn" style="color: #a78bfa;">
+                  <i class="fa fa-gear"></i>
+                  <span>Settings</span>
+                </button>
+              <% } else { %>
+                <button onclick="showNoSettingsPermissionModal()" class="action-btn disabled" style="color: #6b7280;">
+                  <i class="fa fa-gear"></i>
+                  <span>Settings</span>
+                </button>
+              <% } %>
+
+              <% if (canManageMembers) { %>
+                <button onclick="openInviteCodesModal()" class="action-btn" style="color: #34d399;">
+                  <i class="fa fa-user-plus"></i>
+                  <span>Invite</span>
+                </button>
+              <% } else { %>
+                <button onclick="showNoInviteCodesPermissionModal()" class="action-btn disabled" style="color: #6b7280;">
+                  <i class="fa fa-user-plus"></i>
+                  <span>Invite</span>
+                </button>
+              <% } %>
+
+              <button id="shareBtn" onclick="copyCommunityUrl()" class="action-btn" style="color: #60a5fa;">
+                <i id="shareBtnIcon" class="fa fa-share-nodes"></i>
+                <span id="shareBtnText">Share</span>
+              </button>
+
+              <button onclick="scrollToSection('announcements-section')" class="action-btn" style="color: #f472b6;">
+                <i class="fa fa-bullhorn"></i>
+                <span>News</span>
+              </button>
+
+              <button onclick="scrollToSection('events-section')" class="action-btn" style="color: #fbbf24;">
+                <i class="fa fa-calendar"></i>
+                <span>Events</span>
+              </button>
+
+              <a href="/community-pricing?communityId=<%= community.community._id || community._id %>" class="action-btn" style="color: #f97316; text-decoration: none;">
+                <i class="fa fa-rocket"></i>
+                <span>Boost</span>
+              </a>
+            </div>
+          </section>
+        <% } %>
+
+        <!-- Departments Section -->
+        <section id="departments-section" class="mb-6 animate-fade-in-up" style="animation-delay: 0.2s;">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="section-title text-white flex items-center gap-2">
+              <i class="fa fa-building" style="color: #fbbf24;"></i>
+              Departments
+              <% if (isMemberApproved) { %>
+                <span id="dept-count-badge" class="text-xs px-2 py-0.5 rounded-full" style="color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+                  <%= community.community.departments ? community.community.departments.length : 0 %>
+                </span>
+              <% } %>
+            </h2>
+
+            <% if (isMemberApproved && canManageDepartments) { %>
+              <button onclick="openCreateDepartmentModal()" class="btn-secondary text-sm">
+                <i class="fa fa-plus mr-1"></i>Add
+              </button>
+            <% } %>
+          </div>
+
+          <% if (!isMemberApproved) { %>
+            <div class="dashboard-card text-center py-12">
+              <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+                <i class="fa fa-lock text-2xl text-slate-500"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white mb-2">Departments Locked</h3>
+              <p class="text-slate-400 text-sm mb-4">Join the community to access departments</p>
+              <% if (!user) { %>
+                <a href="/login-civ?redirect=<%= encodeURIComponent('/community/' + community._id) %>" class="btn-primary inline-block">
+                  Sign In to Join
+                </a>
+              <% } else if (!isMemberPending) { %>
+                <button onclick="openRequestJoinModal()" class="btn-primary">
+                  Request to Join
+                </button>
+              <% } else { %>
+                <button disabled class="btn-secondary opacity-50 cursor-not-allowed">
+                  Request Pending
+                </button>
+              <% } %>
+            </div>
+          <% } else { %>
+            <!-- Department Filter Tabs -->
+            <div id="dept-filter-tabs" class="flex flex-wrap gap-2 mb-4" style="display: none;"></div>
+
+            <div id="departments-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+              <%
+              // Use community.community.departments which has full member data
+              var allDepts = community.community.departments || [];
+              if (allDepts.length === 0) {
+              %>
+                <div id="no-departments-empty-state" class="col-span-full dashboard-card text-center py-8">
+                  <i class="fa fa-building text-3xl text-slate-600 mb-3"></i>
+                  <p class="text-slate-400">No departments yet</p>
+                  <% if (canManageDepartments) { %>
+                    <button onclick="openCreateDepartmentModal()" class="btn-primary mt-4 text-sm">
+                      <i class="fa fa-plus mr-1"></i>Create First Department
+                    </button>
+                  <% } %>
+                </div>
+              <%
+              } else {
+              allDepts.forEach(function(dept, deptIndex) {
+                var templateName = (dept.template && dept.template.name) ? dept.template.name : '';
+                var approvalRequired = dept.approvalRequired;
+                var members = Array.isArray(dept.members) ? dept.members : [];
+
+                // Check user's membership status in this department
+                var userMembership = members.find(function(m) { return m.userID === userId; });
+                var isDeptMember = userMembership && userMembership.status === 'approved';
+                var isDeptPending = userMembership && userMembership.status === 'pending';
+
+                // Check if user is admin
+                var isAdmin = false;
+                if (userId && community.community && Array.isArray(community.community.roles)) {
+                  community.community.roles.forEach(function(role) {
+                    if (Array.isArray(role.members) && role.members.includes(userId)) {
+                      if (Array.isArray(role.permissions)) {
+                        role.permissions.forEach(function(perm) {
+                          if (perm.name === "administrator" && perm.enabled === true) {
+                            isAdmin = true;
+                          }
+                        });
+                      }
+                    }
+                  });
+                }
+
+                // Determine access: admin OR public dept OR approved member
+                var canAccess = isAdmin || !approvalRequired || isDeptMember;
+                var accessStatus = canAccess ? 'approved' : (isDeptPending ? 'pending' : 'locked');
+
+                var deptIcon = 'fa-building';
+                var deptColor = '#60a5fa';
+                var lowerTemplate = templateName.toLowerCase();
+                if (lowerTemplate.includes('police')) {
+                  deptIcon = 'fa-shield-halved';
+                  deptColor = '#3b82f6';
+                } else if (lowerTemplate.includes('sheriff')) {
+                  deptIcon = 'fa-star';
+                  deptColor = '#fbbf24';
+                } else if (lowerTemplate.includes('civilian')) {
+                  deptIcon = 'fa-user';
+                  deptColor = '#10b981';
+                } else if (lowerTemplate.includes('fire')) {
+                  deptIcon = 'fa-fire';
+                  deptColor = '#ef4444';
+                } else if (lowerTemplate.includes('ems')) {
+                  deptIcon = 'fa-truck-medical';
+                  deptColor = '#ef4444';
+                } else if (lowerTemplate.includes('dispatch')) {
+                  deptIcon = 'fa-headset';
+                  deptColor = '#f59e0b';
+                }
+              %>
+                <div
+                  class="dept-card <%= canAccess ? '' : 'locked' %>"
+                  data-dept-index="<%= deptIndex %>"
+                  <% if (deptIndex >= 6) { %>style="display: none;"<% } %>
+                  data-dept-id="<%= dept._id %>"
+                  data-dept-name="<%= dept.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'") %>"
+                  data-template-name="<%= templateName.replace(/\\/g, "\\\\").replace(/'/g, "\\'") %>"
+                  data-access-status="<%= accessStatus %>"
+                >
+                  <div class="relative">
+                    <% if (!canAccess) { %>
+                      <% if (dept.image) { %>
+                        <div class="aspect-[2/1] overflow-hidden relative">
+                          <img src="<%= dept.image %>" alt="<%= dept.name %>" class="w-full h-full object-cover" style="pointer-events: none; filter: blur(4px);" />
+                          <div class="absolute inset-0" style="background: rgba(10, 10, 15, 0.7);"></div>
+                          <div class="absolute inset-0 flex items-center justify-center">
+                            <i class="fa fa-lock text-2xl text-slate-400"></i>
+                          </div>
+                        </div>
+                      <% } else { %>
+                        <div class="aspect-[2/1] flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);">
+                          <i class="fa fa-lock text-4xl" style="color: #64748b; opacity: 0.5;"></i>
+                        </div>
+                      <% } %>
+                    <% } else if (dept.image) { %>
+                      <div class="aspect-[2/1] overflow-hidden">
+                        <img src="<%= dept.image %>" alt="<%= dept.name %>" class="w-full h-full object-cover" style="pointer-events: none;" />
+                        <div class="absolute inset-0" style="background: linear-gradient(to top, rgba(10, 10, 15, 0.95) 0%, transparent 60%);"></div>
+                      </div>
+                    <% } else { %>
+                      <div class="aspect-[2/1] flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);">
+                        <i class="fa <%= deptIcon %> text-4xl" style="color: <%= deptColor %>; opacity: 0.5;"></i>
+                      </div>
+                    <% } %>
+
+                    <% if (approvalRequired) { %>
+                      <div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full z-10" style="background: rgba(0, 0, 0, 0.6);">
+                        <i class="fa fa-lock text-xs" style="color: #fbbf24;"></i>
+                        <span class="text-xs font-medium" style="color: #fbbf24;">Private</span>
+                      </div>
+                    <% } %>
+
+                    <% if (canManageDepartments) { %>
+                      <button
+                        class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full transition-colors z-10"
+                        style="background: rgba(0, 0, 0, 0.5); color: #94a3b8;"
+                        onclick="event.stopPropagation(); openEditDepartmentModal('<%= dept._id %>');"
+                      >
+                        <i class="fa fa-pencil text-sm"></i>
+                      </button>
+                    <% } %>
+                  </div>
+
+                  <div class="p-4 flex flex-col justify-between" style="min-height: 88px;">
+                    <div>
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="fa <%= deptIcon %> text-sm" style="color: <%= deptColor %>;"></i>
+                        <h3 class="font-bold text-white text-base line-clamp-1"><%= dept.name %></h3>
+                      </div>
+                      <% if (dept.description) { %>
+                        <p class="text-slate-400 text-xs line-clamp-2"><%= dept.description %></p>
+                      <% } %>
+                    </div>
+                    <div class="flex items-center justify-between mt-2">
+                      <span class="text-xs text-slate-500"><%= templateName || 'Department' %></span>
+                      <% if (canAccess) { %>
+                        <span class="text-xs" style="color: #fbbf24;">Enter <i class="fa fa-arrow-right ml-1"></i></span>
+                      <% } else if (isDeptPending) { %>
+                        <span class="text-xs px-2 py-1 rounded" style="color: #94a3b8; background: rgba(148, 163, 184, 0.1);">Request Pending</span>
+                      <% } else { %>
+                        <button class="text-xs px-2 py-1 rounded transition-colors" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);" onclick="event.stopPropagation(); openRequestJoinDepartmentModal('<%= dept._id %>', '<%= dept.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'") %>');">Request to Join</button>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
+              <% });
+              } %>
+            </div>
+
+            <% var totalDepts = allDepts.length; %>
+            <div id="dept-pagination" class="justify-center items-center gap-4 mt-4" style="display: <%= totalDepts > 6 ? 'flex' : 'none' %>;">
+              <button id="dept-prev-btn" onclick="changeDeptPage(-1)" class="btn-secondary text-sm" disabled style="opacity:0.5;cursor:not-allowed;">
+                <i class="fa fa-chevron-left mr-1"></i>Prev
+              </button>
+              <span id="dept-page-info" class="text-slate-400 text-sm">Page 1 of <%= Math.max(1, Math.ceil(totalDepts / 6)) %></span>
+              <button id="dept-next-btn" onclick="changeDeptPage(1)" class="btn-secondary text-sm">
+                Next<i class="fa fa-chevron-right ml-1"></i>
+              </button>
+            </div>
+          <% } %>
+        </section>
+
+        <!-- Announcements Section -->
+        <section id="announcements-section" class="mb-6 animate-fade-in-up" style="animation-delay: 0.25s;">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="section-title text-white flex items-center gap-2">
+              <i class="fa fa-bullhorn" style="color: #f472b6;"></i>
+              Announcements
+              <div id="unread-count" class="bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full hidden">
+                <span id="unread-number">0</span>
+              </div>
+            </h2>
+
+            <% if (isMemberApproved && canManageAnnouncements) { %>
+              <button onclick="openCreateAnnouncementModal()" class="btn-secondary text-sm">
+                <i class="fa fa-plus mr-1"></i>Add
+              </button>
+            <% } %>
+          </div>
+
+          <% if (!isMemberApproved) { %>
+            <div class="dashboard-card text-center py-8">
+              <i class="fa fa-lock text-2xl text-slate-500 mb-3"></i>
+              <p class="text-slate-400 text-sm">Join to view announcements</p>
+            </div>
+          <% } else { %>
+            <div id="announcement-filter-tabs" class="flex flex-wrap gap-2 mb-4">
+              <button onclick="filterAnnouncements('all')" id="tab-all" class="announcement-filter-tab active" data-filter="all"
+                style="padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 500; border: 1px solid rgba(244, 114, 182, 0.5); background: rgba(244, 114, 182, 0.15); color: #f472b6; cursor: pointer; transition: all 0.2s;">
+                All <span id="tab-all-count" style="opacity: 0.7;">(0)</span>
+              </button>
+              <button onclick="filterAnnouncements('main')" id="tab-main" class="announcement-filter-tab" data-filter="main"
+                style="padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 500; border: 1px solid rgba(59, 130, 246, 0.3); background: transparent; color: #94a3b8; cursor: pointer; transition: all 0.2s;">
+                <i class="fa fa-bullhorn mr-1"></i>Main <span id="tab-main-count" style="opacity: 0.7;">(0)</span>
+              </button>
+              <button onclick="filterAnnouncements('session')" id="tab-session" class="announcement-filter-tab" data-filter="session"
+                style="padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 500; border: 1px solid rgba(168, 85, 247, 0.3); background: transparent; color: #94a3b8; cursor: pointer; transition: all 0.2s;">
+                <i class="fa fa-calendar-day mr-1"></i>Session <span id="tab-session-count" style="opacity: 0.7;">(0)</span>
+              </button>
+              <button onclick="filterAnnouncements('training')" id="tab-training" class="announcement-filter-tab" data-filter="training"
+                style="padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 500; border: 1px solid rgba(34, 197, 94, 0.3); background: transparent; color: #94a3b8; cursor: pointer; transition: all 0.2s;">
+                <i class="fa fa-graduation-cap mr-1"></i>Training <span id="tab-training-count" style="opacity: 0.7;">(0)</span>
+              </button>
+            </div>
+
+            <div id="announcements-container" class="space-y-3">
+              <div class="dashboard-card text-center py-6">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                <p class="text-slate-400 text-sm">Loading announcements...</p>
+              </div>
+            </div>
+
+            <div id="announcements-pagination" class="flex justify-center items-center gap-4 mt-4" style="display: none;"></div>
+          <% } %>
+        </section>
+
+        <!-- Events Section -->
+        <section id="events-section" class="mb-6 animate-fade-in-up" style="animation-delay: 0.3s;">
+          <%
+            let canManageEvents = false;
+            if (userId && community.community && Array.isArray(community.community.roles)) {
+              community.community.roles.forEach(function(role) {
+                if (Array.isArray(role.members) && role.members.includes(userId)) {
+                  if (Array.isArray(role.permissions)) {
+                    role.permissions.forEach(function(perm) {
+                      if ((perm.name === "administrator" && perm.enabled === true) || (perm.name === "manage community events" && perm.enabled === true)) {
+                        canManageEvents = true;
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          %>
+          <script>window.canManageEvents = <%= canManageEvents %>;</script>
+
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="section-title text-white flex items-center gap-2">
+              <i class="fa fa-calendar" style="color: #fbbf24;"></i>
+              Events
+              <% if (isMemberApproved && community.community.events) { %>
+                <span class="text-xs px-2 py-0.5 rounded-full" style="color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+                  <%= community.community.events.length %>
+                </span>
+              <% } %>
+            </h2>
+
+            <% if (isMemberApproved && canManageEvents) { %>
+              <button onclick="openCreateEventModal()" class="btn-secondary text-sm">
+                <i class="fa fa-plus mr-1"></i>Add
+              </button>
+            <% } %>
+          </div>
+
+          <% if (!isMemberApproved) { %>
+            <div class="dashboard-card text-center py-8">
+              <i class="fa fa-lock text-2xl text-slate-500 mb-3"></i>
+              <p class="text-slate-400 text-sm">Join to view events</p>
+            </div>
+          <% } else { %>
+            <%
+              const eventsPerPage = 4;
+              const allEvents = community.community.events || [];
+              const totalEventPages = Math.max(1, Math.ceil(allEvents.length / eventsPerPage));
+            %>
+
+            <% if (allEvents.length > 0) { %>
+              <%
+                const requiredCount = allEvents.filter(e => e.required).length;
+                const optionalCount = allEvents.length - requiredCount;
+              %>
+              <!-- Event Filter Tabs -->
+              <div id="event-filter-tabs" class="flex flex-wrap gap-2 mb-4">
+                <button onclick="filterEvents('all')" class="event-filter-tab active" data-filter="all" style="padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 500; border: 1px solid rgba(251, 191, 36, 0.5); background: rgba(251, 191, 36, 0.15); color: #fbbf24; cursor: pointer; transition: all 0.2s;">
+                  All <span style="opacity: 0.7;">(<%= allEvents.length %>)</span>
+                </button>
+                <% if (requiredCount > 0) { %>
+                <button onclick="filterEvents('required')" class="event-filter-tab" data-filter="required" style="padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 500; border: 1px solid rgba(239, 68, 68, 0.3); background: transparent; color: #94a3b8; cursor: pointer; transition: all 0.2s;">
+                  Required <span style="opacity: 0.7;">(<%= requiredCount %>)</span>
+                </button>
+                <% } %>
+                <% if (optionalCount > 0) { %>
+                <button onclick="filterEvents('optional')" class="event-filter-tab" data-filter="optional" style="padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 500; border: 1px solid rgba(59, 130, 246, 0.3); background: transparent; color: #94a3b8; cursor: pointer; transition: all 0.2s;">
+                  Optional <span style="opacity: 0.7;">(<%= optionalCount %>)</span>
+                </button>
+                <% } %>
+              </div>
+
+              <div id="events-list" class="space-y-3">
+                <% allEvents.forEach(function(evt, evtIndex) { %>
+                  <div class="dashboard-card event-card" data-event-index="<%= evtIndex %>" data-event-required="<%= evt.required ? 'true' : 'false' %>" <% if (evtIndex >= eventsPerPage) { %>style="display: none;"<% } %>>
+                    <div class="flex gap-4">
+                      <% if (evt.image) { %>
+                        <img src="<%= evt.image %>" alt="Event" class="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
+                      <% } else { %>
+                        <div class="w-20 h-20 rounded-lg flex-shrink-0 flex items-center justify-center" style="background: rgba(251, 191, 36, 0.1);">
+                          <i class="fa fa-calendar text-2xl" style="color: #fbbf24; opacity: 0.5;"></i>
+                        </div>
+                      <% } %>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2">
+                          <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-white text-base line-clamp-1"><%= evt.title %></h3>
+                            <% if (evt.required) { %>
+                              <span style="font-size: 0.625rem; padding: 0.15rem 0.4rem; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 600; white-space: nowrap;">Required</span>
+                            <% } %>
+                          </div>
+                          <% if (canManageEvents) { %>
+                            <button onclick="event.stopPropagation(); openEditEventModal('<%= evt._id %>')" class="text-slate-400 hover:text-white transition-colors flex-shrink-0">
+                              <i class="fa fa-pencil text-sm"></i>
+                            </button>
+                          <% } %>
+                        </div>
+                        <p class="text-xs mb-1" style="color: #fbbf24;"><%= new Date(evt.scheduledDate).toLocaleString() %></p>
+                        <% if (evt.description) { %>
+                          <p class="text-slate-400 text-xs line-clamp-2"><%= evt.description %></p>
+                        <% } %>
+                        <% if (evt.location) { %>
+                          <p class="text-slate-500 text-xs mt-1"><i class="fa fa-location-dot mr-1"></i><%= evt.location %></p>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+                <% }); %>
+              </div>
+
+              <% if (totalEventPages > 1) { %>
+                <div id="event-pagination" class="flex justify-center items-center gap-4 mt-4">
+                  <button id="event-prev-btn" onclick="changeEventPage(-1)" class="btn-secondary text-sm" disabled style="opacity:0.5;cursor:not-allowed;">
+                    <i class="fa fa-chevron-left mr-1"></i>Prev
+                  </button>
+                  <span id="event-page-info" class="text-slate-400 text-sm">Page 1 of <%= totalEventPages %></span>
+                  <button id="event-next-btn" onclick="changeEventPage(1)" class="btn-secondary text-sm">
+                    Next<i class="fa fa-chevron-right ml-1"></i>
+                  </button>
+                </div>
+              <% } %>
+            <% } else { %>
+              <div class="dashboard-card text-center py-8">
+                <i class="fa fa-calendar text-3xl text-slate-600 mb-3"></i>
+                <p class="text-slate-400">No upcoming events</p>
+                <% if (canManageEvents) { %>
+                  <button onclick="openCreateEventModal()" class="btn-primary mt-4 text-sm">
+                    <i class="fa fa-plus mr-1"></i>Create Event
+                  </button>
+                <% } %>
+              </div>
+            <% } %>
+          <% } %>
+        </section>
+
+        <!-- Community Stats -->
+        <section class="mb-6 animate-fade-in-up" style="animation-delay: 0.35s;">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4">
+            <div class="dashboard-card text-center py-4 lg:py-6">
+              <div class="text-2xl lg:text-3xl font-bold text-white"><%= community.community.membersCount || 0 %></div>
+              <div class="text-xs sm:text-sm text-slate-400 mt-1">Members</div>
+            </div>
+            <div class="dashboard-card text-center py-4 lg:py-6">
+              <div class="text-2xl lg:text-3xl font-bold text-white"><%= community.community.departments ? community.community.departments.length : 0 %></div>
+              <div class="text-xs sm:text-sm text-slate-400 mt-1">Departments</div>
+            </div>
+            <div class="dashboard-card text-center py-4 lg:py-6">
+              <div class="text-2xl lg:text-3xl font-bold text-white" id="announcements-count">0</div>
+              <div class="text-xs sm:text-sm text-slate-400 mt-1">Announcements</div>
+            </div>
+            <div class="dashboard-card text-center py-4 lg:py-6">
+              <div class="text-2xl lg:text-3xl font-bold text-white"><%= community.community.events ? community.community.events.length : 0 %></div>
+              <div class="text-xs sm:text-sm text-slate-400 mt-1">Events</div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Footer -->
+      <% include partials/footer %>
+    <% } else { %>
+      <main class="max-w-4xl mx-auto px-4 py-12">
+        <div class="dashboard-card text-center">
+          <i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
+          <h2 class="text-2xl font-bold text-white mb-2">Community Not Found</h2>
+          <p class="text-slate-400 mb-6">Sorry, we couldn't load this community's details.</p>
+          <a href="/communities" class="btn-primary inline-block">
+            <i class="fa fa-arrow-left mr-2"></i>Back to Communities
+          </a>
+        </div>
+      </main>
+
+      <!-- Footer -->
+      <% include partials/footer %>
+    <% } %>
+
+    <% if (user && user._doc) { %>
+      <% include partials/notificationModal %>
+      <script src="/static/js/notifications.js"></script>
+    <% } %>
+
+    <div id="toast" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:12px 24px; border-radius:8px; z-index:9999; max-width:90%; text-align:center;"></div>
+
+    <script>
+      var dbUser = <%- JSON.stringify(user || {}) %>;
+      let currentNotificationId = null;
+      window.API_URL = '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+
+      // showToast is defined in community-details-modals.ejs with glassmorphism styling
+
+      function scrollToSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+
+      function copyCommunityUrl() {
+        const url = window.location.href;
+        const icon = document.getElementById('shareBtnIcon');
+        const text = document.getElementById('shareBtnText');
+
+        navigator.clipboard.writeText(url).then(() => {
+          // Change icon to check mark
+          if (icon) {
+            icon.className = 'fa fa-check';
+          }
+          if (text) {
+            text.textContent = 'Copied!';
+          }
+          showToast('Community link copied!', 2000, 'success');
+
+          // Revert back to share icon after 2 seconds
+          setTimeout(() => {
+            if (icon) {
+              icon.className = 'fa fa-share-nodes';
+            }
+            if (text) {
+              text.textContent = 'Share';
+            }
+          }, 2000);
+        }).catch(() => {
+          showToast('Failed to copy link', 2000, 'error');
+        });
+      }
+
+      function showComingSoon() {
+        showToast('This feature is coming soon!', 2500, 'info');
+      }
+
+      function showNoSettingsPermissionModal() {
+        showPermissionDeniedToast('You don\'t have permission to access settings. Contact your community admin if you think this is a mistake.');
+      }
+
+      function showNoInviteCodesPermissionModal() {
+        showPermissionDeniedToast('You don\'t have permission to invite members. Contact your community admin if you think this is a mistake.');
+      }
+
+      function showPermissionDeniedToast(message) {
+        // Use the main showToast function with info type for permission messages
+        if (typeof showToast === 'function') {
+          showToast(message, 5000, 'info');
+        } else {
+          alert(message);
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        // Account dropdown toggle
+        const accountBtn = document.getElementById('accountBtn');
+        const accountDropdown = document.getElementById('accountDropdown');
+        const accountChevron = document.getElementById('accountChevron');
+        if (accountBtn && accountDropdown) {
+          accountBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isOpen = accountDropdown.style.display === 'block';
+            accountDropdown.style.display = isOpen ? 'none' : 'block';
+            if (accountChevron) {
+              accountChevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+            }
+          });
+          // Close dropdown when clicking outside
+          document.addEventListener('click', function(e) {
+            if (!document.getElementById('accountDropdownWrapper').contains(e.target)) {
+              accountDropdown.style.display = 'none';
+              if (accountChevron) accountChevron.style.transform = '';
+            }
+          });
+        }
+
+        const notificationBtn = document.getElementById('notificationBtn');
+        if (notificationBtn) {
+          notificationBtn.addEventListener('click', function() {
+            document.getElementById('notificationModal').style.display = 'flex';
+            fetchNotifications(0);
+          });
+        }
+
+        const notificationModalClose = document.getElementById('notificationModalClose');
+        if (notificationModalClose) {
+          notificationModalClose.addEventListener('click', function() {
+            document.getElementById('notificationModal').style.display = 'none';
+          });
+        }
+
+        window.addEventListener('click', function(event) {
+          const modals = ['notificationModal', 'requestJoinModal', 'leaveCommunityModal', 'ownerCannotLeaveModal'];
+          modals.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (event.target === modal) {
+              modal.style.display = 'none';
+            }
+          });
+        });
+
+        if (dbUser && dbUser._id) {
+          fetchNotificationCount();
+        }
+      });
+
+      (function() {
+        try {
+          var params = new URLSearchParams(window.location.search);
+          if (params.get('notice') === 'selectDepartment') {
+            var toast = document.getElementById('deptToast');
+            if (toast) {
+              toast.style.display = 'block';
+              setTimeout(function() { toast.style.display = 'none'; }, 5000);
+            }
+            if (window.location.hash !== '#departments-section') {
+              window.location.hash = 'departments-section';
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    <!-- Include all modals and remaining scripts from partial -->
+    <% include partials/community-details-modals %>
+  </body>
+</html>

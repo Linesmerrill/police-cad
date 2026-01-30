@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <% include ad-header %>
     <meta charset="utf-8">
     <title>LPC - Sign up as Civilian</title>
     <meta name="description" content="Lines Roleplay Police CAD (Computer Aided Dispatch). Built to facilitate the needs of roleplay police and civilians." />
@@ -11,11 +12,104 @@
     <link rel="stylesheet" href="/static/css/ionicons.min.css" />
     <link rel="stylesheet" href="/static/css/styles.css" />
     <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
-    <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
-    <!-- To hide google translate header bar on each page -->
-    <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
-    <style type='text/css'> body {position: static !important; top:0px !important;}</style>
-    <% include ad-header %>
+    <!-- HeroUI Pro styles (replace with your licensed bundle if available) -->
+    <link rel="stylesheet" href="https://unpkg.com/@headlessui/react@latest/dist/headlessui.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@heroicons/react/24/outline/heroicons-outline.min.css" />
+    <style>
+      .step-card { max-width: 400px; margin: 40px auto; }
+      .stepper { display: flex; justify-content: center; margin-bottom: 2rem; }
+      .stepper-step { width: 2rem; height: 2rem; border-radius: 50%; background: #e5e7eb; color: #374151; display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 0 0.5rem; }
+      .stepper-step.active { background: #2563eb; color: #fff; }
+      .stepper-step.completed { background: #22c55e; color: #fff; }
+      .stepper-line { width: 2rem; height: 2px; background: #e5e7eb; align-self: center; }
+      @media (max-width: 500px) { .step-card { max-width: 98vw; margin: 10px auto; } }
+      .signup-error-message {
+        color: #dc2626;
+        background: rgba(255, 228, 230, 0.95);
+        border: 1px solid #dc2626;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        margin: 0.5rem 0 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: center;
+      }
+      .signup-error-message svg {
+        width: 1.25em;
+        height: 1.25em;
+        flex-shrink: 0;
+      }
+      .signup-status-message {
+        color: #2563eb;
+        background: #e0edff;
+        border: 1px solid #2563eb;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        margin: 0.5rem 0 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: center;
+      }
+      .form-control {
+        margin-bottom: 1rem;
+      }
+      .btn-secondary {
+        background-color: #2563eb;
+        color: #fff;
+        border: none;
+        border-radius: 0.375rem;
+        padding: 0.5rem 1.25rem;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      .btn-secondary:hover:not(:disabled) {
+        background-color: #1d4ed8;
+      }
+      .btn-secondary:disabled {
+        background-color: #a5b4fc;
+        color: #fff;
+        opacity: 1;
+        cursor: not-allowed;
+      }
+      .step-btn-group {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 0.5rem;
+      }
+      .btn-link {
+        color: #2563eb !important;
+        background: #fff;
+        border: 1px solid #2563eb;
+        border-radius: 0.375rem;
+        font-weight: 600;
+        padding: 0.5rem 1.25rem;
+        text-decoration: none !important;
+        transition: background 0.2s, color 0.2s;
+      }
+      .btn-link:hover, .btn-link:focus {
+        background: #2563eb;
+        color: #fff !important;
+        text-decoration: none;
+      }
+      .username-helper-text {
+        color: #222;
+        background: rgba(255,255,255,0.7);
+        font-size: 0.97em;
+        margin-bottom: 0.5rem;
+        padding: 0.35em 0.75em;
+        border-radius: 0.375rem;
+        display: inline-block;
+        font-weight: 500;
+      }
+    </style>
   </head>
   <body>
     <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
@@ -30,177 +124,445 @@
                 <a class="navbar-brand page-scroll" href="/"><img style="display: inline; margin-top: -9px; vertical-align: text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD</a>
             </div>
             <div class="navbar-collapse collapse" id="bs-navbar">
-                <ul class="nav navbar-nav">
-
-                </ul>
+                <ul class="nav navbar-nav"></ul>
                 <ul class="nav navbar-nav navbar-right">
-                  <li>
-                    <a href="/release-log">Release Log</a>
-                  </li>
-                    <li>
-                        <a class="page-scroll" data-toggle="modal" title="Lines Police CAD" href="#aboutModal">About</a>
-                    </li>
+                  <li><a href="/">Home</a></li>
+                  <li><a href="/about">About</a></li>
+                  <li><a href="/contact-us">Contact Us</a></li>
+                  <li><a href="/login">Login</a></li>
                 </ul>
             </div>
         </div>
     </nav>
     <header id="first">
-
-        <div class="header-content">
-            <div class="inner">
-                <h4>Register as a Civilian</h4>
-                <hr>
-                 <div class="col-lg-10 col-lg-offset-1 text-center">
-                <form id="signInForm" class="contact-form row" action="/signup-civ" method="post">
-                  <% if(message != undefined && message != null) {%>
-                    <% if (message.length > 0) { %>
-                    <div class="alert alert-danger col-md-4 col-md-offset-4">
-                      <strong>Sorry, <%= message %> </strong>
-                    </div>
-                    <% } %>
-                  <% } %>
-                  <div class="col-md-12">
-                    <div class="col-md-4 col-md-offset-4">
-                        <label>Username</label>
-                        <input id="inputUsername" type="text" name="username" class="form-control" placeholder="Username (cannot contain spaces)" required>
-                    </div>
-                  </div>
-                  <div class="col-md-12">
-                    <div class="col-md-4 col-md-offset-4">
-                        <label>Email</label>
-                        <input id="inputEmail" type="email" name="email" class="form-control" placeholder="Email Address" required>
-                    </div>
-                  </div>
-                    <div class="col-md-12">
-                      <div class="col-md-4 col-md-offset-4">
-                          <label>Password</label>
-                          <input id="inputPassword" type="password" name="password" class="form-control" placeholder="Password" required>
-                      </div>
-                    </div>
-                    <div class="col-md-12">
-                      <div class="col-md-4 col-md-offset-4">
-                          <label>Confirm Password</label>
-                          <input id="confirmPassword" type="password" name="confirmPassword" class="form-control" placeholder="Confirm password" required>
-                      </div>
-                      <div id="password-check-bad" class="col-md-1" >
-                         <span class="password-check-bad"><i class="glyphicon glyphicon-cd"></i></span>
-                      </div>
-                      <div id="password-check-good" class="col-md-1" style="display:none">
-                         <span class="password-check-good"><i class="glyphicon glyphicon-cd"></i></span>
-                      </div>
-
-                    </div>
-                </div>
-
-                <button type="submit" value="SignUp" class="btn btn-primary btn-xl margin-top-2" >Create</button>
-              </form>
+      <div class="header-content">
+        <div class="inner" style="background: none; box-shadow: none; padding: 0;">
+          <div class="stepper">
+            <div class="stepper-step" id="stepper-1">1</div>
+            <div class="stepper-line"></div>
+            <div class="stepper-step" id="stepper-2">2</div>
+            <div class="stepper-line"></div>
+            <div class="stepper-step" id="stepper-3">3</div>
+            <div class="stepper-line"></div>
+            <div class="stepper-step" id="stepper-4">4</div>
+          </div>
+          <!-- Step 1: Email -->
+          <div class="step-card card shadow p-4" id="step-1">
+            <h2 class="mb-4 text-center">Sign Up - Step 1</h2>
+            <label for="signup-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+            <input id="signup-email" type="email" class="form-control" placeholder="Enter your email" required autocomplete="email" />
+            <div id="email-error" class="signup-error-message" style="display:none"></div>
+            <button id="email-next" class="btn btn-primary w-full mt-2">Next</button>
+          </div>
+          <!-- Step 2: Verification Code -->
+          <div class="step-card card shadow p-4" id="step-2" style="display:none">
+            <h2 class="mb-4 text-center">Step 2: Verify Email</h2>
+            <label for="signup-code" class="block text-sm font-medium text-gray-700">Verification Code</label>
+            <input id="signup-code" type="text" class="form-control" placeholder="Enter 6-digit code" maxlength="6" required />
+            <div id="code-error" class="signup-error-message" style="display:none"></div>
+            <div class="step-btn-group">
+              <button id="code-back" class="btn btn-link" type="button">Back</button>
+              <button id="code-next" class="btn btn-primary" type="button">Next</button>
             </div>
+            <div class="step-btn-group">
+              <button id="resend-code" class="btn btn-secondary" type="button">Resend Code</button>
+            </div>
+          </div>
+          <!-- Step 3: Password -->
+          <div class="step-card card shadow p-4" id="step-3" style="display:none">
+            <h2 class="mb-4 text-center">Step 3: Set Password</h2>
+            <label for="signup-password" class="block text-sm font-medium text-gray-700">Password</label>
+            <input id="signup-password" type="password" class="form-control" placeholder="Password" required autocomplete="new-password" />
+            <div id="password-error" class="signup-error-message" style="display:none"></div>
+            <button id="password-back" class="btn btn-link">Back</button>
+            <button id="password-next" class="btn btn-primary w-full mt-2">Next</button>
+          </div>
+          <!-- Step 4: Username -->
+          <div class="step-card card shadow p-4" id="step-4" style="display:none">
+            <h2 class="mb-4 text-center">Step 4: Choose Username</h2>
+            <label for="signup-username" class="block text-sm font-medium text-gray-700">Username</label>
+            <input id="signup-username" type="text" class="form-control" placeholder="Username" required autocomplete="username" />
+            <div class="username-helper-text">You can update this later from your account settings page.</div>
+            <div id="username-error" class="signup-error-message" style="display:none"></div>
+            <button id="username-back" class="btn btn-link">Back</button>
+            <button id="signup-submit" class="btn btn-success w-full mt-2">Create Account</button>
+          </div>
+          <div id="signup-success" class="step-card card shadow p-4 text-center" style="display:none">
+            <h2 class="mb-4">Account Created!</h2>
+            <p>You can now <a href="/login">log in</a>.</p>
+          </div>
         </div>
-
+      </div>
     </header>
     <div class="google-ad"></div>
-    <% include footer %>    
-    <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-        	<div class="modal-body">
-        		<img src="" id="galleryImage" class="img-responsive" />
-        		<p>
-        		    <br/>
-        		    <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close <i class="ion-android-close"></i></button>
-        		</p>
-        	</div>
-        </div>
-        </div>
-    </div>
-    <div id="aboutModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog">
-        <div class="modal-content">
-        	<div class="modal-body">
-        		<h2 class="text-center">Lines Police CAD</h2>
-        		<h5 class="text-center">
-        		   CAD (Computer Aided Dispatch)
-        		</h5>
-        		<p class="text-justify">
-        		    Developed with users in mind. Easy to log in and create an account. From there you can take the
-                freedom of playing with a certain persona in GTA V. Buy cars, apartments, make a living online.
-                Or join the law, become a police officer and patrol the streets. You decide your own fate.
-        		</p>
-
-        		<br/>
-        		<button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true"> OK </button>
-        	</div>
-        </div>
-        </div>
-    </div>
-    <div id="alertModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-        	<div class="modal-body">
-        		<h2 class="text-center">Nice Job!</h2>
-        		<p class="text-center">You clicked the button, this is just one of the many easter eggs on this site ;)</p>
-        		<br/>
-        		<button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK <i class="ion-android-close"></i></button>
-        	</div>
-        </div>
-        </div>
-    </div>
-    <!--scripts loaded here -->
-    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+    <% include footer %>
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
     <script src="/static/js/jquery.easing.min.js"></script>
     <script src="/static/js/wow.js"></script>
     <script src="/static/js/scripts.js"></script>
-    <script>if (window.module) module = window.module;</script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script src="/static/js/ads.js"></script>
+    <script>
+      // --- CONFIG ---
+      const API_URL = "<%= apiUrl %>";
+      // --- State ---
+      let signupState = {
+        email: '',
+        code: '',
+        password: '',
+        username: '',
+      };
+      let currentStep = 1;
+
+      // --- Stepper UI ---
+      function updateStepper(step) {
+        for (let i = 1; i <= 4; i++) {
+          const el = document.getElementById('stepper-' + i);
+          el.classList.remove('active', 'completed');
+          if (i < step) el.classList.add('completed');
+          if (i === step) el.classList.add('active');
+        }
+      }
+      function showStep(step) {
+        for (let i = 1; i <= 4; i++) {
+          document.getElementById('step-' + i).style.display = (i === step) ? '' : 'none';
+        }
+        document.getElementById('signup-success').style.display = 'none';
+        updateStepper(step);
+        currentStep = step;
+      }
+      function showSuccess() {
+        for (let i = 1; i <= 4; i++) {
+          document.getElementById('step-' + i).style.display = 'none';
+        }
+        document.getElementById('signup-success').style.display = '';
+      }
+      // --- Error helpers ---
+      function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"']/g, function (c) {
+          return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+          }[c];
+        });
+      }
+      function showError(id, msg, allowHTML = false) {
+        const el = document.getElementById(id);
+        el.classList.remove('signup-status-message');
+        el.classList.add('signup-error-message');
+        el.innerHTML = allowHTML ? msg : escapeHTML(msg); // Only allow HTML if explicitly safe
+        el.style.display = '';
+      }
+      function hideError(id) {
+        const el = document.getElementById(id);
+        el.innerHTML = ''; // Clear innerHTML
+        el.classList.remove('signup-error-message', 'signup-status-message');
+        el.style.display = 'none';
+      }
+      function showStatus(id, msg, allowHTML = false) {
+        const el = document.getElementById(id);
+        el.classList.remove('signup-error-message');
+        el.classList.add('signup-status-message');
+        el.innerHTML = allowHTML ? msg : escapeHTML(msg);
+        el.style.display = '';
+      }
+      // --- Step 1: Email ---
+      document.getElementById('email-next').onclick = async function(e) {
+        e.preventDefault();
+        hideError('email-error');
+        const email = document.getElementById('signup-email').value.trim().toLowerCase();
+        if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+          showError('email-error', 'Please enter a valid email address.');
+          return;
+        }
+        // Check if email exists
+        try {
+          const checkRes = await fetch(`${API_URL}/api/v1/user/check-user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          });
+          let checkData = null;
+          try {
+            const text = await checkRes.text();
+            if (text) {
+              checkData = JSON.parse(text);
+            } else {
+              checkData = {};
+            }
+          } catch (parseErr) {
+            console.error('Failed to parse email check response as JSON:', parseErr);
+            checkData = {};
+          }
+          if (
+            checkData.Response &&
+            checkData.Response.Error &&
+            checkData.Response.Error.toLowerCase().includes('duplicate')
+          ) {
+            showError('email-error', 'An account with this email already exists. <a href="/login" style="color:#2563eb;text-decoration:underline;">Log in</a> or <a href="/forgot-password" style="color:#2563eb;text-decoration:underline;">reset your password</a>.', true);
+            return;
+          } else if (checkData.Response && checkData.Response.Error) {
+            showError('email-error', checkData.Response.Error); // No HTML allowed
+            return;
+          }
+          // If checkData is empty, treat as email does not exist and proceed
+        } catch (err) {
+          console.error('Error during email check:', err);
+          showError('email-error', 'Error checking email. Please try again.');
+          return;
+        }
+        // Send verification code
+        try {
+          const sendRes = await fetch(`${API_URL}/api/v1/verify/send-verification-code`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          });
+          let sendData = {};
+          try {
+            sendData = await sendRes.json();
+          } catch {}
+          if (
+            sendData.message &&
+            sendData.message.toLowerCase().includes('verification already in progress')
+          ) {
+            // Call resend-verification-code and move to step 2
+            await fetch(`${API_URL}/api/v1/verify/resend-verification-code`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email })
+            });
+            signupState.email = email;
+            showStep(2);
+            showStatus('code-error', 'A new verification code has been sent to your email.');
+            return;
+          }
+          if (!sendRes.ok) throw new Error('Failed to send code');
+        } catch (err) {
+          showError('email-error', 'Failed to send verification code. Please try again.');
+          return;
+        }
+        signupState.email = email;
+        showStep(2);
+      };
+      // --- Step 2: Code ---
+      let resendTimer = null;
+      let resendCountdown = 60;
+      const resendBtn = document.getElementById('resend-code');
+      const clockIcon = '<svg style="vertical-align:middle;margin-left:4px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+
+      function startResendTimer() {
+        resendCountdown = 60;
+        resendBtn.disabled = true;
+        resendBtn.innerHTML = `Resend Code (${resendCountdown}s) ${clockIcon}`;
+        if (resendTimer) clearInterval(resendTimer);
+        resendTimer = setInterval(() => {
+          resendCountdown--;
+          resendBtn.innerHTML = `Resend Code (${resendCountdown}s) ${clockIcon}`;
+          if (resendCountdown <= 0) {
+            clearInterval(resendTimer);
+            resendBtn.disabled = false;
+            resendBtn.innerHTML = 'Resend Code';
+          }
+        }, 1000);
+      }
+
+      document.getElementById('code-back').onclick = function(e) {
+        e.preventDefault();
+        if (resendTimer) clearInterval(resendTimer);
+        resendBtn.disabled = false;
+        resendBtn.innerHTML = 'Resend Code';
+        document.getElementById('signup-code').value = '';
+        hideError('code-error');
+        showStep(1);
+        setTimeout(() => {
+          document.getElementById('signup-email').focus();
+        }, 100);
+      };
+      resendBtn.onclick = async function(e) {
+        e.preventDefault();
+        hideError('code-error');
+        resendBtn.disabled = true;
+        resendCountdown = 60;
+        resendBtn.innerHTML = `Resend Code (${resendCountdown}s) ${clockIcon}`;
+        if (resendTimer) clearInterval(resendTimer);
+        resendTimer = setInterval(() => {
+          resendCountdown--;
+          resendBtn.innerHTML = `Resend Code (${resendCountdown}s) ${clockIcon}`;
+          if (resendCountdown <= 0) {
+            clearInterval(resendTimer);
+            resendBtn.disabled = false;
+            resendBtn.innerHTML = 'Resend Code';
+          }
+        }, 1000);
+        try {
+          const sendRes = await fetch(`${API_URL}/api/v1/verify/resend-verification-code`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: signupState.email })
+          });
+          let sendData = {};
+          try {
+            sendData = await sendRes.json();
+          } catch {}
+          if (sendRes.status === 429 && sendData.message && sendData.message.toLowerCase().includes('please wait at least 1 minute')) {
+            showError('code-error', 'Please wait at least 1 minute before requesting a new code.');
+            // Timer continues for the rest of the minute
+            return;
+          }
+          if (!sendRes.ok) throw new Error('Failed to resend code');
+          showStatus('code-error', 'Verification code resent!');
+          setTimeout(() => hideError('code-error'), 2000);
+        } catch (err) {
+          showError('code-error', 'Failed to resend code.');
+        }
+      };
+      document.getElementById('code-next').onclick = async function(e) {
+        e.preventDefault();
+        hideError('code-error');
+        const code = document.getElementById('signup-code').value.trim();
+        if (!/^[0-9]{6}$/.test(code)) {
+          showError('code-error', 'Please enter the 6-digit code.');
+          return;
+        }
+        // Verify code
+        try {
+          const verifyRes = await fetch(`${API_URL}/api/v1/verify/verify-code`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, email: signupState.email })
+          });
+          let verifyData = {};
+          let text = '';
+          try {
+            text = await verifyRes.text();
+            if (text) {
+              verifyData = JSON.parse(text);
+            }
+          } catch {}
+          if (
+            verifyRes.ok &&
+            (
+              !text ||
+              (verifyData.message && verifyData.message.toLowerCase().includes('verified successfully'))
+            )
+          ) {
+            // Success, move to next step
+            signupState.code = code;
+            if (resendTimer) clearInterval(resendTimer);
+            resendBtn.disabled = false;
+            resendBtn.innerHTML = 'Resend Code';
+            showStep(3);
+            return;
+          }
+          // If not ok, show error
+          showError('code-error', (verifyData && verifyData.message) || 'Invalid code.');
+        } catch (err) {
+          showError('code-error', 'Error verifying code.');
+          return;
+        }
+      };
+      // --- Step 3: Password ---
+      document.getElementById('password-back').onclick = function(e) {
+        e.preventDefault();
+        showStep(2);
+      };
+      document.getElementById('password-next').onclick = function(e) {
+        e.preventDefault();
+        hideError('password-error');
+        const pw = document.getElementById('signup-password').value;
+        if (pw.length < 4) {
+          showError('password-error', 'Password must be at least 4 characters.');
+          return;
+        }
+        signupState.password = pw;
+        showStep(4);
+      };
+      // --- Step 4: Username ---
+      document.getElementById('username-back').onclick = function(e) {
+        e.preventDefault();
+        showStep(3);
+      };
+      document.getElementById('signup-submit').onclick = async function(e) {
+        e.preventDefault();
+        hideError('username-error');
+        const username = document.getElementById('signup-username').value.trim();
+        if (!username || username.length < 3) {
+          showError('username-error', 'Username must be at least 3 characters.');
+          return;
+        }
+        // Optionally: check username uniqueness here with an API call
+        // Create user
+        const submitBtn = document.getElementById('signup-submit');
+        submitBtn.disabled = true;
+        try {
+          const createRes = await fetch(`${API_URL}/api/v1/user/create-user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: signupState.email,
+              password: signupState.password,
+              username: username
+            })
+          });
+          let createData = {};
+          try {
+            createData = await createRes.json();
+          } catch {}
+          if (createRes.status === 409 && createData.Response && createData.Response.Error && createData.Response.Error.toLowerCase().includes('duplicate')) {
+            showError('username-error', 'An account with this email already exists. <a href="/login" style="color:#2563eb;text-decoration:underline;">Log in</a> or <a href="/forgot-password" style="color:#2563eb;text-decoration:underline;">reset your password</a>.', true);
+            submitBtn.disabled = false;
+            return;
+          }
+          if (!createRes.ok || (createData && createData.success === false)) {
+            showError('username-error', (createData && createData.message) || 'Failed to create account.');
+            submitBtn.disabled = false;
+            return;
+          }
+        } catch (err) {
+          showError('username-error', 'Error creating account.');
+          submitBtn.disabled = false;
+          return;
+        }
+        signupState.username = username;
+        // Auto-login after successful signup
+        try {
+          const loginRes = await fetch('/login-civ', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              email: signupState.email,
+              password: signupState.password
+            })
+          });
+          if (loginRes.ok) {
+            window.location.href = '/communities';
+            return;
+          }
+          // If login fails, show the success message as fallback
+          showSuccess();
+        } catch (err) {
+          showSuccess();
+        }
+      };
+      // --- Init ---
+      showStep(1);
+      // --- Show Step override to start timer on step 2 ---
+      const _origShowStep = showStep;
+      showStep = function(step) {
+        _origShowStep(step);
+        if (step === 2) {
+          startResendTimer();
+        } else if (step !== 2 && resendTimer) {
+          clearInterval(resendTimer);
+          resendBtn.disabled = false;
+          resendBtn.innerHTML = 'Resend Code';
+        }
+      }
+    </script>
   </body>
 </html>
-
-<script type="text/javascript">
-$('input').keyup(function() {
-  str = $(this).val();
-  str = str.replace(/\s/g,'');
-  $(this).val(str);
-});
-
-$(document).ready(function() {
-  $("#confirmPassword").keyup(validate);
-});
-
-var goodPassword = document.getElementById('password-check-good');
-var badPassword = document.getElementById('password-check-bad');
-var passwordsMatch = false
-function validate() {
-  var password1 = $("#inputPassword").val();
-  var password2 = $("#confirmPassword").val();
-
-    if(password1 == password2) {
-      passwordsMatch = true;
-      goodPassword.style.display = 'block'
-      badPassword.style.display = 'none'
-       $("#password-check-good").val("valid");
-    }
-    else {
-      passwordsMatch = false;
-      goodPassword.style.display = 'none'
-      badPassword.style.display = 'block'
-        $("#validate-status").text("invalid");
-    }
-}
-
-$('#signInForm').submit(function (evt) {
-  if (passwordsMatch) {}
-  else {
-    evt.preventDefault();
-  }
-});
-
-</script>
-
-<!--  added for google translate --> 
-<script type="text/javascript">
-function googleTranslateElementInit() {
-  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
-}
-</script>

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <% include ad-header %>
     <title>LPC - Penal Codes</title>
     <!-- Meta -->
     <meta charset="utf-8">
@@ -48,8 +49,8 @@
         <div class="doc-wrapper">
             <div class="container">
                 <div id="doc-header" class="doc-header text-center">
-                    <h1 class="doc-title"><i class="fas fa-laptop"></i> </span> Penal Codes</h1>
-                    <div class="meta"><i class="far fa-clock"></i> Last updated: Dec 6th, 2020</div>
+                    <h1 class="doc-title"><i class="fa fa-laptop"></i> </span> Penal Codes</h1>
+                    <div class="meta"><i class="fa fa-clock"></i> Last updated: Dec 6th, 2020</div>
                 </div><!--//doc-header-->
                 <div class="doc-body row">
                     <div class="doc-content col-md-9 col-12 order-1">
@@ -852,13 +853,22 @@
         
     </div><!--//page-wrapper-->
     <footer id="footer">
+      <%
+        var _user = (typeof user !== 'undefined') ? user : null;
+        var subPlan = (_user && _user.user && _user.user.subscription && _user.user.subscription.plan) || 'free';
+        var subActive = !!(_user && _user.user && _user.user.subscription && _user.user.subscription.active);
+        var isPremiumPlus = subActive && subPlan === 'premium_plus';
+        var isPremium = subActive && subPlan === 'premium';
+      %>
+      <% if (!isPremiumPlus && !(isPremium && Math.random() >= 0.5)) { %>
       <% include ad-body %>
+      <% } %>
         <div class="container-fluid">
             <div class="row">
                 <div class="col-xs-6 col-sm-3 column">
                     <h4>Information</h4>
                     <ul class="list-unstyled">
-                        <li><a href="/release-log">Release Log</a></li>
+                        <li><a href="https://github.com/Linesmerrill/police-cad/releases">Release Log</a></li>
                         <li><a href="https://linesmerrill.github.io/MerrillLines/" target="_blank">Developers</a></li>
                     </ul>
                 </div>
@@ -904,7 +914,8 @@
     <script type="text/javascript" src="/static/plugins/lightbox/dist/ekko-lightbox.min.js"></script>   
     <script type="text/javascript" src="/static/plugins/stickyfill/dist/stickyfill.min.js"></script>   
     <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>     
+    <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>
+    <script src="/static/js/ads.js"></script>     
     <script>if (window.module) module = window.module;</script>                    
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>                                    
     

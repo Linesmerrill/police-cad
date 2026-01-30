@@ -94,17 +94,15 @@
                             </tr>
                         </thead>
                         <tbody>
-                                <input id="link" type="text" value="" style="opacity: 0;">
-                            <% if (communities != undefined && communities != null) {%>
-                            <% for(var i=0; i<communities.length; i++) {%>
-                                    <tr>
-                                        <td style="text-transform: capitalize;"><%=communities[i].community.name%></td>
-                                        <td><%=communities[i].community.code%><span class="iconify" data-icon="ant-design:copy-outlined" data-inline="false" style="color:#337ab7;cursor:pointer" data-width="15" data-height="15" onclick="copyText('#link', '<%=communities[i].community.code%>')"></span></td>
-                                        <td class="text-align-center"><button type="submit" name="communityID" value="<%= communities[i]._id %>" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" data-icon="jam:write" style="color:#337ab7;" data-inline="false" data-width="25" data-height="25"></span></button>
-                                        <td class="text-align-center"><a class="btn btn-md btn-danger" data-toggle="modal" href="#deleteCommunityModal" onclick="populateCommunityID('<%=communities[i]._id%>')">Delete</a></td>
-                                    </tr>
-                            <%}%>
-                            <%}%>
+                            <td>Please use the mobile app to manage your communities.
+                                <br><br> <a href="https://apps.apple.com/us/app/lpc-app/id6503307483" target="_blank"><span class="btn btn-primary btn-sm">Download the iOS mobile app</span></a>
+                                <br><br> <a href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp" target="_blank"><span class="btn btn-primary btn-sm">Download the Android mobile app</span></a>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td>
+                                
+                            </td>
                         </tbody>
                     </table>
                     </fieldset>
@@ -176,6 +174,7 @@
     <script src="/static/js/jquery.easing.min.js"></script>
     <script src="/static/js/wow.js"></script>
     <script src="/static/js/scripts.js"></script>
+    <script src="/static/js/ads.js"></script>
     <script>if (window.module) module = window.module;</script>
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
@@ -204,6 +203,7 @@ $(document).ready(function () {
     })
 
     $('#panic-button-check-sound').prop("checked", myUser.user.panicButtonSound)
+    $('#alert-volume-slider').val(myUser.user.alertVolumeLevel || 10)
 });
 
 function copyText(element, code) {
@@ -241,9 +241,24 @@ function fillAccountDetails() {
     socket.emit('update_panic_btn_sound', <%- JSON.stringify(user) %>)
     socket.on('load_panic_btn_result', (res) => {
       $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
-      $('#successfully-updated-alert').removeClass('hide').delay(2000).fadeOut(1000, function() {
-    $(this).hide();
+      $('#successfully-updated-alert').removeClass('hide').addClass('show').delay(2000).fadeOut(1000, function () {
+        $(this).addClass('hide').removeClass('show');
   });
+    })
+  }
+
+  function adjustAlertVolumeSlider() {
+    var socket=io();
+    var volumeAmount = $('#alert-volume-slider').val()
+    var myObj = {
+      dbUser: dbUser,
+      volume: volumeAmount
+    }
+    socket.emit('update_alert_volume_slider', myObj)
+    socket.on('load_alert_volume_result', (res) => {
+      $('#successfully-updated-alert').removeClass('hide').addClass('show').delay(2000).fadeOut(1000, function () {
+        $(this).addClass('hide').removeClass('show');
+      });
     })
   }
 </script>

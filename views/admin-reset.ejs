@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>LPC - Admin Reset Password</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/static/css/animate.min.css" />
+    <link rel="stylesheet" href="/static/css/ionicons.min.css" />
+    <link rel="stylesheet" href="/static/css/styles.css" />
+    <link rel="icon" type="image/x-icon" href="/static/images/admin-favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/admin-favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/admin-favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/admin-apple-touch-icon.png">
+    <style>
+      body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0b1220 100%); }
+      .admin-hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+      .admin-card { background: #1e2028; border-radius: 16px; border: 1px solid #35385a; box-shadow: 0 20px 50px rgba(0,0,0,0.35); color: #fff; }
+      .admin-card .form-control { background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb; }
+      .admin-card .form-control:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.25); }
+      .btn-gradient { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); border: none; }
+      .btn-gradient:hover { opacity: 0.95; }
+      .alert-compact { padding: 0.75rem 1rem; border-radius: 8px; }
+      .muted { color:#9aa0b4; }
+    </style>
+  </head>
+  <body>
+    <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand page-scroll" href="/"><img style="display:inline; margin-top:-9px; vertical-align:text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD</a>
+        </div>
+      </div>
+    </nav>
+
+    <section class="admin-hero">
+      <div class="container">
+        <div class="row">
+          <div class="col-sm-10 col-sm-offset-1 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3">
+            <div class="admin-card" style="padding: 2rem;">
+              <div class="text-center" style="margin-bottom:1rem;">
+                <img src="/static/images/dispatch-logo-512.png" alt="Admin" style="width:56px; height:56px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.35);" />
+              </div>
+              <h2 class="text-center" style="font-weight:700;">Set New Admin Password</h2>
+              <p class="text-center muted">Enter a new password for your Admin account.</p>
+
+              <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+                <div class="alert alert-danger alert-compact" role="alert">
+                  <strong>Error:</strong> <%= error %>
+                </div>
+              <% } %>
+              <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+                <div class="alert alert-success alert-compact" role="alert">
+                  <%= success %>
+                </div>
+              <% } %>
+
+              <form action="/admin/reset-password" method="post" autocomplete="off" novalidate>
+                <input type="hidden" name="token" value="<%= token || '' %>" />
+                <div class="form-group">
+                  <label for="password">New Password</label>
+                  <input id="password" type="password" name="password" class="form-control" required />
+                </div>
+                <div class="form-group">
+                  <label for="confirm">Confirm Password</label>
+                  <input id="confirm" type="password" name="confirm" class="form-control" required />
+                </div>
+                <button type="submit" class="btn btn-gradient btn-block btn-lg" style="border-radius:10px;">Update Password</button>
+              </form>
+              <div class="text-center" style="margin-top:1rem;">
+                <a href="/admin" class="muted">Back to Admin Login</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <% include footer %>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+  </body>
+ </html>
+
+

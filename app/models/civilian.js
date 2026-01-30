@@ -1,22 +1,24 @@
-var mongoose = require('mongoose');
-var bcrypt = require('bcrypt-nodejs');
-const {
-  registerDecorator
-} = require('handlebars');
+var mongoose = require("mongoose");
+var bcrypt = require("bcrypt-nodejs");
+const { registerDecorator } = require("handlebars");
 
 var civilianSchema = mongoose.Schema({
   civilian: {
     email: String, //deprecated 6/27/2020
     firstName: String,
     lastName: String,
+    middleInitial: String,
     licenseStatus: String, //1: valid, 2: revoked, 3: none
     ticketCount: String,
     birthday: String,
-    warrants: [{
-      type: String
-    }],
+    warrants: [
+      {
+        type: String,
+      },
+    ],
     gender: String,
     address: String,
+    addressZip: String,
     deceased: Boolean, // true: yes (deceased), false: no (alive),
     race: String,
     hairColor: String,
@@ -30,11 +32,12 @@ var civilianSchema = mongoose.Schema({
     image: String,
     occupation: String,
     firearmLicense: String,
+    age: String,
     activeCommunityID: String,
     userID: String,
     createdAt: Date,
-    updatedAt: Date
-  }
+    updatedAt: Date,
+  },
 });
 
 civilianSchema.methods.socketCreateUpdateCiv = function (req) {
@@ -43,7 +46,7 @@ civilianSchema.methods.socketCreateUpdateCiv = function (req) {
   // we use this for updates, so if the civID is provided then we will treat this
   // as an upsert
   if (req.body.civID) {
-    this._id = req.body.civID
+    this._id = req.body.civID;
   }
   this.civilian.firstName = req.body.civFirstName.trim().toLowerCase();
   this.civilian.lastName = req.body.civLastName.trim().toLowerCase();
@@ -54,10 +57,13 @@ civilianSchema.methods.socketCreateUpdateCiv = function (req) {
   if (exists(req.body.address)) {
     this.civilian.address = req.body.address.trim();
   }
+  if (exists(req.body.addressZip)) {
+    this.civilian.addressZip = req.body.addressZip.trim();
+  }
   if (exists(req.body.deceased)) {
     this.civilian.deceased = req.body.deceased;
   } else if (!exists(this.civilian.deceased)) {
-    this.civilian.deceased = false
+    this.civilian.deceased = false;
   }
   if (exists(req.body.occupation)) {
     this.civilian.occupation = req.body.occupation.trim();
@@ -71,42 +77,17 @@ civilianSchema.methods.socketCreateUpdateCiv = function (req) {
   if (exists(req.body.gender)) {
     this.civilian.gender = req.body.gender;
   }
-  if (exists(req.body.imperial) && exists(req.body.metric)) {
-    // we have redundant boolean values for imperial and metric,
-    //these will always be inverse values of one another.
-    //
-    // if user has selected 'imperial', then we should calculate USA maths for height
-    // else just grab whatever value was passed in for height
-    if (req.body.imperial) {
-      this.civilian.heightClassification = 'imperial'
-      // height classification: imperial or metric, imperial will have 2 inputs and metric will have one
-      if (exists(req.body.heightFoot) || exists(req.body.heightInches)) {
-        // because the USA is dumb, we gotta do some quick-maths to convert ft and inches to a single number :fml:
-        this.civilian.height = generateHeight(req.body.heightFoot, req.body.heightInches)
-      }
-    } else {
-      this.civilian.heightClassification = 'metric'
-      if (exists(req.body.heightCentimeters)) {
-        this.civilian.height = req.body.heightCentimeters;
-      }
-    }
+  if (exists(req.body.height)) {
+    this.civilian.height = req.body.height.trim();
   }
-  if (exists(req.body.weightImperial) && exists(req.body.weightMetric)) {
-    // we have redundant boolean values for imperial and metric,
-    //these will always be inverse values of one another.
-    if (req.body.weightImperial && exists(req.body.pounds)) {
-      this.civilian.weight = req.body.pounds;
-      this.civilian.weightClassification = 'imperial'
-    } else if (req.body.weightMetric && exists(req.body.kilos)) {
-      this.civilian.weight = req.body.kilos;
-      this.civilian.weightClassification = 'metric'
-    }
+  if (exists(req.body.weight)) {
+    this.civilian.weight = req.body.weight.trim();
   }
   if (exists(req.body.eyeColor)) {
-    this.civilian.eyeColor = req.body.eyeColor;
+    this.civilian.eyeColor = req.body.eyeColor.trim();
   }
   if (exists(req.body.hairColor)) {
-    this.civilian.hairColor = req.body.hairColor;
+    this.civilian.hairColor = req.body.hairColor.trim();
   }
   if (exists(req.body.organDonor)) {
     this.civilian.organDonor = req.body.organDonor;
@@ -114,31 +95,22 @@ civilianSchema.methods.socketCreateUpdateCiv = function (req) {
   if (exists(req.body.veteran)) {
     this.civilian.veteran = req.body.veteran;
   }
+  if (exists(req.body.age)) {
+    this.civilian.age = req.body.age;
+  }
+  if (exists(req.body.civMiddleInitial)) {
+    this.civilian.middleInitial = req.body.civMiddleInitial;
+  }
   this.civilian.userID = req.body.userID; // we set this when submitting the form so it should not be null
   this.civilian.createdAt = new Date();
-}
+};
 
 function exists(v) {
   if (v !== undefined) {
-    return true
+    return true;
   } else {
-    return false
+    return false;
   }
 }
 
-function generateHeight(heightFoot, heightInches) {
-  if (exists(heightFoot) && !exists(heightInches)) {
-    //if only foot exists, then just convert to inches and store in DB
-    return parseInt(heightFoot) * 12;
-  }
-  if (exists(heightFoot) && exists(heightInches)) {
-    //if foot and inches exist, we want to convert to inches to store in DB
-    return parseInt(heightFoot) * 12 + parseInt(heightInches);
-  }
-  if (!exists(heightFoot) && exists(heightInches)) {
-    //if foot doesn't exist but inches exists, simple maths
-    return parseInt(heightInches)
-  }
-}
-
-module.exports = mongoose.model('Civilian', civilianSchema);
+module.exports = mongoose.model("Civilian", civilianSchema);
