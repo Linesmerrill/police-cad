@@ -854,8 +854,9 @@
     </div><!--//page-wrapper-->
     <footer id="footer">
       <%
-        var subPlan = (user && user.user && user.user.subscription && user.user.subscription.plan) || 'free';
-        var subActive = !!(user && user.user && user.user.subscription && user.user.subscription.active);
+        var _user = (typeof user !== 'undefined') ? user : null;
+        var subPlan = (_user && _user.user && _user.user.subscription && _user.user.subscription.plan) || 'free';
+        var subActive = !!(_user && _user.user && _user.user.subscription && _user.user.subscription.active);
         var isPremiumPlus = subActive && subPlan === 'premium_plus';
         var isPremium = subActive && subPlan === 'premium';
       %>
