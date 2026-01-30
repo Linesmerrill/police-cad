@@ -2,6 +2,9 @@ import { test, expect } from '@playwright/test';
 import { PUBLIC_PAGES } from '../fixtures/test-data';
 
 test.describe('Public Pages Smoke Tests', () => {
+  // Next.js dev mode compiles pages on first access — allow extra time
+  test.setTimeout(60000);
+
   for (const page of PUBLIC_PAGES) {
     test(`${page.path} loads successfully`, async ({ page: pw }) => {
       const errors: string[] = [];

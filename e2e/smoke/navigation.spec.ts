@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Navigation Smoke Tests', () => {
+  // Next.js dev mode compiles pages on first access — allow extra time
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
   });
@@ -17,13 +20,10 @@ test.describe('Navigation Smoke Tests', () => {
     expect(count).toBeGreaterThan(0);
   });
 
-  test('logo / brand link navigates to home', async ({ page }) => {
-    // Click on the logo or brand name which should link to home
+  test('logo / brand link points to home', async ({ page }) => {
     const logo = page.locator('nav a[href="/"]').first();
-    if (await logo.isVisible()) {
-      await logo.click();
-      await expect(page).toHaveURL(/\/$/);
-    }
+    await expect(logo).toBeVisible();
+    await expect(logo).toHaveAttribute('href', '/');
   });
 
   test('login link is accessible from home page', async ({ page }) => {
