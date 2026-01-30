@@ -1,0 +1,37 @@
+[
+  {
+    "id": "free",
+    "name": "Free",
+    "price": 0,
+    "interval": "month",
+    "features": [
+      "Basic CAD access",
+      "Up to 5 civilians",
+      "Community access"
+    ]
+  },
+  {
+    "id": "pro",
+    "name": "Pro",
+    "price": 4.99,
+    "interval": "month",
+    "features": [
+      "Unlimited civilians",
+      "Priority support",
+      "Custom departments",
+      "Advanced search"
+    ]
+  },
+  {
+    "id": "premium",
+    "name": "Premium",
+    "price": 9.99,
+    "interval": "month",
+    "features": [
+      "All Pro features",
+      "Custom branding",
+      "API access",
+      "Premium badge"
+    ]
+  }
+]

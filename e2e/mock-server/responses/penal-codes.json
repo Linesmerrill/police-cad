@@ -1,0 +1,42 @@
+[
+  {
+    "code": "10-1",
+    "description": "Receiving Poorly",
+    "category": "Radio Codes"
+  },
+  {
+    "code": "10-4",
+    "description": "Acknowledgement",
+    "category": "Radio Codes"
+  },
+  {
+    "code": "10-7",
+    "description": "Out of Service",
+    "category": "Radio Codes"
+  },
+  {
+    "code": "10-8",
+    "description": "In Service",
+    "category": "Radio Codes"
+  },
+  {
+    "code": "10-20",
+    "description": "Location",
+    "category": "Radio Codes"
+  },
+  {
+    "code": "187",
+    "description": "Homicide",
+    "category": "Penal Codes"
+  },
+  {
+    "code": "211",
+    "description": "Robbery",
+    "category": "Penal Codes"
+  },
+  {
+    "code": "459",
+    "description": "Burglary",
+    "category": "Penal Codes"
+  }
+]

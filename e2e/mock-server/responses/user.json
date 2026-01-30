@@ -1,0 +1,27 @@
+{
+  "_id": "507f1f77bcf86cd799439001",
+  "user": {
+    "email": "testuser@test.com",
+    "username": "testuser",
+    "callSign": "T-1",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "activeCommunity": "507f1f77bcf86cd799439011",
+    "lastAccessedCommunity": "507f1f77bcf86cd799439011",
+    "communities": [
+      {
+        "uniqueId": "507f1f77bcf86cd799439011",
+        "communityName": "Test Community",
+        "communityCode": "TEST123"
+      }
+    ],
+    "subscription": {
+      "plan": "free",
+      "active": false
+    },
+    "dispatchStatus": "offline",
+    "isDeactivated": false,
+    "friends": [],
+    "notifications": [],
+    "notes": ""
+  }
+}

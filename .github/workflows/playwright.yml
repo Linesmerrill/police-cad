@@ -1,0 +1,94 @@
+name: Playwright E2E Tests
+
+on:
+  pull_request:
+    branches: [main, development]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  playwright:
+    name: E2E Tests (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [smoke, public, auth, protected, dashboards, admin, a11y]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build Next.js
+        run: npm run next:build
+        env:
+          NODE_ENV: production
+
+      - name: Start mock API server
+        run: node e2e/mock-server/index.js &
+        env:
+          MOCK_PORT: 9090
+
+      - name: Wait for mock API server
+        run: |
+          for i in $(seq 1 10); do
+            curl -s http://localhost:9090/api/v1/subscription/tiers > /dev/null && break
+            echo "Waiting for mock API server..."
+            sleep 1
+          done
+
+      - name: Run Playwright tests — ${{ matrix.project }}
+        run: npx playwright test --config=e2e/playwright.config.ts --project=${{ matrix.project }}
+        env:
+          NODE_ENV: test
+          DB_URI: mongodb://localhost:27017/police_cad_test
+          POLICE_CAD_API_URL: http://localhost:9090
+          POLICE_CAD_API_TOKEN: 'Bearer test-token'
+          PORT: 8080
+          BASE_URL: http://localhost:8080
+          TEST_USER_EMAIL: testuser@test.com
+          TEST_USER_PASSWORD: testpassword123
+          TEST_ADMIN_EMAIL: admin@test.com
+          TEST_ADMIN_PASSWORD: adminpassword123
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-${{ matrix.project }}
+          path: e2e/playwright-report/
+          retention-days: 14
+
+      - name: Upload test traces on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-traces-${{ matrix.project }}
+          path: e2e/test-results/
+          retention-days: 7

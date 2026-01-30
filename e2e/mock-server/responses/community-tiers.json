@@ -1,0 +1,34 @@
+[
+  {
+    "id": "community-free",
+    "name": "Free",
+    "price": 0,
+    "interval": "month",
+    "features": [
+      "Up to 25 members",
+      "Basic features"
+    ]
+  },
+  {
+    "id": "community-pro",
+    "name": "Pro",
+    "price": 9.99,
+    "interval": "month",
+    "features": [
+      "Up to 100 members",
+      "Custom roles",
+      "Priority support"
+    ]
+  },
+  {
+    "id": "community-premium",
+    "name": "Premium",
+    "price": 19.99,
+    "interval": "month",
+    "features": [
+      "Unlimited members",
+      "All Pro features",
+      "Custom branding"
+    ]
+  }
+]

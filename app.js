@@ -39,8 +39,10 @@ const limiter = rateLimit({
   max: 500, // limit each IP to 100 requests per windowMs
 });
 
-//  apply to all requests
-app.use(limiter);
+//  apply to all requests (skip in test environment to avoid flaky E2E tests)
+if (process.env.NODE_ENV !== 'test') {
+  app.use(limiter);
+}
 
 // Use cookie parser.
 app.use(cookieParser());

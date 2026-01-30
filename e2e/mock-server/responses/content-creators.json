@@ -1,0 +1,33 @@
+[
+  {
+    "_id": "507f1f77bcf86cd799439021",
+    "slug": "test-creator",
+    "displayName": "Test Creator",
+    "bio": "A test content creator for E2E testing",
+    "profileImage": "",
+    "socialLinks": {
+      "youtube": "https://youtube.com/test",
+      "twitch": "https://twitch.tv/test"
+    },
+    "community": {
+      "name": "Creator Community",
+      "code": "CC123"
+    },
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "_id": "507f1f77bcf86cd799439022",
+    "slug": "another-creator",
+    "displayName": "Another Creator",
+    "bio": "Another test content creator",
+    "profileImage": "",
+    "socialLinks": {
+      "youtube": "https://youtube.com/another"
+    },
+    "community": {
+      "name": "Another Community",
+      "code": "AC456"
+    },
+    "createdAt": "2024-02-01T00:00:00.000Z"
+  }
+]

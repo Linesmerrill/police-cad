@@ -52,6 +52,42 @@ function decodeId(encoded) {
 }
 
 module.exports = function (app, passport, server, nextApp, handle) {
+  // --- Test-only auth bypass routes (only active when NODE_ENV=test) ---
+  if (process.env.NODE_ENV === 'test') {
+    app.post('/test/login', function (req, res) {
+      var email = req.body.email || 'testuser@test.com';
+      User.findOne({ 'user.email': email }, function (err, user) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!user) {
+          var newUser = new User();
+          newUser.user.email = email;
+          newUser.user.username = req.body.username || 'testuser';
+          newUser.user.callSign = req.body.callSign || 'T-1';
+          newUser.user.createdAt = new Date();
+          newUser.user.communities = [];
+          newUser.save(function (err) {
+            if (err) return res.status(500).json({ error: 'Failed to create test user' });
+            req.login(newUser, function (err) {
+              if (err) return res.status(500).json({ error: 'Login failed' });
+              res.json({ success: true, userId: newUser._id });
+            });
+          });
+        } else {
+          req.login(user, function (err) {
+            if (err) return res.status(500).json({ error: 'Login failed' });
+            res.json({ success: true, userId: user._id });
+          });
+        }
+      });
+    });
+
+    app.post('/test/admin-login', function (req, res) {
+      req.session.adminAuthenticated = true;
+      req.session.adminEmail = req.body.email || 'admin@test.com';
+      res.json({ success: true });
+    });
+  }
+
   // Root route - use Next.js if available, otherwise fall back to EJS
   app.get("/", function (req, res) {
     if (nextApp && handle) {

@@ -1,0 +1,21 @@
+[
+  {
+    "_id": "507f1f77bcf86cd799439011",
+    "community": {
+      "name": "Test Community",
+      "code": "TEST123",
+      "ownerID": "507f1f77bcf86cd799439001",
+      "members": {},
+      "departments": [
+        {
+          "name": "Default Department",
+          "templates": []
+        }
+      ],
+      "description": "A test community for E2E testing",
+      "roles": [],
+      "banList": [],
+      "tenCodes": []
+    }
+  }
+]
