@@ -3482,6 +3482,17 @@
         }
       }
 
+      // Poll for panic status updates every 15s to catch cross-platform panics
+      setInterval(function() {
+        if (dashboardSocket.connected) {
+          dashboardSocket.emit('load_panic_statuses', {
+            userID: dbUser._id,
+            userUsername: dbUser.user.username,
+            activeCommunity: dbUser.user?.lastAccessedCommunity?.communityID
+          });
+        }
+      }, 15000);
+
       // Wait for connection before emitting
       if (dashboardSocket.connected) {
         onConnected();

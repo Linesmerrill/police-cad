@@ -7072,13 +7072,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
           const activeSignal100 = community ? community.activeSignal100 : false;
           const activeHoldTraffic = community ? community.activeHoldTraffic : false;
 
-          broadcastToCommunity(
-            "load_panic_status_update",
-            activePanicsMap,
-            req.activeCommunity
-          );
-          // Also emit signal100 and holdTraffic as additional args for backward compat
-          socket.broadcast.emit(
+          // Emit with all args for backward compat: (map, signal100, holdTraffic, origReq)
+          const roomName = `community:${req.activeCommunity}`;
+          io.to(roomName).emit(
             "load_panic_status_update",
             activePanicsMap,
             activeSignal100,
@@ -7139,8 +7135,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
           activePanicsMap.set(req.userID, alertData);
 
           // Broadcast to community room
-          broadcastToCommunity("panic_button_updated", activePanicsMap, req.activeCommunity);
-          // Also emit with the original req for backward compatibility
+          // Emit both map and req for backward compat with old listeners that expect (map, origReq)
+          const roomName = `community:${req.activeCommunity}`;
+          io.to(roomName).emit("panic_button_updated", activePanicsMap, req);
           broadcastToCommunity("panic_alert_created", alertData, req.activeCommunity);
         } catch (err) {
           console.error("panic_button_update: API error:", err.message);

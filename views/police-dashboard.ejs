@@ -747,6 +747,7 @@
                                               }
 
                                               .status-card {
+                                                position: relative;
                                                 background: rgba(30, 41, 59, 0.8);
                                                 border: 2px solid rgba(71, 85, 105, 0.5);
                                                 border-radius: 10px;
@@ -786,6 +787,30 @@
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
                                                 white-space: nowrap;
+                                              }
+
+                                              .panic-badge {
+                                                position: absolute;
+                                                top: -8px;
+                                                right: -8px;
+                                                display: flex;
+                                                align-items: center;
+                                                gap: 3px;
+                                                font-size: 0.65rem;
+                                                font-weight: 700;
+                                                background: #ef4444;
+                                                color: #fff;
+                                                padding: 3px 7px;
+                                                border-radius: 6px;
+                                                letter-spacing: 0.5px;
+                                                box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+                                                z-index: 1;
+                                              }
+
+                                              .panic-badge svg {
+                                                width: 12px;
+                                                height: 12px;
+                                                fill: #fff;
                                               }
 
                                               /* Category Colors */
@@ -2693,7 +2718,7 @@ const codesPerPage = 10;
     $('.profile-picture').css("background-image", `url(${dbUser?.user?.profilePicture || 'https://ui-avatars.com/api/?name='+dbUser?.user?.username+'&background=808080&color=fff&size=256'})`)
 
     // AJAX function to update officer status
-function updateStatus(statusCode) {
+function updateStatus(statusCode, previousTenCodeID) {
   const userId = dbUser._id;
   const communityId = dbUser.user?.lastAccessedCommunity.communityID;
   const data = {
@@ -2759,6 +2784,29 @@ function updateStatus(statusCode) {
               aboutUsername: dbUser.user.username
             });
         }
+
+        // If switching away from 10-99, clear the user's panic
+        if (previousTenCodeID) {
+            const prevCode = tenCodesCache.find(tc => tc._id === previousTenCodeID);
+            if (prevCode && prevCode.code === '10-99' && (!tenCode || tenCode.code !== '10-99')) {
+                dashboardSocket.emit('clear_panic', {
+                  userID: userId,
+                  communityID: communityId,
+                  clearedBy: userId
+                });
+            }
+        }
+
+        // Check if this is 10-99 (Officer Needs Assistance) - trigger panic alert
+        if (tenCode && tenCode.code === '10-99') {
+            dashboardSocket.emit('panic_button_update', {
+              userID: userId,
+              userUsername: dbUser.user.username,
+              callSign: dbUser.user.callSign || '',
+              activeCommunity: communityId,
+              departmentType: departmentName || 'police'
+            });
+        }
       }
     },
     error: function(xhr) {
@@ -2783,11 +2831,12 @@ function selectTenCode(tenCodeID) {
     return;
   }
   // Immediately update UI for responsive feel
+  const previousTenCodeID = currentTenCodeID;
   currentTenCodeID = tenCodeID;
   $('#currentStatusCode').text(tenCode.code);
   updateStatusCardHighlights(tenCodeID);
 
-  updateStatus(tenCodeID);
+  updateStatus(tenCodeID, previousTenCodeID);
   $('#10codesModal').modal('hide'); // Close modal after selection
 }
 
@@ -3188,14 +3237,14 @@ function displayQuickStatusCodes(codes) {
   // Define preferred quick codes in order of priority
   const preferredCodes = [
     'signal 100', // Emergency
+    '10-99',      // Officer Needs Assistance
     'code 4',     // Under Control
     'signal 41',  // Log on to MDT
     'signal 42',  // Log out of MDT
     '10-8',       // In Service
     '10-7',       // Out of Service
     '10-11',      // Traffic Stop
-    '10-15',      // Subject in Custody
-    '10-99'       // Officer Needs Assistance
+    '10-15'       // Subject in Custody
   ];
 
   // Find matching codes from the available codes
@@ -3220,11 +3269,14 @@ function displayQuickStatusCodes(codes) {
   quickCodes.forEach(code => {
     const category = getCodeCategory(code.code, code.description);
     const isActive = currentTenCodeID === code._id ? 'active' : '';
+    const isPanic = code.code.toLowerCase() === '10-99';
+    const panicBadge = isPanic ? `<span class="panic-badge"><svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v5h-2z"/></svg>PANIC</span>` : '';
     quickGrid.append(
       `<div class="status-card ${category} ${isActive}"
            data-ten-code-id="${code._id}"
            onclick="selectTenCode('${code._id}')"
            title="${code.description}">
+        ${panicBadge}
         <div class="status-card-code">${code.code}</div>
         <div class="status-card-desc">${code.description}</div>
       </div>`
@@ -3333,7 +3385,7 @@ function displayTenCodes(codes) {
 
     // Polling function to refresh dynamic data
     function pollDashboardData() {
-      // loadPanicStatuses(); // Coming soon
+      loadPanicStatuses();
       loadActiveBOLOs();
       loadAssignedCalls();
       

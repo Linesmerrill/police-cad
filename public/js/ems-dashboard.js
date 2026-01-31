@@ -87,6 +87,17 @@ function initializeSocket() {
     socket.on('connect', onSocketConnected);
   }
 
+  // Poll for panic status updates every 15s to catch cross-platform panics
+  setInterval(function() {
+    if (socket.connected) {
+      socket.emit('load_panic_statuses', {
+        userID: dbUser._id,
+        userUsername: dbUser.user?.username,
+        activeCommunity: communityId,
+      });
+    }
+  }, 15000);
+
   // Listen for room join confirmation
   socket.on('joined_room', function(data) {
     // Room joined successfully
@@ -5119,6 +5130,7 @@ function displayQuickStatusCodes(codes) {
   // Define preferred EMS quick codes in order of priority
   const preferredCodes = [
     'signal 100', // Emergency (if available)
+    '10-99',      // Officer Needs Assistance (Panic)
     '10-8',       // In Service / Available
     '10-7',       // Out of Service
     '10-6',       // Busy
@@ -5126,7 +5138,6 @@ function displayQuickStatusCodes(codes) {
     '10-19',      // Returning to Station
     '10-23',      // Arrived on Scene
     '10-97',      // Arrived at Scene
-    '10-98',      // Completed Assignment
   ];
 
   // Find matching codes from the available codes
@@ -5165,11 +5176,14 @@ function displayQuickStatusCodes(codes) {
   quickCodes.forEach(code => {
     const category = getCodeCategory(code.code, code.description);
     const isActive = currentTenCodeID === code._id ? 'active' : '';
+    const isPanic = code.code.toLowerCase() === '10-99';
+    const panicBadge = isPanic ? `<span class="panic-badge"><svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v5h-2z"/></svg>PANIC</span>` : '';
     quickGrid.append(
       `<div class="status-card ${category} ${isActive}"
            data-ten-code-id="${code._id}"
            onclick="selectTenCode('${code._id}')"
            title="${code.description}">
+        ${panicBadge}
         <div class="status-card-code">${code.code}</div>
         <div class="status-card-desc">${code.description}</div>
       </div>`
