@@ -44,14 +44,28 @@
   <style type='text/css'> body {position: static !important; top:0px !important;}</style>
   <style>
     /* Signal 100 Banner - Modern Mobile-Friendly Design */
-    .signal-100-banner {
+    #fixed-alert-banners {
       position: fixed;
       top: 60px;
-      left: 0;
+      left: 300px;
       right: 0;
-      z-index: 1050;
+      z-index: 8;
+      transition: left 0.3s;
+    }
+    #fixed-alert-banners.sidebar-collapsed {
+      left: 0;
+    }
+    @media (max-width: 991.98px) {
+      #fixed-alert-banners {
+        left: 0;
+      }
+      #fixed-alert-banners.sidebar-collapsed {
+        left: 300px;
+      }
+    }
+    .signal-100-banner {
       background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-      padding: 12px 16px;
+      padding: 6px 16px;
       cursor: pointer;
       box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4);
       transition: all 0.3s ease;
@@ -72,29 +86,27 @@
     }
     .signal-100-content {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
-      justify-content: center;
-      gap: 4px;
-      max-width: 600px;
-      margin: 0 auto;
+      justify-content: space-between;
+      gap: 12px;
     }
     .signal-100-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
     }
     .signal-100-icon {
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 36px;
-      height: 36px;
+      width: 24px;
+      height: 24px;
       flex-shrink: 0;
     }
     .signal-100-icon i {
-      font-size: 24px;
+      font-size: 16px;
       color: #fff;
       z-index: 2;
       position: relative;
@@ -112,32 +124,32 @@
       100% { transform: scale(1.8); opacity: 0; }
     }
     .signal-100-text {
-      text-align: center;
+      text-align: left;
       flex: 1;
       min-width: 0;
     }
     .signal-100-title {
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 700;
       color: #fff;
-      letter-spacing: 2px;
+      letter-spacing: 1.5px;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     .signal-100-details {
-      font-size: 13px;
+      font-size: 12px;
       color: rgba(255, 255, 255, 0.9);
-      margin-top: 2px;
+      margin-top: 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .signal-100-tap {
-      font-size: 11px;
+      font-size: 10px;
       color: rgba(255, 255, 255, 0.7);
       text-transform: uppercase;
       letter-spacing: 1px;
       flex-shrink: 0;
-      padding: 4px 8px;
+      padding: 3px 8px;
       border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: 4px;
     }
@@ -166,6 +178,48 @@
         font-size: 9px;
         padding: 3px 6px;
       }
+    }
+
+    /* Panic Alert Banner */
+    .panic-alerts-banner {
+      max-height: 125px;
+      overflow-y: auto;
+      background: linear-gradient(135deg, #ea580c 0%, #9a3412 100%);
+      box-shadow: 0 4px 20px rgba(234, 88, 12, 0.4);
+      animation: panicGlow 2s ease-in-out infinite;
+    }
+    .panic-alerts-banner:empty { display: none; }
+    .panic-alerts-banner::-webkit-scrollbar { width: 4px; }
+    .panic-alerts-banner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
+    @keyframes panicGlow {
+      0%, 100% { box-shadow: 0 4px 20px rgba(234, 88, 12, 0.4); }
+      50% { box-shadow: 0 4px 30px rgba(234, 88, 12, 0.7); }
+    }
+    .panic-alert-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; min-height: 50px;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+      animation: panicPulseRow 1.5s ease-in-out infinite;
+    }
+    .panic-alert-row:last-child { border-bottom: none; }
+    @keyframes panicPulseRow { 0%, 100% { opacity: 1; } 50% { opacity: 0.85; } }
+    .panic-alert-content { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .panic-alert-icon { position: relative; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex-shrink: 0; }
+    .panic-alert-icon i { font-size: 18px; color: #fff; z-index: 2; position: relative; }
+    .panic-alert-icon .panic-pulse { position: absolute; width: 100%; height: 100%; background: rgba(255,255,255,0.3); border-radius: 50%; animation: panicPulse 1s ease-out infinite; }
+    @keyframes panicPulse { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
+    .panic-alert-text { flex: 1; min-width: 0; }
+    .panic-alert-title { font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 1.5px; text-transform: uppercase; }
+    .panic-alert-details { font-size: 12px; color: rgba(255,255,255,0.9); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .panic-alert-clear-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 14px; transition: background 0.2s; }
+    .panic-alert-clear-btn:hover { background: rgba(255,255,255,0.35); }
+    .panic-alert-hide-btn { background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.6); width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 12px; transition: background 0.2s; }
+    .panic-alert-hide-btn:hover { background: rgba(255,255,255,0.2); }
+    .panic-scroll-hint { background: #7c2d12; padding: 3px 0; text-align: center; font-size: 10px; color: rgba(255,255,255,0.7); letter-spacing: 0.5px; }
+    @media (max-width: 480px) {
+      .panic-alert-row { padding: 8px 12px; min-height: 44px; }
+      .panic-alert-title { font-size: 11px; }
+      .panic-alert-details { font-size: 11px; }
     }
 
     /* Clear Signal 100 Modal */
@@ -491,6 +545,20 @@
             <h1 class="cursive"><a href="/dispatch-dashboard"><i class="fa-solid fa-headset"></i> Dispatch Operations</a> • <a href="/community-dashboard"><span id="community-name"></span></a></h1>
           </div>
         </div>
+        <a data-toggle="modal" href="#holdTrafficDetailModal" style="z-index: 8;width: 100%;">
+          <div id="hold-traffic-banner" class="panel panel-warning hide">
+            <div class="panel-heading">
+              <span class="panel-title">⚠️⚠️⚠️ 10-3 Active: hold all radio traffic! ⚠️⚠️⚠️</span>
+              <button type="button" class="close" aria-label="Close"
+                style="position: absolute; margin-top: 5px; margin-left: 1em;">
+                <i class="fa fa-times"></i> Clear
+              </button>
+            </div>
+          </div>
+        </a>
+      </nav>
+
+      <div id="fixed-alert-banners">
         <div id="signal-100-banner" class="signal-100-banner hide" onclick="showClearSignal100Modal()">
           <div class="signal-100-content">
             <div class="signal-100-row">
@@ -506,18 +574,9 @@
             <div class="signal-100-tap">Tap to clear</div>
           </div>
         </div>
-        <a data-toggle="modal" href="#holdTrafficDetailModal" style="z-index: 8;width: 100%;">
-          <div id="hold-traffic-banner" class="panel panel-warning hide">
-            <div class="panel-heading">
-              <span class="panel-title">⚠️⚠️⚠️ 10-3 Active: hold all radio traffic! ⚠️⚠️⚠️</span>
-              <button type="button" class="close" aria-label="Close"
-                style="position: absolute; margin-top: 5px; margin-left: 1em;">
-                <i class="fa fa-times"></i> Clear
-              </button>
-            </div>
-          </div>
-        </a>
-      </nav>
+        <div id="panic-alerts-banner" class="panic-alerts-banner"></div>
+        <div id="panic-scroll-hint" class="panic-scroll-hint" style="display:none;"></div>
+      </div>
 
       <!-- Clear Signal 100 Confirmation Modal (outside nav for proper z-index) -->
       <div id="clear-signal-100-modal" class="clear-signal-modal-overlay" onclick="hideClearSignal100Modal(event)">
@@ -1169,10 +1228,6 @@
       <section style='background-image: url("/static/images/blue-clouds.jpg"); padding: 0;'>
         <div class="container">
           <div class="col-lg-10 col-lg-offset-1 margin-top-1">
-            
-                  <div id="panic-placeholder"></div>
-                  <div id="panic-placeholder-socket"></div>
-                
           </div>
         </div>
 
@@ -3006,27 +3061,8 @@
           $('#hold-traffic-banner').removeClass('show').addClass('hide')
         }
 
-        //load the panic status items
-        $('#panic-placeholder-socket').empty();
-        $('#panic-placeholder').append(
-          '<div id="panic-placeholder-socket"></div>'
-        ).fadeTo(1, function () {
-          $(this).add();
-        })
-        for (var m in map) {
-          $('#panic-placeholder-socket').append(
-            '<a id="'+map[m].userId+'-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\''+map[m].userId+'\')">'+
-            '<div class="alert alert-danger alert-dismissible show" role="alert">'+
-            '<strong>Panic! </strong> Triggered by: <span id="'+map[m].userId+'-panic-username">'+map[m].username+'</span>'+
-            '<button type="button" type="button" class="close" aria-label="Close">'+
-            '<span aria-hidden="true">&times;</span>'+
-            '</button>'+
-            '</div>'+
-            '</a>'
-          ).fadeTo(1, function () {
-            $(this).add();
-          })
-        }
+        //load the panic status items via AJAX refresh
+        loadPanicStatusesAjax();
       }
     })
 
@@ -3038,33 +3074,13 @@
           audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
           audioElement.play();
         }
-        $('#panic-placeholder-socket').empty();
-        $('#panic-placeholder').append(
-          '<div id="panic-placeholder-socket"></div>'
-        ).fadeTo(1, function () {
-          $(this).add();
-        })
-        for (var m in map) {
-          $('#panic-placeholder-socket').append(
-            '<a id="'+map[m].userId+'-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\''+map[m].userId+'\')">'+
-            '<div class="alert alert-danger alert-dismissible show" role="alert">'+
-            '<strong>Panic! </strong> Triggered by: <span id="'+map[m].userId+'-panic-username">'+map[m].username+'</span>'+
-            '<button type="button" type="button" class="close" aria-label="Close">'+
-            '<span aria-hidden="true">&times;</span>'+
-            '</button>'+
-            '</div>'+
-            '</a>'
-          ).fadeTo(1, function () {
-            $(this).add();
-          })
-        }
+        loadPanicStatusesAjax();
       }
     })
 
     socket.on('cleared_panic', res => {
-      $('#'+res.userID+'-panic-row').remove().fadeOut(1, function () {
-        $(this).remove();
-      })
+      $('#panic-row-' + (res.alertId || res.userID)).fadeOut(200, function() { $(this).remove(); });
+      loadPanicStatusesAjax();
     })
 
     socket.on('signal_100_button_updated', (origReq) => {
@@ -3516,6 +3532,105 @@
       } else {
         dashboardSocket.once('connect', onConnected);
       }
+
+      // ==========================================
+      // AJAX POLLING FOR CROSS-PLATFORM UPDATES
+      // ==========================================
+
+      // Direct AJAX polling to Go API — catches mobile-triggered panics/signal100
+      function loadPanicStatusesAjax() {
+        if (!communityId) return;
+
+        // Fetch Signal 100 status
+        $.ajax({
+          url: `${API_URL}/api/v1/community/${communityId}/signal-100`,
+          method: 'GET',
+          success: function(s100Data) {
+            if (s100Data && s100Data.active) {
+              updateSignal100Banner({
+                activatedBy: s100Data.activatedByDepartment || '',
+                activatedByCallSign: s100Data.activatedByCallSign || '',
+                activatedByUsername: s100Data.activatedByUsername || '',
+              });
+            } else {
+              $('#signal-100-banner').removeClass('show').addClass('hide');
+              $('#signal-100-details').text('');
+            }
+          },
+          error: function() { /* ignore */ }
+        });
+
+        // Fetch active panic alerts
+        $.ajax({
+          url: `${API_URL}/api/v1/community/${communityId}/panic-alerts?status=active`,
+          method: 'GET',
+          success: function(data) {
+            renderStyledPanicAlerts(data.alerts || []);
+          },
+          error: function(xhr) {
+            console.error('Error loading panic statuses via AJAX:', xhr.responseText);
+          }
+        });
+      }
+
+      function renderStyledPanicAlerts(alerts) {
+        var $banner = $('#panic-alerts-banner');
+        var $hint = $('#panic-scroll-hint');
+        $banner.empty();
+
+        if (!alerts || alerts.length === 0) {
+          $hint.hide();
+          return;
+        }
+
+        alerts.forEach(function(alert) {
+          var displayName = alert.callSign
+            ? alert.callSign + ' (' + alert.username + ')'
+            : alert.username;
+          // Dispatch can clear any panic
+          var actionBtn = '<button class="panic-alert-clear-btn" onclick="event.stopPropagation(); clearPanicAlert(\'' + alert.alertId + '\')" title="Clear panic"><i class="fa fa-times"></i></button>';
+
+          $banner.append(
+            '<div class="panic-alert-row" id="panic-row-' + alert.alertId + '">' +
+              '<div class="panic-alert-content">' +
+                '<div class="panic-alert-icon"><span class="panic-pulse"></span><i class="fa fa-exclamation-triangle"></i></div>' +
+                '<div class="panic-alert-text">' +
+                  '<div class="panic-alert-title">PANIC ALERT</div>' +
+                  '<div class="panic-alert-details">' + displayName + '</div>' +
+                '</div>' +
+              '</div>' +
+              actionBtn +
+            '</div>'
+          );
+        });
+
+        if (alerts.length > 2) {
+          $hint.text(alerts.length + ' active alerts — scroll for more').show();
+        } else {
+          $hint.hide();
+        }
+      }
+
+      function clearPanicAlert(alertId) {
+        if (!communityId) return;
+        $.ajax({
+          url: API_URL + '/api/v1/community/' + communityId + '/panic-alerts/' + alertId,
+          method: 'DELETE',
+          contentType: 'application/json',
+          data: JSON.stringify({ clearedBy: dbUser._id }),
+          success: function() {
+            $('#panic-row-' + alertId).fadeOut(200, function() { $(this).remove(); });
+            loadPanicStatusesAjax();
+          },
+          error: function(xhr) {
+            console.error('Error clearing panic alert:', xhr.responseText);
+          }
+        });
+      }
+
+      // Poll via AJAX every 20s (offset from Socket.IO 15s polling)
+      loadPanicStatusesAjax();
+      setInterval(loadPanicStatusesAjax, 20000);
 
       // ==========================================
       // REAL-TIME SOCKET LISTENERS FOR DISPATCH

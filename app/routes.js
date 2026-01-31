@@ -7050,17 +7050,17 @@ module.exports = function (app, passport, server, nextApp, handle) {
           const apiResp = await axios.get(apiUrl, config);
           const alerts = (apiResp.data && apiResp.data.alerts) || [];
 
-          // Convert API array format to Map format for backward compatibility with frontend
-          const activePanicsMap = new Map();
+          // Convert API array format to object keyed by userId for backward compatibility with frontend
+          const activePanicsMap = {};
           for (const alert of alerts) {
-            activePanicsMap.set(alert.userId, {
+            activePanicsMap[alert.userId] = {
               userId: alert.userId,
               username: alert.username,
               activeCommunityID: alert.communityId,
               callSign: alert.callSign,
               departmentType: alert.departmentType,
               alertId: alert.alertId,
-            });
+            };
           }
 
           // Fetch Signal 100 data from Go API (includes activation metadata)
@@ -7106,9 +7106,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
             function (dbErr, resp) {
               if (dbErr) return console.error(dbErr);
               if (resp != null && resp.community != null) {
+                // Convert Mongoose Map to plain object if needed
+                var panics = resp.community.activePanics instanceof Map
+                  ? Object.fromEntries(resp.community.activePanics)
+                  : (resp.community.activePanics || {});
                 return socket.broadcast.emit(
                   "load_panic_status_update",
-                  resp.community.activePanics,
+                  panics,
                   resp.community.activeSignal100,
                   resp.community.activeHoldTraffic,
                   req
@@ -7139,7 +7143,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             departmentType: req.departmentType || "police",
           }, config);
 
-          // Build a Map for backward compatibility with existing frontend listeners
+          // Build an object keyed by userId for backward compatibility with existing frontend listeners
           const alertData = {
             userId: req.userID,
             username: req.userUsername,
@@ -7148,8 +7152,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
             departmentType: req.departmentType || "police",
             alertId: apiResp.data && apiResp.data.alertId,
           };
-          const activePanicsMap = new Map();
-          activePanicsMap.set(req.userID, alertData);
+          const activePanicsMap = {};
+          activePanicsMap[req.userID] = alertData;
 
           // Broadcast to community room
           // Emit both map and req for backward compat with old listeners that expect (map, origReq)
@@ -7170,8 +7174,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
               if (dbErr) return console.error(dbErr);
               if (resp != null && resp.community != null) {
                 if (!resp.community.activePanics) {
-                  var mapInsert = new Map();
-                  mapInsert.set(req.userID, values);
+                  var mapInsert = {};
+                  mapInsert[req.userID] = values;
                   Community.findByIdAndUpdate(
                     { _id: ObjectId(req.activeCommunity) },
                     { $set: { "community.activePanics": mapInsert } },
@@ -7181,13 +7185,17 @@ module.exports = function (app, passport, server, nextApp, handle) {
                     }
                   );
                 } else {
-                  resp.community.activePanics.set(req.userID, values);
+                  // Convert to plain object if needed (Mongoose may return a Map)
+                  var panics = resp.community.activePanics instanceof Map
+                    ? Object.fromEntries(resp.community.activePanics)
+                    : (resp.community.activePanics || {});
+                  panics[req.userID] = values;
                   Community.findByIdAndUpdate(
                     { _id: ObjectId(req.activeCommunity) },
-                    { $set: { "community.activePanics": resp.community.activePanics } },
+                    { $set: { "community.activePanics": panics } },
                     function (updateErr) {
                       if (updateErr) return console.error(updateErr);
-                      return socket.broadcast.emit("panic_button_updated", resp.community.activePanics, req);
+                      return socket.broadcast.emit("panic_button_updated", panics, req);
                     }
                   );
                 }

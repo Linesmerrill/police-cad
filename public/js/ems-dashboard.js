@@ -106,6 +106,110 @@ function initializeSocket() {
     console.error('Room error:', data);
   });
 
+  // ==========================================
+  // AJAX POLLING FOR CROSS-PLATFORM UPDATES
+  // ==========================================
+
+  // Direct AJAX polling to Go API — catches mobile-triggered panics/signal100
+  function loadPanicStatusesAjax() {
+    if (!communityId) return;
+
+    // Fetch Signal 100 status
+    $.ajax({
+      url: POLICE_CAD_API_URL + '/api/v1/community/' + communityId + '/signal-100',
+      method: 'GET',
+      success: function(s100Data) {
+        if (s100Data && s100Data.active) {
+          // updateSignal100Banner handles showing the banner and adjusting offset
+          updateSignal100Banner({
+            activatedBy: s100Data.activatedByDepartment || '',
+            activatedByCallSign: s100Data.activatedByCallSign || '',
+            activatedByUsername: s100Data.activatedByUsername || '',
+          });
+        } else {
+          $('#signal-100-banner').removeClass('show').addClass('hide');
+          adjustSignal100Offset(false);
+        }
+      },
+      error: function() { /* ignore */ }
+    });
+
+    // Fetch active panic alerts
+    $.ajax({
+      url: POLICE_CAD_API_URL + '/api/v1/community/' + communityId + '/panic-alerts?status=active',
+      method: 'GET',
+      success: function(data) {
+        renderStyledPanicAlerts(data.alerts || []);
+      },
+      error: function(xhr) {
+        console.error('Error loading panic statuses via AJAX:', xhr.responseText);
+      }
+    });
+  }
+
+  function renderStyledPanicAlerts(alerts) {
+    var $banner = $('#panic-alerts-banner');
+    var $hint = $('#panic-scroll-hint');
+    $banner.empty();
+
+    if (!alerts || alerts.length === 0) {
+      $hint.hide();
+      adjustBannerOffsets();
+      return;
+    }
+
+    alerts.forEach(function(alert) {
+      var displayName = alert.callSign
+        ? alert.callSign + ' (' + alert.username + ')'
+        : alert.username;
+      var isOwner = alert.userId === dbUser._id;
+      var actionBtn = isOwner
+        ? '<button class="panic-alert-clear-btn" onclick="event.stopPropagation(); clearPanicAlert(\'' + alert.alertId + '\')" title="Clear panic"><i class="fa fa-times"></i></button>'
+        : '<button class="panic-alert-hide-btn" onclick="event.stopPropagation(); $(this).closest(\'.panic-alert-row\').fadeOut(200)" title="Hide"><i class="fa fa-eye-slash"></i></button>';
+
+      $banner.append(
+        '<div class="panic-alert-row" id="panic-row-' + alert.alertId + '">' +
+          '<div class="panic-alert-content">' +
+            '<div class="panic-alert-icon"><span class="panic-pulse"></span><i class="fa fa-exclamation-triangle"></i></div>' +
+            '<div class="panic-alert-text">' +
+              '<div class="panic-alert-title">PANIC ALERT</div>' +
+              '<div class="panic-alert-details">' + displayName + '</div>' +
+            '</div>' +
+          '</div>' +
+          actionBtn +
+        '</div>'
+      );
+    });
+
+    if (alerts.length > 2) {
+      $hint.text(alerts.length + ' active alerts — scroll for more').show();
+    } else {
+      $hint.hide();
+    }
+    adjustBannerOffsets();
+  }
+
+  function clearPanicAlert(alertId) {
+    if (!communityId) return;
+    $.ajax({
+      url: POLICE_CAD_API_URL + '/api/v1/community/' + communityId + '/panic-alerts/' + alertId,
+      method: 'DELETE',
+      contentType: 'application/json',
+      data: JSON.stringify({ clearedBy: dbUser._id }),
+      success: function() {
+        $('#panic-row-' + alertId).fadeOut(200, function() { $(this).remove(); });
+        loadPanicStatusesAjax();
+      },
+      error: function(xhr) {
+        console.error('Error clearing panic alert:', xhr.responseText);
+      }
+    });
+  }
+
+  // Poll via AJAX every 20s (offset from Socket.IO 15s polling)
+  loadPanicStatusesAjax();
+  setInterval(loadPanicStatusesAjax, 20000);
+
   // Socket event listeners (legacy)
   socket.on('updated_ems_status', res => {
     location.reload();
@@ -198,22 +302,8 @@ function initializeSocket() {
       $('#signal-100-banner').removeClass('show').addClass('hide');
     }
 
-    // Render panic alerts
-    $('#panic-placeholder-socket').empty();
-    if (map) {
-      for (var m in map) {
-        $('#panic-placeholder-socket').append(
-          '<a id="' + map[m].userId + '-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\'' + map[m].userId + '\')">' +
-          '<div class="alert alert-danger alert-dismissible show" role="alert">' +
-          '<strong>Panic! </strong> Triggered by: <span id="' + map[m].userId + '-panic-username">' + map[m].username + '</span>' +
-          '<button type="button" class="close" aria-label="Close">' +
-          '<span aria-hidden="true">&times;</span>' +
-          '</button>' +
-          '</div>' +
-          '</a>'
-        );
-      }
-    }
+    // Refresh panic alerts from API (styled banners)
+    loadPanicStatusesAjax();
   });
 
   // New panic triggered
@@ -228,29 +318,16 @@ function initializeSocket() {
       audioElement.play().catch(function(e) { console.log('Audio play failed:', e); });
     }
 
-    // Render panic alerts
-    $('#panic-placeholder-socket').empty();
-    if (map) {
-      for (var m in map) {
-        $('#panic-placeholder-socket').append(
-          '<a id="' + map[m].userId + '-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\'' + map[m].userId + '\')">' +
-          '<div class="alert alert-danger alert-dismissible show" role="alert">' +
-          '<strong>Panic! </strong> Triggered by: <span id="' + map[m].userId + '-panic-username">' + map[m].username + '</span>' +
-          '<button type="button" class="close" aria-label="Close">' +
-          '<span aria-hidden="true">&times;</span>' +
-          '</button>' +
-          '</div>' +
-          '</a>'
-        );
-      }
-    }
+    // Refresh panic alerts from API (styled banners)
+    loadPanicStatusesAjax();
 
     showRealTimeToast('emergency', 'PANIC ALERT triggered!', 'error');
   });
 
   // Panic cleared
   socket.on('cleared_panic', function(res) {
-    $('#' + res.userID + '-panic-row').remove();
+    $('#panic-row-' + (res.alertId || res.userID)).fadeOut(200, function() { $(this).remove(); });
+    loadPanicStatusesAjax();
   });
 
   // Populate panic details in modal
@@ -303,6 +380,7 @@ function initializeSocket() {
 
     $('#signal-100-banner').removeClass('show').addClass('hide');
     $('#signal-100-details').text('');
+    adjustSignal100Offset(false);
 
     const clearedBy = (typeof data === 'object' && data.clearedByCallSign)
       ? data.clearedByCallSign + ' (' + data.clearedByUsername + ')'
@@ -344,6 +422,22 @@ function initializeSocket() {
 
 }
 
+// Adjust page content offset when banners (Signal 100 and/or Panic) are shown/hidden
+function adjustBannerOffsets() {
+  var header = document.getElementById('second');
+  if (!header) return;
+
+  var container = document.getElementById('fixed-alert-banners');
+  var totalOffset = container ? container.offsetHeight : 0;
+
+  header.style.marginTop = totalOffset > 0 ? totalOffset + 'px' : '0';
+}
+
+// Backward-compatible alias
+function adjustSignal100Offset() {
+  adjustBannerOffsets();
+}
+
 // Update Signal 100 Banner
 function updateSignal100Banner(data) {
   // Store the user ID for when we clear the Signal 100
@@ -378,6 +472,7 @@ function updateSignal100Banner(data) {
   // Show banner
   $('#signal-100-banner').addClass('show').removeClass('hide');
   $('#signal-100-details').text(message);
+  adjustSignal100Offset(true);
 }
 
 // Trigger Signal 100 from the static action button
@@ -474,6 +569,7 @@ function confirmClearSignal100() {
 
   $('#signal-100-banner').removeClass('show').addClass('hide');
   $('#signal-100-details').text('');
+  adjustSignal100Offset(false);
   hideClearSignal100Modal();
   showRealTimeToast('status', 'Signal 100 Cleared', 'success');
 }
