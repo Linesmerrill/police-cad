@@ -2825,6 +2825,12 @@
 
 </html>
 <script>
+    // HTML escaping helper to prevent XSS when inserting dynamic content into the DOM
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     var dbUser = <%- JSON.stringify(user) %>;
     const API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 var departmentId = <%- JSON.stringify(departmentId) %>;
@@ -3036,22 +3042,28 @@ function selectTenCode(tenCodeID) {
           ? alert.callSign + ' (' + alert.username + ')'
           : alert.username;
         var isOwner = alert.userId === dbUser._id;
-        var actionBtn = isOwner
-          ? '<button class="panic-alert-clear-btn" onclick="event.stopPropagation(); clearPanicAlert(\'' + alert.alertId + '\')" title="Clear panic"><i class="fa fa-times"></i></button>'
-          : '<button class="panic-alert-hide-btn" onclick="event.stopPropagation(); togglePanicCollapse(this)" title="Minimize"><i class="fa fa-chevron-up"></i></button>';
+        var safeAlertId = escapeHtml(alert.alertId);
 
-        $banner.append(
-          '<div class="panic-alert-row" id="panic-row-' + alert.alertId + '">' +
-            '<div class="panic-alert-content">' +
-              '<div class="panic-alert-icon"><span class="panic-pulse"></span><i class="fa fa-exclamation-triangle"></i></div>' +
-              '<div class="panic-alert-text">' +
-                '<div class="panic-alert-title">PANIC ALERT</div>' +
-                '<div class="panic-alert-details">' + displayName + '</div>' +
-              '</div>' +
-            '</div>' +
-            actionBtn +
-          '</div>'
-        );
+        var $row = $('<div>').addClass('panic-alert-row').attr('id', 'panic-row-' + safeAlertId);
+        var $content = $('<div>').addClass('panic-alert-content');
+        $content.append($('<div>').addClass('panic-alert-icon').html('<span class="panic-pulse"></span><i class="fa fa-exclamation-triangle"></i>'));
+        var $text = $('<div>').addClass('panic-alert-text');
+        $text.append($('<div>').addClass('panic-alert-title').text('PANIC ALERT'));
+        $text.append($('<div>').addClass('panic-alert-details').text(displayName));
+        $content.append($text);
+        $row.append($content);
+
+        if (isOwner) {
+          var $clearBtn = $('<button>').addClass('panic-alert-clear-btn').attr('title', 'Clear panic').html('<i class="fa fa-times"></i>');
+          $clearBtn.on('click', function(e) { e.stopPropagation(); clearPanicAlert(alert.alertId); });
+          $row.append($clearBtn);
+        } else {
+          var $hideBtn = $('<button>').addClass('panic-alert-hide-btn').attr('title', 'Minimize').html('<i class="fa fa-chevron-up"></i>');
+          $hideBtn.on('click', function(e) { e.stopPropagation(); togglePanicCollapse(this); });
+          $row.append($hideBtn);
+        }
+
+        $banner.append($row);
       });
 
       if (alerts.length > 2) {

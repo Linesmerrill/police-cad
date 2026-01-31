@@ -3064,6 +3064,12 @@
 
 </html>
 <script>
+  // HTML escaping helper to prevent XSS when inserting dynamic content into the DOM
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
   $(function () {
     // Use shared socket or create one and share it
     var socket = window.dashboardSocket || io();
@@ -3710,21 +3716,23 @@
           var displayName = alert.callSign
             ? alert.callSign + ' (' + alert.username + ')'
             : alert.username;
-          // Dispatch can clear any panic
-          var actionBtn = '<button class="panic-alert-clear-btn" onclick="event.stopPropagation(); clearPanicAlert(\'' + alert.alertId + '\')" title="Clear panic"><i class="fa fa-times"></i></button>';
+          var safeAlertId = escapeHtml(alert.alertId);
 
-          $banner.append(
-            '<div class="panic-alert-row" id="panic-row-' + alert.alertId + '">' +
-              '<div class="panic-alert-content">' +
-                '<div class="panic-alert-icon"><span class="panic-pulse"></span><i class="fa fa-exclamation-triangle"></i></div>' +
-                '<div class="panic-alert-text">' +
-                  '<div class="panic-alert-title">PANIC ALERT</div>' +
-                  '<div class="panic-alert-details">' + displayName + '</div>' +
-                '</div>' +
-              '</div>' +
-              actionBtn +
-            '</div>'
-          );
+          var $row = $('<div>').addClass('panic-alert-row').attr('id', 'panic-row-' + safeAlertId);
+          var $content = $('<div>').addClass('panic-alert-content');
+          $content.append($('<div>').addClass('panic-alert-icon').html('<span class="panic-pulse"></span><i class="fa fa-exclamation-triangle"></i>'));
+          var $text = $('<div>').addClass('panic-alert-text');
+          $text.append($('<div>').addClass('panic-alert-title').text('PANIC ALERT'));
+          $text.append($('<div>').addClass('panic-alert-details').text(displayName));
+          $content.append($text);
+          $row.append($content);
+
+          // Dispatch can clear any panic
+          var $clearBtn = $('<button>').addClass('panic-alert-clear-btn').attr('title', 'Clear panic').html('<i class="fa fa-times"></i>');
+          $clearBtn.on('click', function(e) { e.stopPropagation(); clearPanicAlert(alert.alertId); });
+          $row.append($clearBtn);
+
+          $banner.append($row);
         });
 
         if (alerts.length > 2) {
@@ -4747,15 +4755,27 @@
               `</div>`
             )
             $('#active-warrants-panel-body-'+index).append(
-            `Date Created: ${res[i].warrant.date}<br/>`+
-            `Time Created: ${res[i].warrant.time}<br/>`+
-            `Reporting Officer: ${res[i].warrant.reportingOfficer}<br/>`+
-            `Reason(s): ${res[i].warrant.reasons}<br/>`
+            'Date Created: ' + escapeHtml(res[i].warrant.date) + '<br/>' +
+            'Time Created: ' + escapeHtml(res[i].warrant.time) + '<br/>' +
+            'Reporting Officer: ' + escapeHtml(res[i].warrant.reportingOfficer) + '<br/>' +
+            'Reason(s): ' + escapeHtml(res[i].warrant.reasons) + '<br/>'
           )
 
-          $('#active-warrants-panel-body-'+index).append(
-            `<button type="button" class="btn btn-info margin-bottom-05" id="confirmWarrantModal" data-toggle="modal" href="#confirmClearWarrantModal" onclick="clearWarrantWithValues('${res[i]._id}', '${res[i].warrant.reasons}')">Clear</button>`
-          )
+          var warrantId = res[i]._id;
+          var warrantReasons = res[i].warrant.reasons;
+          var $clearBtn = $('<button>')
+            .attr('type', 'button')
+            .addClass('btn btn-info margin-bottom-05')
+            .attr('id', 'confirmWarrantModal')
+            .attr('data-toggle', 'modal')
+            .attr('href', '#confirmClearWarrantModal')
+            .text('Clear');
+          (function(wId, wReasons) {
+            $clearBtn.on('click', function() {
+              clearWarrantWithValues(wId, wReasons);
+            });
+          })(warrantId, warrantReasons);
+          $('#active-warrants-panel-body-'+index).append($clearBtn)
           counter++
           }
         }

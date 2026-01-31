@@ -1,4 +1,11 @@
 // EMS Dashboard JavaScript
+
+// HTML escaping helper to prevent XSS when inserting dynamic content into the DOM
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // Global variables
 var dbUser;
 var dbVehicles;
@@ -165,22 +172,28 @@ function initializeSocket() {
         ? alert.callSign + ' (' + alert.username + ')'
         : alert.username;
       var isOwner = alert.userId === dbUser._id;
-      var actionBtn = isOwner
-        ? '<button class="panic-alert-clear-btn" onclick="event.stopPropagation(); clearPanicAlert(\'' + alert.alertId + '\')" title="Clear panic"><i class="fa fa-times"></i></button>'
-        : '<button class="panic-alert-hide-btn" onclick="event.stopPropagation(); togglePanicCollapse(this)" title="Minimize"><i class="fa fa-chevron-up"></i></button>';
+      var safeAlertId = escapeHtml(alert.alertId);
 
-      $banner.append(
-        '<div class="panic-alert-row" id="panic-row-' + alert.alertId + '">' +
-          '<div class="panic-alert-content">' +
-            '<div class="panic-alert-icon"><span class="panic-pulse"></span><i class="fa fa-exclamation-triangle"></i></div>' +
-            '<div class="panic-alert-text">' +
-              '<div class="panic-alert-title">PANIC ALERT</div>' +
-              '<div class="panic-alert-details">' + displayName + '</div>' +
-            '</div>' +
-          '</div>' +
-          actionBtn +
-        '</div>'
-      );
+      var $row = $('<div>').addClass('panic-alert-row').attr('id', 'panic-row-' + safeAlertId);
+      var $content = $('<div>').addClass('panic-alert-content');
+      $content.append($('<div>').addClass('panic-alert-icon').html('<span class="panic-pulse"></span><i class="fa fa-exclamation-triangle"></i>'));
+      var $text = $('<div>').addClass('panic-alert-text');
+      $text.append($('<div>').addClass('panic-alert-title').text('PANIC ALERT'));
+      $text.append($('<div>').addClass('panic-alert-details').text(displayName));
+      $content.append($text);
+      $row.append($content);
+
+      if (isOwner) {
+        var $clearBtn = $('<button>').addClass('panic-alert-clear-btn').attr('title', 'Clear panic').html('<i class="fa fa-times"></i>');
+        $clearBtn.on('click', function(e) { e.stopPropagation(); clearPanicAlert(alert.alertId); });
+        $row.append($clearBtn);
+      } else {
+        var $hideBtn = $('<button>').addClass('panic-alert-hide-btn').attr('title', 'Minimize').html('<i class="fa fa-chevron-up"></i>');
+        $hideBtn.on('click', function(e) { e.stopPropagation(); togglePanicCollapse(this); });
+        $row.append($hideBtn);
+      }
+
+      $banner.append($row);
     });
 
     if (alerts.length > 2) {
@@ -254,16 +267,30 @@ function initializeSocket() {
         }
       }
       if (containsVeh) {
-        $('#assigned-call-container').append(
-            `<a id="${res._id}" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails('${res._id}')">
-              <div class="alert alert-success alert-dismissible show" role="alert">
-                Opened: <span id="${res._id}-createdAt" style="text-transform:capitalize">
-                  <time>${res.call.createdAtReadable}</time> |  Description: <span id="${res._id}-description">${res.call.shortDescription}</span></span>
-            </div>
-            </a>`
-          ).fadeTo(1, function () {
-            $(this).add();
-          })
+        var safeId = escapeHtml(res._id);
+        var $link = $('<a>')
+          .attr('id', safeId)
+          .attr('data-toggle', 'modal')
+          .attr('href', '#callDetailModal');
+        $link.on('click', function(e) {
+          e.preventDefault();
+          populateCallDetails(res._id);
+        });
+        var $alertDiv = $('<div>')
+          .addClass('alert alert-success alert-dismissible show')
+          .attr('role', 'alert');
+        $alertDiv.append(document.createTextNode('Opened: '));
+        var $createdAtSpan = $('<span>')
+          .attr('id', safeId + '-createdAt')
+          .css('text-transform', 'capitalize');
+        $createdAtSpan.append($('<time>').text(res.call.createdAtReadable));
+        $createdAtSpan.append(document.createTextNode(' |  Description: '));
+        $createdAtSpan.append($('<span>').attr('id', safeId + '-description').text(res.call.shortDescription));
+        $alertDiv.append($createdAtSpan);
+        $link.append($alertDiv);
+        $('#assigned-call-container').append($link).fadeTo(1, function () {
+          $(this).add();
+        });
         showRealTimeToast('call', 'New call assigned!', 'info');
       }
     }

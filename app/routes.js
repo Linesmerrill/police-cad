@@ -7044,6 +7044,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!isValid) {
           return;
         }
+        if (!isValidObjectIdFormat(req.activeCommunity, "invalid format activeCommunity, socket: load_panic_statuses")) {
+          return;
+        }
         try {
           // Fetch active panic alerts from the Go API
           const apiUrl = `${policeCadApiUrl}/api/v1/community/${req.activeCommunity}/panic-alerts?status=active`;
@@ -7133,6 +7136,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!isValid) {
           return;
         }
+        if (!isValidObjectIdFormat(req.activeCommunity, "invalid format activeCommunity, socket: panic_button_update")) {
+          return;
+        }
         try {
           // Create panic alert via Go API
           const apiUrl = `${policeCadApiUrl}/api/v1/community/${req.activeCommunity}/panic-alerts`;
@@ -7215,6 +7221,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!isValid) {
           return;
         }
+        if (!isValidObjectIdFormat(req.communityID, "invalid format communityID, socket: clear_panic")) {
+          return;
+        }
+        if (!isValidObjectIdFormat(req.userID, "invalid format userID, socket: clear_panic")) {
+          return;
+        }
         try {
           // Clear panic alerts for user via Go API
           const apiUrl = `${policeCadApiUrl}/api/v1/community/${req.communityID}/panic-alerts/user/${req.userID}`;
@@ -7258,6 +7270,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
           "cannot lookup invalid length activeCommunity, socket: signal_100_button_update"
         );
         if (!isValid) {
+          return;
+        }
+        if (!isValidObjectIdFormat(req.activeCommunity, "invalid format activeCommunity, socket: signal_100_button_update")) {
           return;
         }
         try {
@@ -7349,6 +7364,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
           "cannot lookup invalid length activeCommunity, socket: clear_signal_100"
         );
         if (!isValid) {
+          return;
+        }
+        if (!isValidObjectIdFormat(activeCommunity, "invalid format activeCommunity, socket: clear_signal_100")) {
           return;
         }
         try {
@@ -8577,6 +8595,21 @@ function exists(v) {
   } else {
     return false;
   }
+}
+
+var OBJECT_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
+
+function isValidObjectIdFormat(value, errorMessage) {
+  if (value == null || value === undefined) {
+    return false;
+  }
+  if (!OBJECT_ID_PATTERN.test(String(value))) {
+    console.warn(
+      `[LPS] [level=warn] [method=isValidObjectIdFormat] errorMessage: ${errorMessage}, value: ${value}`
+    );
+    return false;
+  }
+  return true;
 }
 
 function isValidObjectIdLength(value, errorMessage) {
