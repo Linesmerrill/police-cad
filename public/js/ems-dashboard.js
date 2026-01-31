@@ -380,6 +380,104 @@ function updateSignal100Banner(data) {
   $('#signal-100-details').text(message);
 }
 
+// Trigger Signal 100 from the static action button
+function triggerSignal100() {
+  const userId = dbUser._id;
+  const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+  if (!communityId || !window.dashboardSocket) return;
+
+  window.dashboardSocket.emit('signal_100_button_update', {
+    userID: userId,
+    userUsername: dbUser.user.username,
+    userCallSign: dbUser.user.callSign || null,
+    activeCommunity: communityId,
+    activatedBy: 'EMS',
+    activatedByCallSign: dbUser.user.callSign || null,
+    activatedByUsername: dbUser.user.username,
+    aboutUserId: userId,
+    aboutCallSign: dbUser.user.callSign || null,
+    aboutUsername: dbUser.user.username,
+    timestamp: new Date().toISOString()
+  });
+
+  updateSignal100Banner({
+    activatedBy: 'EMS',
+    activatedByCallSign: dbUser.user.callSign,
+    activatedByUsername: dbUser.user.username,
+    aboutCallSign: dbUser.user.callSign,
+    aboutUsername: dbUser.user.username
+  });
+
+  if (dbUser.user?.panicButtonSound) {
+    var audioElement = document.createElement('audio');
+    audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
+    audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
+    audioElement.play().catch(function(e) { console.log('Audio play failed:', e); });
+  }
+}
+
+// Trigger Panic from the static action button
+function triggerPanic() {
+  const userId = dbUser._id;
+  const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+  if (!communityId) return;
+
+  $.ajax({
+    url: `${POLICE_CAD_API_URL}/api/v1/community/${communityId}/panic-alerts`,
+    method: 'POST',
+    data: JSON.stringify({
+      userId: userId,
+      username: dbUser.user.username,
+      callSign: dbUser.user.callSign || '',
+      departmentType: 'ems',
+    }),
+    contentType: 'application/json',
+    success: function() {
+      if (dbUser.user?.panicButtonSound) {
+        var audioElement = document.createElement('audio');
+        audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
+        audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
+        audioElement.play().catch(function(e) { console.log('Audio play failed:', e); });
+      }
+      showRealTimeToast('emergency', 'Panic Alert triggered!', 'error');
+    },
+    error: function(xhr) {
+      console.error('Error triggering panic:', xhr.responseText);
+      showRealTimeToast('status', 'Failed to trigger panic', 'danger');
+    }
+  });
+}
+
+// Show the clear Signal 100 confirmation modal
+function showClearSignal100Modal() {
+  $('#clear-signal-100-modal').addClass('show');
+}
+
+// Hide the clear Signal 100 confirmation modal
+function hideClearSignal100Modal(event) {
+  if (event && event.target !== event.currentTarget) return;
+  $('#clear-signal-100-modal').removeClass('show');
+}
+
+// Confirm and broadcast Signal 100 cleared
+function confirmClearSignal100() {
+  const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+
+  if (window.dashboardSocket && window.dashboardSocket.connected) {
+    window.dashboardSocket.emit('clear_signal_100', {
+      activeCommunity: communityId,
+      clearedByUserId: dbUser._id,
+      clearedByUsername: dbUser.user?.username || '',
+      clearedByCallSign: dbUser.user?.callSign || '',
+    });
+  }
+
+  $('#signal-100-banner').removeClass('show').addClass('hide');
+  $('#signal-100-details').text('');
+  hideClearSignal100Modal();
+  showRealTimeToast('status', 'Signal 100 Cleared', 'success');
+}
+
 // Toast notification system for real-time updates
 function showRealTimeToast(type, message, severity, details) {
   // Create toast container if it doesn't exist
@@ -5133,10 +5231,12 @@ function displayQuickStatusCodes(codes) {
   const quickGrid = $('#quickStatusGrid');
   quickGrid.empty();
 
+  // Signal 100 and Panic (10-99) have dedicated static action buttons above,
+  // so exclude them from the quick status grid
+  const excludedCodes = ['signal 100', '10-99'];
+
   // Define preferred EMS quick codes in order of priority
   const preferredCodes = [
-    'signal 100', // Emergency (if available)
-    '10-99',      // Officer Needs Assistance (Panic)
     '10-8',       // In Service / Available
     '10-7',       // Out of Service
     '10-6',       // Busy
@@ -5144,6 +5244,7 @@ function displayQuickStatusCodes(codes) {
     '10-19',      // Returning to Station
     '10-23',      // Arrived on Scene
     '10-97',      // Arrived at Scene
+    'code 4',     // Under Control
   ];
 
   // Find matching codes from the available codes
@@ -5161,6 +5262,7 @@ function displayQuickStatusCodes(codes) {
   if (quickCodes.length < 8) {
     codes.forEach(code => {
       if (quickCodes.length >= 8) return;
+      if (excludedCodes.includes(code.code.toLowerCase())) return;
       const descLower = code.description.toLowerCase();
       const hasEmsKeyword = emsKeywords.some(kw => descLower.includes(kw));
       if (hasEmsKeyword && !quickCodes.find(qc => qc._id === code._id)) {
@@ -5173,6 +5275,7 @@ function displayQuickStatusCodes(codes) {
   if (quickCodes.length < 8) {
     codes.forEach(code => {
       if (quickCodes.length >= 8) return;
+      if (excludedCodes.includes(code.code.toLowerCase())) return;
       if (!quickCodes.find(qc => qc._id === code._id)) {
         quickCodes.push(code);
       }
@@ -5182,14 +5285,11 @@ function displayQuickStatusCodes(codes) {
   quickCodes.forEach(code => {
     const category = getCodeCategory(code.code, code.description);
     const isActive = currentTenCodeID === code._id ? 'active' : '';
-    const isPanic = code.code.toLowerCase() === '10-99';
-    const panicBadge = isPanic ? `<span class="panic-badge"><svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v5h-2z"/></svg>PANIC</span>` : '';
     quickGrid.append(
       `<div class="status-card ${category} ${isActive}"
            data-ten-code-id="${code._id}"
            onclick="selectTenCode('${code._id}')"
            title="${code.description}">
-        ${panicBadge}
         <div class="status-card-code">${code.code}</div>
         <div class="status-card-desc">${code.description}</div>
       </div>`

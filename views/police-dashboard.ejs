@@ -634,6 +634,18 @@
                                                 No 10-codes available for this community.
                                               </div>
 
+                                              <!-- Static Action Buttons -->
+                                              <div class="action-buttons-row">
+                                                <div class="action-btn action-btn-signal100" onclick="triggerSignal100()">
+                                                  <i class="fa fa-exclamation-triangle"></i>
+                                                  <span>Signal 100</span>
+                                                </div>
+                                                <div class="action-btn action-btn-panic" onclick="panicButtonPressed()">
+                                                  <i class="fa fa-exclamation-circle"></i>
+                                                  <span>Panic</span>
+                                                </div>
+                                              </div>
+
                                               <!-- Quick Status Grid - Most Common Codes -->
                                               <div id="quickStatusGrid" class="quick-status-grid">
                                                 <!-- Populated by JavaScript -->
@@ -818,6 +830,54 @@
                                               .status-card.busy { border-left: 4px solid #f59e0b; }
                                               .status-card.emergency { border-left: 4px solid #ef4444; }
                                               .status-card.offline { border-left: 4px solid #6b7280; }
+
+                                              /* Static action buttons row */
+                                              .action-buttons-row {
+                                                display: grid;
+                                                grid-template-columns: 1fr 1fr;
+                                                gap: 0.75rem;
+                                                padding: 1.25rem 1.25rem 0;
+                                              }
+                                              .action-btn {
+                                                position: relative;
+                                                border: 2px solid;
+                                                border-radius: 10px;
+                                                padding: 0.875rem 1rem;
+                                                cursor: pointer;
+                                                transition: all 0.2s ease;
+                                                text-align: center;
+                                                display: flex;
+                                                align-items: center;
+                                                justify-content: center;
+                                                gap: 8px;
+                                                font-weight: 700;
+                                                font-size: 0.95rem;
+                                                letter-spacing: 1px;
+                                                text-transform: uppercase;
+                                              }
+                                              .action-btn i {
+                                                font-size: 1.1rem;
+                                              }
+                                              .action-btn-signal100 {
+                                                background: rgba(153, 27, 27, 0.3);
+                                                border-color: #dc2626;
+                                                color: #fca5a5;
+                                              }
+                                              .action-btn-signal100:hover {
+                                                background: rgba(220, 38, 38, 0.4);
+                                                box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+                                                transform: translateY(-2px);
+                                              }
+                                              .action-btn-panic {
+                                                background: rgba(194, 65, 12, 0.3);
+                                                border-color: #f97316;
+                                                color: #fdba74;
+                                              }
+                                              .action-btn-panic:hover {
+                                                background: rgba(249, 115, 22, 0.4);
+                                                box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+                                                transform: translateY(-2px);
+                                              }
 
                                               /* Emergency active state - pulsing red animation */
                                               .status-card.emergency.active {
@@ -3258,17 +3318,20 @@ function displayQuickStatusCodes(codes) {
   const quickGrid = $('#quickStatusGrid');
   quickGrid.empty();
 
+  // Signal 100 and Panic (10-99) have dedicated static action buttons above,
+  // so exclude them from the quick status grid
+  const excludedCodes = ['signal 100', '10-99'];
+
   // Define preferred quick codes in order of priority
   const preferredCodes = [
-    'signal 100', // Emergency
-    '10-99',      // Officer Needs Assistance
     'code 4',     // Under Control
     'signal 41',  // Log on to MDT
     'signal 42',  // Log out of MDT
     '10-8',       // In Service
     '10-7',       // Out of Service
     '10-11',      // Traffic Stop
-    '10-15'       // Subject in Custody
+    '10-15',      // Subject in Custody
+    '10-6'        // Busy
   ];
 
   // Find matching codes from the available codes
@@ -3280,10 +3343,11 @@ function displayQuickStatusCodes(codes) {
     }
   });
 
-  // If we don't have 8, fill with remaining codes (excluding already added)
+  // If we don't have 8, fill with remaining codes (excluding already added and excluded)
   if (quickCodes.length < 8) {
     codes.forEach(code => {
       if (quickCodes.length >= 8) return;
+      if (excludedCodes.includes(code.code.toLowerCase())) return;
       if (!quickCodes.find(qc => qc._id === code._id)) {
         quickCodes.push(code);
       }
@@ -3293,14 +3357,11 @@ function displayQuickStatusCodes(codes) {
   quickCodes.forEach(code => {
     const category = getCodeCategory(code.code, code.description);
     const isActive = currentTenCodeID === code._id ? 'active' : '';
-    const isPanic = code.code.toLowerCase() === '10-99';
-    const panicBadge = isPanic ? `<span class="panic-badge"><svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v5h-2z"/></svg>PANIC</span>` : '';
     quickGrid.append(
       `<div class="status-card ${category} ${isActive}"
            data-ten-code-id="${code._id}"
            onclick="selectTenCode('${code._id}')"
            title="${code.description}">
-        ${panicBadge}
         <div class="status-card-code">${code.code}</div>
         <div class="status-card-desc">${code.description}</div>
       </div>`
@@ -3807,7 +3868,45 @@ function toggleCaret(event) {
       });
     }
 
-    
+    // Handle Signal 100 button press
+    function triggerSignal100() {
+      const userId = dbUser._id;
+      const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+      if (!communityId) return;
+
+      if (dashboardSocket && dashboardSocket.connected) {
+        dashboardSocket.emit('signal_100_button_update', {
+          userID: userId,
+          userUsername: dbUser.user.username,
+          userCallSign: dbUser.user.callSign || null,
+          activeCommunity: communityId,
+          activatedBy: 'Officer',
+          activatedByCallSign: dbUser.user.callSign || null,
+          activatedByUsername: dbUser.user.username,
+          aboutUserId: userId,
+          aboutCallSign: dbUser.user.callSign || null,
+          aboutUsername: dbUser.user.username,
+          timestamp: new Date().toISOString()
+        });
+
+        updateSignal100Banner({
+          activatedBy: 'Officer',
+          activatedByCallSign: dbUser.user.callSign,
+          activatedByUsername: dbUser.user.username,
+          aboutCallSign: dbUser.user.callSign,
+          aboutUsername: dbUser.user.username
+        });
+
+        if ($('#panic-button-check-sound').prop('checked')) {
+          var audioElement = document.createElement('audio');
+          audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
+          audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
+          audioElement.play().catch(e => console.log('Audio play failed:', e));
+        }
+      }
+    }
+
+
     // Hide modal utility
 function hideModal(modalId) {
   const $modal = $(`#${modalId}`);

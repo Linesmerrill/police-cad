@@ -117,10 +117,84 @@
       letter-spacing: 1px;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
+    .signal-100-text {
+      text-align: center;
+      flex: 1;
+      min-width: 0;
+    }
     .signal-100-details {
       color: rgba(255, 255, 255, 0.9);
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      margin-top: 2px;
+    }
+    .signal-100-tap {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: uppercase;
+      letter-spacing: 1px;
       text-align: center;
+    }
+
+    /* Clear Signal 100 Modal */
+    .clear-signal-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 1100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .clear-signal-modal-overlay.show {
+      display: flex;
+    }
+    .clear-signal-modal {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+    .clear-signal-modal h3 {
+      color: #f1f5f9;
+      margin-bottom: 8px;
+    }
+    .clear-signal-modal p {
+      color: #94a3b8;
+      margin-bottom: 20px;
+    }
+    .clear-signal-modal-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    .clear-signal-btn-cancel {
+      padding: 8px 20px;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: transparent;
+      color: #94a3b8;
+      cursor: pointer;
+    }
+    .clear-signal-btn-cancel:hover {
+      background: rgba(71, 85, 105, 0.3);
+    }
+    .clear-signal-btn-confirm {
+      padding: 8px 20px;
+      border-radius: 8px;
+      border: none;
+      background: #dc2626;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .clear-signal-btn-confirm:hover {
+      background: #b91c1c;
     }
 
     /* Toast animation keyframes */
@@ -383,6 +457,52 @@
     .status-card.busy { border-left: 4px solid #f59e0b; }
     .status-card.emergency { border-left: 4px solid #ef4444; }
     .status-card.offline { border-left: 4px solid #6b7280; }
+
+    /* Static action buttons row */
+    .action-buttons-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      padding: 1.25rem 1.25rem 0;
+    }
+    .action-btn {
+      position: relative;
+      border: 2px solid;
+      border-radius: 10px;
+      padding: 0.875rem 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .action-btn i { font-size: 1.1rem; }
+    .action-btn-signal100 {
+      background: rgba(153, 27, 27, 0.3);
+      border-color: #dc2626;
+      color: #fca5a5;
+    }
+    .action-btn-signal100:hover {
+      background: rgba(220, 38, 38, 0.4);
+      box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+      transform: translateY(-2px);
+    }
+    .action-btn-panic {
+      background: rgba(194, 65, 12, 0.3);
+      border-color: #f97316;
+      color: #fdba74;
+    }
+    .action-btn-panic:hover {
+      background: rgba(249, 115, 22, 0.4);
+      box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+      transform: translateY(-2px);
+    }
 
     /* Emergency active state - pulsing red animation */
     .status-card.emergency.active {
@@ -1622,16 +1742,31 @@
 </head>
 <body>
   <!-- Signal 100 Banner (hidden by default) -->
-  <div id="signal-100-banner" class="signal-100-banner hide">
+  <div id="signal-100-banner" class="signal-100-banner hide" onclick="showClearSignal100Modal()">
     <div class="signal-100-content">
       <div class="signal-100-row">
         <div class="signal-100-icon">
           <span class="signal-100-pulse"></span>
           <i class="fa fa-exclamation-triangle"></i>
         </div>
-        <span class="signal-100-title">SIGNAL 100 - HOLD ALL TRAFFIC</span>
+        <div class="signal-100-text">
+          <div class="signal-100-title">SIGNAL 100</div>
+          <div id="signal-100-details" class="signal-100-details"></div>
+        </div>
       </div>
-      <div id="signal-100-details" class="signal-100-details"></div>
+      <div class="signal-100-tap">Click to clear</div>
+    </div>
+  </div>
+
+  <!-- Clear Signal 100 Confirmation Modal -->
+  <div id="clear-signal-100-modal" class="clear-signal-modal-overlay" onclick="hideClearSignal100Modal(event)">
+    <div class="clear-signal-modal" onclick="event.stopPropagation()">
+      <h3>Clear Signal 100?</h3>
+      <p>This will notify all units that the emergency has been resolved.</p>
+      <div class="clear-signal-modal-buttons">
+        <button class="clear-signal-btn-cancel" onclick="hideClearSignal100Modal()">Cancel</button>
+        <button class="clear-signal-btn-confirm" onclick="confirmClearSignal100()">Clear Signal 100</button>
+      </div>
     </div>
   </div>
 
@@ -1764,6 +1899,18 @@
 
               <div id="noTenCodes" class="alert alert-info" style="display: none; margin: 1rem;">
                 No status codes available for this community.
+              </div>
+
+              <!-- Static Action Buttons -->
+              <div class="action-buttons-row">
+                <div class="action-btn action-btn-signal100" onclick="triggerSignal100()">
+                  <i class="fa fa-exclamation-triangle"></i>
+                  <span>Signal 100</span>
+                </div>
+                <div class="action-btn action-btn-panic" onclick="triggerPanic()">
+                  <i class="fa fa-exclamation-circle"></i>
+                  <span>Panic</span>
+                </div>
               </div>
 
               <!-- Quick Status Grid - Most Common Codes -->
