@@ -219,6 +219,11 @@
   .panic-alert-clear-btn:hover { background: rgba(255,255,255,0.35); }
   .panic-alert-hide-btn { background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.6); width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 12px; transition: background 0.2s; }
   .panic-alert-hide-btn:hover { background: rgba(255,255,255,0.2); }
+  .panic-alert-row.collapsed { min-height: 28px; padding: 4px 16px; animation: none; opacity: 0.65; }
+  .panic-alert-row.collapsed .panic-alert-icon { display: none; }
+  .panic-alert-row.collapsed .panic-alert-title { display: inline; font-size: 11px; letter-spacing: 0.5px; }
+  .panic-alert-row.collapsed .panic-alert-details { display: inline; font-size: 11px; margin-top: 0; margin-left: 6px; }
+  .panic-alert-row.collapsed .panic-alert-text { display: flex; align-items: center; }
   .panic-scroll-hint { background: #7c2d12; padding: 3px 0; text-align: center; font-size: 10px; color: rgba(255,255,255,0.7); letter-spacing: 0.5px; }
   @media (max-width: 480px) {
     .panic-alert-row { padding: 8px 12px; min-height: 44px; }
@@ -3033,7 +3038,7 @@ function selectTenCode(tenCodeID) {
         var isOwner = alert.userId === dbUser._id;
         var actionBtn = isOwner
           ? '<button class="panic-alert-clear-btn" onclick="event.stopPropagation(); clearPanicAlert(\'' + alert.alertId + '\')" title="Clear panic"><i class="fa fa-times"></i></button>'
-          : '<button class="panic-alert-hide-btn" onclick="event.stopPropagation(); $(this).closest(\'.panic-alert-row\').fadeOut(200)" title="Hide"><i class="fa fa-eye-slash"></i></button>';
+          : '<button class="panic-alert-hide-btn" onclick="event.stopPropagation(); togglePanicCollapse(this)" title="Minimize"><i class="fa fa-chevron-up"></i></button>';
 
         $banner.append(
           '<div class="panic-alert-row" id="panic-row-' + alert.alertId + '">' +
@@ -3058,6 +3063,19 @@ function selectTenCode(tenCodeID) {
       // Update panic button toggle state
       var userHasPanic = alerts.some(function(a) { return a.userId === dbUser._id; });
       updatePanicButtonState(userHasPanic);
+    }
+
+    function togglePanicCollapse(btn) {
+      var $row = $(btn).closest('.panic-alert-row');
+      var $icon = $(btn).find('i');
+      $row.toggleClass('collapsed');
+      if ($row.hasClass('collapsed')) {
+        $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        $(btn).attr('title', 'Expand');
+      } else {
+        $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        $(btn).attr('title', 'Minimize');
+      }
     }
 
     function updatePanicButtonState(hasPanic) {
@@ -4047,6 +4065,12 @@ function toggleCaret(event) {
       const userId = dbUser._id;
       const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
       if (!communityId) return;
+
+      // If already active, clear it instead of reactivating
+      if ($('#signal-100-banner').hasClass('show')) {
+        showClearSignal100Modal();
+        return;
+      }
 
       _signal100Loading = true;
       $('#signal100ActionBtn').addClass('loading');

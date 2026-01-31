@@ -167,7 +167,7 @@ function initializeSocket() {
       var isOwner = alert.userId === dbUser._id;
       var actionBtn = isOwner
         ? '<button class="panic-alert-clear-btn" onclick="event.stopPropagation(); clearPanicAlert(\'' + alert.alertId + '\')" title="Clear panic"><i class="fa fa-times"></i></button>'
-        : '<button class="panic-alert-hide-btn" onclick="event.stopPropagation(); $(this).closest(\'.panic-alert-row\').fadeOut(200)" title="Hide"><i class="fa fa-eye-slash"></i></button>';
+        : '<button class="panic-alert-hide-btn" onclick="event.stopPropagation(); togglePanicCollapse(this)" title="Minimize"><i class="fa fa-chevron-up"></i></button>';
 
       $banner.append(
         '<div class="panic-alert-row" id="panic-row-' + alert.alertId + '">' +
@@ -195,6 +195,19 @@ function initializeSocket() {
     adjustBannerOffsets();
   }
 
+  function togglePanicCollapse(btn) {
+    var $row = $(btn).closest('.panic-alert-row');
+    var $icon = $(btn).find('i');
+    $row.toggleClass('collapsed');
+    if ($row.hasClass('collapsed')) {
+      $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+      $(btn).attr('title', 'Expand');
+    } else {
+      $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+      $(btn).attr('title', 'Minimize');
+    }
+  }
+
   function clearPanicAlert(alertId) {
     if (!communityId) return;
     $.ajax({
@@ -211,6 +224,10 @@ function initializeSocket() {
       }
     });
   }
+
+  // Expose to inline onclick handlers (these are inside initializeSocket closure)
+  window.togglePanicCollapse = togglePanicCollapse;
+  window.clearPanicAlert = clearPanicAlert;
 
   // Poll via AJAX every 20s (offset from Socket.IO 15s polling)
   loadPanicStatusesAjax();
@@ -503,6 +520,12 @@ function triggerSignal100() {
   const userId = dbUser._id;
   const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
   if (!communityId || !window.dashboardSocket) return;
+
+  // If already active, clear it instead of reactivating
+  if ($('#signal-100-banner').hasClass('show')) {
+    showClearSignal100Modal();
+    return;
+  }
 
   _signal100Loading = true;
   $('#signal100ActionBtn').addClass('loading');
