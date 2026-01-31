@@ -70,6 +70,14 @@ function initializeSocket() {
     if (communityId) {
       socket.emit('join_community_room', { communityId: communityId });
     }
+
+    // Load initial panic statuses
+    var panicReq = {
+      userID: dbUser._id,
+      userUsername: dbUser.user?.username,
+      activeCommunity: communityId,
+    };
+    socket.emit('load_panic_statuses', panicReq);
   }
 
   // Connect handler - wait for connection before joining room
@@ -163,6 +171,99 @@ function initializeSocket() {
       }
     }
   });
+
+  // ==========================================
+  // PANIC ALERT LISTENERS
+  // ==========================================
+
+  // Load initial panic statuses
+  socket.on('load_panic_status_update', function(map, signal100Resp, holdTrafficResp, origReq) {
+    if (origReq && origReq.activeCommunity && dbUser.user?.lastAccessedCommunity?.communityID !== origReq.activeCommunity) return;
+
+    // Update signal 100 banner
+    if (signal100Resp) {
+      $('#signal-100-banner').removeClass('hide').addClass('show');
+    } else {
+      $('#signal-100-banner').removeClass('show').addClass('hide');
+    }
+
+    // Render panic alerts
+    $('#panic-placeholder-socket').empty();
+    if (map) {
+      for (var m in map) {
+        $('#panic-placeholder-socket').append(
+          '<a id="' + map[m].userId + '-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\'' + map[m].userId + '\')">' +
+          '<div class="alert alert-danger alert-dismissible show" role="alert">' +
+          '<strong>Panic! </strong> Triggered by: <span id="' + map[m].userId + '-panic-username">' + map[m].username + '</span>' +
+          '<button type="button" class="close" aria-label="Close">' +
+          '<span aria-hidden="true">&times;</span>' +
+          '</button>' +
+          '</div>' +
+          '</a>'
+        );
+      }
+    }
+  });
+
+  // New panic triggered
+  socket.on('panic_button_updated', function(map, origReq) {
+    if (origReq && origReq.activeCommunity && dbUser.user?.lastAccessedCommunity?.communityID !== origReq.activeCommunity) return;
+
+    // Play panic alert sound if enabled
+    if (dbUser.user?.panicButtonSound) {
+      var audioElement = document.createElement('audio');
+      audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
+      audioElement.volume = dbUser.user?.alertVolumeLevel / 100 || 0.1;
+      audioElement.play().catch(function(e) { console.log('Audio play failed:', e); });
+    }
+
+    // Render panic alerts
+    $('#panic-placeholder-socket').empty();
+    if (map) {
+      for (var m in map) {
+        $('#panic-placeholder-socket').append(
+          '<a id="' + map[m].userId + '-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\'' + map[m].userId + '\')">' +
+          '<div class="alert alert-danger alert-dismissible show" role="alert">' +
+          '<strong>Panic! </strong> Triggered by: <span id="' + map[m].userId + '-panic-username">' + map[m].username + '</span>' +
+          '<button type="button" class="close" aria-label="Close">' +
+          '<span aria-hidden="true">&times;</span>' +
+          '</button>' +
+          '</div>' +
+          '</a>'
+        );
+      }
+    }
+
+    showRealTimeToast('emergency', 'PANIC ALERT triggered!', 'error');
+  });
+
+  // Panic cleared
+  socket.on('cleared_panic', function(res) {
+    $('#' + res.userID + '-panic-row').remove();
+  });
+
+  // Populate panic details in modal
+  function populatePanicDetails(id) {
+    $('#panic-id').val(id);
+  }
+
+  // Clear panic handler
+  $('#clearPanic').on('click', function() {
+    var panicUserId = $('#panic-id').val();
+    if (panicUserId) {
+      var myReq = {
+        userID: panicUserId,
+        communityID: communityId,
+        clearedBy: dbUser._id,
+      };
+      socket.emit('clear_panic', myReq);
+      $('#panicDetailModal').modal('hide');
+    }
+  });
+
+  // ==========================================
+  // SIGNAL 100 LISTENERS
+  // ==========================================
 
   // Listen for Signal 100 activation
   socket.on('signal_100_button_updated', function(data) {

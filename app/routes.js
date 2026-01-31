@@ -7035,8 +7035,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
     });
 
-    socket.on("load_panic_statuses", (req) => {
-      // console.debug('load panic status req: ', req)
+    socket.on("load_panic_statuses", async (req) => {
       if (req.activeCommunity != null && req.activeCommunity != undefined) {
         var isValid = isValidObjectIdLength(
           req.activeCommunity,
@@ -7045,16 +7044,55 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!isValid) {
           return;
         }
-        Community.findById(
-          {
-            _id: ObjectId(req.activeCommunity),
-          },
-          function (err, resp) {
-            if (err) return console.error(err);
-            if (resp != null) {
-              if (resp.community != null) {
-                // console.debug("resp", resp)
-                // console.debug("resp.community", resp.community)
+        try {
+          // Fetch active panic alerts from the Go API
+          const apiUrl = `${policeCadApiUrl}/api/v1/community/${req.activeCommunity}/panic-alerts?status=active`;
+          const apiResp = await axios.get(apiUrl, config);
+          const alerts = (apiResp.data && apiResp.data.alerts) || [];
+
+          // Convert API array format to Map format for backward compatibility with frontend
+          const activePanicsMap = new Map();
+          for (const alert of alerts) {
+            activePanicsMap.set(alert.userId, {
+              userId: alert.userId,
+              username: alert.username,
+              activeCommunityID: alert.communityId,
+              callSign: alert.callSign,
+              departmentType: alert.departmentType,
+              alertId: alert.alertId,
+            });
+          }
+
+          // Also fetch community for signal100 and holdTraffic (still stored on community)
+          const communityResp = await axios.get(
+            `${policeCadApiUrl}/api/v1/community/${req.activeCommunity}`,
+            config
+          );
+          const community = communityResp.data && communityResp.data.community;
+          const activeSignal100 = community ? community.activeSignal100 : false;
+          const activeHoldTraffic = community ? community.activeHoldTraffic : false;
+
+          broadcastToCommunity(
+            "load_panic_status_update",
+            activePanicsMap,
+            req.activeCommunity
+          );
+          // Also emit signal100 and holdTraffic as additional args for backward compat
+          socket.broadcast.emit(
+            "load_panic_status_update",
+            activePanicsMap,
+            activeSignal100,
+            activeHoldTraffic,
+            req
+          );
+        } catch (err) {
+          console.error("load_panic_statuses: API error:", err.message);
+          // Fallback to direct DB read
+          Community.findById(
+            { _id: ObjectId(req.activeCommunity) },
+            function (dbErr, resp) {
+              if (dbErr) return console.error(dbErr);
+              if (resp != null && resp.community != null) {
                 return socket.broadcast.emit(
                   "load_panic_status_update",
                   resp.community.activePanics,
@@ -7064,19 +7102,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 );
               }
             }
-          }
-        );
+          );
+        }
       }
     });
 
-    socket.on("panic_button_update", (req) => {
-      // console.debug('panic button update req: ', req)
+    socket.on("panic_button_update", async (req) => {
       if (req.activeCommunity != null && req.activeCommunity != undefined) {
-        var values = {
-          userId: req.userID,
-          username: req.userUsername,
-          activeCommunityID: req.activeCommunity,
-        };
         var isValid = isValidObjectIdLength(
           req.activeCommunity,
           "cannot lookup invalid length activeCommunity, socket: panic_button_update"
@@ -7084,92 +7116,75 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!isValid) {
           return;
         }
-        Community.findById(
-          {
-            _id: ObjectId(req.activeCommunity),
-          },
-          function (err, resp) {
-            if (err) return console.error(err);
-            if (resp != null) {
-              if (resp.community != null) {
-                if (
-                  resp.community.activePanics == undefined ||
-                  resp.community.activePanics == null
-                ) {
+        try {
+          // Create panic alert via Go API
+          const apiUrl = `${policeCadApiUrl}/api/v1/community/${req.activeCommunity}/panic-alerts`;
+          const apiResp = await axios.post(apiUrl, {
+            userId: req.userID,
+            username: req.userUsername,
+            callSign: req.callSign || "",
+            departmentType: req.departmentType || "police",
+          }, config);
+
+          // Build a Map for backward compatibility with existing frontend listeners
+          const alertData = {
+            userId: req.userID,
+            username: req.userUsername,
+            activeCommunityID: req.activeCommunity,
+            callSign: req.callSign || "",
+            departmentType: req.departmentType || "police",
+            alertId: apiResp.data && apiResp.data.alertId,
+          };
+          const activePanicsMap = new Map();
+          activePanicsMap.set(req.userID, alertData);
+
+          // Broadcast to community room
+          broadcastToCommunity("panic_button_updated", activePanicsMap, req.activeCommunity);
+          // Also emit with the original req for backward compatibility
+          broadcastToCommunity("panic_alert_created", alertData, req.activeCommunity);
+        } catch (err) {
+          console.error("panic_button_update: API error:", err.message);
+          // Fallback to old direct MongoDB approach
+          var values = {
+            userId: req.userID,
+            username: req.userUsername,
+            activeCommunityID: req.activeCommunity,
+          };
+          Community.findById(
+            { _id: ObjectId(req.activeCommunity) },
+            function (dbErr, resp) {
+              if (dbErr) return console.error(dbErr);
+              if (resp != null && resp.community != null) {
+                if (!resp.community.activePanics) {
                   var mapInsert = new Map();
                   mapInsert.set(req.userID, values);
-                  var isValid = isValidObjectIdLength(
-                    req.activeCommunity,
-                    "cannot lookup invalid length activeCommunity, socket: panic_button_update"
-                  );
-                  if (!isValid) {
-                    return;
-                  }
                   Community.findByIdAndUpdate(
-                    {
-                      _id: ObjectId(req.activeCommunity),
-                    },
-                    {
-                      $set: {
-                        "community.activePanics": mapInsert,
-                      },
-                    },
-                    function (err) {
-                      if (err) return console.error(err);
-                      return socket.broadcast.emit(
-                        "panic_button_updated",
-                        mapInsert,
-                        req
-                      );
+                    { _id: ObjectId(req.activeCommunity) },
+                    { $set: { "community.activePanics": mapInsert } },
+                    function (updateErr) {
+                      if (updateErr) return console.error(updateErr);
+                      return socket.broadcast.emit("panic_button_updated", mapInsert, req);
                     }
                   );
                 } else {
-                  if (
-                    resp.community.activePanics.get(req.userID) == undefined
-                  ) {
-                    resp.community.activePanics.set(req.userID, values);
-                    var isValid = isValidObjectIdLength(
-                      req.activeCommunity,
-                      "cannot lookup invalid length activeCommunity, socket: panic_button_update"
-                    );
-                    if (!isValid) {
-                      return;
+                  resp.community.activePanics.set(req.userID, values);
+                  Community.findByIdAndUpdate(
+                    { _id: ObjectId(req.activeCommunity) },
+                    { $set: { "community.activePanics": resp.community.activePanics } },
+                    function (updateErr) {
+                      if (updateErr) return console.error(updateErr);
+                      return socket.broadcast.emit("panic_button_updated", resp.community.activePanics, req);
                     }
-                    Community.findByIdAndUpdate(
-                      {
-                        _id: ObjectId(req.activeCommunity),
-                      },
-                      {
-                        $set: {
-                          "community.activePanics": resp.community.activePanics,
-                        },
-                      },
-                      function (err) {
-                        if (err) return console.error(err);
-                        return socket.broadcast.emit(
-                          "panic_button_updated",
-                          resp.community.activePanics,
-                          req
-                        );
-                      }
-                    );
-                  } else {
-                    return socket.broadcast.emit(
-                      "panic_button_updated",
-                      resp.community.activePanics,
-                      req
-                    );
-                  }
+                  );
                 }
               }
             }
-          }
-        );
+          );
+        }
       }
     });
 
-    socket.on("clear_panic", (req) => {
-      // console.debug("clear req", req)
+    socket.on("clear_panic", async (req) => {
       if (req.communityID != null && req.communityID != undefined) {
         var isValid = isValidObjectIdLength(
           req.communityID,
@@ -7178,42 +7193,39 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!isValid) {
           return;
         }
-        Community.findById(
-          {
-            _id: ObjectId(req.communityID),
-          },
-          function (err, resp) {
-            if (err) return console.error(err);
-            if (resp != null) {
-              if (resp.community != null) {
+        try {
+          // Clear panic alerts for user via Go API
+          const apiUrl = `${policeCadApiUrl}/api/v1/community/${req.communityID}/panic-alerts/user/${req.userID}`;
+          await axios.delete(apiUrl, {
+            ...config,
+            data: { clearedBy: req.clearedBy || req.userID },
+          });
+
+          // Broadcast cleared event to community
+          broadcastToCommunity("cleared_panic", req, req.communityID);
+        } catch (err) {
+          console.error("clear_panic: API error:", err.message);
+          // Fallback to old direct MongoDB approach
+          Community.findById(
+            { _id: ObjectId(req.communityID) },
+            function (dbErr, resp) {
+              if (dbErr) return console.error(dbErr);
+              if (resp != null && resp.community != null) {
                 if (resp.community.activePanics != null) {
                   resp.community.activePanics.delete(req.userID);
-                  var isValid = isValidObjectIdLength(
-                    req.communityID,
-                    "cannot lookup invalid length communityID, socket: clear_panic"
-                  );
-                  if (!isValid) {
-                    return;
-                  }
                   Community.findByIdAndUpdate(
-                    {
-                      _id: ObjectId(req.communityID),
-                    },
-                    {
-                      $set: {
-                        "community.activePanics": resp.community.activePanics,
-                      },
-                    },
-                    function (err) {
-                      if (err) return console.error(err);
+                    { _id: ObjectId(req.communityID) },
+                    { $set: { "community.activePanics": resp.community.activePanics } },
+                    function (updateErr) {
+                      if (updateErr) return console.error(updateErr);
                       return socket.broadcast.emit("cleared_panic", req);
                     }
                   );
                 }
               }
             }
-          }
-        );
+          );
+        }
       }
     });
 

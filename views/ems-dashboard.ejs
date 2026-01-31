@@ -1610,6 +1610,10 @@
     </div>
   </div>
 
+  <!-- Panic Alert Placeholders -->
+  <div id="panic-placeholder"></div>
+  <div id="panic-placeholder-socket"></div>
+
   <div class="wrapper d-flex align-items-stretch">
     <nav id="sidebar" style="z-index: 9;">
       <div class="img bg-wrap text-center py-4" style="background-image: linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.4)),url(/static/images/fire-ems-corner-bg.jpg);">
@@ -3089,6 +3093,29 @@
     var POLICE_CAD_API_URL = '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     var API_URL = POLICE_CAD_API_URL; // For notifications.js compatibility
   </script>
+
+  <!-- Panic Detail Modal -->
+  <div id="panicDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Panic Alert</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="clear-panic-form" class="form-horizontal" action="" method="post">
+            <fieldset>
+              <input id="panic-id" type="hidden" name="panic-id" value="">
+              <p>Clear this panic alert?</p>
+              <button id="clearPanic" type="button" class="btn btn-danger" onclick="hideModal('panicDetailModal')">Clear</button>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>
