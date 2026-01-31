@@ -467,31 +467,16 @@ function updateSignal100Banner(data) {
   // Store the user ID for when we clear the Signal 100
   signal100UserId = data.aboutUserId || data.userID || null;
 
-  // Determine who activated the signal
-  let activatedByDisplay;
-  if (data.activatedBy === 'Dispatch') {
-    // Dispatcher activated it - show dispatcher's username
-    activatedByDisplay = data.activatedByUsername || 'Dispatch';
+  // Build display name matching mobile format: "{callSign} ({department})" or "{username}"
+  let activatorDisplay;
+  if (data.activatedByCallSign) {
+    const detail = data.activatedBy || data.activatedByUsername || '';
+    activatorDisplay = detail ? `${data.activatedByCallSign} (${detail})` : data.activatedByCallSign;
   } else {
-    // Officer activated it themselves
-    activatedByDisplay = data.activatedByCallSign || data.activatedByUsername || data.activatedBy || 'Unknown';
+    activatorDisplay = data.activatedByUsername || data.activatedBy || 'Unknown';
   }
 
-  // Get the officer the signal is about (may be different from who activated)
-  const aboutUser = data.aboutCallSign || data.aboutUsername || null;
-
-  // Build the message
-  let message;
-  if (data.activatedBy === 'Dispatch' && aboutUser) {
-    // Dispatch activated it for a specific officer
-    message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
-  } else if (aboutUser && aboutUser !== activatedByDisplay) {
-    // Someone activated it for another officer
-    message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
-  } else {
-    // Self-activated or unknown
-    message = `Activated by ${activatedByDisplay}`;
-  }
+  const message = `Activated by ${activatorDisplay}`;
 
   // Show banner
   $('#signal-100-banner').addClass('show').removeClass('hide');

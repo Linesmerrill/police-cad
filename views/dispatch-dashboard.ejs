@@ -3660,6 +3660,7 @@
               signal100UserId = null;
               $('#signal-100-banner').removeClass('show').addClass('hide');
               $('#signal-100-details').text('');
+              updateSignal100ButtonState();
               renderUnitsGrid();
               adjustContentOffset();
             }
@@ -3752,6 +3753,9 @@
           }
         });
       }
+
+      // Expose to inline onclick handlers (defined inside closure)
+      window.clearPanicAlert = clearPanicAlert;
 
       // Poll via AJAX every 20s (offset from Socket.IO 15s polling)
       loadPanicStatusesAjax();
@@ -4394,8 +4398,8 @@
           dashboardSocket.emit('update_status', emitData);
 
           // Check if this is Signal 100 or 10-99 - trigger community-wide alert
-          if (shouldBroadcast) {
-            dashboardSocket.emit('signal_100_button_update', {
+          if (shouldBroadcast && !$('#signal-100-banner').hasClass('show')) {
+            var signal100Req = {
               userID: userId,
               userUsername: unitUsername,
               userCallSign: unitCallSign,
@@ -4408,9 +4412,33 @@
               aboutUsername: unitUsername,
               statusCode: tenCode.code,
               timestamp: new Date().toISOString()
+            };
+
+            // Persist via Go API, then broadcast via Socket.IO
+            $.ajax({
+              url: API_URL + '/api/v1/community/' + communityId + '/signal-100',
+              method: 'POST',
+              contentType: 'application/json',
+              data: JSON.stringify({
+                userId: dbUser._id,
+                username: dbUser.user?.username || 'Dispatch',
+                callSign: dbUser.user?.callSign || '',
+                departmentName: 'Dispatch'
+              }),
+              success: function() {
+                if (dashboardSocket && dashboardSocket.connected) {
+                  dashboardSocket.emit('signal_100_button_update', signal100Req);
+                }
+              },
+              error: function(xhr) {
+                console.error('Error activating Signal 100 via API:', xhr.responseText);
+                if (dashboardSocket && dashboardSocket.connected) {
+                  dashboardSocket.emit('signal_100_button_update', signal100Req);
+                }
+              }
             });
 
-            // Update local banner
+            // Update local banner immediately
             updateSignal100Banner({
               activatedBy: 'Dispatch',
               activatedByCallSign: dbUser.user?.callSign,
@@ -5089,16 +5117,41 @@
   // Confirm and broadcast Signal 100 cleared
   function confirmClearSignal100() {
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+    if (!communityId) return;
 
-    // Emit clear signal to server with user info for tracking
-    if (dashboardSocket && dashboardSocket.connected) {
-      dashboardSocket.emit('clear_signal_100', {
-        activeCommunity: communityId,
+    // Clear via Go API, then broadcast via Socket.IO
+    $.ajax({
+      url: API_URL + '/api/v1/community/' + communityId + '/signal-100',
+      method: 'DELETE',
+      contentType: 'application/json',
+      data: JSON.stringify({
         clearedByUserId: dbUser._id,
         clearedByUsername: dbUser.user?.username || '',
         clearedByCallSign: dbUser.user?.callSign || '',
-      });
-    }
+      }),
+      success: function() {
+        if (dashboardSocket && dashboardSocket.connected) {
+          dashboardSocket.emit('clear_signal_100', {
+            activeCommunity: communityId,
+            clearedByUserId: dbUser._id,
+            clearedByUsername: dbUser.user?.username || '',
+            clearedByCallSign: dbUser.user?.callSign || '',
+          });
+        }
+      },
+      error: function(xhr) {
+        console.error('Error clearing Signal 100 via API:', xhr.responseText);
+        // Fallback: still emit Socket.IO (server handler will retry DB)
+        if (dashboardSocket && dashboardSocket.connected) {
+          dashboardSocket.emit('clear_signal_100', {
+            activeCommunity: communityId,
+            clearedByUserId: dbUser._id,
+            clearedByUsername: dbUser.user?.username || '',
+            clearedByCallSign: dbUser.user?.callSign || '',
+          });
+        }
+      }
+    });
 
     // Helper to validate MongoDB ObjectId format (24 hex chars)
     function isValidObjectId(id) {
@@ -5799,13 +5852,14 @@
     //if it is already showing we don't want to show it again (there can only be 1 active
     // signal 100 per community)
     if (!$('#signal-100-banner').hasClass('show')) {
+      var communityIdForSignal = dbUser.user?.lastAccessedCommunity?.communityID;
+      if (!communityIdForSignal) return;
 
-      var socket=io();
-      myReq={
+      var myReq={
         userID: dbUser._id,
         userUsername: dbUser.user.username,
         userCallSign: dbUser.user.callSign || null,
-        activeCommunity: dbUser.user.activeCommunity,
+        activeCommunity: communityIdForSignal,
         activatedBy: 'Dispatch',
         activatedByCallSign: dbUser.user.callSign || null,
         activatedByUsername: dbUser.user.username,
@@ -5822,9 +5876,33 @@
         audioElement.play();
       }
 
-      socket.emit('signal_100_button_update', myReq)
+      // Persist via Go API, then broadcast via Socket.IO
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityIdForSignal + '/signal-100',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          userId: dbUser._id,
+          username: dbUser.user.username,
+          callSign: dbUser.user.callSign || '',
+          departmentName: 'Dispatch'
+        }),
+        success: function() {
+          // Broadcast to other dashboards via Socket.IO
+          if (dashboardSocket && dashboardSocket.connected) {
+            dashboardSocket.emit('signal_100_button_update', myReq);
+          }
+        },
+        error: function(xhr) {
+          console.error('Error activating Signal 100 via API:', xhr.responseText);
+          // Still broadcast via Socket.IO as fallback (server handler will retry DB)
+          if (dashboardSocket && dashboardSocket.connected) {
+            dashboardSocket.emit('signal_100_button_update', myReq);
+          }
+        }
+      });
 
-      // Also update local banner with details
+      // Update local banner immediately
       updateSignal100Banner(myReq);
     }
   }
@@ -5838,36 +5916,16 @@
     // Priority: aboutUserId (the officer in distress), then userID (who triggered it)
     signal100UserId = data.aboutUserId || data.userID || null;
 
-    // Build the message
-    let message = '';
-
-    // Determine who activated it (prefer username for dispatch, callsign for officers)
-    let activatedByDisplay;
-    if (data.activatedBy === 'Dispatch') {
-      // For dispatch, use username or fallback to 'Dispatch'
-      activatedByDisplay = data.activatedByUsername || 'Dispatch';
+    // Build display name matching mobile format: "{callSign} ({department})" or "{username}"
+    let activatorDisplay;
+    if (data.activatedByCallSign) {
+      const detail = data.activatedBy || data.activatedByUsername || '';
+      activatorDisplay = detail ? `${data.activatedByCallSign} (${detail})` : data.activatedByCallSign;
     } else {
-      // For officers, prefer callsign
-      activatedByDisplay = data.activatedByCallSign || data.activatedByUsername || data.activatedBy || 'Unknown';
+      activatorDisplay = data.activatedByUsername || data.activatedBy || 'Unknown';
     }
 
-    // The person the Signal 100 is about (the officer in distress)
-    const aboutUser = data.aboutCallSign || data.aboutUsername || null;
-
-    // Build appropriate message
-    if (data.activatedBy === 'Dispatch' && aboutUser) {
-      // Dispatch activated for a specific officer
-      message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
-    } else if (aboutUser && aboutUser !== activatedByDisplay) {
-      // Someone activated it for another person
-      message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
-    } else if (aboutUser) {
-      // Officer activated for themselves
-      message = `Activated by ${aboutUser}`;
-    } else {
-      // Generic activation
-      message = `Activated by ${activatedByDisplay}`;
-    }
+    const message = `Activated by ${activatorDisplay}`;
 
     // Update the details span
     if ($details.length) {

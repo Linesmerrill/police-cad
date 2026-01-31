@@ -3311,36 +3311,16 @@ function updateSignal100Banner(data) {
   const $banner = $('#signal-100-banner');
   const $details = $('#signal-100-details');
 
-  // Build the message
-  let message = '';
-
-  // Determine who activated it (prefer username for dispatch, callsign for officers)
-  let activatedByDisplay;
-  if (data.activatedBy === 'Dispatch') {
-    // For dispatch, use username or fallback to 'Dispatch'
-    activatedByDisplay = data.activatedByUsername || 'Dispatch';
+  // Build display name matching mobile format: "{callSign} ({department})" or "{username}"
+  let activatorDisplay;
+  if (data.activatedByCallSign) {
+    const detail = data.activatedBy || data.activatedByUsername || '';
+    activatorDisplay = detail ? `${data.activatedByCallSign} (${detail})` : data.activatedByCallSign;
   } else {
-    // For officers, prefer callsign
-    activatedByDisplay = data.activatedByCallSign || data.activatedByUsername || data.activatedBy || 'Unknown';
+    activatorDisplay = data.activatedByUsername || data.activatedBy || 'Unknown';
   }
 
-  // The person the Signal 100 is about (the officer in distress)
-  const aboutUser = data.aboutCallSign || data.aboutUsername || null;
-
-  // Build appropriate message
-  if (data.activatedBy === 'Dispatch' && aboutUser) {
-    // Dispatch activated for a specific officer
-    message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
-  } else if (aboutUser && aboutUser !== activatedByDisplay) {
-    // Someone activated it for another person
-    message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
-  } else if (aboutUser) {
-    // Officer activated for themselves
-    message = `Activated by ${aboutUser}`;
-  } else {
-    // Generic activation
-    message = `Activated by ${activatedByDisplay}`;
-  }
+  const message = `Activated by ${activatorDisplay}`;
 
   // Update the details span
   if ($details.length) {
