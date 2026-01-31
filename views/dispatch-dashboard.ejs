@@ -4296,8 +4296,8 @@
       // Use effective category for card styling (panic/signal100 overrides)
       const statusCategory = effectiveCategory;
 
-      const callSign = unit.user?.callSign ? `Unit ${unit.user.callSign}` : 'No Unit #';
-      const username = unit.user?.username || 'Unknown';
+      const callSign = unit.user?.callSign ? `Unit ${escapeHtml(unit.user.callSign)}` : 'No Unit #';
+      const username = escapeHtml(unit.user?.username || 'Unknown');
 
       // Build alert badge if unit has active panic or signal 100
       let alertBadgeHtml = '';
@@ -4311,7 +4311,7 @@
       let selectOptions = '<option value="">No Status</option>';
       tenCodesCache.forEach(tc => {
         const selected = tc._id === tenCodeId ? 'selected' : '';
-        selectOptions += `<option value="${tc._id}" ${selected}>${tc.code}</option>`;
+        selectOptions += `<option value="${escapeHtml(tc._id)}" ${selected}>${escapeHtml(tc.code)}</option>`;
       });
 
       // Get department badges for this unit
@@ -4323,24 +4323,25 @@
       if (activeDeptName) {
         // Show active department with expand button if they have other departments
         if (otherDepts.length > 0) {
-          const otherBadges = otherDepts.map(d => `<span class="dept-badge">${d.name}</span>`).join('');
+          const otherBadges = otherDepts.map(d => `<span class="dept-badge">${escapeHtml(d.name)}</span>`).join('');
           deptBadgesHtml = `
             <div class="unit-departments">
-              <span class="active-dept-badge">${activeDeptName}</span>
+              <span class="active-dept-badge">${escapeHtml(activeDeptName)}</span>
               <span class="dept-expand-btn" onclick="toggleDeptExpand(this, event)" title="View all departments">+${otherDepts.length}</span>
               <div class="dept-expanded hidden">${otherBadges}</div>
             </div>`;
         } else {
-          deptBadgesHtml = `<div class="unit-departments"><span class="active-dept-badge">${activeDeptName}</span></div>`;
+          deptBadgesHtml = `<div class="unit-departments"><span class="active-dept-badge">${escapeHtml(activeDeptName)}</span></div>`;
         }
       } else if (userDepts.length > 0) {
         // No active department - show all their departments
-        const badges = userDepts.map(d => `<span class="dept-badge">${d.name}</span>`).join('');
+        const badges = userDepts.map(d => `<span class="dept-badge">${escapeHtml(d.name)}</span>`).join('');
         deptBadgesHtml = `<div class="unit-departments">${badges}</div>`;
       }
 
+      const safeUserId = escapeHtml(unit._id);
       const cardHtml = `
-        <div class="unit-card ${statusCategory}" data-user-id="${unit._id}">
+        <div class="unit-card ${statusCategory}" data-user-id="${safeUserId}">
           <div class="unit-status-indicator ${statusCategory}"></div>
           <div class="unit-info">
             <div class="unit-callsign">${callSign}</div>
@@ -4348,7 +4349,7 @@
             ${alertBadgeHtml}
             ${deptBadgesHtml}
           </div>
-          <select class="unit-status-select" data-user-id="${unit._id}" onchange="updateUnitStatus(this)">
+          <select class="unit-status-select" data-user-id="${safeUserId}" onchange="updateUnitStatus(this)">
             ${selectOptions}
           </select>
         </div>
@@ -4627,13 +4628,13 @@
           if (res[i].firearm.isStolen=="true") {
             $('#registered-firearms-panel-body-'+index).append(
               `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
-              `<strong>Danger!</strong> #${res[i].firearm.serialNumber} reported as stolen.`+
+              `<strong>Danger!</strong> #${escapeHtml(res[i].firearm.serialNumber)} reported as stolen.`+
               `</div>`
             )
           }
           $('#registered-firearms-panel-body-'+index).append(
-            `Serial #: ${res[i].firearm.serialNumber}<br/>`+
-            `Weapon Type: ${res[i].firearm.weaponType}<br/>`
+            `Serial #: ${escapeHtml(res[i].firearm.serialNumber)}<br/>`+
+            `Weapon Type: ${escapeHtml(res[i].firearm.weaponType)}<br/>`
           )
         }
       } else {
