@@ -2982,13 +2982,23 @@
     //   repopulateOfficerList(res.userID, res.status)
     // })
 
-    socket.on('load_panic_status_update', (map, signal100Resp, holdTrafficResp, origReq) => {
+    socket.on('load_panic_status_update', (map, signal100Resp, holdTrafficResp, origReq, signal100Data) => {
       if (dbUser.user.activeCommunity==origReq.activeCommunity) {
         //load the signal 100 status to the page
         if (signal100Resp) {
-          $('#signal-100-banner').removeClass('hide').addClass('show')
+          // Populate banner details from API metadata if available
+          if (signal100Data && signal100Data.active) {
+            updateSignal100Banner({
+              activatedBy: signal100Data.activatedByDepartment || '',
+              activatedByCallSign: signal100Data.activatedByCallSign || '',
+              activatedByUsername: signal100Data.activatedByUsername || '',
+            });
+          } else {
+            $('#signal-100-banner').removeClass('hide').addClass('show')
+          }
         } else {
           $('#signal-100-banner').removeClass('show').addClass('hide')
+          $('#signal-100-details').text('');
         }
         if (holdTrafficResp) {
           $('#hold-traffic-banner').removeClass('hide').addClass('show')
