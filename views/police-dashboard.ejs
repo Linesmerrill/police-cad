@@ -695,13 +695,13 @@
 
                                               <!-- Static Action Buttons -->
                                               <div class="action-buttons-row">
-                                                <div class="action-btn action-btn-signal100" onclick="triggerSignal100()">
-                                                  <i class="fa fa-exclamation-triangle"></i>
-                                                  <span>Signal 100</span>
+                                                <div id="signal100ActionBtn" class="action-btn action-btn-signal100" onclick="triggerSignal100()">
+                                                  <i id="signal100BtnIcon" class="fa fa-exclamation-triangle"></i>
+                                                  <span id="signal100BtnText">Signal 100</span>
                                                 </div>
-                                                <div class="action-btn action-btn-panic" onclick="panicButtonPressed()">
+                                                <div id="panicActionBtn" class="action-btn action-btn-panic" onclick="panicButtonPressed()">
                                                   <i class="fa fa-exclamation-circle"></i>
-                                                  <span>Panic</span>
+                                                  <span id="panicBtnText">Panic</span>
                                                 </div>
                                               </div>
 
@@ -936,6 +936,25 @@
                                                 background: rgba(249, 115, 22, 0.4);
                                                 box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
                                                 transform: translateY(-2px);
+                                              }
+                                              .action-btn-panic.active {
+                                                background: rgba(154, 52, 18, 0.8);
+                                                border-color: #f97316;
+                                              }
+                                              .action-btn-signal100.active {
+                                                background: rgba(153, 27, 27, 0.8);
+                                                border-color: #dc2626;
+                                              }
+                                              .action-btn.loading {
+                                                opacity: 0.6;
+                                                pointer-events: none;
+                                              }
+                                              .action-btn .fa-spinner {
+                                                animation: btn-spin 1s linear infinite;
+                                              }
+                                              @keyframes btn-spin {
+                                                from { transform: rotate(0deg); }
+                                                to { transform: rotate(360deg); }
                                               }
 
                                               /* Emergency active state - pulsing red animation */
@@ -2978,6 +2997,7 @@ function selectTenCode(tenCodeID) {
           } else {
             $('#signal-100-banner').removeClass('show').addClass('hide');
             $('#signal-100-details').text('');
+            updateSignal100ButtonState();
           }
         },
         error: function() { /* ignore — main panic fetch will handle fallback */ }
@@ -3002,6 +3022,7 @@ function selectTenCode(tenCodeID) {
 
       if (!alerts || alerts.length === 0) {
         $hint.hide();
+        updatePanicButtonState(false);
         return;
       }
 
@@ -3033,6 +3054,23 @@ function selectTenCode(tenCodeID) {
       } else {
         $hint.hide();
       }
+
+      // Update panic button toggle state
+      var userHasPanic = alerts.some(function(a) { return a.userId === dbUser._id; });
+      updatePanicButtonState(userHasPanic);
+    }
+
+    function updatePanicButtonState(hasPanic) {
+      _userHasActivePanic = hasPanic;
+      var $btn = $('#panicActionBtn');
+      var $text = $('#panicBtnText');
+      if (hasPanic) {
+        $text.text('Clear Panic');
+        $btn.addClass('active');
+      } else {
+        $text.text('Panic');
+        $btn.removeClass('active');
+      }
     }
 
     function clearPanicAlert(alertId) {
@@ -3053,20 +3091,6 @@ function selectTenCode(tenCodeID) {
       });
     }
 
-    // AJAX function to clear panic alert
-    function clearPanic(userId) {
-      $.ajax({
-        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/police/${userId}/panic`,
-        method: 'DELETE',
-        success: function() {
-          $(`#${userId}-panic-row`).fadeOut(1, function() { $(this).remove(); });
-        },
-        error: function(xhr) {
-          console.error('Error clearing panic:', xhr.responseText);
-          alert('Failed to clear panic: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
-      });
-    }
 
     // AJAX function to load active BOLOs
     function loadActiveBOLOs() {
@@ -3307,6 +3331,7 @@ function updateSignal100Banner(data) {
 
   // Show the banner
   $banner.removeClass('hide').addClass('show');
+  updateSignal100ButtonState();
 }
 
 // Show the clear Signal 100 confirmation modal
@@ -3948,33 +3973,84 @@ function toggleCaret(event) {
       $('#panic-id').val(userId);
     }
 
-    // Handle panic button press
+    // Handle panic button press (toggle: create or clear)
+    var _userHasActivePanic = false;
+    var _panicLoading = false;
     function panicButtonPressed() {
-      const userId = dbUser._id;
-      $.ajax({
-        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/police/${userId}/panic`,
-        method: 'POST',
-        success: function() {
-          if ($('#panic-button-check-sound').prop('checked')) {
-            var audioElement = document.createElement('audio');
-            audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
-            audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
-            audioElement.play();
-          }
-          loadPanicStatuses(); // Refresh panic statuses
-        },
-        error: function(xhr) {
-          console.error('Error triggering panic:', xhr.responseText);
-          alert('Failed to trigger panic: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
-      });
-    }
-
-    // Handle Signal 100 button press
-    function triggerSignal100() {
+      if (_panicLoading) return;
       const userId = dbUser._id;
       const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
       if (!communityId) return;
+
+      _panicLoading = true;
+      $('#panicActionBtn').addClass('loading');
+      var $icon = $('#panicActionBtn i');
+      var origIconClass = $icon.attr('class');
+      $icon.attr('class', 'fa fa-spinner');
+
+      function resetPanicLoading() {
+        _panicLoading = false;
+        $('#panicActionBtn').removeClass('loading');
+        $icon.attr('class', origIconClass);
+      }
+
+      if (_userHasActivePanic) {
+        $.ajax({
+          url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/panic-alerts/user/${userId}`,
+          method: 'DELETE',
+          contentType: 'application/json',
+          data: JSON.stringify({ clearedBy: userId }),
+          success: function() {
+            loadPanicStatuses();
+            resetPanicLoading();
+          },
+          error: function(xhr) {
+            console.error('Error clearing panic:', xhr.responseText);
+            alert('Failed to clear panic: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            resetPanicLoading();
+          }
+        });
+      } else {
+        $.ajax({
+          url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/panic-alerts`,
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            userId: userId,
+            username: dbUser.user.username,
+            callSign: dbUser.user.callSign || '',
+            departmentType: 'police'
+          }),
+          success: function() {
+            if ($('#panic-button-check-sound').prop('checked')) {
+              var audioElement = document.createElement('audio');
+              audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
+              audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
+              audioElement.play();
+            }
+            loadPanicStatuses();
+            resetPanicLoading();
+          },
+          error: function(xhr) {
+            console.error('Error triggering panic:', xhr.responseText);
+            alert('Failed to trigger panic: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            resetPanicLoading();
+          }
+        });
+      }
+    }
+
+    // Handle Signal 100 button press
+    var _signal100Loading = false;
+    function triggerSignal100() {
+      if (_signal100Loading) return;
+      const userId = dbUser._id;
+      const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+      if (!communityId) return;
+
+      _signal100Loading = true;
+      $('#signal100ActionBtn').addClass('loading');
+      $('#signal100BtnIcon').removeClass('fa-exclamation-triangle').addClass('fa-spinner');
 
       if (dashboardSocket && dashboardSocket.connected) {
         dashboardSocket.emit('signal_100_button_update', {
@@ -4005,6 +4081,27 @@ function toggleCaret(event) {
           audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
           audioElement.play().catch(e => console.log('Audio play failed:', e));
         }
+      }
+
+      // Reset after brief delay (socket emit is fire-and-forget)
+      setTimeout(function() {
+        _signal100Loading = false;
+        $('#signal100ActionBtn').removeClass('loading');
+        $('#signal100BtnIcon').removeClass('fa-spinner').addClass('fa-exclamation-triangle');
+        updateSignal100ButtonState();
+      }, 2000);
+    }
+
+    function updateSignal100ButtonState() {
+      var isActive = $('#signal-100-banner').hasClass('show');
+      var $btn = $('#signal100ActionBtn');
+      var $text = $('#signal100BtnText');
+      if (isActive) {
+        $text.text('Clear Signal 100');
+        $btn.addClass('active');
+      } else {
+        $text.text('Signal 100');
+        $btn.removeClass('active');
       }
     }
 
@@ -4257,7 +4354,7 @@ window.showBoloModal = showBoloModal;
 
       // Initialize dashboard data
       pollDashboardData();
-      setInterval(pollDashboardData, 30000); // Poll every 30 seconds
+      setInterval(pollDashboardData, 15000); // Poll every 15 seconds
       loadTenCodes();
       filteredTenCodes = tenCodesCache;
     currentPage = 1;
@@ -4496,6 +4593,22 @@ window.showBoloModal = showBoloModal;
       showRealTimeToast('call', 'Call Cleared', 'success');
     });
 
+    // Listen for panic alert events — immediate refresh
+    dashboardSocket.on('panic_button_updated', function(map, origReq) {
+      if (origReq && origReq.activeCommunity && origReq.activeCommunity !== communityId) return;
+      if ($('#panic-button-check-sound').prop('checked')) {
+        var audioElement = document.createElement('audio');
+        audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
+        audioElement.volume = dbUser.user?.alertVolumeLevel / 100 || 0.1;
+        audioElement.play().catch(e => console.log('Audio play failed:', e));
+      }
+      loadPanicStatuses();
+    });
+
+    dashboardSocket.on('cleared_panic', function(res) {
+      loadPanicStatuses();
+    });
+
     // Listen for Signal 100 activation
     dashboardSocket.on('signal_100_button_updated', function(data) {
       if (data.activeCommunity && data.activeCommunity !== communityId) return;
@@ -4511,6 +4624,9 @@ window.showBoloModal = showBoloModal;
       // Update the banner with details
       updateSignal100Banner(data);
 
+      // Also refresh from API for full data
+      loadPanicStatuses();
+
       // Show toast notification
       const activatedBy = data.activatedByCallSign || data.activatedByUsername || 'Unknown';
       showRealTimeToast('emergency', `🚨 Signal 100 Activated by ${activatedBy}!`, 'error');
@@ -4523,6 +4639,10 @@ window.showBoloModal = showBoloModal;
 
       $('#signal-100-banner').removeClass('show').addClass('hide');
       $('#signal-100-details').text('');
+      updateSignal100ButtonState();
+
+      // Refresh from API
+      loadPanicStatuses();
 
       const clearedBy = (typeof data === 'object' && data.clearedByCallSign)
         ? data.clearedByCallSign + ' (' + data.clearedByUsername + ')'

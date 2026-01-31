@@ -600,6 +600,25 @@
       box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
       transform: translateY(-2px);
     }
+    .action-btn-panic.active {
+      background: rgba(154, 52, 18, 0.8);
+      border-color: #f97316;
+    }
+    .action-btn-signal100.active {
+      background: rgba(153, 27, 27, 0.8);
+      border-color: #dc2626;
+    }
+    .action-btn.loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    .action-btn .fa-spinner {
+      animation: btn-spin 1s linear infinite;
+    }
+    @keyframes btn-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
 
     /* Emergency active state - pulsing red animation */
     .status-card.emergency.active {
@@ -1999,13 +2018,13 @@
 
               <!-- Static Action Buttons -->
               <div class="action-buttons-row">
-                <div class="action-btn action-btn-signal100" onclick="triggerSignal100()">
-                  <i class="fa fa-exclamation-triangle"></i>
-                  <span>Signal 100</span>
+                <div id="signal100ActionBtn" class="action-btn action-btn-signal100" onclick="triggerSignal100()">
+                  <i id="signal100BtnIcon" class="fa fa-exclamation-triangle"></i>
+                  <span id="signal100BtnText">Signal 100</span>
                 </div>
-                <div class="action-btn action-btn-panic" onclick="triggerPanic()">
+                <div id="panicActionBtn" class="action-btn action-btn-panic" onclick="triggerPanic()">
                   <i class="fa fa-exclamation-circle"></i>
-                  <span>Panic</span>
+                  <span id="panicBtnText">Panic</span>
                 </div>
               </div>
 
