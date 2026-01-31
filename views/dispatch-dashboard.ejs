@@ -3081,10 +3081,17 @@
       }
     })
 
-    socket.on('clear_signal_100_updated', activeCommunity => {
-      if (dbUser.user.activeCommunity==activeCommunity) {
+    socket.on('clear_signal_100_updated', (data) => {
+      const cid = typeof data === 'string' ? data : data.activeCommunity;
+      if (dbUser.user.activeCommunity == cid) {
         $('#signal-100-banner').removeClass('show').addClass('hide')
         $('#signal-100-details').text('');
+
+        const clearedBy = (typeof data === 'object' && data.clearedByCallSign)
+          ? data.clearedByCallSign + ' (' + data.clearedByUsername + ')'
+          : (typeof data === 'object' && data.clearedByUsername) ? data.clearedByUsername : '';
+        const msg = clearedBy ? 'Signal 100 cleared by ' + clearedBy : 'Signal 100 Cleared';
+        showRealTimeToast('status', msg, 'success');
       }
     })
 
@@ -4811,9 +4818,14 @@
   function confirmClearSignal100() {
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
 
-    // Emit clear signal to server
+    // Emit clear signal to server with user info for tracking
     if (dashboardSocket && dashboardSocket.connected) {
-      dashboardSocket.emit('clear_signal_100', communityId);
+      dashboardSocket.emit('clear_signal_100', {
+        activeCommunity: communityId,
+        clearedByUserId: dbUser._id,
+        clearedByUsername: dbUser.user?.username || '',
+        clearedByCallSign: dbUser.user?.callSign || '',
+      });
     }
 
     // Helper to validate MongoDB ObjectId format (24 hex chars)

@@ -2844,12 +2844,31 @@ function selectTenCode(tenCodeID) {
     function loadPanicStatuses() {
       const communityId = dbUser.user?.lastAccessedCommunity.communityID;
       if (!communityId) return;
+
+      // Also fetch Signal 100 metadata from dedicated endpoint
+      $.ajax({
+        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/signal-100`,
+        method: 'GET',
+        success: function(s100Data) {
+          if (s100Data && s100Data.active) {
+            updateSignal100Banner({
+              activatedBy: s100Data.activatedByDepartment || '',
+              activatedByCallSign: s100Data.activatedByCallSign || '',
+              activatedByUsername: s100Data.activatedByUsername || '',
+            });
+          } else {
+            $('#signal-100-banner').removeClass('show').addClass('hide');
+            $('#signal-100-details').text('');
+          }
+        },
+        error: function() { /* ignore — main panic fetch will handle fallback */ }
+      });
+
       $.ajax({
         url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/panic`,
         method: 'GET',
         success: function(data) {
-          // Update signal 100 and hold traffic banners
-          $('#signal-100-banner').toggleClass('show', data.signal100).toggleClass('hide', !data.signal100);
+          // Update hold traffic banner (signal 100 handled above)
           $('#hold-traffic-banner').toggleClass('show', data.holdTraffic).toggleClass('hide', !data.holdTraffic);
 
           // Update panic alerts
@@ -3144,9 +3163,14 @@ function hideClearSignal100Modal(event) {
 function confirmClearSignal100() {
   const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
 
-  // Emit clear signal to server
+  // Emit clear signal to server with user info for tracking
   if (dashboardSocket && dashboardSocket.connected) {
-    dashboardSocket.emit('clear_signal_100', communityId);
+    dashboardSocket.emit('clear_signal_100', {
+      activeCommunity: communityId,
+      clearedByUserId: dbUser._id,
+      clearedByUsername: dbUser.user?.username || '',
+      clearedByCallSign: dbUser.user?.callSign || '',
+    });
   }
 
   // Find Code 4 in the ten codes cache and set status to it
@@ -4292,12 +4316,18 @@ window.showBoloModal = showBoloModal;
     });
 
     // Listen for Signal 100 cleared
-    dashboardSocket.on('clear_signal_100_updated', function(activeCommunity) {
-      if (activeCommunity && activeCommunity !== communityId) return;
+    dashboardSocket.on('clear_signal_100_updated', function(data) {
+      const cid = typeof data === 'string' ? data : data.activeCommunity;
+      if (cid && cid !== communityId) return;
 
       $('#signal-100-banner').removeClass('show').addClass('hide');
       $('#signal-100-details').text('');
-      showRealTimeToast('status', 'Signal 100 Cleared', 'success');
+
+      const clearedBy = (typeof data === 'object' && data.clearedByCallSign)
+        ? data.clearedByCallSign + ' (' + data.clearedByUsername + ')'
+        : (typeof data === 'object' && data.clearedByUsername) ? data.clearedByUsername : '';
+      const msg = clearedBy ? 'Signal 100 cleared by ' + clearedBy : 'Signal 100 Cleared';
+      showRealTimeToast('status', msg, 'success');
     });
 
   }

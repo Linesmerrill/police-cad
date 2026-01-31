@@ -7063,23 +7063,40 @@ module.exports = function (app, passport, server, nextApp, handle) {
             });
           }
 
-          // Also fetch community for signal100 and holdTraffic (still stored on community)
-          const communityResp = await axios.get(
-            `${policeCadApiUrl}/api/v1/community/${req.activeCommunity}`,
-            config
-          );
-          const community = communityResp.data && communityResp.data.community;
-          const activeSignal100 = community ? community.activeSignal100 : false;
-          const activeHoldTraffic = community ? community.activeHoldTraffic : false;
+          // Fetch Signal 100 data from Go API (includes activation metadata)
+          let signal100Data = { active: false };
+          let activeHoldTraffic = false;
+          try {
+            const signal100Resp = await axios.get(
+              `${policeCadApiUrl}/api/v1/community/${req.activeCommunity}/signal-100`,
+              config
+            );
+            signal100Data = signal100Resp.data || { active: false };
+          } catch (s100Err) {
+            console.error("load_panic_statuses: Signal 100 API error:", s100Err.message);
+          }
 
-          // Emit with all args for backward compat: (map, signal100, holdTraffic, origReq)
+          // Still fetch community for holdTraffic (not yet migrated to API)
+          try {
+            const communityResp = await axios.get(
+              `${policeCadApiUrl}/api/v1/community/${req.activeCommunity}`,
+              config
+            );
+            const community = communityResp.data && communityResp.data.community;
+            activeHoldTraffic = community ? community.activeHoldTraffic : false;
+          } catch (commErr) {
+            console.error("load_panic_statuses: community fetch error:", commErr.message);
+          }
+
+          // Emit with all args for backward compat: (map, signal100, holdTraffic, origReq, signal100Data)
           const roomName = `community:${req.activeCommunity}`;
           io.to(roomName).emit(
             "load_panic_status_update",
             activePanicsMap,
-            activeSignal100,
+            signal100Data.active,
             activeHoldTraffic,
-            req
+            req,
+            signal100Data
           );
         } catch (err) {
           console.error("load_panic_statuses: API error:", err.message);
@@ -7226,8 +7243,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
     });
 
-    socket.on("signal_100_button_update", (req) => {
-      // console.debug('signal 100 button update req: ', req)
+    socket.on("signal_100_button_update", async (req) => {
       if (req.activeCommunity != null && req.activeCommunity != undefined) {
         var isValid = isValidObjectIdLength(
           req.activeCommunity,
@@ -7236,36 +7252,37 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!isValid) {
           return;
         }
-        Community.findById(
-          {
-            _id: ObjectId(req.activeCommunity),
-          },
-          function (err, resp) {
-            if (err) return console.error(err);
-            if (resp != null) {
-              if (resp.community != null) {
-                Community.findByIdAndUpdate(
-                  {
-                    _id: ObjectId(req.activeCommunity),
-                  },
-                  {
-                    $set: {
-                      "community.activeSignal100": true,
-                    },
-                  },
-                  function (err) {
-                    if (err) return console.error(err);
-                    return broadcastToCommunity(
-                      "signal_100_button_updated",
-                      req,
-                      req.activeCommunity
-                    );
-                  }
-                );
-              }
+        try {
+          // Activate Signal 100 via Go API
+          const apiUrl = `${policeCadApiUrl}/api/v1/community/${req.activeCommunity}/signal-100`;
+          await axios.post(apiUrl, {
+            userId: req.userID || req.activatedByUserId || "",
+            username: req.activatedByUsername || req.userUsername || "",
+            callSign: req.activatedByCallSign || req.userCallSign || "",
+            departmentName: req.activatedBy || "",
+          }, config);
+
+          return broadcastToCommunity(
+            "signal_100_button_updated",
+            req,
+            req.activeCommunity
+          );
+        } catch (err) {
+          console.error("signal_100_button_update: API error:", err.message);
+          // Fallback to direct DB update
+          Community.findByIdAndUpdate(
+            { _id: ObjectId(req.activeCommunity) },
+            { $set: { "community.activeSignal100": true } },
+            function (dbErr) {
+              if (dbErr) return console.error(dbErr);
+              return broadcastToCommunity(
+                "signal_100_button_updated",
+                req,
+                req.activeCommunity
+              );
             }
-          }
-        );
+          );
+        }
       }
     });
 
@@ -7311,8 +7328,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
     });
 
-    socket.on("clear_signal_100", (activeCommunity) => {
-      // console.debug('signal 100 clear button update req: ', activeCommunity)
+    socket.on("clear_signal_100", async (data) => {
+      // Support both old format (string communityId) and new format (object with user info)
+      const activeCommunity = typeof data === "string" ? data : data.activeCommunity;
+      const clearedByUserId = typeof data === "object" ? (data.clearedByUserId || "") : "";
+      const clearedByUsername = typeof data === "object" ? (data.clearedByUsername || "") : "";
+      const clearedByCallSign = typeof data === "object" ? (data.clearedByCallSign || "") : "";
+
       if (activeCommunity != null && activeCommunity != undefined) {
         var isValid = isValidObjectIdLength(
           activeCommunity,
@@ -7321,36 +7343,45 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!isValid) {
           return;
         }
-        Community.findById(
-          {
-            _id: ObjectId(activeCommunity),
-          },
-          function (err, resp) {
-            if (err) return console.error(err);
-            if (resp != null) {
-              if (resp.community != null) {
-                Community.findByIdAndUpdate(
-                  {
-                    _id: ObjectId(activeCommunity),
-                  },
-                  {
-                    $set: {
-                      "community.activeSignal100": false,
-                    },
-                  },
-                  function (err) {
-                    if (err) return console.error(err);
-                    return broadcastToCommunity(
-                      "clear_signal_100_updated",
-                      activeCommunity,
-                      activeCommunity
-                    );
-                  }
-                );
-              }
+        try {
+          // Clear Signal 100 via Go API
+          const apiUrl = `${policeCadApiUrl}/api/v1/community/${activeCommunity}/signal-100`;
+          const apiResp = await axios.delete(apiUrl, {
+            ...config,
+            data: {
+              clearedByUserId,
+              clearedByUsername,
+              clearedByCallSign,
+            },
+          });
+
+          const clearedData = apiResp.data || {};
+          return broadcastToCommunity(
+            "clear_signal_100_updated",
+            {
+              activeCommunity,
+              clearedByUserId: clearedData.clearedByUserId || clearedByUserId,
+              clearedByUsername: clearedData.clearedByUsername || clearedByUsername,
+              clearedByCallSign: clearedData.clearedByCallSign || clearedByCallSign,
+            },
+            activeCommunity
+          );
+        } catch (err) {
+          console.error("clear_signal_100: API error:", err.message);
+          // Fallback to direct DB update
+          Community.findByIdAndUpdate(
+            { _id: ObjectId(activeCommunity) },
+            { $set: { "community.activeSignal100": false } },
+            function (dbErr) {
+              if (dbErr) return console.error(dbErr);
+              return broadcastToCommunity(
+                "clear_signal_100_updated",
+                activeCommunity,
+                activeCommunity
+              );
             }
-          }
-        );
+          );
+        }
       }
     });
 

@@ -297,12 +297,18 @@ function initializeSocket() {
   });
 
   // Listen for Signal 100 cleared
-  socket.on('clear_signal_100_updated', function(activeCommunity) {
-    if (activeCommunity && activeCommunity !== communityId) return;
+  socket.on('clear_signal_100_updated', function(data) {
+    const cid = typeof data === 'string' ? data : data.activeCommunity;
+    if (cid && cid !== communityId) return;
 
     $('#signal-100-banner').removeClass('show').addClass('hide');
     $('#signal-100-details').text('');
-    showRealTimeToast('status', 'Signal 100 Cleared', 'success');
+
+    const clearedBy = (typeof data === 'object' && data.clearedByCallSign)
+      ? data.clearedByCallSign + ' (' + data.clearedByUsername + ')'
+      : (typeof data === 'object' && data.clearedByUsername) ? data.clearedByUsername : '';
+    const msg = clearedBy ? 'Signal 100 cleared by ' + clearedBy : 'Signal 100 Cleared';
+    showRealTimeToast('status', msg, 'success');
   });
 
   // Listen for new BOLOs
