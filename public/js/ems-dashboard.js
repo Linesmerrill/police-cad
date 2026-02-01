@@ -5128,7 +5128,7 @@ function populateCallDetails(callId) {
           if (validUsers.length > 0) {
             validUsers.forEach(user => {
               $('#callAssignedToDetail').append(
-                `<span class="badge badge-primary">${user.username}</span>`
+                `<span class="badge badge-primary">${escapeHtml(user.username)}</span>`
               );
             });
           } else {

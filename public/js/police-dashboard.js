@@ -1,3 +1,9 @@
+// HTML escaping helper to prevent XSS when inserting dynamic content into the DOM
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function generateSerialNumber(length, inputID) {
   var result = "";
   var characters = "ABCDEFGHJKMNPQRSTUVWXYZ0123456789";
@@ -216,7 +222,7 @@ function populateCallDetails(callID) {
             selectedClassifiers += `<span class="badge badge-success">EMS</span>  `;
             break;
           default:
-            selectedClassifiers += `<span class="badge badge-secondary">${res.call.classifier[i]}</span>  `;
+            selectedClassifiers += `<span class="badge badge-secondary">${escapeHtml(res.call.classifier[i])}</span>  `;
             break;
         }
       }
