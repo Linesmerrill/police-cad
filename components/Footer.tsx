@@ -8,6 +8,7 @@ const footerLinks = {
   information: [
     { name: 'Release Log', href: 'https://github.com/Linesmerrill/police-cad/releases', external: true },
     { name: 'Developers', href: 'https://linesmerrill.github.io/MerrillLines/', external: true },
+    { name: 'System Status', href: 'https://status.linespolice-cad.com', external: true },
   ],
   about: [
     { name: 'FAQ', href: '/faq' },

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scheduled Maintenance - Lines Police CAD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="shortcut icon" type="image/ico" href="https://www.linespolice-cad.com/static/images/favicon.ico">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: #f0f0f5;
+      background: #0a0a0f;
+    }
+
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(251, 191, 36, 0.10) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 100%, rgba(59, 130, 246, 0.10) 0%, transparent 60%),
+        radial-gradient(ellipse at 50% 50%, rgba(139, 92, 246, 0.06) 0%, transparent 70%);
+      z-index: 0;
+    }
+
+    .noise {
+      position: fixed;
+      inset: 0;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      z-index: 0;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .logo {
+      margin-bottom: 2.5rem;
+      animation: fadeDown 0.6s ease-out;
+    }
+
+    .logo img {
+      height: 48px;
+      width: auto;
+      filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.15));
+    }
+
+    .card {
+      background: rgba(15, 15, 25, 0.7);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 1.5rem;
+      padding: 3rem 2.5rem;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03),
+        0 24px 48px rgba(0, 0, 0, 0.4),
+        0 0 80px rgba(251, 191, 36, 0.04);
+      animation: slideUp 0.7s ease-out;
+    }
+
+    .icon-ring {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%);
+      border: 1px solid rgba(251, 191, 36, 0.2);
+      box-shadow: 0 0 30px rgba(251, 191, 36, 0.1);
+      animation: spin 8s linear infinite;
+    }
+
+    .icon-ring i {
+      font-size: 2rem;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: counter-spin 8s linear infinite;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.55);
+      margin-bottom: 2.5rem;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .progress-bar {
+      width: 100%;
+      max-width: 280px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 2px;
+      margin: 0 auto 2rem;
+      overflow: hidden;
+    }
+
+    .progress-bar-inner {
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(90deg, #fbbf24, #f59e0b);
+      border-radius: 2px;
+      animation: progress 2.5s ease-in-out infinite;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      padding: 0.85rem 1.75rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      font-family: inherit;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      cursor: pointer;
+      border: none;
+      width: 100%;
+      max-width: 280px;
+    }
+
+    .btn-status {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      color: #0a0a0f;
+      box-shadow: 0 4px 20px rgba(251, 191, 36, 0.25);
+    }
+
+    .btn-status:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(251, 191, 36, 0.35);
+    }
+
+    .btn-discord {
+      background: rgba(88, 101, 242, 0.12);
+      color: #8b9cf7;
+      border: 1px solid rgba(88, 101, 242, 0.25);
+    }
+
+    .btn-discord:hover {
+      background: rgba(88, 101, 242, 0.2);
+      border-color: rgba(88, 101, 242, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-home {
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-home:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.7);
+      transform: translateY(-1px);
+    }
+
+    .divider {
+      width: 40px;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.08);
+      margin: 0.5rem auto;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes counter-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(-360deg); }
+    }
+
+    @keyframes progress {
+      0% { transform: translateX(-100%); }
+      50% { transform: translateX(200%); }
+      100% { transform: translateX(-100%); }
+    }
+
+    @media (max-width: 480px) {
+      .card { padding: 2rem 1.5rem; }
+      h1 { font-size: 1.4rem; }
+      .subtitle { font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-layer"></div>
+  <div class="noise"></div>
+
+  <div class="page">
+    <div class="logo">
+      <img
+        src="https://www.linespolice-cad.com/static/images/lines-police-cad-discord-logo-2024-github-profile.png"
+        alt="Lines Police CAD"
+      />
+    </div>
+
+    <div class="card">
+      <div class="icon-ring">
+        <i class="fas fa-gear"></i>
+      </div>
+
+      <h1>Scheduled Maintenance</h1>
+      <p class="subtitle">
+        We're performing planned maintenance to improve your experience. Service will be restored shortly.
+      </p>
+
+      <div class="progress-bar">
+        <div class="progress-bar-inner"></div>
+      </div>
+
+      <div class="actions">
+        <a href="https://status.linespolice-cad.com" class="btn btn-status">
+          <i class="fas fa-signal"></i>
+          View Status Updates
+        </a>
+
+        <div class="divider"></div>
+
+        <a href="https://discord.gg/Y9ytW2ZMp4" target="_blank" rel="noopener noreferrer" class="btn btn-discord">
+          <i class="fab fa-discord"></i>
+          Updates on Discord
+        </a>
+
+        <a href="/" class="btn btn-home">
+          <i class="fas fa-rotate-right"></i>
+          Try Again
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
