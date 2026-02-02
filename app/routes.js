@@ -7140,8 +7140,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
     });
 
-    socket.on("load_panic_statuses", (req) => {
-      // console.debug('load panic status req: ', req)
+    socket.on("load_panic_statuses", async (req) => {
       if (req.activeCommunity != null && req.activeCommunity != undefined) {
         var isValid = isValidObjectIdLength(
           req.activeCommunity,
@@ -7150,38 +7149,91 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!isValid) {
           return;
         }
-        Community.findById(
-          {
-            _id: ObjectId(req.activeCommunity),
-          },
-          function (err, resp) {
-            if (err) return console.error(err);
-            if (resp != null) {
-              if (resp.community != null) {
-                // console.debug("resp", resp)
-                // console.debug("resp.community", resp.community)
+        if (!isValidObjectIdFormat(req.activeCommunity, "invalid format activeCommunity, socket: load_panic_statuses")) {
+          return;
+        }
+        try {
+          // Fetch active panic alerts from the Go API
+          const apiUrl = `${policeCadApiUrl}/api/v1/community/${req.activeCommunity}/panic-alerts?status=active`;
+          const apiResp = await axios.get(apiUrl, config);
+          const alerts = (apiResp.data && apiResp.data.alerts) || [];
+
+          // Convert API array format to object keyed by userId for backward compatibility with frontend
+          const activePanicsMap = {};
+          for (const alert of alerts) {
+            activePanicsMap[alert.userId] = {
+              userId: alert.userId,
+              username: alert.username,
+              activeCommunityID: alert.communityId,
+              callSign: alert.callSign,
+              departmentType: alert.departmentType,
+              alertId: alert.alertId,
+            };
+          }
+
+          // Fetch Signal 100 data from Go API (includes activation metadata)
+          let signal100Data = { active: false };
+          let activeHoldTraffic = false;
+          try {
+            const signal100Resp = await axios.get(
+              `${policeCadApiUrl}/api/v1/community/${req.activeCommunity}/signal-100`,
+              config
+            );
+            signal100Data = signal100Resp.data || { active: false };
+          } catch (s100Err) {
+            console.error("load_panic_statuses: Signal 100 API error:", s100Err.message);
+          }
+
+          // Still fetch community for holdTraffic (not yet migrated to API)
+          try {
+            const communityResp = await axios.get(
+              `${policeCadApiUrl}/api/v1/community/${req.activeCommunity}`,
+              config
+            );
+            const community = communityResp.data && communityResp.data.community;
+            activeHoldTraffic = community ? community.activeHoldTraffic : false;
+          } catch (commErr) {
+            console.error("load_panic_statuses: community fetch error:", commErr.message);
+          }
+
+          // Emit with all args for backward compat: (map, signal100, holdTraffic, origReq, signal100Data)
+          const roomName = `community:${req.activeCommunity}`;
+          io.to(roomName).emit(
+            "load_panic_status_update",
+            activePanicsMap,
+            signal100Data.active,
+            activeHoldTraffic,
+            req,
+            signal100Data
+          );
+        } catch (err) {
+          console.error("load_panic_statuses: API error:", err.message);
+          // Fallback to direct DB read
+          Community.findById(
+            { _id: ObjectId(req.activeCommunity) },
+            function (dbErr, resp) {
+              if (dbErr) return console.error(dbErr);
+              if (resp != null && resp.community != null) {
+                // Convert Mongoose Map to plain object if needed
+                var panics = resp.community.activePanics instanceof Map
+                  ? Object.fromEntries(resp.community.activePanics)
+                  : (resp.community.activePanics || {});
                 return socket.broadcast.emit(
                   "load_panic_status_update",
-                  resp.community.activePanics,
+                  panics,
                   resp.community.activeSignal100,
                   resp.community.activeHoldTraffic,
                   req
                 );
               }
             }
-          }
-        );
+          );
+        }
       }
     });
 
-    socket.on("panic_button_update", (req) => {
-      // console.debug('panic button update req: ', req)
+    socket.on("panic_button_update", async (req) => {
       if (req.activeCommunity != null && req.activeCommunity != undefined) {
-        var values = {
-          userId: req.userID,
-          username: req.userUsername,
-          activeCommunityID: req.activeCommunity,
-        };
         var isValid = isValidObjectIdLength(
           req.activeCommunity,
           "cannot lookup invalid length activeCommunity, socket: panic_button_update"
@@ -7189,92 +7241,83 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!isValid) {
           return;
         }
-        Community.findById(
-          {
-            _id: ObjectId(req.activeCommunity),
-          },
-          function (err, resp) {
-            if (err) return console.error(err);
-            if (resp != null) {
-              if (resp.community != null) {
-                if (
-                  resp.community.activePanics == undefined ||
-                  resp.community.activePanics == null
-                ) {
-                  var mapInsert = new Map();
-                  mapInsert.set(req.userID, values);
-                  var isValid = isValidObjectIdLength(
-                    req.activeCommunity,
-                    "cannot lookup invalid length activeCommunity, socket: panic_button_update"
-                  );
-                  if (!isValid) {
-                    return;
-                  }
+        if (!isValidObjectIdFormat(req.activeCommunity, "invalid format activeCommunity, socket: panic_button_update")) {
+          return;
+        }
+        try {
+          // Create panic alert via Go API
+          const apiUrl = `${policeCadApiUrl}/api/v1/community/${req.activeCommunity}/panic-alerts`;
+          const apiResp = await axios.post(apiUrl, {
+            userId: req.userID,
+            username: req.userUsername,
+            callSign: req.callSign || "",
+            departmentType: req.departmentType || "police",
+          }, config);
+
+          // Build an object keyed by userId for backward compatibility with existing frontend listeners
+          const alertData = {
+            userId: req.userID,
+            username: req.userUsername,
+            activeCommunityID: req.activeCommunity,
+            callSign: req.callSign || "",
+            departmentType: req.departmentType || "police",
+            alertId: apiResp.data && apiResp.data.alertId,
+          };
+          const activePanicsMap = {};
+          activePanicsMap[req.userID] = alertData;
+
+          // Broadcast to community room
+          // Emit both map and req for backward compat with old listeners that expect (map, origReq)
+          const roomName = `community:${req.activeCommunity}`;
+          io.to(roomName).emit("panic_button_updated", activePanicsMap, req);
+          broadcastToCommunity("panic_alert_created", alertData, req.activeCommunity);
+        } catch (err) {
+          console.error("panic_button_update: API error:", err.message);
+          // Fallback to old direct MongoDB approach
+          var values = {
+            userId: req.userID,
+            username: req.userUsername,
+            activeCommunityID: req.activeCommunity,
+          };
+          Community.findById(
+            { _id: ObjectId(req.activeCommunity) },
+            function (dbErr, resp) {
+              if (dbErr) return console.error(dbErr);
+              if (resp != null && resp.community != null) {
+                if (!resp.community.activePanics) {
+                  var mapInsert = {};
+                  mapInsert[req.userID] = values;
                   Community.findByIdAndUpdate(
-                    {
-                      _id: ObjectId(req.activeCommunity),
-                    },
-                    {
-                      $set: {
-                        "community.activePanics": mapInsert,
-                      },
-                    },
-                    function (err) {
-                      if (err) return console.error(err);
-                      return socket.broadcast.emit(
-                        "panic_button_updated",
-                        mapInsert,
-                        req
-                      );
+                    { _id: ObjectId(req.activeCommunity) },
+                    { $set: { "community.activePanics": mapInsert } },
+                    function (updateErr) {
+                      if (updateErr) return console.error(updateErr);
+                      return socket.broadcast.emit("panic_button_updated", mapInsert, req);
                     }
                   );
                 } else {
-                  if (
-                    resp.community.activePanics.get(req.userID) == undefined
-                  ) {
-                    resp.community.activePanics.set(req.userID, values);
-                    var isValid = isValidObjectIdLength(
-                      req.activeCommunity,
-                      "cannot lookup invalid length activeCommunity, socket: panic_button_update"
-                    );
-                    if (!isValid) {
-                      return;
+                  // Convert to plain object if needed (Mongoose may return a Map)
+                  var panics = resp.community.activePanics instanceof Map
+                    ? Object.fromEntries(resp.community.activePanics)
+                    : (resp.community.activePanics || {});
+                  panics[req.userID] = values;
+                  Community.findByIdAndUpdate(
+                    { _id: ObjectId(req.activeCommunity) },
+                    { $set: { "community.activePanics": panics } },
+                    function (updateErr) {
+                      if (updateErr) return console.error(updateErr);
+                      return socket.broadcast.emit("panic_button_updated", panics, req);
                     }
-                    Community.findByIdAndUpdate(
-                      {
-                        _id: ObjectId(req.activeCommunity),
-                      },
-                      {
-                        $set: {
-                          "community.activePanics": resp.community.activePanics,
-                        },
-                      },
-                      function (err) {
-                        if (err) return console.error(err);
-                        return socket.broadcast.emit(
-                          "panic_button_updated",
-                          resp.community.activePanics,
-                          req
-                        );
-                      }
-                    );
-                  } else {
-                    return socket.broadcast.emit(
-                      "panic_button_updated",
-                      resp.community.activePanics,
-                      req
-                    );
-                  }
+                  );
                 }
               }
             }
-          }
-        );
+          );
+        }
       }
     });
 
-    socket.on("clear_panic", (req) => {
-      // console.debug("clear req", req)
+    socket.on("clear_panic", async (req) => {
       if (req.communityID != null && req.communityID != undefined) {
         var isValid = isValidObjectIdLength(
           req.communityID,
@@ -7283,47 +7326,49 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!isValid) {
           return;
         }
-        Community.findById(
-          {
-            _id: ObjectId(req.communityID),
-          },
-          function (err, resp) {
-            if (err) return console.error(err);
-            if (resp != null) {
-              if (resp.community != null) {
+        if (!isValidObjectIdFormat(req.communityID, "invalid format communityID, socket: clear_panic")) {
+          return;
+        }
+        if (!isValidObjectIdFormat(req.userID, "invalid format userID, socket: clear_panic")) {
+          return;
+        }
+        try {
+          // Clear panic alerts for user via Go API
+          const apiUrl = `${policeCadApiUrl}/api/v1/community/${req.communityID}/panic-alerts/user/${req.userID}`;
+          await axios.delete(apiUrl, {
+            ...config,
+            data: { clearedBy: req.clearedBy || req.userID },
+          });
+
+          // Broadcast cleared event to community
+          broadcastToCommunity("cleared_panic", req, req.communityID);
+        } catch (err) {
+          console.error("clear_panic: API error:", err.message);
+          // Fallback to old direct MongoDB approach
+          Community.findById(
+            { _id: ObjectId(req.communityID) },
+            function (dbErr, resp) {
+              if (dbErr) return console.error(dbErr);
+              if (resp != null && resp.community != null) {
                 if (resp.community.activePanics != null) {
                   resp.community.activePanics.delete(req.userID);
-                  var isValid = isValidObjectIdLength(
-                    req.communityID,
-                    "cannot lookup invalid length communityID, socket: clear_panic"
-                  );
-                  if (!isValid) {
-                    return;
-                  }
                   Community.findByIdAndUpdate(
-                    {
-                      _id: ObjectId(req.communityID),
-                    },
-                    {
-                      $set: {
-                        "community.activePanics": resp.community.activePanics,
-                      },
-                    },
-                    function (err) {
-                      if (err) return console.error(err);
+                    { _id: ObjectId(req.communityID) },
+                    { $set: { "community.activePanics": resp.community.activePanics } },
+                    function (updateErr) {
+                      if (updateErr) return console.error(updateErr);
                       return socket.broadcast.emit("cleared_panic", req);
                     }
                   );
                 }
               }
             }
-          }
-        );
+          );
+        }
       }
     });
 
-    socket.on("signal_100_button_update", (req) => {
-      // console.debug('signal 100 button update req: ', req)
+    socket.on("signal_100_button_update", async (req) => {
       if (req.activeCommunity != null && req.activeCommunity != undefined) {
         var isValid = isValidObjectIdLength(
           req.activeCommunity,
@@ -7332,36 +7377,40 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!isValid) {
           return;
         }
-        Community.findById(
-          {
-            _id: ObjectId(req.activeCommunity),
-          },
-          function (err, resp) {
-            if (err) return console.error(err);
-            if (resp != null) {
-              if (resp.community != null) {
-                Community.findByIdAndUpdate(
-                  {
-                    _id: ObjectId(req.activeCommunity),
-                  },
-                  {
-                    $set: {
-                      "community.activeSignal100": true,
-                    },
-                  },
-                  function (err) {
-                    if (err) return console.error(err);
-                    return broadcastToCommunity(
-                      "signal_100_button_updated",
-                      req,
-                      req.activeCommunity
-                    );
-                  }
-                );
-              }
+        if (!isValidObjectIdFormat(req.activeCommunity, "invalid format activeCommunity, socket: signal_100_button_update")) {
+          return;
+        }
+        try {
+          // Activate Signal 100 via Go API
+          const apiUrl = `${policeCadApiUrl}/api/v1/community/${req.activeCommunity}/signal-100`;
+          await axios.post(apiUrl, {
+            userId: req.userID || req.activatedByUserId || "",
+            username: req.activatedByUsername || req.userUsername || "",
+            callSign: req.activatedByCallSign || req.userCallSign || "",
+            departmentName: req.activatedBy || "",
+          }, config);
+
+          return broadcastToCommunity(
+            "signal_100_button_updated",
+            req,
+            req.activeCommunity
+          );
+        } catch (err) {
+          console.error("signal_100_button_update: API error:", err.message);
+          // Fallback to direct DB update
+          Community.findByIdAndUpdate(
+            { _id: ObjectId(req.activeCommunity) },
+            { $set: { "community.activeSignal100": true } },
+            function (dbErr) {
+              if (dbErr) return console.error(dbErr);
+              return broadcastToCommunity(
+                "signal_100_button_updated",
+                req,
+                req.activeCommunity
+              );
             }
-          }
-        );
+          );
+        }
       }
     });
 
@@ -7407,8 +7456,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
     });
 
-    socket.on("clear_signal_100", (activeCommunity) => {
-      // console.debug('signal 100 clear button update req: ', activeCommunity)
+    socket.on("clear_signal_100", async (data) => {
+      // Support both old format (string communityId) and new format (object with user info)
+      const activeCommunity = typeof data === "string" ? data : data.activeCommunity;
+      const clearedByUserId = typeof data === "object" ? (data.clearedByUserId || "") : "";
+      const clearedByUsername = typeof data === "object" ? (data.clearedByUsername || "") : "";
+      const clearedByCallSign = typeof data === "object" ? (data.clearedByCallSign || "") : "";
+
       if (activeCommunity != null && activeCommunity != undefined) {
         var isValid = isValidObjectIdLength(
           activeCommunity,
@@ -7417,36 +7471,48 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!isValid) {
           return;
         }
-        Community.findById(
-          {
-            _id: ObjectId(activeCommunity),
-          },
-          function (err, resp) {
-            if (err) return console.error(err);
-            if (resp != null) {
-              if (resp.community != null) {
-                Community.findByIdAndUpdate(
-                  {
-                    _id: ObjectId(activeCommunity),
-                  },
-                  {
-                    $set: {
-                      "community.activeSignal100": false,
-                    },
-                  },
-                  function (err) {
-                    if (err) return console.error(err);
-                    return broadcastToCommunity(
-                      "clear_signal_100_updated",
-                      activeCommunity,
-                      activeCommunity
-                    );
-                  }
-                );
-              }
+        if (!isValidObjectIdFormat(activeCommunity, "invalid format activeCommunity, socket: clear_signal_100")) {
+          return;
+        }
+        try {
+          // Clear Signal 100 via Go API
+          const apiUrl = `${policeCadApiUrl}/api/v1/community/${activeCommunity}/signal-100`;
+          const apiResp = await axios.delete(apiUrl, {
+            ...config,
+            data: {
+              clearedByUserId,
+              clearedByUsername,
+              clearedByCallSign,
+            },
+          });
+
+          const clearedData = apiResp.data || {};
+          return broadcastToCommunity(
+            "clear_signal_100_updated",
+            {
+              activeCommunity,
+              clearedByUserId: clearedData.clearedByUserId || clearedByUserId,
+              clearedByUsername: clearedData.clearedByUsername || clearedByUsername,
+              clearedByCallSign: clearedData.clearedByCallSign || clearedByCallSign,
+            },
+            activeCommunity
+          );
+        } catch (err) {
+          console.error("clear_signal_100: API error:", err.message);
+          // Fallback to direct DB update
+          Community.findByIdAndUpdate(
+            { _id: ObjectId(activeCommunity) },
+            { $set: { "community.activeSignal100": false } },
+            function (dbErr) {
+              if (dbErr) return console.error(dbErr);
+              return broadcastToCommunity(
+                "clear_signal_100_updated",
+                activeCommunity,
+                activeCommunity
+              );
             }
-          }
-        );
+          );
+        }
       }
     });
 
@@ -8634,6 +8700,21 @@ function exists(v) {
   } else {
     return false;
   }
+}
+
+var OBJECT_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
+
+function isValidObjectIdFormat(value, errorMessage) {
+  if (value == null || value === undefined) {
+    return false;
+  }
+  if (!OBJECT_ID_PATTERN.test(String(value))) {
+    console.warn(
+      `[LPS] [level=warn] [method=isValidObjectIdFormat] errorMessage: ${errorMessage}, value: ${value}`
+    );
+    return false;
+  }
+  return true;
 }
 
 function isValidObjectIdLength(value, errorMessage) {

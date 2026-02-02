@@ -44,14 +44,28 @@
   <style type='text/css'> body {position: static !important; top:0px !important;}</style>
   <style>
     /* Signal 100 Banner - Modern Mobile-Friendly Design */
-    .signal-100-banner {
+    #fixed-alert-banners {
       position: fixed;
       top: 60px;
-      left: 0;
+      left: 300px;
       right: 0;
-      z-index: 1050;
+      z-index: 8;
+      transition: left 0.3s;
+    }
+    #fixed-alert-banners.sidebar-collapsed {
+      left: 0;
+    }
+    @media (max-width: 991.98px) {
+      #fixed-alert-banners {
+        left: 0;
+      }
+      #fixed-alert-banners.sidebar-collapsed {
+        left: 300px;
+      }
+    }
+    .signal-100-banner {
       background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-      padding: 12px 16px;
+      padding: 6px 16px;
       cursor: pointer;
       box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4);
       transition: all 0.3s ease;
@@ -72,29 +86,27 @@
     }
     .signal-100-content {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
-      justify-content: center;
-      gap: 4px;
-      max-width: 600px;
-      margin: 0 auto;
+      justify-content: space-between;
+      gap: 12px;
     }
     .signal-100-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
     }
     .signal-100-icon {
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 36px;
-      height: 36px;
+      width: 24px;
+      height: 24px;
       flex-shrink: 0;
     }
     .signal-100-icon i {
-      font-size: 24px;
+      font-size: 16px;
       color: #fff;
       z-index: 2;
       position: relative;
@@ -112,32 +124,32 @@
       100% { transform: scale(1.8); opacity: 0; }
     }
     .signal-100-text {
-      text-align: center;
+      text-align: left;
       flex: 1;
       min-width: 0;
     }
     .signal-100-title {
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 700;
       color: #fff;
-      letter-spacing: 2px;
+      letter-spacing: 1.5px;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     .signal-100-details {
-      font-size: 13px;
+      font-size: 12px;
       color: rgba(255, 255, 255, 0.9);
-      margin-top: 2px;
+      margin-top: 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .signal-100-tap {
-      font-size: 11px;
+      font-size: 10px;
       color: rgba(255, 255, 255, 0.7);
       text-transform: uppercase;
       letter-spacing: 1px;
       flex-shrink: 0;
-      padding: 4px 8px;
+      padding: 3px 8px;
       border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: 4px;
     }
@@ -166,6 +178,48 @@
         font-size: 9px;
         padding: 3px 6px;
       }
+    }
+
+    /* Panic Alert Banner */
+    .panic-alerts-banner {
+      max-height: 125px;
+      overflow-y: auto;
+      background: linear-gradient(135deg, #ea580c 0%, #9a3412 100%);
+      box-shadow: 0 4px 20px rgba(234, 88, 12, 0.4);
+      animation: panicGlow 2s ease-in-out infinite;
+    }
+    .panic-alerts-banner:empty { display: none; }
+    .panic-alerts-banner::-webkit-scrollbar { width: 4px; }
+    .panic-alerts-banner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
+    @keyframes panicGlow {
+      0%, 100% { box-shadow: 0 4px 20px rgba(234, 88, 12, 0.4); }
+      50% { box-shadow: 0 4px 30px rgba(234, 88, 12, 0.7); }
+    }
+    .panic-alert-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; min-height: 50px;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+      animation: panicPulseRow 1.5s ease-in-out infinite;
+    }
+    .panic-alert-row:last-child { border-bottom: none; }
+    @keyframes panicPulseRow { 0%, 100% { opacity: 1; } 50% { opacity: 0.85; } }
+    .panic-alert-content { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .panic-alert-icon { position: relative; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex-shrink: 0; }
+    .panic-alert-icon i { font-size: 18px; color: #fff; z-index: 2; position: relative; }
+    .panic-alert-icon .panic-pulse { position: absolute; width: 100%; height: 100%; background: rgba(255,255,255,0.3); border-radius: 50%; animation: panicPulse 1s ease-out infinite; }
+    @keyframes panicPulse { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
+    .panic-alert-text { flex: 1; min-width: 0; }
+    .panic-alert-title { font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 1.5px; text-transform: uppercase; }
+    .panic-alert-details { font-size: 12px; color: rgba(255,255,255,0.9); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .panic-alert-clear-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 14px; transition: background 0.2s; }
+    .panic-alert-clear-btn:hover { background: rgba(255,255,255,0.35); }
+    .panic-alert-hide-btn { background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.6); width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 12px; transition: background 0.2s; }
+    .panic-alert-hide-btn:hover { background: rgba(255,255,255,0.2); }
+    .panic-scroll-hint { background: #7c2d12; padding: 3px 0; text-align: center; font-size: 10px; color: rgba(255,255,255,0.7); letter-spacing: 0.5px; }
+    @media (max-width: 480px) {
+      .panic-alert-row { padding: 8px 12px; min-height: 44px; }
+      .panic-alert-title { font-size: 11px; }
+      .panic-alert-details { font-size: 11px; }
     }
 
     /* Clear Signal 100 Modal */
@@ -491,6 +545,20 @@
             <h1 class="cursive"><a href="/dispatch-dashboard"><i class="fa-solid fa-headset"></i> Dispatch Operations</a> • <a href="/community-dashboard"><span id="community-name"></span></a></h1>
           </div>
         </div>
+        <a data-toggle="modal" href="#holdTrafficDetailModal" style="z-index: 8;width: 100%;">
+          <div id="hold-traffic-banner" class="panel panel-warning hide">
+            <div class="panel-heading">
+              <span class="panel-title">⚠️⚠️⚠️ 10-3 Active: hold all radio traffic! ⚠️⚠️⚠️</span>
+              <button type="button" class="close" aria-label="Close"
+                style="position: absolute; margin-top: 5px; margin-left: 1em;">
+                <i class="fa fa-times"></i> Clear
+              </button>
+            </div>
+          </div>
+        </a>
+      </nav>
+
+      <div id="fixed-alert-banners">
         <div id="signal-100-banner" class="signal-100-banner hide" onclick="showClearSignal100Modal()">
           <div class="signal-100-content">
             <div class="signal-100-row">
@@ -506,18 +574,9 @@
             <div class="signal-100-tap">Tap to clear</div>
           </div>
         </div>
-        <a data-toggle="modal" href="#holdTrafficDetailModal" style="z-index: 8;width: 100%;">
-          <div id="hold-traffic-banner" class="panel panel-warning hide">
-            <div class="panel-heading">
-              <span class="panel-title">⚠️⚠️⚠️ 10-3 Active: hold all radio traffic! ⚠️⚠️⚠️</span>
-              <button type="button" class="close" aria-label="Close"
-                style="position: absolute; margin-top: 5px; margin-left: 1em;">
-                <i class="fa fa-times"></i> Clear
-              </button>
-            </div>
-          </div>
-        </a>
-      </nav>
+        <div id="panic-alerts-banner" class="panic-alerts-banner"></div>
+        <div id="panic-scroll-hint" class="panic-scroll-hint" style="display:none;"></div>
+      </div>
 
       <!-- Clear Signal 100 Confirmation Modal (outside nav for proper z-index) -->
       <div id="clear-signal-100-modal" class="clear-signal-modal-overlay" onclick="hideClearSignal100Modal(event)">
@@ -607,10 +666,16 @@
                                     <i class="fa fa-users"></i>
                                     <span>UNIT STATUS</span>
                                   </div>
-                                  <div class="unit-stats">
-                                    <span class="stat-badge online"><span id="onlineCount">0</span> Online</span>
-                                    <span class="stat-badge offline"><span id="offlineCount">0</span> Offline</span>
-                                    <span class="stat-badge total"><span id="totalCount">0</span> Total</span>
+                                  <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                                    <div id="signal100ActionBtn" class="dispatch-signal100-btn" onclick="dispatchToggleSignal100()">
+                                      <i id="signal100BtnIcon" class="fa fa-exclamation-triangle"></i>
+                                      <span id="signal100BtnText">Signal 100</span>
+                                    </div>
+                                    <div class="unit-stats">
+                                      <span class="stat-badge online"><span id="onlineCount">0</span> Online</span>
+                                      <span class="stat-badge offline"><span id="offlineCount">0</span> Offline</span>
+                                      <span class="stat-badge total"><span id="totalCount">0</span> Total</span>
+                                    </div>
                                   </div>
                                 </div>
 
@@ -721,6 +786,41 @@
                                   background: rgba(59, 130, 246, 0.2);
                                   color: #60a5fa;
                                   border: 1px solid rgba(59, 130, 246, 0.4);
+                                }
+
+                                .dispatch-signal100-btn {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 0.5rem;
+                                  padding: 0.5rem 1rem;
+                                  border: 2px solid #dc2626;
+                                  border-radius: 8px;
+                                  background: rgba(153, 27, 27, 0.3);
+                                  color: #fca5a5;
+                                  font-weight: 700;
+                                  font-size: 0.85rem;
+                                  letter-spacing: 0.05em;
+                                  cursor: pointer;
+                                  transition: all 0.2s ease;
+                                  white-space: nowrap;
+                                }
+                                .dispatch-signal100-btn:hover {
+                                  background: rgba(220, 38, 38, 0.4);
+                                  box-shadow: 0 2px 10px rgba(220, 38, 38, 0.4);
+                                }
+                                .dispatch-signal100-btn.active {
+                                  background: #991b1b;
+                                  color: #fff;
+                                  border-color: #ef4444;
+                                  animation: pulse-signal100-btn 1.5s infinite;
+                                }
+                                .dispatch-signal100-btn.loading {
+                                  opacity: 0.6;
+                                  pointer-events: none;
+                                }
+                                @keyframes pulse-signal100-btn {
+                                  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); }
+                                  50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
                                 }
 
                                 .unit-controls {
@@ -883,6 +983,60 @@
                                 @keyframes pulse-emergency {
                                   0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
                                   50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+                                }
+
+                                /* Panic alert unit card */
+                                .unit-card.panic {
+                                  border-left: 4px solid #ea580c;
+                                  background: rgba(234, 88, 12, 0.15);
+                                  animation: pulse-panic 1.5s infinite;
+                                }
+                                @keyframes pulse-panic {
+                                  0%, 100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.4); }
+                                  50% { box-shadow: 0 0 0 8px rgba(234, 88, 12, 0); }
+                                }
+
+                                /* Signal 100 unit card */
+                                .unit-card.signal100-unit {
+                                  border-left: 4px solid #dc2626;
+                                  background: rgba(220, 38, 38, 0.15);
+                                  animation: pulse-signal100-unit 1.5s infinite;
+                                }
+                                @keyframes pulse-signal100-unit {
+                                  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+                                  50% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+                                }
+
+                                .unit-status-indicator.panic {
+                                  background: #ea580c;
+                                  box-shadow: 0 0 8px rgba(234, 88, 12, 0.6);
+                                  animation: blink 1s infinite;
+                                }
+                                .unit-status-indicator.signal100-unit {
+                                  background: #dc2626;
+                                  box-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
+                                  animation: blink 1s infinite;
+                                }
+
+                                .unit-alert-badge {
+                                  display: inline-block;
+                                  padding: 2px 8px;
+                                  border-radius: 4px;
+                                  font-size: 0.65rem;
+                                  font-weight: 700;
+                                  letter-spacing: 1px;
+                                  text-transform: uppercase;
+                                  margin-top: 4px;
+                                }
+                                .unit-alert-badge.panic-badge {
+                                  background: rgba(234, 88, 12, 0.3);
+                                  color: #fb923c;
+                                  border: 1px solid rgba(234, 88, 12, 0.5);
+                                }
+                                .unit-alert-badge.signal100-badge {
+                                  background: rgba(220, 38, 38, 0.3);
+                                  color: #fca5a5;
+                                  border: 1px solid rgba(220, 38, 38, 0.5);
                                 }
 
                                 /* Status update highlight animation */
@@ -1169,10 +1323,6 @@
       <section style='background-image: url("/static/images/blue-clouds.jpg"); padding: 0;'>
         <div class="container">
           <div class="col-lg-10 col-lg-offset-1 margin-top-1">
-            
-                  <div id="panic-placeholder"></div>
-                  <div id="panic-placeholder-socket"></div>
-                
           </div>
         </div>
 
@@ -2914,6 +3064,12 @@
 
 </html>
 <script>
+  // HTML escaping helper to prevent XSS when inserting dynamic content into the DOM
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
   $(function () {
     // Use shared socket or create one and share it
     var socket = window.dashboardSocket || io();
@@ -2982,13 +3138,26 @@
     //   repopulateOfficerList(res.userID, res.status)
     // })
 
-    socket.on('load_panic_status_update', (map, signal100Resp, holdTrafficResp, origReq) => {
+    socket.on('load_panic_status_update', (map, signal100Resp, holdTrafficResp, origReq, signal100Data) => {
       if (dbUser.user.activeCommunity==origReq.activeCommunity) {
         //load the signal 100 status to the page
         if (signal100Resp) {
-          $('#signal-100-banner').removeClass('hide').addClass('show')
+          // Populate banner details from API metadata if available
+          if (signal100Data && signal100Data.active) {
+            updateSignal100Banner({
+              activatedBy: signal100Data.activatedByDepartment || '',
+              activatedByCallSign: signal100Data.activatedByCallSign || '',
+              activatedByUsername: signal100Data.activatedByUsername || '',
+              aboutUserId: signal100Data.activatedByUserId || '',
+            });
+          } else {
+            $('#signal-100-banner').removeClass('hide').addClass('show')
+          }
         } else {
+          signal100UserId = null;
           $('#signal-100-banner').removeClass('show').addClass('hide')
+          $('#signal-100-details').text('');
+          updateSignal100ButtonState();
         }
         if (holdTrafficResp) {
           $('#hold-traffic-banner').removeClass('hide').addClass('show')
@@ -2996,27 +3165,9 @@
           $('#hold-traffic-banner').removeClass('show').addClass('hide')
         }
 
-        //load the panic status items
-        $('#panic-placeholder-socket').empty();
-        $('#panic-placeholder').append(
-          '<div id="panic-placeholder-socket"></div>'
-        ).fadeTo(1, function () {
-          $(this).add();
-        })
-        for (var m in map) {
-          $('#panic-placeholder-socket').append(
-            '<a id="'+map[m].userId+'-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\''+map[m].userId+'\')">'+
-            '<div class="alert alert-danger alert-dismissible show" role="alert">'+
-            '<strong>Panic! </strong> Triggered by: <span id="'+map[m].userId+'-panic-username">'+map[m].username+'</span>'+
-            '<button type="button" type="button" class="close" aria-label="Close">'+
-            '<span aria-hidden="true">&times;</span>'+
-            '</button>'+
-            '</div>'+
-            '</a>'
-          ).fadeTo(1, function () {
-            $(this).add();
-          })
-        }
+        //load the panic status items via AJAX refresh
+        loadPanicStatusesAjax();
+        adjustContentOffset();
       }
     })
 
@@ -3028,33 +3179,13 @@
           audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
           audioElement.play();
         }
-        $('#panic-placeholder-socket').empty();
-        $('#panic-placeholder').append(
-          '<div id="panic-placeholder-socket"></div>'
-        ).fadeTo(1, function () {
-          $(this).add();
-        })
-        for (var m in map) {
-          $('#panic-placeholder-socket').append(
-            '<a id="'+map[m].userId+'-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\''+map[m].userId+'\')">'+
-            '<div class="alert alert-danger alert-dismissible show" role="alert">'+
-            '<strong>Panic! </strong> Triggered by: <span id="'+map[m].userId+'-panic-username">'+map[m].username+'</span>'+
-            '<button type="button" type="button" class="close" aria-label="Close">'+
-            '<span aria-hidden="true">&times;</span>'+
-            '</button>'+
-            '</div>'+
-            '</a>'
-          ).fadeTo(1, function () {
-            $(this).add();
-          })
-        }
+        loadPanicStatusesAjax();
       }
     })
 
     socket.on('cleared_panic', res => {
-      $('#'+res.userID+'-panic-row').remove().fadeOut(1, function () {
-        $(this).remove();
-      })
+      $('#panic-row-' + (res.alertId || res.userID)).fadeOut(200, function() { $(this).remove(); });
+      loadPanicStatusesAjax();
     })
 
     socket.on('signal_100_button_updated', (origReq) => {
@@ -3081,10 +3212,21 @@
       }
     })
 
-    socket.on('clear_signal_100_updated', activeCommunity => {
-      if (dbUser.user.activeCommunity==activeCommunity) {
+    socket.on('clear_signal_100_updated', (data) => {
+      const cid = typeof data === 'string' ? data : data.activeCommunity;
+      if (dbUser.user.activeCommunity == cid) {
+        signal100UserId = null;
         $('#signal-100-banner').removeClass('show').addClass('hide')
         $('#signal-100-details').text('');
+
+        const clearedBy = (typeof data === 'object' && data.clearedByCallSign)
+          ? data.clearedByCallSign + ' (' + data.clearedByUsername + ')'
+          : (typeof data === 'object' && data.clearedByUsername) ? data.clearedByUsername : '';
+        const msg = clearedBy ? 'Signal 100 cleared by ' + clearedBy : 'Signal 100 Cleared';
+        showRealTimeToast('status', msg, 'success');
+        adjustContentOffset();
+        renderUnitsGrid();
+        updateSignal100ButtonState();
       }
     })
 
@@ -3482,12 +3624,150 @@
         }
       }
 
+      // Poll for panic status updates every 15s to catch cross-platform panics
+      setInterval(function() {
+        if (dashboardSocket.connected) {
+          dashboardSocket.emit('load_panic_statuses', {
+            userID: dbUser._id,
+            userUsername: dbUser.user.username,
+            activeCommunity: dbUser.user?.lastAccessedCommunity?.communityID
+          });
+        }
+      }, 15000);
+
       // Wait for connection before emitting
       if (dashboardSocket.connected) {
         onConnected();
       } else {
         dashboardSocket.once('connect', onConnected);
       }
+
+      // ==========================================
+      // AJAX POLLING FOR CROSS-PLATFORM UPDATES
+      // ==========================================
+
+      // Direct AJAX polling to Go API — catches mobile-triggered panics/signal100
+      function loadPanicStatusesAjax() {
+        if (!communityId) return;
+
+        // Fetch Signal 100 status
+        $.ajax({
+          url: `${API_URL}/api/v1/community/${communityId}/signal-100`,
+          method: 'GET',
+          success: function(s100Data) {
+            if (s100Data && s100Data.active) {
+              updateSignal100Banner({
+                activatedBy: s100Data.activatedByDepartment || '',
+                activatedByCallSign: s100Data.activatedByCallSign || '',
+                activatedByUsername: s100Data.activatedByUsername || '',
+                aboutUserId: s100Data.activatedByUserId || '',
+              });
+            } else {
+              signal100UserId = null;
+              $('#signal-100-banner').removeClass('show').addClass('hide');
+              $('#signal-100-details').text('');
+              updateSignal100ButtonState();
+              renderUnitsGrid();
+              adjustContentOffset();
+            }
+          },
+          error: function() { /* ignore */ }
+        });
+
+        // Fetch active panic alerts
+        $.ajax({
+          url: `${API_URL}/api/v1/community/${communityId}/panic-alerts?status=active`,
+          method: 'GET',
+          success: function(data) {
+            renderStyledPanicAlerts(data.alerts || []);
+          },
+          error: function(xhr) {
+            console.error('Error loading panic statuses via AJAX:', xhr.responseText);
+          }
+        });
+      }
+
+      function renderStyledPanicAlerts(alerts) {
+        var $banner = $('#panic-alerts-banner');
+        var $hint = $('#panic-scroll-hint');
+        $banner.empty();
+
+        // Track which users have active panics (for unit card styling)
+        var prevSize = activePanicUserIds.size;
+        activePanicUserIds = new Set();
+        if (alerts && alerts.length > 0) {
+          alerts.forEach(function(a) { if (a.userId) activePanicUserIds.add(a.userId); });
+        }
+        // Re-render unit cards if panic user set changed
+        var changed = activePanicUserIds.size !== prevSize;
+        if (!changed && activePanicUserIds.size > 0) {
+          // Quick check if contents changed
+          changed = true; // Conservative: re-render when we have panics
+        }
+
+        if (!alerts || alerts.length === 0) {
+          $hint.hide();
+          if (changed) renderUnitsGrid();
+          adjustContentOffset();
+          return;
+        }
+
+        alerts.forEach(function(alert) {
+          var displayName = alert.callSign
+            ? alert.callSign + ' (' + alert.username + ')'
+            : alert.username;
+          var safeAlertId = escapeHtml(alert.alertId);
+
+          var $row = $('<div>').addClass('panic-alert-row').attr('id', 'panic-row-' + safeAlertId);
+          var $content = $('<div>').addClass('panic-alert-content');
+          $content.append($('<div>').addClass('panic-alert-icon').html('<span class="panic-pulse"></span><i class="fa fa-exclamation-triangle"></i>'));
+          var $text = $('<div>').addClass('panic-alert-text');
+          $text.append($('<div>').addClass('panic-alert-title').text('PANIC ALERT'));
+          $text.append($('<div>').addClass('panic-alert-details').text(displayName));
+          $content.append($text);
+          $row.append($content);
+
+          // Dispatch can clear any panic
+          var $clearBtn = $('<button>').addClass('panic-alert-clear-btn').attr('title', 'Clear panic').html('<i class="fa fa-times"></i>');
+          $clearBtn.on('click', function(e) { e.stopPropagation(); clearPanicAlert(alert.alertId); });
+          $row.append($clearBtn);
+
+          $banner.append($row);
+        });
+
+        if (alerts.length > 2) {
+          $hint.text(alerts.length + ' active alerts — scroll for more').show();
+        } else {
+          $hint.hide();
+        }
+
+        if (changed) renderUnitsGrid();
+        adjustContentOffset();
+      }
+
+      function clearPanicAlert(alertId) {
+        if (!communityId) return;
+        $.ajax({
+          url: API_URL + '/api/v1/community/' + communityId + '/panic-alerts/' + alertId,
+          method: 'DELETE',
+          contentType: 'application/json',
+          data: JSON.stringify({ clearedBy: dbUser._id }),
+          success: function() {
+            $('#panic-row-' + alertId).fadeOut(200, function() { $(this).remove(); });
+            loadPanicStatusesAjax();
+          },
+          error: function(xhr) {
+            console.error('Error clearing panic alert:', xhr.responseText);
+          }
+        });
+      }
+
+      // Expose to inline onclick handlers (defined inside closure)
+      window.clearPanicAlert = clearPanicAlert;
+
+      // Poll via AJAX every 20s (offset from Socket.IO 15s polling)
+      loadPanicStatusesAjax();
+      setInterval(loadPanicStatusesAjax, 20000);
 
       // ==========================================
       // REAL-TIME SOCKET LISTENERS FOR DISPATCH
@@ -3970,15 +4250,20 @@
       return true;
     });
 
-    // Sort: emergency first, then active statuses, then offline/no status last
-    filteredUnits.sort((a, b) => {
-      const aData = memberDataCache[a._id] || {};
-      const bData = memberDataCache[b._id] || {};
-      const aCategory = getUnitStatusCategory(aData.tenCodeID);
-      const bCategory = getUnitStatusCategory(bData.tenCodeID);
+    // Determine effective status category (panic/signal100 override ten-code category)
+    function getEffectiveCategory(unitId) {
+      if (activePanicUserIds.has(unitId)) return 'panic';
+      if (signal100UserId === unitId && $('#signal-100-banner').hasClass('show')) return 'signal100-unit';
+      const data = memberDataCache[unitId] || {};
+      return getUnitStatusCategory(data.tenCodeID);
+    }
 
-      // Emergency first, then busy, then online/active, then offline, then no status
-      const order = { emergency: 0, busy: 1, online: 2, offline: 3, none: 4 };
+    // Sort: panic first, then signal100, then emergency, then busy, online, offline, none
+    filteredUnits.sort((a, b) => {
+      const aCategory = getEffectiveCategory(a._id);
+      const bCategory = getEffectiveCategory(b._id);
+
+      const order = { panic: -2, 'signal100-unit': -1, emergency: 0, busy: 1, online: 2, offline: 3, none: 4 };
       return (order[aCategory] ?? 4) - (order[bCategory] ?? 4);
     });
 
@@ -4006,16 +4291,27 @@
       const tenCodeId = memberData.tenCodeID;
       const tenCode = tenCodesCache.find(tc => tc._id === tenCodeId);
       const statusCode = tenCode?.code || 'No Status';
-      const statusCategory = getUnitStatusCategory(tenCodeId);
+      const baseCategory = getUnitStatusCategory(tenCodeId);
+      const effectiveCategory = getEffectiveCategory(unit._id);
+      // Use effective category for card styling (panic/signal100 overrides)
+      const statusCategory = effectiveCategory;
 
-      const callSign = unit.user?.callSign ? `Unit ${unit.user.callSign}` : 'No Unit #';
-      const username = unit.user?.username || 'Unknown';
+      const callSign = unit.user?.callSign ? `Unit ${escapeHtml(unit.user.callSign)}` : 'No Unit #';
+      const username = escapeHtml(unit.user?.username || 'Unknown');
+
+      // Build alert badge if unit has active panic or signal 100
+      let alertBadgeHtml = '';
+      if (activePanicUserIds.has(unit._id)) {
+        alertBadgeHtml = '<div class="unit-alert-badge panic-badge"><i class="fa fa-exclamation-triangle"></i> PANIC</div>';
+      } else if (signal100UserId === unit._id && $('#signal-100-banner').hasClass('show')) {
+        alertBadgeHtml = '<div class="unit-alert-badge signal100-badge"><i class="fa fa-exclamation-triangle"></i> SIGNAL 100</div>';
+      }
 
       // Build status select options
       let selectOptions = '<option value="">No Status</option>';
       tenCodesCache.forEach(tc => {
         const selected = tc._id === tenCodeId ? 'selected' : '';
-        selectOptions += `<option value="${tc._id}" ${selected}>${tc.code}</option>`;
+        selectOptions += `<option value="${escapeHtml(tc._id)}" ${selected}>${escapeHtml(tc.code)}</option>`;
       });
 
       // Get department badges for this unit
@@ -4027,31 +4323,33 @@
       if (activeDeptName) {
         // Show active department with expand button if they have other departments
         if (otherDepts.length > 0) {
-          const otherBadges = otherDepts.map(d => `<span class="dept-badge">${d.name}</span>`).join('');
+          const otherBadges = otherDepts.map(d => `<span class="dept-badge">${escapeHtml(d.name)}</span>`).join('');
           deptBadgesHtml = `
             <div class="unit-departments">
-              <span class="active-dept-badge">${activeDeptName}</span>
+              <span class="active-dept-badge">${escapeHtml(activeDeptName)}</span>
               <span class="dept-expand-btn" onclick="toggleDeptExpand(this, event)" title="View all departments">+${otherDepts.length}</span>
               <div class="dept-expanded hidden">${otherBadges}</div>
             </div>`;
         } else {
-          deptBadgesHtml = `<div class="unit-departments"><span class="active-dept-badge">${activeDeptName}</span></div>`;
+          deptBadgesHtml = `<div class="unit-departments"><span class="active-dept-badge">${escapeHtml(activeDeptName)}</span></div>`;
         }
       } else if (userDepts.length > 0) {
         // No active department - show all their departments
-        const badges = userDepts.map(d => `<span class="dept-badge">${d.name}</span>`).join('');
+        const badges = userDepts.map(d => `<span class="dept-badge">${escapeHtml(d.name)}</span>`).join('');
         deptBadgesHtml = `<div class="unit-departments">${badges}</div>`;
       }
 
+      const safeUserId = escapeHtml(unit._id);
       const cardHtml = `
-        <div class="unit-card ${statusCategory}" data-user-id="${unit._id}">
+        <div class="unit-card ${statusCategory}" data-user-id="${safeUserId}">
           <div class="unit-status-indicator ${statusCategory}"></div>
           <div class="unit-info">
             <div class="unit-callsign">${callSign}</div>
             <div class="unit-name">${username}</div>
+            ${alertBadgeHtml}
             ${deptBadgesHtml}
           </div>
-          <select class="unit-status-select" data-user-id="${unit._id}" onchange="updateUnitStatus(this)">
+          <select class="unit-status-select" data-user-id="${safeUserId}" onchange="updateUnitStatus(this)">
             ${selectOptions}
           </select>
         </div>
@@ -4109,8 +4407,8 @@
           dashboardSocket.emit('update_status', emitData);
 
           // Check if this is Signal 100 or 10-99 - trigger community-wide alert
-          if (shouldBroadcast) {
-            dashboardSocket.emit('signal_100_button_update', {
+          if (shouldBroadcast && !$('#signal-100-banner').hasClass('show')) {
+            var signal100Req = {
               userID: userId,
               userUsername: unitUsername,
               userCallSign: unitCallSign,
@@ -4123,9 +4421,33 @@
               aboutUsername: unitUsername,
               statusCode: tenCode.code,
               timestamp: new Date().toISOString()
+            };
+
+            // Persist via Go API, then broadcast via Socket.IO
+            $.ajax({
+              url: API_URL + '/api/v1/community/' + communityId + '/signal-100',
+              method: 'POST',
+              contentType: 'application/json',
+              data: JSON.stringify({
+                userId: dbUser._id,
+                username: dbUser.user?.username || 'Dispatch',
+                callSign: dbUser.user?.callSign || '',
+                departmentName: 'Dispatch'
+              }),
+              success: function() {
+                if (dashboardSocket && dashboardSocket.connected) {
+                  dashboardSocket.emit('signal_100_button_update', signal100Req);
+                }
+              },
+              error: function(xhr) {
+                console.error('Error activating Signal 100 via API:', xhr.responseText);
+                if (dashboardSocket && dashboardSocket.connected) {
+                  dashboardSocket.emit('signal_100_button_update', signal100Req);
+                }
+              }
             });
 
-            // Update local banner
+            // Update local banner immediately
             updateSignal100Banner({
               activatedBy: 'Dispatch',
               activatedByCallSign: dbUser.user?.callSign,
@@ -4190,6 +4512,8 @@
     initializeRealtimeSocket();
     // Load units panel after a short delay to ensure everything is ready
     setTimeout(loadUnitsPanel, 500);
+    // Initial content offset calculation
+    adjustContentOffset();
   };
 
   // Also expose loadUnitsPanel globally for real-time refresh
@@ -4304,13 +4628,13 @@
           if (res[i].firearm.isStolen=="true") {
             $('#registered-firearms-panel-body-'+index).append(
               `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
-              `<strong>Danger!</strong> #${res[i].firearm.serialNumber} reported as stolen.`+
+              `<strong>Danger!</strong> #${escapeHtml(res[i].firearm.serialNumber)} reported as stolen.`+
               `</div>`
             )
           }
           $('#registered-firearms-panel-body-'+index).append(
-            `Serial #: ${res[i].firearm.serialNumber}<br/>`+
-            `Weapon Type: ${res[i].firearm.weaponType}<br/>`
+            `Serial #: ${escapeHtml(res[i].firearm.serialNumber)}<br/>`+
+            `Weapon Type: ${escapeHtml(res[i].firearm.weaponType)}<br/>`
           )
         }
       } else {
@@ -4432,15 +4756,27 @@
               `</div>`
             )
             $('#active-warrants-panel-body-'+index).append(
-            `Date Created: ${res[i].warrant.date}<br/>`+
-            `Time Created: ${res[i].warrant.time}<br/>`+
-            `Reporting Officer: ${res[i].warrant.reportingOfficer}<br/>`+
-            `Reason(s): ${res[i].warrant.reasons}<br/>`
+            'Date Created: ' + escapeHtml(res[i].warrant.date) + '<br/>' +
+            'Time Created: ' + escapeHtml(res[i].warrant.time) + '<br/>' +
+            'Reporting Officer: ' + escapeHtml(res[i].warrant.reportingOfficer) + '<br/>' +
+            'Reason(s): ' + escapeHtml(res[i].warrant.reasons) + '<br/>'
           )
 
-          $('#active-warrants-panel-body-'+index).append(
-            `<button type="button" class="btn btn-info margin-bottom-05" id="confirmWarrantModal" data-toggle="modal" href="#confirmClearWarrantModal" onclick="clearWarrantWithValues('${res[i]._id}', '${res[i].warrant.reasons}')">Clear</button>`
-          )
+          var warrantId = res[i]._id;
+          var warrantReasons = res[i].warrant.reasons;
+          var $clearBtn = $('<button>')
+            .attr('type', 'button')
+            .addClass('btn btn-info margin-bottom-05')
+            .attr('id', 'confirmWarrantModal')
+            .attr('data-toggle', 'modal')
+            .attr('href', '#confirmClearWarrantModal')
+            .text('Clear');
+          (function(wId, wReasons) {
+            $clearBtn.on('click', function() {
+              clearWarrantWithValues(wId, wReasons);
+            });
+          })(warrantId, warrantReasons);
+          $('#active-warrants-panel-body-'+index).append($clearBtn)
           counter++
           }
         }
@@ -4796,14 +5132,47 @@
   // Track the user ID associated with the current Signal 100
   let signal100UserId = null;
 
+  // Track user IDs with active panic alerts (for unit card styling)
+  let activePanicUserIds = new Set();
+
   // Confirm and broadcast Signal 100 cleared
   function confirmClearSignal100() {
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+    if (!communityId) return;
 
-    // Emit clear signal to server
-    if (dashboardSocket && dashboardSocket.connected) {
-      dashboardSocket.emit('clear_signal_100', communityId);
-    }
+    // Clear via Go API, then broadcast via Socket.IO
+    $.ajax({
+      url: API_URL + '/api/v1/community/' + communityId + '/signal-100',
+      method: 'DELETE',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        clearedByUserId: dbUser._id,
+        clearedByUsername: dbUser.user?.username || '',
+        clearedByCallSign: dbUser.user?.callSign || '',
+      }),
+      success: function() {
+        if (dashboardSocket && dashboardSocket.connected) {
+          dashboardSocket.emit('clear_signal_100', {
+            activeCommunity: communityId,
+            clearedByUserId: dbUser._id,
+            clearedByUsername: dbUser.user?.username || '',
+            clearedByCallSign: dbUser.user?.callSign || '',
+          });
+        }
+      },
+      error: function(xhr) {
+        console.error('Error clearing Signal 100 via API:', xhr.responseText);
+        // Fallback: still emit Socket.IO (server handler will retry DB)
+        if (dashboardSocket && dashboardSocket.connected) {
+          dashboardSocket.emit('clear_signal_100', {
+            activeCommunity: communityId,
+            clearedByUserId: dbUser._id,
+            clearedByUsername: dbUser.user?.username || '',
+            clearedByCallSign: dbUser.user?.callSign || '',
+          });
+        }
+      }
+    });
 
     // Helper to validate MongoDB ObjectId format (24 hex chars)
     function isValidObjectId(id) {
@@ -4871,6 +5240,8 @@
     $('#signal-100-banner').removeClass('show').addClass('hide');
     $('#signal-100-details').text('');
     hideClearSignal100Modal();
+    adjustContentOffset();
+    updateSignal100ButtonState();
   }
 
   function clearSignal100() {
@@ -5502,13 +5873,14 @@
     //if it is already showing we don't want to show it again (there can only be 1 active
     // signal 100 per community)
     if (!$('#signal-100-banner').hasClass('show')) {
+      var communityIdForSignal = dbUser.user?.lastAccessedCommunity?.communityID;
+      if (!communityIdForSignal) return;
 
-      var socket=io();
-      myReq={
+      var myReq={
         userID: dbUser._id,
         userUsername: dbUser.user.username,
         userCallSign: dbUser.user.callSign || null,
-        activeCommunity: dbUser.user.activeCommunity,
+        activeCommunity: communityIdForSignal,
         activatedBy: 'Dispatch',
         activatedByCallSign: dbUser.user.callSign || null,
         activatedByUsername: dbUser.user.username,
@@ -5525,9 +5897,33 @@
         audioElement.play();
       }
 
-      socket.emit('signal_100_button_update', myReq)
+      // Persist via Go API, then broadcast via Socket.IO
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityIdForSignal + '/signal-100',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          userId: dbUser._id,
+          username: dbUser.user.username,
+          callSign: dbUser.user.callSign || '',
+          departmentName: 'Dispatch'
+        }),
+        success: function() {
+          // Broadcast to other dashboards via Socket.IO
+          if (dashboardSocket && dashboardSocket.connected) {
+            dashboardSocket.emit('signal_100_button_update', myReq);
+          }
+        },
+        error: function(xhr) {
+          console.error('Error activating Signal 100 via API:', xhr.responseText);
+          // Still broadcast via Socket.IO as fallback (server handler will retry DB)
+          if (dashboardSocket && dashboardSocket.connected) {
+            dashboardSocket.emit('signal_100_button_update', myReq);
+          }
+        }
+      });
 
-      // Also update local banner with details
+      // Update local banner immediately
       updateSignal100Banner(myReq);
     }
   }
@@ -5541,36 +5937,16 @@
     // Priority: aboutUserId (the officer in distress), then userID (who triggered it)
     signal100UserId = data.aboutUserId || data.userID || null;
 
-    // Build the message
-    let message = '';
-
-    // Determine who activated it (prefer username for dispatch, callsign for officers)
-    let activatedByDisplay;
-    if (data.activatedBy === 'Dispatch') {
-      // For dispatch, use username or fallback to 'Dispatch'
-      activatedByDisplay = data.activatedByUsername || 'Dispatch';
+    // Build display name matching mobile format: "{callSign} ({department})" or "{username}"
+    let activatorDisplay;
+    if (data.activatedByCallSign) {
+      const detail = data.activatedBy || data.activatedByUsername || '';
+      activatorDisplay = detail ? `${data.activatedByCallSign} (${detail})` : data.activatedByCallSign;
     } else {
-      // For officers, prefer callsign
-      activatedByDisplay = data.activatedByCallSign || data.activatedByUsername || data.activatedBy || 'Unknown';
+      activatorDisplay = data.activatedByUsername || data.activatedBy || 'Unknown';
     }
 
-    // The person the Signal 100 is about (the officer in distress)
-    const aboutUser = data.aboutCallSign || data.aboutUsername || null;
-
-    // Build appropriate message
-    if (data.activatedBy === 'Dispatch' && aboutUser) {
-      // Dispatch activated for a specific officer
-      message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
-    } else if (aboutUser && aboutUser !== activatedByDisplay) {
-      // Someone activated it for another person
-      message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
-    } else if (aboutUser) {
-      // Officer activated for themselves
-      message = `Activated by ${aboutUser}`;
-    } else {
-      // Generic activation
-      message = `Activated by ${activatedByDisplay}`;
-    }
+    const message = `Activated by ${activatorDisplay}`;
 
     // Update the details span
     if ($details.length) {
@@ -5579,6 +5955,58 @@
 
     // Show the banner
     $banner.removeClass('hide').addClass('show');
+
+    adjustContentOffset();
+    renderUnitsGrid();
+    updateSignal100ButtonState();
+  }
+
+  // Toggle Signal 100 from the dispatch action button
+  var _signal100Loading = false;
+  function dispatchToggleSignal100() {
+    if (_signal100Loading) return;
+    var isActive = $('#signal-100-banner').hasClass('show');
+
+    if (isActive) {
+      // Clear it
+      showClearSignal100Modal();
+    } else {
+      // Activate it
+      _signal100Loading = true;
+      $('#signal100ActionBtn').addClass('loading');
+      $('#signal100BtnIcon').removeClass('fa-exclamation-triangle').addClass('fa-spinner fa-spin');
+      signal100(null, null, null);
+      setTimeout(function() {
+        _signal100Loading = false;
+        $('#signal100ActionBtn').removeClass('loading');
+        $('#signal100BtnIcon').removeClass('fa-spinner fa-spin').addClass('fa-exclamation-triangle');
+        updateSignal100ButtonState();
+      }, 2000);
+    }
+  }
+
+  // Sync the Signal 100 button state with banner visibility
+  function updateSignal100ButtonState() {
+    var isActive = $('#signal-100-banner').hasClass('show');
+    var $btn = $('#signal100ActionBtn');
+    var $text = $('#signal100BtnText');
+    if (isActive) {
+      $text.text('Clear Signal 100');
+      $btn.addClass('active');
+    } else {
+      $text.text('Signal 100');
+      $btn.removeClass('active');
+    }
+  }
+
+  // Adjust content offset to account for fixed alert banners height
+  function adjustContentOffset() {
+    var banners = document.getElementById('fixed-alert-banners');
+    var header = document.getElementById('second');
+    if (banners && header) {
+      var h = banners.offsetHeight || 0;
+      header.style.marginTop = h > 0 ? h + 'px' : '0';
+    }
   }
 
   function holdTraffic() {
