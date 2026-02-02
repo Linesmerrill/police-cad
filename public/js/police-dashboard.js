@@ -1,3 +1,9 @@
+// HTML escaping helper to prevent XSS when inserting dynamic content into the DOM
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function generateSerialNumber(length, inputID) {
   var result = "";
   var characters = "ABCDEFGHJKMNPQRSTUVWXYZ0123456789";
@@ -216,7 +222,7 @@ function populateCallDetails(callID) {
             selectedClassifiers += `<span class="badge badge-success">EMS</span>  `;
             break;
           default:
-            selectedClassifiers += `<span class="badge badge-secondary">${res.call.classifier[i]}</span>  `;
+            selectedClassifiers += `<span class="badge badge-secondary">${escapeHtml(res.call.classifier[i])}</span>  `;
             break;
         }
       }
@@ -275,30 +281,6 @@ function updateStatus(status) {
   socket.emit("update_status", myReq);
 }
 
-var panicButtonEnabled = true;
-
-function panicButtonPressed() {
-  if (panicButtonEnabled) {
-    var socket = io();
-    myReq = {
-      userID: dbUser._id,
-      userUsername: dbUser.user.username,
-      activeCommunity: dbUser.user.activeCommunity,
-    };
-    if ($("#panic-button-check-sound").prop("checked")) {
-      var audioElement = document.createElement("audio");
-      audioElement.setAttribute(
-        "src",
-        "/static/audio/Police_panic_button_sound_adj.mp3"
-      );
-      audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
-      // audioElement.play();
-    }
-
-    socket.emit("panic_button_update", myReq);
-    panicButtonEnabled = false;
-  }
-}
 
 // $("#updateBolo").one("click", function () {
 //   var val = $(this).attr("value");

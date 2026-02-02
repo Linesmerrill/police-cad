@@ -1,3 +1,9 @@
+// HTML escaping helper to prevent XSS when inserting dynamic content into the DOM
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function vehicleSearchPoliceForm() {
   var socket = io();
   var pageVeh = 0;
@@ -37,9 +43,9 @@ function vehicleSearchPoliceForm() {
                 <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
                   <ion-icon class="font-size-4-vmax md hydrated" name="car-sport-outline" role="img" aria-label="car sport outline"></ion-icon>
                   <div class="caption">
-                    <h4 id="search-results-vehicles-thumbnail-plate-${res[i]._id}" class="color-white license-plate">#${res[i].vehicle.plate})</h4>
-                    <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
-                    <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${res[i].vehicle.registeredOwner}</h5>
+                    <h4 id="search-results-vehicles-thumbnail-plate-${res[i]._id}" class="color-white license-plate">#${escapeHtml(res[i].vehicle.plate)})</h4>
+                    <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${escapeHtml(res[i].vehicle.color)} ${escapeHtml(res[i].vehicle.model)}</h5>
+                    <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${escapeHtml(res[i].vehicle.registeredOwner)}</h5>
                     ${(res[i].vehicle.isStolen === 'true' || res[i].vehicle.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
                     ${(res[i].vehicle.validRegistration === 'false' || res[i].vehicle.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
                     ${(res[i].vehicle.validInsurance === 'false' || res[i].vehicle.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
@@ -176,8 +182,8 @@ function getVehicles() {
           <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
             <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
             <div class="caption">
-              <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
-              <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+              <h4 class="color-white license-plate">#${escapeHtml(res[i].vehicle.plate)})</h4>
+              <h5 class="color-white">${escapeHtml(res[i].vehicle.color)} ${escapeHtml(res[i].vehicle.model)}</h5>
               ${(res[i].vehicle.isStolen === 'true' || res[i].vehicle.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
               ${(res[i].vehicle.validRegistration === 'false' || res[i].vehicle.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
               ${(res[i].vehicle.validInsurance === 'false' || res[i].vehicle.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
@@ -222,8 +228,8 @@ function getNextVehPage() {
         <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
           <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
           <div class="caption">
-            <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
-            <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+            <h4 class="color-white license-plate">#${escapeHtml(res[i].vehicle.plate)})</h4>
+            <h5 class="color-white">${escapeHtml(res[i].vehicle.color)} ${escapeHtml(res[i].vehicle.model)}</h5>
             ${(res[i].vehicle.isStolen === 'true' || res[i].vehicle.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
             ${(res[i].vehicle.validRegistration === 'false' || res[i].vehicle.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
             ${(res[i].vehicle.validInsurance === 'false' || res[i].vehicle.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
@@ -272,8 +278,8 @@ function getPrevVehPage() {
         <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
           <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
           <div class="caption">
-            <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
-            <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+            <h4 class="color-white license-plate">#${escapeHtml(res[i].vehicle.plate)})</h4>
+            <h5 class="color-white">${escapeHtml(res[i].vehicle.color)} ${escapeHtml(res[i].vehicle.model)}</h5>
             ${(res[i].vehicle.isStolen === 'true' || res[i].vehicle.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
             ${(res[i].vehicle.validRegistration === 'false' || res[i].vehicle.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
             ${(res[i].vehicle.validInsurance === 'false' || res[i].vehicle.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
@@ -312,9 +318,9 @@ function getNextSearchVehPage() {
                   <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
                     <ion-icon class="font-size-4-vmax md hydrated" name="car-sport-outline" role="img" aria-label="car sport outline"></ion-icon>
                     <div class="caption">
-                      <h4 id="search-results-vehicles-thumbnail-plate-${res[i]._id}" class="color-white license-plate">#${res[i].vehicle.plate})</h4>
-                      <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
-                      <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${res[i].vehicle.registeredOwner}</h5>
+                      <h4 id="search-results-vehicles-thumbnail-plate-${res[i]._id}" class="color-white license-plate">#${escapeHtml(res[i].vehicle.plate)})</h4>
+                      <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${escapeHtml(res[i].vehicle.color)} ${escapeHtml(res[i].vehicle.model)}</h5>
+                      <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${escapeHtml(res[i].vehicle.registeredOwner)}</h5>
                       ${(res[i].vehicle.isStolen === 'true' || res[i].vehicle.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
                       ${(res[i].vehicle.validRegistration === 'false' || res[i].vehicle.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
                       ${(res[i].vehicle.validInsurance === 'false' || res[i].vehicle.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
@@ -369,9 +375,9 @@ function getPrevSearchVehPage() {
                   <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
                     <ion-icon class="font-size-4-vmax md hydrated" name="car-sport-outline" role="img" aria-label="car sport outline"></ion-icon>
                     <div class="caption">
-                      <h4 id="search-results-vehicles-thumbnail-plate-${res[i]._id}" class="color-white license-plate">#${res[i].vehicle.plate})</h4>
-                      <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
-                      <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${res[i].vehicle.registeredOwner}</h5>
+                      <h4 id="search-results-vehicles-thumbnail-plate-${res[i]._id}" class="color-white license-plate">#${escapeHtml(res[i].vehicle.plate)})</h4>
+                      <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${escapeHtml(res[i].vehicle.color)} ${escapeHtml(res[i].vehicle.model)}</h5>
+                      <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${escapeHtml(res[i].vehicle.registeredOwner)}</h5>
                       ${(res[i].vehicle.isStolen === 'true' || res[i].vehicle.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
                       ${(res[i].vehicle.validRegistration === 'false' || res[i].vehicle.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
                       ${(res[i].vehicle.validInsurance === 'false' || res[i].vehicle.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
