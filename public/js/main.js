@@ -14,6 +14,7 @@
 
 	$('#sidebarCollapse').on('click', function () {
       $('#sidebar').toggleClass('active');
+      $('#fixed-alert-banners').toggleClass('sidebar-collapsed');
   });
 
 })(jQuery);

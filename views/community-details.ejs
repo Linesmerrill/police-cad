@@ -1461,6 +1461,11 @@
                 </button>
               <% } %>
 
+              <a href="/community-pricing?communityId=<%= community.community._id || community._id %>" class="action-btn" style="color: #f97316; text-decoration: none;">
+                <i class="fa fa-rocket"></i>
+                <span>Boost</span>
+              </a>
+
               <button id="shareBtn" onclick="copyCommunityUrl()" class="action-btn" style="color: #60a5fa;">
                 <i id="shareBtnIcon" class="fa fa-share-nodes"></i>
                 <span id="shareBtnText">Share</span>
@@ -1475,11 +1480,6 @@
                 <i class="fa fa-calendar"></i>
                 <span>Events</span>
               </button>
-
-              <a href="/community-pricing?communityId=<%= community.community._id || community._id %>" class="action-btn" style="color: #f97316; text-decoration: none;">
-                <i class="fa fa-rocket"></i>
-                <span>Boost</span>
-              </a>
             </div>
           </section>
         <% } %>

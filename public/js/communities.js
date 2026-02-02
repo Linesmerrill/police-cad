@@ -1286,7 +1286,7 @@ const QuickNav = () => {
   return (
     <div className="px-4 py-4 overflow-x-auto scrollbar-hide">
       <div className="flex gap-3 min-w-max">
-        {navItems.map((item) => (
+        {navItems.slice(0, 2).map((item) => (
           <button
             key={item.id}
             onClick={() => scrollToSection(item.id)}
@@ -1313,6 +1313,21 @@ const QuickNav = () => {
           <i className="fa fa-ticket"></i>
           <span>Invite Code</span>
         </a>
+        {navItems.slice(2).map((item) => (
+          <button
+            key={item.id}
+            onClick={() => scrollToSection(item.id)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 active:scale-95"
+            style={{
+              background: item.bg,
+              color: item.textColor,
+              boxShadow: `0 4px 15px ${item.shadow}`
+            }}
+          >
+            <i className={`fa ${item.icon}`}></i>
+            <span>{item.label}</span>
+          </button>
+        ))}
       </div>
     </div>
   );

@@ -1,3 +1,9 @@
+// HTML escaping helper to prevent XSS when inserting dynamic content into the DOM
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // add in a delete function as it is not supported as of jQuery {whatever-version-we-have}
 $.delete = function (url, data, callback, type) {
   if ($.isFunction(data)) {
@@ -1144,8 +1150,8 @@ $("#create-vehicle-form").submit(function (e) {
         <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res._id}')">
           <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
           <div class="caption">
-            <h4 class="color-white license-plate">#${res.vehicle.plate})</h4>
-            <h5 class="color-white">${res.vehicle.color} ${res.vehicle.model}</h5>
+            <h4 class="color-white license-plate">#${escapeHtml(res.vehicle.plate)})</h4>
+            <h5 class="color-white">${escapeHtml(res.vehicle.color)} ${escapeHtml(res.vehicle.model)}</h5>
           </div>
         </div>
       </div>`
@@ -1163,9 +1169,9 @@ $("#create-vehicle-form").submit(function (e) {
     $("#vehicle-table tr:last")
       .after(
         `<tr class="gray-hover" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res._id}')">
-      <td>${res.vehicle.plate}</td>
-      <td>${res.vehicle.model}</td>
-      <td>${res.vehicle.color}</td>
+      <td>${escapeHtml(res.vehicle.plate)}</td>
+      <td>${escapeHtml(res.vehicle.model)}</td>
+      <td>${escapeHtml(res.vehicle.color)}</td>
     </tr>`
       )
       .fadeTo(1, function () {
@@ -1205,9 +1211,9 @@ $("#create-firearm-form").submit(function (e) {
       <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res._id}')">
         <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
         <div class="caption text-capitalize">
-          <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res.firearm.serialNumber}</h4>
-          <h5 class="color-white">${res.firearm.weaponType}</h5>
-          <p class="color-white" style="font-size: 12px;">${res.firearm.registeredOwner}</p>
+          <h4 class="color-white" style="font-family: dealerplatecalifornia;">${escapeHtml(res.firearm.serialNumber)}</h4>
+          <h5 class="color-white">${escapeHtml(res.firearm.weaponType)}</h5>
+          <p class="color-white" style="font-size: 12px;">${escapeHtml(res.firearm.registeredOwner)}</p>
         </div>
       </div>
     </div>`
@@ -1225,9 +1231,9 @@ $("#create-firearm-form").submit(function (e) {
     $("#firearm-table tr:last")
       .after(
         `<tr class="gray-hover" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res._id}')">
-      <td>${res.firearm.serialNumber}</td>
-      <td style="text-transform: capitalize;"> ${res.firearm.weaponType}</td>
-      <td> ${res.firearm.registeredOwner}</td>
+      <td>${escapeHtml(res.firearm.serialNumber)}</td>
+      <td style="text-transform: capitalize;"> ${escapeHtml(res.firearm.weaponType)}</td>
+      <td> ${escapeHtml(res.firearm.registeredOwner)}</td>
     </tr>`
       )
       .fadeTo(1, function () {
@@ -1267,9 +1273,9 @@ $("#create-license-form").submit(function (e) {
       <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res._id}')">
         <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
         <div class="caption text-capitalize">
-          <h4 class="color-white">${res.license.licenseType}</h4>
-          <h5 class="color-white">Status: ${res.license.status}</h5>
-          <p class="color-white" style="font-size: 12px;">${res.license.ownerName}</p>
+          <h4 class="color-white">${escapeHtml(res.license.licenseType)}</h4>
+          <h5 class="color-white">Status: ${escapeHtml(res.license.status)}</h5>
+          <p class="color-white" style="font-size: 12px;">${escapeHtml(res.license.ownerName)}</p>
         </div>
       </div>
     </div>`
@@ -1287,9 +1293,9 @@ $("#create-license-form").submit(function (e) {
     $("#license-table tr:last")
       .after(
         `<tr class="gray-hover" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res._id}')">
-      <td>${res.license.serialNumber}</td>
-      <td style="text-transform: capitalize;"> ${res.license.weaponType}</td>
-      <td> ${res.license.registeredOwner}</td>
+      <td>${escapeHtml(res.license.serialNumber)}</td>
+      <td style="text-transform: capitalize;"> ${escapeHtml(res.license.weaponType)}</td>
+      <td> ${escapeHtml(res.license.registeredOwner)}</td>
     </tr>`
       )
       .fadeTo(1, function () {
