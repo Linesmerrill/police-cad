@@ -267,13 +267,18 @@
           <i class="fa fa-home"></i>
           Return to Home
         </a>
-        
+
+        <a href="https://status.linespolice-cad.com" target="_blank" rel="noopener noreferrer" class="btn-secondary">
+          <i class="fa fa-signal"></i>
+          Check Service Status
+        </a>
+
         <% if (typeof redirect !== 'undefined' && redirect) { %>
           <a href="<%= redirect %>" class="btn-secondary">
             <i class="fa fa-arrow-left"></i>
             Go Back
           </a>
-          
+
           <div class="error-code">
             Redirect: <%= redirect %>
           </div>
