@@ -1,3 +1,9 @@
+// HTML escaping helper to prevent XSS when inserting dynamic content into the DOM
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function nameSearchPoliceForm() {
   $("#search-results-civilians-loading").show();
   var socket = io();
@@ -41,8 +47,8 @@ function nameSearchPoliceForm() {
                 <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
                   <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                   <div class="caption capitalize">
-                    <h4 id="search-results-personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
-                    <h5 id="search-results-personas-thumbnail-dob-${res[i]._id}" class="color-white">${res[i].civilian.birthday}</h5>
+                    <h4 id="search-results-personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${escapeHtml(res[i].civilian.firstName)} ${escapeHtml(res[i].civilian.lastName)}</h4>
+                    <h5 id="search-results-personas-thumbnail-dob-${res[i]._id}" class="color-white">${escapeHtml(res[i].civilian.birthday)}</h5>
                   </div>
                 </div> 
               </div>`
@@ -125,8 +131,8 @@ function getPrevCivPage() {
                 <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
                   <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                   <div class="caption capitalize">
-                    <h4 id="search-results-personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
-                    <h5 id="search-results-personas-thumbnail-dob-${res[i]._id}" class="color-white">${res[i].civilian.birthday}</h5>
+                    <h4 id="search-results-personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${escapeHtml(res[i].civilian.firstName)} ${escapeHtml(res[i].civilian.lastName)}</h4>
+                    <h5 id="search-results-personas-thumbnail-dob-${res[i]._id}" class="color-white">${escapeHtml(res[i].civilian.birthday)}</h5>
                   </div>
                 </div> 
               </div>`
@@ -160,8 +166,8 @@ function getNextCivPage() {
                 <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
                   <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                   <div class="caption capitalize">
-                    <h4 id="search-results-personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
-                    <h5 id="search-results-personas-thumbnail-dob-${res[i]._id}" class="color-white">${res[i].civilian.birthday}</h5>
+                    <h4 id="search-results-personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${escapeHtml(res[i].civilian.firstName)} ${escapeHtml(res[i].civilian.lastName)}</h4>
+                    <h5 id="search-results-personas-thumbnail-dob-${res[i]._id}" class="color-white">${escapeHtml(res[i].civilian.birthday)}</h5>
                   </div>
                 </div> 
               </div>`
@@ -864,9 +870,9 @@ function getFirearms() {
         <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
           <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
           <div class="caption text-capitalize">
-            <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
-            <h5 class="color-white">${res[i].firearm.weaponType}</h5>
-            <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
+            <h4 class="color-white" style="font-family: dealerplatecalifornia;">${escapeHtml(res[i].firearm.serialNumber)}</h4>
+            <h5 class="color-white">${escapeHtml(res[i].firearm.weaponType)}</h5>
+            <p class="color-white" style="font-size: 12px;">${escapeHtml(res[i].firearm.registeredOwner)}</p>
           </div>
         </div>
       </div>`
@@ -906,9 +912,9 @@ function getNextGunPage() {
       <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
         <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
         <div class="caption text-capitalize">
-          <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
-          <h5 class="color-white">${res[i].firearm.weaponType}</h5>
-          <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
+          <h4 class="color-white" style="font-family: dealerplatecalifornia;">${escapeHtml(res[i].firearm.serialNumber)}</h4>
+          <h5 class="color-white">${escapeHtml(res[i].firearm.weaponType)}</h5>
+          <p class="color-white" style="font-size: 12px;">${escapeHtml(res[i].firearm.registeredOwner)}</p>
         </div>
       </div>
     </div>`
@@ -950,9 +956,9 @@ function getPrevGunPage() {
       <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
         <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
         <div class="caption text-capitalize">
-          <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
-          <h5 class="color-white">${res[i].firearm.weaponType}</h5>
-          <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
+          <h4 class="color-white" style="font-family: dealerplatecalifornia;">${escapeHtml(res[i].firearm.serialNumber)}</h4>
+          <h5 class="color-white">${escapeHtml(res[i].firearm.weaponType)}</h5>
+          <p class="color-white" style="font-size: 12px;">${escapeHtml(res[i].firearm.registeredOwner)}</p>
         </div>
       </div>
     </div>`
@@ -994,9 +1000,9 @@ function getLicenses() {
         <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
           <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
           <div class="caption text-capitalize">
-            <h4 class="color-white">${res[i].license.licenseType}</h4>
-            <h5 class="color-white">Status: ${res[i].license.status}</h5>
-            <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
+            <h4 class="color-white">${escapeHtml(res[i].license.licenseType)}</h4>
+            <h5 class="color-white">Status: ${escapeHtml(res[i].license.status)}</h5>
+            <p class="color-white" style="font-size: 12px;">${escapeHtml(res[i].license.ownerName)}</p>
           </div>
         </div>
       </div>`
@@ -1036,9 +1042,9 @@ function getNextLicensePage() {
     <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
       <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
       <div class="caption text-capitalize">
-        <h4 class="color-white">${res[i].license.licenseType}</h4>
-        <h5 class="color-white">Status: ${res[i].license.status}</h5>
-        <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
+        <h4 class="color-white">${escapeHtml(res[i].license.licenseType)}</h4>
+        <h5 class="color-white">Status: ${escapeHtml(res[i].license.status)}</h5>
+        <p class="color-white" style="font-size: 12px;">${escapeHtml(res[i].license.ownerName)}</p>
       </div>
     </div>
   </div>`
@@ -1084,9 +1090,9 @@ function getPrevLicensePage() {
     <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
       <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
       <div class="caption text-capitalize">
-        <h4 class="color-white">${res[i].license.licenseType}</h4>
-        <h5 class="color-white">Status: ${res[i].license.status}</h5>
-        <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
+        <h4 class="color-white">${escapeHtml(res[i].license.licenseType)}</h4>
+        <h5 class="color-white">Status: ${escapeHtml(res[i].license.status)}</h5>
+        <p class="color-white" style="font-size: 12px;">${escapeHtml(res[i].license.ownerName)}</p>
       </div>
     </div>
   </div>`
@@ -1130,8 +1136,8 @@ function getWarrants() {
         <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
           <span class="iconify font-size-4-vmax" style="color:indianred" data-icon="mdi:alert-octagon" data-inline="false"></span>
           <div class="caption text-capitalize">
-            <h4 class="color-white">${res[i].warrant.reasons}</h4>
-            <p class="color-white" style="font-size: 12px;">${res[i].warrant.accusedFirstName} ${res[i].warrant.accusedLastName}</p>
+            <h4 class="color-white">${escapeHtml(res[i].warrant.reasons)}</h4>
+            <p class="color-white" style="font-size: 12px;">${escapeHtml(res[i].warrant.accusedFirstName)} ${escapeHtml(res[i].warrant.accusedLastName)}</p>
           </div>
         </div>
       </div>`
@@ -1171,9 +1177,9 @@ function getNextWarrantPage() {
     <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
       <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
       <div class="caption text-capitalize">
-        <h4 class="color-white">${res[i].warrants.warrantsType}</h4>
-        <h5 class="color-white">Status: ${res[i].warrants.status}</h5>
-        <p class="color-white" style="font-size: 12px;">${res[i].warrants.ownerName}</p>
+        <h4 class="color-white">${escapeHtml(res[i].warrants.warrantsType)}</h4>
+        <h5 class="color-white">Status: ${escapeHtml(res[i].warrants.status)}</h5>
+        <p class="color-white" style="font-size: 12px;">${escapeHtml(res[i].warrants.ownerName)}</p>
       </div>
     </div>
   </div>`
@@ -1219,9 +1225,9 @@ function getPrevWarrantPage() {
     <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
       <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
       <div class="caption text-capitalize">
-        <h4 class="color-white">${res[i].warrants.warrantsType}</h4>
-        <h5 class="color-white">Status: ${res[i].warrants.status}</h5>
-        <p class="color-white" style="font-size: 12px;">${res[i].warrants.ownerName}</p>
+        <h4 class="color-white">${escapeHtml(res[i].warrants.warrantsType)}</h4>
+        <h5 class="color-white">Status: ${escapeHtml(res[i].warrants.status)}</h5>
+        <p class="color-white" style="font-size: 12px;">${escapeHtml(res[i].warrants.ownerName)}</p>
       </div>
     </div>
   </div>`

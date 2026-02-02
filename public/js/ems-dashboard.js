@@ -1,4 +1,11 @@
 // EMS Dashboard JavaScript
+
+// HTML escaping helper to prevent XSS when inserting dynamic content into the DOM
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // Global variables
 var dbUser;
 var dbVehicles;
@@ -70,6 +77,14 @@ function initializeSocket() {
     if (communityId) {
       socket.emit('join_community_room', { communityId: communityId });
     }
+
+    // Load initial panic statuses
+    var panicReq = {
+      userID: dbUser._id,
+      userUsername: dbUser.user?.username,
+      activeCommunity: communityId,
+    };
+    socket.emit('load_panic_statuses', panicReq);
   }
 
   // Connect handler - wait for connection before joining room
@@ -79,6 +94,17 @@ function initializeSocket() {
     socket.on('connect', onSocketConnected);
   }
 
+  // Poll for panic status updates every 15s to catch cross-platform panics
+  setInterval(function() {
+    if (socket.connected) {
+      socket.emit('load_panic_statuses', {
+        userID: dbUser._id,
+        userUsername: dbUser.user?.username,
+        activeCommunity: communityId,
+      });
+    }
+  }, 15000);
+
   // Listen for room join confirmation
   socket.on('joined_room', function(data) {
     // Room joined successfully
@@ -86,6 +112,139 @@ function initializeSocket() {
   socket.on('room_error', function(data) {
     console.error('Room error:', data);
   });
+
+  // ==========================================
+  // AJAX POLLING FOR CROSS-PLATFORM UPDATES
+  // ==========================================
+
+  // Direct AJAX polling to Go API — catches mobile-triggered panics/signal100
+  function loadPanicStatusesAjax() {
+    if (!communityId) return;
+
+    // Fetch Signal 100 status
+    $.ajax({
+      url: POLICE_CAD_API_URL + '/api/v1/community/' + communityId + '/signal-100',
+      method: 'GET',
+      success: function(s100Data) {
+        if (s100Data && s100Data.active) {
+          // updateSignal100Banner handles showing the banner and adjusting offset
+          updateSignal100Banner({
+            activatedBy: s100Data.activatedByDepartment || '',
+            activatedByCallSign: s100Data.activatedByCallSign || '',
+            activatedByUsername: s100Data.activatedByUsername || '',
+          });
+        } else {
+          $('#signal-100-banner').removeClass('show').addClass('hide');
+          adjustSignal100Offset(false);
+          updateSignal100ButtonState();
+        }
+      },
+      error: function() { /* ignore */ }
+    });
+
+    // Fetch active panic alerts
+    $.ajax({
+      url: POLICE_CAD_API_URL + '/api/v1/community/' + communityId + '/panic-alerts?status=active',
+      method: 'GET',
+      success: function(data) {
+        renderStyledPanicAlerts(data.alerts || []);
+      },
+      error: function(xhr) {
+        console.error('Error loading panic statuses via AJAX:', xhr.responseText);
+      }
+    });
+  }
+
+  function renderStyledPanicAlerts(alerts) {
+    var $banner = $('#panic-alerts-banner');
+    var $hint = $('#panic-scroll-hint');
+    $banner.empty();
+
+    if (!alerts || alerts.length === 0) {
+      $hint.hide();
+      updatePanicButtonState(false);
+      adjustBannerOffsets();
+      return;
+    }
+
+    alerts.forEach(function(alert) {
+      var displayName = alert.callSign
+        ? alert.callSign + ' (' + alert.username + ')'
+        : alert.username;
+      var isOwner = alert.userId === dbUser._id;
+      var safeAlertId = escapeHtml(alert.alertId);
+
+      var $row = $('<div>').addClass('panic-alert-row').attr('id', 'panic-row-' + safeAlertId);
+      var $content = $('<div>').addClass('panic-alert-content');
+      $content.append($('<div>').addClass('panic-alert-icon').html('<span class="panic-pulse"></span><i class="fa fa-exclamation-triangle"></i>'));
+      var $text = $('<div>').addClass('panic-alert-text');
+      $text.append($('<div>').addClass('panic-alert-title').text('PANIC ALERT'));
+      $text.append($('<div>').addClass('panic-alert-details').text(displayName));
+      $content.append($text);
+      $row.append($content);
+
+      if (isOwner) {
+        var $clearBtn = $('<button>').addClass('panic-alert-clear-btn').attr('title', 'Clear panic').html('<i class="fa fa-times"></i>');
+        $clearBtn.on('click', function(e) { e.stopPropagation(); clearPanicAlert(alert.alertId); });
+        $row.append($clearBtn);
+      } else {
+        var $hideBtn = $('<button>').addClass('panic-alert-hide-btn').attr('title', 'Minimize').html('<i class="fa fa-chevron-up"></i>');
+        $hideBtn.on('click', function(e) { e.stopPropagation(); togglePanicCollapse(this); });
+        $row.append($hideBtn);
+      }
+
+      $banner.append($row);
+    });
+
+    if (alerts.length > 2) {
+      $hint.text(alerts.length + ' active alerts — scroll for more').show();
+    } else {
+      $hint.hide();
+    }
+
+    // Update panic button toggle state
+    var userHasPanic = alerts.some(function(a) { return a.userId === dbUser._id; });
+    updatePanicButtonState(userHasPanic);
+    adjustBannerOffsets();
+  }
+
+  function togglePanicCollapse(btn) {
+    var $row = $(btn).closest('.panic-alert-row');
+    var $icon = $(btn).find('i');
+    $row.toggleClass('collapsed');
+    if ($row.hasClass('collapsed')) {
+      $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+      $(btn).attr('title', 'Expand');
+    } else {
+      $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+      $(btn).attr('title', 'Minimize');
+    }
+  }
+
+  function clearPanicAlert(alertId) {
+    if (!communityId) return;
+    $.ajax({
+      url: POLICE_CAD_API_URL + '/api/v1/community/' + communityId + '/panic-alerts/' + alertId,
+      method: 'DELETE',
+      contentType: 'application/json',
+      data: JSON.stringify({ clearedBy: dbUser._id }),
+      success: function() {
+        $('#panic-row-' + alertId).fadeOut(200, function() { $(this).remove(); });
+        loadPanicStatusesAjax();
+      },
+      error: function(xhr) {
+        console.error('Error clearing panic alert:', xhr.responseText);
+      }
+    });
+  }
+
+  // Expose to inline onclick handlers (these are inside initializeSocket closure)
+  window.togglePanicCollapse = togglePanicCollapse;
+  window.clearPanicAlert = clearPanicAlert;
+
+  // Poll via AJAX every 20s (offset from Socket.IO 15s polling)
+  loadPanicStatusesAjax();
+  setInterval(loadPanicStatusesAjax, 20000);
 
   // Socket event listeners (legacy)
   socket.on('updated_ems_status', res => {
@@ -108,16 +267,30 @@ function initializeSocket() {
         }
       }
       if (containsVeh) {
-        $('#assigned-call-container').append(
-            `<a id="${res._id}" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails('${res._id}')">
-              <div class="alert alert-success alert-dismissible show" role="alert">
-                Opened: <span id="${res._id}-createdAt" style="text-transform:capitalize">
-                  <time>${res.call.createdAtReadable}</time> |  Description: <span id="${res._id}-description">${res.call.shortDescription}</span></span>
-            </div>
-            </a>`
-          ).fadeTo(1, function () {
-            $(this).add();
-          })
+        var safeId = escapeHtml(res._id);
+        var $link = $('<a>')
+          .attr('id', safeId)
+          .attr('data-toggle', 'modal')
+          .attr('href', '#callDetailModal');
+        $link.on('click', function(e) {
+          e.preventDefault();
+          populateCallDetails(res._id);
+        });
+        var $alertDiv = $('<div>')
+          .addClass('alert alert-success alert-dismissible show')
+          .attr('role', 'alert');
+        $alertDiv.append(document.createTextNode('Opened: '));
+        var $createdAtSpan = $('<span>')
+          .attr('id', safeId + '-createdAt')
+          .css('text-transform', 'capitalize');
+        $createdAtSpan.append($('<time>').text(res.call.createdAtReadable));
+        $createdAtSpan.append(document.createTextNode(' |  Description: '));
+        $createdAtSpan.append($('<span>').attr('id', safeId + '-description').text(res.call.shortDescription));
+        $alertDiv.append($createdAtSpan);
+        $link.append($alertDiv);
+        $('#assigned-call-container').append($link).fadeTo(1, function () {
+          $(this).add();
+        });
         showRealTimeToast('call', 'New call assigned!', 'info');
       }
     }
@@ -164,6 +337,72 @@ function initializeSocket() {
     }
   });
 
+  // ==========================================
+  // PANIC ALERT LISTENERS
+  // ==========================================
+
+  // Load initial panic statuses
+  socket.on('load_panic_status_update', function(map, signal100Resp, holdTrafficResp, origReq) {
+    if (origReq && origReq.activeCommunity && dbUser.user?.lastAccessedCommunity?.communityID !== origReq.activeCommunity) return;
+
+    // Update signal 100 banner
+    if (signal100Resp) {
+      $('#signal-100-banner').removeClass('hide').addClass('show');
+    } else {
+      $('#signal-100-banner').removeClass('show').addClass('hide');
+    }
+
+    // Refresh panic alerts from API (styled banners)
+    loadPanicStatusesAjax();
+  });
+
+  // New panic triggered
+  socket.on('panic_button_updated', function(map, origReq) {
+    if (origReq && origReq.activeCommunity && dbUser.user?.lastAccessedCommunity?.communityID !== origReq.activeCommunity) return;
+
+    // Play panic alert sound if enabled
+    if (dbUser.user?.panicButtonSound) {
+      var audioElement = document.createElement('audio');
+      audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
+      audioElement.volume = dbUser.user?.alertVolumeLevel / 100 || 0.1;
+      audioElement.play().catch(function(e) { console.log('Audio play failed:', e); });
+    }
+
+    // Refresh panic alerts from API (styled banners)
+    loadPanicStatusesAjax();
+
+    showRealTimeToast('emergency', 'PANIC ALERT triggered!', 'error');
+  });
+
+  // Panic cleared
+  socket.on('cleared_panic', function(res) {
+    $('#panic-row-' + (res.alertId || res.userID)).fadeOut(200, function() { $(this).remove(); });
+    loadPanicStatusesAjax();
+  });
+
+  // Populate panic details in modal
+  function populatePanicDetails(id) {
+    $('#panic-id').val(id);
+  }
+
+  // Clear panic handler
+  $('#clearPanic').on('click', function() {
+    var panicUserId = $('#panic-id').val();
+    if (panicUserId) {
+      var myReq = {
+        userID: panicUserId,
+        communityID: communityId,
+        clearedBy: dbUser._id,
+      };
+      socket.emit('clear_panic', myReq);
+      $('#panicDetailModal').modal('hide');
+    }
+  });
+
+  // ==========================================
+  // SIGNAL 100 LISTENERS
+  // ==========================================
+
   // Listen for Signal 100 activation
   socket.on('signal_100_button_updated', function(data) {
     if (data.activeCommunity && data.activeCommunity !== communityId) return;
@@ -185,12 +424,20 @@ function initializeSocket() {
   });
 
   // Listen for Signal 100 cleared
-  socket.on('clear_signal_100_updated', function(activeCommunity) {
-    if (activeCommunity && activeCommunity !== communityId) return;
+  socket.on('clear_signal_100_updated', function(data) {
+    const cid = typeof data === 'string' ? data : data.activeCommunity;
+    if (cid && cid !== communityId) return;
 
     $('#signal-100-banner').removeClass('show').addClass('hide');
     $('#signal-100-details').text('');
-    showRealTimeToast('status', 'Signal 100 Cleared', 'success');
+    adjustSignal100Offset(false);
+    updateSignal100ButtonState();
+
+    const clearedBy = (typeof data === 'object' && data.clearedByCallSign)
+      ? data.clearedByCallSign + ' (' + data.clearedByUsername + ')'
+      : (typeof data === 'object' && data.clearedByUsername) ? data.clearedByUsername : '';
+    const msg = clearedBy ? 'Signal 100 cleared by ' + clearedBy : 'Signal 100 Cleared';
+    showRealTimeToast('status', msg, 'success');
   });
 
   // Listen for new BOLOs
@@ -226,40 +473,224 @@ function initializeSocket() {
 
 }
 
+// Adjust page content offset when banners (Signal 100 and/or Panic) are shown/hidden
+function adjustBannerOffsets() {
+  var header = document.getElementById('second');
+  if (!header) return;
+
+  var container = document.getElementById('fixed-alert-banners');
+  var totalOffset = container ? container.offsetHeight : 0;
+
+  header.style.marginTop = totalOffset > 0 ? totalOffset + 'px' : '0';
+}
+
+// Backward-compatible alias
+function adjustSignal100Offset() {
+  adjustBannerOffsets();
+}
+
 // Update Signal 100 Banner
 function updateSignal100Banner(data) {
   // Store the user ID for when we clear the Signal 100
   signal100UserId = data.aboutUserId || data.userID || null;
 
-  // Determine who activated the signal
-  let activatedByDisplay;
-  if (data.activatedBy === 'Dispatch') {
-    // Dispatcher activated it - show dispatcher's username
-    activatedByDisplay = data.activatedByUsername || 'Dispatch';
+  // Build display name matching mobile format: "{callSign} ({department})" or "{username}"
+  let activatorDisplay;
+  if (data.activatedByCallSign) {
+    const detail = data.activatedBy || data.activatedByUsername || '';
+    activatorDisplay = detail ? `${data.activatedByCallSign} (${detail})` : data.activatedByCallSign;
   } else {
-    // Officer activated it themselves
-    activatedByDisplay = data.activatedByCallSign || data.activatedByUsername || data.activatedBy || 'Unknown';
+    activatorDisplay = data.activatedByUsername || data.activatedBy || 'Unknown';
   }
 
-  // Get the officer the signal is about (may be different from who activated)
-  const aboutUser = data.aboutCallSign || data.aboutUsername || null;
-
-  // Build the message
-  let message;
-  if (data.activatedBy === 'Dispatch' && aboutUser) {
-    // Dispatch activated it for a specific officer
-    message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
-  } else if (aboutUser && aboutUser !== activatedByDisplay) {
-    // Someone activated it for another officer
-    message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
-  } else {
-    // Self-activated or unknown
-    message = `Activated by ${activatedByDisplay}`;
-  }
+  const message = `Activated by ${activatorDisplay}`;
 
   // Show banner
   $('#signal-100-banner').addClass('show').removeClass('hide');
   $('#signal-100-details').text(message);
+  adjustSignal100Offset(true);
+  updateSignal100ButtonState();
+}
+
+function updateSignal100ButtonState() {
+  var isActive = $('#signal-100-banner').hasClass('show');
+  var $btn = $('#signal100ActionBtn');
+  var $text = $('#signal100BtnText');
+  if (isActive) {
+    $text.text('Clear Signal 100');
+    $btn.addClass('active');
+  } else {
+    $text.text('Signal 100');
+    $btn.removeClass('active');
+  }
+}
+
+// Trigger Signal 100 from the static action button
+var _signal100Loading = false;
+function triggerSignal100() {
+  if (_signal100Loading) return;
+  const userId = dbUser._id;
+  const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+  if (!communityId || !window.dashboardSocket) return;
+
+  // If already active, clear it instead of reactivating
+  if ($('#signal-100-banner').hasClass('show')) {
+    showClearSignal100Modal();
+    return;
+  }
+
+  _signal100Loading = true;
+  $('#signal100ActionBtn').addClass('loading');
+  $('#signal100BtnIcon').removeClass('fa-exclamation-triangle').addClass('fa-spinner');
+
+  window.dashboardSocket.emit('signal_100_button_update', {
+    userID: userId,
+    userUsername: dbUser.user.username,
+    userCallSign: dbUser.user.callSign || null,
+    activeCommunity: communityId,
+    activatedBy: 'EMS',
+    activatedByCallSign: dbUser.user.callSign || null,
+    activatedByUsername: dbUser.user.username,
+    aboutUserId: userId,
+    aboutCallSign: dbUser.user.callSign || null,
+    aboutUsername: dbUser.user.username,
+    timestamp: new Date().toISOString()
+  });
+
+  updateSignal100Banner({
+    activatedBy: 'EMS',
+    activatedByCallSign: dbUser.user.callSign,
+    activatedByUsername: dbUser.user.username,
+    aboutCallSign: dbUser.user.callSign,
+    aboutUsername: dbUser.user.username
+  });
+
+  if (dbUser.user?.panicButtonSound) {
+    var audioElement = document.createElement('audio');
+    audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
+    audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
+    audioElement.play().catch(function(e) { console.log('Audio play failed:', e); });
+  }
+
+  // Reset after brief delay (socket emit is fire-and-forget)
+  setTimeout(function() {
+    _signal100Loading = false;
+    $('#signal100ActionBtn').removeClass('loading');
+    $('#signal100BtnIcon').removeClass('fa-spinner').addClass('fa-exclamation-triangle');
+    updateSignal100ButtonState();
+  }, 2000);
+}
+
+// Trigger Panic from the static action button (toggle: create or clear)
+var _userHasActivePanic = false;
+var _panicLoading = false;
+function triggerPanic() {
+  if (_panicLoading) return;
+  const userId = dbUser._id;
+  const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+  if (!communityId) return;
+
+  _panicLoading = true;
+  $('#panicActionBtn').addClass('loading');
+  var $icon = $('#panicActionBtn i');
+  var origIconClass = $icon.attr('class');
+  $icon.attr('class', 'fa fa-spinner');
+
+  function resetPanicLoading() {
+    _panicLoading = false;
+    $('#panicActionBtn').removeClass('loading');
+    $icon.attr('class', origIconClass);
+  }
+
+  if (_userHasActivePanic) {
+    $.ajax({
+      url: `${POLICE_CAD_API_URL}/api/v1/community/${communityId}/panic-alerts/user/${userId}`,
+      method: 'DELETE',
+      contentType: 'application/json',
+      data: JSON.stringify({ clearedBy: userId }),
+      success: function() {
+        loadPanicStatusesAjax();
+        resetPanicLoading();
+      },
+      error: function(xhr) {
+        console.error('Error clearing panic:', xhr.responseText);
+        showRealTimeToast('status', 'Failed to clear panic', 'danger');
+        resetPanicLoading();
+      }
+    });
+  } else {
+    $.ajax({
+      url: `${POLICE_CAD_API_URL}/api/v1/community/${communityId}/panic-alerts`,
+      method: 'POST',
+      data: JSON.stringify({
+        userId: userId,
+        username: dbUser.user.username,
+        callSign: dbUser.user.callSign || '',
+        departmentType: 'ems',
+      }),
+      contentType: 'application/json',
+      success: function() {
+        if (dbUser.user?.panicButtonSound) {
+          var audioElement = document.createElement('audio');
+          audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
+          audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
+          audioElement.play().catch(function(e) { console.log('Audio play failed:', e); });
+        }
+        loadPanicStatusesAjax();
+        resetPanicLoading();
+      },
+      error: function(xhr) {
+        console.error('Error triggering panic:', xhr.responseText);
+        showRealTimeToast('status', 'Failed to trigger panic', 'danger');
+        resetPanicLoading();
+      }
+    });
+  }
+}
+
+function updatePanicButtonState(hasPanic) {
+  _userHasActivePanic = hasPanic;
+  var $btn = $('#panicActionBtn');
+  var $text = $('#panicBtnText');
+  if (hasPanic) {
+    $text.text('Clear Panic');
+    $btn.addClass('active');
+  } else {
+    $text.text('Panic');
+    $btn.removeClass('active');
+  }
+}
+
+// Show the clear Signal 100 confirmation modal
+function showClearSignal100Modal() {
+  $('#clear-signal-100-modal').addClass('show');
+}
+
+// Hide the clear Signal 100 confirmation modal
+function hideClearSignal100Modal(event) {
+  if (event && event.target !== event.currentTarget) return;
+  $('#clear-signal-100-modal').removeClass('show');
+}
+
+// Confirm and broadcast Signal 100 cleared
+function confirmClearSignal100() {
+  const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+
+  if (window.dashboardSocket && window.dashboardSocket.connected) {
+    window.dashboardSocket.emit('clear_signal_100', {
+      activeCommunity: communityId,
+      clearedByUserId: dbUser._id,
+      clearedByUsername: dbUser.user?.username || '',
+      clearedByCallSign: dbUser.user?.callSign || '',
+    });
+  }
+
+  $('#signal-100-banner').removeClass('show').addClass('hide');
+  $('#signal-100-details').text('');
+  adjustSignal100Offset(false);
+  updateSignal100ButtonState();
+  hideClearSignal100Modal();
+  showRealTimeToast('status', 'Signal 100 Cleared', 'success');
 }
 
 // Toast notification system for real-time updates
@@ -4697,7 +5128,7 @@ function populateCallDetails(callId) {
           if (validUsers.length > 0) {
             validUsers.forEach(user => {
               $('#callAssignedToDetail').append(
-                `<span class="badge badge-primary">${user.username}</span>`
+                `<span class="badge badge-primary">${escapeHtml(user.username)}</span>`
               );
             });
           } else {
@@ -5015,9 +5446,12 @@ function displayQuickStatusCodes(codes) {
   const quickGrid = $('#quickStatusGrid');
   quickGrid.empty();
 
+  // Signal 100 and Panic (10-99) have dedicated static action buttons above,
+  // so exclude them from the quick status grid
+  const excludedCodes = ['signal 100', '10-99'];
+
   // Define preferred EMS quick codes in order of priority
   const preferredCodes = [
-    'signal 100', // Emergency (if available)
     '10-8',       // In Service / Available
     '10-7',       // Out of Service
     '10-6',       // Busy
@@ -5025,7 +5459,7 @@ function displayQuickStatusCodes(codes) {
     '10-19',      // Returning to Station
     '10-23',      // Arrived on Scene
     '10-97',      // Arrived at Scene
-    '10-98',      // Completed Assignment
+    'code 4',     // Under Control
   ];
 
   // Find matching codes from the available codes
@@ -5043,6 +5477,7 @@ function displayQuickStatusCodes(codes) {
   if (quickCodes.length < 8) {
     codes.forEach(code => {
       if (quickCodes.length >= 8) return;
+      if (excludedCodes.includes(code.code.toLowerCase())) return;
       const descLower = code.description.toLowerCase();
       const hasEmsKeyword = emsKeywords.some(kw => descLower.includes(kw));
       if (hasEmsKeyword && !quickCodes.find(qc => qc._id === code._id)) {
@@ -5055,6 +5490,7 @@ function displayQuickStatusCodes(codes) {
   if (quickCodes.length < 8) {
     codes.forEach(code => {
       if (quickCodes.length >= 8) return;
+      if (excludedCodes.includes(code.code.toLowerCase())) return;
       if (!quickCodes.find(qc => qc._id === code._id)) {
         quickCodes.push(code);
       }
