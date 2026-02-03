@@ -242,9 +242,9 @@ function initializeSocket() {
   window.togglePanicCollapse = togglePanicCollapse;
   window.clearPanicAlert = clearPanicAlert;
 
-  // Poll via AJAX every 20s (offset from Socket.IO 15s polling)
+  // Poll via AJAX every 5s for fast panic updates
   loadPanicStatusesAjax();
-  setInterval(loadPanicStatusesAjax, 20000);
+  setInterval(loadPanicStatusesAjax, 5000);
 
   // Socket event listeners (legacy)
   socket.on('updated_ems_status', res => {
