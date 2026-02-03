@@ -592,14 +592,12 @@ function triggerPanic() {
 
   _panicLoading = true;
   $('#panicActionBtn').addClass('loading');
-  var $icon = $('#panicActionBtn i');
-  var origIconClass = $icon.attr('class');
-  $icon.attr('class', 'fa fa-spinner');
+  $('#panicBtnIcon').removeClass('fa-exclamation-circle').addClass('fa-spinner');
 
   function resetPanicLoading() {
     _panicLoading = false;
     $('#panicActionBtn').removeClass('loading');
-    $icon.attr('class', origIconClass);
+    $('#panicBtnIcon').removeClass('fa-spinner').addClass('fa-exclamation-circle');
   }
 
   if (_userHasActivePanic) {
