@@ -4368,7 +4368,7 @@ window.showBoloModal = showBoloModal;
 
       // Initialize dashboard data
       pollDashboardData();
-      setInterval(pollDashboardData, 5000); // Poll every 5 seconds
+      setInterval(pollDashboardData, 30000); // Poll every 30 seconds (fallback for missed webhooks)
       loadTenCodes();
       filteredTenCodes = tenCodesCache;
     currentPage = 1;
