@@ -212,6 +212,7 @@ $(document).ready(function() {
     $('#createFirearmForm').submit(function(e) {
         e.preventDefault();
         
+        const newFirearmImageUrl = document.getElementById('newFirearmImageUrl') ? document.getElementById('newFirearmImageUrl').value : '';
         const formData = {
             serialNumber: $('#newFirearmSerial').val(),
             name: $('#newFirearmName').val(),
@@ -219,6 +220,7 @@ $(document).ready(function() {
             caliber: $('#newFirearmCaliber').val(),
             color: $('#newFirearmColor').val(),
             isStolen: $('#newFirearmIsStolen').val(),
+            image: newFirearmImageUrl,
             userID: dbUser._id,
             activeCommunityID: dbUser?.user?.lastAccessedCommunity?.communityID
         };
@@ -803,6 +805,7 @@ function renderCivilians(civilians) {
         // Use a data attribute to store the index for event delegation
         const card = `
             <div class="${cardClass}" data-civ-index="${index}">
+                ${approvalIndicator || '<div class="edit-badge" title="Edit Civilian" style="position:absolute;top:0.5rem;right:0.5rem;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;z-index:10;background:rgba(102,126,234,0.25);color:#a0aec0;"><i class="fa fa-edit"></i></div>'}
                 <div class="card-header">
                     <div class="card-avatar">
                         ${avatarHtml}
@@ -811,7 +814,6 @@ function renderCivilians(civilians) {
                         <div class="card-title" style="font-size:1.25rem;font-weight:700;color:#f7fafc;margin-bottom:0.25rem;">${fullName}</div>
                         <p class="card-subtitle">Age: ${getAge(civData.birthday)}</p>
                     </div>
-                    ${approvalIndicator}
                 </div>
                 <div class="card-content">
                     <p><strong>Gender:</strong> ${civData.gender || 'N/A'}</p>
@@ -880,12 +882,18 @@ function renderVehicles(vehicles) {
     vehicles.forEach((veh, index) => {
         const vehData = veh.vehicle ? veh.vehicle : veh;
         const type = vehData.type || 'Unknown';
-        const imageHtml = vehData.image ? `<img src="${vehData.image}" alt="Vehicle Image" style="width:100%;max-width:220px;border-radius:8px;margin-bottom:0.75rem;object-fit:cover;">` : '';
+        let vehAvatarHtml = '';
+        if (vehData.image && vehData.image.startsWith('https://')) {
+            vehAvatarHtml = `<img src="${vehData.image}" alt="Vehicle" style="width:60px;height:45px;object-fit:cover;border-radius:8px;background:#23263a;">`;
+        } else {
+            vehAvatarHtml = `<i class="fa fa-car"></i>`;
+        }
         const card = `
             <div class="card veh-card" data-veh-index="${index}">
+                <div class="edit-badge" title="Edit Vehicle" style="position:absolute;top:0.5rem;right:0.5rem;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;z-index:10;background:rgba(102,126,234,0.25);color:#a0aec0;"><i class="fa fa-edit"></i></div>
                 <div class="card-header">
-                    <div class="card-avatar">
-                        <i class="fa fa-car"></i>
+                    <div class="card-avatar" style="${vehData.image && vehData.image.startsWith('https://') ? 'border-radius:8px;width:60px;height:45px;' : ''}">
+                        ${vehAvatarHtml}
                     </div>
                     <div>
                         <h3 class="card-title" style="font-size:1.15rem;font-weight:700;color:#f7fafc;margin-bottom:0.25rem;">${vehData.plate}</h3>
@@ -893,7 +901,6 @@ function renderVehicles(vehicles) {
                     </div>
                 </div>
                 <div class="card-content">
-                    ${imageHtml}
                     <p><strong>Make:</strong> ${vehData.make || 'N/A'}</p>
                     <p><strong>Model:</strong> ${vehData.model || 'N/A'}</p>
                     <p><strong>Year:</strong> ${vehData.year || 'N/A'}</p>
@@ -1041,11 +1048,18 @@ function renderFirearms(firearms) {
     firearms.forEach((firearm, index) => {
         const gunData = firearm.firearm ? firearm.firearm : firearm;
         
+        let firearmAvatarHtml = '';
+        if (gunData.image && gunData.image.startsWith('https://')) {
+            firearmAvatarHtml = `<img src="${gunData.image}" alt="Firearm" style="width:60px;height:45px;object-fit:cover;border-radius:8px;background:#23263a;">`;
+        } else {
+            firearmAvatarHtml = `<i class="fa fa-crosshairs"></i>`;
+        }
         const card = `
             <div class="card firearm-card" data-firearm-index="${index}">
+                <div class="edit-badge" title="Edit Firearm" style="position:absolute;top:0.5rem;right:0.5rem;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;z-index:10;background:rgba(102,126,234,0.25);color:#a0aec0;"><i class="fa fa-edit"></i></div>
                 <div class="card-header">
-                    <div class="card-avatar">
-                        <i class="fa fa-crosshairs"></i>
+                    <div class="card-avatar" style="${gunData.image && gunData.image.startsWith('https://') ? 'border-radius:8px;width:60px;height:45px;' : ''}">
+                        ${firearmAvatarHtml}
                     </div>
                     <div>
                         <h3 class="card-title">${gunData.name || gunData.serialNumber}</h3>
@@ -3399,14 +3413,17 @@ function openVehDetailsModal(veh) {
     // Handle vehicle image
     var vehImageImg = document.getElementById('vehImageImg');
     var vehImageIcon = document.getElementById('vehImageIcon');
+    var vehImageUrlInput = document.getElementById('vehImageUrl');
     if (vehData.image && vehData.image.startsWith('https://')) {
         vehImageImg.src = vehData.image;
         vehImageImg.style.display = 'block';
         vehImageIcon.style.display = 'none';
+        if (vehImageUrlInput) vehImageUrlInput.value = vehData.image;
     } else {
         vehImageImg.src = '';
         vehImageImg.style.display = 'none';
         vehImageIcon.style.display = 'block';
+        if (vehImageUrlInput) vehImageUrlInput.value = '';
     }
     
     // Populate form fields
@@ -3517,6 +3534,7 @@ function updateVehModern(vehId) {
         return "false"; // default to not stolen
     }
     
+    const vehImageUrl = document.getElementById('vehImageUrl') ? document.getElementById('vehImageUrl').value : '';
     const data = {
         plate: $('#vehPlate').val() ? $('#vehPlate').val().trim().toUpperCase() : '',
         licensePlateState: $('#vehPlateState').val() ? $('#vehPlateState').val().trim().toUpperCase() : '',
@@ -3526,7 +3544,7 @@ function updateVehModern(vehId) {
         model: $('#vehModel').val() ? $('#vehModel').val().trim() : '',
         year: $('#vehYear').val(),
         color: $('#vehColor').val() ? $('#vehColor').val().trim() : '',
-        // registeredOwner removed
+        image: vehImageUrl,
         validRegistration: selectToBoolString($('#vehValidRegistration').val()),
         validInsurance: selectToBoolString($('#vehValidInsurance').val()),
         isStolen: selectToStolenString($('#vehIsStolen').val()),
@@ -3601,6 +3619,7 @@ $(document).ready(function() {
             return "true"; // default to true for registration/insurance
         }
         
+        const newVehImageUrl = document.getElementById('newVehImageUrl') ? document.getElementById('newVehImageUrl').value : '';
         const data = {
             plate: $('#newVehPlate').val() ? $('#newVehPlate').val().trim().toUpperCase() : '',
             licensePlateState: $('#newVehPlateState').val() ? $('#newVehPlateState').val().trim().toUpperCase() : '',
@@ -3610,6 +3629,7 @@ $(document).ready(function() {
             model: $('#newVehModel').val() ? $('#newVehModel').val().trim() : '',
             year: $('#newVehYear').val(),
             color: $('#newVehColor').val() ? $('#newVehColor').val().trim() : '',
+            image: newVehImageUrl,
             validRegistration: selectToBoolString($('#newVehValidRegistration').val()),
             validInsurance: selectToBoolString($('#newVehValidInsurance').val()),
             isStolen: selectToStolenString($('#newVehIsStolen').val()),
@@ -3642,8 +3662,17 @@ $(document).ready(function() {
                 closeNewVehicleModal();
                 // Reset the form
                 $('#createVehicleForm')[0].reset();
+                // Reset image upload state
+                var nvu = document.getElementById('newVehImageUrl');
+                var nvi = document.getElementById('newVehImageImg');
+                var nvic = document.getElementById('newVehImageIcon');
+                var nvinput = document.getElementById('newVehImageInput');
+                if (nvu) nvu.value = '';
+                if (nvi) { nvi.src = ''; nvi.style.display = 'none'; }
+                if (nvic) nvic.style.display = 'block';
+                if (nvinput) nvinput.value = '';
                 loadVehicles();
-                
+
                 // Update vehicle creation button states after successful creation
                 const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
                 if (communityId) {
@@ -3889,14 +3918,17 @@ function openFirearmDetailsModal(firearm) {
     // Handle firearm image
     var firearmImg = document.getElementById('firearmImageImg');
     var firearmIcon = document.getElementById('firearmImageIcon');
+    var firearmImageUrlInput = document.getElementById('firearmImageUrl');
     if (firearmData.image && firearmData.image.startsWith('https://')) {
         firearmImg.src = firearmData.image;
         firearmImg.style.display = 'block';
         firearmIcon.style.display = 'none';
+        if (firearmImageUrlInput) firearmImageUrlInput.value = firearmData.image;
     } else {
         firearmImg.src = '';
         firearmImg.style.display = 'none';
         firearmIcon.style.display = 'block';
+        if (firearmImageUrlInput) firearmImageUrlInput.value = '';
     }
     
     // Populate form fields
@@ -3971,7 +4003,7 @@ function closeNewFirearmModal() {
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
         document.body.style.paddingRight = '';
-        
+
         // Reset form fields
         document.getElementById('newFirearmSerial').value = '';
         document.getElementById('newFirearmName').value = '';
@@ -3979,6 +4011,16 @@ function closeNewFirearmModal() {
         document.getElementById('newFirearmCaliber').value = '';
         document.getElementById('newFirearmColor').value = '';
         document.getElementById('newFirearmIsStolen').value = 'false';
+
+        // Reset image upload state
+        var newFirearmImageUrl = document.getElementById('newFirearmImageUrl');
+        var newFirearmImageImg = document.getElementById('newFirearmImageImg');
+        var newFirearmImageIcon = document.getElementById('newFirearmImageIcon');
+        var newFirearmImageInput = document.getElementById('newFirearmImageInput');
+        if (newFirearmImageUrl) newFirearmImageUrl.value = '';
+        if (newFirearmImageImg) { newFirearmImageImg.src = ''; newFirearmImageImg.style.display = 'none'; }
+        if (newFirearmImageIcon) newFirearmImageIcon.style.display = 'block';
+        if (newFirearmImageInput) newFirearmImageInput.value = '';
     }
 }
 
@@ -3994,12 +4036,14 @@ function updateFirearmModern(firearmId) {
     isUpdatingFirearm = true;
     
     // Get form data
+    const firearmImageUrl = document.getElementById('firearmImageUrl') ? document.getElementById('firearmImageUrl').value : '';
     const formData = {
         serialNumber: document.getElementById('firearmSerial').value,
         name: document.getElementById('firearmName').value,
         weaponType: document.getElementById('firearmType').value,
         caliber: document.getElementById('firearmCaliber').value,
-        isStolen: document.getElementById('firearmIsStolen').value
+        isStolen: document.getElementById('firearmIsStolen').value,
+        image: firearmImageUrl
     };
     
     // Validate required fields
