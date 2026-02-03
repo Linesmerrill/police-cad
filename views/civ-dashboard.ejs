@@ -164,7 +164,7 @@
       color: white;
     }
     
-    .civ-card {
+    .civ-card, .veh-card, .firearm-card {
       position: relative;
     }
     
@@ -2641,10 +2641,11 @@
         <!-- Edit Vehicle Form -->
         <form id="editVehicleForm" autocomplete="off">
           <input type="hidden" id="vehIdHidden" />
+          <input type="hidden" id="vehImageUrl" value="" />
           <div style="display:flex; gap:2rem; align-items:flex-start; flex-wrap:wrap;">
             <div style="flex:1 1 220px; min-width:220px;">
-              <div id="vehImageUpload" style="width:90px; height:90px; border-radius:50%; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:#fff; margin-bottom:1.2rem; position:relative; cursor:pointer; transition:box-shadow 0.2s; box-shadow:0 2px 8px rgba(102,126,234,0.10); overflow:hidden;">
-                <img id="vehImageImg" src="" alt="Vehicle" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:50%; position:absolute; left:0; top:0;" />
+              <div id="vehImageUpload" style="width:120px; height:80px; border-radius:12px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:#fff; margin-bottom:1.2rem; position:relative; cursor:pointer; transition:box-shadow 0.2s; box-shadow:0 2px 8px rgba(102,126,234,0.10); overflow:hidden;">
+                <img id="vehImageImg" src="" alt="Vehicle" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:12px; position:absolute; left:0; top:0;" />
                 <i class="fa fa-car" id="vehImageIcon"></i>
                 <span style="position:absolute; bottom:8px; right:8px; background:rgba(30,32,44,0.85); border-radius:50%; padding:7px; display:flex; align-items:center; justify-content:center; transition:background 0.2s;">
                   <i class="fa fa-camera" style="font-size:1.55rem; color:#f7fafc;"></i>
@@ -2740,8 +2741,8 @@
       <form id="createVehicleForm" autocomplete="off">
         <div style="display:flex; gap:2rem; align-items:flex-start; flex-wrap:wrap;">
           <div style="flex:1 1 220px; min-width:220px;">
-            <div id="newVehImageUpload" style="width:90px; height:90px; border-radius:50%; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:#fff; margin-bottom:1.2rem; position:relative; cursor:pointer; transition:box-shadow 0.2s; box-shadow:0 2px 8px rgba(102,126,234,0.10); overflow:hidden;">
-              <img id="newVehImageImg" src="" alt="Vehicle" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:50%; position:absolute; left:0; top:0;" />
+            <div id="newVehImageUpload" style="width:120px; height:80px; border-radius:12px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:#fff; margin-bottom:1.2rem; position:relative; cursor:pointer; transition:box-shadow 0.2s; box-shadow:0 2px 8px rgba(102,126,234,0.10); overflow:hidden;">
+              <img id="newVehImageImg" src="" alt="Vehicle" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:12px; position:absolute; left:0; top:0;" />
               <i class="fa fa-car" id="newVehImageIcon"></i>
               <span style="position:absolute; bottom:8px; right:8px; background:rgba(30,32,44,0.85); border-radius:50%; padding:7px; display:flex; align-items:center; justify-content:center; transition:background 0.2s;">
                 <i class="fa fa-camera" style="font-size:1.55rem; color:#f7fafc;"></i>
@@ -2749,6 +2750,7 @@
               <input type="file" id="newVehImageInput" accept="image/*" style="display:none;" />
             </div>
             <div style="font-size:1.1rem; color:#a0aec0; margin-bottom:0.5rem;">Vehicle Photo</div>
+            <input type="hidden" id="newVehImageUrl" value="" />
           </div>
           <div style="flex:2 1 320px; min-width:260px;">
             <div style="font-size:1.2rem; font-weight:600; color:#f7fafc; margin-bottom:0.7rem;">Vehicle Information</div>
@@ -2840,10 +2842,11 @@
         <!-- Edit Firearm Form -->
         <form id="editFirearmForm" autocomplete="off">
           <input type="hidden" id="firearmIdHidden" />
+          <input type="hidden" id="firearmImageUrl" value="" />
           <div style="display:flex; gap:2rem; align-items:flex-start; flex-wrap:wrap;">
             <div style="flex:1 1 220px; min-width:220px;">
-              <div id="firearmImageUpload" style="width:90px; height:90px; border-radius:50%; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:#fff; margin-bottom:1.2rem; position:relative; cursor:pointer; transition:box-shadow 0.2s; box-shadow:0 2px 8px rgba(102,126,234,0.10); overflow:hidden;">
-                <img id="firearmImageImg" src="" alt="Firearm" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:50%; position:absolute; left:0; top:0;" />
+              <div id="firearmImageUpload" style="width:120px; height:80px; border-radius:12px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:#fff; margin-bottom:1.2rem; position:relative; cursor:pointer; transition:box-shadow 0.2s; box-shadow:0 2px 8px rgba(102,126,234,0.10); overflow:hidden;">
+                <img id="firearmImageImg" src="" alt="Firearm" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:12px; position:absolute; left:0; top:0;" />
                 <i class="fa fa-crosshairs" id="firearmImageIcon"></i>
                 <span style="position:absolute; bottom:8px; right:8px; background:rgba(30,32,44,0.85); border-radius:50%; padding:7px; display:flex; align-items:center; justify-content:center; transition:background 0.2s;">
                   <i class="fa fa-camera" style="font-size:1.55rem; color:#f7fafc;"></i>
@@ -2910,8 +2913,8 @@
       <form id="createFirearmForm" autocomplete="off">
         <div style="display:flex; gap:2rem; align-items:flex-start; flex-wrap:wrap;">
           <div style="flex:1 1 220px; min-width:220px;">
-            <div id="newFirearmImageUpload" style="width:90px; height:90px; border-radius:50%; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:#fff; margin-bottom:1.2rem; position:relative; cursor:pointer; transition:box-shadow 0.2s; box-shadow:0 2px 8px rgba(102,126,234,0.10); overflow:hidden;">
-              <img id="newFirearmImageImg" src="" alt="Firearm" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:50%; position:absolute; left:0; top:0;" />
+            <div id="newFirearmImageUpload" style="width:120px; height:80px; border-radius:12px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:#fff; margin-bottom:1.2rem; position:relative; cursor:pointer; transition:box-shadow 0.2s; box-shadow:0 2px 8px rgba(102,126,234,0.10); overflow:hidden;">
+              <img id="newFirearmImageImg" src="" alt="Firearm" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:12px; position:absolute; left:0; top:0;" />
               <i class="fa fa-crosshairs" id="newFirearmImageIcon"></i>
               <span style="position:absolute; bottom:8px; right:8px; background:rgba(30,32,44,0.85); border-radius:50%; padding:7px; display:flex; align-items:center; justify-content:center; transition:background 0.2s;">
                 <i class="fa fa-camera" style="font-size:1.55rem; color:#f7fafc;"></i>
@@ -2919,6 +2922,7 @@
               <input type="file" id="newFirearmImageInput" accept="image/*" style="display:none;" />
             </div>
             <div style="font-size:1.1rem; color:#a0aec0; margin-bottom:0.5rem;">Firearm Photo</div>
+            <input type="hidden" id="newFirearmImageUrl" value="" />
           </div>
           <div style="flex:2 1 320px; min-width:260px;">
             <div style="font-size:1.2rem; font-weight:600; color:#f7fafc; margin-bottom:0.7rem;">Firearm Information</div>
@@ -4026,39 +4030,7 @@
       }
     };
     
-    // Intercept all file input clicks for image uploads (except civilian)
-    var fileInputs = [
-      document.getElementById('vehImageInput'),
-      document.getElementById('newVehImageInput'),
-      document.getElementById('firearmImageInput'),
-      document.getElementById('newFirearmImageInput')
-    ];
-    fileInputs.forEach(function(input) {
-      if (input) {
-        input.addEventListener('click', function(e) {
-          e.preventDefault();
-          // openComingSoonModal(); // Removed since modal is removed
-          return false;
-        });
-      }
-    });
-    
-    // Intercept all upload container clicks for image uploads (except civilian avatar)
-    var uploadContainers = [
-      document.getElementById('vehImageUpload'),
-      document.getElementById('newVehImageUpload'),
-      document.getElementById('firearmImageUpload'),
-      document.getElementById('newFirearmImageUpload')
-    ];
-    uploadContainers.forEach(function(container) {
-      if (container) {
-        container.addEventListener('click', function(e) {
-          e.preventDefault();
-          // openComingSoonModal(); // Removed since modal is removed
-          return false;
-        });
-      }
-    });
+    // Vehicle and firearm image upload click handlers are now in their respective DOMContentLoaded blocks below
     
     // Intercept profile pic click in Account Settings modal (custom avatar)
     var accountPic = document.getElementById('accountProfilePicUpload');
@@ -4332,6 +4304,292 @@
       }
 
       return response.json();
+    }
+  });
+
+  // Vehicle Photo Upload Functionality (Edit Modal)
+  document.addEventListener('DOMContentLoaded', function() {
+    const vehImageUpload = document.getElementById('vehImageUpload');
+    const vehImageInput = document.getElementById('vehImageInput');
+    const vehImageImg = document.getElementById('vehImageImg');
+    const vehImageIcon = document.getElementById('vehImageIcon');
+
+    if (vehImageUpload && !vehImageUpload.hasAttribute('data-photo-upload-attached')) {
+      vehImageUpload.setAttribute('data-photo-upload-attached', 'true');
+      vehImageUpload.addEventListener('click', function(e) {
+        if (vehImageInput) {
+          vehImageInput.style.display = 'block';
+          vehImageInput.style.position = 'absolute';
+          vehImageInput.style.left = '-9999px';
+          vehImageInput.disabled = false;
+          vehImageInput.focus();
+          vehImageInput.click();
+          setTimeout(() => { vehImageInput.style.display = 'none'; }, 100);
+        }
+      });
+    }
+
+    if (vehImageInput) {
+      vehImageInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+          handleVehPhotoUpload(file);
+        }
+      });
+    }
+
+    async function handleVehPhotoUpload(file) {
+      try {
+        if (!file.type.startsWith('image/')) {
+          showToast('Please select a valid image file', 'error');
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('Image must be less than 5MB', 'error');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          vehImageImg.src = e.target.result;
+          vehImageImg.style.display = 'block';
+          vehImageIcon.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+
+        showToast('Uploading photo...', 'info');
+
+        const vehId = document.getElementById('vehIdHidden').value;
+        const imageUrl = await uploadToCloudinary(file, 'vehicles', `vehicle_${vehId}_${Date.now()}`);
+
+        document.getElementById('vehImageUrl').value = imageUrl;
+
+        // Also update the vehicle record immediately
+        const apiUrl = window.API_URL || '';
+        const response = await fetch(`${apiUrl}/api/v1/vehicle/${vehId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: imageUrl })
+        });
+        if (!response.ok) {
+          throw new Error('Failed to update vehicle photo');
+        }
+
+        showToast('Photo updated successfully!', 'success');
+      } catch (error) {
+        console.error('Vehicle photo upload error:', error);
+        showToast('Upload failed: ' + error.message, 'error');
+        vehImageImg.style.display = 'none';
+        vehImageIcon.style.display = 'block';
+      }
+    }
+  });
+
+  // Vehicle Photo Upload Functionality (New Vehicle Modal)
+  document.addEventListener('DOMContentLoaded', function() {
+    const newVehImageUpload = document.getElementById('newVehImageUpload');
+    const newVehImageInput = document.getElementById('newVehImageInput');
+    const newVehImageImg = document.getElementById('newVehImageImg');
+    const newVehImageIcon = document.getElementById('newVehImageIcon');
+
+    if (newVehImageUpload && !newVehImageUpload.hasAttribute('data-photo-upload-attached')) {
+      newVehImageUpload.setAttribute('data-photo-upload-attached', 'true');
+      newVehImageUpload.addEventListener('click', function(e) {
+        if (newVehImageInput) {
+          newVehImageInput.style.display = 'block';
+          newVehImageInput.style.position = 'absolute';
+          newVehImageInput.style.left = '-9999px';
+          newVehImageInput.disabled = false;
+          newVehImageInput.focus();
+          newVehImageInput.click();
+          setTimeout(() => { newVehImageInput.style.display = 'none'; }, 100);
+        }
+      });
+    }
+
+    if (newVehImageInput) {
+      newVehImageInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+          handleNewVehPhotoUpload(file);
+        }
+      });
+    }
+
+    async function handleNewVehPhotoUpload(file) {
+      try {
+        if (!file.type.startsWith('image/')) {
+          showToast('Please select a valid image file', 'error');
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('Image must be less than 5MB', 'error');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          newVehImageImg.src = e.target.result;
+          newVehImageImg.style.display = 'block';
+          newVehImageIcon.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+
+        showToast('Uploading photo...', 'info');
+
+        const imageUrl = await uploadToCloudinary(file, 'vehicles', `new_vehicle_${Date.now()}`);
+        document.getElementById('newVehImageUrl').value = imageUrl;
+
+        showToast('Photo uploaded successfully!', 'success');
+      } catch (error) {
+        console.error('New vehicle photo upload error:', error);
+        showToast('Upload failed: ' + error.message, 'error');
+        newVehImageImg.style.display = 'none';
+        newVehImageIcon.style.display = 'block';
+      }
+    }
+  });
+
+  // Firearm Photo Upload Functionality (Edit Modal)
+  document.addEventListener('DOMContentLoaded', function() {
+    const firearmImageUpload = document.getElementById('firearmImageUpload');
+    const firearmImageInput = document.getElementById('firearmImageInput');
+    const firearmImageImg = document.getElementById('firearmImageImg');
+    const firearmImageIcon = document.getElementById('firearmImageIcon');
+
+    if (firearmImageUpload && !firearmImageUpload.hasAttribute('data-photo-upload-attached')) {
+      firearmImageUpload.setAttribute('data-photo-upload-attached', 'true');
+      firearmImageUpload.addEventListener('click', function(e) {
+        if (firearmImageInput) {
+          firearmImageInput.style.display = 'block';
+          firearmImageInput.style.position = 'absolute';
+          firearmImageInput.style.left = '-9999px';
+          firearmImageInput.disabled = false;
+          firearmImageInput.focus();
+          firearmImageInput.click();
+          setTimeout(() => { firearmImageInput.style.display = 'none'; }, 100);
+        }
+      });
+    }
+
+    if (firearmImageInput) {
+      firearmImageInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+          handleFirearmPhotoUpload(file);
+        }
+      });
+    }
+
+    async function handleFirearmPhotoUpload(file) {
+      try {
+        if (!file.type.startsWith('image/')) {
+          showToast('Please select a valid image file', 'error');
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('Image must be less than 5MB', 'error');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          firearmImageImg.src = e.target.result;
+          firearmImageImg.style.display = 'block';
+          firearmImageIcon.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+
+        showToast('Uploading photo...', 'info');
+
+        const firearmId = document.getElementById('firearmIdHidden').value;
+        const imageUrl = await uploadToCloudinary(file, 'firearms', `firearm_${firearmId}_${Date.now()}`);
+
+        document.getElementById('firearmImageUrl').value = imageUrl;
+
+        // Also update the firearm record immediately
+        const apiUrl = window.API_URL || '';
+        const response = await fetch(`${apiUrl}/api/v1/firearm/${firearmId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: imageUrl })
+        });
+        if (!response.ok) {
+          throw new Error('Failed to update firearm photo');
+        }
+
+        showToast('Photo updated successfully!', 'success');
+      } catch (error) {
+        console.error('Firearm photo upload error:', error);
+        showToast('Upload failed: ' + error.message, 'error');
+        firearmImageImg.style.display = 'none';
+        firearmImageIcon.style.display = 'block';
+      }
+    }
+  });
+
+  // Firearm Photo Upload Functionality (New Firearm Modal)
+  document.addEventListener('DOMContentLoaded', function() {
+    const newFirearmImageUpload = document.getElementById('newFirearmImageUpload');
+    const newFirearmImageInput = document.getElementById('newFirearmImageInput');
+    const newFirearmImageImg = document.getElementById('newFirearmImageImg');
+    const newFirearmImageIcon = document.getElementById('newFirearmImageIcon');
+
+    if (newFirearmImageUpload && !newFirearmImageUpload.hasAttribute('data-photo-upload-attached')) {
+      newFirearmImageUpload.setAttribute('data-photo-upload-attached', 'true');
+      newFirearmImageUpload.addEventListener('click', function(e) {
+        if (newFirearmImageInput) {
+          newFirearmImageInput.style.display = 'block';
+          newFirearmImageInput.style.position = 'absolute';
+          newFirearmImageInput.style.left = '-9999px';
+          newFirearmImageInput.disabled = false;
+          newFirearmImageInput.focus();
+          newFirearmImageInput.click();
+          setTimeout(() => { newFirearmImageInput.style.display = 'none'; }, 100);
+        }
+      });
+    }
+
+    if (newFirearmImageInput) {
+      newFirearmImageInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+          handleNewFirearmPhotoUpload(file);
+        }
+      });
+    }
+
+    async function handleNewFirearmPhotoUpload(file) {
+      try {
+        if (!file.type.startsWith('image/')) {
+          showToast('Please select a valid image file', 'error');
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('Image must be less than 5MB', 'error');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          newFirearmImageImg.src = e.target.result;
+          newFirearmImageImg.style.display = 'block';
+          newFirearmImageIcon.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+
+        showToast('Uploading photo...', 'info');
+
+        const imageUrl = await uploadToCloudinary(file, 'firearms', `new_firearm_${Date.now()}`);
+        document.getElementById('newFirearmImageUrl').value = imageUrl;
+
+        showToast('Photo uploaded successfully!', 'success');
+      } catch (error) {
+        console.error('New firearm photo upload error:', error);
+        showToast('Upload failed: ' + error.message, 'error');
+        newFirearmImageImg.style.display = 'none';
+        newFirearmImageIcon.style.display = 'block';
+      }
     }
   });
   </script>
