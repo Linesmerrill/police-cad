@@ -3139,7 +3139,7 @@
     // })
 
     socket.on('load_panic_status_update', (map, signal100Resp, holdTrafficResp, origReq, signal100Data) => {
-      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
+      if (communityId == origReq.activeCommunity) {
         //load the signal 100 status to the page
         if (signal100Resp) {
           // Populate banner details from API metadata if available
@@ -3172,7 +3172,7 @@
     })
 
     socket.on('panic_button_updated', (map, origReq) => {
-      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
+      if (communityId == origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
@@ -3189,7 +3189,7 @@
     })
 
     socket.on('signal_100_button_updated', (origReq) => {
-      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
+      if (communityId == origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
@@ -3201,7 +3201,7 @@
     })
 
     socket.on('hold_traffic_button_updated', (origReq) => {
-      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
+      if (communityId == origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound_adj.mp3');
@@ -3214,7 +3214,7 @@
 
     socket.on('clear_signal_100_updated', (data) => {
       const cid = typeof data === 'string' ? data : data.activeCommunity;
-      if (dbUser.user.activeCommunity == cid) {
+      if (communityId == cid) {
         signal100UserId = null;
         $('#signal-100-banner').removeClass('show').addClass('hide')
         $('#signal-100-details').text('');
@@ -3231,7 +3231,7 @@
     })
 
     socket.on('clear_hold_traffic_updated', activeCommunity => {
-      if (dbUser.user.activeCommunity==activeCommunity) {
+      if (communityId == activeCommunity) {
         $('#hold-traffic-banner').removeClass('show').addClass('hide')
       }
     })
