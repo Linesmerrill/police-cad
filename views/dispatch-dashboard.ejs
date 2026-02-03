@@ -3166,7 +3166,7 @@
         }
 
         //load the panic status items via AJAX refresh
-        loadPanicStatusesAjax();
+        if (window.loadPanicStatusesAjax) window.loadPanicStatusesAjax();
         adjustContentOffset();
       }
     })
@@ -3179,13 +3179,13 @@
           audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
           audioElement.play();
         }
-        loadPanicStatusesAjax();
+        if (window.loadPanicStatusesAjax) window.loadPanicStatusesAjax();
       }
     })
 
     socket.on('cleared_panic', res => {
       $('#panic-row-' + (res.alertId || res.userID)).fadeOut(200, function() { $(this).remove(); });
-      loadPanicStatusesAjax();
+      if (window.loadPanicStatusesAjax) window.loadPanicStatusesAjax();
     })
 
     socket.on('signal_100_button_updated', (origReq) => {
@@ -3764,6 +3764,7 @@
 
       // Expose to inline onclick handlers (defined inside closure)
       window.clearPanicAlert = clearPanicAlert;
+      window.loadPanicStatusesAjax = loadPanicStatusesAjax;
 
       // Poll via AJAX every 20s (offset from Socket.IO 15s polling)
       loadPanicStatusesAjax();
