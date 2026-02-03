@@ -4009,6 +4009,14 @@ function toggleCaret(event) {
           contentType: 'application/json',
           data: JSON.stringify({ clearedBy: userId }),
           success: function() {
+            // Broadcast via socket so other dashboards update immediately
+            if (window.dashboardSocket && window.dashboardSocket.connected) {
+              window.dashboardSocket.emit('clear_panic', {
+                userID: userId,
+                communityID: communityId,
+                clearedBy: userId
+              });
+            }
             loadPanicStatuses();
             resetPanicLoading();
           },
@@ -4035,6 +4043,16 @@ function toggleCaret(event) {
               audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
               audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
               audioElement.play();
+            }
+            // Broadcast via socket so other dashboards update immediately
+            if (window.dashboardSocket && window.dashboardSocket.connected) {
+              window.dashboardSocket.emit('panic_button_update', {
+                userID: userId,
+                userUsername: dbUser.user.username,
+                activeCommunity: communityId,
+                callSign: dbUser.user.callSign || '',
+                departmentType: 'police'
+              });
             }
             loadPanicStatuses();
             resetPanicLoading();
