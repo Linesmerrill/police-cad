@@ -359,8 +359,6 @@ function initializeSocket() {
   // New panic triggered
   socket.on('panic_button_updated', function(map, origReq) {
     if (origReq && origReq.activeCommunity && dbUser.user?.lastAccessedCommunity?.communityID !== origReq.activeCommunity) return;
-    // Skip if this is our own panic (we already refreshed via AJAX)
-    if (origReq && origReq.userID === dbUser._id) return;
 
     // Play panic alert sound if enabled
     if (dbUser.user?.panicButtonSound) {
@@ -378,8 +376,6 @@ function initializeSocket() {
 
   // Panic cleared
   socket.on('cleared_panic', function(res) {
-    // Skip if we cleared our own panic (we already refreshed via AJAX)
-    if (res && res.userID === dbUser._id) return;
     $('#panic-row-' + (res.alertId || res.userID)).fadeOut(200, function() { $(this).remove(); });
     loadPanicStatusesAjax();
   });
@@ -611,14 +607,6 @@ function triggerPanic() {
       contentType: 'application/json',
       data: JSON.stringify({ clearedBy: userId }),
       success: function() {
-        // Broadcast via socket so other dashboards update immediately
-        if (window.dashboardSocket && window.dashboardSocket.connected) {
-          window.dashboardSocket.emit('clear_panic', {
-            userID: userId,
-            communityID: communityId,
-            clearedBy: userId
-          });
-        }
         loadPanicStatusesAjax();
         resetPanicLoading();
       },
@@ -645,16 +633,6 @@ function triggerPanic() {
           audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
           audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
           audioElement.play().catch(function(e) { console.log('Audio play failed:', e); });
-        }
-        // Broadcast via socket so other dashboards update immediately
-        if (window.dashboardSocket && window.dashboardSocket.connected) {
-          window.dashboardSocket.emit('panic_button_update', {
-            userID: userId,
-            userUsername: dbUser.user.username,
-            activeCommunity: communityId,
-            callSign: dbUser.user.callSign || '',
-            departmentType: 'ems'
-          });
         }
         loadPanicStatusesAjax();
         resetPanicLoading();
