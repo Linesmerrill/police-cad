@@ -4628,6 +4628,8 @@ window.showBoloModal = showBoloModal;
     // Listen for panic alert events — immediate refresh
     dashboardSocket.on('panic_button_updated', function(map, origReq) {
       if (origReq && origReq.activeCommunity && origReq.activeCommunity !== communityId) return;
+      // Skip if this is our own panic (we already refreshed via AJAX)
+      if (origReq && origReq.userID === dbUser._id) return;
       if ($('#panic-button-check-sound').prop('checked')) {
         var audioElement = document.createElement('audio');
         audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
@@ -4638,6 +4640,8 @@ window.showBoloModal = showBoloModal;
     });
 
     dashboardSocket.on('cleared_panic', function(res) {
+      // Skip if we cleared our own panic (we already refreshed via AJAX)
+      if (res && res.userID === dbUser._id) return;
       loadPanicStatuses();
     });
 

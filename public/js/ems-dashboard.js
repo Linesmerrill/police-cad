@@ -359,6 +359,8 @@ function initializeSocket() {
   // New panic triggered
   socket.on('panic_button_updated', function(map, origReq) {
     if (origReq && origReq.activeCommunity && dbUser.user?.lastAccessedCommunity?.communityID !== origReq.activeCommunity) return;
+    // Skip if this is our own panic (we already refreshed via AJAX)
+    if (origReq && origReq.userID === dbUser._id) return;
 
     // Play panic alert sound if enabled
     if (dbUser.user?.panicButtonSound) {
@@ -376,6 +378,8 @@ function initializeSocket() {
 
   // Panic cleared
   socket.on('cleared_panic', function(res) {
+    // Skip if we cleared our own panic (we already refreshed via AJAX)
+    if (res && res.userID === dbUser._id) return;
     $('#panic-row-' + (res.alertId || res.userID)).fadeOut(200, function() { $(this).remove(); });
     loadPanicStatusesAjax();
   });
