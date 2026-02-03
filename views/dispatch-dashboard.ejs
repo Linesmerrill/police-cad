@@ -3139,7 +3139,7 @@
     // })
 
     socket.on('load_panic_status_update', (map, signal100Resp, holdTrafficResp, origReq, signal100Data) => {
-      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
+      if (communityId == origReq.activeCommunity) {
         //load the signal 100 status to the page
         if (signal100Resp) {
           // Populate banner details from API metadata if available
@@ -3166,30 +3166,30 @@
         }
 
         //load the panic status items via AJAX refresh
-        loadPanicStatusesAjax();
+        if (window.loadPanicStatusesAjax) window.loadPanicStatusesAjax();
         adjustContentOffset();
       }
     })
 
     socket.on('panic_button_updated', (map, origReq) => {
-      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
+      if (communityId == origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
           audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
           audioElement.play();
         }
-        loadPanicStatusesAjax();
+        if (window.loadPanicStatusesAjax) window.loadPanicStatusesAjax();
       }
     })
 
     socket.on('cleared_panic', res => {
       $('#panic-row-' + (res.alertId || res.userID)).fadeOut(200, function() { $(this).remove(); });
-      loadPanicStatusesAjax();
+      if (window.loadPanicStatusesAjax) window.loadPanicStatusesAjax();
     })
 
     socket.on('signal_100_button_updated', (origReq) => {
-      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
+      if (communityId == origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
@@ -3201,7 +3201,7 @@
     })
 
     socket.on('hold_traffic_button_updated', (origReq) => {
-      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
+      if (communityId == origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound_adj.mp3');
@@ -3214,7 +3214,7 @@
 
     socket.on('clear_signal_100_updated', (data) => {
       const cid = typeof data === 'string' ? data : data.activeCommunity;
-      if (dbUser.user.activeCommunity == cid) {
+      if (communityId == cid) {
         signal100UserId = null;
         $('#signal-100-banner').removeClass('show').addClass('hide')
         $('#signal-100-details').text('');
@@ -3231,7 +3231,7 @@
     })
 
     socket.on('clear_hold_traffic_updated', activeCommunity => {
-      if (dbUser.user.activeCommunity==activeCommunity) {
+      if (communityId == activeCommunity) {
         $('#hold-traffic-banner').removeClass('show').addClass('hide')
       }
     })
@@ -3764,10 +3764,11 @@
 
       // Expose to inline onclick handlers (defined inside closure)
       window.clearPanicAlert = clearPanicAlert;
+      window.loadPanicStatusesAjax = loadPanicStatusesAjax;
 
-      // Poll via AJAX every 20s (offset from Socket.IO 15s polling)
+      // Poll via AJAX every 30s (fallback for missed webhooks)
       loadPanicStatusesAjax();
-      setInterval(loadPanicStatusesAjax, 20000);
+      setInterval(loadPanicStatusesAjax, 30000);
 
       // ==========================================
       // REAL-TIME SOCKET LISTENERS FOR DISPATCH
@@ -3933,7 +3934,7 @@
 
       // Listen for room join confirmation
       dashboardSocket.on('joined_room', function(data) {
-        console.log('Dispatch joined community room:', data.room);
+        // Room joined successfully
       });
     }
   }

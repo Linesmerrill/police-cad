@@ -5870,6 +5870,61 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   var io = require("socket.io")(server);
 
+  // ==========================================
+  // INTERNAL WEBHOOK ENDPOINT FOR GO API
+  // ==========================================
+  // Receives panic/signal100 events from Go API and broadcasts via Socket.IO
+  app.post("/internal/panic-broadcast", function (req, res) {
+    const apiKey = req.headers["x-internal-api-key"];
+    if (!process.env.INTERNAL_API_KEY || apiKey !== process.env.INTERNAL_API_KEY) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { event, communityId, data } = req.body;
+    if (!event || !communityId) {
+      return res.status(400).json({ error: "Missing event or communityId" });
+    }
+
+    const roomName = `community:${communityId}`;
+
+    if (event === "panic_created") {
+      // Broadcast panic_button_updated to match existing socket event format
+      const panicMap = {};
+      panicMap[data.userId] = data;
+      io.to(roomName).emit("panic_button_updated", panicMap, {
+        userID: data.userId,
+        userUsername: data.username,
+        activeCommunity: communityId,
+        callSign: data.callSign || "",
+        departmentType: data.departmentType || "police",
+      });
+    } else if (event === "panic_cleared") {
+      io.to(roomName).emit("cleared_panic", {
+        userID: data.userId,
+        alertId: data.alertId,
+        communityID: communityId,
+        clearedBy: data.clearedBy,
+      });
+    } else if (event === "signal_100_activated") {
+      io.to(roomName).emit("signal_100_button_updated", {
+        activeCommunity: communityId,
+        activatedByUserId: data.userId,
+        activatedByUsername: data.username,
+        activatedByCallSign: data.callSign || "",
+        activatedByDepartment: data.departmentType || "",
+      });
+    } else if (event === "signal_100_cleared") {
+      io.to(roomName).emit("clear_signal_100_updated", {
+        activeCommunity: communityId,
+        clearedByUserId: data.userId,
+        clearedByUsername: data.username,
+        clearedByCallSign: data.callSign || "",
+      });
+    }
+
+    res.json({ success: true, event: event, communityId: communityId });
+  });
+
   io.sockets.on("connection", (socket) => {
     // ==========================================
     // SOCKET ROOM MANAGEMENT

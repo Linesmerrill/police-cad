@@ -242,9 +242,9 @@ function initializeSocket() {
   window.togglePanicCollapse = togglePanicCollapse;
   window.clearPanicAlert = clearPanicAlert;
 
-  // Poll via AJAX every 20s (offset from Socket.IO 15s polling)
+  // Poll via AJAX every 30s (fallback for missed webhooks)
   loadPanicStatusesAjax();
-  setInterval(loadPanicStatusesAjax, 20000);
+  setInterval(loadPanicStatusesAjax, 30000);
 
   // Socket event listeners (legacy)
   socket.on('updated_ems_status', res => {
@@ -592,14 +592,12 @@ function triggerPanic() {
 
   _panicLoading = true;
   $('#panicActionBtn').addClass('loading');
-  var $icon = $('#panicActionBtn i');
-  var origIconClass = $icon.attr('class');
-  $icon.attr('class', 'fa fa-spinner');
+  $('#panicBtnIcon').removeClass('fa-exclamation-circle').addClass('fa-spinner');
 
   function resetPanicLoading() {
     _panicLoading = false;
     $('#panicActionBtn').removeClass('loading');
-    $icon.attr('class', origIconClass);
+    $('#panicBtnIcon').removeClass('fa-spinner').addClass('fa-exclamation-circle');
   }
 
   if (_userHasActivePanic) {

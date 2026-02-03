@@ -705,7 +705,7 @@
                                                   <span id="signal100BtnText">Signal 100</span>
                                                 </div>
                                                 <div id="panicActionBtn" class="action-btn action-btn-panic" onclick="panicButtonPressed()">
-                                                  <i class="fa fa-exclamation-circle"></i>
+                                                  <i id="panicBtnIcon" class="fa fa-exclamation-circle"></i>
                                                   <span id="panicBtnText">Panic</span>
                                                 </div>
                                               </div>
@@ -3994,14 +3994,12 @@ function toggleCaret(event) {
 
       _panicLoading = true;
       $('#panicActionBtn').addClass('loading');
-      var $icon = $('#panicActionBtn i');
-      var origIconClass = $icon.attr('class');
-      $icon.attr('class', 'fa fa-spinner');
+      $('#panicBtnIcon').removeClass('fa-exclamation-circle').addClass('fa-spinner');
 
       function resetPanicLoading() {
         _panicLoading = false;
         $('#panicActionBtn').removeClass('loading');
-        $icon.attr('class', origIconClass);
+        $('#panicBtnIcon').removeClass('fa-spinner').addClass('fa-exclamation-circle');
       }
 
       if (_userHasActivePanic) {
@@ -4370,7 +4368,7 @@ window.showBoloModal = showBoloModal;
 
       // Initialize dashboard data
       pollDashboardData();
-      setInterval(pollDashboardData, 15000); // Poll every 15 seconds
+      setInterval(pollDashboardData, 30000); // Poll every 30 seconds (fallback for missed webhooks)
       loadTenCodes();
       filteredTenCodes = tenCodesCache;
     currentPage = 1;
