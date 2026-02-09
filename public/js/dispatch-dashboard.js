@@ -18,6 +18,7 @@ $(document).ready(function () {
   let isProcessingEditNoteModal = false; // Prevent recursive modal opens
   let isProcessingCallDetails = false; // Guard against multiple calls
   let isCallModalSelect2Initialized = false; // Track Select2 state
+  let currentCallFilter = "open"; // Filter: "all", "open", or "closed"
 
   fetchAndRenderDepartments(); // Fetch and render departments on page load
 
@@ -35,6 +36,71 @@ $(document).ready(function () {
     $modal.removeData("bs.modal");
     // Ensure no lingering modal-open classes
     $("body").css("padding-right", "");
+  }
+
+  // Cleanup all modals - ensures no stray backdrops or modal states
+  function cleanupAllModals() {
+    // Hide all open modals
+    $(".modal.show").modal("hide");
+    // Remove all backdrops
+    $(".modal-backdrop").remove();
+    // Reset body state
+    $("body").removeClass("modal-open").css("padding-right", "");
+    // Reset all modal states
+    $(".modal").removeClass("show").css("display", "none").removeData("bs.modal");
+  }
+
+  // Show confirmation modals (for nested modal support)
+  function showMarkCompletedModal() {
+    $("#markCompletedModal").modal("show");
+  }
+
+  function showReopenCallModal() {
+    $("#reopenCallModal").modal("show");
+  }
+
+  function showDeleteCallModal() {
+    $("#deleteCallModal").modal("show");
+  }
+
+  // Toast notification functions - using vanilla JS for reliability
+  function showToast(message, type = 'success') {
+    // Create toast container if it doesn't exist
+    let container = document.getElementById('dispatch-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'dispatch-toast-container';
+      container.style.cssText = 'position: fixed; top: 80px; right: 20px; z-index: 99999;';
+      document.body.appendChild(container);
+    }
+
+    const toastId = 'toast-' + Date.now();
+    const bgColor = type === 'success' ? '#28a745' : type === 'warning' ? '#ffc107' : '#dc3545';
+    const textColor = type === 'warning' ? '#000' : '#fff';
+
+    const toast = document.createElement('div');
+    toast.id = toastId;
+    toast.style.cssText = `min-width: 300px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); background-color: ${bgColor}; color: ${textColor}; display: flex; align-items: center; opacity: 0; transition: opacity 0.3s ease;`;
+    toast.innerHTML = `
+      <div style="padding: 12px 16px; flex-grow: 1;">${message}</div>
+      <button onclick="removeToast('${toastId}')" style="background:none;border:none;color:${textColor};font-size:18px;padding:8px 12px;cursor:pointer;">×</button>
+    `;
+
+    container.appendChild(toast);
+
+    // Fade in
+    setTimeout(() => { toast.style.opacity = '1'; }, 10);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => removeToast(toastId), 5000);
+  }
+
+  function removeToast(toastId) {
+    const toast = document.getElementById(toastId);
+    if (toast) {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 300);
+    }
   }
 
   // Show BOLO modal
@@ -286,6 +352,29 @@ $(document).ready(function () {
     });
   }
 
+  // Set call filter and reload
+  function setCallFilter(filter) {
+    currentCallFilter = filter;
+    currentCallPage = 1; // Reset pagination when filter changes
+
+    // Update button styles
+    $("#filterAllCalls, #filterOpenCalls, #filterClosedCalls")
+      .removeClass("btn-primary")
+      .addClass("btn-secondary");
+    if (filter === "all") {
+      $("#filterAllCalls").removeClass("btn-secondary").addClass("btn-primary");
+      $("#callsHeading").text("All Calls:");
+    } else if (filter === "open") {
+      $("#filterOpenCalls").removeClass("btn-secondary").addClass("btn-primary");
+      $("#callsHeading").text("Active Calls:");
+    } else if (filter === "closed") {
+      $("#filterClosedCalls").removeClass("btn-secondary").addClass("btn-primary");
+      $("#callsHeading").text("Closed Calls:");
+    }
+
+    loadAssignedCalls();
+  }
+
   // AJAX function to load assigned calls
   function loadAssignedCalls() {
     const communityId = dbUser.user.lastAccessedCommunity.communityID;
@@ -295,8 +384,14 @@ $(document).ready(function () {
       return;
     }
 
+    // Build status parameter based on filter
+    let statusParam = "";
+    if (currentCallFilter === "open") statusParam = "&status=true";
+    else if (currentCallFilter === "closed") statusParam = "&status=false";
+    // "all" = no status param, returns all calls
+
     $.ajax({
-      url: `${API_URL}/api/v1/calls/community/${communityId}?status=true&limit=${callLimit}&page=${currentCallPage}`,
+      url: `${API_URL}/api/v1/calls/community/${communityId}?limit=${callLimit}&page=${currentCallPage}${statusParam}`,
       method: "GET",
       success: function (response) {
         const $tbody = $("#callTable tbody");
@@ -306,7 +401,7 @@ $(document).ready(function () {
 
         if (calls.length === 0) {
           $tbody.append(
-            '<tr><td colspan="3" class="text-center">No calls found.</td></tr>'
+            '<tr><td colspan="4" class="text-center">No calls found.</td></tr>'
           );
         } else {
           calls.forEach((call) => {
@@ -314,6 +409,10 @@ $(document).ready(function () {
             const createdAt = call.call?.createdAt
               ? new Date(call.call.createdAt).toLocaleString()
               : "N/A";
+            const isOpen = call.call?.status === true;
+            const statusBadge = isOpen
+              ? '<span class="badge badge-success">Open</span>'
+              : '<span class="badge badge-secondary">Closed</span>';
             const description =
               `${call.call?.title || ""}${
                 call.call?.details ? " | " + call.call.details : ""
@@ -348,9 +447,10 @@ $(document).ready(function () {
             ` || "None";
 
             $tbody.append(`
-              <tr class="gray-hover" data-toggle="modal" data-id="${callId}" data-target="#callDetailModal"
+              <tr class="gray-hover" data-id="${callId}" style="cursor: pointer;"
                 onclick="populateCallDetails('${callId}')">
                 <td>${createdAt}</td>
+                <td>${statusBadge}</td>
                 <td style="text-transform: capitalize;">${description}</td>
                 <td>${unitsAssigned}</td>
               </tr>
@@ -536,11 +636,25 @@ $(document).ready(function () {
           `);
         });
 
-        // Show/hide Close/Reopen buttons
-        $("#closeCallBtn").toggle(callData.call.status);
-        $("#reopenCallBtn").toggle(!callData.call.status);
+        // Show/hide button groups based on call status
+        const isOpen = callData.call.status;
+        $("#openCallButtons").toggle(isOpen);
+        $("#closedCallButtons").toggle(!isOpen);
+
+        // Reset edit mode state for closed calls
+        if (!isOpen && isEditMode) {
+          isEditMode = false;
+          $("#titleCallDetail, #detailsCallDetail").prop("disabled", true);
+          $("#editCallBtn").show();
+          $("#saveCallBtn, #cancelEditBtn").hide();
+          $("#departmentsSelect, #membersSelect").hide();
+          $("#departmentsCallDetail, #assignedToCallDetail").show();
+        }
+
+        // Clean up any stray backdrops before showing modal
+        $(".modal-backdrop").remove();
+        $("body").removeClass("modal-open");
         $("#callDetailModal").modal("show");
-        $(".modal-backdrop").show();
         isProcessingCallDetails = false;
       },
       error: function (xhr) {
@@ -561,9 +675,8 @@ $(document).ready(function () {
     $("#saveCallBtn, #cancelEditBtn").toggle(isEditMode);
     $("#departmentsSelect, #membersSelect").toggle(isEditMode);
     $("#departmentsCallDetail, #assignedToCallDetail").toggle(!isEditMode);
-    $("#addNoteBtn, #deleteCallBtn, #closeCallBtn, #reopenCallBtn").toggle(
-      !isEditMode
-    );
+    // Show/hide action buttons based on edit mode
+    $("#addNoteBtn, #closeCallBtn, #deleteCallBtnOpen").toggle(!isEditMode);
     $("#addNoteSection").hide();
     if (isEditMode) {
       // Initialize Select2
@@ -707,128 +820,105 @@ $(document).ready(function () {
       data: JSON.stringify(updatedCall),
       contentType: "application/json",
       success: function () {
-        alert("Call updated successfully.");
+        showToast("Call updated successfully.", "success");
         toggleEditMode();
         populateCallDetails($("#callIDDetail").val());
       },
       error: function (xhr) {
         console.error("Error updating call:", xhr.responseText);
-        alert(
-          "Failed to update call: " +
-            (xhr.responseJSON?.message || "Unknown error")
-        );
+        showToast("Failed to update call: " + (xhr.responseJSON?.message || "Unknown error"), "danger");
       },
     });
   }
 
-  function deleteCall() {
-    if (
-      !confirm(
-        "Are you sure you want to delete this call? This action cannot be undone."
-      )
-    )
-      return;
+  function confirmDeleteCall() {
+    cleanupAllModals();
+    const callId = $("#callIDDetail").val();
     $.ajax({
-      url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}`,
+      url: `${API_URL}/api/v1/call/${callId}`,
       method: "DELETE",
       success: function () {
-        $(`#${$("#callIDDetail").val()}-row`).fadeOut(1, function () {
+        $(`#${callId}-row`).fadeOut(1, function () {
           $(this).remove();
         });
-        loadAssignedCalls(); // Refresh call list
-
-        // $(".close").click();
-        $("[data-dismiss=modal]").trigger({ type: "click" });
-        // $("#callDetailModal").modal("hide");
-        // hideModal("callDetailModal");
-        // $("body").removeClass("modal-open");
-        // $(".modal-backdrop").remove();
-        alert("Call deleted successfully.");
+        loadAssignedCalls();
+        showToast("Call deleted successfully.", "success");
       },
       error: function (xhr) {
         console.error("Error deleting call:", xhr.responseText);
-        alert(
-          "Failed to delete call: " +
-            (xhr.responseJSON?.message || "Unknown error")
-        );
+        showToast("Failed to delete call: " + (xhr.responseJSON?.message || "Unknown error"), "danger");
       },
     });
   }
 
-  function markAsCompleted() {
-    if (!confirm("Are you sure you want to mark this call as completed?"))
-      return;
+  function confirmMarkAsCompleted() {
+    cleanupAllModals();
+    const callId = $("#callIDDetail").val();
     const noteData = {
       note: `${dbUser.user.username} marked the call as completed.`,
       createdBy: "system",
       createdAt: new Date().toISOString(),
     };
     $.ajax({
-      url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}`,
+      url: `${API_URL}/api/v1/call/${callId}`,
       method: "PUT",
       data: JSON.stringify({ status: false }),
       contentType: "application/json",
       success: function () {
         $.ajax({
-          url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}/note`,
+          url: `${API_URL}/api/v1/call/${callId}/note`,
           method: "POST",
           data: JSON.stringify(noteData),
           contentType: "application/json",
           success: function () {
-            alert("Call marked as completed.");
-            hideModal("callDetailModal");
-            $("#callDetailModal").modal("hide");
+            loadAssignedCalls();
+            showToast("Call marked as completed.", "success");
           },
           error: function (xhr) {
             console.error("Error adding note:", xhr.responseText);
-            alert("Failed to add completion note.");
+            showToast("Failed to add completion note.", "warning");
           },
         });
       },
       error: function (xhr) {
         console.error("Error marking call as completed:", xhr.responseText);
-        alert(
-          "Failed to mark call as completed: " +
-            (xhr.responseJSON?.message || "Unknown error")
-        );
+        showToast("Failed to mark call as completed: " + (xhr.responseJSON?.message || "Unknown error"), "danger");
       },
     });
   }
 
-  function reopenCall() {
-    if (!confirm("Are you sure you want to reopen this call?")) return;
+  function confirmReopenCall() {
+    cleanupAllModals();
+    const callId = $("#callIDDetail").val();
     const noteData = {
       note: `${dbUser.user.username} reopened the call.`,
       createdBy: "system",
       createdAt: new Date().toISOString(),
     };
     $.ajax({
-      url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}`,
+      url: `${API_URL}/api/v1/call/${callId}`,
       method: "PUT",
       data: JSON.stringify({ status: true }),
       contentType: "application/json",
       success: function () {
         $.ajax({
-          url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}/note`,
+          url: `${API_URL}/api/v1/call/${callId}/note`,
           method: "POST",
           data: JSON.stringify(noteData),
           contentType: "application/json",
           success: function () {
-            alert("Call reopened successfully.");
-            populateCallDetails($("#callIDDetail").val());
+            loadAssignedCalls();
+            showToast("Call reopened successfully.", "success");
           },
           error: function (xhr) {
             console.error("Error adding note:", xhr.responseText);
-            alert("Failed to add reopen note.");
+            showToast("Failed to add reopen note.", "warning");
           },
         });
       },
       error: function (xhr) {
         console.error("Error reopening call:", xhr.responseText);
-        alert(
-          "Failed to reopen call: " +
-            (xhr.responseJSON?.message || "Unknown error")
-        );
+        showToast("Failed to reopen call: " + (xhr.responseJSON?.message || "Unknown error"), "danger");
       },
     });
   }
@@ -1191,14 +1281,20 @@ $(document).ready(function () {
   window.handleDeleteBolo = handleDeleteBolo;
   window.populateBoloDetails = populateBoloDetails;
   window.changeCallPage = changeCallPage;
+  window.setCallFilter = setCallFilter;
   window.populateCallDetails = populateCallDetails;
   window.toggleEditMode = toggleEditMode;
   window.openDepartmentModal = openDepartmentModal;
   window.openMemberModal = openMemberModal;
   window.saveChanges = saveChanges;
-  window.deleteCall = deleteCall;
-  window.markAsCompleted = markAsCompleted;
-  window.reopenCall = reopenCall;
+  window.confirmDeleteCall = confirmDeleteCall;
+  window.confirmMarkAsCompleted = confirmMarkAsCompleted;
+  window.confirmReopenCall = confirmReopenCall;
+  window.showMarkCompletedModal = showMarkCompletedModal;
+  window.showReopenCallModal = showReopenCallModal;
+  window.showDeleteCallModal = showDeleteCallModal;
+  window.showToast = showToast;
+  window.removeToast = removeToast;
   window.toggleAddNote = toggleAddNote;
   window.addNote = addNote;
   window.openEditNoteModal = openEditNoteModal;

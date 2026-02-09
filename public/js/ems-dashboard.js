@@ -19,6 +19,11 @@ var currentTenCodeID = null;
 var currentPage = 1;
 var codesPerPage = 20;
 
+// Call filter and pagination state
+var currentCallFilter = 'open';
+var currentCallPage = 1;
+var callLimit = 10;
+
 // Hide modal utility function (global scope)
 function hideModal(modalId) {
   const $modal = $(`#${modalId}`);
@@ -56,8 +61,33 @@ function hideModal(modalId) {
       $(".modal-backdrop").remove();
       $("body").removeClass("modal-open");
     }, 100);
-    
+
   }, 150);
+}
+
+// Cleanup all modals - ensures no stray backdrops or modal states
+function cleanupAllModals() {
+  // Hide all open modals
+  $('.modal.show').modal('hide');
+  // Remove all backdrops
+  $('.modal-backdrop').remove();
+  // Reset body state
+  $('body').removeClass('modal-open').css('padding-right', '');
+  // Reset all modal states
+  $('.modal').removeClass('show').css('display', 'none').removeData('bs.modal');
+}
+
+// Show confirmation modals (for nested modal support)
+function showMarkCompletedModal() {
+  $('#markCompletedModalEms').modal('show');
+}
+
+function showReopenCallModal() {
+  $('#reopenCallModalEms').modal('show');
+}
+
+function showDeleteCallModal() {
+  $('#deleteCallModalEms').modal('show');
 }
 
 // Track Signal 100 user for clearing
@@ -4917,11 +4947,37 @@ function setupNotificationModal() {
   }
 }
 
+// Set call filter and reload
+function setCallFilter(filter) {
+  currentCallFilter = filter;
+  currentCallPage = 1; // Reset to first page when filter changes
+
+  // Update button styles
+  $('#filterAllCalls, #filterOpenCalls, #filterClosedCalls')
+    .removeClass('btn-primary').addClass('btn-secondary');
+  if (filter === 'all') {
+    $('#filterAllCalls').removeClass('btn-secondary').addClass('btn-primary');
+  } else if (filter === 'open') {
+    $('#filterOpenCalls').removeClass('btn-secondary').addClass('btn-primary');
+  } else if (filter === 'closed') {
+    $('#filterClosedCalls').removeClass('btn-secondary').addClass('btn-primary');
+  }
+
+  loadAssignedCalls();
+}
+
+// Change call page
+function changeCallPage(page) {
+  if (page < 1) return;
+  currentCallPage = page;
+  loadAssignedCalls();
+}
+
 // AJAX function to load assigned calls
 function loadAssignedCalls() {
   const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
   if (!communityId) return;
-  
+
   // Get the current department ID from the URL query parameters or global variable
   const urlParams = new URLSearchParams(window.location.search);
   const encodedDeptId = urlParams.get('d');
@@ -4952,38 +5008,56 @@ function loadAssignedCalls() {
   if (!currentDepartmentId && typeof departmentId !== 'undefined' && departmentId) {
     currentDepartmentId = departmentId;
   }
-  
+
+  // Build query parameters
+  let queryParams = `?limit=${callLimit}&page=${currentCallPage}`;
+  if (currentCallFilter === 'open') queryParams += '&status=true';
+  else if (currentCallFilter === 'closed') queryParams += '&status=false';
+  // 'all' = no status param
+
+  // Determine heading text based on filter
+  let filterText = 'Open';
+  if (currentCallFilter === 'all') filterText = 'All';
+  else if (currentCallFilter === 'closed') filterText = 'Closed';
+
   $.ajax({
-    url: `${POLICE_CAD_API_URL}/api/v1/calls/community/${communityId}?status=true`,
+    url: `${POLICE_CAD_API_URL}/api/v1/calls/community/${communityId}${queryParams}`,
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${dbUser.token || ''}`
     },
-    success: function(data) {
+    success: function(response) {
       const $container = $('#assigned-call-container');
       $container.find('a').remove();
       $container.find('span').remove();
+      $container.find('p').remove();
+      $container.find('.call-pagination').remove();
+
+      // Handle both array and object response formats
+      const data = response.data || response;
+      const totalCount = response.totalCount || data.length;
+
       // Get department name for display
       const urlParams = new URLSearchParams(window.location.search);
       const departmentName = urlParams.get('dept') || 'Current Department';
-      
+
       $container.append(`
         <span>
           <h4>
-            ${departmentName} Open Calls 
-            <i class="fa fa-info-circle" 
-               data-toggle="tooltip" 
-               data-placement="top" 
-               title="These are only the calls assigned to your current department. Other calls in the community are not shown here." 
+            ${departmentName} ${filterText} Calls
+            <i class="fa fa-info-circle"
+               data-toggle="tooltip"
+               data-placement="top"
+               title="These are only the calls assigned to your current department. Other calls in the community are not shown here."
                style="color: #17a2b8; cursor: help; margin-left: 8px;"></i>
           </h4>
           <h5>Click for details</h5>
         </span>
       `);
-      
+
       // Initialize tooltips
       $('[data-toggle="tooltip"]').tooltip();
-      
+
       if (data && data.length > 0) {
         // Filter calls to only show those assigned to the current department
         const filteredCalls = data.filter(call => {
@@ -4993,15 +5067,21 @@ function loadAssignedCalls() {
           const callDepartments = call?.call?.departments || [];
           return callDepartments.includes(currentDepartmentId);
         });
-        
+
         if (filteredCalls.length > 0) {
           filteredCalls.forEach(call => {
             const is911Call = (call?.call?.title?.startsWith('911:') || call?.call?.details?.startsWith('911:'));
-            const alertClass = is911Call ? 'alert-danger' : 'alert-success';
+            const isOpen = call?.call?.status === true;
+            // Open 911 calls are red, open regular calls are green, closed calls are gray
+            let alertClass = 'alert-secondary';
+            if (isOpen) {
+              alertClass = is911Call ? 'alert-danger' : 'alert-success';
+            }
+            const statusLabel = isOpen ? 'Open' : 'Closed';
             $container.append(
               `<a id="${call._id}" href="javascript:void(0)" onclick="event.stopPropagation(); populateCallDetails('${call._id}');">
                 <div class="alert ${alertClass} alert-dismissible show" role="alert">
-                  Opened: <span id="${call._id}-createdAt" style="text-transform:capitalize">
+                  <strong>[${statusLabel}]</strong> <span id="${call._id}-createdAt" style="text-transform:capitalize">
                     <time>${call?.call?.createdAt || 'N/A'}</time> | Description: <span id="${call._id}-description">${call?.call?.title || 'N/A'} | ${call?.call?.details || 'N/A'}</span>
                   </span>
                 </div>
@@ -5011,10 +5091,26 @@ function loadAssignedCalls() {
         } else {
           const urlParams = new URLSearchParams(window.location.search);
           const departmentName = urlParams.get('dept') || 'your department';
-          $container.append(`<p class="text-center" style="font-style: italic; font-size: 14px">No open calls assigned to ${departmentName} at this time.</p>`);
+          const noCallsText = currentCallFilter === 'all' ? 'No calls' :
+                             currentCallFilter === 'closed' ? 'No closed calls' : 'No open calls';
+          $container.append(`<p class="text-center" style="font-style: italic; font-size: 14px">${noCallsText} assigned to ${departmentName} at this time.</p>`);
         }
       } else {
-        $container.append('<p class="text-center" style="font-style: italic; font-size: 14px">No open calls at this time.</p>');
+        const noCallsText = currentCallFilter === 'all' ? 'No calls' :
+                           currentCallFilter === 'closed' ? 'No closed calls' : 'No open calls';
+        $container.append(`<p class="text-center" style="font-style: italic; font-size: 14px">${noCallsText} at this time.</p>`);
+      }
+
+      // Add pagination controls if needed
+      if (totalCount > callLimit) {
+        const totalPages = Math.ceil(totalCount / callLimit);
+        $container.append(`
+          <div class="call-pagination d-flex justify-content-between mt-2">
+            <button class="btn btn-primary" onclick="changeCallPage(${currentCallPage - 1})" ${currentCallPage === 1 ? 'disabled' : ''}>Previous</button>
+            <span class="align-self-center">Page ${currentCallPage} of ${totalPages}</span>
+            <button class="btn btn-primary" onclick="changeCallPage(${currentCallPage + 1})" ${currentCallPage >= totalPages ? 'disabled' : ''}>Next</button>
+          </div>
+        `);
       }
     },
     error: function(xhr) {
@@ -5029,6 +5125,10 @@ function loadAssignedCalls() {
 
 // Populate call details in modal
 function populateCallDetails(callId) {
+  // Clean up any stray backdrops before showing modal
+  $('.modal-backdrop').remove();
+  $('body').removeClass('modal-open');
+
   $.ajax({
     url: `${POLICE_CAD_API_URL}/api/v1/call/${callId}`,
     method: 'GET',
@@ -5041,6 +5141,26 @@ function populateCallDetails(callId) {
       $('#updatedAtCallDetail').text(call?.call?.updatedAt ? new Date(call.call.updatedAt).toLocaleString() : 'N/A');
       $('#callTitleDetail').val(call?.call?.title || '');
       $('#callDetailsDetail').val(call?.call?.details || '');
+
+      // Handle call status
+      const isOpen = call?.call?.status === true;
+      $('#callStatusHidden').val(isOpen ? 'true' : 'false');
+      $('#callStatusDetail')
+        .text(isOpen ? 'Open' : 'Closed')
+        .removeClass('badge-primary badge-secondary badge-success')
+        .addClass(isOpen ? 'badge-success' : 'badge-secondary');
+
+      // Show/hide button groups based on status
+      $('#openCallButtons').toggle(isOpen);
+      $('#closedCallButtons').toggle(!isOpen);
+
+      // Enable/disable editing based on status
+      $('#callTitleDetail, #callDetailsDetail').prop('disabled', !isOpen);
+
+      // Hide add note for closed calls
+      $('#addNoteToggle').toggle(isOpen);
+      $('#addNoteSection').hide();
+      $('#addNoteButtonSection').hide();
 
       // Format call notes
       const callNotes = call?.call?.callNotes || [];
@@ -5184,28 +5304,118 @@ function handleUpdateCall() {
   });
 }
 
-// Handle call deletion
-function handleDeleteCall() {
+// Confirm delete call (from modal)
+function confirmDeleteCall() {
   const callId = $('#callIdDetail').val();
-  
-  if (confirm('Are you sure you want to delete this call? This action cannot be undone.')) {
-    $.ajax({
-      url: `${POLICE_CAD_API_URL}/api/v1/call/${callId}`,
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${dbUser.token || ''}`
-      },
-      success: function(data) {
-        $('#callDetailModal').modal('hide');
-        showToast('Call deleted successfully', 'success');
-        loadAssignedCalls(); // Refresh call list
-      },
-      error: function(xhr) {
-        console.error('Error deleting call:', xhr.responseText);
-        alert('Failed to delete call: ' + (xhr.responseJSON?.message || 'Unknown error'));
-      }
-    });
-  }
+  cleanupAllModals();
+
+  $.ajax({
+    url: `${POLICE_CAD_API_URL}/api/v1/call/${callId}`,
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${dbUser.token || ''}`
+    },
+    success: function(data) {
+      showToast('Call deleted successfully', 'success');
+      loadAssignedCalls();
+    },
+    error: function(xhr) {
+      console.error('Error deleting call:', xhr.responseText);
+      alert('Failed to delete call: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
+// Confirm mark as completed (from modal)
+function confirmMarkAsCompleted() {
+  const callId = $('#callIdDetail').val();
+  cleanupAllModals();
+
+  const noteData = {
+    note: `${dbUser.user.username} marked the call as completed.`,
+    createdBy: 'system',
+    createdAt: new Date().toISOString()
+  };
+
+  $.ajax({
+    url: `${POLICE_CAD_API_URL}/api/v1/call/${callId}`,
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${dbUser.token || ''}`
+    },
+    data: JSON.stringify({ status: false }),
+    contentType: 'application/json',
+    success: function() {
+      $.ajax({
+        url: `${POLICE_CAD_API_URL}/api/v1/call/${callId}/note`,
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${dbUser.token || ''}`
+        },
+        data: JSON.stringify(noteData),
+        contentType: 'application/json',
+        success: function() {
+          showToast('Call marked as completed', 'success');
+          loadAssignedCalls();
+        },
+        error: function(xhr) {
+          console.error('Error adding note:', xhr.responseText);
+          showToast('Call marked as completed but failed to add note', 'warning');
+          loadAssignedCalls();
+        }
+      });
+    },
+    error: function(xhr) {
+      console.error('Error marking call as completed:', xhr.responseText);
+      alert('Failed to mark call as completed: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
+// Confirm reopen call (from modal)
+function confirmReopenCall() {
+  const callId = $('#callIdDetail').val();
+  cleanupAllModals();
+
+  const noteData = {
+    note: `${dbUser.user.username} reopened the call.`,
+    createdBy: 'system',
+    createdAt: new Date().toISOString()
+  };
+
+  $.ajax({
+    url: `${POLICE_CAD_API_URL}/api/v1/call/${callId}`,
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${dbUser.token || ''}`
+    },
+    data: JSON.stringify({ status: true }),
+    contentType: 'application/json',
+    success: function() {
+      $.ajax({
+        url: `${POLICE_CAD_API_URL}/api/v1/call/${callId}/note`,
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${dbUser.token || ''}`
+        },
+        data: JSON.stringify(noteData),
+        contentType: 'application/json',
+        success: function() {
+          showToast('Call reopened successfully', 'success');
+          loadAssignedCalls();
+        },
+        error: function(xhr) {
+          console.error('Error adding note:', xhr.responseText);
+          showToast('Call reopened but failed to add note', 'warning');
+          loadAssignedCalls();
+        }
+      });
+    },
+    error: function(xhr) {
+      console.error('Error reopening call:', xhr.responseText);
+      alert('Failed to reopen call: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
 }
 
 // Toggle the add note section
