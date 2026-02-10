@@ -185,6 +185,9 @@ function initializeSocket() {
     });
   }
 
+  // Expose globally so triggerPanic() can call it
+  window.loadPanicStatusesAjax = loadPanicStatusesAjax;
+
   function renderStyledPanicAlerts(alerts) {
     var $banner = $('#panic-alerts-banner');
     var $hint = $('#panic-scroll-hint');
