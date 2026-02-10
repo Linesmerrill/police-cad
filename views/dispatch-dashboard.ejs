@@ -486,6 +486,66 @@
     outline: none;
     box-shadow: none;
   }
+
+  /* Mobile responsive header */
+  .navbar-header h1.cursive {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100vw - 100px);
+    font-size: 1.2em;
+  }
+  .navbar-header h1.cursive #community-name {
+    display: inline-block;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
+  @media (max-width: 576px) {
+    .navbar-header h1.cursive {
+      font-size: 0.95em;
+      max-width: calc(100vw - 70px);
+    }
+    .navbar-header h1.cursive #community-name {
+      max-width: 80px;
+    }
+  }
+
+  /* Mobile responsive calls table */
+  .table-responsive-calls {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  @media (max-width: 768px) {
+    #callTable th,
+    #callTable td {
+      padding: 6px 8px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    #callTable th:nth-child(5),
+    #callTable td:nth-child(5) {
+      /* Units Assigned column - hide on small screens */
+      display: none;
+    }
+  }
+  @media (max-width: 576px) {
+    #callTable th:nth-child(3),
+    #callTable td:nth-child(3) {
+      /* Department column - hide on very small screens */
+      display: none;
+    }
+    #callTable th:nth-child(4),
+    #callTable td:nth-child(4) {
+      /* Description column - truncate */
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
   </style>
 </head>
 
@@ -1434,20 +1494,22 @@
               <select id="callDepartmentFilter" class="form-control margin-left-1 margin-bottom-1" style="display: inline-block; width: auto; min-width: 150px;" onchange="setCallDepartmentFilter(this.value)">
                 <option value="all">All Departments</option>
               </select>
-              <table id="callTable" class="table table-hover table-bordered">
-  <thead>
-    <tr>
-      <th>Created At</th>
-      <th>Status</th>
-      <th>Department</th>
-      <th>Description</th>
-      <th>Units Assigned</th>
-    </tr>
-  </thead>
-  <tbody>
-    <!-- Populated dynamically by loadAssignedCalls -->
-  </tbody>
-</table>
+              <div class="table-responsive-calls">
+                <table id="callTable" class="table table-hover table-bordered">
+                  <thead>
+                    <tr>
+                      <th>Created At</th>
+                      <th>Status</th>
+                      <th>Department</th>
+                      <th>Description</th>
+                      <th>Units Assigned</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Populated dynamically by loadAssignedCalls -->
+                  </tbody>
+                </table>
+              </div>
 
           </div>
         </div>
