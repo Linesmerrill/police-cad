@@ -19,8 +19,11 @@ $(document).ready(function () {
   let isProcessingCallDetails = false; // Guard against multiple calls
   let isCallModalSelect2Initialized = false; // Track Select2 state
   let currentCallFilter = "open"; // Filter: "all", "open", or "closed"
+  let currentCallDepartmentFilter = "all"; // Department filter for calls
+  let callDepartmentsCache = []; // Cache departments for call filtering
 
   fetchAndRenderDepartments(); // Fetch and render departments on page load
+  fetchCallDepartments(); // Populate department filter dropdown
 
   // Hide modal utility
   function hideModal(modalId) {
@@ -373,6 +376,43 @@ $(document).ready(function () {
     loadAssignedCalls();
   }
 
+  // Fetch departments for call filter dropdown
+  function fetchCallDepartments() {
+    const communityId = dbUser.user.lastAccessedCommunity.communityID;
+    if (!communityId) return;
+
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${communityId}/departments`,
+      method: "GET",
+      success: function (data) {
+        const departments = (data.departments || []).filter(
+          (d) => d.template?.name !== "Civilian"
+        );
+        callDepartmentsCache = departments;
+
+        const $select = $("#callDepartmentFilter");
+        $select.empty();
+        $select.append('<option value="all">All Departments</option>');
+        departments.forEach((dept) => {
+          $select.append(
+            `<option value="${dept._id}">${dept.name}</option>`
+          );
+        });
+      },
+      error: function (xhr) {
+        console.error("Error loading departments:", xhr.responseText);
+      },
+    });
+  }
+
+  // Set department filter for calls
+  function setCallDepartmentFilter(departmentId) {
+    currentCallDepartmentFilter = departmentId;
+    currentCallPage = 1; // Reset pagination when filter changes
+    loadAssignedCalls();
+  }
+  window.setCallDepartmentFilter = setCallDepartmentFilter; // Expose globally
+
   // AJAX function to load assigned calls
   function loadAssignedCalls() {
     const communityId = dbUser.user.lastAccessedCommunity.communityID;
@@ -382,14 +422,17 @@ $(document).ready(function () {
       return;
     }
 
-    // Build status parameter based on filter
-    let statusParam = "";
-    if (currentCallFilter === "open") statusParam = "&status=true";
-    else if (currentCallFilter === "closed") statusParam = "&status=false";
+    // Build query parameters based on filters
+    let queryParams = `?limit=${callLimit}&page=${currentCallPage}`;
+    if (currentCallFilter === "open") queryParams += "&status=true";
+    else if (currentCallFilter === "closed") queryParams += "&status=false";
     // "all" = no status param, returns all calls
+    if (currentCallDepartmentFilter && currentCallDepartmentFilter !== "all") {
+      queryParams += `&departmentId=${currentCallDepartmentFilter}`;
+    }
 
     $.ajax({
-      url: `${API_URL}/api/v2/calls/community/${communityId}?limit=${callLimit}&page=${currentCallPage}${statusParam}`,
+      url: `${API_URL}/api/v2/calls/community/${communityId}${queryParams}`,
       method: "GET",
       success: function (response) {
         const $tbody = $("#callTable tbody");
@@ -399,7 +442,7 @@ $(document).ready(function () {
 
         if (calls.length === 0) {
           $tbody.append(
-            '<tr><td colspan="4" class="text-center">No calls found.</td></tr>'
+            '<tr><td colspan="5" class="text-center">No calls found.</td></tr>'
           );
         } else {
           calls.forEach((call) => {
@@ -411,6 +454,25 @@ $(document).ready(function () {
             const statusBadge = isOpen
               ? '<span class="badge badge-success">Open</span>'
               : '<span class="badge badge-secondary">Closed</span>';
+
+            // Get department names from the call
+            const departmentIds = call.call?.departments || [];
+            const departmentNames = departmentIds
+              .map((deptId) => {
+                const dept = callDepartmentsCache.find((d) => d._id === deptId);
+                return dept ? dept.name : null;
+              })
+              .filter((name) => name !== null);
+            const departmentDisplay =
+              departmentNames.length > 0
+                ? departmentNames
+                    .map(
+                      (name) =>
+                        `<span class="badge badge-info">${name}</span>`
+                    )
+                    .join(" ")
+                : '<span class="text-muted">-</span>';
+
             const description =
               `${call.call?.title || ""}${
                 call.call?.details ? " | " + call.call.details : ""
@@ -423,32 +485,35 @@ $(document).ready(function () {
                         `${o.name || "Unknown"} (${o.badgeNumber || "N/A"})`
                     )
                     .join(", ")
-                : "None";
+                : "";
             const fireEmsUnits =
               call.call?.assignedFireEms?.length > 0
                 ? call.call.assignedFireEms
                     .map((u) => u.unitName || "Unknown")
                     .join(", ")
-                : "None";
+                : "";
             const unitsAssigned =
-              `
+              policeUnits || fireEmsUnits
+                ? `
               ${
-                policeUnits !== "None"
-                  ? `<span class="badge badge-secondary">${policeUnits} (Police)</span>`
+                policeUnits
+                  ? `<span class="badge badge-secondary">${policeUnits}</span>`
                   : ""
               }
               ${
-                fireEmsUnits !== "None"
+                fireEmsUnits
                   ? `<span class="badge badge-secondary">${fireEmsUnits}</span>`
                   : ""
               }
-            ` || "None";
+            `
+                : '<span class="text-muted">-</span>';
 
             $tbody.append(`
               <tr class="gray-hover" data-id="${callId}" style="cursor: pointer;"
                 onclick="populateCallDetails('${callId}')">
                 <td>${createdAt}</td>
                 <td>${statusBadge}</td>
+                <td>${departmentDisplay}</td>
                 <td style="text-transform: capitalize;">${description}</td>
                 <td>${unitsAssigned}</td>
               </tr>
@@ -485,7 +550,7 @@ $(document).ready(function () {
         $("#callTable tbody")
           .empty()
           .append(
-            '<tr><td colspan="3" class="text-center">Error loading calls.</td></tr>'
+            '<tr><td colspan="5" class="text-center">Error loading calls.</td></tr>'
           );
       },
     });

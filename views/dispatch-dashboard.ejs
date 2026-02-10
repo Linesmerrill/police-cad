@@ -1425,11 +1425,15 @@
                 <button type="button" class="btn btn-primary" id="filterOpenCalls" onclick="setCallFilter('open')">Open</button>
                 <button type="button" class="btn btn-secondary" id="filterClosedCalls" onclick="setCallFilter('closed')">Closed</button>
               </div>
+              <select id="callDepartmentFilter" class="form-control margin-left-1 margin-bottom-1" style="display: inline-block; width: auto; min-width: 150px;" onchange="setCallDepartmentFilter(this.value)">
+                <option value="all">All Departments</option>
+              </select>
               <table id="callTable" class="table table-hover table-bordered">
   <thead>
     <tr>
       <th>Created At</th>
       <th>Status</th>
+      <th>Department</th>
       <th>Description</th>
       <th>Units Assigned</th>
     </tr>
