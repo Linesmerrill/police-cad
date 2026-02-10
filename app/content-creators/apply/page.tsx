@@ -786,57 +786,34 @@ export default function ApplyPage() {
 
               {/* Platforms */}
               <div style={{ marginBottom: '28px' }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#fff',
                   marginBottom: '12px'
                 }}>
-                  <label style={{
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#fff'
-                  }}>
-                    Platforms * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(at least one with 500+ followers)</span>
-                  </label>
-                  {platforms.length < 4 && getAvailablePlatformTypes().length > 0 && (
-                    <button
-                      type="button"
-                      onClick={addPlatform}
-                      className="add-platform-btn"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        background: 'rgba(251, 191, 36, 0.08)',
-                        border: '1px solid rgba(251, 191, 36, 0.5)',
-                        borderRadius: '6px',
-                        color: '#fbbf24',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        padding: '6px 14px',
-                        transition: 'all 0.2s ease',
-                        animation: 'addPlatformGlow 3s ease-in-out infinite'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(251, 191, 36, 0.15)';
-                        e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.8)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(251, 191, 36, 0.08)';
-                        e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.5)';
-                      }}
-                    >
-                      <PlusIcon style={{ width: '16px', height: '16px' }} />
-                      Add Platform
-                    </button>
-                  )}
-                </div>
+                  Platforms * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(at least one with 500+ followers)</span>
+                </label>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {platforms.map((platform, index) => {
                     const platformOption = platformOptions.find(p => p.value === platform.type);
+
+                    // Build preview URL from handle
+                    const cleanHandle = platform.handle.replace(/^@+/, '');
+                    let previewUrl = '';
+                    if (cleanHandle) {
+                      if (platform.type === 'twitch') {
+                        previewUrl = `https://twitch.tv/${cleanHandle}`;
+                      } else if (platform.type === 'youtube') {
+                        previewUrl = `https://youtube.com/@${cleanHandle}`;
+                      } else if (platform.type === 'tiktok') {
+                        previewUrl = `https://tiktok.com/@${cleanHandle}`;
+                      } else if (platform.type === 'other' && platform.url) {
+                        previewUrl = platform.url;
+                      }
+                    }
 
                     return (
                       <div
@@ -950,9 +927,69 @@ export default function ApplyPage() {
                             }}
                           />
                         </div>
+
+                        {/* Preview Link */}
+                        {previewUrl && (
+                          <div style={{ marginTop: '10px' }}>
+                            <a
+                              href={previewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontSize: '13px',
+                                color: platformOption?.color || '#fbbf24',
+                                textDecoration: 'none',
+                                opacity: 0.8,
+                                transition: 'opacity 0.2s'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                              onMouseLeave={(e) => e.currentTarget.style.opacity = '0.8'}
+                            >
+                              <ArrowRightIcon style={{ width: '14px', height: '14px' }} />
+                              Test link: {previewUrl}
+                            </a>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
+
+                  {/* Add Platform Button - inside the platforms section */}
+                  {platforms.length < 4 && getAvailablePlatformTypes().length > 0 && (
+                    <button
+                      type="button"
+                      onClick={addPlatform}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        background: 'rgba(251, 191, 36, 0.06)',
+                        border: '1px dashed rgba(251, 191, 36, 0.4)',
+                        borderRadius: '12px',
+                        color: '#fbbf24',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        padding: '16px 20px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(251, 191, 36, 0.12)';
+                        e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.6)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(251, 191, 36, 0.06)';
+                        e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.4)';
+                      }}
+                    >
+                      <PlusIcon style={{ width: '18px', height: '18px' }} />
+                      Add Another Platform
+                    </button>
+                  )}
                 </div>
               </div>
 
