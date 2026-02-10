@@ -109,18 +109,20 @@ function fetchAndRenderDepartments() {
             break;
         }
 
-        const lockIcon = isDisabled
-          ? `<span class="fa fa-lock ml-2" style="cursor: pointer; color: #fbbf24;" onclick="event.stopPropagation(); showDepartmentAccessModal('${name.replace(/'/g, "\\'")}', '${communityId}')"></span>`
-          : "";
-
         html += `
           <li>
             ${
               isDisabled
                 ? `
-              <span class="disabled-department" style="display: flex; align-items: center;">
-                <span class="fa ${icon} ml-3 mr-3"></span> ${name} (${template}) ${lockIcon}
-              </span>
+              <div style="display: flex; align-items: center; padding: 10px 0;">
+                <span style="display: flex; align-items: center; flex: 1; min-width: 0; opacity: 0.5; cursor: not-allowed;">
+                  <span class="fa ${icon} ml-3 mr-3" style="flex-shrink: 0;"></span>
+                  <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name} (${template})</span>
+                </span>
+                <span class="fa fa-lock mr-3" style="cursor: pointer; color: #fbbf24; flex-shrink: 0; padding: 4px 8px;"
+                  onclick="showDepartmentAccessModal('${name.replace(/'/g, "\\'")}', '${communityId}')"
+                  title="Click for more info"></span>
+              </div>
             `
                 : useForm
                 ? `
