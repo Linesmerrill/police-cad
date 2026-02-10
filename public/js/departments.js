@@ -63,6 +63,14 @@ function showDepartmentAccessModal(departmentName, communityId, isPending) {
 function fetchAndRenderDepartments() {
   const communityId = dbUser.user.lastAccessedCommunity.communityID;
   const currentUserId = dbUser._id;
+
+  // Check if user is the community owner
+  const isOwner = dbUser.user.lastAccessedCommunity.ownerID === currentUserId;
+
+  // Check if user has admin role in the community
+  const userRole = dbUser.user.lastAccessedCommunity.role;
+  const isAdmin = userRole && userRole.admin === true;
+
   $.ajax({
     url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/departments`,
     method: "GET",
@@ -92,9 +100,9 @@ function fetchAndRenderDepartments() {
         const isApprovedMember = userMembership && userMembership.status === 'approved';
         const isPendingMember = userMembership && userMembership.status === 'pending';
 
-        // User can access if: department is public OR user is approved member
+        // User can access if: owner, admin role, department is public, OR user is approved member
         const isPublicDepartment = dept.approvalRequired === false;
-        const canAccess = isPublicDepartment || isApprovedMember;
+        const canAccess = isOwner || isAdmin || isPublicDepartment || isApprovedMember;
 
         let icon = "fa-building";
         let action = "#";
