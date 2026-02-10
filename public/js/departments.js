@@ -6,8 +6,8 @@ function encodeCommunityIdForUrl(communityId) {
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-// Show modal when user clicks lock icon on a department they don't have access to
-function showDepartmentAccessModal(departmentName, communityId) {
+// Show modal when user clicks lock/clock icon on a department they don't have access to
+function showDepartmentAccessModal(departmentName, communityId, isPending) {
   const encodedId = encodeCommunityIdForUrl(communityId);
   const communityUrl = `/community/${encodedId}#departments-section`;
 
@@ -18,15 +18,15 @@ function showDepartmentAccessModal(departmentName, communityId) {
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content" style="background-color: #1a1a2e; border: 1px solid rgba(255,255,255,0.1);">
             <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-              <h5 class="modal-title text-white"><i class="fa fa-lock mr-2"></i>Access Restricted</h5>
+              <h5 class="modal-title text-white"><i id="deptAccessIcon" class="fa fa-lock mr-2"></i><span id="deptAccessTitle">Access Restricted</span></h5>
               <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body text-center py-4">
               <div class="mb-3">
-                <i class="fa fa-lock fa-3x text-warning"></i>
+                <i id="deptAccessBodyIcon" class="fa fa-lock fa-3x text-warning"></i>
               </div>
-              <p class="text-white mb-2">You don't have access to the <strong id="deptAccessName"></strong> department.</p>
-              <p class="text-muted">You can request to join from the community details page.</p>
+              <p class="text-white mb-2" id="deptAccessMessage">You don't have access to the <strong id="deptAccessName"></strong> department.</p>
+              <p class="text-muted" id="deptAccessSubtext">You can request to join from the community details page.</p>
             </div>
             <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.1);">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -38,9 +38,23 @@ function showDepartmentAccessModal(departmentName, communityId) {
     `);
   }
 
-  // Update modal content
+  // Update modal content based on pending status
   $('#deptAccessName').text(departmentName);
   $('#deptAccessLink').attr('href', communityUrl);
+
+  if (isPending) {
+    $('#deptAccessIcon').removeClass('fa-lock').addClass('fa-clock');
+    $('#deptAccessBodyIcon').removeClass('fa-lock text-warning').addClass('fa-clock text-info');
+    $('#deptAccessTitle').text('Request Pending');
+    $('#deptAccessMessage').html(`Your request to join the <strong>${departmentName}</strong> department is pending approval.`);
+    $('#deptAccessSubtext').text('An administrator will review your request soon.');
+  } else {
+    $('#deptAccessIcon').removeClass('fa-clock').addClass('fa-lock');
+    $('#deptAccessBodyIcon').removeClass('fa-clock text-info').addClass('fa-lock text-warning');
+    $('#deptAccessTitle').text('Access Restricted');
+    $('#deptAccessMessage').html(`You don't have access to the <strong>${departmentName}</strong> department.`);
+    $('#deptAccessSubtext').text('You can request to join from the community details page.');
+  }
 
   // Show modal
   $('#departmentAccessModal').modal('show');
@@ -70,10 +84,17 @@ function fetchAndRenderDepartments() {
           return;
         }
 
-        // Check if current user is a member of this department
-        const isMember = Array.isArray(dept.members) && dept.members.some(
+        // Check if current user is an approved member of this department
+        const members = Array.isArray(dept.members) ? dept.members : [];
+        const userMembership = members.find(
           (member) => (member.userID || member._id) === currentUserId
         );
+        const isApprovedMember = userMembership && userMembership.status === 'approved';
+        const isPendingMember = userMembership && userMembership.status === 'pending';
+
+        // User can access if: department is public OR user is approved member
+        const isPublicDepartment = dept.approvalRequired === false;
+        const canAccess = isPublicDepartment || isApprovedMember;
 
         let icon = "fa-building";
         let action = "#";
@@ -81,7 +102,7 @@ function fetchAndRenderDepartments() {
         const useForm = ["police", "fire", "ems", "dispatch"].includes(
           template.toLowerCase()
         );
-        const isDisabled = !isMember;
+        const isDisabled = !canAccess;
 
         // Map icons and routes
         switch (template.toLowerCase()) {
@@ -126,6 +147,11 @@ function fetchAndRenderDepartments() {
           case 'civilian': badgeColor = '#6b7280'; break; // gray
         }
 
+        // Icon and color for lock/pending status
+        const statusIcon = isPendingMember ? 'fa-clock' : 'fa-lock';
+        const statusColor = isPendingMember ? '#3b82f6' : '#fbbf24'; // blue for pending, yellow for locked
+        const statusTitle = isPendingMember ? 'Request pending' : 'Click for more info';
+
         html += `
           <li>
             ${
@@ -139,9 +165,9 @@ function fetchAndRenderDepartments() {
                   </div>
                   <span style="display: inline-block; font-size: 0.7em; padding: 2px 6px; border-radius: 3px; background: ${badgeColor}; color: white; margin-top: 2px;">${template}</span>
                 </div>
-                <span class="fa fa-lock mr-3" style="cursor: pointer; color: #fbbf24; flex-shrink: 0; padding: 4px 8px; opacity: 1;"
-                  onclick="showDepartmentAccessModal('${name.replace(/'/g, "\\'")}', '${communityId}')"
-                  title="Click for more info"></span>
+                <span class="fa ${statusIcon} mr-3" style="cursor: pointer; color: ${statusColor}; flex-shrink: 0; padding: 4px 8px; opacity: 1;"
+                  onclick="showDepartmentAccessModal('${name.replace(/'/g, "\\'")}', '${communityId}', ${isPendingMember})"
+                  title="${statusTitle}"></span>
               </div>
             `
                 : useForm
