@@ -3571,3 +3571,51 @@ function googleTranslateElementInit() {
 }
 </script>
 
+<!-- Notification handlers -->
+<script>
+(function() {
+  // Handle Notifications button clicks
+  function handleNotificationsClick(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    // Check if fetchNotifications function is available
+    if (typeof window.fetchNotifications === 'function') {
+      try {
+        window.fetchNotifications(0);
+        const modal = document.getElementById('notificationModal');
+        if (modal) {
+          modal.style.display = 'flex';
+          document.body.classList.add('modal-open');
+        }
+        return false;
+      } catch (e) {
+        console.error('Error opening notifications modal:', e);
+      }
+    } else {
+      console.error('fetchNotifications function not available');
+    }
+    return false;
+  }
+
+  // Make function globally available
+  window.handleNotificationsClick = handleNotificationsClick;
+
+  // Set up notification modal close button
+  document.addEventListener('DOMContentLoaded', function() {
+    const closeBtn = document.getElementById('notificationModalClose');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function() {
+        const modal = document.getElementById('notificationModal');
+        if (modal) {
+          modal.style.display = 'none';
+          document.body.classList.remove('modal-open');
+        }
+      });
+    }
+  });
+})();
+</script>
+
