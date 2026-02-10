@@ -797,10 +797,44 @@ export default function ApplyPage() {
                   fontSize: '14px',
                   fontWeight: '600',
                   color: '#fff',
-                  marginBottom: '12px'
+                  marginBottom: '8px'
                 }}>
                   Platforms * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(at least one with 500+ followers)</span>
                 </label>
+
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  marginBottom: '16px',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  color: 'rgba(255, 255, 255, 0.6)'
+                }}>
+                  <p style={{ margin: '0 0 10px 0' }}>
+                    Link to your platforms where you create LPC content. Our team will review these to verify active content featuring Lines Police CAD.
+                  </p>
+                  <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+                    <div>
+                      <p style={{ margin: '0 0 4px 0', color: '#22c55e', fontWeight: '500', fontSize: '12px' }}>✓ What we want to see:</p>
+                      <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px' }}>
+                        <li>Content of you actively using LPC</li>
+                        <li>Videos showcasing the CAD in action</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p style={{ margin: '0 0 4px 0', color: '#ef4444', fontWeight: '500', fontSize: '12px' }}>✗ What to avoid:</p>
+                      <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px' }}>
+                        <li>Platforms with no LPC content</li>
+                        <li>Videos where LPC isn&apos;t shown</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <p style={{ margin: '10px 0 0 0', fontStyle: 'italic', fontSize: '12px' }}>
+                    Tip: Include relevant links to help us quickly review your application.
+                  </p>
+                </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {platforms.map((platform, index) => {
@@ -1082,7 +1116,7 @@ export default function ApplyPage() {
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe how you use LPC in your content, what kind of streams/videos you create, and why you'd be a great fit for the Creator Program..."
+                  placeholder="Tell us about your content and how you use LPC. Feel free to include direct links to specific videos or VODs that showcase your LPC content..."
                   rows={4}
                   style={{
                     width: '100%',
@@ -1108,6 +1142,14 @@ export default function ApplyPage() {
                   textAlign: 'right'
                 }}>
                   {description.length}/50 characters minimum
+                </p>
+                <p style={{
+                  fontSize: '12px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  marginTop: '6px',
+                  lineHeight: '1.5'
+                }}>
+                  💡 This is your chance to highlight your best LPC content. Include links to specific videos, timestamps, or VODs where we can see you using the CAD. The more you help us find your content, the faster we can review your application.
                 </p>
                 <p style={{
                   fontSize: '12px',
