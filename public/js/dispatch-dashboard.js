@@ -22,10 +22,53 @@ $(document).ready(function () {
   let currentCallDepartmentFilter = "all"; // Department filter for calls
   let callDepartmentsCache = []; // Cache departments for call filtering
   let callMembersCache = []; // Cache members for resolving assignedTo
+  let callCachesReady = false; // Track if caches are loaded
 
   fetchAndRenderDepartments(); // Fetch and render departments on page load
-  fetchCallDepartments(); // Populate department filter dropdown
-  fetchCallMembers(); // Cache members for call table display
+  initializeCallCaches(); // Load departments and members before displaying calls
+
+  // Initialize caches before loading calls
+  function initializeCallCaches() {
+    const communityId = dbUser.user.lastAccessedCommunity.communityID;
+    if (!communityId) return;
+
+    // Fetch both departments and members in parallel, then mark ready
+    Promise.all([
+      // Fetch departments
+      $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}/departments`,
+        method: "GET",
+      }).then(function (data) {
+        const departments = (data.departments || []).filter(
+          (d) => d.template?.name !== "Civilian"
+        );
+        callDepartmentsCache = departments;
+
+        const $select = $("#callDepartmentFilter");
+        $select.empty();
+        $select.append('<option value="all">All Departments</option>');
+        departments.forEach((dept) => {
+          $select.append(
+            `<option value="${dept._id}">${dept.name}</option>`
+          );
+        });
+      }),
+      // Fetch members
+      $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}/members?limit=500`,
+        method: "GET",
+      }).then(function (data) {
+        callMembersCache = data.members || [];
+      }),
+    ])
+      .then(function () {
+        callCachesReady = true;
+      })
+      .catch(function (err) {
+        console.error("Error loading call caches:", err);
+        callCachesReady = true; // Still allow calls to load
+      });
+  }
 
   // Hide modal utility
   function hideModal(modalId) {
@@ -379,51 +422,6 @@ $(document).ready(function () {
   }
 
   // Fetch departments for call filter dropdown
-  function fetchCallDepartments() {
-    const communityId = dbUser.user.lastAccessedCommunity.communityID;
-    if (!communityId) return;
-
-    $.ajax({
-      url: `${API_URL}/api/v1/community/${communityId}/departments`,
-      method: "GET",
-      success: function (data) {
-        const departments = (data.departments || []).filter(
-          (d) => d.template?.name !== "Civilian"
-        );
-        callDepartmentsCache = departments;
-
-        const $select = $("#callDepartmentFilter");
-        $select.empty();
-        $select.append('<option value="all">All Departments</option>');
-        departments.forEach((dept) => {
-          $select.append(
-            `<option value="${dept._id}">${dept.name}</option>`
-          );
-        });
-      },
-      error: function (xhr) {
-        console.error("Error loading departments:", xhr.responseText);
-      },
-    });
-  }
-
-  // Fetch members for resolving assignedTo in call table
-  function fetchCallMembers() {
-    const communityId = dbUser.user.lastAccessedCommunity.communityID;
-    if (!communityId) return;
-
-    $.ajax({
-      url: `${API_URL}/api/v1/community/${communityId}/members?limit=500`,
-      method: "GET",
-      success: function (data) {
-        callMembersCache = data.members || [];
-      },
-      error: function (xhr) {
-        console.error("Error loading members:", xhr.responseText);
-      },
-    });
-  }
-
   // Set department filter for calls
   function setCallDepartmentFilter(departmentId) {
     currentCallDepartmentFilter = departmentId;
@@ -502,7 +500,7 @@ $(document).ready(function () {
             const assignedNames = assignedToIds
               .map((memberId) => {
                 const member = callMembersCache.find((m) => m._id === memberId);
-                return member ? member.username : null;
+                return member?.user?.username || null;
               })
               .filter((name) => name !== null);
             const unitsAssigned =
