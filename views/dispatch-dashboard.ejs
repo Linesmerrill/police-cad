@@ -662,7 +662,7 @@
               <i class="fa fa-bars" aria-hidden="true" style="z-index: 9; font-size: 1.5em;"></i>
             </button>
           </div>
-          <div class="navbar-header" style="position: absolute; left: 85px;">
+          <div class="navbar-header" style="position: absolute; left: 85px; top: 50%; transform: translateY(-50%);">
             <%
               var communityId = user.user?.lastAccessedCommunity?.communityID || '';
               var communityDisplayName = communityName || 'Community';
