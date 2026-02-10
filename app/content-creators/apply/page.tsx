@@ -1113,6 +1113,22 @@ export default function ApplyPage() {
                 }}>
                   How do you use Lines Police CAD? * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(min 50 characters)</span>
                 </label>
+                <p style={{
+                  fontSize: '13px',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  marginBottom: '12px',
+                  lineHeight: '1.5'
+                }}>
+                  💡 This is your chance to highlight your best LPC content. Include links to specific videos, timestamps, or VODs where we can see you using the CAD. The more you help us find your content, the faster we can review your application.
+                </p>
+                <p style={{
+                  fontSize: '12px',
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  marginBottom: '12px',
+                  fontStyle: 'italic'
+                }}>
+                  This is for our review team only and won&apos;t be shown on your public profile.
+                </p>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -1142,22 +1158,6 @@ export default function ApplyPage() {
                   textAlign: 'right'
                 }}>
                   {description.length}/50 characters minimum
-                </p>
-                <p style={{
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  marginTop: '6px',
-                  lineHeight: '1.5'
-                }}>
-                  💡 This is your chance to highlight your best LPC content. Include links to specific videos, timestamps, or VODs where we can see you using the CAD. The more you help us find your content, the faster we can review your application.
-                </p>
-                <p style={{
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.4)',
-                  marginTop: '4px',
-                  fontStyle: 'italic'
-                }}>
-                  This is for our review team only and won&apos;t be shown on your public profile.
                 </p>
               </div>
 
