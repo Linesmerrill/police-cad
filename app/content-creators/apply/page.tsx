@@ -16,7 +16,8 @@ import {
   PlusIcon,
   XMarkIcon,
   DocumentCheckIcon,
-  GiftIcon
+  GiftIcon,
+  StarIcon
 } from '@heroicons/react/24/outline';
 
 type PlatformType = 'twitch' | 'youtube' | 'tiktok' | 'other';
@@ -823,14 +824,18 @@ export default function ApplyPage() {
                       }
                     }
 
+                    const isPrimary = platform.type === primaryPlatform;
+
                     return (
                       <div
                         key={platform.id}
                         style={{
-                          background: 'rgba(255, 255, 255, 0.03)',
+                          background: isPrimary ? 'rgba(251, 191, 36, 0.03)' : 'rgba(255, 255, 255, 0.03)',
                           borderRadius: '12px',
-                          border: '1px solid rgba(255, 255, 255, 0.06)',
-                          padding: '20px'
+                          border: isPrimary ? '1px solid rgba(251, 191, 36, 0.4)' : '1px solid rgba(255, 255, 255, 0.06)',
+                          padding: '20px',
+                          boxShadow: isPrimary ? '0 0 20px rgba(251, 191, 36, 0.15)' : 'none',
+                          transition: 'all 0.2s ease'
                         }}
                       >
                         <div style={{
@@ -839,29 +844,48 @@ export default function ApplyPage() {
                           justifyContent: 'space-between',
                           marginBottom: '16px'
                         }}>
-                          <select
-                            value={platform.type}
-                            onChange={(e) => updatePlatform(platform.id, 'type', e.target.value)}
-                            style={{
-                              padding: '10px 14px',
-                              fontSize: '14px',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              border: `1px solid ${platformOption?.color || '#6366f1'}40`,
-                              borderRadius: '8px',
-                              color: platformOption?.color || '#fff',
-                              outline: 'none',
-                              cursor: 'pointer',
-                              fontWeight: '600'
-                            }}
-                          >
-                            {platformOptions
-                              .filter(opt => opt.value === platform.type || !getUsedPlatformTypes().has(opt.value))
-                              .map(opt => (
-                                <option key={opt.value} value={opt.value} style={{ background: '#1a1a2e', color: '#fff' }}>
-                                  {opt.label}
-                                </option>
-                              ))}
-                          </select>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <select
+                              value={platform.type}
+                              onChange={(e) => updatePlatform(platform.id, 'type', e.target.value)}
+                              style={{
+                                padding: '10px 14px',
+                                fontSize: '14px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: `1px solid ${platformOption?.color || '#6366f1'}40`,
+                                borderRadius: '8px',
+                                color: platformOption?.color || '#fff',
+                                outline: 'none',
+                                cursor: 'pointer',
+                                fontWeight: '600'
+                              }}
+                            >
+                              {platformOptions
+                                .filter(opt => opt.value === platform.type || !getUsedPlatformTypes().has(opt.value))
+                                .map(opt => (
+                                  <option key={opt.value} value={opt.value} style={{ background: '#1a1a2e', color: '#fff' }}>
+                                    {opt.label}
+                                  </option>
+                                ))}
+                            </select>
+                            {isPrimary && (
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                background: 'rgba(251, 191, 36, 0.15)',
+                                border: '1px solid rgba(251, 191, 36, 0.3)',
+                                borderRadius: '6px',
+                                padding: '4px 8px',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                color: '#fbbf24'
+                              }}>
+                                <StarIcon style={{ width: '14px', height: '14px' }} />
+                                Primary
+                              </div>
+                            )}
+                          </div>
 
                           {platforms.length > 1 && (
                             <button
