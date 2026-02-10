@@ -3,7 +3,7 @@
 
 <head>
   <% include ad-header %>
-  <title>LPC - Fire/EMS Dashboard</title>
+  <title>LPC - <%= departmentName || 'Fire/EMS' %> Dashboard</title>
   <meta charset="utf-8">
   <meta name="description"
     content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
@@ -1943,7 +1943,7 @@
           </div>
           <div class="navbar-header" style="position: absolute; left: 85px;">
             <h1 class="cursive">
-              <a href="#" id="ems-nav-link" data-community-id="<%= user.user.lastAccessedCommunity?.communityID || '' %>"><i class="fa fa-star"></i> EMS</a>
+              <a href="#" id="ems-nav-link" data-community-id="<%= user.user.lastAccessedCommunity?.communityID || '' %>"><i class="fa fa-star"></i> <%= departmentName || 'EMS' %></a>
               <span style="font-size: 0.8em; margin-left: 10px; color: #ccc;">
                 | <a href="/community-dashboard" style="color: #ccc; text-decoration: none;">Lines Police CAD</a>
               </span>
@@ -1988,7 +1988,7 @@
         <div class="header-content">
           <div class="inner">
             <h1 class="cursive">
-              <a href="#" id="ems-header-link" data-community-id="<%= user.user.lastAccessedCommunity?.communityID || '' %>">EMS</a>
+              <a href="#" id="ems-header-link" data-community-id="<%= user.user.lastAccessedCommunity?.communityID || '' %>"><%= departmentName || 'EMS' %></a>
               <span style="font-size: 0.8em; margin-left: 10px; color: #ccc;">
                 | <a href="/community-dashboard" style="color: #ccc; text-decoration: none;">Lines Police CAD</a>
               </span>

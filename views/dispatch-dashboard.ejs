@@ -3,7 +3,7 @@
 
 <head>
   <% include ad-header %>
-  <title>LPC - Dispatch Dashboard</title>
+  <title>LPC - <%= departmentName || 'Dispatch' %> Dashboard</title>
   <meta charset="utf-8">
   <meta name="description"
     content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
@@ -590,7 +590,7 @@
             </button>
           </div>
           <div class="navbar-header" style="position: absolute; left: 85px;">
-            <h1 class="cursive"><a href="/dispatch-dashboard"><i class="fa-solid fa-headset"></i> Dispatch Operations</a> • <a href="/community-dashboard"><span id="community-name"></span></a></h1>
+            <h1 class="cursive"><a href="/dispatch-dashboard"><i class="fa-solid fa-headset"></i> <%= departmentName || 'Dispatch' %></a> • <a href="/community-dashboard"><span id="community-name"></span></a></h1>
           </div>
         </div>
         <a data-toggle="modal" href="#holdTrafficDetailModal" style="z-index: 8;width: 100%;">

@@ -3,7 +3,7 @@
 
 <head>
   <% include ad-header %>
-  <title>LPC - Police Dashboard</title>
+  <title>LPC - <%= departmentName || 'Police' %> Dashboard</title>
   <meta charset="utf-8">
   <meta name="description"
     content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
@@ -547,7 +547,7 @@
             </button>
           </div>
           <div class="navbar-header" style="position: absolute; left: 85px;">
-            <h1 class="cursive"><a href="/police-dashboard"><i class="fa fa-star"></i> Police Operations</a> • <a href="/community-dashboard"><span id="community-name"><%= user.user?.lastAccessedCommunity?.communityName || user.user?.lastAccessedCommunity?.name || 'Community' %></span></a></h1>
+            <h1 class="cursive"><a href="/police-dashboard"><i class="fa fa-star"></i> <%= departmentName || 'Police' %></a> • <a href="/community-dashboard"><span id="community-name"><%= user.user?.lastAccessedCommunity?.communityName || user.user?.lastAccessedCommunity?.name || 'Community' %></span></a></h1>
             
           </div>
           
