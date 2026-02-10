@@ -3321,6 +3321,9 @@ function loadAssignedCalls() {
   if (currentCallFilter === 'open') queryParams += '&status=true';
   else if (currentCallFilter === 'closed') queryParams += '&status=false';
   // 'all' = no status param
+  if (departmentId && departmentId !== 'undefined') {
+    queryParams += `&departmentId=${departmentId}`;
+  }
 
   // Determine heading text
   let headingText = 'Open Calls:';
