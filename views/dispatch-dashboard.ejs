@@ -513,31 +513,16 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-  @media (max-width: 768px) {
-    #callTable th,
-    #callTable td {
-      padding: 6px 8px;
-      font-size: 12px;
-      white-space: nowrap;
-    }
+  @media (max-width: 576px) {
     #callTable th:nth-child(5),
     #callTable td:nth-child(5) {
       /* Units Assigned column - hide on small screens */
       display: none;
     }
-  }
-  @media (max-width: 576px) {
     #callTable th:nth-child(3),
     #callTable td:nth-child(3) {
       /* Department column - hide on very small screens */
       display: none;
-    }
-    #callTable th:nth-child(4),
-    #callTable td:nth-child(4) {
-      /* Description column - truncate */
-      max-width: 120px;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
   }
   </style>
