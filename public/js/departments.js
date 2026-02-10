@@ -109,34 +109,55 @@ function fetchAndRenderDepartments() {
             break;
         }
 
+        // Badge color based on template type
+        let badgeColor = '#6b7280'; // default gray
+        switch (template.toLowerCase()) {
+          case 'police': badgeColor = '#3b82f6'; break; // blue
+          case 'dispatch': badgeColor = '#8b5cf6'; break; // purple
+          case 'fire': badgeColor = '#f97316'; break; // orange
+          case 'ems': badgeColor = '#22c55e'; break; // green
+          case 'civilian': badgeColor = '#6b7280'; break; // gray
+        }
+
         html += `
           <li>
             ${
               isDisabled
                 ? `
-              <div style="display: flex; align-items: center; padding: 10px 0;">
-                <span style="display: flex; align-items: center; flex: 1; min-width: 0; opacity: 0.5; cursor: not-allowed;">
-                  <span class="fa ${icon} ml-3 mr-3" style="flex-shrink: 0;"></span>
-                  <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name} (${template})</span>
-                </span>
-                <span class="fa fa-lock mr-3" style="cursor: pointer; color: #fbbf24; flex-shrink: 0; padding: 4px 8px;"
+              <div style="display: flex; align-items: center; padding: 8px 0;">
+                <span class="fa ${icon} ml-3 mr-3" style="flex-shrink: 0; opacity: 0.5; font-size: 1.2em;"></span>
+                <div style="flex: 1; min-width: 0; opacity: 0.5; cursor: not-allowed;">
+                  <div style="display: flex; align-items: center;">
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${name}</span>
+                  </div>
+                  <span style="display: inline-block; font-size: 0.7em; padding: 2px 6px; border-radius: 3px; background: ${badgeColor}; color: white; margin-top: 2px;">${template}</span>
+                </div>
+                <span class="fa fa-lock mr-3" style="cursor: pointer; color: #fbbf24; flex-shrink: 0; padding: 4px 8px; opacity: 1;"
                   onclick="showDepartmentAccessModal('${name.replace(/'/g, "\\'")}', '${communityId}')"
                   title="Click for more info"></span>
               </div>
             `
                 : useForm
                 ? `
-              <form action="${action}" method="POST" style="display: inline;">
+              <form action="${action}" method="POST" style="display: inline; width: 100%;">
                 <input type="hidden" name="departmentId" value="${departmentId}">
                 <input type="hidden" name="redirect" value="${redirect}">
-                <a href="#" onclick="this.parentNode.submit()">
-                  <span class="fa ${icon} ml-3 mr-3"></span> ${name} (${template})
+                <a href="#" onclick="this.parentNode.submit()" style="display: flex; align-items: center; padding: 8px 0;">
+                  <span class="fa ${icon} ml-3 mr-3" style="flex-shrink: 0; font-size: 1.2em;"></span>
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</div>
+                    <span style="display: inline-block; font-size: 0.7em; padding: 2px 6px; border-radius: 3px; background: ${badgeColor}; color: white; margin-top: 2px;">${template}</span>
+                  </div>
                 </a>
               </form>
             `
                 : `
-              <a href="${action}">
-                <span class="fa ${icon} ml-3 mr-3"></span> ${name} (${template})
+              <a href="${action}" style="display: flex; align-items: center; padding: 8px 0;">
+                <span class="fa ${icon} ml-3 mr-3" style="flex-shrink: 0; font-size: 1.2em;"></span>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</div>
+                  <span style="display: inline-block; font-size: 0.7em; padding: 2px 6px; border-radius: 3px; background: ${badgeColor}; color: white; margin-top: 2px;">${template}</span>
+                </div>
               </a>
             `
             }
