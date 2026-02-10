@@ -487,23 +487,57 @@
     box-shadow: none;
   }
 
-  /* Mobile responsive header - only truncate community name */
-  .navbar-header h1.cursive #community-name {
-    display: inline-block;
+  /* Two-line header layout */
+  .header-two-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-icon-link {
+    display: flex;
+    align-items: center;
+  }
+  .header-icon {
+    font-size: 1.8em;
+    color: #5bc0de;
+  }
+  .header-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+  .header-dept-name {
+    font-size: 1.3em;
+    color: #5bc0de;
+    text-decoration: none;
+  }
+  .header-dept-name:hover {
+    color: #46b8da;
+    text-decoration: none;
+  }
+  .header-community-name {
+    font-size: 0.85em;
+    color: #999;
+    text-decoration: none;
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    vertical-align: bottom;
   }
-  @media (max-width: 768px) {
-    .navbar-header h1.cursive #community-name {
-      max-width: 120px;
-    }
+  .header-community-name:hover {
+    color: #bbb;
+    text-decoration: none;
   }
   @media (max-width: 480px) {
-    .navbar-header h1.cursive #community-name {
-      max-width: 70px;
+    .header-icon {
+      font-size: 1.4em;
+    }
+    .header-dept-name {
+      font-size: 1.1em;
+    }
+    .header-community-name {
+      font-size: 0.75em;
+      max-width: 150px;
     }
   }
 
@@ -635,7 +669,15 @@
               var encodedCommunityId = communityId ? Buffer.from(communityId).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : '';
               var communityDetailsUrl = encodedCommunityId ? '/community/' + encodedCommunityId : '/community-dashboard';
             %>
-            <h1 class="cursive"><a href="/dispatch-dashboard"><i class="fa-solid fa-headset"></i> <%= departmentName || 'Dispatch' %></a> • <a href="<%= communityDetailsUrl %>"><span id="community-name"><%= communityDisplayName %></span></a></h1>
+            <div class="header-two-line">
+              <a href="/dispatch-dashboard" class="header-icon-link">
+                <i class="fa-solid fa-headset header-icon"></i>
+              </a>
+              <div class="header-text">
+                <a href="/dispatch-dashboard" class="header-dept-name cursive"><%= departmentName || 'Dispatch' %></a>
+                <a href="<%= communityDetailsUrl %>" class="header-community-name"><span id="community-name"><%= communityDisplayName %></span></a>
+              </div>
+            </div>
           </div>
         </div>
         <a data-toggle="modal" href="#holdTrafficDetailModal" style="z-index: 8;width: 100%;">
