@@ -1944,14 +1944,14 @@
           <div class="navbar-header" style="position: absolute; left: 85px;">
             <%
               var communityId = user.user.lastAccessedCommunity?.communityID || '';
-              var communityName = user.user.lastAccessedCommunity?.communityName || user.user.lastAccessedCommunity?.name || 'Community';
+              var communityDisplayName = communityName || 'Community';
               var encodedCommunityId = communityId ? Buffer.from(communityId).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : '';
               var communityDetailsUrl = encodedCommunityId ? '/community/' + encodedCommunityId : '/community-dashboard';
             %>
             <h1 class="cursive">
               <a href="#" id="ems-nav-link" data-community-id="<%= communityId %>"><i class="fa fa-star"></i> <%= departmentName || 'EMS' %></a>
               <span style="font-size: 0.8em; margin-left: 10px; color: #ccc;">
-                | <a href="<%= communityDetailsUrl %>" style="color: #ccc; text-decoration: none;"><%= communityName %></a>
+                | <a href="<%= communityDetailsUrl %>" style="color: #ccc; text-decoration: none;"><%= communityDisplayName %></a>
               </span>
             </h1>
           </div>
@@ -1996,7 +1996,7 @@
             <h1 class="cursive">
               <a href="#" id="ems-header-link" data-community-id="<%= communityId %>"><%= departmentName || 'EMS' %></a>
               <span style="font-size: 0.8em; margin-left: 10px; color: #ccc;">
-                | <a href="<%= communityDetailsUrl %>" style="color: #ccc; text-decoration: none;"><%= communityName %></a>
+                | <a href="<%= communityDetailsUrl %>" style="color: #ccc; text-decoration: none;"><%= communityDisplayName %></a>
               </span>
             </h1>
 

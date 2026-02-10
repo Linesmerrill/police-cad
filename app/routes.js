@@ -1476,10 +1476,26 @@ module.exports = function (app, passport, server, nextApp, handle) {
         }
       }
       
-      // Fetch EMS vehicles and calls
+      // Fetch EMS vehicles, calls, and community info
       let dbEmsVehicles = null;
       let dbCalls = null;
-      
+      let communityName = null;
+
+      const communityId = req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
+
+      // Fetch community name
+      if (communityId) {
+        try {
+          const communityResponse = await axios.get(
+            `${policeCadApiUrl}/api/v1/community/${communityId}`,
+            config
+          );
+          communityName = communityResponse.data?.community?.name || null;
+        } catch (err) {
+          console.error('Error fetching community:', err.message);
+        }
+      }
+
       try {
         const vehiclesResponse = await axios.get(
           `${policeCadApiUrl}/api/v1/emsVehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`,
@@ -1489,7 +1505,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       } catch (err) {
         console.error('Error fetching EMS vehicles:', err);
       }
-      
+
       try {
         const callsResponse = await axios.get(
           `${policeCadApiUrl}/api/v2/calls/community/${req.user.user.activeCommunity}?status=true&limit=10&page=1`,
@@ -1500,7 +1516,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       } catch (err) {
         console.error('Error fetching calls:', err);
       }
-      
+
       res.render("ems-dashboard", {
         user: req.user,
         vehicles: exists(dbEmsVehicles) ? dbEmsVehicles : null,
@@ -1510,6 +1526,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         redirect: encodeURIComponent(redirect),
         departmentId: departmentId || req.session.departmentId || null,
         departmentName: departmentName,
+        communityName: communityName,
       });
     } catch (error) {
       console.error('🚨 Error in ems-dashboard route:', error);
@@ -1644,7 +1661,22 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         }
       }
-      
+
+      // Fetch community name
+      let communityName = null;
+      const communityIdForName = req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
+      if (communityIdForName) {
+        try {
+          const communityResponse = await axios.get(
+            `${policeCadApiUrl}/api/v1/community/${communityIdForName}`,
+            config
+          );
+          communityName = communityResponse.data?.community?.name || null;
+        } catch (err) {
+          console.error('Error fetching community:', err.message);
+        }
+      }
+
       res.render("police-dashboard", {
         user: req.user,
         referer: encodeURIComponent("/police-dashboard"),
@@ -1652,6 +1684,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         context: null,
         departmentId: departmentId || req.session.departmentId || null,
         departmentName: departmentName,
+        communityName: communityName,
         apiUrl: policeCadApiUrl,
       });
     } catch (error) {
@@ -1745,7 +1778,22 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         }
       }
-      
+
+      // Fetch community name
+      let communityName = null;
+      const communityIdForName = req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
+      if (communityIdForName) {
+        try {
+          const communityResponse = await axios.get(
+            `${policeCadApiUrl}/api/v1/community/${communityIdForName}`,
+            config
+          );
+          communityName = communityResponse.data?.community?.name || null;
+        } catch (err) {
+          console.error('Error fetching community:', err.message);
+        }
+      }
+
       res.render("dispatch-dashboard", {
         user: req.user,
         referer: encodeURIComponent("/dispatch-dashboard"),
@@ -1753,6 +1801,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         context: null,
         departmentId: departmentId || req.session.departmentId || null,
         departmentName: departmentName,
+        communityName: communityName,
         apiUrl: policeCadApiUrl,
       });
     } catch (error) {

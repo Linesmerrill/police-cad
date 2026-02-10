@@ -592,11 +592,11 @@
           <div class="navbar-header" style="position: absolute; left: 85px;">
             <%
               var communityId = user.user?.lastAccessedCommunity?.communityID || '';
-              var communityName = user.user?.lastAccessedCommunity?.communityName || user.user?.lastAccessedCommunity?.name || 'Community';
+              var communityDisplayName = communityName || 'Community';
               var encodedCommunityId = communityId ? Buffer.from(communityId).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : '';
               var communityDetailsUrl = encodedCommunityId ? '/community/' + encodedCommunityId : '/community-dashboard';
             %>
-            <h1 class="cursive"><a href="/dispatch-dashboard"><i class="fa-solid fa-headset"></i> <%= departmentName || 'Dispatch' %></a> • <a href="<%= communityDetailsUrl %>"><span id="community-name"><%= communityName %></span></a></h1>
+            <h1 class="cursive"><a href="/dispatch-dashboard"><i class="fa-solid fa-headset"></i> <%= departmentName || 'Dispatch' %></a> • <a href="<%= communityDetailsUrl %>"><span id="community-name"><%= communityDisplayName %></span></a></h1>
           </div>
         </div>
         <a data-toggle="modal" href="#holdTrafficDetailModal" style="z-index: 8;width: 100%;">
