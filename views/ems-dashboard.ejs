@@ -1869,29 +1869,23 @@
       -webkit-text-fill-color: #ccc !important;
     }
 
-    /* Mobile responsive header */
-    .navbar-header h1.cursive {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: calc(100vw - 100px);
-      font-size: 1.2em;
-    }
+    /* Mobile responsive header - only truncate community name */
     .navbar-header h1.cursive #community-name {
       display: inline-block;
-      max-width: 150px;
+      max-width: 200px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       vertical-align: bottom;
     }
-    @media (max-width: 576px) {
-      .navbar-header h1.cursive {
-        font-size: 0.95em;
-        max-width: calc(100vw - 70px);
-      }
+    @media (max-width: 768px) {
       .navbar-header h1.cursive #community-name {
-        max-width: 80px;
+        max-width: 120px;
+      }
+    }
+    @media (max-width: 480px) {
+      .navbar-header h1.cursive #community-name {
+        max-width: 70px;
       }
     }
   </style>
