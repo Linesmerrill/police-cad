@@ -1,6 +1,7 @@
 // static/js/departments.js
 function fetchAndRenderDepartments() {
   const communityId = dbUser.user.lastAccessedCommunity.communityID;
+  const currentUserId = dbUser._id;
   $.ajax({
     url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/departments`,
     method: "GET",
@@ -8,8 +9,6 @@ function fetchAndRenderDepartments() {
     success: function (data) {
       const departments = data.departments || [];
       let html = "";
-
-      // Debug departments data
 
       departments.forEach((dept) => {
         const template = dept?.template?.name;
@@ -24,13 +23,18 @@ function fetchAndRenderDepartments() {
           return;
         }
 
+        // Check if current user is a member of this department
+        const isMember = Array.isArray(dept.members) && dept.members.some(
+          (member) => (member.userID || member._id) === currentUserId
+        );
+
         let icon = "fa-building";
         let action = "#";
         let redirect = "";
         const useForm = ["police", "fire", "ems", "dispatch"].includes(
           template.toLowerCase()
         );
-        const isDisabled = [].includes(template.toLowerCase());
+        const isDisabled = !isMember;
 
         // Map icons and routes
         switch (template.toLowerCase()) {
@@ -65,6 +69,10 @@ function fetchAndRenderDepartments() {
             break;
         }
 
+        const disabledAttr = isDisabled
+          ? 'class="disabled-department" title="You are not a member of this department"'
+          : "";
+
         html += `
           <li>
             ${
@@ -73,21 +81,13 @@ function fetchAndRenderDepartments() {
               <form action="${action}" method="POST" style="display: inline;">
                 <input type="hidden" name="departmentId" value="${departmentId}">
                 <input type="hidden" name="redirect" value="${redirect}">
-                <a href="#" ${
-                  isDisabled
-                    ? 'class="disabled-department" title="This department is not yet available"'
-                    : ""
-                } ${isDisabled ? "" : 'onclick="this.parentNode.submit()"'}>
+                <a href="#" ${disabledAttr} ${isDisabled ? "" : 'onclick="this.parentNode.submit()"'}>
                   <span class="fa ${icon} ml-3 mr-3"></span> ${name} (${template})
                 </a>
               </form>
             `
                 : `
-              <a href="${action}" ${
-                    isDisabled
-                      ? 'class="disabled-department" title="This department is not yet available"'
-                      : ""
-                  }>
+              <a href="${action}" ${disabledAttr}>
                 <span class="fa ${icon} ml-3 mr-3"></span> ${name} (${template})
               </a>
             `
