@@ -1178,6 +1178,22 @@ export default function ApplyPage() {
                 }}>
                   Profile Bio * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(20-500 characters)</span>
                 </label>
+
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  marginBottom: '16px',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  color: 'rgba(255, 255, 255, 0.6)'
+                }}>
+                  <p style={{ margin: 0 }}>
+                    ✨ This will be displayed on your public creator profile page. Tell viewers about yourself and your content!
+                  </p>
+                </div>
+
                 <textarea
                   value={bio}
                   onChange={(e) => {
@@ -1185,7 +1201,7 @@ export default function ApplyPage() {
                       setBio(e.target.value);
                     }
                   }}
-                  placeholder="Write a short bio that will be displayed on your public creator profile. Tell viewers about yourself and your content..."
+                  placeholder="Write a short bio about yourself and your content..."
                   rows={3}
                   style={{
                     width: '100%',
@@ -1211,14 +1227,6 @@ export default function ApplyPage() {
                   textAlign: 'right'
                 }}>
                   {bio.length}/500 characters
-                </p>
-                <p style={{
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.4)',
-                  marginTop: '4px',
-                  fontStyle: 'italic'
-                }}>
-                  This will be displayed on your public creator profile page.
                 </p>
               </div>
 
