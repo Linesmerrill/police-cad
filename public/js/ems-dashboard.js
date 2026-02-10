@@ -5009,13 +5009,16 @@ function loadAssignedCalls() {
     currentDepartmentId = departmentId;
   }
 
-  // Build query parameters
-  // Note: Using high limit since we filter by department client-side
-  // TODO: Add department filter to API for proper pagination
-  let queryParams = `?limit=100`;
+  // Build query parameters with server-side department filtering
+  let queryParams = `?limit=${callLimit}&page=${currentCallPage}`;
   if (currentCallFilter === 'open') queryParams += '&status=true';
   else if (currentCallFilter === 'closed') queryParams += '&status=false';
   // 'all' = no status param
+
+  // Add department filter for server-side filtering
+  if (currentDepartmentId) {
+    queryParams += `&departmentId=${currentDepartmentId}`;
+  }
 
   // Determine heading text based on filter
   let filterText = 'Open';
@@ -5061,50 +5064,45 @@ function loadAssignedCalls() {
       $('[data-toggle="tooltip"]').tooltip();
 
       if (data && data.length > 0) {
-        // Filter calls to only show those assigned to the current department
-        const filteredCalls = data.filter(call => {
-          if (!currentDepartmentId) {
-            return false;
+        // Calls are already filtered by department on the server
+        data.forEach(call => {
+          const is911Call = (call?.call?.title?.startsWith('911:') || call?.call?.details?.startsWith('911:'));
+          const isOpen = call?.call?.status === true;
+          // Open 911 calls are red, open regular calls are green, closed calls are gray
+          let alertClass = 'alert-secondary';
+          if (isOpen) {
+            alertClass = is911Call ? 'alert-danger' : 'alert-success';
           }
-          const callDepartments = call?.call?.departments || [];
-          return callDepartments.includes(currentDepartmentId);
+          const statusLabel = isOpen ? 'Open' : 'Closed';
+          $container.append(
+            `<a id="${call._id}" href="javascript:void(0)" onclick="event.stopPropagation(); populateCallDetails('${call._id}');">
+              <div class="alert ${alertClass} alert-dismissible show" role="alert">
+                <strong>[${statusLabel}]</strong> <span id="${call._id}-createdAt" style="text-transform:capitalize">
+                  <time>${call?.call?.createdAt || 'N/A'}</time> | Description: <span id="${call._id}-description">${call?.call?.title || 'N/A'} | ${call?.call?.details || 'N/A'}</span>
+                </span>
+              </div>
+            </a>`
+          );
         });
-
-        if (filteredCalls.length > 0) {
-          filteredCalls.forEach(call => {
-            const is911Call = (call?.call?.title?.startsWith('911:') || call?.call?.details?.startsWith('911:'));
-            const isOpen = call?.call?.status === true;
-            // Open 911 calls are red, open regular calls are green, closed calls are gray
-            let alertClass = 'alert-secondary';
-            if (isOpen) {
-              alertClass = is911Call ? 'alert-danger' : 'alert-success';
-            }
-            const statusLabel = isOpen ? 'Open' : 'Closed';
-            $container.append(
-              `<a id="${call._id}" href="javascript:void(0)" onclick="event.stopPropagation(); populateCallDetails('${call._id}');">
-                <div class="alert ${alertClass} alert-dismissible show" role="alert">
-                  <strong>[${statusLabel}]</strong> <span id="${call._id}-createdAt" style="text-transform:capitalize">
-                    <time>${call?.call?.createdAt || 'N/A'}</time> | Description: <span id="${call._id}-description">${call?.call?.title || 'N/A'} | ${call?.call?.details || 'N/A'}</span>
-                  </span>
-                </div>
-              </a>`
-            );
-          });
-        } else {
-          const urlParams = new URLSearchParams(window.location.search);
-          const departmentName = urlParams.get('dept') || 'your department';
-          const noCallsText = currentCallFilter === 'all' ? 'No calls' :
-                             currentCallFilter === 'closed' ? 'No closed calls' : 'No open calls';
-          $container.append(`<p class="text-center" style="font-style: italic; font-size: 14px">${noCallsText} assigned to ${departmentName} at this time.</p>`);
-        }
       } else {
+        const urlParams = new URLSearchParams(window.location.search);
+        const departmentName = urlParams.get('dept') || 'your department';
         const noCallsText = currentCallFilter === 'all' ? 'No calls' :
                            currentCallFilter === 'closed' ? 'No closed calls' : 'No open calls';
-        $container.append(`<p class="text-center" style="font-style: italic; font-size: 14px">${noCallsText} at this time.</p>`);
+        $container.append(`<p class="text-center" style="font-style: italic; font-size: 14px">${noCallsText} assigned to ${departmentName} at this time.</p>`);
       }
 
-      // Note: Pagination disabled for EMS because calls are filtered client-side by department
-      // TODO: Add department filter to API v2 for proper server-side pagination
+      // Add pagination controls if needed
+      if (totalCount > callLimit) {
+        const totalPages = Math.ceil(totalCount / callLimit);
+        $container.append(`
+          <div class="call-pagination d-flex justify-content-between mt-2">
+            <button class="btn btn-primary" onclick="changeCallPage(${currentCallPage - 1})" ${currentCallPage === 1 ? 'disabled' : ''}>Previous</button>
+            <span class="align-self-center">Page ${currentCallPage} of ${totalPages}</span>
+            <button class="btn btn-primary" onclick="changeCallPage(${currentCallPage + 1})" ${currentCallPage >= totalPages ? 'disabled' : ''}>Next</button>
+          </div>
+        `);
+      }
     },
     error: function(xhr) {
       console.error('Error loading assigned calls:', xhr.responseText);
