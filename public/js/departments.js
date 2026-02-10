@@ -104,9 +104,10 @@ function fetchAndRenderDepartments() {
         );
         const isDisabled = !canAccess;
 
-        // Build query params for department
+        // Build query params for department (include community ID for proper context)
         const encodedDeptId = encodeDepartmentId(departmentId);
-        const deptQueryParams = `?dept=${encodeURIComponent(name)}&d=${encodedDeptId}`;
+        const encodedCommunityId = encodeCommunityIdForUrl(communityId);
+        const deptQueryParams = `?dept=${encodeURIComponent(name)}&d=${encodedDeptId}&c=${encodedCommunityId}`;
 
         // Map icons and routes
         switch (template.toLowerCase()) {

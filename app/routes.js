@@ -1401,39 +1401,56 @@ module.exports = function (app, passport, server, nextApp, handle) {
           let base64 = encodedDeptId
             .replace(/-/g, '+')
             .replace(/_/g, '/');
-          
+
           // Add padding back
           while (base64.length % 4) {
             base64 += '=';
           }
-          
+
           departmentId = Buffer.from(base64, 'base64').toString('utf8');
         } catch (e) {
           console.error('Failed to decode department ID:', e);
           departmentId = null;
         }
       }
-      
+
+      // Decode the community ID from URL param if present
+      const encodedCommunityId = req.query.c || null;
+      let urlCommunityId = null;
+      if (encodedCommunityId) {
+        try {
+          let base64 = encodedCommunityId
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          urlCommunityId = Buffer.from(base64, 'base64').toString('utf8');
+        } catch (e) {
+          console.error('Failed to decode community ID from URL:', e);
+        }
+      }
+
+      // Use community ID from URL if provided, otherwise fall back to user's context
+      const communityId = urlCommunityId || req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
+
       // If no department context is provided, redirect to community or communities
       if (!(departmentId || req.session.departmentId) && !departmentName) {
-        const communityId = (req.user && req.user.user && (req.user.user.lastAccessedCommunity && req.user.user.lastAccessedCommunity.communityID)) || (req.user && req.user.user && req.user.user.activeCommunity);
         if (communityId) {
           return res.redirect(`/community/${encodeId(communityId)}?notice=selectDepartment#departments-section`);
         }
         return res.redirect('/communities');
       }
-      
+
       // If a specific department is requested, verify user access
       if (departmentId && departmentName) {
-        const communityId = req.user.user.lastAccessedCommunity?.communityID || req.user.user.activeCommunity;
-        
         if (!communityId) {
           return res.status(403).render("error", {
             message: "No active community found. Please select a community first.",
             redirect: "/communities",
           });
         }
-        
+
         // --- ADMIN CHECK USING COMMUNITY ROLES API ---
         let isAdmin = false;
         try {
@@ -1455,7 +1472,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           console.error('Error fetching community roles:', err.message);
         }
         // --- END ADMIN CHECK ---
-        
+
         if (!isAdmin) {
           // Check if user has access to this department by fetching user's departments
           const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
@@ -1475,15 +1492,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         }
       }
-      
+
       // Fetch EMS vehicles, calls, and community info
       let dbEmsVehicles = null;
       let dbCalls = null;
       let communityName = null;
 
-      const communityId = req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
-
-      // Fetch community name
+      // Fetch community name using the resolved community ID
       if (communityId) {
         try {
           const communityResponse = await axios.get(
@@ -1587,39 +1602,56 @@ module.exports = function (app, passport, server, nextApp, handle) {
           let base64 = encodedDeptId
             .replace(/-/g, '+')
             .replace(/_/g, '/');
-          
+
           // Add padding back
           while (base64.length % 4) {
             base64 += '=';
           }
-          
+
           departmentId = Buffer.from(base64, 'base64').toString('utf8');
         } catch (e) {
           console.error('Failed to decode department ID:', e);
           departmentId = null;
         }
       }
-      
+
+      // Decode the community ID from URL param if present
+      const encodedCommunityId = req.query.c || null;
+      let urlCommunityId = null;
+      if (encodedCommunityId) {
+        try {
+          let base64 = encodedCommunityId
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          urlCommunityId = Buffer.from(base64, 'base64').toString('utf8');
+        } catch (e) {
+          console.error('Failed to decode community ID from URL:', e);
+        }
+      }
+
+      // Use community ID from URL if provided, otherwise fall back to user's context
+      const communityId = urlCommunityId || req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
+
       // If no department context is provided, redirect to community or communities
       if (!(departmentId || req.session.departmentId) && !departmentName) {
-        const communityId = (req.user && req.user.user && (req.user.user.lastAccessedCommunity && req.user.user.lastAccessedCommunity.communityID)) || (req.user && req.user.user && req.user.user.activeCommunity);
         if (communityId) {
           return res.redirect(`/community/${encodeId(communityId)}?notice=selectDepartment#departments-section`);
         }
         return res.redirect('/communities');
       }
-      
+
       // If a specific department is requested, verify user access
       if (departmentId && departmentName) {
-        const communityId = req.user.user.lastAccessedCommunity?.communityID || req.user.user.activeCommunity;
-        
         if (!communityId) {
           return res.status(403).render("error", {
             message: "No active community found. Please select a community first.",
             redirect: "/communities",
           });
         }
-        
+
         // --- ADMIN CHECK USING COMMUNITY ROLES API ---
         let isAdmin = false;
         try {
@@ -1641,7 +1673,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           console.error('Error fetching community roles:', err.message);
         }
         // --- END ADMIN CHECK ---
-        
+
         if (!isAdmin) {
           // Check if user has access to this department by fetching user's departments
           const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
@@ -1662,13 +1694,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
         }
       }
 
-      // Fetch community name
+      // Fetch community name using the resolved community ID
       let communityName = null;
-      const communityIdForName = req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
-      if (communityIdForName) {
+      if (communityId) {
         try {
           const communityResponse = await axios.get(
-            `${policeCadApiUrl}/api/v1/community/${communityIdForName}`,
+            `${policeCadApiUrl}/api/v1/community/${communityId}`,
             config
           );
           communityName = communityResponse.data?.community?.name || null;
@@ -1713,30 +1744,48 @@ module.exports = function (app, passport, server, nextApp, handle) {
           let base64 = encodedDeptId
             .replace(/-/g, '+')
             .replace(/_/g, '/');
-          
+
           // Add padding back
           while (base64.length % 4) {
             base64 += '=';
           }
-          
+
           departmentId = Buffer.from(base64, 'base64').toString('utf8');
         } catch (e) {
           console.error('Failed to decode department ID:', e);
           departmentId = null;
         }
       }
-      
+
+      // Decode the community ID from URL param if present
+      const encodedCommunityId = req.query.c || null;
+      let urlCommunityId = null;
+      if (encodedCommunityId) {
+        try {
+          let base64 = encodedCommunityId
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          urlCommunityId = Buffer.from(base64, 'base64').toString('utf8');
+        } catch (e) {
+          console.error('Failed to decode community ID from URL:', e);
+        }
+      }
+
+      // Use community ID from URL if provided, otherwise fall back to user's context
+      const communityId = urlCommunityId || req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
+
       // If a specific department is requested, verify user access
       if (departmentId && departmentName) {
-        const communityId = req.user.user.lastAccessedCommunity?.communityID || req.user.user.activeCommunity;
-        
         if (!communityId) {
           return res.status(403).render("error", {
             message: "No active community found. Please select a community first.",
             redirect: "/communities",
           });
         }
-        
+
         // --- ADMIN CHECK USING COMMUNITY ROLES API ---
         let isAdmin = false;
         try {
@@ -1758,7 +1807,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           console.error('Error fetching community roles:', err.message);
         }
         // --- END ADMIN CHECK ---
-        
+
         if (!isAdmin) {
           // Check if user has access to this department by fetching user's departments
           const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
@@ -1779,13 +1828,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
         }
       }
 
-      // Fetch community name
+      // Fetch community name using the resolved community ID
       let communityName = null;
-      const communityIdForName = req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
-      if (communityIdForName) {
+      if (communityId) {
         try {
           const communityResponse = await axios.get(
-            `${policeCadApiUrl}/api/v1/community/${communityIdForName}`,
+            `${policeCadApiUrl}/api/v1/community/${communityId}`,
             config
           );
           communityName = communityResponse.data?.community?.name || null;
