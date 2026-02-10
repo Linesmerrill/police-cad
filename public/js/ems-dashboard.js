@@ -4763,41 +4763,32 @@ function loadTenCodes() {
   $('#tenCodesMiddle').html('');
   $('#tenCodesRight').html('');
 
-  fetch(`${POLICE_CAD_API_URL}/api/v1/community/${communityId}`, {
+  $.ajax({
+    url: `${POLICE_CAD_API_URL}/api/v1/community/${communityId}`,
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${dbUser.token || ''}`
-    }
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(data => {
-    tenCodesCache = data?.community?.tenCodes || [];
-    
-    // Build tenCodeMap
-    tenCodeMap = {};
-    tenCodesCache.forEach(tc => {
-      tenCodeMap[tc._id] = tc.code;
-    });
+    success: function(data) {
+      tenCodesCache = data?.community?.tenCodes || [];
 
-    if (tenCodesCache.length === 0) {
-      $('#noTenCodesModal').text('No 10-codes available for this community.').show();
+      // Build tenCodeMap
+      tenCodeMap = {};
+      tenCodesCache.forEach(tc => {
+        tenCodeMap[tc._id] = tc.code;
+      });
+
+      if (tenCodesCache.length === 0) {
+        $('#noTenCodesModal').text('No 10-codes available for this community.').show();
+        $('#tenCodesContent').hide();
+      } else {
+        $('#noTenCodesModal').hide();
+        $('#tenCodesContent').show();
+        displayTenCodes(tenCodesCache);
+      }
+    },
+    error: function(xhr, status, error) {
+      console.error('❌ Error loading 10-codes:', error);
+      $('#noTenCodesModal').text('Failed to load 10-codes: ' + error).show();
       $('#tenCodesContent').hide();
-    } else {
-      $('#noTenCodesModal').hide();
-      $('#tenCodesContent').show();
-      displayTenCodes(tenCodesCache);
     }
-  })
-  .catch(error => {
-    console.error('❌ Error loading 10-codes:', error);
-    $('#noTenCodesModal').text('Failed to load 10-codes: ' + error.message).show();
-    $('#tenCodesContent').hide();
   });
 }
 
