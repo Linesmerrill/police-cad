@@ -104,36 +104,35 @@ function fetchAndRenderDepartments() {
         );
         const isDisabled = !canAccess;
 
+        // Build query params for department
+        const encodedDeptId = encodeDepartmentId(departmentId);
+        const deptQueryParams = `?dept=${encodeURIComponent(name)}&d=${encodedDeptId}`;
+
         // Map icons and routes
         switch (template.toLowerCase()) {
           case "civilian":
             icon = "fa-user";
-            action = "/civ-dashboard";
-            // Add department name as query parameter for civilian departments
-            if (action !== "#") {
-              const encodedDeptId = encodeDepartmentId(departmentId);
-              action += `?dept=${encodeURIComponent(name)}&d=${encodedDeptId}`;
-            }
+            action = `/civ-dashboard${deptQueryParams}`;
             break;
           case "police":
             icon = "fa-shield";
             action = "/select-department";
-            redirect = "/police-dashboard";
+            redirect = `/police-dashboard${deptQueryParams}`;
             break;
           case "dispatch":
             icon = "fa-headset";
             action = "/select-department";
-            redirect = "/dispatch-dashboard";
+            redirect = `/dispatch-dashboard${deptQueryParams}`;
             break;
           case "fire":
             icon = "fa-fire-extinguisher";
             action = "/select-department";
-            redirect = "/ems-dashboard";
+            redirect = `/ems-dashboard${deptQueryParams}`;
             break;
           case "ems":
             icon = "fa-medkit";
             action = "/select-department";
-            redirect = "/ems-dashboard";
+            redirect = `/ems-dashboard${deptQueryParams}`;
             break;
         }
 
