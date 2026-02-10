@@ -1,4 +1,44 @@
 // static/js/departments.js
+
+// Show modal when user clicks lock icon on a department they don't have access to
+function showDepartmentAccessModal(departmentName, communityId) {
+  const communityUrl = `/community/${communityId}`;
+
+  // Create modal if it doesn't exist
+  if ($('#departmentAccessModal').length === 0) {
+    $('body').append(`
+      <div class="modal fade" id="departmentAccessModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content" style="background-color: #1a1a2e; border: 1px solid rgba(255,255,255,0.1);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+              <h5 class="modal-title text-white"><i class="fa fa-lock mr-2"></i>Access Restricted</h5>
+              <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body text-center py-4">
+              <div class="mb-3">
+                <i class="fa fa-lock fa-3x text-warning"></i>
+              </div>
+              <p class="text-white mb-2">You don't have access to the <strong id="deptAccessName"></strong> department.</p>
+              <p class="text-muted">You can request to join from the community details page.</p>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.1);">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <a id="deptAccessLink" href="#" class="btn btn-primary"><i class="fa fa-external-link-alt mr-2"></i>Go to Community</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  // Update modal content
+  $('#deptAccessName').text(departmentName);
+  $('#deptAccessLink').attr('href', communityUrl);
+
+  // Show modal
+  $('#departmentAccessModal').modal('show');
+}
+
 function fetchAndRenderDepartments() {
   const communityId = dbUser.user.lastAccessedCommunity.communityID;
   const currentUserId = dbUser._id;
@@ -69,25 +109,31 @@ function fetchAndRenderDepartments() {
             break;
         }
 
-        const disabledAttr = isDisabled
-          ? 'class="disabled-department" title="You are not a member of this department"'
+        const lockIcon = isDisabled
+          ? `<span class="fa fa-lock ml-2" style="cursor: pointer; color: #fbbf24;" onclick="event.stopPropagation(); showDepartmentAccessModal('${name.replace(/'/g, "\\'")}', '${communityId}')"></span>`
           : "";
 
         html += `
           <li>
             ${
-              useForm
+              isDisabled
+                ? `
+              <span class="disabled-department" style="display: flex; align-items: center;">
+                <span class="fa ${icon} ml-3 mr-3"></span> ${name} (${template}) ${lockIcon}
+              </span>
+            `
+                : useForm
                 ? `
               <form action="${action}" method="POST" style="display: inline;">
                 <input type="hidden" name="departmentId" value="${departmentId}">
                 <input type="hidden" name="redirect" value="${redirect}">
-                <a href="#" ${disabledAttr} ${isDisabled ? "" : 'onclick="this.parentNode.submit()"'}>
+                <a href="#" onclick="this.parentNode.submit()">
                   <span class="fa ${icon} ml-3 mr-3"></span> ${name} (${template})
                 </a>
               </form>
             `
                 : `
-              <a href="${action}" ${disabledAttr}>
+              <a href="${action}">
                 <span class="fa ${icon} ml-3 mr-3"></span> ${name} (${template})
               </a>
             `
