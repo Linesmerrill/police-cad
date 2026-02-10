@@ -83,14 +83,14 @@ function renderNotifications() {
     ) {
       const isLoading = notificationLoading[notification.notificationId];
       actionButtons = `
-          <div style="display: flex; gap: 0.5rem; margin-top: 0.65rem;">
+          <div style="display: flex; gap: 8px; margin-top: 10px;">
             <button style="
               background: rgba(34, 197, 94, 0.12);
               color: #4ade80;
               border: 1px solid rgba(34, 197, 94, 0.2);
               border-radius: 8px;
-              padding: 0.45rem 1rem;
-              font-size: 0.8rem;
+              padding: 7px 16px;
+              font-size: 13px;
               font-weight: 500;
               cursor: pointer;
               transition: all 0.15s;
@@ -104,8 +104,8 @@ function renderNotifications() {
               color: #f87171;
               border: 1px solid rgba(239, 68, 68, 0.2);
               border-radius: 8px;
-              padding: 0.45rem 1rem;
-              font-size: 0.8rem;
+              padding: 7px 16px;
+              font-size: 13px;
               font-weight: 500;
               cursor: pointer;
               transition: all 0.15s;
@@ -119,7 +119,7 @@ function renderNotifications() {
     } else if (notification.status) {
       const statusColor = notification.status === "approved" ? "#4ade80" : "#f87171";
       const statusBg = notification.status === "approved" ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)";
-      actionButtons = `<span style="display: inline-block; margin-top: 0.5rem; color: ${statusColor}; background: ${statusBg}; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 6px; font-weight: 500;">${
+      actionButtons = `<span style="display: inline-block; margin-top: 8px; color: ${statusColor}; background: ${statusBg}; font-size: 12px; padding: 3px 10px; border-radius: 6px; font-weight: 500;">${
         notification.status === "approved" ? "Accepted" : "Declined"
       }</span>`;
     }
@@ -136,8 +136,8 @@ function renderNotifications() {
     }
 
     $list.append(`
-        <div class="notification-item" style="padding: 0.85rem 1.25rem; ${unseenStyle} transition: background 0.15s;">
-          <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+        <div class="notification-item" style="padding: 14px 20px; ${unseenStyle} transition: background 0.15s;">
+          <div style="display: flex; align-items: flex-start; gap: 12px;">
             <div style="flex-shrink: 0; margin-top: 2px;">
               <img src="${
                 notification.senderProfilePic ||
@@ -146,12 +146,12 @@ function renderNotifications() {
                   "&background=1e293b&color=94a3b8&size=256"
               }"
                 alt="${notification.senderUsername || "Unknown"}"
-                style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); object-fit: cover;">
+                style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); object-fit: cover;">
             </div>
             <div style="flex: 1; min-width: 0;">
-              <p style="margin: 0; color: #e2e8f0; font-size: 0.875rem; line-height: 1.45; word-wrap: break-word;">${message}</p>
-              <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem;">
-                <span style="color: #64748b; font-size: 0.75rem;">${notification.timeAgo}</span>
+              <p style="margin: 0; color: #e2e8f0; font-size: 14px; line-height: 1.45; word-wrap: break-word;">${message}</p>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+                <span style="color: #64748b; font-size: 12px;">${notification.timeAgo}</span>
                 ${unseenDot}
               </div>
               ${actionButtons}
@@ -159,7 +159,7 @@ function renderNotifications() {
             <div style="flex-shrink: 0;">
               <button style="
                 width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-                background: rgba(255, 255, 255, 0.04); border: none; color: #64748b; font-size: 0.85rem;
+                background: rgba(255, 255, 255, 0.04); border: none; color: #64748b; font-size: 14px;
                 cursor: pointer; border-radius: 8px; transition: all 0.15s;
               " onclick="openNotificationMenu('${notification.notificationId}', event)"
                 onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#e2e8f0'"
