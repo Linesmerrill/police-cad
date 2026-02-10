@@ -21,9 +21,11 @@ $(document).ready(function () {
   let currentCallFilter = "open"; // Filter: "all", "open", or "closed"
   let currentCallDepartmentFilter = "all"; // Department filter for calls
   let callDepartmentsCache = []; // Cache departments for call filtering
+  let callMembersCache = []; // Cache members for resolving assignedTo
 
   fetchAndRenderDepartments(); // Fetch and render departments on page load
   fetchCallDepartments(); // Populate department filter dropdown
+  fetchCallMembers(); // Cache members for call table display
 
   // Hide modal utility
   function hideModal(modalId) {
@@ -405,6 +407,23 @@ $(document).ready(function () {
     });
   }
 
+  // Fetch members for resolving assignedTo in call table
+  function fetchCallMembers() {
+    const communityId = dbUser.user.lastAccessedCommunity.communityID;
+    if (!communityId) return;
+
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${communityId}/members?limit=500`,
+      method: "GET",
+      success: function (data) {
+        callMembersCache = data.members || [];
+      },
+      error: function (xhr) {
+        console.error("Error loading members:", xhr.responseText);
+      },
+    });
+  }
+
   // Set department filter for calls
   function setCallDepartmentFilter(departmentId) {
     currentCallDepartmentFilter = departmentId;
@@ -477,35 +496,23 @@ $(document).ready(function () {
               `${call.call?.title || ""}${
                 call.call?.details ? " | " + call.call.details : ""
               }` || "N/A";
-            const policeUnits =
-              call.call?.assignedOfficers?.length > 0
-                ? call.call.assignedOfficers
-                    .map(
-                      (o) =>
-                        `${o.name || "Unknown"} (${o.badgeNumber || "N/A"})`
-                    )
-                    .join(", ")
-                : "";
-            const fireEmsUnits =
-              call.call?.assignedFireEms?.length > 0
-                ? call.call.assignedFireEms
-                    .map((u) => u.unitName || "Unknown")
-                    .join(", ")
-                : "";
+
+            // Get assigned units from assignedTo (array of member IDs)
+            const assignedToIds = call.call?.assignedTo || [];
+            const assignedNames = assignedToIds
+              .map((memberId) => {
+                const member = callMembersCache.find((m) => m._id === memberId);
+                return member ? member.username : null;
+              })
+              .filter((name) => name !== null);
             const unitsAssigned =
-              policeUnits || fireEmsUnits
-                ? `
-              ${
-                policeUnits
-                  ? `<span class="badge badge-secondary">${policeUnits}</span>`
-                  : ""
-              }
-              ${
-                fireEmsUnits
-                  ? `<span class="badge badge-secondary">${fireEmsUnits}</span>`
-                  : ""
-              }
-            `
+              assignedNames.length > 0
+                ? assignedNames
+                    .map(
+                      (name) =>
+                        `<span class="badge badge-secondary">${name}</span>`
+                    )
+                    .join(" ")
                 : '<span class="text-muted">-</span>';
 
             $tbody.append(`
