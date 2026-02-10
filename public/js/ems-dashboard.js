@@ -5021,7 +5021,7 @@ function loadAssignedCalls() {
   else if (currentCallFilter === 'closed') filterText = 'Closed';
 
   $.ajax({
-    url: `${POLICE_CAD_API_URL}/api/v1/calls/community/${communityId}${queryParams}`,
+    url: `${POLICE_CAD_API_URL}/api/v2/calls/community/${communityId}${queryParams}`,
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${dbUser.token || ''}`

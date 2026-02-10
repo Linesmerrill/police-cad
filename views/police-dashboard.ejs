@@ -3328,7 +3328,7 @@ function loadAssignedCalls() {
   else if (currentCallFilter === 'closed') headingText = 'Closed Calls:';
 
   $.ajax({
-    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/calls/community/${communityId}${queryParams}`,
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v2/calls/community/${communityId}${queryParams}`,
     method: 'GET',
     success: function(response) {
       const $container = $('#assigned-call-container');

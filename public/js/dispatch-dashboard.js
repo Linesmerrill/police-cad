@@ -38,16 +38,14 @@ $(document).ready(function () {
     $("body").css("padding-right", "");
   }
 
-  // Cleanup all modals - ensures no stray backdrops or modal states
+  // Cleanup all modals - ensures no stray backdrops
   function cleanupAllModals() {
-    // Hide all open modals
-    $(".modal.show").modal("hide");
-    // Remove all backdrops
+    // Remove any stray backdrops
     $(".modal-backdrop").remove();
-    // Reset body state
-    $("body").removeClass("modal-open").css("padding-right", "");
-    // Reset all modal states
-    $(".modal").removeClass("show").css("display", "none").removeData("bs.modal");
+    // Reset body state if no modals are open
+    if ($(".modal.show").length === 0) {
+      $("body").removeClass("modal-open").css("padding-right", "");
+    }
   }
 
   // Show confirmation modals (for nested modal support)
@@ -391,7 +389,7 @@ $(document).ready(function () {
     // "all" = no status param, returns all calls
 
     $.ajax({
-      url: `${API_URL}/api/v1/calls/community/${communityId}?limit=${callLimit}&page=${currentCallPage}${statusParam}`,
+      url: `${API_URL}/api/v2/calls/community/${communityId}?limit=${callLimit}&page=${currentCallPage}${statusParam}`,
       method: "GET",
       success: function (response) {
         const $tbody = $("#callTable tbody");
@@ -467,15 +465,17 @@ $(document).ready(function () {
         }
         const $paginationContainer = $(".call-pagination");
         $paginationContainer.empty();
+        const totalPages = Math.ceil(totalCount / callLimit);
         if (totalCount > callLimit) {
           $paginationContainer.append(`
             <button class="btn btn-primary" onclick="changeCallPage(${
               currentCallPage - 1
             })" ${currentCallPage === 1 ? "disabled" : ""}>Previous</button>
+            <span class="mx-3 align-self-center">Page ${currentCallPage} of ${totalPages}</span>
             <button class="btn btn-primary" onclick="changeCallPage(${
               currentCallPage + 1
             })" ${
-            currentCallPage * callLimit >= totalCount ? "disabled" : ""
+            currentCallPage >= totalPages ? "disabled" : ""
           }>Next</button>
           `);
         }
@@ -682,7 +682,7 @@ $(document).ready(function () {
       // Initialize Select2
       $("#departmentsSelect")
         .select2({
-          placeholder: "Select departments",
+          placeholder: "Select...",
           width: "100%",
           dropdownParent: $("#callDetailModal"),
         })
@@ -832,7 +832,10 @@ $(document).ready(function () {
   }
 
   function confirmDeleteCall() {
-    cleanupAllModals();
+    // Hide both modals properly
+    $("#deleteCallModal").modal("hide");
+    $("#callDetailModal").modal("hide");
+
     const callId = $("#callIDDetail").val();
     $.ajax({
       url: `${API_URL}/api/v1/call/${callId}`,
@@ -846,13 +849,16 @@ $(document).ready(function () {
       },
       error: function (xhr) {
         console.error("Error deleting call:", xhr.responseText);
-        showToast("Failed to delete call: " + (xhr.responseJSON?.message || "Unknown error"), "danger");
+        showToast("Failed to delete call: " + (xhr.responseJSON?.message || "Unknown error"), "error");
       },
     });
   }
 
   function confirmMarkAsCompleted() {
-    cleanupAllModals();
+    // Hide both modals properly
+    $("#markCompletedModal").modal("hide");
+    $("#callDetailModal").modal("hide");
+
     const callId = $("#callIDDetail").val();
     const noteData = {
       note: `${dbUser.user.username} marked the call as completed.`,
@@ -882,13 +888,16 @@ $(document).ready(function () {
       },
       error: function (xhr) {
         console.error("Error marking call as completed:", xhr.responseText);
-        showToast("Failed to mark call as completed: " + (xhr.responseJSON?.message || "Unknown error"), "danger");
+        showToast("Failed to mark call as completed: " + (xhr.responseJSON?.message || "Unknown error"), "error");
       },
     });
   }
 
   function confirmReopenCall() {
-    cleanupAllModals();
+    // Hide both modals properly
+    $("#reopenCallModal").modal("hide");
+    $("#callDetailModal").modal("hide");
+
     const callId = $("#callIDDetail").val();
     const noteData = {
       note: `${dbUser.user.username} reopened the call.`,
@@ -918,7 +927,7 @@ $(document).ready(function () {
       },
       error: function (xhr) {
         console.error("Error reopening call:", xhr.responseText);
-        showToast("Failed to reopen call: " + (xhr.responseJSON?.message || "Unknown error"), "danger");
+        showToast("Failed to reopen call: " + (xhr.responseJSON?.message || "Unknown error"), "error");
       },
     });
   }
@@ -1064,121 +1073,86 @@ $(document).ready(function () {
     });
   }
 
-  // Initialize departments and members data on modal show
-  $("#callModal")
-    .off("show.bs.modal")
-    .on("show.bs.modal", function () {
-      // Clear inputs
-      $("#callTitle, #callDetails, #callNote").val("");
-
-      // Only destroy Select2 if initialized
-      if (isCallModalSelect2Initialized) {
-        try {
-          $("#callDepartments, #callMembers").select2("destroy");
-        } catch (e) {
-          console.error("Error destroying Select2:", e);
-        }
-      }
-      $("#callDepartments, #callMembers").empty();
-      isCallModalSelect2Initialized = false;
-
-      // Fetch departments
-      $.ajax({
-        url: `${API_URL}/api/v1/community/${dbUser.user.lastAccessedCommunity.communityID}/departments`,
-        method: "GET",
-        success: function (deptResponse) {
-          departmentsData =
-            deptResponse.departments.filter(
-              (d) => d.template?.name !== "Civilian"
-            ) || [];
-          $("#callDepartments")
-            .empty()
-            .append(
-              departmentsData.length > 0
-                ? departmentsData.map(
-                    (dept) =>
-                      `<option value="${dept._id}">${dept.name}</option>`
-                  )
-                : '<option value="" disabled>No departments available</option>'
-            )
-            .select2({
-              placeholder: "Select departments",
-              width: "100%",
-              dropdownParent: $("#callModal"),
-            })
-            .on("change", function () {});
-          isCallModalSelect2Initialized = true;
-        },
-        error: function (xhr) {
-          console.error("Error fetching departments:", xhr.responseText);
-          $("#callDepartments")
-            .empty()
-            .append(
-              '<option value="" disabled>Error loading departments</option>'
-            )
-            .select2({
-              placeholder: "Select departments",
-              width: "100%",
-              dropdownParent: $("#callModal"),
-            });
-          isCallModalSelect2Initialized = true;
-        },
-      });
-
-      // Fetch members
-      $.ajax({
-        url: `${API_URL}/api/v1/community/${dbUser.user.lastAccessedCommunity.communityID}/members?limit=100`,
-        method: "GET",
-        success: function (memberResponse) {
-          membersData = memberResponse.members || [];
-          $("#callMembers")
-            .empty()
-            .append(
-              membersData.length > 0
-                ? membersData.map(
-                    (member) =>
-                      `<option value="${member._id}">${member.user.username}</option>`
-                  )
-                : '<option value="" disabled>No members available</option>'
-            )
-            .select2({
-              placeholder: "Select members",
-              width: "100%",
-              dropdownParent: $("#callModal"),
-            })
-            .on("change", function () {});
-          isCallModalSelect2Initialized = true;
-        },
-        error: function (xhr) {
-          console.error("Error fetching members:", xhr.responseText);
-          $("#callMembers")
-            .empty()
-            .append('<option value="" disabled>Error loading members</option>')
-            .select2({
-              placeholder: "Select members",
-              width: "100%",
-              dropdownParent: $("#callModal"),
-            });
-          isCallModalSelect2Initialized = true;
-        },
-      });
+  // Initialize departments and members Select2 once on page load
+  function initializeCallModalSelects() {
+    // Fetch departments
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${dbUser.user.lastAccessedCommunity.communityID}/departments`,
+      method: "GET",
+      success: function (deptResponse) {
+        departmentsData =
+          deptResponse.departments.filter(
+            (d) => d.template?.name !== "Civilian"
+          ) || [];
+        $("#callDepartments")
+          .empty()
+          .append(
+            departmentsData.length > 0
+              ? departmentsData.map(
+                  (dept) =>
+                    `<option value="${dept._id}">${dept.name}</option>`
+                )
+              : '<option value="" disabled>No departments available</option>'
+          )
+          .select2({
+            placeholder: "Select...",
+            width: "100%",
+            dropdownParent: $("#callModal"),
+            allowClear: true,
+          });
+      },
+      error: function (xhr) {
+        console.error("Error fetching departments:", xhr.responseText);
+      },
     });
 
-  // Clean up on modal close
-  $("#callModal")
-    .off("hidden.bs.modal")
-    .on("hidden.bs.modal", function () {
-      $("#callTitle, #callDetails, #callNote").val("");
-      if (isCallModalSelect2Initialized) {
-        try {
-          $("#callDepartments, #callMembers").select2("destroy");
-        } catch (e) {
-          console.error("Error destroying Select2 on close:", e);
-        }
-      }
-      $("#callDepartments, #callMembers").empty();
-      isCallModalSelect2Initialized = false;
+    // Fetch members
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${dbUser.user.lastAccessedCommunity.communityID}/members?limit=100`,
+      method: "GET",
+      success: function (memberResponse) {
+        membersData = memberResponse.members || [];
+        $("#callMembers")
+          .empty()
+          .append(
+            membersData.length > 0
+              ? membersData.map(
+                  (member) =>
+                    `<option value="${member._id}">${member.user.username}</option>`
+                )
+              : '<option value="" disabled>No members available</option>'
+          )
+          .select2({
+            placeholder: "Select...",
+            width: "100%",
+            dropdownParent: $("#callModal"),
+            allowClear: true,
+          });
+      },
+      error: function (xhr) {
+        console.error("Error fetching members:", xhr.responseText);
+      },
     });
+  }
+
+  // Initialize Select2 once on page load
+  initializeCallModalSelects();
+
+  // Function to safely open the create call modal
+  function openCreateCallModal() {
+    // Clear any stuck state
+    $("#callModal").removeClass("show").css("display", "");
+    $(".modal-backdrop").remove();
+    $("body").removeClass("modal-open").css("padding-right", "");
+
+    // Clear form
+    $("#callTitle, #callDetails, #callNote").val("");
+    $("#callDepartments, #callMembers").val(null).trigger("change");
+
+    // Now show modal fresh
+    $("#callModal").modal("show");
+  }
+  window.openCreateCallModal = openCreateCallModal;
 
   function createCall() {
     const title = $("#callTitle").val().trim();
@@ -1191,8 +1165,8 @@ $(document).ready(function () {
     const createdByUsername = $("#createdByUsername").val();
 
     if (!title) {
-      alert("Title is required.");
-      return;
+      showToast("Title is required.", "warning");
+      return false;
     }
 
     const newCall = {
@@ -1220,25 +1194,42 @@ $(document).ready(function () {
       method: "POST",
       data: JSON.stringify(newCall),
       contentType: "application/json",
-      success: function () {
-        alert("Call created successfully.");
+      success: function (response) {
+        // Close modal by clicking the dismiss button (same as user clicking X)
+        $("#callModal [data-dismiss='modal']").first().click();
 
-        // hideModal("callModal");
-        // $(".close").click();
-        $("[data-dismiss=modal]").trigger({ type: "click" });
-        // $("#callModal").modal("hide");
-        // $("#callModal").hide();
-        // $(".modal-backdrop").remove();
+        // Force cleanup extra backdrops after animation
+        setTimeout(function() {
+          var visibleModals = $(".modal.show").length || $(".modal:visible").length;
+          var backdrops = $(".modal-backdrop").length;
+
+          if (visibleModals === 0) {
+            // No modals open - remove all backdrops
+            $(".modal-backdrop").remove();
+            $("body").removeClass("modal-open").css("padding-right", "");
+          } else if (backdrops > visibleModals) {
+            // More backdrops than modals - remove extras
+            $(".modal-backdrop").slice(visibleModals).remove();
+          }
+        }, 400);
+
+        // Show success toast
+        showToast("Call created successfully.", "success");
+
+        // Reload the calls table
         loadAssignedCalls();
       },
       error: function (xhr) {
         console.error("Error creating call:", xhr.responseText);
-        alert(
+        showToast(
           "Failed to create call: " +
-            (xhr.responseJSON?.message || "Unknown error")
+            (xhr.responseJSON?.message || "Unknown error"),
+          "error"
         );
       },
     });
+
+    return false;
   }
 
   // Legacy function - now handled by loadUnitsOnDuty in EJS

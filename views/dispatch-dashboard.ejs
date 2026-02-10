@@ -549,7 +549,7 @@
           </li>
           <li>
             <% if (user.user?.lastAccessedCommunity !=null) {%>
-              <a data-toggle="modal" href="#callModal" onclick=""><span
+              <a href="javascript:void(0)" onclick="openCreateCallModal()"><span
                   class="fa fa-plus-square ml-3 mr-3"></span> Create Call</a>
               <% } else {%>
                 <a data-toggle="modal" href="#nonCommunityBoloModal" class="mock-disabled"><span
@@ -1418,9 +1418,8 @@
               <hr style="width: 88%;max-width: 100rem;">
               <!-- Active Calls -->
               <span id="callsHeading" class="margin-right-1" style="font-size: 18px;">Active Calls:</span> <button
-                type="button" data-toggle="modal" href="#callModal"
-                class="btn btn-primary btn-md pull-right margin-bottom-1"
-                onclick="">Create Call</button>
+                type="button" onclick="openCreateCallModal()"
+                class="btn btn-primary btn-md pull-right margin-bottom-1">Create Call</button>
               <div class="btn-group margin-bottom-1 margin-left-1" role="group" aria-label="Call status filter">
                 <button type="button" class="btn btn-secondary" id="filterAllCalls" onclick="setCallFilter('all')">All</button>
                 <button type="button" class="btn btn-primary" id="filterOpenCalls" onclick="setCallFilter('open')">Open</button>
@@ -2432,7 +2431,7 @@
           <div class="form-group">
             <div class="col-md-12 d-flex justify-content-between">
               <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-              <button class="btn btn-primary" onclick="createCall()">Create</button>
+              <button type="button" class="btn btn-primary" onclick="createCall(); return false;">Create</button>
             </div>
           </div>
 
@@ -5400,30 +5399,30 @@
     $('#boloModal').modal('hide')
   })
 
-  $('#createCall').one('click', function () {
-    var socket=io();
-      $('#create-call-form').submit(function (e) {
-        e.preventDefault(); //prevents page from reloading
-        myCreatedAt=new Date();
-        myCreatedDate=new Date(myCreatedAt);
-
-        var myCreateReq={
-          classifier: $('#classifier').val(),
-          shortDescription: $('#short-description').val(),
-          assignedOfficers: $('#officer-select').val(),
-          assignedFireEms: $('#fireEms-select').val(),
-          callNotes: $('#call-notes').val(),
-          createdByUsername: dbUser.user.username,
-          createdByID: dbUser._id,
-          communityID: dbUser.user.activeCommunity,
-          createdAt: myCreatedAt,
-          createdAtReadable: myCreatedDate.toLocaleString()
-        }
-        socket.emit('create_call', myCreateReq)
-        return true;
-      })
-    $('#callModal').modal('hide');
-  })
+  // Legacy create call handler - replaced by createCall() in dispatch-dashboard.js
+  // $('#createCall').one('click', function () {
+  //   var socket=io();
+  //     $('#create-call-form').submit(function (e) {
+  //       e.preventDefault();
+  //       myCreatedAt=new Date();
+  //       myCreatedDate=new Date(myCreatedAt);
+  //       var myCreateReq={
+  //         classifier: $('#classifier').val(),
+  //         shortDescription: $('#short-description').val(),
+  //         assignedOfficers: $('#officer-select').val(),
+  //         assignedFireEms: $('#fireEms-select').val(),
+  //         callNotes: $('#call-notes').val(),
+  //         createdByUsername: dbUser.user.username,
+  //         createdByID: dbUser._id,
+  //         communityID: dbUser.user.activeCommunity,
+  //         createdAt: myCreatedAt,
+  //         createdAtReadable: myCreatedDate.toLocaleString()
+  //       }
+  //       socket.emit('create_call', myCreateReq)
+  //       return true;
+  //     })
+  //   $('#callModal').modal('hide');
+  // })
 
   $('#closeCall').click(function () {
     var socket=io();

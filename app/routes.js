@@ -1492,10 +1492,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
       
       try {
         const callsResponse = await axios.get(
-          `${policeCadApiUrl}/api/v1/calls/community/${req.user.user.activeCommunity}?status=true`,
+          `${policeCadApiUrl}/api/v2/calls/community/${req.user.user.activeCommunity}?status=true&limit=10&page=1`,
           config
         );
-        dbCalls = callsResponse.data;
+        // v2 API returns { data: [...], totalCount, page, limit }
+        dbCalls = callsResponse.data.data || callsResponse.data;
       } catch (err) {
         console.error('Error fetching calls:', err);
       }
