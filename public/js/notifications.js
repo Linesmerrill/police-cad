@@ -174,17 +174,28 @@ function renderNotifications() {
 }
 
 function updateNotificationCount(unseenCount) {
-  const $count = $("#notificationBadge");
-  if (unseenCount > 0) {
-    if (unseenCount > 99) {
-      $count.text("99+");
-    } else {
-      $count.text(unseenCount);
-    }
-  } else {
-    $count.text("0");
+  // Update both the modal badge and sidebar badge
+  const $modalBadge = $("#notificationBadge");
+  const $sidebarBadge = $("#notification-count");
+
+  const displayCount = unseenCount > 99 ? "99+" : unseenCount.toString();
+
+  // Update modal badge
+  if ($modalBadge.length) {
+    $modalBadge.text(unseenCount > 0 ? displayCount : "0");
+    $modalBadge.toggleClass("show", unseenCount > 0);
   }
-  $count.toggleClass("show", unseenCount > 0);
+
+  // Update sidebar badge
+  if ($sidebarBadge.length) {
+    if (unseenCount > 0) {
+      $sidebarBadge.text(displayCount);
+      $sidebarBadge.addClass("show");
+    } else {
+      $sidebarBadge.text("");
+      $sidebarBadge.removeClass("show");
+    }
+  }
 }
 
 function fetchNotificationCount() {

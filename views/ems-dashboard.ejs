@@ -1922,6 +1922,30 @@
         max-width: 150px;
       }
     }
+    /* notification styles */
+    .notif {
+      position: relative;
+      display: inline-block;
+    }
+    .notification-badge {
+      position: absolute;
+      top: -8px;
+      right: -10px;
+      background-color: #dc3545;
+      color: white;
+      border-radius: 10px;
+      min-width: 18px;
+      height: 18px;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 18px;
+      text-align: center;
+      padding: 0 5px;
+      display: none;
+    }
+    .notification-badge.show {
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
