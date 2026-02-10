@@ -1,6 +1,12 @@
 // modern-departments.js
 // HeroUI Pro styled departments functionality for the new dashboard
 
+// Encode community ID for URL (base64 with URL-safe characters)
+function encodeCommunityIdForUrl(communityId) {
+  const base64 = btoa(communityId);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 function fetchAndRenderModernDepartments() {
   const communityId = dbUser?.user?.lastAccessedCommunity?.communityID || dbUser?.user?.activeCommunity;
   
@@ -45,44 +51,32 @@ function fetchAndRenderModernDepartments() {
         const useForm = false; // All departments now use direct navigation with query parameters
         const isDisabled = [].includes(template.toLowerCase());
 
+        // Build query params for department (include community ID for proper context)
+        const encodedDeptId = encodeDepartmentId(departmentId);
+        const encodedCommunityId = encodeCommunityIdForUrl(communityId);
+        const deptQueryParams = `?dept=${encodeURIComponent(name)}&d=${encodedDeptId}&c=${encodedCommunityId}`;
+
         // Map icons and routes
         switch (template.toLowerCase()) {
           case "civilian":
             icon = "fa-user";
-            action = "/civ-dashboard";
-            // Add department name as query parameter for civilian departments
-            if (action !== "#") {
-              const encodedDeptId = encodeDepartmentId(departmentId);
-              action += `?dept=${encodeURIComponent(name)}&d=${encodedDeptId}`;
-            }
+            action = `/civ-dashboard${deptQueryParams}`;
             break;
           case "police":
             icon = "fa-shield";
-            action = "/police-dashboard";
-            // Add department name as query parameter for police departments
-            const encodedPoliceDeptId = encodeDepartmentId(departmentId);
-            action += `?dept=${encodeURIComponent(name)}&d=${encodedPoliceDeptId}`;
+            action = `/police-dashboard${deptQueryParams}`;
             break;
           case "dispatch":
             icon = "fa-headset";
-            action = "/dispatch-dashboard";
-            // Add department name as query parameter for dispatch departments
-            const encodedDispatchDeptId = encodeDepartmentId(departmentId);
-            action += `?dept=${encodeURIComponent(name)}&d=${encodedDispatchDeptId}`;
+            action = `/dispatch-dashboard${deptQueryParams}`;
             break;
           case "fire":
             icon = "fa-fire-extinguisher";
-            action = "/ems-dashboard";
-            // Add department name as query parameter for fire departments
-            const encodedFireDeptId = encodeDepartmentId(departmentId);
-            action += `?dept=${encodeURIComponent(name)}&d=${encodedFireDeptId}`;
+            action = `/ems-dashboard${deptQueryParams}`;
             break;
           case "ems":
             icon = "fa-medkit";
-            action = "/ems-dashboard";
-            // Add department name as query parameter for EMS departments
-            const encodedEmsDeptId = encodeDepartmentId(departmentId);
-            action += `?dept=${encodeURIComponent(name)}&d=${encodedEmsDeptId}`;
+            action = `/ems-dashboard${deptQueryParams}`;
             break;
         }
 

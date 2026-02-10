@@ -53,18 +53,25 @@
         return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
       }
 
+      function encodeCommunityIdForUrl(communityId) {
+        const base64 = btoa(communityId);
+        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+      }
+
       function navigateToDepartment(departmentId, departmentName, templateName) {
         const templateType = templateName.toLowerCase();
+        const communityId = '<%= community._id %>';
+        const encodedCommunityId = encodeCommunityIdForUrl(communityId);
         let dashboardUrl = '';
 
         if (templateType.includes('civilian')) {
-          dashboardUrl = `/civ-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}`;
+          dashboardUrl = `/civ-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}&c=${encodedCommunityId}`;
         } else if (templateType.includes('police')) {
-          dashboardUrl = `/police-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}`;
+          dashboardUrl = `/police-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}&c=${encodedCommunityId}`;
         } else if (templateType.includes('fire') || templateType.includes('ems')) {
-          dashboardUrl = `/ems-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}`;
+          dashboardUrl = `/ems-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}&c=${encodedCommunityId}`;
         } else if (templateType.includes('dispatch')) {
-          dashboardUrl = `/dispatch-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}`;
+          dashboardUrl = `/dispatch-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}&c=${encodedCommunityId}`;
         }
 
         if (dashboardUrl) {
