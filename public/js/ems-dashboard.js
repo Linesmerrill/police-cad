@@ -5010,7 +5010,9 @@ function loadAssignedCalls() {
   }
 
   // Build query parameters
-  let queryParams = `?limit=${callLimit}&page=${currentCallPage}`;
+  // Note: Using high limit since we filter by department client-side
+  // TODO: Add department filter to API for proper pagination
+  let queryParams = `?limit=100`;
   if (currentCallFilter === 'open') queryParams += '&status=true';
   else if (currentCallFilter === 'closed') queryParams += '&status=false';
   // 'all' = no status param
@@ -5101,17 +5103,8 @@ function loadAssignedCalls() {
         $container.append(`<p class="text-center" style="font-style: italic; font-size: 14px">${noCallsText} at this time.</p>`);
       }
 
-      // Add pagination controls if needed
-      if (totalCount > callLimit) {
-        const totalPages = Math.ceil(totalCount / callLimit);
-        $container.append(`
-          <div class="call-pagination d-flex justify-content-between mt-2">
-            <button class="btn btn-primary" onclick="changeCallPage(${currentCallPage - 1})" ${currentCallPage === 1 ? 'disabled' : ''}>Previous</button>
-            <span class="align-self-center">Page ${currentCallPage} of ${totalPages}</span>
-            <button class="btn btn-primary" onclick="changeCallPage(${currentCallPage + 1})" ${currentCallPage >= totalPages ? 'disabled' : ''}>Next</button>
-          </div>
-        `);
-      }
+      // Note: Pagination disabled for EMS because calls are filtered client-side by department
+      // TODO: Add department filter to API v2 for proper server-side pagination
     },
     error: function(xhr) {
       console.error('Error loading assigned calls:', xhr.responseText);
