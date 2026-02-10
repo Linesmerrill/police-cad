@@ -29,11 +29,11 @@ interface PlatformEntry {
   followerCount: string;
 }
 
-const platformOptions: { value: PlatformType; label: string; color: string; baseUrl: string; placeholder: string }[] = [
-  { value: 'twitch', label: 'Twitch', color: '#9146FF', baseUrl: 'https://twitch.tv/', placeholder: 'https://twitch.tv/yourhandle' },
-  { value: 'youtube', label: 'YouTube', color: '#FF0000', baseUrl: 'https://youtube.com/@', placeholder: 'https://youtube.com/@yourhandle' },
-  { value: 'tiktok', label: 'TikTok', color: '#00F2EA', baseUrl: 'https://tiktok.com/@', placeholder: 'https://tiktok.com/@yourhandle' },
-  { value: 'other', label: 'Other', color: '#6366f1', baseUrl: '', placeholder: 'https://...' }
+const platformOptions: { value: PlatformType; label: string; color: string; baseUrl: string; placeholder: string; handlePlaceholder: string }[] = [
+  { value: 'twitch', label: 'Twitch', color: '#9146FF', baseUrl: 'https://twitch.tv/', placeholder: 'https://twitch.tv/', handlePlaceholder: 'e.g. yourname' },
+  { value: 'youtube', label: 'YouTube', color: '#FF0000', baseUrl: 'https://youtube.com/@', placeholder: 'https://youtube.com/@', handlePlaceholder: 'e.g. yourname' },
+  { value: 'tiktok', label: 'TikTok', color: '#00F2EA', baseUrl: 'https://tiktok.com/@', placeholder: 'https://tiktok.com/@', handlePlaceholder: 'e.g. yourname' },
+  { value: 'other', label: 'Other', color: '#6366f1', baseUrl: '', placeholder: 'https://yourplatform.com/profile', handlePlaceholder: '' }
 ];
 
 function generateId(): string {
@@ -231,9 +231,14 @@ export default function ApplyPage() {
     if (getMaxFollowers() < 500) return false;
 
     // Check at least one platform has valid data
-    const hasValidPlatform = platforms.some(p =>
-      p.url.trim() && p.handle.trim() && parseInt(p.followerCount) >= 500
-    );
+    // For 'other' platforms, only URL and follower count required (no handle)
+    const hasValidPlatform = platforms.some(p => {
+      const hasValidFollowers = parseInt(p.followerCount) >= 500;
+      if (p.type === 'other') {
+        return p.url.trim() && hasValidFollowers;
+      }
+      return p.url.trim() && p.handle.trim() && hasValidFollowers;
+    });
     return hasValidPlatform;
   };
 
@@ -800,18 +805,21 @@ export default function ApplyPage() {
                   {platforms.map((platform, index) => {
                     const platformOption = platformOptions.find(p => p.value === platform.type);
 
-                    // Build preview URL from handle
+                    // Build preview URL from handle (or just URL for 'other')
                     const cleanHandle = platform.handle.replace(/^@+/, '');
                     let previewUrl = '';
-                    if (cleanHandle) {
+                    if (platform.type === 'other') {
+                      // For 'other' platforms, just use the URL directly
+                      if (platform.url.trim()) {
+                        previewUrl = platform.url;
+                      }
+                    } else if (cleanHandle) {
                       if (platform.type === 'twitch') {
                         previewUrl = `https://twitch.tv/${cleanHandle}`;
                       } else if (platform.type === 'youtube') {
                         previewUrl = `https://youtube.com/@${cleanHandle}`;
                       } else if (platform.type === 'tiktok') {
                         previewUrl = `https://tiktok.com/@${cleanHandle}`;
-                      } else if (platform.type === 'other' && platform.url) {
-                        previewUrl = platform.url;
                       }
                     }
 
@@ -875,7 +883,7 @@ export default function ApplyPage() {
 
                         <div style={{
                           display: 'grid',
-                          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 120px',
+                          gridTemplateColumns: isMobile ? '1fr' : (platform.type === 'other' ? '1fr 120px' : '1fr 1fr 120px'),
                           gap: '12px'
                         }}>
                           <input
@@ -893,21 +901,23 @@ export default function ApplyPage() {
                               outline: 'none'
                             }}
                           />
-                          <input
-                            type="text"
-                            value={platform.handle}
-                            onChange={(e) => updatePlatform(platform.id, 'handle', e.target.value)}
-                            placeholder="Handle (e.g. @yourname)"
-                            style={{
-                              padding: '12px 14px',
-                              fontSize: '14px',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
-                              borderRadius: '8px',
-                              color: '#fff',
-                              outline: 'none'
-                            }}
-                          />
+                          {platform.type !== 'other' && (
+                            <input
+                              type="text"
+                              value={platform.handle}
+                              onChange={(e) => updatePlatform(platform.id, 'handle', e.target.value)}
+                              placeholder={platformOption?.handlePlaceholder || 'Handle'}
+                              style={{
+                                padding: '12px 14px',
+                                fontSize: '14px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '8px',
+                                color: '#fff',
+                                outline: 'none'
+                              }}
+                            />
+                          )}
                           <input
                             type="number"
                             value={platform.followerCount}
