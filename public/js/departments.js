@@ -1,8 +1,15 @@
 // static/js/departments.js
 
+// Encode community ID for URL (base64 with URL-safe characters)
+function encodeCommunityIdForUrl(communityId) {
+  const base64 = btoa(communityId);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 // Show modal when user clicks lock icon on a department they don't have access to
 function showDepartmentAccessModal(departmentName, communityId) {
-  const communityUrl = `/community/${communityId}`;
+  const encodedId = encodeCommunityIdForUrl(communityId);
+  const communityUrl = `/community/${encodedId}#departments-section`;
 
   // Create modal if it doesn't exist
   if ($('#departmentAccessModal').length === 0) {
