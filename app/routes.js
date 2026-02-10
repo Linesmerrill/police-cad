@@ -1417,6 +1417,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
       // Decode the community ID from URL param if present
       const encodedCommunityId = req.query.c || null;
       let urlCommunityId = null;
+      // MongoDB ObjectId pattern for validation (prevents SSRF)
+      const communityIdPattern = /^[a-fA-F0-9]{24}$/;
       if (encodedCommunityId) {
         try {
           let base64 = encodedCommunityId
@@ -1425,13 +1427,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
           while (base64.length % 4) {
             base64 += '=';
           }
-          urlCommunityId = Buffer.from(base64, 'base64').toString('utf8');
+          const decoded = Buffer.from(base64, 'base64').toString('utf8');
+          // Validate decoded community ID to prevent SSRF
+          if (communityIdPattern.test(decoded)) {
+            urlCommunityId = decoded;
+          } else {
+            console.warn('Rejected invalid community ID from URL:', decoded);
+          }
         } catch (e) {
           console.error('Failed to decode community ID from URL:', e);
         }
       }
 
-      // Use community ID from URL if provided, otherwise fall back to user's context
+      // Use community ID from URL if provided and valid, otherwise fall back to user's context
       const communityId = urlCommunityId || req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
 
       // If no department context is provided, redirect to community or communities
@@ -1618,6 +1626,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
       // Decode the community ID from URL param if present
       const encodedCommunityId = req.query.c || null;
       let urlCommunityId = null;
+      // MongoDB ObjectId pattern for validation (prevents SSRF)
+      const communityIdPattern = /^[a-fA-F0-9]{24}$/;
       if (encodedCommunityId) {
         try {
           let base64 = encodedCommunityId
@@ -1626,13 +1636,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
           while (base64.length % 4) {
             base64 += '=';
           }
-          urlCommunityId = Buffer.from(base64, 'base64').toString('utf8');
+          const decoded = Buffer.from(base64, 'base64').toString('utf8');
+          // Validate decoded community ID to prevent SSRF
+          if (communityIdPattern.test(decoded)) {
+            urlCommunityId = decoded;
+          } else {
+            console.warn('Rejected invalid community ID from URL:', decoded);
+          }
         } catch (e) {
           console.error('Failed to decode community ID from URL:', e);
         }
       }
 
-      // Use community ID from URL if provided, otherwise fall back to user's context
+      // Use community ID from URL if provided and valid, otherwise fall back to user's context
       const communityId = urlCommunityId || req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
 
       // If no department context is provided, redirect to community or communities
@@ -1760,6 +1776,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
       // Decode the community ID from URL param if present
       const encodedCommunityId = req.query.c || null;
       let urlCommunityId = null;
+      // MongoDB ObjectId pattern for validation (prevents SSRF)
+      const communityIdPattern = /^[a-fA-F0-9]{24}$/;
       if (encodedCommunityId) {
         try {
           let base64 = encodedCommunityId
@@ -1768,13 +1786,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
           while (base64.length % 4) {
             base64 += '=';
           }
-          urlCommunityId = Buffer.from(base64, 'base64').toString('utf8');
+          const decoded = Buffer.from(base64, 'base64').toString('utf8');
+          // Validate decoded community ID to prevent SSRF
+          if (communityIdPattern.test(decoded)) {
+            urlCommunityId = decoded;
+          } else {
+            console.warn('Rejected invalid community ID from URL:', decoded);
+          }
         } catch (e) {
           console.error('Failed to decode community ID from URL:', e);
         }
       }
 
-      // Use community ID from URL if provided, otherwise fall back to user's context
+      // Use community ID from URL if provided and valid, otherwise fall back to user's context
       const communityId = urlCommunityId || req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
 
       // If a specific department is requested, verify user access

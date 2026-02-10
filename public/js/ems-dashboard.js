@@ -5042,9 +5042,9 @@ function loadAssignedCalls() {
       const data = response.data || response;
       const totalCount = response.totalCount || data.length;
 
-      // Get department name for display
+      // Get department name for display (escape to prevent XSS)
       const urlParams = new URLSearchParams(window.location.search);
-      const departmentName = urlParams.get('dept') || 'Current Department';
+      const departmentName = escapeHtml(urlParams.get('dept') || 'Current Department');
 
       $container.append(`
         <span>
@@ -5086,7 +5086,7 @@ function loadAssignedCalls() {
         });
       } else {
         const urlParams = new URLSearchParams(window.location.search);
-        const departmentName = urlParams.get('dept') || 'your department';
+        const departmentName = escapeHtml(urlParams.get('dept') || 'your department');
         const noCallsText = currentCallFilter === 'all' ? 'No calls' :
                            currentCallFilter === 'closed' ? 'No closed calls' : 'No open calls';
         $container.append(`<p class="text-center" style="font-style: italic; font-size: 14px">${noCallsText} assigned to ${departmentName} at this time.</p>`);
