@@ -1113,22 +1113,28 @@ export default function ApplyPage() {
                 }}>
                   How do you use Lines Police CAD? * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(min 50 characters)</span>
                 </label>
-                <p style={{
+
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  marginBottom: '16px',
                   fontSize: '13px',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  marginBottom: '12px',
-                  lineHeight: '1.5'
+                  lineHeight: '1.6',
+                  color: 'rgba(255, 255, 255, 0.6)'
                 }}>
-                  💡 This is your chance to highlight your best LPC content. Include links to specific videos, timestamps, or VODs where we can see you using the CAD. The more you help us find your content, the faster we can review your application.
-                </p>
-                <p style={{
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.4)',
-                  marginBottom: '12px',
-                  fontStyle: 'italic'
-                }}>
-                  This is for our review team only and won&apos;t be shown on your public profile.
-                </p>
+                  <p style={{ margin: '0 0 8px 0' }}>
+                    💡 This is your chance to highlight your best LPC content. Include links to specific videos, timestamps, or VODs where we can see you using the CAD.
+                  </p>
+                  <p style={{ margin: '0 0 8px 0', fontSize: '12px' }}>
+                    The more you help us find your content, the faster we can review your application.
+                  </p>
+                  <p style={{ margin: 0, fontStyle: 'italic', fontSize: '12px', color: 'rgba(255, 255, 255, 0.4)' }}>
+                    This is for our review team only and won&apos;t be shown on your public profile.
+                  </p>
+                </div>
+
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
