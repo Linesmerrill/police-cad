@@ -174,7 +174,7 @@ function fetchAndRenderDepartments() {
                   <span style="display: inline-block; font-size: 0.7em; padding: 2px 6px; border-radius: 3px; background: ${badgeColor}; color: white; margin-top: 2px;">${template}</span>
                 </div>
                 <span class="fa ${statusIcon} mr-3" style="cursor: pointer; color: ${statusColor}; flex-shrink: 0; padding: 4px 8px; opacity: 1;"
-                  onclick="showDepartmentAccessModal('${name.replace(/'/g, "\\'")}', '${communityId}', ${isPendingMember})"
+                  onclick="showDepartmentAccessModal('${name.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}', '${communityId}', ${isPendingMember})"
                   title="${statusTitle}"></span>
               </div>
             `
