@@ -19,6 +19,7 @@
     overflow: hidden;
     box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.4);
     animation: notif-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    font-size: 16px;
   ">
     <!-- Drag handle for mobile -->
     <div style="display: flex; justify-content: center; padding: 10px 0 4px 0; flex-shrink: 0;">
@@ -112,25 +113,25 @@
 <!-- Notification Context Menu (Dropdown) -->
 <div
   id="notificationContextMenu"
-  style="display: none; position: fixed; z-index: 9999; background: rgba(15, 15, 25, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); min-width: 170px; overflow: hidden; padding: 4px;"
+  style="display: none; position: fixed; z-index: 9999; background: rgba(15, 15, 25, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); min-width: 180px; overflow: hidden; padding: 6px; font-size: 16px;"
 >
   <button
     id="notificationMarkReadBtn"
     onclick="markNotificationAsRead()"
-    style="display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.65rem 0.85rem; background: none; border: none; color: #e2e8f0; font-size: 0.85rem; cursor: pointer; text-align: left; transition: background 0.15s; border-radius: 8px;"
+    style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; background: none; border: none; color: #e2e8f0; font-size: 14px; cursor: pointer; text-align: left; transition: background 0.15s; border-radius: 8px;"
     onmouseover="this.style.background='rgba(255,255,255,0.08)'"
     onmouseout="this.style.background='none'"
   >
-    <i class="fa fa-check" style="color: #34d399; width: 16px;"></i>
+    <i class="fa fa-check" style="color: #34d399; width: 16px; font-size: 14px;"></i>
     Mark as Read
   </button>
   <button
     onclick="deleteNotification()"
-    style="display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.65rem 0.85rem; background: none; border: none; color: #f87171; font-size: 0.85rem; cursor: pointer; text-align: left; transition: background 0.15s; border-radius: 8px;"
+    style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; background: none; border: none; color: #f87171; font-size: 14px; cursor: pointer; text-align: left; transition: background 0.15s; border-radius: 8px;"
     onmouseover="this.style.background='rgba(239,68,68,0.1)'"
     onmouseout="this.style.background='none'"
   >
-    <i class="fa fa-trash" style="width: 16px;"></i>
+    <i class="fa fa-trash" style="width: 16px; font-size: 14px;"></i>
     Delete
   </button>
 </div>

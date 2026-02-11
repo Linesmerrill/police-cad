@@ -16,7 +16,8 @@ import {
   PlusIcon,
   XMarkIcon,
   DocumentCheckIcon,
-  GiftIcon
+  GiftIcon,
+  StarIcon
 } from '@heroicons/react/24/outline';
 
 type PlatformType = 'twitch' | 'youtube' | 'tiktok' | 'other';
@@ -29,11 +30,11 @@ interface PlatformEntry {
   followerCount: string;
 }
 
-const platformOptions: { value: PlatformType; label: string; color: string; baseUrl: string; placeholder: string }[] = [
-  { value: 'twitch', label: 'Twitch', color: '#9146FF', baseUrl: 'https://twitch.tv/', placeholder: 'https://twitch.tv/yourhandle' },
-  { value: 'youtube', label: 'YouTube', color: '#FF0000', baseUrl: 'https://youtube.com/@', placeholder: 'https://youtube.com/@yourhandle' },
-  { value: 'tiktok', label: 'TikTok', color: '#00F2EA', baseUrl: 'https://tiktok.com/@', placeholder: 'https://tiktok.com/@yourhandle' },
-  { value: 'other', label: 'Other', color: '#6366f1', baseUrl: '', placeholder: 'https://...' }
+const platformOptions: { value: PlatformType; label: string; color: string; baseUrl: string; placeholder: string; handlePlaceholder: string }[] = [
+  { value: 'twitch', label: 'Twitch', color: '#9146FF', baseUrl: 'https://twitch.tv/', placeholder: 'https://twitch.tv/', handlePlaceholder: 'e.g. yourname' },
+  { value: 'youtube', label: 'YouTube', color: '#FF0000', baseUrl: 'https://youtube.com/@', placeholder: 'https://youtube.com/@', handlePlaceholder: 'e.g. yourname' },
+  { value: 'tiktok', label: 'TikTok', color: '#00F2EA', baseUrl: 'https://tiktok.com/@', placeholder: 'https://tiktok.com/@', handlePlaceholder: 'e.g. yourname' },
+  { value: 'other', label: 'Other', color: '#6366f1', baseUrl: '', placeholder: 'https://yourplatform.com/profile', handlePlaceholder: '' }
 ];
 
 function generateId(): string {
@@ -186,13 +187,13 @@ export default function ApplyPage() {
     const newType = availableTypes[0];
     const platformOption = platformOptions.find(p => p.value === newType);
 
-    setPlatforms([{
+    setPlatforms([...platforms, {
       id: generateId(),
       type: newType,
       url: platformOption?.baseUrl || '',
       handle: '',
       followerCount: ''
-    }, ...platforms]);
+    }]);
   };
 
   const removePlatform = (id: string) => {
@@ -231,9 +232,14 @@ export default function ApplyPage() {
     if (getMaxFollowers() < 500) return false;
 
     // Check at least one platform has valid data
-    const hasValidPlatform = platforms.some(p =>
-      p.url.trim() && p.handle.trim() && parseInt(p.followerCount) >= 500
-    );
+    // For 'other' platforms, only URL and follower count required (no handle)
+    const hasValidPlatform = platforms.some(p => {
+      const hasValidFollowers = parseInt(p.followerCount) >= 500;
+      if (p.type === 'other') {
+        return p.url.trim() && hasValidFollowers;
+      }
+      return p.url.trim() && p.handle.trim() && hasValidFollowers;
+    });
     return hasValidPlatform;
   };
 
@@ -786,66 +792,84 @@ export default function ApplyPage() {
 
               {/* Platforms */}
               <div style={{ marginBottom: '28px' }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '12px'
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#fff',
+                  marginBottom: '8px'
                 }}>
-                  <label style={{
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#fff'
-                  }}>
-                    Platforms * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(at least one with 500+ followers)</span>
-                  </label>
-                  {platforms.length < 4 && getAvailablePlatformTypes().length > 0 && (
-                    <button
-                      type="button"
-                      onClick={addPlatform}
-                      className="add-platform-btn"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        background: 'rgba(251, 191, 36, 0.08)',
-                        border: '1px solid rgba(251, 191, 36, 0.5)',
-                        borderRadius: '6px',
-                        color: '#fbbf24',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        padding: '6px 14px',
-                        transition: 'all 0.2s ease',
-                        animation: 'addPlatformGlow 3s ease-in-out infinite'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(251, 191, 36, 0.15)';
-                        e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.8)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(251, 191, 36, 0.08)';
-                        e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.5)';
-                      }}
-                    >
-                      <PlusIcon style={{ width: '16px', height: '16px' }} />
-                      Add Platform
-                    </button>
-                  )}
+                  Platforms * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(at least one with 500+ followers)</span>
+                </label>
+
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  marginBottom: '16px',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  color: 'rgba(255, 255, 255, 0.6)'
+                }}>
+                  <p style={{ margin: '0 0 10px 0' }}>
+                    Link to your platforms where you create LPC content. Our team will review these to verify active content featuring Lines Police CAD.
+                  </p>
+                  <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+                    <div>
+                      <p style={{ margin: '0 0 4px 0', color: '#22c55e', fontWeight: '500', fontSize: '12px' }}>✓ What we want to see:</p>
+                      <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px' }}>
+                        <li>Content of you actively using LPC</li>
+                        <li>Videos showcasing the CAD in action</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p style={{ margin: '0 0 4px 0', color: '#ef4444', fontWeight: '500', fontSize: '12px' }}>✗ What to avoid:</p>
+                      <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px' }}>
+                        <li>Platforms with no LPC content</li>
+                        <li>Videos where LPC isn&apos;t shown</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <p style={{ margin: '10px 0 0 0', fontStyle: 'italic', fontSize: '12px' }}>
+                    Tip: Include relevant links to help us quickly review your application.
+                  </p>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {platforms.map((platform, index) => {
                     const platformOption = platformOptions.find(p => p.value === platform.type);
 
+                    // Build preview URL from handle (or just URL for 'other')
+                    const cleanHandle = platform.handle.replace(/^@+/, '');
+                    let previewUrl = '';
+                    if (platform.type === 'other') {
+                      // For 'other' platforms, just use the URL directly
+                      if (platform.url.trim()) {
+                        previewUrl = platform.url;
+                      }
+                    } else if (cleanHandle) {
+                      if (platform.type === 'twitch') {
+                        previewUrl = `https://twitch.tv/${cleanHandle}`;
+                      } else if (platform.type === 'youtube') {
+                        previewUrl = `https://youtube.com/@${cleanHandle}`;
+                      } else if (platform.type === 'tiktok') {
+                        previewUrl = `https://tiktok.com/@${cleanHandle}`;
+                      }
+                    }
+
+                    const isPrimary = platform.type === primaryPlatform;
+
                     return (
                       <div
                         key={platform.id}
                         style={{
-                          background: 'rgba(255, 255, 255, 0.03)',
+                          background: isPrimary ? 'rgba(251, 191, 36, 0.03)' : 'rgba(255, 255, 255, 0.03)',
                           borderRadius: '12px',
-                          border: '1px solid rgba(255, 255, 255, 0.06)',
-                          padding: '20px'
+                          border: isPrimary ? '1px solid rgba(251, 191, 36, 0.4)' : '1px solid rgba(255, 255, 255, 0.06)',
+                          padding: '20px',
+                          boxShadow: isPrimary ? '0 0 20px rgba(251, 191, 36, 0.15)' : 'none',
+                          transition: 'all 0.2s ease'
                         }}
                       >
                         <div style={{
@@ -854,29 +878,48 @@ export default function ApplyPage() {
                           justifyContent: 'space-between',
                           marginBottom: '16px'
                         }}>
-                          <select
-                            value={platform.type}
-                            onChange={(e) => updatePlatform(platform.id, 'type', e.target.value)}
-                            style={{
-                              padding: '10px 14px',
-                              fontSize: '14px',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              border: `1px solid ${platformOption?.color || '#6366f1'}40`,
-                              borderRadius: '8px',
-                              color: platformOption?.color || '#fff',
-                              outline: 'none',
-                              cursor: 'pointer',
-                              fontWeight: '600'
-                            }}
-                          >
-                            {platformOptions
-                              .filter(opt => opt.value === platform.type || !getUsedPlatformTypes().has(opt.value))
-                              .map(opt => (
-                                <option key={opt.value} value={opt.value} style={{ background: '#1a1a2e', color: '#fff' }}>
-                                  {opt.label}
-                                </option>
-                              ))}
-                          </select>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <select
+                              value={platform.type}
+                              onChange={(e) => updatePlatform(platform.id, 'type', e.target.value)}
+                              style={{
+                                padding: '10px 14px',
+                                fontSize: '14px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: `1px solid ${platformOption?.color || '#6366f1'}40`,
+                                borderRadius: '8px',
+                                color: platformOption?.color || '#fff',
+                                outline: 'none',
+                                cursor: 'pointer',
+                                fontWeight: '600'
+                              }}
+                            >
+                              {platformOptions
+                                .filter(opt => opt.value === platform.type || !getUsedPlatformTypes().has(opt.value))
+                                .map(opt => (
+                                  <option key={opt.value} value={opt.value} style={{ background: '#1a1a2e', color: '#fff' }}>
+                                    {opt.label}
+                                  </option>
+                                ))}
+                            </select>
+                            {isPrimary && (
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                background: 'rgba(251, 191, 36, 0.15)',
+                                border: '1px solid rgba(251, 191, 36, 0.3)',
+                                borderRadius: '6px',
+                                padding: '4px 8px',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                color: '#fbbf24'
+                              }}>
+                                <StarIcon style={{ width: '14px', height: '14px' }} />
+                                Primary
+                              </div>
+                            )}
+                          </div>
 
                           {platforms.length > 1 && (
                             <button
@@ -898,7 +941,7 @@ export default function ApplyPage() {
 
                         <div style={{
                           display: 'grid',
-                          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 120px',
+                          gridTemplateColumns: isMobile ? '1fr' : (platform.type === 'other' ? '1fr 120px' : '1fr 1fr 120px'),
                           gap: '12px'
                         }}>
                           <input
@@ -916,21 +959,23 @@ export default function ApplyPage() {
                               outline: 'none'
                             }}
                           />
-                          <input
-                            type="text"
-                            value={platform.handle}
-                            onChange={(e) => updatePlatform(platform.id, 'handle', e.target.value)}
-                            placeholder="Handle (e.g. @yourname)"
-                            style={{
-                              padding: '12px 14px',
-                              fontSize: '14px',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
-                              borderRadius: '8px',
-                              color: '#fff',
-                              outline: 'none'
-                            }}
-                          />
+                          {platform.type !== 'other' && (
+                            <input
+                              type="text"
+                              value={platform.handle}
+                              onChange={(e) => updatePlatform(platform.id, 'handle', e.target.value)}
+                              placeholder={platformOption?.handlePlaceholder || 'Handle'}
+                              style={{
+                                padding: '12px 14px',
+                                fontSize: '14px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '8px',
+                                color: '#fff',
+                                outline: 'none'
+                              }}
+                            />
+                          )}
                           <input
                             type="number"
                             value={platform.followerCount}
@@ -950,9 +995,69 @@ export default function ApplyPage() {
                             }}
                           />
                         </div>
+
+                        {/* Preview Link */}
+                        {previewUrl && (
+                          <div style={{ marginTop: '10px' }}>
+                            <a
+                              href={previewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontSize: '13px',
+                                color: platformOption?.color || '#fbbf24',
+                                textDecoration: 'none',
+                                opacity: 0.8,
+                                transition: 'opacity 0.2s'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                              onMouseLeave={(e) => e.currentTarget.style.opacity = '0.8'}
+                            >
+                              <ArrowRightIcon style={{ width: '14px', height: '14px' }} />
+                              Test link: {previewUrl}
+                            </a>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
+
+                  {/* Add Platform Button - inside the platforms section */}
+                  {platforms.length < 4 && getAvailablePlatformTypes().length > 0 && (
+                    <button
+                      type="button"
+                      onClick={addPlatform}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        background: 'rgba(251, 191, 36, 0.06)',
+                        border: '1px dashed rgba(251, 191, 36, 0.4)',
+                        borderRadius: '12px',
+                        color: '#fbbf24',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        padding: '16px 20px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(251, 191, 36, 0.12)';
+                        e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.6)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(251, 191, 36, 0.06)';
+                        e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.4)';
+                      }}
+                    >
+                      <PlusIcon style={{ width: '18px', height: '18px' }} />
+                      Add Another Platform
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1008,10 +1113,32 @@ export default function ApplyPage() {
                 }}>
                   How do you use Lines Police CAD? * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(min 50 characters)</span>
                 </label>
+
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  marginBottom: '16px',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  color: 'rgba(255, 255, 255, 0.6)'
+                }}>
+                  <p style={{ margin: '0 0 8px 0' }}>
+                    💡 This is your chance to highlight your best LPC content. Include links to specific videos, timestamps, or VODs where we can see you using the CAD.
+                  </p>
+                  <p style={{ margin: '0 0 8px 0', fontSize: '12px' }}>
+                    The more you help us find your content, the faster we can review your application.
+                  </p>
+                  <p style={{ margin: 0, fontStyle: 'italic', fontSize: '12px', color: 'rgba(255, 255, 255, 0.4)' }}>
+                    This is for our review team only and won&apos;t be shown on your public profile.
+                  </p>
+                </div>
+
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe how you use LPC in your content, what kind of streams/videos you create, and why you'd be a great fit for the Creator Program..."
+                  placeholder="Tell us about your content and how you use LPC. Feel free to include direct links to specific videos or VODs that showcase your LPC content..."
                   rows={4}
                   style={{
                     width: '100%',
@@ -1038,14 +1165,6 @@ export default function ApplyPage() {
                 }}>
                   {description.length}/50 characters minimum
                 </p>
-                <p style={{
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.4)',
-                  marginTop: '4px',
-                  fontStyle: 'italic'
-                }}>
-                  This is for our review team only and won&apos;t be shown on your public profile.
-                </p>
               </div>
 
               {/* Bio - for public profile */}
@@ -1059,6 +1178,22 @@ export default function ApplyPage() {
                 }}>
                   Profile Bio * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(20-500 characters)</span>
                 </label>
+
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  marginBottom: '16px',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  color: 'rgba(255, 255, 255, 0.6)'
+                }}>
+                  <p style={{ margin: 0 }}>
+                    ✨ This will be displayed on your public creator profile page. Tell viewers about yourself and your content!
+                  </p>
+                </div>
+
                 <textarea
                   value={bio}
                   onChange={(e) => {
@@ -1066,7 +1201,7 @@ export default function ApplyPage() {
                       setBio(e.target.value);
                     }
                   }}
-                  placeholder="Write a short bio that will be displayed on your public creator profile. Tell viewers about yourself and your content..."
+                  placeholder="Write a short bio about yourself and your content..."
                   rows={3}
                   style={{
                     width: '100%',
@@ -1092,14 +1227,6 @@ export default function ApplyPage() {
                   textAlign: 'right'
                 }}>
                   {bio.length}/500 characters
-                </p>
-                <p style={{
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.4)',
-                  marginTop: '4px',
-                  fontStyle: 'italic'
-                }}>
-                  This will be displayed on your public creator profile page.
                 </p>
               </div>
 

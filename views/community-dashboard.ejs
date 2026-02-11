@@ -287,19 +287,22 @@ $(document).ready(function () {
                     const deptName = dept?.template?.name?.toLowerCase();
                     let dashboardUrl = '';
                     
+                    // Build query params with department and community IDs
+                    const encodedDeptId = encodeDepartmentId(dept._id);
+                    const encodedCommunityId = encodeCommunityIdForUrl(activeCommunityId);
+                    const deptQueryParams = `?dept=${encodeURIComponent(dept.name)}&d=${encodedDeptId}&c=${encodedCommunityId}`;
+
                     if (deptName.includes('civilian')) {
-                        // For civilian departments, use query parameters like the departments sidebar
-                        const encodedDeptId = encodeDepartmentId(dept._id);
-                        dashboardUrl = `/civ-dashboard?dept=${encodeURIComponent(dept.name)}&d=${encodedDeptId}`;
+                        dashboardUrl = `/civ-dashboard${deptQueryParams}`;
                         // Navigate directly for civilian departments
                         window.location.href = dashboardUrl;
                         return;
                     } else if (deptName.includes('police')) {
-                        dashboardUrl = `/police-dashboard`;
+                        dashboardUrl = `/police-dashboard${deptQueryParams}`;
                     } else if (deptName.includes('fire') || deptName.includes('ems')) {
-                        dashboardUrl = `/ems-dashboard`;
+                        dashboardUrl = `/ems-dashboard${deptQueryParams}`;
                     } else if (deptName.includes('dispatch')) {
-                        dashboardUrl = `/dispatch-dashboard`;
+                        dashboardUrl = `/dispatch-dashboard${deptQueryParams}`;
                     }
                     
                     if (dashboardUrl) {
@@ -907,5 +910,11 @@ function encodeDepartmentId(departmentId) {
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
         .replace(/=/g, '');
+}
+
+// Encode community ID for URL (base64 with URL-safe characters)
+function encodeCommunityIdForUrl(communityId) {
+    const base64 = btoa(communityId);
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 </script>

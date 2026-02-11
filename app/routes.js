@@ -1401,39 +1401,64 @@ module.exports = function (app, passport, server, nextApp, handle) {
           let base64 = encodedDeptId
             .replace(/-/g, '+')
             .replace(/_/g, '/');
-          
+
           // Add padding back
           while (base64.length % 4) {
             base64 += '=';
           }
-          
+
           departmentId = Buffer.from(base64, 'base64').toString('utf8');
         } catch (e) {
           console.error('Failed to decode department ID:', e);
           departmentId = null;
         }
       }
-      
+
+      // Decode the community ID from URL param if present
+      const encodedCommunityId = req.query.c || null;
+      let urlCommunityId = null;
+      // MongoDB ObjectId pattern for validation (prevents SSRF)
+      const communityIdPattern = /^[a-fA-F0-9]{24}$/;
+      if (encodedCommunityId) {
+        try {
+          let base64 = encodedCommunityId
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          const decoded = Buffer.from(base64, 'base64').toString('utf8');
+          // Validate decoded community ID to prevent SSRF
+          if (communityIdPattern.test(decoded)) {
+            urlCommunityId = decoded;
+          } else {
+            console.warn('Rejected invalid community ID from URL:', decoded);
+          }
+        } catch (e) {
+          console.error('Failed to decode community ID from URL:', e);
+        }
+      }
+
+      // Use community ID from URL if provided and valid, otherwise fall back to user's context
+      const communityId = urlCommunityId || req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
+
       // If no department context is provided, redirect to community or communities
       if (!(departmentId || req.session.departmentId) && !departmentName) {
-        const communityId = (req.user && req.user.user && (req.user.user.lastAccessedCommunity && req.user.user.lastAccessedCommunity.communityID)) || (req.user && req.user.user && req.user.user.activeCommunity);
         if (communityId) {
           return res.redirect(`/community/${encodeId(communityId)}?notice=selectDepartment#departments-section`);
         }
         return res.redirect('/communities');
       }
-      
+
       // If a specific department is requested, verify user access
       if (departmentId && departmentName) {
-        const communityId = req.user.user.lastAccessedCommunity?.communityID || req.user.user.activeCommunity;
-        
         if (!communityId) {
           return res.status(403).render("error", {
             message: "No active community found. Please select a community first.",
             redirect: "/communities",
           });
         }
-        
+
         // --- ADMIN CHECK USING COMMUNITY ROLES API ---
         let isAdmin = false;
         try {
@@ -1455,7 +1480,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           console.error('Error fetching community roles:', err.message);
         }
         // --- END ADMIN CHECK ---
-        
+
         if (!isAdmin) {
           // Check if user has access to this department by fetching user's departments
           const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
@@ -1475,11 +1500,25 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         }
       }
-      
-      // Fetch EMS vehicles and calls
+
+      // Fetch EMS vehicles, calls, and community info
       let dbEmsVehicles = null;
       let dbCalls = null;
-      
+      let communityName = null;
+
+      // Fetch community name using the resolved community ID
+      if (communityId) {
+        try {
+          const communityResponse = await axios.get(
+            `${policeCadApiUrl}/api/v1/community/${communityId}`,
+            config
+          );
+          communityName = communityResponse.data?.community?.name || null;
+        } catch (err) {
+          console.error('Error fetching community:', err.message);
+        }
+      }
+
       try {
         const vehiclesResponse = await axios.get(
           `${policeCadApiUrl}/api/v1/emsVehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`,
@@ -1489,17 +1528,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
       } catch (err) {
         console.error('Error fetching EMS vehicles:', err);
       }
-      
+
       try {
         const callsResponse = await axios.get(
-          `${policeCadApiUrl}/api/v1/calls/community/${req.user.user.activeCommunity}?status=true`,
+          `${policeCadApiUrl}/api/v2/calls/community/${req.user.user.activeCommunity}?status=true&limit=10&page=1`,
           config
         );
-        dbCalls = callsResponse.data;
+        // v2 API returns { data: [...], totalCount, page, limit }
+        dbCalls = callsResponse.data.data || callsResponse.data;
       } catch (err) {
         console.error('Error fetching calls:', err);
       }
-      
+
       res.render("ems-dashboard", {
         user: req.user,
         vehicles: exists(dbEmsVehicles) ? dbEmsVehicles : null,
@@ -1509,6 +1549,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         redirect: encodeURIComponent(redirect),
         departmentId: departmentId || req.session.departmentId || null,
         departmentName: departmentName,
+        communityName: communityName,
       });
     } catch (error) {
       console.error('🚨 Error in ems-dashboard route:', error);
@@ -1569,39 +1610,64 @@ module.exports = function (app, passport, server, nextApp, handle) {
           let base64 = encodedDeptId
             .replace(/-/g, '+')
             .replace(/_/g, '/');
-          
+
           // Add padding back
           while (base64.length % 4) {
             base64 += '=';
           }
-          
+
           departmentId = Buffer.from(base64, 'base64').toString('utf8');
         } catch (e) {
           console.error('Failed to decode department ID:', e);
           departmentId = null;
         }
       }
-      
+
+      // Decode the community ID from URL param if present
+      const encodedCommunityId = req.query.c || null;
+      let urlCommunityId = null;
+      // MongoDB ObjectId pattern for validation (prevents SSRF)
+      const communityIdPattern = /^[a-fA-F0-9]{24}$/;
+      if (encodedCommunityId) {
+        try {
+          let base64 = encodedCommunityId
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          const decoded = Buffer.from(base64, 'base64').toString('utf8');
+          // Validate decoded community ID to prevent SSRF
+          if (communityIdPattern.test(decoded)) {
+            urlCommunityId = decoded;
+          } else {
+            console.warn('Rejected invalid community ID from URL:', decoded);
+          }
+        } catch (e) {
+          console.error('Failed to decode community ID from URL:', e);
+        }
+      }
+
+      // Use community ID from URL if provided and valid, otherwise fall back to user's context
+      const communityId = urlCommunityId || req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
+
       // If no department context is provided, redirect to community or communities
       if (!(departmentId || req.session.departmentId) && !departmentName) {
-        const communityId = (req.user && req.user.user && (req.user.user.lastAccessedCommunity && req.user.user.lastAccessedCommunity.communityID)) || (req.user && req.user.user && req.user.user.activeCommunity);
         if (communityId) {
           return res.redirect(`/community/${encodeId(communityId)}?notice=selectDepartment#departments-section`);
         }
         return res.redirect('/communities');
       }
-      
+
       // If a specific department is requested, verify user access
       if (departmentId && departmentName) {
-        const communityId = req.user.user.lastAccessedCommunity?.communityID || req.user.user.activeCommunity;
-        
         if (!communityId) {
           return res.status(403).render("error", {
             message: "No active community found. Please select a community first.",
             redirect: "/communities",
           });
         }
-        
+
         // --- ADMIN CHECK USING COMMUNITY ROLES API ---
         let isAdmin = false;
         try {
@@ -1623,7 +1689,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           console.error('Error fetching community roles:', err.message);
         }
         // --- END ADMIN CHECK ---
-        
+
         if (!isAdmin) {
           // Check if user has access to this department by fetching user's departments
           const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
@@ -1643,7 +1709,21 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         }
       }
-      
+
+      // Fetch community name using the resolved community ID
+      let communityName = null;
+      if (communityId) {
+        try {
+          const communityResponse = await axios.get(
+            `${policeCadApiUrl}/api/v1/community/${communityId}`,
+            config
+          );
+          communityName = communityResponse.data?.community?.name || null;
+        } catch (err) {
+          console.error('Error fetching community:', err.message);
+        }
+      }
+
       res.render("police-dashboard", {
         user: req.user,
         referer: encodeURIComponent("/police-dashboard"),
@@ -1651,6 +1731,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         context: null,
         departmentId: departmentId || req.session.departmentId || null,
         departmentName: departmentName,
+        communityName: communityName,
         apiUrl: policeCadApiUrl,
       });
     } catch (error) {
@@ -1679,30 +1760,56 @@ module.exports = function (app, passport, server, nextApp, handle) {
           let base64 = encodedDeptId
             .replace(/-/g, '+')
             .replace(/_/g, '/');
-          
+
           // Add padding back
           while (base64.length % 4) {
             base64 += '=';
           }
-          
+
           departmentId = Buffer.from(base64, 'base64').toString('utf8');
         } catch (e) {
           console.error('Failed to decode department ID:', e);
           departmentId = null;
         }
       }
-      
+
+      // Decode the community ID from URL param if present
+      const encodedCommunityId = req.query.c || null;
+      let urlCommunityId = null;
+      // MongoDB ObjectId pattern for validation (prevents SSRF)
+      const communityIdPattern = /^[a-fA-F0-9]{24}$/;
+      if (encodedCommunityId) {
+        try {
+          let base64 = encodedCommunityId
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          const decoded = Buffer.from(base64, 'base64').toString('utf8');
+          // Validate decoded community ID to prevent SSRF
+          if (communityIdPattern.test(decoded)) {
+            urlCommunityId = decoded;
+          } else {
+            console.warn('Rejected invalid community ID from URL:', decoded);
+          }
+        } catch (e) {
+          console.error('Failed to decode community ID from URL:', e);
+        }
+      }
+
+      // Use community ID from URL if provided and valid, otherwise fall back to user's context
+      const communityId = urlCommunityId || req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
+
       // If a specific department is requested, verify user access
       if (departmentId && departmentName) {
-        const communityId = req.user.user.lastAccessedCommunity?.communityID || req.user.user.activeCommunity;
-        
         if (!communityId) {
           return res.status(403).render("error", {
             message: "No active community found. Please select a community first.",
             redirect: "/communities",
           });
         }
-        
+
         // --- ADMIN CHECK USING COMMUNITY ROLES API ---
         let isAdmin = false;
         try {
@@ -1724,7 +1831,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           console.error('Error fetching community roles:', err.message);
         }
         // --- END ADMIN CHECK ---
-        
+
         if (!isAdmin) {
           // Check if user has access to this department by fetching user's departments
           const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
@@ -1744,7 +1851,21 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         }
       }
-      
+
+      // Fetch community name using the resolved community ID
+      let communityName = null;
+      if (communityId) {
+        try {
+          const communityResponse = await axios.get(
+            `${policeCadApiUrl}/api/v1/community/${communityId}`,
+            config
+          );
+          communityName = communityResponse.data?.community?.name || null;
+        } catch (err) {
+          console.error('Error fetching community:', err.message);
+        }
+      }
+
       res.render("dispatch-dashboard", {
         user: req.user,
         referer: encodeURIComponent("/dispatch-dashboard"),
@@ -1752,6 +1873,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         context: null,
         departmentId: departmentId || req.session.departmentId || null,
         departmentName: departmentName,
+        communityName: communityName,
         apiUrl: policeCadApiUrl,
       });
     } catch (error) {

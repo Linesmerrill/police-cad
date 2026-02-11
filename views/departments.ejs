@@ -460,10 +460,21 @@
         .replace(/=/g, '');
     }
 
+    // Encode community ID for URL (base64 with URL-safe characters)
+    function encodeCommunityIdForUrl(communityId) {
+      const base64 = btoa(communityId);
+      return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
     function goToDepartment(departmentId, dashboardUrl, departmentName) {
-      // For all departments, navigate directly with parameters
+      // For all departments, navigate directly with parameters including community ID
+      const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
       const encodedDeptId = encodeDepartmentId(departmentId);
-      const url = `${dashboardUrl}?dept=${encodeURIComponent(departmentName)}&d=${encodedDeptId}`;
+      const encodedCommunityId = communityId ? encodeCommunityIdForUrl(communityId) : '';
+      let url = `${dashboardUrl}?dept=${encodeURIComponent(departmentName)}&d=${encodedDeptId}`;
+      if (encodedCommunityId) {
+        url += `&c=${encodedCommunityId}`;
+      }
       window.location.href = url;
     }
 
