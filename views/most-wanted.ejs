@@ -671,6 +671,20 @@
       font-weight: 500;
     }
 
+    .mw-civ-option-disabled {
+      cursor: default;
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    .mw-civ-option-badge {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: #f87171;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
     .mw-civ-no-results {
       padding: 0.8rem 1rem;
       color: var(--text-secondary);
@@ -1922,11 +1936,21 @@
         return;
       }
 
+      // Build set of civilianIDs already on the most wanted list
+      var existingCivIds = {};
+      for (var e = 0; e < entries.length; e++) {
+        if (entries[e].civilianID) {
+          existingCivIds[entries[e].civilianID] = true;
+        }
+      }
+
       var html = '';
       for (var i = 0; i < civs.length; i++) {
         var c = civs[i];
         var name = getCivName(c);
         var img = c.image || c.profilePicture || '';
+        var civId = c._id || c.id || '';
+        var alreadyListed = civId && existingCivIds[civId];
 
         var avatarHtml = '';
         if (img) {
@@ -1935,10 +1959,18 @@
           avatarHtml = '<div class="mw-civ-option-initials">' + escapeHtml(getInitials(c.firstName, c.lastName, c.name)) + '</div>';
         }
 
-        html += '<div class="mw-civ-option" onclick="selectCivilianByIndex(' + i + ')">' +
-          avatarHtml +
-          '<span class="mw-civ-option-name">' + escapeHtml(name) + '</span>' +
-        '</div>';
+        if (alreadyListed) {
+          html += '<div class="mw-civ-option mw-civ-option-disabled">' +
+            avatarHtml +
+            '<span class="mw-civ-option-name">' + escapeHtml(name) + '</span>' +
+            '<span class="mw-civ-option-badge">Already listed</span>' +
+          '</div>';
+        } else {
+          html += '<div class="mw-civ-option" onclick="selectCivilianByIndex(' + i + ')">' +
+            avatarHtml +
+            '<span class="mw-civ-option-name">' + escapeHtml(name) + '</span>' +
+          '</div>';
+        }
       }
 
       dropdown.innerHTML = html;
