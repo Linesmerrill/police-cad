@@ -1641,7 +1641,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       try {
         const deptApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/user/${req.user._id}/departments`;
         const deptResponse = await axios.get(deptApiUrl, config);
-        const departments = deptResponse.data || [];
+        const departments = deptResponse.data?.departments || [];
         isDepartmentMember = departments.length > 0;
       } catch (err) {
         console.error('Error fetching user departments for most-wanted:', err.message);
