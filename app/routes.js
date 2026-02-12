@@ -1593,6 +1593,73 @@ module.exports = function (app, passport, server, nextApp, handle) {
     });
   });
 
+  app.get("/most-wanted", authCheck, async function (req, res) {
+    try {
+      const communityId = req.user?.user?.lastAccessedCommunity?.communityID
+                       || req.user?.user?.activeCommunity;
+      if (!communityId) {
+        return res.redirect('/communities');
+      }
+
+      // Fetch community data for settings
+      let community = null;
+      try {
+        const communityResponse = await axios.get(
+          `${policeCadApiUrl}/api/v1/community/${communityId}`, config
+        );
+        community = communityResponse.data;
+      } catch (err) {
+        console.error('Error fetching community for most-wanted:', err.message);
+      }
+
+      // Check if user is owner
+      const isOwner = community?.community?.ownerID === String(req.user._id);
+
+      // Check if user is admin via community roles
+      let isAdmin = false;
+      try {
+        const rolesApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/roles`;
+        const rolesResponse = await axios.get(rolesApiUrl, config);
+        const roles = rolesResponse.data || [];
+        roles.forEach(role => {
+          if (Array.isArray(role.members) && role.members.includes(String(req.user._id))) {
+            if (Array.isArray(role.permissions)) {
+              role.permissions.forEach(perm => {
+                if (perm.name === 'administrator' && perm.enabled === true) {
+                  isAdmin = true;
+                }
+              });
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Error fetching community roles for most-wanted:', err.message);
+      }
+
+      // Check if user is in any department (non-civilian)
+      let isDepartmentMember = false;
+      try {
+        const deptApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/user/${req.user._id}/departments`;
+        const deptResponse = await axios.get(deptApiUrl, config);
+        const departments = deptResponse.data || [];
+        isDepartmentMember = departments.length > 0;
+      } catch (err) {
+        console.error('Error fetching user departments for most-wanted:', err.message);
+      }
+
+      return res.render("most-wanted", {
+        user: req.user,
+        community: community,
+        isAdmin: isAdmin || isOwner,
+        isDepartmentMember: isDepartmentMember,
+        communityId: communityId,
+      });
+    } catch (err) {
+      console.error('Error loading most-wanted page:', err);
+      return res.redirect('/communities');
+    }
+  });
+
   app.get("/police-dashboard", authCheck, async function (req, res) {
     try {
       var context = req.app.locals.specialContext;
