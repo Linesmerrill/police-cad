@@ -418,7 +418,7 @@ function CommunityPricingContent() {
                     key={opt.months}
                     onClick={() => setSelectedMonths(opt.months)}
                     style={{
-                      padding: '10px 24px',
+                      padding: '10px 20px',
                       borderRadius: '8px',
                       border: 'none',
                       background: isActive
@@ -432,22 +432,21 @@ function CommunityPricingContent() {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '4px'
+                      gap: '2px'
                     }}
                   >
+                    {opt.label}
                     {savingsForElite > 0 && (
                       <span style={{
-                        fontSize: '0.7rem',
-                        background: 'rgba(16, 185, 129, 0.15)',
+                        fontSize: '0.65rem',
                         color: '#10b981',
-                        padding: '2px 8px',
-                        borderRadius: '9999px',
-                        fontWeight: 400
+                        fontWeight: 400,
+                        letterSpacing: '0.01em',
+                        whiteSpace: 'nowrap'
                       }}>
-                        Save up to <strong>{savingsForElite}%</strong>
+                        Save up to <strong style={{ fontWeight: 700 }}>{savingsForElite}%</strong>
                       </span>
                     )}
-                    {opt.label}
                   </button>
                 );
               })}
