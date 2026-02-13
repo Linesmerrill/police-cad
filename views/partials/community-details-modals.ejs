@@ -2230,18 +2230,20 @@ function renderPermissionsList() {
   }
   
   // Group permissions into categories
-  const generalPermissions = filteredPermissions.filter(p => 
+  const generalPermissions = filteredPermissions.filter(p =>
     p.name.includes('manage community') || p.name.includes('manage departments')
   );
-  
-  const advancedPermissions = filteredPermissions.filter(p => 
-    p.name === 'administrator' || p.name.includes('manage roles') || p.name.includes('manage members') || p.name.includes('manage bans')
-  );
-  
-  let html = '';
-  
 
-  
+  const featurePermissions = filteredPermissions.filter(p =>
+    p.name.includes('manage most wanted') || p.name.includes('manage bans')
+  );
+
+  const advancedPermissions = filteredPermissions.filter(p =>
+    p.name === 'administrator' || p.name.includes('manage roles') || p.name.includes('manage members')
+  );
+
+  let html = '';
+
   // Render General Community Settings
   if (generalPermissions.length > 0) {
     html += `
@@ -2253,7 +2255,19 @@ function renderPermissionsList() {
       </div>
     `;
   }
-  
+
+  // Render Feature Permissions
+  if (featurePermissions.length > 0) {
+    html += `
+      <div style="margin-bottom:2rem;">
+        <h4 style="color:#fff; margin:0 0 1rem 0; font-size:1.125rem; font-weight:600; border-bottom:1px solid #4a5568; padding-bottom:0.5rem;">
+          Feature Permissions
+        </h4>
+        ${featurePermissions.map(permission => renderPermissionItem(permission, isHeadAdmin)).join('')}
+      </div>
+    `;
+  }
+
   // Render Advanced Permissions
   if (advancedPermissions.length > 0) {
     html += `
@@ -2284,19 +2298,24 @@ function renderPermissionItem(permission, isHeadAdmin) {
   // For head admin, all permissions are disabled (cannot be changed)
   const shouldDisable = isHeadAdmin;
   
+  const isAdmin = permission.name === 'administrator' && permission.description !== 'Head Admin';
+  const adminStyle = isAdmin
+    ? 'border:1px solid #ef4444; box-shadow:0 0 12px rgba(239,68,68,0.25);'
+    : 'border:1px solid #4a5568;';
+
   return `
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; margin-bottom:1rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:#2d3748; ${adminStyle} border-radius:8px; margin-bottom:1rem;">
       <div style="flex:1; margin-right:1rem;">
-        <h4 style="color:#fff; margin:0 0 0.5rem 0; font-size:1rem; font-weight:600;">${displayName}</h4>
+        <h4 style="color:${isAdmin ? '#ef4444' : '#fff'}; margin:0 0 0.5rem 0; font-size:1rem; font-weight:600;">${displayName}${isAdmin ? ' <i class="fa fa-exclamation-triangle" style="font-size:0.85rem; margin-left:0.25rem;"></i>' : ''}</h4>
         <p style="color:#a0aec0; margin:0; font-size:0.875rem; max-width:66%;">${permission.description}</p>
       </div>
       <label style="position:relative; display:inline-block; width:50px; height:24px; cursor:${isDisabled || shouldDisable ? 'not-allowed' : 'pointer'};" onclick="${!isDisabled && !shouldDisable ? `togglePermission('${permission._id}', ${!displayEnabled})` : ''}">
-        <input type="checkbox" 
-               ${displayEnabled ? 'checked' : ''} 
+        <input type="checkbox"
+               ${displayEnabled ? 'checked' : ''}
                onchange="togglePermission('${permission._id}', this.checked)"
                ${isDisabled || shouldDisable ? 'disabled' : ''}
                style="opacity:0; width:0; height:0;">
-        <span style="position:absolute; top:0; left:0; right:0; bottom:0; background-color:${displayEnabled ? '#8b5cf6' : '#4a5568'}; transition:0.3s; border-radius:24px; opacity:${isDisabled || shouldDisable ? '0.5' : '1'};">
+        <span style="position:absolute; top:0; left:0; right:0; bottom:0; background-color:${displayEnabled ? (isAdmin ? '#ef4444' : '#8b5cf6') : '#4a5568'}; transition:0.3s; border-radius:24px; opacity:${isDisabled || shouldDisable ? '0.5' : '1'};">
           <span style="position:absolute; height:18px; width:18px; left:${displayEnabled ? '26px' : '3px'}; top:3px; border-radius:50%; background-color:white; transition:0.3s; box-shadow:0 2px 4px rgba(0,0,0,0.2);"></span>
         </span>
       </label>
@@ -2305,28 +2324,49 @@ function renderPermissionItem(permission, isHeadAdmin) {
 }
 
 function togglePermission(permissionId, enabled) {
-  console.log('togglePermission called:', permissionId, enabled); // Debug log
-  
-  // Update the local state immediately for better UX
+  const permission = currentRole.permissions.find(p => p._id === permissionId);
+  if (!permission) return;
+
+  // Show confirmation modal when enabling administrator (non-Head Admin)
+  if (permission.name === 'administrator' && permission.description !== 'Head Admin' && enabled) {
+    showAdminConfirmModal(permissionId);
+    return;
+  }
+
+  applyPermissionToggle(permissionId, enabled);
+}
+
+function applyPermissionToggle(permissionId, enabled) {
   const permission = currentRole.permissions.find(p => p._id === permissionId);
   if (permission) {
     permission.enabled = enabled;
-    console.log('Permission updated:', permission.name, 'enabled:', permission.enabled); // Debug log
-    
+
     // If this is the head admin permission being enabled, update other permissions
     if (permission.name === 'administrator' && permission.description === 'Head Admin' && enabled) {
-      // Disable all other permissions for head admin
       currentRole.permissions.forEach(p => {
         if (p._id !== permissionId) {
           p.enabled = false;
         }
       });
     }
-    
-    // Always re-render to show updated state
+
     renderPermissionsList();
+  }
+}
+
+function showAdminConfirmModal(permissionId) {
+  document.getElementById('adminConfirmModal').style.display = 'flex';
+  document.getElementById('adminConfirmModal').dataset.permissionId = permissionId;
+}
+
+function closeAdminConfirmModal(confirmed) {
+  const modal = document.getElementById('adminConfirmModal');
+  const permissionId = modal.dataset.permissionId;
+  modal.style.display = 'none';
+  if (confirmed && permissionId) {
+    applyPermissionToggle(permissionId, true);
   } else {
-    console.log('Permission not found:', permissionId); // Debug log
+    renderPermissionsList();
   }
 }
 
@@ -5001,6 +5041,26 @@ async function deleteInviteCode() {
     <div style="display:flex; justify-content:flex-end; gap:1rem;">
       <button onclick="closeRolePermissionsModal()" style="background:#6b7280; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer;">Cancel</button>
       <button id="savePermissionsBtn" onclick="saveRolePermissions()" style="background:#8b5cf6; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer;">Save Permissions</button>
+    </div>
+  </div>
+</div>
+
+<!-- Administrator Confirm Modal -->
+<div id="adminConfirmModal" style="display:none; position:fixed; z-index:6000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:440px; width:90%; position:relative; border:1px solid #ef4444; box-shadow:0 0 30px rgba(239,68,68,0.3);">
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-exclamation-triangle" style="font-size:3rem; color:#ef4444; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.25rem; font-weight:700;">Grant Administrator?</h3>
+    </div>
+    <p style="color:#e5e7eb; font-size:0.95rem; line-height:1.6; text-align:center; margin:0 0 0.75rem 0;">
+      This is a <strong style="color:#ef4444;">dangerous permission</strong> to grant.
+    </p>
+    <p style="color:#a0aec0; font-size:0.875rem; line-height:1.6; text-align:center; margin:0 0 1.5rem 0;">
+      Members with this permission can access all settings and pages, manage all members and roles, and <strong style="color:#ef4444;">remove anyone from the community &mdash; including you</strong>.
+    </p>
+    <div style="display:flex; gap:0.75rem; justify-content:center;">
+      <button onclick="closeAdminConfirmModal(false)" style="background:#374151; color:#fff; border:none; padding:0.7rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer; font-size:0.95rem;">Cancel</button>
+      <button onclick="closeAdminConfirmModal(true)" style="background:#ef4444; color:#fff; border:none; padding:0.7rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer; font-size:0.95rem;">Yes, Grant Access</button>
     </div>
   </div>
 </div>
