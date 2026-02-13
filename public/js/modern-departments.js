@@ -9,32 +9,43 @@ function encodeCommunityIdForUrl(communityId) {
 
 function fetchAndRenderModernDepartments() {
   const communityId = dbUser?.user?.lastAccessedCommunity?.communityID || dbUser?.user?.activeCommunity;
-  
+  const userId = dbUser?._id;
+
   if (!communityId) {
     console.warn('No active community found for departments');
     renderModernDepartmentsFallback();
     return;
   }
 
+  // Use v2 endpoint with userId to get accessStatus per department
+  const apiUrl = userId
+    ? `${API_URL}/api/v2/community/${communityId}/departments?userId=${userId}&page=1&limit=50`
+    : `${API_URL}/api/v1/community/${communityId}/departments`;
+
   $.ajax({
-    url: `${API_URL}/api/v1/community/${communityId}/departments`,
+    url: apiUrl,
     method: "GET",
     headers: {},
     success: function (data) {
-      const departments = data.departments || [];
-      
+      // v2 returns { data: [...] }, v1 returns { departments: [...] }
+      const departments = data.data || data.departments || [];
+
       if (departments.length === 0) {
         renderModernDepartmentsEmpty();
         return;
       }
-      
+
       let html = "";
       let civilianDepartmentName = null;
 
       departments.forEach((dept) => {
-        const template = dept?.template?.name;
+        // v2 returns templateName as string, v1 returns template.name as object
+        const template = dept?.templateName || dept?.template?.name;
         const name = dept?.name;
         const departmentId = dept?._id;
+        const accessStatus = dept?.accessStatus || 'approved';
+        const canAccess = accessStatus === 'approved';
+        const isPending = accessStatus === 'pending';
 
         // Skip if departmentId or template is invalid
         if (!departmentId || departmentId === "undefined" || !template) {
@@ -48,8 +59,6 @@ function fetchAndRenderModernDepartments() {
 
         let icon = "fa-building";
         let action = "#";
-        const useForm = false; // All departments now use direct navigation with query parameters
-        const isDisabled = [].includes(template.toLowerCase());
 
         // Build query params for department (include community ID for proper context)
         const encodedDeptId = encodeDepartmentId(departmentId);
@@ -80,34 +89,28 @@ function fetchAndRenderModernDepartments() {
             break;
         }
 
-        // Create HeroUI Pro styled department link
-        if (useForm) {
+        if (canAccess) {
           html += `
             <div class="nav-item">
-              <form action="${escapeHtml(action)}" method="POST" style="display: inline; width: 100%;">
-                <input type="hidden" name="departmentId" value="${escapeHtml(departmentId)}">
-                <input type="hidden" name="redirect" value="${escapeHtml(redirect)}">
-                <a href="#" class="nav-link" ${
-                  isDisabled
-                    ? 'style="opacity: 0.5; cursor: not-allowed;" title="This department is not yet available"'
-                    : 'onclick="this.parentNode.submit()"'
-                }>
-                  <i class="fa ${escapeHtml(icon)} nav-icon"></i>
-                  <span class="nav-text">${escapeHtml(name)} (${escapeHtml(template)})</span>
-                </a>
-              </form>
+              <a href="${escapeHtml(action)}" class="nav-link">
+                <i class="fa ${escapeHtml(icon)} nav-icon"></i>
+                <span class="nav-text" style="display:flex; flex-direction:column; line-height:1.3;">
+                  <span>${escapeHtml(name)}</span>
+                  <span style="font-size:0.75rem; opacity:0.5;">${escapeHtml(template)}</span>
+                </span>
+              </a>
             </div>
           `;
         } else {
+          // Locked or pending — show lock icon, clickable to open access modal
           html += `
             <div class="nav-item">
-              <a href="${escapeHtml(action)}" class="nav-link" ${
-                isDisabled
-                  ? 'style="opacity: 0.5; cursor: not-allowed;" title="This department is not yet available"'
-                  : ""
-              }>
-                <i class="fa ${escapeHtml(icon)} nav-icon"></i>
-                <span class="nav-text">${escapeHtml(name)} (${escapeHtml(template)})</span>
+              <a href="#" class="nav-link" style="opacity:0.55;" onclick="event.preventDefault(); showDeptAccessModal('${escapeHtml(name)}', '${isPending ? 'pending' : 'locked'}');">
+                <i class="fa fa-lock nav-icon" style="color:#64748b;"></i>
+                <span class="nav-text" style="display:flex; flex-direction:column; line-height:1.3;">
+                  <span>${escapeHtml(name)}</span>
+                  <span style="font-size:0.75rem; opacity:0.5;">${escapeHtml(template)}</span>
+                </span>
               </a>
             </div>
           `;
@@ -116,21 +119,21 @@ function fetchAndRenderModernDepartments() {
 
       // Update the departments submenu
       $("#departmentsSubmenu").html(html);
-      
-      // Enable tooltips for disabled departments
+
+      // Enable tooltips for locked departments
       $("[title]").tooltip();
-      
+
       // Update dashboard title if we're on the civilian dashboard
       if (window.location.pathname === '/civ-dashboard') {
         // Check if there's a specific department in the URL
         const urlParams = new URLSearchParams(window.location.search);
         const urlDeptName = urlParams.get('dept');
         const encodedDeptId = urlParams.get('d');
-        
+
         if (urlDeptName) {
           // Use the department name from URL (for specific department selection)
           updateDashboardTitle(decodeURIComponent(urlDeptName));
-          
+
           // Store the decoded department ID for potential future use
           if (encodedDeptId) {
             const decodedDeptId = decodeDepartmentId(encodedDeptId);
@@ -148,9 +151,7 @@ function fetchAndRenderModernDepartments() {
       }
     },
     error: function (xhr) {
-      console.error("❌ Error fetching departments:", xhr.responseText);
-      console.error("Status:", xhr.status);
-      console.error("StatusText:", xhr.statusText);
+      console.error("Error fetching departments:", xhr.responseText);
       renderModernDepartmentsFallback();
     },
   });
@@ -244,6 +245,51 @@ function escapeHtml(str) {
     .replace(/'/g, "&#39;");
 }
 
+// Department access modal
+function showDeptAccessModal(deptName, status) {
+  var modal = document.getElementById('deptAccessModal');
+  if (!modal) {
+    // Create modal on first use
+    var communityId = dbUser?.user?.lastAccessedCommunity?.communityID || dbUser?.user?.activeCommunity;
+    var communityLink = communityId ? '/community/' + encodeCommunityIdForUrl(communityId) : '/community-dashboard';
+    var div = document.createElement('div');
+    div.innerHTML = `
+      <div id="deptAccessModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); align-items:center; justify-content:center;">
+        <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:400px; width:90%; position:relative; border:1px solid #35385a;">
+          <button onclick="closeDeptAccessModal()" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.3rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+          <div style="text-align:center; margin-bottom:1.5rem;">
+            <i class="fa fa-lock" style="font-size:2.5rem; color:#64748b; margin-bottom:0.75rem;"></i>
+            <h3 id="deptAccessModalTitle" style="color:#fff; margin:0; font-size:1.2rem; font-weight:600;"></h3>
+          </div>
+          <p id="deptAccessModalMsg" style="color:#a0aec0; font-size:0.9rem; line-height:1.6; text-align:center; margin:0 0 1.5rem 0;"></p>
+          <div style="display:flex; gap:0.75rem; justify-content:center;">
+            <button onclick="closeDeptAccessModal()" style="background:#374151; color:#fff; border:none; padding:0.6rem 1.2rem; border-radius:8px; font-weight:500; cursor:pointer;">Close</button>
+            <a href="${communityLink}" style="background:#3b82f6; color:#fff; border:none; padding:0.6rem 1.2rem; border-radius:8px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block;">Go to Community</a>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(div.firstElementChild);
+    modal = document.getElementById('deptAccessModal');
+  }
+
+  var title = document.getElementById('deptAccessModalTitle');
+  var msg = document.getElementById('deptAccessModalMsg');
+
+  if (status === 'pending') {
+    title.textContent = deptName;
+    msg.textContent = 'Your request to join this department is pending approval. You can check the status on the community page.';
+  } else {
+    title.textContent = deptName;
+    msg.textContent = 'You don\'t have access to this department. Visit the community page to request to join.';
+  }
+  modal.style.display = 'flex';
+}
+
+function closeDeptAccessModal() {
+  var modal = document.getElementById('deptAccessModal');
+  if (modal) modal.style.display = 'none';
+}
+
 // Initialize departments when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
   // Wait a bit for other scripts to load
@@ -254,4 +300,4 @@ document.addEventListener('DOMContentLoaded', function() {
       console.error('fetchAndRenderModernDepartments function not found!');
     }
   }, 500);
-}); 
+});
