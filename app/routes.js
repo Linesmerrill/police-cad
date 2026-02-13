@@ -1595,7 +1595,25 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   app.get("/most-wanted", authCheck, async function (req, res) {
     try {
-      const communityId = req.user?.user?.lastAccessedCommunity?.communityID
+      // Decode the community ID from URL param if present
+      const encodedCommunityId = req.query.c || null;
+      let urlCommunityId = null;
+      const communityIdPattern = /^[a-fA-F0-9]{24}$/;
+      if (encodedCommunityId) {
+        try {
+          const decoded = decodeId(encodedCommunityId);
+          if (communityIdPattern.test(decoded)) {
+            urlCommunityId = decoded;
+          } else {
+            console.warn('Rejected invalid community ID from most-wanted URL:', decoded);
+          }
+        } catch (e) {
+          console.error('Failed to decode community ID from most-wanted URL:', e);
+        }
+      }
+
+      const communityId = urlCommunityId
+                       || req.user?.user?.lastAccessedCommunity?.communityID
                        || req.user?.user?.activeCommunity;
       if (!communityId) {
         return res.redirect('/communities');
@@ -1636,13 +1654,17 @@ module.exports = function (app, passport, server, nextApp, handle) {
         console.error('Error fetching community roles for most-wanted:', err.message);
       }
 
-      // Check if user is in any department (non-civilian)
+      // Check if user is in any non-civilian department
       let isDepartmentMember = false;
       try {
         const deptApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/user/${req.user._id}/departments`;
         const deptResponse = await axios.get(deptApiUrl, config);
         const departments = deptResponse.data?.departments || [];
-        isDepartmentMember = departments.length > 0;
+        // Only count non-civilian departments — civilians can view but not edit
+        isDepartmentMember = departments.some(dept => {
+          const templateName = (dept.template?.name || '').toLowerCase();
+          return templateName !== 'civilian';
+        });
       } catch (err) {
         console.error('Error fetching user departments for most-wanted:', err.message);
       }
@@ -1650,6 +1672,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       return res.render("most-wanted", {
         user: req.user,
         community: community,
+        communityName: community?.community?.name || '',
         isAdmin: isAdmin || isOwner,
         isDepartmentMember: isDepartmentMember,
         communityId: communityId,
