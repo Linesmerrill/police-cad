@@ -2142,9 +2142,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       return next();
     } else {
       req.session.redirect = req.originalUrl; // Store the original URL in session
-      res.render("login-civ", {
-        message: "",
-      });
+      res.redirect("/login");
     }
   }
 
