@@ -1635,10 +1635,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
       // Check if user is admin via community roles
       let isAdmin = false;
+      let roles = [];
       try {
         const rolesApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/roles`;
         const rolesResponse = await axios.get(rolesApiUrl, config);
-        const roles = rolesResponse.data || [];
+        roles = rolesResponse.data || [];
         roles.forEach(role => {
           if (Array.isArray(role.members) && role.members.includes(String(req.user._id))) {
             if (Array.isArray(role.permissions)) {
@@ -1667,6 +1668,28 @@ module.exports = function (app, passport, server, nextApp, handle) {
         });
       } catch (err) {
         console.error('Error fetching user departments for most-wanted:', err.message);
+      }
+
+      // Check "manage most wanted" permission — defaults to granted if permission doesn't exist on role
+      if (isDepartmentMember) {
+        const userId = String(req.user._id);
+        const userRoles = roles.filter(r =>
+          Array.isArray(r.members) && r.members.includes(userId)
+        );
+
+        if (userRoles.length > 0) {
+          const canManage = userRoles.some(role => {
+            const perms = role.permissions || [];
+            const mwPerm = perms.find(p => p.name === 'manage most wanted');
+            // Permission not on this role yet → default granted
+            if (!mwPerm) return true;
+            // Permission exists and is enabled → granted
+            if (mwPerm.enabled) return true;
+            // Admin override
+            return perms.some(p => p.name === 'administrator' && p.enabled);
+          });
+          isDepartmentMember = canManage;
+        }
       }
 
       return res.render("most-wanted", {
