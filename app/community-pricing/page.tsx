@@ -71,6 +71,12 @@ function encodeId(id: string): string {
   return btoa(id).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+function decodeId(encoded: string): string {
+  let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4 !== 0) base64 += '=';
+  return atob(base64);
+}
+
 function calculateProrationCredit(
   subscription: NonNullable<Community['community']['subscription']>,
   newTierKey: string,
@@ -115,7 +121,8 @@ function calculateProrationCredit(
 function CommunityPricingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const preselectedCommunityId = searchParams.get('communityId') || '';
+  const rawParam = searchParams.get('c') || '';
+  const preselectedCommunityId = rawParam ? decodeId(rawParam) : '';
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [tiers, setTiers] = useState<CommunityTier[]>([]);
@@ -247,7 +254,8 @@ function CommunityPricingContent() {
 
   const handleSelectBoost = (tier: CommunityTier) => {
     if (!user) {
-      router.push('/login?redirect=/community-pricing');
+      const redirect = rawParam ? `/community-pricing?c=${rawParam}` : '/community-pricing';
+      router.push(`/login?redirect=${encodeURIComponent(redirect)}`);
       return;
     }
     setSelectedTier(tier);
