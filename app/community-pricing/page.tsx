@@ -430,11 +430,11 @@ function CommunityPricingContent() {
                       fontSize: '0.9rem',
                       transition: 'all 0.2s',
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '8px'
+                      gap: '4px'
                     }}
                   >
-                    {opt.label}
                     {savingsForElite > 0 && (
                       <span style={{
                         fontSize: '0.7rem',
@@ -442,11 +442,12 @@ function CommunityPricingContent() {
                         color: '#10b981',
                         padding: '2px 8px',
                         borderRadius: '9999px',
-                        fontWeight: 600
+                        fontWeight: 400
                       }}>
-                        Save up to {savingsForElite}%
+                        Save up to <strong>{savingsForElite}%</strong>
                       </span>
                     )}
+                    {opt.label}
                   </button>
                 );
               })}
