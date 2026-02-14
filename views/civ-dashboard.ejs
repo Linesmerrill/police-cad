@@ -1182,6 +1182,16 @@
             <i class="fa fa-external-link-alt" style="margin-left: auto; font-size: 0.8rem;"></i>
           </a>
   </div>
+        <%
+          var civCommunityId = user.user?.lastAccessedCommunity?.communityID || '';
+          var civEncodedCommunityId = civCommunityId ? Buffer.from(civCommunityId).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : '';
+        %>
+        <div class="nav-item">
+          <a href="/most-wanted<%= civEncodedCommunityId ? '?c=' + civEncodedCommunityId : '' %>" class="nav-link">
+            <i class="fa fa-user-secret nav-icon"></i>
+            <span class="nav-text">Most Wanted</span>
+          </a>
+        </div>
 </div>
 
       <!-- Departments -->
@@ -1196,7 +1206,7 @@
       <div class="nav-section">
         <div class="nav-section-title">Communities</div>
         <div class="nav-item">
-          <a href="/community-dashboard" class="nav-link">
+          <a href="<%= civEncodedCommunityId ? '/community/' + civEncodedCommunityId : '/community-dashboard' %>" class="nav-link">
             <i class="fa fa-house-user nav-icon"></i>
             <span class="nav-text">Community Dashboard</span>
           </a>
@@ -1247,7 +1257,7 @@
     <!-- Top Navigation -->
     <nav class="top-nav">
       <div class="container-fluid">
-        <h1><a href="/civ-dashboard"><i class="fa fa-user"></i> <span id="main-dashboard-title"><%= departmentName || 'Civilian Dashboard' %></span></a> • <a href="/community-dashboard"><span id="community-name" style="background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600;"></span></a></h1>
+        <h1><a href="/civ-dashboard"><i class="fa fa-user"></i> <span id="main-dashboard-title"><%= departmentName || 'Civilian Dashboard' %></span></a> • <a href="<%= civEncodedCommunityId ? '/community/' + civEncodedCommunityId : '/community-dashboard' %>"><span id="community-name" style="background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600;"></span></a></h1>
               </div>
     </nav>
 

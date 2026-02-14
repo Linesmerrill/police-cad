@@ -71,6 +71,12 @@ function encodeId(id: string): string {
   return btoa(id).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+function decodeId(encoded: string): string {
+  let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4 !== 0) base64 += '=';
+  return atob(base64);
+}
+
 function calculateProrationCredit(
   subscription: NonNullable<Community['community']['subscription']>,
   newTierKey: string,
@@ -115,7 +121,8 @@ function calculateProrationCredit(
 function CommunityPricingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const preselectedCommunityId = searchParams.get('communityId') || '';
+  const rawParam = searchParams.get('c') || '';
+  const preselectedCommunityId = rawParam ? decodeId(rawParam) : '';
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [tiers, setTiers] = useState<CommunityTier[]>([]);
@@ -247,7 +254,8 @@ function CommunityPricingContent() {
 
   const handleSelectBoost = (tier: CommunityTier) => {
     if (!user) {
-      router.push('/login?redirect=/community-pricing');
+      const redirect = rawParam ? `/community-pricing?c=${rawParam}` : '/community-pricing';
+      router.push(`/login?redirect=${encodeURIComponent(redirect)}`);
       return;
     }
     setSelectedTier(tier);
@@ -410,7 +418,7 @@ function CommunityPricingContent() {
                     key={opt.months}
                     onClick={() => setSelectedMonths(opt.months)}
                     style={{
-                      padding: '10px 24px',
+                      padding: '10px 20px',
                       borderRadius: '8px',
                       border: 'none',
                       background: isActive
@@ -422,21 +430,21 @@ function CommunityPricingContent() {
                       fontSize: '0.9rem',
                       transition: 'all 0.2s',
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '8px'
+                      gap: '2px'
                     }}
                   >
                     {opt.label}
                     {savingsForElite > 0 && (
                       <span style={{
-                        fontSize: '0.7rem',
-                        background: 'rgba(16, 185, 129, 0.15)',
+                        fontSize: '0.65rem',
                         color: '#10b981',
-                        padding: '2px 8px',
-                        borderRadius: '9999px',
-                        fontWeight: 600
+                        fontWeight: 400,
+                        letterSpacing: '0.01em',
+                        whiteSpace: 'nowrap'
                       }}>
-                        Save up to {savingsForElite}%
+                        Save up to <strong style={{ fontWeight: 700 }}>{savingsForElite}%</strong>
                       </span>
                     )}
                   </button>

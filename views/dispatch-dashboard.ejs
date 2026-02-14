@@ -592,6 +592,10 @@
           <h5>Logged in as: Dispatch</h5>
         </div>
       </div>
+      <%
+        var communityId = user.user?.lastAccessedCommunity?.communityID || '';
+        var encodedCommunityId = communityId ? Buffer.from(communityId).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : '';
+      %>
       <ul class="list-unstyled components mb-5">
         <li>
           <a href="/"><span class="fa fa-home mr-3"></span> <img style="display: inline; margin-top: -9px; vertical-align: text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD</a>
@@ -653,6 +657,9 @@
           <li>
             <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
                 class="fa fa-external-link-alt"></i></a>
+          </li>
+          <li>
+            <a href="/most-wanted<%= encodedCommunityId ? '?c=' + encodedCommunityId : '' %>"><span class="fa fa-user-secret ml-3 mr-3"></span> Most Wanted</a>
           </li>
         </div>
         <% include departments-sidebar %>

@@ -1593,6 +1593,119 @@ module.exports = function (app, passport, server, nextApp, handle) {
     });
   });
 
+  app.get("/most-wanted", authCheck, async function (req, res) {
+    try {
+      // Decode the community ID from URL param if present
+      const encodedCommunityId = req.query.c || null;
+      let urlCommunityId = null;
+      const communityIdPattern = /^[a-fA-F0-9]{24}$/;
+      if (encodedCommunityId) {
+        try {
+          const decoded = decodeId(encodedCommunityId);
+          if (communityIdPattern.test(decoded)) {
+            urlCommunityId = decoded;
+          } else {
+            console.warn('Rejected invalid community ID from most-wanted URL:', decoded);
+          }
+        } catch (e) {
+          console.error('Failed to decode community ID from most-wanted URL:', e);
+        }
+      }
+
+      const communityId = urlCommunityId
+                       || req.user?.user?.lastAccessedCommunity?.communityID
+                       || req.user?.user?.activeCommunity;
+      if (!communityId) {
+        return res.redirect('/communities');
+      }
+
+      // Fetch community data for settings
+      let community = null;
+      try {
+        const communityResponse = await axios.get(
+          `${policeCadApiUrl}/api/v1/community/${communityId}`, config
+        );
+        community = communityResponse.data;
+      } catch (err) {
+        console.error('Error fetching community for most-wanted:', err.message);
+      }
+
+      // Check if user is owner
+      const isOwner = community?.community?.ownerID === String(req.user._id);
+
+      // Check if user is admin via community roles
+      let isAdmin = false;
+      let roles = [];
+      try {
+        const rolesApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/roles`;
+        const rolesResponse = await axios.get(rolesApiUrl, config);
+        roles = rolesResponse.data || [];
+        roles.forEach(role => {
+          if (Array.isArray(role.members) && role.members.includes(String(req.user._id))) {
+            if (Array.isArray(role.permissions)) {
+              role.permissions.forEach(perm => {
+                if (perm.name === 'administrator' && perm.enabled === true) {
+                  isAdmin = true;
+                }
+              });
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Error fetching community roles for most-wanted:', err.message);
+      }
+
+      // Check if user is in any non-civilian department
+      let isDepartmentMember = false;
+      try {
+        const deptApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/user/${req.user._id}/departments`;
+        const deptResponse = await axios.get(deptApiUrl, config);
+        const departments = deptResponse.data?.departments || [];
+        // Only count non-civilian departments — civilians can view but not edit
+        isDepartmentMember = departments.some(dept => {
+          const templateName = (dept.template?.name || '').toLowerCase();
+          return templateName !== 'civilian';
+        });
+      } catch (err) {
+        console.error('Error fetching user departments for most-wanted:', err.message);
+      }
+
+      // Check "manage most wanted" permission — defaults to granted if permission doesn't exist on role
+      if (isDepartmentMember) {
+        const userId = String(req.user._id);
+        const userRoles = roles.filter(r =>
+          Array.isArray(r.members) && r.members.includes(userId)
+        );
+
+        if (userRoles.length > 0) {
+          const canManage = userRoles.some(role => {
+            const perms = role.permissions || [];
+            const mwPerm = perms.find(p => p.name === 'manage most wanted');
+            // Permission not on this role yet → default granted
+            if (!mwPerm) return true;
+            // Permission exists and is enabled → granted
+            if (mwPerm.enabled) return true;
+            // Admin override
+            return perms.some(p => p.name === 'administrator' && p.enabled);
+          });
+          isDepartmentMember = canManage;
+        }
+      }
+
+      return res.render("most-wanted", {
+        user: req.user,
+        community: community,
+        communityName: community?.community?.name || '',
+        isAdmin: isAdmin || isOwner,
+        isDepartmentMember: isDepartmentMember,
+        communityId: communityId,
+      });
+    } catch (err) {
+      console.error('Error loading most-wanted page:', err);
+      return res.redirect('/communities');
+    }
+  });
+
   app.get("/police-dashboard", authCheck, async function (req, res) {
     try {
       var context = req.app.locals.specialContext;
@@ -2052,9 +2165,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       return next();
     } else {
       req.session.redirect = req.originalUrl; // Store the original URL in session
-      res.render("login-civ", {
-        message: "",
-      });
+      res.redirect("/login");
     }
   }
 

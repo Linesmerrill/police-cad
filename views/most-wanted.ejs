@@ -1,0 +1,2529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <% include ad-header %>
+  <title>LPC - Most Wanted</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Lines Roleplay Police CAD - Most Wanted List" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Favicon -->
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+
+  <style>
+    :root {
+      --primary-color: #667eea;
+      --primary-dark: #5a67d8;
+      --secondary-color: #764ba2;
+      --accent-color: #f093fb;
+      --success-color: #48bb78;
+      --warning-color: #ed8936;
+      --danger-color: #f56565;
+      --dark-bg: #1a202c;
+      --darker-bg: #171923;
+      --card-bg: #2d3748;
+      --text-primary: #f7fafc;
+      --text-secondary: #a0aec0;
+      --border-color: #4a5568;
+      --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      background: #0a0a0f;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(245, 101, 101, 0.05) 0%, transparent 60%),
+        #0a0a0f;
+    }
+
+    /* ========== TOP NAV ========== */
+    .mw-topnav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(23, 25, 35, 0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .mw-topnav-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .mw-topnav-left a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 1.5rem;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .mw-topnav-left a:hover {
+      color: var(--text-primary);
+    }
+
+    .mw-topnav-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 0.02em;
+    }
+
+    .mw-topnav-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-settings {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-secondary);
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 1.15rem;
+    }
+
+    .btn-settings:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-primary);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-add-entry {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #1a202c;
+      border: none;
+      height: 44px;
+      padding: 0 1.6rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1.05rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-add-entry:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(251, 191, 36, 0.35);
+    }
+
+    /* ========== MAIN CONTENT ========== */
+    .mw-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .mw-community-name {
+      color: var(--text-secondary);
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .mw-community-name i {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    /* ========== LOADING SPINNER ========== */
+    .mw-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 0;
+      gap: 1rem;
+    }
+
+    .mw-spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(251, 191, 36, 0.2);
+      border-top-color: #fbbf24;
+      border-radius: 50%;
+      animation: mw-spin 0.8s linear infinite;
+    }
+
+    @keyframes mw-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .mw-loading-text {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    /* ========== EMPTY STATE ========== */
+    .mw-empty {
+      text-align: center;
+      padding: 5rem 2rem;
+    }
+
+    .mw-empty-icon {
+      font-size: 5rem;
+      color: rgba(251, 191, 36, 0.3);
+      margin-bottom: 1.5rem;
+    }
+
+    .mw-empty h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .mw-empty p {
+      color: var(--text-secondary);
+      font-size: 1.15rem;
+      margin-bottom: 2rem;
+    }
+
+    /* ========== WANTED CARD ========== */
+    .mw-card {
+      background: rgba(35, 38, 58, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .mw-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    /* WANTED Banner */
+    .mw-card-banner {
+      background: linear-gradient(135deg, #dc2626, #991b1b);
+      padding: 0.5rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mw-card-banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 20px,
+        rgba(255, 255, 255, 0.03) 20px,
+        rgba(255, 255, 255, 0.03) 40px
+      );
+    }
+
+    .mw-card-banner-text {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 1;
+    }
+
+    .mw-card-banner-stars {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.85rem;
+      letter-spacing: 0.15em;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Card Body */
+    .mw-card-body {
+      padding: 1.5rem;
+    }
+
+    .mw-card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Rank */
+    .mw-rank {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #fbbf24;
+      line-height: 1;
+      text-shadow: 0 0 20px rgba(251, 191, 36, 0.4), 0 0 40px rgba(251, 191, 36, 0.15);
+      min-width: 48px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .mw-rank-hash {
+      font-size: 1.4rem;
+      color: rgba(251, 191, 36, 0.6);
+      font-weight: 600;
+    }
+
+    /* Photo */
+    .mw-photo-wrap {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      padding: 3px;
+      position: relative;
+    }
+
+    .mw-photo {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .mw-photo-initials {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Info */
+    .mw-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .mw-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+      word-break: break-word;
+    }
+
+    /* Fields Grid */
+    .mw-fields-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem 1.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .mw-field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mw-field-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #a0aec0;
+    }
+
+    .mw-field-value {
+      font-size: 1rem;
+      color: #f7fafc;
+      font-weight: 500;
+    }
+
+    /* Charges */
+    .mw-charges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 1rem;
+    }
+
+    .mw-charge-pill {
+      background: linear-gradient(135deg, rgba(245, 101, 101, 0.2), rgba(237, 137, 54, 0.2));
+      border: 1px solid rgba(245, 101, 101, 0.35);
+      color: #feb2b2;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* Description */
+    .mw-description {
+      margin-top: 0.75rem;
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Custom Fields */
+    .mw-custom-fields {
+      margin-top: 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.5rem;
+    }
+
+    .mw-custom-field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Card Footer */
+    .mw-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .mw-date {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .mw-card-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-card-action {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-secondary);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .btn-card-action:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+    }
+
+    .btn-card-action.danger:hover {
+      background: rgba(245, 101, 101, 0.15);
+      color: #feb2b2;
+      border-color: rgba(245, 101, 101, 0.3);
+    }
+
+    /* ========== PAGINATION ========== */
+    .mw-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .mw-page-info {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .btn-page {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border: none;
+      padding: 0.7rem 1.4rem;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-page:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-page:disabled {
+      background: #4a5568;
+      color: #718096;
+      cursor: not-allowed;
+      opacity: 0.6;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* ========== MODALS (Glass Morphism) ========== */
+    .mw-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .mw-modal-overlay.active {
+      display: flex;
+    }
+
+    .mw-modal {
+      background: #23263a;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      width: 100%;
+      max-width: 580px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .mw-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .mw-modal-header h3 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .mw-modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.4rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      transition: color 0.2s;
+    }
+
+    .mw-modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .mw-modal-body {
+      padding: 1.5rem;
+    }
+
+    /* Form elements */
+    .mw-form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .mw-form-label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #a0aec0;
+      margin-bottom: 0.4rem;
+    }
+
+    .mw-form-input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.2s;
+    }
+
+    .mw-form-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    }
+
+    .mw-form-input::placeholder {
+      color: rgba(160, 174, 192, 0.5);
+    }
+
+    textarea.mw-form-input {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* Civilian Search */
+    .mw-civ-search-wrap {
+      position: relative;
+    }
+
+    .mw-civ-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #2d3148;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      margin-top: 4px;
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 10;
+      display: none;
+    }
+
+    .mw-civ-dropdown.active {
+      display: block;
+    }
+
+    .mw-civ-option {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 1rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .mw-civ-option:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .mw-civ-option-photo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .mw-civ-option-initials {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .mw-civ-option-name {
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .mw-civ-option-disabled {
+      cursor: default;
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    .mw-civ-option-badge {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: #f87171;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .mw-civ-no-results {
+      padding: 0.8rem 1rem;
+      color: var(--text-secondary);
+      font-size: 1rem;
+      text-align: center;
+    }
+
+    /* Selected civilian display */
+    .mw-selected-civ {
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 1rem;
+      background: rgba(102, 126, 234, 0.1);
+      border: 1px solid rgba(102, 126, 234, 0.25);
+      border-radius: 10px;
+      margin-top: 0.5rem;
+    }
+
+    .mw-selected-civ.active {
+      display: flex;
+    }
+
+    .mw-selected-civ-photo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .mw-selected-civ-initials {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .mw-selected-civ-name {
+      flex: 1;
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .mw-selected-civ-clear {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1.15rem;
+      padding: 0.2rem;
+      transition: color 0.2s;
+    }
+
+    .mw-selected-civ-clear:hover {
+      color: var(--danger-color);
+    }
+
+    /* Charges tag input */
+    .mw-charges-input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .mw-charges-input-row .mw-form-input {
+      flex: 1;
+    }
+
+    .btn-add-charge {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: #fff;
+      border: none;
+      padding: 0.8rem 1.3rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-add-charge:hover {
+      transform: translateY(-1px);
+    }
+
+    .mw-charges-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+
+    .mw-charge-tag {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: linear-gradient(135deg, rgba(245, 101, 101, 0.2), rgba(237, 137, 54, 0.2));
+      border: 1px solid rgba(245, 101, 101, 0.35);
+      color: #feb2b2;
+      padding: 0.3rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .mw-charge-tag button {
+      background: transparent;
+      border: none;
+      color: rgba(254, 178, 178, 0.7);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .mw-charge-tag button:hover {
+      color: #fff;
+    }
+
+    /* Star Rating Picker */
+    .mw-star-rating {
+      display: flex;
+      gap: 0.35rem;
+    }
+
+    .mw-star-rating .mw-star-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.6rem;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.2);
+      transition: color 0.15s, transform 0.15s;
+      padding: 0.1rem;
+      line-height: 1;
+    }
+
+    .mw-star-rating .mw-star-btn.active {
+      color: #fbbf24;
+    }
+
+    .mw-star-rating .mw-star-btn:hover {
+      transform: scale(1.2);
+    }
+
+    /* Card banner star display */
+    .mw-card-banner-stars .fa-star.dimmed {
+      opacity: 0.25;
+    }
+
+    /* Reorder buttons */
+    .btn-reorder {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-secondary);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .btn-reorder:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-reorder:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .btn-reorder:disabled:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-secondary);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Submit button */
+    .btn-submit-mw {
+      width: 100%;
+      padding: 0.9rem;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #1a202c;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 0.5rem;
+    }
+
+    .btn-submit-mw:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(251, 191, 36, 0.35);
+    }
+
+    .btn-submit-mw:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Settings modal specifics */
+    .mw-settings-field-check {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.4rem 0;
+    }
+
+    .mw-settings-field-check input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      min-width: 20px;
+      accent-color: var(--primary-color);
+      cursor: pointer;
+      margin: 0;
+      flex-shrink: 0;
+    }
+
+    .mw-settings-field-check label {
+      color: var(--text-primary);
+      font-size: 1rem;
+      cursor: pointer;
+      user-select: none;
+      line-height: 1;
+    }
+
+    .mw-settings-field-check input:disabled + label {
+      color: var(--text-secondary);
+    }
+
+    .mw-custom-field-list {
+      margin-top: 0.5rem;
+    }
+
+    .mw-custom-field-item {
+      display: flex;
+      align-items: center;
+      padding: 0.6rem 0.75rem;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+      margin-bottom: 0.4rem;
+      gap: 0.5rem;
+    }
+
+    .mw-custom-field-item .cf-name {
+      color: var(--text-primary);
+      font-size: 1rem;
+      flex: 1;
+    }
+
+    .mw-custom-field-item .cf-required-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      user-select: none;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .mw-custom-field-item .cf-required-toggle:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .mw-custom-field-item .cf-required-toggle .cf-checkbox {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 2px solid #6b7280;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      font-size: 10px;
+      color: #000;
+      font-weight: 700;
+    }
+
+    .mw-custom-field-item .cf-required-toggle .cf-checkbox.checked {
+      border-color: #fbbf24;
+      background: #fbbf24;
+    }
+
+    .mw-custom-field-item .cf-required-toggle .cf-label {
+      font-size: 0.8rem;
+      color: #6b7280;
+      transition: color 0.2s;
+    }
+
+    .mw-custom-field-item .cf-required-toggle .cf-label.active {
+      color: #fbbf24;
+    }
+
+    .mw-custom-field-item .cf-remove-btn {
+      background: transparent;
+      border: none;
+      color: var(--danger-color);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0.2rem;
+      transition: opacity 0.2s;
+    }
+
+    .mw-custom-field-item .cf-remove-btn:hover {
+      opacity: 0.7;
+    }
+
+    .mw-add-custom-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .mw-add-custom-row .mw-form-input {
+      flex: 1;
+    }
+
+    /* Save settings button */
+    .btn-save-settings {
+      width: 100%;
+      padding: 0.9rem;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 0.5rem;
+    }
+
+    .btn-save-settings:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.35);
+    }
+
+    .btn-save-settings:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Delete modal */
+    .mw-delete-modal .mw-modal {
+      max-width: 420px;
+    }
+
+    .mw-delete-msg {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.5;
+      margin-bottom: 1.25rem;
+    }
+
+    .mw-delete-name {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .mw-delete-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+
+    .btn-cancel {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-secondary);
+      padding: 0.7rem 1.4rem;
+      border-radius: 10px;
+      font-weight: 500;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-primary);
+    }
+
+    .btn-delete-confirm {
+      background: linear-gradient(135deg, #f56565, #dc2626);
+      color: #fff;
+      border: none;
+      padding: 0.7rem 1.4rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-delete-confirm:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 101, 101, 0.3);
+    }
+
+    .btn-delete-confirm:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .mw-discard-modal .mw-modal {
+      max-width: 380px;
+    }
+
+    .btn-discard-save {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #000;
+      border: none;
+      padding: 0.7rem 1.4rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-discard-save:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+    }
+
+    /* Toast notification */
+    .mw-toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      padding: 0.85rem 1.6rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 500;
+      z-index: 3000;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .mw-toast.active {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .mw-toast.success {
+      background: rgba(72, 187, 120, 0.9);
+      color: #fff;
+      border: 1px solid rgba(72, 187, 120, 0.5);
+    }
+
+    .mw-toast.error {
+      background: rgba(245, 101, 101, 0.9);
+      color: #fff;
+      border: 1px solid rgba(245, 101, 101, 0.5);
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 640px) {
+      .mw-topnav {
+        padding: 0.75rem 1rem;
+      }
+
+      .mw-topnav-title {
+        font-size: 1.35rem;
+      }
+
+      .btn-add-entry span {
+        display: none;
+      }
+
+      .mw-container {
+        padding: 1rem 0.75rem 3rem;
+      }
+
+      .mw-card-top {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .mw-rank {
+        font-size: 2rem;
+      }
+
+      .mw-fields-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mw-card-footer {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+      }
+
+      .mw-card-actions {
+        align-self: flex-end;
+      }
+
+      .mw-modal {
+        max-height: 95vh;
+        border-radius: 12px;
+      }
+    }
+
+    /* Scrollbar styling for modals */
+    .mw-modal::-webkit-scrollbar,
+    .mw-civ-dropdown::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .mw-modal::-webkit-scrollbar-track,
+    .mw-civ-dropdown::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .mw-modal::-webkit-scrollbar-thumb,
+    .mw-civ-dropdown::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+
+    .mw-modal::-webkit-scrollbar-thumb:hover,
+    .mw-civ-dropdown::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <nav class="mw-topnav">
+    <div class="mw-topnav-left">
+      <a href="#" onclick="history.back(); return false;">
+        <i class="fas fa-arrow-left"></i>
+      </a>
+      <span class="mw-topnav-title"><%= community.community.mostWantedSidebarName || 'Most Wanted' %></span>
+    </div>
+    <div class="mw-topnav-right">
+      <% if (isAdmin) { %>
+        <button class="btn-settings" onclick="openSettings()" title="Settings">
+          <i class="fas fa-gear"></i>
+        </button>
+      <% } %>
+      <% if (isDepartmentMember) { %>
+        <button class="btn-add-entry" onclick="openAddModal()">
+          <i class="fas fa-plus"></i>
+          <span>Add New</span>
+        </button>
+      <% } %>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="mw-container">
+    <% if (communityName) { %>
+      <div class="mw-community-name">
+        <i class="fas fa-building"></i>
+        <%= communityName %>
+      </div>
+    <% } %>
+
+    <!-- Loading State -->
+    <div id="mw-loading" class="mw-loading">
+      <div class="mw-spinner"></div>
+      <div class="mw-loading-text">Loading most wanted list...</div>
+    </div>
+
+    <!-- Empty State (hidden by default) -->
+    <div id="mw-empty" class="mw-empty" style="display: none;">
+      <div class="mw-empty-icon">
+        <i class="fas fa-user-secret"></i>
+      </div>
+      <h2>No Most Wanted</h2>
+      <p>No one has been added to the most wanted list yet.</p>
+      <% if (isDepartmentMember) { %>
+        <button class="btn-add-entry" onclick="openAddModal()" style="display: inline-flex;">
+          <i class="fas fa-plus"></i>
+          <span>Add the first entry</span>
+        </button>
+      <% } %>
+    </div>
+
+    <!-- Entries List -->
+    <div id="mw-entries"></div>
+
+    <!-- Pagination -->
+    <div id="mw-pagination" class="mw-pagination" style="display: none;">
+      <button class="btn-page" id="btn-prev-page" onclick="prevPage()" disabled>
+        <i class="fas fa-chevron-left"></i> Previous
+      </button>
+      <span class="mw-page-info" id="mw-page-info">Page 1 of 1</span>
+      <button class="btn-page" id="btn-next-page" onclick="nextPage()" disabled>
+        Next <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div class="mw-modal-overlay" id="addMostWantedModal">
+    <div class="mw-modal">
+      <div class="mw-modal-header">
+        <h3 id="mw-modal-title">Add to Most Wanted</h3>
+        <button class="mw-modal-close" onclick="closeAddModal()">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+      <div class="mw-modal-body">
+        <!-- Civilian Search (add mode only) -->
+        <div class="mw-form-group" id="mw-civ-search-group">
+          <label class="mw-form-label">Search Civilian <span style="color:#ef4444;">*</span></label>
+          <div class="mw-civ-search-wrap">
+            <input
+              type="text"
+              class="mw-form-input"
+              id="mw-civ-search-input"
+              placeholder="Type a name to search..."
+              autocomplete="off"
+            />
+            <div class="mw-civ-dropdown" id="mw-civ-dropdown"></div>
+          </div>
+          <div class="mw-selected-civ" id="mw-selected-civ">
+            <div id="mw-selected-civ-avatar"></div>
+            <span class="mw-selected-civ-name" id="mw-selected-civ-name"></span>
+            <button class="mw-selected-civ-clear" onclick="clearSelectedCivilian()" title="Clear selection">
+              <i class="fas fa-xmark"></i>
+            </button>
+          </div>
+          <input type="hidden" id="mw-civilian-id" />
+        </div>
+
+        <!-- Charges -->
+        <div class="mw-form-group">
+          <label class="mw-form-label">Charges <span style="color:#ef4444;">*</span></label>
+          <div class="mw-charges-input-row">
+            <input
+              type="text"
+              class="mw-form-input"
+              id="mw-charge-input"
+              placeholder="Enter a charge..."
+              onkeydown="if(event.key==='Enter'){event.preventDefault();addCharge();}"
+            />
+            <button class="btn-add-charge" onclick="addCharge()">Add</button>
+          </div>
+          <div class="mw-charges-list" id="mw-charges-list"></div>
+        </div>
+
+        <!-- Description -->
+        <div class="mw-form-group">
+          <label class="mw-form-label">Description <span style="color:#ef4444;">*</span></label>
+          <textarea
+            class="mw-form-input"
+            id="mw-description-input"
+            rows="3"
+            placeholder="Details about why this person is wanted..."
+          ></textarea>
+        </div>
+
+        <!-- Star Rating -->
+        <div class="mw-form-group">
+          <label class="mw-form-label">Threat Level</label>
+          <div class="mw-star-rating" id="mw-star-rating">
+            <button type="button" class="mw-star-btn active" data-star="1" onclick="setStars(1)"><i class="fas fa-star"></i></button>
+            <button type="button" class="mw-star-btn active" data-star="2" onclick="setStars(2)"><i class="fas fa-star"></i></button>
+            <button type="button" class="mw-star-btn active" data-star="3" onclick="setStars(3)"><i class="fas fa-star"></i></button>
+            <button type="button" class="mw-star-btn active" data-star="4" onclick="setStars(4)"><i class="fas fa-star"></i></button>
+            <button type="button" class="mw-star-btn active" data-star="5" onclick="setStars(5)"><i class="fas fa-star"></i></button>
+          </div>
+        </div>
+
+        <!-- Custom Fields (rendered dynamically) -->
+        <div id="mw-custom-fields-container"></div>
+
+        <!-- Submit -->
+        <button class="btn-submit-mw" id="btn-submit-mw" onclick="submitMostWanted()">
+          <i class="fas fa-plus"></i> Add to Most Wanted
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="mw-modal-overlay" id="settingsModal">
+    <div class="mw-modal">
+      <div class="mw-modal-header">
+        <h3>Most Wanted Settings</h3>
+        <button class="mw-modal-close" onclick="closeSettings()">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+      <div class="mw-modal-body">
+        <!-- Sidebar Label -->
+        <div class="mw-form-group">
+          <label class="mw-form-label">Sidebar Label</label>
+          <input
+            type="text"
+            class="mw-form-input"
+            id="settings-sidebar-label"
+            placeholder="Most Wanted"
+          />
+        </div>
+
+        <!-- Visible Fields -->
+        <div class="mw-form-group">
+          <label class="mw-form-label">Visible Fields</label>
+          <div class="mw-settings-field-check">
+            <input type="checkbox" id="vf-name" checked disabled />
+            <label for="vf-name">Name (always shown)</label>
+          </div>
+          <div class="mw-settings-field-check">
+            <input type="checkbox" id="vf-image" value="image" />
+            <label for="vf-image">Image</label>
+          </div>
+          <div class="mw-settings-field-check">
+            <input type="checkbox" id="vf-birthday" value="birthday" />
+            <label for="vf-birthday">Date of Birth</label>
+          </div>
+          <div class="mw-settings-field-check">
+            <input type="checkbox" id="vf-gender" value="gender" />
+            <label for="vf-gender">Gender</label>
+          </div>
+          <div class="mw-settings-field-check">
+            <input type="checkbox" id="vf-race" value="race" />
+            <label for="vf-race">Race</label>
+          </div>
+          <div class="mw-settings-field-check">
+            <input type="checkbox" id="vf-hairColor" value="hairColor" />
+            <label for="vf-hairColor">Hair Color</label>
+          </div>
+          <div class="mw-settings-field-check">
+            <input type="checkbox" id="vf-eyeColor" value="eyeColor" />
+            <label for="vf-eyeColor">Eye Color</label>
+          </div>
+          <div class="mw-settings-field-check">
+            <input type="checkbox" id="vf-height" value="height" />
+            <label for="vf-height">Height</label>
+          </div>
+          <div class="mw-settings-field-check">
+            <input type="checkbox" id="vf-weight" value="weight" />
+            <label for="vf-weight">Weight</label>
+          </div>
+          <div class="mw-settings-field-check">
+            <input type="checkbox" id="vf-address" value="address" />
+            <label for="vf-address">Address</label>
+          </div>
+          <div class="mw-settings-field-check">
+            <input type="checkbox" id="vf-occupation" value="occupation" />
+            <label for="vf-occupation">Occupation</label>
+          </div>
+        </div>
+
+        <!-- Custom Fields -->
+        <div class="mw-form-group">
+          <label class="mw-form-label">Custom Fields</label>
+          <div class="mw-custom-field-list" id="settings-custom-fields-list"></div>
+          <div class="mw-add-custom-row">
+            <input
+              type="text"
+              class="mw-form-input"
+              id="settings-new-custom-field"
+              placeholder="e.g. Bounty Amount, Last Known Location"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomFieldSetting();}"
+            />
+            <button class="btn-add-charge" onclick="addCustomFieldSetting()">Add</button>
+          </div>
+        </div>
+
+        <!-- Save -->
+        <button class="btn-save-settings" id="btn-save-settings" onclick="saveSettings()">
+          <i class="fas fa-save"></i> Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="mw-modal-overlay mw-delete-modal" id="deleteModal">
+    <div class="mw-modal">
+      <div class="mw-modal-header">
+        <h3>Confirm Removal</h3>
+        <button class="mw-modal-close" onclick="closeDeleteModal()">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+      <div class="mw-modal-body">
+        <p class="mw-delete-msg">
+          Are you sure you want to remove <span class="mw-delete-name" id="delete-entry-name"></span> from the most wanted list?
+        </p>
+        <div class="mw-delete-actions">
+          <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+          <button class="btn-delete-confirm" id="btn-delete-confirm" onclick="confirmDelete()">
+            <i class="fas fa-trash-alt"></i> Remove
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Discard Changes Confirmation Modal -->
+  <div class="mw-modal-overlay mw-discard-modal" id="discardModal">
+    <div class="mw-modal">
+      <div class="mw-modal-body" style="padding-top: 1.5rem;">
+        <div style="text-align: center; margin-bottom: 1.25rem;">
+          <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: #fbbf24;"></i>
+        </div>
+        <h3 style="color: var(--text-primary); text-align: center; margin-bottom: 0.5rem; font-size: 1.2rem;">Unsaved Changes</h3>
+        <p style="color: var(--text-secondary); text-align: center; font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.5rem;">
+          You have unsaved changes. Would you like to save them before closing?
+        </p>
+        <div class="mw-delete-actions" style="justify-content: center;">
+          <button class="btn-cancel" onclick="confirmDiscard()">Discard</button>
+          <button class="btn-discard-save" onclick="discardAndSave()">
+            <i class="fas fa-save"></i> Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="mw-toast" id="mw-toast"></div>
+
+  <script>
+    // ========== STATE ==========
+    var API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+    var communityId = '<%= communityId %>';
+    var isAdmin = <%= isAdmin %>;
+    var isDepartmentMember = <%= isDepartmentMember %>;
+    var visibleFields = <%- JSON.stringify(community?.community?.mostWantedVisibleFields || ['name', 'image']) %>;
+    var customFieldDefs = <%- JSON.stringify(community?.community?.mostWantedCustomFields || []) %>;
+    var apiToken = '<%= process.env.POLICE_CAD_API_TOKEN || "" %>';
+    var currentUserId = '<%= user._id %>';
+
+    var currentPage = 0;
+    var totalPages = 0;
+    var totalEntries = 0;
+    var entries = [];
+    var currentCharges = [];
+    var editingEntryId = null;
+    var selectedCivilian = null;
+    var civSearchDebounce = null;
+    var deleteTargetId = null;
+    var deleteTargetName = '';
+    var settingsCustomFields = [];
+    var settingsDirty = false;
+    var civDropdownItems = [];
+    var currentStars = 5;
+    var currentSidebarName = '<%= (community.community.mostWantedSidebarName || "Most Wanted").replace(/\'/g, "\\'") %>';
+
+    // ========== HELPERS ==========
+    function getHeaders() {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': apiToken
+      };
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function getCivName(civ) {
+      var combined = ((civ.firstName || '') + ' ' + (civ.lastName || '')).trim();
+      return combined || civ.name || 'Unknown';
+    }
+
+    function getInitials(firstName, lastName, fullName) {
+      var f = (firstName || '').trim();
+      var l = (lastName || '').trim();
+      if (!f && !l && fullName) {
+        var parts = fullName.trim().split(/\s+/);
+        f = parts[0] || '';
+        l = parts.length > 1 ? parts[parts.length - 1] : '';
+      }
+      var initials = '';
+      if (f) initials += f.charAt(0).toUpperCase();
+      if (l) initials += l.charAt(0).toUpperCase();
+      return initials || '?';
+    }
+
+    function setStars(num) {
+      currentStars = num;
+      var btns = document.querySelectorAll('#mw-star-rating .mw-star-btn');
+      for (var i = 0; i < btns.length; i++) {
+        if (i < num) {
+          btns[i].classList.add('active');
+        } else {
+          btns[i].classList.remove('active');
+        }
+      }
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      try {
+        var d = new Date(dateStr);
+        return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      } catch(e) {
+        return dateStr;
+      }
+    }
+
+    function showToast(message, type) {
+      var toast = document.getElementById('mw-toast');
+      toast.textContent = message;
+      toast.className = 'mw-toast ' + (type || 'success');
+      // Force reflow
+      void toast.offsetWidth;
+      toast.classList.add('active');
+      setTimeout(function() {
+        toast.classList.remove('active');
+      }, 3000);
+    }
+
+    function fieldLabel(key) {
+      var labels = {
+        birthday: 'Date of Birth',
+        gender: 'Gender',
+        race: 'Race',
+        hairColor: 'Hair Color',
+        eyeColor: 'Eye Color',
+        height: 'Height',
+        weight: 'Weight',
+        address: 'Address',
+        occupation: 'Occupation'
+      };
+      return labels[key] || key;
+    }
+
+    // ========== LOAD ENTRIES ==========
+    function loadMostWanted(page) {
+      var loadingEl = document.getElementById('mw-loading');
+      var emptyEl = document.getElementById('mw-empty');
+      var entriesEl = document.getElementById('mw-entries');
+      var paginationEl = document.getElementById('mw-pagination');
+
+      loadingEl.style.display = 'flex';
+      emptyEl.style.display = 'none';
+      entriesEl.innerHTML = '';
+      paginationEl.style.display = 'none';
+
+      fetch(API_URL + '/api/v2/community/' + communityId + '/most-wanted?page=' + page + '&limit=10&status=active', {
+        method: 'GET',
+        headers: getHeaders()
+      })
+      .then(function(res) {
+        if (!res.ok) throw new Error('Failed to load most wanted list');
+        return res.json();
+      })
+      .then(function(data) {
+        loadingEl.style.display = 'none';
+
+        var rawItems = data.entries || data.data || data.mostWanted || [];
+        var pagination = data.pagination || {};
+        var total = pagination.totalCount || data.total || data.totalCount || rawItems.length;
+        var limit = pagination.limit || data.limit || 10;
+
+        // Flatten nested 'mostWanted' wrapper from API response
+        var items = [];
+        for (var i = 0; i < rawItems.length; i++) {
+          var raw = rawItems[i];
+          var details = raw.mostWanted || raw;
+          var entry = {
+            _id: raw._id || details._id || '',
+            civilianID: details.civilianID || '',
+            civilian: details.civilianSnapshot || {},
+            charges: details.charges || [],
+            description: details.description || '',
+            customFields: details.customFields || {},
+            status: details.status || '',
+            createdAt: details.createdAt || '',
+            addedByUserID: details.addedByUserID || '',
+            listOrder: details.listOrder || 0,
+            stars: details.stars || 5
+          };
+          items.push(entry);
+        }
+
+        entries = items;
+        totalEntries = total;
+        totalPages = Math.max(1, Math.ceil(total / limit));
+        currentPage = page;
+
+        if (items.length === 0 && page === 0) {
+          emptyEl.style.display = 'block';
+        } else {
+          renderEntries(items);
+          updatePagination();
+        }
+      })
+      .catch(function(err) {
+        loadingEl.style.display = 'none';
+        emptyEl.style.display = 'block';
+        console.error('Error loading most wanted:', err);
+      });
+    }
+
+    // ========== RENDER ==========
+    function renderEntries(items) {
+      var container = document.getElementById('mw-entries');
+      container.innerHTML = '';
+      for (var i = 0; i < items.length; i++) {
+        var rankNum = (currentPage * 10) + i + 1;
+        container.innerHTML += renderCard(items[i], rankNum, i, items.length);
+      }
+    }
+
+    function renderCard(entry, rankNum, index, totalCount) {
+      var civ = entry.civilian || entry.civilianData || {};
+      var fullName = getCivName(civ);
+      var image = civ.image || civ.profilePicture || '';
+      var showImage = visibleFields.indexOf('image') !== -1;
+
+      // Photo HTML
+      var photoHtml = '';
+      if (showImage) {
+        if (image) {
+          photoHtml = '<div class="mw-photo-wrap"><img class="mw-photo" src="' + escapeHtml(image) + '" alt="Photo" onerror="this.parentElement.innerHTML=\'<div class=&quot;mw-photo-initials&quot;>' + escapeHtml(getInitials(civ.firstName, civ.lastName, civ.name)) + '</div>\'" /></div>';
+        } else {
+          photoHtml = '<div class="mw-photo-wrap"><div class="mw-photo-initials">' + escapeHtml(getInitials(civ.firstName, civ.lastName, civ.name)) + '</div></div>';
+        }
+      }
+
+      // Standard fields
+      var fieldsHtml = '';
+      var standardFields = ['birthday', 'gender', 'race', 'hairColor', 'eyeColor', 'height', 'weight', 'address', 'occupation'];
+      var hasFields = false;
+      for (var f = 0; f < standardFields.length; f++) {
+        var key = standardFields[f];
+        if (visibleFields.indexOf(key) !== -1 && civ[key]) {
+          var val = key === 'birthday' ? formatDate(civ[key]) : civ[key];
+          fieldsHtml += '<div class="mw-field"><span class="mw-field-label">' + escapeHtml(fieldLabel(key)) + '</span><span class="mw-field-value">' + escapeHtml(String(val)) + '</span></div>';
+          hasFields = true;
+        }
+      }
+      if (hasFields) {
+        fieldsHtml = '<div class="mw-fields-grid">' + fieldsHtml + '</div>';
+      }
+
+      // Charges
+      var charges = entry.charges || [];
+      var chargesHtml = '';
+      if (charges.length > 0) {
+        chargesHtml = '<div class="mw-charges">';
+        for (var c = 0; c < charges.length; c++) {
+          chargesHtml += '<span class="mw-charge-pill">' + escapeHtml(charges[c]) + '</span>';
+        }
+        chargesHtml += '</div>';
+      }
+
+      // Description
+      var descHtml = '';
+      if (entry.description) {
+        descHtml = '<div class="mw-description">' + escapeHtml(entry.description) + '</div>';
+      }
+
+      // Custom fields
+      var customHtml = '';
+      var entryCustomFields = entry.customFields || {};
+      if (customFieldDefs.length > 0) {
+        var hasCustom = false;
+        var customContent = '';
+        for (var cf = 0; cf < customFieldDefs.length; cf++) {
+          var cfDef = customFieldDefs[cf];
+          var cfId = typeof cfDef === 'object' ? cfDef._id : cfDef;
+          var cfName = typeof cfDef === 'object' ? cfDef.name : cfDef;
+          var cfVal = entryCustomFields[cfId] || entryCustomFields[cfName];
+          if (cfVal) {
+            customContent += '<div class="mw-custom-field mw-field"><span class="mw-field-label">' + escapeHtml(cfName) + '</span><span class="mw-field-value">' + escapeHtml(String(cfVal)) + '</span></div>';
+            hasCustom = true;
+          }
+        }
+        if (hasCustom) {
+          customHtml = '<div class="mw-custom-fields">' + customContent + '</div>';
+        }
+      }
+
+      // Date
+      var dateAdded = entry.createdAt || entry.dateAdded || '';
+      var dateHtml = dateAdded ? '<span class="mw-date"><i class="far fa-clock"></i> Added ' + escapeHtml(formatDate(dateAdded)) + '</span>' : '<span class="mw-date"></span>';
+
+      // Actions (department members only)
+      var actionsHtml = '';
+      if (isDepartmentMember) {
+        var entryId = entry._id || entry.id || '';
+        var upDisabled = index === 0 ? ' disabled' : '';
+        var downDisabled = index === totalCount - 1 ? ' disabled' : '';
+        actionsHtml = '<div class="mw-card-actions">' +
+          '<button class="btn-reorder"' + upDisabled + ' onclick="moveEntry(' + index + ', -1)" title="Move up"><i class="fas fa-arrow-up"></i></button>' +
+          '<button class="btn-reorder"' + downDisabled + ' onclick="moveEntry(' + index + ', 1)" title="Move down"><i class="fas fa-arrow-down"></i></button>' +
+          '<button class="btn-card-action" onclick="openEditModal(\'' + escapeHtml(entryId) + '\')" title="Edit"><i class="fas fa-pen"></i> Edit</button>' +
+          '<button class="btn-card-action danger" onclick="deleteEntry(\'' + escapeHtml(entryId) + '\', \'' + escapeHtml(fullName).replace(/'/g, "\\'") + '\')" title="Remove"><i class="fas fa-trash-alt"></i> Remove</button>' +
+          '</div>';
+      }
+
+      // Build dynamic stars
+      var starCount = entry.stars || 5;
+      var starsHtml = '';
+      for (var s = 0; s < 5; s++) {
+        starsHtml += '<i class="fas fa-star' + (s >= starCount ? ' dimmed' : '') + '"></i> ';
+      }
+
+      return '<div class="mw-card" data-entry-id="' + escapeHtml(entry._id || entry.id || '') + '">' +
+        '<div class="mw-card-banner">' +
+          '<span class="mw-card-banner-text"><i class="fas fa-exclamation-triangle"></i> WANTED</span>' +
+          '<span class="mw-card-banner-stars">' + starsHtml + '</span>' +
+        '</div>' +
+        '<div class="mw-card-body">' +
+          '<div class="mw-card-top">' +
+            '<div class="mw-rank"><span class="mw-rank-hash">#</span>' + rankNum + '</div>' +
+            photoHtml +
+            '<div class="mw-info">' +
+              '<div class="mw-name">' + escapeHtml(fullName) + '</div>' +
+              fieldsHtml +
+            '</div>' +
+          '</div>' +
+          chargesHtml +
+          descHtml +
+          customHtml +
+          '<div class="mw-card-footer">' +
+            dateHtml +
+            actionsHtml +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    // ========== REORDER ==========
+    function moveEntry(index, direction) {
+      var newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= entries.length) return;
+
+      // Swap in local array
+      var temp = entries[index];
+      entries[index] = entries[newIndex];
+      entries[newIndex] = temp;
+
+      // Build order payload with updated listOrder values
+      var order = [];
+      for (var i = 0; i < entries.length; i++) {
+        var globalOrder = (currentPage * 10) + i + 1;
+        entries[i].listOrder = globalOrder;
+        order.push({
+          entryId: entries[i]._id || entries[i].id,
+          listOrder: globalOrder
+        });
+      }
+
+      // Re-render immediately for responsiveness
+      renderEntries(entries);
+
+      // Persist to API
+      fetch(API_URL + '/api/v1/most-wanted/reorder', {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          communityID: communityId,
+          order: order
+        })
+      })
+      .then(function(res) {
+        if (!res.ok) throw new Error('Failed to reorder');
+      })
+      .catch(function(err) {
+        console.error('Error reordering:', err);
+        showToast('Failed to save new order', 'error');
+        loadMostWanted(currentPage);
+      });
+    }
+
+    // ========== PAGINATION ==========
+    function updatePagination() {
+      var paginationEl = document.getElementById('mw-pagination');
+      var prevBtn = document.getElementById('btn-prev-page');
+      var nextBtn = document.getElementById('btn-next-page');
+      var pageInfo = document.getElementById('mw-page-info');
+
+      if (totalPages <= 1 && entries.length <= 10) {
+        paginationEl.style.display = 'none';
+        return;
+      }
+
+      paginationEl.style.display = 'flex';
+      prevBtn.disabled = currentPage <= 0;
+      nextBtn.disabled = currentPage >= totalPages - 1;
+      pageInfo.textContent = 'Page ' + (currentPage + 1) + ' of ' + totalPages;
+    }
+
+    function prevPage() {
+      if (currentPage > 0) {
+        loadMostWanted(currentPage - 1);
+      }
+    }
+
+    function nextPage() {
+      if (currentPage < totalPages - 1) {
+        loadMostWanted(currentPage + 1);
+      }
+    }
+
+    // ========== ADD/EDIT MODAL ==========
+    function openAddModal() {
+      editingEntryId = null;
+      currentCharges = [];
+      selectedCivilian = null;
+
+      document.getElementById('mw-modal-title').textContent = 'Add to Most Wanted';
+      document.getElementById('mw-civ-search-group').style.display = 'block';
+      document.getElementById('mw-civ-search-input').value = '';
+      document.getElementById('mw-civilian-id').value = '';
+      document.getElementById('mw-selected-civ').classList.remove('active');
+      document.getElementById('mw-charge-input').value = '';
+      document.getElementById('mw-charges-list').innerHTML = '';
+      document.getElementById('mw-description-input').value = '';
+      document.getElementById('btn-submit-mw').innerHTML = '<i class="fas fa-plus"></i> Add to Most Wanted';
+      document.getElementById('btn-submit-mw').disabled = false;
+      setStars(5);
+
+      renderCustomFieldInputs({});
+      document.getElementById('addMostWantedModal').classList.add('active');
+    }
+
+    function openEditModal(entryId) {
+      var entry = null;
+      for (var i = 0; i < entries.length; i++) {
+        if ((entries[i]._id || entries[i].id) === entryId) {
+          entry = entries[i];
+          break;
+        }
+      }
+      if (!entry) return;
+
+      editingEntryId = entryId;
+      currentCharges = (entry.charges || []).slice();
+      selectedCivilian = entry.civilian || entry.civilianData || null;
+
+      document.getElementById('mw-modal-title').textContent = 'Edit Most Wanted Entry';
+      document.getElementById('mw-civ-search-group').style.display = 'none';
+      document.getElementById('mw-civilian-id').value = entry.civilianID || (selectedCivilian && selectedCivilian._id) || '';
+      document.getElementById('mw-description-input').value = entry.description || '';
+      document.getElementById('mw-charge-input').value = '';
+      document.getElementById('btn-submit-mw').innerHTML = '<i class="fas fa-save"></i> Save Changes';
+      document.getElementById('btn-submit-mw').disabled = false;
+      setStars(entry.stars || 5);
+
+      renderChargesList();
+      renderCustomFieldInputs(entry.customFields || {});
+      document.getElementById('addMostWantedModal').classList.add('active');
+    }
+
+    function closeAddModal() {
+      document.getElementById('addMostWantedModal').classList.remove('active');
+      var dropdown = document.getElementById('mw-civ-dropdown');
+      dropdown.classList.remove('active');
+      dropdown.innerHTML = '';
+    }
+
+    function renderCustomFieldInputs(existingValues) {
+      var container = document.getElementById('mw-custom-fields-container');
+      container.innerHTML = '';
+      for (var i = 0; i < customFieldDefs.length; i++) {
+        var cfDef = customFieldDefs[i];
+        var cfId = typeof cfDef === 'object' ? cfDef._id : cfDef;
+        var cfName = typeof cfDef === 'object' ? cfDef.name : cfDef;
+        var isRequired = typeof cfDef === 'object' ? cfDef.required : false;
+        var val = existingValues[cfId] || existingValues[cfName] || '';
+        var requiredMark = isRequired ? ' <span style="color:#f56565;">*</span>' : '';
+        container.innerHTML +=
+          '<div class="mw-form-group">' +
+            '<label class="mw-form-label">' + escapeHtml(cfName) + requiredMark + '</label>' +
+            '<input type="text" class="mw-form-input mw-custom-field-input" data-field-id="' + escapeHtml(cfId) + '" data-field-name="' + escapeHtml(cfName) + '" data-required="' + (isRequired ? 'true' : 'false') + '" value="' + escapeHtml(val) + '" placeholder="Enter ' + escapeHtml(cfName) + '..." />' +
+          '</div>';
+      }
+    }
+
+    // ========== CIVILIAN SEARCH ==========
+    function searchCivilians(query) {
+      if (!query || query.length < 2) {
+        var dropdown = document.getElementById('mw-civ-dropdown');
+        dropdown.classList.remove('active');
+        dropdown.innerHTML = '';
+        return;
+      }
+
+      fetch(API_URL + '/api/v2/community/' + communityId + '/civilians?page=1&limit=20&search=' + encodeURIComponent(query), {
+        method: 'GET',
+        headers: getHeaders()
+      })
+      .then(function(res) {
+        if (!res.ok) throw new Error('Search failed');
+        return res.json();
+      })
+      .then(function(data) {
+        var civs = data.civilians || data.data || [];
+        // Flatten nested civilian data and filter to approved
+        var approved = [];
+        for (var i = 0; i < civs.length; i++) {
+          var item = civs[i];
+          // API may nest details under a 'civilian' key
+          if (item.civilian && typeof item.civilian === 'object') {
+            var id = item._id;
+            item = item.civilian;
+            item._id = id;
+          }
+          var status = item.approvalStatus || item.status || '';
+          if (status === 'approved' || status === '') {
+            approved.push(item);
+          }
+        }
+        renderCivDropdown(approved);
+      })
+      .catch(function(err) {
+        console.error('Error searching civilians:', err);
+        var dropdown = document.getElementById('mw-civ-dropdown');
+        dropdown.innerHTML = '<div class="mw-civ-no-results">Error searching civilians</div>';
+        dropdown.classList.add('active');
+      });
+    }
+
+    function renderCivDropdown(civs) {
+      var dropdown = document.getElementById('mw-civ-dropdown');
+      civDropdownItems = civs;
+
+      if (civs.length === 0) {
+        dropdown.innerHTML = '<div class="mw-civ-no-results">No civilians found</div>';
+        dropdown.classList.add('active');
+        return;
+      }
+
+      // Build set of civilianIDs already on the most wanted list
+      var existingCivIds = {};
+      for (var e = 0; e < entries.length; e++) {
+        if (entries[e].civilianID) {
+          existingCivIds[entries[e].civilianID] = true;
+        }
+      }
+
+      var html = '';
+      for (var i = 0; i < civs.length; i++) {
+        var c = civs[i];
+        var name = getCivName(c);
+        var img = c.image || c.profilePicture || '';
+        var civId = c._id || c.id || '';
+        var alreadyListed = civId && existingCivIds[civId];
+
+        var avatarHtml = '';
+        if (img) {
+          avatarHtml = '<img class="mw-civ-option-photo" src="' + escapeHtml(img) + '" alt="" onerror="this.outerHTML=\'<div class=&quot;mw-civ-option-initials&quot;>' + escapeHtml(getInitials(c.firstName, c.lastName, c.name)) + '</div>\'" />';
+        } else {
+          avatarHtml = '<div class="mw-civ-option-initials">' + escapeHtml(getInitials(c.firstName, c.lastName, c.name)) + '</div>';
+        }
+
+        if (alreadyListed) {
+          html += '<div class="mw-civ-option mw-civ-option-disabled">' +
+            avatarHtml +
+            '<span class="mw-civ-option-name">' + escapeHtml(name) + '</span>' +
+            '<span class="mw-civ-option-badge">Already listed</span>' +
+          '</div>';
+        } else {
+          html += '<div class="mw-civ-option" onclick="selectCivilianByIndex(' + i + ')">' +
+            avatarHtml +
+            '<span class="mw-civ-option-name">' + escapeHtml(name) + '</span>' +
+          '</div>';
+        }
+      }
+
+      dropdown.innerHTML = html;
+      dropdown.classList.add('active');
+    }
+
+    function selectCivilianByIndex(index) {
+      var civ = civDropdownItems[index];
+      if (civ) selectCivilian(civ);
+    }
+
+    function selectCivilian(civ) {
+      selectedCivilian = civ;
+      var id = civ._id || civ.id || '';
+      var name = getCivName(civ);
+      var img = civ.image || civ.profilePicture || '';
+
+      document.getElementById('mw-civilian-id').value = id;
+      document.getElementById('mw-civ-search-input').value = '';
+
+      var dropdown = document.getElementById('mw-civ-dropdown');
+      dropdown.classList.remove('active');
+      dropdown.innerHTML = '';
+
+      // Show selected
+      var selectedEl = document.getElementById('mw-selected-civ');
+      var avatarEl = document.getElementById('mw-selected-civ-avatar');
+      var nameEl = document.getElementById('mw-selected-civ-name');
+
+      if (img) {
+        avatarEl.innerHTML = '<img class="mw-selected-civ-photo" src="' + escapeHtml(img) + '" alt="" onerror="this.outerHTML=\'<div class=&quot;mw-selected-civ-initials&quot;>' + escapeHtml(getInitials(civ.firstName, civ.lastName, civ.name)) + '</div>\'" />';
+      } else {
+        avatarEl.innerHTML = '<div class="mw-selected-civ-initials">' + escapeHtml(getInitials(civ.firstName, civ.lastName, civ.name)) + '</div>';
+      }
+      nameEl.textContent = name;
+      selectedEl.classList.add('active');
+    }
+
+    function clearSelectedCivilian() {
+      selectedCivilian = null;
+      document.getElementById('mw-civilian-id').value = '';
+      document.getElementById('mw-selected-civ').classList.remove('active');
+      document.getElementById('mw-civ-search-input').value = '';
+    }
+
+    // Debounced search
+    document.getElementById('mw-civ-search-input').addEventListener('input', function(e) {
+      clearTimeout(civSearchDebounce);
+      var val = e.target.value.trim();
+      civSearchDebounce = setTimeout(function() {
+        searchCivilians(val);
+      }, 300);
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      var wrap = document.querySelector('.mw-civ-search-wrap');
+      if (wrap && !wrap.contains(e.target)) {
+        var dropdown = document.getElementById('mw-civ-dropdown');
+        dropdown.classList.remove('active');
+      }
+    });
+
+    // ========== CHARGES ==========
+    function addCharge() {
+      var input = document.getElementById('mw-charge-input');
+      var val = input.value.trim();
+      if (!val) return;
+      currentCharges.push(val);
+      input.value = '';
+      input.focus();
+      renderChargesList();
+    }
+
+    function removeCharge(index) {
+      currentCharges.splice(index, 1);
+      renderChargesList();
+    }
+
+    function renderChargesList() {
+      var container = document.getElementById('mw-charges-list');
+      var html = '';
+      for (var i = 0; i < currentCharges.length; i++) {
+        html += '<span class="mw-charge-tag">' +
+          escapeHtml(currentCharges[i]) +
+          ' <button type="button" onclick="removeCharge(' + i + ')" title="Remove">&times;</button>' +
+        '</span>';
+      }
+      container.innerHTML = html;
+    }
+
+    // ========== SUBMIT ==========
+    function submitMostWanted() {
+      var btn = document.getElementById('btn-submit-mw');
+      btn.disabled = true;
+
+      var civilianID = document.getElementById('mw-civilian-id').value;
+      var description = document.getElementById('mw-description-input').value.trim();
+
+      // Gather custom field values
+      var customFields = {};
+      var missingRequired = [];
+      var cfInputs = document.querySelectorAll('.mw-custom-field-input');
+      for (var i = 0; i < cfInputs.length; i++) {
+        var fieldId = cfInputs[i].getAttribute('data-field-id') || cfInputs[i].getAttribute('data-field-name');
+        var fieldName = cfInputs[i].getAttribute('data-field-name');
+        var fieldVal = cfInputs[i].value.trim();
+        var isReq = cfInputs[i].getAttribute('data-required') === 'true';
+        if (isReq && !fieldVal) {
+          missingRequired.push(fieldName);
+        }
+        if (fieldId && fieldVal) {
+          customFields[fieldId] = fieldVal;
+        }
+      }
+      if (!editingEntryId && !civilianID) {
+        missingRequired.unshift('Civilian');
+      }
+      if (currentCharges.length === 0) {
+        missingRequired.push('Charges');
+      }
+      if (!description) {
+        missingRequired.push('Description');
+      }
+      if (missingRequired.length > 0) {
+        showToast('Required: ' + missingRequired.join(', '), 'error');
+        btn.disabled = false;
+        return;
+      }
+
+      if (editingEntryId) {
+        // Update
+        var updateBody = {
+          charges: currentCharges,
+          description: description,
+          customFields: customFields,
+          stars: currentStars
+        };
+
+        fetch(API_URL + '/api/v1/most-wanted/' + editingEntryId, {
+          method: 'PUT',
+          headers: getHeaders(),
+          body: JSON.stringify(updateBody)
+        })
+        .then(function(res) {
+          if (!res.ok) throw new Error('Failed to update entry');
+          return res.json();
+        })
+        .then(function() {
+          closeAddModal();
+          showToast('Entry updated successfully', 'success');
+          loadMostWanted(currentPage);
+        })
+        .catch(function(err) {
+          console.error('Error updating entry:', err);
+          showToast('Failed to update entry', 'error');
+          btn.disabled = false;
+        });
+      } else {
+        // Create
+        var createBody = {
+          communityID: communityId,
+          civilianID: civilianID,
+          charges: currentCharges,
+          description: description,
+          addedByUserID: currentUserId,
+          customFields: customFields,
+          stars: currentStars
+        };
+
+        fetch(API_URL + '/api/v1/most-wanted', {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify(createBody)
+        })
+        .then(function(res) {
+          if (!res.ok) throw new Error('Failed to add entry');
+          return res.json();
+        })
+        .then(function() {
+          closeAddModal();
+          showToast('Added to most wanted list', 'success');
+          loadMostWanted(0);
+        })
+        .catch(function(err) {
+          console.error('Error creating entry:', err);
+          showToast('Failed to add entry', 'error');
+          btn.disabled = false;
+        });
+      }
+    }
+
+    // ========== DELETE ==========
+    function deleteEntry(entryId, name) {
+      deleteTargetId = entryId;
+      deleteTargetName = name;
+      document.getElementById('delete-entry-name').textContent = name;
+      document.getElementById('btn-delete-confirm').disabled = false;
+      document.getElementById('deleteModal').classList.add('active');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').classList.remove('active');
+      deleteTargetId = null;
+      deleteTargetName = '';
+    }
+
+    function confirmDelete() {
+      if (!deleteTargetId) return;
+      var btn = document.getElementById('btn-delete-confirm');
+      btn.disabled = true;
+
+      fetch(API_URL + '/api/v1/most-wanted/' + deleteTargetId, {
+        method: 'DELETE',
+        headers: getHeaders()
+      })
+      .then(function(res) {
+        if (!res.ok) throw new Error('Failed to remove entry');
+        return res.json();
+      })
+      .then(function() {
+        closeDeleteModal();
+        showToast('Removed from most wanted list', 'success');
+        loadMostWanted(currentPage);
+      })
+      .catch(function(err) {
+        console.error('Error deleting entry:', err);
+        showToast('Failed to remove entry', 'error');
+        btn.disabled = false;
+      });
+    }
+
+    // ========== SETTINGS ==========
+    function openSettings() {
+      if (!isAdmin) return;
+
+      // Sidebar label
+      var labelInput = document.getElementById('settings-sidebar-label');
+      labelInput.value = currentSidebarName;
+
+      // Visible fields checkboxes
+      var fieldIds = ['image', 'birthday', 'gender', 'race', 'hairColor', 'eyeColor', 'height', 'weight', 'address', 'occupation'];
+      for (var i = 0; i < fieldIds.length; i++) {
+        var cb = document.getElementById('vf-' + fieldIds[i]);
+        if (cb) {
+          cb.checked = visibleFields.indexOf(fieldIds[i]) !== -1;
+        }
+      }
+
+      // Custom fields
+      settingsCustomFields = customFieldDefs.slice();
+      renderSettingsCustomFields();
+
+      document.getElementById('btn-save-settings').disabled = false;
+      settingsDirty = false;
+      document.getElementById('settingsModal').classList.add('active');
+
+      // Mark dirty on any input change inside the settings modal
+      var modal = document.getElementById('settingsModal');
+      modal.querySelectorAll('input').forEach(function(input) {
+        input.addEventListener('change', function() { settingsDirty = true; });
+        input.addEventListener('input', function() { settingsDirty = true; });
+      });
+    }
+
+    function closeSettings(force) {
+      if (!force && settingsDirty) {
+        document.getElementById('discardModal').classList.add('active');
+        return;
+      }
+      document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function confirmDiscard() {
+      document.getElementById('discardModal').classList.remove('active');
+      settingsDirty = false;
+      document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function discardAndSave() {
+      document.getElementById('discardModal').classList.remove('active');
+      saveSettings();
+    }
+
+    function renderSettingsCustomFields() {
+      var container = document.getElementById('settings-custom-fields-list');
+      var html = '';
+      for (var i = 0; i < settingsCustomFields.length; i++) {
+        var cf = settingsCustomFields[i];
+        var cfName = typeof cf === 'object' ? cf.name : cf;
+        var cfRequired = typeof cf === 'object' ? cf.required : false;
+        html += '<div class="mw-custom-field-item">' +
+          '<span class="cf-name">' + escapeHtml(cfName) + '</span>' +
+          '<div class="cf-required-toggle" onclick="toggleCustomFieldRequired(' + i + ')">' +
+            '<div class="cf-checkbox' + (cfRequired ? ' checked' : '') + '">' + (cfRequired ? '✓' : '') + '</div>' +
+            '<span class="cf-label' + (cfRequired ? ' active' : '') + '">Required</span>' +
+          '</div>' +
+          '<button type="button" class="cf-remove-btn" onclick="removeCustomFieldSetting(' + i + ')" title="Remove"><i class="fas fa-xmark"></i></button>' +
+        '</div>';
+      }
+      container.innerHTML = html;
+    }
+
+    function toggleCustomFieldRequired(index) {
+      var cf = settingsCustomFields[index];
+      if (typeof cf === 'object') {
+        cf.required = !cf.required;
+      } else {
+        settingsCustomFields[index] = { _id: '', name: cf, required: true };
+      }
+      settingsDirty = true;
+      renderSettingsCustomFields();
+    }
+
+    function addCustomFieldSetting() {
+      var input = document.getElementById('settings-new-custom-field');
+      var val = input.value.trim();
+      if (!val) return;
+      // Avoid duplicates
+      var exists = settingsCustomFields.some(function(cf) {
+        var name = typeof cf === 'object' ? cf.name : cf;
+        return name.toLowerCase() === val.toLowerCase();
+      });
+      if (exists) {
+        showToast('Custom field already exists', 'error');
+        return;
+      }
+      // Generate a simple ObjectId-like ID
+      var newId = Math.floor(Date.now() / 1000).toString(16).padStart(8, '0');
+      for (var i = 0; i < 16; i++) newId += Math.floor(Math.random() * 16).toString(16);
+      settingsCustomFields.push({ _id: newId, name: val, required: false });
+      input.value = '';
+      settingsDirty = true;
+      renderSettingsCustomFields();
+    }
+
+    function removeCustomFieldSetting(index) {
+      settingsCustomFields.splice(index, 1);
+      settingsDirty = true;
+      renderSettingsCustomFields();
+    }
+
+    function saveSettings() {
+      var btn = document.getElementById('btn-save-settings');
+      btn.disabled = true;
+
+      var sidebarName = document.getElementById('settings-sidebar-label').value.trim() || 'Most Wanted';
+
+      // Gather visible fields - name is always included
+      var newVisibleFields = ['name'];
+      var fieldIds = ['image', 'birthday', 'gender', 'race', 'hairColor', 'eyeColor', 'height', 'weight', 'address', 'occupation'];
+      for (var i = 0; i < fieldIds.length; i++) {
+        var cb = document.getElementById('vf-' + fieldIds[i]);
+        if (cb && cb.checked) {
+          newVisibleFields.push(fieldIds[i]);
+        }
+      }
+
+      var body = {
+        mostWantedSidebarName: sidebarName,
+        mostWantedVisibleFields: newVisibleFields,
+        mostWantedCustomFields: settingsCustomFields
+      };
+
+      fetch(API_URL + '/api/v1/community/' + communityId, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify(body)
+      })
+      .then(function(res) {
+        if (!res.ok) throw new Error('Failed to save settings');
+        return res.json();
+      })
+      .then(function() {
+        // Update local state
+        visibleFields = newVisibleFields;
+        customFieldDefs = settingsCustomFields.slice();
+        currentSidebarName = sidebarName;
+
+        // Update page title
+        document.querySelector('.mw-topnav-title').textContent = sidebarName;
+
+        closeSettings(true);
+        showToast('Settings saved successfully', 'success');
+        loadMostWanted(currentPage);
+      })
+      .catch(function(err) {
+        console.error('Error saving settings:', err);
+        showToast('Failed to save settings', 'error');
+        btn.disabled = false;
+      });
+    }
+
+    // ========== CLOSE MODALS ON OVERLAY CLICK ==========
+    document.querySelectorAll('.mw-modal-overlay').forEach(function(overlay) {
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+          if (overlay.id === 'discardModal') {
+            overlay.classList.remove('active');
+          } else if (overlay.id === 'settingsModal') {
+            closeSettings();
+          } else {
+            overlay.classList.remove('active');
+          }
+        }
+      });
+    });
+
+    // ========== CLOSE MODALS ON ESCAPE KEY ==========
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        var discardModal = document.getElementById('discardModal');
+        if (discardModal && discardModal.classList.contains('active')) {
+          discardModal.classList.remove('active');
+          return;
+        }
+        var settingsModal = document.getElementById('settingsModal');
+        if (settingsModal && settingsModal.classList.contains('active')) {
+          closeSettings();
+          return;
+        }
+        document.querySelectorAll('.mw-modal-overlay.active').forEach(function(overlay) {
+          overlay.classList.remove('active');
+        });
+      }
+    });
+
+    // ========== INIT ==========
+    document.addEventListener('DOMContentLoaded', function() {
+      loadMostWanted(0);
+    });
+  </script>
+</body>
+</html>

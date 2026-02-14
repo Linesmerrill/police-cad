@@ -878,6 +878,11 @@
                 <i class="fas fa-shield-alt" style="margin-right: 8px;"></i>Admin Management
               </a>
             </li>
+            <li role="presentation" id="email-tab" style="display: none;">
+              <a href="#email-tab-content" data-toggle="tab">
+                <i class="fas fa-envelope" style="margin-right: 8px;"></i>Email
+              </a>
+            </li>
           </ul>
           
           <div class="tab-content">
@@ -1075,6 +1080,37 @@
                 </div>
               </div>
             </div>
+
+            <!-- Email Tab -->
+            <div role="tabpanel" class="tab-pane" id="email-tab-content">
+              <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                  <h3 style="color: #fff; margin-bottom: 1.5rem;">
+                    <i class="fas fa-envelope" style="margin-right: 8px; color: #667eea;"></i>Send Email
+                  </h3>
+                  <div class="form-group">
+                    <label for="emailTo" style="color: #9aa0b4;">To (email address)</label>
+                    <input type="email" id="emailTo" class="form-control search-input"
+                           placeholder="recipient@example.com" />
+                  </div>
+                  <div class="form-group">
+                    <label for="emailSubject" style="color: #9aa0b4;">Subject</label>
+                    <input type="text" id="emailSubject" class="form-control search-input"
+                           placeholder="Email subject line" />
+                  </div>
+                  <div class="form-group">
+                    <label for="emailBody" style="color: #9aa0b4;">Body (plain text)</label>
+                    <textarea id="emailBody" class="form-control search-input" rows="10"
+                              placeholder="Type your message here. Line breaks will be preserved."
+                              style="resize: vertical; min-height: 200px;"></textarea>
+                  </div>
+                  <button type="button" id="sendEmailBtn" class="btn btn-gradient btn-block">
+                    <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Send Email
+                  </button>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -1411,10 +1447,13 @@
         if (roles.includes('owner')) {
           $('#admin-management-tab').show();
           $('#add-admin-section').show();
+          $('#email-tab').show();
         } else {
           $('#admin-management-tab').hide();
           $('#add-admin-section').hide();
           $('#admin-management-tab-content').hide();
+          $('#email-tab').hide();
+          $('#email-tab-content').hide();
 
           // Clear any admin data that might be displayed
           $('#adminResults').html('');
@@ -1526,7 +1565,75 @@
           // Update URL hash for better navigation
           window.location.hash = 'communities-tab';
         });
-        
+
+        // Email tab - Send Email handler
+        $('#sendEmailBtn').on('click', function() {
+          var toEmail = $.trim($('#emailTo').val());
+          var subject = $.trim($('#emailSubject').val());
+          var body = $.trim($('#emailBody').val());
+
+          if (!toEmail) {
+            showInfoModal('Validation Error', 'Please enter a recipient email address.');
+            return;
+          }
+          if (!subject) {
+            showInfoModal('Validation Error', 'Please enter a subject line.');
+            return;
+          }
+          if (!body) {
+            showInfoModal('Validation Error', 'Please enter the email body.');
+            return;
+          }
+
+          var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(toEmail)) {
+            showInfoModal('Validation Error', 'Please enter a valid email address.');
+            return;
+          }
+
+          showConfirmModal(
+            'Confirm Send Email',
+            'Are you sure you want to send this email to <strong>' + $('<span>').text(toEmail).html() + '</strong>?',
+            function() {
+              $('#sendEmailBtn').prop('disabled', true).html(
+                '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Sending...'
+              );
+
+              $.ajax({
+                url: API_BASE + '/api/v1/admin/send-email',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                  toEmail: toEmail,
+                  subject: subject,
+                  body: body,
+                  currentUser: {
+                    email: currentUserEmail,
+                    roles: roles
+                  }
+                }),
+                success: function(data) {
+                  $('#emailTo').val('');
+                  $('#emailSubject').val('');
+                  $('#emailBody').val('');
+                  showInfoModal('Success', 'Email sent successfully to ' + $('<span>').text(toEmail).html() + '!');
+                },
+                error: function(xhr) {
+                  var errorMsg = xhr.responseJSON && xhr.responseJSON.error
+                    ? xhr.responseJSON.error
+                    : 'Failed to send email. Please try again.';
+                  showInfoModal('Error', errorMsg);
+                },
+                complete: function() {
+                  $('#sendEmailBtn').prop('disabled', false).html(
+                    '<i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Send Email'
+                  );
+                }
+              });
+            }
+          );
+        });
+
         // Function to clear results from other tabs
         function clearTabResults(activeTab) {
           if (activeTab !== 'users') {
