@@ -1296,7 +1296,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
             base64 += '=';
           }
           
-                  departmentId = Buffer.from(base64, 'base64').toString('utf8');
+          departmentId = Buffer.from(base64, 'base64').toString('utf8');
+
+          // Validate as a MongoDB ObjectId to prevent SSRF
+          if (!/^[a-fA-F0-9]{24}$/.test(departmentId)) {
+            departmentId = null;
+          }
         } catch (e) {
           console.error('Failed to decode department ID:', e);
           departmentId = null;
