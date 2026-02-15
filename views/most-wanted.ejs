@@ -768,13 +768,106 @@
     }
 
     /* Charges tag input */
-    .mw-charges-input-row {
-      display: flex;
-      gap: 0.5rem;
+    .mw-charges-search-wrap {
+      position: relative;
     }
 
-    .mw-charges-input-row .mw-form-input {
+    .mw-charges-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #2d3148;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      margin-top: 4px;
+      max-height: 280px;
+      overflow-y: auto;
+      z-index: 10;
+      display: none;
+    }
+
+    .mw-charges-dropdown.active {
+      display: block;
+    }
+
+    .mw-charges-category-label {
+      padding: 0.5rem 1rem 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .mw-charges-category-label:first-child {
+      border-top: none;
+    }
+
+    .mw-charges-option {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .mw-charges-option:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .mw-charges-option.selected {
+      background: rgba(245, 101, 101, 0.12);
+    }
+
+    .mw-charges-option-checkbox {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .mw-charges-option.selected .mw-charges-option-checkbox {
+      background: #ef4444;
+      border-color: #ef4444;
+    }
+
+    .mw-charges-option-name {
       flex: 1;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .mw-charges-option-amount {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .mw-charges-no-results {
+      padding: 0.8rem 1rem;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    .mw-charges-total {
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(245, 101, 101, 0.1);
+      border: 1px solid rgba(245, 101, 101, 0.2);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      font-weight: 600;
     }
 
     .btn-add-charge {
@@ -1360,17 +1453,18 @@
         <!-- Charges -->
         <div class="mw-form-group">
           <label class="mw-form-label">Charges <span style="color:#ef4444;">*</span></label>
-          <div class="mw-charges-input-row">
+          <div class="mw-charges-search-wrap">
             <input
               type="text"
               class="mw-form-input"
-              id="mw-charge-input"
-              placeholder="Enter a charge..."
-              onkeydown="if(event.key==='Enter'){event.preventDefault();addCharge();}"
+              id="mw-charges-search-input"
+              placeholder="Search charges..."
+              autocomplete="off"
             />
-            <button class="btn-add-charge" onclick="addCharge()">Add</button>
+            <div class="mw-charges-dropdown" id="mw-charges-dropdown"></div>
           </div>
           <div class="mw-charges-list" id="mw-charges-list"></div>
+          <div class="mw-charges-total" id="mw-charges-total" style="display:none;"></div>
         </div>
 
         <!-- Description -->
@@ -1556,6 +1650,7 @@
     var isDepartmentMember = <%= isDepartmentMember %>;
     var visibleFields = <%- JSON.stringify(community?.community?.mostWantedVisibleFields || ['name', 'image']) %>;
     var customFieldDefs = <%- JSON.stringify(community?.community?.mostWantedCustomFields || []) %>;
+    var communityFines = <%- JSON.stringify(community?.community?.fines || { currency: 'USD', categories: [] }) %>;
     var apiToken = '<%= process.env.POLICE_CAD_API_TOKEN || "" %>';
     var currentUserId = '<%= user._id %>';
 
@@ -1940,7 +2035,8 @@
       document.getElementById('mw-civ-search-input').value = '';
       document.getElementById('mw-civilian-id').value = '';
       document.getElementById('mw-selected-civ').classList.remove('active');
-      document.getElementById('mw-charge-input').value = '';
+      document.getElementById('mw-charges-search-input').value = '';
+      document.getElementById('mw-charges-total').style.display = 'none';
       document.getElementById('mw-charges-list').innerHTML = '';
       document.getElementById('mw-description-input').value = '';
       document.getElementById('btn-submit-mw').innerHTML = '<i class="fas fa-plus"></i> Add to Most Wanted';
@@ -1969,7 +2065,8 @@
       document.getElementById('mw-civ-search-group').style.display = 'none';
       document.getElementById('mw-civilian-id').value = entry.civilianID || (selectedCivilian && selectedCivilian._id) || '';
       document.getElementById('mw-description-input').value = entry.description || '';
-      document.getElementById('mw-charge-input').value = '';
+      document.getElementById('mw-charges-search-input').value = '';
+      document.getElementById('mw-charges-total').style.display = 'none';
       document.getElementById('btn-submit-mw').innerHTML = '<i class="fas fa-save"></i> Save Changes';
       document.getElementById('btn-submit-mw').disabled = false;
       setStars(entry.stars || 5);
@@ -2156,20 +2253,80 @@
       }
     });
 
-    // ========== CHARGES ==========
-    function addCharge() {
-      var input = document.getElementById('mw-charge-input');
-      var val = input.value.trim();
-      if (!val) return;
-      currentCharges.push(val);
-      input.value = '';
-      input.focus();
+    // ========== CHARGES (MULTI-SELECT) ==========
+    function hasCommunityFines() {
+      return communityFines && communityFines.categories && communityFines.categories.length > 0 &&
+        communityFines.categories.some(function(cat) { return cat.fines && cat.fines.length > 0; });
+    }
+
+    function toggleCharge(fineName) {
+      var idx = currentCharges.indexOf(fineName);
+      if (idx === -1) {
+        currentCharges.push(fineName);
+      } else {
+        currentCharges.splice(idx, 1);
+      }
+      renderChargesDropdown();
       renderChargesList();
     }
 
     function removeCharge(index) {
       currentCharges.splice(index, 1);
+      renderChargesDropdown();
       renderChargesList();
+    }
+
+    function renderChargesDropdown() {
+      var dropdown = document.getElementById('mw-charges-dropdown');
+      var searchVal = (document.getElementById('mw-charges-search-input').value || '').trim().toLowerCase();
+
+      if (!hasCommunityFines()) {
+        dropdown.innerHTML = '<div class="mw-charges-no-results">No fines configured for this community.</div>';
+        return;
+      }
+
+      var html = '';
+      var hasResults = false;
+
+      for (var c = 0; c < communityFines.categories.length; c++) {
+        var category = communityFines.categories[c];
+        if (!category.fines || category.fines.length === 0) continue;
+
+        var categoryFines = [];
+        for (var f = 0; f < category.fines.length; f++) {
+          var fine = category.fines[f];
+          if (!searchVal ||
+              fine.name.toLowerCase().indexOf(searchVal) !== -1 ||
+              category.name.toLowerCase().indexOf(searchVal) !== -1) {
+            categoryFines.push(fine);
+          }
+        }
+
+        if (categoryFines.length === 0) continue;
+        hasResults = true;
+
+        html += '<div class="mw-charges-category-label">' + escapeHtml(category.name) + '</div>';
+        for (var f = 0; f < categoryFines.length; f++) {
+          var fine = categoryFines[f];
+          var isSelected = currentCharges.indexOf(fine.name) !== -1;
+          var selectedClass = isSelected ? ' selected' : '';
+          var checkHtml = isSelected ? '<i class="fas fa-check" style="color:#fff;font-size:0.7rem;"></i>' : '';
+          var amountHtml = fine.amount ? '<span class="mw-charges-option-amount">' + fine.amount + ' ' + escapeHtml(communityFines.currency || '') + '</span>' : '';
+          var safeName = fine.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+          html += '<div class="mw-charges-option' + selectedClass + '" onclick="toggleCharge(\'' + safeName + '\')">' +
+            '<div class="mw-charges-option-checkbox">' + checkHtml + '</div>' +
+            '<span class="mw-charges-option-name">' + escapeHtml(fine.name) + '</span>' +
+            amountHtml +
+          '</div>';
+        }
+      }
+
+      if (!hasResults) {
+        html = '<div class="mw-charges-no-results">No charges matching &ldquo;' + escapeHtml(searchVal) + '&rdquo;</div>';
+      }
+
+      dropdown.innerHTML = html;
     }
 
     function renderChargesList() {
@@ -2182,7 +2339,50 @@
         '</span>';
       }
       container.innerHTML = html;
+
+      // Update total amount
+      var totalEl = document.getElementById('mw-charges-total');
+      if (hasCommunityFines() && currentCharges.length > 0) {
+        var total = 0;
+        for (var i = 0; i < currentCharges.length; i++) {
+          for (var c = 0; c < communityFines.categories.length; c++) {
+            var cat = communityFines.categories[c];
+            for (var f = 0; f < (cat.fines || []).length; f++) {
+              if (cat.fines[f].name === currentCharges[i]) {
+                total += parseFloat(cat.fines[f].amount || 0);
+              }
+            }
+          }
+        }
+        if (total > 0) {
+          totalEl.textContent = 'Total Fine Amount: ' + total + ' ' + (communityFines.currency || '');
+          totalEl.style.display = 'block';
+        } else {
+          totalEl.style.display = 'none';
+        }
+      } else {
+        totalEl.style.display = 'none';
+      }
     }
+
+    // Show dropdown on focus / input
+    document.getElementById('mw-charges-search-input').addEventListener('focus', function() {
+      renderChargesDropdown();
+      document.getElementById('mw-charges-dropdown').classList.add('active');
+    });
+
+    document.getElementById('mw-charges-search-input').addEventListener('input', function() {
+      renderChargesDropdown();
+      document.getElementById('mw-charges-dropdown').classList.add('active');
+    });
+
+    // Close charges dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      var wrap = document.querySelector('.mw-charges-search-wrap');
+      if (wrap && !wrap.contains(e.target)) {
+        document.getElementById('mw-charges-dropdown').classList.remove('active');
+      }
+    });
 
     // ========== SUBMIT ==========
     function submitMostWanted() {
