@@ -1311,18 +1311,21 @@ module.exports = function (app, passport, server, nextApp, handle) {
         }
         return res.redirect('/communities');
       }
-      
+
+      // Department component settings — empty means all components shown (backwards compat)
+      let departmentComponents = {};
+
       // If a specific department is requested, verify user access
       if (departmentId && departmentName) {
         const communityId = req.user.user.lastAccessedCommunity?.communityID || req.user.user.activeCommunity;
-        
+
         if (!communityId) {
           return res.status(403).render("error", {
             message: "No active community found. Please select a community first.",
             redirect: "/communities",
           });
         }
-        
+
         // --- ADMIN CHECK USING COMMUNITY ROLES API ---
         let isAdmin = false;
         try {
@@ -1363,8 +1366,23 @@ module.exports = function (app, passport, server, nextApp, handle) {
             // Allow access if API is not available - this is a fallback
           }
         }
+
+        // Fetch department component settings for sidebar visibility
+        try {
+          const deptApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/departments/${departmentId}`;
+          const deptResponse = await axios.get(deptApiUrl, config);
+          const dept = deptResponse.data && deptResponse.data.department;
+          if (dept && dept.template && Array.isArray(dept.template.components)) {
+            dept.template.components.forEach(c => {
+              departmentComponents[c.name] = c.enabled;
+            });
+          }
+        } catch (deptErr) {
+          // If fetch fails, departmentComponents stays empty — all components shown (backwards compat)
+          console.error('Error fetching department components:', deptErr.message);
+        }
       }
-      
+
       res.render("civ-dashboard", {
         user: req.user,
         // userId,
@@ -1374,6 +1392,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         redirect: encodeURIComponent(redirect),
         departmentName: departmentName,
         departmentId: departmentId,
+        departmentComponents: departmentComponents,
         apiUrl: policeCadApiUrl,
       });
     } catch (error) {

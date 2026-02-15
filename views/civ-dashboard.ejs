@@ -1175,12 +1175,14 @@
             <span class="nav-text">Call 911</span>
           </a>
               </div>
+        <% if (!departmentComponents || !departmentComponents.hasOwnProperty('notepad') || departmentComponents['notepad'] !== false) { %>
         <div class="nav-item" id="navNotepad">
           <a onclick="handleNotepadClick(event)" class="nav-link" style="cursor: pointer;">
             <i class="fa fa-clipboard nav-icon"></i>
             <span class="nav-text">Notepad</span>
           </a>
         </div>
+        <% } %>
         <div class="nav-item">
           <a href="/map-interactive" class="nav-link">
             <i class="fa fa-map nav-icon"></i>
