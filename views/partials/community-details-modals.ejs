@@ -6345,6 +6345,34 @@ var editDeptComponentMeta = {
   nameSearch:           { label: 'Name Search',                  icon: 'fa-search',               color: 'text-blue-400' }
 };
 
+// Expected components per template type — used to add missing components to legacy departments
+var expectedComponentsByTemplate = {
+  'civilian': ['createCivilians', 'createVehicles', 'createFirearms', 'call911', 'notepad'],
+  'police':   ['10CodesInterface', 'personSearch', 'vehicleSearch', 'firearmSearch', 'createBolos', 'viewBolosAndWarrants', 'notepad'],
+  'dispatch': ['dispatchUnits', 'createAndManageCalls', 'createBolos', 'manage911Calls', 'nameSearch', 'vehicleSearch', 'firearmSearch'],
+  'fire':     ['10CodesInterface', 'personSearch', 'vehicleSearch', 'createBolos', 'viewBolosAndWarrants', 'notepad'],
+  'ems':      ['10CodesInterface', 'personSearch', 'vehicleSearch', 'createBolos', 'viewBolosAndWarrants', 'notepad']
+};
+
+// Merge missing expected components into a department's component list (defaults to enabled)
+function mergeExpectedComponents(components, templateName) {
+  if (!templateName) return components;
+  var lowerName = templateName.toLowerCase();
+  var expected = expectedComponentsByTemplate[lowerName];
+  if (!expected) return components;
+
+  var existingNames = {};
+  components.forEach(function(c) { existingNames[c.name] = true; });
+
+  var merged = components.slice(); // copy
+  expected.forEach(function(name) {
+    if (!existingNames[name]) {
+      merged.push({ name: name, enabled: true });
+    }
+  });
+  return merged;
+}
+
 function renderEditDeptComponents(components) {
   var container = document.getElementById('editDeptComponentsContainer');
   if (!components || components.length === 0) {
@@ -6391,12 +6419,11 @@ function populateEditDeptModal(dept) {
     if (deleteBtn) deleteBtn.style.display = 'none';
   }
 
-  // Dynamically render components from template
-  if (dept.template && dept.template.components) {
-    renderEditDeptComponents(dept.template.components);
-  } else {
-    renderEditDeptComponents([]);
-  }
+  // Dynamically render components from template, merging in any missing expected components
+  var templateName = (dept.template && dept.template.name) ? dept.template.name : '';
+  var existingComponents = (dept.template && dept.template.components) ? dept.template.components : [];
+  var mergedComponents = mergeExpectedComponents(existingComponents, templateName);
+  renderEditDeptComponents(mergedComponents);
 
   updateEditDeptVisibilityLabel();
   document.getElementById('editDepartmentModal').style.display = 'flex';
@@ -6629,17 +6656,20 @@ async function saveEditDepartment() {
       image: finalImage
     };
 
-    // Update the template components if template exists - include in the same PATCH request
-    if (currentDept.template && currentDept.template.components) {
-      // Read toggle states from the dynamically rendered checkboxes
+    // Update the template components - include in the same PATCH request
+    if (currentDept.template) {
+      // Read toggle states from the dynamically rendered checkboxes (includes merged components)
       const toggleStates = {};
       document.querySelectorAll('.edit-dept-component-toggle').forEach(function(cb) {
         toggleStates[cb.getAttribute('data-component-name')] = cb.checked;
       });
 
-      const updatedComponents = currentDept.template.components.map(component => {
+      // Start with existing components from the API
+      const existingComponents = currentDept.template.components || [];
+      const existingNames = {};
+      const updatedComponents = existingComponents.map(component => {
         const componentName = component.name;
-        // Use the toggle value if present, otherwise keep the current value
+        existingNames[componentName] = true;
         const isEnabled = toggleStates.hasOwnProperty(componentName) ? toggleStates[componentName] : component.enabled;
 
         // Extract component ID - handle both string and {$oid: ...} formats
@@ -6653,6 +6683,16 @@ async function saveEditDepartment() {
           name: component.name,
           enabled: isEnabled
         };
+      });
+
+      // Add any new components from toggles that weren't in the original list (e.g. notepad on legacy depts)
+      Object.keys(toggleStates).forEach(function(toggleName) {
+        if (!existingNames[toggleName]) {
+          updatedComponents.push({
+            name: toggleName,
+            enabled: toggleStates[toggleName]
+          });
+        }
       });
 
       // Extract template ID - handle both string and {$oid: ...} formats
