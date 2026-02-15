@@ -1175,6 +1175,12 @@
             <span class="nav-text">Call 911</span>
           </a>
               </div>
+        <div class="nav-item" id="navNotepad">
+          <a onclick="handleNotepadClick(event)" class="nav-link" style="cursor: pointer;">
+            <i class="fa fa-clipboard nav-icon"></i>
+            <span class="nav-text">Notepad</span>
+          </a>
+        </div>
         <div class="nav-item">
           <a href="/map-interactive" class="nav-link">
             <i class="fa fa-map nav-icon"></i>
@@ -2274,6 +2280,7 @@
   <script src="/static/js/scripts.js"></script>
   <script src="/static/js/faker.js"></script>
   <script src="/static/js/moment.js"></script>
+  <script src="/static/js/notepad.js"></script>
   <script src="/static/js/civ-dashboard.js"></script>
   <script src="/static/js/notifications.js"></script>
   <script>
@@ -2391,6 +2398,34 @@
         fetchAndRenderModernDepartments();
       }
     });
+  </script>
+
+  <!-- Notepad Integration -->
+  <script>
+    // Set API URL for shared notepad module
+    if (typeof setApiUrl === 'function') {
+      setApiUrl('<%= apiUrl %>');
+    }
+
+    // Handle Notepad button clicks
+    function handleNotepadClick(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      if (typeof $ !== 'undefined' && typeof $.fn.modal !== 'undefined') {
+        try {
+          $('#notepadModal').modal('show');
+          return false;
+        } catch (e) {
+          console.error('Error opening notepad modal:', e);
+        }
+      }
+      if (typeof showJavaScriptRequiredAlert === 'function') {
+        showJavaScriptRequiredAlert();
+      }
+      return false;
+    }
   </script>
 
   <!-- Modern Footer -->
@@ -2984,6 +3019,8 @@
       </form>
     </div>
   </div>
+
+  <% include notepad %>
 
   <!-- Call 911 Modal -->
   <div id="call911Modal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
