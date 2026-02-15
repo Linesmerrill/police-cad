@@ -1374,6 +1374,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         redirect: encodeURIComponent(redirect),
         departmentName: departmentName,
         departmentId: departmentId,
+        apiUrl: policeCadApiUrl,
       });
     } catch (error) {
       console.error('🚨 Error in civ-dashboard route:', error);

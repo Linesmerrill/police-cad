@@ -2407,6 +2407,11 @@
       setApiUrl('<%= apiUrl %>');
     }
 
+    // Initialize notepad (sets up modal show listener to load notes)
+    if (typeof initNotepad === 'function') {
+      initNotepad();
+    }
+
     // Handle Notepad button clicks
     function handleNotepadClick(event) {
       if (event) {
@@ -2415,6 +2420,10 @@
       }
       if (typeof $ !== 'undefined' && typeof $.fn.modal !== 'undefined') {
         try {
+          // Load notes before showing modal (show.bs.modal may not fire on all Bootstrap versions)
+          if (typeof loadUserNotes === 'function') {
+            loadUserNotes();
+          }
           $('#notepadModal').modal('show');
           return false;
         } catch (e) {
