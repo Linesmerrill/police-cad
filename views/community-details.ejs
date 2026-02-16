@@ -632,14 +632,31 @@
         function changeDeptPage(delta) {
           var newPage = deptCurrentPage + delta;
           if (newPage < 1 || newPage > deptTotalPages) return;
+          if (deptIsLoading) return;
 
           deptCurrentPage = newPage;
 
-          // All departments are already rendered server-side, just show/hide based on page
+          // Check if the cards for this page exist in the DOM
           var startIdx = (deptCurrentPage - 1) * deptPerPage;
           var endIdx = startIdx + deptPerPage;
           var cards = document.querySelectorAll('#departments-grid .dept-card');
 
+          // Count how many cards fall in the target page range
+          var cardsInRange = 0;
+          cards.forEach(function(card) {
+            var idx = parseInt(card.getAttribute('data-dept-index'), 10);
+            if (idx >= startIdx && idx < endIdx) cardsInRange++;
+          });
+
+          if (cardsInRange === 0) {
+            // Cards for this page are not in the DOM — fetch from API
+            fetchDepartmentsPage(deptCurrentPage, true).then(function() {
+              if (typeof initDeptCardClicks === 'function') initDeptCardClicks();
+            });
+            return;
+          }
+
+          // Cards exist in DOM — show/hide based on page
           if (deptCurrentFilter) {
             // When filtered, use filtered index (cards without data-filtered-index stay hidden)
             cards.forEach(function(card) {

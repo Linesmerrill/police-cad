@@ -11,7 +11,7 @@
         </div>
         
         <!-- Mobile Navigation Tabs (visible only on mobile) -->
-        <div class="d-md-none" style="background-color: #2d2d2d; border-bottom: 1px solid #404040;">
+        <div class="notepad-mobile-tabs" style="background-color: #2d2d2d; border-bottom: 1px solid #404040;">
           <div class="btn-group btn-group-justified" style="width: 100%;">
             <button class="btn btn-default" id="mobile-notes-tab" onclick="showMobileTab('notes')" style="background-color: #007bff; color: white; border: none; border-radius: 0;">
               <i class="fa fa-list"></i> Notes
@@ -88,8 +88,16 @@
 </div>
 
 <style>
+/* Hide mobile tabs on desktop */
+.notepad-mobile-tabs {
+  display: none;
+}
+
 /* Mobile-specific styles */
 @media (max-width: 768px) {
+  .notepad-mobile-tabs {
+    display: block;
+  }
   .mobile-notes-panel {
     display: block;
   }
