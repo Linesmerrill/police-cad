@@ -4353,10 +4353,14 @@ function openEmergencyServicesModal() {
             depts.forEach(function(dept) {
                 var icon = templateIcons[dept.template.name] || 'fa-building';
                 var color = templateColors[dept.template.name] || '#6b7280';
-                html += '<div onclick="selectEmergencyDepartment(\'' + dept._id + '\', \'' + dept.name.replace(/'/g, "\\'") + '\', \'' + dept.template.name + '\')" style="cursor:pointer; background:#1e2028; border:1.5px solid #35385a; border-radius:12px; padding:1rem 1.2rem; margin-bottom:0.75rem; display:flex; align-items:center; gap:1rem; transition:border-color 0.15s, transform 0.15s;" onmouseover="this.style.borderColor=\'' + color + '\';this.style.transform=\'translateY(-1px)\';" onmouseout="this.style.borderColor=\'#35385a\';this.style.transform=\'\';">'
+                // Escape for JS string literal (backslashes first, then quotes)
+                var safeName = dept.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                // Escape for HTML display
+                var displayName = dept.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                html += '<div onclick="selectEmergencyDepartment(\'' + dept._id + '\', \'' + safeName + '\', \'' + dept.template.name + '\')" style="cursor:pointer; background:#1e2028; border:1.5px solid #35385a; border-radius:12px; padding:1rem 1.2rem; margin-bottom:0.75rem; display:flex; align-items:center; gap:1rem; transition:border-color 0.15s, transform 0.15s;" onmouseover="this.style.borderColor=\'' + color + '\';this.style.transform=\'translateY(-1px)\';" onmouseout="this.style.borderColor=\'#35385a\';this.style.transform=\'\';">'
                     + '<div style="background:' + color + '22; border-radius:10px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">'
                     + '<i class="fa ' + icon + '" style="color:' + color + '; font-size:1rem;"></i></div>'
-                    + '<div><div style="color:#f7fafc; font-weight:600;">' + dept.name + '</div>'
+                    + '<div><div style="color:#f7fafc; font-weight:600;">' + displayName + '</div>'
                     + '<div style="color:#a0aec0; font-size:0.8rem;">' + dept.template.name + ' Department</div></div>'
                     + '</div>';
             });
