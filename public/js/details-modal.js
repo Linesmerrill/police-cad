@@ -454,6 +454,9 @@ $(document).ready(function () {
         <div class="mb-2"><span class="text-gray">Stolen:</span> ${
           (data.isStolen === 'true' || data.isStolen === '2') ? '<span class="badge-stolen">Yes</span>' : '<span class="badge-stolen" style="background-color: #10b981; color: white;">No</span>'
         }</div>
+        <div class="mb-2"><span class="text-gray">Exempt:</span> ${
+          (data.isExempt === 'true') ? '<span class="badge-stolen" style="background-color: #3b82f6; color: white;">Yes</span>' : '<span class="badge-stolen" style="background-color: #6b7280; color: white;">No</span>'
+        }</div>
         <div class="mb-2"><span class="text-gray">Registered Owner:</span> ${
           owner
             ? `<a href="#" class="owner-link" data-id="${
