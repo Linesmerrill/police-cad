@@ -592,9 +592,14 @@
           <h3>
             <%=user.user.username%>
           </h3>
-          <h5 id="sidebar-callsign">
-            <%=user.user.callSign%>
-          </h5>
+          <h5 style="display:inline-block;" id="sidebar-callsign"><%=user.user.callSign%></h5><i id="sidebar-callsign-edit-btn" class="fa fa-pencil" style="display:none; cursor:pointer; font-size:0.85rem; margin-left:0.5rem; opacity:0.8; vertical-align:middle; text-shadow:0 1px 3px rgba(0,0,0,0.6);" title="Edit department call sign" onclick="openSidebarCallSignEdit()"></i>
+          <div id="sidebar-callsign-edit" style="display:none; margin-top:0.5rem;">
+            <input id="sidebar-callsign-input" type="text" maxlength="10" style="width:80%; padding:0.4rem 0.6rem; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:6px; color:#fff; font-size:1rem; text-align:center;">
+            <div style="margin-top:0.5rem;">
+              <button type="button" style="background:#667eea; color:#fff; border:none; border-radius:5px; padding:0.35rem 1rem; font-size:0.9rem; cursor:pointer; margin-right:0.3rem;" onclick="saveSidebarCallSign()">Save</button>
+              <button type="button" style="background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:5px; padding:0.35rem 1rem; font-size:0.9rem; cursor:pointer;" onclick="cancelSidebarCallSignEdit()">Cancel</button>
+            </div>
+          </div>
           <h5>Logged in as: Dispatch</h5>
         </div>
       </div>
@@ -4173,7 +4178,15 @@
         }
 
         // Update callsign displays with resolved (department-specific) callsign
-        var sidebarCS = getResolvedCallSign(dbUser._id, dbUser.user?.callSign);
+        // For the sidebar, prefer the callsign for this page's department context over activeDepartmentId
+        var myMember = memberDataCache[dbUser._id];
+        var sidebarCS = '';
+        if (myMember && myMember.departmentCallSigns && departmentId) {
+          sidebarCS = myMember.departmentCallSigns[departmentId] || '';
+        }
+        if (!sidebarCS) {
+          sidebarCS = getResolvedCallSign(dbUser._id, dbUser.user?.callSign);
+        }
         if (sidebarCS) {
           $('#sidebar-callsign').text(sidebarCS);
           $('#createdByUsername').val(dbUser.user?.username + ' (' + sidebarCS + ')');
@@ -4497,7 +4510,9 @@
       method: 'PUT',
       data: JSON.stringify({
         departmentId: departmentId,
-        tenCodeID: tenCodeId || null
+        tenCodeID: tenCodeId || null,
+        activeDepartmentId: memberDataCache[userId]?.activeDepartmentId || departmentId,
+        activeDepartmentName: memberDataCache[userId]?.activeDepartmentName || ''
       }),
       contentType: 'application/json',
       success: function(res) {
@@ -4528,7 +4543,9 @@
             statusCode: tenCodeId,
             setBy: dbUser.user?.username || 'Dispatch',
             communityId: communityId,
-            broadcastToAll: shouldBroadcast  // Flag for server to broadcast to all or just the user
+            broadcastToAll: shouldBroadcast,  // Flag for server to broadcast to all or just the user
+            activeDepartmentId: memberDataCache[userId]?.activeDepartmentId || departmentId,
+            activeDepartmentName: memberDataCache[userId]?.activeDepartmentName || ''
           };
           dashboardSocket.emit('update_status', emitData);
 
@@ -5483,13 +5500,16 @@
       status="Offline"
     }
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+    var targetUserId = $('#userIDDispatch').val();
     myReq={
-      userID: $('#userIDDispatch').val(),
+      userID: targetUserId,
       status: status,
       setBy: 'Dispatch',
       onDuty: onDuty,
       updateDuty: updateDuty,
-      communityId: communityId
+      communityId: communityId,
+      activeDepartmentId: memberDataCache[targetUserId]?.activeDepartmentId || departmentId,
+      activeDepartmentName: memberDataCache[targetUserId]?.activeDepartmentName || ''
     }
     socket.emit('update_status', myReq)
 

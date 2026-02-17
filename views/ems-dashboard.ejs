@@ -1964,9 +1964,14 @@
           <h3>
             <%=user.user.username%>
           </h3>
-          <h5>
-            <%=user.user.callSign%>
-          </h5>
+          <h5 style="display:inline-block;" id="sidebar-callsign"><%=user.user.callSign%></h5><i id="sidebar-callsign-edit-btn" class="fa fa-pencil" style="display:none; cursor:pointer; font-size:0.85rem; margin-left:0.5rem; opacity:0.8; vertical-align:middle; text-shadow:0 1px 3px rgba(0,0,0,0.6);" title="Edit department call sign" onclick="openSidebarCallSignEdit()"></i>
+          <div id="sidebar-callsign-edit" style="display:none; margin-top:0.5rem;">
+            <input id="sidebar-callsign-input" type="text" maxlength="10" style="width:80%; padding:0.4rem 0.6rem; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:6px; color:#fff; font-size:1rem; text-align:center;">
+            <div style="margin-top:0.5rem;">
+              <button type="button" style="background:#667eea; color:#fff; border:none; border-radius:5px; padding:0.35rem 1rem; font-size:0.9rem; cursor:pointer; margin-right:0.3rem;" onclick="saveSidebarCallSign()">Save</button>
+              <button type="button" style="background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:5px; padding:0.35rem 1rem; font-size:0.9rem; cursor:pointer;" onclick="cancelSidebarCallSignEdit()">Cancel</button>
+            </div>
+          </div>
           <h5>Logged in as: Fire/EMS</h5>
         </div>
       </div>
