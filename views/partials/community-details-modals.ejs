@@ -752,19 +752,33 @@
 
           <div style="display:flex; flex-direction:column; gap:0.75rem;">
             <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
-              <input type="radio" name="warrantApprovalMode" value="auto-approve" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;">
+              <input type="radio" name="warrantApprovalMode" value="auto-approve" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;" onchange="toggleWarrantApprovalSlider()">
               Auto-Approve
             </label>
             <p style="color:#a0aec0; margin:0 0 0 1.75rem; font-size:0.8rem;">All warrant requests are automatically approved. Best for communities without a judicial department.</p>
 
             <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
-              <input type="radio" name="warrantApprovalMode" value="random" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;">
+              <input type="radio" name="warrantApprovalMode" value="random" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;" onchange="toggleWarrantApprovalSlider()">
               Random
             </label>
-            <p style="color:#a0aec0; margin:0 0 0 1.75rem; font-size:0.8rem;">A random judge will approve or deny the warrant (70% approval rate).</p>
+            <p style="color:#a0aec0; margin:0 0 0 1.75rem; font-size:0.8rem;">A random judge will approve or deny the warrant.</p>
+            <div id="warrantApprovalSliderContainer" style="display:none; margin:0.5rem 0 0.75rem 1.75rem; padding:0.75rem 1rem; background:#1a1b2e; border-radius:8px; max-width:320px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.375rem;">
+                <label style="color:#a0aec0; font-size:0.8rem; font-weight:500;">Approval Rate</label>
+                <span id="warrantApprovalRateValue" style="color:#3b82f6; font-weight:700; font-size:0.9rem;">70%</span>
+              </div>
+              <input type="range" id="warrantRandomApprovalRate" min="0" max="100" value="70" step="5"
+                style="width:100%; accent-color:#3b82f6; cursor:pointer;"
+                oninput="document.getElementById('warrantApprovalRateValue').textContent = this.value + '%'">
+              <div style="display:flex; justify-content:space-between; margin-top:0.25rem;">
+                <span style="color:#6b7280; font-size:0.7rem;">0%</span>
+                <span style="color:#6b7280; font-size:0.7rem;">50%</span>
+                <span style="color:#6b7280; font-size:0.7rem;">100%</span>
+              </div>
+            </div>
 
             <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
-              <input type="radio" name="warrantApprovalMode" value="require-judge" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;">
+              <input type="radio" name="warrantApprovalMode" value="require-judge" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;" onchange="toggleWarrantApprovalSlider()">
               Require Judge
             </label>
             <p style="color:#a0aec0; margin:0 0 0 1.75rem; font-size:0.8rem;">Warrants require manual approval from a judge in a Judicial department.</p>
@@ -7759,6 +7773,14 @@ async function saveEditEvent() {
         document.getElementById('generalSettingsModal').style.display = 'none';
       }
 
+      function toggleWarrantApprovalSlider() {
+        var mode = document.querySelector('input[name="warrantApprovalMode"]:checked');
+        var slider = document.getElementById('warrantApprovalSliderContainer');
+        if (slider) {
+          slider.style.display = (mode && mode.value === 'random') ? 'block' : 'none';
+        }
+      }
+
       function loadGeneralSettings() {
         // Get current general settings from the page data
         const communityData = <%- JSON.stringify(community || {}) %>;
@@ -7836,6 +7858,13 @@ async function saveEditEvent() {
         if (warrantRadio) {
           warrantRadio.checked = true;
         }
+        const warrantRate = communityData.community?.warrantRandomApprovalRate || 70;
+        const warrantRateSlider = document.getElementById('warrantRandomApprovalRate');
+        if (warrantRateSlider) {
+          warrantRateSlider.value = warrantRate;
+          document.getElementById('warrantApprovalRateValue').textContent = warrantRate + '%';
+        }
+        toggleWarrantApprovalSlider();
 
         // Hide loading state
         document.getElementById('generalSettingsLoading').style.display = 'none';
@@ -7937,11 +7966,18 @@ async function saveEditEvent() {
         }
         
         // Set warrant approval mode
-        const warrantApprovalMode = communityData?.warrantApprovalMode || 'auto-approve';
-        const warrantRadio = document.querySelector(`input[name="warrantApprovalMode"][value="${warrantApprovalMode}"]`);
-        if (warrantRadio) {
-          warrantRadio.checked = true;
+        const warrantApprovalMode2 = communityData?.warrantApprovalMode || 'auto-approve';
+        const warrantRadio2 = document.querySelector(`input[name="warrantApprovalMode"][value="${warrantApprovalMode2}"]`);
+        if (warrantRadio2) {
+          warrantRadio2.checked = true;
         }
+        const warrantRate2 = communityData?.warrantRandomApprovalRate || 70;
+        const warrantRateSlider2 = document.getElementById('warrantRandomApprovalRate');
+        if (warrantRateSlider2) {
+          warrantRateSlider2.value = warrantRate2;
+          document.getElementById('warrantApprovalRateValue').textContent = warrantRate2 + '%';
+        }
+        toggleWarrantApprovalSlider();
 
         // Hide loading state
         document.getElementById('generalSettingsLoading').style.display = 'none';
@@ -8055,6 +8091,7 @@ async function saveEditEvent() {
         // Get warrant approval mode
         const warrantApprovalModeEl = document.querySelector('input[name="warrantApprovalMode"]:checked');
         const warrantApprovalMode = warrantApprovalModeEl ? warrantApprovalModeEl.value : 'auto-approve';
+        const warrantRandomApprovalRate = parseInt(document.getElementById('warrantRandomApprovalRate').value) || 70;
 
         // Use the actual field names that match the backend community model
         const updateData = {
@@ -8065,7 +8102,8 @@ async function saveEditEvent() {
           vehicleCreationLimit: maxVehicles,
           firearmCreationLimitsEnabled: enableFirearmLimits,
           firearmCreationLimit: maxFirearms,
-          warrantApprovalMode: warrantApprovalMode
+          warrantApprovalMode: warrantApprovalMode,
+          warrantRandomApprovalRate: warrantRandomApprovalRate
         };
         
         // Save to server - use the same route as saveCommunityProfile
