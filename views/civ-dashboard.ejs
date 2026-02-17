@@ -1170,9 +1170,9 @@
       <div class="nav-section">
         <div class="nav-section-title">Utilities</div>
         <div class="nav-item" id="navCall911">
-          <a onclick="openCall911Modal()" class="nav-link" style="cursor: pointer;">
-            <i class="fa fa-exclamation-triangle nav-icon"></i>
-            <span class="nav-text">Call 911</span>
+          <a onclick="openEmergencyServicesModal()" class="nav-link" style="cursor: pointer;">
+            <i class="fa fa-phone nav-icon"></i>
+            <span class="nav-text">Emergency Services</span>
           </a>
               </div>
         <% if (!departmentComponents || !departmentComponents.hasOwnProperty('notepad') || departmentComponents['notepad'] !== false) { %>
@@ -3033,11 +3033,46 @@
 
   <% include notepad %>
 
+  <!-- Emergency Services Department Selection Modal -->
+  <div id="emergencyServicesModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+    <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:500px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2.5rem 2rem 2rem 2rem; position:relative; max-height:90vh; overflow-y:auto;">
+      <button id="emergencyServicesModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+      <div style="font-size:1.5rem; font-weight:700; color:#f7fafc; margin-bottom:0.5rem;">
+        <i class="fa fa-phone" style="color:#3b82f6; margin-right:0.5rem;"></i>
+        Emergency Services
+      </div>
+      <p style="color:#a0aec0; font-size:0.9rem; margin-bottom:1.5rem;">Select a department to contact or call 911 for general emergencies.</p>
+
+      <!-- Generic Call 911 -->
+      <div onclick="selectEmergencyDepartment(null)" style="cursor:pointer; background:linear-gradient(135deg,#f56565 0%,#e53e3e 100%); border-radius:12px; padding:1.2rem 1.2rem; margin-bottom:1rem; display:flex; align-items:center; gap:1rem; transition:transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(245,101,101,0.4)';" onmouseout="this.style.transform='';this.style.boxShadow='';">
+        <div style="background:rgba(255,255,255,0.2); border-radius:10px; width:44px; height:44px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <i class="fa fa-exclamation-triangle" style="color:#fff; font-size:1.2rem;"></i>
+        </div>
+        <div>
+          <div style="color:#fff; font-weight:600; font-size:1.05rem;">Call 911</div>
+          <div style="color:rgba(255,255,255,0.8); font-size:0.8rem;">General Emergency &mdash; Dispatched to all available units</div>
+        </div>
+      </div>
+
+      <!-- Loading spinner -->
+      <div id="emergencyDeptLoading" style="text-align:center; padding:1.5rem 0;">
+        <i class="fa fa-spinner fa-spin" style="color:#a0aec0; font-size:1.5rem;"></i>
+      </div>
+
+      <!-- Department list (populated by JS) -->
+      <div id="emergencyDeptList"></div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:1.5rem;">
+        <button id="emergencyServicesModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Call 911 Modal -->
   <div id="call911Modal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
     <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:600px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2.5rem 2rem 2rem 2rem; position:relative; max-height:90vh; overflow-y:auto;">
       <button id="call911ModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-      <div style="font-size:1.5rem; font-weight:700; color:#f7fafc; margin-bottom:1.5rem;">
+      <div id="call911ModalTitle" style="font-size:1.5rem; font-weight:700; color:#f7fafc; margin-bottom:1.5rem;">
         <i class="fa fa-exclamation-triangle" style="color:#f56565; margin-right:0.5rem;"></i>
         Emergency 911 Call
       </div>

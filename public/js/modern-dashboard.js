@@ -276,10 +276,14 @@ $(document).ready(function() {
         $('#newFirearmImageInput').click();
     });
     
+    // Emergency Services modal handlers
+    $('#emergencyServicesModalClose').click(closeEmergencyServicesModal);
+    $('#emergencyServicesModalCancel').click(closeEmergencyServicesModal);
+
     // Call 911 modal handlers
     $('#call911ModalClose').click(closeCall911Modal);
     $('#call911ModalCancel').click(closeCall911Modal);
-    
+
     // Call 911 form submission
     $('#call911Form').submit(function(e) {
         e.preventDefault();
@@ -4307,6 +4311,97 @@ function openAlertVolumeHelp() {
     showToast('Alert volume controls the sound level for notifications and alerts in the application.');
 }
 
+// Emergency Services Modal Functions
+window._selectedEmergencyDept = null;
+
+var EMERGENCY_TEMPLATES = ['Police', 'Fire', 'EMS'];
+
+function openEmergencyServicesModal() {
+    const modal = document.getElementById('emergencyServicesModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.style.cssText = 'display: flex !important; position: fixed !important; z-index: 2000 !important; left: 0 !important; top: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(30,32,44,0.65) !important; align-items: center !important; justify-content: center !important;';
+        document.body.classList.add('modal-open');
+    }
+
+    // Fetch and render emergency departments
+    var communityId = dbUser?.user?.lastAccessedCommunity?.communityID || dbUser?.user?.activeCommunity;
+    var loadingEl = document.getElementById('emergencyDeptLoading');
+    var listEl = document.getElementById('emergencyDeptList');
+    if (loadingEl) loadingEl.style.display = 'block';
+    if (listEl) listEl.innerHTML = '';
+
+    if (!communityId) {
+        if (loadingEl) loadingEl.style.display = 'none';
+        return;
+    }
+
+    $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}/departments`,
+        method: 'GET',
+        success: function(data) {
+            if (loadingEl) loadingEl.style.display = 'none';
+            var depts = (data.departments || []).filter(function(dept) {
+                return EMERGENCY_TEMPLATES.indexOf(dept.template.name) !== -1;
+            });
+            if (depts.length === 0) return;
+
+            var templateIcons = { 'Police': 'fa-shield', 'Fire': 'fa-fire', 'EMS': 'fa-medkit' };
+            var templateColors = { 'Police': '#3b82f6', 'Fire': '#f97316', 'EMS': '#10b981' };
+
+            var html = '<div style="color:#a0aec0; font-size:0.8rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.75rem;">Departments</div>';
+            depts.forEach(function(dept) {
+                var icon = templateIcons[dept.template.name] || 'fa-building';
+                var color = templateColors[dept.template.name] || '#6b7280';
+                // Escape for JS string literal (backslashes first, then quotes)
+                var safeName = dept.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                // Escape for HTML display
+                var displayName = dept.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                html += '<div onclick="selectEmergencyDepartment(\'' + dept._id + '\', \'' + safeName + '\', \'' + dept.template.name + '\')" style="cursor:pointer; background:#1e2028; border:1.5px solid #35385a; border-radius:12px; padding:1rem 1.2rem; margin-bottom:0.75rem; display:flex; align-items:center; gap:1rem; transition:border-color 0.15s, transform 0.15s;" onmouseover="this.style.borderColor=\'' + color + '\';this.style.transform=\'translateY(-1px)\';" onmouseout="this.style.borderColor=\'#35385a\';this.style.transform=\'\';">'
+                    + '<div style="background:' + color + '22; border-radius:10px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">'
+                    + '<i class="fa ' + icon + '" style="color:' + color + '; font-size:1rem;"></i></div>'
+                    + '<div><div style="color:#f7fafc; font-weight:600;">' + displayName + '</div>'
+                    + '<div style="color:#a0aec0; font-size:0.8rem;">' + dept.template.name + ' Department</div></div>'
+                    + '</div>';
+            });
+            if (listEl) listEl.innerHTML = html;
+        },
+        error: function() {
+            if (loadingEl) loadingEl.style.display = 'none';
+            showToast('Error: Failed to load emergency departments.');
+        }
+    });
+}
+
+function closeEmergencyServicesModal() {
+    var modal = document.getElementById('emergencyServicesModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
+}
+
+function selectEmergencyDepartment(deptId, deptName, templateName) {
+    if (deptId) {
+        window._selectedEmergencyDept = { _id: deptId, name: deptName, templateName: templateName };
+    } else {
+        window._selectedEmergencyDept = null;
+    }
+    closeEmergencyServicesModal();
+
+    // Update call form title
+    var titleEl = document.getElementById('call911ModalTitle');
+    if (titleEl) {
+        if (window._selectedEmergencyDept) {
+            titleEl.innerHTML = '<i class="fa fa-phone" style="color:#3b82f6; margin-right:0.5rem;"></i>Emergency Call &mdash; ' + window._selectedEmergencyDept.name;
+        } else {
+            titleEl.innerHTML = '<i class="fa fa-exclamation-triangle" style="color:#f56565; margin-right:0.5rem;"></i>Emergency 911 Call';
+        }
+    }
+
+    openCall911Modal();
+}
+
 // Call 911 Modal Functions
 function openCall911Modal() {
     const modal = document.getElementById('call911Modal');
@@ -4314,7 +4409,7 @@ function openCall911Modal() {
         modal.style.display = 'flex';
         modal.style.cssText = 'display: flex !important; position: fixed !important; z-index: 2000 !important; left: 0 !important; top: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(30,32,44,0.65) !important; align-items: center !important; justify-content: center !important;';
         document.body.classList.add('modal-open');
-        
+
         // Focus on the first input
         setTimeout(() => {
             document.getElementById('call911Name').focus();
@@ -4327,62 +4422,73 @@ function closeCall911Modal() {
     if (modal) {
         modal.style.display = 'none';
         document.body.classList.remove('modal-open');
-        
+
         // Reset form
         document.getElementById('call911Form').reset();
     }
+    window._selectedEmergencyDept = null;
 }
 
 function submit911Call() {
-    
+
     // Get form data
     const name = document.getElementById('call911Name').value.trim();
     const location = document.getElementById('call911Location').value.trim();
     const peopleDescription = document.getElementById('call911PeopleDescription').value.trim();
     const callDescription = document.getElementById('call911Description').value.trim();
-    
+
     // Validation
     if (!name || !location || !peopleDescription || !callDescription) {
         showToast('Please fill in all required fields.');
         return;
     }
-    
+
     // Show loading state
     const submitBtn = document.getElementById('submit911Call');
     const originalText = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin" style="margin-right:0.5rem;"></i>Submitting...';
-    
+
     // Get community ID and user info
     const communityId = dbUser?.user?.lastAccessedCommunity?.communityID || dbUser?.user?.activeCommunity;
     const userId = dbUser._id;
     const username = dbUser?.user?.username;
-    
+
     if (!communityId) {
         showToast('Error: No active community found. Please join a community first.');
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
         return;
     }
-    
-    // First, fetch dispatch departments
+
+    const selectedDept = window._selectedEmergencyDept;
+
+    // Fetch dispatch departments
     $.ajax({
         url: `${API_URL}/api/v1/community/${communityId}/departments`,
         method: 'GET',
         success: function(data) {
             const dispatchDepartments = data.departments.filter(dept => dept.template.name === 'Dispatch');
             const departmentIds = dispatchDepartments.map(dept => dept._id);
-            
+
             if (departmentIds.length === 0) {
                 showToast('Error: No dispatch departments found in this community.');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
                 return;
             }
-            
+
+            // If a specific department was selected, add it too
+            if (selectedDept && departmentIds.indexOf(selectedDept._id) === -1) {
+                departmentIds.push(selectedDept._id);
+            }
+
+            // Build title
+            const titlePrefix = selectedDept ? selectedDept.templateName + ' Emergency' : '911';
+
             // Create call data
             const callData = {
-                title: `911: ${location}`,
+                title: `${titlePrefix}: ${location}`,
                 details: `911 Caller: ${name}\nLocation: ${location}\nPeople Description: ${peopleDescription}\nCall Description: ${callDescription}`,
                 departments: departmentIds,
                 status: true,
@@ -4390,7 +4496,7 @@ function submit911Call() {
                 createdByID: userId,
                 createdByUsername: username
             };
-            
+
             // Submit the call
             $.ajax({
                 url: `${API_URL}/api/v1/calls`,
@@ -4400,7 +4506,7 @@ function submit911Call() {
                 success: function(response) {
                     showToast('Emergency call submitted successfully!');
                     closeCall911Modal();
-                    
+
                     // Show success alert
                     const alert = document.getElementById('911CallCreatedAlert');
                     if (alert) {
@@ -4424,7 +4530,6 @@ function submit911Call() {
             });
         },
         error: function(xhr) {
-            // Silently handle error - user sees toast message
             showToast('Error: Failed to fetch dispatch departments.');
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
