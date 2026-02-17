@@ -55,14 +55,29 @@
               </div>
             </div>
 
-            <!-- Call Sign Field -->
+            <!-- Call Sign Field (Default/Global) -->
             <div style="margin-bottom:1.5rem;">
-              <label style="display:block; color:#e2e8f0; margin-bottom:0.5rem; font-weight:500;">Call Sign: <small style="color:#a0aec0; font-size:0.8rem;">Max 10 characters</small></label>
+              <label style="display:block; color:#e2e8f0; margin-bottom:0.5rem; font-weight:500;">Default Call Sign: <small style="color:#a0aec0; font-size:0.8rem;">Max 10 characters</small></label>
               <input id="accountCallSign" name="accountCallSign" type="text" maxlength="10" autocomplete="off" required style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#e2e8f0; font-size:0.9rem;">
+              <small style="color:#718096; font-size:0.75rem;">Used when no department-specific call sign is set</small>
               <div id="updateCallSignBtns" style="display:none; margin-top:1rem;">
                 <input type="hidden" name="page" value="/civ-dashboard">
                 <button id="updateCallSign" value="updateCallSign" name="action" style="background:#667eea; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; margin-right:0.5rem; cursor:pointer;">Update Call Sign</button>
                 <button type="button" onclick="cancelCallSign()" style="background:#4a5568; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:pointer;">Cancel</button>
+              </div>
+            </div>
+
+            <!-- Department Call Sign Field -->
+            <div id="deptCallSignSection" style="margin-bottom:1.5rem; display:none;">
+              <label style="display:block; color:#e2e8f0; margin-bottom:0.5rem; font-weight:500;">
+                <i class="fa fa-building" style="margin-right:0.3rem; color:#667eea;"></i>
+                Department Call Sign: <small id="deptCallSignDeptName" style="color:#a0aec0; font-size:0.8rem;"></small>
+              </label>
+              <input id="deptCallSignInput" type="text" maxlength="10" autocomplete="off" placeholder="Leave blank to use default" style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#e2e8f0; font-size:0.9rem;">
+              <small style="color:#718096; font-size:0.75rem;">Overrides the default call sign for this department only</small>
+              <div id="updateDeptCallSignBtns" style="display:none; margin-top:1rem;">
+                <button id="saveDeptCallSign" type="button" style="background:#667eea; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; margin-right:0.5rem; cursor:pointer;">Update Department Call Sign</button>
+                <button type="button" onclick="cancelDeptCallSign()" style="background:#4a5568; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:pointer;">Cancel</button>
               </div>
             </div>
           </div>
@@ -530,6 +545,109 @@
         event.stopPropagation();
       });
     }
+  });
+
+  // Department Call Sign functionality
+  var deptCallSignOriginalValue = '';
+
+  function initDeptCallSign() {
+    var communityId = '<%= (typeof user !== "undefined" && user.user && user.user.lastAccessedCommunity) ? user.user.lastAccessedCommunity.communityID : "" %>';
+    var deptId = '<%= (typeof departmentId !== "undefined" && departmentId) ? departmentId : "" %>';
+    var deptName = '<%= (typeof departmentName !== "undefined" && departmentName) ? departmentName : "" %>';
+    var userId = '<%= (typeof user !== "undefined") ? user._id : "" %>';
+
+    if (!communityId || !deptId || !userId) return;
+
+    var section = document.getElementById('deptCallSignSection');
+    var nameLabel = document.getElementById('deptCallSignDeptName');
+    var input = document.getElementById('deptCallSignInput');
+    if (!section || !input) return;
+
+    nameLabel.textContent = deptName || 'Current Department';
+    section.style.display = 'block';
+
+    // Fetch current department callsigns
+    fetch(window.API_URL + '/api/v1/community/' + communityId + '/members/' + userId + '/department-callsigns')
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        var callSigns = data.departmentCallSigns || {};
+        var currentValue = callSigns[deptId] || '';
+        input.value = currentValue;
+        deptCallSignOriginalValue = currentValue;
+      })
+      .catch(function(err) {
+        console.error('Error fetching department callsigns:', err);
+      });
+
+    // Change detection
+    input.addEventListener('input', function() {
+      var btns = document.getElementById('updateDeptCallSignBtns');
+      if (this.value !== deptCallSignOriginalValue) {
+        btns.style.display = 'block';
+      } else {
+        btns.style.display = 'none';
+      }
+    });
+
+    // Save handler
+    document.getElementById('saveDeptCallSign').addEventListener('click', function() {
+      var newValue = input.value.trim();
+      fetch(window.API_URL + '/api/v1/community/' + communityId + '/members/' + userId + '/department-callsigns', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ departmentId: deptId, callSign: newValue })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        deptCallSignOriginalValue = newValue;
+        document.getElementById('updateDeptCallSignBtns').style.display = 'none';
+        var successAlert = document.getElementById('successfully-updated-alert');
+        if (successAlert) {
+          successAlert.style.display = 'block';
+          setTimeout(function() { successAlert.style.display = 'none'; }, 3000);
+        }
+      })
+      .catch(function(err) {
+        console.error('Error saving department callsign:', err);
+        alert('Failed to update department call sign. Please try again.');
+      });
+    });
+  }
+
+  function cancelDeptCallSign() {
+    var input = document.getElementById('deptCallSignInput');
+    var btns = document.getElementById('updateDeptCallSignBtns');
+    if (input) input.value = deptCallSignOriginalValue;
+    if (btns) btns.style.display = 'none';
+  }
+
+  // Initialize when the account modal is opened
+  var origOpenAccountModal = window.openAccountModal;
+  window.openAccountModal = function() {
+    if (typeof origOpenAccountModal === 'function') origOpenAccountModal();
+    initDeptCallSign();
+  };
+
+  // Update sidebar callsign with department-specific callsign if available
+  document.addEventListener('DOMContentLoaded', function() {
+    var communityId = '<%= (typeof user !== "undefined" && user.user && user.user.lastAccessedCommunity) ? user.user.lastAccessedCommunity.communityID : "" %>';
+    var userId = '<%= (typeof user !== "undefined") ? user._id : "" %>';
+    var deptId = '<%= (typeof departmentId !== "undefined" && departmentId) ? departmentId : "" %>';
+
+    if (!communityId || !userId || !deptId) return;
+
+    fetch(window.API_URL + '/api/v1/community/' + communityId + '/members/' + userId + '/department-callsigns')
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        var callSigns = data.departmentCallSigns || {};
+        var deptCS = callSigns[deptId];
+        if (deptCS) {
+          // Update sidebar callsign display (works across all dashboards)
+          var sidebarEl = document.querySelector('#sidebar .user-logo h5:first-of-type');
+          if (sidebarEl) sidebarEl.textContent = deptCS;
+        }
+      })
+      .catch(function() {});
   });
 </script>
 
