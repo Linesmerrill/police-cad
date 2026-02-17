@@ -4777,15 +4777,42 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
 
   app.post("/create-warrant", auth, function (req, res) {
-    var myWarrant = new Warrant();
-    myWarrant.createWarrant(req, res);
-    myWarrant.save(function (err) {
-      if (err) return console.error(err);
-    });
+    // Build charges array from the multi-select
+    var charges = req.body.charges;
+    if (!Array.isArray(charges)) {
+      charges = charges ? [charges] : [];
+    }
+
+    var warrantData = {
+      warrantType: req.body.warrantType || "arrest",
+      accusedID: req.body.accusedID,
+      accusedFirstName: req.body.accusedFirstName,
+      accusedLastName: req.body.accusedLastName,
+      charges: charges,
+      probableCause: req.body.probableCause,
+      searchLocation: req.body.searchLocation || "",
+      requestingOfficerID: req.body.requestingOfficerID,
+      requestingOfficerName: req.body.requestingOfficerName,
+      activeCommunityID: req.body.activeCommunityID || "",
+    };
+
+    axios
+      .post(`${policeCadApiUrl}/api/v1/warrant`, warrantData, config)
+      .then(function (response) {
+        req.app.locals.specialContext = null;
+        if (response.data && response.data.status === "pending") {
+          req.app.locals.specialContext = "warrantPending";
+        }
+        return res.redirect("/" + req.body.route);
+      })
+      .catch(function (err) {
+        console.error("Error creating warrant:", err.message);
+        req.app.locals.specialContext = "warrantError";
+        return res.redirect("/" + req.body.route);
+      });
   });
 
   app.post("/clear-warrant", auth, function (req, res) {
-    // console.debug("/clear-warrant req: ", req.body);
     req.app.locals.specialContext = null;
     var isValid = isValidObjectIdLength(
       req.body.warrantID,
@@ -4795,22 +4822,20 @@ module.exports = function (app, passport, server, nextApp, handle) {
       req.app.locals.specialContext = "invalidRequest";
       return res.redirect("/" + req.body.route);
     }
-    Warrant.findByIdAndUpdate(
-      {
-        _id: ObjectId(req.body.warrantID),
-      },
-      {
-        $set: {
-          "warrant.updatedAt": new Date(),
-          "warrant.clearingOfficerID": req.body.clearingOfficerID,
-          "warrant.status": false,
-        },
-      },
-      function (err) {
-        if (err) return console.error(err);
+    // Use the API to update warrant status to withdrawn
+    axios
+      .put(
+        `${policeCadApiUrl}/api/v1/warrant/${req.body.warrantID}`,
+        { status: "withdrawn" },
+        config
+      )
+      .then(function () {
         return res.redirect("/" + req.body.route);
-      }
-    );
+      })
+      .catch(function (err) {
+        console.error("Error clearing warrant:", err.message);
+        return res.redirect("/" + req.body.route);
+      });
   });
 
   app.post("/create-bolo", auth, function (req, res) {

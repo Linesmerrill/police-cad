@@ -741,7 +741,36 @@
             </p>
           </div>
         </div>
-        
+
+        <!-- Warrant Approval Mode Section -->
+        <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+            <i class="fa fa-gavel" style="font-size:1.5rem; color:#8b5cf6;"></i>
+            <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">Warrant Approval Mode</h4>
+          </div>
+          <p style="color:#a0aec0; margin-bottom:1rem; font-size:0.875rem;">Configure how warrant requests are processed in this community</p>
+
+          <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
+              <input type="radio" name="warrantApprovalMode" value="auto-approve" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;">
+              Auto-Approve
+            </label>
+            <p style="color:#a0aec0; margin:0 0 0 1.75rem; font-size:0.8rem;">All warrant requests are automatically approved. Best for communities without a judicial department.</p>
+
+            <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
+              <input type="radio" name="warrantApprovalMode" value="random" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;">
+              Random
+            </label>
+            <p style="color:#a0aec0; margin:0 0 0 1.75rem; font-size:0.8rem;">A random judge will approve or deny the warrant (70% approval rate).</p>
+
+            <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
+              <input type="radio" name="warrantApprovalMode" value="require-judge" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;">
+              Require Judge
+            </label>
+            <p style="color:#a0aec0; margin:0 0 0 1.75rem; font-size:0.8rem;">Warrants require manual approval from a judge in a Judicial department.</p>
+          </div>
+        </div>
+
         <div style="margin-top:2rem; display:flex; gap:1rem; justify-content:center;">
           <button onclick="closeGeneralSettingsModal()" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
             Cancel
@@ -7801,6 +7830,13 @@ async function saveEditEvent() {
           }
         }
         
+        // Set warrant approval mode
+        const warrantApprovalMode = communityData.community?.warrantApprovalMode || 'auto-approve';
+        const warrantRadio = document.querySelector(`input[name="warrantApprovalMode"][value="${warrantApprovalMode}"]`);
+        if (warrantRadio) {
+          warrantRadio.checked = true;
+        }
+
         // Hide loading state
         document.getElementById('generalSettingsLoading').style.display = 'none';
       }
@@ -7900,6 +7936,13 @@ async function saveEditEvent() {
           }
         }
         
+        // Set warrant approval mode
+        const warrantApprovalMode = communityData?.warrantApprovalMode || 'auto-approve';
+        const warrantRadio = document.querySelector(`input[name="warrantApprovalMode"][value="${warrantApprovalMode}"]`);
+        if (warrantRadio) {
+          warrantRadio.checked = true;
+        }
+
         // Hide loading state
         document.getElementById('generalSettingsLoading').style.display = 'none';
       }
@@ -8009,6 +8052,10 @@ async function saveEditEvent() {
           }
         }
         
+        // Get warrant approval mode
+        const warrantApprovalModeEl = document.querySelector('input[name="warrantApprovalMode"]:checked');
+        const warrantApprovalMode = warrantApprovalModeEl ? warrantApprovalModeEl.value : 'auto-approve';
+
         // Use the actual field names that match the backend community model
         const updateData = {
           civilianCreationLimitsEnabled: enableLimits,
@@ -8017,7 +8064,8 @@ async function saveEditEvent() {
           vehicleCreationLimitsEnabled: enableVehicleLimits,
           vehicleCreationLimit: maxVehicles,
           firearmCreationLimitsEnabled: enableFirearmLimits,
-          firearmCreationLimit: maxFirearms
+          firearmCreationLimit: maxFirearms,
+          warrantApprovalMode: warrantApprovalMode
         };
         
         // Save to server - use the same route as saveCommunityProfile
