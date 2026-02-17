@@ -3315,6 +3315,8 @@
           audioElement.play();
         }
         if (window.loadPanicStatusesAjax) window.loadPanicStatusesAjax();
+        // Refresh unit data so activeDepartmentId and callsigns are up to date
+        if (typeof loadUnitsPanel === 'function') loadUnitsPanel();
       }
     })
 
@@ -3810,6 +3812,11 @@
         if (!changed && activePanicUserIds.size > 0) {
           // Quick check if contents changed
           changed = true; // Conservative: re-render when we have panics
+        }
+        // If new panics appeared, refresh community data to pick up activeDepartmentId changes
+        if (activePanicUserIds.size > prevSize && typeof loadUnitsPanel === 'function') {
+          loadUnitsPanel();
+          return; // loadUnitsPanel will re-render, no need to continue
         }
 
         if (!alerts || alerts.length === 0) {
