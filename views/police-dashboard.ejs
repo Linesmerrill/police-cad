@@ -3056,6 +3056,27 @@ var departmentName = <%- JSON.stringify(departmentName || null) %>;
 var tenCodesCache = [];
 var tenCodeMap = {}; // Map tenCodeID to code (e.g., { "123": "10-8" })
 var filteredTenCodes = [];
+
+    // Get resolved callsign: prefer department-specific, fall back to global
+    function getMyResolvedCallSign() {
+      return window._resolvedDeptCallSign || dbUser.user.callSign || '';
+    }
+
+    // Update activeDepartmentId to current dashboard's department
+    function ensureActiveDepartment() {
+      var communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+      if (!communityId || !departmentId) return;
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityId + '/members/' + dbUser._id + '/tenCode',
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          departmentID: departmentId,
+          activeDepartmentId: departmentId,
+          activeDepartmentName: departmentName || ''
+        })
+      });
+    }
 var currentPage = 1;
 const codesPerPage = 10;
 
@@ -3130,13 +3151,13 @@ function updateStatus(statusCode, previousTenCodeID) {
             dashboardSocket.emit('signal_100_button_update', {
               userID: userId,
               userUsername: dbUser.user.username,
-              userCallSign: dbUser.user.callSign || null,
+              userCallSign: getMyResolvedCallSign() || null,
               activeCommunity: communityId,
               activatedBy: 'Officer',
-              activatedByCallSign: dbUser.user.callSign || null,
+              activatedByCallSign: getMyResolvedCallSign() || null,
               activatedByUsername: dbUser.user.username,
               aboutUserId: userId,
-              aboutCallSign: dbUser.user.callSign || null,
+              aboutCallSign: getMyResolvedCallSign() || null,
               aboutUsername: dbUser.user.username,
               statusCode: tenCode.code,
               timestamp: new Date().toISOString()
@@ -3145,9 +3166,9 @@ function updateStatus(statusCode, previousTenCodeID) {
             // Update local banner
             updateSignal100Banner({
               activatedBy: 'Officer',
-              activatedByCallSign: dbUser.user.callSign,
+              activatedByCallSign: getMyResolvedCallSign(),
               activatedByUsername: dbUser.user.username,
-              aboutCallSign: dbUser.user.callSign,
+              aboutCallSign: getMyResolvedCallSign(),
               aboutUsername: dbUser.user.username
             });
         }
@@ -3169,7 +3190,7 @@ function updateStatus(statusCode, previousTenCodeID) {
             dashboardSocket.emit('panic_button_update', {
               userID: userId,
               userUsername: dbUser.user.username,
-              callSign: dbUser.user.callSign || '',
+              callSign: getMyResolvedCallSign(),
               activeCommunity: communityId,
               departmentType: departmentName || 'police'
             });
@@ -4421,10 +4442,11 @@ function toggleCaret(event) {
           data: JSON.stringify({
             userId: userId,
             username: dbUser.user.username,
-            callSign: dbUser.user.callSign || '',
+            callSign: getMyResolvedCallSign(),
             departmentType: 'police'
           }),
           success: function() {
+            ensureActiveDepartment();
             if ($('#panic-button-check-sound').prop('checked')) {
               var audioElement = document.createElement('audio');
               audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
@@ -4462,25 +4484,27 @@ function toggleCaret(event) {
       $('#signal100BtnIcon').removeClass('fa-exclamation-triangle').addClass('fa-spinner');
 
       if (dashboardSocket && dashboardSocket.connected) {
+        var myCS = getMyResolvedCallSign();
+        ensureActiveDepartment();
         dashboardSocket.emit('signal_100_button_update', {
           userID: userId,
           userUsername: dbUser.user.username,
-          userCallSign: dbUser.user.callSign || null,
+          userCallSign: myCS || null,
           activeCommunity: communityId,
           activatedBy: 'Officer',
-          activatedByCallSign: dbUser.user.callSign || null,
+          activatedByCallSign: myCS || null,
           activatedByUsername: dbUser.user.username,
           aboutUserId: userId,
-          aboutCallSign: dbUser.user.callSign || null,
+          aboutCallSign: myCS || null,
           aboutUsername: dbUser.user.username,
           timestamp: new Date().toISOString()
         });
 
         updateSignal100Banner({
           activatedBy: 'Officer',
-          activatedByCallSign: dbUser.user.callSign,
+          activatedByCallSign: myCS,
           activatedByUsername: dbUser.user.username,
-          aboutCallSign: dbUser.user.callSign,
+          aboutCallSign: myCS,
           aboutUsername: dbUser.user.username
         });
 

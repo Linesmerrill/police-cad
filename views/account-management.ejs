@@ -634,6 +634,9 @@
   // Sidebar callsign inline edit state
   var _sidebarCS = { communityId: '', userId: '', deptId: '', original: '' };
 
+  // Global resolved callsign — available to panic/signal100 handlers on all dashboards
+  window._resolvedDeptCallSign = null;
+
   function openSidebarCallSignEdit() {
     var display = document.getElementById('sidebar-callsign');
     var editDiv = document.getElementById('sidebar-callsign-edit');
@@ -671,6 +674,8 @@
     .then(function() {
       var display = document.getElementById('sidebar-callsign');
       if (display) display.textContent = newValue || _sidebarCS.original;
+      // Keep global resolved callsign in sync
+      window._resolvedDeptCallSign = newValue || null;
       // Also update the account modal input if it exists
       var modalInput = document.getElementById('deptCallSignInput');
       if (modalInput) {
@@ -712,6 +717,8 @@
         if (deptCS && sidebarEl) {
           sidebarEl.textContent = deptCS;
         }
+        // Store resolved callsign globally for panic/signal100 handlers
+        window._resolvedDeptCallSign = deptCS || null;
         // Show the edit pencil icon (department context exists)
         var editBtn = document.getElementById('sidebar-callsign-edit-btn');
         if (editBtn) editBtn.style.display = 'inline';
