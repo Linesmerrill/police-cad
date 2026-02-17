@@ -5802,6 +5802,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "vehicle.validInsurance": req.body.validInsView,
             "vehicle.registeredOwner": req.body.roVeh.trim(),
             "vehicle.isStolen": req.body.stolenView,
+            "vehicle.isExempt": req.body.exemptView,
             "vehicle.updatedAt": new Date(),
           },
         },

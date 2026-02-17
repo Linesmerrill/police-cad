@@ -13,6 +13,7 @@ var vehicleSchema = mongoose.Schema({
     registeredOwner: String,
     registeredOwnerID: String,
     isStolen: String,
+    isExempt: String,
     activeCommunityID: String,
     userID: String,
     createdAt: Date,
@@ -53,6 +54,9 @@ vehicleSchema.methods.createVeh = function (req, res) {
   if (exists(req.body.isStolen)) {
     this.vehicle.isStolen = req.body.isStolen;
   }
+  if (exists(req.body.isExempt)) {
+    this.vehicle.isExempt = req.body.isExempt;
+  }
   this.vehicle.activeCommunityID = req.body.activeCommunityID; // we set this when submitting the from so it should not be null
   this.vehicle.userID = req.body.userID; // we set this when submitting the from so it should not be null
   this.vehicle.createdAt = new Date();
@@ -91,6 +95,9 @@ vehicleSchema.methods.socketCreateVeh = function (req, res) {
   }
   if (exists(req.body.isStolen)) {
     this.vehicle.isStolen = req.body.isStolen;
+  }
+  if (exists(req.body.isExempt)) {
+    this.vehicle.isExempt = req.body.isExempt;
   }
   this.vehicle.activeCommunityID = req.body.activeCommunityID; // we set this when submitting the from so it should not be null
   this.vehicle.userID = req.body.userID; // we set this when submitting the from so it should not be null

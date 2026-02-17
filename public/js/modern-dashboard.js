@@ -909,6 +909,7 @@ function renderVehicles(vehicles) {
                     <p><strong>Model:</strong> ${vehData.model || 'N/A'}</p>
                     <p><strong>Year:</strong> ${vehData.year || 'N/A'}</p>
                     ${(vehData.isStolen === 'true' || vehData.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                    ${(vehData.isExempt === 'true') ? '<p style="color:#3b82f6; font-weight:bold;"><i class="fa fa-shield"></i> EXEMPT</p>' : ''}
                     ${(vehData.validRegistration === 'false' || vehData.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID REGISTRATION</p>' : ''}
                     ${(vehData.validInsurance === 'false' || vehData.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID INSURANCE</p>' : ''}
                 </div>
@@ -3466,6 +3467,7 @@ function openVehDetailsModal(veh) {
     document.getElementById('vehValidRegistration').value = boolToSelect(vehData.validRegistration);
     document.getElementById('vehValidInsurance').value = boolToSelect(vehData.validInsurance);
     document.getElementById('vehIsStolen').value = stolenToSelect(vehData.isStolen);
+    document.getElementById('vehIsExempt').value = boolToSelect(vehData.isExempt || 'false');
     
     // Show modal
     modal.style.cssText = 'display: flex !important; position: fixed !important; z-index: 2000 !important; left: 0 !important; top: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(30,32,44,0.65) !important; align-items: center !important; justify-content: center !important; visibility: visible !important; opacity: 1 !important;';
@@ -3552,10 +3554,11 @@ function updateVehModern(vehId) {
         validRegistration: selectToBoolString($('#vehValidRegistration').val()),
         validInsurance: selectToBoolString($('#vehValidInsurance').val()),
         isStolen: selectToStolenString($('#vehIsStolen').val()),
+        isExempt: selectToBoolString($('#vehIsExempt').val()),
         userID: dbUser._id,
         activeCommunityID: dbUser?.user?.lastAccessedCommunity?.communityID
     };
-    
+
     // Validate required fields
     if (!data.plate) {
         showToast('License plate is required');
@@ -3637,6 +3640,7 @@ $(document).ready(function() {
             validRegistration: selectToBoolString($('#newVehValidRegistration').val()),
             validInsurance: selectToBoolString($('#newVehValidInsurance').val()),
             isStolen: selectToStolenString($('#newVehIsStolen').val()),
+            isExempt: selectToBoolString($('#newVehIsExempt').val()),
             registeredOwner: '', // Always include, even if empty
             registeredOwnerID: '', // Always include, even if empty
             userID: dbUser._id,
@@ -3820,6 +3824,7 @@ function renderLinkedVehicles(vehicles, civilianId) {
                     <p>Type: ${vehicle?.vehicle?.type || 'Unknown'}</p>
                     <p>Year: ${vehicle?.vehicle?.year || 'Unknown'}</p>
                     ${(vehicle?.vehicle?.isStolen === 'true' || vehicle?.vehicle?.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                    ${(vehicle?.vehicle?.isExempt === 'true') ? '<p style="color:#3b82f6; font-weight:bold;"><i class="fa fa-shield"></i> EXEMPT</p>' : ''}
                     ${(vehicle?.vehicle?.validRegistration === 'false' || vehicle?.vehicle?.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID REGISTRATION</p>' : ''}
                     ${(vehicle?.vehicle?.validInsurance === 'false' || vehicle?.vehicle?.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID INSURANCE</p>' : ''}
                     ${linkedInfo}
