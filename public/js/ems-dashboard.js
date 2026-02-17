@@ -11,6 +11,27 @@ var dbUser;
 var dbVehicles;
 var socket;
 
+// Get resolved callsign: prefer department-specific, fall back to global
+function getMyResolvedCallSign() {
+  return window._resolvedDeptCallSign || (dbUser && dbUser.user ? dbUser.user.callSign : '') || '';
+}
+
+// Update activeDepartmentId to current dashboard's department
+function ensureActiveDepartment() {
+  var communityId = dbUser && dbUser.user && dbUser.user.lastAccessedCommunity ? dbUser.user.lastAccessedCommunity.communityID : null;
+  if (!communityId || typeof departmentId === 'undefined' || !departmentId) return;
+  $.ajax({
+    url: POLICE_CAD_API_URL + '/api/v1/community/' + communityId + '/members/' + dbUser._id + '/tenCode',
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      departmentID: departmentId,
+      activeDepartmentId: departmentId,
+      activeDepartmentName: (typeof departmentName !== 'undefined' ? departmentName : '') || ''
+    })
+  });
+}
+
 // Status Codes Global Variables
 var statusCodesCache = [];
 var statusCodeMap = {};
@@ -576,25 +597,27 @@ function triggerSignal100() {
   $('#signal100ActionBtn').addClass('loading');
   $('#signal100BtnIcon').removeClass('fa-exclamation-triangle').addClass('fa-spinner');
 
+  var myCS = getMyResolvedCallSign();
+  ensureActiveDepartment();
   window.dashboardSocket.emit('signal_100_button_update', {
     userID: userId,
     userUsername: dbUser.user.username,
-    userCallSign: dbUser.user.callSign || null,
+    userCallSign: myCS || null,
     activeCommunity: communityId,
     activatedBy: 'EMS',
-    activatedByCallSign: dbUser.user.callSign || null,
+    activatedByCallSign: myCS || null,
     activatedByUsername: dbUser.user.username,
     aboutUserId: userId,
-    aboutCallSign: dbUser.user.callSign || null,
+    aboutCallSign: myCS || null,
     aboutUsername: dbUser.user.username,
     timestamp: new Date().toISOString()
   });
 
   updateSignal100Banner({
     activatedBy: 'EMS',
-    activatedByCallSign: dbUser.user.callSign,
+    activatedByCallSign: myCS,
     activatedByUsername: dbUser.user.username,
-    aboutCallSign: dbUser.user.callSign,
+    aboutCallSign: myCS,
     aboutUsername: dbUser.user.username
   });
 
@@ -656,11 +679,12 @@ function triggerPanic() {
       data: JSON.stringify({
         userId: userId,
         username: dbUser.user.username,
-        callSign: dbUser.user.callSign || '',
+        callSign: getMyResolvedCallSign(),
         departmentType: 'ems',
       }),
       contentType: 'application/json',
       success: function() {
+        ensureActiveDepartment();
         if (dbUser.user?.panicButtonSound) {
           var audioElement = document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');

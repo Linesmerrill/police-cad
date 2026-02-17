@@ -592,9 +592,14 @@
           <h3>
             <%=user.user.username%>
           </h3>
-          <h5>
-            <%=user.user.callSign%>
-          </h5>
+          <h5 style="display:inline-block;" id="sidebar-callsign"><%=user.user.callSign%></h5><i id="sidebar-callsign-edit-btn" class="fa fa-pencil" style="display:none; cursor:pointer; font-size:0.85rem; margin-left:0.5rem; opacity:0.8; vertical-align:middle; text-shadow:0 1px 3px rgba(0,0,0,0.6);" title="Edit department call sign" onclick="openSidebarCallSignEdit()"></i>
+          <div id="sidebar-callsign-edit" style="display:none; margin-top:0.5rem;">
+            <input id="sidebar-callsign-input" type="text" maxlength="10" style="width:80%; padding:0.4rem 0.6rem; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:6px; color:#fff; font-size:1rem; text-align:center;">
+            <div style="margin-top:0.5rem;">
+              <button type="button" style="background:#667eea; color:#fff; border:none; border-radius:5px; padding:0.35rem 1rem; font-size:0.9rem; cursor:pointer; margin-right:0.3rem;" onclick="saveSidebarCallSign()">Save</button>
+              <button type="button" style="background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:5px; padding:0.35rem 1rem; font-size:0.9rem; cursor:pointer;" onclick="cancelSidebarCallSignEdit()">Cancel</button>
+            </div>
+          </div>
           <h5>Logged in as: Dispatch</h5>
         </div>
       </div>
@@ -3310,6 +3315,8 @@
           audioElement.play();
         }
         if (window.loadPanicStatusesAjax) window.loadPanicStatusesAjax();
+        // Refresh unit data so activeDepartmentId and callsigns are up to date
+        if (typeof loadUnitsPanel === 'function') loadUnitsPanel();
       }
     })
 
@@ -3806,6 +3813,11 @@
           // Quick check if contents changed
           changed = true; // Conservative: re-render when we have panics
         }
+        // If new panics appeared, refresh community data to pick up activeDepartmentId changes
+        if (activePanicUserIds.size > prevSize && typeof loadUnitsPanel === 'function') {
+          loadUnitsPanel();
+          return; // loadUnitsPanel will re-render, no need to continue
+        }
 
         if (!alerts || alerts.length === 0) {
           $hint.hide();
@@ -4125,6 +4137,16 @@
   var currentDepartmentFilter = 'all';
   var currentUnitSearch = '';
 
+  // Resolve the callsign for a user: prefer department-specific, fall back to global
+  function getResolvedCallSign(userId, globalCallSign) {
+    const member = memberDataCache[userId];
+    if (member && member.departmentCallSigns && member.activeDepartmentId) {
+      const deptCallSign = member.departmentCallSigns[member.activeDepartmentId];
+      if (deptCallSign) return deptCallSign;
+    }
+    return globalCallSign || '';
+  }
+
   // Load and display units in the new panel
   function loadUnitsPanel() {
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
@@ -4160,6 +4182,22 @@
         // Update community name in header
         if (commData.community?.name) {
           $('#community-name').text(commData.community.name);
+        }
+
+        // Update callsign displays with resolved (department-specific) callsign
+        // For the sidebar, prefer the callsign for this page's department context over activeDepartmentId
+        var myMember = memberDataCache[dbUser._id];
+        var sidebarCS = '';
+        if (myMember && myMember.departmentCallSigns && departmentId) {
+          sidebarCS = myMember.departmentCallSigns[departmentId] || '';
+        }
+        if (!sidebarCS) {
+          sidebarCS = getResolvedCallSign(dbUser._id, dbUser.user?.callSign);
+        }
+        if (sidebarCS) {
+          $('#sidebar-callsign').text(sidebarCS);
+          $('#createdByUsername').val(dbUser.user?.username + ' (' + sidebarCS + ')');
+          $('#bolo-clearingOfficerUsername').val(dbUser.user?.username + ' (' + sidebarCS + ')');
         }
 
         // Fetch departments to build user-department mapping
@@ -4338,14 +4376,18 @@
       if (currentUnitSearch) {
         const search = currentUnitSearch.toLowerCase();
         const username = (unit.user?.username || '').toLowerCase();
-        const callSign = (unit.user?.callSign || '').toLowerCase();
+        const resolvedCallSign = getResolvedCallSign(unit._id, unit.user?.callSign).toLowerCase();
+        const globalCallSign = (unit.user?.callSign || '').toLowerCase();
         const tenCode = tenCodesCache.find(tc => tc._id === tenCodeId);
         const statusText = (tenCode?.code || '').toLowerCase();
         // Also search in department names
         const userDepts = userDepartmentMap[unit._id] || [];
         const deptNames = userDepts.map(d => (d.name || '').toLowerCase()).join(' ');
+        // Search across all department callsigns too
+        const member = memberDataCache[unit._id];
+        const allDeptCallSigns = member?.departmentCallSigns ? Object.values(member.departmentCallSigns).join(' ').toLowerCase() : '';
 
-        if (!username.includes(search) && !callSign.includes(search) && !statusText.includes(search) && !deptNames.includes(search)) {
+        if (!username.includes(search) && !resolvedCallSign.includes(search) && !globalCallSign.includes(search) && !statusText.includes(search) && !deptNames.includes(search) && !allDeptCallSigns.includes(search)) {
           return false;
         }
       }
@@ -4399,7 +4441,8 @@
       // Use effective category for card styling (panic/signal100 overrides)
       const statusCategory = effectiveCategory;
 
-      const callSign = unit.user?.callSign ? `Unit ${escapeHtml(unit.user.callSign)}` : 'No Unit #';
+      const resolvedCS = getResolvedCallSign(unit._id, unit.user?.callSign);
+      const callSign = resolvedCS ? `Unit ${escapeHtml(resolvedCS)}` : 'No Unit #';
       const username = escapeHtml(unit.user?.username || 'Unknown');
 
       // Build alert badge if unit has active panic or signal 100
@@ -4474,7 +4517,9 @@
       method: 'PUT',
       data: JSON.stringify({
         departmentId: departmentId,
-        tenCodeID: tenCodeId || null
+        tenCodeID: tenCodeId || null,
+        activeDepartmentId: memberDataCache[userId]?.activeDepartmentId || departmentId,
+        activeDepartmentName: memberDataCache[userId]?.activeDepartmentName || ''
       }),
       contentType: 'application/json',
       success: function(res) {
@@ -4491,7 +4536,7 @@
 
         // Find the unit's info for the Signal 100 broadcast
         const unit = unitsCache.find(u => u._id === userId);
-        const unitCallSign = unit?.user?.callSign || null;
+        const unitCallSign = getResolvedCallSign(userId, unit?.user?.callSign) || null;
         const unitUsername = unit?.user?.username || 'Unknown';
 
         // Emit socket event for real-time updates to other clients
@@ -4505,7 +4550,9 @@
             statusCode: tenCodeId,
             setBy: dbUser.user?.username || 'Dispatch',
             communityId: communityId,
-            broadcastToAll: shouldBroadcast  // Flag for server to broadcast to all or just the user
+            broadcastToAll: shouldBroadcast,  // Flag for server to broadcast to all or just the user
+            activeDepartmentId: memberDataCache[userId]?.activeDepartmentId || departmentId,
+            activeDepartmentName: memberDataCache[userId]?.activeDepartmentName || ''
           };
           dashboardSocket.emit('update_status', emitData);
 
@@ -4517,7 +4564,7 @@
               userCallSign: unitCallSign,
               activeCommunity: communityId,
               activatedBy: 'Dispatch',
-              activatedByCallSign: dbUser.user?.callSign || null,
+              activatedByCallSign: getResolvedCallSign(dbUser._id, dbUser.user?.callSign) || null,
               activatedByUsername: dbUser.user?.username || 'Dispatch',
               aboutUserId: userId,
               aboutCallSign: unitCallSign,
@@ -4534,7 +4581,7 @@
               data: JSON.stringify({
                 userId: dbUser._id,
                 username: dbUser.user?.username || 'Dispatch',
-                callSign: dbUser.user?.callSign || '',
+                callSign: getResolvedCallSign(dbUser._id, dbUser.user?.callSign),
                 departmentName: 'Dispatch'
               }),
               success: function() {
@@ -4553,7 +4600,7 @@
             // Update local banner immediately
             updateSignal100Banner({
               activatedBy: 'Dispatch',
-              activatedByCallSign: dbUser.user?.callSign,
+              activatedByCallSign: getResolvedCallSign(dbUser._id, dbUser.user?.callSign),
               activatedByUsername: dbUser.user?.username,
               aboutUserId: userId,
               aboutCallSign: unitCallSign,
@@ -5243,6 +5290,8 @@
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
     if (!communityId) return;
 
+    var clearCallSign = getResolvedCallSign(dbUser._id, dbUser.user?.callSign);
+
     // Clear via Go API, then broadcast via Socket.IO
     $.ajax({
       url: API_URL + '/api/v1/community/' + communityId + '/signal-100',
@@ -5251,7 +5300,7 @@
       data: JSON.stringify({
         clearedByUserId: dbUser._id,
         clearedByUsername: dbUser.user?.username || '',
-        clearedByCallSign: dbUser.user?.callSign || '',
+        clearedByCallSign: clearCallSign || '',
       }),
       success: function() {
         if (dashboardSocket && dashboardSocket.connected) {
@@ -5259,7 +5308,7 @@
             activeCommunity: communityId,
             clearedByUserId: dbUser._id,
             clearedByUsername: dbUser.user?.username || '',
-            clearedByCallSign: dbUser.user?.callSign || '',
+            clearedByCallSign: clearCallSign || '',
           });
         }
       },
@@ -5271,7 +5320,7 @@
             activeCommunity: communityId,
             clearedByUserId: dbUser._id,
             clearedByUsername: dbUser.user?.username || '',
-            clearedByCallSign: dbUser.user?.callSign || '',
+            clearedByCallSign: clearCallSign || '',
           });
         }
       }
@@ -5458,13 +5507,16 @@
       status="Offline"
     }
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+    var targetUserId = $('#userIDDispatch').val();
     myReq={
-      userID: $('#userIDDispatch').val(),
+      userID: targetUserId,
       status: status,
       setBy: 'Dispatch',
       onDuty: onDuty,
       updateDuty: updateDuty,
-      communityId: communityId
+      communityId: communityId,
+      activeDepartmentId: memberDataCache[targetUserId]?.activeDepartmentId || departmentId,
+      activeDepartmentName: memberDataCache[targetUserId]?.activeDepartmentName || ''
     }
     socket.emit('update_status', myReq)
 
@@ -5979,13 +6031,14 @@
       var communityIdForSignal = dbUser.user?.lastAccessedCommunity?.communityID;
       if (!communityIdForSignal) return;
 
+      var dispatchCallSign = getResolvedCallSign(dbUser._id, dbUser.user.callSign) || null;
       var myReq={
         userID: dbUser._id,
         userUsername: dbUser.user.username,
-        userCallSign: dbUser.user.callSign || null,
+        userCallSign: dispatchCallSign,
         activeCommunity: communityIdForSignal,
         activatedBy: 'Dispatch',
-        activatedByCallSign: dbUser.user.callSign || null,
+        activatedByCallSign: dispatchCallSign,
         activatedByUsername: dbUser.user.username,
         // If Signal 100 is about a specific user (e.g., officer pressed it for themselves)
         aboutUserId: aboutUserId || null,
@@ -6008,7 +6061,7 @@
         data: JSON.stringify({
           userId: dbUser._id,
           username: dbUser.user.username,
-          callSign: dbUser.user.callSign || '',
+          callSign: dispatchCallSign || '',
           departmentName: 'Dispatch'
         }),
         success: function() {
