@@ -1182,7 +1182,7 @@ $(document).ready(function () {
         const civName = currentItem?.civilian?.name || '';
         const parts = civName.trim().split(/\s+/);
         const searchName = parts.length > 1 ? parts[parts.length - 1] : civName;
-        const safeName = searchName.replace(/'/g, "\\'");
+        const safeName = searchName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         let badges = [];
         if (approved > 0) {
           badges.push(`<a href="#" class="text-danger" style="font-weight:600;text-decoration:none;cursor:pointer;" onclick="event.preventDefault();if(typeof wmOpenSearch==='function')wmOpenSearch({name:'${safeName}',status:'approved'})"><i class="fa fa-exclamation-triangle mr-1"></i>${approved} Active</a>`);

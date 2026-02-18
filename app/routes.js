@@ -4903,6 +4903,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
     });
   });
 
+  // Sanitize user-provided route values to prevent open redirects.
+  // Only allows simple path characters; rejects protocol-relative URLs and schemes.
+  function getSafeRedirectPath(route) {
+    if (typeof route !== "string") return "/";
+    var trimmed = route.trim();
+    if (!trimmed || /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed) || trimmed.startsWith("//")) return "/";
+    if (!/^[A-Za-z0-9/_-]+$/.test(trimmed)) return "/";
+    return trimmed.startsWith("/") ? trimmed : "/" + trimmed;
+  }
+
   app.post("/create-warrant", auth, function (req, res) {
     // Build charges array from the multi-select
     var charges = req.body.charges;
@@ -4930,12 +4940,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (response.data && response.data.status === "pending") {
           req.app.locals.specialContext = "warrantPending";
         }
-        return res.redirect("/" + req.body.route);
+        return res.redirect(getSafeRedirectPath(req.body.route));
       })
       .catch(function (err) {
         console.error("Error creating warrant:", err.message);
         req.app.locals.specialContext = "warrantError";
-        return res.redirect("/" + req.body.route);
+        return res.redirect(getSafeRedirectPath(req.body.route));
       });
   });
 
@@ -4947,7 +4957,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
     );
     if (!isValid) {
       req.app.locals.specialContext = "invalidRequest";
-      return res.redirect("/" + req.body.route);
+      return res.redirect(getSafeRedirectPath(req.body.route));
+    }
+    // Enforce strict ObjectId format (24 hexadecimal characters) to prevent SSRF
+    if (!/^[a-fA-F0-9]{24}$/.test(req.body.warrantID)) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect(getSafeRedirectPath(req.body.route));
     }
     // Use the API to update warrant status to withdrawn
     axios
@@ -4957,11 +4972,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
         config
       )
       .then(function () {
-        return res.redirect("/" + req.body.route);
+        return res.redirect(getSafeRedirectPath(req.body.route));
       })
       .catch(function (err) {
         console.error("Error clearing warrant:", err.message);
-        return res.redirect("/" + req.body.route);
+        return res.redirect(getSafeRedirectPath(req.body.route));
       });
   });
 
