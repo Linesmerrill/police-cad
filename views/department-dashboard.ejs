@@ -1333,6 +1333,30 @@
     @keyframes dd-fade-in {
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* ── Warrant Approval Mode Banner ── */
+    .dd-warrant-mode-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.875rem;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: var(--dd-radius);
+      color: var(--dd-text);
+      font-size: 0.8125rem;
+      line-height: 1.5;
+    }
+    .dd-warrant-mode-banner i {
+      color: var(--dd-amber);
+      font-size: 1.125rem;
+      margin-top: 0.125rem;
+      flex-shrink: 0;
+    }
+    .dd-warrant-mode-banner strong {
+      color: #fbbf24;
+    }
   </style>
 </head>
 
@@ -1488,6 +1512,7 @@
     var pendingWarrants = [];
     var tenCodes = [];
     var expandedWarrantId = null;
+    var currentTemplateName = '';
 
     // ── Component Registry ──
     // Each key maps to a component definition that can be rendered.
@@ -1562,6 +1587,7 @@
               enabledComponents[comp.name] = comp.enabled;
             });
           }
+          currentTemplateName = (template && template.name || '').toLowerCase();
           buildDashboard();
         },
         error: function() {
@@ -1577,6 +1603,7 @@
     function buildDashboard() {
       buildSidebarNav();
       buildPanels();
+      checkWarrantApprovalMode();
       $('#dd-loading').hide();
       $('#dd-panels').show();
 
@@ -1660,6 +1687,55 @@
         $card.html(comp.render(key));
         $panel.append($card);
         $panels.append($panel);
+      });
+    }
+
+    // ── Warrant Approval Mode Banner ──
+    function checkWarrantApprovalMode() {
+      if (!communityId || !departmentId) return;
+
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityId,
+        method: 'GET',
+        success: function(res) {
+          var community = res.community || res;
+
+          // Find this department in the community and check if it's judicial
+          var departments = community.departments || [];
+          var isJudicial = false;
+          for (var i = 0; i < departments.length; i++) {
+            if (departments[i]._id === departmentId) {
+              var tplName = (departments[i].template && departments[i].template.name || '').toLowerCase();
+              isJudicial = tplName === 'judicial';
+              break;
+            }
+          }
+          if (!isJudicial) return;
+
+          var mode = community.warrantApprovalMode || 'auto-approve';
+          if (mode === 'require-judge') return;
+
+          var modeLabel = mode === 'random'
+            ? 'Random (auto-approves ~' + (community.warrantRandomApprovalRate || 70) + '% of warrants)'
+            : 'Auto-Approve (all warrants are approved instantly)';
+
+          var $banner = $(
+            '<div class="dd-warrant-mode-banner dd-animate-in">' +
+              '<i class="fa fa-exclamation-triangle"></i>' +
+              '<div>' +
+                '<strong>Warrant approval is set to: ' + modeLabel + '</strong><br>' +
+                'Warrants are not being routed to judges for review. To require judicial approval, have a community admin go to ' +
+                '<strong>Community Settings &rarr; General Settings</strong>, scroll down to the ' +
+                '<strong>Judicial</strong> section, and select <strong>Require Judge</strong>.' +
+              '</div>' +
+            '</div>'
+          );
+
+          var $statsRow = $('#dd-stats-row');
+          if ($statsRow.length) {
+            $statsRow.after($banner);
+          }
+        }
       });
     }
 
