@@ -698,47 +698,11 @@
             }
           });
 
-          // Filter and paginate the server-rendered departments
-          var cards = document.querySelectorAll('#departments-grid .dept-card');
-
-          if (!deptCurrentFilter) {
-            // No filter - show all cards by their original index
-            cards.forEach(function(card) {
-              var idx = parseInt(card.getAttribute('data-dept-index'), 10);
-              card.style.display = (idx < deptPerPage) ? '' : 'none';
-              card.removeAttribute('data-filtered-index');
-            });
-            deptTotalCount = deptOriginalCount;
-          } else {
-            // Filter active - show only matching cards
-            var visibleIdx = 0;
-            var matchingCount = 0;
-
-            cards.forEach(function(card) {
-              var cardTemplate = (card.getAttribute('data-template-name') || '').toLowerCase();
-              var filterLower = deptCurrentFilter.toLowerCase();
-              var matchesFilter = cardTemplate.includes(filterLower);
-
-              if (matchesFilter) {
-                // Show only first page of matching departments
-                if (visibleIdx < deptPerPage) {
-                  card.style.display = '';
-                } else {
-                  card.style.display = 'none';
-                }
-                card.setAttribute('data-filtered-index', visibleIdx);
-                visibleIdx++;
-                matchingCount++;
-              } else {
-                card.style.display = 'none';
-                card.removeAttribute('data-filtered-index');
-              }
-            });
-            deptTotalCount = matchingCount;
-          }
-
-          deptTotalPages = Math.max(1, Math.ceil(deptTotalCount / deptPerPage));
-          updateDeptPaginationUI();
+          // Always fetch filtered results from the API so we don't miss
+          // departments that weren't in the initial server-rendered page.
+          fetchDepartmentsPage(1, true).then(function() {
+            if (typeof initDeptCardClicks === 'function') initDeptCardClicks();
+          });
         }
 
         async function fetchDepartmentsPage(page, clearContainer) {

@@ -578,6 +578,20 @@
     });
 
     function showCreateDepartmentModal() {
+      // Reset state for a fresh creation flow
+      departmentData = {
+        name: '',
+        description: '',
+        image: '',
+        visibility: 'public',
+        template: { name: '', components: [] },
+        members: [{ userID: dbUser._id, status: 'approved' }]
+      };
+      selectedMembers = [{ _id: dbUser._id, user: dbUser.user || { username: 'You', profilePicture: '' } }];
+
+      // Remove any leftover modals from previous attempts
+      $('#createDepartmentStep1Modal, #createDepartmentStep2Modal, #createDepartmentStep3Modal').remove();
+
       const modal = `
         <div id="createDepartmentStep1Modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
           <div class="modal-dialog modal-lg">
@@ -722,11 +736,11 @@
       method: 'GET',
       success: function(data) {
         const members = data.members || [];
-        
+
         // Ensure current user is always selected and can't be deselected
-        const currentUser = members.find(m => m._id === dbUser._id);
-        if (currentUser && !selectedMembers.some(m => m._id === dbUser._id)) {
-          selectedMembers.unshift(currentUser); // Add to beginning of array
+        if (!selectedMembers.some(m => m._id === dbUser._id)) {
+          const currentUser = members.find(m => m._id === dbUser._id);
+          selectedMembers.unshift(currentUser || { _id: dbUser._id, user: dbUser.user || { username: 'You', profilePicture: '' } });
         }
         
         const modal = `
@@ -782,8 +796,9 @@
           </div>
         `;
         
-        // Hide step 2 modal and show step 3
+        // Hide step 2 modal, remove any old step 3 modal, and show step 3
         $('#createDepartmentStep2Modal').modal('hide');
+        $('#createDepartmentStep3Modal').remove();
         $('body').append(modal);
         $('#createDepartmentStep3Modal').modal('show');
 
