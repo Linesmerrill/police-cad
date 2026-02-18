@@ -925,6 +925,34 @@
             return;
           }
 
+          // If tabs already exist, just update active states and counts in-place
+          var existingBtns = container.querySelectorAll('button[data-filter]');
+          if (existingBtns.length > 0) {
+            existingBtns.forEach(function(btn) {
+              var btnFilter = btn.getAttribute('data-filter') || '';
+              var isActive = btnFilter === deptCurrentFilter;
+              btn.style.background = isActive ? '#3b82f6' : 'rgba(255,255,255,0.05)';
+              btn.style.color = isActive ? 'white' : '#94a3b8';
+              // Update counts
+              if (btnFilter === '') {
+                btn.querySelector('.text-xs').textContent = '(' + deptOriginalCount + ')';
+              } else {
+                var typeData = deptTemplateTypes.find(function(t) { return t.name === btnFilter; });
+                if (typeData) {
+                  btn.querySelector('.text-xs').textContent = '(' + typeData.count + ')';
+                } else {
+                  // Template type no longer exists — remove the button
+                  btn.remove();
+                }
+              }
+            });
+            // Check if any new template types need to be added
+            var existingFilters = Array.from(container.querySelectorAll('button[data-filter]')).map(function(b) { return b.getAttribute('data-filter'); });
+            var hasNewTypes = deptTemplateTypes.some(function(t) { return existingFilters.indexOf(t.name) === -1; });
+            if (!hasNewTypes) return;
+          }
+
+          // Full rebuild: initial render or when new template types appear
           container.style.display = 'flex';
           container.innerHTML = '';
 
@@ -938,8 +966,11 @@
           allBtn.onclick = function() { filterDepartments(''); };
           container.appendChild(allBtn);
 
-          // Sort by count descending
-          var sortedTypes = deptTemplateTypes.slice().sort(function(a, b) { return b.count - a.count; });
+          // Sort by count descending, then alphabetically for stable order
+          var sortedTypes = deptTemplateTypes.slice().sort(function(a, b) {
+            if (b.count !== a.count) return b.count - a.count;
+            return a.name.localeCompare(b.name);
+          });
 
           // Add button for each template type
           sortedTypes.forEach(function(type) {
