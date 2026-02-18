@@ -5590,6 +5590,7 @@ createDeptTemplates.forEach(t => {
   createDeptPermissionsState[t.name] = permAcc;
 });
 let createDeptSelectedTemplate = '';
+const createDeptCurrentUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
 let createDeptMembers = [];
 let createDeptAllMembers = [];
 
@@ -5635,7 +5636,7 @@ function resetCreateDepartmentForm() {
     members: []
   };
   createDeptSelectedTemplate = '';
-  createDeptMembers = [];
+  createDeptMembers = window.dbUser ? [{ _id: window.dbUser._id, user: window.dbUser.user || { username: 'You', profilePicture: '' } }] : [];
 
   // Reset template permissions
   createDeptTemplates.forEach(t => {
@@ -5781,25 +5782,21 @@ function fetchCommunityMembers(page = 1, append = false) {
       return res.json();
     })
     .then(data => {
-      let newMembers = data.members || [];
+      // Filter out the current user — they're always auto-selected via dbUser
+      let newMembers = (data.members || []).filter(m => m._id !== createDeptCurrentUserId);
       membersTotal = data.totalUsers || 0;
-      
+
       if (append) {
-        // Append new members to existing list
         createDeptAllMembers = [...createDeptAllMembers, ...newMembers];
       } else {
-        // Replace existing members (first load)
         createDeptAllMembers = newMembers;
       }
-      
-      // Check if there are more members to load
-      hasMoreMembers = createDeptAllMembers.length < membersTotal;
-      
-      // Ensure current user is always selected and can't be deselected
-      const currentUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
-      const currentUser = createDeptAllMembers.find(m => m._id === currentUserId);
-      if (currentUser && !createDeptMembers.some(m => m._id === currentUserId)) {
-        createDeptMembers.unshift(currentUser); // Add to beginning of array
+
+      hasMoreMembers = (createDeptAllMembers.length + 1) < membersTotal; // +1 for filtered-out current user
+
+      // Ensure current user is always in createDeptMembers from dbUser (not from API)
+      if (window.dbUser && !createDeptMembers.some(m => m._id === createDeptCurrentUserId)) {
+        createDeptMembers.unshift({ _id: window.dbUser._id, user: window.dbUser.user || { username: 'You', profilePicture: '' } });
       }
       
       renderMemberList();
@@ -5838,39 +5835,48 @@ function renderMemberList() {
   // Clear existing content
   memberList.innerHTML = '';
   selectedMembersDiv.innerHTML = '';
-  
-  // Render all members
+
+  // Render current user's chip first (always selected, non-removable)
+  const currentUserMember = createDeptMembers.find(m => m._id === createDeptCurrentUserId);
+  if (currentUserMember) {
+    const selDiv = document.createElement('div');
+    selDiv.className = 'flex items-center gap-2 bg-gray-700 rounded px-3 py-2 mb-2';
+    selDiv.innerHTML = `
+      <img src="${currentUserMember.user.profilePicture || `https://ui-avatars.com/api/?name=${currentUserMember.user.username}&background=808080&color=fff&size=256`}" class="w-6 h-6 rounded-full" />
+      <span class="text-base">${currentUserMember.user.username}</span>
+    `;
+    selectedMembersDiv.appendChild(selDiv);
+  }
+
+  // Render other members (current user is filtered out of createDeptAllMembers)
   createDeptAllMembers.forEach(member => {
     const isSelected = createDeptMembers.some(m => m._id === member._id);
-    const currentUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
-    const isCurrentUser = member._id === currentUserId;
-    
+
     const div = document.createElement('div');
     div.className = 'flex items-center gap-3 mb-2';
     div.innerHTML = `
-      <input type="checkbox" 
-        ${isCurrentUser ? 'checked' : (isSelected ? 'checked' : '')} 
-        ${isCurrentUser ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} 
-        onchange="toggleCreateDeptMember('${member._id}')" 
+      <input type="checkbox"
+        ${isSelected ? 'checked' : ''}
+        onchange="toggleCreateDeptMember('${member._id}')"
         class="w-5 h-5" />
       <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" class="w-8 h-8 rounded-full" />
-      <span class="text-lg" ${isCurrentUser ? 'style="color: #6c757d; font-style: italic;"' : ''}>${member.user.username}${isCurrentUser ? ' (You - Required)' : ''}</span>
+      <span class="text-lg">${member.user.username}</span>
     `;
     memberList.appendChild(div);
-    
+
     if (isSelected) {
       const selDiv = document.createElement('div');
       selDiv.className = 'flex items-center gap-2 bg-gray-700 rounded px-3 py-2 mb-2';
       selDiv.innerHTML = `
         <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" class="w-6 h-6 rounded-full" />
         <span class="text-base">${member.user.username}</span>
-        ${member._id !== '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>' ? `<button onclick="toggleCreateDeptMember('${member._id}')" class="ml-2 text-red-400 text-lg">&times;</button>` : ''}
+        <button onclick="toggleCreateDeptMember('${member._id}')" class="ml-2 text-red-400 text-lg">&times;</button>
       `;
       selectedMembersDiv.appendChild(selDiv);
     }
   });
-  
-  // Add infinite scroll trigger at the bottom
+
+  // Add load more button at the bottom
   if (hasMoreMembers) {
     const loadMoreDiv = document.createElement('div');
     loadMoreDiv.className = 'text-center py-3';
@@ -5881,14 +5887,13 @@ function renderMemberList() {
     `;
     memberList.appendChild(loadMoreDiv);
   }
-  
-          selectedMembersCount.textContent = `${createDeptMembers.length} ${createDeptMembers.length === 1 ? 'member' : 'members'} selected`;
+
+  selectedMembersCount.textContent = `${createDeptMembers.length} ${createDeptMembers.length === 1 ? 'member' : 'members'} selected`;
 }
 
 function toggleCreateDeptMember(memberId) {
   // Prevent current user from being deselected
-  const currentUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
-  if (memberId === currentUserId) {
+  if (memberId === createDeptCurrentUserId) {
     return;
   }
   
