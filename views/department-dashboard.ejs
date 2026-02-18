@@ -762,6 +762,100 @@
       box-shadow: 0 0 20px rgba(239, 68, 68, 0.1);
     }
 
+    /* ── Status Badges (All Warrants) ── */
+    .dd-badge-pending { background: rgba(139, 92, 246, 0.15); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.2); }
+    .dd-badge-approved { background: rgba(34, 197, 94, 0.15); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.2); }
+    .dd-badge-denied { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.2); }
+    .dd-badge-executed { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .dd-badge-expired { background: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.2); }
+    .dd-badge-withdrawn { background: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.2); }
+
+    .dd-filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .dd-filter-bar label {
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--dd-text-dim);
+      font-weight: 600;
+      margin-right: 0.25rem;
+    }
+
+    .dd-filter-btn {
+      padding: 0.375rem 0.75rem;
+      border-radius: 99px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border: 1px solid var(--dd-glass-border);
+      background: var(--dd-glass);
+      color: var(--dd-text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .dd-filter-btn:hover {
+      background: var(--dd-glass-hover);
+      color: var(--dd-text);
+    }
+
+    .dd-filter-btn.active {
+      background: rgba(139, 92, 246, 0.15);
+      color: #c4b5fd;
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    .dd-filter-sep {
+      width: 1px;
+      height: 1.25rem;
+      background: var(--dd-glass-border);
+      margin: 0 0.25rem;
+    }
+
+    .dd-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--dd-glass-border);
+    }
+
+    .dd-page-btn {
+      padding: 0.375rem 0.75rem;
+      border-radius: var(--dd-radius-sm);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border: 1px solid var(--dd-glass-border);
+      background: var(--dd-glass);
+      color: var(--dd-text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .dd-page-btn:hover:not(:disabled) {
+      background: var(--dd-glass-hover);
+      color: var(--dd-text);
+    }
+
+    .dd-page-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .dd-page-info {
+      font-size: 0.75rem;
+      color: var(--dd-text-muted);
+    }
+
     /* ── Notepad Component ── */
     .dd-notepad-textarea {
       width: 100%;
@@ -1417,6 +1511,15 @@
         render: renderNotepadPanel,
         init: initNotepad
       },
+      allWarrants: {
+        label: 'All Warrants',
+        icon: 'fa-folder-open',
+        navIcon: 'fa-folder-open',
+        gridClass: 'dd-grid-full',
+        accentColor: 'var(--dd-blue)',
+        render: renderAllWarrantsPanel,
+        init: loadAllWarrants
+      },
       '10CodesInterface': {
         label: '10-Codes',
         icon: 'fa-list-ol',
@@ -1677,7 +1780,7 @@
                 '<div class="dd-detail-label">Probable Cause</div>' +
                 '<p class="dd-detail-value">' + esc(d.probableCause || 'No probable cause provided.') + '</p>' +
               '</div>' +
-              (d.charges && d.charges.length > 0 ?
+              (Array.isArray(d.charges) && d.charges.length > 0 ?
                 '<div class="dd-detail-section">' +
                   '<div class="dd-detail-label">Charges</div>' +
                   '<ul class="dd-detail-charges-list">' + d.charges.map(function(c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul>' +
@@ -1726,36 +1829,31 @@
 
     function loadWarrantStats() {
       if (!communityId) return;
-      // Load total warrants to get approved/denied/total counts
+      var base = API_URL + '/api/v2/warrants/community/' + communityId + '?limit=1&page=0';
+      // Fetch total, approved, and denied counts in parallel
       $.ajax({
-        url: API_URL + '/api/v2/warrants/community/' + communityId + '?limit=1&page=1',
+        url: base,
         method: 'GET',
         success: function(result) {
-          var total = result.totalCount || 0;
-          var pending = pendingWarrants.length;
-          $('#dd-stat-total').text(total);
-          // Estimate approved/denied from total minus pending (exact counts would need API filter)
-          // For now show total - pending as "processed"
-          var processed = Math.max(0, total - pending);
-          // We'll load approved count separately
-          $.ajax({
-            url: API_URL + '/api/v2/warrants/community/' + communityId + '?limit=1&page=1&status=approved',
-            method: 'GET',
-            success: function(r2) {
-              var approved = r2.totalCount || 0;
-              var denied = Math.max(0, processed - approved);
-              $('#dd-stat-approved').text(approved);
-              $('#dd-stat-denied').text(denied);
-            },
-            error: function() {
-              $('#dd-stat-approved').text('—');
-              $('#dd-stat-denied').text('—');
-            }
-          });
+          $('#dd-stat-total').text(result.totalCount || 0);
         },
-        error: function() {
-          $('#dd-stat-total').text('—');
-        }
+        error: function() { $('#dd-stat-total').text('—'); }
+      });
+      $.ajax({
+        url: base + '&status=approved',
+        method: 'GET',
+        success: function(result) {
+          $('#dd-stat-approved').text(result.totalCount || 0);
+        },
+        error: function() { $('#dd-stat-approved').text('—'); }
+      });
+      $.ajax({
+        url: base + '&status=denied',
+        method: 'GET',
+        success: function(result) {
+          $('#dd-stat-denied').text(result.totalCount || 0);
+        },
+        error: function() { $('#dd-stat-denied').text('—'); }
       });
     }
 
@@ -1793,6 +1891,221 @@
         error: function() {
           ddToast('Failed to review warrant', 'error');
           $btns.prop('disabled', false);
+        }
+      });
+    };
+
+    // ══════════════════════════════════════════
+    //  ALL WARRANTS COMPONENT
+    // ══════════════════════════════════════════
+    var allWarrantsData = [];
+    var allWarrantsPage = 0;
+    var allWarrantsTotalPages = 0;
+    var allWarrantsTotalCount = 0;
+    var allWarrantsStatusFilter = '';
+    var allWarrantsTypeFilter = '';
+    var expandedAllWarrantId = null;
+
+    var statusColors = {
+      pending: 'pending', approved: 'approved', denied: 'denied',
+      executed: 'executed', expired: 'expired', withdrawn: 'withdrawn'
+    };
+
+    function renderAllWarrantsPanel(key) {
+      return '<div class="dd-card-header">' +
+          '<div class="dd-card-header-left">' +
+            '<div class="dd-card-icon" style="background:rgba(59,130,246,0.15);color:var(--dd-blue);"><i class="fa fa-folder-open"></i></div>' +
+            '<div><h3 class="dd-card-title">All Warrants</h3><p class="dd-card-subtitle">Browse and filter all warrants</p></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="dd-card-body">' +
+          '<div class="dd-filter-bar" id="dd-aw-filters">' +
+            '<label>Status:</label>' +
+            '<button class="dd-filter-btn active" data-group="status" onclick="ddSetAwStatusFilter(this, \'\')" data-filter="">All</button>' +
+            '<button class="dd-filter-btn" data-group="status" onclick="ddSetAwStatusFilter(this, \'pending\')" data-filter="pending">Pending</button>' +
+            '<button class="dd-filter-btn" data-group="status" onclick="ddSetAwStatusFilter(this, \'approved\')" data-filter="approved">Approved</button>' +
+            '<button class="dd-filter-btn" data-group="status" onclick="ddSetAwStatusFilter(this, \'denied\')" data-filter="denied">Denied</button>' +
+            '<button class="dd-filter-btn" data-group="status" onclick="ddSetAwStatusFilter(this, \'executed\')" data-filter="executed">Executed</button>' +
+            '<button class="dd-filter-btn" data-group="status" onclick="ddSetAwStatusFilter(this, \'expired\')" data-filter="expired">Expired</button>' +
+            '<button class="dd-filter-btn" data-group="status" onclick="ddSetAwStatusFilter(this, \'withdrawn\')" data-filter="withdrawn">Withdrawn</button>' +
+            '<div class="dd-filter-sep"></div>' +
+            '<label>Type:</label>' +
+            '<button class="dd-filter-btn active" data-group="type" onclick="ddSetAwTypeFilter(this, \'\')" data-filter="">All</button>' +
+            '<button class="dd-filter-btn" data-group="type" onclick="ddSetAwTypeFilter(this, \'arrest\')" data-filter="arrest">Arrest</button>' +
+            '<button class="dd-filter-btn" data-group="type" onclick="ddSetAwTypeFilter(this, \'search\')" data-filter="search">Search</button>' +
+            '<button class="dd-filter-btn" data-group="type" onclick="ddSetAwTypeFilter(this, \'bench\')" data-filter="bench">Bench</button>' +
+          '</div>' +
+          '<div class="dd-aw-loading dd-spinner"></div>' +
+          '<div class="dd-aw-empty dd-empty" style="display:none;">' +
+            '<div class="dd-empty-icon-wrap"><i class="fa fa-folder-open"></i></div>' +
+            '<p class="dd-empty-title">No warrants found</p>' +
+            '<p class="dd-empty-sub">Try adjusting your filters</p>' +
+          '</div>' +
+          '<div class="dd-aw-list dd-warrant-list"></div>' +
+          '<div class="dd-aw-pagination dd-pagination" style="display:none;">' +
+            '<button class="dd-page-btn dd-aw-prev" onclick="ddAwPage(-1)"><i class="fa fa-chevron-left"></i> Prev</button>' +
+            '<span class="dd-page-info dd-aw-page-info">Page 1 of 1</span>' +
+            '<button class="dd-page-btn dd-aw-next" onclick="ddAwPage(1)">Next <i class="fa fa-chevron-right"></i></button>' +
+          '</div>' +
+        '</div>';
+    }
+
+    function loadAllWarrants() {
+      if (!communityId) {
+        console.warn('[AllWarrants] No communityId, skipping load');
+        return;
+      }
+      $('.dd-aw-loading').show();
+      $('.dd-aw-empty').hide();
+      $('.dd-aw-list').empty();
+
+      var url = API_URL + '/api/v2/warrants/community/' + communityId + '?limit=20&page=' + allWarrantsPage;
+      if (allWarrantsStatusFilter) url += '&status=' + allWarrantsStatusFilter;
+      if (allWarrantsTypeFilter) url += '&warrantType=' + allWarrantsTypeFilter;
+
+      $.ajax({
+        url: url,
+        method: 'GET',
+        success: function(result) {
+          try {
+            allWarrantsData = result.data || [];
+            allWarrantsTotalCount = result.totalCount || 0;
+            allWarrantsTotalPages = result.totalPages || Math.ceil(allWarrantsTotalCount / 20) || 1;
+            renderAllWarrantsList();
+            updateAwPagination();
+          } catch (e) {
+            console.error('[AllWarrants] Render error:', e);
+            $('.dd-aw-loading').hide();
+            $('.dd-aw-empty').show().find('.dd-empty-title').text('Error rendering warrants');
+            $('.dd-aw-empty').find('.dd-empty-sub').text(e.message || 'Unknown error');
+          }
+        },
+        error: function(xhr, status, err) {
+          console.error('[AllWarrants] AJAX error:', status, err, xhr.responseText);
+          $('.dd-aw-loading').hide();
+          $('.dd-aw-empty').show().find('.dd-empty-title').text('Unable to load warrants');
+          $('.dd-aw-empty').find('.dd-empty-sub').text(err || status || 'Network error');
+        }
+      });
+    }
+
+    function renderAllWarrantsList() {
+      $('.dd-aw-loading').hide();
+      var $lists = $('.dd-aw-list');
+      $lists.empty();
+
+      if (allWarrantsData.length === 0) {
+        $('.dd-aw-empty').show();
+        return;
+      }
+      $('.dd-aw-empty').hide();
+
+      allWarrantsData.forEach(function(w, i) {
+        var d = w.warrant || {};
+        var typeClass = d.warrantType || 'arrest';
+        var status = d.status || 'pending';
+        var charges = Array.isArray(d.charges) ? d.charges.join(', ') : (d.charges || 'No charges listed');
+        var date = formatDate(d.createdAt);
+        var isExpanded = expandedAllWarrantId === w._id;
+
+        var html = '<div class="dd-warrant-item' + (isExpanded ? ' expanded' : '') + '" data-id="' + w._id + '" style="animation-delay:' + (i * 0.04) + 's">' +
+          '<div class="dd-warrant-summary" onclick="ddToggleAllWarrant(\'' + w._id + '\')">' +
+            '<div class="dd-warrant-type-indicator ' + typeClass + '"></div>' +
+            '<div class="dd-warrant-info">' +
+              '<p class="dd-warrant-name">' + esc(d.accusedFirstName || '') + ' ' + esc(d.accusedLastName || '') + '</p>' +
+              '<div class="dd-warrant-meta">' +
+                '<span class="dd-badge dd-badge-' + typeClass + '">' + esc(typeClass) + '</span>' +
+                '<span class="dd-badge dd-badge-' + (statusColors[status] || 'pending') + '">' + esc(status) + '</span>' +
+              '</div>' +
+              '<p class="dd-warrant-charges">' + esc(charges) + '</p>' +
+              '<div class="dd-warrant-footer-meta">' +
+                '<span><i class="fa fa-user"></i>' + esc(d.requestingOfficerName || 'Unknown') + '</span>' +
+                '<span><i class="fa fa-calendar"></i>' + date + '</span>' +
+              '</div>' +
+            '</div>' +
+            '<i class="fa fa-chevron-down dd-warrant-expand-icon"></i>' +
+          '</div>' +
+          '<div class="dd-warrant-detail">' +
+            '<div class="dd-warrant-detail-inner">' +
+              '<div class="dd-detail-section">' +
+                '<div class="dd-detail-label">Probable Cause</div>' +
+                '<p class="dd-detail-value">' + esc(d.probableCause || 'No probable cause provided.') + '</p>' +
+              '</div>' +
+              (Array.isArray(d.charges) && d.charges.length > 0 ?
+                '<div class="dd-detail-section">' +
+                  '<div class="dd-detail-label">Charges</div>' +
+                  '<ul class="dd-detail-charges-list">' + d.charges.map(function(c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul>' +
+                '</div>' : '') +
+              (d.warrantType === 'search' && d.searchLocation ?
+                '<div class="dd-detail-section">' +
+                  '<div class="dd-detail-label">Search Location</div>' +
+                  '<p class="dd-detail-value">' + esc(d.searchLocation) + '</p>' +
+                '</div>' : '') +
+              '<div class="dd-detail-section">' +
+                '<div class="dd-detail-label">Requesting Officer</div>' +
+                '<p class="dd-detail-value">' + esc(d.requestingOfficerName || 'Unknown') + '</p>' +
+              '</div>' +
+              (d.judgeName ?
+                '<div class="dd-detail-section">' +
+                  '<div class="dd-detail-label">Judge</div>' +
+                  '<p class="dd-detail-value">' + esc(d.judgeName) + (d.reviewedAt ? ' — ' + formatDate(d.reviewedAt) : '') + '</p>' +
+                  (d.judgeNotes ? '<p class="dd-detail-value" style="margin-top:0.25rem;font-style:italic;color:var(--dd-text-muted);">' + esc(d.judgeNotes) + '</p>' : '') +
+                '</div>' : '') +
+              (d.status === 'executed' && d.executingOfficerName ?
+                '<div class="dd-detail-section">' +
+                  '<div class="dd-detail-label">Executed By</div>' +
+                  '<p class="dd-detail-value">' + esc(d.executingOfficerName) + (d.executedAt ? ' — ' + formatDate(d.executedAt) : '') + '</p>' +
+                '</div>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>';
+
+        $lists.append(html);
+      });
+    }
+
+    function updateAwPagination() {
+      var $pag = $('.dd-aw-pagination');
+      if (allWarrantsTotalPages <= 1) {
+        $pag.hide();
+        return;
+      }
+      $pag.show();
+      $('.dd-aw-page-info').text('Page ' + (allWarrantsPage + 1) + ' of ' + allWarrantsTotalPages);
+      $('.dd-aw-prev').prop('disabled', allWarrantsPage <= 0);
+      $('.dd-aw-next').prop('disabled', allWarrantsPage >= allWarrantsTotalPages - 1);
+    }
+
+    window.ddAwPage = function(dir) {
+      allWarrantsPage = Math.max(0, Math.min(allWarrantsTotalPages - 1, allWarrantsPage + dir));
+      loadAllWarrants();
+    };
+
+    window.ddSetAwStatusFilter = function(btn, status) {
+      allWarrantsStatusFilter = status;
+      allWarrantsPage = 0;
+      expandedAllWarrantId = null;
+      $(btn).closest('.dd-filter-bar').find('.dd-filter-btn[data-group="status"]').removeClass('active');
+      $(btn).addClass('active');
+      loadAllWarrants();
+    };
+
+    window.ddSetAwTypeFilter = function(btn, type) {
+      allWarrantsTypeFilter = type;
+      allWarrantsPage = 0;
+      expandedAllWarrantId = null;
+      $(btn).closest('.dd-filter-bar').find('.dd-filter-btn[data-group="type"]').removeClass('active');
+      $(btn).addClass('active');
+      loadAllWarrants();
+    };
+
+    window.ddToggleAllWarrant = function(id) {
+      expandedAllWarrantId = (expandedAllWarrantId === id) ? null : id;
+      $('.dd-aw-list .dd-warrant-item').each(function() {
+        if ($(this).data('id') === id) {
+          $(this).toggleClass('expanded');
+        } else {
+          $(this).removeClass('expanded');
         }
       });
     };

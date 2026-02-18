@@ -839,7 +839,7 @@ $(function () {
   if (typeof loadAssignedCalls === 'function') {
     loadAssignedCalls();
   }
-  
+
   // Event handlers for delete confirmation modals
   $('#confirmDeletePersonaBtn').on('click', function() {
     confirmDeleteEmsPersona();
@@ -4879,6 +4879,7 @@ function setupNotificationModal() {
     });
   }
 }
+
 
 // Set call filter and reload
 function setCallFilter(filter) {

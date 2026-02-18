@@ -2254,7 +2254,7 @@
 
               <input id="warrant-reportingOfficerID" type="hidden" name="requestingOfficerID" value="<%=user._id%>">
               <input id="warrant-reportingOfficerName" type="hidden" name="requestingOfficerName" value="<%=user.user.username%><%= user.user.callSign ? ' (' + user.user.callSign + ')' : '' %>">
-              <input id="warrant-activeCommunityID" type="hidden" name="activeCommunityID" value="">
+              <input id="warrant-activeCommunityID" type="hidden" name="activeCommunityID" value="<%= user.user?.lastAccessedCommunity?.communityID || '' %>">
 
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitWarrantCreation"></label>

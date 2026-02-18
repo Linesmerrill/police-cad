@@ -1994,6 +1994,9 @@
                         Database</a>
           </li>
           <li>
+            <a href="#" onclick="event.preventDefault(); wmOpenSearch();"><span class="fa fa-gavel ml-3 mr-3"></span> Warrant Database</a>
+          </li>
+          <li>
             <a href="#" onclick="openNewPersonaModal()"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Persona</a>
           </li>
           <li>
@@ -2216,6 +2219,7 @@
 
       </section>
       
+
       <!-- Active Calls Section -->
       <section style='background-image: url("/static/images/blue-clouds.jpg"); padding: 0 0 2rem 0;'>
         <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
@@ -2238,10 +2242,11 @@
 </div>
   </div>
 
+
   <!-- Include all the modals and scripts -->
   <% include account-management %>
           <% include partials/notificationModal %>
-    
+
     <!-- Delete Confirmation Modal for Medical Reports -->
     <div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true" style="z-index: 9999;">
       <div class="modal-dialog modal-sm" role="document">
@@ -3113,6 +3118,486 @@
       </div>
     </div>
   </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- Warrant Database Overlay System (Read-Only) -->
+  <!-- ══════════════════════════════════════════ -->
+  <style>
+    .wm-overlay {
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(4, 6, 14, 0.82);
+      backdrop-filter: blur(12px) saturate(1.2);
+      -webkit-backdrop-filter: blur(12px) saturate(1.2);
+      display: none; align-items: stretch; justify-content: center;
+      overflow-y: auto;
+      animation: wm-fade-in 0.2s ease-out;
+    }
+    .wm-overlay.active { display: flex; }
+    @keyframes wm-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+    .wm-panel {
+      background: linear-gradient(170deg, #12141f 0%, #0d0f18 100%);
+      border-left: 1px solid rgba(255,255,255,0.05);
+      border-right: 1px solid rgba(255,255,255,0.05);
+      width: 92vw; max-width: 1440px;
+      color: #c8d0de;
+      display: flex; flex-direction: column;
+      min-height: 100vh;
+      position: relative;
+      animation: wm-slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wm-panel.wm-md { width: 70vw; max-width: 960px; }
+    @keyframes wm-slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .wm-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 36px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      flex-shrink: 0;
+      background: rgba(255,255,255,0.01);
+    }
+    .wm-header h4 {
+      margin: 0; font-size: 1.05rem; font-weight: 600; color: #fff;
+      display: flex; align-items: center; gap: 10px;
+      letter-spacing: -0.01em;
+    }
+    .wm-close {
+      background: transparent; border: 1px solid rgba(255,255,255,0.07);
+      color: #64748b; width: 34px; height: 34px; border-radius: 10px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 16px; transition: all 0.15s; flex-shrink: 0;
+    }
+    .wm-close:hover { background: rgba(255,255,255,0.06); color: #f1f5f9; border-color: rgba(255,255,255,0.12); }
+
+    .wm-body {
+      padding: 28px 36px 36px;
+      flex: 1; overflow-y: auto;
+    }
+    .wm-body::-webkit-scrollbar { width: 5px; }
+    .wm-body::-webkit-scrollbar-track { background: transparent; }
+    .wm-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 3px; }
+
+    .wm-back {
+      background: none; border: none; color: #475569; cursor: pointer;
+      font-size: 14px; padding: 2px 0; margin-right: 10px;
+      transition: color 0.15s;
+    }
+    .wm-back:hover { color: #e2e8f0; }
+
+    .wm-search-bar {
+      display: flex; gap: 12px; align-items: stretch;
+      padding: 18px 0 22px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      margin-bottom: 24px;
+    }
+    .wm-search-bar > input { flex: 2; min-width: 0; }
+    .wm-search-bar > select { flex: 1; min-width: 0; }
+    .wm-search-bar > button { flex: 0 0 auto; }
+
+    .wm-input {
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px; color: #e2e8f0;
+      padding: 11px 16px; font-size: 13.5px;
+      width: 100%; transition: all 0.15s;
+      font-family: inherit;
+    }
+    .wm-input:focus { outline: none; border-color: rgba(99,102,241,0.5); background: rgba(255,255,255,0.05); box-shadow: 0 0 0 3px rgba(99,102,241,0.08); }
+    .wm-input::placeholder { color: #3e4558; }
+    select.wm-input { appearance: auto; cursor: pointer; }
+
+    .wm-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 11px 22px; border-radius: 9px;
+      font-size: 13px; font-weight: 600; font-family: inherit;
+      border: none; cursor: pointer; transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .wm-btn-primary { background: #5b5fef; color: #fff; }
+    .wm-btn-primary:hover { background: #4f52e0; box-shadow: 0 4px 14px rgba(91,95,239,0.25); }
+    .wm-btn-ghost { background: rgba(255,255,255,0.035); color: #8892a8; border: 1px solid rgba(255,255,255,0.06); }
+    .wm-btn-ghost:hover { background: rgba(255,255,255,0.07); color: #e2e8f0; }
+    .wm-btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+    .wm-badge {
+      display: inline-block; padding: 4px 11px; border-radius: 6px;
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .wm-badge-pending { background: rgba(245,158,11,0.12); color: #fbbf24; }
+    .wm-badge-approved { background: rgba(34,197,94,0.12); color: #4ade80; }
+    .wm-badge-denied { background: rgba(239,68,68,0.12); color: #f87171; }
+    .wm-badge-executed { background: rgba(99,102,241,0.12); color: #a5b4fc; }
+    .wm-badge-expired, .wm-badge-withdrawn { background: rgba(100,116,139,0.1); color: #7a849a; }
+
+    .wm-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 48px;
+    }
+    .wm-detail-grid .wm-detail-full { grid-column: 1 / -1; }
+    .wm-table { width: 100%; border-collapse: collapse; }
+    .wm-table td {
+      padding: 14px 0; font-size: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      vertical-align: top;
+    }
+    .wm-table td:first-child {
+      color: #4b5672; width: 180px; font-weight: 600;
+      font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em;
+      padding-right: 20px;
+    }
+    .wm-table td:last-child { color: #d1d8e6; line-height: 1.5; }
+    .wm-table tr:last-child td { border-bottom: none; }
+
+    .wm-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .wm-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 11px; padding: 18px 20px;
+      cursor: pointer; transition: all 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .wm-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--card-accent, rgba(255,255,255,0.05));
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .wm-card:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); transform: translateY(-1px); }
+    .wm-card:hover::before { opacity: 1; }
+    .wm-card[data-status="pending"] { --card-accent: #f59e0b; }
+    .wm-card[data-status="approved"] { --card-accent: #22c55e; }
+    .wm-card[data-status="denied"] { --card-accent: #ef4444; }
+    .wm-card[data-status="executed"] { --card-accent: #6366f1; }
+    .wm-card h5 { color: #f1f5f9; margin: 8px 0 5px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+    .wm-card p { margin: 0; font-size: 12.5px; color: #525d75; line-height: 1.4; }
+    .wm-card .wm-card-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.03); }
+    .wm-card .wm-card-meta span { font-size: 11px; color: #3e4558; }
+
+    .wm-empty { text-align: center; padding: 80px 20px; color: #3e4558; }
+    .wm-empty i { font-size: 2.5rem; margin-bottom: 14px; display: block; opacity: 0.4; }
+    .wm-empty p { font-size: 14px; margin: 0; }
+
+    .wm-status-center { text-align: center; margin-bottom: 24px; }
+
+    .wm-pagination {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px; margin-top: 24px; padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,0.03);
+    }
+    .wm-pagination span { font-size: 12px; color: #4b5672; font-weight: 500; }
+
+    .wm-notice {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.1);
+      border-radius: 8px; padding: 10px 16px; margin-bottom: 20px;
+      font-size: 12.5px; color: #8892a8; line-height: 1.5;
+    }
+    .wm-notice i { color: #6366f1; font-size: 14px; flex-shrink: 0; }
+
+    @media (min-width: 1200px) {
+      .wm-panel { width: 92vw; max-width: 1440px; }
+      .wm-panel.wm-md { width: 70vw; max-width: 960px; }
+      .wm-header { padding: 22px 44px; }
+      .wm-body { padding: 32px 44px 40px; }
+      .wm-cards-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+    }
+    @media (min-width: 1600px) {
+      .wm-panel { width: 88vw; max-width: 1680px; }
+      .wm-panel.wm-md { width: 60vw; max-width: 1100px; }
+      .wm-cards-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+    }
+    @media (max-width: 1199px) and (min-width: 769px) {
+      .wm-panel { width: 94vw; }
+      .wm-panel.wm-md { width: 80vw; }
+      .wm-cards-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    }
+    @media (max-width: 768px) {
+      .wm-panel, .wm-panel.wm-md { width: 100%; max-width: 100%; border-radius: 0; border-left: none; border-right: none; }
+      .wm-header { padding: 16px 18px; }
+      .wm-body { padding: 18px; }
+      .wm-search-bar { flex-direction: column; gap: 8px; }
+      .wm-cards-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .wm-card { padding: 14px 16px; }
+      .wm-table td:first-child { width: 120px; font-size: 11px; }
+      .wm-detail-grid { grid-template-columns: 1fr; gap: 0; }
+    }
+    @media (max-width: 480px) {
+      .wm-cards-grid { grid-template-columns: 1fr; }
+      .wm-card h5 { font-size: 13.5px; }
+      .wm-header h4 { font-size: 0.9rem; }
+    }
+
+    .wm-timeline { position: relative; padding-left: 28px; }
+    .wm-timeline-item {
+      position: relative; padding-bottom: 24px; padding-left: 20px;
+      border-left: 2px solid rgba(255,255,255,0.06);
+    }
+    .wm-timeline-item.wm-timeline-last { border-left-color: transparent; padding-bottom: 0; }
+    .wm-timeline-dot {
+      position: absolute; left: -7px; top: 2px;
+      width: 12px; height: 12px; border-radius: 50%;
+    }
+    .wm-timeline-action { font-size: 14px; font-weight: 600; color: #e2e8f0; margin-bottom: 2px; }
+    .wm-timeline-meta { font-size: 12px; color: #4b5672; }
+    .wm-timeline-notes {
+      font-size: 12.5px; color: #7a849a; margin-top: 6px;
+      background: rgba(255,255,255,0.02); border-radius: 6px; padding: 8px 12px;
+      border-left: 2px solid rgba(255,255,255,0.06);
+    }
+  </style>
+
+  <div id="wm-overlay" class="wm-overlay">
+    <div id="wm-content"></div>
+  </div>
+
+  <script>
+  (function() {
+    // === Warrant Modal System (Read-Only for Fire/EMS) ===
+    var wmPage = 0;
+    var wmLimit = 8;
+    var wmTotalPages = 1;
+    var wmViewStack = [];
+
+    function wmOpen(html) { $('#wm-content').html(html); $('#wm-overlay').addClass('active'); }
+    function wmClose() { $('#wm-overlay').removeClass('active'); $('#wm-content').html(''); wmViewStack = []; }
+    function wmPush(html) { wmViewStack.push($('#wm-content').html()); $('#wm-content').html(html); }
+    function wmBack() { if (wmViewStack.length > 0) { $('#wm-content').html(wmViewStack.pop()); } else { wmClose(); } }
+
+    $(document).on('click', '#wm-overlay', function(e) { if (e.target === this) wmClose(); });
+    $(document).on('keydown', function(e) { if (e.key === 'Escape' && $('#wm-overlay').hasClass('active')) wmClose(); });
+
+    function wmBadgeClass(status) {
+      return 'wm-badge wm-badge-' + (status || 'unknown');
+    }
+
+    function wmFormatDate(dateStr) {
+      if (!dateStr) return 'N/A';
+      var d = new Date(dateStr);
+      if (isNaN(d) || d.getFullYear() <= 1970) return 'N/A';
+      var h = d.getHours(), m = d.getMinutes();
+      var ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      var time = h + ':' + (m < 10 ? '0' : '') + m + ampm;
+      return (d.getMonth()+1) + '/' + d.getDate() + '/' + d.getFullYear() + ' ' + time;
+    }
+
+    function wmCap(str) {
+      return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+    }
+
+    function wmEsc(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // === Search / Database View ===
+    function wmOpenSearch(opts) {
+      opts = opts || {};
+      wmViewStack = [];
+      wmOpen(
+        '<div class="wm-panel">' +
+          '<div class="wm-header"><h4><i class="fa fa-gavel" style="opacity:0.4;"></i>Warrant Database</h4><button class="wm-close" onclick="wmClose()">&times;</button></div>' +
+          '<div class="wm-body">' +
+            '<div class="wm-notice"><i class="fa fa-info-circle"></i>Fire/EMS personnel have view-only access to warrants. To request or modify a warrant, please contact Police or Dispatch.</div>' +
+            '<div class="wm-search-bar">' +
+              '<input type="text" id="wm-search-name" class="wm-input" placeholder="Search by accused name...">' +
+              '<select id="wm-search-type" class="wm-input"><option value="">All Types</option><option value="arrest">Arrest</option><option value="search">Search</option><option value="bench">Bench</option></select>' +
+              '<select id="wm-search-status" class="wm-input"><option value="">All Statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="denied">Denied</option><option value="executed">Executed</option><option value="expired">Expired</option><option value="withdrawn">Withdrawn</option></select>' +
+              '<button class="wm-btn wm-btn-primary" onclick="wmSearch()" style="padding:10px 22px;"><i class="fa fa-search"></i> Search</button>' +
+            '</div>' +
+            '<div id="wm-search-loading" style="display:none;" class="wm-empty"><i class="fa fa-spinner fa-spin"></i><p>Searching warrants...</p></div>' +
+            '<div id="wm-search-empty" style="display:none;" class="wm-empty"><i class="fa fa-gavel"></i><p>No warrants found. Try adjusting your search.</p></div>' +
+            '<div id="wm-search-results" style="display:none;">' +
+              '<div id="wm-search-cards" class="wm-cards-grid"></div>' +
+              '<div class="wm-pagination">' +
+                '<button id="wm-prev" class="wm-btn wm-btn-ghost" onclick="wmChangePage(-1)" disabled><i class="fa fa-chevron-left"></i> Prev</button>' +
+                '<span id="wm-page-info">Page 1</span>' +
+                '<button id="wm-next" class="wm-btn wm-btn-ghost" onclick="wmChangePage(1)">Next <i class="fa fa-chevron-right"></i></button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+      if (opts.name) $('#wm-search-name').val(opts.name);
+      if (opts.status) $('#wm-search-status').val(opts.status);
+      if (opts.type) $('#wm-search-type').val(opts.type);
+      wmSearch(0);
+      $(document).off('keydown.wmsearch').on('keydown.wmsearch', '#wm-search-name', function(e) { if (e.key === 'Enter') wmSearch(); });
+    }
+
+    // === Search Function ===
+    function wmSearch(page) {
+      if (page !== undefined) wmPage = page;
+      else wmPage = 0;
+
+      var communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+      var params = new URLSearchParams();
+      var name = $('#wm-search-name').val() || '';
+      var warrantType = $('#wm-search-type').val() || '';
+      var status = $('#wm-search-status').val() || '';
+      if (name) params.append('name', name);
+      if (warrantType) params.append('warrantType', warrantType);
+      if (status) params.append('status', status);
+      if (communityId) params.append('communityId', communityId);
+      params.append('limit', wmLimit);
+      params.append('page', wmPage);
+
+      $('#wm-search-loading').show();
+      $('#wm-search-results, #wm-search-empty').hide();
+
+      $.ajax({
+        url: POLICE_CAD_API_URL + '/api/v1/warrants/search?' + params.toString(),
+        method: 'GET',
+        success: function(result) {
+          $('#wm-search-loading').hide();
+          var warrants = result.data || [];
+          var totalCount = result.totalCount || 0;
+          wmTotalPages = Math.max(1, Math.ceil(totalCount / wmLimit));
+
+          if (warrants.length === 0) {
+            $('#wm-search-empty').show();
+            return;
+          }
+
+          $('#wm-search-results').show();
+          var $cards = $('#wm-search-cards');
+          $cards.empty();
+
+          warrants.forEach(function(w) {
+            var d = w.warrant || {};
+            var dateStr = wmFormatDate(d.createdAt);
+            var chargesPreview = (d.charges || []).slice(0, 2).join(', ');
+            if ((d.charges || []).length > 2) chargesPreview += ' +' + (d.charges.length - 2);
+            $cards.append(
+              '<div class="wm-card" data-status="' + (d.status || '') + '" onclick="wmOpenDetail(\'' + w._id + '\')">' +
+                '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
+                  '<span class="' + wmBadgeClass(d.status) + '">' + wmEsc(wmCap(d.status)) + '</span>' +
+                  '<span class="wm-badge" style="background:rgba(255,255,255,0.04);color:#64748b;">' + wmEsc(wmCap(d.warrantType)) + '</span>' +
+                '</div>' +
+                '<h5>' + wmEsc((d.accusedFirstName || '') + ' ' + (d.accusedLastName || '')) + '</h5>' +
+                '<p>' + wmEsc(chargesPreview) + '</p>' +
+                '<div class="wm-card-meta">' +
+                  '<span>' + dateStr + '</span>' +
+                  '<span><i class="fa fa-arrow-right" style="font-size:10px;opacity:0.3;"></i></span>' +
+                '</div>' +
+              '</div>'
+            );
+          });
+
+          $('#wm-page-info').text('Page ' + (wmPage + 1) + ' of ' + wmTotalPages);
+          $('#wm-prev').prop('disabled', wmPage <= 0);
+          $('#wm-next').prop('disabled', wmPage >= wmTotalPages - 1);
+        },
+        error: function() {
+          $('#wm-search-loading').hide();
+          $('#wm-search-empty').show();
+        }
+      });
+    }
+
+    function wmChangePage(delta) {
+      var newPage = wmPage + delta;
+      if (newPage < 0 || newPage >= wmTotalPages) return;
+      wmSearch(newPage);
+    }
+
+    // === Detail View (Read-Only) ===
+    function wmOpenDetail(warrantId) {
+      $.ajax({
+        url: POLICE_CAD_API_URL + '/api/v1/warrant/' + warrantId,
+        method: 'GET',
+        success: function(w) {
+          var d = w.warrant || {};
+
+          var leftRows = '';
+          leftRows += '<tr><td>Warrant Type</td><td style="text-transform:capitalize;">' + wmEsc(d.warrantType || 'N/A') + '</td></tr>';
+          leftRows += '<tr><td>Status</td><td style="text-transform:capitalize;">' + wmEsc(d.status || 'N/A') + '</td></tr>';
+          leftRows += '<tr><td>Accused</td><td>' + wmEsc((d.accusedFirstName || '') + ' ' + (d.accusedLastName || '')) + '</td></tr>';
+          leftRows += '<tr><td>Charges</td><td>' + wmEsc((d.charges || []).join(', ') || 'N/A') + '</td></tr>';
+          if (d.warrantType === 'search' && d.searchLocation) {
+            leftRows += '<tr><td>Search Location</td><td>' + wmEsc(d.searchLocation) + '</td></tr>';
+          }
+
+          var rightRows = '';
+          rightRows += '<tr><td>Requesting Officer</td><td>' + wmEsc(d.requestingOfficerName || 'N/A') + '</td></tr>';
+          rightRows += '<tr><td>Judge</td><td>' + (d.judgeName ? 'The Honorable ' + wmEsc(d.judgeName) : 'N/A') + '</td></tr>';
+          if (d.judgeNotes) {
+            rightRows += '<tr><td>Judge Notes</td><td>' + wmEsc(d.judgeNotes) + '</td></tr>';
+          }
+          if (d.status === 'executed' && d.executingOfficerName) {
+            rightRows += '<tr><td>Executed By</td><td>' + wmEsc(d.executingOfficerName) + (wmFormatDate(d.executedAt) !== 'N/A' ? ' (' + wmFormatDate(d.executedAt) + ')' : '') + '</td></tr>';
+          }
+          rightRows += '<tr><td>Date Filed</td><td>' + wmFormatDate(d.createdAt) + '</td></tr>';
+          if (wmFormatDate(d.reviewedAt) !== 'N/A') {
+            rightRows += '<tr><td>Date Reviewed</td><td>' + wmFormatDate(d.reviewedAt) + '</td></tr>';
+          }
+
+          var causeHtml = '<div class="wm-detail-full" style="margin-top:8px;">' +
+            '<div class="wm-label" style="margin-bottom:10px;">Probable Cause</div>' +
+            '<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:16px 20px;color:#c8d0de;font-size:14px;line-height:1.65;">' +
+              wmEsc(d.probableCause || 'N/A') +
+            '</div>' +
+          '</div>';
+
+          // Build history timeline
+          var historyHtml = '';
+          var history = d.history || [];
+          if (history.length > 0) {
+            var actionLabels = { created: 'Warrant Filed', approved: 'Approved', denied: 'Denied', edited: 'Edited', resubmitted: 'Resubmitted for Review', executed: 'Served', withdrawn: 'Withdrawn' };
+            var actionColors = { created: '#6366f1', approved: '#22c55e', denied: '#ef4444', edited: '#f59e0b', resubmitted: '#f59e0b', executed: '#8b5cf6', withdrawn: '#64748b' };
+            historyHtml = '<div class="wm-detail-full" style="margin-top:24px;">' +
+              '<div class="wm-label" style="margin-bottom:14px;">Warrant History</div>' +
+              '<div class="wm-timeline">';
+            history.forEach(function(h, i) {
+              var label = actionLabels[h.action] || wmCap(h.action);
+              var color = actionColors[h.action] || '#64748b';
+              var isLast = i === history.length - 1;
+              historyHtml += '<div class="wm-timeline-item' + (isLast ? ' wm-timeline-last' : '') + '">' +
+                '<div class="wm-timeline-dot" style="background:' + color + ';box-shadow:0 0 0 4px ' + color + '22;"></div>' +
+                '<div class="wm-timeline-content">' +
+                  '<div class="wm-timeline-action">' + label + '</div>' +
+                  '<div class="wm-timeline-meta">' + ((h.action === 'approved' || h.action === 'denied') && h.userName ? 'The Honorable ' : '') + wmEsc(h.userName || 'System') + ' &middot; ' + wmFormatDate(h.timestamp) + '</div>' +
+                  (h.notes ? '<div class="wm-timeline-notes">' + wmEsc(h.notes) + '</div>' : '') +
+                '</div>' +
+              '</div>';
+            });
+            historyHtml += '</div></div>';
+          }
+
+          wmPush(
+            '<div class="wm-panel wm-md">' +
+              '<div class="wm-header"><h4><button class="wm-back" onclick="wmBack()"><i class="fa fa-arrow-left"></i></button>' + wmEsc(wmCap(d.warrantType || 'Unknown') + ' Warrant') + '</h4><button class="wm-close" onclick="wmClose()">&times;</button></div>' +
+              '<div class="wm-body">' +
+                '<div class="wm-status-center"><span class="' + wmBadgeClass(d.status) + '" style="font-size:13px;padding:6px 16px;">' + wmEsc(wmCap(d.status)) + '</span></div>' +
+                '<div class="wm-detail-grid">' +
+                  '<div><table class="wm-table"><tbody>' + leftRows + '</tbody></table></div>' +
+                  '<div><table class="wm-table"><tbody>' + rightRows + '</tbody></table></div>' +
+                  causeHtml +
+                  historyHtml +
+                '</div>' +
+              '</div>' +
+            '</div>'
+          );
+        },
+        error: function() {
+          alert('Failed to load warrant details.');
+        }
+      });
+    }
+
+    // Export to window for onclick handlers
+    window.wmOpenSearch = wmOpenSearch;
+    window.wmSearch = wmSearch;
+    window.wmChangePage = wmChangePage;
+    window.wmOpenDetail = wmOpenDetail;
+    window.wmClose = wmClose;
+    window.wmBack = wmBack;
+  })();
+  </script>
 
   <!-- Toast Container for Notifications -->
   <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
