@@ -720,15 +720,16 @@
             deptTotalCount = data.totalCount || 0;
             deptTotalPages = Math.max(1, Math.ceil(deptTotalCount / deptPerPage));
 
-            // Update the department count badge
-            var countBadge = document.getElementById('dept-count-badge');
-            if (countBadge && !deptCurrentFilter) {
-              countBadge.textContent = deptTotalCount;
-            }
-
-            // Update template types if returned (only on first fetch without filter)
-            if (data.templateTypes && !deptCurrentFilter) {
+            // Update template types and counts whenever the API returns them
+            if (data.templateTypes) {
               deptTemplateTypes = data.templateTypes;
+              // Total department count is the sum of all template type counts
+              var totalAllDepts = deptTemplateTypes.reduce(function(sum, t) { return sum + (t.count || 0); }, 0);
+              deptOriginalCount = totalAllDepts;
+              var countBadge = document.getElementById('dept-count-badge');
+              if (countBadge) {
+                countBadge.textContent = totalAllDepts;
+              }
               renderDeptFilterTabs();
             }
 
@@ -933,7 +934,7 @@
           allBtn.className = 'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5';
           allBtn.style.background = deptCurrentFilter === '' ? '#3b82f6' : 'rgba(255,255,255,0.05)';
           allBtn.style.color = deptCurrentFilter === '' ? 'white' : '#94a3b8';
-          allBtn.innerHTML = 'All <span class="text-xs opacity-60">(' + deptTotalCount + ')</span>';
+          allBtn.innerHTML = 'All <span class="text-xs opacity-60">(' + deptOriginalCount + ')</span>';
           allBtn.onclick = function() { filterDepartments(''); };
           container.appendChild(allBtn);
 
