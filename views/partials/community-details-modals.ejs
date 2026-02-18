@@ -4294,6 +4294,7 @@ function openNoSettingsPermissionModal() {
 
 function openCreateDepartmentModal() {
   document.getElementById('createDepartmentStep1Modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 }
 
 function openNoDepartmentPermissionModal() {
@@ -5436,7 +5437,7 @@ async function deleteInviteCode() {
 
 <!-- HeroUI Pro Create Department Modals (Step 1: Basic Info) -->
 <div id="createDepartmentStep1Modal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:420px; width:90%; position:relative; border:1px solid #35385a;">
+  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:420px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto; overscroll-behavior:contain;">
     <button onclick="closeCreateDepartmentModal(1)" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
     <div style="text-align:center; margin-bottom:1rem;">
       <i class="fa fa-building" style="font-size:2rem; color:#3b82f6; margin-bottom:0.5rem;"></i>
@@ -5487,7 +5488,7 @@ async function deleteInviteCode() {
 
 <!-- Step 2: Template Selection -->
 <div id="createDepartmentStep2Modal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto; overscroll-behavior:contain;">
     <button onclick="closeCreateDepartmentModal(2)" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
     <div style="text-align:center; margin-bottom:1rem;">
       <i class="fa fa-layer-group" style="font-size:2rem; color:#a78bfa; margin-bottom:0.5rem;"></i>
@@ -5505,7 +5506,7 @@ async function deleteInviteCode() {
 
 <!-- Step 3: Add Members -->
 <div id="createDepartmentStep3Modal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto; overscroll-behavior:contain;">
     <button onclick="closeCreateDepartmentModal(3)" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
     <div style="text-align:center; margin-bottom:1rem;">
       <i class="fa fa-users" style="font-size:2rem; color:#10b981; margin-bottom:0.5rem;"></i>
@@ -5598,6 +5599,7 @@ document.getElementById('openCreateDepartmentModalBtn')?.addEventListener('click
 });
 function closeCreateDepartmentModal(step) {
   document.getElementById(`createDepartmentStep${step}Modal`).style.display = 'none';
+  document.body.style.overflow = '';
 }
 
 function resetCreateDepartmentForm() {
