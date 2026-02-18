@@ -4168,7 +4168,7 @@ function selectTenCode(tenCodeID) {
                 '<div class="wm-timeline-dot" style="background:' + color + ';box-shadow:0 0 0 4px ' + color + '22;"></div>' +
                 '<div class="wm-timeline-content">' +
                   '<div class="wm-timeline-action">' + label + '</div>' +
-                  '<div class="wm-timeline-meta">' + escapeHtml(h.userName || 'System') + ' &middot; ' + wmFormatDate(h.timestamp) + '</div>' +
+                  '<div class="wm-timeline-meta">' + ((h.action === 'approved' || h.action === 'denied') && h.userName ? 'The Honorable ' : '') + escapeHtml(h.userName || 'System') + ' &middot; ' + wmFormatDate(h.timestamp) + '</div>' +
                   (h.notes ? '<div class="wm-timeline-notes">' + escapeHtml(h.notes) + '</div>' : '') +
                 '</div>' +
               '</div>';
