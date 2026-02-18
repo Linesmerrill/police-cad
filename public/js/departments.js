@@ -143,6 +143,10 @@ function fetchAndRenderDepartments() {
             action = "/select-department";
             redirect = `/ems-dashboard${deptQueryParams}`;
             break;
+          case "judicial":
+            icon = "fa-gavel";
+            action = `/department-dashboard${deptQueryParams}`;
+            break;
         }
 
         // Badge color based on template type
@@ -153,6 +157,7 @@ function fetchAndRenderDepartments() {
           case 'fire': badgeColor = '#f97316'; break; // orange
           case 'ems': badgeColor = '#22c55e'; break; // green
           case 'civilian': badgeColor = '#6b7280'; break; // gray
+          case 'judicial': badgeColor = '#f59e0b'; break; // amber
         }
 
         // Icon and color for lock/pending status

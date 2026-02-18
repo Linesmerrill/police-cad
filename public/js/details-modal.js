@@ -408,11 +408,7 @@ $(document).ready(function () {
         <div class="mb-2"><span class="text-gray">Address:</span> ${
           data.address || "N/A"
         }</div>
-        <div class="mb-2"><span class="text-gray">Warrants:</span> ${
-          data.warrants?.length > 0
-            ? '<span class="text-danger" style="cursor: pointer; text-decoration: underline;" onclick="viewWarrantDetails()">Active Warrant</span>'
-            : "None"
-        }</div>
+        <div class="mb-2"><span class="text-gray">Warrants:</span> <span id="warrant-status-display"><i class="fa fa-spinner fa-spin fa-sm"></i></span></div>
         <div class="mb-2"><span class="text-gray">Parole:</span> ${
           data.onParole ? '<span class="text-warning">On Parole</span>' : "None"
         }</div>
@@ -504,6 +500,11 @@ $(document).ready(function () {
       `;
     }
     $("#detailsInfo").html(detailsHtml);
+
+    // Fetch real warrant status for civilians
+    if (currentType === "Civilian" && currentItem?._id) {
+      loadWarrantStatus(currentItem._id);
+    }
 
     // Show/hide tabs based on type - only show for Civilian
     if (currentType === "Civilian") {
@@ -675,10 +676,11 @@ $(document).ready(function () {
         </button>
       `;
     } else if (currentType === "Civilian") {
+      const hasActiveWarrants = currentItem.civilian?.warrants?.length > 0;
       actionsHtml += `
         <button class="btn btn-primary btn-block mb-2 action-button" data-action="Update On Probation">Update On Probation</button>
         <button class="btn btn-primary btn-block mb-2 action-button" data-action="Update On Parole">Update On Parole</button>
-        <button class="btn btn-primary btn-block mb-2 action-button" data-action="Update Warrant">Update Warrant</button>
+        <button class="btn btn-primary btn-block mb-2 action-button" data-action="Request Warrant">Request Warrant</button>
         <button class="btn btn-primary btn-block mb-2 action-button" data-action="Issue Citation">Issue Citation</button>
         <button class="btn btn-primary btn-block mb-2 action-button" data-action="Issue Warning">Issue Warning</button>
         <button class="btn btn-danger btn-block mb-2 action-button" data-action="Arrest">Arrest</button>
@@ -793,22 +795,6 @@ $(document).ready(function () {
       confirmMessage = `Are you sure you want to set this civilian's status to ${
         newStatus ? "On parole" : "No longer on parole"
       }?`;
-    } else if (action === "Update Warrant") {
-      hasWarrants = currentItem.civilian.warrants?.length > 0;
-      if (hasWarrants) {
-        confirmMessage = "Are you sure you want to clear the active warrant?";
-        updateData = { warrants: [] };
-      } else {
-        confirmMessage = "Are you sure you want to issue a warrant?";
-        updateData = {
-          warrants: [
-            {
-              status: "Granted",
-              date: new Date().toISOString(),
-            },
-          ],
-        };
-      }
     }
 
     if (!confirm(confirmMessage)) return;
@@ -836,11 +822,11 @@ $(document).ready(function () {
   // Open existing action modals
   function openActionModal(action) {
     if (
-      ["Update On Probation", "Update On Parole", "Update Warrant"].includes(
-        action
-      )
+      ["Update On Probation", "Update On Parole"].includes(action)
     ) {
       updateCivilianStatus(action);
+    } else if (action === "Request Warrant") {
+      openWarrantRequestModal();
     } else if (action === "Issue Citation") {
       $("#ticketModal").modal("show");
       $("#ticket-civ-name").text(currentItem.civilian?.name || "");
@@ -1172,6 +1158,269 @@ $(document).ready(function () {
     const action = $(this).data("action");
     openActionModal.call(this, action);
   });
+
+  // ── Warrant Status Display ──
+  function loadWarrantStatus(civilianId) {
+    $.ajax({
+      url: `${API_URL}/api/v1/warrants/user/${civilianId}?limit=50`,
+      method: 'GET',
+      success: function(warrants) {
+        const list = Array.isArray(warrants) ? warrants : [];
+        const active = list.filter(w => {
+          const s = (w.warrant?.status || '').toLowerCase();
+          return s === 'approved' || s === 'pending';
+        });
+
+        if (active.length === 0) {
+          $('#warrant-status-display').html('None');
+          return;
+        }
+
+        const pending = active.filter(w => w.warrant?.status === 'pending').length;
+        const approved = active.filter(w => w.warrant?.status === 'approved').length;
+        // Use last name for search (API does prefix match on first or last name)
+        const civName = currentItem?.civilian?.name || '';
+        const parts = civName.trim().split(/\s+/);
+        const searchName = parts.length > 1 ? parts[parts.length - 1] : civName;
+        const safeName = searchName.replace(/'/g, "\\'");
+        let badges = [];
+        if (approved > 0) {
+          badges.push(`<a href="#" class="text-danger" style="font-weight:600;text-decoration:none;cursor:pointer;" onclick="event.preventDefault();if(typeof wmOpenSearch==='function')wmOpenSearch({name:'${safeName}',status:'approved'})"><i class="fa fa-exclamation-triangle mr-1"></i>${approved} Active</a>`);
+        }
+        if (pending > 0) {
+          badges.push(`<a href="#" class="text-warning" style="font-weight:600;text-decoration:none;cursor:pointer;" onclick="event.preventDefault();if(typeof wmOpenSearch==='function')wmOpenSearch({name:'${safeName}',status:'pending'})"><i class="fa fa-clock mr-1"></i>${pending} Pending</a>`);
+        }
+        let html = badges.join(' &nbsp;');
+        // If both active and pending, add a "view all" link
+        if (approved > 0 && pending > 0) {
+          html += ` &nbsp;<a href="#" style="font-weight:400;text-decoration:none;cursor:pointer;color:#8899a6;font-size:0.85em;" onclick="event.preventDefault();if(typeof wmOpenSearch==='function')wmOpenSearch({name:'${safeName}'})"><i class="fa fa-external-link-alt mr-1"></i>View All</a>`;
+        }
+        $('#warrant-status-display').html(html);
+      },
+      error: function() {
+        // Fall back to legacy warrants field
+        const legacyWarrants = currentItem?.civilian?.warrants || [];
+        if (legacyWarrants.length > 0) {
+          $('#warrant-status-display').html('<span class="text-danger">Active Warrant</span>');
+        } else {
+          $('#warrant-status-display').html('None');
+        }
+      }
+    });
+  }
+
+  // ── Warrant Request Modal ──
+  function ensureWarrantModal() {
+    if ($('#warrantRequestModal').length > 0) return;
+    $('body').append(`
+      <div class="modal fade" id="warrantRequestModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index: 9000;">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-body">
+              <form id="warrant-request-form" class="form-horizontal">
+                <fieldset>
+                  <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+                  <h4>Request Warrant</h4>
+                  <hr style="width: 88%; max-width: 100rem;">
+
+                  <div class="form-group required">
+                    <label class="col-md-4 control-label">Warrant Type</label>
+                    <div class="col-md-6">
+                      <select id="wr-type" class="form-control" required>
+                        <option value="arrest">Arrest Warrant</option>
+                        <option value="search">Search Warrant</option>
+                        <option value="bench">Bench Warrant</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="col-md-4 control-label">Accused</label>
+                    <div class="col-md-6">
+                      <input id="wr-accused-name" type="text" class="form-control input-md" readonly style="background: #2a2a3e; border-color: #444;">
+                    </div>
+                  </div>
+
+                  <div class="form-group required">
+                    <label class="col-md-4 control-label">Charges</label>
+                    <div class="col-md-6">
+                      <select id="wr-charges" class="form-control" multiple>
+                        <optgroup label="Crime not listed">
+                          <option value="Other">Other</option>
+                        </optgroup>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group required">
+                    <label class="col-md-4 control-label">Probable Cause</label>
+                    <div class="col-md-6">
+                      <textarea id="wr-probable-cause" class="form-control" rows="4"
+                        placeholder="Describe the probable cause for this warrant request..." required></textarea>
+                    </div>
+                  </div>
+
+                  <div id="wr-search-location-group" class="form-group" style="display:none;">
+                    <label class="col-md-4 control-label">Search Location</label>
+                    <div class="col-md-6">
+                      <input id="wr-search-location" type="text" class="form-control input-md"
+                        placeholder="Address or location to search">
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <div class="col-md-6 col-md-offset-4">
+                      <button id="wr-submit-btn" type="submit" class="btn btn-primary">
+                        <i class="fa fa-gavel mr-1"></i> Submit Warrant Request
+                      </button>
+                    </div>
+                  </div>
+                </fieldset>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+
+    // Toggle search location field based on warrant type
+    $(document).on('change', '#wr-type', function() {
+      $('#wr-search-location-group').toggle($(this).val() === 'search');
+    });
+
+    // Handle form submission
+    $(document).on('submit', '#warrant-request-form', function(e) {
+      e.preventDefault();
+      submitWarrantRequest();
+    });
+  }
+
+  function openWarrantRequestModal() {
+    if (!currentItem || currentType !== 'Civilian') return;
+
+    ensureWarrantModal();
+
+    const civ = currentItem.civilian || {};
+    const accusedName = civ.name || ((civ.firstName || '') + ' ' + (civ.lastName || '')).trim() || 'Unknown';
+
+    // Reset form
+    $('#wr-type').val('arrest');
+    $('#wr-probable-cause').val('');
+    $('#wr-search-location').val('');
+    $('#wr-search-location-group').hide();
+    $('#wr-accused-name').val(accusedName);
+    $('#wr-submit-btn').prop('disabled', false).html('<i class="fa fa-gavel mr-1"></i> Submit Warrant Request');
+
+    // Load community fines into charges select (same pattern as citation flow)
+    const communityId = dbUser.user.lastAccessedCommunity.communityID;
+    const $select = $('#wr-charges');
+
+    // Destroy existing Select2 instance if any
+    if ($select.hasClass('select2-hidden-accessible')) {
+      $select.select2('destroy');
+    }
+    $select.find('optgroup:not([label="Crime not listed"])').remove();
+
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${communityId}`,
+      method: 'GET',
+      success: function(data) {
+        const communityFines = data?.community?.fines?.categories || [];
+        if (communityFines.length === 0) {
+          $select.prepend('<optgroup label="No charges available"><option disabled>No charges configured</option></optgroup>');
+        } else {
+          communityFines.forEach(function(category) {
+            const $optgroup = $('<optgroup label="' + (category.name || 'Unknown') + '"></optgroup>');
+            (category.fines || []).forEach(function(fine) {
+              $optgroup.append('<option value="' + fine.name + '">' + fine.name + '</option>');
+            });
+            $select.prepend($optgroup);
+          });
+        }
+        $select.select2({
+          placeholder: 'Search charges...',
+          allowClear: true,
+          width: '100%',
+          dropdownParent: $('#warrantRequestModal')
+        });
+      },
+      error: function() {
+        $select.prepend('<optgroup label="Error"><option disabled>Failed to load charges</option></optgroup>');
+        $select.select2({
+          placeholder: 'Search charges...',
+          allowClear: true,
+          width: '100%',
+          dropdownParent: $('#warrantRequestModal')
+        });
+      }
+    });
+
+    $('#warrantRequestModal').modal('show');
+  }
+
+  function submitWarrantRequest() {
+    if (!currentItem) return;
+
+    const civ = currentItem.civilian || {};
+    const communityId = dbUser.user?.lastAccessedCommunity?.communityID || '';
+    const charges = ($('#wr-charges').val() || []).filter(c => c !== 'Other');
+
+    if (charges.length === 0) {
+      alert('Please select at least one charge.');
+      return;
+    }
+
+    const probableCause = $('#wr-probable-cause').val().trim();
+    if (!probableCause) {
+      alert('Please provide probable cause.');
+      return;
+    }
+
+    // Parse name — civilian may have `name` (full) or `firstName`/`lastName` separately
+    const fullName = civ.name || '';
+    const nameParts = fullName.split(' ');
+    const firstName = civ.firstName || nameParts[0] || '';
+    const lastName = civ.lastName || nameParts.slice(1).join(' ') || '';
+
+    const warrantData = {
+      warrantType: $('#wr-type').val(),
+      accusedID: currentItem._id,
+      accusedFirstName: firstName,
+      accusedLastName: lastName,
+      charges: charges,
+      probableCause: probableCause,
+      searchLocation: $('#wr-search-location').val() || '',
+      requestingOfficerID: dbUser._id || '',
+      requestingOfficerName: (dbUser.user?.username || '') + (dbUser.user?.callSign ? ' (' + dbUser.user.callSign + ')' : ''),
+      activeCommunityID: communityId
+    };
+
+    $('#wr-submit-btn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin mr-1"></i> Submitting...');
+
+    $.ajax({
+      url: `${API_URL}/api/v1/warrant`,
+      method: 'POST',
+      data: JSON.stringify(warrantData),
+      contentType: 'application/json',
+      success: function(response) {
+        $('#warrantRequestModal').modal('hide');
+        const status = response.warrant?.status || response.status || '';
+        if (status === 'pending') {
+          alert('Warrant request submitted. It is awaiting judicial review.');
+        } else if (status === 'approved') {
+          alert('Warrant has been approved.');
+        } else {
+          alert('Warrant request submitted successfully.');
+        }
+        fetchDetails();
+      },
+      error: function(xhr) {
+        console.error('Error creating warrant:', xhr.responseText);
+        alert('Failed to submit warrant request: ' + (xhr.responseJSON?.message || 'Unknown error'));
+        $('#wr-submit-btn').prop('disabled', false).html('<i class="fa fa-gavel mr-1"></i> Submit Warrant Request');
+      }
+    });
+  }
 
   // View warrant details
   window.viewWarrantDetails = function() {

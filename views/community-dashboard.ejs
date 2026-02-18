@@ -303,6 +303,8 @@ $(document).ready(function () {
                         dashboardUrl = `/ems-dashboard${deptQueryParams}`;
                     } else if (deptName.includes('dispatch')) {
                         dashboardUrl = `/dispatch-dashboard${deptQueryParams}`;
+                    } else if (deptName.includes('judicial')) {
+                        dashboardUrl = `/department-dashboard${deptQueryParams}`;
                     }
                     
                     if (dashboardUrl) {

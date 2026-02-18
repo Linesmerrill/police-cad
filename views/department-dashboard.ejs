@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <% include ad-header %>
+  <title>LPC - <%= departmentName || 'Department' %> Dashboard</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="/static/js/jquery.min.js"></script>
+  <style>
+    /* ═══════════════════════════════════════════════════
+       DEPARTMENT DASHBOARD — Frosted Glass Command Center
+       ═══════════════════════════════════════════════════ */
+
+    :root {
+      --dd-bg: #08090c;
+      --dd-surface: rgba(255, 255, 255, 0.03);
+      --dd-glass: rgba(255, 255, 255, 0.04);
+      --dd-glass-border: rgba(255, 255, 255, 0.06);
+      --dd-glass-hover: rgba(255, 255, 255, 0.07);
+      --dd-text: #e2e8f0;
+      --dd-text-muted: #64748b;
+      --dd-text-dim: #475569;
+      --dd-accent: #8b5cf6;
+      --dd-accent-glow: rgba(139, 92, 246, 0.15);
+      --dd-green: #22c55e;
+      --dd-red: #ef4444;
+      --dd-amber: #f59e0b;
+      --dd-blue: #3b82f6;
+      --dd-sidebar-w: 280px;
+      --dd-radius: 12px;
+      --dd-radius-sm: 8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+    body.dd-body {
+      margin: 0;
+      padding: 0;
+      background: var(--dd-bg);
+      color: var(--dd-text);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background mesh with slow drift */
+    .dd-bg-mesh {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 700px 500px at 10% 15%, rgba(139, 92, 246, 0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 90% 85%, rgba(245, 158, 11, 0.04) 0%, transparent 70%),
+        radial-gradient(ellipse 600px 350px at 50% 40%, rgba(59, 130, 246, 0.03) 0%, transparent 70%);
+      animation: dd-mesh-drift 20s ease-in-out infinite alternate;
+    }
+
+    @keyframes dd-mesh-drift {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+
+    /* Noise grain overlay */
+    .dd-grain {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 200px;
+    }
+
+    /* ── Sidebar ── */
+    .dd-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--dd-sidebar-w);
+      height: 100vh;
+      background: rgba(12, 13, 18, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid var(--dd-glass-border);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dd-sidebar-header {
+      padding: 1.5rem 1.25rem 1rem;
+      border-bottom: 1px solid var(--dd-glass-border);
+    }
+
+    .dd-sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      text-decoration: none;
+      margin-bottom: 1rem;
+    }
+
+    .dd-sidebar-brand img {
+      height: 26px;
+      width: auto;
+      opacity: 0.9;
+    }
+
+    .dd-sidebar-brand span {
+      font-size: 0.75rem;
+      color: var(--dd-text-muted);
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .dd-sidebar-dept {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #fff;
+      margin: 0 0 0.25rem;
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+    }
+
+    .dd-sidebar-community {
+      font-size: 0.75rem;
+      color: var(--dd-text-muted);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .dd-sidebar-community i {
+      font-size: 0.5rem;
+      color: var(--dd-green);
+      animation: dd-status-blink 3s ease-in-out infinite;
+    }
+
+    @keyframes dd-status-blink {
+      0%, 90%, 100% { opacity: 1; }
+      95% { opacity: 0.3; }
+    }
+
+    .dd-sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.75rem 0;
+    }
+
+    .dd-nav-section {
+      padding: 0 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .dd-nav-section-label {
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--dd-text-dim);
+      padding: 0.5rem 0.5rem 0.375rem;
+      font-weight: 600;
+    }
+
+    .dd-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.625rem 0.75rem;
+      border-radius: var(--dd-radius-sm);
+      color: var(--dd-text-muted);
+      text-decoration: none;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      position: relative;
+    }
+
+    .dd-nav-item:hover {
+      color: var(--dd-text);
+      background: var(--dd-glass-hover);
+      text-decoration: none;
+    }
+
+    .dd-nav-item.active {
+      color: #fff;
+      background: var(--dd-accent-glow);
+      border-color: rgba(139, 92, 246, 0.2);
+    }
+
+    .dd-nav-item.active i { color: var(--dd-accent); }
+
+    .dd-nav-item i {
+      width: 18px;
+      text-align: center;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .dd-nav-badge {
+      margin-left: auto;
+      background: var(--dd-accent);
+      color: #fff;
+      font-size: 0.625rem;
+      font-weight: 700;
+      padding: 0.125rem 0.5rem;
+      border-radius: 99px;
+      min-width: 20px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .dd-sidebar-footer {
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--dd-glass-border);
+    }
+
+    .dd-sidebar-user {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.5rem;
+      border-radius: var(--dd-radius-sm);
+      transition: background 0.15s;
+    }
+
+    .dd-sidebar-user:hover { background: var(--dd-glass-hover); }
+
+    .dd-user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--dd-accent), var(--dd-blue));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .dd-user-info { flex: 1; min-width: 0; }
+
+    .dd-user-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--dd-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dd-user-role {
+      font-size: 0.6875rem;
+      color: var(--dd-text-dim);
+    }
+
+    /* ── Mobile toggle ── */
+    .dd-sidebar-toggle {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 200;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--dd-radius-sm);
+      background: rgba(12, 13, 18, 0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--dd-glass-border);
+      color: #fff;
+      font-size: 1.125rem;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dd-sidebar-close {
+      display: none;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--dd-radius-sm);
+      background: var(--dd-glass);
+      border: 1px solid var(--dd-glass-border);
+      color: var(--dd-text-muted);
+      font-size: 0.875rem;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .dd-sidebar-close:hover {
+      color: #fff;
+      background: var(--dd-glass-hover);
+    }
+
+    /* ── Main content ── */
+    .dd-main {
+      margin-left: var(--dd-sidebar-w);
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dd-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(8, 9, 12, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--dd-glass-border);
+    }
+
+    .dd-topbar-title {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--dd-text);
+      letter-spacing: -0.01em;
+    }
+
+    .dd-topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .dd-topbar-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--dd-radius-sm);
+      border: 1px solid var(--dd-glass-border);
+      background: var(--dd-glass);
+      color: var(--dd-text-muted);
+      font-size: 0.875rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .dd-topbar-btn:hover {
+      color: #fff;
+      background: var(--dd-glass-hover);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .dd-content {
+      padding: 1.5rem 2rem 3rem;
+    }
+
+    /* ── Stats Summary ── */
+    .dd-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.875rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .dd-stat {
+      background: var(--dd-glass);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius);
+      padding: 1.125rem 1.25rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .dd-stat:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .dd-stat::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--stat-accent, var(--dd-accent));
+      opacity: 0.6;
+    }
+
+    .dd-stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+      margin-bottom: 0.25rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .dd-stat-label {
+      font-size: 0.6875rem;
+      color: var(--dd-text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+
+    .dd-stat-icon {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 1.25rem;
+      opacity: 0.08;
+      color: #fff;
+    }
+
+    /* ── Glass Card ── */
+    .dd-card {
+      background: var(--dd-glass);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+
+    .dd-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--card-accent, var(--dd-glass-border));
+      opacity: 0.7;
+      z-index: 1;
+    }
+
+    .dd-card:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .dd-card-header {
+      padding: 1.125rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--dd-glass-border);
+    }
+
+    .dd-card-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .dd-card-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--dd-radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .dd-card-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--dd-text);
+      margin: 0;
+    }
+
+    .dd-card-subtitle {
+      font-size: 0.6875rem;
+      color: var(--dd-text-dim);
+      margin: 0;
+    }
+
+    .dd-card-body {
+      padding: 1.25rem;
+    }
+
+    /* ── Component Grid ── */
+    .dd-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    .dd-grid-full {
+      grid-column: 1 / -1;
+    }
+
+    /* ── Warrant Review Component ── */
+    .dd-warrant-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .dd-warrant-item {
+      background: var(--dd-surface);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius-sm);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      overflow: hidden;
+    }
+
+    .dd-warrant-item:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    }
+
+    .dd-warrant-item.expanded {
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 4px 24px rgba(139, 92, 246, 0.08);
+    }
+
+    .dd-warrant-summary {
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .dd-warrant-type-indicator {
+      width: 4px;
+      border-radius: 2px;
+      min-height: 48px;
+      flex-shrink: 0;
+      align-self: stretch;
+    }
+
+    .dd-warrant-type-indicator.arrest { background: var(--dd-red); box-shadow: 0 0 8px rgba(239, 68, 68, 0.3); }
+    .dd-warrant-type-indicator.search { background: var(--dd-amber); box-shadow: 0 0 8px rgba(245, 158, 11, 0.3); }
+    .dd-warrant-type-indicator.bench { background: var(--dd-blue); box-shadow: 0 0 8px rgba(59, 130, 246, 0.3); }
+
+    .dd-warrant-info { flex: 1; min-width: 0; }
+
+    .dd-warrant-name {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #fff;
+      margin: 0 0 0.25rem;
+    }
+
+    .dd-warrant-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.375rem;
+    }
+
+    .dd-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.125rem 0.5rem;
+      border-radius: 99px;
+      font-size: 0.625rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .dd-badge-arrest { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.2); }
+    .dd-badge-search { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .dd-badge-bench { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.2); }
+
+    .dd-warrant-charges {
+      font-size: 0.75rem;
+      color: var(--dd-text-muted);
+      margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dd-warrant-footer-meta {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.375rem;
+    }
+
+    .dd-warrant-footer-meta span {
+      font-size: 0.6875rem;
+      color: var(--dd-text-dim);
+    }
+
+    .dd-warrant-footer-meta i {
+      margin-right: 0.25rem;
+      font-size: 0.625rem;
+    }
+
+    .dd-warrant-expand-icon {
+      color: var(--dd-text-dim);
+      font-size: 0.75rem;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+      padding-top: 0.25rem;
+    }
+
+    .dd-warrant-item.expanded .dd-warrant-expand-icon {
+      transform: rotate(180deg);
+    }
+
+    .dd-warrant-detail {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dd-warrant-item.expanded .dd-warrant-detail {
+      max-height: 800px;
+    }
+
+    .dd-warrant-detail-inner {
+      padding: 0 1.25rem 1.25rem;
+      border-top: 1px solid var(--dd-glass-border);
+      padding-top: 1rem;
+    }
+
+    .dd-detail-section {
+      margin-bottom: 1rem;
+    }
+
+    .dd-detail-label {
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--dd-text-dim);
+      margin-bottom: 0.25rem;
+      font-weight: 600;
+    }
+
+    .dd-detail-value {
+      font-size: 0.8125rem;
+      color: var(--dd-text);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .dd-detail-charges-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+    }
+
+    .dd-detail-charges-list li {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 0.25rem 0.625rem;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      color: var(--dd-text-muted);
+    }
+
+    .dd-judge-form {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--dd-glass-border);
+    }
+
+    .dd-judge-textarea {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius-sm);
+      color: var(--dd-text);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8125rem;
+      padding: 0.75rem;
+      resize: vertical;
+      min-height: 72px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .dd-judge-textarea:focus {
+      border-color: rgba(139, 92, 246, 0.4);
+    }
+
+    .dd-judge-textarea::placeholder {
+      color: var(--dd-text-dim);
+    }
+
+    .dd-judge-actions {
+      display: flex;
+      gap: 0.625rem;
+      margin-top: 0.75rem;
+    }
+
+    .dd-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--dd-radius-sm);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex: 1;
+    }
+
+    .dd-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .dd-btn-approve {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--dd-green);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .dd-btn-approve:hover:not(:disabled) {
+      background: rgba(34, 197, 94, 0.25);
+      border-color: rgba(34, 197, 94, 0.4);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);
+    }
+
+    .dd-btn-deny {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--dd-red);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .dd-btn-deny:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: rgba(239, 68, 68, 0.4);
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.1);
+    }
+
+    /* ── Notepad Component ── */
+    .dd-notepad-textarea {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius-sm);
+      color: var(--dd-text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8125rem;
+      padding: 1rem;
+      resize: vertical;
+      min-height: 200px;
+      outline: none;
+      line-height: 1.6;
+      transition: border-color 0.15s;
+    }
+
+    .dd-notepad-textarea:focus {
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    .dd-notepad-textarea::placeholder { color: var(--dd-text-dim); }
+
+    .dd-notepad-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.75rem;
+    }
+
+    .dd-notepad-indicator {
+      font-size: 0.6875rem;
+      color: var(--dd-text-dim);
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .dd-notepad-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--dd-text-dim);
+    }
+
+    .dd-notepad-dot.saved { background: var(--dd-green); }
+
+    /* ── 10-Codes Component ── */
+    .dd-codes-search {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius-sm);
+      color: var(--dd-text);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8125rem;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .dd-codes-search:focus { border-color: rgba(139, 92, 246, 0.3); }
+    .dd-codes-search::placeholder { color: var(--dd-text-dim); }
+
+    .dd-codes-search-wrap {
+      position: relative;
+      margin-bottom: 0.75rem;
+    }
+
+    .dd-codes-search-wrap i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--dd-text-dim);
+      font-size: 0.75rem;
+    }
+
+    .dd-codes-list {
+      max-height: 340px;
+      overflow-y: auto;
+    }
+
+    .dd-codes-list::-webkit-scrollbar { width: 4px; }
+    .dd-codes-list::-webkit-scrollbar-track { background: transparent; }
+    .dd-codes-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+    .dd-code-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .dd-code-row:last-child { border-bottom: none; }
+
+    .dd-code-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--dd-accent);
+      min-width: 48px;
+      flex-shrink: 0;
+    }
+
+    .dd-code-desc {
+      font-size: 0.8125rem;
+      color: var(--dd-text-muted);
+    }
+
+    /* ── Empty state ── */
+    .dd-empty {
+      text-align: center;
+      padding: 3rem 1.5rem;
+    }
+
+    .dd-empty-icon-wrap {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(34, 197, 94, 0.08);
+      border: 1px solid rgba(34, 197, 94, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      animation: dd-empty-pulse 3s ease-in-out infinite;
+    }
+
+    .dd-empty-icon-wrap i {
+      font-size: 1.25rem;
+      color: var(--dd-green);
+    }
+
+    @keyframes dd-empty-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.1); }
+      50% { box-shadow: 0 0 0 12px rgba(34, 197, 94, 0); }
+    }
+
+    .dd-empty > i {
+      font-size: 2rem;
+      color: var(--dd-text-dim);
+      margin-bottom: 0.75rem;
+    }
+
+    .dd-empty-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--dd-text-muted);
+      margin: 0 0 0.25rem;
+    }
+
+    .dd-empty-sub {
+      font-size: 0.75rem;
+      color: var(--dd-text-dim);
+      margin: 0;
+    }
+
+    /* Badge pulse */
+    .dd-nav-badge {
+      animation: dd-badge-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes dd-badge-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* ── Loading spinner ── */
+    .dd-spinner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .dd-spinner::after {
+      content: '';
+      width: 24px;
+      height: 24px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-top-color: var(--dd-accent);
+      border-radius: 50%;
+      animation: dd-spin 0.6s linear infinite;
+    }
+
+    @keyframes dd-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Toast notification ── */
+    .dd-toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 9999;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--dd-radius-sm);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #fff;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+    }
+
+    .dd-toast.visible {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .dd-toast.success {
+      background: rgba(34, 197, 94, 0.9);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    }
+
+    .dd-toast.error {
+      background: rgba(239, 68, 68, 0.9);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 1024px) {
+      .dd-grid { grid-template-columns: 1fr; }
+      .dd-content { padding: 1.25rem; }
+    }
+
+    @media (max-width: 768px) {
+      .dd-sidebar { transform: translateX(-100%); }
+      .dd-sidebar.open { transform: translateX(0); }
+      .dd-sidebar-toggle { display: flex; }
+      .dd-sidebar-close { display: flex; }
+      .dd-main { margin-left: 0; }
+      .dd-topbar { padding: 1rem 1rem 1rem 3.5rem; }
+      .dd-content { padding: 1rem; }
+      .dd-stats { grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem; }
+      .dd-stat { padding: 0.75rem 0.875rem; }
+      .dd-stat-value { font-size: 1.25rem; }
+      .dd-stat-label { font-size: 0.625rem; }
+    }
+
+    /* ── Departments list ── */
+    .dd-dept-list {
+      max-height: 180px;
+      overflow-y: auto;
+      margin: 0 -0.25rem;
+      padding: 0 0.25rem;
+    }
+
+    .dd-dept-list::-webkit-scrollbar { width: 3px; }
+    .dd-dept-list::-webkit-scrollbar-track { background: transparent; }
+    .dd-dept-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+    .dd-dept-item {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--dd-radius-sm);
+      color: var(--dd-text-muted);
+      text-decoration: none;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .dd-dept-item:hover {
+      color: var(--dd-text);
+      background: var(--dd-glass-hover);
+      text-decoration: none;
+    }
+
+    .dd-dept-item.current {
+      color: #fff;
+      background: var(--dd-accent-glow);
+      border-color: rgba(139, 92, 246, 0.2);
+    }
+
+    .dd-dept-item.locked {
+      cursor: not-allowed;
+    }
+
+    .dd-dept-item.locked:hover {
+      background: transparent;
+      color: var(--dd-text-muted);
+    }
+
+    .dd-dept-item i {
+      width: 16px;
+      text-align: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .dd-dept-name {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dd-dept-badge {
+      font-size: 0.5625rem;
+      font-weight: 700;
+      padding: 0.0625rem 0.375rem;
+      border-radius: 99px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      flex-shrink: 0;
+      color: #fff;
+    }
+
+    /* ── Access Modal ── */
+    .dd-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .dd-modal-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .dd-modal {
+      background: rgba(20, 21, 30, 0.98);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius);
+      width: 90%;
+      max-width: 380px;
+      overflow: hidden;
+      transform: scale(0.95) translateY(8px);
+      transition: transform 0.2s ease;
+    }
+
+    .dd-modal-overlay.visible .dd-modal {
+      transform: scale(1) translateY(0);
+    }
+
+    .dd-modal-header {
+      padding: 1.25rem 1.25rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dd-modal-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--dd-text);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .dd-modal-close {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--dd-radius-sm);
+      background: transparent;
+      border: none;
+      color: var(--dd-text-dim);
+      font-size: 0.875rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .dd-modal-close:hover {
+      color: #fff;
+      background: var(--dd-glass-hover);
+    }
+
+    .dd-modal-body {
+      padding: 1.5rem 1.25rem;
+      text-align: center;
+    }
+
+    .dd-modal-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      margin: 0 auto 1rem;
+    }
+
+    .dd-modal-body p {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      margin: 0 0 0.375rem;
+    }
+
+    .dd-modal-body .dd-text-muted {
+      color: var(--dd-text-dim);
+      font-size: 0.75rem;
+    }
+
+    .dd-modal-footer {
+      padding: 0 1.25rem 1.25rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .dd-modal-btn {
+      flex: 1;
+      padding: 0.5rem 1rem;
+      border-radius: var(--dd-radius-sm);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      text-decoration: none;
+      text-align: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.375rem;
+    }
+
+    .dd-modal-btn-secondary {
+      background: var(--dd-glass);
+      border: 1px solid var(--dd-glass-border);
+      color: var(--dd-text-muted);
+    }
+
+    .dd-modal-btn-secondary:hover {
+      color: #fff;
+      background: var(--dd-glass-hover);
+    }
+
+    .dd-modal-btn-primary {
+      background: rgba(139, 92, 246, 0.2);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: var(--dd-accent);
+    }
+
+    .dd-modal-btn-primary:hover {
+      background: rgba(139, 92, 246, 0.3);
+      border-color: rgba(139, 92, 246, 0.5);
+      color: #fff;
+      text-decoration: none;
+    }
+
+    /* ── Stagger animation ── */
+    .dd-animate-in {
+      opacity: 0;
+      transform: translateY(12px);
+      animation: dd-fade-in 0.4s ease forwards;
+    }
+
+    @keyframes dd-fade-in {
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body class="dd-body">
+  <div class="dd-bg-mesh"></div>
+  <div class="dd-grain"></div>
+
+  <!-- Mobile sidebar toggle -->
+  <button class="dd-sidebar-toggle" id="dd-sidebar-open" onclick="document.querySelector('.dd-sidebar').classList.add('open'); this.style.display='none';">
+    <i class="fa fa-bars"></i>
+  </button>
+
+  <%
+    var communityId = user.user?.lastAccessedCommunity?.communityID || '';
+    var encodedCommunityId = communityId ? Buffer.from(communityId).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : '';
+    var communityUrl = encodedCommunityId ? '/community/' + encodedCommunityId : '/communities';
+    var username = user.user?.username || 'User';
+    var userInitial = username.charAt(0).toUpperCase();
+  %>
+
+  <!-- ════════ Sidebar ════════ -->
+  <aside class="dd-sidebar">
+    <div class="dd-sidebar-header">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <a href="/" class="dd-sidebar-brand" style="margin-bottom:0;">
+          <img src="/static/images/lines-police-cad-discord-logo-2024-github-profile.png" alt="">
+          <span>Lines Police CAD</span>
+        </a>
+        <button class="dd-sidebar-close" onclick="document.querySelector('.dd-sidebar').classList.remove('open'); document.getElementById('dd-sidebar-open').style.display=''">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <h2 class="dd-sidebar-dept"><%= departmentName || 'Department' %></h2>
+      <p class="dd-sidebar-community">
+        <i class="fa fa-circle"></i>
+        <%= communityName || 'Community' %>
+      </p>
+    </div>
+
+    <div class="dd-sidebar-nav">
+      <!-- Dashboard nav -->
+      <div class="dd-nav-section">
+        <div class="dd-nav-section-label">Dashboard</div>
+        <a class="dd-nav-item active" data-panel="overview" onclick="ddNavTo('overview')">
+          <i class="fa fa-th-large"></i>
+          Overview
+        </a>
+      </div>
+
+      <!-- Component nav — built dynamically -->
+      <div class="dd-nav-section" id="dd-nav-components">
+        <div class="dd-nav-section-label">Components</div>
+        <!-- Injected by JS based on enabledComponents -->
+      </div>
+
+      <!-- Departments -->
+      <div class="dd-nav-section">
+        <div class="dd-nav-section-label">Departments</div>
+        <div class="dd-dept-list" id="dd-dept-list">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+
+      <!-- Utilities -->
+      <div class="dd-nav-section">
+        <div class="dd-nav-section-label">Navigation</div>
+        <a class="dd-nav-item" href="<%= communityUrl %>">
+          <i class="fa fa-arrow-left"></i>
+          Back to Community
+        </a>
+        <a class="dd-nav-item" href="/communities">
+          <i class="fa fa-layer-group"></i>
+          All Communities
+        </a>
+      </div>
+    </div>
+
+    <div class="dd-sidebar-footer">
+      <a href="/profile" style="text-decoration:none;">
+        <div class="dd-sidebar-user">
+          <div class="dd-user-avatar"><%= userInitial %></div>
+          <div class="dd-user-info">
+            <div class="dd-user-name"><%= username %></div>
+            <div class="dd-user-role">Department Member</div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ════════ Main ════════ -->
+  <main class="dd-main">
+    <div class="dd-topbar">
+      <div class="dd-topbar-title" id="dd-topbar-title">Overview</div>
+      <div class="dd-topbar-actions">
+        <button class="dd-topbar-btn" title="Refresh" onclick="ddRefresh()">
+          <i class="fa fa-arrows-rotate"></i>
+        </button>
+        <a class="dd-topbar-btn" href="/profile" title="Profile">
+          <i class="fa fa-user"></i>
+        </a>
+      </div>
+    </div>
+
+    <div class="dd-content" id="dd-content">
+      <!-- Loading state -->
+      <div id="dd-loading" class="dd-spinner"></div>
+
+      <!-- Content panels injected by JS -->
+      <div id="dd-panels" style="display:none;"></div>
+    </div>
+  </main>
+
+  <!-- Toast -->
+  <div class="dd-toast" id="dd-toast"></div>
+
+  <!-- Department Access Modal -->
+  <div class="dd-modal-overlay" id="dd-access-modal">
+    <div class="dd-modal">
+      <div class="dd-modal-header">
+        <h3 id="dd-access-title"><i class="fa fa-lock"></i> Access Restricted</h3>
+        <button class="dd-modal-close" onclick="ddCloseAccessModal()"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="dd-modal-body">
+        <div class="dd-modal-icon" id="dd-access-icon-wrap" style="background:rgba(251,191,36,0.12);">
+          <i class="fa fa-lock" id="dd-access-icon" style="color:#fbbf24;"></i>
+        </div>
+        <p id="dd-access-msg" style="color:var(--dd-text);">You don't have access to this department.</p>
+        <p class="dd-text-muted" id="dd-access-sub">You can request to join from the community details page.</p>
+      </div>
+      <div class="dd-modal-footer">
+        <button class="dd-modal-btn dd-modal-btn-secondary" onclick="ddCloseAccessModal()">Close</button>
+        <a class="dd-modal-btn dd-modal-btn-primary" id="dd-access-link" href="#">
+          <i class="fa fa-external-link-alt"></i> Go to Community
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    // ── Config ──
+    var API_URL = '<%= apiUrl || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    var departmentId = '<%= departmentId || "" %>';
+    var dbUser = <%- JSON.stringify(user) %>;
+    var communityId = dbUser.user?.lastAccessedCommunity?.communityID || '';
+    var userId = dbUser._id || dbUser.user?._id || '';
+    var userName = dbUser.user?.username || 'Judge';
+
+    var enabledComponents = {};
+    var pendingWarrants = [];
+    var tenCodes = [];
+    var expandedWarrantId = null;
+
+    // ── Component Registry ──
+    // Each key maps to a component definition that can be rendered.
+    // New templates just add components here.
+    var componentRegistry = {
+      reviewWarrants: {
+        label: 'Review Warrants',
+        icon: 'fa-gavel',
+        navIcon: 'fa-gavel',
+        gridClass: 'dd-grid-full',
+        accentColor: 'var(--dd-accent)',
+        render: renderWarrantsPanel,
+        init: loadPendingWarrants
+      },
+      notepad: {
+        label: 'Notepad',
+        icon: 'fa-sticky-note',
+        navIcon: 'fa-sticky-note',
+        gridClass: '',
+        accentColor: 'var(--dd-amber)',
+        render: renderNotepadPanel,
+        init: initNotepad
+      },
+      '10CodesInterface': {
+        label: '10-Codes',
+        icon: 'fa-list-ol',
+        navIcon: 'fa-list-ol',
+        gridClass: '',
+        accentColor: 'var(--dd-blue)',
+        render: renderCodesPanel,
+        init: loadTenCodes
+      }
+    };
+
+    // ── Department type config ──
+    var deptTypeConfig = {
+      police:   { icon: 'fa-shield',          color: '#3b82f6', route: 'police' },
+      dispatch: { icon: 'fa-headset',         color: '#8b5cf6', route: 'dispatch' },
+      fire:     { icon: 'fa-fire-extinguisher', color: '#f97316', route: 'ems' },
+      ems:      { icon: 'fa-medkit',           color: '#22c55e', route: 'ems' },
+      civilian: { icon: 'fa-user',             color: '#6b7280', route: 'civ' },
+      judicial: { icon: 'fa-gavel',            color: '#f59e0b', route: 'department' }
+    };
+
+    // ── Initialize ──
+    $(document).ready(function() {
+      fetchDepartmentData();
+      loadSidebarDepartments();
+    });
+
+    function fetchDepartmentData() {
+      if (!departmentId) {
+        showError('No department selected.');
+        return;
+      }
+      $.ajax({
+        url: API_URL + '/api/v1/department/' + departmentId,
+        method: 'GET',
+        success: function(dept) {
+          var template = dept?.department?.template;
+          if (template && template.components) {
+            template.components.forEach(function(comp) {
+              enabledComponents[comp.name] = comp.enabled;
+            });
+          }
+          buildDashboard();
+        },
+        error: function() {
+          // Fallback: show all components from registry
+          Object.keys(componentRegistry).forEach(function(k) {
+            enabledComponents[k] = true;
+          });
+          buildDashboard();
+        }
+      });
+    }
+
+    function buildDashboard() {
+      buildSidebarNav();
+      buildPanels();
+      $('#dd-loading').hide();
+      $('#dd-panels').show();
+
+      // Init each enabled component
+      Object.keys(componentRegistry).forEach(function(key) {
+        if (enabledComponents[key] && componentRegistry[key].init) {
+          componentRegistry[key].init();
+        }
+      });
+    }
+
+    // ── Sidebar Nav ──
+    function buildSidebarNav() {
+      var $nav = $('#dd-nav-components');
+      // Keep section label, remove old items
+      $nav.find('.dd-nav-item').remove();
+
+      Object.keys(componentRegistry).forEach(function(key) {
+        if (!enabledComponents[key]) return;
+        var comp = componentRegistry[key];
+        var $item = $('<a class="dd-nav-item" data-panel="' + key + '">' +
+          '<i class="fa ' + comp.navIcon + '"></i>' +
+          comp.label +
+          (key === 'reviewWarrants' ? '<span class="dd-nav-badge" id="dd-warrant-count" style="display:none;">0</span>' : '') +
+          '</a>');
+        $item.on('click', function() { ddNavTo(key); });
+        $nav.append($item);
+      });
+    }
+
+    // ── Build Panels ──
+    function buildPanels() {
+      var $panels = $('#dd-panels');
+      $panels.empty();
+
+      // Stats row
+      var $statsRow = $('<div class="dd-stats dd-animate-in" id="dd-stats-row"></div>');
+      $statsRow.html(
+        '<div class="dd-stat dd-animate-in" style="--stat-accent:var(--dd-accent); animation-delay:0.02s;">' +
+          '<i class="fa fa-gavel dd-stat-icon"></i>' +
+          '<div class="dd-stat-value" id="dd-stat-pending">—</div>' +
+          '<div class="dd-stat-label">Pending Review</div>' +
+        '</div>' +
+        '<div class="dd-stat dd-animate-in" style="--stat-accent:var(--dd-green); animation-delay:0.06s;">' +
+          '<i class="fa fa-check dd-stat-icon"></i>' +
+          '<div class="dd-stat-value" id="dd-stat-approved">—</div>' +
+          '<div class="dd-stat-label">Approved</div>' +
+        '</div>' +
+        '<div class="dd-stat dd-animate-in" style="--stat-accent:var(--dd-red); animation-delay:0.10s;">' +
+          '<i class="fa fa-times dd-stat-icon"></i>' +
+          '<div class="dd-stat-value" id="dd-stat-denied">—</div>' +
+          '<div class="dd-stat-label">Denied</div>' +
+        '</div>' +
+        '<div class="dd-stat dd-animate-in" style="--stat-accent:var(--dd-amber); animation-delay:0.14s;">' +
+          '<i class="fa fa-bolt dd-stat-icon"></i>' +
+          '<div class="dd-stat-value" id="dd-stat-total">—</div>' +
+          '<div class="dd-stat-label">Total Warrants</div>' +
+        '</div>'
+      );
+
+      // Overview panel: shows all components in a grid
+      var $overview = $('<div id="dd-panel-overview"></div>');
+      $overview.append($statsRow);
+      var $grid = $('<div class="dd-grid dd-animate-in"></div>');
+      Object.keys(componentRegistry).forEach(function(key, i) {
+        if (!enabledComponents[key]) return;
+        var comp = componentRegistry[key];
+        var $card = $('<div class="dd-card ' + comp.gridClass + ' dd-animate-in" id="dd-component-' + key + '" style="--card-accent:' + comp.accentColor + '; animation-delay:' + (i * 0.08 + 0.15) + 's"></div>');
+        $card.html(comp.render(key));
+        $grid.append($card);
+      });
+      $overview.append($grid);
+      $panels.append($overview);
+
+      // Individual focused panels for each component
+      Object.keys(componentRegistry).forEach(function(key) {
+        if (!enabledComponents[key]) return;
+        var comp = componentRegistry[key];
+        var $panel = $('<div id="dd-panel-' + key + '" class="dd-animate-in" style="display:none;"></div>');
+        var $card = $('<div class="dd-card dd-animate-in" id="dd-component-focus-' + key + '" style="--card-accent:' + comp.accentColor + ';"></div>');
+        $card.html(comp.render(key));
+        $panel.append($card);
+        $panels.append($panel);
+      });
+    }
+
+    // ── Navigation ──
+    function ddNavTo(panel) {
+      // Update sidebar
+      $('.dd-nav-item').removeClass('active');
+      $('.dd-nav-item[data-panel="' + panel + '"]').addClass('active');
+
+      // Update topbar title
+      if (panel === 'overview') {
+        $('#dd-topbar-title').text('Overview');
+      } else if (componentRegistry[panel]) {
+        $('#dd-topbar-title').text(componentRegistry[panel].label);
+      }
+
+      // Show/hide panels
+      $('[id^="dd-panel-"]').hide();
+      $('#dd-panel-' + panel).show();
+
+      // Close mobile sidebar and restore hamburger
+      $('.dd-sidebar').removeClass('open');
+      $('#dd-sidebar-open').css('display', '');
+    }
+    window.ddNavTo = ddNavTo;
+
+    function ddRefresh() {
+      Object.keys(componentRegistry).forEach(function(key) {
+        if (enabledComponents[key] && componentRegistry[key].init) {
+          componentRegistry[key].init();
+        }
+      });
+      ddToast('Dashboard refreshed', 'success');
+    }
+    window.ddRefresh = ddRefresh;
+
+    // ══════════════════════════════════════════
+    //  WARRANT REVIEW COMPONENT
+    // ══════════════════════════════════════════
+    function renderWarrantsPanel(key) {
+      return '<div class="dd-card-header">' +
+          '<div class="dd-card-header-left">' +
+            '<div class="dd-card-icon" style="background:rgba(139,92,246,0.15);color:var(--dd-accent);"><i class="fa fa-gavel"></i></div>' +
+            '<div><h3 class="dd-card-title">Pending Warrants</h3><p class="dd-card-subtitle">Awaiting judicial review</p></div>' +
+          '</div>' +
+          '<span class="dd-nav-badge dd-warrant-header-count" style="display:none;">0</span>' +
+        '</div>' +
+        '<div class="dd-card-body">' +
+          '<div id="dd-warrants-loading" class="dd-spinner"></div>' +
+          '<div id="dd-warrants-empty" class="dd-empty" style="display:none;">' +
+            '<div class="dd-empty-icon-wrap"><i class="fa fa-check"></i></div>' +
+            '<p class="dd-empty-title">All clear</p>' +
+            '<p class="dd-empty-sub">No pending warrants to review</p>' +
+          '</div>' +
+          '<div id="dd-warrants-list" class="dd-warrant-list"></div>' +
+        '</div>';
+    }
+
+    function loadPendingWarrants() {
+      if (!communityId) return;
+      // Show loading in all instances (overview + focused)
+      $('.dd-warrant-list').empty();
+      $('[id$="-warrants-loading"]').show();
+      $('[id$="-warrants-empty"]').hide();
+
+      $.ajax({
+        url: API_URL + '/api/v1/warrants/pending/community/' + communityId + '?limit=50&page=0',
+        method: 'GET',
+        success: function(result) {
+          pendingWarrants = result.data || [];
+          renderWarrantsList();
+          updateWarrantCount();
+        },
+        error: function() {
+          $('[id$="-warrants-loading"]').hide();
+          $('[id$="-warrants-empty"]').show().find('.dd-empty-title').text('Unable to load warrants');
+        }
+      });
+    }
+
+    function renderWarrantsList() {
+      $('[id$="-warrants-loading"]').hide();
+      var $lists = $('.dd-warrant-list');
+      $lists.empty();
+
+      if (pendingWarrants.length === 0) {
+        $('[id$="-warrants-empty"]').show();
+        return;
+      }
+      $('[id$="-warrants-empty"]').hide();
+
+      pendingWarrants.forEach(function(w, i) {
+        var d = w.warrant || {};
+        var typeClass = d.warrantType || 'arrest';
+        var charges = (d.charges || []).join(', ') || 'No charges listed';
+        var date = formatDate(d.createdAt);
+        var isExpanded = expandedWarrantId === w._id;
+
+        var html = '<div class="dd-warrant-item' + (isExpanded ? ' expanded' : '') + '" data-id="' + w._id + '" style="animation-delay:' + (i * 0.04) + 's">' +
+          '<div class="dd-warrant-summary" onclick="ddToggleWarrant(\'' + w._id + '\')">' +
+            '<div class="dd-warrant-type-indicator ' + typeClass + '"></div>' +
+            '<div class="dd-warrant-info">' +
+              '<p class="dd-warrant-name">' + esc(d.accusedFirstName || '') + ' ' + esc(d.accusedLastName || '') + '</p>' +
+              '<div class="dd-warrant-meta">' +
+                '<span class="dd-badge dd-badge-' + typeClass + '">' + esc(typeClass) + '</span>' +
+              '</div>' +
+              '<p class="dd-warrant-charges">' + esc(charges) + '</p>' +
+              '<div class="dd-warrant-footer-meta">' +
+                '<span><i class="fa fa-user"></i>' + esc(d.requestingOfficerName || 'Unknown') + '</span>' +
+                '<span><i class="fa fa-calendar"></i>' + date + '</span>' +
+              '</div>' +
+            '</div>' +
+            '<i class="fa fa-chevron-down dd-warrant-expand-icon"></i>' +
+          '</div>' +
+          '<div class="dd-warrant-detail">' +
+            '<div class="dd-warrant-detail-inner">' +
+              '<div class="dd-detail-section">' +
+                '<div class="dd-detail-label">Probable Cause</div>' +
+                '<p class="dd-detail-value">' + esc(d.probableCause || 'No probable cause provided.') + '</p>' +
+              '</div>' +
+              (d.charges && d.charges.length > 0 ?
+                '<div class="dd-detail-section">' +
+                  '<div class="dd-detail-label">Charges</div>' +
+                  '<ul class="dd-detail-charges-list">' + d.charges.map(function(c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul>' +
+                '</div>' : '') +
+              (d.warrantType === 'search' && d.searchLocation ?
+                '<div class="dd-detail-section">' +
+                  '<div class="dd-detail-label">Search Location</div>' +
+                  '<p class="dd-detail-value">' + esc(d.searchLocation) + '</p>' +
+                '</div>' : '') +
+              '<div class="dd-detail-section">' +
+                '<div class="dd-detail-label">Requesting Officer</div>' +
+                '<p class="dd-detail-value">' + esc(d.requestingOfficerName || 'Unknown') + '</p>' +
+              '</div>' +
+              '<div class="dd-judge-form">' +
+                '<div class="dd-detail-label" style="margin-bottom:0.5rem;">Judge Notes</div>' +
+                '<textarea class="dd-judge-textarea" id="dd-notes-' + w._id + '" placeholder="Enter your notes (optional)..."></textarea>' +
+                '<div class="dd-judge-actions">' +
+                  '<button class="dd-btn dd-btn-approve" onclick="ddReviewWarrant(\'' + w._id + '\', true)">' +
+                    '<i class="fa fa-check-circle"></i> Approve' +
+                  '</button>' +
+                  '<button class="dd-btn dd-btn-deny" onclick="ddReviewWarrant(\'' + w._id + '\', false)">' +
+                    '<i class="fa fa-times-circle"></i> Deny' +
+                  '</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+
+        $lists.append(html);
+      });
+    }
+
+    function updateWarrantCount() {
+      var count = pendingWarrants.length;
+      var $badges = $('#dd-warrant-count, .dd-warrant-header-count');
+      if (count > 0) {
+        $badges.text(count).show();
+      } else {
+        $badges.hide();
+      }
+      // Update stats
+      $('#dd-stat-pending').text(count);
+      loadWarrantStats();
+    }
+
+    function loadWarrantStats() {
+      if (!communityId) return;
+      // Load total warrants to get approved/denied/total counts
+      $.ajax({
+        url: API_URL + '/api/v2/warrants/community/' + communityId + '?limit=1&page=1',
+        method: 'GET',
+        success: function(result) {
+          var total = result.totalCount || 0;
+          var pending = pendingWarrants.length;
+          $('#dd-stat-total').text(total);
+          // Estimate approved/denied from total minus pending (exact counts would need API filter)
+          // For now show total - pending as "processed"
+          var processed = Math.max(0, total - pending);
+          // We'll load approved count separately
+          $.ajax({
+            url: API_URL + '/api/v2/warrants/community/' + communityId + '?limit=1&page=1&status=approved',
+            method: 'GET',
+            success: function(r2) {
+              var approved = r2.totalCount || 0;
+              var denied = Math.max(0, processed - approved);
+              $('#dd-stat-approved').text(approved);
+              $('#dd-stat-denied').text(denied);
+            },
+            error: function() {
+              $('#dd-stat-approved').text('—');
+              $('#dd-stat-denied').text('—');
+            }
+          });
+        },
+        error: function() {
+          $('#dd-stat-total').text('—');
+        }
+      });
+    }
+
+    window.ddToggleWarrant = function(id) {
+      expandedWarrantId = (expandedWarrantId === id) ? null : id;
+      $('.dd-warrant-item').each(function() {
+        if ($(this).data('id') === id) {
+          $(this).toggleClass('expanded');
+        } else {
+          $(this).removeClass('expanded');
+        }
+      });
+    };
+
+    window.ddReviewWarrant = function(warrantId, approved) {
+      var notes = $('#dd-notes-' + warrantId).val() || '';
+      var $btns = $('.dd-warrant-item[data-id="' + warrantId + '"] .dd-btn');
+      $btns.prop('disabled', true);
+
+      $.ajax({
+        url: API_URL + '/api/v1/warrant/' + warrantId + '/review',
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          approved: approved,
+          judgeNotes: notes,
+          judgeID: userId,
+          judgeName: userName
+        }),
+        success: function() {
+          ddToast('Warrant ' + (approved ? 'approved' : 'denied') + ' successfully', 'success');
+          expandedWarrantId = null;
+          loadPendingWarrants();
+        },
+        error: function() {
+          ddToast('Failed to review warrant', 'error');
+          $btns.prop('disabled', false);
+        }
+      });
+    };
+
+    // ══════════════════════════════════════════
+    //  NOTEPAD COMPONENT
+    // ══════════════════════════════════════════
+    var notepadTimer = null;
+    var notepadSaveKey = 'dd-notepad-' + departmentId;
+
+    function renderNotepadPanel() {
+      return '<div class="dd-card-header">' +
+          '<div class="dd-card-header-left">' +
+            '<div class="dd-card-icon" style="background:rgba(245,158,11,0.15);color:var(--dd-amber);"><i class="fa fa-sticky-note"></i></div>' +
+            '<div><h3 class="dd-card-title">Notepad</h3><p class="dd-card-subtitle">Quick notes &amp; scratchpad</p></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="dd-card-body">' +
+          '<textarea class="dd-notepad-textarea" id="dd-notepad" placeholder="Type your notes here..."></textarea>' +
+          '<div class="dd-notepad-status">' +
+            '<div class="dd-notepad-indicator">' +
+              '<div class="dd-notepad-dot" id="dd-notepad-dot"></div>' +
+              '<span id="dd-notepad-status">Ready</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    function initNotepad() {
+      var saved = localStorage.getItem(notepadSaveKey) || '';
+      // Set value on all notepad instances
+      setTimeout(function() {
+        $('textarea#dd-notepad, textarea.dd-notepad-textarea').val(saved);
+        $('textarea#dd-notepad, textarea.dd-notepad-textarea').off('input.notepad').on('input.notepad', function() {
+          var val = $(this).val();
+          // Sync all notepad textareas
+          $('textarea#dd-notepad, textarea.dd-notepad-textarea').not(this).val(val);
+          $('#dd-notepad-dot').removeClass('saved');
+          $('#dd-notepad-status').text('Typing...');
+          clearTimeout(notepadTimer);
+          notepadTimer = setTimeout(function() {
+            localStorage.setItem(notepadSaveKey, val);
+            $('#dd-notepad-dot').addClass('saved');
+            $('#dd-notepad-status').text('Saved locally');
+          }, 800);
+        });
+      }, 100);
+    }
+
+    // ══════════════════════════════════════════
+    //  10-CODES COMPONENT
+    // ══════════════════════════════════════════
+    function renderCodesPanel() {
+      return '<div class="dd-card-header">' +
+          '<div class="dd-card-header-left">' +
+            '<div class="dd-card-icon" style="background:rgba(59,130,246,0.15);color:var(--dd-blue);"><i class="fa fa-list-ol"></i></div>' +
+            '<div><h3 class="dd-card-title">10-Codes</h3><p class="dd-card-subtitle">Quick reference</p></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="dd-card-body">' +
+          '<div class="dd-codes-search-wrap">' +
+            '<i class="fa fa-search"></i>' +
+            '<input type="text" class="dd-codes-search" placeholder="Search codes..." oninput="ddFilterCodes(this.value)">' +
+          '</div>' +
+          '<div id="dd-codes-loading" class="dd-spinner" style="padding:1rem;"></div>' +
+          '<div id="dd-codes-list" class="dd-codes-list"></div>' +
+          '<div id="dd-codes-empty" class="dd-empty" style="display:none; padding:1.5rem;">' +
+            '<i class="fa fa-info-circle" style="font-size:1.25rem;"></i>' +
+            '<p class="dd-empty-title">No 10-codes configured</p>' +
+            '<p class="dd-empty-sub">Community admin can add codes in settings</p>' +
+          '</div>' +
+        '</div>';
+    }
+
+    function loadTenCodes() {
+      if (!communityId) return;
+      $('#dd-codes-loading').show();
+      $('#dd-codes-list').empty();
+
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityId + '/ten-codes',
+        method: 'GET',
+        success: function(data) {
+          tenCodes = data || [];
+          if (tenCodes.length === 0) {
+            // No codes configured — hide entire component
+            hideComponent('10CodesInterface');
+            return;
+          }
+          renderTenCodes(tenCodes);
+        },
+        error: function() {
+          // Failed to load — hide entire component
+          hideComponent('10CodesInterface');
+        }
+      });
+    }
+
+    function renderTenCodes(codes) {
+      $('#dd-codes-loading').hide();
+      var $lists = $('#dd-codes-list');
+      $lists.empty();
+
+      if (!codes || codes.length === 0) {
+        $('#dd-codes-empty').show();
+        return;
+      }
+      $('#dd-codes-empty').hide();
+
+      codes.forEach(function(code) {
+        $lists.append(
+          '<div class="dd-code-row">' +
+            '<span class="dd-code-num">' + esc(code.code || '') + '</span>' +
+            '<span class="dd-code-desc">' + esc(code.description || '') + '</span>' +
+          '</div>'
+        );
+      });
+    }
+
+    window.ddFilterCodes = function(query) {
+      var q = query.toLowerCase();
+      var filtered = tenCodes.filter(function(c) {
+        return (c.code || '').toLowerCase().indexOf(q) !== -1 ||
+               (c.description || '').toLowerCase().indexOf(q) !== -1;
+      });
+      renderTenCodes(filtered);
+    };
+
+    // ══════════════════════════════════════════
+    //  SIDEBAR DEPARTMENTS LIST
+    // ══════════════════════════════════════════
+    function loadSidebarDepartments() {
+      if (!communityId) return;
+      var encodedCommunityId = btoa(communityId).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityId + '/departments',
+        method: 'GET',
+        success: function(data) {
+          var departments = (data && data.departments) || [];
+          renderSidebarDepartments(departments, encodedCommunityId);
+        },
+        error: function() {
+          // Silently fail — sidebar just won't show departments
+        }
+      });
+    }
+
+    function renderSidebarDepartments(departments, encodedCommunityId) {
+      var $list = $('#dd-dept-list');
+      $list.empty();
+
+      // Access checks (same logic as departments.js sidebar)
+      var currentUserId = dbUser._id || '';
+      var isOwner = (dbUser.user?.lastAccessedCommunity?.ownerID || '') === currentUserId;
+      var userRole = dbUser.user?.lastAccessedCommunity?.role;
+      var isAdmin = userRole && userRole.admin === true;
+
+      departments.forEach(function(dept) {
+        var template = (dept.template && dept.template.name || '').toLowerCase();
+        var name = dept.name || 'Unknown';
+        var deptId = dept._id;
+        if (!deptId || !template) return;
+
+        var config = deptTypeConfig[template] || { icon: 'fa-building', color: '#6b7280', route: null };
+        var isCurrent = deptId === departmentId;
+
+        // Check membership
+        var members = Array.isArray(dept.members) ? dept.members : [];
+        var userMembership = null;
+        for (var i = 0; i < members.length; i++) {
+          if ((members[i].userID || members[i]._id) === currentUserId) {
+            userMembership = members[i];
+            break;
+          }
+        }
+        var isApprovedMember = userMembership && userMembership.status === 'approved';
+        var isPendingMember = userMembership && userMembership.status === 'pending';
+        var isPublicDept = dept.approvalRequired === false;
+        var canAccess = isOwner || isAdmin || isPublicDept || isApprovedMember;
+
+        // Build URL
+        var encodedDeptId = btoa(deptId).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+        var params = '?dept=' + encodeURIComponent(name) + '&d=' + encodedDeptId + '&c=' + encodedCommunityId;
+        var href = '#';
+
+        // Determine route and whether it needs a form POST
+        var useFormPost = false;
+        var redirect = '';
+        if (canAccess) {
+          if (template === 'civilian') {
+            href = '/civ-dashboard' + params;
+          } else if (template === 'judicial') {
+            href = '/department-dashboard' + params;
+          } else if (['police', 'dispatch', 'fire', 'ems'].indexOf(template) !== -1) {
+            useFormPost = true;
+            if (template === 'police') {
+              redirect = '/police-dashboard' + params;
+            } else if (template === 'dispatch') {
+              redirect = '/dispatch-dashboard' + params;
+            } else {
+              redirect = '/ems-dashboard' + params;
+            }
+          }
+        }
+
+        // Status icon for locked/pending
+        var statusHtml = '';
+        if (!canAccess) {
+          if (isPendingMember) {
+            statusHtml = '<i class="fa fa-clock" style="color:#3b82f6;font-size:0.625rem;flex-shrink:0;" title="Request pending"></i>';
+          } else {
+            statusHtml = '<i class="fa fa-lock" style="color:#fbbf24;font-size:0.625rem;flex-shrink:0;" title="No access"></i>';
+          }
+        }
+
+        var classes = 'dd-dept-item';
+        if (isCurrent) classes += ' current';
+        if (!canAccess) classes += ' locked';
+
+        var communityUrl = '/community/' + encodedCommunityId + '#departments-section';
+        var safeName = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+        var innerHtml =
+          '<i class="fa ' + config.icon + '" style="color:' + config.color + ';' + (!canAccess ? 'opacity:0.4;' : '') + '"></i>' +
+          '<span class="dd-dept-name" style="' + (!canAccess ? 'opacity:0.4;' : '') + '">' + esc(name) + '</span>' +
+          (statusHtml || '<span class="dd-dept-badge" style="background:' + config.color + ';">' + esc(template) + '</span>');
+
+        if (!canAccess) {
+          var $item = $('<a class="' + classes + '" href="#" onclick="event.preventDefault(); ddShowAccessModal(\'' + safeName + '\', ' + !!isPendingMember + ', \'' + communityUrl + '\');">' + innerHtml + '</a>');
+          $list.append($item);
+        } else if (useFormPost) {
+          var formId = 'dd-dept-form-' + deptId;
+          var $item = $('<a class="' + classes + '" href="#" onclick="event.preventDefault(); document.getElementById(\'' + formId + '\').submit();">' + innerHtml + '</a>');
+          var $form = $('<form id="' + formId + '" action="/select-department" method="POST" style="display:none;">' +
+            '<input type="hidden" name="departmentId" value="' + deptId + '">' +
+            '<input type="hidden" name="redirect" value="' + redirect + '">' +
+            '</form>');
+          $list.append($item);
+          $list.append($form);
+        } else {
+          var $item = $('<a class="' + classes + '" href="' + href + '">' + innerHtml + '</a>');
+          $list.append($item);
+        }
+      });
+    }
+
+    // ── Department Access Modal ──
+    function ddShowAccessModal(deptName, isPending, communityUrl) {
+      var $overlay = $('#dd-access-modal');
+      if (isPending) {
+        $('#dd-access-title').html('<i class="fa fa-clock"></i> Request Pending');
+        $('#dd-access-icon-wrap').css('background', 'rgba(59,130,246,0.12)');
+        $('#dd-access-icon').removeClass('fa-lock').addClass('fa-clock').css('color', '#3b82f6');
+        $('#dd-access-msg').html('Your request to join <strong>' + esc(deptName) + '</strong> is pending approval.');
+        $('#dd-access-sub').text('An administrator will review your request soon.');
+      } else {
+        $('#dd-access-title').html('<i class="fa fa-lock"></i> Access Restricted');
+        $('#dd-access-icon-wrap').css('background', 'rgba(251,191,36,0.12)');
+        $('#dd-access-icon').removeClass('fa-clock').addClass('fa-lock').css('color', '#fbbf24');
+        $('#dd-access-msg').html('You don\'t have access to the <strong>' + esc(deptName) + '</strong> department.');
+        $('#dd-access-sub').text('You can request to join from the community details page.');
+      }
+      $('#dd-access-link').attr('href', communityUrl);
+      $overlay.addClass('visible');
+    }
+    window.ddShowAccessModal = ddShowAccessModal;
+
+    function ddCloseAccessModal() {
+      $('#dd-access-modal').removeClass('visible');
+    }
+    window.ddCloseAccessModal = ddCloseAccessModal;
+
+    // Close modal on overlay click
+    $(document).on('click', '#dd-access-modal', function(e) {
+      if (e.target === this) ddCloseAccessModal();
+    });
+
+    // Close modal on Escape key
+    $(document).on('keydown', function(e) {
+      if (e.key === 'Escape') ddCloseAccessModal();
+    });
+
+    // ── Hide a component entirely (card + nav) ──
+    function hideComponent(key) {
+      $('#dd-component-' + key).remove();
+      $('#dd-component-focus-' + key).closest('[id^="dd-panel-"]').remove();
+      $('.dd-nav-item[data-panel="' + key + '"]').remove();
+      delete enabledComponents[key];
+
+      // Reflow grid: if only one non-full-width card remains, make it full width
+      var $grid = $('#dd-panel-overview .dd-grid');
+      var $halfCards = $grid.children('.dd-card').not('.dd-grid-full');
+      if ($halfCards.length === 1) {
+        $halfCards.addClass('dd-grid-full');
+      }
+    }
+
+    // ── Utilities ──
+    function formatDate(dateStr) {
+      if (!dateStr) return 'N/A';
+      var d = new Date(dateStr);
+      if (isNaN(d) || d.getFullYear() <= 1970) return 'N/A';
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function esc(str) {
+      if (!str) return '';
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
+    function ddToast(msg, type) {
+      var $t = $('#dd-toast');
+      $t.text(msg).removeClass('success error visible').addClass(type);
+      setTimeout(function() { $t.addClass('visible'); }, 10);
+      setTimeout(function() { $t.removeClass('visible'); }, 3000);
+    }
+    window.ddToast = ddToast;
+
+    function showError(msg) {
+      $('#dd-loading').hide();
+      $('#dd-panels').html(
+        '<div class="dd-empty" style="padding-top:6rem;">' +
+          '<i class="fa fa-exclamation-triangle"></i>' +
+          '<p class="dd-empty-title">' + esc(msg) + '</p>' +
+        '</div>'
+      ).show();
+    }
+
+  })();
+  </script>
+</body>
+</html>

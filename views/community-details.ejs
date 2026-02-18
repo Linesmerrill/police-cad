@@ -72,6 +72,8 @@
           dashboardUrl = `/ems-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}&c=${encodedCommunityId}`;
         } else if (templateType.includes('dispatch')) {
           dashboardUrl = `/dispatch-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}&c=${encodedCommunityId}`;
+        } else if (templateType.includes('judicial')) {
+          dashboardUrl = `/department-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}&c=${encodedCommunityId}`;
         }
 
         if (dashboardUrl) {
@@ -843,6 +845,9 @@
           } else if (lowerTemplate.includes('dispatch')) {
             deptIcon = 'fa-headset';
             deptColor = '#f59e0b';
+          } else if (lowerTemplate.includes('judicial')) {
+            deptIcon = 'fa-gavel';
+            deptColor = '#f59e0b';
           }
 
           // For locked departments, show blurred/overlay image
@@ -939,6 +944,9 @@
             deptColor = '#ef4444';
           } else if (lowerTemplate.includes('dispatch')) {
             deptIcon = 'fa-headset';
+            deptColor = '#f59e0b';
+          } else if (lowerTemplate.includes('judicial')) {
+            deptIcon = 'fa-gavel';
             deptColor = '#f59e0b';
           }
           return { icon: deptIcon, color: deptColor };
@@ -1620,6 +1628,9 @@
                   deptColor = '#ef4444';
                 } else if (lowerTemplate.includes('dispatch')) {
                   deptIcon = 'fa-headset';
+                  deptColor = '#f59e0b';
+                } else if (lowerTemplate.includes('judicial')) {
+                  deptIcon = 'fa-gavel';
                   deptColor = '#f59e0b';
                 }
               %>
