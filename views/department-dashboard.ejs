@@ -1897,8 +1897,7 @@
       if (currentTemplateName === 'judicial') {
         var encodedCId = communityId ? btoa(communityId).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : '';
         if (encodedCId) {
-          var $navSection = $('.dd-sidebar-nav .dd-nav-section').last();
-          $navSection.append(
+          $('#dd-nav-components').append(
             '<a class="dd-nav-item" href="/penal-code-settings?c=' + encodedCId + '">' +
               '<i class="fa fa-gavel"></i>' +
               'Manage Penal Codes' +
