@@ -2966,11 +2966,14 @@ $('#dd-loading').hide();
       if (allWarrantsStatusFilter) url += '&status=' + allWarrantsStatusFilter;
       if (allWarrantsTypeFilter) url += '&warrantType=' + allWarrantsTypeFilter;
 
+      console.log('[AllWarrants] Fetching:', url);
       $.ajax({
         url: url,
         method: 'GET',
+        cache: false,
         success: function(result) {
           try {
+            console.log('[AllWarrants] Response:', { totalCount: result.totalCount, totalPages: result.totalPages, dataLength: (result.data || []).length, page: result.page });
             allWarrantsData = result.data || [];
             allWarrantsTotalCount = result.totalCount || 0;
             allWarrantsTotalPages = result.totalPages || Math.ceil(allWarrantsTotalCount / 20) || 1;
