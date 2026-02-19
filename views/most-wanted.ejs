@@ -1651,7 +1651,8 @@
     var visibleFields = <%- JSON.stringify(community?.community?.mostWantedVisibleFields || ['name', 'image']) %>;
     var customFieldDefs = <%- JSON.stringify(community?.community?.mostWantedCustomFields || []) %>;
     var communityPenalCodes = <%- JSON.stringify(community?.community?.penalCodes || { currency: 'USD', categories: [] }) %>;
-    var penalCodesCurrencySymbols = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', CAD: 'C$', AUD: 'A$' };
+    var penalCodesKnownCurrencies = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', CAD: 'C$', AUD: 'A$' };
+    function getCurrencySymbol(code) { return penalCodesKnownCurrencies[code] || code || '$'; }
     var apiToken = '<%= process.env.POLICE_CAD_API_TOKEN || "" %>';
     var currentUserId = '<%= user._id %>';
 
@@ -2288,7 +2289,7 @@
 
       var html = '';
       var hasResults = false;
-      var sym = penalCodesCurrencySymbols[communityPenalCodes.currency] || '$';
+      var sym = getCurrencySymbol(communityPenalCodes.currency);
 
       for (var c = 0; c < communityPenalCodes.categories.length; c++) {
         var category = communityPenalCodes.categories[c];
@@ -2344,7 +2345,7 @@
 
       // Update total amount
       var totalEl = document.getElementById('mw-charges-total');
-      var sym = penalCodesCurrencySymbols[communityPenalCodes.currency] || '$';
+      var sym = getCurrencySymbol(communityPenalCodes.currency);
       if (hasCommunityFines() && currentCharges.length > 0) {
         var total = 0;
         for (var i = 0; i < currentCharges.length; i++) {

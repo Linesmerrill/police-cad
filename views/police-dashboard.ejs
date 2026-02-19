@@ -3289,7 +3289,11 @@
 
     var pcData = null;
     var pcCurrency = 'USD';
-    var pcCurrencySymbols = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', CAD: 'C$', AUD: 'A$' };
+    var pcKnownCurrencies = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', CAD: 'C$', AUD: 'A$' };
+
+    function pcGetCurrencySymbol(code) {
+      return pcKnownCurrencies[code] || code || '$';
+    }
 
     function pcParseFine(val) {
       if (typeof val === 'number') return val;
@@ -3300,7 +3304,7 @@
     function pcFormatFine(amount) {
       var n = pcParseFine(amount);
       if (!n) return '\u2014';
-      var sym = pcCurrencySymbols[pcCurrency] || '$';
+      var sym = pcGetCurrencySymbol(pcCurrency);
       return sym + n.toLocaleString();
     }
 

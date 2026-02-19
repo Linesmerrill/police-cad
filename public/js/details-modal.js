@@ -839,7 +839,8 @@ $(document).ready(function () {
 
       // Fetch penal codes for ticket violations
       const communityId = dbUser.user.lastAccessedCommunity.communityID;
-      const currencySymbols = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', CAD: 'C$', AUD: 'A$' };
+      const knownCurrencies = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', CAD: 'C$', AUD: 'A$' };
+      function getCurrencySymbol(code) { return knownCurrencies[code] || code || '$'; }
 
       // Parse fine value — handles both int (500) and legacy string ("$500") formats
       function parseFine(val) {
@@ -857,7 +858,7 @@ $(document).ready(function () {
         success: function (data) {
           const categories = (data && data.categories) || [];
           const currency = (data && data.currency) || 'USD';
-          const sym = currencySymbols[currency] || '$';
+          const sym = getCurrencySymbol(currency);
           const $select = $("#ticket-select");
           $select.find('optgroup:not([label="Crime not listed"])').remove();
           if (categories.length === 0) {

@@ -3287,7 +3287,11 @@ $('#dd-loading').hide();
     //  PENAL CODES COMPONENT
     // ══════════════════════════════════════════
 
-    var pcCurrencySymbols = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', CAD: 'C$', AUD: 'A$' };
+    var pcKnownCurrencies = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', CAD: 'C$', AUD: 'A$' };
+
+    function pcGetCurrencySymbol(code) {
+      return pcKnownCurrencies[code] || code || '$';
+    }
 
     function pcParseFine(val) {
       if (typeof val === 'number') return val;
@@ -3298,8 +3302,7 @@ $('#dd-loading').hide();
     function pcFormatFine(amount) {
       var n = pcParseFine(amount);
       if (!n) return '\u2014';
-      var sym = pcCurrencySymbols[penalCodesCurrency] || '$';
-      return sym + n.toLocaleString();
+      return pcGetCurrencySymbol(penalCodesCurrency) + n.toLocaleString();
     }
 
     function renderPenalCodesPanel() {
@@ -3309,13 +3312,18 @@ $('#dd-loading').hide();
             '<div><h3 class="dd-card-title">Penal Codes</h3><p class="dd-card-subtitle">Manage violations &amp; penalties</p></div>' +
           '</div>' +
           '<div class="dd-card-header-right">' +
-            '<select class="dd-pc-currency-select" onchange="pcSetCurrency(this.value)" title="Currency">' +
-              '<option value="USD"' + (penalCodesCurrency === 'USD' ? ' selected' : '') + '>$ USD</option>' +
-              '<option value="EUR"' + (penalCodesCurrency === 'EUR' ? ' selected' : '') + '>\u20AC EUR</option>' +
-              '<option value="GBP"' + (penalCodesCurrency === 'GBP' ? ' selected' : '') + '>\u00A3 GBP</option>' +
-              '<option value="CAD"' + (penalCodesCurrency === 'CAD' ? ' selected' : '') + '>C$ CAD</option>' +
-              '<option value="AUD"' + (penalCodesCurrency === 'AUD' ? ' selected' : '') + '>A$ AUD</option>' +
-            '</select>' +
+            (function() {
+              var isCustom = !pcKnownCurrencies[penalCodesCurrency] && penalCodesCurrency;
+              return '<select class="dd-pc-currency-select" onchange="pcHandleCurrencyChange(this)" title="Currency">' +
+                '<option value="USD"' + (penalCodesCurrency === 'USD' ? ' selected' : '') + '>$ USD</option>' +
+                '<option value="EUR"' + (penalCodesCurrency === 'EUR' ? ' selected' : '') + '>\u20AC EUR</option>' +
+                '<option value="GBP"' + (penalCodesCurrency === 'GBP' ? ' selected' : '') + '>\u00A3 GBP</option>' +
+                '<option value="CAD"' + (penalCodesCurrency === 'CAD' ? ' selected' : '') + '>C$ CAD</option>' +
+                '<option value="AUD"' + (penalCodesCurrency === 'AUD' ? ' selected' : '') + '>A$ AUD</option>' +
+                (isCustom ? '<option value="' + esc(penalCodesCurrency) + '" selected>' + esc(penalCodesCurrency) + ' (Custom)</option>' : '') +
+                '<option value="__other__">Other...</option>' +
+              '</select>';
+            })() +
             '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="pcResetToDefaults()" title="Reset to Defaults"><i class="fa fa-arrows-rotate"></i> Reset</button> ' +
             '<button class="dd-btn dd-btn-sm dd-btn-primary" onclick="pcShowAddCategory()"><i class="fa fa-plus"></i> Category</button>' +
           '</div>' +
@@ -3488,9 +3496,24 @@ $('#dd-loading').hide();
       });
     }
 
-    window.pcSetCurrency = function(val) {
-      penalCodesCurrency = val;
-      renderPenalCodesCategories(penalCodesData);
+    window.pcHandleCurrencyChange = function(selectEl) {
+      var val = selectEl.value;
+      if (val === '__other__') {
+        var custom = prompt('Enter a custom currency symbol (e.g. R$, kr, \u20B9):');
+        if (!custom || !custom.trim()) {
+          // Cancelled — revert select to current value
+          selectEl.value = penalCodesCurrency;
+          if (!selectEl.value) selectEl.value = 'USD';
+          return;
+        }
+        penalCodesCurrency = custom.trim();
+        // Re-render the whole panel so the select shows the custom option
+        $('#dd-panel-penalCodes .dd-card').html(renderPenalCodesPanel());
+        renderPenalCodesCategories(penalCodesData);
+      } else {
+        penalCodesCurrency = val;
+        renderPenalCodesCategories(penalCodesData);
+      }
       pcSaveAll();
     };
 
@@ -3626,7 +3649,7 @@ $('#dd-loading').hide();
           '<input type="text" id="pcv-name" value="' + esc(values.name) + '">' +
           '<label>Jail Time *</label>' +
           '<input type="text" id="pcv-jailtime" value="' + esc(values.jailTime) + '" placeholder="e.g. 30 seconds, 5 minutes">' +
-          '<label>Fine (' + (pcCurrencySymbols[penalCodesCurrency] || '$') + ')</label>' +
+          '<label>Fine (' + pcGetCurrencySymbol(penalCodesCurrency) + ')</label>' +
           '<input type="number" id="pcv-fine" min="0" step="1" value="' + (values.fine || 0) + '" placeholder="e.g. 500">' +
           '<label>Explanation</label>' +
           '<textarea id="pcv-explanation" rows="2">' + esc(values.explanation || '') + '</textarea>' +
