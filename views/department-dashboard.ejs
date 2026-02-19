@@ -3461,7 +3461,20 @@ $('#dd-loading').hide();
     //  PENAL CODES COMPONENT
     // ══════════════════════════════════════════
 
-    var pcKnownCurrencies = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', CAD: 'C$', AUD: 'A$' };
+    var pcKnownCurrencies = {};
+    var pcCurrencyList = [];
+    var pcDefaultCurrencies = [
+      { code: 'USD', symbol: '$', builtin: true },
+      { code: 'EUR', symbol: '\u20AC', builtin: true },
+      { code: 'GBP', symbol: '\u00A3', builtin: true },
+      { code: 'CAD', symbol: 'C$', builtin: true },
+      { code: 'AUD', symbol: 'A$', builtin: true }
+    ];
+
+    function pcBuildKnownCurrencies() {
+      pcKnownCurrencies = {};
+      pcCurrencyList.forEach(function(c) { pcKnownCurrencies[c.code] = c.symbol; });
+    }
 
     function pcGetCurrencySymbol(code) {
       return pcKnownCurrencies[code] || code || '$';
@@ -3524,6 +3537,11 @@ $('#dd-loading').hide();
           console.log('[PenalCodes] Response:', data);
           penalCodesData = (data && data.categories) || [];
           penalCodesCurrency = (data && data.currency) || 'USD';
+          // Load currencies from API, fall back to defaults
+          pcCurrencyList = (data && data.currencies && data.currencies.length > 0)
+            ? data.currencies
+            : pcDefaultCurrencies.slice();
+          pcBuildKnownCurrencies();
           console.log('[PenalCodes] Categories count:', penalCodesData.length);
           renderPenalCodesCategories(penalCodesData);
         },
@@ -3653,7 +3671,7 @@ $('#dd-loading').hide();
         url: API_URL + '/api/v1/community/' + communityId + '/penal-codes',
         method: 'PUT',
         contentType: 'application/json',
-        data: JSON.stringify({ categories: penalCodesData, currency: penalCodesCurrency }),
+        data: JSON.stringify({ categories: penalCodesData, currency: penalCodesCurrency, currencies: pcCurrencyList }),
         success: function() {
           if (callback) callback();
         },
@@ -3662,15 +3680,6 @@ $('#dd-loading').hide();
         }
       });
     }
-
-    // Currency list — starts with built-in, custom ones get appended
-    var pcCurrencyList = [
-      { code: 'USD', symbol: '$', builtin: true },
-      { code: 'EUR', symbol: '\u20AC', builtin: true },
-      { code: 'GBP', symbol: '\u00A3', builtin: true },
-      { code: 'CAD', symbol: 'C$', builtin: true },
-      { code: 'AUD', symbol: 'A$', builtin: true }
-    ];
 
     // If current currency isn't in the list, add it as custom
     function pcEnsureCurrentCurrency() {
@@ -3729,11 +3738,9 @@ $('#dd-loading').hide();
         var c = pcCurrencyList[idx];
         if (!c) return;
         penalCodesCurrency = c.code;
-        // Update the known currencies map for the helper
-        if (!pcKnownCurrencies[c.code]) pcKnownCurrencies[c.code] = c.symbol;
+        pcBuildKnownCurrencies();
         pcSaveAll(function() {
           renderCurrencyList();
-          // Update the button text in the header
           $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
           $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
           renderPenalCodesCategories(penalCodesData);
@@ -3771,19 +3778,14 @@ $('#dd-loading').hide();
           var oldCode = c.code;
           c.symbol = newSym;
           c.code = newCode;
-          delete pcKnownCurrencies[oldCode];
-          pcKnownCurrencies[newCode] = newSym;
           if (oldCode === penalCodesCurrency) penalCodesCurrency = newCode;
-          if (c.code === penalCodesCurrency) {
-            pcSaveAll(function() {
-              renderCurrencyList();
-              $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
-              $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
-              renderPenalCodesCategories(penalCodesData);
-            });
-          } else {
+          pcBuildKnownCurrencies();
+          pcSaveAll(function() {
             renderCurrencyList();
-          }
+            $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
+            $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
+            renderPenalCodesCategories(penalCodesData);
+          });
         }
 
         $row.find('.dd-pc-edit-save').on('click', function(e) { e.stopPropagation(); saveEdit(); });
@@ -3798,8 +3800,8 @@ $('#dd-loading').hide();
         var c = pcCurrencyList[idx];
         if (!c || c.builtin || c.code === penalCodesCurrency) return;
         pcCurrencyList.splice(idx, 1);
-        delete pcKnownCurrencies[c.code];
-        renderCurrencyList();
+        pcBuildKnownCurrencies();
+        pcSaveAll(function() { renderCurrencyList(); });
       };
 
       // Add new currency
@@ -3811,10 +3813,10 @@ $('#dd-loading').hide();
         var exists = pcCurrencyList.some(function(c) { return c.code === code; });
         if (exists) { alert('Currency code "' + code + '" already exists.'); return; }
         pcCurrencyList.push({ code: code, symbol: sym, builtin: false });
-        pcKnownCurrencies[code] = sym;
+        pcBuildKnownCurrencies();
         $('#pc-currency-new-symbol').val('');
         $('#pc-currency-new-code').val('');
-        renderCurrencyList();
+        pcSaveAll(function() { renderCurrencyList(); });
       });
 
       // Enter key in inputs triggers add
@@ -3837,6 +3839,10 @@ $('#dd-loading').hide();
         success: function(data) {
           penalCodesData = (data && data.categories) || [];
           penalCodesCurrency = (data && data.currency) || 'USD';
+          pcCurrencyList = (data && data.currencies && data.currencies.length > 0)
+            ? data.currencies
+            : pcDefaultCurrencies.slice();
+          pcBuildKnownCurrencies();
           // Update the currency button in the header
           $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
           $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);

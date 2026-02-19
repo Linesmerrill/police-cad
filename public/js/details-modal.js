@@ -858,6 +858,9 @@ $(document).ready(function () {
         success: function (data) {
           const categories = (data && data.categories) || [];
           const currency = (data && data.currency) || 'USD';
+          if (data && data.currencies) {
+            data.currencies.forEach(function(c) { knownCurrencies[c.code] = c.symbol; });
+          }
           const sym = getCurrencySymbol(currency);
           const $select = $("#ticket-select");
           $select.find('optgroup:not([label="Crime not listed"])').remove();

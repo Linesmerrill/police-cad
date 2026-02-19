@@ -1652,6 +1652,9 @@
     var customFieldDefs = <%- JSON.stringify(community?.community?.mostWantedCustomFields || []) %>;
     var communityPenalCodes = <%- JSON.stringify(community?.community?.penalCodes || { currency: 'USD', categories: [] }) %>;
     var penalCodesKnownCurrencies = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', CAD: 'C$', AUD: 'A$' };
+    if (communityPenalCodes.currencies) {
+      communityPenalCodes.currencies.forEach(function(c) { penalCodesKnownCurrencies[c.code] = c.symbol; });
+    }
     function getCurrencySymbol(code) { return penalCodesKnownCurrencies[code] || code || '$'; }
     var apiToken = '<%= process.env.POLICE_CAD_API_TOKEN || "" %>';
     var currentUserId = '<%= user._id %>';
