@@ -3739,12 +3739,13 @@ $('#dd-loading').hide();
         if (!c) return;
         penalCodesCurrency = c.code;
         pcBuildKnownCurrencies();
-        pcSaveAll(function() {
-          renderCurrencyList();
-          $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
-          $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
-          renderPenalCodesCategories(penalCodesData);
-        });
+        // Update UI immediately
+        renderCurrencyList();
+        $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
+        $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
+        renderPenalCodesCategories(penalCodesData);
+        // Persist to backend
+        pcSaveAll();
       };
 
       window.pcEditCurrencyItem = function(idx) {
@@ -3780,12 +3781,12 @@ $('#dd-loading').hide();
           c.code = newCode;
           if (oldCode === penalCodesCurrency) penalCodesCurrency = newCode;
           pcBuildKnownCurrencies();
-          pcSaveAll(function() {
-            renderCurrencyList();
-            $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
-            $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
-            renderPenalCodesCategories(penalCodesData);
-          });
+          // Update UI immediately
+          renderCurrencyList();
+          $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
+          $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
+          renderPenalCodesCategories(penalCodesData);
+          pcSaveAll();
         }
 
         $row.find('.dd-pc-edit-save').on('click', function(e) { e.stopPropagation(); saveEdit(); });
@@ -3801,7 +3802,8 @@ $('#dd-loading').hide();
         if (!c || c.builtin || c.code === penalCodesCurrency) return;
         pcCurrencyList.splice(idx, 1);
         pcBuildKnownCurrencies();
-        pcSaveAll(function() { renderCurrencyList(); });
+        renderCurrencyList();
+        pcSaveAll();
       };
 
       // Add new currency
@@ -3816,7 +3818,8 @@ $('#dd-loading').hide();
         pcBuildKnownCurrencies();
         $('#pc-currency-new-symbol').val('');
         $('#pc-currency-new-code').val('');
-        pcSaveAll(function() { renderCurrencyList(); });
+        renderCurrencyList();
+        pcSaveAll();
       });
 
       // Enter key in inputs triggers add
