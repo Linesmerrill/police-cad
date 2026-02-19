@@ -2875,7 +2875,8 @@ $('#dd-loading').hide();
     }
 
     function loadPenalCodes() {
-      if (!communityId) return;
+      if (!communityId) { console.warn('[PenalCodes] No communityId'); return; }
+      console.log('[PenalCodes] Loading from:', API_URL + '/api/v1/community/' + communityId + '/penal-codes');
       $('.dd-pc-loading').show();
       $('.dd-pc-empty').hide();
       $('#dd-pc-categories').empty();
@@ -2884,12 +2885,16 @@ $('#dd-loading').hide();
         url: API_URL + '/api/v1/community/' + communityId + '/penal-codes',
         method: 'GET',
         success: function(data) {
+          console.log('[PenalCodes] Response:', data);
           penalCodesData = (data && data.categories) || [];
+          console.log('[PenalCodes] Categories count:', penalCodesData.length);
           renderPenalCodesCategories(penalCodesData);
         },
-        error: function() {
+        error: function(xhr, status, err) {
+          console.error('[PenalCodes] Error:', status, err, xhr.status, xhr.responseText);
           $('.dd-pc-loading').hide();
           $('.dd-pc-empty').show().find('.dd-empty-title').text('Unable to load penal codes');
+          $('.dd-pc-empty').find('.dd-empty-sub').text(err || status || 'Check console for details');
         }
       });
     }
