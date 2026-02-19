@@ -252,6 +252,13 @@
       font-weight: 700;
       color: #fff;
       flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .dd-user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .dd-user-info { flex: 1; min-width: 0; }
@@ -857,36 +864,229 @@
     }
 
     /* ── Notepad Component ── */
-    .dd-notepad-textarea {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid var(--dd-glass-border);
+    .dd-notepad-layout {
+      display: flex;
+      min-height: 380px;
+      max-height: 480px;
       border-radius: var(--dd-radius-sm);
-      color: var(--dd-text);
-      font-family: 'JetBrains Mono', monospace;
+      overflow: hidden;
+      border: 1px solid var(--dd-glass-border);
+    }
+
+    .dd-notepad-sidebar {
+      width: 240px;
+      min-width: 240px;
+      background: rgba(0, 0, 0, 0.2);
+      border-right: 1px solid var(--dd-glass-border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dd-notepad-sidebar-header {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--dd-glass-border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .dd-notepad-new-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--dd-radius-sm);
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      color: var(--dd-amber);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .dd-notepad-new-btn:hover {
+      background: rgba(245, 158, 11, 0.2);
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+
+    .dd-notepad-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .dd-notepad-list::-webkit-scrollbar { width: 3px; }
+    .dd-notepad-list::-webkit-scrollbar-track { background: transparent; }
+    .dd-notepad-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+    .dd-note-item {
+      padding: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      transition: background 0.12s;
+      position: relative;
+    }
+
+    .dd-note-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .dd-note-item.active {
+      background: rgba(245, 158, 11, 0.08);
+      border-left: 2px solid var(--dd-amber);
+    }
+
+    .dd-note-item-title {
       font-size: 0.8125rem;
-      padding: 1rem;
-      resize: vertical;
-      min-height: 200px;
+      font-weight: 600;
+      color: var(--dd-text);
+      margin: 0 0 0.125rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-right: 1.5rem;
+    }
+
+    .dd-note-item-preview {
+      font-size: 0.6875rem;
+      color: var(--dd-text-dim);
+      margin: 0 0 0.25rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dd-note-item-date {
+      font-size: 0.625rem;
+      color: var(--dd-text-dim);
+    }
+
+    .dd-note-item-delete {
+      position: absolute;
+      top: 0.625rem;
+      right: 0.5rem;
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      background: transparent;
+      border: none;
+      color: var(--dd-text-dim);
+      font-size: 0.625rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: all 0.12s;
+    }
+
+    .dd-note-item:hover .dd-note-item-delete { opacity: 1; }
+
+    .dd-note-item-delete:hover {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--dd-red);
+    }
+
+    .dd-notepad-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+
+    .dd-notepad-empty i {
+      font-size: 1.5rem;
+      color: var(--dd-text-dim);
+      margin-bottom: 0.625rem;
+      opacity: 0.5;
+    }
+
+    .dd-notepad-empty p {
+      font-size: 0.75rem;
+      color: var(--dd-text-dim);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .dd-notepad-editor {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: rgba(0, 0, 0, 0.1);
+      min-width: 0;
+    }
+
+    .dd-notepad-editor-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--dd-text-dim);
+      gap: 0.5rem;
+    }
+
+    .dd-notepad-editor-empty i {
+      font-size: 2rem;
+      opacity: 0.3;
+    }
+
+    .dd-notepad-editor-empty p {
+      font-size: 0.8125rem;
+      margin: 0;
+    }
+
+    .dd-notepad-title-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--dd-glass-border);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.875rem 1rem;
       outline: none;
-      line-height: 1.6;
       transition: border-color 0.15s;
     }
 
-    .dd-notepad-textarea:focus {
-      border-color: rgba(139, 92, 246, 0.3);
+    .dd-notepad-title-input:focus {
+      border-bottom-color: rgba(245, 158, 11, 0.3);
     }
 
-    .dd-notepad-textarea::placeholder { color: var(--dd-text-dim); }
+    .dd-notepad-title-input::placeholder { color: var(--dd-text-dim); }
 
-    .dd-notepad-status {
+    .dd-notepad-content-input {
+      flex: 1;
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--dd-text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8125rem;
+      padding: 0.875rem 1rem;
+      resize: none;
+      outline: none;
+      line-height: 1.7;
+    }
+
+    .dd-notepad-content-input::placeholder { color: var(--dd-text-dim); }
+
+    .dd-notepad-editor-footer {
+      padding: 0.625rem 1rem;
+      border-top: 1px solid var(--dd-glass-border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 0.75rem;
     }
 
-    .dd-notepad-indicator {
+    .dd-notepad-status-text {
       font-size: 0.6875rem;
       color: var(--dd-text-dim);
       display: flex;
@@ -894,14 +1094,58 @@
       gap: 0.375rem;
     }
 
-    .dd-notepad-dot {
+    .dd-notepad-status-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
       background: var(--dd-text-dim);
+      transition: background 0.2s;
     }
 
-    .dd-notepad-dot.saved { background: var(--dd-green); }
+    .dd-notepad-status-dot.saving { background: var(--dd-amber); }
+    .dd-notepad-status-dot.saved { background: var(--dd-green); }
+    .dd-notepad-status-dot.error { background: var(--dd-red); }
+
+    .dd-notepad-save-btn {
+      padding: 0.375rem 0.875rem;
+      border-radius: var(--dd-radius-sm);
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      color: var(--dd-amber);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .dd-notepad-save-btn:hover {
+      background: rgba(245, 158, 11, 0.2);
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+
+    .dd-notepad-save-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Mobile notepad stacking */
+    @media (max-width: 768px) {
+      .dd-notepad-layout {
+        flex-direction: column;
+        max-height: none;
+      }
+      .dd-notepad-sidebar {
+        width: 100%;
+        min-width: 100%;
+        max-height: 200px;
+        border-right: none;
+        border-bottom: 1px solid var(--dd-glass-border);
+      }
+      .dd-notepad-editor {
+        min-height: 280px;
+      }
+    }
 
     /* ── 10-Codes Component ── */
     .dd-codes-search {
@@ -1175,20 +1419,20 @@
       color: #fff;
     }
 
-    /* ── Access Modal ── */
+    /* ── Unified Modal System ── */
     .dd-modal-overlay {
       position: fixed;
       inset: 0;
       z-index: 9000;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       display: flex;
       align-items: center;
       justify-content: center;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s ease;
+      transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .dd-modal-overlay.visible {
@@ -1197,18 +1441,32 @@
     }
 
     .dd-modal {
-      background: rgba(20, 21, 30, 0.98);
-      border: 1px solid var(--dd-glass-border);
+      background: rgba(16, 17, 24, 0.97);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: var(--dd-radius);
       width: 90%;
-      max-width: 380px;
+      max-width: 400px;
       overflow: hidden;
-      transform: scale(0.95) translateY(8px);
-      transition: transform 0.2s ease;
+      transform: scale(0.92) translateY(12px);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      position: relative;
     }
 
     .dd-modal-overlay.visible .dd-modal {
       transform: scale(1) translateY(0);
+    }
+
+    /* Type accent bar at top */
+    .dd-modal::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--dd-modal-accent, var(--dd-accent));
+      opacity: 0.8;
     }
 
     .dd-modal-header {
@@ -1254,14 +1512,27 @@
     }
 
     .dd-modal-icon {
-      width: 48px;
-      height: 48px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.25rem;
       margin: 0 auto 1rem;
+      position: relative;
+    }
+
+    /* Subtle glow behind icon */
+    .dd-modal-icon::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      background: inherit;
+      opacity: 0.3;
+      filter: blur(8px);
+      z-index: -1;
     }
 
     .dd-modal-body p {
@@ -1270,7 +1541,7 @@
       margin: 0 0 0.375rem;
     }
 
-    .dd-modal-body .dd-text-muted {
+    .dd-modal-body .dd-modal-detail {
       color: var(--dd-text-dim);
       font-size: 0.75rem;
     }
@@ -1283,7 +1554,7 @@
 
     .dd-modal-btn {
       flex: 1;
-      padding: 0.5rem 1rem;
+      padding: 0.5625rem 1rem;
       border-radius: var(--dd-radius-sm);
       font-family: 'Outfit', sans-serif;
       font-size: 0.8125rem;
@@ -1321,6 +1592,30 @@
       border-color: rgba(139, 92, 246, 0.5);
       color: #fff;
       text-decoration: none;
+    }
+
+    .dd-modal-btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #fca5a5;
+    }
+
+    .dd-modal-btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fff;
+    }
+
+    .dd-modal-btn-warning {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      color: #fcd34d;
+    }
+
+    .dd-modal-btn-warning:hover {
+      background: rgba(245, 158, 11, 0.25);
+      border-color: rgba(245, 158, 11, 0.4);
+      color: #fff;
     }
 
     /* ── Stagger animation ── */
@@ -1437,7 +1732,7 @@
     <div class="dd-sidebar-footer">
       <a href="/profile" style="text-decoration:none;">
         <div class="dd-sidebar-user">
-          <div class="dd-user-avatar"><%= userInitial %></div>
+          <div class="dd-user-avatar"><% if (user.user && user.user.profilePicture) { %><img src="<%= user.user.profilePicture %>" alt=""><% } else { %><%= userInitial %><% } %></div>
           <div class="dd-user-info">
             <div class="dd-user-name"><%= username %></div>
             <div class="dd-user-role">Department Member</div>
@@ -1473,26 +1768,19 @@
   <!-- Toast -->
   <div class="dd-toast" id="dd-toast"></div>
 
-  <!-- Department Access Modal -->
-  <div class="dd-modal-overlay" id="dd-access-modal">
-    <div class="dd-modal">
+  <!-- Unified Modal -->
+  <div class="dd-modal-overlay" id="dd-modal-overlay">
+    <div class="dd-modal" id="dd-modal">
       <div class="dd-modal-header">
-        <h3 id="dd-access-title"><i class="fa fa-lock"></i> Access Restricted</h3>
-        <button class="dd-modal-close" onclick="ddCloseAccessModal()"><i class="fa fa-times"></i></button>
+        <h3 id="dd-modal-title"></h3>
+        <button class="dd-modal-close" id="dd-modal-close"><i class="fa fa-times"></i></button>
       </div>
       <div class="dd-modal-body">
-        <div class="dd-modal-icon" id="dd-access-icon-wrap" style="background:rgba(251,191,36,0.12);">
-          <i class="fa fa-lock" id="dd-access-icon" style="color:#fbbf24;"></i>
-        </div>
-        <p id="dd-access-msg" style="color:var(--dd-text);">You don't have access to this department.</p>
-        <p class="dd-text-muted" id="dd-access-sub">You can request to join from the community details page.</p>
+        <div class="dd-modal-icon" id="dd-modal-icon"></div>
+        <p id="dd-modal-msg" style="color:var(--dd-text);"></p>
+        <p class="dd-modal-detail" id="dd-modal-detail"></p>
       </div>
-      <div class="dd-modal-footer">
-        <button class="dd-modal-btn dd-modal-btn-secondary" onclick="ddCloseAccessModal()">Close</button>
-        <a class="dd-modal-btn dd-modal-btn-primary" id="dd-access-link" href="#">
-          <i class="fa fa-external-link-alt"></i> Go to Community
-        </a>
-      </div>
+      <div class="dd-modal-footer" id="dd-modal-footer"></div>
     </div>
   </div>
 
@@ -1531,7 +1819,7 @@
         label: 'Notepad',
         icon: 'fa-sticky-note',
         navIcon: 'fa-sticky-note',
-        gridClass: '',
+        gridClass: 'dd-grid-full',
         accentColor: 'var(--dd-amber)',
         render: renderNotepadPanel,
         init: initNotepad
@@ -2187,48 +2475,272 @@
     };
 
     // ══════════════════════════════════════════
-    //  NOTEPAD COMPONENT
+    //  NOTEPAD COMPONENT (User Profile Notes)
     // ══════════════════════════════════════════
-    var notepadTimer = null;
-    var notepadSaveKey = 'dd-notepad-' + departmentId;
+    var ddNotes = [];
+    var ddSelectedNoteId = null;
+    var ddNotepadSaveTimer = null;
 
     function renderNotepadPanel() {
       return '<div class="dd-card-header">' +
           '<div class="dd-card-header-left">' +
             '<div class="dd-card-icon" style="background:rgba(245,158,11,0.15);color:var(--dd-amber);"><i class="fa fa-sticky-note"></i></div>' +
-            '<div><h3 class="dd-card-title">Notepad</h3><p class="dd-card-subtitle">Quick notes &amp; scratchpad</p></div>' +
+            '<div><h3 class="dd-card-title">Notepad</h3><p class="dd-card-subtitle">Synced to your profile</p></div>' +
           '</div>' +
         '</div>' +
-        '<div class="dd-card-body">' +
-          '<textarea class="dd-notepad-textarea" id="dd-notepad" placeholder="Type your notes here..."></textarea>' +
-          '<div class="dd-notepad-status">' +
-            '<div class="dd-notepad-indicator">' +
-              '<div class="dd-notepad-dot" id="dd-notepad-dot"></div>' +
-              '<span id="dd-notepad-status">Ready</span>' +
+        '<div class="dd-card-body" style="padding:0;">' +
+          '<div class="dd-notepad-layout">' +
+            /* Sidebar: notes list */
+            '<div class="dd-notepad-sidebar">' +
+              '<div class="dd-notepad-sidebar-header">' +
+                '<button class="dd-notepad-new-btn" onclick="ddNewNote()"><i class="fa fa-plus"></i> New Note</button>' +
+              '</div>' +
+              '<div class="dd-notepad-list" id="dd-notepad-list"></div>' +
+            '</div>' +
+            /* Editor */
+            '<div class="dd-notepad-editor" id="dd-notepad-editor">' +
+              '<div class="dd-notepad-editor-empty" id="dd-notepad-placeholder">' +
+                '<i class="fa fa-sticky-note"></i>' +
+                '<p>Select a note or create a new one</p>' +
+              '</div>' +
+              '<div id="dd-notepad-form" style="display:none;flex-direction:column;flex:1;">' +
+                '<input type="text" class="dd-notepad-title-input" id="dd-notepad-title" placeholder="Note title" maxlength="100">' +
+                '<textarea class="dd-notepad-content-input" id="dd-notepad-content" placeholder="Start writing..."></textarea>' +
+                '<div class="dd-notepad-editor-footer">' +
+                  '<div class="dd-notepad-status-text">' +
+                    '<div class="dd-notepad-status-dot" id="dd-notepad-dot"></div>' +
+                    '<span id="dd-notepad-status">Ready</span>' +
+                  '</div>' +
+                  '<button class="dd-notepad-save-btn" id="dd-notepad-save" onclick="ddSaveNote()">Save</button>' +
+                '</div>' +
+              '</div>' +
             '</div>' +
           '</div>' +
         '</div>';
     }
 
     function initNotepad() {
-      var saved = localStorage.getItem(notepadSaveKey) || '';
-      // Set value on all notepad instances
-      setTimeout(function() {
-        $('textarea#dd-notepad, textarea.dd-notepad-textarea').val(saved);
-        $('textarea#dd-notepad, textarea.dd-notepad-textarea').off('input.notepad').on('input.notepad', function() {
-          var val = $(this).val();
-          // Sync all notepad textareas
-          $('textarea#dd-notepad, textarea.dd-notepad-textarea').not(this).val(val);
-          $('#dd-notepad-dot').removeClass('saved');
-          $('#dd-notepad-status').text('Typing...');
-          clearTimeout(notepadTimer);
-          notepadTimer = setTimeout(function() {
-            localStorage.setItem(notepadSaveKey, val);
-            $('#dd-notepad-dot').addClass('saved');
-            $('#dd-notepad-status').text('Saved locally');
-          }, 800);
+      // Load notes from user profile data (embedded in page)
+      ddNotes = (dbUser && dbUser.user && dbUser.user.notes) ? dbUser.user.notes.slice() : [];
+      ddSelectedNoteId = null;
+      ddRenderNoteList();
+      ddShowPlaceholder();
+    }
+
+    function ddRenderNoteList() {
+      var $lists = $('#dd-notepad-list');
+      $lists.empty();
+
+      if (ddNotes.length === 0) {
+        $lists.html(
+          '<div class="dd-notepad-empty">' +
+            '<i class="fa fa-file-alt"></i>' +
+            '<p>No notes yet.<br>Click <strong>New Note</strong> to get started.</p>' +
+          '</div>'
+        );
+        return;
+      }
+
+      // Sort newest first
+      var sorted = ddNotes.slice().sort(function(a, b) {
+        return new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0);
+      });
+
+      sorted.forEach(function(note) {
+        var content = note.content || '';
+        var preview = content.length > 60 ? content.substring(0, 60) + '...' : content;
+        var isActive = note._id === ddSelectedNoteId;
+        var displayDate = ddFormatNoteDate(note.updatedAt || note.createdAt);
+
+        var html = '<div class="dd-note-item' + (isActive ? ' active' : '') + '" data-note-id="' + note._id + '" onclick="ddSelectNote(\'' + note._id + '\')">' +
+          '<button class="dd-note-item-delete" onclick="event.stopPropagation(); ddDeleteNote(\'' + note._id + '\')" title="Delete note"><i class="fa fa-trash"></i></button>' +
+          '<div class="dd-note-item-title">' + esc(note.title || 'Untitled') + '</div>' +
+          '<div class="dd-note-item-preview">' + esc(preview) + '</div>' +
+          '<div class="dd-note-item-date">' + displayDate + '</div>' +
+        '</div>';
+        $lists.append(html);
+      });
+    }
+
+    function ddFormatNoteDate(dateStr) {
+      if (!dateStr) return '';
+      var d = new Date(dateStr);
+      if (isNaN(d)) return '';
+      var now = new Date();
+      var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      var yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+      var noteDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+      if (noteDay.getTime() === today.getTime()) {
+        return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      } else if (noteDay.getTime() === yesterday.getTime()) {
+        return 'Yesterday';
+      }
+      return d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' });
+    }
+
+    function ddShowPlaceholder() {
+      $('#dd-notepad-form').hide();
+      $('#dd-notepad-placeholder').show();
+    }
+
+    function ddShowEditor() {
+      $('#dd-notepad-placeholder').hide();
+      $('#dd-notepad-form').css('display', 'flex');
+    }
+
+    function ddSelectNote(noteId) {
+      var note = ddNotes.find(function(n) { return n._id === noteId; });
+      if (!note) return;
+      ddSelectedNoteId = noteId;
+      $('#dd-notepad-title').val(note.title || '');
+      $('#dd-notepad-content').val(note.content || '');
+      ddSetNoteStatus('ready', 'Ready');
+      ddShowEditor();
+      ddRenderNoteList();
+    }
+    window.ddSelectNote = ddSelectNote;
+
+    function ddNewNote() {
+      ddSelectedNoteId = null;
+      $('#dd-notepad-title').val('');
+      $('#dd-notepad-content').val('');
+      ddSetNoteStatus('ready', 'New note');
+      ddShowEditor();
+      ddRenderNoteList();
+      // Focus the title
+      setTimeout(function() { $('#dd-notepad-title').focus(); }, 50);
+    }
+    window.ddNewNote = ddNewNote;
+
+    function ddSaveNote() {
+      var title = $('#dd-notepad-title').val().trim();
+      var content = $('#dd-notepad-content').val().trim();
+
+      if (!title && !content) {
+        ddSetNoteStatus('error', 'Title or content required');
+        return;
+      }
+      if (!title) title = 'Untitled';
+
+      var $btn = $('#dd-notepad-save');
+      $btn.prop('disabled', true).text('Saving...');
+      ddSetNoteStatus('saving', 'Saving...');
+
+      if (ddSelectedNoteId) {
+        // Update existing note
+        var existingNote = ddNotes.find(function(n) { return n._id === ddSelectedNoteId; });
+        var updateData = {
+          title: title,
+          content: content,
+          createdAt: existingNote ? existingNote.createdAt : new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        $.ajax({
+          url: API_URL + '/api/v1/users/' + userId + '/notes/' + ddSelectedNoteId,
+          method: 'PUT',
+          data: JSON.stringify(updateData),
+          contentType: 'application/json',
+          success: function() {
+            // Update local data
+            var idx = ddNotes.findIndex(function(n) { return n._id === ddSelectedNoteId; });
+            if (idx !== -1) {
+              ddNotes[idx] = Object.assign({}, ddNotes[idx], updateData);
+            }
+            if (dbUser.user && dbUser.user.notes) {
+              var uIdx = dbUser.user.notes.findIndex(function(n) { return n._id === ddSelectedNoteId; });
+              if (uIdx !== -1) {
+                dbUser.user.notes[uIdx] = Object.assign({}, dbUser.user.notes[uIdx], updateData);
+              }
+            }
+            ddRenderNoteList();
+            ddSetNoteStatus('saved', 'Saved');
+            $btn.prop('disabled', false).text('Save');
+          },
+          error: function(xhr) {
+            console.error('Error updating note:', xhr.responseText);
+            ddSetNoteStatus('error', 'Save failed');
+            $btn.prop('disabled', false).text('Save');
+            ddToast('Failed to save note', 'error');
+          }
         });
-      }, 100);
+      } else {
+        // Create new note
+        $.ajax({
+          url: API_URL + '/api/v1/users/' + userId + '/notes',
+          method: 'POST',
+          data: JSON.stringify({ title: title, content: content }),
+          contentType: 'application/json',
+          success: function(response) {
+            if (response && response.note) {
+              ddNotes.push(response.note);
+              if (dbUser.user) {
+                if (!dbUser.user.notes) dbUser.user.notes = [];
+                dbUser.user.notes.push(response.note);
+              }
+              ddSelectedNoteId = response.note._id;
+            }
+            ddRenderNoteList();
+            ddSetNoteStatus('saved', 'Saved');
+            $btn.prop('disabled', false).text('Save');
+          },
+          error: function(xhr) {
+            console.error('Error creating note:', xhr.responseText);
+            ddSetNoteStatus('error', 'Save failed');
+            $btn.prop('disabled', false).text('Save');
+            ddToast('Failed to create note', 'error');
+          }
+        });
+      }
+    }
+    window.ddSaveNote = ddSaveNote;
+
+    function ddDeleteNote(noteId) {
+      var note = ddNotes.find(function(n) { return n._id === noteId; });
+      var noteTitle = (note && note.title) ? note.title : 'Untitled';
+
+      ddModal({
+        type: 'danger',
+        icon: 'fa-trash',
+        title: 'Delete Note',
+        message: 'Delete <strong>' + esc(noteTitle) + '</strong>?',
+        detail: 'This action cannot be undone.',
+        confirmText: 'Delete',
+        confirmIcon: 'fa-trash',
+        cancelText: 'Keep',
+        onConfirm: function() {
+          $.ajax({
+            url: API_URL + '/api/v1/users/' + userId + '/notes/' + noteId,
+            method: 'DELETE',
+            success: function() {
+              ddNotes = ddNotes.filter(function(n) { return n._id !== noteId; });
+              if (dbUser.user && dbUser.user.notes) {
+                dbUser.user.notes = dbUser.user.notes.filter(function(n) { return n._id !== noteId; });
+              }
+              if (ddSelectedNoteId === noteId) {
+                ddSelectedNoteId = null;
+                ddShowPlaceholder();
+              }
+              ddRenderNoteList();
+              ddToast('Note deleted', 'success');
+            },
+            error: function(xhr) {
+              console.error('Error deleting note:', xhr.responseText);
+              ddToast('Failed to delete note', 'error');
+            }
+          });
+        }
+      });
+    }
+    window.ddDeleteNote = ddDeleteNote;
+
+    function ddSetNoteStatus(state, text) {
+      var $dot = $('#dd-notepad-dot');
+      var $text = $('#dd-notepad-status');
+      $dot.removeClass('saving saved error');
+      if (state !== 'ready') $dot.addClass(state);
+      $text.text(text);
     }
 
     // ══════════════════════════════════════════
@@ -2429,41 +2941,166 @@
       });
     }
 
-    // ── Department Access Modal ──
-    function ddShowAccessModal(deptName, isPending, communityUrl) {
-      var $overlay = $('#dd-access-modal');
-      if (isPending) {
-        $('#dd-access-title').html('<i class="fa fa-clock"></i> Request Pending');
-        $('#dd-access-icon-wrap').css('background', 'rgba(59,130,246,0.12)');
-        $('#dd-access-icon').removeClass('fa-lock').addClass('fa-clock').css('color', '#3b82f6');
-        $('#dd-access-msg').html('Your request to join <strong>' + esc(deptName) + '</strong> is pending approval.');
-        $('#dd-access-sub').text('An administrator will review your request soon.');
+    // ══════════════════════════════════════════
+    //  UNIFIED MODAL SYSTEM
+    // ══════════════════════════════════════════
+    // Type configs: { accent (CSS color), iconBg, iconColor, confirmClass }
+    var ddModalTypes = {
+      danger:  { accent: 'var(--dd-red)',    iconBg: 'rgba(239,68,68,0.12)',   iconColor: '#fca5a5', btnClass: 'dd-modal-btn-danger' },
+      warning: { accent: 'var(--dd-amber)',  iconBg: 'rgba(245,158,11,0.12)',  iconColor: '#fcd34d', btnClass: 'dd-modal-btn-warning' },
+      info:    { accent: 'var(--dd-blue)',   iconBg: 'rgba(59,130,246,0.12)',   iconColor: '#93c5fd', btnClass: 'dd-modal-btn-primary' },
+      confirm: { accent: 'var(--dd-accent)', iconBg: 'rgba(139,92,246,0.12)',  iconColor: '#c4b5fd', btnClass: 'dd-modal-btn-primary' },
+      success: { accent: 'var(--dd-green)',  iconBg: 'rgba(34,197,94,0.12)',   iconColor: '#86efac', btnClass: 'dd-modal-btn-primary' }
+    };
+
+    var ddModalCallback = null;
+
+    /**
+     * Show a unified modal.
+     * @param {Object} opts
+     * @param {string} opts.type      - 'danger' | 'warning' | 'info' | 'confirm' | 'success'
+     * @param {string} opts.icon      - FontAwesome class, e.g. 'fa-trash'
+     * @param {string} opts.title     - Modal title text
+     * @param {string} opts.message   - Main message (supports HTML)
+     * @param {string} [opts.detail]  - Smaller subtext below message
+     * @param {string} [opts.confirmText] - Confirm button label (default: 'Confirm')
+     * @param {string} [opts.cancelText]  - Cancel button label (default: 'Cancel')
+     * @param {Function} [opts.onConfirm] - Called when confirm is clicked
+     * @param {Function} [opts.onCancel]  - Called when cancel/close is clicked
+     * @param {Array}  [opts.buttons] - Custom buttons array: [{ label, class, href, onClick }]
+     */
+    function ddModal(opts) {
+      var type = ddModalTypes[opts.type] || ddModalTypes.confirm;
+
+      // Set accent color on the modal
+      $('#dd-modal').css('--dd-modal-accent', type.accent);
+
+      // Title
+      $('#dd-modal-title').html('<i class="fa ' + (opts.icon || 'fa-info-circle') + '" style="color:' + type.iconColor + ';"></i> ' + esc(opts.title || 'Confirm'));
+
+      // Icon
+      $('#dd-modal-icon')
+        .css('background', type.iconBg)
+        .html('<i class="fa ' + (opts.icon || 'fa-info-circle') + '" style="color:' + type.iconColor + ';font-size:1.375rem;"></i>');
+
+      // Message & detail
+      $('#dd-modal-msg').html(opts.message || '');
+      if (opts.detail) {
+        $('#dd-modal-detail').html(opts.detail).show();
       } else {
-        $('#dd-access-title').html('<i class="fa fa-lock"></i> Access Restricted');
-        $('#dd-access-icon-wrap').css('background', 'rgba(251,191,36,0.12)');
-        $('#dd-access-icon').removeClass('fa-clock').addClass('fa-lock').css('color', '#fbbf24');
-        $('#dd-access-msg').html('You don\'t have access to the <strong>' + esc(deptName) + '</strong> department.');
-        $('#dd-access-sub').text('You can request to join from the community details page.');
+        $('#dd-modal-detail').hide();
       }
-      $('#dd-access-link').attr('href', communityUrl);
-      $overlay.addClass('visible');
+
+      // Build footer buttons
+      var $footer = $('#dd-modal-footer');
+      $footer.empty();
+
+      if (opts.buttons) {
+        // Custom buttons
+        opts.buttons.forEach(function(btn) {
+          if (btn.href) {
+            var $a = $('<a class="dd-modal-btn ' + (btn.class || 'dd-modal-btn-secondary') + '" href="' + btn.href + '"></a>');
+            if (btn.icon) $a.append('<i class="fa ' + btn.icon + '"></i> ');
+            $a.append(btn.label || 'OK');
+            $footer.append($a);
+          } else {
+            var $b = $('<button class="dd-modal-btn ' + (btn.class || 'dd-modal-btn-secondary') + '"></button>');
+            if (btn.icon) $b.append('<i class="fa ' + btn.icon + '"></i> ');
+            $b.append(btn.label || 'OK');
+            $b.on('click', function() {
+              ddCloseModal();
+              if (btn.onClick) btn.onClick();
+            });
+            $footer.append($b);
+          }
+        });
+      } else {
+        // Default: Cancel + Confirm
+        var $cancel = $('<button class="dd-modal-btn dd-modal-btn-secondary"></button>').text(opts.cancelText || 'Cancel');
+        $cancel.on('click', function() {
+          ddCloseModal();
+          if (opts.onCancel) opts.onCancel();
+        });
+
+        var $confirm = $('<button class="dd-modal-btn ' + type.btnClass + '"></button>');
+        if (opts.confirmIcon) $confirm.append('<i class="fa ' + opts.confirmIcon + '"></i> ');
+        $confirm.append(opts.confirmText || 'Confirm');
+        $confirm.on('click', function() {
+          ddCloseModal();
+          if (opts.onConfirm) opts.onConfirm();
+        });
+
+        $footer.append($cancel).append($confirm);
+      }
+
+      // Store callback ref for Escape handling
+      ddModalCallback = opts.onCancel || null;
+
+      // Show
+      $('#dd-modal-overlay').addClass('visible');
+    }
+    window.ddModal = ddModal;
+
+    function ddCloseModal() {
+      $('#dd-modal-overlay').removeClass('visible');
+      ddModalCallback = null;
+    }
+    window.ddCloseModal = ddCloseModal;
+
+    // Close button
+    $(document).on('click', '#dd-modal-close', function() {
+      var cb = ddModalCallback;
+      ddCloseModal();
+      if (cb) cb();
+    });
+
+    // Close on overlay click
+    $(document).on('click', '#dd-modal-overlay', function(e) {
+      if (e.target === this) {
+        var cb = ddModalCallback;
+        ddCloseModal();
+        if (cb) cb();
+      }
+    });
+
+    // Close on Escape
+    $(document).on('keydown', function(e) {
+      if (e.key === 'Escape' && $('#dd-modal-overlay').hasClass('visible')) {
+        var cb = ddModalCallback;
+        ddCloseModal();
+        if (cb) cb();
+      }
+    });
+
+    // ── Department Access Modal (uses unified system) ──
+    function ddShowAccessModal(deptName, isPending, communityUrl) {
+      if (isPending) {
+        ddModal({
+          type: 'info',
+          icon: 'fa-clock',
+          title: 'Request Pending',
+          message: 'Your request to join <strong>' + esc(deptName) + '</strong> is pending approval.',
+          detail: 'An administrator will review your request soon.',
+          buttons: [
+            { label: 'Close', class: 'dd-modal-btn-secondary', onClick: function() {} },
+            { label: 'Go to Community', class: 'dd-modal-btn-primary', icon: 'fa-external-link-alt', href: communityUrl }
+          ]
+        });
+      } else {
+        ddModal({
+          type: 'warning',
+          icon: 'fa-lock',
+          title: 'Access Restricted',
+          message: 'You don\'t have access to the <strong>' + esc(deptName) + '</strong> department.',
+          detail: 'You can request to join from the community details page.',
+          buttons: [
+            { label: 'Close', class: 'dd-modal-btn-secondary', onClick: function() {} },
+            { label: 'Go to Community', class: 'dd-modal-btn-warning', icon: 'fa-external-link-alt', href: communityUrl }
+          ]
+        });
+      }
     }
     window.ddShowAccessModal = ddShowAccessModal;
-
-    function ddCloseAccessModal() {
-      $('#dd-access-modal').removeClass('visible');
-    }
-    window.ddCloseAccessModal = ddCloseAccessModal;
-
-    // Close modal on overlay click
-    $(document).on('click', '#dd-access-modal', function(e) {
-      if (e.target === this) ddCloseAccessModal();
-    });
-
-    // Close modal on Escape key
-    $(document).on('keydown', function(e) {
-      if (e.key === 'Escape') ddCloseAccessModal();
-    });
 
     // ── Hide a component entirely (card + nav) ──
     function hideComponent(key) {
