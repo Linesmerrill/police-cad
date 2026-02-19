@@ -1799,6 +1799,7 @@
     var enabledComponents = {};
     var pendingWarrants = [];
     var tenCodes = [];
+    var penalCodesData = [];
     var expandedWarrantId = null;
     var currentTemplateName = '';
 
@@ -1841,6 +1842,15 @@
         accentColor: 'var(--dd-blue)',
         render: renderCodesPanel,
         init: loadTenCodes
+      },
+      penalCodes: {
+        label: 'Penal Codes',
+        icon: 'fa-scale-balanced',
+        navIcon: 'fa-scale-balanced',
+        gridClass: 'dd-grid-full',
+        accentColor: 'var(--dd-amber)',
+        render: renderPenalCodesPanel,
+        init: loadPenalCodes
       }
     };
 
@@ -1893,20 +1903,7 @@
       buildPanels();
       checkWarrantApprovalMode();
 
-      // Add "Manage Penal Codes" link for judicial departments
-      if (currentTemplateName === 'judicial') {
-        var encodedCId = communityId ? btoa(communityId).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : '';
-        if (encodedCId) {
-          $('#dd-nav-components').append(
-            '<a class="dd-nav-item" href="/penal-code-settings?c=' + encodedCId + '">' +
-              '<i class="fa fa-gavel"></i>' +
-              'Manage Penal Codes' +
-            '</a>'
-          );
-        }
-      }
-
-      $('#dd-loading').hide();
+$('#dd-loading').hide();
       $('#dd-panels').show();
 
       // Init each enabled component
@@ -2847,6 +2844,327 @@
       });
       renderTenCodes(filtered);
     };
+
+    // ══════════════════════════════════════════
+    //  PENAL CODES COMPONENT
+    // ══════════════════════════════════════════
+
+    function renderPenalCodesPanel() {
+      return '<div class="dd-card-header">' +
+          '<div class="dd-card-header-left">' +
+            '<div class="dd-card-icon" style="background:rgba(251,191,36,0.15);color:var(--dd-amber);"><i class="fa fa-scale-balanced"></i></div>' +
+            '<div><h3 class="dd-card-title">Penal Codes</h3><p class="dd-card-subtitle">Manage violations &amp; penalties</p></div>' +
+          '</div>' +
+          '<div class="dd-card-header-right">' +
+            '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="pcResetToDefaults()" title="Reset to Defaults"><i class="fa fa-arrows-rotate"></i> Reset</button> ' +
+            '<button class="dd-btn dd-btn-sm dd-btn-primary" onclick="pcShowAddCategory()"><i class="fa fa-plus"></i> Category</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="dd-card-body">' +
+          '<div style="margin-bottom:12px;">' +
+            '<input type="text" class="dd-search-input" id="dd-pc-search" placeholder="Search violations..." oninput="pcFilterViolations(this.value)" style="width:100%;padding:8px 12px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;">' +
+          '</div>' +
+          '<div class="dd-pc-loading dd-spinner"></div>' +
+          '<div class="dd-pc-empty dd-empty" style="display:none;">' +
+            '<div class="dd-empty-icon-wrap"><i class="fa fa-scale-balanced"></i></div>' +
+            '<p class="dd-empty-title">No penal codes found</p>' +
+            '<p class="dd-empty-sub">Add categories and violations to get started</p>' +
+          '</div>' +
+          '<div id="dd-pc-categories"></div>' +
+        '</div>';
+    }
+
+    function loadPenalCodes() {
+      if (!communityId) return;
+      $('.dd-pc-loading').show();
+      $('.dd-pc-empty').hide();
+      $('#dd-pc-categories').empty();
+
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityId + '/penal-codes',
+        method: 'GET',
+        success: function(data) {
+          penalCodesData = (data && data.categories) || [];
+          renderPenalCodesCategories(penalCodesData);
+        },
+        error: function() {
+          $('.dd-pc-loading').hide();
+          $('.dd-pc-empty').show().find('.dd-empty-title').text('Unable to load penal codes');
+        }
+      });
+    }
+
+    function renderPenalCodesCategories(categories) {
+      $('.dd-pc-loading').hide();
+      var $container = $('#dd-pc-categories');
+      $container.empty();
+
+      if (!categories || categories.length === 0) {
+        $('.dd-pc-empty').show();
+        return;
+      }
+      $('.dd-pc-empty').hide();
+
+      categories.forEach(function(cat, catIdx) {
+        var violationRows = '';
+        (cat.violations || []).forEach(function(v, vIdx) {
+          violationRows += '<tr>' +
+            '<td style="color:#e5e7eb;">' + esc(v.name || '') + '</td>' +
+            '<td style="color:#fbbf24;">' + esc(v.jailTime || '') + '</td>' +
+            '<td style="color:#34d399;">' + esc(v.fine || '—') + '</td>' +
+            '<td style="color:#9ca3af;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + esc(v.explanation || '') + '">' + esc(v.explanation || '—') + '</td>' +
+            '<td style="text-align:right;white-space:nowrap;">' +
+              '<button class="dd-btn-icon" onclick="pcEditViolation(' + catIdx + ',' + vIdx + ')" title="Edit"><i class="fa fa-pen" style="font-size:11px;"></i></button>' +
+              '<button class="dd-btn-icon" onclick="pcDeleteViolation(' + catIdx + ',' + vIdx + ')" title="Delete" style="color:var(--dd-red);"><i class="fa fa-trash" style="font-size:11px;"></i></button>' +
+            '</td>' +
+          '</tr>';
+        });
+
+        var catHtml = '<div class="dd-pc-category" style="margin-bottom:16px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:8px;overflow:hidden;">' +
+          '<div class="dd-pc-cat-header" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none;" onclick="pcToggleCategory(' + catIdx + ')">' +
+            '<div style="display:flex;align-items:center;gap:8px;">' +
+              '<i class="fa fa-chevron-down dd-pc-chevron-' + catIdx + '" style="font-size:11px;color:#9ca3af;transition:transform 0.2s;"></i>' +
+              '<span style="font-weight:600;color:#fff;">' + esc(cat.name || 'Category') + '</span>' +
+              '<span style="font-size:12px;color:#6b7280;">(' + (cat.violations || []).length + ')</span>' +
+            '</div>' +
+            '<div style="display:flex;gap:4px;" onclick="event.stopPropagation();">' +
+              '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="pcShowAddViolation(' + catIdx + ')" style="font-size:11px;padding:3px 8px;"><i class="fa fa-plus"></i> Violation</button>' +
+              '<button class="dd-btn-icon" onclick="pcEditCategory(' + catIdx + ')" title="Edit Category"><i class="fa fa-pen" style="font-size:11px;"></i></button>' +
+              '<button class="dd-btn-icon" onclick="pcDeleteCategory(' + catIdx + ')" title="Delete Category" style="color:var(--dd-red);"><i class="fa fa-trash" style="font-size:11px;"></i></button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="dd-pc-cat-body-' + catIdx + '" style="display:none;padding:0 14px 10px;">' +
+            (violationRows ?
+              '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+                '<thead><tr style="border-bottom:1px solid var(--dd-border);text-align:left;">' +
+                  '<th style="padding:6px 8px;color:#9ca3af;font-weight:500;">Violation</th>' +
+                  '<th style="padding:6px 8px;color:#9ca3af;font-weight:500;">Jail Time</th>' +
+                  '<th style="padding:6px 8px;color:#9ca3af;font-weight:500;">Fine</th>' +
+                  '<th style="padding:6px 8px;color:#9ca3af;font-weight:500;">Explanation</th>' +
+                  '<th></th>' +
+                '</tr></thead>' +
+                '<tbody>' + violationRows + '</tbody>' +
+              '</table>'
+            : '<p style="color:#6b7280;font-size:13px;margin:4px 0;">No violations in this category</p>') +
+          '</div>' +
+        '</div>';
+
+        $container.append(catHtml);
+      });
+
+      // Auto-expand first category
+      if (categories.length > 0) pcToggleCategory(0);
+    }
+
+    window.pcToggleCategory = function(catIdx) {
+      var $body = $('.dd-pc-cat-body-' + catIdx);
+      var $chevron = $('.dd-pc-chevron-' + catIdx);
+      $body.slideToggle(200);
+      $chevron.toggleClass('dd-pc-expanded');
+    };
+
+    window.pcFilterViolations = function(query) {
+      var q = query.toLowerCase();
+      if (!q) {
+        renderPenalCodesCategories(penalCodesData);
+        return;
+      }
+      var filtered = penalCodesData.map(function(cat) {
+        var matchedViolations = (cat.violations || []).filter(function(v) {
+          return (v.name || '').toLowerCase().indexOf(q) !== -1 ||
+                 (v.jailTime || '').toLowerCase().indexOf(q) !== -1 ||
+                 (v.fine || '').toLowerCase().indexOf(q) !== -1 ||
+                 (v.explanation || '').toLowerCase().indexOf(q) !== -1;
+        });
+        if (matchedViolations.length > 0) {
+          return Object.assign({}, cat, { violations: matchedViolations });
+        }
+        return null;
+      }).filter(Boolean);
+      renderPenalCodesCategories(filtered);
+    };
+
+    function pcSaveAll(callback) {
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityId + '/penal-codes',
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ categories: penalCodesData }),
+        success: function() {
+          if (callback) callback();
+        },
+        error: function() {
+          alert('Failed to save penal codes.');
+        }
+      });
+    }
+
+    window.pcResetToDefaults = function() {
+      if (!confirm('Reset all penal codes to defaults? This will overwrite any customizations.')) return;
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityId + '/penal-codes/reset',
+        method: 'POST',
+        success: function(data) {
+          penalCodesData = (data && data.categories) || [];
+          renderPenalCodesCategories(penalCodesData);
+          $('#dd-pc-search').val('');
+        },
+        error: function() {
+          alert('Failed to reset penal codes.');
+        }
+      });
+    };
+
+    // ── Penal Codes: Category CRUD ──
+
+    window.pcShowAddCategory = function() {
+      pcShowModal('Add Category', { name: '', subtitle: '' }, function(vals) {
+        penalCodesData.push({
+          id: 'cat_' + Date.now(),
+          name: vals.name,
+          subtitle: vals.subtitle,
+          icon: '',
+          color: '',
+          columns: ['Violation', 'Jail Time', 'Fine', 'Explanation'],
+          violations: []
+        });
+        pcSaveAll(function() {
+          renderPenalCodesCategories(penalCodesData);
+          $('#dd-pc-search').val('');
+        });
+      });
+    };
+
+    window.pcEditCategory = function(catIdx) {
+      var cat = penalCodesData[catIdx];
+      if (!cat) return;
+      pcShowModal('Edit Category', { name: cat.name, subtitle: cat.subtitle || '' }, function(vals) {
+        penalCodesData[catIdx].name = vals.name;
+        penalCodesData[catIdx].subtitle = vals.subtitle;
+        pcSaveAll(function() {
+          renderPenalCodesCategories(penalCodesData);
+        });
+      });
+    };
+
+    window.pcDeleteCategory = function(catIdx) {
+      var cat = penalCodesData[catIdx];
+      if (!cat) return;
+      if (!confirm('Delete "' + cat.name + '" and all its violations?')) return;
+      penalCodesData.splice(catIdx, 1);
+      pcSaveAll(function() {
+        renderPenalCodesCategories(penalCodesData);
+      });
+    };
+
+    // ── Penal Codes: Violation CRUD ──
+
+    window.pcShowAddViolation = function(catIdx) {
+      pcShowViolationModal('Add Violation', { name: '', jailTime: '', fine: '', explanation: '' }, function(vals) {
+        if (!penalCodesData[catIdx].violations) penalCodesData[catIdx].violations = [];
+        penalCodesData[catIdx].violations.push(vals);
+        pcSaveAll(function() {
+          renderPenalCodesCategories(penalCodesData);
+        });
+      });
+    };
+
+    window.pcEditViolation = function(catIdx, vIdx) {
+      var v = penalCodesData[catIdx] && penalCodesData[catIdx].violations[vIdx];
+      if (!v) return;
+      pcShowViolationModal('Edit Violation', v, function(vals) {
+        penalCodesData[catIdx].violations[vIdx] = vals;
+        pcSaveAll(function() {
+          renderPenalCodesCategories(penalCodesData);
+        });
+      });
+    };
+
+    window.pcDeleteViolation = function(catIdx, vIdx) {
+      var v = penalCodesData[catIdx] && penalCodesData[catIdx].violations[vIdx];
+      if (!v) return;
+      if (!confirm('Delete "' + v.name + '"?')) return;
+      penalCodesData[catIdx].violations.splice(vIdx, 1);
+      pcSaveAll(function() {
+        renderPenalCodesCategories(penalCodesData);
+      });
+    };
+
+    // ── Penal Codes: Modals ──
+
+    function pcShowModal(title, values, onSave) {
+      var $overlay = $('<div class="dd-modal-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;">');
+      var $modal = $(
+        '<div style="background:var(--dd-card);border:1px solid var(--dd-border);border-radius:12px;padding:24px;min-width:360px;max-width:420px;">' +
+          '<h3 style="color:#fff;margin:0 0 16px;font-size:16px;">' + esc(title) + '</h3>' +
+          '<label style="color:#9ca3af;font-size:12px;margin-bottom:4px;display:block;">Name *</label>' +
+          '<input type="text" id="pc-modal-name" value="' + esc(values.name) + '" style="width:100%;padding:8px 10px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;margin-bottom:12px;box-sizing:border-box;">' +
+          '<label style="color:#9ca3af;font-size:12px;margin-bottom:4px;display:block;">Subtitle</label>' +
+          '<input type="text" id="pc-modal-subtitle" value="' + esc(values.subtitle || '') + '" style="width:100%;padding:8px 10px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;margin-bottom:16px;box-sizing:border-box;">' +
+          '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
+            '<button class="dd-btn dd-btn-sm dd-btn-outline" id="pc-modal-cancel">Cancel</button>' +
+            '<button class="dd-btn dd-btn-sm dd-btn-primary" id="pc-modal-save">Save</button>' +
+          '</div>' +
+        '</div>'
+      );
+      $overlay.append($modal);
+      $('body').append($overlay);
+      $overlay.find('#pc-modal-name').focus();
+      $overlay.find('#pc-modal-cancel').on('click', function() { $overlay.remove(); });
+      $overlay.on('click', function(e) { if (e.target === $overlay[0]) $overlay.remove(); });
+      $overlay.find('#pc-modal-save').on('click', function() {
+        var name = $overlay.find('#pc-modal-name').val().trim();
+        if (!name) { $overlay.find('#pc-modal-name').css('border-color', 'var(--dd-red)'); return; }
+        $overlay.remove();
+        onSave({ name: name, subtitle: $overlay.find('#pc-modal-subtitle').val().trim() });
+      });
+    }
+
+    function pcShowViolationModal(title, values, onSave) {
+      var $overlay = $('<div class="dd-modal-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;">');
+      var $modal = $(
+        '<div style="background:var(--dd-card);border:1px solid var(--dd-border);border-radius:12px;padding:24px;min-width:400px;max-width:480px;">' +
+          '<h3 style="color:#fff;margin:0 0 16px;font-size:16px;">' + esc(title) + '</h3>' +
+          '<label style="color:#9ca3af;font-size:12px;margin-bottom:4px;display:block;">Violation Name *</label>' +
+          '<input type="text" id="pcv-name" value="' + esc(values.name) + '" style="width:100%;padding:8px 10px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;margin-bottom:10px;box-sizing:border-box;">' +
+          '<label style="color:#9ca3af;font-size:12px;margin-bottom:4px;display:block;">Jail Time *</label>' +
+          '<input type="text" id="pcv-jailtime" value="' + esc(values.jailTime) + '" placeholder="e.g. 30 seconds, 5 minutes" style="width:100%;padding:8px 10px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;margin-bottom:10px;box-sizing:border-box;">' +
+          '<label style="color:#9ca3af;font-size:12px;margin-bottom:4px;display:block;">Fine</label>' +
+          '<input type="text" id="pcv-fine" value="' + esc(values.fine || '') + '" placeholder="e.g. $500" style="width:100%;padding:8px 10px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;margin-bottom:10px;box-sizing:border-box;">' +
+          '<label style="color:#9ca3af;font-size:12px;margin-bottom:4px;display:block;">Explanation</label>' +
+          '<textarea id="pcv-explanation" rows="2" style="width:100%;padding:8px 10px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;margin-bottom:16px;box-sizing:border-box;resize:vertical;">' + esc(values.explanation || '') + '</textarea>' +
+          '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
+            '<button class="dd-btn dd-btn-sm dd-btn-outline" id="pcv-cancel">Cancel</button>' +
+            '<button class="dd-btn dd-btn-sm dd-btn-primary" id="pcv-save">Save</button>' +
+          '</div>' +
+        '</div>'
+      );
+      $overlay.append($modal);
+      $('body').append($overlay);
+      $overlay.find('#pcv-name').focus();
+      $overlay.find('#pcv-cancel').on('click', function() { $overlay.remove(); });
+      $overlay.on('click', function(e) { if (e.target === $overlay[0]) $overlay.remove(); });
+      $overlay.find('#pcv-save').on('click', function() {
+        var name = $overlay.find('#pcv-name').val().trim();
+        var jailTime = $overlay.find('#pcv-jailtime').val().trim();
+        if (!name) { $overlay.find('#pcv-name').css('border-color', 'var(--dd-red)'); return; }
+        if (!jailTime) { $overlay.find('#pcv-jailtime').css('border-color', 'var(--dd-red)'); return; }
+        $overlay.remove();
+        onSave({
+          name: name,
+          jailTime: jailTime,
+          fine: $overlay.find('#pcv-fine').val().trim(),
+          explanation: $overlay.find('#pcv-explanation').val().trim()
+        });
+      });
+    }
+
+    // ── Penal Codes: CSS for chevron rotation ──
+    (function() {
+      var style = document.createElement('style');
+      style.textContent = '.dd-pc-expanded { transform: rotate(-180deg); }';
+      document.head.appendChild(style);
+    })();
 
     // ══════════════════════════════════════════
     //  SIDEBAR DEPARTMENTS LIST

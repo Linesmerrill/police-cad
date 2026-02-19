@@ -3878,59 +3878,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // END CONTENT CREATOR API ROUTES
   // ===========================================
 
-  // ===========================================
-  // PENAL CODE API ROUTES (proxy to Go API)
-  // ===========================================
-
-  app.get("/api/v1/community/:communityId/penal-codes", authCheck, async function (req, res) {
-    try {
-      const { communityId } = req.params;
-      const response = await axios.get(
-        `${policeCadApiUrl}/api/v1/community/${communityId}/penal-codes`,
-        config
-      );
-      res.json(response.data);
-    } catch (error) {
-      console.error("Error fetching penal codes:", error.message);
-      res.status(error.response?.status || 500).json({ error: "Failed to fetch penal codes" });
-    }
-  });
-
-  app.put("/api/v1/community/:communityId/penal-codes", authCheck, async function (req, res) {
-    try {
-      const { communityId } = req.params;
-      const response = await axios.put(
-        `${policeCadApiUrl}/api/v1/community/${communityId}/penal-codes`,
-        req.body,
-        config
-      );
-      res.json(response.data);
-    } catch (error) {
-      console.error("Error updating penal codes:", error.message);
-      res.status(error.response?.status || 500).json({ error: "Failed to update penal codes" });
-    }
-  });
-
-  app.post("/api/v1/community/:communityId/penal-codes/reset", authCheck, async function (req, res) {
-    try {
-      const { communityId } = req.params;
-      const response = await axios.post(
-        `${policeCadApiUrl}/api/v1/community/${communityId}/penal-codes/reset`,
-        {},
-        config
-      );
-      res.json(response.data);
-    } catch (error) {
-      console.error("Error resetting penal codes:", error.message);
-      res.status(error.response?.status || 500).json({ error: "Failed to reset penal codes" });
-    }
-  });
-
   // Be sure to place all GET requests above this catchall
   // Exclude Next.js internal routes
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/') || req.path.startsWith('/content-creators') || req.path === '/pricing' || req.path === '/community-pricing' || req.path === '/manage-subscription' || req.path.startsWith('/subscription/') || req.path.startsWith('/community-promotion/') || req.path === '/penal-code' || req.path === '/penal-code-settings') {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/') || req.path.startsWith('/content-creators') || req.path === '/pricing' || req.path === '/community-pricing' || req.path === '/manage-subscription' || req.path.startsWith('/subscription/') || req.path.startsWith('/community-promotion/') || req.path === '/penal-code') {
       return handle(req, res);
     }
     res.render("page-not-found");
