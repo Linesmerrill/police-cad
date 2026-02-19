@@ -6394,7 +6394,9 @@ var editDeptComponentMeta = {
   createAndManageCalls: { label: 'Create & Manage Calls',        icon: 'fa-phone',                color: 'text-green-400' },
   manage911Calls:       { label: 'Manage 911 Calls',             icon: 'fa-ambulance',            color: 'text-red-400' },
   nameSearch:           { label: 'Name Search',                  icon: 'fa-search',               color: 'text-blue-400' },
-  reviewWarrants:       { label: 'Review Warrants',              icon: 'fa-gavel',                color: 'text-purple-400' }
+  reviewWarrants:       { label: 'Review Warrants',              icon: 'fa-gavel',                color: 'text-purple-400' },
+  allWarrants:          { label: 'All Warrants',                 icon: 'fa-folder-open',          color: 'text-blue-400' },
+  penalCodes:           { label: 'Penal Codes',                  icon: 'fa-scale-balanced',       color: 'text-amber-400' }
 };
 
 // Expected components per template type — used to add missing components to legacy departments
@@ -6404,7 +6406,7 @@ var expectedComponentsByTemplate = {
   'dispatch': ['dispatchUnits', 'createAndManageCalls', 'createBolos', 'manage911Calls', 'nameSearch', 'vehicleSearch', 'firearmSearch'],
   'fire':     ['10CodesInterface', 'personSearch', 'vehicleSearch', 'createBolos', 'viewBolosAndWarrants', 'notepad'],
   'ems':      ['10CodesInterface', 'personSearch', 'vehicleSearch', 'createBolos', 'viewBolosAndWarrants', 'notepad'],
-  'judicial': ['reviewWarrants', '10CodesInterface', 'notepad']
+  'judicial': ['reviewWarrants', 'allWarrants', '10CodesInterface', 'penalCodes', 'notepad']
 };
 
 // Merge missing expected components into a department's component list (defaults to enabled)
