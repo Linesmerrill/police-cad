@@ -1211,26 +1211,177 @@
       color: var(--dd-text-muted);
     }
 
+    /* ── Card Header Right Actions ── */
+
+    .dd-card-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Button Variants ── */
+
+    .dd-btn-sm {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.75rem;
+      flex: none;
+    }
+
+    .dd-btn-outline {
+      background: var(--dd-glass-bg);
+      color: var(--dd-text-muted);
+      border: 1px solid var(--dd-glass-border);
+    }
+    .dd-btn-outline:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--dd-text);
+      border-color: rgba(255,255,255,0.15);
+    }
+
+    .dd-btn-primary {
+      background: rgba(251,191,36,0.15);
+      color: var(--dd-amber);
+      border: 1px solid rgba(251,191,36,0.25);
+    }
+    .dd-btn-primary:hover {
+      background: rgba(251,191,36,0.25);
+      border-color: rgba(251,191,36,0.4);
+      box-shadow: 0 0 16px rgba(251,191,36,0.1);
+    }
+
     /* ── Penal Codes Component ── */
 
-    .dd-pc-currency-select {
+    .dd-pc-currency-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
       background: var(--dd-glass-bg);
       border: 1px solid var(--dd-glass-border);
       color: var(--dd-text);
-      border-radius: 6px;
-      padding: 0.3rem 0.5rem;
+      border-radius: var(--dd-radius-sm);
+      padding: 0.375rem 0.625rem;
       font-size: 0.75rem;
       font-family: 'JetBrains Mono', monospace;
       cursor: pointer;
       outline: none;
-      transition: border-color 0.2s;
+      height: 30px;
+      transition: all 0.15s ease;
     }
-    .dd-pc-currency-select:focus {
-      border-color: var(--dd-amber);
+    .dd-pc-currency-btn:hover {
+      border-color: rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
     }
-    .dd-pc-currency-select option {
-      background: #1a1a2e;
+    .dd-pc-currency-btn .dd-pc-currency-sym {
+      font-weight: 600;
+      color: var(--dd-amber);
+    }
+    .dd-pc-currency-btn i {
+      font-size: 0.6rem;
+      opacity: 0.5;
+      margin-left: 0.125rem;
+    }
+
+    /* ── Currency Modal ── */
+    .dd-pc-currency-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+      margin-bottom: 1rem;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .dd-pc-currency-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0.625rem;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .dd-pc-currency-item:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: var(--dd-glass-border);
+    }
+    .dd-pc-currency-item.active {
+      background: rgba(251,191,36,0.08);
+      border-color: rgba(251,191,36,0.25);
+    }
+    .dd-pc-currency-item-sym {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--dd-amber);
+      min-width: 28px;
+      text-align: center;
+    }
+    .dd-pc-currency-item-label {
+      font-size: 0.8125rem;
       color: var(--dd-text);
+      flex: 1;
+    }
+    .dd-pc-currency-item-actions {
+      display: flex;
+      gap: 0.25rem;
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+    .dd-pc-currency-item:hover .dd-pc-currency-item-actions {
+      opacity: 1;
+    }
+    .dd-pc-currency-item-actions button {
+      background: transparent;
+      border: none;
+      color: var(--dd-text-dim);
+      cursor: pointer;
+      padding: 0.2rem 0.375rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      transition: all 0.1s;
+    }
+    .dd-pc-currency-item-actions button:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--dd-text);
+    }
+    .dd-pc-currency-item-actions button.delete:hover {
+      background: rgba(239,68,68,0.15);
+      color: var(--dd-red);
+    }
+    .dd-pc-currency-add-row {
+      display: flex;
+      gap: 0.375rem;
+      align-items: center;
+    }
+    .dd-pc-currency-add-row input {
+      margin-bottom: 0;
+      flex: 1;
+    }
+    .dd-pc-currency-add-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      background: rgba(251,191,36,0.15);
+      border: 1px solid rgba(251,191,36,0.25);
+      color: var(--dd-amber);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .dd-pc-currency-add-btn:hover {
+      background: rgba(251,191,36,0.25);
+      border-color: rgba(251,191,36,0.4);
+    }
+    .dd-pc-currency-add-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
 
     .dd-pc-search-wrap {
@@ -3312,18 +3463,11 @@ $('#dd-loading').hide();
             '<div><h3 class="dd-card-title">Penal Codes</h3><p class="dd-card-subtitle">Manage violations &amp; penalties</p></div>' +
           '</div>' +
           '<div class="dd-card-header-right">' +
-            (function() {
-              var isCustom = !pcKnownCurrencies[penalCodesCurrency] && penalCodesCurrency;
-              return '<select class="dd-pc-currency-select" onchange="pcHandleCurrencyChange(this)" title="Currency">' +
-                '<option value="USD"' + (penalCodesCurrency === 'USD' ? ' selected' : '') + '>$ USD</option>' +
-                '<option value="EUR"' + (penalCodesCurrency === 'EUR' ? ' selected' : '') + '>\u20AC EUR</option>' +
-                '<option value="GBP"' + (penalCodesCurrency === 'GBP' ? ' selected' : '') + '>\u00A3 GBP</option>' +
-                '<option value="CAD"' + (penalCodesCurrency === 'CAD' ? ' selected' : '') + '>C$ CAD</option>' +
-                '<option value="AUD"' + (penalCodesCurrency === 'AUD' ? ' selected' : '') + '>A$ AUD</option>' +
-                (isCustom ? '<option value="' + esc(penalCodesCurrency) + '" selected>' + esc(penalCodesCurrency) + ' (Custom)</option>' : '') +
-                '<option value="__other__">Other...</option>' +
-              '</select>';
-            })() +
+            '<button class="dd-pc-currency-btn" onclick="pcShowCurrencyModal()" title="Change currency">' +
+              '<span class="dd-pc-currency-sym">' + esc(pcGetCurrencySymbol(penalCodesCurrency)) + '</span>' +
+              '<span>' + esc(penalCodesCurrency) + '</span>' +
+              '<i class="fa fa-chevron-down"></i>' +
+            '</button>' +
             '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="pcResetToDefaults()" title="Reset to Defaults"><i class="fa fa-arrows-rotate"></i> Reset</button> ' +
             '<button class="dd-btn dd-btn-sm dd-btn-primary" onclick="pcShowAddCategory()"><i class="fa fa-plus"></i> Category</button>' +
           '</div>' +
@@ -3496,25 +3640,134 @@ $('#dd-loading').hide();
       });
     }
 
-    window.pcHandleCurrencyChange = function(selectEl) {
-      var val = selectEl.value;
-      if (val === '__other__') {
-        var custom = prompt('Enter a custom currency symbol (e.g. R$, kr, \u20B9):');
-        if (!custom || !custom.trim()) {
-          // Cancelled — revert select to current value
-          selectEl.value = penalCodesCurrency;
-          if (!selectEl.value) selectEl.value = 'USD';
-          return;
-        }
-        penalCodesCurrency = custom.trim();
-        // Re-render the whole panel so the select shows the custom option
-        $('#dd-panel-penalCodes .dd-card').html(renderPenalCodesPanel());
-        renderPenalCodesCategories(penalCodesData);
-      } else {
-        penalCodesCurrency = val;
-        renderPenalCodesCategories(penalCodesData);
+    // Currency list — starts with built-in, custom ones get appended
+    var pcCurrencyList = [
+      { code: 'USD', symbol: '$', builtin: true },
+      { code: 'EUR', symbol: '\u20AC', builtin: true },
+      { code: 'GBP', symbol: '\u00A3', builtin: true },
+      { code: 'CAD', symbol: 'C$', builtin: true },
+      { code: 'AUD', symbol: 'A$', builtin: true }
+    ];
+
+    // If current currency isn't in the list, add it as custom
+    function pcEnsureCurrentCurrency() {
+      if (!penalCodesCurrency) return;
+      var found = pcCurrencyList.some(function(c) { return c.code === penalCodesCurrency; });
+      if (!found) {
+        pcCurrencyList.push({ code: penalCodesCurrency, symbol: penalCodesCurrency, builtin: false });
       }
-      pcSaveAll();
+    }
+
+    window.pcShowCurrencyModal = function() {
+      pcEnsureCurrentCurrency();
+      var $overlay = $('<div class="dd-pc-modal-overlay">');
+      var $modal = $(
+        '<div class="dd-pc-modal wide">' +
+          '<h3>Currency</h3>' +
+          '<div class="dd-pc-currency-list" id="pc-currency-list"></div>' +
+          '<label>Add Custom Currency</label>' +
+          '<div class="dd-pc-currency-add-row">' +
+            '<input type="text" id="pc-currency-new-symbol" placeholder="Symbol (e.g. R$, kr)" style="flex:0.6;">' +
+            '<input type="text" id="pc-currency-new-code" placeholder="Code (e.g. BRL)" style="flex:0.4;">' +
+            '<button class="dd-pc-currency-add-btn" id="pc-currency-add-btn"><i class="fa fa-plus"></i></button>' +
+          '</div>' +
+          '<div class="dd-pc-modal-footer">' +
+            '<button class="dd-pc-modal-btn cancel" id="pc-currency-close">Close</button>' +
+          '</div>' +
+        '</div>'
+      );
+      $overlay.append($modal);
+      $('body').append($overlay);
+
+      function renderCurrencyList() {
+        var html = '';
+        pcCurrencyList.forEach(function(c, idx) {
+          var isActive = c.code === penalCodesCurrency;
+          html += '<div class="dd-pc-currency-item' + (isActive ? ' active' : '') + '" data-idx="' + idx + '">' +
+            '<div class="dd-pc-currency-item-sym">' + esc(c.symbol) + '</div>' +
+            '<div class="dd-pc-currency-item-label">' + esc(c.code) + (isActive ? ' <span style="color:var(--dd-amber);font-size:0.6875rem;font-weight:500;">\u2022 Active</span>' : '') + '</div>' +
+            '<div class="dd-pc-currency-item-actions">' +
+              (!isActive ? '<button onclick="event.stopPropagation();pcSelectCurrency(' + idx + ')" title="Use this currency"><i class="fa fa-check"></i></button>' : '') +
+              (!c.builtin ? '<button onclick="event.stopPropagation();pcEditCurrencyItem(' + idx + ')" title="Edit"><i class="fa fa-pen"></i></button>' : '') +
+              (!c.builtin && !isActive ? '<button class="delete" onclick="event.stopPropagation();pcDeleteCurrencyItem(' + idx + ')" title="Delete"><i class="fa fa-trash"></i></button>' : '') +
+            '</div>' +
+          '</div>';
+        });
+        $('#pc-currency-list').html(html);
+
+        // Click row to select
+        $('#pc-currency-list .dd-pc-currency-item').on('click', function() {
+          var idx = parseInt($(this).data('idx'));
+          pcSelectCurrency(idx);
+        });
+      }
+
+      window.pcSelectCurrency = function(idx) {
+        var c = pcCurrencyList[idx];
+        if (!c) return;
+        penalCodesCurrency = c.code;
+        // Update the known currencies map for the helper
+        if (!pcKnownCurrencies[c.code]) pcKnownCurrencies[c.code] = c.symbol;
+        pcSaveAll(function() {
+          renderCurrencyList();
+          // Update the button text in the header
+          $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
+          $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
+          renderPenalCodesCategories(penalCodesData);
+        });
+      };
+
+      window.pcEditCurrencyItem = function(idx) {
+        var c = pcCurrencyList[idx];
+        if (!c || c.builtin) return;
+        var newSymbol = prompt('Edit symbol for ' + c.code + ':', c.symbol);
+        if (!newSymbol || !newSymbol.trim()) return;
+        c.symbol = newSymbol.trim();
+        pcKnownCurrencies[c.code] = c.symbol;
+        if (c.code === penalCodesCurrency) {
+          pcSaveAll(function() {
+            renderCurrencyList();
+            $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
+            renderPenalCodesCategories(penalCodesData);
+          });
+        } else {
+          renderCurrencyList();
+        }
+      };
+
+      window.pcDeleteCurrencyItem = function(idx) {
+        var c = pcCurrencyList[idx];
+        if (!c || c.builtin || c.code === penalCodesCurrency) return;
+        pcCurrencyList.splice(idx, 1);
+        delete pcKnownCurrencies[c.code];
+        renderCurrencyList();
+      };
+
+      // Add new currency
+      $modal.find('#pc-currency-add-btn').on('click', function() {
+        var sym = $('#pc-currency-new-symbol').val().trim();
+        var code = $('#pc-currency-new-code').val().trim().toUpperCase();
+        if (!sym || !code) return;
+        // Check duplicate
+        var exists = pcCurrencyList.some(function(c) { return c.code === code; });
+        if (exists) { alert('Currency code "' + code + '" already exists.'); return; }
+        pcCurrencyList.push({ code: code, symbol: sym, builtin: false });
+        pcKnownCurrencies[code] = sym;
+        $('#pc-currency-new-symbol').val('');
+        $('#pc-currency-new-code').val('');
+        renderCurrencyList();
+      });
+
+      // Enter key in inputs triggers add
+      $modal.find('#pc-currency-new-symbol, #pc-currency-new-code').on('keydown', function(e) {
+        if (e.key === 'Enter') { $modal.find('#pc-currency-add-btn').click(); }
+      });
+
+      // Close
+      $modal.find('#pc-currency-close').on('click', function() { $overlay.remove(); });
+      $overlay.on('click', function(e) { if (e.target === $overlay[0]) $overlay.remove(); });
+
+      renderCurrencyList();
     };
 
     window.pcResetToDefaults = function() {
@@ -3525,8 +3778,10 @@ $('#dd-loading').hide();
         success: function(data) {
           penalCodesData = (data && data.categories) || [];
           penalCodesCurrency = (data && data.currency) || 'USD';
+          // Update the currency button in the header
+          $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
+          $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
           renderPenalCodesCategories(penalCodesData);
-          $('.dd-pc-currency-select').val(penalCodesCurrency);
           $('.dd-pc-search').val('');
         },
         error: function() {
