@@ -3461,8 +3461,6 @@ $('#dd-loading').hide();
     //  PENAL CODES COMPONENT
     // ══════════════════════════════════════════
 
-    var pcKnownCurrencies = {};
-    var pcCurrencyList = [];
     var pcDefaultCurrencies = [
       { code: 'USD', symbol: '$', builtin: true },
       { code: 'EUR', symbol: '\u20AC', builtin: true },
@@ -3470,11 +3468,15 @@ $('#dd-loading').hide();
       { code: 'CAD', symbol: 'C$', builtin: true },
       { code: 'AUD', symbol: 'A$', builtin: true }
     ];
+    var pcCurrencyList = pcDefaultCurrencies.slice();
+    var pcKnownCurrencies = {};
 
     function pcBuildKnownCurrencies() {
       pcKnownCurrencies = {};
       pcCurrencyList.forEach(function(c) { pcKnownCurrencies[c.code] = c.symbol; });
     }
+    // Build immediately so initial render has symbols
+    pcBuildKnownCurrencies();
 
     function pcGetCurrencySymbol(code) {
       return pcKnownCurrencies[code] || code || '$';
@@ -3542,6 +3544,9 @@ $('#dd-loading').hide();
             ? data.currencies
             : pcDefaultCurrencies.slice();
           pcBuildKnownCurrencies();
+          // Update header button to reflect loaded currency
+          $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
+          $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
           console.log('[PenalCodes] Categories count:', penalCodesData.length);
           renderPenalCodesCategories(penalCodesData);
         },
