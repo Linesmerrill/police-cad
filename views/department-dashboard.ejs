@@ -1384,6 +1384,29 @@
       cursor: not-allowed;
     }
 
+    /* Inline edit inputs for currency rows */
+    .dd-pc-edit-input {
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: 4px;
+      color: var(--dd-text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8125rem;
+      padding: 0.3rem 0.5rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .dd-pc-edit-input:focus {
+      border-color: var(--dd-amber);
+    }
+    .dd-pc-edit-save {
+      color: var(--dd-green, #22c55e) !important;
+    }
+    .dd-pc-edit-save:hover {
+      background: rgba(34,197,94,0.15) !important;
+      color: var(--dd-green, #22c55e) !important;
+    }
+
     .dd-pc-search-wrap {
       position: relative;
       margin-bottom: 1rem;
@@ -3720,19 +3743,55 @@ $('#dd-loading').hide();
       window.pcEditCurrencyItem = function(idx) {
         var c = pcCurrencyList[idx];
         if (!c || c.builtin) return;
-        var newSymbol = prompt('Edit symbol for ' + c.code + ':', c.symbol);
-        if (!newSymbol || !newSymbol.trim()) return;
-        c.symbol = newSymbol.trim();
-        pcKnownCurrencies[c.code] = c.symbol;
-        if (c.code === penalCodesCurrency) {
-          pcSaveAll(function() {
+
+        // Replace the row with inline edit inputs
+        var $row = $('#pc-currency-list .dd-pc-currency-item[data-idx="' + idx + '"]');
+        $row.off('click');
+        $row.removeClass('dd-pc-currency-item').addClass('dd-pc-currency-item').css({ cursor: 'default' });
+        $row.html(
+          '<input type="text" class="dd-pc-edit-input dd-pc-edit-sym" value="' + esc(c.symbol) + '" placeholder="Symbol" style="width:50px;text-align:center;">' +
+          '<input type="text" class="dd-pc-edit-input dd-pc-edit-code" value="' + esc(c.code) + '" placeholder="Code" style="flex:1;">' +
+          '<div class="dd-pc-currency-item-actions" style="opacity:1;">' +
+            '<button class="dd-pc-edit-save" title="Save"><i class="fa fa-check"></i></button>' +
+            '<button class="dd-pc-edit-cancel" title="Cancel"><i class="fa fa-xmark"></i></button>' +
+          '</div>'
+        );
+
+        var $symInput = $row.find('.dd-pc-edit-sym');
+        var $codeInput = $row.find('.dd-pc-edit-code');
+        $symInput.focus().select();
+
+        function saveEdit() {
+          var newSym = $symInput.val().trim();
+          var newCode = $codeInput.val().trim().toUpperCase();
+          if (!newSym || !newCode) { renderCurrencyList(); return; }
+          // Check for code conflict (ignore self)
+          var conflict = pcCurrencyList.some(function(other, i) { return i !== idx && other.code === newCode; });
+          if (conflict) { $codeInput.css('border-color', 'var(--dd-red)').focus(); return; }
+          var oldCode = c.code;
+          c.symbol = newSym;
+          c.code = newCode;
+          delete pcKnownCurrencies[oldCode];
+          pcKnownCurrencies[newCode] = newSym;
+          if (oldCode === penalCodesCurrency) penalCodesCurrency = newCode;
+          if (c.code === penalCodesCurrency) {
+            pcSaveAll(function() {
+              renderCurrencyList();
+              $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
+              $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
+              renderPenalCodesCategories(penalCodesData);
+            });
+          } else {
             renderCurrencyList();
-            $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
-            renderPenalCodesCategories(penalCodesData);
-          });
-        } else {
-          renderCurrencyList();
+          }
         }
+
+        $row.find('.dd-pc-edit-save').on('click', function(e) { e.stopPropagation(); saveEdit(); });
+        $row.find('.dd-pc-edit-cancel').on('click', function(e) { e.stopPropagation(); renderCurrencyList(); });
+        $row.find('input').on('keydown', function(e) {
+          if (e.key === 'Enter') saveEdit();
+          if (e.key === 'Escape') renderCurrencyList();
+        });
       };
 
       window.pcDeleteCurrencyItem = function(idx) {
