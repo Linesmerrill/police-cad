@@ -302,6 +302,37 @@ $(document).ready(function () {
       });
   }
 
+  // Load real warrant status for all visible civilian badges
+  function loadWarrantBadges() {
+    if (searchType !== "Civilian") return;
+    $(".warrant-status-badge").each(function() {
+      const $badge = $(this);
+      const civId = $badge.data("civilian-id");
+      if (!civId) { $badge.text("No Warrants"); return; }
+      $.ajax({
+        url: `${API_URL}/api/v1/warrants/user/${civId}?limit=50`,
+        method: "GET",
+        success: function(warrants) {
+          const list = Array.isArray(warrants) ? warrants : [];
+          const approved = list.filter(w => (w.warrant?.status || "").toLowerCase() === "approved").length;
+          const pending = list.filter(w => (w.warrant?.status || "").toLowerCase() === "pending").length;
+          if (approved === 0 && pending === 0) {
+            $badge.html("No Warrants");
+            return;
+          }
+          let parts = [];
+          if (approved > 0) parts.push(`<span style="color:#ef4444;font-weight:600;"><i class="fa fa-exclamation-triangle mr-1"></i>${approved} Active</span>`);
+          if (pending > 0) parts.push(`<span style="color:#f59e0b;font-weight:600;"><i class="fa fa-clock mr-1"></i>${pending} Pending</span>`);
+          $badge.html(parts.join(" &nbsp;"));
+        },
+        error: function() {
+          // Fall back to legacy
+          $badge.text("No Warrants");
+        }
+      });
+    });
+  }
+
   // Render suggestions
   function renderSuggestions() {
     const $suggestions = $("#searchSuggestions");
@@ -311,6 +342,7 @@ $(document).ready(function () {
         $suggestions.append(renderItem(item, true))
       );
       $suggestions.show();
+      loadWarrantBadges();
     } else {
       $suggestions.hide();
     }
@@ -320,11 +352,12 @@ $(document).ready(function () {
   function renderResults() {
     const $results = $("#searchResults");
     $results.empty();
-    
+
     if (searchResults.length > 0) {
       searchResults.forEach((item) =>
         $results.append(renderItem(item, false))
       );
+      loadWarrantBadges();
     } else {
       // Show different messages based on whether a search was performed
       if (searchQuery.trim()) {
@@ -371,10 +404,7 @@ $(document).ready(function () {
 
     if (searchType === "Civilian") {
       title = item.civilian?.name || "Unknown";
-      const hasWarrants = item.civilian?.warrants?.length > 0;
-      subtitle = `DOB: ${item.civilian?.birthday || "Unknown"} | Status: ${
-        hasWarrants ? '<span style="color: #ef4444; font-weight: bold;">Active Warrant</span>' : "No Warrants"
-      }`;
+      subtitle = `DOB: ${item.civilian?.birthday || "Unknown"} | Status: <span class="warrant-status-badge" data-civilian-id="${id}"><i class="fa fa-spinner fa-spin fa-sm"></i></span>`;
       // Store the full name in recent searches for display purposes
       recentSearchQuery = title;
     } else if (searchType === "Vehicle") {

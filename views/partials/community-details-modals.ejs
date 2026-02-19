@@ -741,7 +741,50 @@
             </p>
           </div>
         </div>
-        
+
+        <!-- Warrant Approval Mode Section -->
+        <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+            <i class="fa fa-gavel" style="font-size:1.5rem; color:#8b5cf6;"></i>
+            <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">Warrant Approval Mode</h4>
+          </div>
+          <p style="color:#a0aec0; margin-bottom:1rem; font-size:0.875rem;">Configure how warrant requests are processed in this community</p>
+
+          <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
+              <input type="radio" name="warrantApprovalMode" value="auto-approve" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;" onchange="toggleWarrantApprovalSlider()">
+              Auto-Approve
+            </label>
+            <p style="color:#a0aec0; margin:0 0 0 1.75rem; font-size:0.8rem;">All warrant requests are automatically approved. Best for communities without a judicial department.</p>
+
+            <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
+              <input type="radio" name="warrantApprovalMode" value="random" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;" onchange="toggleWarrantApprovalSlider()">
+              Random
+            </label>
+            <p style="color:#a0aec0; margin:0 0 0 1.75rem; font-size:0.8rem;">A random judge will approve or deny the warrant.</p>
+            <div id="warrantApprovalSliderContainer" style="display:none; margin:0.5rem 0 0.75rem 1.75rem; padding:0.75rem 1rem; background:#1a1b2e; border-radius:8px; max-width:320px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.375rem;">
+                <label style="color:#a0aec0; font-size:0.8rem; font-weight:500;">Approval Rate</label>
+                <span id="warrantApprovalRateValue" style="color:#3b82f6; font-weight:700; font-size:0.9rem;">70%</span>
+              </div>
+              <input type="range" id="warrantRandomApprovalRate" min="0" max="100" value="70" step="5"
+                style="width:100%; accent-color:#3b82f6; cursor:pointer;"
+                oninput="document.getElementById('warrantApprovalRateValue').textContent = this.value + '%'">
+              <div style="display:flex; justify-content:space-between; margin-top:0.25rem;">
+                <span style="color:#6b7280; font-size:0.7rem;">0%</span>
+                <span style="color:#6b7280; font-size:0.7rem;">50%</span>
+                <span style="color:#6b7280; font-size:0.7rem;">100%</span>
+              </div>
+            </div>
+
+            <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
+              <input type="radio" name="warrantApprovalMode" value="require-judge" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;" onchange="toggleWarrantApprovalSlider()">
+              Require Judge
+            </label>
+            <p style="color:#a0aec0; margin:0 0 0 1.75rem; font-size:0.8rem;">Warrants require manual approval from a judge in a Judicial department.</p>
+          </div>
+        </div>
+
         <div style="margin-top:2rem; display:flex; gap:1rem; justify-content:center;">
           <button onclick="closeGeneralSettingsModal()" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
             Cancel
@@ -4251,6 +4294,7 @@ function openNoSettingsPermissionModal() {
 
 function openCreateDepartmentModal() {
   document.getElementById('createDepartmentStep1Modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 }
 
 function openNoDepartmentPermissionModal() {
@@ -5393,7 +5437,7 @@ async function deleteInviteCode() {
 
 <!-- HeroUI Pro Create Department Modals (Step 1: Basic Info) -->
 <div id="createDepartmentStep1Modal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:420px; width:90%; position:relative; border:1px solid #35385a;">
+  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:420px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto; overscroll-behavior:contain;">
     <button onclick="closeCreateDepartmentModal(1)" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
     <div style="text-align:center; margin-bottom:1rem;">
       <i class="fa fa-building" style="font-size:2rem; color:#3b82f6; margin-bottom:0.5rem;"></i>
@@ -5444,7 +5488,7 @@ async function deleteInviteCode() {
 
 <!-- Step 2: Template Selection -->
 <div id="createDepartmentStep2Modal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto; overscroll-behavior:contain;">
     <button onclick="closeCreateDepartmentModal(2)" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
     <div style="text-align:center; margin-bottom:1rem;">
       <i class="fa fa-layer-group" style="font-size:2rem; color:#a78bfa; margin-bottom:0.5rem;"></i>
@@ -5462,7 +5506,7 @@ async function deleteInviteCode() {
 
 <!-- Step 3: Add Members -->
 <div id="createDepartmentStep3Modal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto; overscroll-behavior:contain;">
     <button onclick="closeCreateDepartmentModal(3)" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
     <div style="text-align:center; margin-bottom:1rem;">
       <i class="fa fa-users" style="font-size:2rem; color:#10b981; margin-bottom:0.5rem;"></i>
@@ -5536,6 +5580,7 @@ let createDeptTemplates = [
   { name: "Dispatch", color: "#f59e42", description: "Can manage calls, dispatch units create bolos and more.", permissions: [ { key: "dispatchUnits", label: "Dispatch Units", default: true }, { key: "createAndManageCalls", label: "Create & Manage Calls", default: true }, { key: "createBolos", label: "Create Bolos", default: true }, { key: "manage911Calls", label: "Manage 911 Calls", default: true }, { key: "nameSearch", label: "Name Search", default: true }, { key: "vehicleSearch", label: "Vehicle Search & Actions", default: true }, { key: "firearmSearch", label: "Firearm Search & Actions", default: true } ] },
   { name: "Fire", color: "#f87171", description: "Basic fire department with basic components and permissions.", permissions: [ { key: "10CodesInterface", label: "10-codes interface", default: true }, { key: "personSearch", label: "Person Search & Actions", default: true }, { key: "vehicleSearch", label: "Vehicle Search & Actions", default: true }, { key: "createBolos", label: "Create Bolos", default: true }, { key: "viewBolosAndWarrants", label: "View Calls, Bolos & Warrants", default: true }, { key: "notepad", label: "Notepad", default: true } ] },
   { name: "EMS", color: "#10b981", description: "Basic EMS department with basic components and permissions.", permissions: [ { key: "10CodesInterface", label: "10-codes interface", default: true }, { key: "personSearch", label: "Person Search & Actions", default: true }, { key: "vehicleSearch", label: "Vehicle Search & Actions", default: true }, { key: "createBolos", label: "Create Bolos", default: true }, { key: "viewBolosAndWarrants", label: "View Calls, Bolos & Warrants", default: true }, { key: "notepad", label: "Notepad", default: true } ] },
+  { name: "Judicial", color: "#8b5cf6", description: "Judicial department for reviewing and approving warrants.", permissions: [ { key: "reviewWarrants", label: "Review Warrants", default: true }, { key: "10CodesInterface", label: "10-codes interface", default: true }, { key: "notepad", label: "Notepad", default: true } ] },
   { name: "Custom", color: "#a3a3a3", description: "(Coming Soon!) Add a new department with custom components and permissions.", permissions: [ { key: "talkInChannels", label: "Create your own components (Coming soon)", default: true }, { key: "inviteFriends", label: "Custom features for a new department (Coming soon)", default: true } ] }
 ];
 let createDeptPermissionsState = {};
@@ -5545,6 +5590,7 @@ createDeptTemplates.forEach(t => {
   createDeptPermissionsState[t.name] = permAcc;
 });
 let createDeptSelectedTemplate = '';
+const createDeptCurrentUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
 let createDeptMembers = [];
 let createDeptAllMembers = [];
 
@@ -5554,6 +5600,7 @@ document.getElementById('openCreateDepartmentModalBtn')?.addEventListener('click
 });
 function closeCreateDepartmentModal(step) {
   document.getElementById(`createDepartmentStep${step}Modal`).style.display = 'none';
+  document.body.style.overflow = '';
 }
 
 function resetCreateDepartmentForm() {
@@ -5589,7 +5636,7 @@ function resetCreateDepartmentForm() {
     members: []
   };
   createDeptSelectedTemplate = '';
-  createDeptMembers = [];
+  createDeptMembers = window.dbUser ? [{ _id: window.dbUser._id, user: window.dbUser.user || { username: 'You', profilePicture: '' } }] : [];
 
   // Reset template permissions
   createDeptTemplates.forEach(t => {
@@ -5735,25 +5782,21 @@ function fetchCommunityMembers(page = 1, append = false) {
       return res.json();
     })
     .then(data => {
-      let newMembers = data.members || [];
+      // Filter out the current user — they're always auto-selected via dbUser
+      let newMembers = (data.members || []).filter(m => m._id !== createDeptCurrentUserId);
       membersTotal = data.totalUsers || 0;
-      
+
       if (append) {
-        // Append new members to existing list
         createDeptAllMembers = [...createDeptAllMembers, ...newMembers];
       } else {
-        // Replace existing members (first load)
         createDeptAllMembers = newMembers;
       }
-      
-      // Check if there are more members to load
-      hasMoreMembers = createDeptAllMembers.length < membersTotal;
-      
-      // Ensure current user is always selected and can't be deselected
-      const currentUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
-      const currentUser = createDeptAllMembers.find(m => m._id === currentUserId);
-      if (currentUser && !createDeptMembers.some(m => m._id === currentUserId)) {
-        createDeptMembers.unshift(currentUser); // Add to beginning of array
+
+      hasMoreMembers = (createDeptAllMembers.length + 1) < membersTotal; // +1 for filtered-out current user
+
+      // Ensure current user is always in createDeptMembers from dbUser (not from API)
+      if (window.dbUser && !createDeptMembers.some(m => m._id === createDeptCurrentUserId)) {
+        createDeptMembers.unshift({ _id: window.dbUser._id, user: window.dbUser.user || { username: 'You', profilePicture: '' } });
       }
       
       renderMemberList();
@@ -5792,39 +5835,48 @@ function renderMemberList() {
   // Clear existing content
   memberList.innerHTML = '';
   selectedMembersDiv.innerHTML = '';
-  
-  // Render all members
+
+  // Render current user's chip first (always selected, non-removable)
+  const currentUserMember = createDeptMembers.find(m => m._id === createDeptCurrentUserId);
+  if (currentUserMember) {
+    const selDiv = document.createElement('div');
+    selDiv.className = 'flex items-center gap-2 bg-gray-700 rounded px-3 py-2 mb-2';
+    selDiv.innerHTML = `
+      <img src="${currentUserMember.user.profilePicture || `https://ui-avatars.com/api/?name=${currentUserMember.user.username}&background=808080&color=fff&size=256`}" class="w-6 h-6 rounded-full" />
+      <span class="text-base">${currentUserMember.user.username}</span>
+    `;
+    selectedMembersDiv.appendChild(selDiv);
+  }
+
+  // Render other members (current user is filtered out of createDeptAllMembers)
   createDeptAllMembers.forEach(member => {
     const isSelected = createDeptMembers.some(m => m._id === member._id);
-    const currentUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
-    const isCurrentUser = member._id === currentUserId;
-    
+
     const div = document.createElement('div');
     div.className = 'flex items-center gap-3 mb-2';
     div.innerHTML = `
-      <input type="checkbox" 
-        ${isCurrentUser ? 'checked' : (isSelected ? 'checked' : '')} 
-        ${isCurrentUser ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} 
-        onchange="toggleCreateDeptMember('${member._id}')" 
+      <input type="checkbox"
+        ${isSelected ? 'checked' : ''}
+        onchange="toggleCreateDeptMember('${member._id}')"
         class="w-5 h-5" />
       <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" class="w-8 h-8 rounded-full" />
-      <span class="text-lg" ${isCurrentUser ? 'style="color: #6c757d; font-style: italic;"' : ''}>${member.user.username}${isCurrentUser ? ' (You - Required)' : ''}</span>
+      <span class="text-lg">${member.user.username}</span>
     `;
     memberList.appendChild(div);
-    
+
     if (isSelected) {
       const selDiv = document.createElement('div');
       selDiv.className = 'flex items-center gap-2 bg-gray-700 rounded px-3 py-2 mb-2';
       selDiv.innerHTML = `
         <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" class="w-6 h-6 rounded-full" />
         <span class="text-base">${member.user.username}</span>
-        ${member._id !== '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>' ? `<button onclick="toggleCreateDeptMember('${member._id}')" class="ml-2 text-red-400 text-lg">&times;</button>` : ''}
+        <button onclick="toggleCreateDeptMember('${member._id}')" class="ml-2 text-red-400 text-lg">&times;</button>
       `;
       selectedMembersDiv.appendChild(selDiv);
     }
   });
-  
-  // Add infinite scroll trigger at the bottom
+
+  // Add load more button at the bottom
   if (hasMoreMembers) {
     const loadMoreDiv = document.createElement('div');
     loadMoreDiv.className = 'text-center py-3';
@@ -5835,14 +5887,13 @@ function renderMemberList() {
     `;
     memberList.appendChild(loadMoreDiv);
   }
-  
-          selectedMembersCount.textContent = `${createDeptMembers.length} ${createDeptMembers.length === 1 ? 'member' : 'members'} selected`;
+
+  selectedMembersCount.textContent = `${createDeptMembers.length} ${createDeptMembers.length === 1 ? 'member' : 'members'} selected`;
 }
 
 function toggleCreateDeptMember(memberId) {
   // Prevent current user from being deselected
-  const currentUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
-  if (memberId === currentUserId) {
+  if (memberId === createDeptCurrentUserId) {
     return;
   }
   
@@ -6342,7 +6393,8 @@ var editDeptComponentMeta = {
   dispatchUnits:        { label: 'Dispatch Units',               icon: 'fa-headset',              color: 'text-blue-400' },
   createAndManageCalls: { label: 'Create & Manage Calls',        icon: 'fa-phone',                color: 'text-green-400' },
   manage911Calls:       { label: 'Manage 911 Calls',             icon: 'fa-ambulance',            color: 'text-red-400' },
-  nameSearch:           { label: 'Name Search',                  icon: 'fa-search',               color: 'text-blue-400' }
+  nameSearch:           { label: 'Name Search',                  icon: 'fa-search',               color: 'text-blue-400' },
+  reviewWarrants:       { label: 'Review Warrants',              icon: 'fa-gavel',                color: 'text-purple-400' }
 };
 
 // Expected components per template type — used to add missing components to legacy departments
@@ -6351,7 +6403,8 @@ var expectedComponentsByTemplate = {
   'police':   ['10CodesInterface', 'personSearch', 'vehicleSearch', 'firearmSearch', 'createBolos', 'viewBolosAndWarrants', 'notepad'],
   'dispatch': ['dispatchUnits', 'createAndManageCalls', 'createBolos', 'manage911Calls', 'nameSearch', 'vehicleSearch', 'firearmSearch'],
   'fire':     ['10CodesInterface', 'personSearch', 'vehicleSearch', 'createBolos', 'viewBolosAndWarrants', 'notepad'],
-  'ems':      ['10CodesInterface', 'personSearch', 'vehicleSearch', 'createBolos', 'viewBolosAndWarrants', 'notepad']
+  'ems':      ['10CodesInterface', 'personSearch', 'vehicleSearch', 'createBolos', 'viewBolosAndWarrants', 'notepad'],
+  'judicial': ['reviewWarrants', '10CodesInterface', 'notepad']
 };
 
 // Merge missing expected components into a department's component list (defaults to enabled)
@@ -7730,6 +7783,14 @@ async function saveEditEvent() {
         document.getElementById('generalSettingsModal').style.display = 'none';
       }
 
+      function toggleWarrantApprovalSlider() {
+        var mode = document.querySelector('input[name="warrantApprovalMode"]:checked');
+        var slider = document.getElementById('warrantApprovalSliderContainer');
+        if (slider) {
+          slider.style.display = (mode && mode.value === 'random') ? 'block' : 'none';
+        }
+      }
+
       function loadGeneralSettings() {
         // Get current general settings from the page data
         const communityData = <%- JSON.stringify(community || {}) %>;
@@ -7801,6 +7862,20 @@ async function saveEditEvent() {
           }
         }
         
+        // Set warrant approval mode
+        const warrantApprovalMode = communityData.community?.warrantApprovalMode || 'auto-approve';
+        const warrantRadio = document.querySelector(`input[name="warrantApprovalMode"][value="${warrantApprovalMode}"]`);
+        if (warrantRadio) {
+          warrantRadio.checked = true;
+        }
+        const warrantRate = communityData.community?.warrantRandomApprovalRate || 70;
+        const warrantRateSlider = document.getElementById('warrantRandomApprovalRate');
+        if (warrantRateSlider) {
+          warrantRateSlider.value = warrantRate;
+          document.getElementById('warrantApprovalRateValue').textContent = warrantRate + '%';
+        }
+        toggleWarrantApprovalSlider();
+
         // Hide loading state
         document.getElementById('generalSettingsLoading').style.display = 'none';
       }
@@ -7900,6 +7975,20 @@ async function saveEditEvent() {
           }
         }
         
+        // Set warrant approval mode
+        const warrantApprovalMode2 = communityData?.warrantApprovalMode || 'auto-approve';
+        const warrantRadio2 = document.querySelector(`input[name="warrantApprovalMode"][value="${warrantApprovalMode2}"]`);
+        if (warrantRadio2) {
+          warrantRadio2.checked = true;
+        }
+        const warrantRate2 = communityData?.warrantRandomApprovalRate || 70;
+        const warrantRateSlider2 = document.getElementById('warrantRandomApprovalRate');
+        if (warrantRateSlider2) {
+          warrantRateSlider2.value = warrantRate2;
+          document.getElementById('warrantApprovalRateValue').textContent = warrantRate2 + '%';
+        }
+        toggleWarrantApprovalSlider();
+
         // Hide loading state
         document.getElementById('generalSettingsLoading').style.display = 'none';
       }
@@ -8009,6 +8098,11 @@ async function saveEditEvent() {
           }
         }
         
+        // Get warrant approval mode
+        const warrantApprovalModeEl = document.querySelector('input[name="warrantApprovalMode"]:checked');
+        const warrantApprovalMode = warrantApprovalModeEl ? warrantApprovalModeEl.value : 'auto-approve';
+        const warrantRandomApprovalRate = parseInt(document.getElementById('warrantRandomApprovalRate').value) || 70;
+
         // Use the actual field names that match the backend community model
         const updateData = {
           civilianCreationLimitsEnabled: enableLimits,
@@ -8017,7 +8111,9 @@ async function saveEditEvent() {
           vehicleCreationLimitsEnabled: enableVehicleLimits,
           vehicleCreationLimit: maxVehicles,
           firearmCreationLimitsEnabled: enableFirearmLimits,
-          firearmCreationLimit: maxFirearms
+          firearmCreationLimit: maxFirearms,
+          warrantApprovalMode: warrantApprovalMode,
+          warrantRandomApprovalRate: warrantRandomApprovalRate
         };
         
         // Save to server - use the same route as saveCommunityProfile

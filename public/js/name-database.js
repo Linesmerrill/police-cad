@@ -815,12 +815,57 @@ function loadDriversLicenseSocket(res) {
 }
 
 function populateWarrantSocketDetails(res) {
-  $("#view-warrant-civ-first-name").val(res.warrant.accusedFirstName);
-  $("#view-warrant-civ-last-name").val(res.warrant.accusedLastName);
-  $("#view-warrant-civ-dob").val($("#delBirthday").val());
-  $("#view-civIDWarrant").val(res.warrant.accusedID);
-  $("#view-warrant-select").val(res.warrant.reasons);
+  var w = res.warrant;
+  $("#view-warrant-type").val(w.warrantType || "arrest");
+  $("#view-warrant-status").val(w.status || "unknown");
+  $("#view-warrant-accused-name").val((w.accusedFirstName || "") + " " + (w.accusedLastName || ""));
+  $("#view-warrant-charges").val(Array.isArray(w.charges) ? w.charges.join(", ") : (w.reasons || ""));
+  $("#view-warrant-probable-cause").val(w.probableCause || "");
+  $("#view-warrant-officer").val(w.requestingOfficerName || "");
+  $("#view-warrant-judge").val(w.judgeName || "N/A");
+  $("#view-warrant-date-filed").val(w.createdAt ? new Date(w.createdAt).toLocaleDateString() : "");
   $("#warrant-ID").val(res._id);
+  $("#view-civIDWarrant").val(w.accusedID);
+
+  // Show/hide search location
+  if (w.warrantType === "search" && w.searchLocation) {
+    $("#view-warrant-search-location-group").show();
+    $("#view-warrant-search-location").val(w.searchLocation);
+  } else {
+    $("#view-warrant-search-location-group").hide();
+  }
+
+  // Show/hide judge notes
+  if (w.judgeNotes) {
+    $("#view-warrant-judge-notes-group").show();
+    $("#view-warrant-judge-notes").val(w.judgeNotes);
+  } else {
+    $("#view-warrant-judge-notes-group").hide();
+  }
+
+  // Status alert
+  var statusAlert = $("#view-warrant-status-alert");
+  if (w.status === "approved") {
+    statusAlert.show().removeClass().addClass("alert alert-danger").text("Active Warrant");
+    $("#executeWarrantBtn").show();
+    $("#withdrawWarrantBtn").show();
+  } else if (w.status === "pending") {
+    statusAlert.show().removeClass().addClass("alert alert-warning").text("Pending Judge Review");
+    $("#executeWarrantBtn").hide();
+    $("#withdrawWarrantBtn").show();
+  } else if (w.status === "denied") {
+    statusAlert.show().removeClass().addClass("alert alert-info").text("Warrant Denied");
+    $("#executeWarrantBtn").hide();
+    $("#withdrawWarrantBtn").hide();
+  } else if (w.status === "executed") {
+    statusAlert.show().removeClass().addClass("alert alert-success").text("Warrant Executed");
+    $("#executeWarrantBtn").hide();
+    $("#withdrawWarrantBtn").hide();
+  } else {
+    statusAlert.hide();
+    $("#executeWarrantBtn").hide();
+    $("#withdrawWarrantBtn").hide();
+  }
 }
 
 // function OpenCitation() {
@@ -1105,6 +1150,46 @@ function getPrevLicensePage() {
   });
 }
 
+function getWarrantStatusColor(status) {
+  switch (status) {
+    case "approved": return "indianred";
+    case "pending": return "orange";
+    case "denied": return "gray";
+    case "executed": return "green";
+    case "withdrawn": return "gray";
+    default: return "indianred";
+  }
+}
+
+function getWarrantStatusIcon(status) {
+  switch (status) {
+    case "approved": return "mdi:alert-octagon";
+    case "pending": return "mdi:clock-outline";
+    case "denied": return "mdi:close-circle";
+    case "executed": return "mdi:check-circle";
+    case "withdrawn": return "mdi:cancel";
+    default: return "mdi:alert-octagon";
+  }
+}
+
+function renderWarrantCard(warrant) {
+  var w = warrant.warrant;
+  var charges = Array.isArray(w.charges) ? w.charges.join(", ") : (w.reasons || "Warrant");
+  var statusColor = getWarrantStatusColor(w.status);
+  var statusIcon = getWarrantStatusIcon(w.status);
+  var typeLabel = (w.warrantType || "arrest").charAt(0).toUpperCase() + (w.warrantType || "arrest").slice(1);
+  return `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center warrants-thumbnails flex-li-wrapper">
+    <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${warrant._id}')">
+      <span class="iconify font-size-4-vmax" style="color:${statusColor}" data-icon="${statusIcon}" data-inline="false"></span>
+      <div class="caption text-capitalize">
+        <h5 class="color-white" style="margin:4px 0">${escapeHtml(typeLabel)}</h5>
+        <h4 class="color-white" style="font-size:12px">${escapeHtml(charges)}</h4>
+        <p class="color-white" style="font-size:11px; margin:2px 0; color:${statusColor}">${escapeHtml(w.status || "active")}</p>
+      </div>
+    </div>
+  </div>`;
+}
+
 function getWarrants() {
   var socket = io();
   $("#no-warrants-message").hide();
@@ -1120,7 +1205,6 @@ function getWarrants() {
     } else {
       $("#issue-loading-warrants-alert").hide();
       if (res.length < 1) {
-        // if we have 0 results back
         $("#warrants-loading").hide();
         $("#no-warrants-message").show();
         $("#next-warrants-page-btn").addClass("isDisabled");
@@ -1131,17 +1215,7 @@ function getWarrants() {
         $("#no-warrants-message").hide();
         $("#warrants-thumbnail").empty();
         for (i = 0; i < res.length; i++) {
-          $("#warrants-thumbnail").append(
-            `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center warrants-thumbnails flex-li-wrapper">
-        <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
-          <span class="iconify font-size-4-vmax" style="color:indianred" data-icon="mdi:alert-octagon" data-inline="false"></span>
-          <div class="caption text-capitalize">
-            <h4 class="color-white">${escapeHtml(res[i].warrant.reasons)}</h4>
-            <p class="color-white" style="font-size: 12px;">${escapeHtml(res[i].warrant.accusedFirstName)} ${escapeHtml(res[i].warrant.accusedLastName)}</p>
-          </div>
-        </div>
-      </div>`
-          );
+          $("#warrants-thumbnail").append(renderWarrantCard(res[i]));
         }
         $("#warrants-loading").hide();
         $("#prev-warrants-page-btn").addClass("isDisabled");
@@ -1169,26 +1243,12 @@ function getNextWarrantPage() {
   };
   socket.emit("fetch_warrant_cards", myObj);
   socket.on("load_warrant_cards_result", (res) => {
-    // load content on page
     $("#warrants-thumbnail").empty();
     for (i = 0; i < res.length; i++) {
-      $("#warrants-thumbnail").append(
-        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center warrants-thumbnails flex-li-wrapper">
-    <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
-      <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
-      <div class="caption text-capitalize">
-        <h4 class="color-white">${escapeHtml(res[i].warrants.warrantsType)}</h4>
-        <h5 class="color-white">Status: ${escapeHtml(res[i].warrants.status)}</h5>
-        <p class="color-white" style="font-size: 12px;">${escapeHtml(res[i].warrants.ownerName)}</p>
-      </div>
-    </div>
-  </div>`
-      );
+      $("#warrants-thumbnail").append(renderWarrantCard(res[i]));
     }
     if (res.length < 8) {
-      // if we have reached the end of the data, then gray out the 'next' button
       $("#next-warrants-page-btn").addClass("isDisabled");
-      // page = page - 1
       $("#next-warrants-page-btn").attr("onclick", "").unbind("click");
     } else {
       $("#next-warrants-page-btn").removeClass("isDisabled");
@@ -1217,21 +1277,9 @@ function getPrevWarrantPage() {
   };
   socket.emit("fetch_warrant_cards", myObj);
   socket.on("load_warrant_cards_result", (res) => {
-    // load content on page
     $("#warrants-thumbnail").empty();
     for (i = 0; i < res.length; i++) {
-      $("#warrants-thumbnail").append(
-        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center warrants-thumbnails flex-li-wrapper">
-    <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
-      <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
-      <div class="caption text-capitalize">
-        <h4 class="color-white">${escapeHtml(res[i].warrants.warrantsType)}</h4>
-        <h5 class="color-white">Status: ${escapeHtml(res[i].warrants.status)}</h5>
-        <p class="color-white" style="font-size: 12px;">${escapeHtml(res[i].warrants.ownerName)}</p>
-      </div>
-    </div>
-  </div>`
-      );
+      $("#warrants-thumbnail").append(renderWarrantCard(res[i]));
     }
     $("#next-warrants-page-btn").removeClass("isDisabled");
     $("#next-warrants-page-btn")

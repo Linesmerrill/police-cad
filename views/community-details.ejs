@@ -72,6 +72,8 @@
           dashboardUrl = `/ems-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}&c=${encodedCommunityId}`;
         } else if (templateType.includes('dispatch')) {
           dashboardUrl = `/dispatch-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}&c=${encodedCommunityId}`;
+        } else if (templateType.includes('judicial')) {
+          dashboardUrl = `/department-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}&c=${encodedCommunityId}`;
         }
 
         if (dashboardUrl) {
@@ -696,47 +698,11 @@
             }
           });
 
-          // Filter and paginate the server-rendered departments
-          var cards = document.querySelectorAll('#departments-grid .dept-card');
-
-          if (!deptCurrentFilter) {
-            // No filter - show all cards by their original index
-            cards.forEach(function(card) {
-              var idx = parseInt(card.getAttribute('data-dept-index'), 10);
-              card.style.display = (idx < deptPerPage) ? '' : 'none';
-              card.removeAttribute('data-filtered-index');
-            });
-            deptTotalCount = deptOriginalCount;
-          } else {
-            // Filter active - show only matching cards
-            var visibleIdx = 0;
-            var matchingCount = 0;
-
-            cards.forEach(function(card) {
-              var cardTemplate = (card.getAttribute('data-template-name') || '').toLowerCase();
-              var filterLower = deptCurrentFilter.toLowerCase();
-              var matchesFilter = cardTemplate.includes(filterLower);
-
-              if (matchesFilter) {
-                // Show only first page of matching departments
-                if (visibleIdx < deptPerPage) {
-                  card.style.display = '';
-                } else {
-                  card.style.display = 'none';
-                }
-                card.setAttribute('data-filtered-index', visibleIdx);
-                visibleIdx++;
-                matchingCount++;
-              } else {
-                card.style.display = 'none';
-                card.removeAttribute('data-filtered-index');
-              }
-            });
-            deptTotalCount = matchingCount;
-          }
-
-          deptTotalPages = Math.max(1, Math.ceil(deptTotalCount / deptPerPage));
-          updateDeptPaginationUI();
+          // Always fetch filtered results from the API so we don't miss
+          // departments that weren't in the initial server-rendered page.
+          fetchDepartmentsPage(1, true).then(function() {
+            if (typeof initDeptCardClicks === 'function') initDeptCardClicks();
+          });
         }
 
         async function fetchDepartmentsPage(page, clearContainer) {
@@ -754,15 +720,16 @@
             deptTotalCount = data.totalCount || 0;
             deptTotalPages = Math.max(1, Math.ceil(deptTotalCount / deptPerPage));
 
-            // Update the department count badge
-            var countBadge = document.getElementById('dept-count-badge');
-            if (countBadge && !deptCurrentFilter) {
-              countBadge.textContent = deptTotalCount;
-            }
-
-            // Update template types if returned (only on first fetch without filter)
-            if (data.templateTypes && !deptCurrentFilter) {
+            // Update template types and counts whenever the API returns them
+            if (data.templateTypes) {
               deptTemplateTypes = data.templateTypes;
+              // Total department count is the sum of all template type counts
+              var totalAllDepts = deptTemplateTypes.reduce(function(sum, t) { return sum + (t.count || 0); }, 0);
+              deptOriginalCount = totalAllDepts;
+              var countBadge = document.getElementById('dept-count-badge');
+              if (countBadge) {
+                countBadge.textContent = totalAllDepts;
+              }
               renderDeptFilterTabs();
             }
 
@@ -842,6 +809,9 @@
             deptColor = '#ef4444';
           } else if (lowerTemplate.includes('dispatch')) {
             deptIcon = 'fa-headset';
+            deptColor = '#f59e0b';
+          } else if (lowerTemplate.includes('judicial')) {
+            deptIcon = 'fa-gavel';
             deptColor = '#f59e0b';
           }
 
@@ -940,6 +910,9 @@
           } else if (lowerTemplate.includes('dispatch')) {
             deptIcon = 'fa-headset';
             deptColor = '#f59e0b';
+          } else if (lowerTemplate.includes('judicial')) {
+            deptIcon = 'fa-gavel';
+            deptColor = '#f59e0b';
           }
           return { icon: deptIcon, color: deptColor };
         }
@@ -952,6 +925,34 @@
             return;
           }
 
+          // If tabs already exist, just update active states and counts in-place
+          var existingBtns = container.querySelectorAll('button[data-filter]');
+          if (existingBtns.length > 0) {
+            existingBtns.forEach(function(btn) {
+              var btnFilter = btn.getAttribute('data-filter') || '';
+              var isActive = btnFilter === deptCurrentFilter;
+              btn.style.background = isActive ? '#3b82f6' : 'rgba(255,255,255,0.05)';
+              btn.style.color = isActive ? 'white' : '#94a3b8';
+              // Update counts
+              if (btnFilter === '') {
+                btn.querySelector('.text-xs').textContent = '(' + deptOriginalCount + ')';
+              } else {
+                var typeData = deptTemplateTypes.find(function(t) { return t.name === btnFilter; });
+                if (typeData) {
+                  btn.querySelector('.text-xs').textContent = '(' + typeData.count + ')';
+                } else {
+                  // Template type no longer exists — remove the button
+                  btn.remove();
+                }
+              }
+            });
+            // Check if any new template types need to be added
+            var existingFilters = Array.from(container.querySelectorAll('button[data-filter]')).map(function(b) { return b.getAttribute('data-filter'); });
+            var hasNewTypes = deptTemplateTypes.some(function(t) { return existingFilters.indexOf(t.name) === -1; });
+            if (!hasNewTypes) return;
+          }
+
+          // Full rebuild: initial render or when new template types appear
           container.style.display = 'flex';
           container.innerHTML = '';
 
@@ -961,12 +962,15 @@
           allBtn.className = 'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5';
           allBtn.style.background = deptCurrentFilter === '' ? '#3b82f6' : 'rgba(255,255,255,0.05)';
           allBtn.style.color = deptCurrentFilter === '' ? 'white' : '#94a3b8';
-          allBtn.innerHTML = 'All <span class="text-xs opacity-60">(' + deptTotalCount + ')</span>';
+          allBtn.innerHTML = 'All <span class="text-xs opacity-60">(' + deptOriginalCount + ')</span>';
           allBtn.onclick = function() { filterDepartments(''); };
           container.appendChild(allBtn);
 
-          // Sort by count descending
-          var sortedTypes = deptTemplateTypes.slice().sort(function(a, b) { return b.count - a.count; });
+          // Sort by count descending, then alphabetically for stable order
+          var sortedTypes = deptTemplateTypes.slice().sort(function(a, b) {
+            if (b.count !== a.count) return b.count - a.count;
+            return a.name.localeCompare(b.name);
+          });
 
           // Add button for each template type
           sortedTypes.forEach(function(type) {
@@ -1620,6 +1624,9 @@
                   deptColor = '#ef4444';
                 } else if (lowerTemplate.includes('dispatch')) {
                   deptIcon = 'fa-headset';
+                  deptColor = '#f59e0b';
+                } else if (lowerTemplate.includes('judicial')) {
+                  deptIcon = 'fa-gavel';
                   deptColor = '#f59e0b';
                 }
               %>

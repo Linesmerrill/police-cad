@@ -2023,6 +2023,133 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Generic configurable department dashboard (used for Judicial and future templates)
+  app.get("/department-dashboard", authCheck, async function (req, res) {
+    try {
+      var context = req.app.locals.specialContext;
+      req.app.locals.specialContext = null;
+
+      const departmentName = req.query.dept || null;
+      const encodedDeptId = req.query.d || null;
+
+      let departmentId = null;
+      if (encodedDeptId) {
+        try {
+          let base64 = encodedDeptId
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          departmentId = Buffer.from(base64, 'base64').toString('utf8');
+        } catch (e) {
+          console.error('Failed to decode department ID:', e);
+          departmentId = null;
+        }
+      }
+
+      const encodedCommunityId = req.query.c || null;
+      let urlCommunityId = null;
+      const communityIdPattern = /^[a-fA-F0-9]{24}$/;
+      if (encodedCommunityId) {
+        try {
+          let base64 = encodedCommunityId
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          const decoded = Buffer.from(base64, 'base64').toString('utf8');
+          if (communityIdPattern.test(decoded)) {
+            urlCommunityId = decoded;
+          } else {
+            console.warn('Rejected invalid community ID from URL:', decoded);
+          }
+        } catch (e) {
+          console.error('Failed to decode community ID from URL:', e);
+        }
+      }
+
+      const communityId = urlCommunityId || req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
+
+      if (departmentId && departmentName) {
+        if (!communityId) {
+          return res.status(403).render("error", {
+            message: "No active community found. Please select a community first.",
+            redirect: "/communities",
+          });
+        }
+
+        let isAdmin = false;
+        try {
+          const rolesApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/roles`;
+          const rolesResponse = await axios.get(rolesApiUrl, config);
+          const roles = rolesResponse.data || [];
+          roles.forEach(role => {
+            if (Array.isArray(role.members) && role.members.includes(String(req.user._id))) {
+              if (Array.isArray(role.permissions)) {
+                role.permissions.forEach(perm => {
+                  if (perm.name === 'administrator' && perm.enabled === true) {
+                    isAdmin = true;
+                  }
+                });
+              }
+            }
+          });
+        } catch (err) {
+          console.error('Error fetching community roles:', err.message);
+        }
+
+        if (!isAdmin) {
+          const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
+          try {
+            const userDepartmentsResponse = await axios.get(apiUrl, config);
+            const userDepartments = userDepartmentsResponse.data.data || [];
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId && dept.accessStatus === 'approved');
+            if (!userHasAccess) {
+              return res.status(403).render("error", {
+                message: "You don't have access to this department. Please contact the department administrator.",
+                redirect: "/departments",
+              });
+            }
+          } catch (apiError) {
+            console.error('API Error:', apiError.message);
+          }
+        }
+      }
+
+      let communityName = null;
+      if (communityId) {
+        try {
+          const communityResponse = await axios.get(
+            `${policeCadApiUrl}/api/v1/community/${communityId}`,
+            config
+          );
+          communityName = communityResponse.data?.community?.name || null;
+        } catch (err) {
+          console.error('Error fetching community:', err.message);
+        }
+      }
+
+      res.render("department-dashboard", {
+        user: req.user,
+        referer: encodeURIComponent("/department-dashboard"),
+        redirect: encodeURIComponent("/department-dashboard"),
+        context: null,
+        departmentId: departmentId || req.session.departmentId || null,
+        departmentName: departmentName,
+        communityName: communityName,
+        apiUrl: policeCadApiUrl,
+      });
+    } catch (error) {
+      console.error('Error in department-dashboard route:', error);
+      return res.status(500).render("error", {
+        message: "An error occurred while loading the dashboard. Please try again.",
+        redirect: "/communities",
+      });
+    }
+  });
+
   app.get("/invite/:code", authCheck, async function (req, res) {
     try {
       const { code } = req.params;
@@ -4776,16 +4903,53 @@ module.exports = function (app, passport, server, nextApp, handle) {
     });
   });
 
+  // Sanitize user-provided route values to prevent open redirects.
+  // Only allows simple path characters; rejects protocol-relative URLs and schemes.
+  function getSafeRedirectPath(route) {
+    if (typeof route !== "string") return "/";
+    var trimmed = route.trim();
+    if (!trimmed || /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed) || trimmed.startsWith("//")) return "/";
+    if (!/^[A-Za-z0-9/_-]+$/.test(trimmed)) return "/";
+    return trimmed.startsWith("/") ? trimmed : "/" + trimmed;
+  }
+
   app.post("/create-warrant", auth, function (req, res) {
-    var myWarrant = new Warrant();
-    myWarrant.createWarrant(req, res);
-    myWarrant.save(function (err) {
-      if (err) return console.error(err);
-    });
+    // Build charges array from the multi-select
+    var charges = req.body.charges;
+    if (!Array.isArray(charges)) {
+      charges = charges ? [charges] : [];
+    }
+
+    var warrantData = {
+      warrantType: req.body.warrantType || "arrest",
+      accusedID: req.body.accusedID,
+      accusedFirstName: req.body.accusedFirstName,
+      accusedLastName: req.body.accusedLastName,
+      charges: charges,
+      probableCause: req.body.probableCause,
+      searchLocation: req.body.searchLocation || "",
+      requestingOfficerID: req.body.requestingOfficerID,
+      requestingOfficerName: req.body.requestingOfficerName,
+      activeCommunityID: req.body.activeCommunityID || "",
+    };
+
+    axios
+      .post(`${policeCadApiUrl}/api/v1/warrant`, warrantData, config)
+      .then(function (response) {
+        req.app.locals.specialContext = null;
+        if (response.data && response.data.status === "pending") {
+          req.app.locals.specialContext = "warrantPending";
+        }
+        return res.redirect(getSafeRedirectPath(req.body.route));
+      })
+      .catch(function (err) {
+        console.error("Error creating warrant:", err.message);
+        req.app.locals.specialContext = "warrantError";
+        return res.redirect(getSafeRedirectPath(req.body.route));
+      });
   });
 
   app.post("/clear-warrant", auth, function (req, res) {
-    // console.debug("/clear-warrant req: ", req.body);
     req.app.locals.specialContext = null;
     var isValid = isValidObjectIdLength(
       req.body.warrantID,
@@ -4793,24 +4957,27 @@ module.exports = function (app, passport, server, nextApp, handle) {
     );
     if (!isValid) {
       req.app.locals.specialContext = "invalidRequest";
-      return res.redirect("/" + req.body.route);
+      return res.redirect(getSafeRedirectPath(req.body.route));
     }
-    Warrant.findByIdAndUpdate(
-      {
-        _id: ObjectId(req.body.warrantID),
-      },
-      {
-        $set: {
-          "warrant.updatedAt": new Date(),
-          "warrant.clearingOfficerID": req.body.clearingOfficerID,
-          "warrant.status": false,
-        },
-      },
-      function (err) {
-        if (err) return console.error(err);
-        return res.redirect("/" + req.body.route);
-      }
-    );
+    // Enforce strict ObjectId format (24 hexadecimal characters) to prevent SSRF
+    if (!/^[a-fA-F0-9]{24}$/.test(req.body.warrantID)) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect(getSafeRedirectPath(req.body.route));
+    }
+    // Use the API to update warrant status to withdrawn
+    axios
+      .put(
+        `${policeCadApiUrl}/api/v1/warrant/${req.body.warrantID}`,
+        { status: "withdrawn" },
+        config
+      )
+      .then(function () {
+        return res.redirect(getSafeRedirectPath(req.body.route));
+      })
+      .catch(function (err) {
+        console.error("Error clearing warrant:", err.message);
+        return res.redirect(getSafeRedirectPath(req.body.route));
+      });
   });
 
   app.post("/create-bolo", auth, function (req, res) {
