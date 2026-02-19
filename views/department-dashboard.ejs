@@ -2495,23 +2495,23 @@
               '<div class="dd-notepad-sidebar-header">' +
                 '<button class="dd-notepad-new-btn" onclick="ddNewNote()"><i class="fa fa-plus"></i> New Note</button>' +
               '</div>' +
-              '<div class="dd-notepad-list" id="dd-notepad-list"></div>' +
+              '<div class="dd-notepad-list"></div>' +
             '</div>' +
             /* Editor */
-            '<div class="dd-notepad-editor" id="dd-notepad-editor">' +
-              '<div class="dd-notepad-editor-empty" id="dd-notepad-placeholder">' +
+            '<div class="dd-notepad-editor">' +
+              '<div class="dd-notepad-editor-empty dd-notepad-placeholder">' +
                 '<i class="fa fa-sticky-note"></i>' +
                 '<p>Select a note or create a new one</p>' +
               '</div>' +
-              '<div id="dd-notepad-form" style="display:none;flex-direction:column;flex:1;">' +
-                '<input type="text" class="dd-notepad-title-input" id="dd-notepad-title" placeholder="Note title" maxlength="100">' +
-                '<textarea class="dd-notepad-content-input" id="dd-notepad-content" placeholder="Start writing..."></textarea>' +
+              '<div class="dd-notepad-form" style="display:none;flex-direction:column;flex:1;">' +
+                '<input type="text" class="dd-notepad-title-input" placeholder="Note title" maxlength="100">' +
+                '<textarea class="dd-notepad-content-input" placeholder="Start writing..."></textarea>' +
                 '<div class="dd-notepad-editor-footer">' +
                   '<div class="dd-notepad-status-text">' +
-                    '<div class="dd-notepad-status-dot" id="dd-notepad-dot"></div>' +
-                    '<span id="dd-notepad-status">Ready</span>' +
+                    '<div class="dd-notepad-status-dot"></div>' +
+                    '<span class="dd-notepad-status-label">Ready</span>' +
                   '</div>' +
-                  '<button class="dd-notepad-save-btn" id="dd-notepad-save" onclick="ddSaveNote()">Save</button>' +
+                  '<button class="dd-notepad-save-btn" onclick="ddSaveNote()">Save</button>' +
                 '</div>' +
               '</div>' +
             '</div>' +
@@ -2525,10 +2525,20 @@
       ddSelectedNoteId = null;
       ddRenderNoteList();
       ddShowPlaceholder();
+
+      // Sync editor inputs across both instances (overview + focused)
+      $(document).off('input.notepad-sync').on('input.notepad-sync', '.dd-notepad-title-input', function() {
+        var val = $(this).val();
+        $('.dd-notepad-title-input').not(this).val(val);
+      });
+      $(document).off('input.notepad-content-sync').on('input.notepad-content-sync', '.dd-notepad-content-input', function() {
+        var val = $(this).val();
+        $('.dd-notepad-content-input').not(this).val(val);
+      });
     }
 
     function ddRenderNoteList() {
-      var $lists = $('#dd-notepad-list');
+      var $lists = $('.dd-notepad-list');
       $lists.empty();
 
       if (ddNotes.length === 0) {
@@ -2580,21 +2590,21 @@
     }
 
     function ddShowPlaceholder() {
-      $('#dd-notepad-form').hide();
-      $('#dd-notepad-placeholder').show();
+      $('.dd-notepad-form').hide();
+      $('.dd-notepad-placeholder').show();
     }
 
     function ddShowEditor() {
-      $('#dd-notepad-placeholder').hide();
-      $('#dd-notepad-form').css('display', 'flex');
+      $('.dd-notepad-placeholder').hide();
+      $('.dd-notepad-form').css('display', 'flex');
     }
 
     function ddSelectNote(noteId) {
       var note = ddNotes.find(function(n) { return n._id === noteId; });
       if (!note) return;
       ddSelectedNoteId = noteId;
-      $('#dd-notepad-title').val(note.title || '');
-      $('#dd-notepad-content').val(note.content || '');
+      $('.dd-notepad-title-input').val(note.title || '');
+      $('.dd-notepad-content-input').val(note.content || '');
       ddSetNoteStatus('ready', 'Ready');
       ddShowEditor();
       ddRenderNoteList();
@@ -2603,19 +2613,22 @@
 
     function ddNewNote() {
       ddSelectedNoteId = null;
-      $('#dd-notepad-title').val('');
-      $('#dd-notepad-content').val('');
+      $('.dd-notepad-title-input').val('');
+      $('.dd-notepad-content-input').val('');
       ddSetNoteStatus('ready', 'New note');
       ddShowEditor();
       ddRenderNoteList();
-      // Focus the title
-      setTimeout(function() { $('#dd-notepad-title').focus(); }, 50);
+      // Focus the title in the visible panel
+      setTimeout(function() { $('.dd-notepad-title-input:visible').first().focus(); }, 50);
     }
     window.ddNewNote = ddNewNote;
 
     function ddSaveNote() {
-      var title = $('#dd-notepad-title').val().trim();
-      var content = $('#dd-notepad-content').val().trim();
+      // Read from whichever instance is visible
+      var $visibleTitle = $('.dd-notepad-title-input:visible').first();
+      var $visibleContent = $('.dd-notepad-content-input:visible').first();
+      var title = $visibleTitle.val().trim();
+      var content = $visibleContent.val().trim();
 
       if (!title && !content) {
         ddSetNoteStatus('error', 'Title or content required');
@@ -2623,8 +2636,8 @@
       }
       if (!title) title = 'Untitled';
 
-      var $btn = $('#dd-notepad-save');
-      $btn.prop('disabled', true).text('Saving...');
+      var $btns = $('.dd-notepad-save-btn');
+      $btns.prop('disabled', true).text('Saving...');
       ddSetNoteStatus('saving', 'Saving...');
 
       if (ddSelectedNoteId) {
@@ -2643,7 +2656,6 @@
           data: JSON.stringify(updateData),
           contentType: 'application/json',
           success: function() {
-            // Update local data
             var idx = ddNotes.findIndex(function(n) { return n._id === ddSelectedNoteId; });
             if (idx !== -1) {
               ddNotes[idx] = Object.assign({}, ddNotes[idx], updateData);
@@ -2656,12 +2668,12 @@
             }
             ddRenderNoteList();
             ddSetNoteStatus('saved', 'Saved');
-            $btn.prop('disabled', false).text('Save');
+            $btns.prop('disabled', false).text('Save');
           },
           error: function(xhr) {
             console.error('Error updating note:', xhr.responseText);
             ddSetNoteStatus('error', 'Save failed');
-            $btn.prop('disabled', false).text('Save');
+            $btns.prop('disabled', false).text('Save');
             ddToast('Failed to save note', 'error');
           }
         });
@@ -2683,12 +2695,12 @@
             }
             ddRenderNoteList();
             ddSetNoteStatus('saved', 'Saved');
-            $btn.prop('disabled', false).text('Save');
+            $btns.prop('disabled', false).text('Save');
           },
           error: function(xhr) {
             console.error('Error creating note:', xhr.responseText);
             ddSetNoteStatus('error', 'Save failed');
-            $btn.prop('disabled', false).text('Save');
+            $btns.prop('disabled', false).text('Save');
             ddToast('Failed to create note', 'error');
           }
         });
@@ -2736,11 +2748,11 @@
     window.ddDeleteNote = ddDeleteNote;
 
     function ddSetNoteStatus(state, text) {
-      var $dot = $('#dd-notepad-dot');
-      var $text = $('#dd-notepad-status');
-      $dot.removeClass('saving saved error');
-      if (state !== 'ready') $dot.addClass(state);
-      $text.text(text);
+      var $dots = $('.dd-notepad-status-dot');
+      var $labels = $('.dd-notepad-status-label');
+      $dots.removeClass('saving saved error');
+      if (state !== 'ready') $dots.addClass(state);
+      $labels.text(text);
     }
 
     // ══════════════════════════════════════════
