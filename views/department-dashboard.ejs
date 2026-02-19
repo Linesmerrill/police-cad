@@ -1866,7 +1866,7 @@
         return;
       }
       $.ajax({
-        url: API_URL + '/api/v1/department/' + departmentId,
+        url: API_URL + '/api/v1/community/' + communityId + '/departments/' + departmentId,
         method: 'GET',
         success: function(dept) {
           var template = dept?.department?.template;
