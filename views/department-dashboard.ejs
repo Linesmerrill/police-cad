@@ -2519,9 +2519,10 @@ $('#dd-loading').hide();
         }
       });
 
-      // Auto-navigate to a section if specified in URL
-      var urlSection = new URLSearchParams(window.location.search).get('section');
-      if (urlSection && componentRegistry[urlSection] && enabledComponents[urlSection]) {
+      // Auto-navigate to a section from hash (e.g. #penalCodes) or query param (?section=penalCodes)
+      var urlSection = window.location.hash.replace('#', '') ||
+                       new URLSearchParams(window.location.search).get('section');
+      if (urlSection === 'overview' || (urlSection && componentRegistry[urlSection] && enabledComponents[urlSection])) {
         ddNavTo(urlSection);
       }
     }
@@ -2667,11 +2668,26 @@ $('#dd-loading').hide();
       $('[id^="dd-panel-"]').hide();
       $('#dd-panel-' + panel).show();
 
+      // Update URL hash for bookmarking and refresh persistence
+      if (!ddNavTo._fromPopState && window.location.hash !== '#' + panel) {
+        history.pushState({ panel: panel }, '', '#' + panel);
+      }
+      ddNavTo._fromPopState = false;
+
       // Close mobile sidebar and restore hamburger
       $('.dd-sidebar').removeClass('open');
       $('#dd-sidebar-open').css('display', '');
     }
     window.ddNavTo = ddNavTo;
+
+    // Handle browser back/forward
+    window.addEventListener('popstate', function() {
+      var hash = window.location.hash.replace('#', '') || 'overview';
+      if (hash === 'overview' || (componentRegistry[hash] && enabledComponents[hash])) {
+        ddNavTo._fromPopState = true;
+        ddNavTo(hash);
+      }
+    });
 
     function ddRefresh() {
       Object.keys(componentRegistry).forEach(function(key) {
