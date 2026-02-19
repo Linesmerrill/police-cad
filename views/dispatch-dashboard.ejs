@@ -666,8 +666,7 @@
             <a data-toggle="modal" href="#notepadModal"><span class="fa fa-clipboard ml-3 mr-3"></span> Notepad</a>
           </li>
           <li>
-            <a href="/penal-code"><span class="fa fa-laptop ml-3 mr-3"></span>Penal Codes <i
-                class="fa fa-external-link-alt"></i></a>
+            <a href="#" onclick="event.preventDefault(); pcOpenSearch();"><span class="fa fa-scale-balanced ml-3 mr-3"></span> Penal Codes</a>
           </li>
           <li>
             <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
@@ -3498,13 +3497,13 @@
       var $select = $('#wm-edit-charges');
 
       $.ajax({
-        url: API_URL + '/api/v1/community/' + communityId,
+        url: API_URL + '/api/v1/community/' + communityId + '/penal-codes',
         method: 'GET',
         success: function(data) {
-          var fines = (data && data.community && data.community.fines && data.community.fines.categories) || [];
-          fines.forEach(function(cat) {
+          var categories = (data && data.categories) || [];
+          categories.forEach(function(cat) {
             var $g = $('<optgroup label="' + wmEsc(cat.name || 'Unknown') + '"></optgroup>');
-            (cat.fines || []).forEach(function(f) { $g.append('<option value="' + wmEsc(f.name) + '">' + wmEsc(f.name) + '</option>'); });
+            (cat.violations || []).forEach(function(v) { $g.append('<option value="' + wmEsc(v.name) + '">' + wmEsc(v.name) + '</option>'); });
             $select.prepend($g);
           });
           $select.select2({ placeholder: 'Search charges...', allowClear: true, width: '100%', dropdownParent: $('#wm-overlay') });
@@ -3598,6 +3597,399 @@
     window.wmExecuteWarrant = wmExecuteWarrant;
     window.wmClose = wmClose;
     window.wmBack = wmBack;
+  })();
+  </script>
+
+  <!-- ═══ Penal Codes Modal ═══ -->
+  <style>
+    .pc-overlay {
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(4, 6, 14, 0.82);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      display: none; align-items: center; justify-content: center;
+    }
+    .pc-overlay.active { display: flex; }
+
+    .pc-panel {
+      background: linear-gradient(170deg, #12141f 0%, #0d0f18 100%);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      width: 85vw; max-width: 1100px; max-height: 90vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 32px 64px rgba(0,0,0,0.5);
+      animation: pc-slide-in 0.2s cubic-bezier(0.4,0,0.2,1);
+    }
+    @keyframes pc-slide-in {
+      from { opacity: 0; transform: scale(0.96) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .pc-header {
+      padding: 20px 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .pc-header h4 {
+      margin: 0; font-size: 16px; font-weight: 600; color: #e2e8f0;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .pc-header h4 i { color: #f59e0b; font-size: 15px; }
+    .pc-close {
+      background: none; border: none; color: #64748b; font-size: 22px;
+      cursor: pointer; padding: 4px 8px; border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .pc-close:hover { color: #e2e8f0; background: rgba(255,255,255,0.06); }
+
+    .pc-body {
+      padding: 20px 28px 28px; flex: 1; overflow-y: auto;
+    }
+    .pc-body::-webkit-scrollbar { width: 5px; }
+    .pc-body::-webkit-scrollbar-track { background: transparent; }
+    .pc-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    .pc-body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+    .pc-search-wrap {
+      position: relative; margin-bottom: 18px;
+    }
+    .pc-search-wrap i {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: #475569; font-size: 13px; transition: color 0.15s;
+    }
+    .pc-search-wrap:focus-within i { color: #8b5cf6; }
+    .pc-search-input {
+      width: 100%;
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px;
+      padding: 10px 14px 10px 38px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .pc-search-input:focus {
+      border-color: rgba(139,92,246,0.3);
+      box-shadow: 0 0 0 3px rgba(139,92,246,0.06);
+    }
+    .pc-search-input::placeholder { color: #475569; }
+
+    .pc-loading {
+      text-align: center; padding: 3rem; color: #64748b; font-size: 13px;
+    }
+    .pc-loading i { margin-right: 6px; }
+
+    .pc-empty {
+      text-align: center; padding: 3rem; color: #475569; font-size: 14px;
+    }
+
+    .pc-category {
+      margin-bottom: 8px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .pc-category:hover { border-color: rgba(255,255,255,0.08); }
+
+    .pc-cat-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px;
+      cursor: pointer; user-select: none;
+      transition: background 0.15s;
+      position: relative;
+    }
+    .pc-cat-header::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--pc-color, #8b5cf6);
+      border-radius: 0 2px 2px 0;
+      opacity: 0.8;
+    }
+    .pc-cat-header:hover { background: rgba(255,255,255,0.03); }
+
+    .pc-cat-left {
+      display: flex; align-items: center; gap: 10px; min-width: 0;
+    }
+
+    .pc-chevron {
+      font-size: 10px; color: #475569;
+      transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+      width: 14px; text-align: center; flex-shrink: 0;
+    }
+    .pc-chevron.open { transform: rotate(-180deg); }
+
+    .pc-cat-icon {
+      width: 26px; height: 26px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; flex-shrink: 0;
+      background: var(--pc-bg, rgba(139,92,246,0.12));
+      color: var(--pc-color, #8b5cf6);
+    }
+
+    .pc-cat-name {
+      font-weight: 600; font-size: 13px; color: #e2e8f0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pc-cat-count {
+      font-size: 11px; color: #475569; font-weight: 500;
+      background: rgba(255,255,255,0.04);
+      padding: 1px 8px; border-radius: 99px; flex-shrink: 0;
+    }
+
+    .pc-cat-body { display: none; border-top: 1px solid rgba(255,255,255,0.04); }
+
+    .pc-table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+    }
+    .pc-table thead th {
+      padding: 8px 12px;
+      font-size: 10px; font-weight: 600; color: #475569;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      background: rgba(0,0,0,0.15);
+    }
+    .pc-table tbody tr {
+      transition: background 0.12s;
+      border-bottom: 1px solid rgba(255,255,255,0.02);
+    }
+    .pc-table tbody tr:last-child { border-bottom: none; }
+    .pc-table tbody tr:hover { background: rgba(255,255,255,0.025); }
+    .pc-table td { padding: 8px 12px; vertical-align: middle; }
+
+    .pc-v-name { color: #e2e8f0; font-weight: 500; }
+    .pc-v-jail {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 12px; color: #fbbf24; white-space: nowrap;
+    }
+    .pc-v-fine {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 12px; color: #34d399; white-space: nowrap;
+    }
+    .pc-v-explanation {
+      color: #64748b; max-width: 300px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      font-size: 12px;
+    }
+
+    .pc-highlight {
+      background: rgba(251,191,36,0.25); color: #fbbf24;
+      border-radius: 2px; padding: 0 1px;
+    }
+
+    .pc-empty-cat {
+      padding: 16px; color: #475569; font-size: 13px;
+      text-align: center; font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+      .pc-panel { width: 96vw; max-height: 95vh; }
+      .pc-header { padding: 16px 18px; }
+      .pc-body { padding: 16px 18px 20px; }
+      .pc-v-explanation { display: none; }
+    }
+  </style>
+
+  <div id="pc-overlay" class="pc-overlay">
+    <div id="pc-content"></div>
+  </div>
+
+  <script>
+  (function() {
+    // === Penal Codes Modal ===
+
+    var pcData = null;
+    var pcCurrency = 'USD';
+    var pcCurrencySymbols = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', CAD: 'C$', AUD: 'A$' };
+
+    function pcParseFine(val) {
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') { var n = parseInt(val.replace(/[^0-9]/g, ''), 10); return isNaN(n) ? 0 : n; }
+      return 0;
+    }
+
+    function pcFormatFine(amount) {
+      var n = pcParseFine(amount);
+      if (!n) return '\u2014';
+      var sym = pcCurrencySymbols[pcCurrency] || '$';
+      return sym + n.toLocaleString();
+    }
+
+    var pcColors = {
+      'traffic violations':  { color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', icon: 'fa-car' },
+      'petty misdemeanors':  { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', icon: 'fa-scale-balanced' },
+      'misdemeanors':        { color: '#f97316', bg: 'rgba(249,115,22,0.12)', icon: 'fa-gavel' },
+      'felonies':            { color: '#ef4444', bg: 'rgba(239,68,68,0.12)', icon: 'fa-handcuffs' },
+      'other':               { color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', icon: 'fa-circle-exclamation' }
+    };
+
+    function pcGetStyle(name) {
+      return pcColors[(name || '').toLowerCase().trim()] || { color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', icon: 'fa-folder' };
+    }
+
+    function pcEsc(str) {
+      var d = document.createElement('div');
+      d.appendChild(document.createTextNode(str || ''));
+      return d.innerHTML;
+    }
+
+    function pcOpen(html) {
+      $('#pc-content').html(html);
+      $('#pc-overlay').addClass('active');
+    }
+
+    function pcClose() {
+      $('#pc-overlay').removeClass('active');
+      $('#pc-content').html('');
+      pcData = null;
+    }
+
+    $(document).on('click', '#pc-overlay', function(e) { if (e.target === this) pcClose(); });
+    $(document).on('keydown', function(e) {
+      if (e.key === 'Escape' && $('#pc-overlay').hasClass('active')) pcClose();
+    });
+
+    function pcOpenSearch() {
+      pcOpen(
+        '<div class="pc-panel">' +
+          '<div class="pc-header">' +
+            '<h4><i class="fa fa-scale-balanced"></i> Penal Codes</h4>' +
+            '<button class="pc-close" onclick="pcClose()">&times;</button>' +
+          '</div>' +
+          '<div class="pc-body">' +
+            '<div class="pc-search-wrap">' +
+              '<i class="fa fa-search"></i>' +
+              '<input type="text" class="pc-search-input" id="pc-search" placeholder="Search violations..." oninput="pcFilter(this.value)">' +
+            '</div>' +
+            '<div id="pc-results"><div class="pc-loading"><i class="fa fa-spinner fa-spin"></i> Loading penal codes...</div></div>' +
+          '</div>' +
+        '</div>'
+      );
+      pcLoadData();
+    }
+
+    function pcLoadData() {
+      var communityId = (typeof dbUser !== 'undefined') ? (dbUser.user && dbUser.user.lastAccessedCommunity && dbUser.user.lastAccessedCommunity.communityID) : null;
+      if (!communityId) {
+        $('#pc-results').html('<div class="pc-empty">No community found.</div>');
+        return;
+      }
+
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityId + '/penal-codes',
+        method: 'GET',
+        success: function(data) {
+          pcData = (data && data.categories) || [];
+          pcCurrency = (data && data.currency) || 'USD';
+          pcRender(pcData, '');
+        },
+        error: function() {
+          $('#pc-results').html('<div class="pc-empty">Failed to load penal codes.</div>');
+        }
+      });
+    }
+
+    function pcHighlight(text, query) {
+      if (!query) return pcEsc(text);
+      var escaped = pcEsc(text);
+      var q = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return escaped.replace(new RegExp('(' + q + ')', 'gi'), '<span class="pc-highlight">$1</span>');
+    }
+
+    function pcRender(categories, query) {
+      var $r = $('#pc-results');
+      $r.empty();
+
+      if (!categories || categories.length === 0) {
+        $r.html('<div class="pc-empty">No violations found.</div>');
+        return;
+      }
+
+      categories.forEach(function(cat, catIdx) {
+        var s = pcGetStyle(cat.name);
+        var violations = cat.violations || [];
+
+        var rows = '';
+        violations.forEach(function(v) {
+          rows += '<tr>' +
+            '<td class="pc-v-name">' + pcHighlight(v.name || '', query) + '</td>' +
+            '<td class="pc-v-jail">' + pcHighlight(v.jailTime || 'N/A', query) + '</td>' +
+            '<td class="pc-v-fine">' + pcHighlight(pcFormatFine(v.fine), query) + '</td>' +
+            '<td class="pc-v-explanation" title="' + pcEsc(v.explanation || '') + '">' + pcHighlight(v.explanation || '\u2014', query) + '</td>' +
+          '</tr>';
+        });
+
+        var html = '<div class="pc-category" style="--pc-color:' + s.color + ';--pc-bg:' + s.bg + ';">' +
+          '<div class="pc-cat-header" onclick="pcToggle(' + catIdx + ')">' +
+            '<div class="pc-cat-left">' +
+              '<i class="fa fa-chevron-down pc-chevron pc-chev-' + catIdx + (query ? ' open' : '') + '"></i>' +
+              '<div class="pc-cat-icon"><i class="fa ' + s.icon + '"></i></div>' +
+              '<span class="pc-cat-name">' + pcEsc(cat.name || 'Category') + '</span>' +
+              '<span class="pc-cat-count">' + violations.length + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="pc-cat-body pc-body-' + catIdx + '"' + (query ? ' style="display:block;"' : '') + '>' +
+            (rows ?
+              '<table class="pc-table">' +
+                '<thead><tr>' +
+                  '<th>Violation</th><th>Jail Time</th><th>Fine</th><th>Explanation</th>' +
+                '</tr></thead>' +
+                '<tbody>' + rows + '</tbody>' +
+              '</table>'
+            : '<div class="pc-empty-cat">No violations in this category</div>') +
+          '</div>' +
+        '</div>';
+
+        $r.append(html);
+      });
+
+      // Auto-expand all categories on first load (no search query)
+      if (!query) {
+        categories.forEach(function(cat, i) {
+          pcToggle(i);
+        });
+      }
+    }
+
+    function pcFilter(query) {
+      var q = (query || '').toLowerCase().trim();
+      if (!q) {
+        pcRender(pcData, '');
+        return;
+      }
+
+      var filtered = (pcData || []).map(function(cat) {
+        var matched = (cat.violations || []).filter(function(v) {
+          return (v.name || '').toLowerCase().indexOf(q) !== -1 ||
+                 (v.jailTime || '').toLowerCase().indexOf(q) !== -1 ||
+                 String(v.fine || '').indexOf(q) !== -1 ||
+                 (v.explanation || '').toLowerCase().indexOf(q) !== -1;
+        });
+        if (matched.length > 0) {
+          return $.extend({}, cat, { violations: matched });
+        }
+        return null;
+      }).filter(Boolean);
+
+      pcRender(filtered, q);
+    }
+
+    function pcToggle(catIdx) {
+      var $body = $('.pc-body-' + catIdx);
+      var $chev = $('.pc-chev-' + catIdx);
+      $body.slideToggle(200);
+      $chev.toggleClass('open');
+    }
+
+    // Export to window
+    window.pcOpenSearch = pcOpenSearch;
+    window.pcClose = pcClose;
+    window.pcFilter = pcFilter;
+    window.pcToggle = pcToggle;
   })();
   </script>
 

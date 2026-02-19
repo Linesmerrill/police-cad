@@ -222,6 +222,15 @@
             </div>
           </div>
 
+          <!-- Penal Codes -->
+          <div id="penalCodesCard" onclick="openPenalCodesSettings()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#f59e0b;">
+            <div style="text-align:center;">
+              <i class="fa fa-scale-balanced" style="font-size:2rem; color:#fbbf24; margin-bottom:0.5rem;"></i>
+              <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Penal Codes</h5>
+              <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage violations & penalties</p>
+            </div>
+          </div>
+
           <!-- Members Management -->
           <div id="membersManagementCard" onclick="openMembersModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
             <div style="text-align:center;">
@@ -8176,6 +8185,11 @@ async function saveEditEvent() {
         document.getElementById('fineCurrency').addEventListener('change', handleCurrencyChange);
       }
 
+      function openPenalCodesSettings() {
+        // Redirect to the department dashboard where penal codes are managed
+        window.location.href = '/department-dashboard?section=penal-codes';
+      }
+
       function attemptCloseFineSettingsModal() {
         // Check if there are unsaved changes
         if (hasUnsavedChanges()) {
@@ -9872,6 +9886,15 @@ async function saveEditEvent() {
           <i class="fa fa-dollar-sign" style="font-size:3rem; color:#10b981; margin-bottom:1rem;"></i>
           <h3 style="color:#fff; margin:0; font-size:1.75rem; font-weight:600;">Fine Settings</h3>
           <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:1rem;">Configure community fines and penalties</p>
+        </div>
+
+        <!-- Deprecation Notice -->
+        <div style="margin-bottom:1.5rem; padding:1rem 1.25rem; background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.3); border-radius:10px; display:flex; align-items:flex-start; gap:0.75rem;">
+          <i class="fa fa-triangle-exclamation" style="color:#fbbf24; font-size:1.1rem; margin-top:2px;"></i>
+          <div>
+            <p style="color:#fbbf24; margin:0 0 0.25rem 0; font-weight:600; font-size:0.875rem;">Fines are being replaced by Penal Codes</p>
+            <p style="color:#a0aec0; margin:0; font-size:0.8rem; line-height:1.5;">Tickets, warrants, and Most Wanted now use Penal Codes for charges and fine amounts. Manage your violations and penalties from <strong style="color:#e2e8f0;">Department Dashboard &rarr; Penal Codes</strong>, or from the Penal Codes card below. These legacy fines will be removed in a future update.</p>
+          </div>
         </div>
 
         <!-- Currency Selection -->

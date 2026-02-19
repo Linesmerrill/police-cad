@@ -1650,7 +1650,8 @@
     var isDepartmentMember = <%= isDepartmentMember %>;
     var visibleFields = <%- JSON.stringify(community?.community?.mostWantedVisibleFields || ['name', 'image']) %>;
     var customFieldDefs = <%- JSON.stringify(community?.community?.mostWantedCustomFields || []) %>;
-    var communityFines = <%- JSON.stringify(community?.community?.fines || { currency: 'USD', categories: [] }) %>;
+    var communityPenalCodes = <%- JSON.stringify(community?.community?.penalCodes || { currency: 'USD', categories: [] }) %>;
+    var penalCodesCurrencySymbols = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', CAD: 'C$', AUD: 'A$' };
     var apiToken = '<%= process.env.POLICE_CAD_API_TOKEN || "" %>';
     var currentUserId = '<%= user._id %>';
 
@@ -2255,8 +2256,8 @@
 
     // ========== CHARGES (MULTI-SELECT) ==========
     function hasCommunityFines() {
-      return communityFines && communityFines.categories && communityFines.categories.length > 0 &&
-        communityFines.categories.some(function(cat) { return cat.fines && cat.fines.length > 0; });
+      return communityPenalCodes && communityPenalCodes.categories && communityPenalCodes.categories.length > 0 &&
+        communityPenalCodes.categories.some(function(cat) { return cat.violations && cat.violations.length > 0; });
     }
 
     function toggleCharge(fineName) {
@@ -2281,42 +2282,43 @@
       var searchVal = (document.getElementById('mw-charges-search-input').value || '').trim().toLowerCase();
 
       if (!hasCommunityFines()) {
-        dropdown.innerHTML = '<div class="mw-charges-no-results">No fines configured for this community.</div>';
+        dropdown.innerHTML = '<div class="mw-charges-no-results">No penal codes configured for this community.</div>';
         return;
       }
 
       var html = '';
       var hasResults = false;
+      var sym = penalCodesCurrencySymbols[communityPenalCodes.currency] || '$';
 
-      for (var c = 0; c < communityFines.categories.length; c++) {
-        var category = communityFines.categories[c];
-        if (!category.fines || category.fines.length === 0) continue;
+      for (var c = 0; c < communityPenalCodes.categories.length; c++) {
+        var category = communityPenalCodes.categories[c];
+        if (!category.violations || category.violations.length === 0) continue;
 
-        var categoryFines = [];
-        for (var f = 0; f < category.fines.length; f++) {
-          var fine = category.fines[f];
+        var matchedViolations = [];
+        for (var f = 0; f < category.violations.length; f++) {
+          var v = category.violations[f];
           if (!searchVal ||
-              fine.name.toLowerCase().indexOf(searchVal) !== -1 ||
+              v.name.toLowerCase().indexOf(searchVal) !== -1 ||
               category.name.toLowerCase().indexOf(searchVal) !== -1) {
-            categoryFines.push(fine);
+            matchedViolations.push(v);
           }
         }
 
-        if (categoryFines.length === 0) continue;
+        if (matchedViolations.length === 0) continue;
         hasResults = true;
 
         html += '<div class="mw-charges-category-label">' + escapeHtml(category.name) + '</div>';
-        for (var f = 0; f < categoryFines.length; f++) {
-          var fine = categoryFines[f];
-          var isSelected = currentCharges.indexOf(fine.name) !== -1;
+        for (var f = 0; f < matchedViolations.length; f++) {
+          var v = matchedViolations[f];
+          var isSelected = currentCharges.indexOf(v.name) !== -1;
           var selectedClass = isSelected ? ' selected' : '';
           var checkHtml = isSelected ? '<i class="fas fa-check" style="color:#fff;font-size:0.7rem;"></i>' : '';
-          var amountHtml = fine.amount ? '<span class="mw-charges-option-amount">' + fine.amount + ' ' + escapeHtml(communityFines.currency || '') + '</span>' : '';
-          var safeName = fine.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          var amountHtml = v.fine ? '<span class="mw-charges-option-amount">' + sym + Number(v.fine).toLocaleString() + '</span>' : '';
+          var safeName = v.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
           html += '<div class="mw-charges-option' + selectedClass + '" onclick="toggleCharge(\'' + safeName + '\')">' +
             '<div class="mw-charges-option-checkbox">' + checkHtml + '</div>' +
-            '<span class="mw-charges-option-name">' + escapeHtml(fine.name) + '</span>' +
+            '<span class="mw-charges-option-name">' + escapeHtml(v.name) + '</span>' +
             amountHtml +
           '</div>';
         }
@@ -2342,20 +2344,21 @@
 
       // Update total amount
       var totalEl = document.getElementById('mw-charges-total');
+      var sym = penalCodesCurrencySymbols[communityPenalCodes.currency] || '$';
       if (hasCommunityFines() && currentCharges.length > 0) {
         var total = 0;
         for (var i = 0; i < currentCharges.length; i++) {
-          for (var c = 0; c < communityFines.categories.length; c++) {
-            var cat = communityFines.categories[c];
-            for (var f = 0; f < (cat.fines || []).length; f++) {
-              if (cat.fines[f].name === currentCharges[i]) {
-                total += parseFloat(cat.fines[f].amount || 0);
+          for (var c = 0; c < communityPenalCodes.categories.length; c++) {
+            var cat = communityPenalCodes.categories[c];
+            for (var f = 0; f < (cat.violations || []).length; f++) {
+              if (cat.violations[f].name === currentCharges[i]) {
+                total += parseFloat(cat.violations[f].fine || 0);
               }
             }
           }
         }
         if (total > 0) {
-          totalEl.textContent = 'Total Fine Amount: ' + total + ' ' + (communityFines.currency || '');
+          totalEl.textContent = 'Total Fine Amount: ' + sym + total.toLocaleString();
           totalEl.style.display = 'block';
         } else {
           totalEl.style.display = 'none';

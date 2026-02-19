@@ -1211,6 +1211,437 @@
       color: var(--dd-text-muted);
     }
 
+    /* ── Penal Codes Component ── */
+
+    .dd-pc-currency-select {
+      background: var(--dd-glass-bg);
+      border: 1px solid var(--dd-glass-border);
+      color: var(--dd-text);
+      border-radius: 6px;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .dd-pc-currency-select:focus {
+      border-color: var(--dd-amber);
+    }
+    .dd-pc-currency-select option {
+      background: #1a1a2e;
+      color: var(--dd-text);
+    }
+
+    .dd-pc-search-wrap {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+
+    .dd-pc-search-wrap i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--dd-text-dim);
+      font-size: 0.75rem;
+      transition: color 0.15s;
+    }
+
+    .dd-pc-search-wrap:focus-within i {
+      color: var(--dd-accent);
+    }
+
+    .dd-pc-search-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius-sm);
+      color: var(--dd-text);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8125rem;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .dd-pc-search-input:focus {
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.06);
+    }
+
+    .dd-pc-search-input::placeholder {
+      color: var(--dd-text-dim);
+    }
+
+    .dd-pc-category {
+      margin-bottom: 0.625rem;
+      background: var(--dd-surface);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius-sm);
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .dd-pc-category:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .dd-pc-cat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+      position: relative;
+    }
+
+    .dd-pc-cat-header::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--pc-cat-color, var(--dd-accent));
+      border-radius: 0 2px 2px 0;
+      opacity: 0.8;
+    }
+
+    .dd-pc-cat-header:hover {
+      background: var(--dd-glass-hover);
+    }
+
+    .dd-pc-cat-left {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      min-width: 0;
+    }
+
+    .dd-pc-chevron {
+      font-size: 0.625rem;
+      color: var(--dd-text-dim);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-shrink: 0;
+      width: 1rem;
+      text-align: center;
+    }
+
+    .dd-pc-chevron.expanded {
+      transform: rotate(-180deg);
+    }
+
+    .dd-pc-cat-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6875rem;
+      flex-shrink: 0;
+      background: var(--pc-cat-bg, rgba(139, 92, 246, 0.12));
+      color: var(--pc-cat-color, var(--dd-accent));
+    }
+
+    .dd-pc-cat-name {
+      font-weight: 600;
+      font-size: 0.8125rem;
+      color: var(--dd-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dd-pc-cat-count {
+      font-size: 0.6875rem;
+      color: var(--dd-text-dim);
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 0.125rem 0.5rem;
+      border-radius: 99px;
+      flex-shrink: 0;
+    }
+
+    .dd-pc-cat-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+
+    .dd-pc-cat-actions .dd-pc-add-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      font-family: 'Outfit', sans-serif;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--dd-glass-border);
+      background: transparent;
+      color: var(--dd-text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .dd-pc-cat-actions .dd-pc-add-btn:hover {
+      background: var(--dd-glass-hover);
+      color: var(--dd-text);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .dd-pc-icon-btn {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: transparent;
+      color: var(--dd-text-dim);
+      cursor: pointer;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      font-size: 0.6875rem;
+    }
+
+    .dd-pc-icon-btn:hover {
+      background: var(--dd-glass-hover);
+      color: var(--dd-text);
+    }
+
+    .dd-pc-icon-btn.danger:hover {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--dd-red);
+    }
+
+    .dd-pc-cat-body {
+      display: none;
+      border-top: 1px solid var(--dd-glass-border);
+    }
+
+    .dd-pc-cat-body.open {
+      display: block;
+    }
+
+    /* Violations Table */
+    .dd-pc-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .dd-pc-table thead th {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--dd-text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      text-align: left;
+      border-bottom: 1px solid var(--dd-glass-border);
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .dd-pc-table tbody tr {
+      transition: background 0.12s;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+    }
+
+    .dd-pc-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .dd-pc-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .dd-pc-table td {
+      padding: 0.5rem 0.75rem;
+      vertical-align: middle;
+    }
+
+    .dd-pc-v-name {
+      color: var(--dd-text);
+      font-weight: 500;
+    }
+
+    .dd-pc-v-jail {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: #fbbf24;
+      white-space: nowrap;
+    }
+
+    .dd-pc-v-fine {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: #34d399;
+      white-space: nowrap;
+    }
+
+    .dd-pc-v-explanation {
+      color: var(--dd-text-muted);
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.75rem;
+    }
+
+    .dd-pc-v-actions {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .dd-pc-empty-cat {
+      padding: 1.25rem 0.75rem;
+      color: var(--dd-text-dim);
+      font-size: 0.8125rem;
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* Penal Codes Scrollable Container */
+    .dd-pc-categories {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .dd-pc-categories::-webkit-scrollbar { width: 4px; }
+    .dd-pc-categories::-webkit-scrollbar-track { background: transparent; }
+    .dd-pc-categories::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 2px; }
+    .dd-pc-categories::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
+
+    /* Modal styling */
+    .dd-pc-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: dd-pc-fade-in 0.15s ease;
+    }
+
+    @keyframes dd-pc-fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .dd-pc-modal {
+      background: #12141a;
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius);
+      padding: 1.5rem;
+      min-width: 360px;
+      max-width: 420px;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+      animation: dd-pc-modal-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dd-pc-modal.wide {
+      min-width: 400px;
+      max-width: 480px;
+    }
+
+    @keyframes dd-pc-modal-in {
+      from { opacity: 0; transform: scale(0.95) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .dd-pc-modal h3 {
+      color: var(--dd-text);
+      margin: 0 0 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .dd-pc-modal label {
+      color: var(--dd-text-muted);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .dd-pc-modal input,
+    .dd-pc-modal textarea {
+      width: 100%;
+      padding: 0.5rem 0.625rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: 6px;
+      color: var(--dd-text);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8125rem;
+      margin-bottom: 0.75rem;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .dd-pc-modal input:focus,
+    .dd-pc-modal textarea:focus {
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    .dd-pc-modal textarea {
+      resize: vertical;
+    }
+
+    .dd-pc-modal-footer {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+    }
+
+    .dd-pc-modal-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .dd-pc-modal-btn.cancel {
+      background: transparent;
+      border: 1px solid var(--dd-glass-border);
+      color: var(--dd-text-muted);
+    }
+
+    .dd-pc-modal-btn.cancel:hover {
+      background: var(--dd-glass-hover);
+      color: var(--dd-text);
+    }
+
+    .dd-pc-modal-btn.save {
+      background: var(--dd-accent);
+      border: none;
+      color: #fff;
+    }
+
+    .dd-pc-modal-btn.save:hover {
+      background: #7c4deb;
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+    }
+
     /* ── Empty state ── */
     .dd-empty {
       text-align: center;
@@ -1800,6 +2231,7 @@
     var pendingWarrants = [];
     var tenCodes = [];
     var penalCodesData = [];
+    var penalCodesCurrency = 'USD';
     var expandedWarrantId = null;
     var currentTemplateName = '';
 
@@ -1912,6 +2344,12 @@ $('#dd-loading').hide();
           componentRegistry[key].init();
         }
       });
+
+      // Auto-navigate to a section if specified in URL
+      var urlSection = new URLSearchParams(window.location.search).get('section');
+      if (urlSection && componentRegistry[urlSection] && enabledComponents[urlSection]) {
+        ddNavTo(urlSection);
+      }
     }
 
     // ── Sidebar Nav ──
@@ -2849,6 +3287,21 @@ $('#dd-loading').hide();
     //  PENAL CODES COMPONENT
     // ══════════════════════════════════════════
 
+    var pcCurrencySymbols = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', CAD: 'C$', AUD: 'A$' };
+
+    function pcParseFine(val) {
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') { var n = parseInt(val.replace(/[^0-9]/g, ''), 10); return isNaN(n) ? 0 : n; }
+      return 0;
+    }
+
+    function pcFormatFine(amount) {
+      var n = pcParseFine(amount);
+      if (!n) return '\u2014';
+      var sym = pcCurrencySymbols[penalCodesCurrency] || '$';
+      return sym + n.toLocaleString();
+    }
+
     function renderPenalCodesPanel() {
       return '<div class="dd-card-header">' +
           '<div class="dd-card-header-left">' +
@@ -2856,13 +3309,21 @@ $('#dd-loading').hide();
             '<div><h3 class="dd-card-title">Penal Codes</h3><p class="dd-card-subtitle">Manage violations &amp; penalties</p></div>' +
           '</div>' +
           '<div class="dd-card-header-right">' +
+            '<select class="dd-pc-currency-select" onchange="pcSetCurrency(this.value)" title="Currency">' +
+              '<option value="USD"' + (penalCodesCurrency === 'USD' ? ' selected' : '') + '>$ USD</option>' +
+              '<option value="EUR"' + (penalCodesCurrency === 'EUR' ? ' selected' : '') + '>\u20AC EUR</option>' +
+              '<option value="GBP"' + (penalCodesCurrency === 'GBP' ? ' selected' : '') + '>\u00A3 GBP</option>' +
+              '<option value="CAD"' + (penalCodesCurrency === 'CAD' ? ' selected' : '') + '>C$ CAD</option>' +
+              '<option value="AUD"' + (penalCodesCurrency === 'AUD' ? ' selected' : '') + '>A$ AUD</option>' +
+            '</select>' +
             '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="pcResetToDefaults()" title="Reset to Defaults"><i class="fa fa-arrows-rotate"></i> Reset</button> ' +
             '<button class="dd-btn dd-btn-sm dd-btn-primary" onclick="pcShowAddCategory()"><i class="fa fa-plus"></i> Category</button>' +
           '</div>' +
         '</div>' +
         '<div class="dd-card-body">' +
-          '<div style="margin-bottom:12px;">' +
-            '<input type="text" class="dd-search-input dd-pc-search" placeholder="Search violations..." oninput="pcFilterViolations(this.value)" style="width:100%;padding:8px 12px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;">' +
+          '<div class="dd-pc-search-wrap">' +
+            '<i class="fa fa-search"></i>' +
+            '<input type="text" class="dd-pc-search-input dd-pc-search" placeholder="Search violations..." oninput="pcFilterViolations(this.value)">' +
           '</div>' +
           '<div class="dd-pc-loading dd-spinner"></div>' +
           '<div class="dd-pc-empty dd-empty" style="display:none;">' +
@@ -2887,6 +3348,7 @@ $('#dd-loading').hide();
         success: function(data) {
           console.log('[PenalCodes] Response:', data);
           penalCodesData = (data && data.categories) || [];
+          penalCodesCurrency = (data && data.currency) || 'USD';
           console.log('[PenalCodes] Categories count:', penalCodesData.length);
           renderPenalCodesCategories(penalCodesData);
         },
@@ -2897,6 +3359,20 @@ $('#dd-loading').hide();
           $('.dd-pc-empty').find('.dd-empty-sub').text(err || status || 'Check console for details');
         }
       });
+    }
+
+    // Category color config for visual variety
+    var pcCategoryColors = {
+      'traffic violations':   { color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  icon: 'fa-car' },
+      'petty misdemeanors':   { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', icon: 'fa-scale-balanced' },
+      'misdemeanors':         { color: '#f97316', bg: 'rgba(249,115,22,0.12)', icon: 'fa-gavel' },
+      'felonies':             { color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  icon: 'fa-handcuffs' },
+      'other':                { color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', icon: 'fa-circle-exclamation' }
+    };
+
+    function pcGetCategoryStyle(catName) {
+      var key = (catName || '').toLowerCase().trim();
+      return pcCategoryColors[key] || { color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', icon: 'fa-folder' };
     }
 
     function renderPenalCodesCategories(categories) {
@@ -2911,46 +3387,50 @@ $('#dd-loading').hide();
       $('.dd-pc-empty').hide();
 
       categories.forEach(function(cat, catIdx) {
+        var style = pcGetCategoryStyle(cat.name);
+        var violations = cat.violations || [];
         var violationRows = '';
-        (cat.violations || []).forEach(function(v, vIdx) {
+
+        violations.forEach(function(v, vIdx) {
           violationRows += '<tr>' +
-            '<td style="color:#e5e7eb;">' + esc(v.name || '') + '</td>' +
-            '<td style="color:#fbbf24;">' + esc(v.jailTime || '') + '</td>' +
-            '<td style="color:#34d399;">' + esc(v.fine || '—') + '</td>' +
-            '<td style="color:#9ca3af;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + esc(v.explanation || '') + '">' + esc(v.explanation || '—') + '</td>' +
-            '<td style="text-align:right;white-space:nowrap;">' +
-              '<button class="dd-btn-icon" onclick="pcEditViolation(' + catIdx + ',' + vIdx + ')" title="Edit"><i class="fa fa-pen" style="font-size:11px;"></i></button>' +
-              '<button class="dd-btn-icon" onclick="pcDeleteViolation(' + catIdx + ',' + vIdx + ')" title="Delete" style="color:var(--dd-red);"><i class="fa fa-trash" style="font-size:11px;"></i></button>' +
+            '<td class="dd-pc-v-name">' + esc(v.name || '') + '</td>' +
+            '<td class="dd-pc-v-jail">' + esc(v.jailTime || 'N/A') + '</td>' +
+            '<td class="dd-pc-v-fine">' + pcFormatFine(v.fine) + '</td>' +
+            '<td class="dd-pc-v-explanation" title="' + esc(v.explanation || '') + '">' + esc(v.explanation || '\u2014') + '</td>' +
+            '<td class="dd-pc-v-actions">' +
+              '<button class="dd-pc-icon-btn" onclick="pcEditViolation(' + catIdx + ',' + vIdx + ')" title="Edit"><i class="fa fa-pen"></i></button>' +
+              '<button class="dd-pc-icon-btn danger" onclick="pcDeleteViolation(' + catIdx + ',' + vIdx + ')" title="Delete"><i class="fa fa-trash"></i></button>' +
             '</td>' +
           '</tr>';
         });
 
-        var catHtml = '<div class="dd-pc-category" style="margin-bottom:16px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:8px;overflow:hidden;">' +
-          '<div class="dd-pc-cat-header" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none;" onclick="pcToggleCategory(' + catIdx + ')">' +
-            '<div style="display:flex;align-items:center;gap:8px;">' +
-              '<i class="fa fa-chevron-down dd-pc-chevron-' + catIdx + '" style="font-size:11px;color:#9ca3af;transition:transform 0.2s;"></i>' +
-              '<span style="font-weight:600;color:#fff;">' + esc(cat.name || 'Category') + '</span>' +
-              '<span style="font-size:12px;color:#6b7280;">(' + (cat.violations || []).length + ')</span>' +
+        var catHtml = '<div class="dd-pc-category" style="--pc-cat-color:' + style.color + ';--pc-cat-bg:' + style.bg + ';">' +
+          '<div class="dd-pc-cat-header" onclick="pcToggleCategory(' + catIdx + ')">' +
+            '<div class="dd-pc-cat-left">' +
+              '<i class="fa fa-chevron-down dd-pc-chevron dd-pc-chevron-' + catIdx + '"></i>' +
+              '<div class="dd-pc-cat-icon"><i class="fa ' + style.icon + '"></i></div>' +
+              '<span class="dd-pc-cat-name">' + esc(cat.name || 'Category') + '</span>' +
+              '<span class="dd-pc-cat-count">' + violations.length + '</span>' +
             '</div>' +
-            '<div style="display:flex;gap:4px;" onclick="event.stopPropagation();">' +
-              '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="pcShowAddViolation(' + catIdx + ')" style="font-size:11px;padding:3px 8px;"><i class="fa fa-plus"></i> Violation</button>' +
-              '<button class="dd-btn-icon" onclick="pcEditCategory(' + catIdx + ')" title="Edit Category"><i class="fa fa-pen" style="font-size:11px;"></i></button>' +
-              '<button class="dd-btn-icon" onclick="pcDeleteCategory(' + catIdx + ')" title="Delete Category" style="color:var(--dd-red);"><i class="fa fa-trash" style="font-size:11px;"></i></button>' +
+            '<div class="dd-pc-cat-actions" onclick="event.stopPropagation();">' +
+              '<button class="dd-pc-add-btn" onclick="pcShowAddViolation(' + catIdx + ')"><i class="fa fa-plus"></i> Violation</button>' +
+              '<button class="dd-pc-icon-btn" onclick="pcEditCategory(' + catIdx + ')" title="Edit Category"><i class="fa fa-pen"></i></button>' +
+              '<button class="dd-pc-icon-btn danger" onclick="pcDeleteCategory(' + catIdx + ')" title="Delete Category"><i class="fa fa-trash"></i></button>' +
             '</div>' +
           '</div>' +
-          '<div class="dd-pc-cat-body-' + catIdx + '" style="display:none;padding:0 14px 10px;">' +
+          '<div class="dd-pc-cat-body dd-pc-cat-body-' + catIdx + '">' +
             (violationRows ?
-              '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
-                '<thead><tr style="border-bottom:1px solid var(--dd-border);text-align:left;">' +
-                  '<th style="padding:6px 8px;color:#9ca3af;font-weight:500;">Violation</th>' +
-                  '<th style="padding:6px 8px;color:#9ca3af;font-weight:500;">Jail Time</th>' +
-                  '<th style="padding:6px 8px;color:#9ca3af;font-weight:500;">Fine</th>' +
-                  '<th style="padding:6px 8px;color:#9ca3af;font-weight:500;">Explanation</th>' +
+              '<table class="dd-pc-table">' +
+                '<thead><tr>' +
+                  '<th>Violation</th>' +
+                  '<th>Jail Time</th>' +
+                  '<th>Fine</th>' +
+                  '<th>Explanation</th>' +
                   '<th></th>' +
                 '</tr></thead>' +
                 '<tbody>' + violationRows + '</tbody>' +
               '</table>'
-            : '<p style="color:#6b7280;font-size:13px;margin:4px 0;">No violations in this category</p>') +
+            : '<div class="dd-pc-empty-cat">No violations in this category</div>') +
           '</div>' +
         '</div>';
 
@@ -2964,8 +3444,12 @@ $('#dd-loading').hide();
     window.pcToggleCategory = function(catIdx) {
       var $body = $('.dd-pc-cat-body-' + catIdx);
       var $chevron = $('.dd-pc-chevron-' + catIdx);
-      $body.slideToggle(200);
-      $chevron.toggleClass('dd-pc-expanded');
+      if ($body.hasClass('open')) {
+        $body.slideUp(200, function() { $body.removeClass('open'); });
+      } else {
+        $body.addClass('open').hide().slideDown(200);
+      }
+      $chevron.toggleClass('expanded');
     };
 
     window.pcFilterViolations = function(query) {
@@ -2978,7 +3462,7 @@ $('#dd-loading').hide();
         var matchedViolations = (cat.violations || []).filter(function(v) {
           return (v.name || '').toLowerCase().indexOf(q) !== -1 ||
                  (v.jailTime || '').toLowerCase().indexOf(q) !== -1 ||
-                 (v.fine || '').toLowerCase().indexOf(q) !== -1 ||
+                 String(v.fine || '').indexOf(q) !== -1 ||
                  (v.explanation || '').toLowerCase().indexOf(q) !== -1;
         });
         if (matchedViolations.length > 0) {
@@ -2994,7 +3478,7 @@ $('#dd-loading').hide();
         url: API_URL + '/api/v1/community/' + communityId + '/penal-codes',
         method: 'PUT',
         contentType: 'application/json',
-        data: JSON.stringify({ categories: penalCodesData }),
+        data: JSON.stringify({ categories: penalCodesData, currency: penalCodesCurrency }),
         success: function() {
           if (callback) callback();
         },
@@ -3004,6 +3488,12 @@ $('#dd-loading').hide();
       });
     }
 
+    window.pcSetCurrency = function(val) {
+      penalCodesCurrency = val;
+      renderPenalCodesCategories(penalCodesData);
+      pcSaveAll();
+    };
+
     window.pcResetToDefaults = function() {
       if (!confirm('Reset all penal codes to defaults? This will overwrite any customizations.')) return;
       $.ajax({
@@ -3011,7 +3501,9 @@ $('#dd-loading').hide();
         method: 'POST',
         success: function(data) {
           penalCodesData = (data && data.categories) || [];
+          penalCodesCurrency = (data && data.currency) || 'USD';
           renderPenalCodesCategories(penalCodesData);
+          $('.dd-pc-currency-select').val(penalCodesCurrency);
           $('.dd-pc-search').val('');
         },
         error: function() {
@@ -3098,17 +3590,17 @@ $('#dd-loading').hide();
     // ── Penal Codes: Modals ──
 
     function pcShowModal(title, values, onSave) {
-      var $overlay = $('<div class="dd-modal-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;">');
+      var $overlay = $('<div class="dd-pc-modal-overlay">');
       var $modal = $(
-        '<div style="background:var(--dd-card);border:1px solid var(--dd-border);border-radius:12px;padding:24px;min-width:360px;max-width:420px;">' +
-          '<h3 style="color:#fff;margin:0 0 16px;font-size:16px;">' + esc(title) + '</h3>' +
-          '<label style="color:#9ca3af;font-size:12px;margin-bottom:4px;display:block;">Name *</label>' +
-          '<input type="text" id="pc-modal-name" value="' + esc(values.name) + '" style="width:100%;padding:8px 10px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;margin-bottom:12px;box-sizing:border-box;">' +
-          '<label style="color:#9ca3af;font-size:12px;margin-bottom:4px;display:block;">Subtitle</label>' +
-          '<input type="text" id="pc-modal-subtitle" value="' + esc(values.subtitle || '') + '" style="width:100%;padding:8px 10px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;margin-bottom:16px;box-sizing:border-box;">' +
-          '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
-            '<button class="dd-btn dd-btn-sm dd-btn-outline" id="pc-modal-cancel">Cancel</button>' +
-            '<button class="dd-btn dd-btn-sm dd-btn-primary" id="pc-modal-save">Save</button>' +
+        '<div class="dd-pc-modal">' +
+          '<h3>' + esc(title) + '</h3>' +
+          '<label>Name *</label>' +
+          '<input type="text" id="pc-modal-name" value="' + esc(values.name) + '">' +
+          '<label>Subtitle</label>' +
+          '<input type="text" id="pc-modal-subtitle" value="' + esc(values.subtitle || '') + '">' +
+          '<div class="dd-pc-modal-footer">' +
+            '<button class="dd-pc-modal-btn cancel" id="pc-modal-cancel">Cancel</button>' +
+            '<button class="dd-pc-modal-btn save" id="pc-modal-save">Save</button>' +
           '</div>' +
         '</div>'
       );
@@ -3126,21 +3618,21 @@ $('#dd-loading').hide();
     }
 
     function pcShowViolationModal(title, values, onSave) {
-      var $overlay = $('<div class="dd-modal-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;">');
+      var $overlay = $('<div class="dd-pc-modal-overlay">');
       var $modal = $(
-        '<div style="background:var(--dd-card);border:1px solid var(--dd-border);border-radius:12px;padding:24px;min-width:400px;max-width:480px;">' +
-          '<h3 style="color:#fff;margin:0 0 16px;font-size:16px;">' + esc(title) + '</h3>' +
-          '<label style="color:#9ca3af;font-size:12px;margin-bottom:4px;display:block;">Violation Name *</label>' +
-          '<input type="text" id="pcv-name" value="' + esc(values.name) + '" style="width:100%;padding:8px 10px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;margin-bottom:10px;box-sizing:border-box;">' +
-          '<label style="color:#9ca3af;font-size:12px;margin-bottom:4px;display:block;">Jail Time *</label>' +
-          '<input type="text" id="pcv-jailtime" value="' + esc(values.jailTime) + '" placeholder="e.g. 30 seconds, 5 minutes" style="width:100%;padding:8px 10px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;margin-bottom:10px;box-sizing:border-box;">' +
-          '<label style="color:#9ca3af;font-size:12px;margin-bottom:4px;display:block;">Fine</label>' +
-          '<input type="text" id="pcv-fine" value="' + esc(values.fine || '') + '" placeholder="e.g. $500" style="width:100%;padding:8px 10px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;margin-bottom:10px;box-sizing:border-box;">' +
-          '<label style="color:#9ca3af;font-size:12px;margin-bottom:4px;display:block;">Explanation</label>' +
-          '<textarea id="pcv-explanation" rows="2" style="width:100%;padding:8px 10px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;margin-bottom:16px;box-sizing:border-box;resize:vertical;">' + esc(values.explanation || '') + '</textarea>' +
-          '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
-            '<button class="dd-btn dd-btn-sm dd-btn-outline" id="pcv-cancel">Cancel</button>' +
-            '<button class="dd-btn dd-btn-sm dd-btn-primary" id="pcv-save">Save</button>' +
+        '<div class="dd-pc-modal wide">' +
+          '<h3>' + esc(title) + '</h3>' +
+          '<label>Violation Name *</label>' +
+          '<input type="text" id="pcv-name" value="' + esc(values.name) + '">' +
+          '<label>Jail Time *</label>' +
+          '<input type="text" id="pcv-jailtime" value="' + esc(values.jailTime) + '" placeholder="e.g. 30 seconds, 5 minutes">' +
+          '<label>Fine (' + (pcCurrencySymbols[penalCodesCurrency] || '$') + ')</label>' +
+          '<input type="number" id="pcv-fine" min="0" step="1" value="' + (values.fine || 0) + '" placeholder="e.g. 500">' +
+          '<label>Explanation</label>' +
+          '<textarea id="pcv-explanation" rows="2">' + esc(values.explanation || '') + '</textarea>' +
+          '<div class="dd-pc-modal-footer">' +
+            '<button class="dd-pc-modal-btn cancel" id="pcv-cancel">Cancel</button>' +
+            '<button class="dd-pc-modal-btn save" id="pcv-save">Save</button>' +
           '</div>' +
         '</div>'
       );
@@ -3158,18 +3650,13 @@ $('#dd-loading').hide();
         onSave({
           name: name,
           jailTime: jailTime,
-          fine: $overlay.find('#pcv-fine').val().trim(),
+          fine: parseInt($overlay.find('#pcv-fine').val(), 10) || 0,
           explanation: $overlay.find('#pcv-explanation').val().trim()
         });
       });
     }
 
-    // ── Penal Codes: CSS for chevron rotation ──
-    (function() {
-      var style = document.createElement('style');
-      style.textContent = '.dd-pc-expanded { transform: rotate(-180deg); }';
-      document.head.appendChild(style);
-    })();
+    // Chevron rotation is handled by .dd-pc-chevron.expanded in the stylesheet
 
     // ══════════════════════════════════════════
     //  SIDEBAR DEPARTMENTS LIST
