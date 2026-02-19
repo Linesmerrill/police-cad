@@ -825,6 +825,47 @@
       margin: 0 0.25rem;
     }
 
+    .dd-aw-search-wrap {
+      position: relative;
+      margin-bottom: 0.75rem;
+    }
+
+    .dd-aw-search-wrap i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--dd-text-dim);
+      font-size: 0.75rem;
+      transition: color 0.15s;
+    }
+
+    .dd-aw-search-wrap:focus-within i {
+      color: var(--dd-accent);
+    }
+
+    .dd-aw-search {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius-sm);
+      color: var(--dd-text);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8125rem;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .dd-aw-search:focus {
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.06);
+    }
+
+    .dd-aw-search::placeholder {
+      color: var(--dd-text-dim);
+    }
+
     .dd-pagination {
       display: flex;
       align-items: center;
@@ -2907,6 +2948,8 @@ $('#dd-loading').hide();
     var allWarrantsTotalCount = 0;
     var allWarrantsStatusFilter = '';
     var allWarrantsTypeFilter = '';
+    var allWarrantsSearchQuery = '';
+    var awSearchTimer = null;
     var expandedAllWarrantId = null;
 
     var statusColors = {
@@ -2922,6 +2965,10 @@ $('#dd-loading').hide();
           '</div>' +
         '</div>' +
         '<div class="dd-card-body">' +
+          '<div class="dd-aw-search-wrap">' +
+            '<i class="fa fa-search"></i>' +
+            '<input type="text" class="dd-aw-search" placeholder="Search by name..." oninput="ddSetAwSearch(this.value)">' +
+          '</div>' +
           '<div class="dd-filter-bar" id="dd-aw-filters">' +
             '<label>Status:</label>' +
             '<button class="dd-filter-btn active" data-group="status" onclick="ddSetAwStatusFilter(this, \'\')" data-filter="">All</button>' +
@@ -2965,6 +3012,7 @@ $('#dd-loading').hide();
       var url = API_URL + '/api/v2/warrants/community/' + communityId + '?limit=20&page=' + allWarrantsPage;
       if (allWarrantsStatusFilter) url += '&status=' + allWarrantsStatusFilter;
       if (allWarrantsTypeFilter) url += '&warrantType=' + allWarrantsTypeFilter;
+      if (allWarrantsSearchQuery) url += '&name=' + encodeURIComponent(allWarrantsSearchQuery);
 
       console.log('[AllWarrants] Fetching:', url);
       $.ajax({
@@ -3103,6 +3151,16 @@ $('#dd-loading').hide();
       $(btn).closest('.dd-filter-bar').find('.dd-filter-btn[data-group="type"]').removeClass('active');
       $(btn).addClass('active');
       loadAllWarrants();
+    };
+
+    window.ddSetAwSearch = function(query) {
+      clearTimeout(awSearchTimer);
+      awSearchTimer = setTimeout(function() {
+        allWarrantsSearchQuery = query.trim();
+        allWarrantsPage = 0;
+        expandedAllWarrantId = null;
+        loadAllWarrants();
+      }, 300);
     };
 
     window.ddToggleAllWarrant = function(id) {
