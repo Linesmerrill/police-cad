@@ -2862,7 +2862,7 @@ $('#dd-loading').hide();
         '</div>' +
         '<div class="dd-card-body">' +
           '<div style="margin-bottom:12px;">' +
-            '<input type="text" class="dd-search-input" id="dd-pc-search" placeholder="Search violations..." oninput="pcFilterViolations(this.value)" style="width:100%;padding:8px 12px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;">' +
+            '<input type="text" class="dd-search-input dd-pc-search" placeholder="Search violations..." oninput="pcFilterViolations(this.value)" style="width:100%;padding:8px 12px;background:var(--dd-surface);border:1px solid var(--dd-border);border-radius:6px;color:#fff;font-size:13px;">' +
           '</div>' +
           '<div class="dd-pc-loading dd-spinner"></div>' +
           '<div class="dd-pc-empty dd-empty" style="display:none;">' +
@@ -2870,7 +2870,7 @@ $('#dd-loading').hide();
             '<p class="dd-empty-title">No penal codes found</p>' +
             '<p class="dd-empty-sub">Add categories and violations to get started</p>' +
           '</div>' +
-          '<div id="dd-pc-categories"></div>' +
+          '<div class="dd-pc-categories"></div>' +
         '</div>';
     }
 
@@ -2879,7 +2879,7 @@ $('#dd-loading').hide();
       console.log('[PenalCodes] Loading from:', API_URL + '/api/v1/community/' + communityId + '/penal-codes');
       $('.dd-pc-loading').show();
       $('.dd-pc-empty').hide();
-      $('#dd-pc-categories').empty();
+      $('.dd-pc-categories').empty();
 
       $.ajax({
         url: API_URL + '/api/v1/community/' + communityId + '/penal-codes',
@@ -2901,7 +2901,7 @@ $('#dd-loading').hide();
 
     function renderPenalCodesCategories(categories) {
       $('.dd-pc-loading').hide();
-      var $container = $('#dd-pc-categories');
+      var $container = $('.dd-pc-categories');
       $container.empty();
 
       if (!categories || categories.length === 0) {
@@ -3012,7 +3012,7 @@ $('#dd-loading').hide();
         success: function(data) {
           penalCodesData = (data && data.categories) || [];
           renderPenalCodesCategories(penalCodesData);
-          $('#dd-pc-search').val('');
+          $('.dd-pc-search').val('');
         },
         error: function() {
           alert('Failed to reset penal codes.');
@@ -3035,7 +3035,7 @@ $('#dd-loading').hide();
         });
         pcSaveAll(function() {
           renderPenalCodesCategories(penalCodesData);
-          $('#dd-pc-search').val('');
+          $('.dd-pc-search').val('');
         });
       });
     };
