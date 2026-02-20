@@ -1156,6 +1156,12 @@
       // Global API configuration - using Go backend API
       const API_BASE = '<%= POLICE_CAD_API_URL %>';
 
+      // Utility: escape a string for safe insertion into HTML
+      function escapeHtml(str) {
+        if (typeof str !== 'string') return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
       // =====================================================
       // SIDEBAR NAVIGATION
       // =====================================================
@@ -1202,7 +1208,7 @@
         window.location.hash = panel;
 
         // Lazy-load data for panels that need it
-        if (!panelLoaded[panel] && panelLoadCallbacks[panel]) {
+        if (!panelLoaded[panel] && Object.prototype.hasOwnProperty.call(panelLoadCallbacks, panel)) {
           panelLoadCallbacks[panel]();
           panelLoaded[panel] = true;
         }
@@ -1513,7 +1519,7 @@
 
           showConfirmModal(
             'Confirm Send Email',
-            'Are you sure you want to send this email to <strong>' + $('<span>').text(toEmail).html() + '</strong>?',
+            'Are you sure you want to send this email to <strong>' + escapeHtml(toEmail) + '</strong>?',
             function() {
               $('#sendEmailBtn').prop('disabled', true).html(
                 '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Sending...'
@@ -2943,7 +2949,7 @@
                         <i class="fas fa-info-circle" style="margin-right: 0.5rem; color: #667eea;"></i>
                         If this user is still pending verification, you can check the Pending Users tab.
                       </p>
-                      <button class="btn btn-gradient btn-sm" onclick="switchToPendingUsers('${query}')">
+                      <button class="btn btn-gradient btn-sm" onclick="switchToPendingUsers('${escapeHtml(query)}')">
                         <i class="fas fa-user-clock" style="margin-right: 0.5rem;"></i>
                         Check Pending Users
                       </button>
@@ -3068,11 +3074,14 @@
         
         let html = '';
         searches.forEach(search => {
+          const safeQuery = escapeHtml(search.query);
+          const safeType = escapeHtml(search.type);
+          const typeLabel = search.type === 'users' ? 'Users' : search.type === 'pending_users' ? 'Pending Users' : 'Communities';
           html += `
-            <div class="recent-search-item" onclick="performRecentSearch('${search.query}', '${search.type}')">
-              <span class="search-text">${search.query}</span>
-              <span class="search-type">${search.type === 'users' ? 'Users' : search.type === 'pending_users' ? 'Pending Users' : 'Communities'}</span>
-              <button class="remove-btn" onclick="removeRecentSearch('${search.query}', '${search.type}', event)">
+            <div class="recent-search-item" onclick="performRecentSearch('${safeQuery}', '${safeType}')">
+              <span class="search-text">${safeQuery}</span>
+              <span class="search-type">${escapeHtml(typeLabel)}</span>
+              <button class="remove-btn" onclick="removeRecentSearch('${safeQuery}', '${safeType}', event)">
                 <i class="fas fa-times"></i>
               </button>
             </div>
@@ -4290,11 +4299,12 @@
       }
       
       function sendAdminResetEmail(email) {
-        const button = $(`button[onclick*="sendAdminResetEmail('${email}')"]`);
-        const originalText = button.html();
+        const safeEmail = escapeHtml(email);
+        const button = $(`button[onclick*="sendAdminResetEmail('${safeEmail}')"]`);
+        button.data('original-html', button.html());
         button.html('<i class="fas fa-spinner fa-spin"></i> Sending...');
         button.prop('disabled', true);
-        
+
         $.ajax({
           url: `${API_BASE}/api/v1/admin/send-reset-email`,
           method: 'POST',
@@ -4306,30 +4316,31 @@
             const successHtml = `
               <div class="alert alert-success" style="background: #10b981; color: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
                 <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
-                Password reset email sent successfully to ${email}
+                Password reset email sent successfully to ${safeEmail}
               </div>
             `;
-            
+
             // Insert success message at the top of the modal body
             $('#adminResetLinkBody').prepend(successHtml);
-            
+
             // Disable the send email button since it was sent
             button.prop('disabled', true);
             button.html('<i class="fas fa-check"></i> Email Sent');
             button.removeClass('btn-secondary').addClass('btn-success');
-            
+
             // Track this action
             trackAdminAction('admin_reset_email', `Sent password reset email to admin: ${email}`);
           },
           error: function(xhr) {
             // Show error message in the current modal
+            const errorMsg = escapeHtml(xhr.responseJSON?.error || 'Unknown error');
             const errorHtml = `
               <div class="alert alert-danger" style="background: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
                 <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>
-                Failed to send email: ${xhr.responseJSON?.error || 'Unknown error'}
+                Failed to send email: ${errorMsg}
             </div>
             `;
-            
+
             // Insert error message at the top of the modal body
             $('#adminResetLinkBody').prepend(errorHtml);
           },
@@ -4338,7 +4349,7 @@
             if (button.hasClass('btn-success')) {
               return; // Button was successfully sent, don't change it
             }
-            button.html(originalText);
+            button.html(button.data('original-html'));
             button.prop('disabled', false);
           }
         });
@@ -4346,8 +4357,9 @@
       
       function sendExistingAdminReset(email) {
         // Show loading state
-        const button = $(`button[onclick*="sendExistingAdminReset('${email}')"]`);
-        const originalText = button.html();
+        const safeEmail = escapeHtml(email);
+        const button = $(`button[onclick*="sendExistingAdminReset('${safeEmail}')"]`);
+        button.data('original-html', button.html());
         button.html('<i class="fas fa-spinner fa-spin"></i> Sending...');
         button.prop('disabled', true);
 
@@ -4364,7 +4376,7 @@
             const successHtml = `
               <div class="alert alert-success" style="background: #10b981; color: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
                 <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
-                New password reset email sent successfully to ${email}
+                New password reset email sent successfully to ${safeEmail}
               </div>
             `;
 
@@ -4377,24 +4389,23 @@
 
             // Clear the email input since we successfully sent the reset
             $('#newAdminEmail').val('');
-            
+
             // Track this action
             trackAdminAction('admin_reset_existing', `Sent reset email to existing admin: ${email}`);
           },
           error: function(xhr) {
             // Show error message
-            let errorMessage = 'Unknown error';
-            if (xhr.responseJSON && xhr.responseJSON.error) {
-              errorMessage = xhr.responseJSON.error;
-            }
-            
+            const errorMessage = escapeHtml(
+              (xhr.responseJSON && xhr.responseJSON.error) ? xhr.responseJSON.error : 'Unknown error'
+            );
+
             const errorHtml = `
               <div class="alert alert-danger" style="background: #ef4444; color: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
                 <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>
                 Failed to send reset email: ${errorMessage}
               </div>
             `;
-            
+
             $('#addAdminModal .modal-body').prepend(errorHtml);
           },
           complete: function() {
@@ -4402,7 +4413,7 @@
             if (button.hasClass('btn-success')) {
               return; // Button was successfully sent, don't change it
             }
-            button.html(originalText);
+            button.html(button.data('original-html'));
             button.prop('disabled', false);
           }
         });
