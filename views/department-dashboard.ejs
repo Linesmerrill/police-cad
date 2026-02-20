@@ -2518,12 +2518,16 @@
     });
 
     function fetchDepartmentData() {
-      if (!departmentId) {
+      if (!departmentId || !/^[a-f0-9]{24}$/i.test(departmentId)) {
         showError('No department selected.');
         return;
       }
+      if (communityId && !/^[a-f0-9]{24}$/i.test(communityId)) {
+        showError('Invalid community.');
+        return;
+      }
       $.ajax({
-        url: API_URL + '/api/v1/community/' + communityId + '/departments/' + departmentId,
+        url: API_URL + '/api/v1/community/' + encodeURIComponent(communityId) + '/departments/' + encodeURIComponent(departmentId),
         method: 'GET',
         success: function(dept) {
           var template = dept?.department?.template;
@@ -3568,7 +3572,7 @@ $('#dd-loading').hide();
     function pcFormatFine(amount) {
       var n = pcParseFine(amount);
       if (!n) return '\u2014';
-      return pcGetCurrencySymbol(penalCodesCurrency) + n.toLocaleString();
+      return esc(pcGetCurrencySymbol(penalCodesCurrency)) + n.toLocaleString();
     }
 
     function renderPenalCodesPanel() {
@@ -4054,8 +4058,8 @@ $('#dd-loading').hide();
           '<input type="text" id="pcv-name" value="' + esc(values.name) + '">' +
           '<label>Jail Time *</label>' +
           '<input type="text" id="pcv-jailtime" value="' + esc(values.jailTime) + '" placeholder="e.g. 30 seconds, 5 minutes">' +
-          '<label>Fine (' + pcGetCurrencySymbol(penalCodesCurrency) + ')</label>' +
-          '<input type="number" id="pcv-fine" min="0" step="1" value="' + (values.fine || 0) + '" placeholder="e.g. 500">' +
+          '<label>Fine (' + esc(pcGetCurrencySymbol(penalCodesCurrency)) + ')</label>' +
+          '<input type="number" id="pcv-fine" min="0" step="1" value="' + esc(String(values.fine || 0)) + '" placeholder="e.g. 500">' +
           '<label>Explanation</label>' +
           '<textarea id="pcv-explanation" rows="2">' + esc(values.explanation || '') + '</textarea>' +
           '<div class="dd-pc-modal-footer">' +

@@ -8323,7 +8323,7 @@ async function saveEditEvent() {
             tbody = '<tr><td colspan="5" class="pcm-empty-cat">No violations — click "Add" to create one.</td></tr>';
           } else {
             violations.forEach(function(v, vIdx) {
-              var fineDisplay = v.fine ? sym + Number(v.fine).toLocaleString() : '—';
+              var fineDisplay = v.fine ? escHtml(sym) + Number(v.fine).toLocaleString() : '—';
               tbody +=
                 '<tr data-cat="' + catIdx + '" data-vio="' + vIdx + '">' +
                   '<td class="pcm-v-name">' + escHtml(v.name) + '</td>' +
