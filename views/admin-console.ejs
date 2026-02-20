@@ -320,6 +320,62 @@
       .stat-number { font-size:1.5rem !important; font-weight:700; color:var(--ac-accent) !important; margin-bottom:0.25rem; font-family:'JetBrains Mono',monospace; }
       .stat-label { color:var(--ac-text-muted) !important; font-size:0.625rem !important; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; }
 
+      /* ── Dashboard pending applications ── */
+      .dash-pending-cc {
+        background:var(--ac-surface); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+        border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius);
+        padding:1.5rem; margin-bottom:1.75rem; animation:ac-fadeUp 0.4s ease both;
+        animation-delay:0.18s;
+      }
+      .dash-pending-cc-header {
+        display:flex; justify-content:space-between; align-items:center;
+        margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--ac-glass-border);
+      }
+      .dash-pending-cc-header h4 {
+        font-size:0.9375rem; font-weight:600; color:#fff; margin:0;
+        display:flex; align-items:center; gap:0.5rem;
+      }
+      .dash-pending-cc-header .pending-count {
+        background:rgba(239,68,68,0.15); color:#ef4444;
+        font-size:0.6875rem; font-weight:700; padding:0.15rem 0.5rem;
+        border-radius:99px; font-family:'JetBrains Mono',monospace;
+      }
+      .dash-pending-cc-item {
+        display:flex; align-items:center; justify-content:space-between;
+        padding:0.875rem 1rem; background:rgba(0,0,0,0.15);
+        border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius-sm);
+        margin-bottom:0.5rem; transition:border-color 0.15s;
+      }
+      .dash-pending-cc-item:last-child { margin-bottom:0; }
+      .dash-pending-cc-item:hover { border-color:rgba(139,92,246,0.25); }
+      .dash-pending-cc-item-info { display:flex; align-items:center; gap:0.75rem; min-width:0; flex:1; }
+      .dash-pending-cc-platform-icon {
+        width:34px; height:34px; border-radius:8px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:0.875rem; flex-shrink:0;
+      }
+      .dash-pending-cc-item-text { min-width:0; }
+      .dash-pending-cc-item-text strong {
+        display:block; font-size:0.8125rem; font-weight:600; color:#fff;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      }
+      .dash-pending-cc-item-text span {
+        font-size:0.6875rem; color:var(--ac-text-muted);
+      }
+      .dash-pending-cc-item-actions { flex-shrink:0; margin-left:0.75rem; }
+      .dash-cc-all-clear {
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        padding:2rem 1rem; color:var(--ac-text-muted); text-align:center;
+      }
+      .dash-cc-all-clear-icon {
+        width:48px; height:48px; border-radius:50%;
+        background:rgba(34,197,94,0.1); color:var(--ac-green);
+        display:flex; align-items:center; justify-content:center;
+        font-size:1.25rem; margin-bottom:0.75rem;
+      }
+      .dash-cc-all-clear strong { display:block; color:var(--ac-text); font-size:0.875rem; margin-bottom:0.25rem; }
+      .dash-cc-all-clear span { font-size:0.75rem; }
+
       /* ── Code value & copy ── */
       .code-value {
         font-family:'JetBrains Mono',monospace !important; font-size:1.1em; font-weight:600;
@@ -674,6 +730,25 @@
                 <span>Manage CC applications</span>
               </div>
             </a>
+          </div>
+
+          <div class="ac-section-label" id="dash-pending-cc-label" style="display:none;">Pending Applications</div>
+          <div class="dash-pending-cc" id="dash-pending-cc-container" style="display:none;">
+            <div class="dash-pending-cc-header">
+              <h4>
+                <i class="fas fa-inbox" style="color:#ef4444;"></i>
+                Content Creator Applications
+                <span class="pending-count" id="dash-pending-cc-count" style="display:none;">0</span>
+              </h4>
+              <a href="#" onclick="acNavTo('content-creators'); return false;" style="font-size:0.75rem; color:var(--ac-accent); text-decoration:none; font-weight:500;">
+                View All <i class="fas fa-arrow-right" style="margin-left:4px; font-size:0.625rem;"></i>
+              </a>
+            </div>
+            <div id="dash-pending-cc-list">
+              <div style="text-align:center; padding:1rem; color:var(--ac-text-muted);">
+                <i class="fas fa-spinner fa-spin"></i>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1177,7 +1252,7 @@
 
       // Data-load callbacks for lazy-loaded panels
       const panelLoadCallbacks = {
-        'dashboard': function() { if (typeof loadDashboardStats === 'function') loadDashboardStats(); },
+        'dashboard': function() { if (typeof loadDashboardStats === 'function') loadDashboardStats(); if (typeof loadDashboardPendingCC === 'function') loadDashboardPendingCC(); },
         'admin-management': function() { if (typeof loadAllAdmins === 'function') loadAllAdmins(); },
         'content-creators': function() { if (typeof loadCCApplications === 'function') { loadCCApplications(); loadCCStats(); } }
       };
@@ -1335,6 +1410,102 @@
       }
 
       // =====================================================
+      // DASHBOARD — PENDING CC APPLICATIONS
+      // =====================================================
+      function loadDashboardPendingCC() {
+        // Only show for admin/owner roles
+        if (!roles.includes('owner') && !roles.includes('admin')) return;
+
+        $('#dash-pending-cc-label').show();
+        $('#dash-pending-cc-container').show();
+
+        $.ajax({
+          url: API_BASE + '/api/v1/admin/content-creator-applications?status=submitted&limit=5',
+          method: 'GET',
+          success: function(data) {
+            var apps = (data && data.applications) ? data.applications : [];
+            var total = (data && data.pagination) ? data.pagination.totalItems : 0;
+            renderDashboardPendingCC(apps, total);
+          },
+          error: function() {
+            renderDashboardPendingCC([], 0);
+          }
+        });
+      }
+
+      function renderDashboardPendingCC(apps, total) {
+        var list = $('#dash-pending-cc-list');
+        var countBadge = $('#dash-pending-cc-count');
+
+        if (!apps || apps.length === 0) {
+          countBadge.hide();
+          list.html(`
+            <div class="dash-cc-all-clear">
+              <div class="dash-cc-all-clear-icon">
+                <i class="fas fa-check"></i>
+              </div>
+              <strong>All caught up!</strong>
+              <span>No pending applications to review</span>
+            </div>
+          `);
+          return;
+        }
+
+        countBadge.text(total).show();
+
+        var platformIcons = {
+          twitch: { icon: 'fab fa-twitch', bg: 'rgba(145,70,255,0.12)', color: '#9146FF' },
+          youtube: { icon: 'fab fa-youtube', bg: 'rgba(255,0,0,0.1)', color: '#FF0000' },
+          tiktok: { icon: 'fab fa-tiktok', bg: 'rgba(255,255,255,0.08)', color: '#fff' },
+          other: { icon: 'fas fa-globe', bg: 'rgba(99,102,241,0.12)', color: 'var(--ac-accent)' }
+        };
+
+        var html = '';
+        apps.forEach(function(app) {
+          var appId = app._id || app.id || '';
+          var displayName = escapeHtml(app.displayName || 'Unknown');
+          var platform = app.primaryPlatform || 'other';
+          var pIcon = platformIcons[platform] || platformIcons.other;
+          var totalFollowers = 0;
+          if (app.platforms && app.platforms.length) {
+            app.platforms.forEach(function(p) { totalFollowers += (p.followerCount || 0); });
+          }
+          var createdAt = app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '';
+
+          html += `
+            <div class="dash-pending-cc-item">
+              <div class="dash-pending-cc-item-info">
+                <div class="dash-pending-cc-platform-icon" style="background:${pIcon.bg}; color:${pIcon.color};">
+                  <i class="${pIcon.icon}"></i>
+                </div>
+                <div class="dash-pending-cc-item-text">
+                  <strong>${displayName}</strong>
+                  <span>${escapeHtml(platform)} &middot; ${totalFollowers.toLocaleString()} followers &middot; ${escapeHtml(createdAt)}</span>
+                </div>
+              </div>
+              <div class="dash-pending-cc-item-actions">
+                <button class="btn btn-secondary btn-sm" onclick="acNavTo('content-creators'); setTimeout(function(){ viewCCApplication('${escapeHtml(appId)}'); }, 300);" style="font-size:0.75rem; padding:0.3rem 0.75rem;">
+                  Review
+                </button>
+              </div>
+            </div>
+          `;
+        });
+
+        if (total > 5) {
+          html += `
+            <div style="text-align:center; padding-top:0.75rem;">
+              <a href="#" onclick="acNavTo('content-creators'); return false;" style="font-size:0.75rem; color:var(--ac-accent); text-decoration:none; font-weight:500;">
+                View all ${total} applications <i class="fas fa-arrow-right" style="margin-left:4px; font-size:0.625rem;"></i>
+              </a>
+            </div>
+          `;
+        }
+
+        list.html(html);
+      }
+
+      // =====================================================
       // LIVE CC APPLICATION NOTIFICATIONS (polling)
       // =====================================================
       function pollCCSubmissions() {
@@ -1483,6 +1654,7 @@
 
         // Load dashboard stats on page load (dashboard is default panel)
         loadDashboardStats();
+        loadDashboardPendingCC();
         panelLoaded['dashboard'] = true;
 
         // Start polling for live CC submission notifications
