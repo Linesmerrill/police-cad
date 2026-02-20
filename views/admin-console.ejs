@@ -5003,15 +5003,18 @@
             };
             const icon = platformIcons[p.type] || 'fas fa-globe';
 
+            const safeUrl = escapeHtml(p.url || '');
+            const safeHandle = p.handle ? escapeHtml(p.handle.replace(/^@+/, '')) : '';
+            const profileLink = p.url
+              ? `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-size: 1rem;">@${safeHandle || safeUrl} <i class="fas fa-external-link-alt" style="font-size: 0.625rem; margin-left: 4px; opacity: 0.7;"></i></a>`
+              : (safeHandle ? `<span style="color: #9aa0b4; font-size: 1rem;">@${safeHandle}</span>` : '');
+
             platformsHtml += `
               <div class="info-item" style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
                   <i class="${icon}" style="color: #667eea; font-size: 1.25rem;"></i>
-                  <span style="color: #e5e7eb; font-weight: 600; text-transform: capitalize; font-size: 1.1rem;">${p.type}</span>
-                  ${p.handle ? `<span style="color: #9aa0b4; font-size: 1rem;">@${p.handle.replace(/^@+/, '')}</span>` : ''}
-                </div>
-                <div style="margin-bottom: 0.5rem;">
-                  <a href="${p.url}" target="_blank" style="color: #667eea; word-break: break-all; font-size: 1rem;">${p.url}</a>
+                  <span style="color: #e5e7eb; font-weight: 600; text-transform: capitalize; font-size: 1.1rem;">${escapeHtml(p.type)}</span>
+                  ${profileLink}
                 </div>
                 <div style="color: #e5e7eb; font-size: 1rem; font-weight: 500;">
                   ${(p.followerCount || 0).toLocaleString()} followers
