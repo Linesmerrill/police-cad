@@ -5015,16 +5015,13 @@
               twitter: 'https://twitter.com/',
               facebook: 'https://facebook.com/'
             };
-            let profileUrl = p.url || '';
-            // If the stored URL is just a base domain without the handle, append it
-            if (cleanHandle && profileUrl) {
-              const urlLower = profileUrl.replace(/\/+$/, '').toLowerCase();
-              const baseUrl = platformBaseUrls[p.type] ? platformBaseUrls[p.type].replace(/\/+$/, '').toLowerCase() : '';
-              if (baseUrl && (urlLower === baseUrl || urlLower === baseUrl.replace('/@', '/'))) {
-                profileUrl = platformBaseUrls[p.type] + cleanHandle;
-              }
-            } else if (cleanHandle && !profileUrl && platformBaseUrls[p.type]) {
+            // Always prefer building URL from platform type + handle when both are known
+            // p.url from the database is unreliable (can contain wrong domains)
+            let profileUrl = '';
+            if (cleanHandle && platformBaseUrls[p.type]) {
               profileUrl = platformBaseUrls[p.type] + cleanHandle;
+            } else if (p.url) {
+              profileUrl = p.url;
             }
             const safeProfileUrl = escapeHtml(profileUrl);
 
@@ -5446,7 +5443,7 @@
           <% } %>
         </div>
         <div class="ac-footer-links">
-          <a href="https://linespolicecad.com" target="_blank">Website</a>
+          <a href="https://linespolice-cad.com" target="_blank">Website</a>
           <a href="https://discord.gg/linespolicecad" target="_blank">Discord</a>
         </div>
       </div>
