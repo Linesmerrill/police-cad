@@ -5531,7 +5531,7 @@ function fetchArrestReportsForCiv(civId, cb) {
     url: `${API_URL}/api/v1/arrest-report/arrestee/${civId}`,
     method: 'GET',
     success: function(data) {
-      cachedArrestReports = (data.data || []).map(r => r.arrestReport || r);
+      cachedArrestReports = (data.data || []).map(r => r.arrestReport ? { _id: r._id, ...r.arrestReport } : r);
       cachedArrestReportsCount = data.totalCount || cachedArrestReports.length;
       if (typeof cb === 'function') cb();
     },
