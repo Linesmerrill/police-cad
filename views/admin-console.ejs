@@ -1460,6 +1460,16 @@
         // Update UI based on user roles
         updateUIForUserRoles();
 
+        // Send heartbeat to track last active time
+        const heartbeatAdminId = '<%= admin && admin.id ? admin.id : "" %>';
+        if (heartbeatAdminId) {
+          fetch(`${API_BASE}/api/v1/admin/heartbeat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adminId: heartbeatAdminId })
+          }).catch(() => {});
+        }
+
         // Load pending content creator applications count for badge
         if (roles.includes('owner') || roles.includes('admin')) {
           loadCCPendingCount();
@@ -1766,9 +1776,9 @@
                   <div class="info-value">${admin.createdBy || 'System'}</div>
                 </div>
                 <div class="info-item">
-                  <div class="info-label">Last Login</div>
-                  <div class="info-value">${admin.lastLoginAt ? (() => {
-                    const date = new Date(admin.lastLoginAt);
+                  <div class="info-label">Last Active</div>
+                  <div class="info-value">${(admin.lastAccessedAt || admin.lastLoginAt) ? (() => {
+                    const date = new Date(admin.lastAccessedAt || admin.lastLoginAt);
                     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
                   })() : 'Never'}</div>
                 </div>
@@ -1809,8 +1819,8 @@
         const isActive = admin.active !== undefined ? admin.active : true;
         const createdAt = admin.createdAt ? new Date(admin.createdAt).toLocaleDateString() : 'Unknown';
         const createdBy = admin.createdBy || 'System';
-        const lastLoginAt = admin.lastLoginAt ? (() => {
-          const date = new Date(admin.lastLoginAt);
+        const lastActive = (admin.lastAccessedAt || admin.lastLoginAt) ? (() => {
+          const date = new Date(admin.lastAccessedAt || admin.lastLoginAt);
           return date.toLocaleDateString() + ' ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
         })() : 'Never';
         const adminId = admin.id || admin._id || 'unknown';
@@ -1853,8 +1863,8 @@
               <div class="info-value">${createdBy}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Last Login</div>
-              <div class="info-value">${lastLoginAt}</div>
+              <div class="info-label">Last Active</div>
+              <div class="info-value">${lastActive}</div>
             </div>
           </div>
           
