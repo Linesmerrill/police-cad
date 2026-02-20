@@ -229,6 +229,14 @@
         box-shadow:0 0 0 3px var(--ac-accent-glow) !important; outline:none !important;
       }
       body.ac-body .form-control::placeholder { color:var(--ac-text-dim) !important; }
+      body.ac-body select.form-control {
+        height:auto !important; line-height:1.4 !important;
+        padding:0.625rem 2rem 0.625rem 1rem !important;
+        -webkit-appearance:none; -moz-appearance:none; appearance:none;
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa0b4' d='M6 8.825a.5.5 0 0 1-.354-.146l-4-4a.5.5 0 0 1 .708-.708L6 7.617l3.646-3.646a.5.5 0 0 1 .708.708l-4 4A.5.5 0 0 1 6 8.825z'/%3E%3C/svg%3E") !important;
+        background-repeat:no-repeat !important; background-position:right 0.75rem center !important;
+        background-size:12px !important; background-color:rgba(0,0,0,0.3) !important;
+      }
       body.ac-body label, .ac-label { color:var(--ac-text-muted); font-size:0.875rem; font-weight:500; }
 
       /* ── Buttons ── */
@@ -972,7 +980,7 @@
             <input type="hidden" id="rejectApplicationId" />
             <div class="form-group">
               <label for="rejectionReason" style="color: #e5e7eb; margin-bottom: 0.5rem;">Rejection Reason</label>
-              <select id="rejectionReason" class="form-control" style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;">
+              <select id="rejectionReason" class="form-control">
                 <option value="">Select a reason...</option>
                 <option value="insufficient_followers">Insufficient followers</option>
                 <option value="content_quality">Content quality concerns</option>
@@ -1023,7 +1031,7 @@
             </div>
             <div class="form-group">
               <label for="removalReason" style="color: #e5e7eb; margin-bottom: 0.5rem;">Reason for Removal <span style="color: #ef4444;">*</span></label>
-              <select id="removalReason" class="form-control" style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;">
+              <select id="removalReason" class="form-control">
                 <option value="">Select a reason...</option>
                 <option value="Policy violation">Policy violation</option>
                 <option value="Inactivity">Inactivity</option>
@@ -1069,8 +1077,7 @@
             </div>
             <div class="form-group">
               <label for="adminRole" style="color: #e5e7eb; margin-bottom: 0.5rem;">Admin Role</label>
-              <select id="adminRole" class="form-control" 
-                      style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;">
+              <select id="adminRole" class="form-control">
                 <option value="admin">Admin</option>
                 <option value="owner">Owner</option>
               </select>
