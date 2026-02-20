@@ -6428,9 +6428,18 @@ function mergeExpectedComponents(components, templateName) {
   var existingNames = {};
   components.forEach(function(c) { existingNames[c.name] = true; });
 
-  var merged = components.slice(); // copy
+  // Build set of expected component names for quick lookup
+  var expectedSet = {};
+  expected.forEach(function(name) { expectedSet[name] = true; });
+
+  // Keep only components that are in the expected list, preserving their enabled state
+  var merged = components.filter(function(c) { return expectedSet[c.name]; });
+
+  // Add any expected components that are missing (defaults to enabled)
+  var mergedNames = {};
+  merged.forEach(function(c) { mergedNames[c.name] = true; });
   expected.forEach(function(name) {
-    if (!existingNames[name]) {
+    if (!mergedNames[name]) {
       merged.push({ name: name, enabled: true });
     }
   });
