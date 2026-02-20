@@ -5003,11 +5003,36 @@
             };
             const icon = platformIcons[p.type] || 'fas fa-globe';
 
-            const safeUrl = escapeHtml(p.url || '');
-            const safeHandle = p.handle ? escapeHtml(p.handle.replace(/^@+/, '')) : '';
-            const profileLink = p.url
-              ? `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-size: 1rem;">@${safeHandle || safeUrl} <i class="fas fa-external-link-alt" style="font-size: 0.625rem; margin-left: 4px; opacity: 0.7;"></i></a>`
-              : (safeHandle ? `<span style="color: #9aa0b4; font-size: 1rem;">@${safeHandle}</span>` : '');
+            const cleanHandle = p.handle ? p.handle.replace(/^@+/, '') : '';
+            const safeHandle = escapeHtml(cleanHandle);
+
+            // Build the actual profile URL from platform type + handle
+            const platformBaseUrls = {
+              twitch: 'https://twitch.tv/',
+              youtube: 'https://youtube.com/@',
+              tiktok: 'https://tiktok.com/@',
+              instagram: 'https://instagram.com/',
+              twitter: 'https://twitter.com/',
+              facebook: 'https://facebook.com/'
+            };
+            let profileUrl = p.url || '';
+            // If the stored URL is just a base domain without the handle, append it
+            if (cleanHandle && profileUrl) {
+              const urlLower = profileUrl.replace(/\/+$/, '').toLowerCase();
+              const baseUrl = platformBaseUrls[p.type] ? platformBaseUrls[p.type].replace(/\/+$/, '').toLowerCase() : '';
+              if (baseUrl && (urlLower === baseUrl || urlLower === baseUrl.replace('/@', '/'))) {
+                profileUrl = platformBaseUrls[p.type] + cleanHandle;
+              }
+            } else if (cleanHandle && !profileUrl && platformBaseUrls[p.type]) {
+              profileUrl = platformBaseUrls[p.type] + cleanHandle;
+            }
+            const safeProfileUrl = escapeHtml(profileUrl);
+
+            const profileLink = (safeProfileUrl && safeHandle)
+              ? `<a href="${safeProfileUrl}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-size: 1rem;">@${safeHandle} <i class="fas fa-external-link-alt" style="font-size: 0.625rem; margin-left: 4px; opacity: 0.7;"></i></a>`
+              : safeProfileUrl
+                ? `<a href="${safeProfileUrl}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-size: 1rem; word-break: break-all;">${safeProfileUrl} <i class="fas fa-external-link-alt" style="font-size: 0.625rem; margin-left: 4px; opacity: 0.7;"></i></a>`
+                : (safeHandle ? `<span style="color: #9aa0b4; font-size: 1rem;">@${safeHandle}</span>` : '');
 
             platformsHtml += `
               <div class="info-item" style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
