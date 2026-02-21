@@ -1409,6 +1409,66 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  app.get("/court-session", authCheck, async function (req, res) {
+    try {
+      var context = req.app.locals.specialContext;
+      req.app.locals.specialContext = null;
+
+      res.render("court-session", {
+        user: req.user,
+        context: context,
+        referer: encodeURIComponent("/court-session"),
+        redirect: encodeURIComponent(redirect),
+        apiUrl: policeCadApiUrl,
+      });
+    } catch (error) {
+      console.error('Error in court-session route:', error);
+      return res.status(500).render("error", {
+        message: "An error occurred while loading the court session. Please try again.",
+        redirect: "/communities",
+      });
+    }
+  });
+
+  app.get("/judicial-dashboard", authCheck, async function (req, res) {
+    try {
+      var context = req.app.locals.specialContext;
+      req.app.locals.specialContext = null;
+
+      const departmentName = req.query.dept || null;
+      const encodedDeptId = req.query.d || null;
+
+      let departmentId = null;
+      if (encodedDeptId) {
+        try {
+          let base64 = encodedDeptId.replace(/-/g, '+').replace(/_/g, '/');
+          while (base64.length % 4) { base64 += '='; }
+          departmentId = Buffer.from(base64, 'base64').toString('utf8');
+          if (!/^[a-fA-F0-9]{24}$/.test(departmentId)) { departmentId = null; }
+        } catch (e) {
+          console.error('Failed to decode department ID:', e);
+          departmentId = null;
+        }
+      }
+
+      res.render("judicial-dashboard", {
+        user: req.user,
+        context: context,
+        referer: encodeURIComponent("/judicial-dashboard"),
+        redirect: encodeURIComponent(redirect),
+        departmentName: departmentName,
+        departmentId: departmentId,
+        apiUrl: policeCadApiUrl,
+      });
+    } catch (error) {
+      console.error('Error in judicial-dashboard route:', error);
+      return res.status(500).render("error", {
+        message: "An error occurred while loading the judicial dashboard. Please try again.",
+        redirect: "/communities",
+      });
+    }
+  });
+
   app.get("/ems-dashboard", authCheck, async function (req, res) {
     try {
       var context = req.app.locals.specialContext;

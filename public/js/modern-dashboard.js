@@ -5478,6 +5478,41 @@ function updateCriminalHistoryMetrics(civData) {
   }
 }
 
+function getCriminalStatusBadge(entry) {
+  if (entry.status === 'dismissed') {
+    return `<span style="display:inline-block;background:#065f46;color:#6ee7b7;font-size:0.8rem;font-weight:600;padding:0.2rem 0.6rem;border-radius:6px;margin-left:0.5rem;">Dismissed</span>`;
+  }
+  if (entry.status === 'contested') {
+    return `<span style="display:inline-block;background:#78350f;color:#fbbf24;font-size:0.8rem;font-weight:600;padding:0.2rem 0.6rem;border-radius:6px;margin-left:0.5rem;">Contested</span>`;
+  }
+  return '';
+}
+
+function getContestCheckbox(entry, type) {
+  if (entry.status === 'dismissed' || entry.status === 'contested') return '';
+  const itemType = type === 'Arrest' ? 'arrest' : type.toLowerCase();
+  return `<input type="checkbox" class="contest-item-checkbox" data-item-id="${entry._id}" data-item-type="${itemType}" style="width:18px;height:18px;cursor:pointer;accent-color:#667eea;margin-right:0.75rem;flex-shrink:0;" />`;
+}
+
+function updateContestButtonVisibility() {
+  const checked = $('.contest-item-checkbox:checked').length;
+  if (checked > 0) {
+    if ($('#contestSelectedBtn').length === 0) {
+      $('#criminalHistoryContentArea').before(`
+        <div id="contestSelectedBtnContainer" style="margin-bottom:1rem;display:flex;justify-content:flex-end;">
+          <button id="contestSelectedBtn" style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);color:#fff;border:none;padding:0.6rem 1.25rem;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.95rem;display:flex;align-items:center;gap:0.5rem;">
+            <i class="fa fa-gavel"></i> Contest Selected (<span id="contestCount">${checked}</span>)
+          </button>
+        </div>
+      `);
+    } else {
+      $('#contestCount').text(checked);
+    }
+  } else {
+    $('#contestSelectedBtnContainer').remove();
+  }
+}
+
 function renderCriminalHistoryEntries(type, civData) {
   let html = '';
   if (type === 'Citation' || type === 'Warning') {
@@ -5485,39 +5520,161 @@ function renderCriminalHistoryEntries(type, civData) {
     if (entries.length === 0) {
       html = `<div style="color:#a0aec0;text-align:center;padding:2rem 0;">No ${type.toLowerCase()}s found.</div>`;
     } else {
-      html = entries.map(entry => `
-        <div class="heroui-criminal-card" style="background:#23263a;border-radius:10px;padding:1rem;margin-bottom:1.25rem;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-weight:600;font-size:1.1rem;">${entry.type}</div>
+      html = entries.map(entry => {
+        const isDismissed = entry.status === 'dismissed';
+        const cardOpacity = isDismissed ? 'opacity:0.6;' : '';
+        const textDecoration = isDismissed ? 'text-decoration:line-through;' : '';
+        return `
+        <div class="heroui-criminal-card" style="background:#23263a;border-radius:10px;padding:1rem;margin-bottom:1.25rem;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);display:flex;align-items:center;${cardOpacity}">
+          ${getContestCheckbox(entry, type)}
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:1.1rem;${textDecoration}">${entry.type}${getCriminalStatusBadge(entry)}</div>
             <div style="font-size:0.95rem;color:#a0aec0;">${new Date(entry.createdAt).toLocaleDateString()}</div>
             <ul style="margin:0.5rem 0 0.5rem 1.25rem;padding:0;list-style:disc;">${(entry.fines||[]).map(fine => `<li><strong>${fine.fineType}</strong> (${fine.category}): $${fine.fineAmount}</li>`).join('')}</ul>
             <div style="font-size:0.95rem;color:#a0aec0;">${entry.notes ? `<strong>Notes:</strong> ${entry.notes}` : ''}</div>
             ${entry.redacted ? '<div style="color:#ef4444;font-weight:600;">Redacted</div>' : ''}
+            ${isDismissed && entry.dismissedBy ? `<div style="font-size:0.85rem;color:#6ee7b7;margin-top:0.25rem;">Dismissed by ${entry.dismissedBy}</div>` : ''}
           </div>
           <button class="heroui-trash-btn" data-type="criminal" data-id="${entry._id}" title="Delete" style="background:none;border:none;color:#ef4444;font-size:1.5rem;cursor:pointer;"><i class="fa fa-trash"></i></button>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
     }
   } else if (type === 'Arrest') {
     const entries = cachedArrestReports || [];
     if (entries.length === 0) {
       html = `<div style="color:#a0aec0;text-align:center;padding:2rem 0;">No arrest reports found.</div>`;
     } else {
-      html = entries.map(entry => `
-        <div class="heroui-criminal-card" style="background:#23263a;border-radius:10px;padding:1rem;margin-bottom:1.25rem;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-weight:600;font-size:1.1rem;">Arrest Report</div>
+      html = entries.map(entry => {
+        const isDismissed = entry.status === 'dismissed';
+        const cardOpacity = isDismissed ? 'opacity:0.6;' : '';
+        const textDecoration = isDismissed ? 'text-decoration:line-through;' : '';
+        return `
+        <div class="heroui-criminal-card" style="background:#23263a;border-radius:10px;padding:1rem;margin-bottom:1.25rem;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);display:flex;align-items:center;${cardOpacity}">
+          ${getContestCheckbox(entry, 'Arrest')}
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:1.1rem;${textDecoration}">Arrest Report${getCriminalStatusBadge(entry)}</div>
             <div style="font-size:0.95rem;color:#a0aec0;">${new Date(entry.arrestDate).toLocaleDateString()}</div>
             <div style="font-size:0.95rem;color:#a0aec0;"><strong>Charges:</strong> ${entry.charges || 'N/A'}</div>
             <div style="font-size:0.95rem;color:#a0aec0;"><strong>Location:</strong> ${entry.arrestLocation || 'N/A'}</div>
+            ${isDismissed && entry.dismissedBy ? `<div style="font-size:0.85rem;color:#6ee7b7;margin-top:0.25rem;">Dismissed by ${entry.dismissedBy}</div>` : ''}
           </div>
           <button class="heroui-trash-btn" data-type="arrest" data-id="${entry._id}" title="Delete" style="background:none;border:none;color:#ef4444;font-size:1.5rem;cursor:pointer;"><i class="fa fa-trash"></i></button>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
     }
   }
   $('#criminalHistoryContentArea').html(html);
+  updateContestButtonVisibility();
 }
+
+// Contest checkbox change handler
+$(document).on('change', '.contest-item-checkbox', function() {
+  updateContestButtonVisibility();
+});
+
+// Contest selected button click handler — opens contest modal
+$(document).on('click', '#contestSelectedBtn', function() {
+  const selectedItems = [];
+  $('.contest-item-checkbox:checked').each(function() {
+    const $card = $(this).closest('.heroui-criminal-card');
+    const itemId = $(this).data('item-id');
+    const itemType = $(this).data('item-type');
+    const titleEl = $card.find('div[style*="font-weight:600;font-size:1.1rem"]');
+    const summary = titleEl.text().trim() + ' - ' + $card.find('div[style*="color:#a0aec0"]').first().text().trim();
+    selectedItems.push({ itemID: itemId, itemType: itemType, summary: summary });
+  });
+  openContestModal(selectedItems);
+});
+
+function openContestModal(selectedItems) {
+  window._contestSelectedItems = selectedItems;
+  let itemsHtml = selectedItems.map((item, i) => `
+    <div style="background:#1e2035;border-radius:8px;padding:0.75rem 1rem;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.75rem;">
+      <span style="display:inline-block;background:${item.itemType === 'arrest' ? '#7f1d1d' : item.itemType === 'citation' ? '#312e81' : '#78350f'};color:#fff;font-size:0.75rem;padding:0.15rem 0.5rem;border-radius:4px;text-transform:capitalize;">${item.itemType}</span>
+      <span style="color:#e2e8f0;font-size:0.95rem;">${item.summary}</span>
+    </div>
+  `).join('');
+
+  const modalHtml = `
+    <div id="contestModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;">
+      <div style="background:#1a1c2e;border-radius:16px;padding:2rem;max-width:550px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 25px 50px rgba(0,0,0,0.5);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+          <h3 style="margin:0;color:#f7fafc;font-size:1.25rem;"><i class="fa fa-gavel" style="margin-right:0.5rem;color:#f59e0b;"></i>Contest Records</h3>
+          <button id="closeContestModal" style="background:none;border:none;color:#a0aec0;font-size:1.5rem;cursor:pointer;">&times;</button>
+        </div>
+        <div style="margin-bottom:1.25rem;">
+          <label style="color:#a0aec0;font-size:0.9rem;display:block;margin-bottom:0.5rem;">Records to Contest (${selectedItems.length})</label>
+          ${itemsHtml}
+        </div>
+        <div style="margin-bottom:1.25rem;">
+          <label style="color:#a0aec0;font-size:0.9rem;display:block;margin-bottom:0.5rem;">Your Statement</label>
+          <textarea id="contestStatement" rows="4" placeholder="Explain why you are contesting these records..." style="width:100%;background:#23263a;border:1px solid #35385a;border-radius:8px;padding:0.75rem;color:#f7fafc;font-size:0.95rem;resize:vertical;"></textarea>
+        </div>
+        <div style="display:flex;gap:1rem;justify-content:flex-end;">
+          <button id="cancelContestBtn" style="background:#23263a;color:#a0aec0;border:1px solid #35385a;padding:0.6rem 1.25rem;border-radius:8px;cursor:pointer;font-weight:600;">Cancel</button>
+          <button id="submitContestBtn" style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);color:#fff;border:none;padding:0.6rem 1.25rem;border-radius:8px;cursor:pointer;font-weight:600;">Submit Contest</button>
+        </div>
+      </div>
+    </div>`;
+  $('body').append(modalHtml);
+}
+
+$(document).on('click', '#closeContestModal, #cancelContestBtn', function() {
+  $('#contestModal').remove();
+});
+
+$(document).on('click', '#submitContestBtn', function() {
+  const statement = $('#contestStatement').val().trim();
+  if (!statement) {
+    alert('Please provide a statement explaining why you are contesting.');
+    return;
+  }
+  const selectedItems = window._contestSelectedItems || [];
+  const civId = $('#civIdHidden').val();
+  const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
+  const civData = civ?.civilian || civ || {};
+  const communityId = dbUser?.user?.lastAccessedCommunity?.communityID || '';
+
+  const courtCasePayload = {
+    civilianID: civId,
+    civilianName: (civData.firstName || '') + ' ' + (civData.lastName || ''),
+    userID: dbUser?._id || dbUser?.user?._id || '',
+    contestedItems: selectedItems,
+    statement: statement,
+    communityID: communityId,
+    departmentID: '', // Will be assigned by judge
+  };
+
+  $('#submitContestBtn').prop('disabled', true).text('Submitting...');
+
+  $.ajax({
+    url: `${API_URL}/api/v2/court-cases`,
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(courtCasePayload),
+    success: function(resp) {
+      $('#contestModal').remove();
+      alert('Your contest has been submitted successfully. A judge will review your case.');
+      // Refresh the records view
+      const civId = $('#civIdHidden').val();
+      const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
+      const civData = civ?.civilian || civ || {};
+      // Re-fetch civilian data to get updated statuses
+      $.ajax({
+        url: `${API_URL}/api/v1/civilian/${civId}`,
+        method: 'GET',
+        success: function(updatedCiv) {
+          const updatedCivData = updatedCiv?.civilian || updatedCiv || {};
+          renderCriminalHistoryTab(updatedCivData);
+        }
+      });
+    },
+    error: function(xhr) {
+      alert('Failed to submit contest: ' + (xhr.responseJSON?.message || 'Unknown error'));
+      $('#submitContestBtn').prop('disabled', false).text('Submit Contest');
+    }
+  });
+});
 
 // Toggle logic (Custom HeroUI Pro styles)
 $(document).on('click', '.criminal-toggle-btn', function() {
