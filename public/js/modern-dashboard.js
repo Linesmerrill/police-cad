@@ -5466,6 +5466,18 @@ function renderCriminalHistoryTab(civData) {
   renderCriminalHistoryEntries('Citation', civData);
 }
 
+function updateCriminalHistoryMetrics(civData) {
+  const criminalHistory = civData.criminalHistory || [];
+  const citations = criminalHistory.filter(e => e.type === 'Citation');
+  const warnings = criminalHistory.filter(e => e.type === 'Warning');
+  const metricCards = $('.heroui-metrics-row .heroui-metric-card');
+  if (metricCards.length >= 3) {
+    metricCards.eq(0).find('div:first').text(citations.length);
+    metricCards.eq(1).find('div:first').text(warnings.length);
+    metricCards.eq(2).find('div:first').text(cachedArrestReportsCount);
+  }
+}
+
 function renderCriminalHistoryEntries(type, civData) {
   let html = '';
   if (type === 'Citation' || type === 'Warning') {
@@ -5531,7 +5543,7 @@ function fetchArrestReportsForCiv(civId, cb) {
     url: `${API_URL}/api/v1/arrest-report/arrestee/${civId}`,
     method: 'GET',
     success: function(data) {
-      cachedArrestReports = (data.data || []).map(r => r.arrestReport || r);
+      cachedArrestReports = (data.data || []).map(r => r.arrestReport ? { _id: r._id, ...r.arrestReport } : r);
       cachedArrestReportsCount = data.totalCount || cachedArrestReports.length;
       if (typeof cb === 'function') cb();
     },
@@ -5709,8 +5721,9 @@ $(document).on('click', '.medical-toggle-btn', function() {
 
 // Delete logic
 $(document).on('click', '.heroui-trash-btn', function() {
-  const type = $(this).data('type');
-  const id = $(this).data('id');
+  const $btn = $(this);
+  const type = $btn.data('type');
+  const id = $btn.data('id');
   const civId = $('#civIdHidden').val();
   if (!confirm('Are you sure you want to delete this record? This action cannot be undone.')) return;
   
@@ -5743,11 +5756,12 @@ $(document).on('click', '.heroui-trash-btn', function() {
       url: `${API_URL}/api/v1/civilian/${civId}/criminal-history/${id}`,
       method: 'DELETE',
       success: function() {
-        // Remove from UI
         const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
         const civData = civ?.civilian || civ || {};
         civData.criminalHistory = (civData.criminalHistory || []).filter(e => e._id !== id);
-        renderCriminalHistoryTab(civData);
+        // Remove card from DOM and update metrics without resetting the active tab
+        $btn.closest('.heroui-criminal-card').remove();
+        updateCriminalHistoryMetrics(civData);
       },
       error: function() {
         showToast('Failed to delete record.');
@@ -5762,7 +5776,9 @@ $(document).on('click', '.heroui-trash-btn', function() {
         cachedArrestReportsCount--;
         const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
         const civData = civ?.civilian || civ || {};
-        renderCriminalHistoryTab(civData);
+        // Remove card from DOM and update metrics without resetting the active tab
+        $btn.closest('.heroui-criminal-card').remove();
+        updateCriminalHistoryMetrics(civData);
       },
       error: function() {
         showToast('Failed to delete arrest report.');

@@ -350,6 +350,18 @@
       .dept-card.locked { cursor: not-allowed; opacity: 0.7; }
       .dept-card.locked:hover { transform: none; border-color: rgba(59, 130, 246, 0.2); box-shadow: none; }
 
+      /* Department Edit Button */
+      .dept-edit-btn {
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .dept-edit-btn:hover {
+        background: rgba(59, 130, 246, 0.8);
+        color: #fff;
+        border-color: rgba(59, 130, 246, 0.6);
+      }
+
       /* Action Button - responsive */
       .action-btn {
         display: flex;
@@ -832,7 +844,7 @@
             : '';
 
           var editBtnHtml = window.canManageDepartments
-            ? '<button class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full transition-colors z-10" style="background: rgba(0, 0, 0, 0.5); color: #94a3b8;" onclick="event.stopPropagation(); openEditDepartmentModal(\'' + dept._id + '\');"><i class="fa fa-pencil text-sm"></i></button>'
+            ? '<button class="dept-edit-btn absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full transition-colors z-10" onclick="event.stopPropagation(); openEditDepartmentModal(\'' + dept._id + '\');"><i class="fa fa-pencil text-sm"></i></button>'
             : '';
 
           // Bottom action based on access status
@@ -1674,8 +1686,7 @@
 
                     <% if (canManageDepartments) { %>
                       <button
-                        class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full transition-colors z-10"
-                        style="background: rgba(0, 0, 0, 0.5); color: #94a3b8;"
+                        class="dept-edit-btn absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full transition-colors z-10"
                         onclick="event.stopPropagation(); openEditDepartmentModal('<%= dept._id %>');"
                       >
                         <i class="fa fa-pencil text-sm"></i>

@@ -837,27 +837,47 @@ $(document).ready(function () {
       $("#ticket-other").val("");
       $("#amount").val("");
 
-      // Fetch community fines
+      // Fetch penal codes for ticket violations
       const communityId = dbUser.user.lastAccessedCommunity.communityID;
+      const knownCurrencies = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', CAD: 'C$', AUD: 'A$' };
+      function getCurrencySymbol(code) { return knownCurrencies[code] || code || '$'; }
+
+      // Parse fine value — handles both int (500) and legacy string ("$500") formats
+      function parseFine(val) {
+        if (typeof val === 'number') return val;
+        if (typeof val === 'string') {
+          var n = parseInt(val.replace(/[^0-9]/g, ''), 10);
+          return isNaN(n) ? 0 : n;
+        }
+        return 0;
+      }
+
       $.ajax({
-        url: `${API_URL}/api/v1/community/${communityId}`,
+        url: `${API_URL}/api/v1/community/${communityId}/penal-codes`,
         method: "GET",
         success: function (data) {
-          const communityFines = data?.community?.fines?.categories || [];
+          const categories = (data && data.categories) || [];
+          const currency = (data && data.currency) || 'USD';
+          if (data && data.currencies) {
+            data.currencies.forEach(function(c) { knownCurrencies[c.code] = c.symbol; });
+          }
+          const sym = getCurrencySymbol(currency);
           const $select = $("#ticket-select");
           $select.find('optgroup:not([label="Crime not listed"])').remove();
-          if (communityFines.length === 0) {
+          if (categories.length === 0) {
             $select.prepend(
-              '<optgroup label="No fines available"><option disabled>No fines found</option></optgroup>'
+              '<optgroup label="No violations available"><option disabled>No violations found</option></optgroup>'
             );
           } else {
-            communityFines.forEach((category) => {
+            categories.forEach((category) => {
               const $optgroup = $(
                 `<optgroup label="${category.name || "Unknown"}"></optgroup>`
               );
-              (category.fines || []).forEach((fine) => {
+              (category.violations || []).forEach((v) => {
+                const fineAmount = parseFine(v.fine);
+                const fineLabel = fineAmount ? ` (${sym}${fineAmount.toLocaleString()})` : '';
                 $optgroup.append(
-                  `<option value="${fine.name}" data-amount="${fine.amount}">${fine.name} ($${fine.amount})</option>`
+                  `<option value="${v.name}" data-amount="${fineAmount}">${v.name}${fineLabel}</option>`
                 );
               });
               $select.prepend($optgroup);
@@ -865,20 +885,20 @@ $(document).ready(function () {
           }
           // Initialize Select2
           $select.select2({
-            placeholder: "Select fines...",
+            placeholder: "Select violations...",
             allowClear: true,
             width: "100%",
             dropdownParent: $("#ticketModal"),
           });
-          // Update total amount on fine selection
+          // Update total amount on violation selection
           $select.on("change", function () {
-            const selectedFines = $(this).val() || [];
-            const total = selectedFines
-              .filter((fine) => fine !== "Other")
-              .reduce((sum, fine) => {
+            const selectedViolations = $(this).val() || [];
+            const total = selectedViolations
+              .filter((v) => v !== "Other")
+              .reduce((sum, v) => {
                 const amount =
                   parseInt(
-                    $(`#ticket-select option[value="${fine}"]`).data("amount")
+                    $(`#ticket-select option[value="${v}"]`).data("amount")
                   ) || 0;
                 return sum + amount;
               }, 0);
@@ -886,30 +906,30 @@ $(document).ready(function () {
           });
         },
         error: function (xhr) {
-          console.error("Error fetching community fines:", xhr.responseText);
+          console.error("Error fetching penal codes:", xhr.responseText);
           alert(
-            "Failed to load fines: " +
+            "Failed to load violations: " +
               (xhr.responseJSON?.message || "Unknown error")
           );
           const $select = $("#ticket-select");
           $select.find('optgroup:not([label="Crime not listed"])').remove();
           $select.prepend(
-            '<optgroup label="Error"><option disabled>Failed to load fines</option></optgroup>'
+            '<optgroup label="Error"><option disabled>Failed to load violations</option></optgroup>'
           );
           $select.select2({
-            placeholder: "Select fines...",
+            placeholder: "Select violations...",
             allowClear: true,
             width: "100%",
             dropdownParent: $("#ticketModal"),
           });
           $select.on("change", function () {
-            const selectedFines = $(this).val() || [];
-            const total = selectedFines
-              .filter((fine) => fine !== "Other")
-              .reduce((sum, fine) => {
+            const selectedViolations = $(this).val() || [];
+            const total = selectedViolations
+              .filter((v) => v !== "Other")
+              .reduce((sum, v) => {
                 const amount =
                   parseInt(
-                    $(`#ticket-select option[value="${fine}"]`).data("amount")
+                    $(`#ticket-select option[value="${v}"]`).data("amount")
                   ) || 0;
                 return sum + amount;
               }, 0);
@@ -1311,7 +1331,7 @@ $(document).ready(function () {
     $('#wr-accused-name').val(accusedName);
     $('#wr-submit-btn').prop('disabled', false).html('<i class="fa fa-gavel mr-1"></i> Submit Warrant Request');
 
-    // Load community fines into charges select (same pattern as citation flow)
+    // Load penal code violations into charges select
     const communityId = dbUser.user.lastAccessedCommunity.communityID;
     const $select = $('#wr-charges');
 
@@ -1322,17 +1342,17 @@ $(document).ready(function () {
     $select.find('optgroup:not([label="Crime not listed"])').remove();
 
     $.ajax({
-      url: `${API_URL}/api/v1/community/${communityId}`,
+      url: `${API_URL}/api/v1/community/${communityId}/penal-codes`,
       method: 'GET',
       success: function(data) {
-        const communityFines = data?.community?.fines?.categories || [];
-        if (communityFines.length === 0) {
+        const categories = (data && data.categories) || [];
+        if (categories.length === 0) {
           $select.prepend('<optgroup label="No charges available"><option disabled>No charges configured</option></optgroup>');
         } else {
-          communityFines.forEach(function(category) {
+          categories.forEach(function(category) {
             const $optgroup = $('<optgroup label="' + (category.name || 'Unknown') + '"></optgroup>');
-            (category.fines || []).forEach(function(fine) {
-              $optgroup.append('<option value="' + fine.name + '">' + fine.name + '</option>');
+            (category.violations || []).forEach(function(v) {
+              $optgroup.append('<option value="' + v.name + '">' + v.name + '</option>');
             });
             $select.prepend($optgroup);
           });

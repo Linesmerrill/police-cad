@@ -14,1063 +14,893 @@
     <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/static/css/styles.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-      html, body { 
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0b1220 100%);
-        background-attachment: fixed;
-        background-size: cover;
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        overflow-x: hidden;
+      /* ═══════════════════════════════════════════════════
+         ADMIN CONSOLE — Frosted Glass Command Center
+         ═══════════════════════════════════════════════════ */
+      :root {
+        --ac-bg:#08090c;
+        --ac-surface:rgba(255,255,255,0.03);
+        --ac-glass:rgba(255,255,255,0.04);
+        --ac-glass-border:rgba(255,255,255,0.06);
+        --ac-glass-hover:rgba(255,255,255,0.07);
+        --ac-text:#e2e8f0;
+        --ac-text-muted:#64748b;
+        --ac-text-dim:#475569;
+        --ac-accent:#8b5cf6;
+        --ac-accent-glow:rgba(139,92,246,0.15);
+        --ac-green:#22c55e;
+        --ac-red:#ef4444;
+        --ac-amber:#f59e0b;
+        --ac-blue:#3b82f6;
+        --ac-sidebar-w:280px;
+        --ac-radius:12px;
+        --ac-radius-sm:8px;
       }
-      
-      /* Ensure background covers overscroll areas */
-      html {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0b1220 100%);
-        background-attachment: fixed;
-        background-size: cover;
+      *,*::before,*::after { box-sizing:border-box; }
+      html { font-size:16px; -webkit-text-size-adjust:100%; }
+      body.ac-body {
+        margin:0; padding:0; background:var(--ac-bg); color:var(--ac-text);
+        font-family:'Outfit',-apple-system,BlinkMacSystemFont,sans-serif;
+        min-height:100vh; overflow-x:hidden;
       }
-      
-      body { 
-        color: #e5e7eb;
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
+
+      /* ── Background mesh ── */
+      .ac-bg-mesh {
+        position:fixed; inset:0; z-index:0; pointer-events:none;
+        background:
+          radial-gradient(ellipse 700px 500px at 10% 15%, rgba(139,92,246,0.07) 0%, transparent 70%),
+          radial-gradient(ellipse 500px 400px at 90% 85%, rgba(245,158,11,0.04) 0%, transparent 70%),
+          radial-gradient(ellipse 600px 350px at 50% 40%, rgba(59,130,246,0.03) 0%, transparent 70%);
+        animation:ac-mesh-drift 20s ease-in-out infinite alternate;
       }
-      .admin-navbar {
-        background: rgba(30, 32, 40, 0.95) !important;
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid #35385a;
-        min-height: 60px;
+      @keyframes ac-mesh-drift { 0%{opacity:1} 50%{opacity:0.7} 100%{opacity:1} }
+      .ac-grain {
+        position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.035;
+        background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        background-repeat:repeat; background-size:200px;
       }
-      .admin-navbar .navbar-brand { 
-        color: #fff !important; 
-        font-weight: 600; 
-        display: flex !important;
-        align-items: center !important;
-        height: 60px;
-        padding: 15px 15px;
+
+      /* ── Sidebar ── */
+      .ac-sidebar {
+        position:fixed; top:0; left:0; width:var(--ac-sidebar-w); height:100vh;
+        background:rgba(12,13,18,0.95); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+        border-right:1px solid var(--ac-glass-border); z-index:100;
+        display:flex; flex-direction:column;
+        transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
       }
-      .admin-navbar .btn-link { 
-        color: #9aa0b4 !important; 
-        display: flex !important;
-        align-items: center !important;
-        height: 60px;
-        padding: 15px 15px;
+      .ac-sidebar-header { padding:1.5rem 1.25rem 1rem; border-bottom:1px solid var(--ac-glass-border); }
+      .ac-sidebar-brand { display:flex; align-items:center; gap:0.625rem; text-decoration:none; margin-bottom:1rem; }
+      .ac-sidebar-brand img { height:26px; width:auto; opacity:0.9; }
+      .ac-sidebar-brand span { font-size:0.75rem; color:var(--ac-text-muted); font-weight:500; letter-spacing:0.04em; text-transform:uppercase; }
+      .ac-sidebar-dept { font-size:1.125rem; font-weight:700; color:#fff; margin:0 0 0.25rem; line-height:1.3; letter-spacing:-0.02em; }
+      .ac-sidebar-status { font-size:0.75rem; color:var(--ac-text-muted); margin:0; display:flex; align-items:center; gap:0.375rem; }
+      .ac-sidebar-status i { font-size:0.5rem; color:var(--ac-green); animation:ac-blink 3s ease-in-out infinite; }
+      @keyframes ac-blink { 0%,90%,100%{opacity:1} 95%{opacity:0.3} }
+      .ac-sidebar-nav { flex:1; overflow-y:auto; padding:0.75rem 0; }
+      .ac-nav-section { padding:0 0.75rem; margin-bottom:0.5rem; }
+      .ac-nav-section-label { font-size:0.625rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--ac-text-dim); padding:0.5rem 0.5rem 0.375rem; font-weight:600; }
+      .ac-nav-item {
+        display:block; padding:0.625rem 0.75rem; border-radius:var(--ac-radius-sm);
+        color:var(--ac-text-muted); text-decoration:none; font-size:0.8125rem; font-weight:500;
+        cursor:pointer; transition:all 0.15s ease; border:1px solid transparent; position:relative;
       }
-      .admin-navbar .btn-link:hover { color: #c7cbe2 !important; }
-      .admin-navbar .navbar-nav > li > span {
-        display: flex !important;
-        align-items: center !important;
-        height: 60px;
-        padding: 15px 15px;
+      .ac-nav-item:hover { color:var(--ac-text); background:var(--ac-glass-hover); }
+      .ac-nav-item.active { color:#fff; background:var(--ac-accent-glow); border-color:rgba(139,92,246,0.2); }
+      .ac-nav-item.active i { color:var(--ac-accent); }
+      .ac-nav-item i { display:inline-block; width:18px; text-align:center; font-size:0.875rem; margin-right:0.75rem; }
+      .ac-nav-badge {
+        float:right; background:var(--ac-accent); color:#fff; font-size:0.625rem; font-weight:700;
+        padding:0.125rem 0.5rem; border-radius:99px; min-width:20px; text-align:center; line-height:1.4;
       }
-      /* Profile dropdown styling */
-      .admin-navbar .dropdown-menu {
-        background: #1e2028 !important;
-        border: 1px solid #35385a !important;
+      .ac-sidebar-footer { padding:0.75rem 1rem; border-top:1px solid var(--ac-glass-border); }
+      .ac-sidebar-user { display:flex; align-items:center; gap:0.625rem; padding:0.5rem; border-radius:var(--ac-radius-sm); }
+      .ac-user-avatar {
+        width:32px; height:32px; border-radius:50%;
+        background:linear-gradient(135deg,var(--ac-accent),var(--ac-blue));
+        display:flex; align-items:center; justify-content:center;
+        font-size:0.75rem; font-weight:700; color:#fff; flex-shrink:0; overflow:hidden;
       }
-      .admin-navbar .dropdown-menu > li > a {
-        color: #e5e7eb !important;
-        background: transparent !important;
+      .ac-user-avatar img { width:100%; height:100%; object-fit:cover; }
+      .ac-user-info { flex:1; min-width:0; }
+      .ac-user-name { font-size:0.8125rem; font-weight:600; color:var(--ac-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .ac-user-role { font-size:0.6875rem; color:var(--ac-text-dim); }
+      .ac-sidebar-actions { display:flex; gap:0.5rem; padding:0.5rem 0.5rem 0; }
+      .ac-sidebar-action {
+        display:flex; align-items:center; justify-content:center;
+        width:32px; height:32px; border-radius:var(--ac-radius-sm);
+        color:var(--ac-text-muted); text-decoration:none; transition:all 0.15s;
       }
-      .admin-navbar .dropdown-menu > li > a:hover,
-      .admin-navbar .dropdown-menu > li > a:focus {
-        background: #2a2d45 !important;
-        color: #fff !important;
+      .ac-sidebar-action:hover { background:var(--ac-glass-hover); color:var(--ac-text); }
+      .ac-sidebar-action.ac-logout:hover { color:var(--ac-red); }
+
+      /* ── Mobile toggle ── */
+      .ac-sidebar-toggle {
+        display:none; position:fixed; top:1rem; left:1rem; z-index:200;
+        width:40px; height:40px; border-radius:var(--ac-radius-sm);
+        background:rgba(12,13,18,0.9); backdrop-filter:blur(10px);
+        border:1px solid var(--ac-glass-border); color:#fff; font-size:1.125rem;
+        cursor:pointer; align-items:center; justify-content:center;
       }
-      .admin-navbar .dropdown-toggle:hover,
-      .admin-navbar .dropdown-toggle:focus,
-      .admin-navbar .dropdown.open > a {
-        background: rgba(102, 126, 234, 0.1) !important;
-        color: #e5e7eb !important;
+
+      /* ── Main ── */
+      .ac-main { margin-left:var(--ac-sidebar-w); min-height:100vh; position:relative; z-index:1; }
+      .ac-topbar {
+        position:sticky; top:0; z-index:50; padding:1rem 2rem;
+        background:rgba(8,9,12,0.8); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+        border-bottom:1px solid var(--ac-glass-border);
+        display:flex; align-items:center; justify-content:space-between;
       }
-      
-      .admin-container { 
-        margin-top: 80px; 
-        padding: 2rem 0; 
-        flex: 1;
+      .ac-topbar-title { font-size:1.25rem; font-weight:700; color:#fff; margin:0; letter-spacing:-0.02em; }
+      .ac-topbar-actions { display:flex; align-items:center; gap:0.75rem; }
+      .ac-content { padding:1.5rem 2rem 3rem; }
+      .ac-panel { display:none; }
+      .ac-panel.active { display:block; }
+
+      /* ── Dashboard overview ── */
+      .ac-dashboard-welcome {
+        margin-bottom:1.5rem;
       }
-      .search-card {
-        background: #1e2028;
-        border: 1px solid #35385a;
-        border-radius: 16px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      .ac-dashboard-welcome h2 {
+        font-size:1.5rem; font-weight:700; color:#fff; margin:0 0 0.25rem;
+        letter-spacing:-0.02em;
       }
-      .search-input {
-        background: #11131a;
-        border: 1px solid #2a2d45;
-        color: #e5e7eb;
-        border-radius: 12px;
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
+      .ac-dashboard-welcome p {
+        font-size:0.875rem; color:var(--ac-text-muted); margin:0;
       }
-      .search-input:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102,126,234,0.25);
-        outline: none;
+      .ac-stats {
+        display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
+        gap:0.875rem; margin-bottom:1.75rem;
       }
-      .btn-gradient {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        border-radius: 12px;
-        padding: 0.75rem 1.5rem;
-        font-weight: 600;
-        color: #fff;
-        transition: all 0.2s;
+      .ac-stat {
+        background:var(--ac-surface); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+        border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius);
+        padding:1.25rem 1.375rem; position:relative; overflow:hidden;
+        transition:border-color 0.2s, transform 0.2s;
+        animation:ac-fadeUp 0.4s ease both;
       }
-      .btn-gradient:hover {
-        opacity: 0.9;
-        transform: translateY(-1px);
-        color: #fff;
+      .ac-stat:hover { border-color:rgba(255,255,255,0.1); transform:translateY(-2px); }
+      .ac-stat::before {
+        content:''; position:absolute; top:0; left:0; right:0; height:2px;
+        background:var(--stat-accent, var(--ac-accent)); opacity:0.7;
       }
-      
-      .code-value {
-        font-family: 'Courier New', monospace;
-        font-size: 1.2em;
-        font-weight: bold;
-        color: #667eea;
-        background: rgba(102, 126, 234, 0.1);
-        padding: 0.25rem 0.5rem;
-        border-radius: 6px;
-        border: 1px solid rgba(102, 126, 234, 0.3);
+      .ac-stat-icon {
+        position:absolute; top:1rem; right:1.125rem;
+        font-size:1.375rem; opacity:0.07; color:#fff;
       }
-      
-      .copy-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        border: none !important;
-        color: #fff !important;
-        font-weight: 500 !important;
-        transition: all 0.2s ease !important;
+      .ac-stat-value {
+        font-size:1.875rem; font-weight:700; color:#fff; line-height:1;
+        margin-bottom:0.375rem; font-variant-numeric:tabular-nums;
+        font-family:'JetBrains Mono','Outfit',sans-serif;
       }
-      
-      .copy-btn:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
-        color: #fff !important;
+      .ac-stat-label {
+        font-size:0.6875rem; color:var(--ac-text-muted); text-transform:uppercase;
+        letter-spacing:0.06em; font-weight:600;
       }
-      
-      .pending-user-card {
-        background: #1e2028;
-        border: 1px solid #35385a;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 0;
-        transition: all 0.2s ease;
+      @keyframes ac-fadeUp {
+        from { opacity:0; transform:translateY(12px); }
+        to { opacity:1; transform:translateY(0); }
       }
-      
-      .pending-user-card:hover {
-        border-color: #667eea;
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.1);
+      .ac-quick-actions {
+        display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+        gap:0.875rem; margin-bottom:1.75rem;
       }
-      
-      .pending-user-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 1px solid #35385a;
+      .ac-quick-action {
+        background:var(--ac-surface); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+        border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius);
+        padding:1.25rem; display:flex; align-items:center; gap:1rem;
+        cursor:pointer; transition:all 0.2s; text-decoration:none; color:var(--ac-text);
       }
-      
-      .pending-user-email {
-        font-size: 1.2rem;
-        color: #f7fafc;
+      .ac-quick-action:hover {
+        border-color:rgba(255,255,255,0.1); transform:translateY(-1px);
+        text-decoration:none; color:#fff;
       }
-      
-      .pending-user-details {
-        background: #11131a;
-        border-radius: 8px;
-        padding: 1rem;
+      .ac-quick-action-icon {
+        width:40px; height:40px; border-radius:10px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:1rem; flex-shrink:0;
       }
-      
-      .pending-user-info {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
+      .ac-quick-action-text { min-width:0; }
+      .ac-quick-action-text strong { display:block; font-size:0.875rem; font-weight:600; color:#fff; margin-bottom:0.125rem; }
+      .ac-quick-action-text span { font-size:0.75rem; color:var(--ac-text-muted); }
+      .ac-section-label {
+        font-size:0.6875rem; text-transform:uppercase; letter-spacing:0.08em;
+        color:var(--ac-text-dim); font-weight:600; margin-bottom:0.875rem;
       }
-      
-      .info-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+
+      /* ── Glass cards ── */
+      .ac-card {
+        background:var(--ac-surface); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+        border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius);
+        margin-bottom:1.5rem; overflow:hidden;
       }
-      
-      .info-label {
-        color: #a0aec0;
-        font-size: 1rem;
-        font-weight: 500;
+      .ac-card-body { padding:1.5rem; }
+
+      /* ── Override Bootstrap forms ── */
+      body.ac-body .form-control, .ac-input {
+        background:rgba(0,0,0,0.3) !important; border:1px solid var(--ac-glass-border) !important;
+        color:var(--ac-text) !important; border-radius:var(--ac-radius-sm) !important;
+        padding:0.75rem 1rem !important; font-size:0.9375rem !important;
+        font-family:'Outfit',sans-serif !important; transition:border-color 0.15s !important;
       }
-      
-      .info-value {
-        color: #f7fafc;
-        font-size: 1rem;
+      body.ac-body .form-control:focus, .ac-input:focus {
+        border-color:var(--ac-accent) !important;
+        box-shadow:0 0 0 3px var(--ac-accent-glow) !important; outline:none !important;
       }
-      
-      .pending-user-divider {
-        height: 1px;
-        background: linear-gradient(90deg, transparent 0%, #35385a 50%, transparent 100%);
-        margin: 1.5rem 0;
+      body.ac-body .form-control::placeholder { color:var(--ac-text-dim) !important; }
+      body.ac-body select.form-control {
+        height:auto !important; line-height:1.4 !important;
+        padding:0.625rem 2rem 0.625rem 1rem !important;
+        -webkit-appearance:none; -moz-appearance:none; appearance:none;
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa0b4' d='M6 8.825a.5.5 0 0 1-.354-.146l-4-4a.5.5 0 0 1 .708-.708L6 7.617l3.646-3.646a.5.5 0 0 1 .708.708l-4 4A.5.5 0 0 1 6 8.825z'/%3E%3C/svg%3E") !important;
+        background-repeat:no-repeat !important; background-position:right 0.75rem center !important;
+        background-size:12px !important; background-color:rgba(0,0,0,0.3) !important;
       }
-      
-      /* Email validation warning styles */
-      .email-warning {
-        padding: 0.75rem;
-        margin: 0.5rem 0;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        font-size: 0.95rem;
-        font-weight: 500;
+      body.ac-body label, .ac-label { color:var(--ac-text-muted); font-size:0.875rem; font-weight:500; }
+
+      /* ── Buttons ── */
+      .ac-btn {
+        display:inline-flex; align-items:center; justify-content:center; gap:0.5rem;
+        padding:0.625rem 1.25rem; border-radius:var(--ac-radius-sm); font-weight:600;
+        font-size:0.875rem; font-family:'Outfit',sans-serif; cursor:pointer;
+        border:1px solid transparent; transition:all 0.15s; text-decoration:none;
       }
-      
-      .email-warning.invalid-warning {
-        background: linear-gradient(135deg, rgba(229, 62, 62, 0.1) 0%, rgba(229, 62, 62, 0.05) 100%);
-        border: 1px solid rgba(229, 62, 62, 0.3);
-        color: #fed7d7;
+      .ac-btn-accent { background:var(--ac-accent); color:#fff; border-color:var(--ac-accent); }
+      .ac-btn-accent:hover { background:#7c3aed; border-color:#7c3aed; transform:translateY(-1px); color:#fff; }
+      .ac-btn-block { width:100%; }
+      .ac-btn-link { background:none; border:none; color:var(--ac-text-muted); cursor:pointer; font-size:0.8125rem; padding:0; }
+      .ac-btn-link:hover { color:var(--ac-text); }
+      body.ac-body .btn { font-family:'Outfit',sans-serif; border-radius:var(--ac-radius-sm); transition:all 0.15s; }
+      body.ac-body .btn-gradient, body.ac-body .btn-primary {
+        background:var(--ac-accent) !important; border-color:var(--ac-accent) !important; color:#fff !important;
       }
-      
-      .email-warning.invalid-warning i {
-        color: #e53e3e;
-        margin-right: 0.5rem;
-        font-size: 1rem;
+      body.ac-body .btn-gradient:hover, body.ac-body .btn-primary:hover {
+        background:#7c3aed !important; border-color:#7c3aed !important; transform:translateY(-1px);
       }
-      
-      .email-warning.suspicious-warning {
-        background: linear-gradient(135deg, rgba(214, 158, 46, 0.1) 0%, rgba(214, 158, 46, 0.05) 100%);
-        border: 1px solid rgba(214, 158, 46, 0.3);
-        color: #faf089;
+      body.ac-body .btn-secondary {
+        background:var(--ac-glass) !important; border:1px solid var(--ac-glass-border) !important; color:var(--ac-text) !important;
       }
-      
-      .email-warning.suspicious-warning i {
-        color: #d69e2e;
-        margin-right: 0.5rem;
-        font-size: 1rem;
+      body.ac-body .btn-secondary:hover { background:var(--ac-glass-hover) !important; color:#fff !important; }
+      body.ac-body .btn-danger {
+        background:rgba(239,68,68,0.15) !important; border:1px solid rgba(239,68,68,0.3) !important; color:var(--ac-red) !important;
       }
-      
-      .recent-search-item {
-        margin-bottom: 0.75rem;
-        font-size: 0.95rem;
+      body.ac-body .btn-danger:hover { background:rgba(239,68,68,0.25) !important; }
+      body.ac-body .btn-success {
+        background:rgba(34,197,94,0.15) !important; border:1px solid rgba(34,197,94,0.3) !important; color:var(--ac-green) !important;
       }
-      
-      .recent-searches h6 {
-        font-size: 1rem;
-        color: #e2e8f0;
-        font-weight: 600;
-      }
-      
-      .no-users-found {
-        text-align: center;
-        padding: 3rem 2rem;
-      }
-      
-      .no-users-message {
-        max-width: 400px;
-        margin: 0 auto;
-      }
-      
-      .no-users-suggestion {
-        background: #11131a;
-        border: 1px solid #35385a;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-top: 1rem;
-      }
-      .btn-secondary {
-        background: #35385a;
-        border: 1px solid #4a4f7a;
-        color: #e5e7eb;
-        border-radius: 12px;
-        padding: 0.75rem 1.5rem;
-        font-weight: 600;
-        transition: all 0.2s;
-      }
-      .btn-secondary:hover {
-        background: #4a4f7a;
-        color: #fff;
-      }
-      
-      .btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none !important;
-        box-shadow: none !important;
-      }
+      body.ac-body .btn-success:hover { background:rgba(34,197,94,0.25) !important; }
+      body.ac-body .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none !important; }
+      body.ac-body .btn-block { width:100%; }
+      body.ac-body .btn-link { color:var(--ac-text-muted) !important; text-decoration:none !important; }
+      body.ac-body .btn-link:hover { color:var(--ac-text) !important; }
+
+      /* ── Result cards ── */
       .result-card {
-        background: #1e2028;
-        border: 1px solid #35385a;
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        background:var(--ac-glass) !important; border:1px solid var(--ac-glass-border) !important;
+        border-radius:var(--ac-radius) !important; padding:1.5rem !important; margin-bottom:1rem !important;
+        backdrop-filter:blur(8px); transition:border-color 0.15s;
       }
-      .result-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid #2a2d45;
-      }
-      .result-title { font-size: 1.25rem; font-weight: 600; color: #fff; margin: 0; }
-      .result-subtitle { color: #9aa0b4; font-size: 0.9rem; }
-      .action-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+      .result-card:hover { border-color:rgba(139,92,246,0.2) !important; }
+      .result-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid var(--ac-glass-border) !important; }
+      .result-title { font-size:1.125rem !important; font-weight:600; color:#fff !important; margin:0; }
+      .result-subtitle { color:var(--ac-text-muted) !important; font-size:0.8125rem !important; }
+      .action-buttons { display:flex; gap:0.5rem; flex-wrap:wrap; }
+
+      /* ── Info grid ── */
       .info-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin: 1rem 0;
-        width: 100%;
-        overflow: hidden;
+        display:grid !important; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)) !important;
+        gap:0.75rem !important; margin:1rem 0 !important; width:100% !important; overflow:hidden !important;
       }
       .info-item {
-        background: #11131a;
-        padding: 1rem;
-        border-radius: 8px;
-        border: 1px solid #2a2d45;
-        min-width: 0; /* Allows grid items to shrink below content size */
-        overflow: hidden;
+        background:rgba(0,0,0,0.2) !important; padding:0.875rem !important; border-radius:var(--ac-radius-sm) !important;
+        border:1px solid var(--ac-glass-border) !important; min-width:0 !important; overflow:hidden !important;
       }
-      
-      /* Specific styling for owner info item */
-      .owner-info-item {
-        word-break: break-all;
-        overflow-wrap: break-word;
-        word-wrap: break-word;
-      }
-      
-      /* Recent Searches Styling - Hero UI Pro Theme */
-      .recent-searches-section {
-        margin: 1.5rem 0;
-        padding: 1.5rem;
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        border: 1px solid #475569;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      }
-      
-      .recent-searches-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 1px solid #475569;
-      }
-      
-      .recent-searches-title {
-        color: #e2e8f0;
-        font-weight: 600;
-        font-size: 1rem;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-      
-      .recent-searches-title i {
-        color: #8b5cf6;
-      }
-      
-      .recent-searches-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-      }
-      
-      .recent-search-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 0.75rem;
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        border: 1px solid #334155;
-        border-radius: 8px;
-        color: #cbd5e1;
-        font-size: 0.875rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        position: relative;
-        max-width: 300px;
-      }
-      
-      .recent-search-item:hover {
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        border-color: #475569;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
-      }
-      
-      .recent-search-item .search-text {
-        flex: 1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      
-      .recent-search-item .search-type {
-        background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
-        color: white;
-          padding: 0.25rem 0.5rem;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 500;
-        white-space: nowrap;
-      }
-      
-      .recent-search-item .remove-btn {
-        background: none;
-        border: none;
-        color: #64748b;
-        cursor: pointer;
-        padding: 0.25rem;
-        border-radius: 4px;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 20px;
-        height: 20px;
-      }
-      
-      .recent-search-item .remove-btn:hover {
-        background: #475569;
-        color: #e2e8f0;
-      }
-      
-      .recent-search-item .remove-btn i {
-        font-size: 0.75rem;
-      }
-      .info-label { color: #9aa0b4; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.25rem; }
-      .info-value { 
-        color: #e5e7eb; 
-        font-weight: 500; 
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        max-width: 100%;
-        white-space: normal;
-        overflow: hidden;
-      }
+      .owner-info-item { word-break:break-all; overflow-wrap:break-word; }
+      .info-label { color:var(--ac-text-muted) !important; font-size:0.6875rem !important; text-transform:uppercase !important; letter-spacing:0.05em; margin-bottom:0.25rem !important; font-weight:600; }
+      .info-value { color:var(--ac-text) !important; font-weight:500; word-wrap:break-word; overflow-wrap:break-word; max-width:100%; white-space:normal; overflow:hidden; }
+
+      /* ── Status badges ── */
       .status-badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
+        display:inline-block; padding:0.2rem 0.6rem; border-radius:99px;
+        font-size:0.6875rem; font-weight:600; text-transform:uppercase; letter-spacing:0.03em;
       }
-      .status-active { background: #10b981; color: #fff; }
-      .status-inactive { background: #ef4444; color: #fff; }
-      .status-pending { background: #f59e0b; color: #fff; }
-      .status-muted { background: #6b7280; color: #fff; }
-.status-warning { background: #f59e0b; color: #fff; }
-      
-      /* Owner button specific styling */
-      .owner-search-button {
-        color: #667eea !important;
-        text-decoration: none !important;
-        word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
-        max-width: 100% !important;
-        white-space: normal !important;
-        text-align: left !important;
-        display: inline-block !important;
-        width: 100% !important;
-      }
-      
-      /* Modal overflow handling */
-      .modal-content {
-        overflow: hidden;
-        width: 100%;
-      }
-      
-      .modal-body {
-        overflow-x: hidden !important;
-        width: 100% !important;
-      }
-      
-      .loading { text-align: center; padding: 2rem; color: #9aa0b4; }
-      .error { background: #dc2626; color: #fff; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
-      .success { background: #059669; color: #fff; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
-      .search-tabs { margin-bottom: 1.5rem; }
-      .search-tabs .nav-tabs { border-bottom: 1px solid #2a2d45; }
-      .search-tabs .nav-tabs > li > a {
-        background: transparent;
-        border: none;
-        color: #9aa0b4;
-        border-radius: 8px 8px 0 0;
-        margin-right: 0.5rem;
-        padding: 0.75rem 1.5rem;
-      }
-      .search-tabs .nav-tabs > li.active > a,
-      .search-tabs .nav-tabs > li > a:hover {
-        background: #667eea;
-        color: #fff;
-        border: none;
-      }
-      .search-tabs .tab-content { padding-top: 1rem; }
-      
-      .input-group-btn .btn {
-        border-radius: 0 8px 8px 0;
-        border-left: none;
-      }
-      
-      .input-group .form-control {
-        border-radius: 8px 0 0 8px;
-      }
-      
-      /* Activity Tracking Styles */
+      .status-active { background:rgba(34,197,94,0.15) !important; color:var(--ac-green) !important; }
+      .status-inactive { background:rgba(239,68,68,0.15) !important; color:var(--ac-red) !important; }
+      .status-pending { background:rgba(245,158,11,0.15) !important; color:var(--ac-amber) !important; }
+      .status-muted { background:var(--ac-glass) !important; color:var(--ac-text-muted) !important; }
+      .status-warning { background:rgba(245,158,11,0.15) !important; color:var(--ac-amber) !important; }
+
+      /* ── Stat cards ── */
       .stat-card {
-        background: #11131a;
-        border: 1px solid #2a2d45;
-        border-radius: 12px;
-        padding: 1.5rem;
-        text-align: center;
-        margin-bottom: 1rem;
+        background:rgba(0,0,0,0.2) !important; border:1px solid var(--ac-glass-border) !important;
+        border-radius:var(--ac-radius-sm) !important; padding:1rem 0.75rem !important; text-align:center !important;
+        margin-bottom:0.75rem !important;
       }
-      
-      .stat-number {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #667eea;
-        margin-bottom: 0.5rem;
-      }
-      
-      .stat-label {
-        color: #9aa0b4;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-      }
-      
-      .timeline-filters {
-        margin-bottom: 1.5rem;
-      }
-      
-      .timeline-filters .btn {
-        margin-right: 0.5rem;
-        margin-bottom: 0.5rem;
-      }
-      
-      .timeline-filters .btn.active {
-        background: #667eea;
-        border-color: #667eea;
-      }
-      
-      .chart-container {
-        background: #11131a;
-        border: 1px solid #2a2d45;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        min-height: 200px;
-        overflow: hidden;
-      }
-      
-      .chart-bars {
-        display: flex;
-        align-items: end;
-        justify-content: space-between;
-        height: 150px;
-        padding: 1rem 0;
-        gap: 8px;
-      }
-      
-      .chart-bar {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        border-radius: 4px 4px 0 0;
-        flex: 1;
-        min-width: 20px;
-        max-width: 40px;
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-      
-      .chart-bar-empty {
-        background: transparent !important;
-        border: 1px solid #374151;
-        border-bottom: none;
-      }
-      
-      .bar-label {
-        position: absolute;
-        bottom: -25px;
-        font-size: 0.7rem;
-        color: #9aa0b4;
-        transform: rotate(-45deg);
-        white-space: nowrap;
-        max-width: 60px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      
-      .activity-item {
-        display: flex;
-        align-items: flex-start;
-        padding: 1rem;
-        border-bottom: 1px solid #2a2d45;
-      }
-      
-      .activity-item:last-child {
-        border-bottom: none;
-      }
-      
-      .activity-icon {
-        margin-right: 1rem;
-        font-size: 1.2rem;
-        margin-top: 0.2rem;
-      }
-      
-      .activity-content {
-        flex: 1;
-      }
-      
-      .activity-title {
-        color: #e5e7eb;
-        font-weight: 600;
-        margin-bottom: 0.25rem;
-      }
-      
-      .activity-time {
-        color: #9aa0b4;
-        font-size: 0.9rem;
-        margin-bottom: 0.25rem;
-      }
-      
-      .activity-details {
-        color: #9aa0b4;
-        font-size: 0.9rem;
-        font-style: italic;
-      }
-      
-      .text-success { color: #10b981 !important; }
-      .text-warning { color: #f59e0b !important; }
-      .text-info { color: #3b82f6 !important; }
-      .text-primary { color: #667eea !important; }
-      .text-secondary { color: #9aa0b4 !important; }
-      .text-muted { color: #6b7280 !important; }
-      
-      /* Role Management Styles */
-      .role-management h6 {
-        color: #e5e7eb;
-        margin-bottom: 0.75rem;
-        font-weight: 600;
-      }
-      
-      .current-roles {
-        margin-bottom: 1rem;
-      }
-      
-      .role-checkboxes {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-      
-      .role-checkbox {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        padding: 0.5rem;
-        border-radius: 8px;
-        transition: background-color 0.2s;
-      }
-      
-      .role-checkbox:hover {
-        background: #2a2d45;
-      }
-      
-      .role-checkbox input[type="checkbox"] {
-        margin-right: 0.75rem;
-        transform: scale(1.2);
-      }
-      
-      .role-checkbox span {
-        color: #e5e7eb;
-        font-weight: 500;
-      }
-      
-      .role-actions {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: flex-end;
-      }
-      
-      /* Admin Actions Container */
-      .admin-actions-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        align-items: stretch;
-      }
-      
-      .admin-actions-container .btn {
-        flex: 1;
-        min-width: 140px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        white-space: nowrap;
-      }
-      
-      .admin-actions-container .btn i {
-        flex-shrink: 0;
-      }
-      
-      /* Footer Styles */
-      .admin-footer {
-        background: rgba(30, 32, 40, 0.95);
-        border-top: 1px solid #35385a;
-        margin-top: auto;
-        padding: 2rem 0;
-        color: #9aa0b4;
-      }
-      
-      .admin-footer a {
-        color: #9aa0b4;
-        text-decoration: none;
-        transition: color 0.2s;
-      }
-      
-      .admin-footer a:hover {
-        color: #c7cbe2;
-      }
+      .stat-number { font-size:1.5rem !important; font-weight:700; color:var(--ac-accent) !important; margin-bottom:0.25rem; font-family:'JetBrains Mono',monospace; }
+      .stat-label { color:var(--ac-text-muted) !important; font-size:0.625rem !important; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; }
 
-      /* Content Creator Tab Styles */
-      .cc-status-btn {
-        margin-right: 0.25rem;
-        padding: 0.5rem 1rem;
+      /* ── Dashboard pending applications ── */
+      .dash-pending-cc {
+        background:var(--ac-surface); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+        border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius);
+        padding:1.5rem; margin-bottom:1.75rem; animation:ac-fadeUp 0.4s ease both;
+        animation-delay:0.18s;
       }
-
-      .cc-status-btn.active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        border-color: #667eea !important;
-        color: #fff !important;
+      .dash-pending-cc-header {
+        display:flex; justify-content:space-between; align-items:center;
+        margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--ac-glass-border);
       }
-
-      .btn-group .cc-status-btn:first-child {
-        border-radius: 8px 0 0 8px;
+      .dash-pending-cc-header h4 {
+        font-size:0.9375rem; font-weight:600; color:#fff; margin:0;
+        display:flex; align-items:center; gap:0.5rem;
       }
-
-      .btn-group .cc-status-btn:last-child {
-        border-radius: 0 8px 8px 0;
-        margin-right: 0;
+      .dash-pending-cc-header .pending-count {
+        background:rgba(239,68,68,0.15); color:#ef4444;
+        font-size:0.6875rem; font-weight:700; padding:0.15rem 0.5rem;
+        border-radius:99px; font-family:'JetBrains Mono',monospace;
       }
-
-      .pagination .page-link {
-        background: #1e2028;
-        border-color: #35385a;
-        color: #e5e7eb;
+      .dash-pending-cc-item {
+        display:flex; align-items:center; justify-content:space-between;
+        padding:0.875rem 1rem; background:rgba(0,0,0,0.15);
+        border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius-sm);
+        margin-bottom:0.5rem; transition:border-color 0.15s;
       }
-
-      .pagination .page-item.active .page-link {
-        background: #667eea;
-        border-color: #667eea;
+      .dash-pending-cc-item:last-child { margin-bottom:0; }
+      .dash-pending-cc-item:hover { border-color:rgba(139,92,246,0.25); }
+      .dash-pending-cc-item-info { display:flex; align-items:center; gap:0.75rem; min-width:0; flex:1; }
+      .dash-pending-cc-platform-icon {
+        width:34px; height:34px; border-radius:8px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:0.875rem; flex-shrink:0;
       }
-
-      .pagination .page-item.disabled .page-link {
-        background: #11131a;
-        color: #6b7280;
+      .dash-pending-cc-item-text { min-width:0; }
+      .dash-pending-cc-item-text strong {
+        display:block; font-size:0.8125rem; font-weight:600; color:#fff;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
       }
-
-      /* Content Creator Pending Badge */
-      .cc-pending-badge {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: #fff;
-        font-size: 11px;
-        font-weight: 600;
-        padding: 2px 7px;
-        border-radius: 10px;
-        min-width: 18px;
-        text-align: center;
-        animation: pulse-badge 2s ease-in-out infinite;
+      .dash-pending-cc-item-text span {
+        font-size:0.6875rem; color:var(--ac-text-muted);
       }
+      .dash-pending-cc-item-actions { flex-shrink:0; margin-left:0.75rem; }
+      .dash-cc-all-clear {
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        padding:2rem 1rem; color:var(--ac-text-muted); text-align:center;
+      }
+      .dash-cc-all-clear-icon {
+        width:48px; height:48px; border-radius:50%;
+        background:rgba(34,197,94,0.1); color:var(--ac-green);
+        display:flex; align-items:center; justify-content:center;
+        font-size:1.25rem; margin-bottom:0.75rem;
+      }
+      .dash-cc-all-clear strong { display:block; color:var(--ac-text); font-size:0.875rem; margin-bottom:0.25rem; }
+      .dash-cc-all-clear span { font-size:0.75rem; }
 
-      @keyframes pulse-badge {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
+      /* ── Code value & copy ── */
+      .code-value {
+        font-family:'JetBrains Mono',monospace !important; font-size:1.1em; font-weight:600;
+        color:var(--ac-accent) !important; background:var(--ac-accent-glow) !important;
+        padding:0.25rem 0.5rem; border-radius:6px; border:1px solid rgba(139,92,246,0.3);
+      }
+      .copy-btn {
+        background:var(--ac-accent) !important; border:none !important; color:#fff !important;
+        font-weight:500 !important; transition:all 0.15s !important;
+      }
+      .copy-btn:hover { transform:translateY(-1px) !important; box-shadow:0 4px 12px var(--ac-accent-glow) !important; }
+
+      /* ── Pending user cards ── */
+      .pending-user-card {
+        background:var(--ac-glass) !important; border:1px solid var(--ac-glass-border) !important;
+        border-radius:var(--ac-radius) !important; padding:1.5rem !important; margin-bottom:0 !important;
+        transition:border-color 0.15s;
+      }
+      .pending-user-card:hover { border-color:rgba(139,92,246,0.2) !important; }
+      .pending-user-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--ac-glass-border); }
+      .pending-user-email { font-size:1.1rem; color:#fff; }
+      .pending-user-details { background:rgba(0,0,0,0.2); border-radius:var(--ac-radius-sm); padding:1rem; }
+      .pending-user-info { display:flex; flex-direction:column; gap:0.75rem; }
+      .pending-user-divider { height:1px; background:linear-gradient(90deg,transparent 0%,var(--ac-glass-border) 50%,transparent 100%); margin:1.5rem 0; }
+
+      /* ── Email warnings ── */
+      .email-warning { padding:0.75rem; margin:0.5rem 0; border-radius:var(--ac-radius-sm); display:flex; align-items:center; font-size:0.9rem; font-weight:500; }
+      .email-warning.invalid-warning { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; }
+      .email-warning.invalid-warning i { color:var(--ac-red); margin-right:0.5rem; }
+      .email-warning.suspicious-warning { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); color:#fde68a; }
+      .email-warning.suspicious-warning i { color:var(--ac-amber); margin-right:0.5rem; }
+
+      /* ── Recent searches ── */
+      .recent-searches-section { margin:1.5rem 0; padding:1.25rem; background:var(--ac-glass); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius-sm); }
+      .recent-searches-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--ac-glass-border); }
+      .recent-searches-title { color:var(--ac-text); font-weight:600; font-size:0.875rem; margin:0; display:flex; align-items:center; gap:0.5rem; }
+      .recent-searches-title i { color:var(--ac-accent); }
+      .recent-searches h6 { color:var(--ac-text); font-size:0.875rem; font-weight:600; }
+      .recent-searches-list { display:flex; flex-wrap:wrap; gap:0.75rem; }
+      .recent-search-item {
+        display:flex; align-items:center; gap:0.5rem; padding:0.5rem 0.75rem;
+        background:rgba(0,0,0,0.2); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius-sm);
+        color:var(--ac-text-muted); font-size:0.8125rem; cursor:pointer; transition:all 0.15s;
+        max-width:300px; margin-bottom:0;
+      }
+      .recent-search-item:hover { background:var(--ac-glass-hover); border-color:rgba(139,92,246,0.2); transform:translateY(-1px); }
+      .recent-search-item .search-text { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .recent-search-item .search-type { background:var(--ac-accent); color:#fff; padding:0.15rem 0.4rem; border-radius:4px; font-size:0.6875rem; font-weight:600; white-space:nowrap; }
+      .recent-search-item .remove-btn { background:none; border:none; color:var(--ac-text-dim); cursor:pointer; padding:0.25rem; border-radius:4px; transition:all 0.15s; display:flex; align-items:center; justify-content:center; width:20px; height:20px; }
+      .recent-search-item .remove-btn:hover { background:var(--ac-glass-hover); color:var(--ac-text); }
+      .recent-search-item .remove-btn i { font-size:0.75rem; }
+
+      /* ── Activity / Timeline ── */
+      .activity-item { display:flex; align-items:flex-start; padding:1rem; border-bottom:1px solid var(--ac-glass-border); }
+      .activity-item:last-child { border-bottom:none; }
+      .activity-icon { margin-right:1rem; font-size:1.1rem; margin-top:0.2rem; }
+      .activity-content { flex:1; }
+      .activity-title { color:var(--ac-text); font-weight:600; margin-bottom:0.25rem; }
+      .activity-time { color:var(--ac-text-muted); font-size:0.8125rem; margin-bottom:0.25rem; }
+      .activity-details { color:var(--ac-text-muted); font-size:0.8125rem; font-style:italic; }
+      .timeline-filters { margin-bottom:1.5rem; }
+      .timeline-filters .btn { margin-right:0.5rem; margin-bottom:0.5rem; }
+      .timeline-filters .btn.active { background:var(--ac-accent) !important; border-color:var(--ac-accent) !important; color:#fff !important; }
+
+      /* ── Chart ── */
+      .chart-container { background:rgba(0,0,0,0.2); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius-sm); padding:1.5rem; margin-bottom:1.5rem; min-height:200px; overflow:hidden; }
+      .chart-bars { display:flex; align-items:end; justify-content:space-between; height:150px; padding:1rem 0; gap:8px; }
+      .chart-bar { background:linear-gradient(135deg,var(--ac-accent),var(--ac-blue)); border-radius:4px 4px 0 0; flex:1; min-width:20px; max-width:40px; position:relative; display:flex; flex-direction:column; align-items:center; }
+      .chart-bar-empty { background:transparent !important; border:1px solid var(--ac-glass-border); border-bottom:none; }
+      .bar-label { position:absolute; bottom:-25px; font-size:0.65rem; color:var(--ac-text-muted); transform:rotate(-45deg); white-space:nowrap; max-width:60px; overflow:hidden; text-overflow:ellipsis; }
+
+      /* ── Role management ── */
+      .role-management h6 { color:var(--ac-text); margin-bottom:0.75rem; font-weight:600; }
+      .current-roles { margin-bottom:1rem; }
+      .role-checkboxes { display:flex; flex-direction:column; gap:0.75rem; }
+      .role-checkbox { display:flex; align-items:center; cursor:pointer; padding:0.5rem; border-radius:var(--ac-radius-sm); transition:background 0.15s; }
+      .role-checkbox:hover { background:var(--ac-glass-hover); }
+      .role-checkbox input[type="checkbox"] { margin-right:0.75rem; transform:scale(1.2); }
+      .role-checkbox span { color:var(--ac-text); font-weight:500; }
+      .role-actions { display:flex; gap:0.75rem; justify-content:flex-end; }
+      .admin-actions-container { display:flex; flex-wrap:wrap; gap:0.75rem; align-items:stretch; }
+      .admin-actions-container .btn { flex:1; min-width:140px; display:flex; align-items:center; justify-content:center; gap:0.5rem; white-space:nowrap; }
+
+      /* ── CC status buttons ── */
+      body.ac-body .cc-status-btn { margin-right:0.25rem; padding:0.5rem 1rem; }
+      body.ac-body .cc-status-btn.active { background:var(--ac-accent) !important; border-color:var(--ac-accent) !important; color:#fff !important; }
+      body.ac-body .btn-group .cc-status-btn:first-child { border-radius:var(--ac-radius-sm) 0 0 var(--ac-radius-sm); }
+      body.ac-body .btn-group .cc-status-btn:last-child { border-radius:0 var(--ac-radius-sm) var(--ac-radius-sm) 0; margin-right:0; }
+      .cc-pending-badge { background:linear-gradient(135deg,var(--ac-red),#dc2626); color:#fff; font-size:11px; font-weight:600; padding:2px 7px; border-radius:10px; min-width:18px; text-align:center; animation:ac-pulse 2s ease-in-out infinite; }
+      @keyframes ac-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+
+      /* ── Pagination ── */
+      body.ac-body .pagination .page-link { background:var(--ac-glass) !important; border-color:var(--ac-glass-border) !important; color:var(--ac-text) !important; }
+      body.ac-body .pagination .page-item.active .page-link { background:var(--ac-accent) !important; border-color:var(--ac-accent) !important; }
+      body.ac-body .pagination .page-item.disabled .page-link { background:rgba(0,0,0,0.2) !important; color:var(--ac-text-dim) !important; }
+      .pagination-container { margin-top:2rem; text-align:center; padding:1rem; border-top:1px solid var(--ac-glass-border); }
+      .pagination-info { margin-bottom:1rem; color:var(--ac-text-muted); }
+
+      /* ── Modal overrides ── */
+      body.ac-body .modal-content {
+        background:rgba(12,13,18,0.95) !important; backdrop-filter:blur(20px) !important;
+        -webkit-backdrop-filter:blur(20px) !important;
+        border:1px solid var(--ac-glass-border) !important; color:var(--ac-text) !important;
+        border-radius:var(--ac-radius) !important; box-shadow:0 25px 60px rgba(0,0,0,0.5) !important;
+      }
+      body.ac-body .modal-header { border-bottom:1px solid var(--ac-glass-border) !important; }
+      body.ac-body .modal-footer { border-top:1px solid var(--ac-glass-border) !important; }
+      body.ac-body .modal-title { color:#fff !important; }
+      body.ac-body .modal-header .close { color:var(--ac-text-muted) !important; opacity:1; text-shadow:none; }
+      body.ac-body .modal-header .close:hover { color:#fff !important; }
+      body.ac-body .modal-backdrop { background:rgba(0,0,0,0.6) !important; }
+      body.ac-body .modal-body { overflow-x:hidden !important; }
+      body.ac-body .alert { border-radius:var(--ac-radius-sm) !important; }
+      body.ac-body .input-group .form-control { border-radius:var(--ac-radius-sm) 0 0 var(--ac-radius-sm) !important; }
+      body.ac-body .input-group-btn .btn { border-radius:0 var(--ac-radius-sm) var(--ac-radius-sm) 0 !important; }
+
+      /* ── Utility ── */
+      .owner-search-button { color:var(--ac-accent) !important; text-decoration:none !important; word-wrap:break-word !important; overflow-wrap:break-word !important; max-width:100% !important; white-space:normal !important; text-align:left !important; display:inline-block !important; width:100% !important; }
+      .no-users-found { text-align:center; padding:3rem 2rem; }
+      .no-users-message { max-width:400px; margin:0 auto; }
+      .no-users-suggestion { background:rgba(0,0,0,0.2); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius); padding:1.5rem; margin-top:1rem; }
+      .loading { text-align:center; padding:2rem; color:var(--ac-text-muted); }
+      .error { background:rgba(239,68,68,0.15); color:var(--ac-red); padding:1rem; border-radius:var(--ac-radius-sm); margin:1rem 0; border:1px solid rgba(239,68,68,0.3); }
+      .success { background:rgba(34,197,94,0.15); color:var(--ac-green); padding:1rem; border-radius:var(--ac-radius-sm); margin:1rem 0; border:1px solid rgba(34,197,94,0.3); }
+      .text-success { color:var(--ac-green) !important; }
+      .text-warning { color:var(--ac-amber) !important; }
+      .text-info { color:var(--ac-blue) !important; }
+      .text-primary { color:var(--ac-accent) !important; }
+      .text-secondary { color:var(--ac-text-muted) !important; }
+      .text-muted { color:var(--ac-text-dim) !important; }
+      body.ac-body .toast-notification { border-radius:var(--ac-radius-sm) !important; font-family:'Outfit',sans-serif !important; }
+
+      /* ── Live toast notifications ── */
+      .ac-live-toast {
+        position:fixed; top:1rem; right:1rem; z-index:10000;
+        display:flex; align-items:center; gap:0.75rem;
+        background:rgba(15,17,23,0.95); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+        border:1px solid var(--ac-glass-border); border-left:3px solid #ef4444;
+        border-radius:var(--ac-radius); padding:1rem 1.25rem;
+        min-width:320px; max-width:420px;
+        box-shadow:0 8px 32px rgba(0,0,0,0.4);
+        transform:translateX(calc(100% + 2rem)); opacity:0;
+        transition:transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease;
+        font-family:'Outfit',sans-serif;
+      }
+      .ac-live-toast.show { transform:translateX(0); opacity:1; }
+      .ac-live-toast-icon {
+        width:36px; height:36px; border-radius:8px;
+        background:rgba(239,68,68,0.15); color:#ef4444;
+        display:flex; align-items:center; justify-content:center;
+        font-size:0.875rem; flex-shrink:0;
+      }
+      .ac-live-toast-body { flex:1; min-width:0; }
+      .ac-live-toast-body strong { display:block; font-size:0.75rem; color:var(--ac-text-muted); text-transform:uppercase; letter-spacing:0.04em; font-weight:600; margin-bottom:0.125rem; }
+      .ac-live-toast-body span { font-size:0.875rem; color:#fff; font-weight:500; }
+      .ac-live-toast > button {
+        background:none; border:none; color:var(--ac-text-dim); cursor:pointer;
+        padding:0.25rem; font-size:0.75rem; transition:color 0.15s; flex-shrink:0;
+      }
+      .ac-live-toast > button:hover { color:#fff; }
+
+      /* ── Footer ── */
+      .ac-footer {
+        margin-left:var(--ac-sidebar-w); padding:1.5rem 2rem;
+        border-top:1px solid var(--ac-glass-border);
+      }
+      .ac-footer-inner {
+        max-width:1200px; margin:0 auto;
+        display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;
+      }
+      .ac-footer-brand { display:flex; align-items:center; gap:0.5rem; }
+      .ac-footer-brand img { width:20px; height:20px; border-radius:4px; opacity:0.8; }
+      .ac-footer-brand span { font-size:0.8125rem; font-weight:600; color:var(--ac-text-muted); }
+      .ac-footer-copy { font-size:0.75rem; color:var(--ac-text-muted); font-family:'JetBrains Mono',monospace; }
+      .ac-footer-links { display:flex; gap:1.25rem; }
+      .ac-footer-links a { color:var(--ac-accent); font-size:0.8125rem; font-weight:500; transition:color 0.15s; text-decoration:none; }
+      .ac-footer-links a:hover { color:var(--ac-text); }
+
+      /* ── Responsive ── */
+      @media (max-width:768px) {
+        .ac-sidebar { transform:translateX(-100%); }
+        .ac-sidebar.open { transform:translateX(0); }
+        .ac-sidebar-toggle { display:flex; }
+        .ac-main { margin-left:0; }
+        .ac-topbar { padding:1rem 1rem 1rem 3.5rem; }
+        .ac-content { padding:1rem; }
+        .ac-footer { margin-left:0; }
+        .ac-footer-inner { flex-direction:column; align-items:flex-start; gap:0.5rem; }
+        .info-grid { grid-template-columns:1fr !important; }
+        .result-header { flex-direction:column; gap:0.75rem; }
+        .action-buttons { width:100%; }
+        body.ac-body .cc-status-btn { font-size:0.75rem; padding:0.4rem 0.6rem; }
+        body.ac-body .btn-group { display:flex; flex-wrap:wrap; }
       }
     </style>
   </head>
-  <body>
-    <nav class="navbar navbar-default navbar-fixed-top admin-navbar">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <a class="navbar-brand" href="/admin/console">
-            <img src="/static/images/dispatch-logo-512.png" style="width:32px; height:32px; margin-right:10px; border-radius:8px;" />
-            LPC Admin Console
-          </a>
+
+  <body class="ac-body">
+    <div class="ac-bg-mesh"></div>
+    <div class="ac-grain"></div>
+
+    <button class="ac-sidebar-toggle" onclick="document.querySelector('.ac-sidebar').classList.toggle('open')">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <aside class="ac-sidebar">
+      <div class="ac-sidebar-header">
+        <a class="ac-sidebar-brand" href="/admin/console">
+          <img src="/static/images/dispatch-logo-512.png" alt="LPC">
+          <span>Lines Police CAD</span>
+        </a>
+        <h2 class="ac-sidebar-dept">Admin Console</h2>
+        <p class="ac-sidebar-status"><i class="fas fa-circle"></i> Online</p>
+      </div>
+
+      <nav class="ac-sidebar-nav">
+        <div class="ac-nav-section">
+          <div class="ac-nav-item active" data-panel="dashboard">
+            <i class="fas fa-th-large"></i> Dashboard
+          </div>
         </div>
-        <div class="navbar-collapse collapse">
-          <ul class="nav navbar-nav navbar-right">
-            <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown" style="color: #9aa0b4; display: flex; align-items: center; height: 60px; padding: 15px;">
-                <% if (admin && admin.profilePicture) { %>
-                  <img src="<%= admin.profilePicture %>" style="width: 28px; height: 28px; border-radius: 50%; margin-right: 8px; object-fit: cover; border: 2px solid #667eea;" />
-                <% } else { %>
-                  <i class="fas fa-user-circle" style="margin-right: 8px; font-size: 1.2rem;"></i>
-                <% } %>
-                <%= admin && admin.firstName && admin.lastName ? admin.firstName + ' ' + admin.lastName : (admin && admin.email ? admin.email : 'Admin') %>
-                <span class="caret" style="margin-left: 8px;"></span>
-              </a>
-              <ul class="dropdown-menu" style="background: #1e2028; border: 1px solid #35385a; border-radius: 8px; margin-top: 0;">
-                <li>
-                  <a href="/admin/profile" style="color: #e5e7eb; padding: 10px 20px; display: block;">
-                    <i class="fas fa-user-edit" style="margin-right: 8px; color: #667eea;"></i>Edit Profile
-                  </a>
-                </li>
-                <li style="border-top: 1px solid #35385a;">
-                  <a href="#" onclick="adminLogout(); return false;" style="color: #e5e7eb; padding: 10px 20px; display: block;">
-                    <i class="fas fa-sign-out-alt" style="margin-right: 8px; color: #ef4444;"></i>Logout
-                  </a>
-                </li>
-              </ul>
-            </li>
-          </ul>
+
+        <div class="ac-nav-section">
+          <div class="ac-nav-section-label">Search</div>
+          <div class="ac-nav-item" data-panel="users">
+            <i class="fas fa-users"></i> Users
+          </div>
+          <div class="ac-nav-item" data-panel="pending-users">
+            <i class="fas fa-user-clock"></i> Pending Users
+          </div>
+          <div class="ac-nav-item" data-panel="communities">
+            <i class="fas fa-building"></i> Communities
+          </div>
+        </div>
+
+        <div class="ac-nav-section">
+          <div class="ac-nav-section-label">Management</div>
+          <div class="ac-nav-item" id="content-creators-tab" data-panel="content-creators" style="display: none;">
+            <i class="fas fa-video"></i> Content Creators
+            <span id="ccPendingBadge" class="ac-nav-badge" style="display: none;"></span>
+          </div>
+          <div class="ac-nav-item" id="admin-management-tab" data-panel="admin-management" style="display: none;">
+            <i class="fas fa-shield-alt"></i> Admin Management
+          </div>
+          <div class="ac-nav-item" id="email-tab" data-panel="email" style="display: none;">
+            <i class="fas fa-envelope"></i> Email
+          </div>
+        </div>
+      </nav>
+
+      <div class="ac-sidebar-footer">
+        <div class="ac-sidebar-user">
+          <div class="ac-user-avatar">
+            <% if (admin && admin.profilePicture) { %>
+              <img src="<%= admin.profilePicture %>" alt="" />
+            <% } else { %>
+              <i class="fas fa-user"></i>
+            <% } %>
+          </div>
+          <div class="ac-user-info">
+            <div class="ac-user-name"><%= admin && admin.firstName && admin.lastName ? admin.firstName + ' ' + admin.lastName : (admin && admin.email ? admin.email : 'Admin') %></div>
+            <div class="ac-user-role">Administrator</div>
+          </div>
+        </div>
+        <div class="ac-sidebar-actions">
+          <a href="/admin/profile" class="ac-sidebar-action" title="Edit Profile"><i class="fas fa-user-edit"></i></a>
+          <a href="#" onclick="adminLogout(); return false;" class="ac-sidebar-action ac-logout" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
         </div>
       </div>
-    </nav>
+    </aside>
 
-    <div class="container admin-container">
-      <div class="search-card">
-        <h2 style="margin-bottom: 1.5rem; color: #fff; font-weight: 700;">
-          <i class="fas fa-search" style="margin-right: 12px; color: #667eea;"></i>
-          Admin Search & Management
-        </h2>
-        
-        <div class="admin-actions" style="margin-bottom: 1.5rem; text-align: right; display: none;" id="add-admin-section">
-          <button class="btn btn-gradient" onclick="showAddAdminModal()">
-            <i class="fas fa-plus" style="margin-right: 8px;"></i>Add Admin
-          </button>
+    <main class="ac-main">
+      <header class="ac-topbar">
+        <h1 class="ac-topbar-title" id="ac-topbar-title">Dashboard</h1>
+        <div class="ac-topbar-actions">
+          <div id="add-admin-section" style="display: none;">
+            <button class="ac-btn ac-btn-accent" onclick="showAddAdminModal()">
+              <i class="fas fa-plus"></i> Add Admin
+            </button>
+          </div>
         </div>
-        
-        <div class="search-tabs">
-          <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation" class="active">
-              <a href="#users-tab" data-toggle="tab">
-                <i class="fas fa-users" style="margin-right: 8px;"></i>Users
+      </header>
+
+      <div class="ac-content">
+
+        <!-- Panel: Dashboard -->
+        <div class="ac-panel active" id="panel-dashboard">
+          <div class="ac-dashboard-welcome">
+            <h2>Welcome back<%= admin && admin.firstName ? ', ' + admin.firstName : '' %></h2>
+            <p>Here's an overview of your admin console.</p>
+          </div>
+
+          <div class="ac-section-label">Overview</div>
+          <div class="ac-stats">
+            <div class="ac-stat" style="--stat-accent:var(--ac-accent); animation-delay:0.02s;">
+              <i class="fas fa-shield-alt ac-stat-icon"></i>
+              <div class="ac-stat-value" id="dash-stat-admins">&mdash;</div>
+              <div class="ac-stat-label">Total Admins</div>
+            </div>
+            <div class="ac-stat" style="--stat-accent:#ef4444; animation-delay:0.06s;">
+              <i class="fas fa-inbox ac-stat-icon"></i>
+              <div class="ac-stat-value" id="dash-stat-submitted">&mdash;</div>
+              <div class="ac-stat-label">CC Submitted</div>
+            </div>
+            <div class="ac-stat" style="--stat-accent:#f59e0b; animation-delay:0.10s;">
+              <i class="fas fa-search ac-stat-icon"></i>
+              <div class="ac-stat-value" id="dash-stat-review">&mdash;</div>
+              <div class="ac-stat-label">CC Under Review</div>
+            </div>
+            <div class="ac-stat" style="--stat-accent:var(--ac-green); animation-delay:0.14s;">
+              <i class="fas fa-star ac-stat-icon"></i>
+              <div class="ac-stat-value" id="dash-stat-active-cc">&mdash;</div>
+              <div class="ac-stat-label">Active Creators</div>
+            </div>
+          </div>
+
+          <div class="ac-section-label">Quick Actions</div>
+          <div class="ac-quick-actions">
+            <a class="ac-quick-action" href="#" onclick="acNavTo('users'); return false;">
+              <div class="ac-quick-action-icon" style="background:rgba(99,102,241,0.12); color:var(--ac-accent);">
+                <i class="fas fa-search"></i>
+              </div>
+              <div class="ac-quick-action-text">
+                <strong>Search Users</strong>
+                <span>Look up users by email</span>
+              </div>
+            </a>
+            <a class="ac-quick-action" href="#" onclick="acNavTo('pending-users'); return false;">
+              <div class="ac-quick-action-icon" style="background:rgba(245,158,11,0.12); color:#f59e0b;">
+                <i class="fas fa-user-clock"></i>
+              </div>
+              <div class="ac-quick-action-text">
+                <strong>Pending Users</strong>
+                <span>Review verification requests</span>
+              </div>
+            </a>
+            <a class="ac-quick-action" href="#" onclick="acNavTo('communities'); return false;">
+              <div class="ac-quick-action-icon" style="background:rgba(16,185,129,0.12); color:var(--ac-green);">
+                <i class="fas fa-building"></i>
+              </div>
+              <div class="ac-quick-action-text">
+                <strong>Communities</strong>
+                <span>Search communities</span>
+              </div>
+            </a>
+            <a class="ac-quick-action" href="#" id="dash-qa-cc" onclick="acNavTo('content-creators'); return false;" style="display:none;">
+              <div class="ac-quick-action-icon" style="background:rgba(239,68,68,0.12); color:#ef4444;">
+                <i class="fas fa-video"></i>
+              </div>
+              <div class="ac-quick-action-text">
+                <strong>Content Creators</strong>
+                <span>Manage CC applications</span>
+              </div>
+            </a>
+          </div>
+
+          <div class="ac-section-label" id="dash-pending-cc-label" style="display:none;">Pending Applications</div>
+          <div class="dash-pending-cc" id="dash-pending-cc-container" style="display:none;">
+            <div class="dash-pending-cc-header">
+              <h4>
+                <i class="fas fa-inbox" style="color:#ef4444;"></i>
+                Content Creator Applications
+                <span class="pending-count" id="dash-pending-cc-count" style="display:none;">0</span>
+              </h4>
+              <a href="#" onclick="acNavTo('content-creators'); return false;" style="font-size:0.75rem; color:var(--ac-accent); text-decoration:none; font-weight:500;">
+                View All <i class="fas fa-arrow-right" style="margin-left:4px; font-size:0.625rem;"></i>
               </a>
-            </li>
-            <li role="presentation">
-              <a href="#pending-users-tab" data-toggle="tab">
-                <i class="fas fa-user-clock" style="margin-right: 8px;"></i>Pending Users
-              </a>
-            </li>
-            <li role="presentation">
-              <a href="#communities-tab" data-toggle="tab">
-                <i class="fas fa-building" style="margin-right: 8px;"></i>Communities
-              </a>
-            </li>
-            <li role="presentation" id="content-creators-tab" style="display: none;">
-              <a href="#content-creators-tab-content" data-toggle="tab">
-                <i class="fas fa-video" style="margin-right: 8px;"></i>Content Creators
-                <span id="ccPendingBadge" class="badge cc-pending-badge" style="display: none; margin-left: 6px;"></span>
-              </a>
-            </li>
-            <li role="presentation" id="admin-management-tab" style="display: none;">
-              <a href="#admin-management-tab-content" data-toggle="tab">
-                <i class="fas fa-shield-alt" style="margin-right: 8px;"></i>Admin Management
-              </a>
-            </li>
-            <li role="presentation" id="email-tab" style="display: none;">
-              <a href="#email-tab-content" data-toggle="tab">
-                <i class="fas fa-envelope" style="margin-right: 8px;"></i>Email
-              </a>
-            </li>
-          </ul>
-          
-          <div class="tab-content">
-            <!-- Users Tab -->
-            <div role="tabpanel" class="tab-pane active" id="users-tab">
+            </div>
+            <div id="dash-pending-cc-list">
+              <div style="text-align:center; padding:1rem; color:var(--ac-text-muted);">
+                <i class="fas fa-spinner fa-spin"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel: Users -->
+        <div class="ac-panel" id="panel-users">
+          <div class="ac-card">
+            <div class="ac-card-body">
               <div class="row">
                 <div class="col-md-8">
-                  <input type="text" id="userSearch" class="form-control search-input" 
-                         placeholder="Search users by email or username..." />
+                  <input type="text" id="userSearch" class="form-control ac-input" placeholder="Search users by email or username..." />
                 </div>
                 <div class="col-md-4">
-                  <button type="button" id="searchUsersBtn" class="btn btn-gradient btn-block">
-                    <i class="fas fa-search" style="margin-right: 8px;"></i>Search Users
+                  <button type="button" id="searchUsersBtn" class="ac-btn ac-btn-accent ac-btn-block">
+                    <i class="fas fa-search"></i> Search Users
                   </button>
                 </div>
               </div>
-              
-              <!-- Recent Searches Section -->
               <div class="recent-searches-section" id="recentSearchesSection" style="display: none;">
                 <div class="recent-searches-header">
-                  <h6 class="recent-searches-title">
-                    <i class="fas fa-history"></i> Recent Searches
-                  </h6>
-                  <button class="btn btn-link btn-sm text-muted" onclick="clearAllRecentSearches('users')">
-                    Clear All
-                  </button>
+                  <h6 class="recent-searches-title"><i class="fas fa-history"></i> Recent Searches</h6>
+                  <button class="ac-btn-link" onclick="clearAllRecentSearches('users')">Clear All</button>
                 </div>
-                <div class="recent-searches-list" id="recentSearchesList">
-                  <!-- Recent search items will be populated here -->
-                </div>
+                <div class="recent-searches-list" id="recentSearchesList"></div>
               </div>
-              
               <div id="userResults"></div>
             </div>
-            
-            <!-- Pending Users Tab -->
-            <div role="tabpanel" class="tab-pane" id="pending-users-tab">
+          </div>
+        </div>
+
+        <!-- Panel: Pending Users -->
+        <div class="ac-panel" id="panel-pending-users">
+          <div class="ac-card">
+            <div class="ac-card-body">
               <div class="row">
                 <div class="col-md-8">
-                  <input type="text" id="pendingUserSearch" class="form-control search-input" 
-                         placeholder="Search pending users by email address..." />
+                  <input type="text" id="pendingUserSearch" class="form-control ac-input" placeholder="Search pending users by email address..." />
                 </div>
                 <div class="col-md-4">
-                  <button type="button" id="searchPendingUsersBtn" class="btn btn-gradient btn-block">
-                    <i class="fas fa-search" style="margin-right: 8px;"></i>Search Pending Users
+                  <button type="button" id="searchPendingUsersBtn" class="ac-btn ac-btn-accent ac-btn-block">
+                    <i class="fas fa-search"></i> Search Pending Users
                   </button>
                 </div>
               </div>
-              
-              <!-- Recent Searches Section -->
               <div class="recent-searches">
                 <h6><i class="fas fa-history" style="margin-right: 8px;"></i>Recent Searches</h6>
                 <div id="pendingUsersRecentSearches" class="recent-searches-list"></div>
               </div>
-              
-              <!-- Search Results -->
               <div id="pendingUserResults" class="search-results"></div>
             </div>
-            
-            <!-- Communities Tab -->
-            <div role="tabpanel" class="tab-pane" id="communities-tab">
+          </div>
+        </div>
+
+        <!-- Panel: Communities -->
+        <div class="ac-panel" id="panel-communities">
+          <div class="ac-card">
+            <div class="ac-card-body">
               <div class="row">
                 <div class="col-md-8">
-                  <input type="text" id="communitySearch" class="form-control search-input" 
-                         placeholder="Search communities by name..." />
+                  <input type="text" id="communitySearch" class="form-control ac-input" placeholder="Search communities by name..." />
                 </div>
                 <div class="col-md-4">
-                  <button type="button" id="searchCommunitiesBtn" class="btn btn-gradient btn-block">
-                    <i class="fas fa-search" style="margin-right: 8px;"></i>Search Communities
+                  <button type="button" id="searchCommunitiesBtn" class="ac-btn ac-btn-accent ac-btn-block">
+                    <i class="fas fa-search"></i> Search Communities
                   </button>
                 </div>
               </div>
-              
-              <!-- Recent Searches Section -->
               <div class="recent-searches-section" id="recentSearchesSectionCommunities" style="display: none;">
                 <div class="recent-searches-header">
-                  <h6 class="recent-searches-title">
-                    <i class="fas fa-history"></i> Recent Searches
-                  </h6>
-                  <button class="btn btn-link btn-sm text-muted" onclick="clearAllRecentSearches('communities')">
-                    Clear All
-                  </button>
+                  <h6 class="recent-searches-title"><i class="fas fa-history"></i> Recent Searches</h6>
+                  <button class="ac-btn-link" onclick="clearAllRecentSearches('communities')">Clear All</button>
                 </div>
-                <div class="recent-searches-list" id="recentSearchesListCommunities">
-                  <!-- Recent search items will be populated here -->
-                </div>
+                <div class="recent-searches-list" id="recentSearchesListCommunities"></div>
               </div>
-              
               <div id="communityResults"></div>
             </div>
+          </div>
+        </div>
 
-            <!-- Content Creators Tab -->
-            <div role="tabpanel" class="tab-pane" id="content-creators-tab-content">
-              <!-- Status Filter Buttons -->
-              <div class="row" style="margin-bottom: 1rem;">
-                <div class="col-md-12">
-                  <div class="btn-group" role="group" id="ccStatusFilter">
-                    <button type="button" class="btn btn-secondary cc-status-btn active" data-status="">All</button>
-                    <button type="button" class="btn btn-secondary cc-status-btn" data-status="submitted">
-                      <i class="fas fa-inbox" style="margin-right: 4px;"></i>Submitted <span id="ccSubmittedCount" class="badge" style="background: #ef4444; margin-left: 4px; display: none;"></span>
-                    </button>
-                    <button type="button" class="btn btn-secondary cc-status-btn" data-status="under_review">
-                      <i class="fas fa-search" style="margin-right: 4px;"></i>Under Review <span id="ccUnderReviewCount" class="badge" style="background: #f59e0b; margin-left: 4px; display: none;"></span>
-                    </button>
-                    <button type="button" class="btn btn-secondary cc-status-btn" data-status="approved">
-                      <i class="fas fa-check-circle" style="margin-right: 4px;"></i>Approved
-                    </button>
-                    <button type="button" class="btn btn-secondary cc-status-btn" data-status="rejected">
-                      <i class="fas fa-times-circle" style="margin-right: 4px;"></i>Rejected
-                    </button>
-                    <button type="button" class="btn btn-secondary cc-status-btn" data-status="withdrawn">
-                      <i class="fas fa-undo" style="margin-right: 4px;"></i>Withdrawn <span id="ccWithdrawnCount" class="badge" style="background: #6b7280; margin-left: 4px; display: none;"></span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-8">
-                  <input type="text" id="ccSearch" class="form-control search-input"
-                         placeholder="Search applications by display name..." />
-                </div>
-                <div class="col-md-4">
-                  <button type="button" id="searchCCBtn" class="btn btn-gradient btn-block">
-                    <i class="fas fa-search" style="margin-right: 8px;"></i>Search Applications
+        <!-- Panel: Content Creators -->
+        <div class="ac-panel" id="panel-content-creators">
+          <div class="ac-card">
+            <div class="ac-card-body">
+              <div style="margin-bottom: 1rem;">
+                <div class="btn-group" role="group" id="ccStatusFilter">
+                  <button type="button" class="btn btn-secondary cc-status-btn active" data-status="">All</button>
+                  <button type="button" class="btn btn-secondary cc-status-btn" data-status="submitted">
+                    <i class="fas fa-inbox" style="margin-right: 4px;"></i>Submitted <span id="ccSubmittedCount" class="badge" style="background: #ef4444; margin-left: 4px; display: none;"></span>
+                  </button>
+                  <button type="button" class="btn btn-secondary cc-status-btn" data-status="under_review">
+                    <i class="fas fa-search" style="margin-right: 4px;"></i>Under Review <span id="ccUnderReviewCount" class="badge" style="background: #f59e0b; margin-left: 4px; display: none;"></span>
+                  </button>
+                  <button type="button" class="btn btn-secondary cc-status-btn" data-status="approved">
+                    <i class="fas fa-check-circle" style="margin-right: 4px;"></i>Approved
+                  </button>
+                  <button type="button" class="btn btn-secondary cc-status-btn" data-status="rejected">
+                    <i class="fas fa-times-circle" style="margin-right: 4px;"></i>Rejected
+                  </button>
+                  <button type="button" class="btn btn-secondary cc-status-btn" data-status="withdrawn">
+                    <i class="fas fa-undo" style="margin-right: 4px;"></i>Withdrawn <span id="ccWithdrawnCount" class="badge" style="background: #6b7280; margin-left: 4px; display: none;"></span>
                   </button>
                 </div>
               </div>
-
-              <!-- Stats Row -->
-              <div style="display: flex; gap: 0.75rem; margin-top: 1rem;" id="ccStatsRow">
-                <div style="flex: 1; min-width: 0;">
-                  <div class="stat-card" style="padding: 0.75rem 0.5rem;">
-                    <div class="stat-number" id="ccStatPending" style="font-size: 1.25rem;">-</div>
-                    <div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">SUBMITTED</div>
-                  </div>
+              <div class="row">
+                <div class="col-md-8">
+                  <input type="text" id="ccSearch" class="form-control ac-input" placeholder="Search applications by display name..." />
                 </div>
-                <div style="flex: 1; min-width: 0;">
-                  <div class="stat-card" style="padding: 0.75rem 0.5rem;">
-                    <div class="stat-number" id="ccStatUnderReview" style="color: #f59e0b; font-size: 1.25rem;">-</div>
-                    <div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">UNDER REVIEW</div>
-                  </div>
-                </div>
-                <div style="flex: 1; min-width: 0;">
-                  <div class="stat-card" style="padding: 0.75rem 0.5rem;">
-                    <div class="stat-number" id="ccStatApproved" style="font-size: 1.25rem;">-</div>
-                    <div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">APPROVED</div>
-                  </div>
-                </div>
-                <div style="flex: 1; min-width: 0;">
-                  <div class="stat-card" style="padding: 0.75rem 0.5rem;">
-                    <div class="stat-number" id="ccStatRejected" style="font-size: 1.25rem;">-</div>
-                    <div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">REJECTED</div>
-                  </div>
-                </div>
-                <div style="flex: 1; min-width: 0;">
-                  <div class="stat-card" style="padding: 0.75rem 0.5rem;">
-                    <div class="stat-number" id="ccStatActive" style="font-size: 1.25rem;">-</div>
-                    <div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">ACTIVE</div>
-                  </div>
+                <div class="col-md-4">
+                  <button type="button" id="searchCCBtn" class="ac-btn ac-btn-accent ac-btn-block">
+                    <i class="fas fa-search"></i> Search Applications
+                  </button>
                 </div>
               </div>
-
-              <!-- Results -->
+              <div style="display: flex; gap: 0.75rem; margin-top: 1rem;" id="ccStatsRow">
+                <div style="flex: 1; min-width: 0;">
+                  <div class="stat-card" style="padding: 0.75rem 0.5rem;"><div class="stat-number" id="ccStatPending" style="font-size: 1.25rem;">-</div><div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">SUBMITTED</div></div>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                  <div class="stat-card" style="padding: 0.75rem 0.5rem;"><div class="stat-number" id="ccStatUnderReview" style="color: #f59e0b; font-size: 1.25rem;">-</div><div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">UNDER REVIEW</div></div>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                  <div class="stat-card" style="padding: 0.75rem 0.5rem;"><div class="stat-number" id="ccStatApproved" style="font-size: 1.25rem;">-</div><div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">APPROVED</div></div>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                  <div class="stat-card" style="padding: 0.75rem 0.5rem;"><div class="stat-number" id="ccStatRejected" style="font-size: 1.25rem;">-</div><div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">REJECTED</div></div>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                  <div class="stat-card" style="padding: 0.75rem 0.5rem;"><div class="stat-number" id="ccStatActive" style="font-size: 1.25rem;">-</div><div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">ACTIVE</div></div>
+                </div>
+              </div>
               <div id="ccApplicationResults">
                 <div class="loading" style="text-align: center; padding: 2rem; color: #9aa0b4;">
                   <i class="fas fa-spinner fa-spin"></i> Loading applications...
                 </div>
               </div>
-
-              <!-- Pagination -->
               <div id="ccPagination" style="margin-top: 1rem; display: none;">
-                <nav>
-                  <ul class="pagination justify-content-center" id="ccPaginationList"></ul>
-                </nav>
+                <nav><ul class="pagination justify-content-center" id="ccPaginationList"></ul></nav>
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- Admin Management Tab -->
-            <div role="tabpanel" class="tab-pane" id="admin-management-tab-content">
+        <!-- Panel: Admin Management -->
+        <div class="ac-panel" id="panel-admin-management">
+          <div class="ac-card">
+            <div class="ac-card-body">
               <div class="row">
                 <div class="col-md-8">
-                  <input type="text" id="adminSearch" class="form-control search-input" 
-                         placeholder="Search admins by email..." />
+                  <input type="text" id="adminSearch" class="form-control ac-input" placeholder="Search admins by email..." />
                 </div>
                 <div class="col-md-4">
-                  <button type="button" id="searchAdminsBtn" class="btn btn-gradient btn-block">
-                    <i class="fas fa-search" style="margin-right: 8px;"></i>Search Admins
+                  <button type="button" id="searchAdminsBtn" class="ac-btn ac-btn-accent ac-btn-block">
+                    <i class="fas fa-search"></i> Search Admins
                   </button>
                 </div>
               </div>
@@ -1080,41 +910,35 @@
                 </div>
               </div>
             </div>
-
-            <!-- Email Tab -->
-            <div role="tabpanel" class="tab-pane" id="email-tab-content">
-              <div class="row">
-                <div class="col-md-8 col-md-offset-2">
-                  <h3 style="color: #fff; margin-bottom: 1.5rem;">
-                    <i class="fas fa-envelope" style="margin-right: 8px; color: #667eea;"></i>Send Email
-                  </h3>
-                  <div class="form-group">
-                    <label for="emailTo" style="color: #9aa0b4;">To (email address)</label>
-                    <input type="email" id="emailTo" class="form-control search-input"
-                           placeholder="recipient@example.com" />
-                  </div>
-                  <div class="form-group">
-                    <label for="emailSubject" style="color: #9aa0b4;">Subject</label>
-                    <input type="text" id="emailSubject" class="form-control search-input"
-                           placeholder="Email subject line" />
-                  </div>
-                  <div class="form-group">
-                    <label for="emailBody" style="color: #9aa0b4;">Body (plain text)</label>
-                    <textarea id="emailBody" class="form-control search-input" rows="10"
-                              placeholder="Type your message here. Line breaks will be preserved."
-                              style="resize: vertical; min-height: 200px;"></textarea>
-                  </div>
-                  <button type="button" id="sendEmailBtn" class="btn btn-gradient btn-block">
-                    <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Send Email
-                  </button>
-                </div>
-              </div>
-            </div>
-
           </div>
         </div>
-      </div>
-    </div>
+
+        <!-- Panel: Email -->
+        <div class="ac-panel" id="panel-email">
+          <div class="ac-card">
+            <div class="ac-card-body">
+              <div class="form-group">
+                <label for="emailTo" class="ac-label">To (email address)</label>
+                <input type="email" id="emailTo" class="form-control ac-input" placeholder="recipient@example.com" />
+              </div>
+              <div class="form-group">
+                <label for="emailSubject" class="ac-label">Subject</label>
+                <input type="text" id="emailSubject" class="form-control ac-input" placeholder="Email subject line" />
+              </div>
+              <div class="form-group">
+                <label for="emailBody" class="ac-label">Body (plain text)</label>
+                <textarea id="emailBody" class="form-control ac-input" rows="10" placeholder="Type your message here. Line breaks will be preserved." style="resize: vertical; min-height: 200px;"></textarea>
+              </div>
+              <button type="button" id="sendEmailBtn" class="ac-btn ac-btn-accent ac-btn-block">
+                <i class="fas fa-paper-plane"></i> Send Email
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end ac-content -->
+    </main>
+
 
     <!-- User Details Modal -->
     <div class="modal fade" id="userModal" tabindex="-1" role="dialog">
@@ -1231,7 +1055,7 @@
             <input type="hidden" id="rejectApplicationId" />
             <div class="form-group">
               <label for="rejectionReason" style="color: #e5e7eb; margin-bottom: 0.5rem;">Rejection Reason</label>
-              <select id="rejectionReason" class="form-control" style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;">
+              <select id="rejectionReason" class="form-control">
                 <option value="">Select a reason...</option>
                 <option value="insufficient_followers">Insufficient followers</option>
                 <option value="content_quality">Content quality concerns</option>
@@ -1282,7 +1106,7 @@
             </div>
             <div class="form-group">
               <label for="removalReason" style="color: #e5e7eb; margin-bottom: 0.5rem;">Reason for Removal <span style="color: #ef4444;">*</span></label>
-              <select id="removalReason" class="form-control" style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;">
+              <select id="removalReason" class="form-control">
                 <option value="">Select a reason...</option>
                 <option value="Policy violation">Policy violation</option>
                 <option value="Inactivity">Inactivity</option>
@@ -1328,8 +1152,7 @@
             </div>
             <div class="form-group">
               <label for="adminRole" style="color: #e5e7eb; margin-bottom: 0.5rem;">Admin Role</label>
-              <select id="adminRole" class="form-control" 
-                      style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;">
+              <select id="adminRole" class="form-control">
                 <option value="admin">Admin</option>
                 <option value="owner">Owner</option>
               </select>
@@ -1407,12 +1230,84 @@
     <script>
       // Global API configuration - using Go backend API
       const API_BASE = '<%= POLICE_CAD_API_URL %>';
-      
+
+      // Utility: escape a string for safe insertion into HTML
+      function escapeHtml(str) {
+        if (typeof str !== 'string') return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      // =====================================================
+      // SIDEBAR NAVIGATION
+      // =====================================================
+      const panelTitleMap = {
+        'dashboard': 'Dashboard',
+        'users': 'Users',
+        'pending-users': 'Pending Users',
+        'communities': 'Communities',
+        'content-creators': 'Content Creators',
+        'admin-management': 'Admin Management',
+        'email': 'Email'
+      };
+
+      // Data-load callbacks for lazy-loaded panels
+      const panelLoadCallbacks = {
+        'dashboard': function() { if (typeof loadDashboardStats === 'function') loadDashboardStats(); if (typeof loadDashboardPendingCC === 'function') loadDashboardPendingCC(); },
+        'admin-management': function() { if (typeof loadAllAdmins === 'function') loadAllAdmins(); },
+        'content-creators': function() { if (typeof loadCCApplications === 'function') { loadCCApplications(); loadCCStats(); } }
+      };
+
+      // Track which panels have been loaded
+      const panelLoaded = {};
+
+      function acNavTo(panel) {
+        // Hide all panels, show the target
+        document.querySelectorAll('.ac-panel').forEach(function(p) { p.classList.remove('active'); });
+        var target = document.getElementById('panel-' + panel);
+        if (target) target.classList.add('active');
+
+        // Update sidebar active state
+        document.querySelectorAll('.ac-nav-item').forEach(function(n) { n.classList.remove('active'); });
+        var navItem = document.querySelector('.ac-nav-item[data-panel="' + panel + '"]');
+        if (navItem) navItem.classList.add('active');
+
+        // Update topbar title
+        var titleEl = document.getElementById('ac-topbar-title');
+        if (titleEl && panelTitleMap[panel]) titleEl.textContent = panelTitleMap[panel];
+
+        // Update topbar actions
+        var addAdminSection = document.getElementById('add-admin-section');
+        if (addAdminSection) addAdminSection.style.display = (panel === 'admin-management') ? '' : 'none';
+
+        // Update URL hash
+        window.location.hash = panel;
+
+        // Lazy-load data for panels that need it
+        if (!panelLoaded[panel] && Object.prototype.hasOwnProperty.call(panelLoadCallbacks, panel)) {
+          panelLoadCallbacks[panel]();
+          panelLoaded[panel] = true;
+        }
+
+        // Close sidebar on mobile
+        var sidebar = document.querySelector('.ac-sidebar');
+        if (sidebar && window.innerWidth < 1024) sidebar.classList.remove('open');
+      }
+
+      // Sidebar nav click handler
+      document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.ac-nav-item').forEach(function(item) {
+          item.addEventListener('click', function() {
+            var panel = this.getAttribute('data-panel');
+            if (panel) acNavTo(panel);
+          });
+        });
+      });
+
       // Show success/error messages on page load
       $(document).ready(function() {
         var successMessage = '<%= success || "" %>';
         var errorMessage = '<%= error || "" %>';
-        
+
         if (successMessage) {
           showToast('success', successMessage);
         }
@@ -1420,7 +1315,7 @@
           showToast('error', errorMessage);
         }
       });
-      
+
       // Global variables for current user info
       let currentUserEmail = '';
       let roles = [];
@@ -1440,8 +1335,10 @@
         // Show content creators tab for admin and owner roles
         if (roles.includes('owner') || roles.includes('admin')) {
           $('#content-creators-tab').show();
+          $('#dash-qa-cc').show();
         } else {
           $('#content-creators-tab').hide();
+          $('#dash-qa-cc').hide();
         }
 
         if (roles.includes('owner')) {
@@ -1451,9 +1348,9 @@
         } else {
           $('#admin-management-tab').hide();
           $('#add-admin-section').hide();
-          $('#admin-management-tab-content').hide();
+          $('#panel-admin-management').hide();
           $('#email-tab').hide();
-          $('#email-tab-content').hide();
+          $('#panel-email').hide();
 
           // Clear any admin data that might be displayed
           $('#adminResults').html('');
@@ -1461,6 +1358,210 @@
         }
       }
       
+      // Dashboard stats loader
+      var lastKnownSubmittedCount = null;
+      var ccPollInterval = null;
+
+      function loadDashboardStats() {
+        // Admins count (lightweight count endpoint)
+        $.ajax({
+          url: API_BASE + '/api/v1/admin/admins/count',
+          method: 'GET',
+          success: function(data) {
+            $('#dash-stat-admins').text(data && data.count != null ? data.count : '—');
+          },
+          error: function() { $('#dash-stat-admins').text('—'); }
+        });
+
+        // CC submitted count
+        $.ajax({
+          url: API_BASE + '/api/v1/admin/content-creator-applications?status=submitted&limit=1',
+          method: 'GET',
+          success: function(data) {
+            var count = (data && data.pagination) ? data.pagination.totalItems : 0;
+            $('#dash-stat-submitted').text(count);
+            // Seed the initial count so polling doesn't fire a false toast
+            if (lastKnownSubmittedCount === null) lastKnownSubmittedCount = count;
+          },
+          error: function() { $('#dash-stat-submitted').text('0'); }
+        });
+
+        // CC under review count
+        $.ajax({
+          url: API_BASE + '/api/v1/admin/content-creator-applications?status=under_review&limit=1',
+          method: 'GET',
+          success: function(data) {
+            var count = (data && data.pagination) ? data.pagination.totalItems : 0;
+            $('#dash-stat-review').text(count);
+          },
+          error: function() { $('#dash-stat-review').text('0'); }
+        });
+
+        // Active creators count
+        $.ajax({
+          url: API_BASE + '/api/v1/admin/content-creators?status=active&limit=1',
+          method: 'GET',
+          success: function(data) {
+            var count = (data && data.pagination) ? data.pagination.totalItems : 0;
+            $('#dash-stat-active-cc').text(count);
+          },
+          error: function() { $('#dash-stat-active-cc').text('0'); }
+        });
+      }
+
+      // =====================================================
+      // DASHBOARD — PENDING CC APPLICATIONS
+      // =====================================================
+      function loadDashboardPendingCC() {
+        // Only show for admin/owner roles
+        if (!roles.includes('owner') && !roles.includes('admin')) return;
+
+        $('#dash-pending-cc-label').show();
+        $('#dash-pending-cc-container').show();
+
+        $.ajax({
+          url: API_BASE + '/api/v1/admin/content-creator-applications?status=submitted&limit=5',
+          method: 'GET',
+          success: function(data) {
+            var apps = (data && data.applications) ? data.applications : [];
+            var total = (data && data.pagination) ? data.pagination.totalItems : 0;
+            renderDashboardPendingCC(apps, total);
+          },
+          error: function() {
+            renderDashboardPendingCC([], 0);
+          }
+        });
+      }
+
+      function renderDashboardPendingCC(apps, total) {
+        var list = $('#dash-pending-cc-list');
+        var countBadge = $('#dash-pending-cc-count');
+
+        if (!apps || apps.length === 0) {
+          countBadge.hide();
+          list.html(`
+            <div class="dash-cc-all-clear">
+              <div class="dash-cc-all-clear-icon">
+                <i class="fas fa-check"></i>
+              </div>
+              <strong>All caught up!</strong>
+              <span>No pending applications to review</span>
+            </div>
+          `);
+          return;
+        }
+
+        countBadge.text(total).show();
+
+        var platformIcons = {
+          twitch: { icon: 'fab fa-twitch', bg: 'rgba(145,70,255,0.12)', color: '#9146FF' },
+          youtube: { icon: 'fab fa-youtube', bg: 'rgba(255,0,0,0.1)', color: '#FF0000' },
+          tiktok: { icon: 'fab fa-tiktok', bg: 'rgba(255,255,255,0.08)', color: '#fff' },
+          other: { icon: 'fas fa-globe', bg: 'rgba(99,102,241,0.12)', color: 'var(--ac-accent)' }
+        };
+
+        var html = '';
+        apps.forEach(function(app) {
+          var appId = app._id || app.id || '';
+          var displayName = escapeHtml(app.displayName || 'Unknown');
+          var platform = app.primaryPlatform || 'other';
+          var pIcon = platformIcons[platform] || platformIcons.other;
+          var totalFollowers = 0;
+          if (app.platforms && app.platforms.length) {
+            app.platforms.forEach(function(p) { totalFollowers += (p.followerCount || 0); });
+          }
+          var createdAt = app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '';
+
+          html += `
+            <div class="dash-pending-cc-item">
+              <div class="dash-pending-cc-item-info">
+                <div class="dash-pending-cc-platform-icon" style="background:${pIcon.bg}; color:${pIcon.color};">
+                  <i class="${pIcon.icon}"></i>
+                </div>
+                <div class="dash-pending-cc-item-text">
+                  <strong>${displayName}</strong>
+                  <span>${escapeHtml(platform)} &middot; ${totalFollowers.toLocaleString()} followers &middot; ${escapeHtml(createdAt)}</span>
+                </div>
+              </div>
+              <div class="dash-pending-cc-item-actions">
+                <button class="btn btn-secondary btn-sm" onclick="acNavTo('content-creators'); setTimeout(function(){ viewCCApplication('${escapeHtml(appId)}'); }, 300);" style="font-size:0.75rem; padding:0.3rem 0.75rem;">
+                  Review
+                </button>
+              </div>
+            </div>
+          `;
+        });
+
+        if (total > 5) {
+          html += `
+            <div style="text-align:center; padding-top:0.75rem;">
+              <a href="#" onclick="acNavTo('content-creators'); return false;" style="font-size:0.75rem; color:var(--ac-accent); text-decoration:none; font-weight:500;">
+                View all ${total} applications <i class="fas fa-arrow-right" style="margin-left:4px; font-size:0.625rem;"></i>
+              </a>
+            </div>
+          `;
+        }
+
+        list.html(html);
+      }
+
+      // =====================================================
+      // LIVE CC APPLICATION NOTIFICATIONS (polling)
+      // =====================================================
+      function pollCCSubmissions() {
+        $.ajax({
+          url: API_BASE + '/api/v1/admin/content-creator-applications?status=submitted&limit=1',
+          method: 'GET',
+          success: function(data) {
+            var count = (data && data.pagination) ? data.pagination.totalItems : 0;
+
+            if (lastKnownSubmittedCount !== null && count > lastKnownSubmittedCount) {
+              var diff = count - lastKnownSubmittedCount;
+              var msg = diff === 1
+                ? 'New content creator application submitted!'
+                : diff + ' new content creator applications submitted!';
+              showLiveToast(msg);
+
+              // Update the dashboard stat card
+              $('#dash-stat-submitted').text(count);
+
+              // Also refresh the sidebar badge
+              if (typeof loadCCPendingCount === 'function') loadCCPendingCount();
+            }
+
+            lastKnownSubmittedCount = count;
+          }
+        });
+      }
+
+      function showLiveToast(message) {
+        var id = 'live-toast-' + Date.now();
+        var html = '<div id="' + id + '" class="ac-live-toast">' +
+          '<div class="ac-live-toast-icon"><i class="fas fa-video"></i></div>' +
+          '<div class="ac-live-toast-body">' +
+            '<strong>Content Creator</strong>' +
+            '<span>' + message + '</span>' +
+          '</div>' +
+          '<button onclick="$(\'#' + id + '\').fadeOut(function(){$(this).remove()})"><i class="fas fa-times"></i></button>' +
+        '</div>';
+
+        $('body').append(html);
+        var el = $('#' + id);
+        // Trigger animation after append
+        setTimeout(function() { el.addClass('show'); }, 10);
+        // Auto-dismiss after 8 seconds
+        setTimeout(function() { el.removeClass('show'); setTimeout(function() { el.remove(); }, 400); }, 8000);
+      }
+
+      function startCCPolling() {
+        if (ccPollInterval) return;
+        ccPollInterval = setInterval(pollCCSubmissions, 30000); // every 30s
+      }
+
+      function stopCCPolling() {
+        if (ccPollInterval) { clearInterval(ccPollInterval); ccPollInterval = null; }
+      }
+
       // Function to clear user data (call this on logout)
       function clearUserData() {
         currentUserEmail = '';
@@ -1536,35 +1637,32 @@
         // Update UI based on user roles
         updateUIForUserRoles();
 
+        // Send heartbeat to track last active time
+        const heartbeatAdminId = '<%= admin && admin.id ? admin.id : "" %>';
+        if (heartbeatAdminId) {
+          fetch(`${API_BASE}/api/v1/admin/heartbeat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adminId: heartbeatAdminId })
+          }).catch(() => {});
+        }
+
         // Load pending content creator applications count for badge
         if (roles.includes('owner') || roles.includes('admin')) {
           loadCCPendingCount();
         }
 
-        // Load all admins when admin management tab is shown (using Bootstrap's shown.bs.tab event)
-        $('a[href="#admin-management-tab-content"]').on('shown.bs.tab', function() {
-          // Clear any existing results from other tabs
-          clearTabResults('admin');
-          
-          // Update URL hash for better navigation
-          window.location.hash = 'admin-management-tab-content';
-          
-          // Then load the admins
-          loadAllAdmins();
-        });
-        
-        // Clear results when switching tabs and update URL hash
-        $('a[href="#users-tab"]').on('click', function() {
-          clearTabResults('users');
-          // Update URL hash for better navigation
-          window.location.hash = 'users-tab';
-        });
-        
-        $('a[href="#communities-tab"]').on('click', function() {
-          clearTabResults('communities');
-          // Update URL hash for better navigation
-          window.location.hash = 'communities-tab';
-        });
+        // Load dashboard stats on page load (dashboard is default panel)
+        loadDashboardStats();
+        loadDashboardPendingCC();
+        panelLoaded['dashboard'] = true;
+
+        // Start polling for live CC submission notifications
+        if (roles.includes('owner') || roles.includes('admin')) {
+          startCCPolling();
+        }
+
+        // Tab switching is now handled by acNavTo() via sidebar click handlers
 
         // Email tab - Send Email handler
         $('#sendEmailBtn').on('click', function() {
@@ -1593,7 +1691,7 @@
 
           showConfirmModal(
             'Confirm Send Email',
-            'Are you sure you want to send this email to <strong>' + $('<span>').text(toEmail).html() + '</strong>?',
+            'Are you sure you want to send this email to <strong>' + escapeHtml(toEmail) + '</strong>?',
             function() {
               $('#sendEmailBtn').prop('disabled', true).html(
                 '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Sending...'
@@ -1701,20 +1799,25 @@
           searchCommunities(communityQuery, 0);
         }
         
-        // Handle URL hash for tab selection
+        // Handle URL hash for panel selection
         const hash = window.location.hash;
         if (hash) {
-          // Remove the # from the hash
-          const tabId = hash.substring(1);
-          
-          // Check if the tab exists and activate it
-          const tabElement = $(`a[href="#${tabId}"]`);
-          if (tabElement.length > 0) {
-            // Activate the tab
-            tabElement.tab('show');
-            
-            // If it's the communities tab, trigger a search if there's a query
-            if (tabId === 'communities-tab') {
+          const panelId = hash.substring(1);
+          // Map old tab hashes to new panel names for backwards compat
+          const hashMap = {
+            'users-tab': 'users',
+            'pending-users-tab': 'pending-users',
+            'communities-tab': 'communities',
+            'content-creators-tab-content': 'content-creators',
+            'admin-management-tab-content': 'admin-management',
+            'email-tab-content': 'email'
+          };
+          const panel = hashMap[panelId] || panelId;
+          if (document.getElementById('panel-' + panel)) {
+            acNavTo(panel);
+
+            // If it's the communities panel, trigger a search if there's a query
+            if (panel === 'communities') {
               const communityQuery = $('#communitySearch').val().trim();
               if (communityQuery) {
                 currentCommunityPage = 0;
@@ -1851,9 +1954,9 @@
                   <div class="info-value">${admin.createdBy || 'System'}</div>
                 </div>
                 <div class="info-item">
-                  <div class="info-label">Last Login</div>
-                  <div class="info-value">${admin.lastLoginAt ? (() => {
-                    const date = new Date(admin.lastLoginAt);
+                  <div class="info-label">Last Active</div>
+                  <div class="info-value">${(admin.lastAccessedAt || admin.lastLoginAt) ? (() => {
+                    const date = new Date(admin.lastAccessedAt || admin.lastLoginAt);
                     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
                   })() : 'Never'}</div>
                 </div>
@@ -1894,8 +1997,8 @@
         const isActive = admin.active !== undefined ? admin.active : true;
         const createdAt = admin.createdAt ? new Date(admin.createdAt).toLocaleDateString() : 'Unknown';
         const createdBy = admin.createdBy || 'System';
-        const lastLoginAt = admin.lastLoginAt ? (() => {
-          const date = new Date(admin.lastLoginAt);
+        const lastActive = (admin.lastAccessedAt || admin.lastLoginAt) ? (() => {
+          const date = new Date(admin.lastAccessedAt || admin.lastLoginAt);
           return date.toLocaleDateString() + ' ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
         })() : 'Never';
         const adminId = admin.id || admin._id || 'unknown';
@@ -1938,8 +2041,8 @@
               <div class="info-value">${createdBy}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Last Login</div>
-              <div class="info-value">${lastLoginAt}</div>
+              <div class="info-label">Last Active</div>
+              <div class="info-value">${lastActive}</div>
             </div>
           </div>
           
@@ -3018,7 +3121,7 @@
                         <i class="fas fa-info-circle" style="margin-right: 0.5rem; color: #667eea;"></i>
                         If this user is still pending verification, you can check the Pending Users tab.
                       </p>
-                      <button class="btn btn-gradient btn-sm" onclick="switchToPendingUsers('${query}')">
+                      <button class="btn btn-gradient btn-sm" onclick="switchToPendingUsers('${escapeHtml(query)}')">
                         <i class="fas fa-user-clock" style="margin-right: 0.5rem;"></i>
                         Check Pending Users
                       </button>
@@ -3041,10 +3144,10 @@
         addToRecentSearches(query, 'users');
       }
       
-      // Function to switch to pending users tab with pre-filled email
+      // Function to switch to pending users panel with pre-filled email
       function switchToPendingUsers(email) {
-        // Switch to Pending Users tab
-        $('a[href="#pending-users-tab"]').tab('show');
+        // Switch to Pending Users panel
+        acNavTo('pending-users');
         
         // Set the search input value
         $('#pendingUserSearch').val(email.trim());
@@ -3056,10 +3159,10 @@
         trackAdminAction('pending_user_search', `Switched to pending users from no users found: "${email}"`);
       }
       
-      // Function to switch to users tab with pre-filled email
+      // Function to switch to users panel with pre-filled email
       function switchToUsers(email) {
-        // Switch to Users tab
-        $('a[href="#users-tab"]').tab('show');
+        // Switch to Users panel
+        acNavTo('users');
         
         // Set the search input value
         $('#userSearch').val(email.trim());
@@ -3143,11 +3246,14 @@
         
         let html = '';
         searches.forEach(search => {
+          const safeQuery = escapeHtml(search.query);
+          const safeType = escapeHtml(search.type);
+          const typeLabel = search.type === 'users' ? 'Users' : search.type === 'pending_users' ? 'Pending Users' : 'Communities';
           html += `
-            <div class="recent-search-item" onclick="performRecentSearch('${search.query}', '${search.type}')">
-              <span class="search-text">${search.query}</span>
-              <span class="search-type">${search.type === 'users' ? 'Users' : search.type === 'pending_users' ? 'Pending Users' : 'Communities'}</span>
-              <button class="remove-btn" onclick="removeRecentSearch('${search.query}', '${search.type}', event)">
+            <div class="recent-search-item" onclick="performRecentSearch('${safeQuery}', '${safeType}')">
+              <span class="search-text">${safeQuery}</span>
+              <span class="search-type">${escapeHtml(typeLabel)}</span>
+              <button class="remove-btn" onclick="removeRecentSearch('${safeQuery}', '${safeType}', event)">
                 <i class="fas fa-times"></i>
               </button>
             </div>
@@ -3159,25 +3265,16 @@
       
       function performRecentSearch(query, type) {
         if (type === 'pending_users') {
-          // Switch to Pending Users tab
-          $('a[href="#pending-users-tab"]').tab('show');
-          // Set search input value
+          acNavTo('pending-users');
           $('#pendingUserSearch').val(query);
-          // Perform search
           searchPendingUsers(query, 0);
         } else if (type === 'users') {
-          // Switch to Users tab
-          $('a[href="#users-tab"]').tab('show');
-          // Set search input value
+          acNavTo('users');
           $('#userSearch').val(query);
-          // Perform search
           searchUsers(query, 0);
         } else if (type === 'communities') {
-          // Switch to Communities tab
-          $('a[href="#communities-tab"]').tab('show');
-          // Set search input value
+          acNavTo('communities');
           $('#communitySearch').val(query);
-          // Perform search
           searchCommunities(query, 0);
         }
       }
@@ -3835,19 +3932,14 @@
         
         // Close the user modal
         $('#userModal').modal('hide');
-        
-        // Wait a moment for modal to close, then switch tabs
+
+        // Wait a moment for modal to close, then switch panels
         setTimeout(() => {
-          // Switch to Communities tab using the href approach
-          $('a[href="#communities-tab"]').tab('show');
-          
-          // Also ensure the tab content is visible
-          $('.tab-content .tab-pane').removeClass('active');
-          $('#communities-tab').addClass('active');
-          
+          acNavTo('communities');
+
           // Set the search input value
           $('#communitySearch').val(communityName);
-          
+
           // Trigger the search
           searchCommunities(communityName, 0);
           
@@ -4204,19 +4296,14 @@
         
         // Close the community modal
         $('#communityModal').modal('hide');
-        
-        // Wait a moment for modal to close, then switch tabs
+
+        // Wait a moment for modal to close, then switch panels
         setTimeout(() => {
-          // Switch to Users tab
-          $('a[href="#users-tab"]').tab('show');
-          
-          // Also ensure the tab content is visible
-          $('.tab-content .tab-pane').removeClass('active');
-          $('#users-tab').addClass('active');
-          
+          acNavTo('users');
+
           // Set the search input value
           $('#userSearch').val(userEmail);
-          
+
           // Trigger the search
           searchUsers(userEmail, 0);
           
@@ -4384,11 +4471,12 @@
       }
       
       function sendAdminResetEmail(email) {
-        const button = $(`button[onclick*="sendAdminResetEmail('${email}')"]`);
-        const originalText = button.html();
+        const safeEmail = escapeHtml(email);
+        const button = $(`button[onclick*="sendAdminResetEmail('${safeEmail}')"]`);
+        button.data('original-html', button.html());
         button.html('<i class="fas fa-spinner fa-spin"></i> Sending...');
         button.prop('disabled', true);
-        
+
         $.ajax({
           url: `${API_BASE}/api/v1/admin/send-reset-email`,
           method: 'POST',
@@ -4400,30 +4488,31 @@
             const successHtml = `
               <div class="alert alert-success" style="background: #10b981; color: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
                 <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
-                Password reset email sent successfully to ${email}
+                Password reset email sent successfully to ${safeEmail}
               </div>
             `;
-            
+
             // Insert success message at the top of the modal body
             $('#adminResetLinkBody').prepend(successHtml);
-            
+
             // Disable the send email button since it was sent
             button.prop('disabled', true);
             button.html('<i class="fas fa-check"></i> Email Sent');
             button.removeClass('btn-secondary').addClass('btn-success');
-            
+
             // Track this action
             trackAdminAction('admin_reset_email', `Sent password reset email to admin: ${email}`);
           },
           error: function(xhr) {
             // Show error message in the current modal
+            const errorMsg = escapeHtml(xhr.responseJSON?.error || 'Unknown error');
             const errorHtml = `
               <div class="alert alert-danger" style="background: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
                 <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>
-                Failed to send email: ${xhr.responseJSON?.error || 'Unknown error'}
+                Failed to send email: ${errorMsg}
             </div>
             `;
-            
+
             // Insert error message at the top of the modal body
             $('#adminResetLinkBody').prepend(errorHtml);
           },
@@ -4432,7 +4521,7 @@
             if (button.hasClass('btn-success')) {
               return; // Button was successfully sent, don't change it
             }
-            button.html(originalText);
+            button.html(button.data('original-html'));
             button.prop('disabled', false);
           }
         });
@@ -4440,8 +4529,9 @@
       
       function sendExistingAdminReset(email) {
         // Show loading state
-        const button = $(`button[onclick*="sendExistingAdminReset('${email}')"]`);
-        const originalText = button.html();
+        const safeEmail = escapeHtml(email);
+        const button = $(`button[onclick*="sendExistingAdminReset('${safeEmail}')"]`);
+        button.data('original-html', button.html());
         button.html('<i class="fas fa-spinner fa-spin"></i> Sending...');
         button.prop('disabled', true);
 
@@ -4458,7 +4548,7 @@
             const successHtml = `
               <div class="alert alert-success" style="background: #10b981; color: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
                 <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
-                New password reset email sent successfully to ${email}
+                New password reset email sent successfully to ${safeEmail}
               </div>
             `;
 
@@ -4471,24 +4561,23 @@
 
             // Clear the email input since we successfully sent the reset
             $('#newAdminEmail').val('');
-            
+
             // Track this action
             trackAdminAction('admin_reset_existing', `Sent reset email to existing admin: ${email}`);
           },
           error: function(xhr) {
             // Show error message
-            let errorMessage = 'Unknown error';
-            if (xhr.responseJSON && xhr.responseJSON.error) {
-              errorMessage = xhr.responseJSON.error;
-            }
-            
+            const errorMessage = escapeHtml(
+              (xhr.responseJSON && xhr.responseJSON.error) ? xhr.responseJSON.error : 'Unknown error'
+            );
+
             const errorHtml = `
               <div class="alert alert-danger" style="background: #ef4444; color: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
                 <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>
                 Failed to send reset email: ${errorMessage}
               </div>
             `;
-            
+
             $('#addAdminModal .modal-body').prepend(errorHtml);
           },
           complete: function() {
@@ -4496,7 +4585,7 @@
             if (button.hasClass('btn-success')) {
               return; // Button was successfully sent, don't change it
             }
-            button.html(originalText);
+            button.html(button.data('original-html'));
             button.prop('disabled', false);
           }
         });
@@ -4510,11 +4599,7 @@
       let currentCCStatus = '';
       let ccPageSize = 10;
 
-      // Load content creator applications when tab is shown
-      $('a[href="#content-creators-tab-content"]').on('shown.bs.tab', function() {
-        loadCCApplications();
-        loadCCStats();
-      });
+      // Content creator applications are now loaded by acNavTo() via panelLoadCallbacks
 
       // Status filter buttons
       $(document).on('click', '.cc-status-btn', function() {
@@ -4918,15 +5003,40 @@
             };
             const icon = platformIcons[p.type] || 'fas fa-globe';
 
+            const cleanHandle = p.handle ? p.handle.replace(/^@+/, '') : '';
+            const safeHandle = escapeHtml(cleanHandle);
+
+            // Build the actual profile URL from platform type + handle
+            const platformBaseUrls = {
+              twitch: 'https://twitch.tv/',
+              youtube: 'https://youtube.com/@',
+              tiktok: 'https://tiktok.com/@',
+              instagram: 'https://instagram.com/',
+              twitter: 'https://twitter.com/',
+              facebook: 'https://facebook.com/'
+            };
+            // Always prefer building URL from platform type + handle when both are known
+            // p.url from the database is unreliable (can contain wrong domains)
+            let profileUrl = '';
+            if (cleanHandle && platformBaseUrls[p.type]) {
+              profileUrl = platformBaseUrls[p.type] + cleanHandle;
+            } else if (p.url) {
+              profileUrl = p.url;
+            }
+            const safeProfileUrl = escapeHtml(profileUrl);
+
+            const profileLink = (safeProfileUrl && safeHandle)
+              ? `<a href="${safeProfileUrl}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-size: 1rem;">@${safeHandle} <i class="fas fa-external-link-alt" style="font-size: 0.625rem; margin-left: 4px; opacity: 0.7;"></i></a>`
+              : safeProfileUrl
+                ? `<a href="${safeProfileUrl}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-size: 1rem; word-break: break-all;">${safeProfileUrl} <i class="fas fa-external-link-alt" style="font-size: 0.625rem; margin-left: 4px; opacity: 0.7;"></i></a>`
+                : (safeHandle ? `<span style="color: #9aa0b4; font-size: 1rem;">@${safeHandle}</span>` : '');
+
             platformsHtml += `
               <div class="info-item" style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
                   <i class="${icon}" style="color: #667eea; font-size: 1.25rem;"></i>
-                  <span style="color: #e5e7eb; font-weight: 600; text-transform: capitalize; font-size: 1.1rem;">${p.type}</span>
-                  ${p.handle ? `<span style="color: #9aa0b4; font-size: 1rem;">@${p.handle.replace(/^@+/, '')}</span>` : ''}
-                </div>
-                <div style="margin-bottom: 0.5rem;">
-                  <a href="${p.url}" target="_blank" style="color: #667eea; word-break: break-all; font-size: 1rem;">${p.url}</a>
+                  <span style="color: #e5e7eb; font-weight: 600; text-transform: capitalize; font-size: 1.1rem;">${escapeHtml(p.type)}</span>
+                  ${profileLink}
                 </div>
                 <div style="color: #e5e7eb; font-size: 1rem; font-weight: 500;">
                   ${(p.followerCount || 0).toLocaleString()} followers
@@ -5318,36 +5428,26 @@
 
 
     </script>
-    
-    <!-- Admin Console Footer -->
-    <footer class="admin-footer">
-      <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
-        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-          <img src="/static/images/dispatch-logo-512.png" alt="LPC Logo" style="width: 32px; height: 32px; border-radius: 8px;">
-          <span style="font-size: 1.2rem; font-weight: 600; color: #e5e7eb; letter-spacing: 0.02em;">Lines Police CAD Admin Console</span>
+
+
+    <footer class="ac-footer">
+      <div class="ac-footer-inner">
+        <div class="ac-footer-brand">
+          <img src="/static/images/dispatch-logo-512.png" alt="LPC">
+          <span>Lines Police CAD</span>
         </div>
-        <div style="font-size: 0.95rem; color: #9aa0b4; margin-bottom: 1rem;">
-          &copy; <%= new Date().getFullYear() %> Lines Police CAD. All rights reserved.
+        <div class="ac-footer-copy">
+          &copy; <%= new Date().getFullYear() %> Lines Police CAD
+          <% if (typeof buildVersion !== 'undefined' && buildVersion) { %>
+            &middot; v<%= buildVersion %>
+          <% } %>
         </div>
-        <div style="display: flex; gap: 1.2rem; margin-bottom: 1rem;">
-          <a href="https://github.com/linesmerrill/police-cad" target="_blank" rel="noopener" style="font-size: 1.3rem;">
-            <i class="fab fa-github"></i>
-          </a>
-          <a href="https://discord.gg/3ECFhqe" target="_blank" rel="noopener" style="font-size: 1.3rem;">
-            <i class="fab fa-discord"></i>
-          </a>
-          <a href="mailto:support@linespolicecad.com" style="font-size: 1.3rem;">
-            <i class="fa fa-envelope"></i>
-          </a>
+        <div class="ac-footer-links">
+          <a href="https://linespolice-cad.com" target="_blank">Website</a>
+          <a href="https://discord.gg/linespolicecad" target="_blank">Discord</a>
         </div>
-        <% if (typeof buildVersion !== 'undefined') { %>
-        <div style="margin-top: 1rem; color: #6b7280; font-size: 0.85rem;">
-          Build: <%= buildVersion %>
-        </div>
-        <% } %>
       </div>
     </footer>
+
   </body>
- </html>
-
-
+</html>

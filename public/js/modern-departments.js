@@ -87,6 +87,10 @@ function fetchAndRenderModernDepartments() {
             icon = "fa-medkit";
             action = `/ems-dashboard${deptQueryParams}`;
             break;
+          case "judicial":
+            icon = "fa-gavel";
+            action = `/department-dashboard${deptQueryParams}`;
+            break;
         }
 
         if (canAccess) {

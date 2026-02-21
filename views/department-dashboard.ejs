@@ -825,6 +825,47 @@
       margin: 0 0.25rem;
     }
 
+    .dd-aw-search-wrap {
+      position: relative;
+      margin-bottom: 0.75rem;
+    }
+
+    .dd-aw-search-wrap i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--dd-text-dim);
+      font-size: 0.75rem;
+      transition: color 0.15s;
+    }
+
+    .dd-aw-search-wrap:focus-within i {
+      color: var(--dd-accent);
+    }
+
+    .dd-aw-search {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius-sm);
+      color: var(--dd-text);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8125rem;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .dd-aw-search:focus {
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.06);
+    }
+
+    .dd-aw-search::placeholder {
+      color: var(--dd-text-dim);
+    }
+
     .dd-pagination {
       display: flex;
       align-items: center;
@@ -1209,6 +1250,611 @@
     .dd-code-desc {
       font-size: 0.8125rem;
       color: var(--dd-text-muted);
+    }
+
+    /* ── Card Header Right Actions ── */
+
+    .dd-card-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Button Variants ── */
+
+    .dd-btn-sm {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.75rem;
+      flex: none;
+    }
+
+    .dd-btn-outline {
+      background: var(--dd-glass-bg);
+      color: var(--dd-text-muted);
+      border: 1px solid var(--dd-glass-border);
+    }
+    .dd-btn-outline:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--dd-text);
+      border-color: rgba(255,255,255,0.15);
+    }
+
+    .dd-btn-primary {
+      background: rgba(251,191,36,0.15);
+      color: var(--dd-amber);
+      border: 1px solid rgba(251,191,36,0.25);
+    }
+    .dd-btn-primary:hover {
+      background: rgba(251,191,36,0.25);
+      border-color: rgba(251,191,36,0.4);
+      box-shadow: 0 0 16px rgba(251,191,36,0.1);
+    }
+
+    /* ── Penal Codes Component ── */
+
+    .dd-pc-currency-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      background: var(--dd-glass-bg);
+      border: 1px solid var(--dd-glass-border);
+      color: var(--dd-text);
+      border-radius: var(--dd-radius-sm);
+      padding: 0.375rem 0.625rem;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      outline: none;
+      height: 30px;
+      transition: all 0.15s ease;
+    }
+    .dd-pc-currency-btn:hover {
+      border-color: rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+    }
+    .dd-pc-currency-btn .dd-pc-currency-sym {
+      font-weight: 600;
+      color: var(--dd-amber);
+    }
+    .dd-pc-currency-btn i {
+      font-size: 0.6rem;
+      opacity: 0.5;
+      margin-left: 0.125rem;
+    }
+
+    /* ── Currency Modal ── */
+    .dd-pc-currency-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+      margin-bottom: 1rem;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .dd-pc-currency-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0.625rem;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .dd-pc-currency-item:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: var(--dd-glass-border);
+    }
+    .dd-pc-currency-item.active {
+      background: rgba(251,191,36,0.08);
+      border-color: rgba(251,191,36,0.25);
+    }
+    .dd-pc-currency-item-sym {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--dd-amber);
+      min-width: 28px;
+      text-align: center;
+    }
+    .dd-pc-currency-item-label {
+      font-size: 0.8125rem;
+      color: var(--dd-text);
+      flex: 1;
+    }
+    .dd-pc-currency-item-actions {
+      display: flex;
+      gap: 0.25rem;
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+    .dd-pc-currency-item:hover .dd-pc-currency-item-actions {
+      opacity: 1;
+    }
+    .dd-pc-currency-item-actions button {
+      background: transparent;
+      border: none;
+      color: var(--dd-text-dim);
+      cursor: pointer;
+      padding: 0.2rem 0.375rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      transition: all 0.1s;
+    }
+    .dd-pc-currency-item-actions button:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--dd-text);
+    }
+    .dd-pc-currency-item-actions button.delete:hover {
+      background: rgba(239,68,68,0.15);
+      color: var(--dd-red);
+    }
+    .dd-pc-currency-add-row {
+      display: flex;
+      gap: 0.375rem;
+      align-items: center;
+    }
+    .dd-pc-currency-add-row input {
+      margin-bottom: 0;
+      flex: 1;
+    }
+    .dd-pc-currency-add-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      background: rgba(251,191,36,0.15);
+      border: 1px solid rgba(251,191,36,0.25);
+      color: var(--dd-amber);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .dd-pc-currency-add-btn:hover {
+      background: rgba(251,191,36,0.25);
+      border-color: rgba(251,191,36,0.4);
+    }
+    .dd-pc-currency-add-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Inline edit inputs for currency rows */
+    .dd-pc-edit-input {
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: 4px;
+      color: var(--dd-text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8125rem;
+      padding: 0.3rem 0.5rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .dd-pc-edit-input:focus {
+      border-color: var(--dd-amber);
+    }
+    .dd-pc-edit-save {
+      color: var(--dd-green, #22c55e) !important;
+    }
+    .dd-pc-edit-save:hover {
+      background: rgba(34,197,94,0.15) !important;
+      color: var(--dd-green, #22c55e) !important;
+    }
+
+    .dd-pc-search-wrap {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+
+    .dd-pc-search-wrap i {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--dd-text-dim);
+      font-size: 0.75rem;
+      transition: color 0.15s;
+    }
+
+    .dd-pc-search-wrap:focus-within i {
+      color: var(--dd-accent);
+    }
+
+    .dd-pc-search-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius-sm);
+      color: var(--dd-text);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8125rem;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .dd-pc-search-input:focus {
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.06);
+    }
+
+    .dd-pc-search-input::placeholder {
+      color: var(--dd-text-dim);
+    }
+
+    .dd-pc-category {
+      margin-bottom: 0.625rem;
+      background: var(--dd-surface);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius-sm);
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .dd-pc-category:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .dd-pc-cat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+      position: relative;
+    }
+
+    .dd-pc-cat-header::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--pc-cat-color, var(--dd-accent));
+      border-radius: 0 2px 2px 0;
+      opacity: 0.8;
+    }
+
+    .dd-pc-cat-header:hover {
+      background: var(--dd-glass-hover);
+    }
+
+    .dd-pc-cat-left {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      min-width: 0;
+    }
+
+    .dd-pc-chevron {
+      font-size: 0.625rem;
+      color: var(--dd-text-dim);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-shrink: 0;
+      width: 1rem;
+      text-align: center;
+    }
+
+    .dd-pc-chevron.expanded {
+      transform: rotate(-180deg);
+    }
+
+    .dd-pc-cat-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6875rem;
+      flex-shrink: 0;
+      background: var(--pc-cat-bg, rgba(139, 92, 246, 0.12));
+      color: var(--pc-cat-color, var(--dd-accent));
+    }
+
+    .dd-pc-cat-name {
+      font-weight: 600;
+      font-size: 0.8125rem;
+      color: var(--dd-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dd-pc-cat-count {
+      font-size: 0.6875rem;
+      color: var(--dd-text-dim);
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 0.125rem 0.5rem;
+      border-radius: 99px;
+      flex-shrink: 0;
+    }
+
+    .dd-pc-cat-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+
+    .dd-pc-cat-actions .dd-pc-add-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      font-family: 'Outfit', sans-serif;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--dd-glass-border);
+      background: transparent;
+      color: var(--dd-text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .dd-pc-cat-actions .dd-pc-add-btn:hover {
+      background: var(--dd-glass-hover);
+      color: var(--dd-text);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .dd-pc-icon-btn {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: transparent;
+      color: var(--dd-text-dim);
+      cursor: pointer;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      font-size: 0.6875rem;
+    }
+
+    .dd-pc-icon-btn:hover {
+      background: var(--dd-glass-hover);
+      color: var(--dd-text);
+    }
+
+    .dd-pc-icon-btn.danger:hover {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--dd-red);
+    }
+
+    .dd-pc-cat-body {
+      display: none;
+      border-top: 1px solid var(--dd-glass-border);
+    }
+
+    .dd-pc-cat-body.open {
+      display: block;
+    }
+
+    /* Violations Table */
+    .dd-pc-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .dd-pc-table thead th {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--dd-text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      text-align: left;
+      border-bottom: 1px solid var(--dd-glass-border);
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .dd-pc-table tbody tr {
+      transition: background 0.12s;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+    }
+
+    .dd-pc-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .dd-pc-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .dd-pc-table td {
+      padding: 0.5rem 0.75rem;
+      vertical-align: middle;
+    }
+
+    .dd-pc-v-name {
+      color: var(--dd-text);
+      font-weight: 500;
+    }
+
+    .dd-pc-v-jail {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: #fbbf24;
+      white-space: nowrap;
+    }
+
+    .dd-pc-v-fine {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: #34d399;
+      white-space: nowrap;
+    }
+
+    .dd-pc-v-explanation {
+      color: var(--dd-text-muted);
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.75rem;
+    }
+
+    .dd-pc-v-actions {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .dd-pc-empty-cat {
+      padding: 1.25rem 0.75rem;
+      color: var(--dd-text-dim);
+      font-size: 0.8125rem;
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* Penal Codes Scrollable Container */
+    .dd-pc-categories {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .dd-pc-categories::-webkit-scrollbar { width: 4px; }
+    .dd-pc-categories::-webkit-scrollbar-track { background: transparent; }
+    .dd-pc-categories::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 2px; }
+    .dd-pc-categories::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
+
+    /* Modal styling */
+    .dd-pc-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: dd-pc-fade-in 0.15s ease;
+    }
+
+    @keyframes dd-pc-fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .dd-pc-modal {
+      background: #12141a;
+      border: 1px solid var(--dd-glass-border);
+      border-radius: var(--dd-radius);
+      padding: 1.5rem;
+      min-width: 360px;
+      max-width: 420px;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+      animation: dd-pc-modal-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dd-pc-modal.wide {
+      min-width: 400px;
+      max-width: 480px;
+    }
+
+    @keyframes dd-pc-modal-in {
+      from { opacity: 0; transform: scale(0.95) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .dd-pc-modal h3 {
+      color: var(--dd-text);
+      margin: 0 0 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .dd-pc-modal label {
+      color: var(--dd-text-muted);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .dd-pc-modal input,
+    .dd-pc-modal textarea {
+      width: 100%;
+      padding: 0.5rem 0.625rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--dd-glass-border);
+      border-radius: 6px;
+      color: var(--dd-text);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8125rem;
+      margin-bottom: 0.75rem;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .dd-pc-modal input:focus,
+    .dd-pc-modal textarea:focus {
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    .dd-pc-modal textarea {
+      resize: vertical;
+    }
+
+    .dd-pc-modal-footer {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+    }
+
+    .dd-pc-modal-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .dd-pc-modal-btn.cancel {
+      background: transparent;
+      border: 1px solid var(--dd-glass-border);
+      color: var(--dd-text-muted);
+    }
+
+    .dd-pc-modal-btn.cancel:hover {
+      background: var(--dd-glass-hover);
+      color: var(--dd-text);
+    }
+
+    .dd-pc-modal-btn.save {
+      background: var(--dd-accent);
+      border: none;
+      color: #fff;
+    }
+
+    .dd-pc-modal-btn.save:hover {
+      background: #7c4deb;
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
     }
 
     /* ── Empty state ── */
@@ -1799,6 +2445,8 @@
     var enabledComponents = {};
     var pendingWarrants = [];
     var tenCodes = [];
+    var penalCodesData = [];
+    var penalCodesCurrency = 'USD';
     var expandedWarrantId = null;
     var currentTemplateName = '';
 
@@ -1841,6 +2489,15 @@
         accentColor: 'var(--dd-blue)',
         render: renderCodesPanel,
         init: loadTenCodes
+      },
+      penalCodes: {
+        label: 'Penal Codes',
+        icon: 'fa-scale-balanced',
+        navIcon: 'fa-scale-balanced',
+        gridClass: 'dd-grid-full',
+        accentColor: 'var(--dd-amber)',
+        render: renderPenalCodesPanel,
+        init: loadPenalCodes
       }
     };
 
@@ -1861,12 +2518,16 @@
     });
 
     function fetchDepartmentData() {
-      if (!departmentId) {
+      if (!departmentId || !/^[a-f0-9]{24}$/i.test(departmentId)) {
         showError('No department selected.');
         return;
       }
+      if (communityId && !/^[a-f0-9]{24}$/i.test(communityId)) {
+        showError('Invalid community.');
+        return;
+      }
       $.ajax({
-        url: API_URL + '/api/v1/department/' + departmentId,
+        url: API_URL + '/api/v1/community/' + encodeURIComponent(communityId) + '/departments/' + encodeURIComponent(departmentId),
         method: 'GET',
         success: function(dept) {
           var template = dept?.department?.template;
@@ -1892,7 +2553,8 @@
       buildSidebarNav();
       buildPanels();
       checkWarrantApprovalMode();
-      $('#dd-loading').hide();
+
+$('#dd-loading').hide();
       $('#dd-panels').show();
 
       // Init each enabled component
@@ -1901,6 +2563,13 @@
           componentRegistry[key].init();
         }
       });
+
+      // Auto-navigate to a section from hash (e.g. #penalCodes) or query param (?section=penalCodes)
+      var urlSection = window.location.hash.replace('#', '') ||
+                       new URLSearchParams(window.location.search).get('section');
+      if (urlSection === 'overview' || (urlSection && componentRegistry[urlSection] && enabledComponents[urlSection])) {
+        ddNavTo(urlSection);
+      }
     }
 
     // ── Sidebar Nav ──
@@ -2044,11 +2713,26 @@
       $('[id^="dd-panel-"]').hide();
       $('#dd-panel-' + panel).show();
 
+      // Update URL hash for bookmarking and refresh persistence
+      if (!ddNavTo._fromPopState && window.location.hash !== '#' + panel) {
+        history.pushState({ panel: panel }, '', '#' + panel);
+      }
+      ddNavTo._fromPopState = false;
+
       // Close mobile sidebar and restore hamburger
       $('.dd-sidebar').removeClass('open');
       $('#dd-sidebar-open').css('display', '');
     }
     window.ddNavTo = ddNavTo;
+
+    // Handle browser back/forward
+    window.addEventListener('popstate', function() {
+      var hash = window.location.hash.replace('#', '') || 'overview';
+      if (hash === 'overview' || (componentRegistry[hash] && enabledComponents[hash])) {
+        ddNavTo._fromPopState = true;
+        ddNavTo(hash);
+      }
+    });
 
     function ddRefresh() {
       Object.keys(componentRegistry).forEach(function(key) {
@@ -2268,6 +2952,8 @@
     var allWarrantsTotalCount = 0;
     var allWarrantsStatusFilter = '';
     var allWarrantsTypeFilter = '';
+    var allWarrantsSearchQuery = '';
+    var awSearchTimer = null;
     var expandedAllWarrantId = null;
 
     var statusColors = {
@@ -2283,6 +2969,10 @@
           '</div>' +
         '</div>' +
         '<div class="dd-card-body">' +
+          '<div class="dd-aw-search-wrap">' +
+            '<i class="fa fa-search"></i>' +
+            '<input type="text" class="dd-aw-search" placeholder="Search by name..." oninput="ddSetAwSearch(this.value)">' +
+          '</div>' +
           '<div class="dd-filter-bar" id="dd-aw-filters">' +
             '<label>Status:</label>' +
             '<button class="dd-filter-btn active" data-group="status" onclick="ddSetAwStatusFilter(this, \'\')" data-filter="">All</button>' +
@@ -2326,12 +3016,16 @@
       var url = API_URL + '/api/v2/warrants/community/' + communityId + '?limit=20&page=' + allWarrantsPage;
       if (allWarrantsStatusFilter) url += '&status=' + allWarrantsStatusFilter;
       if (allWarrantsTypeFilter) url += '&warrantType=' + allWarrantsTypeFilter;
+      if (allWarrantsSearchQuery) url += '&name=' + encodeURIComponent(allWarrantsSearchQuery);
 
+      console.log('[AllWarrants] Fetching:', url);
       $.ajax({
         url: url,
         method: 'GET',
+        cache: false,
         success: function(result) {
           try {
+            console.log('[AllWarrants] Response:', { totalCount: result.totalCount, totalPages: result.totalPages, dataLength: (result.data || []).length, page: result.page });
             allWarrantsData = result.data || [];
             allWarrantsTotalCount = result.totalCount || 0;
             allWarrantsTotalPages = result.totalPages || Math.ceil(allWarrantsTotalCount / 20) || 1;
@@ -2461,6 +3155,16 @@
       $(btn).closest('.dd-filter-bar').find('.dd-filter-btn[data-group="type"]').removeClass('active');
       $(btn).addClass('active');
       loadAllWarrants();
+    };
+
+    window.ddSetAwSearch = function(query) {
+      clearTimeout(awSearchTimer);
+      awSearchTimer = setTimeout(function() {
+        allWarrantsSearchQuery = query.trim();
+        allWarrantsPage = 0;
+        expandedAllWarrantId = null;
+        loadAllWarrants();
+      }, 300);
     };
 
     window.ddToggleAllWarrant = function(id) {
@@ -2833,6 +3537,558 @@
       });
       renderTenCodes(filtered);
     };
+
+    // ══════════════════════════════════════════
+    //  PENAL CODES COMPONENT
+    // ══════════════════════════════════════════
+
+    var pcDefaultCurrencies = [
+      { code: 'USD', symbol: '$', builtin: true },
+      { code: 'EUR', symbol: '\u20AC', builtin: true },
+      { code: 'GBP', symbol: '\u00A3', builtin: true },
+      { code: 'CAD', symbol: 'C$', builtin: true },
+      { code: 'AUD', symbol: 'A$', builtin: true }
+    ];
+    var pcCurrencyList = pcDefaultCurrencies.slice();
+    var pcKnownCurrencies = {};
+
+    function pcBuildKnownCurrencies() {
+      pcKnownCurrencies = {};
+      pcCurrencyList.forEach(function(c) { pcKnownCurrencies[c.code] = c.symbol; });
+    }
+    // Build immediately so initial render has symbols
+    pcBuildKnownCurrencies();
+
+    function pcGetCurrencySymbol(code) {
+      return pcKnownCurrencies[code] || code || '$';
+    }
+
+    function pcParseFine(val) {
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') { var n = parseInt(val.replace(/[^0-9]/g, ''), 10); return isNaN(n) ? 0 : n; }
+      return 0;
+    }
+
+    function pcFormatFine(amount) {
+      var n = pcParseFine(amount);
+      if (!n) return '\u2014';
+      return esc(pcGetCurrencySymbol(penalCodesCurrency)) + n.toLocaleString();
+    }
+
+    function renderPenalCodesPanel() {
+      return '<div class="dd-card-header">' +
+          '<div class="dd-card-header-left">' +
+            '<div class="dd-card-icon" style="background:rgba(251,191,36,0.15);color:var(--dd-amber);"><i class="fa fa-scale-balanced"></i></div>' +
+            '<div><h3 class="dd-card-title">Penal Codes</h3><p class="dd-card-subtitle">Manage violations &amp; penalties</p></div>' +
+          '</div>' +
+          '<div class="dd-card-header-right">' +
+            '<button class="dd-pc-currency-btn" onclick="pcShowCurrencyModal()" title="Change currency">' +
+              '<span class="dd-pc-currency-sym">' + esc(pcGetCurrencySymbol(penalCodesCurrency)) + '</span>' +
+              '<span>' + esc(penalCodesCurrency) + '</span>' +
+              '<i class="fa fa-chevron-down"></i>' +
+            '</button>' +
+            '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="pcResetToDefaults()" title="Reset to Defaults"><i class="fa fa-arrows-rotate"></i> Reset</button> ' +
+            '<button class="dd-btn dd-btn-sm dd-btn-primary" onclick="pcShowAddCategory()"><i class="fa fa-plus"></i> Category</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="dd-card-body">' +
+          '<div class="dd-pc-search-wrap">' +
+            '<i class="fa fa-search"></i>' +
+            '<input type="text" class="dd-pc-search-input dd-pc-search" placeholder="Search violations..." oninput="pcFilterViolations(this.value)">' +
+          '</div>' +
+          '<div class="dd-pc-loading dd-spinner"></div>' +
+          '<div class="dd-pc-empty dd-empty" style="display:none;">' +
+            '<div class="dd-empty-icon-wrap"><i class="fa fa-scale-balanced"></i></div>' +
+            '<p class="dd-empty-title">No penal codes found</p>' +
+            '<p class="dd-empty-sub">Add categories and violations to get started</p>' +
+          '</div>' +
+          '<div class="dd-pc-categories"></div>' +
+        '</div>';
+    }
+
+    function loadPenalCodes() {
+      if (!communityId) { console.warn('[PenalCodes] No communityId'); return; }
+      console.log('[PenalCodes] Loading from:', API_URL + '/api/v1/community/' + communityId + '/penal-codes');
+      $('.dd-pc-loading').show();
+      $('.dd-pc-empty').hide();
+      $('.dd-pc-categories').empty();
+
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityId + '/penal-codes',
+        method: 'GET',
+        success: function(data) {
+          console.log('[PenalCodes] Response:', data);
+          penalCodesData = (data && data.categories) || [];
+          penalCodesCurrency = (data && data.currency) || 'USD';
+          // Load currencies from API, fall back to defaults
+          pcCurrencyList = (data && data.currencies && data.currencies.length > 0)
+            ? data.currencies
+            : pcDefaultCurrencies.slice();
+          pcBuildKnownCurrencies();
+          // Update header button to reflect loaded currency
+          $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
+          $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
+          console.log('[PenalCodes] Categories count:', penalCodesData.length);
+          renderPenalCodesCategories(penalCodesData);
+        },
+        error: function(xhr, status, err) {
+          console.error('[PenalCodes] Error:', status, err, xhr.status, xhr.responseText);
+          $('.dd-pc-loading').hide();
+          $('.dd-pc-empty').show().find('.dd-empty-title').text('Unable to load penal codes');
+          $('.dd-pc-empty').find('.dd-empty-sub').text(err || status || 'Check console for details');
+        }
+      });
+    }
+
+    // Category color config for visual variety
+    var pcCategoryColors = {
+      'traffic violations':   { color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  icon: 'fa-car' },
+      'petty misdemeanors':   { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', icon: 'fa-scale-balanced' },
+      'misdemeanors':         { color: '#f97316', bg: 'rgba(249,115,22,0.12)', icon: 'fa-gavel' },
+      'felonies':             { color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  icon: 'fa-handcuffs' },
+      'other':                { color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', icon: 'fa-circle-exclamation' }
+    };
+
+    function pcGetCategoryStyle(catName) {
+      var key = (catName || '').toLowerCase().trim();
+      return pcCategoryColors[key] || { color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', icon: 'fa-folder' };
+    }
+
+    function renderPenalCodesCategories(categories) {
+      $('.dd-pc-loading').hide();
+      var $container = $('.dd-pc-categories');
+      $container.empty();
+
+      if (!categories || categories.length === 0) {
+        $('.dd-pc-empty').show();
+        return;
+      }
+      $('.dd-pc-empty').hide();
+
+      categories.forEach(function(cat, catIdx) {
+        var style = pcGetCategoryStyle(cat.name);
+        var violations = cat.violations || [];
+        var violationRows = '';
+
+        violations.forEach(function(v, vIdx) {
+          violationRows += '<tr>' +
+            '<td class="dd-pc-v-name">' + esc(v.name || '') + '</td>' +
+            '<td class="dd-pc-v-jail">' + esc(v.jailTime || 'N/A') + '</td>' +
+            '<td class="dd-pc-v-fine">' + pcFormatFine(v.fine) + '</td>' +
+            '<td class="dd-pc-v-explanation" title="' + esc(v.explanation || '') + '">' + esc(v.explanation || '\u2014') + '</td>' +
+            '<td class="dd-pc-v-actions">' +
+              '<button class="dd-pc-icon-btn" onclick="pcEditViolation(' + catIdx + ',' + vIdx + ')" title="Edit"><i class="fa fa-pen"></i></button>' +
+              '<button class="dd-pc-icon-btn danger" onclick="pcDeleteViolation(' + catIdx + ',' + vIdx + ')" title="Delete"><i class="fa fa-trash"></i></button>' +
+            '</td>' +
+          '</tr>';
+        });
+
+        var catHtml = '<div class="dd-pc-category" style="--pc-cat-color:' + style.color + ';--pc-cat-bg:' + style.bg + ';">' +
+          '<div class="dd-pc-cat-header" onclick="pcToggleCategory(' + catIdx + ')">' +
+            '<div class="dd-pc-cat-left">' +
+              '<i class="fa fa-chevron-down dd-pc-chevron dd-pc-chevron-' + catIdx + '"></i>' +
+              '<div class="dd-pc-cat-icon"><i class="fa ' + style.icon + '"></i></div>' +
+              '<span class="dd-pc-cat-name">' + esc(cat.name || 'Category') + '</span>' +
+              '<span class="dd-pc-cat-count">' + violations.length + '</span>' +
+            '</div>' +
+            '<div class="dd-pc-cat-actions" onclick="event.stopPropagation();">' +
+              '<button class="dd-pc-add-btn" onclick="pcShowAddViolation(' + catIdx + ')"><i class="fa fa-plus"></i> Violation</button>' +
+              '<button class="dd-pc-icon-btn" onclick="pcEditCategory(' + catIdx + ')" title="Edit Category"><i class="fa fa-pen"></i></button>' +
+              '<button class="dd-pc-icon-btn danger" onclick="pcDeleteCategory(' + catIdx + ')" title="Delete Category"><i class="fa fa-trash"></i></button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="dd-pc-cat-body dd-pc-cat-body-' + catIdx + '">' +
+            (violationRows ?
+              '<table class="dd-pc-table">' +
+                '<thead><tr>' +
+                  '<th>Violation</th>' +
+                  '<th>Jail Time</th>' +
+                  '<th>Fine</th>' +
+                  '<th>Explanation</th>' +
+                  '<th></th>' +
+                '</tr></thead>' +
+                '<tbody>' + violationRows + '</tbody>' +
+              '</table>'
+            : '<div class="dd-pc-empty-cat">No violations in this category</div>') +
+          '</div>' +
+        '</div>';
+
+        $container.append(catHtml);
+      });
+
+      // Auto-expand first category
+      if (categories.length > 0) pcToggleCategory(0);
+    }
+
+    window.pcToggleCategory = function(catIdx) {
+      var $body = $('.dd-pc-cat-body-' + catIdx);
+      var $chevron = $('.dd-pc-chevron-' + catIdx);
+      if ($body.hasClass('open')) {
+        $body.slideUp(200, function() { $body.removeClass('open'); });
+      } else {
+        $body.addClass('open').hide().slideDown(200);
+      }
+      $chevron.toggleClass('expanded');
+    };
+
+    window.pcFilterViolations = function(query) {
+      var q = query.toLowerCase();
+      if (!q) {
+        renderPenalCodesCategories(penalCodesData);
+        return;
+      }
+      var filtered = penalCodesData.map(function(cat) {
+        var matchedViolations = (cat.violations || []).filter(function(v) {
+          return (v.name || '').toLowerCase().indexOf(q) !== -1 ||
+                 (v.jailTime || '').toLowerCase().indexOf(q) !== -1 ||
+                 String(v.fine || '').indexOf(q) !== -1 ||
+                 (v.explanation || '').toLowerCase().indexOf(q) !== -1;
+        });
+        if (matchedViolations.length > 0) {
+          return Object.assign({}, cat, { violations: matchedViolations });
+        }
+        return null;
+      }).filter(Boolean);
+      renderPenalCodesCategories(filtered);
+    };
+
+    function pcSaveAll(callback) {
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityId + '/penal-codes',
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ categories: penalCodesData, currency: penalCodesCurrency, currencies: pcCurrencyList }),
+        success: function() {
+          if (callback) callback();
+        },
+        error: function() {
+          alert('Failed to save penal codes.');
+        }
+      });
+    }
+
+    // If current currency isn't in the list, add it as custom
+    function pcEnsureCurrentCurrency() {
+      if (!penalCodesCurrency) return;
+      var found = pcCurrencyList.some(function(c) { return c.code === penalCodesCurrency; });
+      if (!found) {
+        pcCurrencyList.push({ code: penalCodesCurrency, symbol: penalCodesCurrency, builtin: false });
+      }
+    }
+
+    window.pcShowCurrencyModal = function() {
+      pcEnsureCurrentCurrency();
+      var $overlay = $('<div class="dd-pc-modal-overlay">');
+      var $modal = $(
+        '<div class="dd-pc-modal wide">' +
+          '<h3>Currency</h3>' +
+          '<div class="dd-pc-currency-list" id="pc-currency-list"></div>' +
+          '<label>Add Custom Currency</label>' +
+          '<div class="dd-pc-currency-add-row">' +
+            '<input type="text" id="pc-currency-new-symbol" placeholder="Symbol (e.g. R$, kr)" style="flex:0.6;">' +
+            '<input type="text" id="pc-currency-new-code" placeholder="Code (e.g. BRL)" style="flex:0.4;">' +
+            '<button class="dd-pc-currency-add-btn" id="pc-currency-add-btn"><i class="fa fa-plus"></i></button>' +
+          '</div>' +
+          '<div class="dd-pc-modal-footer">' +
+            '<button class="dd-pc-modal-btn cancel" id="pc-currency-close">Close</button>' +
+          '</div>' +
+        '</div>'
+      );
+      $overlay.append($modal);
+      $('body').append($overlay);
+
+      function renderCurrencyList() {
+        var html = '';
+        pcCurrencyList.forEach(function(c, idx) {
+          var isActive = c.code === penalCodesCurrency;
+          html += '<div class="dd-pc-currency-item' + (isActive ? ' active' : '') + '" data-idx="' + idx + '">' +
+            '<div class="dd-pc-currency-item-sym">' + esc(c.symbol) + '</div>' +
+            '<div class="dd-pc-currency-item-label">' + esc(c.code) + (isActive ? ' <span style="color:var(--dd-amber);font-size:0.6875rem;font-weight:500;">\u2022 Active</span>' : '') + '</div>' +
+            '<div class="dd-pc-currency-item-actions">' +
+              (!isActive ? '<button onclick="event.stopPropagation();pcSelectCurrency(' + idx + ')" title="Use this currency"><i class="fa fa-check"></i></button>' : '') +
+              (!c.builtin ? '<button onclick="event.stopPropagation();pcEditCurrencyItem(' + idx + ')" title="Edit"><i class="fa fa-pen"></i></button>' : '') +
+              (!c.builtin && !isActive ? '<button class="delete" onclick="event.stopPropagation();pcDeleteCurrencyItem(' + idx + ')" title="Delete"><i class="fa fa-trash"></i></button>' : '') +
+            '</div>' +
+          '</div>';
+        });
+        $('#pc-currency-list').html(html);
+
+        // Click row to select
+        $('#pc-currency-list .dd-pc-currency-item').on('click', function() {
+          var idx = parseInt($(this).data('idx'));
+          pcSelectCurrency(idx);
+        });
+      }
+
+      window.pcSelectCurrency = function(idx) {
+        var c = pcCurrencyList[idx];
+        if (!c) return;
+        penalCodesCurrency = c.code;
+        pcBuildKnownCurrencies();
+        // Update UI immediately
+        renderCurrencyList();
+        $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
+        $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
+        renderPenalCodesCategories(penalCodesData);
+        // Persist to backend
+        pcSaveAll();
+      };
+
+      window.pcEditCurrencyItem = function(idx) {
+        var c = pcCurrencyList[idx];
+        if (!c || c.builtin) return;
+
+        // Replace the row with inline edit inputs
+        var $row = $('#pc-currency-list .dd-pc-currency-item[data-idx="' + idx + '"]');
+        $row.off('click');
+        $row.removeClass('dd-pc-currency-item').addClass('dd-pc-currency-item').css({ cursor: 'default' });
+        $row.html(
+          '<input type="text" class="dd-pc-edit-input dd-pc-edit-sym" value="' + esc(c.symbol) + '" placeholder="Symbol" style="width:50px;text-align:center;">' +
+          '<input type="text" class="dd-pc-edit-input dd-pc-edit-code" value="' + esc(c.code) + '" placeholder="Code" style="flex:1;">' +
+          '<div class="dd-pc-currency-item-actions" style="opacity:1;">' +
+            '<button class="dd-pc-edit-save" title="Save"><i class="fa fa-check"></i></button>' +
+            '<button class="dd-pc-edit-cancel" title="Cancel"><i class="fa fa-xmark"></i></button>' +
+          '</div>'
+        );
+
+        var $symInput = $row.find('.dd-pc-edit-sym');
+        var $codeInput = $row.find('.dd-pc-edit-code');
+        $symInput.focus().select();
+
+        function saveEdit() {
+          var newSym = $symInput.val().trim();
+          var newCode = $codeInput.val().trim().toUpperCase();
+          if (!newSym || !newCode) { renderCurrencyList(); return; }
+          // Check for code conflict (ignore self)
+          var conflict = pcCurrencyList.some(function(other, i) { return i !== idx && other.code === newCode; });
+          if (conflict) { $codeInput.css('border-color', 'var(--dd-red)').focus(); return; }
+          var oldCode = c.code;
+          c.symbol = newSym;
+          c.code = newCode;
+          if (oldCode === penalCodesCurrency) penalCodesCurrency = newCode;
+          pcBuildKnownCurrencies();
+          // Update UI immediately
+          renderCurrencyList();
+          $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
+          $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
+          renderPenalCodesCategories(penalCodesData);
+          pcSaveAll();
+        }
+
+        $row.find('.dd-pc-edit-save').on('click', function(e) { e.stopPropagation(); saveEdit(); });
+        $row.find('.dd-pc-edit-cancel').on('click', function(e) { e.stopPropagation(); renderCurrencyList(); });
+        $row.find('input').on('keydown', function(e) {
+          if (e.key === 'Enter') saveEdit();
+          if (e.key === 'Escape') renderCurrencyList();
+        });
+      };
+
+      window.pcDeleteCurrencyItem = function(idx) {
+        var c = pcCurrencyList[idx];
+        if (!c || c.builtin || c.code === penalCodesCurrency) return;
+        pcCurrencyList.splice(idx, 1);
+        pcBuildKnownCurrencies();
+        renderCurrencyList();
+        pcSaveAll();
+      };
+
+      // Add new currency
+      $modal.find('#pc-currency-add-btn').on('click', function() {
+        var sym = $('#pc-currency-new-symbol').val().trim();
+        var code = $('#pc-currency-new-code').val().trim().toUpperCase();
+        if (!sym || !code) return;
+        // Check duplicate
+        var exists = pcCurrencyList.some(function(c) { return c.code === code; });
+        if (exists) { alert('Currency code "' + code + '" already exists.'); return; }
+        pcCurrencyList.push({ code: code, symbol: sym, builtin: false });
+        pcBuildKnownCurrencies();
+        $('#pc-currency-new-symbol').val('');
+        $('#pc-currency-new-code').val('');
+        renderCurrencyList();
+        pcSaveAll();
+      });
+
+      // Enter key in inputs triggers add
+      $modal.find('#pc-currency-new-symbol, #pc-currency-new-code').on('keydown', function(e) {
+        if (e.key === 'Enter') { $modal.find('#pc-currency-add-btn').click(); }
+      });
+
+      // Close
+      $modal.find('#pc-currency-close').on('click', function() { $overlay.remove(); });
+      $overlay.on('click', function(e) { if (e.target === $overlay[0]) $overlay.remove(); });
+
+      renderCurrencyList();
+    };
+
+    window.pcResetToDefaults = function() {
+      if (!confirm('Reset all penal codes to defaults? This will overwrite any customizations.')) return;
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityId + '/penal-codes/reset',
+        method: 'POST',
+        success: function(data) {
+          penalCodesData = (data && data.categories) || [];
+          penalCodesCurrency = (data && data.currency) || 'USD';
+          pcCurrencyList = (data && data.currencies && data.currencies.length > 0)
+            ? data.currencies
+            : pcDefaultCurrencies.slice();
+          pcBuildKnownCurrencies();
+          // Update the currency button in the header
+          $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
+          $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
+          renderPenalCodesCategories(penalCodesData);
+          $('.dd-pc-search').val('');
+        },
+        error: function() {
+          alert('Failed to reset penal codes.');
+        }
+      });
+    };
+
+    // ── Penal Codes: Category CRUD ──
+
+    window.pcShowAddCategory = function() {
+      pcShowModal('Add Category', { name: '', subtitle: '' }, function(vals) {
+        penalCodesData.push({
+          id: 'cat_' + Date.now(),
+          name: vals.name,
+          subtitle: vals.subtitle,
+          icon: '',
+          color: '',
+          columns: ['Violation', 'Jail Time', 'Fine', 'Explanation'],
+          violations: []
+        });
+        pcSaveAll(function() {
+          renderPenalCodesCategories(penalCodesData);
+          $('.dd-pc-search').val('');
+        });
+      });
+    };
+
+    window.pcEditCategory = function(catIdx) {
+      var cat = penalCodesData[catIdx];
+      if (!cat) return;
+      pcShowModal('Edit Category', { name: cat.name, subtitle: cat.subtitle || '' }, function(vals) {
+        penalCodesData[catIdx].name = vals.name;
+        penalCodesData[catIdx].subtitle = vals.subtitle;
+        pcSaveAll(function() {
+          renderPenalCodesCategories(penalCodesData);
+        });
+      });
+    };
+
+    window.pcDeleteCategory = function(catIdx) {
+      var cat = penalCodesData[catIdx];
+      if (!cat) return;
+      if (!confirm('Delete "' + cat.name + '" and all its violations?')) return;
+      penalCodesData.splice(catIdx, 1);
+      pcSaveAll(function() {
+        renderPenalCodesCategories(penalCodesData);
+      });
+    };
+
+    // ── Penal Codes: Violation CRUD ──
+
+    window.pcShowAddViolation = function(catIdx) {
+      pcShowViolationModal('Add Violation', { name: '', jailTime: '', fine: '', explanation: '' }, function(vals) {
+        if (!penalCodesData[catIdx].violations) penalCodesData[catIdx].violations = [];
+        penalCodesData[catIdx].violations.push(vals);
+        pcSaveAll(function() {
+          renderPenalCodesCategories(penalCodesData);
+        });
+      });
+    };
+
+    window.pcEditViolation = function(catIdx, vIdx) {
+      var v = penalCodesData[catIdx] && penalCodesData[catIdx].violations[vIdx];
+      if (!v) return;
+      pcShowViolationModal('Edit Violation', v, function(vals) {
+        penalCodesData[catIdx].violations[vIdx] = vals;
+        pcSaveAll(function() {
+          renderPenalCodesCategories(penalCodesData);
+        });
+      });
+    };
+
+    window.pcDeleteViolation = function(catIdx, vIdx) {
+      var v = penalCodesData[catIdx] && penalCodesData[catIdx].violations[vIdx];
+      if (!v) return;
+      if (!confirm('Delete "' + v.name + '"?')) return;
+      penalCodesData[catIdx].violations.splice(vIdx, 1);
+      pcSaveAll(function() {
+        renderPenalCodesCategories(penalCodesData);
+      });
+    };
+
+    // ── Penal Codes: Modals ──
+
+    function pcShowModal(title, values, onSave) {
+      var $overlay = $('<div class="dd-pc-modal-overlay">');
+      var $modal = $(
+        '<div class="dd-pc-modal">' +
+          '<h3>' + esc(title) + '</h3>' +
+          '<label>Name *</label>' +
+          '<input type="text" id="pc-modal-name" value="' + esc(values.name) + '">' +
+          '<label>Subtitle</label>' +
+          '<input type="text" id="pc-modal-subtitle" value="' + esc(values.subtitle || '') + '">' +
+          '<div class="dd-pc-modal-footer">' +
+            '<button class="dd-pc-modal-btn cancel" id="pc-modal-cancel">Cancel</button>' +
+            '<button class="dd-pc-modal-btn save" id="pc-modal-save">Save</button>' +
+          '</div>' +
+        '</div>'
+      );
+      $overlay.append($modal);
+      $('body').append($overlay);
+      $overlay.find('#pc-modal-name').focus();
+      $overlay.find('#pc-modal-cancel').on('click', function() { $overlay.remove(); });
+      $overlay.on('click', function(e) { if (e.target === $overlay[0]) $overlay.remove(); });
+      $overlay.find('#pc-modal-save').on('click', function() {
+        var name = $overlay.find('#pc-modal-name').val().trim();
+        if (!name) { $overlay.find('#pc-modal-name').css('border-color', 'var(--dd-red)'); return; }
+        $overlay.remove();
+        onSave({ name: name, subtitle: $overlay.find('#pc-modal-subtitle').val().trim() });
+      });
+    }
+
+    function pcShowViolationModal(title, values, onSave) {
+      var $overlay = $('<div class="dd-pc-modal-overlay">');
+      var $modal = $(
+        '<div class="dd-pc-modal wide">' +
+          '<h3>' + esc(title) + '</h3>' +
+          '<label>Violation Name *</label>' +
+          '<input type="text" id="pcv-name" value="' + esc(values.name) + '">' +
+          '<label>Jail Time *</label>' +
+          '<input type="text" id="pcv-jailtime" value="' + esc(values.jailTime) + '" placeholder="e.g. 30 seconds, 5 minutes">' +
+          '<label>Fine (' + esc(pcGetCurrencySymbol(penalCodesCurrency)) + ')</label>' +
+          '<input type="number" id="pcv-fine" min="0" step="1" value="' + esc(String(values.fine || 0)) + '" placeholder="e.g. 500">' +
+          '<label>Explanation</label>' +
+          '<textarea id="pcv-explanation" rows="2">' + esc(values.explanation || '') + '</textarea>' +
+          '<div class="dd-pc-modal-footer">' +
+            '<button class="dd-pc-modal-btn cancel" id="pcv-cancel">Cancel</button>' +
+            '<button class="dd-pc-modal-btn save" id="pcv-save">Save</button>' +
+          '</div>' +
+        '</div>'
+      );
+      $overlay.append($modal);
+      $('body').append($overlay);
+      $overlay.find('#pcv-name').focus();
+      $overlay.find('#pcv-cancel').on('click', function() { $overlay.remove(); });
+      $overlay.on('click', function(e) { if (e.target === $overlay[0]) $overlay.remove(); });
+      $overlay.find('#pcv-save').on('click', function() {
+        var name = $overlay.find('#pcv-name').val().trim();
+        var jailTime = $overlay.find('#pcv-jailtime').val().trim();
+        if (!name) { $overlay.find('#pcv-name').css('border-color', 'var(--dd-red)'); return; }
+        if (!jailTime) { $overlay.find('#pcv-jailtime').css('border-color', 'var(--dd-red)'); return; }
+        $overlay.remove();
+        onSave({
+          name: name,
+          jailTime: jailTime,
+          fine: parseInt($overlay.find('#pcv-fine').val(), 10) || 0,
+          explanation: $overlay.find('#pcv-explanation').val().trim()
+        });
+      });
+    }
+
+    // Chevron rotation is handled by .dd-pc-chevron.expanded in the stylesheet
 
     // ══════════════════════════════════════════
     //  SIDEBAR DEPARTMENTS LIST

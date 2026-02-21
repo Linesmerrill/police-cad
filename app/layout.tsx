@@ -6,8 +6,12 @@ export const metadata: Metadata = {
   title: 'LPC - Lines Police CAD',
   description: "World's Leading Free-to-use service for Role-play communities",
   icons: {
-    icon: '/static/images/lines-police-cad-discord-logo-2024-github-profile.png',
-    apple: '/static/images/lines-police-cad-discord-logo-2024-github-profile.png',
+    icon: [
+      { url: '/static/images/favicon.ico', sizes: 'any' },
+      { url: '/static/images/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/static/images/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: '/static/images/apple-touch-icon.png',
   },
 };
 
