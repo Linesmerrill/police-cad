@@ -7,8 +7,7 @@
   var userId = (dbUser && dbUser._id) || (dbUser && dbUser.user && dbUser.user._id) || '';
   var userName = '';
   if (dbUser && dbUser.user) {
-    userName = ((dbUser.user.firstName || '') + ' ' + (dbUser.user.lastName || '')).trim();
-    userName = userName || dbUser.user.email || 'Unknown';
+    userName = dbUser.user.username || ((dbUser.user.firstName || '') + ' ' + (dbUser.user.lastName || '')).trim() || dbUser.user.email || 'Unknown';
   }
 
   // --- Session state ---
@@ -17,10 +16,13 @@
   var currentRole = 'spectator'; // judge, defendant, spectator
   var activeCaseData = null;
   var chatMessages = [];
-  var lastChatTimestamp = '';
   var resolutions = {}; // { itemIndex: 'dismissed' | 'upheld' }
   var sessionPollTimer = null;
   var chatPollTimer = null;
+  var pollPaused = false; // pause polling during resolution to prevent race conditions
+  var resolvedCaseIds = {}; // track cases resolved this session to prevent stale re-renders
+  var docketCaseCache = {}; // caseId -> fetched court case details
+  var expandedDocketId = null;
 
   // --- Init ---
   $(document).ready(function() {
@@ -30,8 +32,7 @@
       return;
     }
 
-    loadSession();
-    joinSession();
+    loadSession(); // joinSession() is called inside loadSession success after role is determined
     loadChatHistory();
     bindEvents();
 
@@ -44,8 +45,9 @@
   $(window).on('beforeunload', function() {
     if (sessionId && userId) {
       var url = API_URL + '/api/v2/court-sessions/' + sessionId + '/leave/' + userId;
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(url);
+      // Use fetch with keepalive for DELETE (sendBeacon only supports POST)
+      if (window.fetch) {
+        fetch(url, { method: 'DELETE', keepalive: true });
       } else {
         $.ajax({ url: url, method: 'DELETE', async: false });
       }
@@ -61,8 +63,14 @@
 
     // End session
     $('#endSessionBtn').on('click', function() {
-      if (!confirm('Are you sure you want to end this court session?')) return;
-      endSession();
+      jdConfirm({
+        icon: 'fa-stop',
+        iconClass: 'icon-danger',
+        title: 'End Court Session',
+        message: 'Are you sure you want to end this court session? This action cannot be undone.',
+        confirmLabel: 'End Session',
+        onConfirm: function() { endSession(); }
+      });
     });
 
     // Send chat
@@ -98,11 +106,7 @@
       activateNextDocketEntry();
     });
 
-    // Activate specific docket entry (judge only)
-    $(document).on('click', '.jd-docket-activate-btn', function() {
-      var caseId = $(this).data('case-id');
-      activateDocketEntry(caseId);
-    });
+    // activateDocketEntry is called directly from inline onclick
   }
 
   // --- Data Loading ---
@@ -114,6 +118,7 @@
       success: function(resp) {
         currentSession = resp.courtSession || resp.data || resp;
         determineRole();
+        joinSession(); // Join after role is determined
         renderAll();
         $('#mainLoading').hide();
         $('#sessionLayout').show();
@@ -127,6 +132,26 @@
 
   function joinSession() {
     if (!userId) return;
+
+    // Optimistically add self to participants list before the API call
+    if (currentSession) {
+      var participants = currentSession.participants || [];
+      var alreadyJoined = false;
+      for (var i = 0; i < participants.length; i++) {
+        if (participants[i].userID === userId) { alreadyJoined = true; break; }
+      }
+      if (!alreadyJoined) {
+        participants.push({
+          userID: userId,
+          userName: userName,
+          role: currentRole,
+          joinedAt: new Date().toISOString()
+        });
+        currentSession.participants = participants;
+        renderParticipants(currentSession);
+      }
+    }
+
     $.ajax({
       url: API_URL + '/api/v2/court-sessions/' + sessionId + '/join',
       method: 'POST',
@@ -147,21 +172,31 @@
       url: API_URL + '/api/v2/court-sessions/' + sessionId + '/chat',
       method: 'GET',
       success: function(resp) {
-        chatMessages = resp.messages || resp.data || resp || [];
-        if (chatMessages.length > 0) {
-          lastChatTimestamp = chatMessages[chatMessages.length - 1].timestamp || chatMessages[chatMessages.length - 1].createdAt || '';
-        }
+        chatMessages = resp.data || resp.messages || [];
         renderChat(chatMessages);
       }
     });
   }
 
   function pollSession() {
+    if (pollPaused) return;
     $.ajax({
       url: API_URL + '/api/v2/court-sessions/' + sessionId,
       method: 'GET',
       success: function(resp) {
         var newSession = resp.courtSession || resp.data || resp;
+
+        // Patch stale docket entries: if we resolved a case locally but the
+        // server hasn't caught up yet, force those entries to "completed" so
+        // downstream comparisons and renders never see them as "active".
+        var docket = newSession.docket || [];
+        for (var i = 0; i < docket.length; i++) {
+          var dCaseId = docket[i].courtCaseID || docket[i].caseID || '';
+          if (dCaseId && resolvedCaseIds[dCaseId]) {
+            docket[i].status = 'completed';
+          }
+        }
+
         var statusChanged = !currentSession || currentSession.status !== newSession.status;
         var activeCaseChanged = !currentSession ||
           getActiveDocketCaseId(currentSession) !== getActiveDocketCaseId(newSession);
@@ -173,9 +208,10 @@
 
         if (statusChanged) {
           renderSessionHeader(currentSession);
+          renderActiveCasePanel(currentSession);
           renderDocket(currentSession);
         }
-        if (activeCaseChanged) {
+        if (activeCaseChanged && !statusChanged) {
           renderActiveCasePanel(currentSession);
           renderDocket(currentSession);
         }
@@ -187,24 +223,14 @@
   }
 
   function pollChat() {
-    var url = API_URL + '/api/v2/court-sessions/' + sessionId + '/chat';
-    if (lastChatTimestamp) {
-      url += '?after=' + encodeURIComponent(lastChatTimestamp);
-    }
-
     $.ajax({
-      url: url,
+      url: API_URL + '/api/v2/court-sessions/' + sessionId + '/chat?limit=200',
       method: 'GET',
       success: function(resp) {
-        var newMessages = resp.messages || resp.data || resp || [];
-        if (newMessages.length > 0) {
-          // If we used the "after" param, append; otherwise replace
-          if (lastChatTimestamp) {
-            chatMessages = chatMessages.concat(newMessages);
-          } else {
-            chatMessages = newMessages;
-          }
-          lastChatTimestamp = newMessages[newMessages.length - 1].timestamp || newMessages[newMessages.length - 1].createdAt || '';
+        var messages = resp.data || resp.messages || [];
+        // Only re-render if message count changed
+        if (messages.length !== chatMessages.length) {
+          chatMessages = messages;
           renderChat(chatMessages);
         }
       }
@@ -276,6 +302,15 @@
       $('#startSessionBtn').hide();
       $('#endSessionBtn').hide();
     }
+
+    // Disable chat when session is completed or cancelled
+    if (status === 'completed' || status === 'cancelled') {
+      $('#chatInput').prop('disabled', true).attr('placeholder', 'Session has ended.');
+      $('#chatSendBtn').prop('disabled', true).css('opacity', '0.4');
+    } else {
+      $('#chatInput').prop('disabled', false).attr('placeholder', 'Type a message...');
+      $('#chatSendBtn').prop('disabled', false).css('opacity', '');
+    }
   }
 
   // --- Render: Active Case Panel ---
@@ -293,9 +328,28 @@
         $('#noActiveCaseHint').text('The session has not started yet.');
       } else if (session.status === 'completed') {
         $('#noActiveCaseHint').text('This session has concluded.');
+      } else if (session.status === 'cancelled') {
+        $('#noActiveCaseHint').text('This session was cancelled.');
       } else {
         $('#noActiveCaseHint').text('Waiting for the judge to call the next case.');
       }
+      return;
+    }
+
+    var caseId = activeDocketEntry.courtCaseID || activeDocketEntry.caseID || '';
+
+    // Skip if we already resolved this case (prevents stale docket data from re-showing it)
+    if (caseId && resolvedCaseIds[caseId]) {
+      activeDocketEntry.status = 'completed';
+      activeCaseData = null;
+      $('#activeCasePanel').hide();
+      $('#noActiveCasePanel').show();
+      if (currentRole === 'judge') {
+        $('#noActiveCaseHint').html('Case already resolved. Click <strong>Activate</strong> on the next docket entry.');
+      } else {
+        $('#noActiveCaseHint').text('Waiting for the judge to call the next case.');
+      }
+      renderDocket(session);
       return;
     }
 
@@ -303,7 +357,6 @@
     $('#activeCasePanel').show();
     $('#activeCaseBody').html('<div class="jd-loading"><div class="jd-spinner"></div></div>');
 
-    var caseId = activeDocketEntry.courtCaseID || activeDocketEntry.caseID || '';
     if (!caseId) {
       $('#activeCaseBody').html('<div class="jd-empty"><i class="fa fa-exclamation-triangle"></i>No case ID found for this docket entry.</div>');
       return;
@@ -314,9 +367,37 @@
       method: 'GET',
       success: function(resp) {
         activeCaseData = resp.courtCase || resp.data || resp;
+
+        // If the case has already been resolved, treat it as completed
+        if (activeCaseData.status === 'completed') {
+          // Fix stale docket entry: mark it as completed locally
+          if (session && session.docket) {
+            for (var d = 0; d < session.docket.length; d++) {
+              if ((session.docket[d].courtCaseID || session.docket[d].caseID) === caseId) {
+                session.docket[d].status = 'completed';
+              }
+            }
+          }
+          activeCaseData = null;
+          $('#activeCasePanel').hide();
+          $('#noActiveCasePanel').show();
+          if (currentRole === 'judge') {
+            $('#noActiveCaseHint').html('Case already resolved. Click <strong>Activate</strong> on the next docket entry.');
+          } else {
+            $('#noActiveCaseHint').text('Waiting for the judge to call the next case.');
+          }
+          renderDocket(session);
+          return;
+        }
+
+        // Fallback: if the court case has no civilianName, use the docket entry's denormalized name
+        if (!activeCaseData.civilianName && activeDocketEntry && activeDocketEntry.civilianName) {
+          activeCaseData.civilianName = activeDocketEntry.civilianName;
+        }
         resolutions = {}; // Reset resolutions for new case
         var html = renderCaseDetails(activeCaseData, caseId);
         $('#activeCaseBody').html(html);
+        enrichContestedItems(activeCaseData);
       },
       error: function() {
         $('#activeCaseBody').html('<div class="jd-empty"><i class="fa fa-exclamation-triangle"></i>Failed to load case details.</div>');
@@ -329,11 +410,13 @@
     var civName = d.civilianName || 'Unknown Civilian';
     var statement = d.statement || '';
     var items = d.contestedItems || [];
+    var status = d.status || '';
 
     var html = '';
 
-    // Civilian name
-    html += '<div class="jd-active-case-civ">' + escHtml(civName) + '</div>';
+    // Defendant info
+    html += '<div style="margin-bottom:0.5rem;"><span style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;">Defendant</span></div>';
+    html += '<div class="jd-active-case-civ"><i class="fa fa-user" style="color:var(--accent-gold);margin-right:0.4rem;font-size:0.9em;"></i>' + escHtml(civName) + '</div>';
 
     // Statement
     if (statement) {
@@ -349,6 +432,7 @@
         var item = items[i];
         var typeClass = getItemTypeClass(item.itemType);
         html += '<div class="jd-contested-item" data-item-index="' + i + '">';
+        html += '<div class="jd-contested-item-row">';
         html += '<div class="jd-contested-item-info">';
         html += '<span class="jd-badge ' + typeClass + '">' + escHtml(item.itemType || 'item') + '</span>';
         html += '<span class="jd-contested-item-summary">' + escHtml(item.summary || 'No description') + '</span>';
@@ -359,7 +443,14 @@
           html += renderResolutionToggles(i);
         }
 
+        html += '</div>'; // close jd-contested-item-row
+
+        // Details slot — populated asynchronously by enrichContestedItems
+        html += '<div class="jd-contested-item-details" id="itemDetails-' + i + '">';
+        html += '<div class="jd-item-detail-loading"><i class="fa fa-spinner fa-spin"></i> Loading details&hellip;</div>';
         html += '</div>';
+
+        html += '</div>'; // close jd-contested-item
       }
       html += '</div>';
     }
@@ -384,6 +475,170 @@
       '<button class="jd-toggle-btn jd-toggle-dismiss' + dismissClass + '" data-item-index="' + itemIndex + '">Dismiss</button>' +
       '<button class="jd-toggle-btn jd-toggle-uphold' + upholdClass + '" data-item-index="' + itemIndex + '">Uphold</button>' +
       '</div>';
+  }
+
+  // --- Enrich contested items with source record details ---
+
+  function enrichContestedItems(courtCase) {
+    var items = courtCase.contestedItems || [];
+    if (items.length === 0) return;
+
+    var civilianId = courtCase.civilianID || '';
+    var hasCitationOrWarning = false;
+    var arrestIds = [];
+
+    for (var i = 0; i < items.length; i++) {
+      var t = (items[i].itemType || '').toLowerCase();
+      if (t === 'citation' || t === 'warning') {
+        hasCitationOrWarning = true;
+      } else if (t === 'arrest') {
+        arrestIds.push({ index: i, id: items[i].itemID });
+      }
+    }
+
+    // Fetch civilian record for citations/warnings
+    if (hasCitationOrWarning && !civilianId) {
+      // No civilian ID — can't fetch details
+      for (var i = 0; i < items.length; i++) {
+        var t = (items[i].itemType || '').toLowerCase();
+        if (t === 'citation' || t === 'warning') {
+          renderItemDetails(i, t, null);
+        }
+      }
+    } else if (hasCitationOrWarning && civilianId) {
+      $.ajax({
+        url: API_URL + '/api/v1/civilian/' + civilianId,
+        method: 'GET',
+        success: function(resp) {
+          var civData = resp.civilian || resp;
+          var history = civData.criminalHistory || [];
+          // Build lookup by ID
+          var historyMap = {};
+          for (var h = 0; h < history.length; h++) {
+            historyMap[history[h]._id] = history[h];
+          }
+          // Populate each citation/warning item
+          for (var i = 0; i < items.length; i++) {
+            var t = (items[i].itemType || '').toLowerCase();
+            if (t === 'citation' || t === 'warning') {
+              var record = historyMap[items[i].itemID];
+              renderItemDetails(i, t, record || null);
+            }
+          }
+        },
+        error: function() {
+          for (var i = 0; i < items.length; i++) {
+            var t = (items[i].itemType || '').toLowerCase();
+            if (t === 'citation' || t === 'warning') {
+              renderItemDetails(i, t, null);
+            }
+          }
+        }
+      });
+    }
+
+    // Fetch each arrest report
+    for (var a = 0; a < arrestIds.length; a++) {
+      (function(idx, id) {
+        $.ajax({
+          url: API_URL + '/api/v1/arrest-report/' + id,
+          method: 'GET',
+          success: function(resp) {
+            var report = resp.arrestReport || resp;
+            renderItemDetails(idx, 'arrest', report);
+          },
+          error: function() {
+            renderItemDetails(idx, 'arrest', null);
+          }
+        });
+      })(arrestIds[a].index, arrestIds[a].id);
+    }
+  }
+
+  function renderItemDetails(itemIndex, itemType, record) {
+    var $slot = $('#itemDetails-' + itemIndex);
+    if (!$slot.length) return;
+
+    if (!record) {
+      $slot.html('<div class="jd-item-detail-loading">Details unavailable</div>');
+      return;
+    }
+
+    var html = '';
+
+    if (itemType === 'citation' || itemType === 'warning') {
+      // CriminalHistory record
+      var fines = record.fines || [];
+      var notes = record.notes || '';
+      var date = record.createdAt ? new Date(record.createdAt).toLocaleDateString() : '';
+
+      html += '<div class="jd-item-detail-grid">';
+      if (date) {
+        html += '<div class="jd-item-detail-row"><span class="jd-item-detail-label">Date Issued</span><span class="jd-item-detail-value">' + escHtml(date) + '</span></div>';
+      }
+      if (record.type) {
+        html += '<div class="jd-item-detail-row"><span class="jd-item-detail-label">Type</span><span class="jd-item-detail-value">' + escHtml(record.type) + '</span></div>';
+      }
+      html += '</div>';
+
+      // Fines
+      if (fines.length > 0) {
+        html += '<div class="jd-item-fines">';
+        html += '<div class="jd-item-detail-label" style="margin-bottom:0.2rem;">Charges / Fines</div>';
+        for (var f = 0; f < fines.length; f++) {
+          var fine = fines[f];
+          var catClass = (fine.category || '').toLowerCase();
+          html += '<div class="jd-item-fine-row">';
+          html += '<span class="jd-item-detail-value">' + escHtml(fine.fineType || 'Unknown Charge') + '</span>';
+          if (fine.fineAmount) {
+            html += ' <span class="jd-item-fine-amount">$' + fine.fineAmount + '</span>';
+          }
+          if (fine.category) {
+            html += ' <span class="jd-item-fine-category ' + escHtml(catClass) + '">' + escHtml(fine.category) + '</span>';
+          }
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+
+      // Notes
+      if (notes) {
+        html += '<div style="margin-top:0.35rem;"><span class="jd-item-detail-label">Officer Notes</span>';
+        html += '<div class="jd-item-narrative">' + escHtml(notes) + '</div></div>';
+      }
+
+    } else if (itemType === 'arrest') {
+      // ArrestReport record
+      var d = record;
+      html += '<div class="jd-item-detail-grid">';
+      if (d.arrestDate) {
+        html += '<div class="jd-item-detail-row"><span class="jd-item-detail-label">Arrest Date</span><span class="jd-item-detail-value">' + escHtml(d.arrestDate) + (d.arrestTime ? ' at ' + escHtml(d.arrestTime) : '') + '</span></div>';
+      }
+      if (d.arrestLocation) {
+        html += '<div class="jd-item-detail-row"><span class="jd-item-detail-label">Location</span><span class="jd-item-detail-value">' + escHtml(d.arrestLocation) + '</span></div>';
+      }
+      if (d.officer && d.officer.name) {
+        html += '<div class="jd-item-detail-row"><span class="jd-item-detail-label">Arresting Officer</span><span class="jd-item-detail-value">' + escHtml(d.officer.name) + (d.officer.badgeNumber ? ' #' + escHtml(d.officer.badgeNumber) : '') + '</span></div>';
+      }
+      if (d.reportNumber) {
+        html += '<div class="jd-item-detail-row"><span class="jd-item-detail-label">Report #</span><span class="jd-item-detail-value">' + escHtml(d.reportNumber) + '</span></div>';
+      }
+      html += '</div>';
+
+      // Charges
+      if (d.charges) {
+        html += '<div style="margin-top:0.35rem;"><span class="jd-item-detail-label">Charges</span>';
+        html += '<div class="jd-item-detail-value" style="margin-top:0.1rem;">' + escHtml(d.charges) + '</div></div>';
+      }
+
+      // Narrative
+      if (d.narrative) {
+        html += '<div style="margin-top:0.35rem;"><span class="jd-item-detail-label">Narrative</span>';
+        html += '<div class="jd-item-narrative">' + escHtml(d.narrative) + '</div></div>';
+      }
+    }
+
+    $slot.html(html || '<div class="jd-item-detail-loading">No additional details</div>');
   }
 
   function toggleResolution(itemIndex, verdict) {
@@ -423,37 +678,248 @@
 
     var html = docket.map(function(entry, idx) {
       var status = entry.status || 'pending';
-      var civName = entry.civilianName || 'Case #' + (idx + 1);
+      var caseId = entry.courtCaseID || entry.caseID || '';
       var isActive = status === 'active';
       var isCompleted = status === 'completed';
-      var entryClass = isActive ? ' docket-active' : (isCompleted ? ' docket-completed' : '');
+      var isUnresolved = status === 'unresolved';
+      var isExpanded = (expandedDocketId === caseId);
+      var entryClass = isActive ? ' docket-active' : (isCompleted ? ' docket-completed' : (isUnresolved ? ' docket-completed' : ''));
+      if (isExpanded) entryClass += ' docket-expanded';
 
-      var row = '<div class="jd-docket-entry' + entryClass + '" data-case-id="' + (entry.courtCaseID || entry.caseID || '') + '">';
+      // Cached case data for subtitle
+      var cached = docketCaseCache[caseId];
+      var civName = (entry.civilianName && String(entry.civilianName).trim()) || (cached && cached.civilianName && String(cached.civilianName).trim()) || 'Unknown Civilian';
+      var itemCount = cached ? (cached.contestedItems || []).length : 0;
+      var subText = cached
+        ? itemCount + ' contested item' + (itemCount !== 1 ? 's' : '')
+        : '';
+
+      // Look up username from participants
+      var entryUserId = entry.userID || (cached && cached.userID) || '';
+      var ownerName = '';
+      if (entryUserId && session.participants) {
+        for (var p = 0; p < session.participants.length; p++) {
+          if (session.participants[p].userID === entryUserId) {
+            ownerName = session.participants[p].userName || '';
+            break;
+          }
+        }
+      }
+
+      var row = '<div class="jd-docket-entry' + entryClass + '" data-case-id="' + caseId + '">';
+
+      // Clickable summary row
+      row += '<div class="jd-docket-summary" onclick="toggleDocketEntry(\'' + caseId + '\')">';
       row += '<div class="jd-docket-order">' + (entry.order || (idx + 1)) + '</div>';
       row += '<div class="jd-docket-entry-info">';
-      row += '<div class="jd-docket-entry-name">' + escHtml(civName);
+      row += '<div class="jd-docket-entry-name"><i class="fa fa-user" style="font-size:0.7rem;color:var(--text-tertiary);margin-right:0.3rem;"></i><span class="jd-docket-civ-name">' + escHtml(civName) + '</span>';
+      if (ownerName) {
+        row += ' <span class="jd-docket-owner-badge"><i class="fa fa-id-badge" style="margin-right:0.2rem;"></i>' + escHtml(ownerName) + '</span>';
+      }
       row += ' <span class="jd-badge jd-badge-' + status + '">' + status + '</span>';
       row += '</div>';
+      if (subText) {
+        row += '<div class="jd-docket-entry-sub"><i class="fa fa-file-lines"></i>' + subText + '</div>';
+      }
       row += '</div>';
 
       // Activate button for judge (only for pending entries when session is in_progress)
       if (currentRole === 'judge' && status === 'pending' && session.status === 'in_progress') {
-        row += '<button class="jd-btn jd-btn-gold jd-btn-sm jd-docket-activate-btn" data-case-id="' + (entry.courtCaseID || entry.caseID || '') + '"><i class="fa fa-play"></i> Activate</button>';
+        row += '<button class="jd-btn jd-btn-gold jd-btn-sm jd-docket-activate-btn" onclick="event.stopPropagation(); activateDocketEntry(\'' + caseId + '\');"><i class="fa fa-play"></i> Activate</button>';
       }
 
-      // Completed icon
+      // Status icon
       if (isCompleted) {
         row += '<i class="fa fa-check-circle" style="color:var(--status-completed-text);"></i>';
+      } else if (isUnresolved) {
+        row += '<i class="fa fa-rotate-left" style="color:#f59e9e;" title="Returned to scheduled"></i>';
       }
+
+      row += '<i class="fa fa-chevron-down jd-docket-chevron"></i>';
+      row += '</div>'; // end summary
+
+      // Expandable detail panel
+      row += '<div class="jd-docket-detail">';
+      row += '<div class="jd-docket-detail-inner" id="docket-detail-' + caseId + '">';
+      if (cached) {
+        row += renderDocketDetailContent(cached);
+      } else {
+        row += '<div style="text-align:center;padding:0.5rem;color:var(--text-tertiary);font-size:0.8rem;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>';
+      }
+      row += '</div>';
+      row += '</div>';
 
       row += '</div>';
       return row;
     }).join('');
 
     $list.html(html);
+
+    // Proactively fetch court case details for all docket entries
+    docket.forEach(function(entry) {
+      var caseId = entry.courtCaseID || entry.caseID || '';
+      if (!caseId || docketCaseCache[caseId]) return;
+      $.ajax({
+        url: API_URL + '/api/v2/court-cases/' + caseId,
+        method: 'GET',
+        success: function(resp) {
+          var d = resp.courtCase || resp.data || resp;
+          docketCaseCache[caseId] = d;
+          var $entry = $list.find('[data-case-id="' + caseId + '"]');
+          if ($entry.length) {
+            // Update the detail panel so "Loading..." is replaced
+            $('#docket-detail-' + caseId).html(renderDocketDetailContent(d));
+            // Update subtitle with contested item count
+            var itemCount = (d.contestedItems || []).length;
+            var subText = itemCount + ' contested item' + (itemCount !== 1 ? 's' : '');
+            var $sub = $entry.find('.jd-docket-entry-sub');
+            if ($sub.length) {
+              $sub.html('<i class="fa fa-file-lines"></i>' + subText);
+            } else {
+              $entry.find('.jd-docket-entry-info').append('<div class="jd-docket-entry-sub"><i class="fa fa-file-lines"></i>' + subText + '</div>');
+            }
+            // Backfill civilian name
+            backfillDocketCivName($entry, d);
+            // Backfill owner username badge if not already shown
+            if (!$entry.find('.jd-docket-owner-badge').length && d.userID && session.participants) {
+              for (var p = 0; p < session.participants.length; p++) {
+                if (session.participants[p].userID === d.userID) {
+                  var ownerName = session.participants[p].userName || '';
+                  if (ownerName) {
+                    $entry.find('.jd-docket-civ-name').after(' <span class="jd-docket-owner-badge"><i class="fa fa-id-badge" style="margin-right:0.2rem;"></i>' + escHtml(ownerName) + '</span>');
+                  }
+                  break;
+                }
+              }
+            }
+          }
+        }
+      });
+    });
   }
 
+  function renderDocketDetailContent(caseData) {
+    var items = caseData.contestedItems || [];
+    var resolutions = caseData.resolutions || [];
+    var html = '';
+
+    // Build a lookup of resolutions by itemID
+    var resolutionMap = {};
+    resolutions.forEach(function(r) {
+      if (r.itemID) resolutionMap[r.itemID] = r;
+    });
+
+    // Contested items with inline verdict badges
+    if (items.length > 0) {
+      html += '<div class="jd-docket-detail-label">Contested Items</div>';
+      html += items.map(function(item) {
+        var typeClass = (item.itemType || '').toLowerCase();
+        var row = '<div class="jd-docket-item-row">' +
+          '<span class="jd-docket-item-type ' + typeClass + '">' + escHtml(item.itemType || '') + '</span>' +
+          '<span class="jd-docket-item-summary">' + escHtml(item.summary || 'No description') + '</span>';
+
+        // Show verdict badge inline if resolved
+        var res = resolutionMap[item.itemID];
+        if (res && res.verdict) {
+          var isDismissed = res.verdict === 'dismissed';
+          var badgeClass = isDismissed ? 'jd-verdict-dismissed' : 'jd-verdict-upheld';
+          row += '<span class="jd-verdict-badge ' + badgeClass + '">' + escHtml(res.verdict) + '</span>';
+        }
+
+        row += '</div>';
+
+        // Show judge notes if any
+        if (res && res.judgeNotes) {
+          row += '<div class="jd-docket-judge-notes"><i class="fa fa-gavel" style="font-size:0.65rem;margin-right:0.3rem;"></i>' + escHtml(res.judgeNotes) + '</div>';
+        }
+
+        return row;
+      }).join('');
+    }
+
+    // Statement
+    if (caseData.statement) {
+      html += '<div class="jd-docket-detail-label">Civilian Statement</div>';
+      html += '<div class="jd-docket-statement">' + escHtml(caseData.statement) + '</div>';
+    }
+
+    return html || '<div style="color:var(--text-tertiary);font-size:0.8rem;padding:0.3rem 0;">No details available.</div>';
+  }
+
+  window.toggleDocketEntry = function(caseId) {
+    if (!caseId) return;
+    var wasExpanded = (expandedDocketId === caseId);
+    expandedDocketId = wasExpanded ? null : caseId;
+
+    // Toggle classes
+    $('.jd-docket-entry').each(function() {
+      var id = $(this).data('case-id');
+      if (id === caseId) {
+        $(this).toggleClass('docket-expanded');
+      } else {
+        $(this).removeClass('docket-expanded');
+      }
+    });
+
+    // If expanding and not cached, fetch case details
+    if (!wasExpanded && !docketCaseCache[caseId]) {
+      $.ajax({
+        url: API_URL + '/api/v2/court-cases/' + caseId,
+        method: 'GET',
+        success: function(c) {
+          var d = c.courtCase || c.details || c;
+          docketCaseCache[caseId] = d;
+          $('#docket-detail-' + caseId).html(renderDocketDetailContent(d));
+          var $entry = $('.jd-docket-entry[data-case-id="' + caseId + '"]');
+
+          // Update subtitle with contested item count
+          var itemCount = (d.contestedItems || []).length;
+          var $sub = $entry.find('.jd-docket-entry-sub');
+          var subText = itemCount + ' contested item' + (itemCount !== 1 ? 's' : '');
+          if ($sub.length) {
+            $sub.html('<i class="fa fa-file-lines"></i>' + subText);
+          } else {
+            $entry.find('.jd-docket-entry-info').append('<div class="jd-docket-entry-sub"><i class="fa fa-file-lines"></i>' + subText + '</div>');
+          }
+
+          // Backfill civilian name
+          backfillDocketCivName($entry, d);
+        },
+        error: function() {
+          $('#docket-detail-' + caseId).html('<div style="color:#f87171;font-size:0.8rem;padding:0.3rem 0;">Failed to load case details.</div>');
+        }
+      });
+    }
+  };
+
   // --- Render: Participants ---
+
+  function setDocketEntryName($entry, name) {
+    $entry.find('.jd-docket-civ-name').text(name);
+  }
+
+  function backfillDocketCivName($entry, caseData) {
+    var name = (caseData.civilianName || '').trim();
+    if (name) {
+      setDocketEntryName($entry, name);
+      return;
+    }
+    // civilianName empty — fetch the civilian record to get their name
+    var civId = caseData.civilianID;
+    if (!civId) return;
+    $.ajax({
+      url: API_URL + '/api/v1/civilian/' + civId,
+      method: 'GET',
+      success: function(civ) {
+        var cd = civ.civilian || civ;
+        var fullName = (cd.name || '').trim() || ((cd.firstName || '') + ' ' + (cd.lastName || '')).trim();
+        if (fullName) {
+          caseData.civilianName = fullName;
+          setDocketEntryName($entry, fullName);
+        }
+      }
+    });
+  }
 
   function renderParticipants(session) {
     if (!session) return;
@@ -465,27 +931,59 @@
     $count.html('<i class="fa fa-user"></i> ' + participants.length);
 
     if (participants.length === 0) {
-      $list.html('<div style="color:var(--text-muted);font-size:0.85rem;padding:0.25rem 0;">No participants yet.</div>');
+      $list.html('<div class="jd-participants-empty">No participants yet.</div>');
       return;
     }
 
-    // Sort: judge first, then defendants, then spectators
-    var rolePriority = { judge: 0, defendant: 1, spectator: 2 };
-    var sorted = participants.slice().sort(function(a, b) {
-      return (rolePriority[a.role] || 2) - (rolePriority[b.role] || 2);
+    // Split into court proceedings (judge + defendant) and spectators
+    var proceedings = [];
+    var spectators = [];
+    for (var i = 0; i < participants.length; i++) {
+      var role = participants[i].role || 'spectator';
+      if (role === 'judge' || role === 'defendant') {
+        proceedings.push(participants[i]);
+      } else {
+        spectators.push(participants[i]);
+      }
+    }
+
+    // Sort proceedings: judge first, then defendants
+    proceedings.sort(function(a, b) {
+      return (a.role === 'judge' ? 0 : 1) - (b.role === 'judge' ? 0 : 1);
     });
 
-    var html = sorted.map(function(p) {
+    function renderParticipantRow(p) {
       var initials = getInitials(p.userName || 'U');
       var roleClass = 'role-' + (p.role || 'spectator');
       var roleBadgeClass = 'jd-role-' + (p.role || 'spectator');
-
       return '<div class="jd-participant ' + roleClass + '">' +
         '<div class="jd-participant-avatar">' + initials + '</div>' +
         '<span class="jd-participant-name">' + escHtml(p.userName || 'Unknown') + '</span>' +
         '<span class="jd-role-badge ' + roleBadgeClass + '">' + escHtml(p.role || 'spectator') + '</span>' +
         '</div>';
-    }).join('');
+    }
+
+    var html = '';
+
+    // Court Proceedings section
+    html += '<div class="jd-participants-section-label"><i class="fa fa-gavel"></i> Court Proceedings</div>';
+    html += '<div class="jd-participants-list">';
+    if (proceedings.length > 0) {
+      html += proceedings.map(renderParticipantRow).join('');
+    } else {
+      html += '<div class="jd-participants-empty">No court members present.</div>';
+    }
+    html += '</div>';
+
+    // Spectators section
+    html += '<div class="jd-participants-section-label" style="margin-top:0.5rem;"><i class="fa fa-eye"></i> Spectators</div>';
+    html += '<div class="jd-participants-list">';
+    if (spectators.length > 0) {
+      html += spectators.map(renderParticipantRow).join('');
+    } else {
+      html += '<div class="jd-participants-empty">No spectators.</div>';
+    }
+    html += '</div>';
 
     $list.html(html);
   }
@@ -536,19 +1034,23 @@
 
   function startSession() {
     $('#startSessionBtn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Starting...');
+    // Show loading state on main panels immediately
+    $('#docketList').html('<div class="jd-loading"><div class="jd-spinner"></div></div>');
+    $('#noActiveCasePanel').hide();
+    $('#activeCasePanel').show();
+    $('#activeCaseBody').html('<div class="jd-loading"><div class="jd-spinner"></div></div>');
 
     $.ajax({
       url: API_URL + '/api/v2/court-sessions/' + sessionId + '/start',
       method: 'PUT',
       contentType: 'application/json',
       data: JSON.stringify({ judgeID: userId }),
-      success: function(resp) {
-        currentSession = resp.courtSession || resp.data || resp;
-        determineRole();
-        renderAll();
+      success: function() {
+        // Re-fetch full session since start only returns a message
+        loadSession();
       },
       error: function(xhr) {
-        alert('Failed to start session: ' + ((xhr.responseJSON && xhr.responseJSON.message) || 'Unknown error'));
+        jdAlert('Session Error', 'Failed to start session: ' + ((xhr.responseJSON && xhr.responseJSON.message) || 'Unknown error'), 'fa-circle-xmark');
       },
       complete: function() {
         $('#startSessionBtn').prop('disabled', false).html('<i class="fa fa-play"></i> Start Session');
@@ -557,6 +1059,34 @@
   }
 
   function endSession() {
+    // Check for unresolved docket entries before ending
+    var docket = (currentSession && currentSession.docket) || [];
+    var unresolvedCount = 0;
+    for (var i = 0; i < docket.length; i++) {
+      if (docket[i].status === 'pending' || docket[i].status === 'active') {
+        unresolvedCount++;
+      }
+    }
+
+    if (unresolvedCount > 0) {
+      jdConfirm({
+        icon: 'fa-triangle-exclamation',
+        iconClass: 'icon-danger',
+        title: 'Unresolved Cases',
+        message: 'There ' + (unresolvedCount === 1 ? 'is <strong>1</strong> unresolved case' : 'are <strong>' + unresolvedCount + '</strong> unresolved cases') +
+          ' remaining in the docket. Cancelling the session will reset ' + (unresolvedCount === 1 ? 'it' : 'them') +
+          ' back to <strong>scheduled</strong> status so ' + (unresolvedCount === 1 ? 'it' : 'they') +
+          ' can be added to a future session.<br><br>Are you sure you want to cancel the session?',
+        confirmLabel: 'Cancel Session',
+        confirmClass: 'jd-btn jd-btn-danger',
+        onConfirm: function() { doEndSession(); }
+      });
+    } else {
+      doEndSession();
+    }
+  }
+
+  function doEndSession() {
     $('#endSessionBtn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Ending...');
 
     $.ajax({
@@ -564,17 +1094,15 @@
       method: 'PUT',
       contentType: 'application/json',
       data: JSON.stringify({ judgeID: userId }),
-      success: function(resp) {
-        currentSession = resp.courtSession || resp.data || resp;
-        determineRole();
-        renderAll();
-
+      success: function() {
         // Stop polling
         if (sessionPollTimer) clearInterval(sessionPollTimer);
         if (chatPollTimer) clearInterval(chatPollTimer);
+        // Re-fetch full session since end only returns a message
+        loadSession();
       },
       error: function(xhr) {
-        alert('Failed to end session: ' + ((xhr.responseJSON && xhr.responseJSON.message) || 'Unknown error'));
+        jdAlert('Session Error', 'Failed to end session: ' + ((xhr.responseJSON && xhr.responseJSON.message) || 'Unknown error'), 'fa-circle-xmark');
       },
       complete: function() {
         $('#endSessionBtn').prop('disabled', false).html('<i class="fa fa-stop"></i> End Session');
@@ -582,25 +1110,43 @@
     });
   }
 
-  function activateDocketEntry(caseId) {
+  window.activateDocketEntry = function(caseId, skip) {
     if (!caseId) return;
 
+    // Show loading state immediately
+    $('#noActiveCasePanel').hide();
+    $('#activeCasePanel').show();
+    $('#activeCaseBody').html('<div class="jd-loading"><div class="jd-spinner"></div></div>');
+
+    var activateUrl = API_URL + '/api/v2/court-sessions/' + sessionId + '/docket/' + caseId + '/activate';
+    if (skip) activateUrl += '?skip=true';
+
     $.ajax({
-      url: API_URL + '/api/v2/court-sessions/' + sessionId + '/docket/' + caseId + '/activate',
+      url: activateUrl,
       method: 'PUT',
       contentType: 'application/json',
       data: JSON.stringify({ judgeID: userId }),
-      success: function(resp) {
-        currentSession = resp.courtSession || resp.data || resp;
-        determineRole();
-        renderActiveCasePanel(currentSession);
-        renderDocket(currentSession);
+      success: function() {
+        // Re-fetch full session since activate only returns a message
+        $.ajax({
+          url: API_URL + '/api/v2/court-sessions/' + sessionId,
+          method: 'GET',
+          success: function(resp) {
+            currentSession = resp.courtSession || resp.data || resp;
+            determineRole();
+            renderActiveCasePanel(currentSession);
+            renderDocket(currentSession);
+          },
+          error: function() {
+            jdAlert('Session Error', 'Failed to refresh session data.', 'fa-circle-xmark');
+          }
+        });
       },
       error: function(xhr) {
-        alert('Failed to activate case: ' + ((xhr.responseJSON && xhr.responseJSON.message) || 'Unknown error'));
+        jdAlert('Docket Error', 'Failed to activate case: ' + ((xhr.responseJSON && xhr.responseJSON.message) || 'Unknown error'), 'fa-circle-xmark');
       }
     });
-  }
+  };
 
   function activateNextDocketEntry() {
     if (!currentSession) return;
@@ -617,21 +1163,22 @@
     }
 
     if (!nextEntry) {
-      alert('No more pending cases in the docket.');
+      jdAlert('Docket Complete', 'No more pending cases in the docket.', 'fa-check-circle');
       return;
     }
 
     var caseId = nextEntry.courtCaseID || nextEntry.caseID || '';
     if (caseId) {
-      activateDocketEntry(caseId);
+      // Skip: current active case goes back to pending
+      activateDocketEntry(caseId, true);
     }
   }
 
   function submitResolution() {
-    if (!activeCaseData) { alert('No active case to resolve.'); return; }
+    if (!activeCaseData) { jdAlert('Resolution Error', 'No active case to resolve.', 'fa-circle-xmark'); return; }
 
     var items = activeCaseData.contestedItems || [];
-    if (items.length === 0) { alert('No contested items to resolve.'); return; }
+    if (items.length === 0) { jdAlert('Resolution Error', 'No contested items to resolve.', 'fa-circle-xmark'); return; }
 
     // Build resolutions array
     var resolutionsArr = [];
@@ -651,14 +1198,15 @@
     }
 
     if (!allResolved) {
-      alert('Please select Dismiss or Uphold for every contested item before submitting.');
+      jdAlert('Incomplete Resolution', 'Please select Dismiss or Uphold for every contested item before submitting.', 'fa-triangle-exclamation');
       return;
     }
 
     var caseId = $('#submitResolutionBtn').data('case-id');
-    if (!caseId) { alert('Cannot determine case ID.'); return; }
+    if (!caseId) { jdAlert('Resolution Error', 'Cannot determine case ID.', 'fa-circle-xmark'); return; }
 
     $('#submitResolutionBtn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Submitting...');
+    pollPaused = true; // Pause polling to prevent race condition
 
     $.ajax({
       url: API_URL + '/api/v2/court-cases/' + caseId + '/resolve',
@@ -670,16 +1218,57 @@
         judgeName: userName
       }),
       success: function() {
-        // Advance to next docket entry
         activeCaseData = null;
         resolutions = {};
-        activateNextDocketEntry();
+        resolvedCaseIds[caseId] = true;
 
-        // Refresh session to get updated docket statuses
-        setTimeout(function() { loadSession(); }, 500);
+        // Mark the current docket entry as completed locally
+        if (currentSession && currentSession.docket) {
+          for (var d = 0; d < currentSession.docket.length; d++) {
+            if (currentSession.docket[d].status === 'active') {
+              currentSession.docket[d].status = 'completed';
+            }
+          }
+        }
+
+        // Find next pending case in the docket
+        var docket = (currentSession && currentSession.docket) || [];
+        var nextEntry = null;
+        for (var d = 0; d < docket.length; d++) {
+          if (docket[d].status === 'pending') {
+            nextEntry = docket[d];
+            break;
+          }
+        }
+
+        if (nextEntry) {
+          // Activate the next case (server-side also marks previous as completed)
+          var nextCaseId = nextEntry.courtCaseID || nextEntry.caseID || '';
+          if (nextCaseId) {
+            pollPaused = false;
+            activateDocketEntry(nextCaseId);
+          }
+        } else {
+          // No more pending — show completion and refresh
+          jdShowModal({
+            icon: 'fa-check-circle',
+            iconClass: 'icon-info',
+            title: 'Docket Complete',
+            message: 'All cases in the docket have been resolved.',
+            confirmLabel: 'OK',
+            showCancel: false,
+            onConfirm: function() {}
+          });
+          // Refresh to show updated docket state, then resume polling
+          setTimeout(function() {
+            loadSession();
+            pollPaused = false;
+          }, 1000);
+        }
       },
       error: function(xhr) {
-        alert('Failed to submit resolution: ' + ((xhr.responseJSON && xhr.responseJSON.message) || 'Unknown error'));
+        pollPaused = false;
+        jdAlert('Resolution Error', 'Failed to submit resolution: ' + ((xhr.responseJSON && xhr.responseJSON.message) || 'Unknown error'), 'fa-circle-xmark');
       },
       complete: function() {
         $('#submitResolutionBtn').prop('disabled', false).html('<i class="fa fa-check"></i> Submit Resolution');
@@ -713,7 +1302,6 @@
           timestamp: new Date().toISOString()
         };
         chatMessages.push(newMsg);
-        lastChatTimestamp = newMsg.timestamp || newMsg.createdAt || lastChatTimestamp;
         renderChat(chatMessages);
       },
       error: function() {
@@ -786,7 +1374,7 @@
       '<div class="jd-empty">' +
         '<i class="fa fa-exclamation-triangle"></i>' +
         escHtml(msg) + '<br><br>' +
-        '<a href="/judicial-dashboard" class="jd-btn jd-btn-ghost"><i class="fa fa-arrow-left"></i> Return to Dashboard</a>' +
+        '<a href="javascript:history.back()" class="jd-btn jd-btn-ghost"><i class="fa fa-arrow-left"></i> Return to Dashboard</a>' +
       '</div>'
     );
   }

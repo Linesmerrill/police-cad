@@ -1200,6 +1200,12 @@
             <span class="nav-text">Most Wanted</span>
           </a>
         </div>
+        <div class="nav-item">
+          <a href="/court-cases<%= civEncodedCommunityId ? '?c=' + civEncodedCommunityId : '' %>" class="nav-link" id="sidebar-court-cases">
+            <i class="fa fa-gavel nav-icon"></i>
+            <span class="nav-text">Court Cases</span>
+          </a>
+        </div>
 </div>
 
       <!-- Departments -->
@@ -2285,6 +2291,7 @@
   <script src="/static/js/notepad.js"></script>
   <script src="/static/js/civ-dashboard.js"></script>
   <script src="/static/js/notifications.js"></script>
+  <script src="/static/js/court-session-badge.js"></script>
   <script>
     // Make department ID available to JavaScript
     window.currentDepartmentId = '<%= departmentId %>';

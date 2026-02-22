@@ -1430,40 +1430,56 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
-  app.get("/judicial-dashboard", authCheck, async function (req, res) {
+  // Redirect old judicial-dashboard to communities (functionality moved into department dashboard)
+  app.get("/judicial-dashboard", authCheck, function (req, res) {
+    res.redirect("/communities");
+  });
+
+  // Standalone court cases page (read-only view for all users)
+  app.get("/court-cases", authCheck, async function (req, res) {
     try {
-      var context = req.app.locals.specialContext;
-      req.app.locals.specialContext = null;
-
-      const departmentName = req.query.dept || null;
-      const encodedDeptId = req.query.d || null;
-
-      let departmentId = null;
-      if (encodedDeptId) {
+      const encodedCommunityId = req.query.c || null;
+      let urlCommunityId = null;
+      const communityIdPattern = /^[a-fA-F0-9]{24}$/;
+      if (encodedCommunityId) {
         try {
-          let base64 = encodedDeptId.replace(/-/g, '+').replace(/_/g, '/');
-          while (base64.length % 4) { base64 += '='; }
-          departmentId = Buffer.from(base64, 'base64').toString('utf8');
-          if (!/^[a-fA-F0-9]{24}$/.test(departmentId)) { departmentId = null; }
+          const decoded = decodeId(encodedCommunityId);
+          if (communityIdPattern.test(decoded)) {
+            urlCommunityId = decoded;
+          }
         } catch (e) {
-          console.error('Failed to decode department ID:', e);
-          departmentId = null;
+          console.error('Failed to decode community ID from court-cases URL:', e);
         }
       }
 
-      res.render("judicial-dashboard", {
+      const communityId = urlCommunityId
+                       || req.user?.user?.lastAccessedCommunity?.communityID
+                       || req.user?.user?.activeCommunity;
+      if (!communityId) {
+        return res.redirect('/communities');
+      }
+
+      let communityName = null;
+      try {
+        const communityResponse = await axios.get(
+          `${policeCadApiUrl}/api/v1/community/${communityId}`,
+          config
+        );
+        communityName = communityResponse.data?.community?.name || null;
+      } catch (err) {
+        console.error('Error fetching community name for court-cases:', err.message);
+      }
+
+      res.render("court-cases", {
         user: req.user,
-        context: context,
-        referer: encodeURIComponent("/judicial-dashboard"),
-        redirect: encodeURIComponent(redirect),
-        departmentName: departmentName,
-        departmentId: departmentId,
+        communityId: communityId,
+        communityName: communityName,
         apiUrl: policeCadApiUrl,
       });
     } catch (error) {
-      console.error('Error in judicial-dashboard route:', error);
+      console.error('Error in court-cases route:', error);
       return res.status(500).render("error", {
-        message: "An error occurred while loading the judicial dashboard. Please try again.",
+        message: "An error occurred while loading court cases. Please try again.",
         redirect: "/communities",
       });
     }

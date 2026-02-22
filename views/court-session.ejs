@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Court Session - Lines Police CAD</title>
+  <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -162,6 +163,8 @@
     .jd-badge-completed { background: var(--status-completed-bg); color: var(--status-completed-text); }
     .jd-badge-pending { background: var(--status-pending-bg); color: var(--status-pending-text); }
     .jd-badge-active { background: var(--status-active-bg); color: var(--status-active-text); }
+    .jd-badge-unresolved { background: #4a1d1d; color: #f59e9e; }
+    .jd-badge-cancelled { background: #78350f; color: #fbbf24; }
 
     /* === ROLE BADGES === */
     .jd-role-badge {
@@ -260,15 +263,63 @@
     }
     .jd-contested-items-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem; }
     .jd-contested-item {
-      display: flex; align-items: center; justify-content: space-between;
       background: var(--bg-deep);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .jd-contested-item-row {
+      display: flex; align-items: center; justify-content: space-between;
       padding: 0.65rem 0.85rem;
       gap: 0.75rem;
     }
     .jd-contested-item-info { flex: 1; display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
     .jd-contested-item-summary { font-size: 0.88rem; color: var(--text-primary); }
+    .jd-contested-item-details {
+      border-top: 1px solid var(--border-subtle);
+      padding: 0.6rem 0.85rem;
+      background: rgba(0,0,0,0.15);
+    }
+    .jd-item-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.4rem 1rem;
+    }
+    .jd-item-detail-row {
+      display: flex; flex-direction: column; gap: 0.1rem;
+    }
+    .jd-item-detail-label {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.04em; color: var(--text-muted);
+    }
+    .jd-item-detail-value {
+      font-size: 0.82rem; color: var(--text-primary);
+    }
+    .jd-item-fines { margin-top: 0.35rem; }
+    .jd-item-fine-row {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.82rem; color: var(--text-primary);
+      padding: 0.2rem 0;
+    }
+    .jd-item-fine-amount {
+      font-weight: 600; color: var(--accent-gold);
+    }
+    .jd-item-fine-category {
+      font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+      padding: 0.1rem 0.4rem; border-radius: 3px;
+      background: rgba(252,165,165,0.12); color: #fca5a5;
+    }
+    .jd-item-fine-category.misdemeanor { background: rgba(251,191,36,0.12); color: #fbbf24; }
+    .jd-item-fine-category.infraction { background: rgba(156,163,175,0.12); color: #9ca3af; }
+    .jd-item-narrative {
+      font-size: 0.82rem; color: var(--text-secondary);
+      font-style: italic; line-height: 1.5; margin-top: 0.35rem;
+      max-height: 4.5em; overflow-y: auto;
+    }
+    .jd-item-detail-loading {
+      padding: 0.4rem 0; font-size: 0.78rem; color: var(--text-muted);
+      font-style: italic;
+    }
     .jd-resolution-toggles { display: flex; gap: 0.35rem; flex-shrink: 0; }
     .jd-toggle-btn {
       padding: 0.3rem 0.65rem; font-size: 0.75rem; font-weight: 600;
@@ -293,12 +344,11 @@
     /* === DOCKET LIST === */
     .jd-docket-list { display: flex; flex-direction: column; gap: 0.4rem; }
     .jd-docket-entry {
-      display: flex; align-items: center; gap: 0.75rem;
-      padding: 0.65rem 0.85rem;
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
       transition: var(--transition);
-      cursor: default;
+      margin-bottom: 0.4rem;
+      overflow: hidden;
     }
     .jd-docket-entry:hover { background: var(--bg-card-hover); }
     .jd-docket-entry.docket-active {
@@ -307,6 +357,11 @@
       box-shadow: inset 0 0 0 1px rgba(212,175,55,0.1);
     }
     .jd-docket-entry.docket-completed { opacity: 0.5; }
+    .jd-docket-summary {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.65rem 0.85rem;
+      cursor: pointer;
+    }
     .jd-docket-order {
       width: 26px; height: 26px;
       border-radius: 50%;
@@ -324,22 +379,116 @@
     .jd-docket-entry-info { flex: 1; min-width: 0; }
     .jd-docket-entry-name { font-size: 0.88rem; font-weight: 500; color: var(--text-primary); }
     .jd-docket-entry-name .jd-badge { margin-left: 0.5rem; }
+    .jd-docket-owner-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      background: rgba(255,255,255,0.06);
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      margin-left: 0.4rem;
+      vertical-align: middle;
+    }
+    .jd-docket-entry-sub {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      margin-top: 0.15rem;
+    }
+    .jd-docket-entry-sub i { margin-right: 0.2rem; }
+    .jd-docket-chevron {
+      color: var(--text-tertiary);
+      font-size: 0.7rem;
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+    .jd-docket-entry.docket-expanded .jd-docket-chevron { transform: rotate(180deg); }
+    .jd-docket-detail {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .jd-docket-entry.docket-expanded .jd-docket-detail { max-height: 600px; }
+    .jd-docket-detail-inner {
+      padding: 0 0.85rem 0.75rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .jd-docket-detail-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+      margin: 0.6rem 0 0.35rem;
+    }
+    .jd-docket-item-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0;
+      font-size: 0.8rem;
+    }
+    .jd-docket-item-row + .jd-docket-item-row { border-top: 1px solid rgba(255,255,255,0.03); }
+    .jd-docket-item-type {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .jd-docket-item-type.citation { background: rgba(59,130,246,0.15); color: #93c5fd; }
+    .jd-docket-item-type.warning { background: rgba(234,179,8,0.15); color: #fde047; }
+    .jd-docket-item-type.arrest { background: rgba(239,68,68,0.15); color: #fca5a5; }
+    .jd-docket-item-summary { color: var(--text-secondary); flex: 1; }
+    .jd-verdict-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.12rem 0.45rem;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .jd-verdict-dismissed { background: rgba(110,231,183,0.12); color: #6ee7b7; }
+    .jd-verdict-upheld { background: rgba(252,165,165,0.12); color: #fca5a5; }
+    .jd-docket-judge-notes {
+      font-size: 0.72rem;
+      color: var(--text-tertiary);
+      padding: 0.15rem 0 0.15rem 1.8rem;
+      font-style: italic;
+    }
+    .jd-docket-statement {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      padding: 0.4rem 0.6rem;
+      background: rgba(255,255,255,0.02);
+      border-radius: var(--radius-sm);
+      border-left: 2px solid var(--accent-gold-dim);
+    }
 
     /* === SIDEBAR === */
     .jd-sidebar { display: flex; flex-direction: column; gap: 1.25rem; }
 
     /* === PARTICIPANTS === */
-    .jd-participants-list { display: flex; flex-direction: column; gap: 0.35rem; }
+    .jd-participants-section-label {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-muted);
+      padding: 0.5rem 0 0.25rem; border-bottom: 1px solid var(--border-color);
+      margin-bottom: 0.25rem;
+    }
+    .jd-participants-section-label:first-child { padding-top: 0; }
+    .jd-participants-list { display: flex; flex-direction: column; gap: 0.15rem; }
     .jd-participant {
       display: flex; align-items: center; gap: 0.6rem;
-      padding: 0.45rem 0;
+      padding: 0.4rem 0;
     }
     .jd-participant-avatar {
-      width: 30px; height: 30px;
+      width: 28px; height: 28px;
       border-radius: 50%;
       background: var(--bg-elevated);
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.7rem; font-weight: 700; color: var(--text-secondary);
+      font-size: 0.65rem; font-weight: 700; color: var(--text-secondary);
       flex-shrink: 0;
     }
     .jd-participant.role-judge .jd-participant-avatar {
@@ -348,10 +497,14 @@
     .jd-participant.role-defendant .jd-participant-avatar {
       background: rgba(96,165,250,0.15); color: #60a5fa;
     }
-    .jd-participant-name { font-size: 0.85rem; font-weight: 500; color: var(--text-primary); flex: 1; }
+    .jd-participant-name { font-size: 0.82rem; font-weight: 500; color: var(--text-primary); flex: 1; }
     .jd-participant-count {
       font-size: 0.78rem; color: var(--text-muted);
       display: flex; align-items: center; gap: 0.3rem;
+    }
+    .jd-participants-empty {
+      color: var(--text-muted); font-size: 0.8rem; font-style: italic;
+      padding: 0.25rem 0;
     }
 
     /* === CHAT === */
@@ -486,10 +639,64 @@
     }
     @media (max-width: 480px) {
       .jd-shell { padding: 1rem; }
-      .jd-contested-item { flex-direction: column; align-items: flex-start; }
+      .jd-contested-item-row { flex-direction: column; align-items: flex-start; }
+      .jd-item-detail-grid { grid-template-columns: 1fr; }
       .jd-resolution-toggles { width: 100%; }
       .jd-resolution-toggles .jd-toggle-btn { flex: 1; text-align: center; }
     }
+
+    /* === CUSTOM MODAL === */
+    .jd-modal-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(5, 5, 10, 0.85);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.25s ease;
+      padding: 1.5rem;
+    }
+    .jd-modal-overlay.open { opacity: 1; }
+    .jd-modal-box {
+      background: var(--bg-card);
+      border: 1px solid rgba(212,175,55,0.18);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 40px rgba(212,175,55,0.06);
+      max-width: 420px; width: 100%;
+      padding: 2rem;
+      transform: scale(0.92) translateY(12px);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+      opacity: 0;
+    }
+    .jd-modal-overlay.open .jd-modal-box { transform: scale(1) translateY(0); opacity: 1; }
+    .jd-modal-icon {
+      width: 48px; height: 48px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; margin-bottom: 1rem;
+    }
+    .jd-modal-icon.icon-warn { background: rgba(251,191,36,0.12); color: #fbbf24; }
+    .jd-modal-icon.icon-error { background: rgba(252,129,129,0.12); color: #fc8181; }
+    .jd-modal-icon.icon-info { background: var(--accent-gold-dim); color: var(--accent-gold); }
+    .jd-modal-icon.icon-danger { background: rgba(220,38,38,0.12); color: #ef4444; }
+    .jd-modal-title {
+      font-family: var(--font-display);
+      font-size: 1.2rem; color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    .jd-modal-message {
+      font-size: 0.9rem; color: var(--text-secondary);
+      line-height: 1.6; margin-bottom: 1.5rem;
+    }
+    .jd-modal-actions {
+      display: flex; gap: 0.6rem; justify-content: flex-end;
+    }
+    .jd-modal-actions .jd-btn { min-width: 90px; justify-content: center; }
+    .jd-btn-danger {
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      color: #fff; border: none; font-weight: 600;
+      padding: 0.5rem 1.1rem; border-radius: var(--radius-sm);
+      cursor: pointer; font-family: var(--font-body); font-size: 0.85rem;
+      transition: var(--transition);
+    }
+    .jd-btn-danger:hover { filter: brightness(1.1); }
   </style>
 </head>
 <body>
@@ -505,7 +712,7 @@
       </div>
     </div>
     <div class="jd-header-actions">
-      <a href="/judicial-dashboard" class="jd-back-btn"><i class="fa fa-arrow-left"></i> Back to Dashboard</a>
+      <a href="javascript:history.back()" class="jd-back-btn"><i class="fa fa-arrow-left"></i> Back to Dashboard</a>
       <button class="jd-btn jd-btn-gold" id="startSessionBtn" style="display:none;"><i class="fa fa-play"></i> Start Session</button>
       <button class="jd-btn jd-btn-danger" id="endSessionBtn" style="display:none;"><i class="fa fa-stop"></i> End Session</button>
     </div>
@@ -606,6 +813,78 @@
 </script>
 
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script>
+// Custom modal utilities — replaces native alert() and confirm()
+function jdShowModal(opts) {
+  var iconClass = opts.iconClass || 'icon-info';
+  var icon = opts.icon || 'fa-gavel';
+  var title = opts.title || '';
+  var message = opts.message || '';
+  var confirmLabel = opts.confirmLabel || 'OK';
+  var confirmClass = opts.confirmClass || 'jd-btn jd-btn-gold';
+  var showCancel = opts.showCancel !== false;
+  var cancelLabel = opts.cancelLabel || 'Cancel';
+  var onConfirm = opts.onConfirm || function() {};
+
+  var id = 'jdModal-' + Date.now();
+  var html = '<div class="jd-modal-overlay" id="' + id + '">' +
+    '<div class="jd-modal-box">' +
+      '<div class="jd-modal-icon ' + iconClass + '"><i class="fa ' + icon + '"></i></div>' +
+      '<div class="jd-modal-title">' + title + '</div>' +
+      '<div class="jd-modal-message">' + message + '</div>' +
+      '<div class="jd-modal-actions">' +
+        (showCancel ? '<button class="jd-btn jd-btn-ghost jd-modal-cancel">' + cancelLabel + '</button>' : '') +
+        '<button class="' + confirmClass + ' jd-modal-confirm">' + confirmLabel + '</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+
+  $('body').append(html);
+  var $overlay = $('#' + id);
+
+  // Trigger open animation
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { $overlay.addClass('open'); });
+  });
+
+  function close() {
+    $overlay.removeClass('open');
+    setTimeout(function() { $overlay.remove(); }, 300);
+  }
+
+  $overlay.on('click', '.jd-modal-cancel', close);
+  $overlay.on('click', '.jd-modal-confirm', function() { close(); onConfirm(); });
+  // Close on backdrop click
+  $overlay.on('click', function(e) {
+    if ($(e.target).hasClass('jd-modal-overlay')) close();
+  });
+}
+
+function jdAlert(title, message, icon) {
+  jdShowModal({
+    icon: icon || 'fa-circle-exclamation',
+    iconClass: 'icon-warn',
+    title: title,
+    message: message,
+    confirmLabel: 'OK',
+    showCancel: false
+  });
+}
+
+function jdConfirm(opts) {
+  jdShowModal({
+    icon: opts.icon || 'fa-triangle-exclamation',
+    iconClass: opts.iconClass || 'icon-danger',
+    title: opts.title || 'Are you sure?',
+    message: opts.message || '',
+    confirmLabel: opts.confirmLabel || 'Confirm',
+    confirmClass: opts.confirmClass || 'jd-btn jd-btn-danger',
+    cancelLabel: opts.cancelLabel || 'Cancel',
+    showCancel: true,
+    onConfirm: opts.onConfirm || function() {}
+  });
+}
+</script>
 <script src="/static/js/court-session.js"></script>
 
 </body>

@@ -607,6 +607,9 @@
           <li>
             <a href="/most-wanted<%= encodedCommunityId ? '?c=' + encodedCommunityId : '' %>"><span class="fa fa-user-secret ml-3 mr-3"></span> Most Wanted</a>
           </li>
+          <li>
+            <a href="/court-cases<%= encodedCommunityId ? '?c=' + encodedCommunityId : '' %>" id="sidebar-court-cases"><span class="fa fa-gavel ml-3 mr-3"></span> Court Cases</a>
+          </li>
         </div>
 
         <% include departments-sidebar %>
@@ -3520,6 +3523,7 @@
  <script src="/static/js/details-modal.js"></script>
 <script src="/static/js/bootstrap.min.js"></script>
 <script src="/static/js/notifications.js"></script>
+<script src="/static/js/court-session-badge.js"></script>
 <script src="/static/js/ads.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>

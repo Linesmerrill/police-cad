@@ -5482,6 +5482,9 @@ function getCriminalStatusBadge(entry) {
   if (entry.status === 'dismissed') {
     return `<span style="display:inline-block;background:#065f46;color:#6ee7b7;font-size:0.8rem;font-weight:600;padding:0.2rem 0.6rem;border-radius:6px;margin-left:0.5rem;">Dismissed</span>`;
   }
+  if (entry.status === 'upheld') {
+    return `<span style="display:inline-block;background:#7f1d1d;color:#fca5a5;font-size:0.8rem;font-weight:600;padding:0.2rem 0.6rem;border-radius:6px;margin-left:0.5rem;">Upheld</span>`;
+  }
   if (entry.status === 'contested') {
     return `<span style="display:inline-block;background:#78350f;color:#fbbf24;font-size:0.8rem;font-weight:600;padding:0.2rem 0.6rem;border-radius:6px;margin-left:0.5rem;">Contested</span>`;
   }
@@ -5489,7 +5492,7 @@ function getCriminalStatusBadge(entry) {
 }
 
 function getContestCheckbox(entry, type) {
-  if (entry.status === 'dismissed' || entry.status === 'contested') return '';
+  if (entry.status === 'dismissed' || entry.status === 'contested' || entry.status === 'upheld') return '';
   const itemType = type === 'Arrest' ? 'arrest' : type.toLowerCase();
   return `<input type="checkbox" class="contest-item-checkbox" data-item-id="${entry._id}" data-item-type="${itemType}" style="width:18px;height:18px;cursor:pointer;accent-color:#667eea;margin-right:0.75rem;flex-shrink:0;" />`;
 }
@@ -5521,7 +5524,9 @@ function renderCriminalHistoryEntries(type, civData) {
       html = `<div style="color:#a0aec0;text-align:center;padding:2rem 0;">No ${type.toLowerCase()}s found.</div>`;
     } else {
       html = entries.map(entry => {
+        const isResolved = entry.status === 'dismissed' || entry.status === 'upheld';
         const isDismissed = entry.status === 'dismissed';
+        const isUpheld = entry.status === 'upheld';
         const cardOpacity = isDismissed ? 'opacity:0.6;' : '';
         const textDecoration = isDismissed ? 'text-decoration:line-through;' : '';
         return `
@@ -5534,6 +5539,7 @@ function renderCriminalHistoryEntries(type, civData) {
             <div style="font-size:0.95rem;color:#a0aec0;">${entry.notes ? `<strong>Notes:</strong> ${entry.notes}` : ''}</div>
             ${entry.redacted ? '<div style="color:#ef4444;font-weight:600;">Redacted</div>' : ''}
             ${isDismissed && entry.dismissedBy ? `<div style="font-size:0.85rem;color:#6ee7b7;margin-top:0.25rem;">Dismissed by ${entry.dismissedBy}</div>` : ''}
+            ${isUpheld && entry.dismissedBy ? `<div style="font-size:0.85rem;color:#fca5a5;margin-top:0.25rem;">Upheld by Judge ${entry.dismissedBy}</div>` : ''}
           </div>
           <button class="heroui-trash-btn" data-type="criminal" data-id="${entry._id}" title="Delete" style="background:none;border:none;color:#ef4444;font-size:1.5rem;cursor:pointer;"><i class="fa fa-trash"></i></button>
         </div>`;
@@ -5546,6 +5552,7 @@ function renderCriminalHistoryEntries(type, civData) {
     } else {
       html = entries.map(entry => {
         const isDismissed = entry.status === 'dismissed';
+        const isUpheld = entry.status === 'upheld';
         const cardOpacity = isDismissed ? 'opacity:0.6;' : '';
         const textDecoration = isDismissed ? 'text-decoration:line-through;' : '';
         return `
@@ -5557,6 +5564,7 @@ function renderCriminalHistoryEntries(type, civData) {
             <div style="font-size:0.95rem;color:#a0aec0;"><strong>Charges:</strong> ${entry.charges || 'N/A'}</div>
             <div style="font-size:0.95rem;color:#a0aec0;"><strong>Location:</strong> ${entry.arrestLocation || 'N/A'}</div>
             ${isDismissed && entry.dismissedBy ? `<div style="font-size:0.85rem;color:#6ee7b7;margin-top:0.25rem;">Dismissed by ${entry.dismissedBy}</div>` : ''}
+            ${isUpheld && entry.dismissedBy ? `<div style="font-size:0.85rem;color:#fca5a5;margin-top:0.25rem;">Upheld by Judge ${entry.dismissedBy}</div>` : ''}
           </div>
           <button class="heroui-trash-btn" data-type="arrest" data-id="${entry._id}" title="Delete" style="background:none;border:none;color:#ef4444;font-size:1.5rem;cursor:pointer;"><i class="fa fa-trash"></i></button>
         </div>`;
@@ -5579,8 +5587,23 @@ $(document).on('click', '#contestSelectedBtn', function() {
     const $card = $(this).closest('.heroui-criminal-card');
     const itemId = $(this).data('item-id');
     const itemType = $(this).data('item-type');
-    const titleEl = $card.find('div[style*="font-weight:600;font-size:1.1rem"]');
-    const summary = titleEl.text().trim() + ' - ' + $card.find('div[style*="color:#a0aec0"]').first().text().trim();
+
+    // Build a descriptive summary with actual charge details
+    let summary = '';
+    if (itemType === 'arrest') {
+      const chargesEl = $card.find('div:contains("Charges:")');
+      const charges = chargesEl.length ? chargesEl.text().replace('Charges:', '').trim() : '';
+      summary = charges || 'Arrest Report';
+    } else {
+      // Citation/Warning — extract fine types from the list items
+      const fines = [];
+      $card.find('li').each(function() {
+        const text = $(this).find('strong').text().trim();
+        if (text) fines.push(text);
+      });
+      summary = fines.length > 0 ? fines.join(', ') : (itemType === 'citation' ? 'Citation' : 'Warning');
+    }
+
     selectedItems.push({ itemID: itemId, itemType: itemType, summary: summary });
   });
   openContestModal(selectedItems);
@@ -5637,7 +5660,7 @@ $(document).on('click', '#submitContestBtn', function() {
 
   const courtCasePayload = {
     civilianID: civId,
-    civilianName: (civData.firstName || '') + ' ' + (civData.lastName || ''),
+    civilianName: (civData.name || '').trim() || ((civData.firstName || '') + ' ' + (civData.lastName || '')).trim(),
     userID: dbUser?._id || dbUser?.user?._id || '',
     contestedItems: selectedItems,
     statement: statement,
