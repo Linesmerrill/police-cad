@@ -16,6 +16,51 @@ $(document).ready(function () {
   let totalCriminalHistory = 0;
   let currentCriminalPage = 1;
 
+  // ——— ID Card Utility Functions ———
+
+  function generateLicenseNumber(name, birthday, weight) {
+    const seed = `${name}${birthday}${weight}`;
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      const char = seed.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0;
+    }
+    return `${Math.abs(hash).toString().substring(0, 7).toUpperCase()}`;
+  }
+
+  function generateBarcodeHtml(licenseNumber) {
+    function seededRandom(seed) {
+      let x = Math.sin(seed) * 10000;
+      return x - Math.floor(x);
+    }
+    const seed = parseInt(licenseNumber.padStart(8, '0'), 36);
+    const numBars = 40;
+    let bars = [];
+    let totalWidth = 0;
+    for (let i = 0; i < numBars; i++) {
+      const bw = 1 + Math.floor(seededRandom(seed + i) * 3);
+      const isBar = (Math.floor(seededRandom(seed * (i + 3)) * 7) % 2) === 0;
+      bars.push({ width: bw, isBar: isBar });
+      totalWidth += bw + 0.5;
+    }
+    const scale = 100 / totalWidth;
+    let html = '';
+    for (let i = 0; i < bars.length; i++) {
+      const bar = bars[i];
+      html += '<div style="display:inline-block;width:' + (bar.width * scale) + 'px;height:14px;background-color:' + (bar.isBar ? '#222' : 'transparent') + ';margin-right:' + (0.5 * scale) + 'px;border-radius:0.5px;"></div>';
+    }
+    return html;
+  }
+
+  function formatHeight(height, heightClassification) {
+    if (!height || height <= 0) return 'N/A';
+    if (heightClassification === 'Imperial') {
+      return Math.floor(height / 12) + "' " + (height % 12) + '"';
+    }
+    return height + ' cm';
+  }
+
   // Cache for civilian data
   let civilianCache = {
     civilianId: null,
@@ -139,6 +184,8 @@ $(document).ready(function () {
     currentType = null;
     owner = null;
     licenses = [];
+    $("#licenseCardContainer").hide();
+    $("#detailsImageContainer").hide();
     vehicles = [];
     firearms = [];
     // Ensure no modal state lingers
@@ -378,7 +425,7 @@ $(document).ready(function () {
         ? currentItem.firearm
         : currentItem.license;
 
-    // Image
+    // Image / ID Card
     const placeholderName =
       currentType === "Civilian"
         ? data.name || `${data.firstName || ""} ${data.lastName || ""}`
@@ -387,13 +434,34 @@ $(document).ready(function () {
         : currentType === "Firearm"
         ? `${data.name || ""}`
         : data.type || "License";
-    $("#detailsImage").attr(
-      "src",
+    const imageUrl =
       data.image ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(
-          placeholderName
-        )}&background=808080&color=fff&size=256`
-    );
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        placeholderName
+      )}&background=808080&color=fff&size=256`;
+
+    if (currentType === "Civilian") {
+      $("#detailsImageContainer").hide();
+      $("#licenseCardContainer").show();
+      // Populate ID card fields
+      $("#licenseCardPhoto").attr("src", imageUrl);
+      const civName = data.name || `${data.firstName || ""} ${data.lastName || ""}`;
+      const licNum = generateLicenseNumber(civName, data.birthday || "", data.weight || "");
+      $("#licenseCardNumber").text(licNum.padStart(8, '0'));
+      $("#licenseCardName").text(civName.toUpperCase());
+      const expDate = new Date(new Date().setFullYear(new Date().getFullYear() + 8))
+        .toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
+      $("#licenseCardExpiration").text("expiration date: " + expDate);
+      $("#licenseCardDob").text(data.birthday || "N/A");
+      $("#licenseCardHeight").text(formatHeight(data.height, data.heightClassification));
+      $("#licenseCardGender").text(data.gender || "N/A");
+      $("#licenseCardAddress").text(data.address || "N/A");
+      $("#licenseCardBarcode").html(generateBarcodeHtml(licNum));
+    } else {
+      $("#licenseCardContainer").hide();
+      $("#detailsImageContainer").show();
+      $("#detailsImage").attr("src", imageUrl);
+    }
 
     // Details
     let detailsHtml = "";
@@ -2232,6 +2300,29 @@ $(document).ready(function () {
   function closeArrestReportDetail() {
     $("#arrestReportDetailModal").modal("hide");
   }
+
+  // ——— Download ID Card as PNG ———
+  $("#downloadIdBtn").on("click", function () {
+    var cardElement = document.getElementById("licenseCard");
+    if (!cardElement) return;
+    html2canvas(cardElement, {
+      backgroundColor: "#e6f0e6",
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+    }).then(function (canvas) {
+      var link = document.createElement("a");
+      var civName = currentItem?.civilian?.name ||
+        ((currentItem?.civilian?.firstName || "") + "_" + (currentItem?.civilian?.lastName || ""));
+      link.download = civName.replace(/\s+/g, "_") + "_ID.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }).catch(function (err) {
+      console.error("Error generating ID card image:", err);
+      alert("Failed to download ID card. Please try again.");
+    });
+  });
 
   // Expose showDetailsModal and goBack globally
   window.showDetailsModal = showDetailsModal;
