@@ -3686,14 +3686,12 @@ $('#dd-loading').hide();
       if (allWarrantsTypeFilter) url += '&warrantType=' + allWarrantsTypeFilter;
       if (allWarrantsSearchQuery) url += '&name=' + encodeURIComponent(allWarrantsSearchQuery);
 
-      console.log('[AllWarrants] Fetching:', url);
       $.ajax({
         url: url,
         method: 'GET',
         cache: false,
         success: function(result) {
           try {
-            console.log('[AllWarrants] Response:', { totalCount: result.totalCount, totalPages: result.totalPages, dataLength: (result.data || []).length, page: result.page });
             allWarrantsData = result.data || [];
             allWarrantsTotalCount = result.totalCount || 0;
             allWarrantsTotalPages = result.totalPages || Math.ceil(allWarrantsTotalCount / 20) || 1;
@@ -4560,7 +4558,7 @@ $('#dd-loading').hide();
             '</div>' +
           '</div>' +
           '<div class="dd-cc-case-actions">' +
-            '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="event.stopPropagation();ccReturnToQueue(\'' + caseId + '\',\'' + esc(d.civilianName || 'this case') + '\')"><i class="fa fa-arrow-rotate-left"></i> Unschedule</button>' +
+            (d.courtSessionID ? '' : '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="event.stopPropagation();ccReturnToQueue(\'' + caseId + '\',\'' + esc(d.civilianName || 'this case') + '\')"><i class="fa fa-arrow-rotate-left"></i> Unschedule</button>') +
             '<button class="dd-btn dd-btn-sm dd-btn-outline" style="color:#fbbf24;border-color:rgba(251,191,36,0.3);" onclick="event.stopPropagation();ccRescheduleCase(\'' + caseId + '\',\'' + esc(d.scheduledDate || '') + '\')"><i class="fa fa-clock-rotate-left"></i> Reschedule</button>' +
             '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="event.stopPropagation();ccViewCase(\'' + caseId + '\')"><i class="fa fa-eye"></i> View</button>' +
           '</div>' +
@@ -5037,7 +5035,7 @@ $('#dd-loading').hide();
           if (ccIsJudicial && d.status === 'in_review') {
             footerHtml = '<button class="dd-btn dd-btn-sm dd-btn-primary" onclick="ccScheduleCase(\'' + (c._id || '') + '\')"><i class="fa fa-calendar"></i> Schedule</button>';
           } else if (ccIsJudicial && d.status === 'scheduled') {
-            footerHtml = '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="ccReturnToQueue(\'' + (c._id || '') + '\',\'' + esc(d.civilianName || 'this case') + '\')"><i class="fa fa-arrow-rotate-left"></i> Unschedule</button>' +
+            footerHtml = (d.courtSessionID ? '' : '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="ccReturnToQueue(\'' + (c._id || '') + '\',\'' + esc(d.civilianName || 'this case') + '\')"><i class="fa fa-arrow-rotate-left"></i> Unschedule</button>') +
               '<button class="dd-btn dd-btn-sm dd-btn-primary" onclick="ccRescheduleCase(\'' + (c._id || '') + '\',\'' + esc(d.scheduledDate || '') + '\')"><i class="fa fa-clock-rotate-left"></i> Reschedule</button>';
           }
           $('#dd-cc-case-detail-footer').html(footerHtml);
@@ -5253,7 +5251,7 @@ $('#dd-loading').hide();
                 '<input type="datetime-local" class="dd-cc-form-input" id="dd-cc-session-start">' +
               '</div>' +
               '<div class="dd-cc-form-group">' +
-                '<label class="dd-cc-form-label">Scheduled End</label>' +
+                '<label class="dd-cc-form-label">Scheduled End <span style="color:var(--dd-text-dim);font-weight:400;">(optional)</span></label>' +
                 '<input type="datetime-local" class="dd-cc-form-input" id="dd-cc-session-end">' +
               '</div>' +
             '</div>' +
@@ -5277,21 +5275,21 @@ $('#dd-loading').hide();
         if (e.target === this) $(this).removeClass('open');
       });
 
-      // Load docket cases (scheduled cases)
+      // Load docket cases (scheduled cases not already in a session)
       $.ajax({
-        url: API_URL + '/api/v2/court-cases/community/' + communityId + '?status=scheduled&limit=50',
+        url: API_URL + '/api/v2/court-cases/community/' + communityId + '?status=scheduled&unassigned=true&limit=50',
         method: 'GET',
         success: function(resp) {
           var cases = resp.data || [];
           var $list = $('#dd-cc-docket-list');
           if (cases.length === 0) {
             $list.html(
-              '<div style="color:var(--dd-text-dim);font-size:0.85rem;padding:0.5rem 0.5rem 0.25rem;">No scheduled cases available.</div>' +
+              '<div style="color:var(--dd-text-dim);font-size:0.85rem;padding:0.5rem 0.5rem 0.25rem;">No scheduled cases available that are not already assigned to a court session.</div>' +
               '<ol style="color:var(--dd-text-muted);font-size:0.78rem;margin:0.25rem 0 0 1.5rem;padding:0;line-height:1.7;">' +
                 '<li>Go to the <strong style="color:var(--dd-text-secondary);">Case Queue</strong> tab and click <strong style="color:var(--dd-text-secondary);">Assign</strong> on each case.</li>' +
                 '<li>Click <strong style="color:var(--dd-text-secondary);">View</strong> to open the case details.</li>' +
                 '<li>Press <strong style="color:var(--dd-text-secondary);">Schedule</strong> and pick a court date for the case.</li>' +
-                '<li>Come back here and click <strong style="color:var(--dd-text-secondary);">Create Session</strong> — all scheduled cases will appear as checkboxes.</li>' +
+                '<li>Come back here and click <strong style="color:var(--dd-text-secondary);">Create Session</strong> — all scheduled cases not already in a session will appear as checkboxes.</li>' +
               '</ol>'
             );
             return;
@@ -5396,7 +5394,7 @@ $('#dd-loading').hide();
                 '<input type="datetime-local" class="dd-cc-form-input" id="dd-cc-edit-start" value="' + startVal + '">' +
               '</div>' +
               '<div class="dd-cc-form-group">' +
-                '<label class="dd-cc-form-label">Scheduled End</label>' +
+                '<label class="dd-cc-form-label">Scheduled End <span style="color:var(--dd-text-dim);font-weight:400;">(optional)</span></label>' +
                 '<input type="datetime-local" class="dd-cc-form-input" id="dd-cc-edit-end" value="' + endVal + '">' +
               '</div>' +
             '</div>' +
@@ -5423,12 +5421,19 @@ $('#dd-loading').hide();
       // Existing docket case IDs for pre-checking
       var existingCaseIDs = (d.docket || []).map(function(e) { return e.courtCaseID; });
 
-      // Load scheduled cases for docket editing
+      // Load scheduled cases for docket editing (unassigned + cases already in this session)
       $.ajax({
-        url: API_URL + '/api/v2/court-cases/community/' + communityId + '?status=scheduled&limit=50',
+        url: API_URL + '/api/v2/court-cases/community/' + communityId + '?status=scheduled&unassigned=true&limit=50',
         method: 'GET',
         success: function(resp) {
           var cases = resp.data || [];
+          // Merge in existing docket cases that won't appear in the unassigned query
+          var fetchedIDs = cases.map(function(c) { return c._id; });
+          (d.docket || []).forEach(function(entry) {
+            if (fetchedIDs.indexOf(entry.courtCaseID) === -1) {
+              cases.push({ _id: entry.courtCaseID, courtCase: { civilianName: entry.civilianName } });
+            }
+          });
           var $list = $('#dd-cc-edit-docket-list');
           if (cases.length === 0) {
             $list.html('<div style="color:var(--dd-text-dim);font-size:0.8rem;padding:0.5rem;">No additional scheduled cases available. Schedule more cases from the Case Queue tab first.</div>');
@@ -5619,7 +5624,6 @@ $('#dd-loading').hide();
 
     function loadPenalCodes() {
       if (!communityId) { console.warn('[PenalCodes] No communityId'); return; }
-      console.log('[PenalCodes] Loading from:', API_URL + '/api/v1/community/' + communityId + '/penal-codes');
       $('.dd-pc-loading').show();
       $('.dd-pc-empty').hide();
       $('.dd-pc-categories').empty();
@@ -5628,7 +5632,6 @@ $('#dd-loading').hide();
         url: API_URL + '/api/v1/community/' + communityId + '/penal-codes',
         method: 'GET',
         success: function(data) {
-          console.log('[PenalCodes] Response:', data);
           penalCodesData = (data && data.categories) || [];
           penalCodesCurrency = (data && data.currency) || 'USD';
           // Load currencies from API, fall back to defaults
@@ -5639,7 +5642,6 @@ $('#dd-loading').hide();
           // Update header button to reflect loaded currency
           $('#dd-panel-penalCodes .dd-pc-currency-btn .dd-pc-currency-sym').text(pcGetCurrencySymbol(penalCodesCurrency));
           $('#dd-panel-penalCodes .dd-pc-currency-btn span:eq(1)').text(penalCodesCurrency);
-          console.log('[PenalCodes] Categories count:', penalCodesData.length);
           renderPenalCodesCategories(penalCodesData);
         },
         error: function(xhr, status, err) {
