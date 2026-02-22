@@ -4556,6 +4556,8 @@ $('#dd-loading').hide();
             '</div>' +
           '</div>' +
           '<div class="dd-cc-case-actions">' +
+            '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="event.stopPropagation();ccReturnToQueue(\'' + caseId + '\',\'' + esc(d.civilianName || 'this case') + '\')"><i class="fa fa-arrow-rotate-left"></i> Unschedule</button>' +
+            '<button class="dd-btn dd-btn-sm dd-btn-outline" style="color:#fbbf24;border-color:rgba(251,191,36,0.3);" onclick="event.stopPropagation();ccRescheduleCase(\'' + caseId + '\',\'' + esc(d.scheduledDate || '') + '\')"><i class="fa fa-clock-rotate-left"></i> Reschedule</button>' +
             '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="event.stopPropagation();ccViewCase(\'' + caseId + '\')"><i class="fa fa-eye"></i> View</button>' +
           '</div>' +
         '</div>';
@@ -5017,7 +5019,7 @@ $('#dd-loading').hide();
             (d.statement ? '<div style="margin-bottom:1rem;"><div class="dd-cc-form-label">Civilian Statement</div><div style="background:var(--dd-surface);border:1px solid var(--dd-glass-border);border-radius:var(--dd-radius-sm);padding:0.75rem;font-size:0.85rem;color:var(--dd-text);font-style:italic;">' + esc(d.statement) + '</div></div>' : '') +
             '<div style="margin-bottom:1rem;"><div class="dd-cc-form-label">Contested Items (' + (d.contestedItems || []).length + ')</div>' + itemsHtml + '</div>' +
             (d.judgeName ? '<div style="margin-bottom:1rem;font-size:0.82rem;color:var(--dd-text-muted);"><i class="fa fa-gavel" style="color:var(--dd-accent);margin-right:0.3rem;"></i> Assigned to <strong style="color:#fff;">Judge ' + esc(d.judgeName) + '</strong></div>' : '') +
-            (ccIsValidDate(d.scheduledDate) ? '<div style="margin-bottom:1rem;font-size:0.82rem;color:var(--dd-text-muted);"><i class="fa fa-calendar" style="color:#4ade80;margin-right:0.3rem;"></i> Scheduled for <strong style="color:#fff;">' + new Date(d.scheduledDate).toLocaleString() + '</strong></div>' : '<div style="margin-bottom:1rem;font-size:0.82rem;color:var(--dd-text-dim);"><i class="fa fa-calendar" style="margin-right:0.3rem;"></i> Not yet scheduled</div>') +
+            (d.status === 'scheduled' && ccIsValidDate(d.scheduledDate) ? '<div style="margin-bottom:1rem;font-size:0.82rem;color:var(--dd-text-muted);"><i class="fa fa-calendar" style="color:#4ade80;margin-right:0.3rem;"></i> Scheduled for <strong style="color:#fff;">' + new Date(d.scheduledDate).toLocaleString() + '</strong></div>' : (d.status !== 'scheduled' && d.status !== 'completed' && d.status !== 'in_progress' ? '<div style="margin-bottom:1rem;font-size:0.82rem;color:var(--dd-text-dim);"><i class="fa fa-calendar" style="margin-right:0.3rem;"></i> Not yet scheduled</div>' : '')) +
             resolutionsHtml +
             (historyHtml ? '<div style="margin-top:1rem;"><div class="dd-cc-form-label">History</div>' + historyHtml + '</div>' : '');
 
@@ -5030,6 +5032,9 @@ $('#dd-loading').hide();
           var footerHtml = '';
           if (ccIsJudicial && d.status === 'in_review') {
             footerHtml = '<button class="dd-btn dd-btn-sm dd-btn-primary" onclick="ccScheduleCase(\'' + (c._id || '') + '\')"><i class="fa fa-calendar"></i> Schedule</button>';
+          } else if (ccIsJudicial && d.status === 'scheduled') {
+            footerHtml = '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="ccReturnToQueue(\'' + (c._id || '') + '\',\'' + esc(d.civilianName || 'this case') + '\')"><i class="fa fa-arrow-rotate-left"></i> Unschedule</button>' +
+              '<button class="dd-btn dd-btn-sm dd-btn-primary" onclick="ccRescheduleCase(\'' + (c._id || '') + '\',\'' + esc(d.scheduledDate || '') + '\')"><i class="fa fa-clock-rotate-left"></i> Reschedule</button>';
           }
           $('#dd-cc-case-detail-footer').html(footerHtml);
         },
@@ -5113,6 +5118,113 @@ $('#dd-loading').hide();
             $btn.prop('disabled', false).html('<i class="fa fa-check"></i> Schedule');
           }
         });
+      });
+    };
+
+    window.ccRescheduleCase = function(caseId, currentDate) {
+      $('#dd-cc-case-detail-modal').removeClass('open');
+      $('#dd-cc-reschedule-modal').remove();
+
+      // Format existing date for datetime-local input
+      var prefill = '';
+      if (currentDate && ccIsValidDate(currentDate)) {
+        var d = new Date(currentDate);
+        prefill = d.getFullYear() + '-' +
+          String(d.getMonth() + 1).padStart(2, '0') + '-' +
+          String(d.getDate()).padStart(2, '0') + 'T' +
+          String(d.getHours()).padStart(2, '0') + ':' +
+          String(d.getMinutes()).padStart(2, '0');
+      }
+
+      var modalHtml = '<div class="dd-cc-modal-overlay" id="dd-cc-reschedule-modal">' +
+        '<div class="dd-cc-modal" style="max-width:440px;">' +
+          '<div class="dd-cc-modal-head">' +
+            '<div class="dd-cc-modal-title"><i class="fa fa-clock-rotate-left" style="color:var(--dd-accent);margin-right:0.4rem;"></i> Reschedule Court Date</div>' +
+            '<button class="dd-cc-modal-close" onclick="$(\'#dd-cc-reschedule-modal\').removeClass(\'open\')">&times;</button>' +
+          '</div>' +
+          '<div class="dd-cc-modal-body">' +
+            '<input type="hidden" id="dd-cc-reschedule-case-id" value="' + caseId + '">' +
+            '<div class="dd-cc-form-group">' +
+              '<label class="dd-cc-form-label">New Court Date & Time</label>' +
+              '<input type="datetime-local" class="dd-cc-form-input" id="dd-cc-reschedule-date" value="' + prefill + '">' +
+            '</div>' +
+          '</div>' +
+          '<div class="dd-cc-modal-footer">' +
+            '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="$(\'#dd-cc-reschedule-modal\').removeClass(\'open\')">Cancel</button>' +
+            '<button class="dd-btn dd-btn-sm dd-btn-primary" id="dd-cc-submit-reschedule"><i class="fa fa-check"></i> Reschedule</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+      $('body').append(modalHtml);
+      setTimeout(function() { $('#dd-cc-reschedule-modal').addClass('open'); }, 10);
+
+      $('#dd-cc-reschedule-modal').on('click', function(e) {
+        if (e.target === this) $(this).removeClass('open');
+      });
+
+      $('#dd-cc-submit-reschedule').on('click', function() {
+        var reschedCaseId = $('#dd-cc-reschedule-case-id').val();
+        var dateVal = $('#dd-cc-reschedule-date').val();
+        if (!dateVal) { ccAlert('Missing Field', 'Please select a date and time.', 'warning'); return; }
+
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Rescheduling...');
+
+        $.ajax({
+          url: API_URL + '/api/v2/court-cases/' + reschedCaseId + '/schedule',
+          method: 'PUT',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            scheduledDate: new Date(dateVal).toISOString(),
+            judgeID: userId,
+            judgeName: userName
+          }),
+          success: function() {
+            $('#dd-cc-reschedule-modal').removeClass('open');
+            ccLoadScheduled();
+            ddToast('Court date updated', 'success');
+          },
+          error: function(xhr) {
+            ccAlert('Reschedule Failed', (xhr.responseJSON && xhr.responseJSON.message) || 'An unknown error occurred.', 'danger');
+          },
+          complete: function() {
+            $btn.prop('disabled', false).html('<i class="fa fa-check"></i> Reschedule');
+          }
+        });
+      });
+    };
+
+    window.ccReturnToQueue = function(caseId, civilianName) {
+      ccShowConfirm({
+        icon: 'fa-arrow-rotate-left',
+        iconClass: 'warning',
+        title: 'Return to Queue',
+        message: 'Return ' + civilianName + '\'s case to the review queue? The scheduled date will be cleared.',
+        confirmLabel: 'Return to Queue',
+        confirmIcon: 'fa-arrow-rotate-left',
+        confirmClass: 'dd-btn-primary',
+        onConfirm: function() {
+          $.ajax({
+            url: API_URL + '/api/v2/court-cases/' + caseId + '/status',
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({
+              status: 'in_review',
+              userID: userId,
+              userName: userName,
+              notes: 'Returned to queue by judge'
+            }),
+            success: function() {
+              $('#dd-cc-case-detail-modal').removeClass('open');
+              ccLoadQueue();
+              ccLoadScheduled();
+              ddToast('Case returned to queue', 'success');
+            },
+            error: function(xhr) {
+              ccAlert('Failed', (xhr.responseJSON && xhr.responseJSON.message) || 'An unknown error occurred.', 'danger');
+            }
+          });
+        }
       });
     };
 
