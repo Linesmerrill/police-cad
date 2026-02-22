@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Help & Tutorials - Lines Police CAD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ht-bg: #08090c;
+      --ht-surface: rgba(255,255,255,0.03);
+      --ht-glass: rgba(255,255,255,0.04);
+      --ht-glass-border: rgba(255,255,255,0.06);
+      --ht-glass-hover: rgba(255,255,255,0.07);
+      --ht-text: #e2e8f0;
+      --ht-text-muted: #64748b;
+      --ht-text-dim: #475569;
+      --ht-accent: #8b5cf6;
+      --ht-accent-glow: rgba(139,92,246,0.15);
+      --ht-green: #22c55e;
+      --ht-red: #ef4444;
+      --ht-amber: #f59e0b;
+      --ht-blue: #3b82f6;
+      --ht-radius: 12px;
+      --ht-radius-sm: 8px;
+    }
+
+    html { font-size: 16px; }
+    body {
+      background: var(--ht-bg);
+      color: var(--ht-text);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 700px 500px at 10% 15%, rgba(139,92,246,0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 90% 85%, rgba(59,130,246,0.04) 0%, transparent 70%);
+    }
+
+    .ht-shell {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 2rem 4rem;
+    }
+
+    /* ── Header ── */
+    .ht-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--ht-glass-border);
+    }
+    .ht-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+    }
+    .ht-header-icon {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      background: var(--ht-accent-glow);
+      border: 1px solid rgba(139,92,246,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ht-accent);
+      font-size: 1.1rem;
+    }
+    .ht-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .ht-subtitle {
+      font-size: 0.78rem;
+      color: var(--ht-text-muted);
+      margin-top: 0.1rem;
+    }
+    .ht-back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--ht-text);
+      background: var(--ht-glass);
+      border: 1px solid var(--ht-glass-border);
+      border-radius: var(--ht-radius-sm);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .ht-back-btn:hover {
+      background: var(--ht-glass-hover);
+      color: #fff;
+    }
+
+    /* ── Layout ── */
+    .ht-layout {
+      display: flex;
+      gap: 2.5rem;
+      align-items: flex-start;
+    }
+
+    /* ── Sidebar ── */
+    .ht-sidebar {
+      position: sticky;
+      top: 2rem;
+      width: 210px;
+      flex-shrink: 0;
+      align-self: flex-start;
+    }
+    .ht-nav-group-title {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ht-text-dim);
+      padding: 0.5rem 0.75rem;
+      margin-top: 1rem;
+    }
+    .ht-nav-group-title:first-child { margin-top: 0; }
+    .ht-nav-link {
+      display: block;
+      padding: 0.4rem 0.75rem 0.4rem 1.5rem;
+      font-size: 0.8rem;
+      color: var(--ht-text-muted);
+      text-decoration: none;
+      border-radius: var(--ht-radius-sm);
+      border-left: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .ht-nav-link:hover {
+      color: #fff;
+      background: var(--ht-surface);
+    }
+    .ht-nav-link.active {
+      color: var(--ht-accent);
+      border-left-color: var(--ht-accent);
+      background: var(--ht-accent-glow);
+    }
+
+    /* ── Content ── */
+    .ht-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* ── Section ── */
+    .ht-section {
+      margin-bottom: 3rem;
+    }
+    .ht-section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--ht-glass-border);
+    }
+    .ht-section-icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      background: var(--ht-glass);
+      border: 1px solid var(--ht-glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ht-accent);
+      font-size: 0.95rem;
+    }
+    .ht-section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .ht-section-subtitle {
+      font-size: 0.76rem;
+      color: var(--ht-text-muted);
+      margin-top: 0.1rem;
+    }
+
+    /* ── Subsection ── */
+    .ht-subsection {
+      margin-bottom: 2rem;
+      scroll-margin-top: 2rem;
+    }
+    .ht-subsection-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.6rem;
+    }
+    .ht-text {
+      font-size: 0.84rem;
+      color: var(--ht-text-muted);
+      line-height: 1.65;
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── Steps ── */
+    .ht-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin: 0.75rem 0 1rem;
+    }
+    .ht-step {
+      display: flex;
+      gap: 0.875rem;
+      padding: 0.75rem 1rem;
+      background: var(--ht-surface);
+      border: 1px solid var(--ht-glass-border);
+      border-radius: var(--ht-radius-sm);
+    }
+    .ht-step-number {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--ht-accent-glow);
+      border: 1px solid rgba(139,92,246,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ht-accent);
+      font-weight: 700;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+    .ht-step-body { flex: 1; min-width: 0; }
+    .ht-step-title {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #fff;
+      margin-bottom: 0.15rem;
+    }
+    .ht-step-desc {
+      font-size: 0.8rem;
+      color: var(--ht-text-muted);
+      line-height: 1.5;
+    }
+
+    /* ── Tip Box ── */
+    .ht-tip {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.875rem 1rem;
+      background: rgba(59,130,246,0.06);
+      border: 1px solid rgba(59,130,246,0.15);
+      border-left: 3px solid var(--ht-blue);
+      border-radius: var(--ht-radius-sm);
+      margin: 0.75rem 0 1rem;
+    }
+    .ht-tip-icon {
+      color: var(--ht-blue);
+      font-size: 0.85rem;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+    .ht-tip-text {
+      font-size: 0.8rem;
+      color: var(--ht-text);
+      line-height: 1.55;
+    }
+
+    /* ── Sample Component Box ── */
+    .ht-sample-box {
+      background: var(--ht-surface);
+      border: 1px solid var(--ht-glass-border);
+      border-radius: var(--ht-radius);
+      margin: 1rem 0 1.5rem;
+      overflow: hidden;
+    }
+    .ht-sample-label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ht-text-dim);
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--ht-glass-border);
+    }
+    .ht-sample-content {
+      padding: 1.25rem;
+      pointer-events: none;
+      opacity: 0.85;
+      user-select: none;
+    }
+
+    /* ── Sample Form Elements ── */
+    .ht-form-group {
+      margin-bottom: 0.875rem;
+    }
+    .ht-form-label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--ht-text-muted);
+      margin-bottom: 0.3rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .ht-form-input,
+    .ht-form-select,
+    .ht-form-textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.82rem;
+      font-family: inherit;
+      color: var(--ht-text);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      outline: none;
+    }
+    .ht-form-textarea { resize: none; min-height: 60px; }
+    .ht-form-select { appearance: none; }
+    .ht-form-row {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .ht-form-row > * { flex: 1; }
+
+    /* ── Sample Buttons ── */
+    .ht-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: inherit;
+      border: none;
+      border-radius: 6px;
+      cursor: default;
+    }
+    .ht-btn-accent { background: var(--ht-accent); color: #fff; }
+    .ht-btn-green { background: var(--ht-green); color: #fff; }
+    .ht-btn-red { background: var(--ht-red); color: #fff; }
+    .ht-btn-outline {
+      background: transparent;
+      border: 1px solid var(--ht-glass-border);
+      color: var(--ht-text);
+    }
+    .ht-btn-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    /* ── Sample Table ── */
+    .ht-sample-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .ht-sample-table th {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      background: rgba(255,255,255,0.04);
+      color: var(--ht-text-muted);
+      font-weight: 600;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--ht-glass-border);
+    }
+    .ht-sample-table td {
+      padding: 0.55rem 0.75rem;
+      color: var(--ht-text);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    /* ── Sample Metrics ── */
+    .ht-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+    }
+    .ht-metric {
+      text-align: center;
+      padding: 1rem 0.5rem;
+      background: var(--ht-glass);
+      border: 1px solid var(--ht-glass-border);
+      border-radius: var(--ht-radius);
+    }
+    .ht-metric-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .ht-metric-value.gold { color: var(--ht-amber); }
+    .ht-metric-value.blue { color: var(--ht-blue); }
+    .ht-metric-value.red { color: var(--ht-red); }
+    .ht-metric-value.green { color: var(--ht-green); }
+    .ht-metric-label {
+      font-size: 0.72rem;
+      color: var(--ht-text-muted);
+      margin-top: 0.15rem;
+    }
+
+    /* ── Sample Tabs ── */
+    .ht-tabs {
+      display: flex;
+      gap: 0.25rem;
+      border-bottom: 1px solid var(--ht-glass-border);
+      margin-top: 0.75rem;
+    }
+    .ht-tab {
+      padding: 0.65rem 1rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--ht-text-muted);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .ht-tab.active {
+      color: var(--ht-accent);
+      border-bottom-color: var(--ht-accent);
+    }
+    .ht-tab-count {
+      font-size: 0.68rem;
+      font-weight: 700;
+      background: var(--ht-glass);
+      border: 1px solid var(--ht-glass-border);
+      padding: 0.1rem 0.4rem;
+      border-radius: 10px;
+    }
+
+    /* ── Sample Case Card ── */
+    .ht-case-card {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      padding: 0.875rem 1rem;
+      background: var(--ht-glass);
+      border: 1px solid var(--ht-glass-border);
+      border-radius: var(--ht-radius);
+    }
+    .ht-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: var(--ht-accent-glow);
+      border: 1px solid rgba(139,92,246,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ht-accent);
+      font-weight: 700;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+    .ht-case-info { flex: 1; min-width: 0; }
+    .ht-case-name {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #fff;
+    }
+    .ht-case-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 0.2rem;
+      font-size: 0.72rem;
+      color: var(--ht-text-muted);
+    }
+
+    /* ── Badges ── */
+    .ht-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-radius: 4px;
+    }
+    .ht-badge-submitted { background: rgba(245,158,11,0.15); color: var(--ht-amber); }
+    .ht-badge-scheduled { background: rgba(34,197,94,0.15); color: var(--ht-green); }
+    .ht-badge-active { background: rgba(239,68,68,0.15); color: var(--ht-red); }
+    .ht-badge-pending { background: rgba(139,92,246,0.15); color: var(--ht-accent); }
+    .ht-badge-approved { background: rgba(34,197,94,0.15); color: var(--ht-green); }
+
+    /* ── Sample Live Banner ── */
+    .ht-live-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.65rem 1rem;
+      background: rgba(239,68,68,0.06);
+      border: 1px solid rgba(239,68,68,0.15);
+      border-radius: var(--ht-radius-sm);
+      font-size: 0.8rem;
+      color: var(--ht-text);
+    }
+    .ht-live-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--ht-red);
+      flex-shrink: 0;
+      animation: ht-pulse 2s ease-in-out infinite;
+    }
+    @keyframes ht-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── Warrant Status Flow ── */
+    .ht-flow {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin: 0.5rem 0 0.75rem;
+    }
+    .ht-flow-item {
+      padding: 0.3rem 0.65rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border-radius: 4px;
+      background: var(--ht-glass);
+      border: 1px solid var(--ht-glass-border);
+      color: var(--ht-text-muted);
+    }
+    .ht-flow-arrow {
+      color: var(--ht-text-dim);
+      font-size: 0.7rem;
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+      .ht-shell { padding: 1.25rem 1rem 3rem; }
+      .ht-layout { flex-direction: column; gap: 1.5rem; }
+      .ht-sidebar {
+        position: static;
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--ht-glass-border);
+      }
+      .ht-nav-group-title { margin-top: 0.5rem; width: 100%; }
+      .ht-nav-link { padding: 0.35rem 0.65rem; border-left: none; }
+      .ht-metrics { grid-template-columns: repeat(2, 1fr); }
+      .ht-form-row { flex-direction: column; }
+      .ht-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="ht-shell">
+
+  <!-- ═══ Header ═══ -->
+  <div class="ht-header">
+    <div class="ht-header-left">
+      <div class="ht-header-icon"><i class="fa fa-circle-question"></i></div>
+      <div>
+        <div class="ht-title">Help & Tutorials</div>
+        <div class="ht-subtitle">Learn how to use warrants, penal codes & court cases</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <a href="javascript:history.back()" class="ht-back-btn"><i class="fa fa-arrow-left"></i> Back</a>
+    </div>
+  </div>
+
+  <!-- ═══ Layout ═══ -->
+  <div class="ht-layout">
+
+    <!-- ── Sidebar ── -->
+    <nav class="ht-sidebar">
+      <div class="ht-nav-group-title"><i class="fa fa-gavel"></i> Warrants</div>
+      <a class="ht-nav-link" href="#warrants-overview">Overview</a>
+      <a class="ht-nav-link" href="#warrants-creating">Creating a Warrant</a>
+      <a class="ht-nav-link" href="#warrants-reviewing">Reviewing Warrants</a>
+      <a class="ht-nav-link" href="#warrants-managing">Managing Warrants</a>
+
+      <div class="ht-nav-group-title"><i class="fa fa-scale-balanced"></i> Penal Codes</div>
+      <a class="ht-nav-link" href="#penal-overview">Overview</a>
+      <a class="ht-nav-link" href="#penal-navigating">Navigating</a>
+      <a class="ht-nav-link" href="#penal-table">Understanding the Table</a>
+      <a class="ht-nav-link" href="#penal-usage">Using in Other Features</a>
+
+      <div class="ht-nav-group-title"><i class="fa fa-briefcase"></i> Court Cases</div>
+      <a class="ht-nav-link" href="#court-overview">Overview</a>
+      <a class="ht-nav-link" href="#court-viewing">Viewing Cases</a>
+      <a class="ht-nav-link" href="#court-queue">Case Queue</a>
+      <a class="ht-nav-link" href="#court-sessions">Court Sessions</a>
+    </nav>
+
+    <!-- ── Content ── -->
+    <div class="ht-content">
+
+      <!-- ╔═══════════════════════════════════════════╗ -->
+      <!-- ║           WARRANTS SECTION                 ║ -->
+      <!-- ╚═══════════════════════════════════════════╝ -->
+      <section id="warrants" class="ht-section">
+        <div class="ht-section-header">
+          <div class="ht-section-icon"><i class="fa fa-gavel"></i></div>
+          <div>
+            <div class="ht-section-title">Warrants</div>
+            <div class="ht-section-subtitle">Request, review, and manage warrants</div>
+          </div>
+        </div>
+
+        <!-- Overview -->
+        <div class="ht-subsection" id="warrants-overview">
+          <h3 class="ht-subsection-title">Overview</h3>
+          <p class="ht-text">
+            Warrants are official court-authorized documents that allow law enforcement to take specific actions
+            against a civilian. There are three types of warrants available in the system:
+          </p>
+          <p class="ht-text">
+            <strong style="color:#fff;">Arrest Warrant</strong> &mdash; Authorizes the arrest of a specific individual suspected of a crime.<br>
+            <strong style="color:#fff;">Search Warrant</strong> &mdash; Authorizes a search of a specific location for evidence related to a crime.<br>
+            <strong style="color:#fff;">Bench Warrant</strong> &mdash; Issued by a judge, typically when a person fails to appear in court.
+          </p>
+          <p class="ht-text">Every warrant goes through a lifecycle:</p>
+          <div class="ht-flow">
+            <span class="ht-flow-item">Pending</span>
+            <i class="fa fa-arrow-right ht-flow-arrow"></i>
+            <span class="ht-flow-item">Approved / Denied</span>
+            <i class="fa fa-arrow-right ht-flow-arrow"></i>
+            <span class="ht-flow-item">Active</span>
+            <i class="fa fa-arrow-right ht-flow-arrow"></i>
+            <span class="ht-flow-item">Executed / Withdrawn</span>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Only users with the appropriate permissions (e.g., officers, judges) can create, review, or manage warrants. Your role determines which actions are available to you.
+            </div>
+          </div>
+        </div>
+
+        <!-- Creating a Warrant -->
+        <div class="ht-subsection" id="warrants-creating">
+          <h3 class="ht-subsection-title">Creating a Warrant</h3>
+          <p class="ht-text">Officers can request a warrant by following these steps:</p>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Search for the civilian</div>
+                <div class="ht-step-desc">Use the <strong>Name Database</strong> in the sidebar to look up the person you want to file a warrant for.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Click "Request Warrant"</div>
+                <div class="ht-step-desc">Once you've found the civilian, click the <strong>Request Warrant</strong> button to open the warrant form.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Fill out the warrant form</div>
+                <div class="ht-step-desc">Select the warrant type, add the charges, and provide probable cause. For search warrants, also specify the location to be searched.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">4</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Submit for review</div>
+                <div class="ht-step-desc">Click <strong>Submit</strong> to send the warrant request to a judge for approval. You'll be notified once it's been reviewed.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Warrant Request Form</div>
+            <div class="ht-sample-content">
+              <div class="ht-form-group">
+                <label class="ht-form-label">Warrant Type</label>
+                <select class="ht-form-select">
+                  <option>Arrest Warrant</option>
+                </select>
+              </div>
+              <div class="ht-form-row">
+                <div class="ht-form-group">
+                  <label class="ht-form-label">First Name</label>
+                  <input class="ht-form-input" type="text" value="John">
+                </div>
+                <div class="ht-form-group">
+                  <label class="ht-form-label">Last Name</label>
+                  <input class="ht-form-input" type="text" value="Doe">
+                </div>
+              </div>
+              <div class="ht-form-group">
+                <label class="ht-form-label">Charges</label>
+                <input class="ht-form-input" type="text" value="Reckless Driving, Evading Police">
+              </div>
+              <div class="ht-form-group">
+                <label class="ht-form-label">Probable Cause</label>
+                <textarea class="ht-form-textarea">Suspect was observed driving recklessly through a school zone and fled when officers attempted a traffic stop.</textarea>
+              </div>
+              <div class="ht-btn-group">
+                <button class="ht-btn ht-btn-accent"><i class="fa fa-paper-plane"></i> Submit Warrant</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviewing Warrants -->
+        <div class="ht-subsection" id="warrants-reviewing">
+          <h3 class="ht-subsection-title">Reviewing Warrants</h3>
+          <p class="ht-text">
+            Judges and authorized administrators can review pending warrant requests. Pending warrants appear in the
+            <strong>Review Warrants</strong> section in the sidebar.
+          </p>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Open Review Warrants</div>
+                <div class="ht-step-desc">Click <strong>Review Warrants</strong> in the sidebar. A badge shows how many warrants are pending review.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Read the warrant details</div>
+                <div class="ht-step-desc">Review the warrant type, accused person, charges, probable cause, and the requesting officer's information.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Add judge notes (optional)</div>
+                <div class="ht-step-desc">You can add notes explaining your decision. These notes will be visible to the requesting officer.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">4</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Approve or Deny</div>
+                <div class="ht-step-desc">Click <strong>Approve</strong> to authorize the warrant, or <strong>Deny</strong> to reject it.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Warrant Review Panel</div>
+            <div class="ht-sample-content">
+              <div class="ht-form-row">
+                <div class="ht-form-group">
+                  <label class="ht-form-label">Warrant Type</label>
+                  <input class="ht-form-input" type="text" value="Arrest Warrant" readonly>
+                </div>
+                <div class="ht-form-group">
+                  <label class="ht-form-label">Status</label>
+                  <input class="ht-form-input" type="text" value="Pending Review" readonly>
+                </div>
+              </div>
+              <div class="ht-form-row">
+                <div class="ht-form-group">
+                  <label class="ht-form-label">Accused</label>
+                  <input class="ht-form-input" type="text" value="John Doe" readonly>
+                </div>
+                <div class="ht-form-group">
+                  <label class="ht-form-label">Requesting Officer</label>
+                  <input class="ht-form-input" type="text" value="Ofc. Smith" readonly>
+                </div>
+              </div>
+              <div class="ht-form-group">
+                <label class="ht-form-label">Charges</label>
+                <input class="ht-form-input" type="text" value="Reckless Driving, Evading Police" readonly>
+              </div>
+              <div class="ht-form-group">
+                <label class="ht-form-label">Probable Cause</label>
+                <textarea class="ht-form-textarea" readonly>Suspect was observed driving recklessly through a school zone and fled when officers attempted a traffic stop.</textarea>
+              </div>
+              <div class="ht-form-group">
+                <label class="ht-form-label">Judge Notes</label>
+                <textarea class="ht-form-textarea" placeholder="Enter any notes about your decision..."></textarea>
+              </div>
+              <div class="ht-btn-group">
+                <button class="ht-btn ht-btn-green"><i class="fa fa-check"></i> Approve Warrant</button>
+                <button class="ht-btn ht-btn-red"><i class="fa fa-times"></i> Deny Warrant</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Managing Warrants -->
+        <div class="ht-subsection" id="warrants-managing">
+          <h3 class="ht-subsection-title">Managing Warrants</h3>
+          <p class="ht-text">
+            Once a warrant has been approved, it becomes active. Officers can view all active warrants under the
+            <strong>All Warrants</strong> section in the sidebar.
+          </p>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">View warrant details</div>
+                <div class="ht-step-desc">Click on any warrant to view its full details including type, status, charges, probable cause, and judge notes.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Execute the warrant</div>
+                <div class="ht-step-desc">When you're ready to act on the warrant, click <strong>Execute Warrant</strong>. This marks the warrant as executed in the system.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Withdraw (if needed)</div>
+                <div class="ht-step-desc">If a warrant is no longer needed, click <strong>Withdraw</strong> to recall it. This cannot be undone.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Warrant Detail View</div>
+            <div class="ht-sample-content">
+              <div class="ht-form-row">
+                <div class="ht-form-group">
+                  <label class="ht-form-label">Warrant Type</label>
+                  <input class="ht-form-input" type="text" value="Arrest Warrant" readonly>
+                </div>
+                <div class="ht-form-group">
+                  <label class="ht-form-label">Status</label>
+                  <div style="margin-top:0.3rem;"><span class="ht-badge ht-badge-approved">Approved</span></div>
+                </div>
+              </div>
+              <div class="ht-form-row">
+                <div class="ht-form-group">
+                  <label class="ht-form-label">Accused</label>
+                  <input class="ht-form-input" type="text" value="John Doe" readonly>
+                </div>
+                <div class="ht-form-group">
+                  <label class="ht-form-label">Date Filed</label>
+                  <input class="ht-form-input" type="text" value="2/20/2026, 3:15 PM" readonly>
+                </div>
+              </div>
+              <div class="ht-form-group">
+                <label class="ht-form-label">Charges</label>
+                <input class="ht-form-input" type="text" value="Reckless Driving, Evading Police" readonly>
+              </div>
+              <div class="ht-form-group">
+                <label class="ht-form-label">Judge Notes</label>
+                <textarea class="ht-form-textarea" readonly>Sufficient probable cause. Warrant approved.</textarea>
+              </div>
+              <div class="ht-btn-group">
+                <button class="ht-btn ht-btn-accent"><i class="fa fa-bolt"></i> Execute Warrant</button>
+                <button class="ht-btn ht-btn-outline"><i class="fa fa-rotate-left"></i> Withdraw</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ╔═══════════════════════════════════════════╗ -->
+      <!-- ║         PENAL CODES SECTION                ║ -->
+      <!-- ╚═══════════════════════════════════════════╝ -->
+      <section id="penal-codes" class="ht-section">
+        <div class="ht-section-header">
+          <div class="ht-section-icon"><i class="fa fa-scale-balanced"></i></div>
+          <div>
+            <div class="ht-section-title">Penal Codes</div>
+            <div class="ht-section-subtitle">Browse and understand the legal code reference</div>
+          </div>
+        </div>
+
+        <!-- Overview -->
+        <div class="ht-subsection" id="penal-overview">
+          <h3 class="ht-subsection-title">Overview</h3>
+          <p class="ht-text">
+            Penal Codes are a reference document listing all violations recognized by your community. Each violation includes the offense name,
+            the associated jail time, fine amount, and an explanation of the offense. Penal codes are used throughout the system
+            when filing citations, arrest reports, and warrant charges.
+          </p>
+          <p class="ht-text">Violations are organized into five categories, from least to most severe:</p>
+          <div class="ht-flow">
+            <span class="ht-flow-item">Traffic Violations</span>
+            <i class="fa fa-arrow-right ht-flow-arrow"></i>
+            <span class="ht-flow-item">Petty Misdemeanors</span>
+            <i class="fa fa-arrow-right ht-flow-arrow"></i>
+            <span class="ht-flow-item">Misdemeanors</span>
+            <i class="fa fa-arrow-right ht-flow-arrow"></i>
+            <span class="ht-flow-item">Felonies</span>
+            <i class="fa fa-arrow-right ht-flow-arrow"></i>
+            <span class="ht-flow-item">Other</span>
+          </div>
+        </div>
+
+        <!-- Navigating -->
+        <div class="ht-subsection" id="penal-navigating">
+          <h3 class="ht-subsection-title">Navigating Penal Codes</h3>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Open Penal Codes</div>
+                <div class="ht-step-desc">Click <strong>Penal Codes</strong> in the sidebar to open the reference page.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Use the category navigation</div>
+                <div class="ht-step-desc">The left sidebar on the Penal Codes page lists all categories. Click a category name to jump directly to that section.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Search for a violation</div>
+                <div class="ht-step-desc">Each category table has a search box at the top. Type a keyword to instantly filter results within that category.</div>
+              </div>
+            </div>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-lightbulb ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              The <strong>"Other"</strong> category includes special violations like cop/civ baiting and metagaming. Check this section if the violation you're looking for doesn't fit into the standard categories.
+            </div>
+          </div>
+        </div>
+
+        <!-- Understanding the Table -->
+        <div class="ht-subsection" id="penal-table">
+          <h3 class="ht-subsection-title">Understanding the Table</h3>
+          <p class="ht-text">Each penal code table has four columns:</p>
+          <p class="ht-text">
+            <strong style="color:#fff;">Violation</strong> &mdash; The name of the offense.<br>
+            <strong style="color:#fff;">Jail Time</strong> &mdash; How long the offender may be jailed (in seconds, for roleplay purposes).<br>
+            <strong style="color:#fff;">Fine</strong> &mdash; The monetary fine associated with the offense.<br>
+            <strong style="color:#fff;">Explanation</strong> &mdash; A brief description of what constitutes this offense.
+          </p>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Penal Code Table</div>
+            <div class="ht-sample-content">
+              <table class="ht-sample-table">
+                <thead>
+                  <tr>
+                    <th>Violation</th>
+                    <th>Jail Time</th>
+                    <th>Fine</th>
+                    <th>Explanation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Reckless Driving</td>
+                    <td>30 seconds</td>
+                    <td>$1,000</td>
+                    <td>Careless and unlawful operation of a vehicle.</td>
+                  </tr>
+                  <tr>
+                    <td>Speeding (10-19 over)</td>
+                    <td>N/A</td>
+                    <td>$150</td>
+                    <td>Failing to obey posted speed limit signs.</td>
+                  </tr>
+                  <tr>
+                    <td>Assault</td>
+                    <td>45 seconds</td>
+                    <td>$1,500</td>
+                    <td>Intentional use of physical force against another person.</td>
+                  </tr>
+                  <tr>
+                    <td>Grand Theft Auto</td>
+                    <td>60 seconds</td>
+                    <td>$2,500</td>
+                    <td>Unlawful taking of a motor vehicle belonging to another.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Using in Other Features -->
+        <div class="ht-subsection" id="penal-usage">
+          <h3 class="ht-subsection-title">Using Penal Codes in Other Features</h3>
+          <p class="ht-text">
+            Penal codes aren't just a reference &mdash; they're integrated throughout the system. When you file a citation,
+            create an arrest report, or request a warrant, the <strong>Charges</strong> field pulls from the penal code list.
+            This ensures consistency across all reports and documents.
+          </p>
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              If your community has custom penal codes, those will appear in the charges dropdowns as well. Community owners can manage penal codes through the community settings.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ╔═══════════════════════════════════════════╗ -->
+      <!-- ║         COURT CASES SECTION                ║ -->
+      <!-- ╚═══════════════════════════════════════════╝ -->
+      <section id="court-cases" class="ht-section">
+        <div class="ht-section-header">
+          <div class="ht-section-icon"><i class="fa fa-briefcase"></i></div>
+          <div>
+            <div class="ht-section-title">Court Cases</div>
+            <div class="ht-section-subtitle">File, track, and manage court proceedings</div>
+          </div>
+        </div>
+
+        <!-- Overview -->
+        <div class="ht-subsection" id="court-overview">
+          <h3 class="ht-subsection-title">Overview</h3>
+          <p class="ht-text">
+            The Court Cases system allows civilians to contest actions taken against them (arrests, citations, warnings)
+            and have their cases heard by a judge. Cases are organized into sessions where a judge reviews one or more cases at a time.
+          </p>
+          <p class="ht-text">Every court case follows a lifecycle:</p>
+          <div class="ht-flow">
+            <span class="ht-flow-item">Submitted</span>
+            <i class="fa fa-arrow-right ht-flow-arrow"></i>
+            <span class="ht-flow-item">In Review</span>
+            <i class="fa fa-arrow-right ht-flow-arrow"></i>
+            <span class="ht-flow-item">Scheduled</span>
+            <i class="fa fa-arrow-right ht-flow-arrow"></i>
+            <span class="ht-flow-item">In Progress</span>
+            <i class="fa fa-arrow-right ht-flow-arrow"></i>
+            <span class="ht-flow-item">Completed</span>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Civilians submit cases to contest actions, while judges manage the review and scheduling process. Officers may be called to provide context during court sessions.
+            </div>
+          </div>
+        </div>
+
+        <!-- Viewing Cases -->
+        <div class="ht-subsection" id="court-viewing">
+          <h3 class="ht-subsection-title">Viewing Court Cases</h3>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Open Court Cases</div>
+                <div class="ht-step-desc">Click <strong>Court Cases</strong> in the sidebar to open the court case management page.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Check the metrics bar</div>
+                <div class="ht-step-desc">The metrics bar at the top gives you a quick summary of how many cases are pending, scheduled, active, and completed.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Navigate using tabs</div>
+                <div class="ht-step-desc">Use the tabs to switch between different views: <strong>Queue</strong> (pending cases), <strong>Scheduled</strong> (upcoming), <strong>Sessions</strong> (active court sessions), and <strong>History</strong> (completed).</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Court Cases Dashboard</div>
+            <div class="ht-sample-content">
+              <div class="ht-metrics">
+                <div class="ht-metric">
+                  <div class="ht-metric-value gold">3</div>
+                  <div class="ht-metric-label">Pending</div>
+                </div>
+                <div class="ht-metric">
+                  <div class="ht-metric-value blue">1</div>
+                  <div class="ht-metric-label">Scheduled</div>
+                </div>
+                <div class="ht-metric">
+                  <div class="ht-metric-value red">1</div>
+                  <div class="ht-metric-label">Active</div>
+                </div>
+                <div class="ht-metric">
+                  <div class="ht-metric-value green">12</div>
+                  <div class="ht-metric-label">Completed</div>
+                </div>
+              </div>
+              <div class="ht-tabs">
+                <button class="ht-tab active"><i class="fa fa-inbox"></i> Queue <span class="ht-tab-count">3</span></button>
+                <button class="ht-tab"><i class="fa fa-calendar-check"></i> Scheduled <span class="ht-tab-count">1</span></button>
+                <button class="ht-tab"><i class="fa fa-circle-play"></i> Sessions <span class="ht-tab-count">1</span></button>
+                <button class="ht-tab"><i class="fa fa-clock-rotate-left"></i> History</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Case Queue -->
+        <div class="ht-subsection" id="court-queue">
+          <h3 class="ht-subsection-title">Case Queue</h3>
+          <p class="ht-text">
+            The Case Queue shows all submitted cases that haven't been scheduled yet. Each case card displays the
+            civilian's name, case status, number of contested items, and the submission date. Click on a case to
+            view its full details.
+          </p>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Case Card</div>
+            <div class="ht-sample-content">
+              <div class="ht-case-card">
+                <div class="ht-avatar">JD</div>
+                <div class="ht-case-info">
+                  <div class="ht-case-name">John Doe</div>
+                  <div class="ht-case-meta">
+                    <span class="ht-badge ht-badge-submitted">Submitted</span>
+                    <span><i class="fa fa-file-lines"></i> 2 items</span>
+                    <span><i class="fa fa-clock"></i> 2/20/2026</span>
+                  </div>
+                </div>
+                <button class="ht-btn ht-btn-outline"><i class="fa fa-eye"></i> View</button>
+              </div>
+              <div class="ht-case-card" style="margin-top:0.5rem;">
+                <div class="ht-avatar">AS</div>
+                <div class="ht-case-info">
+                  <div class="ht-case-name">Alice Smith</div>
+                  <div class="ht-case-meta">
+                    <span class="ht-badge ht-badge-pending">In Review</span>
+                    <span><i class="fa fa-file-lines"></i> 1 item</span>
+                    <span><i class="fa fa-clock"></i> 2/18/2026</span>
+                  </div>
+                </div>
+                <button class="ht-btn ht-btn-outline"><i class="fa fa-eye"></i> View</button>
+              </div>
+            </div>
+          </div>
+
+          <p class="ht-text">
+            When viewing a case, you'll see the civilian's statement, the contested items (arrests, citations, or warnings they're disputing),
+            and any judge notes or scheduled dates. Judges can assign themselves to cases and schedule them for a court session.
+          </p>
+        </div>
+
+        <!-- Court Sessions -->
+        <div class="ht-subsection" id="court-sessions">
+          <h3 class="ht-subsection-title">Court Sessions</h3>
+          <p class="ht-text">
+            Court sessions are live proceedings where a judge reviews one or more cases. When a session is active,
+            a red banner appears at the top of the Court Cases page.
+          </p>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Live Session Banner</div>
+            <div class="ht-sample-content">
+              <div class="ht-live-banner">
+                <div class="ht-live-dot"></div>
+                <span><strong style="color:#fff;">Court Session Active</strong> &mdash; Judge Williams is presiding &middot; 2 cases on docket</span>
+                <button class="ht-btn ht-btn-outline" style="margin-left:auto;font-size:0.75rem;padding:0.35rem 0.75rem;"><i class="fa fa-right-to-bracket"></i> Join</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Create a session</div>
+                <div class="ht-step-desc">Judges can create a new court session by clicking <strong>+ Create Session</strong> and selecting which scheduled cases to include in the docket.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Start the session</div>
+                <div class="ht-step-desc">Once created, the judge clicks <strong>Start Session</strong> to begin proceedings. A live banner will appear for all users on the Court Cases page.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Review cases on the docket</div>
+                <div class="ht-step-desc">The judge activates each case in order. For each case, the judge reviews contested items and marks them as <strong>Dismissed</strong> or <strong>Upheld</strong>.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">4</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Submit resolutions</div>
+                <div class="ht-step-desc">After reviewing all contested items, the judge submits the resolution for each case. The verdict is recorded and visible in the History tab.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">5</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">End the session</div>
+                <div class="ht-step-desc">Once all cases have been resolved, the judge ends the session. All completed cases move to the History tab with their verdicts.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Court sessions include a real-time chat feature. Participants (judge, defendants, spectators) can communicate during the session. Use the chat to ask questions or provide additional context.
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /.ht-content -->
+  </div><!-- /.ht-layout -->
+
+
+</div><!-- /.ht-shell -->
+
+<% include partials/footer %>
+
+<script>
+(function() {
+  'use strict';
+
+  var navLinks = document.querySelectorAll('.ht-nav-link');
+  var subsections = document.querySelectorAll('.ht-subsection[id]');
+
+  // Smooth scroll on nav click
+  navLinks.forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      var target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        history.replaceState(null, null, this.getAttribute('href'));
+      }
+    });
+  });
+
+  // Scrollspy: highlight active nav link
+  function updateActiveLink() {
+    var atBottom = (window.innerHeight + window.scrollY) >= (document.body.scrollHeight - 30);
+
+    if (atBottom && subsections.length) {
+      // At the bottom of the page — activate the last subsection
+      var lastId = subsections[subsections.length - 1].id;
+      navLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + lastId) {
+          link.classList.add('active');
+        }
+      });
+      return;
+    }
+
+    var scrollY = window.scrollY + 120;
+    var current = '';
+    subsections.forEach(function(section) {
+      if (section.offsetTop <= scrollY) {
+        current = section.id;
+      }
+    });
+    navLinks.forEach(function(link) {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === '#' + current) {
+        link.classList.add('active');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveLink);
+  updateActiveLink();
+
+  // Handle hash on page load (deep linking)
+  if (window.location.hash) {
+    var hashTarget = document.querySelector(window.location.hash);
+    if (!hashTarget) {
+      // Try matching section id (e.g., #court-cases -> scroll to #court-overview)
+      var sectionMap = {
+        '#warrants': '#warrants-overview',
+        '#penal-codes': '#penal-overview',
+        '#court-cases': '#court-overview'
+      };
+      var mapped = sectionMap[window.location.hash];
+      if (mapped) hashTarget = document.querySelector(mapped);
+    }
+    if (hashTarget) {
+      setTimeout(function() {
+        hashTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+    }
+  }
+})();
+</script>
+
+</body>
+</html>

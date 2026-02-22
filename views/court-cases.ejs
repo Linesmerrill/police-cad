@@ -535,8 +535,9 @@
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:0.75rem;">
+      <a href="/help#court-cases" class="cc-refresh-btn" title="Help & Tutorials"><i class="fa fa-circle-question"></i></a>
       <button class="cc-refresh-btn" onclick="ccRefreshAll()" title="Refresh"><i class="fa fa-arrows-rotate"></i></button>
-      <a href="javascript:history.back()" class="cc-back-btn"><i class="fa fa-arrow-left"></i> Back</a>
+      <a href="javascript:void(0)" onclick="ccGoBack()" class="cc-back-btn"><i class="fa fa-arrow-left"></i> Back</a>
     </div>
   </div>
 
@@ -650,6 +651,21 @@
     $list.closest('.cc-tab-content').find('.cc-spinner').hide();
     $list.show().html('<div class="cc-empty"><i class="fa fa-inbox"></i>' + esc(msg) + '</div>');
   }
+
+  // --- Back navigation ---
+  window.ccGoBack = function() {
+    var ref = document.referrer;
+    // If referrer is from this site and is a dashboard page, use history.back()
+    if (ref && ref.indexOf(window.location.origin) === 0
+        && ref.indexOf('/court-session') === -1
+        && ref.indexOf('/court-cases') === -1
+        && ref.indexOf('/help') === -1) {
+      history.back();
+      return;
+    }
+    // Fallback: go to communities page
+    window.location.href = '/communities';
+  };
 
   // --- Init ---
   $(document).ready(function() {

@@ -1485,6 +1485,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Help & Tutorial page
+  app.get("/help", authCheck, function (req, res) {
+    res.render("help-tutorial", {
+      user: req.user,
+    });
+  });
+
   app.get("/ems-dashboard", authCheck, async function (req, res) {
     try {
       var context = req.app.locals.specialContext;
