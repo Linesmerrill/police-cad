@@ -279,6 +279,12 @@
     $('#sessionSubtitle').html('Presided by Judge ' + escHtml(judgeName));
     $('#sessionJudge').html('<i class="fa fa-gavel"></i> Judge ' + escHtml(judgeName));
 
+    // Update back button to link directly to court-cases page (forces reload instead of stale cache)
+    if (session.communityID) {
+      var encoded = btoa(session.communityID).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+      $('#backToDashboardBtn').attr('href', '/court-cases?c=' + encoded);
+    }
+
     // Status badge
     var status = session.status || 'scheduled';
     var $badge = $('#sessionStatusBadge');
@@ -1019,7 +1025,7 @@
             '<span class="jd-role-badge ' + roleBadgeClass + '">' + escHtml(role) + '</span>' +
             '<span class="jd-chat-msg-time">' + timeStr + '</span>' +
           '</div>' +
-          '<div class="jd-chat-msg-text">' + escHtml(m.message || m.text || '') + '</div>' +
+          '<div class="jd-chat-msg-text">' + linkifyText(m.message || m.text || '') + '</div>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -1346,6 +1352,11 @@
     var div = document.createElement('div');
     div.appendChild(document.createTextNode(str || ''));
     return div.innerHTML;
+  }
+
+  function linkifyText(str) {
+    var escaped = escHtml(str);
+    return escaped.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="jd-chat-link">$1</a>');
   }
 
   function getItemTypeClass(type) {

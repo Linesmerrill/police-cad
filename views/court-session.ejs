@@ -555,6 +555,8 @@
       word-break: break-word;
     }
     .jd-chat-msg.msg-judge .jd-chat-msg-text { color: var(--text-primary); }
+    .jd-chat-link { color: #818cf8; text-decoration: underline; transition: color 0.15s; }
+    .jd-chat-link:hover { color: #a78bfa; }
 
     .jd-chat-input-area {
       display: flex; gap: 0.5rem;
@@ -712,7 +714,7 @@
       </div>
     </div>
     <div class="jd-header-actions">
-      <a href="javascript:history.back()" class="jd-back-btn"><i class="fa fa-arrow-left"></i> Back to Dashboard</a>
+      <a id="backToDashboardBtn" href="javascript:history.back()" class="jd-back-btn"><i class="fa fa-arrow-left"></i> Back to Dashboard</a>
       <button class="jd-btn jd-btn-gold" id="startSessionBtn" style="display:none;"><i class="fa fa-play"></i> Start Session</button>
       <button class="jd-btn jd-btn-danger" id="endSessionBtn" style="display:none;"><i class="fa fa-stop"></i> End Session</button>
     </div>
