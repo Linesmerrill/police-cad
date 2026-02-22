@@ -515,6 +515,31 @@
       .cc-live-session-row { flex-wrap: wrap; gap: 0.5rem; }
       .cc-live-join-btn { width: 100%; justify-content: center; }
     }
+    /* Case filter pills */
+    .cc-case-filter {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .cc-filter-pill {
+      padding: 0.35rem 0.85rem;
+      border-radius: var(--cc-radius-sm);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 0.8rem;
+      border: 1px solid var(--cc-glass-border);
+      background: var(--cc-glass);
+      color: var(--cc-text-dim);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .cc-filter-pill:hover { color: var(--cc-text-muted); border-color: rgba(255,255,255,0.1); }
+    .cc-filter-pill.active {
+      background: var(--cc-accent-glow);
+      border-color: rgba(139,92,246,0.4);
+      color: var(--cc-accent);
+    }
+
     @media (max-width: 480px) {
       .cc-shell { padding: 1rem; }
       .cc-metrics { grid-template-columns: 1fr 1fr; gap: 0.4rem; }
@@ -536,7 +561,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:0.75rem;">
       <a href="/help#court-cases" class="cc-refresh-btn" title="Help & Tutorials"><i class="fa fa-circle-question"></i></a>
-      <button class="cc-refresh-btn" onclick="ccRefreshAll()" title="Refresh"><i class="fa fa-arrows-rotate"></i></button>
+      <button class="cc-refresh-btn" id="ccRefreshBtn" onclick="ccRefreshAll()" title="Refresh"><i class="fa fa-arrows-rotate"></i></button>
       <a href="javascript:void(0)" onclick="ccGoBack()" class="cc-back-btn"><i class="fa fa-arrow-left"></i> Back</a>
     </div>
   </div>
@@ -562,6 +587,12 @@
       <div class="cc-metric-value green" id="metricCompleted">-</div>
       <div class="cc-metric-label">Completed</div>
     </div>
+  </div>
+
+  <!-- Case Filter -->
+  <div class="cc-case-filter">
+    <button class="cc-filter-pill active" data-filter="yours">Your Cases</button>
+    <button class="cc-filter-pill" data-filter="all">All Cases</button>
   </div>
 
   <!-- Tabs -->
@@ -615,6 +646,7 @@
 <script type="text/javascript">
   var API_URL = '<%= apiUrl || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
   var communityId = '<%= communityId %>';
+  var currentUserId = '<%= user && user._doc ? user._doc._id : "" %>';
 </script>
 <script src="/static/js/jquery.min.js"></script>
 <script>
@@ -627,6 +659,7 @@
   var cachedHistory = [];
   var historyCaseCache = {}; // caseId -> fetched court case data
   var expandedHistoryId = null;
+  var caseFilter = 'yours'; // 'yours' | 'all'
 
   function esc(str) {
     var div = document.createElement('div');
@@ -671,7 +704,7 @@
   $(document).ready(function() {
     bindTabs();
     window.ccRefreshAll = function() {
-      var $btn = $('.cc-refresh-btn');
+      var $btn = $('#ccRefreshBtn');
       $btn.addClass('spinning');
       loadQueue();
       loadScheduled();
@@ -724,10 +757,72 @@
       $('#tab-' + tab).addClass('active');
     });
 
+    // Case filter pills
+    $(document).on('click', '.cc-filter-pill', function() {
+      $('.cc-filter-pill').removeClass('active');
+      $(this).addClass('active');
+      caseFilter = $(this).data('filter');
+      reRenderAll();
+    });
+
     // Close modal on backdrop
     $('#caseDetailModal').on('click', function(e) {
       if (e.target === this) $(this).removeClass('open');
     });
+  }
+
+  function isMyCase(c) {
+    var d = c.courtCase || c.details || c;
+    return d.userID === currentUserId;
+  }
+
+  function isMySession(s) {
+    var d = s.courtSession || s.details || s;
+    var parts = d.participants || [];
+    for (var i = 0; i < parts.length; i++) {
+      if (parts[i].userID === currentUserId) return true;
+    }
+    var docket = d.docket || [];
+    for (var j = 0; j < docket.length; j++) {
+      if (docket[j].userID === currentUserId) return true;
+    }
+    return false;
+  }
+
+  function getFilteredQueue() {
+    return caseFilter === 'all' ? cachedQueue : cachedQueue.filter(isMyCase);
+  }
+  function getFilteredScheduled() {
+    return caseFilter === 'all' ? cachedScheduled : cachedScheduled.filter(isMyCase);
+  }
+  function getFilteredActive() {
+    return caseFilter === 'all' ? cachedActive : cachedActive.filter(isMySession);
+  }
+  function getFilteredHistory() {
+    return caseFilter === 'all' ? cachedHistory : cachedHistory.filter(isMySession);
+  }
+
+  function reRenderAll() {
+    renderQueue();
+    renderScheduled();
+    renderActive();
+    renderHistory();
+    updateMetrics();
+  }
+
+  function updateMetrics() {
+    var fq = getFilteredQueue();
+    var fs = getFilteredScheduled();
+    var fa = getFilteredActive();
+    var fh = getFilteredHistory();
+    $('#metricPending').text(fq.length);
+    $('#countQueue').text(fq.length);
+    $('#metricScheduled').text(fs.length);
+    $('#countScheduled').text(fs.length);
+    var activeCount = fa.filter(function(s) { return (s.courtSession || s.details || s).status === 'in_progress'; }).length;
+    $('#metricActive').text(activeCount);
+    $('#countActive').text(fa.length);
+    $('#metricCompleted').text(fh.length);
   }
 
   // --- Data Loading ---
@@ -745,14 +840,12 @@
           success: function(resp2) {
             cachedQueue = submitted.concat(resp2.data || []);
             renderQueue();
-            $('#metricPending').text(cachedQueue.length);
-            $('#countQueue').text(cachedQueue.length);
+            updateMetrics();
           },
           error: function() {
             cachedQueue = submitted;
             renderQueue();
-            $('#metricPending').text(cachedQueue.length);
-            $('#countQueue').text(cachedQueue.length);
+            updateMetrics();
           }
         });
       },
@@ -768,8 +861,7 @@
       success: function(resp) {
         cachedScheduled = resp.data || [];
         renderScheduled();
-        $('#metricScheduled').text(cachedScheduled.length);
-        $('#countScheduled').text(cachedScheduled.length);
+        updateMetrics();
       },
       error: function() { showEmpty($('#scheduledList'), 'Failed to load scheduled cases.'); }
     });
@@ -791,14 +883,12 @@
             var scheduledSessions = respSched.data || [];
             cachedActive = activeSessions.concat(scheduledSessions);
             renderActive();
-            $('#metricActive').text(activeSessions.length);
-            $('#countActive').text(cachedActive.length);
+            updateMetrics();
           },
           error: function() {
             cachedActive = activeSessions;
             renderActive();
-            $('#metricActive').text(activeSessions.length);
-            $('#countActive').text(cachedActive.length);
+            updateMetrics();
           }
         });
       },
@@ -814,7 +904,7 @@
       success: function(resp) {
         cachedHistory = resp.data || [];
         renderHistory();
-        $('#metricCompleted').text(cachedHistory.length);
+        updateMetrics();
       },
       error: function() { showEmpty($('#historyList'), 'Failed to load history.'); }
     });
@@ -827,12 +917,14 @@
     $list.closest('.cc-tab-content').find('.cc-spinner').hide();
     $list.show();
 
-    if (cachedQueue.length === 0) {
-      $list.html('<div class="cc-empty"><i class="fa fa-inbox"></i>No pending cases in the queue.</div>');
+    var filtered = getFilteredQueue();
+    if (filtered.length === 0) {
+      var msg = caseFilter === 'yours' ? 'You have no pending cases.' : 'No pending cases in the queue.';
+      $list.html('<div class="cc-empty"><i class="fa fa-inbox"></i>' + esc(msg) + '</div>');
       return;
     }
 
-    var html = cachedQueue.map(function(c) {
+    var html = filtered.map(function(c) {
       var d = c.courtCase || c.details || c;
       var initials = getInitials(d.civilianName || 'Unknown');
       var itemCount = (d.contestedItems || []).length;
@@ -865,12 +957,14 @@
     $list.closest('.cc-tab-content').find('.cc-spinner').hide();
     $list.show();
 
-    if (cachedScheduled.length === 0) {
-      $list.html('<div class="cc-empty"><i class="fa fa-calendar-check"></i>No scheduled cases.</div>');
+    var filtered = getFilteredScheduled();
+    if (filtered.length === 0) {
+      var msg = caseFilter === 'yours' ? 'You have no scheduled cases.' : 'No scheduled cases.';
+      $list.html('<div class="cc-empty"><i class="fa fa-calendar-check"></i>' + esc(msg) + '</div>');
       return;
     }
 
-    var html = cachedScheduled.map(function(c) {
+    var html = filtered.map(function(c) {
       var d = c.courtCase || c.details || c;
       var initials = getInitials(d.civilianName || 'Unknown');
       var itemCount = (d.contestedItems || []).length;
@@ -936,12 +1030,14 @@
     $list.closest('.cc-tab-content').find('.cc-spinner').hide();
     $list.show();
 
-    if (cachedActive.length === 0) {
-      $list.html('<div class="cc-empty"><i class="fa fa-circle-play"></i>No court sessions.</div>');
+    var filtered = getFilteredActive();
+    if (filtered.length === 0) {
+      var msg = caseFilter === 'yours' ? 'You have no active sessions.' : 'No court sessions.';
+      $list.html('<div class="cc-empty"><i class="fa fa-circle-play"></i>' + esc(msg) + '</div>');
       return;
     }
 
-    var html = cachedActive.map(function(s) {
+    var html = filtered.map(function(s) {
       var d = s.courtSession || s.details || s;
       var docketCount = (d.docket || []).length;
       var participantCount = (d.participants || []).length;
@@ -987,12 +1083,14 @@
     $list.closest('.cc-tab-content').find('.cc-spinner').hide();
     $list.show();
 
-    if (cachedHistory.length === 0) {
-      $list.html('<div class="cc-empty"><i class="fa fa-clock-rotate-left"></i>No session history yet.</div>');
+    var filtered = getFilteredHistory();
+    if (filtered.length === 0) {
+      var msg = caseFilter === 'yours' ? 'You have no completed sessions.' : 'No session history yet.';
+      $list.html('<div class="cc-empty"><i class="fa fa-clock-rotate-left"></i>' + esc(msg) + '</div>');
       return;
     }
 
-    var html = cachedHistory.map(function(s) {
+    var html = filtered.map(function(s) {
       var d = s.courtSession || s.details || s;
       var sid = s._id || '';
       var docketCount = (d.docket || []).length;
