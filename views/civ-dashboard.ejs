@@ -1555,21 +1555,21 @@
         <!-- Edit Civilian Form -->
         <form id="editCivilianForm" autocomplete="off">
           <input type="hidden" id="civIdHidden" />
-          <div style="display:flex; gap:2rem; align-items:flex-start; flex-wrap:wrap;">
-            <div style="flex:1 1 220px; min-width:220px;">
-              <div id="civAvatarUpload" style="width:90px; height:90px; border-radius:50%; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:#fff; margin-bottom:1.2rem; position:relative; cursor:pointer; transition:box-shadow 0.2s; box-shadow:0 2px 8px rgba(102,126,234,0.10); overflow:hidden;">
-                <img id="civAvatarImg" src="" alt="Avatar" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:50%; position:absolute; left:0; top:0;" />
-                <span id="civAvatarInitials">MS</span>
-                <span style="position:absolute; bottom:8px; right:8px; background:rgba(30,32,44,0.85); border-radius:50%; padding:7px; display:flex; align-items:center; justify-content:center; transition:background 0.2s;">
-                  <i class="fa fa-camera" style="font-size:1.55rem; color:#f7fafc;"></i>
-                </span>
-                <input type="file" id="civImageInput" accept="image/*" style="display:none;" />
-              </div>
-              <div style="font-size:1.1rem; color:#a0aec0; margin-bottom:0.5rem;">Profile Photo</div>
+          <div style="display:flex; gap:1.25rem; align-items:center; margin-bottom:1.5rem;">
+            <div id="civAvatarUpload" style="width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:2rem; color:#fff; position:relative; cursor:pointer; transition:box-shadow 0.2s; box-shadow:0 2px 8px rgba(102,126,234,0.10); overflow:hidden; flex-shrink:0;">
+              <img id="civAvatarImg" src="" alt="Avatar" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:50%; position:absolute; left:0; top:0;" />
+              <span id="civAvatarInitials">MS</span>
+              <span style="position:absolute; bottom:4px; right:4px; background:rgba(30,32,44,0.85); border-radius:50%; padding:5px; display:flex; align-items:center; justify-content:center; transition:background 0.2s;">
+                <i class="fa fa-camera" style="font-size:1.1rem; color:#f7fafc;"></i>
+              </span>
+              <input type="file" id="civImageInput" accept="image/*" style="display:none;" />
             </div>
-            <div style="flex:2 1 320px; min-width:260px;">
-              <div style="font-size:1.2rem; font-weight:600; color:#f7fafc; margin-bottom:0.7rem;">Details about your Civilian</div>
-              
+            <div>
+              <div style="font-size:1.2rem; font-weight:600; color:#f7fafc;">Details about your Civilian</div>
+              <div style="font-size:0.85rem; color:#a0aec0;">Click photo to change</div>
+            </div>
+          </div>
+          <div>
                               <!-- Dynamic Approval Warning -->
                 <div id="civPendingWarning" class="pending-warning" style="display:none; background:linear-gradient(135deg,#ed8936 0%,#f6ad55 100%); color:#fff; padding:1rem; border-radius:8px; margin-bottom:1.5rem; border-left:4px solid #c05621;">
                   <div style="display:flex; align-items:center; gap:0.75rem;">
@@ -1605,9 +1605,11 @@
                   <input id="civOccupation" name="occupation" type="text" class="heroui-input civ-input" style="width:100%; margin-top:0.2rem;" placeholder="Occupation" />
                 </div>
               </div>
-              <div style="font-size:1.1rem; color:#a0aec0; margin-bottom:0.5rem; margin-top:1.2rem;">Advanced Details <span style="font-size:0.95rem; color:#888;">(Optional)</span></div>
+              <div style="font-size:1.1rem; color:#a0aec0; margin-bottom:0.75rem; margin-top:1.2rem;">Advanced Details <span style="font-size:0.95rem; color:#888;">(Optional)</span></div>
+
+              <!-- Gender + Height row -->
               <div style="display:flex; gap:1.2rem; flex-wrap:wrap;">
-                <div style="flex:1 1 120px; min-width:100px; margin-bottom:1rem;">
+                <div style="flex:1 1 140px; min-width:120px; margin-bottom:1rem;">
                   <label for="civGender" style="color:#e0e7ff; font-weight:500;">Gender</label>
                   <select id="civGender" name="gender" class="heroui-input civ-input" style="width:100%; margin-top:0.2rem;" placeholder="Gender">
                     <option value="">Select</option>
@@ -1617,13 +1619,13 @@
                   </select>
                 </div>
                 <!-- Height Section -->
-                <div style="margin-bottom: 1.5rem;">
-                  <label style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.5rem;">Height</label>
-                  <div style="display: flex; background:#1e2028; border:1.5px solid #35385a; border-radius:8px; padding:0.25rem; margin-bottom: 0.75rem; width:fit-content;">
+                <div style="flex:1 1 200px; min-width:180px; margin-bottom:1rem;">
+                  <label style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.3rem;">Height</label>
+                  <div style="display:flex; background:#1e2028; border:1.5px solid #35385a; border-radius:8px; padding:0.25rem; margin-bottom:0.5rem; width:fit-content;">
                     <button type="button" id="civImperial" class="height-toggle-btn active" data-value="imperial" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.9rem; font-weight:500; cursor:pointer; transition:all 0.2s ease;">Imperial (ft/in)</button>
                     <button type="button" id="civMetric" class="height-toggle-btn" data-value="metric" style="background:transparent; color:#a0aec0; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.9rem; font-weight:500; cursor:pointer; transition:all 0.2s ease;">Metric (cm)</button>
                   </div>
-                  <div class="civ-height-imperial" style="display:flex;gap:0.75rem; align-items:center;">
+                  <div class="civ-height-imperial" style="display:flex; gap:0.75rem; align-items:center;">
                     <input id="civHeightFoot" type="number" min="0" placeholder="ft" class="heroui-input civ-input" style="width:80px; height:44px;">
                     <input id="civHeightInches" type="number" min="0" max="11" placeholder="in" class="heroui-input civ-input" style="width:80px; height:44px;">
                   </div>
@@ -1631,11 +1633,13 @@
                     <input id="civHeightCm" type="number" min="0" placeholder="cm" class="heroui-input civ-input" style="width:160px; height:44px;">
                   </div>
                 </div>
-                
-                <!-- Weight Section -->
-                <div style="margin-bottom: 1.5rem;">
-                  <label style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.5rem;">Weight</label>
-                  <div style="display: flex; background:#1e2028; border:1.5px solid #35385a; border-radius:8px; padding:0.25rem; margin-bottom: 0.75rem; width:fit-content;">
+              </div>
+
+              <!-- Weight row -->
+              <div style="display:flex; gap:1.2rem; flex-wrap:wrap; margin-bottom:1rem;">
+                <div style="flex:0 1 200px; min-width:160px;">
+                  <label style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.3rem;">Weight</label>
+                  <div style="display:flex; background:#1e2028; border:1.5px solid #35385a; border-radius:8px; padding:0.25rem; margin-bottom:0.5rem; width:fit-content;">
                     <button type="button" id="civImperialWeight" class="weight-toggle-btn active" data-value="imperial" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.9rem; font-weight:500; cursor:pointer; transition:all 0.2s ease;">lbs</button>
                     <button type="button" id="civMetricWeight" class="weight-toggle-btn" data-value="metric" style="background:transparent; color:#a0aec0; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.9rem; font-weight:500; cursor:pointer; transition:all 0.2s ease;">kg</button>
                   </div>
@@ -1646,38 +1650,43 @@
                     <input id="civWeightKg" type="number" min="0" placeholder="kg" class="heroui-input civ-input" style="width:160px; height:44px;">
                   </div>
                 </div>
-                <!-- Checkboxes Row -->
-                <div style="display: flex; gap: 2rem; align-items: center; margin-bottom: 1.5rem;">
-                  <label class="heroui-checkbox-label" style="display:flex;align-items:center;gap:0.5rem;font-size:1em; cursor:pointer; color:#e0e7ff;">
-                    <div class="heroui-checkbox" id="civOrganDonor" data-checked="false" style="width:20px;height:20px;border:2px solid #35385a;border-radius:4px;background:#1e2028;position:relative;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box;">
-                      <i class="fa fa-check" style="color:#fff;font-size:0.75rem;display:none;line-height:1;"></i>
-                    </div>
-                    Organ Donor?
-                  </label>
-                  <label class="heroui-checkbox-label" style="display:flex;align-items:center;gap:0.5rem;font-size:1em; cursor:pointer; color:#e0e7ff;">
-                    <div class="heroui-checkbox" id="civVeteran" data-checked="false" style="width:20px;height:20px;border:2px solid #35385a;border-radius:4px;background:#1e2028;position:relative;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box;">
-                      <i class="fa fa-check" style="color:#fff;font-size:0.75rem;display:none;line-height:1;"></i>
-                    </div>
-                    Veteran?
-                  </label>
-                  <label class="heroui-checkbox-label" style="display:flex;align-items:center;gap:0.5rem;font-size:1em; cursor:pointer; color:#e0e7ff;">
-                    <div class="heroui-checkbox" id="civParole" data-checked="false" style="width:20px;height:20px;border:2px solid #35385a;border-radius:4px;background:#1e2028;position:relative;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box;">
-                      <i class="fa fa-check" style="color:#fff;font-size:0.75rem;display:none;line-height:1;"></i>
-                    </div>
-                    On Parole?
-                  </label>
-                  <label class="heroui-checkbox-label" style="display:flex;align-items:center;gap:0.5rem;font-size:1em; cursor:pointer; color:#e0e7ff;">
-                    <div class="heroui-checkbox" id="civProbation" data-checked="false" style="width:20px;height:20px;border:2px solid #35385a;border-radius:4px;background:#1e2028;position:relative;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box;">
-                      <i class="fa fa-check" style="color:#fff;font-size:0.75rem;display:none;line-height:1;"></i>
-                    </div>
-                    On Probation?
-                  </label>
-                </div>
-                <div style="flex:1 1 100px; min-width:80px; margin-bottom:1rem;">
+              </div>
+
+              <!-- Checkboxes Row -->
+              <div style="display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap; margin-bottom:1.25rem;">
+                <label class="heroui-checkbox-label" style="display:flex;align-items:center;gap:0.5rem;font-size:1em; cursor:pointer; color:#e0e7ff;">
+                  <div class="heroui-checkbox" id="civOrganDonor" data-checked="false" style="width:20px;height:20px;border:2px solid #35385a;border-radius:4px;background:#1e2028;position:relative;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box;">
+                    <i class="fa fa-check" style="color:#fff;font-size:0.75rem;display:none;line-height:1;"></i>
+                  </div>
+                  Organ Donor?
+                </label>
+                <label class="heroui-checkbox-label" style="display:flex;align-items:center;gap:0.5rem;font-size:1em; cursor:pointer; color:#e0e7ff;">
+                  <div class="heroui-checkbox" id="civVeteran" data-checked="false" style="width:20px;height:20px;border:2px solid #35385a;border-radius:4px;background:#1e2028;position:relative;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box;">
+                    <i class="fa fa-check" style="color:#fff;font-size:0.75rem;display:none;line-height:1;"></i>
+                  </div>
+                  Veteran?
+                </label>
+                <label class="heroui-checkbox-label" style="display:flex;align-items:center;gap:0.5rem;font-size:1em; cursor:pointer; color:#e0e7ff;">
+                  <div class="heroui-checkbox" id="civParole" data-checked="false" style="width:20px;height:20px;border:2px solid #35385a;border-radius:4px;background:#1e2028;position:relative;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box;">
+                    <i class="fa fa-check" style="color:#fff;font-size:0.75rem;display:none;line-height:1;"></i>
+                  </div>
+                  On Parole?
+                </label>
+                <label class="heroui-checkbox-label" style="display:flex;align-items:center;gap:0.5rem;font-size:1em; cursor:pointer; color:#e0e7ff;">
+                  <div class="heroui-checkbox" id="civProbation" data-checked="false" style="width:20px;height:20px;border:2px solid #35385a;border-radius:4px;background:#1e2028;position:relative;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box;">
+                    <i class="fa fa-check" style="color:#fff;font-size:0.75rem;display:none;line-height:1;"></i>
+                  </div>
+                  On Probation?
+                </label>
+              </div>
+
+              <!-- Eye Color + Hair Color row -->
+              <div style="display:flex; gap:1.2rem; flex-wrap:wrap;">
+                <div style="flex:1 1 140px; min-width:120px; margin-bottom:1rem;">
                   <label for="civEyeColor" style="color:#e0e7ff; font-weight:500;">Eye Color</label>
                   <input id="civEyeColor" name="eyeColor" type="text" class="heroui-input civ-input" style="width:100%; margin-top:0.2rem;" placeholder="Eye Color" />
                 </div>
-                <div style="flex:1 1 100px; min-width:80px; margin-bottom:1rem;">
+                <div style="flex:1 1 140px; min-width:120px; margin-bottom:1rem;">
                   <label for="civHairColor" style="color:#e0e7ff; font-weight:500;">Hair Color</label>
                   <input id="civHairColor" name="hairColor" type="text" class="heroui-input civ-input" style="width:100%; margin-top:0.2rem;" placeholder="Hair Color (optional)" />
                 </div>
@@ -1689,7 +1698,6 @@
                 <button class="btn btn-primary" id="civDetailsEditBtn" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500;">Update Civilian</button>
                 <button class="btn btn-secondary" id="civDetailsModalClose2" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500;">Close</button>
               </div>
-            </div>
           </div>
         </form>
       </div>
@@ -4737,6 +4745,101 @@
   }
   .civ-records-tab-content {
     width: 100%;
+  }
+
+  /* Criminal record cards */
+  .heroui-criminal-card {
+    background: #23263a;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 2px 8px 0 rgba(30,32,44,0.10);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid transparent;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  }
+  .heroui-criminal-card.contestable {
+    cursor: pointer;
+    border-left-color: #35385a;
+  }
+  .heroui-criminal-card.contestable:hover {
+    border-left-color: #f59e0b;
+    background: #282b42;
+    box-shadow: 0 4px 16px 0 rgba(245,158,11,0.08);
+  }
+  .heroui-criminal-card.contest-selected {
+    border-left-color: #f59e0b;
+    background: #2a2640;
+    box-shadow: 0 4px 16px 0 rgba(245,158,11,0.12);
+  }
+
+  /* Contest checkbox area */
+  .contest-select-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+    min-width: 50px;
+  }
+  .contest-select-area input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #f59e0b;
+  }
+  .contest-select-area .contest-label {
+    font-size: 0.65rem;
+    color: #78797f;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    transition: color 0.2s;
+  }
+  .heroui-criminal-card.contestable:hover .contest-label {
+    color: #f59e0b;
+  }
+  .heroui-criminal-card.contest-selected .contest-label {
+    color: #f59e0b;
+  }
+
+  /* Contest hint banner */
+  .contest-hint-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(217,119,6,0.04) 100%);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.25rem;
+    color: #fbbf24;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  .contest-hint-banner i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  /* Trash button */
+  .heroui-trash-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s;
+    flex-shrink: 0;
+    padding: 0.25rem;
+  }
+  .heroui-trash-btn:hover,
+  .heroui-trash-btn:focus {
+    color: #b91c1c;
+    outline: none;
   }
 </style>
 

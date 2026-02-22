@@ -5494,7 +5494,23 @@ function getCriminalStatusBadge(entry) {
 function getContestCheckbox(entry, type) {
   if (entry.status === 'dismissed' || entry.status === 'contested' || entry.status === 'upheld') return '';
   const itemType = type === 'Arrest' ? 'arrest' : type.toLowerCase();
-  return `<input type="checkbox" class="contest-item-checkbox" data-item-id="${entry._id}" data-item-type="${itemType}" style="width:18px;height:18px;cursor:pointer;accent-color:#667eea;margin-right:0.75rem;flex-shrink:0;" />`;
+  return `<div class="contest-select-area">
+    <input type="checkbox" class="contest-item-checkbox" data-item-id="${entry._id}" data-item-type="${itemType}" />
+    <span class="contest-label">Contest</span>
+  </div>`;
+}
+
+function isContestable(entry) {
+  return entry.status !== 'dismissed' && entry.status !== 'contested' && entry.status !== 'upheld';
+}
+
+function getContestHintBanner(entries) {
+  const hasContestable = entries.some(e => isContestable(e));
+  if (!hasContestable) return '';
+  return `<div class="contest-hint-banner">
+    <i class="fa fa-info-circle"></i>
+    <span>Select any records you'd like to contest, then click <strong>Contest Selected</strong> to submit your case to a judge.</span>
+  </div>`;
 }
 
 function updateContestButtonVisibility() {
@@ -5523,14 +5539,15 @@ function renderCriminalHistoryEntries(type, civData) {
     if (entries.length === 0) {
       html = `<div style="color:#a0aec0;text-align:center;padding:2rem 0;">No ${type.toLowerCase()}s found.</div>`;
     } else {
-      html = entries.map(entry => {
-        const isResolved = entry.status === 'dismissed' || entry.status === 'upheld';
+      html = getContestHintBanner(entries);
+      html += entries.map(entry => {
         const isDismissed = entry.status === 'dismissed';
         const isUpheld = entry.status === 'upheld';
         const cardOpacity = isDismissed ? 'opacity:0.6;' : '';
         const textDecoration = isDismissed ? 'text-decoration:line-through;' : '';
+        const contestableClass = isContestable(entry) ? ' contestable' : '';
         return `
-        <div class="heroui-criminal-card" style="background:#23263a;border-radius:10px;padding:1rem;margin-bottom:1.25rem;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);display:flex;align-items:center;${cardOpacity}">
+        <div class="heroui-criminal-card${contestableClass}" style="${cardOpacity}">
           ${getContestCheckbox(entry, type)}
           <div style="flex:1;">
             <div style="font-weight:600;font-size:1.1rem;${textDecoration}">${entry.type}${getCriminalStatusBadge(entry)}</div>
@@ -5541,7 +5558,7 @@ function renderCriminalHistoryEntries(type, civData) {
             ${isDismissed && entry.dismissedBy ? `<div style="font-size:0.85rem;color:#6ee7b7;margin-top:0.25rem;">Dismissed by ${entry.dismissedBy}</div>` : ''}
             ${isUpheld && entry.dismissedBy ? `<div style="font-size:0.85rem;color:#fca5a5;margin-top:0.25rem;">Upheld by Judge ${entry.dismissedBy}</div>` : ''}
           </div>
-          <button class="heroui-trash-btn" data-type="criminal" data-id="${entry._id}" title="Delete" style="background:none;border:none;color:#ef4444;font-size:1.5rem;cursor:pointer;"><i class="fa fa-trash"></i></button>
+          <button class="heroui-trash-btn" data-type="criminal" data-id="${entry._id}" title="Delete"><i class="fa fa-trash"></i></button>
         </div>`;
       }).join('');
     }
@@ -5550,13 +5567,15 @@ function renderCriminalHistoryEntries(type, civData) {
     if (entries.length === 0) {
       html = `<div style="color:#a0aec0;text-align:center;padding:2rem 0;">No arrest reports found.</div>`;
     } else {
-      html = entries.map(entry => {
+      html = getContestHintBanner(entries);
+      html += entries.map(entry => {
         const isDismissed = entry.status === 'dismissed';
         const isUpheld = entry.status === 'upheld';
         const cardOpacity = isDismissed ? 'opacity:0.6;' : '';
         const textDecoration = isDismissed ? 'text-decoration:line-through;' : '';
+        const contestableClass = isContestable(entry) ? ' contestable' : '';
         return `
-        <div class="heroui-criminal-card" style="background:#23263a;border-radius:10px;padding:1rem;margin-bottom:1.25rem;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);display:flex;align-items:center;${cardOpacity}">
+        <div class="heroui-criminal-card${contestableClass}" style="${cardOpacity}">
           ${getContestCheckbox(entry, 'Arrest')}
           <div style="flex:1;">
             <div style="font-weight:600;font-size:1.1rem;${textDecoration}">Arrest Report${getCriminalStatusBadge(entry)}</div>
@@ -5566,7 +5585,7 @@ function renderCriminalHistoryEntries(type, civData) {
             ${isDismissed && entry.dismissedBy ? `<div style="font-size:0.85rem;color:#6ee7b7;margin-top:0.25rem;">Dismissed by ${entry.dismissedBy}</div>` : ''}
             ${isUpheld && entry.dismissedBy ? `<div style="font-size:0.85rem;color:#fca5a5;margin-top:0.25rem;">Upheld by Judge ${entry.dismissedBy}</div>` : ''}
           </div>
-          <button class="heroui-trash-btn" data-type="arrest" data-id="${entry._id}" title="Delete" style="background:none;border:none;color:#ef4444;font-size:1.5rem;cursor:pointer;"><i class="fa fa-trash"></i></button>
+          <button class="heroui-trash-btn" data-type="arrest" data-id="${entry._id}" title="Delete"><i class="fa fa-trash"></i></button>
         </div>`;
       }).join('');
     }
@@ -5577,7 +5596,17 @@ function renderCriminalHistoryEntries(type, civData) {
 
 // Contest checkbox change handler
 $(document).on('change', '.contest-item-checkbox', function() {
+  const $card = $(this).closest('.heroui-criminal-card');
+  $card.toggleClass('contest-selected', $(this).is(':checked'));
   updateContestButtonVisibility();
+});
+
+// Click anywhere on a contestable card to toggle its checkbox
+$(document).on('click', '.heroui-criminal-card.contestable', function(e) {
+  // Don't toggle if they clicked the checkbox itself, the trash button, or a link
+  if ($(e.target).is('.contest-item-checkbox') || $(e.target).closest('.heroui-trash-btn').length) return;
+  const $checkbox = $(this).find('.contest-item-checkbox');
+  $checkbox.prop('checked', !$checkbox.prop('checked')).trigger('change');
 });
 
 // Contest selected button click handler — opens contest modal
