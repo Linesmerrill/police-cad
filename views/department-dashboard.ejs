@@ -281,7 +281,24 @@
       text-overflow: ellipsis;
     }
 
-    .dd-user-role {
+    .dd-user-roles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      margin-top: 0.2rem;
+    }
+
+    .dd-user-role-tag {
+      font-size: 0.5625rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+
+    .dd-user-role-default {
       font-size: 0.6875rem;
       color: var(--dd-text-dim);
     }
@@ -349,11 +366,45 @@
       border-bottom: 1px solid var(--dd-glass-border);
     }
 
+    .dd-topbar::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--dd-dept-glow, transparent);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .dd-topbar-left {
+      display: flex;
+      align-items: center;
+    }
+
     .dd-topbar-title {
       font-size: 0.9375rem;
       font-weight: 600;
       color: var(--dd-text);
       letter-spacing: -0.01em;
+    }
+
+    .dd-topbar-dept-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.2rem 0.625rem;
+      border-radius: 999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-left: 0.75rem;
+    }
+
+    .dd-topbar-dept-badge i {
+      font-size: 0.625rem;
     }
 
     .dd-topbar-actions {
@@ -2969,6 +3020,20 @@
 
       <!-- Utilities -->
       <div class="dd-nav-section">
+        <div class="dd-nav-section-label">Utilities</div>
+        <a class="dd-nav-item" id="dd-nav-notifications" onclick="window.ddOpenNotifications && window.ddOpenNotifications()" style="cursor:pointer;">
+          <i class="fa fa-bell"></i>
+          Notifications
+          <span class="dd-nav-badge" id="dd-notif-count" style="display:none;">0</span>
+        </a>
+        <a class="dd-nav-item" id="dd-nav-settings" data-panel="departmentSettings" onclick="window.ddNavTo && window.ddNavTo('departmentSettings')" style="cursor:pointer;">
+          <i class="fa fa-gear"></i>
+          Settings
+        </a>
+      </div>
+
+      <!-- Navigation -->
+      <div class="dd-nav-section">
         <div class="dd-nav-section-label">Navigation</div>
         <a class="dd-nav-item" href="<%= communityUrl %>">
           <i class="fa fa-arrow-left"></i>
@@ -2978,9 +3043,29 @@
           <i class="fa fa-layer-group"></i>
           All Communities
         </a>
+        <a class="dd-nav-item" href="/most-wanted?c=<%= encodedCommunityId %>">
+          <i class="fa fa-star"></i>
+          Most Wanted
+        </a>
+        <a class="dd-nav-item" href="/map-interactive" target="_blank">
+          <i class="fa fa-map"></i>
+          Map
+        </a>
+        <a class="dd-nav-item" href="/court-cases?c=<%= encodedCommunityId %>">
+          <i class="fa fa-briefcase"></i>
+          Court Cases
+        </a>
         <a class="dd-nav-item" href="/help">
           <i class="fa fa-circle-question"></i>
           Help & Tutorials
+        </a>
+        <a class="dd-nav-item" href="/contact-us" target="_blank">
+          <i class="fa fa-headset"></i>
+          Support
+        </a>
+        <a class="dd-nav-item" href="/logout">
+          <i class="fa fa-sign-out-alt"></i>
+          Sign Out
         </a>
       </div>
     </div>
@@ -2991,7 +3076,7 @@
           <div class="dd-user-avatar"><% if (user.user && user.user.profilePicture) { %><img src="<%= user.user.profilePicture %>" alt=""><% } else { %><%= userInitial %><% } %></div>
           <div class="dd-user-info">
             <div class="dd-user-name"><%= username %></div>
-            <div class="dd-user-role">Department Member</div>
+            <div id="dd-user-role"><span class="dd-user-role-default">Department Member</span></div>
           </div>
         </div>
       </a>
@@ -3001,7 +3086,10 @@
   <!-- ════════ Main ════════ -->
   <main class="dd-main">
     <div class="dd-topbar">
-      <div class="dd-topbar-title" id="dd-topbar-title">Overview</div>
+      <div class="dd-topbar-left">
+        <div class="dd-topbar-title" id="dd-topbar-title">Overview</div>
+        <span class="dd-topbar-dept-badge" id="dd-topbar-dept-badge" style="display:none;"></span>
+      </div>
       <div class="dd-topbar-actions">
         <button class="dd-topbar-btn" title="Refresh" onclick="ddRefresh()">
           <i class="fa fa-arrows-rotate"></i>
@@ -3052,6 +3140,16 @@
     var userId = dbUser._id || dbUser.user?._id || '';
     var userName = dbUser.user?.username || 'Judge';
 
+    // Expose config for external component JS files (dd-civilians.js, etc.)
+    window.ddConfig = {
+      API_URL: API_URL,
+      communityId: communityId,
+      userId: userId,
+      departmentId: departmentId,
+      dbUser: dbUser,
+      userName: userName
+    };
+
     var enabledComponents = {};
     var pendingWarrants = [];
     var tenCodes = [];
@@ -3079,6 +3177,7 @@
         navIcon: 'fa-sticky-note',
         gridClass: 'dd-grid-full',
         accentColor: 'var(--dd-amber)',
+        overviewHidden: true,
         render: renderNotepadPanel,
         init: initNotepad
       },
@@ -3117,6 +3216,94 @@
         accentColor: 'var(--dd-accent)',
         render: renderCourtCasesPanel,
         init: loadCourtCases
+      },
+      // ── Civilian template components ──
+      createCivilians: {
+        label: 'Civilians',
+        icon: 'fa-users',
+        navIcon: 'fa-users',
+        gridClass: 'dd-grid-full',
+        accentColor: 'var(--dd-blue)',
+        render: function(key) { return window.ddCivRender ? window.ddCivRender(key) : '<div class="dd-empty"><i class="fa fa-users"></i><p>Loading civilians...</p></div>'; },
+        init: function() { if (window.ddCivInit) window.ddCivInit(); }
+      },
+      createVehicles: {
+        label: 'Vehicles',
+        icon: 'fa-car',
+        navIcon: 'fa-car',
+        gridClass: 'dd-grid-full',
+        accentColor: 'var(--dd-green)',
+        render: function(key) { return window.ddVehRender ? window.ddVehRender(key) : '<div class="dd-empty"><i class="fa fa-car"></i><p>Loading vehicles...</p></div>'; },
+        init: function() { if (window.ddVehInit) window.ddVehInit(); }
+      },
+      createFirearms: {
+        label: 'Firearms',
+        icon: 'fa-crosshairs',
+        navIcon: 'fa-crosshairs',
+        gridClass: 'dd-grid-full',
+        accentColor: 'var(--dd-red)',
+        render: function(key) { return window.ddFirearmRender ? window.ddFirearmRender(key) : '<div class="dd-empty"><i class="fa fa-crosshairs"></i><p>Loading firearms...</p></div>'; },
+        init: function() { if (window.ddFirearmInit) window.ddFirearmInit(); }
+      },
+      call911: {
+        label: 'Call 911',
+        icon: 'fa-phone',
+        navIcon: 'fa-phone',
+        gridClass: '',
+        accentColor: 'var(--dd-red)',
+        sidebarAction: function() {
+          // Clicking in sidebar should open the 911 modal directly, not navigate
+          if (window.ddOpen911) window.ddOpen911();
+          else ddToast('911 system loading...', 'error');
+        },
+        render: function(key) {
+          return '' +
+            '<div class="dd-card-body" style="padding:0;" onclick="window.ddOpen911 ? window.ddOpen911() : window.ddToast(\'Loading...\', \'error\');" role="button" tabindex="0">' +
+              '<div style="position:relative; overflow:hidden; border-radius:var(--dd-radius); cursor:pointer; transition:all 0.2s;">' +
+                /* Pulsing background glow */
+                '<div style="position:absolute; inset:0; background:radial-gradient(ellipse at 30% 50%, rgba(239,68,68,0.12) 0%, transparent 70%); pointer-events:none;"></div>' +
+                '<div style="display:flex; align-items:center; gap:1rem; padding:1.25rem 1.5rem;">' +
+                  /* Animated icon ring */
+                  '<div style="position:relative; width:52px; height:52px; flex-shrink:0;">' +
+                    '<div style="position:absolute; inset:0; border-radius:50%; border:2px solid rgba(239,68,68,0.3); animation:dd-911-ring 2s ease-in-out infinite;"></div>' +
+                    '<div style="width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.1)); display:flex; align-items:center; justify-content:center;">' +
+                      '<i class="fa fa-phone" style="color:#ef4444; font-size:1.125rem;"></i>' +
+                    '</div>' +
+                  '</div>' +
+                  /* Text content */
+                  '<div style="flex:1; min-width:0;">' +
+                    '<div style="font-size:0.9375rem; font-weight:700; color:#fff; letter-spacing:0.01em;">Emergency Services</div>' +
+                    '<div style="font-size:0.75rem; color:var(--dd-text-muted); margin-top:0.2rem;">Tap to contact 911</div>' +
+                  '</div>' +
+                  /* Arrow indicator */
+                  '<div style="color:rgba(239,68,68,0.5); font-size:0.875rem;">' +
+                    '<i class="fa fa-chevron-right"></i>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>';
+        },
+        init: function() {
+          // Inject the pulse animation if not already present
+          if (!document.getElementById('dd-911-card-anim')) {
+            var style = document.createElement('style');
+            style.id = 'dd-911-card-anim';
+            style.textContent = '@keyframes dd-911-ring { 0%,100% { transform:scale(1); opacity:0.6; } 50% { transform:scale(1.15); opacity:0.2; } }';
+            document.head.appendChild(style);
+          }
+        }
+      },
+      // ── Department Management (always available) ──
+      departmentSettings: {
+        label: 'Department Management',
+        icon: 'fa-cog',
+        navIcon: 'fa-cog',
+        gridClass: 'dd-grid-full',
+        accentColor: 'var(--dd-accent)',
+        overviewHidden: true,
+        sidebarHidden: true,
+        render: function(key) { return window.ddSettingsRender ? window.ddSettingsRender(key) : '<div class="dd-empty"><i class="fa fa-cog"></i><p>Loading settings...</p></div>'; },
+        init: function() { if (window.ddSettingsInit) window.ddSettingsInit(); }
       }
     };
 
@@ -3126,7 +3313,7 @@
       dispatch: { icon: 'fa-headset',         color: '#8b5cf6', route: 'dispatch' },
       fire:     { icon: 'fa-fire-extinguisher', color: '#f97316', route: 'ems' },
       ems:      { icon: 'fa-medkit',           color: '#22c55e', route: 'ems' },
-      civilian: { icon: 'fa-user',             color: '#6b7280', route: 'civ' },
+      civilian: { icon: 'fa-user',             color: '#6b7280', route: 'department' },
       judicial: { icon: 'fa-gavel',            color: '#f59e0b', route: 'department' }
     };
 
@@ -3149,6 +3336,8 @@
         url: API_URL + '/api/v1/community/' + encodeURIComponent(communityId) + '/departments/' + encodeURIComponent(departmentId),
         method: 'GET',
         success: function(dept) {
+          // Store full department data for settings panel and other uses
+          window.ddConfig.departmentData = dept?.department || dept || {};
           var template = dept?.department?.template;
           if (template && template.components) {
             template.components.forEach(function(comp) {
@@ -3156,6 +3345,8 @@
             });
           }
           currentTemplateName = (template && template.name || '').toLowerCase();
+          // Always enable department management
+          enabledComponents['departmentSettings'] = true;
           buildDashboard();
         },
         error: function() {
@@ -3168,10 +3359,54 @@
       });
     }
 
+    // ── Department type indicator helpers ──
+    function hexToRgba(hex, alpha) {
+      var r = parseInt(hex.slice(1, 3), 16);
+      var g = parseInt(hex.slice(3, 5), 16);
+      var b = parseInt(hex.slice(5, 7), 16);
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+    }
+
+    function lightenHex(hex, amount) {
+      var r = parseInt(hex.slice(1, 3), 16);
+      var g = parseInt(hex.slice(3, 5), 16);
+      var b = parseInt(hex.slice(5, 7), 16);
+      r = Math.min(255, Math.round(r + (255 - r) * amount));
+      g = Math.min(255, Math.round(g + (255 - g) * amount));
+      b = Math.min(255, Math.round(b + (255 - b) * amount));
+      return 'rgb(' + r + ',' + g + ',' + b + ')';
+    }
+
+    function applyDeptTypeIndicator() {
+      var dtc = deptTypeConfig[currentTemplateName];
+      if (!dtc) return;
+
+      var color = dtc.color;
+      var labelMap = { police: 'Police', dispatch: 'Dispatch', fire: 'Fire', ems: 'EMS', civilian: 'Civilian', judicial: 'Judicial' };
+      var label = labelMap[currentTemplateName] || currentTemplateName.charAt(0).toUpperCase() + currentTemplateName.slice(1);
+
+      // Frosted glow line on topbar bottom
+      var gradient = 'linear-gradient(90deg, transparent 0%, ' + color + ' 30%, ' + color + ' 70%, transparent 100%)';
+      document.querySelector('.dd-topbar').style.setProperty('--dd-dept-glow', gradient);
+
+      // Department badge
+      var $badge = $('#dd-topbar-dept-badge');
+      $badge
+        .html('<i class="fa ' + dtc.icon + '"></i> ' + label)
+        .css({
+          background: hexToRgba(color, 0.12),
+          border: '1px solid ' + hexToRgba(color, 0.25),
+          color: lightenHex(color, 0.3)
+        })
+        .show();
+    }
+
     function buildDashboard() {
       buildSidebarNav();
       buildPanels();
       checkWarrantApprovalMode();
+      applyDeptTypeIndicator();
+      loadRecordsStats();
 
 $('#dd-loading').hide();
       $('#dd-panels').show();
@@ -3191,6 +3426,11 @@ $('#dd-loading').hide();
       }
     }
 
+    // Expose internals for dd-settings.js to sync sidebar on component toggle
+    window.ddConfig._enabledComponents = enabledComponents;
+    window.ddConfig._componentRegistry = componentRegistry;
+    window.ddBuildSidebarNav = buildSidebarNav;
+
     // ── Sidebar Nav ──
     function buildSidebarNav() {
       var $nav = $('#dd-nav-components');
@@ -3200,13 +3440,18 @@ $('#dd-loading').hide();
       Object.keys(componentRegistry).forEach(function(key) {
         if (!enabledComponents[key]) return;
         var comp = componentRegistry[key];
+        if (comp.sidebarHidden) return;
         var $item = $('<a class="dd-nav-item" data-panel="' + key + '">' +
           '<i class="fa ' + comp.navIcon + '"></i>' +
           comp.label +
           (key === 'reviewWarrants' ? '<span class="dd-nav-badge" id="dd-warrant-count" style="display:none;">0</span>' : '') +
           (key === 'courtCases' ? '<span class="dd-nav-badge dd-cc-live-badge" id="dd-cc-live-count" style="display:none;">0</span><span class="dd-nav-badge" id="dd-cc-pending-count" style="display:none;">0</span>' : '') +
           '</a>');
-        $item.on('click', function() { ddNavTo(key); });
+        if (comp.sidebarAction) {
+          $item.on('click', function() { comp.sidebarAction(); });
+        } else {
+          $item.on('click', function() { ddNavTo(key); });
+        }
         $nav.append($item);
       });
     }
@@ -3284,8 +3529,30 @@ $('#dd-loading').hide();
         );
       }
 
-      // If only one section, make it full-width
-      if ((hasWarrants && !hasCourt) || (!hasWarrants && hasCourt)) {
+      // Civilians section (for civilian template)
+      var hasCivs = !!enabledComponents.createCivilians;
+      var hasVehs = !!enabledComponents.createVehicles;
+      var hasFirearms = !!enabledComponents.createFirearms;
+
+      if (hasCivs || hasVehs || hasFirearms) {
+        $statsRow.append(
+          '<div class="dd-stats-section dd-animate-in" style="--section-accent:var(--dd-blue); animation-delay:0.02s;">' +
+            '<div class="dd-stats-section-header">' +
+              '<div class="dd-stats-section-icon"><i class="fa fa-id-card"></i></div>' +
+              '<div class="dd-stats-section-title">Records</div>' +
+            '</div>' +
+            '<div class="dd-stats-section-grid">' +
+              (hasCivs ? '<div class="dd-stat-mini"><div class="dd-stat-mini-value blue" id="dd-stat-civs">—</div><div class="dd-stat-mini-label">Civilians</div></div>' : '') +
+              (hasVehs ? '<div class="dd-stat-mini"><div class="dd-stat-mini-value green" id="dd-stat-vehs">—</div><div class="dd-stat-mini-label">Vehicles</div></div>' : '') +
+              (hasFirearms ? '<div class="dd-stat-mini"><div class="dd-stat-mini-value red" id="dd-stat-firearms">—</div><div class="dd-stat-mini-label">Firearms</div></div>' : '') +
+            '</div>' +
+          '</div>'
+        );
+      }
+
+      // Adjust grid columns based on how many stat sections exist
+      var statSections = (hasWarrants ? 1 : 0) + (hasCourt ? 1 : 0) + ((hasCivs || hasVehs || hasFirearms) ? 1 : 0);
+      if (statSections === 1) {
         $statsRow.css('grid-template-columns', '1fr');
       }
 
@@ -3293,26 +3560,60 @@ $('#dd-loading').hide();
       var $overview = $('<div id="dd-panel-overview"></div>');
       $overview.append($statsRow);
       var $grid = $('<div class="dd-grid dd-animate-in"></div>');
-      Object.keys(componentRegistry).forEach(function(key, i) {
+
+      // Sort keys so priority components (call911) appear first in overview
+      var priorityKeys = ['call911'];
+      var orderedKeys = Object.keys(componentRegistry).slice();
+      orderedKeys.sort(function(a, b) {
+        var aP = priorityKeys.indexOf(a);
+        var bP = priorityKeys.indexOf(b);
+        if (aP !== -1 && bP !== -1) return aP - bP;
+        if (aP !== -1) return -1;
+        if (bP !== -1) return 1;
+        return 0;
+      });
+
+      var visibleIdx = 0;
+      var overviewVisibleCount = 0;
+      orderedKeys.forEach(function(key) {
         if (!enabledComponents[key]) return;
         var comp = componentRegistry[key];
-        var $card = $('<div class="dd-card ' + comp.gridClass + ' dd-animate-in" id="dd-component-' + key + '" style="--card-accent:' + comp.accentColor + '; animation-delay:' + (i * 0.08 + 0.15) + 's"></div>');
+        // Components with overviewHidden are only accessible from sidebar, not shown on overview grid
+        var hideOnOverview = comp.overviewHidden;
+        var $card = $('<div class="dd-card ' + comp.gridClass + ' dd-animate-in" id="dd-component-' + key + '" style="--card-accent:' + comp.accentColor + '; animation-delay:' + (visibleIdx * 0.08 + 0.15) + 's"></div>');
         $card.html(comp.render(key));
+        if (hideOnOverview) {
+          $card.addClass('dd-overview-hidden');
+        } else {
+          overviewVisibleCount++;
+        }
         $grid.append($card);
+        visibleIdx++;
       });
+
+      // Empty state when no visible components on overview
+      if (overviewVisibleCount === 0 && statSections === 0) {
+        $grid.append(
+          '<div class="dd-card dd-grid-full dd-animate-in dd-overview-empty" style="animation-delay:0.15s;">' +
+            '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1.5rem;text-align:center;">' +
+              '<div style="width:64px;height:64px;border-radius:50%;background:rgba(139,92,246,0.1);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;">' +
+                '<i class="fa fa-cubes" style="font-size:1.5rem;color:var(--dd-accent);"></i>' +
+              '</div>' +
+              '<div style="font-size:1rem;font-weight:600;color:var(--dd-text);margin-bottom:0.35rem;">No components enabled</div>' +
+              '<div id="dd-empty-state-action" style="font-size:0.8125rem;color:var(--dd-text-muted);max-width:360px;line-height:1.5;">' +
+                'This department doesn\'t have any components enabled yet.' +
+              '</div>' +
+            '</div>' +
+          '</div>'
+        );
+      }
+
       $overview.append($grid);
       $panels.append($overview);
 
-      // Individual focused panels for each component
-      Object.keys(componentRegistry).forEach(function(key) {
-        if (!enabledComponents[key]) return;
-        var comp = componentRegistry[key];
-        var $panel = $('<div id="dd-panel-' + key + '" class="dd-animate-in" style="display:none;"></div>');
-        var $card = $('<div class="dd-card dd-animate-in" id="dd-component-focus-' + key + '" style="--card-accent:' + comp.accentColor + ';"></div>');
-        $card.html(comp.render(key));
-        $panel.append($card);
-        $panels.append($panel);
-      });
+      // NOTE: We no longer create separate focused panels.
+      // ddNavTo handles focus mode by hiding the stats row and
+      // collapsing other cards within the overview grid.
     }
 
     // ── Warrant Approval Mode Banner ──
@@ -3324,6 +3625,73 @@ $('#dd-loading').hide();
         method: 'GET',
         success: function(res) {
           var community = res.community || res;
+          // Store community data for settings panel (roles, permissions)
+          window.ddConfig.communityData = community;
+
+          // Re-render settings component now that permissions are available
+          if (window.ddSettingsInit) window.ddSettingsInit();
+
+          // Resolve all user roles for sidebar display
+          var userRoles = [];
+          var roles = community.roles || [];
+          // Palette of distinct colours for role tags
+          var rolePalette = [
+            { bg: 'rgba(99,102,241,0.18)',  color: '#818cf8' },
+            { bg: 'rgba(34,197,94,0.18)',   color: '#4ade80' },
+            { bg: 'rgba(245,158,11,0.18)',  color: '#fbbf24' },
+            { bg: 'rgba(239,68,68,0.18)',   color: '#f87171' },
+            { bg: 'rgba(168,85,247,0.18)',  color: '#c084fc' },
+            { bg: 'rgba(6,182,212,0.18)',   color: '#22d3ee' },
+            { bg: 'rgba(244,114,182,0.18)', color: '#f472b6' },
+            { bg: 'rgba(251,146,60,0.18)',  color: '#fb923c' }
+          ];
+          for (var ri = 0; ri < roles.length; ri++) {
+            var role = roles[ri];
+            var roleMembers = role.members || [];
+            if (roleMembers.indexOf(userId) !== -1 && role.name) {
+              userRoles.push(role.name);
+            }
+          }
+          if (userRoles.length) {
+            var tagsHtml = '<div class="dd-user-roles">';
+            for (var ti = 0; ti < userRoles.length; ti++) {
+              var pc = rolePalette[ti % rolePalette.length];
+              tagsHtml += '<span class="dd-user-role-tag" style="background:' + pc.bg + ';color:' + pc.color + ';">' + userRoles[ti] + '</span>';
+            }
+            tagsHtml += '</div>';
+            $('#dd-user-role').html(tagsHtml);
+          }
+
+          // Update empty-state action based on permissions
+          var $emptyAction = $('#dd-empty-state-action');
+          if ($emptyAction.length) {
+            var isOwner = (community.ownerID || '') === userId;
+            var canManageDepts = isOwner;
+            if (!canManageDepts) {
+              for (var pi = 0; pi < roles.length; pi++) {
+                var pr = roles[pi];
+                if ((pr.members || []).indexOf(userId) === -1) continue;
+                (pr.permissions || []).forEach(function(p) {
+                  if ((p.name === 'manage departments' || p.name === 'administrator') && p.enabled) canManageDepts = true;
+                });
+              }
+            }
+            if (canManageDepts) {
+              $emptyAction.html(
+                'This department doesn\'t have any components enabled yet. Go to <strong>Settings</strong> to manage components.' +
+                '<div style="margin-top:1rem;">' +
+                  '<button onclick="window.ddNavTo && window.ddNavTo(\'departmentSettings\')" style="padding:0.5rem 1rem;background:var(--dd-accent);color:#fff;border:none;border-radius:8px;font-size:0.8125rem;font-weight:600;cursor:pointer;font-family:\'Outfit\',sans-serif;">' +
+                    '<i class="fa fa-cog" style="margin-right:0.35rem;"></i> Open Settings' +
+                  '</button>' +
+                '</div>'
+              );
+            } else {
+              $emptyAction.html(
+                'This department doesn\'t have any components enabled yet.<br>' +
+                'Ask a community admin to enable components from <strong>Settings</strong>.'
+              );
+            }
+          }
 
           // Find this department in the community and check if it's judicial
           var departments = community.departments || [];
@@ -3368,7 +3736,11 @@ $('#dd-loading').hide();
     function ddNavTo(panel) {
       // Update sidebar
       $('.dd-nav-item').removeClass('active');
-      $('.dd-nav-item[data-panel="' + panel + '"]').addClass('active');
+      if (panel === 'overview') {
+        $('.dd-nav-item[data-panel="overview"]').addClass('active');
+      } else {
+        $('.dd-nav-item[data-panel="' + panel + '"]').addClass('active');
+      }
 
       // Update topbar title
       if (panel === 'overview') {
@@ -3377,9 +3749,53 @@ $('#dd-loading').hide();
         $('#dd-topbar-title').text(componentRegistry[panel].label);
       }
 
-      // Show/hide panels
-      $('[id^="dd-panel-"]').hide();
-      $('#dd-panel-' + panel).show();
+      // All content lives inside #dd-panel-overview.
+      // In overview mode: show stats + all cards.
+      // In focus mode: hide stats, show only the target card full-width.
+      var $overview = $('#dd-panel-overview');
+      $overview.show();
+
+      var $statsRow = $('#dd-stats-row');
+      var $warrantBanner = $('.dd-warrant-mode-banner');
+      var $grid = $overview.find('.dd-grid');
+      var $allCards = $grid.children('.dd-card');
+
+      if (panel === 'overview') {
+        // Show everything except overview-hidden components
+        $statsRow.show();
+        $warrantBanner.show();
+        $allCards.each(function() {
+          var $c = $(this);
+          $c.toggle(!$c.hasClass('dd-overview-hidden'));
+        });
+        // Restore original grid classes
+        $allCards.each(function() {
+          var $c = $(this);
+          var orig = $c.data('orig-grid-class');
+          if (orig !== undefined) {
+            if (orig) {
+              $c.addClass(orig);
+            } else {
+              $c.removeClass('dd-grid-full');
+            }
+            $c.removeData('orig-grid-class');
+          }
+        });
+      } else {
+        // Focus on one component: hide stats, hide other cards, make target full-width
+        $statsRow.hide();
+        $warrantBanner.hide();
+        $allCards.hide();
+
+        var $target = $('#dd-component-' + panel);
+        if ($target.length) {
+          // Save original grid class so we can restore in overview mode
+          if ($target.data('orig-grid-class') === undefined) {
+            $target.data('orig-grid-class', $target.hasClass('dd-grid-full') ? 'dd-grid-full' : '');
+          }
+          $target.addClass('dd-grid-full').show();
+        }
+      }
 
       // Update URL hash for bookmarking and refresh persistence
       if (!ddNavTo._fromPopState && window.location.hash !== '#' + panel) {
@@ -3390,6 +3806,10 @@ $('#dd-loading').hide();
       // Close mobile sidebar and restore hamburger
       $('.dd-sidebar').removeClass('open');
       $('#dd-sidebar-open').css('display', '');
+
+      // Scroll to top of content area
+      var $content = $('#dd-content');
+      if ($content.length) $content.scrollTop(0);
     }
     window.ddNavTo = ddNavTo;
 
@@ -3571,6 +3991,35 @@ $('#dd-loading').hide();
         },
         error: function() { $('#dd-stat-denied').text('—'); }
       });
+    }
+
+    function loadRecordsStats() {
+      if (!userId) return;
+      // Lightweight v2 calls (limit=1) just to get totalCount
+      if ($('#dd-stat-civs').length) {
+        $.ajax({
+          url: API_URL + '/api/v2/civilians/user/' + userId + '?limit=1&page=0&active_community_id=' + communityId,
+          method: 'GET',
+          success: function(res) { $('#dd-stat-civs').text(res.totalCount || 0); },
+          error: function() { $('#dd-stat-civs').text('—'); }
+        });
+      }
+      if ($('#dd-stat-vehs').length) {
+        $.ajax({
+          url: API_URL + '/api/v2/vehicles/user/' + userId + '?limit=1&page=0&active_community_id=' + communityId,
+          method: 'GET',
+          success: function(res) { $('#dd-stat-vehs').text(res.totalCount || 0); },
+          error: function() { $('#dd-stat-vehs').text('—'); }
+        });
+      }
+      if ($('#dd-stat-firearms').length) {
+        $.ajax({
+          url: API_URL + '/api/v2/firearms/user/' + userId + '?limit=1&page=0&active_community_id=' + communityId,
+          method: 'GET',
+          success: function(res) { $('#dd-stat-firearms').text(res.totalCount || 0); },
+          error: function() { $('#dd-stat-firearms').text('—'); }
+        });
+      }
     }
 
     window.ddToggleWarrant = function(id) {
@@ -6166,7 +6615,7 @@ $('#dd-loading').hide();
         var redirect = '';
         if (canAccess) {
           if (template === 'civilian') {
-            href = '/civ-dashboard' + params;
+            href = '/department-dashboard' + params;
           } else if (template === 'judicial') {
             href = '/department-dashboard' + params;
           } else if (['police', 'dispatch', 'fire', 'ems'].indexOf(template) !== -1) {
@@ -6386,7 +6835,6 @@ $('#dd-loading').hide();
     // ── Hide a component entirely (card + nav) ──
     function hideComponent(key) {
       $('#dd-component-' + key).remove();
-      $('#dd-component-focus-' + key).closest('[id^="dd-panel-"]').remove();
       $('.dd-nav-item[data-panel="' + key + '"]').remove();
       delete enabledComponents[key];
 
@@ -6420,6 +6868,8 @@ $('#dd-loading').hide();
       setTimeout(function() { $t.removeClass('visible'); }, 3000);
     }
     window.ddToast = ddToast;
+    window.esc = esc;
+    window.formatDate = formatDate;
 
     function showError(msg) {
       $('#dd-loading').hide();
@@ -6433,5 +6883,20 @@ $('#dd-loading').hide();
 
   })();
   </script>
+  <!-- Cloudinary Configuration -->
+  <script>
+    window.CLOUDINARY_CLOUD_NAME = '<%= process.env.CLOUDINARY_CLOUD_NAME || "" %>';
+    window.CLOUDINARY_API_KEY = '<%= process.env.CLOUDINARY_API_KEY || "" %>';
+    window.CLOUDINARY_UPLOAD_PRESET = '<%= process.env.CLOUDINARY_UPLOAD_PRESET || "" %>';
+  </script>
+  <script src="/static/js/cloudinary-upload.js"></script>
+  <!-- Civilian template component scripts -->
+  <script src="/static/js/dd-civilians.js"></script>
+  <script src="/static/js/dd-vehicles.js"></script>
+  <script src="/static/js/dd-firearms.js"></script>
+  <!-- Utility scripts -->
+  <script src="/static/js/dd-911.js"></script>
+  <script src="/static/js/dd-notifications.js"></script>
+  <script src="/static/js/dd-settings.js"></script>
 </body>
 </html>
