@@ -17,7 +17,7 @@
   var toast = function (m, t) { if (window.ddToast) window.ddToast(m, t); };
   var fmtDate = function (d) { return window.formatDate ? window.formatDate(d) : d || 'N/A'; };
 
-  var PAGE_SIZE = 12;
+  var PAGE_SIZE = window.innerWidth <= 600 ? 6 : 12;
   var SEARCH_LIMIT = 8;
   var ddCivPage = 0;
   var ddCivTotal = 0;
