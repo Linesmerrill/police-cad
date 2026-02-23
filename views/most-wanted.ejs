@@ -2115,9 +2115,10 @@
         return;
       }
 
-      fetch(API_URL + '/api/v2/community/' + communityId + '/civilians?page=1&limit=20&search=' + encodeURIComponent(query), {
-        method: 'GET',
-        headers: getHeaders()
+      fetch(API_URL + '/api/v2/civilians/search', {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ query: query, communityId: communityId, page: 0, limit: 20 })
       })
       .then(function(res) {
         if (!res.ok) throw new Error('Search failed');
