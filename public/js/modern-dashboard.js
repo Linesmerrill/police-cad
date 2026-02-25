@@ -5703,7 +5703,7 @@ $(document).on('click', '#submitContestBtn', function() {
     url: `${API_URL}/api/v2/court-cases`,
     method: 'POST',
     contentType: 'application/json',
-    data: JSON.stringify({ courtCase: courtCasePayload }),
+    data: JSON.stringify(courtCasePayload),
     success: function(resp) {
       $('#contestModal').remove();
       alert('Your contest has been submitted successfully. A judge will review your case.');
