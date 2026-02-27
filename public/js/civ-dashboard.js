@@ -378,7 +378,7 @@ function hideModal(modalID) {
 function loadCivSocketData(civID) {
   $("#civilian-details-loading").removeClass("hide").addClass("show");
   $("#civilian-details").removeClass("show").addClass("hide");
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     civID: civID,
   };
@@ -417,7 +417,7 @@ function loadCivSocketData(civID) {
 // }
 
 // function loadVehSocketData(vehID) {
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var myReq = {
 //     vehID: vehID,
 //   };
@@ -429,7 +429,7 @@ function loadCivSocketData(civID) {
 // }
 
 // function loadFirearmSocketData(firearmID) {
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var myReq = {
 //     firearmID: firearmID,
 //   };
@@ -457,7 +457,7 @@ function loadCivSocketData(civID) {
 // }
 
 // function loadLicenseSocketData(licenseID) {
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var myReq = {
 //     licenseID: licenseID,
 //   };
@@ -805,7 +805,7 @@ we should probably swap to use sockets all the time. */
   from reloading the page on civ creation */
 // $("#create-civ-form").submit(function (e) {
 //   e.preventDefault(); //prevents page from reloading
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var age = "";
 //   if ($("#ageView").val() == "") {
 //     age = $("#ageAmount").val();
@@ -958,7 +958,7 @@ function getWeight() {
 
 // $("#create-auto-civ-form").submit(function (e) {
 //   e.preventDefault(); //prevents page from reloading
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   inputGender = $("#genderAuto").val();
 //   inputFirearmLicense = $("#firearmLicenseAuto").val();
 //   reqBody = autoCivCreator(inputGender, inputFirearmLicense);
@@ -1086,7 +1086,7 @@ function getWeight() {
 //   e.preventDefault(); //prevents page from reloading
 //   callCreatedAt = new Date();
 //   callCreatedDate = new Date(callCreatedAt);
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var myReq = {
 //     body: {
 //       userID: $("#create911Call").val(),
@@ -1123,7 +1123,7 @@ from reloading the page on vehicle creation */
 $("#create-vehicle-form").submit(function (e) {
   e.preventDefault(); //prevents page from reloading
 
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     body: {
       plate: $("#plate").val(),
@@ -1189,7 +1189,7 @@ This is to move away from reloading the page on firearm creation */
 $("#create-firearm-form").submit(function (e) {
   e.preventDefault(); //prevents page from reloading
 
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     body: {
       serialNumber: $("#serial-number").val(),
@@ -1250,7 +1250,7 @@ $("#create-firearm-form").submit(function (e) {
 This is to move away from reloading the page on license creation */
 $("#create-license-form").submit(function (e) {
   e.preventDefault(); //prevents page from reloading
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     body: {
       licenseType: $("#license-type").val(),
@@ -1321,7 +1321,7 @@ This is to move away from reloading the page on civilian updates/deletions */
 //     // if user hits the 'x' to close the window, just return
 //     return;
 //   }
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var myReq = {
 //     body: {
 //       civID: $("#civilianIDView").text(),
@@ -1388,7 +1388,7 @@ This is to move away from reloading the page on civilian updates/deletions */
 
 // function getNextCivPage() {
 //   page = page + 1;
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var myObj = {
 //     dbUser: dbUser,
 //     page: page,
@@ -1430,7 +1430,7 @@ This is to move away from reloading the page on civilian updates/deletions */
 //     $("#prev-civ-page-btn").addClass("isDisabled");
 //     $("#prev-civ-page-btn").attr("onclick", "").unbind("click");
 //   }
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var myObj = {
 //     dbUser: dbUser,
 //     page: page,
@@ -1458,7 +1458,7 @@ This is to move away from reloading the page on civilian updates/deletions */
 // }
 
 // function getVehicles() {
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var myCivObj = {
 //     civID: $("#civilianIDView").text(),
 //     page: 0,
@@ -1513,7 +1513,7 @@ This is to move away from reloading the page on civilian updates/deletions */
 
 // function getNextVehPage() {
 //   pageVeh = pageVeh + 1;
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var myObj = {
 //     civID: $("#civilianIDView").text(),
 //     page: pageVeh,
@@ -1560,7 +1560,7 @@ This is to move away from reloading the page on civilian updates/deletions */
 //     $("#prev-veh-page-btn").addClass("isDisabled");
 //     $("#prev-veh-page-btn").attr("onclick", "").unbind("click");
 //   }
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var myObj = {
 //     civID: $("#civilianIDView").text(),
 //     page: pageVeh,
@@ -1599,7 +1599,7 @@ This is to move away from reloading the page on civilian updates/deletions */
 // }
 
 // function getFirearms() {
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   $("#no-firearms-message").hide();
 //   var myCivObj = {
 //     civID: $("#civilianIDView").text(),
@@ -1656,7 +1656,7 @@ This is to move away from reloading the page on civilian updates/deletions */
 
 // function getNextGunPage() {
 //   pageGun = pageGun + 1;
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var myObj = {
 //     civID: $("#civilianIDView").text(),
 //     page: pageGun,
@@ -1700,7 +1700,7 @@ This is to move away from reloading the page on civilian updates/deletions */
 //     $("#prev-gun-page-btn").addClass("isDisabled");
 //     $("#prev-gun-page-btn").attr("onclick", "").unbind("click");
 //   }
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var myObj = {
 //     civID: $("#civilianIDView").text(),
 //     page: pageGun,
@@ -1729,7 +1729,7 @@ This is to move away from reloading the page on civilian updates/deletions */
 // }
 
 // function getLicenses() {
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   $("#no-licenses-message").hide();
 //   var myCivObj = {
 //     civID: $("#civilianIDView").text(),
@@ -1786,7 +1786,7 @@ This is to move away from reloading the page on civilian updates/deletions */
 
 // function getNextLicensePage() {
 //   pageLicense = pageLicense + 1;
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var myObj = {
 //     civID: $("#civilianIDView").text(),
 //     page: pageLicense,
@@ -1834,7 +1834,7 @@ This is to move away from reloading the page on civilian updates/deletions */
 //     $("#prev-license-page-btn").addClass("isDisabled");
 //     $("#prev-license-page-btn").attr("onclick", "").unbind("click");
 //   }
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   var myObj = {
 //     civID: $("#civilianIDView").text(),
 //     page: pageLicense,

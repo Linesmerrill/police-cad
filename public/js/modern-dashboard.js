@@ -4135,7 +4135,7 @@ function deleteFirearmModern(firearmId) {
 
 
 function loadFirearmSocketData(firearmID) {
-    var socket = io();
+    var socket = io({ transports: ["websocket"] });
     var myReq = {
         firearmID: firearmID,
     };
@@ -4285,7 +4285,7 @@ function cancelCallSign() {
 }
 
 function togglePanicBtnSound() {
-    var socket = io();
+    var socket = io({ transports: ["websocket"] });
     socket.emit('update_panic_btn_sound', dbUser);
     socket.on('load_panic_btn_result', (res) => {
         $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound);
@@ -4294,7 +4294,7 @@ function togglePanicBtnSound() {
 }
 
 function adjustAlertVolumeSlider() {
-    var socket = io();
+    var socket = io({ transports: ["websocket"] });
     var volumeAmount = $('#alert-volume-slider').val();
     var myObj = {
         dbUser: dbUser,

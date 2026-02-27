@@ -6317,7 +6317,7 @@ window.showBoloModal = showBoloModal;
       return;
     }
 
-    dashboardSocket = io();
+    dashboardSocket = io({ transports: ["websocket"] });
     window.dashboardSocket = dashboardSocket; // Sync global reference
 
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;

@@ -117,7 +117,7 @@ var signal100UserId = null;
 // Function to initialize socket after global variables are set
 function initializeSocket() {
   // Initialize socket connection
-  socket = io();
+  socket = io({ transports: ["websocket"] });
   window.dashboardSocket = socket; // Expose globally for other scripts
 
   const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
@@ -1060,7 +1060,7 @@ function hideWarningCivPopover() {
 // populateCallDetails function - Temporarily Hidden for Rework
 /*
 function populateCallDetails(callID) {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   socket.emit('get_call_by_id', callID)
   socket.on('load_call_by_id_result', (res) => {
     var createdDate = new Date(res.call.createdAt)
@@ -1122,7 +1122,7 @@ function populateCallDetails(callID) {
 */
 
 function loadEmsData(personaID) {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   myReq = {
     personaID: personaID
   }
@@ -1148,7 +1148,7 @@ function loadEmsData(personaID) {
 }
 
 function deleteEmsVeh() {
-  var socket = io()
+  var socket = io({ transports: ["websocket"] })
   myReq = {
     vehicleID: $('#vehicle-id').val()
   }
@@ -1156,7 +1156,7 @@ function deleteEmsVeh() {
 }
 
 function updateStatus(status) {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var onDuty = null
   var updateDuty = false
   if (status == '10-41') {

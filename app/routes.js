@@ -6377,7 +6377,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
     return res.redirect("communities");
   });
 
-  var io = require("socket.io")(server);
+  var io = require("socket.io")(server, {
+    transports: ["websocket"],
+  });
 
   // ==========================================
   // INTERNAL WEBHOOK ENDPOINT FOR GO API
