@@ -2977,8 +2977,8 @@ function updateDepartmentJoinButton(departmentId, status) {
 
   // Load 10-codes from community data
   function loadTenCodes() {
-    const tenCodesList = document.getElementById('tenCodesList');
-    if (!tenCodesList) return;
+    const tbody = document.getElementById('tcTableBody');
+    if (!tbody) return;
 
     // Get tenCodes from community data - try different possible structures
     let tenCodes = [];
@@ -2987,10 +2987,10 @@ function updateDepartmentJoinButton(departmentId, status) {
     } else if (window.community?.tenCodes) {
       tenCodes = window.community.tenCodes;
     }
-    
+
     // Store the original tenCodes for filtering
     window.allTenCodes = tenCodes;
-    
+
     // Apply current filter if any
     filterTenCodes();
   }
@@ -2998,73 +2998,62 @@ function updateDepartmentJoinButton(departmentId, status) {
 
   // Filter 10-codes based on search input
   function filterTenCodes() {
-    const tenCodesList = document.getElementById('tenCodesList');
+    const tbody = document.getElementById('tcTableBody');
+    const table = document.getElementById('tcTable');
+    const emptyState = document.getElementById('tcEmptyState');
     const searchInput = document.getElementById('tenCodesSearchInput');
-    if (!tenCodesList || !searchInput) return;
+    if (!tbody || !searchInput) return;
 
     const searchTerm = searchInput.value.toLowerCase().trim();
     const allTenCodes = window.allTenCodes || [];
 
     if (allTenCodes.length === 0) {
-      tenCodesList.innerHTML = `
-        <div style="text-align:center; padding:2rem; color:#a0aec0;">
-          <i class="fa fa-bullhorn" style="font-size:3rem; margin-bottom:1rem; opacity:0.5;"></i>
-          <p style="margin:0; font-size:1rem;">No 10-codes configured yet</p>
-          <p style="margin:0.5rem 0 0 0; font-size:0.875rem;">Add your first 10-code to get started</p>
-        </div>
-      `;
+      if (table) table.style.display = 'none';
+      if (emptyState) {
+        emptyState.innerHTML = '<i class="fa fa-bullhorn"></i><p>No 10-codes configured yet</p><p class="sub">Add your first 10-code to get started</p>';
+        emptyState.style.display = 'block';
+      }
       return;
     }
 
     // Filter tenCodes based on search term
     const filteredTenCodes = allTenCodes.filter(code => {
       if (!searchTerm) return true;
-      return code.code.toLowerCase().includes(searchTerm) || 
+      return code.code.toLowerCase().includes(searchTerm) ||
              code.description.toLowerCase().includes(searchTerm);
     });
 
     if (filteredTenCodes.length === 0) {
-      tenCodesList.innerHTML = `
-        <div style="text-align:center; padding:2rem; color:#a0aec0;">
-          <i class="fa fa-search" style="font-size:3rem; margin-bottom:1rem; opacity:0.5;"></i>
-          <p style="margin:0; font-size:1rem;">No 10-codes found</p>
-          <p style="margin:0.5rem 0 0 0; font-size:0.875rem;">Try adjusting your search terms</p>
-        </div>
-      `;
+      if (table) table.style.display = 'none';
+      if (emptyState) {
+        emptyState.innerHTML = '<i class="fa fa-search"></i><p>No 10-codes found</p><p class="sub">Try adjusting your search terms</p>';
+        emptyState.style.display = 'block';
+      }
       return;
     }
 
+    // Show table, hide empty state
+    if (table) table.style.display = '';
+    if (emptyState) emptyState.style.display = 'none';
+
     let html = '';
-    filteredTenCodes.forEach((code, index) => {
-      // Escape special characters for HTML
+    filteredTenCodes.forEach((code) => {
       const escapedCode = code.code.replace(/'/g, "\\'").replace(/"/g, '\\"');
       const escapedDescription = code.description.replace(/'/g, "\\'").replace(/"/g, '\\"');
-      
-      html += `
-        <div class="ten-code-item" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.25rem; margin-bottom:1rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div style="flex:1;">
-              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
-                <span style="background:#f59e0b; color:#fff; padding:0.5rem 0.75rem; border-radius:6px; font-size:1rem; font-weight:600;">${escapedCode}</span>
-              </div>
-              <p style="color:#fff; margin:0; font-size:1rem;">${escapedDescription}</p>
-            </div>
-            <div style="display:flex; gap:0.75rem; margin-left:1rem; flex-shrink:0;">
-              <button onclick="editTenCode('${code._id}', '${escapedCode}', '${escapedDescription}')" 
-                      style="background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:1rem; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;" title="Edit Code">
-                <i class="fa fa-edit"></i>
-              </button>
-              <button onclick="deleteTenCode('${code._id}', '${escapedCode}')" 
-                      style="background:#ef4444; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:1rem; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;" title="Delete Code">
-                <i class="fa fa-trash"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
+      const htmlCode = code.code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      const htmlDesc = code.description.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+      html += `<tr>
+        <td class="tcm-v-code">${htmlCode}</td>
+        <td class="tcm-v-desc">${htmlDesc}</td>
+        <td class="tcm-v-actions">
+          <button class="tcm-icon-btn" onclick="editTenCode('${code._id}', '${escapedCode}', '${escapedDescription}')" title="Edit"><i class="fa fa-pen"></i></button>
+          <button class="tcm-icon-btn danger" onclick="deleteTenCode('${code._id}', '${escapedCode}')" title="Delete"><i class="fa fa-trash"></i></button>
+        </td>
+      </tr>`;
     });
 
-    tenCodesList.innerHTML = html;
+    tbody.innerHTML = html;
   }
 
   // Add/Edit 10-Code modal functions
@@ -3206,6 +3195,198 @@ function updateDepartmentJoinButton(departmentId, status) {
     } catch (error) {
       showCustomToast('Error creating 10-code: ' + error.message, 'error');
     }
+  }
+
+  // ═══════════════════════════════════════
+  //  TEN CODES IMPORT / EXPORT
+  // ═══════════════════════════════════════
+
+  window.showTcExportMenu = function() {
+    showCustomConfirm(
+      'Export 10-Codes',
+      'Choose export format:',
+      function() { exportTenCodesJSON(); },
+      function() { exportTenCodesCSV(); },
+      'JSON',
+      'CSV'
+    );
+  };
+
+  function tcTriggerDownload(content, filename, mimeType) {
+    var blob = new Blob([content], { type: mimeType });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function exportTenCodesJSON() {
+    var tenCodes = (window.allTenCodes || []).map(function(tc) {
+      return { code: tc.code, description: tc.description };
+    });
+    tcTriggerDownload(JSON.stringify(tenCodes, null, 2), 'ten-codes.json', 'application/json');
+    showCustomToast('10-Codes exported as JSON', 'success');
+  }
+
+  function exportTenCodesCSV() {
+    var rows = [['code', 'description']];
+    (window.allTenCodes || []).forEach(function(tc) {
+      var code = String(tc.code || '').replace(/"/g, '""');
+      var desc = String(tc.description || '').replace(/"/g, '""');
+      rows.push([
+        (code.indexOf(',') >= 0 || code.indexOf('"') >= 0) ? '"' + code + '"' : code,
+        (desc.indexOf(',') >= 0 || desc.indexOf('"') >= 0) ? '"' + desc + '"' : desc
+      ]);
+    });
+    var csv = rows.map(function(r) { return r.join(','); }).join('\n');
+    tcTriggerDownload(csv, 'ten-codes.csv', 'text/csv');
+    showCustomToast('10-Codes exported as CSV', 'success');
+  }
+
+  window.importTenCodesFile = function(input) {
+    var file = input.files[0];
+    if (!file) return;
+    input.value = '';
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var text = e.target.result;
+      var isCSV = file.name.toLowerCase().endsWith('.csv');
+
+      try {
+        var parsed;
+        if (isCSV) {
+          parsed = parseTenCodesCSV(text);
+        } else {
+          parsed = parseTenCodesJSON(text);
+        }
+
+        showCustomConfirm(
+          'Import 10-Codes',
+          'This will replace all ' + (window.allTenCodes || []).length + ' current 10-codes with ' + parsed.length + ' imported codes. Continue?',
+          async function() {
+            try {
+              var response = await fetch(API_URL + '/api/v1/community/' + communityId + '/tenCodes/bulk', {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + (window.dbUser?.token || '')
+                },
+                body: JSON.stringify(parsed)
+              });
+
+              if (!response.ok) {
+                var errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to import 10-codes');
+              }
+
+              var data = await response.json();
+
+              // Update local community data
+              if (window.community?.community) {
+                window.community.community.tenCodes = data.tenCodes || [];
+              }
+
+              loadTenCodes();
+              showCustomToast('10-Codes imported successfully (' + parsed.length + ' codes)', 'success');
+            } catch (err) {
+              showCustomToast('Import error: ' + err.message, 'error');
+            }
+          }
+        );
+      } catch (err) {
+        showCustomToast('File parse error: ' + err.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  function parseTenCodesJSON(text) {
+    var data = JSON.parse(text);
+    if (!Array.isArray(data)) throw new Error('JSON must be an array of {code, description} objects');
+    var result = [];
+    data.forEach(function(item, i) {
+      var code = (item.code || '').trim();
+      var description = (item.description || '').trim();
+      if (!code || !description) throw new Error('Item at index ' + i + ' has empty code or description');
+      result.push({ code: code, description: description });
+    });
+    if (result.length === 0) throw new Error('No valid 10-codes found in file');
+    return result;
+  }
+
+  function parseTenCodesCSV(text) {
+    var lines = tcParseCSVLines(text);
+    if (lines.length < 2) throw new Error('CSV must have a header row and at least one data row');
+
+    var result = [];
+    var header = lines[0].map(function(h) { return h.trim().toLowerCase(); });
+    var codeIdx = header.indexOf('code');
+    var descIdx = header.indexOf('description');
+    // Fallback: if no recognized header, treat as 2-column (code, description)
+    if (codeIdx < 0) codeIdx = 0;
+    if (descIdx < 0) descIdx = 1;
+
+    for (var i = 1; i < lines.length; i++) {
+      var row = lines[i];
+      if (row.length === 0 || (row.length === 1 && !row[0].trim())) continue;
+
+      var code = (codeIdx < row.length ? row[codeIdx] : '').trim();
+      var description = (descIdx < row.length ? row[descIdx] : '').trim();
+
+      if (code && description) {
+        result.push({ code: code, description: description });
+      }
+    }
+
+    if (result.length === 0) throw new Error('No valid 10-codes found in CSV');
+    return result;
+  }
+
+  // Robust CSV parser for ten codes (handles quoted fields with commas/newlines)
+  function tcParseCSVLines(text) {
+    var lines = [];
+    var currentRow = [];
+    var currentField = '';
+    var inQuotes = false;
+
+    for (var i = 0; i < text.length; i++) {
+      var ch = text[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (i + 1 < text.length && text[i + 1] === '"') {
+            currentField += '"';
+            i++;
+          } else {
+            inQuotes = false;
+          }
+        } else {
+          currentField += ch;
+        }
+      } else if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        currentRow.push(currentField);
+        currentField = '';
+      } else if (ch === '\r' || ch === '\n') {
+        currentRow.push(currentField);
+        currentField = '';
+        lines.push(currentRow);
+        currentRow = [];
+        if (ch === '\r' && i + 1 < text.length && text[i + 1] === '\n') i++;
+      } else {
+        currentField += ch;
+      }
+    }
+    if (currentField || currentRow.length > 0) {
+      currentRow.push(currentField);
+      lines.push(currentRow);
+    }
+    return lines;
   }
 
   // Update existing 10-code

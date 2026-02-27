@@ -8605,6 +8605,273 @@ async function saveEditEvent() {
         document.getElementById('pcSettingsSearch').value = '';
       }
 
+      // ═══════════════════════════════════════
+      //  PENAL CODES IMPORT / EXPORT
+      // ═══════════════════════════════════════
+
+      function showPcExportMenu() {
+        showCustomConfirm(
+          'Export Penal Codes',
+          'Choose export format:',
+          function() { exportPenalCodesJSON(); },
+          function() { exportPenalCodesCSV(); },
+          'JSON',
+          'CSV'
+        );
+      }
+
+      function resetToDefaultPenalCodes() {
+        showCustomConfirm(
+          'Reset to Default Penal Codes',
+          'Are you sure you want to reset all penal codes to the default set? This will replace all current categories and violations.',
+          function() {
+            var communityId = '<%= community._id %>';
+            var apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+
+            fetch(apiUrl + '/api/v1/community/' + communityId + '/penal-codes/reset', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            })
+              .then(function(res) {
+                if (!res.ok) throw new Error('Failed to reset penal codes');
+                return res.json();
+              })
+              .then(function(data) {
+                pcSettingsData = (data && data.categories) || [];
+                pcSettingsCurrency = (data && data.currency) || 'USD';
+                pcSettingsCurrencies = (data && data.currencies) || [];
+
+                if (pcSettingsCurrencies.length > 0) {
+                  pcSettingsCurrencies.forEach(function(c) {
+                    pcCurrencySymbolMap[c.code] = c.symbol;
+                  });
+                }
+
+                updatePcCurrencyDisplay();
+                pcSettingsOriginal = JSON.stringify({ categories: pcSettingsData, currency: pcSettingsCurrency });
+                renderPcCategories(pcSettingsData);
+                showToast('Penal codes reset to defaults!', 3000, 'success');
+              })
+              .catch(function(err) {
+                console.error('[PenalCodes] Reset error:', err);
+                showToast('Error resetting penal codes: ' + err.message, 3000, 'error');
+              });
+          }
+        );
+      }
+
+      function triggerDownload(content, filename, mimeType) {
+        var blob = new Blob([content], { type: mimeType });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      function exportPenalCodesJSON() {
+        syncPcCategoryNames();
+        var payload = {
+          categories: pcSettingsData,
+          currency: pcSettingsCurrency,
+          currencies: pcSettingsCurrencies
+        };
+        triggerDownload(JSON.stringify(payload, null, 2), 'penal-codes.json', 'application/json');
+        showCustomToast('Penal codes exported as JSON', 'success');
+      }
+
+      function exportPenalCodesCSV() {
+        syncPcCategoryNames();
+        var rows = [['category_id', 'category_name', 'subtitle', 'icon', 'color', 'violation_name', 'jail_time', 'fine', 'explanation']];
+        (pcSettingsData || []).forEach(function(cat) {
+          (cat.violations || []).forEach(function(v) {
+            rows.push([
+              cat.id || '', cat.name || '', cat.subtitle || '', cat.icon || '', cat.color || '',
+              v.name || '', v.jailTime || '', String(v.fine || 0), v.explanation || ''
+            ]);
+          });
+        });
+        var csv = rows.map(function(row) {
+          return row.map(function(cell) {
+            var s = String(cell).replace(/"/g, '""');
+            return (s.indexOf(',') >= 0 || s.indexOf('"') >= 0 || s.indexOf('\n') >= 0) ? '"' + s + '"' : s;
+          }).join(',');
+        }).join('\n');
+        triggerDownload(csv, 'penal-codes.csv', 'text/csv');
+        showCustomToast('Penal codes exported as CSV', 'success');
+      }
+
+      function importPenalCodesFile(input) {
+        var file = input.files[0];
+        if (!file) return;
+        input.value = ''; // Reset so same file can be picked again
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var text = e.target.result;
+          var isCSV = file.name.toLowerCase().endsWith('.csv');
+
+          try {
+            var parsed;
+            if (isCSV) {
+              parsed = parsePenalCodesCSV(text);
+            } else {
+              parsed = parsePenalCodesJSON(text);
+            }
+
+            showCustomConfirm(
+              'Import Penal Codes',
+              'This will replace all current penal codes with ' + countPcViolations(parsed.categories) + ' violations across ' + parsed.categories.length + ' categories. Continue?',
+              function() {
+                pcSettingsData = parsed.categories;
+                if (parsed.currency) pcSettingsCurrency = parsed.currency;
+                if (parsed.currencies && parsed.currencies.length > 0) pcSettingsCurrencies = parsed.currencies;
+                updatePcCurrencyDisplay();
+                renderPcCategories(pcSettingsData);
+                showCustomToast('Penal codes imported. Click "Save Changes" to persist.', 'success');
+              }
+            );
+          } catch (err) {
+            showCustomToast('Import error: ' + err.message, 'error');
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      function countPcViolations(categories) {
+        var count = 0;
+        (categories || []).forEach(function(cat) { count += (cat.violations || []).length; });
+        return count;
+      }
+
+      function parsePenalCodesJSON(text) {
+        var data = JSON.parse(text);
+        if (!data.categories || !Array.isArray(data.categories)) {
+          throw new Error('JSON must contain a "categories" array');
+        }
+        data.categories.forEach(function(cat, i) {
+          if (!cat.name) throw new Error('Category at index ' + i + ' is missing a name');
+          if (!cat.id) cat.id = cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+          if (!cat.violations) cat.violations = [];
+          if (!cat.columns) cat.columns = ['name', 'jailTime', 'fine', 'explanation'];
+        });
+        return data;
+      }
+
+      function parsePenalCodesCSV(text) {
+        var lines = parseCSVLines(text);
+        if (lines.length < 2) throw new Error('CSV must have a header row and at least one data row');
+
+        var header = lines[0].map(function(h) { return h.trim().toLowerCase(); });
+        var catIdIdx = header.indexOf('category_id');
+        var catNameIdx = header.indexOf('category_name');
+        var subtitleIdx = header.indexOf('subtitle');
+        var iconIdx = header.indexOf('icon');
+        var colorIdx = header.indexOf('color');
+        var violNameIdx = header.indexOf('violation_name');
+        var jailIdx = header.indexOf('jail_time');
+        var fineIdx = header.indexOf('fine');
+        var explIdx = header.indexOf('explanation');
+
+        if (violNameIdx < 0) throw new Error('CSV must have a "violation_name" column');
+
+        var categoryMap = {};
+        var categoryOrder = [];
+
+        for (var i = 1; i < lines.length; i++) {
+          var row = lines[i];
+          if (row.length === 0 || (row.length === 1 && row[0].trim() === '')) continue;
+
+          var catId = (catIdIdx >= 0 ? row[catIdIdx] : '').trim();
+          var catName = (catNameIdx >= 0 ? row[catNameIdx] : '').trim();
+          if (!catId && catName) catId = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+          if (!catId) catId = 'imported';
+          if (!catName) catName = catId;
+
+          if (!categoryMap[catId]) {
+            categoryMap[catId] = {
+              id: catId,
+              name: catName,
+              subtitle: subtitleIdx >= 0 ? (row[subtitleIdx] || '').trim() : '',
+              icon: iconIdx >= 0 ? (row[iconIdx] || '').trim() : 'fa-gavel',
+              color: colorIdx >= 0 ? (row[colorIdx] || '').trim() : '#8b5cf6',
+              columns: ['name', 'jailTime', 'fine', 'explanation'],
+              violations: []
+            };
+            categoryOrder.push(catId);
+          }
+
+          var vName = (violNameIdx >= 0 ? row[violNameIdx] : '').trim();
+          if (!vName) continue;
+
+          categoryMap[catId].violations.push({
+            name: vName,
+            jailTime: jailIdx >= 0 ? (row[jailIdx] || '').trim() : '',
+            fine: fineIdx >= 0 ? parseInt(row[fineIdx], 10) || 0 : 0,
+            explanation: explIdx >= 0 ? (row[explIdx] || '').trim() : ''
+          });
+        }
+
+        var categories = categoryOrder.map(function(id) { return categoryMap[id]; });
+        if (categories.length === 0) throw new Error('No valid data rows found in CSV');
+        return { categories: categories, currency: pcSettingsCurrency, currencies: pcSettingsCurrencies };
+      }
+
+      // Robust CSV parser that handles quoted fields with commas and newlines
+      function parseCSVLines(text) {
+        var lines = [];
+        var currentRow = [];
+        var currentField = '';
+        var inQuotes = false;
+        var i = 0;
+
+        while (i < text.length) {
+          var ch = text[i];
+          if (inQuotes) {
+            if (ch === '"') {
+              if (i + 1 < text.length && text[i + 1] === '"') {
+                currentField += '"';
+                i += 2;
+              } else {
+                inQuotes = false;
+                i++;
+              }
+            } else {
+              currentField += ch;
+              i++;
+            }
+          } else {
+            if (ch === '"') {
+              inQuotes = true;
+              i++;
+            } else if (ch === ',') {
+              currentRow.push(currentField);
+              currentField = '';
+              i++;
+            } else if (ch === '\r' || ch === '\n') {
+              currentRow.push(currentField);
+              currentField = '';
+              lines.push(currentRow);
+              currentRow = [];
+              if (ch === '\r' && i + 1 < text.length && text[i + 1] === '\n') i++;
+              i++;
+            } else {
+              currentField += ch;
+              i++;
+            }
+          }
+        }
+        // Last field/row
+        if (currentField || currentRow.length > 0) {
+          currentRow.push(currentField);
+          lines.push(currentRow);
+        }
+        return lines;
+      }
+
       function attemptCloseFineSettingsModal() {
         // Check if there are unsaved changes
         if (hasUnsavedChanges()) {
@@ -9041,7 +9308,7 @@ async function saveEditEvent() {
           };
           
           // Update cancel button to be "Discard"
-          const cancelBtn = document.querySelector('#customConfirmModal button[onclick="hideCustomConfirm()"]');
+          const cancelBtn = document.getElementById('confirmCancelBtn');
           if (cancelBtn) {
             cancelBtn.textContent = cancelText || 'Discard Changes';
             cancelBtn.style.background = '#ef4444'; // Red for discard
@@ -9064,7 +9331,7 @@ async function saveEditEvent() {
           };
           
           // Reset cancel button to original
-          const cancelBtn = document.querySelector('#customConfirmModal button[onclick="hideCustomConfirm()"]');
+          const cancelBtn = document.getElementById('confirmCancelBtn');
           if (cancelBtn) {
             cancelBtn.textContent = cancelText || 'Cancel';
             cancelBtn.style.background = '#6b7280'; // Gray for cancel
@@ -10808,6 +11075,24 @@ async function saveEditEvent() {
       .pcm-vio-footer {
         display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.25rem;
       }
+
+      /* ── Penal Codes Modal: Mobile ── */
+      @media (max-width: 640px) {
+        .pcm-header { padding: 1rem 1rem 0.875rem; }
+        .pcm-toolbar { padding: 0.625rem 1rem; gap: 0.5rem; }
+        .pcm-body { padding: 0.75rem; }
+        .pcm-footer { padding: 0.75rem 1rem; }
+
+        .pcm-cat-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .pcm-table { min-width: 520px; }
+
+        .pcm-cat-header { flex-wrap: wrap; gap: 0.5rem; }
+        .pcm-cat-left { min-width: 0; }
+        .pcm-cat-name-input { font-size: 0.8rem; min-width: 100px; }
+
+        .pcm-toolbar .pcm-search-wrap { min-width: 140px; }
+        .pcm-add-cat-btn { font-size: 0.72rem; padding: 0.35rem 0.65rem; }
+      }
     </style>
 
     <!-- Main Penal Codes Modal -->
@@ -10822,7 +11107,10 @@ async function saveEditEvent() {
               <p>Manage community violations &amp; penalties</p>
             </div>
           </div>
-          <button class="pcm-close" onclick="attemptClosePenalCodesModal()"><i class="fa fa-times"></i></button>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <a href="/help#settings-penal-import" target="_blank" class="pcm-close" title="Help" style="text-decoration:none; color:#64748b;"><i class="fa fa-circle-question"></i></a>
+            <button class="pcm-close" onclick="attemptClosePenalCodesModal()"><i class="fa fa-times"></i></button>
+          </div>
         </div>
 
         <!-- Toolbar: search + currency + add -->
@@ -10839,6 +11127,16 @@ async function saveEditEvent() {
           <button class="pcm-add-cat-btn" onclick="addPcCategory()">
             <i class="fa fa-plus"></i> Category
           </button>
+          <button class="pcm-add-cat-btn" onclick="showPcExportMenu()" title="Export penal codes" style="background:rgba(16,185,129,0.15); color:#10b981; border-color:rgba(16,185,129,0.25);">
+            <i class="fa fa-download"></i> Export
+          </button>
+          <button class="pcm-add-cat-btn" onclick="document.getElementById('pcImportFileInput').click()" title="Import penal codes" style="background:rgba(59,130,246,0.15); color:#3b82f6; border-color:rgba(59,130,246,0.25);">
+            <i class="fa fa-upload"></i> Import
+          </button>
+          <button class="pcm-add-cat-btn" onclick="resetToDefaultPenalCodes()" title="Reset penal codes to defaults" style="background:rgba(245,158,11,0.15); color:#f59e0b; border-color:rgba(245,158,11,0.25);">
+            <i class="fa fa-undo"></i> Reset
+          </button>
+          <input type="file" id="pcImportFileInput" accept=".json,.csv" style="display:none;" onchange="importPenalCodesFile(this)">
         </div>
 
         <!-- Body: categories -->
@@ -10909,12 +11207,14 @@ async function saveEditEvent() {
 
     <!-- Custom Confirmation Modal -->
     <div id="customConfirmModal" class="heroui-modal" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.75); align-items:center; justify-content:center;">
-      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:95%; border:1px solid #35385a; text-align:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:95%; border:1px solid #35385a; text-align:center; position:relative;">
+        <!-- Close Button -->
+        <button onclick="hideCustomConfirm()" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#a0aec0; font-size:1.25rem; cursor:pointer; opacity:0.7; padding:0.25rem;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'"><i class="fa fa-times"></i></button>
         <!-- Icon -->
         <div style="margin-bottom:1.5rem;">
           <i class="fa fa-exclamation-triangle" style="font-size:3rem; color:#f59e0b;"></i>
         </div>
-        
+
         <!-- Title -->
         <h3 id="confirmTitle" style="color:#fff; margin:0 0 1rem 0; font-size:1.5rem; font-weight:600;">Confirm Action</h3>
         
@@ -10923,7 +11223,7 @@ async function saveEditEvent() {
         
         <!-- Action Buttons -->
         <div style="display:flex; gap:1rem; justify-content:center;">
-          <button onclick="hideCustomConfirm()" style="background:#6b7280; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+          <button id="confirmCancelBtn" onclick="hideCustomConfirm()" style="background:#6b7280; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
             Cancel
           </button>
           <button id="confirmActionBtn" style="background:#ef4444; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
@@ -11721,75 +12021,324 @@ async function saveEditEvent() {
       </div>
     </div>
 
-    <!-- 10-Codes Management Modal -->
-    <div id="tenCodesModal" class="heroui-modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:800px; width:95%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
-        <button onclick="closeTenCodesModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-        
-        <div style="text-align:center; margin-bottom:1.5rem;">
-          <i class="fa fa-bullhorn" style="font-size:3rem; color:#f59e0b; margin-bottom:1rem;"></i>
-          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">10-Codes Management</h3>
-          <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:1rem;">Manage community-wide 10-codes</p>
-        </div>
-        
-        <!-- Add New 10-Code Button -->
-        <div style="margin-bottom:1.5rem; text-align:right;">
-          <button onclick="openAddTenCodeModal()" style="background:#f59e0b; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
-            <i class="fa fa-plus" style="margin-right:0.5rem;"></i> Add 10-Code
-          </button>
-        </div>
-        
-        <!-- Search Bar -->
-        <div style="margin-bottom:1.5rem;">
-          <div style="position:relative;">
-            <input 
-              type="text" 
-              id="tenCodesSearchInput" 
-              placeholder="Search 10-codes..." 
-              style="width:100%; height:44px; background:#2d3748; color:#f7fafc; border:1.5px solid #35385a; border-radius:8px; font-size:1rem; padding-left:2.5rem; padding-right:1rem;"
-              onkeyup="filterTenCodes()"
-            />
-            <i class="fa fa-search" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:#a0aec0; font-size:1rem;"></i>
+    <!-- ═══════════════════════════════════════════ -->
+    <!--          10-CODES MODAL STYLES              -->
+    <!-- ═══════════════════════════════════════════ -->
+    <style>
+      /* ── Overlay & Container ── */
+      .tcm-overlay {
+        position: fixed; inset: 0; z-index: 5000;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+        display: none; align-items: center; justify-content: center;
+        animation: tcmFadeIn 0.15s ease;
+      }
+      @keyframes tcmFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+      .tcm-container {
+        background: #0c0e14;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 14px;
+        width: 95%; max-width: 800px; max-height: 90vh;
+        position: relative; overflow: hidden;
+        box-shadow: 0 32px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset;
+        animation: tcmSlideIn 0.25s cubic-bezier(0.4,0,0.2,1);
+        display: flex; flex-direction: column;
+      }
+      @keyframes tcmSlideIn { from { opacity:0; transform:scale(0.96) translateY(10px); } to { opacity:1; transform:none; } }
+
+      .tcm-container::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+        background: linear-gradient(90deg, transparent, #fbbf24, #f59e0b, transparent);
+        opacity: 0.6; z-index: 2;
+      }
+
+      /* ── Header ── */
+      .tcm-header {
+        padding: 1.5rem 1.75rem 1.25rem;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        display: flex; align-items: center; justify-content: space-between;
+        flex-shrink: 0;
+      }
+      .tcm-header-left { display: flex; align-items: center; gap: 0.75rem; }
+      .tcm-header-icon {
+        width: 38px; height: 38px; border-radius: 10px;
+        background: rgba(245,158,11,0.12); color: #f59e0b;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; flex-shrink: 0;
+      }
+      .tcm-header h3 {
+        font-family: 'Outfit', sans-serif; font-size: 1.0625rem;
+        font-weight: 600; color: #e2e8f0; margin: 0;
+      }
+      .tcm-header p {
+        font-family: 'Outfit', sans-serif; font-size: 0.6875rem;
+        color: #475569; margin: 0;
+      }
+      .tcm-close {
+        width: 30px; height: 30px; border: none;
+        background: rgba(255,255,255,0.04); color: #64748b;
+        border-radius: 8px; cursor: pointer; font-size: 0.875rem;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.15s; text-decoration: none;
+      }
+      .tcm-close:hover { background: rgba(239,68,68,0.12); color: #ef4444; }
+
+      /* ── Toolbar ── */
+      .tcm-toolbar {
+        padding: 0.875rem 1.75rem;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        display: flex; align-items: center; gap: 0.75rem;
+        flex-shrink: 0; flex-wrap: wrap;
+      }
+      .tcm-search-wrap {
+        position: relative; flex: 1; min-width: 200px;
+      }
+      .tcm-search-wrap i {
+        position: absolute; left: 0.625rem; top: 50%;
+        transform: translateY(-50%); color: #475569; font-size: 0.75rem;
+        pointer-events: none;
+      }
+      .tcm-search {
+        width: 100%; padding: 0.4375rem 0.625rem 0.4375rem 1.75rem;
+        font-size: 0.8125rem; font-family: 'Outfit', sans-serif;
+        color: #e2e8f0; background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;
+        outline: none; transition: border-color 0.15s;
+      }
+      .tcm-search::placeholder { color: #475569; }
+      .tcm-search:focus { border-color: rgba(245,158,11,0.3); }
+      .tcm-toolbar-btn {
+        display: inline-flex; align-items: center; gap: 0.375rem;
+        padding: 0.4375rem 0.75rem; font-size: 0.75rem; font-weight: 600;
+        font-family: 'Outfit', sans-serif; border-radius: 8px;
+        cursor: pointer; transition: all 0.15s; white-space: nowrap;
+      }
+
+      /* ── Body ── */
+      .tcm-body {
+        flex: 1; overflow-y: auto; padding: 1rem 1.75rem;
+      }
+      .tcm-body::-webkit-scrollbar { width: 4px; }
+      .tcm-body::-webkit-scrollbar-track { background: transparent; }
+      .tcm-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+      .tcm-body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+      /* ── Table ── */
+      .tcm-table { width: 100%; border-collapse: collapse; font-family: 'Outfit', sans-serif; }
+      .tcm-table thead th {
+        padding: 0.4375rem 0.75rem; font-size: 0.6875rem; font-weight: 600;
+        color: #475569; text-transform: uppercase; letter-spacing: 0.05em;
+        text-align: left; border-bottom: 1px solid rgba(255,255,255,0.04);
+        background: rgba(0,0,0,0.12);
+      }
+      .tcm-table tbody tr {
+        transition: background 0.1s;
+        border-bottom: 1px solid rgba(255,255,255,0.02);
+      }
+      .tcm-table tbody tr:last-child { border-bottom: none; }
+      .tcm-table tbody tr:hover { background: rgba(255,255,255,0.025); }
+      .tcm-table td { padding: 0.5rem 0.75rem; vertical-align: middle; font-size: 0.8125rem; }
+
+      .tcm-v-code {
+        font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.8rem;
+        color: #fbbf24; font-weight: 600; white-space: nowrap;
+      }
+      .tcm-v-desc { color: #e2e8f0; }
+      .tcm-v-actions { text-align: right; white-space: nowrap; }
+      .tcm-v-actions .tcm-icon-btn {
+        width: 24px; height: 24px; border: none; background: transparent;
+        color: #475569; cursor: pointer; border-radius: 5px;
+        display: inline-flex; align-items: center; justify-content: center;
+        transition: all 0.12s; font-size: 0.625rem;
+      }
+      .tcm-v-actions .tcm-icon-btn:hover { background: rgba(255,255,255,0.06); color: #e2e8f0; }
+      .tcm-v-actions .tcm-icon-btn.danger:hover { background: rgba(239,68,68,0.1); color: #ef4444; }
+
+      /* ── Empty State ── */
+      .tcm-empty-state {
+        text-align: center; padding: 3rem 1.5rem;
+      }
+      .tcm-empty-state i { font-size: 2rem; color: #475569; margin-bottom: 0.75rem; display: block; }
+      .tcm-empty-state p { color: #64748b; font-size: 0.875rem; margin: 0; }
+      .tcm-empty-state .sub { color: #475569; font-size: 0.75rem; margin-top: 0.25rem; }
+
+      /* ── Add/Edit Sub-Modal ── */
+      .tcm-edit-overlay {
+        position: fixed; inset: 0; z-index: 6000;
+        background: rgba(0,0,0,0.5); backdrop-filter: blur(3px);
+        display: none; align-items: center; justify-content: center;
+        animation: tcmFadeIn 0.12s ease;
+      }
+      .tcm-edit-container {
+        background: #12141a; border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 14px; width: 90%; max-width: 480px;
+        box-shadow: 0 24px 48px rgba(0,0,0,0.5);
+        animation: tcmSlideIn 0.2s cubic-bezier(0.4,0,0.2,1);
+        overflow: hidden;
+      }
+      .tcm-edit-container::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+        background: linear-gradient(90deg, transparent, #fbbf24, #f59e0b, transparent);
+        opacity: 0.6;
+      }
+      .tcm-edit-header {
+        padding: 1.25rem 1.5rem 1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        display: flex; align-items: center; justify-content: space-between;
+      }
+      .tcm-edit-header-left { display: flex; align-items: center; gap: 0.625rem; }
+      .tcm-edit-header-icon {
+        width: 32px; height: 32px; border-radius: 8px;
+        background: rgba(245,158,11,0.12); color: #f59e0b;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.875rem; flex-shrink: 0;
+      }
+      .tcm-edit-header h3 {
+        font-family: 'Outfit', sans-serif; font-size: 0.9375rem;
+        font-weight: 600; color: #e2e8f0; margin: 0;
+      }
+      .tcm-edit-body { padding: 1.25rem 1.5rem; }
+      .tcm-field { margin-bottom: 1rem; }
+      .tcm-field label {
+        display: block; font-size: 0.75rem; font-weight: 600;
+        color: #94a3b8; margin-bottom: 0.375rem;
+        text-transform: uppercase; letter-spacing: 0.04em;
+        font-family: 'Outfit', sans-serif;
+      }
+      .tcm-field input,
+      .tcm-field textarea {
+        width: 100%; padding: 0.5rem 0.75rem;
+        font-size: 0.8125rem; font-family: 'Outfit', sans-serif;
+        color: #e2e8f0; background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+        outline: none; transition: border-color 0.15s;
+      }
+      .tcm-field input:focus,
+      .tcm-field textarea:focus { border-color: rgba(245,158,11,0.3); }
+      .tcm-field textarea { resize: vertical; min-height: 70px; }
+      .tcm-edit-footer {
+        padding: 0.875rem 1.5rem;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;
+      }
+      .tcm-btn-cancel {
+        font-family: 'Outfit', sans-serif; font-size: 0.8125rem; font-weight: 500;
+        padding: 0.5rem 1rem; border-radius: 8px;
+        background: transparent; border: 1px solid rgba(255,255,255,0.06);
+        color: #64748b; cursor: pointer; transition: all 0.15s;
+      }
+      .tcm-btn-cancel:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+      .tcm-btn-save {
+        font-family: 'Outfit', sans-serif; font-size: 0.8125rem; font-weight: 600;
+        padding: 0.5rem 1.25rem; border-radius: 8px;
+        background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.25);
+        color: #f59e0b; cursor: pointer; transition: all 0.15s;
+        display: inline-flex; align-items: center; gap: 0.375rem;
+      }
+      .tcm-btn-save:hover {
+        background: rgba(245,158,11,0.25); border-color: rgba(245,158,11,0.4);
+        box-shadow: 0 0 16px rgba(245,158,11,0.1);
+      }
+
+      /* ── Mobile ── */
+      @media (max-width: 640px) {
+        .tcm-header { padding: 1rem 1rem 0.875rem; }
+        .tcm-toolbar { padding: 0.625rem 1rem; gap: 0.5rem; }
+        .tcm-body { padding: 0.75rem; }
+        .tcm-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .tcm-table { min-width: 440px; }
+        .tcm-toolbar .tcm-search-wrap { min-width: 140px; }
+        .tcm-toolbar-btn { font-size: 0.72rem; padding: 0.35rem 0.65rem; }
+        .tcm-edit-body { padding: 1rem; }
+        .tcm-edit-footer { padding: 0.75rem 1rem; }
+      }
+    </style>
+
+    <!-- ═══ 10-Codes Management Modal ═══ -->
+    <div id="tenCodesModal" class="tcm-overlay">
+      <div class="tcm-container">
+        <!-- Header -->
+        <div class="tcm-header">
+          <div class="tcm-header-left">
+            <div class="tcm-header-icon"><i class="fa fa-bullhorn"></i></div>
+            <div>
+              <h3>10-Codes</h3>
+              <p>Manage community radio codes</p>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <a href="/help#settings-ten-import" target="_blank" class="tcm-close" title="Help" style="color:#64748b;"><i class="fa fa-circle-question"></i></a>
+            <button class="tcm-close" onclick="closeTenCodesModal()"><i class="fa fa-times"></i></button>
           </div>
         </div>
-        
-        <!-- 10-Codes List -->
-        <div id="tenCodesList" style="max-height:400px; overflow-y:auto;">
-          <!-- 10-codes will be loaded here -->
+
+        <!-- Toolbar -->
+        <div class="tcm-toolbar">
+          <div class="tcm-search-wrap">
+            <i class="fa fa-search"></i>
+            <input type="text" class="tcm-search" id="tenCodesSearchInput" placeholder="Search 10-codes..." onkeyup="filterTenCodes()">
+          </div>
+          <button class="tcm-toolbar-btn" onclick="showTcExportMenu()" title="Export 10-codes" style="background:rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.2);">
+            <i class="fa fa-download"></i> Export
+          </button>
+          <button class="tcm-toolbar-btn" onclick="document.getElementById('tcImportFileInput').click()" title="Import 10-codes" style="background:rgba(59,130,246,0.1); color:#3b82f6; border:1px solid rgba(59,130,246,0.2);">
+            <i class="fa fa-upload"></i> Import
+          </button>
+          <input type="file" id="tcImportFileInput" accept=".json,.csv" style="display:none;" onchange="importTenCodesFile(this)">
+          <button class="tcm-toolbar-btn" onclick="openAddTenCodeModal()" style="background:rgba(245,158,11,0.1); color:#f59e0b; border:1px solid rgba(245,158,11,0.2);">
+            <i class="fa fa-plus"></i> Add
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="tcm-body">
+          <div id="tcEmptyState" class="tcm-empty-state" style="display:none;">
+            <i class="fa fa-bullhorn"></i>
+            <p>No 10-codes configured yet</p>
+            <p class="sub">Add your first 10-code to get started</p>
+          </div>
+          <table class="tcm-table" id="tcTable">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Description</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tcTableBody">
+              <!-- JS-generated rows -->
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
 
-    <!-- Add/Edit 10-Code Modal -->
-    <div id="addEditTenCodeModal" class="heroui-modal" style="display:none; position:fixed; z-index:6000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
-        <button onclick="closeAddEditTenCodeModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-        
-        <div style="text-align:center; margin-bottom:1.5rem;">
-          <i class="fa fa-bullhorn" style="font-size:2.5rem; color:#f59e0b; margin-bottom:0.5rem;"></i>
-          <h3 id="addEditTenCodeTitle" style="color:#fff; margin:0; font-size:1.25rem; font-weight:600;">Add 10-Code</h3>
+    <!-- ═══ Add/Edit 10-Code Sub-Modal ═══ -->
+    <div id="addEditTenCodeModal" class="tcm-edit-overlay">
+      <div class="tcm-edit-container">
+        <div class="tcm-edit-header">
+          <div class="tcm-edit-header-left">
+            <div class="tcm-edit-header-icon"><i class="fa fa-bullhorn"></i></div>
+            <h3 id="addEditTenCodeTitle">Add 10-Code</h3>
+          </div>
+          <button class="tcm-close" onclick="closeAddEditTenCodeModal()"><i class="fa fa-times"></i></button>
         </div>
-        
         <form id="addEditTenCodeForm">
-          <div style="margin-bottom:1rem;">
-            <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500;">Code</label>
-            <input type="text" id="tenCodeCode" placeholder="e.g., Signal 100" required
-                   style="width:100%; background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:0.75rem; color:#fff; font-size:1rem; outline:none;">
+          <div class="tcm-edit-body">
+            <div class="tcm-field">
+              <label>Code</label>
+              <input type="text" id="tenCodeCode" placeholder="e.g., Signal 100" required>
+            </div>
+            <div class="tcm-field">
+              <label>Description</label>
+              <textarea id="tenCodeDescription" placeholder="e.g., HOLD ALL BUT EMERGENCY" required rows="3"></textarea>
+            </div>
           </div>
-          
-          <div style="margin-bottom:1.5rem;">
-            <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500;">Description</label>
-            <textarea id="tenCodeDescription" placeholder="e.g., HOLD ALL BUT EMERGENCY" required rows="3"
-                      style="width:100%; background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:0.75rem; color:#fff; font-size:1rem; outline:none; resize:vertical;"></textarea>
-          </div>
-          
-          <div style="display:flex; gap:1rem; justify-content:flex-end;">
-            <button type="button" onclick="closeAddEditTenCodeModal()" 
-                    style="background:#6b7280; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
-              Cancel
-            </button>
-            <button type="submit" 
-                    style="background:#f59e0b; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+          <div class="tcm-edit-footer">
+            <button type="button" class="tcm-btn-cancel" onclick="closeAddEditTenCodeModal()">Cancel</button>
+            <button type="submit" class="tcm-btn-save">
+              <i class="fa fa-check"></i>
               <span id="addEditTenCodeSubmitText">Add 10-Code</span>
             </button>
           </div>
