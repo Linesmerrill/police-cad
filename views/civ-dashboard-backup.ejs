@@ -3201,7 +3201,7 @@ function deleteFirearm() {
     $('#newLicenseModal').modal('show');
   }
 
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myObj = {
     dbUser: dbUser,
     page: page,
@@ -3380,7 +3380,7 @@ $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 10);
    }
 
    function togglePanicBtnSound() {
-     var socket = io();
+     var socket = io({ transports: ["websocket"] });
      socket.emit('update_panic_btn_sound', dbUser)
      socket.on('load_panic_btn_result', (res) => {
        $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
@@ -3391,7 +3391,7 @@ $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 10);
    }
 
    function adjustAlertVolumeSlider() {
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     var volumeAmount = $('#alert-volume-slider').val()
     var myObj = {
       dbUser: dbUser,

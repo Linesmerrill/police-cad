@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Court Cases - Lines Police CAD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cc-bg: #08090c;
+      --cc-surface: rgba(255,255,255,0.03);
+      --cc-glass: rgba(255,255,255,0.04);
+      --cc-glass-border: rgba(255,255,255,0.06);
+      --cc-glass-hover: rgba(255,255,255,0.07);
+      --cc-text: #e2e8f0;
+      --cc-text-muted: #64748b;
+      --cc-text-dim: #475569;
+      --cc-accent: #8b5cf6;
+      --cc-accent-glow: rgba(139,92,246,0.15);
+      --cc-green: #22c55e;
+      --cc-red: #ef4444;
+      --cc-amber: #f59e0b;
+      --cc-blue: #3b82f6;
+      --cc-radius: 12px;
+      --cc-radius-sm: 8px;
+    }
+
+    html { font-size: 16px; }
+    body {
+      background: var(--cc-bg);
+      color: var(--cc-text);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 700px 500px at 10% 15%, rgba(139,92,246,0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 90% 85%, rgba(245,158,11,0.04) 0%, transparent 70%);
+    }
+
+    .cc-shell {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* Header */
+    .cc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--cc-glass-border);
+    }
+    .cc-header-left { display: flex; align-items: center; gap: 1rem; }
+    .cc-header-icon {
+      width: 44px; height: 44px;
+      background: var(--cc-accent-glow);
+      border: 1px solid rgba(139,92,246,0.2);
+      border-radius: var(--cc-radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; color: var(--cc-accent);
+    }
+    .cc-title { font-weight: 700; font-size: 1.5rem; color: #fff; }
+    .cc-subtitle { font-size: 0.85rem; color: var(--cc-text-muted); margin-top: 0.1rem; }
+    .cc-back-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      color: var(--cc-text-muted); font-size: 0.85rem; text-decoration: none;
+      padding: 0.4rem 0.75rem; border-radius: var(--cc-radius-sm);
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+    .cc-back-btn:hover { color: #fff; background: var(--cc-surface); border-color: var(--cc-glass-border); }
+    .cc-refresh-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border-radius: var(--cc-radius-sm);
+      background: transparent; border: 1px solid var(--cc-glass-border);
+      color: var(--cc-text-muted); font-size: 0.85rem; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .cc-refresh-btn:hover { color: #fff; background: var(--cc-surface); border-color: var(--cc-accent); }
+    .cc-refresh-btn.spinning i { animation: cc-spin 0.8s linear infinite; }
+    @keyframes cc-spin { to { transform: rotate(360deg); } }
+
+    /* Buttons */
+    .cc-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 0.75rem; border-radius: var(--cc-radius-sm);
+      font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 0.8rem;
+      border: none; cursor: pointer; transition: all 0.2s ease;
+      text-decoration: none; white-space: nowrap;
+    }
+    .cc-btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; }
+    .cc-btn-primary:hover { box-shadow: 0 4px 12px rgba(102,126,234,0.3); transform: translateY(-1px); }
+    .cc-btn-outline { background: transparent; color: var(--cc-text-muted); border: 1px solid var(--cc-glass-border); }
+    .cc-btn-outline:hover { background: var(--cc-surface); color: #fff; }
+
+    /* Metrics */
+    .cc-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .cc-metric {
+      background: var(--cc-surface);
+      border: 1px solid var(--cc-glass-border);
+      border-radius: var(--cc-radius-sm);
+      padding: 1rem 0.75rem;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .cc-metric:hover { border-color: rgba(255,255,255,0.1); }
+    .cc-metric-value {
+      font-weight: 700;
+      font-size: 1.8rem;
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+    .cc-metric-value.gold { color: #d4af37; }
+    .cc-metric-value.blue { color: var(--cc-blue); }
+    .cc-metric-value.red { color: var(--cc-red); }
+    .cc-metric-value.green { color: var(--cc-green); }
+    .cc-metric-label { font-size: 0.78rem; color: var(--cc-text-muted); font-weight: 500; }
+
+    /* Tabs */
+    .cc-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--cc-glass-border);
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+    }
+    .cc-tab {
+      padding: 0.65rem 1.1rem;
+      font-weight: 600; font-size: 0.85rem;
+      color: var(--cc-text-dim);
+      cursor: pointer; border: none; background: none;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      font-family: 'Outfit', sans-serif;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .cc-tab:hover { color: var(--cc-text-muted); }
+    .cc-tab.active { color: var(--cc-accent); border-bottom-color: var(--cc-accent); }
+    .cc-tab-count {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 18px; padding: 0 5px;
+      border-radius: 9px; font-size: 0.68rem; font-weight: 700;
+      background: var(--cc-glass); color: var(--cc-text-muted);
+    }
+    .cc-tab.active .cc-tab-count { background: var(--cc-accent-glow); color: var(--cc-accent); }
+
+    .cc-tab-content { display: none; }
+    .cc-tab-content.active { display: block; }
+
+    /* Case cards */
+    .cc-case-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .cc-case-card {
+      background: var(--cc-surface);
+      border: 1px solid var(--cc-glass-border);
+      border-radius: var(--cc-radius-sm);
+      padding: 0.875rem 1rem;
+      display: flex; align-items: center; gap: 0.875rem;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .cc-case-card:hover { border-color: rgba(255,255,255,0.12); background: var(--cc-glass-hover); }
+    .cc-avatar {
+      width: 38px; height: 38px;
+      border-radius: var(--cc-radius-sm);
+      background: var(--cc-accent-glow);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--cc-accent); font-weight: 700; font-size: 0.85rem;
+      flex-shrink: 0;
+      border: 1px solid rgba(139,92,246,0.15);
+    }
+    .cc-case-info { flex: 1; min-width: 0; }
+    .cc-case-name { font-weight: 600; font-size: 0.875rem; color: #fff; }
+    .cc-case-meta {
+      font-size: 0.78rem; color: var(--cc-text-muted); margin-top: 0.15rem;
+      display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+    }
+    .cc-case-meta-item { display: flex; align-items: center; gap: 0.25rem; }
+    .cc-case-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+
+    /* Badges */
+    .cc-badge {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.03em; padding: 0.15rem 0.45rem; border-radius: 5px;
+    }
+    .cc-badge-submitted { background: rgba(234,179,8,0.15); color: #eab308; border: 1px solid rgba(234,179,8,0.25); }
+    .cc-badge-in_review { background: rgba(96,165,250,0.15); color: #60a5fa; border: 1px solid rgba(96,165,250,0.25); }
+    .cc-badge-scheduled { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+    .cc-badge-in_progress { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+    .cc-badge-completed { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.25); }
+    .cc-badge-unresolved { background: rgba(245,158,158,0.15); color: #f59e9e; border: 1px solid rgba(245,158,158,0.25); }
+    .cc-badge-cancelled { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+
+    /* Session cards */
+    .cc-session-card {
+      background: var(--cc-surface);
+      border: 1px solid var(--cc-glass-border);
+      border-radius: var(--cc-radius-sm);
+      padding: 1rem;
+      transition: all 0.2s ease;
+      margin-bottom: 0.6rem;
+    }
+    .cc-session-card:hover { border-color: rgba(255,255,255,0.1); }
+    .cc-session-card.live {
+      border-color: rgba(239,68,68,0.3);
+      box-shadow: 0 0 16px rgba(239,68,68,0.06);
+    }
+    .cc-session-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+    .cc-session-title { font-weight: 600; font-size: 0.9rem; color: #fff; }
+    .cc-session-subtitle { font-size: 0.78rem; color: var(--cc-text-muted); margin-top: 0.2rem; }
+    .cc-live-dot {
+      display: inline-block; width: 7px; height: 7px;
+      border-radius: 50%; background: #ef4444; margin-right: 0.35rem;
+      animation: cc-pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes cc-pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 5px rgba(239,68,68,0); }
+    }
+    .cc-session-meta {
+      display: flex; gap: 1.25rem; margin-top: 0.5rem;
+      font-size: 0.78rem; color: var(--cc-text-muted);
+    }
+    .cc-session-meta i { color: var(--cc-text-dim); margin-right: 0.25rem; }
+
+    /* History session expand/collapse */
+    .cc-session-card.expandable { cursor: pointer; }
+    .cc-session-card.expandable:hover { border-color: rgba(139,92,246,0.25); }
+    .cc-session-card.expanded {
+      border-color: rgba(139,92,246,0.3);
+      box-shadow: 0 4px 24px rgba(139,92,246,0.08);
+    }
+    .cc-session-expand-icon {
+      color: var(--cc-text-dim);
+      font-size: 0.75rem;
+      transition: transform 0.25s ease;
+      flex-shrink: 0;
+      margin-left: 0.5rem;
+    }
+    .cc-session-card.expanded .cc-session-expand-icon { transform: rotate(180deg); }
+    .cc-session-detail {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cc-session-card.expanded .cc-session-detail { max-height: 1200px; }
+    .cc-session-detail-inner {
+      padding-top: 0.875rem;
+      margin-top: 0.75rem;
+      border-top: 1px solid var(--cc-glass-border);
+    }
+    .cc-detail-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--cc-text-dim);
+      margin-bottom: 0.5rem;
+    }
+    .cc-docket-entry {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--cc-glass-border);
+      border-radius: var(--cc-radius-sm);
+      padding: 0.65rem 0.75rem;
+      margin-bottom: 0.4rem;
+    }
+    .cc-docket-civ-name {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #fff;
+      margin-bottom: 0.35rem;
+    }
+    .cc-docket-civ-name i { color: var(--cc-accent); margin-right: 0.35rem; font-size: 0.75rem; }
+    .cc-resolution-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.3rem 0;
+      font-size: 0.8rem;
+    }
+    .cc-resolution-row + .cc-resolution-row { border-top: 1px solid rgba(255,255,255,0.04); }
+    .cc-resolution-summary { color: var(--cc-text-muted); flex: 1; }
+    .cc-resolution-type {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      margin-right: 0.6rem;
+      flex-shrink: 0;
+    }
+    .cc-resolution-type.citation { background: rgba(59,130,246,0.15); color: #93c5fd; }
+    .cc-resolution-type.warning { background: rgba(234,179,8,0.15); color: #fde047; }
+    .cc-resolution-type.arrest { background: rgba(239,68,68,0.15); color: #fca5a5; }
+    .cc-verdict {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+    .cc-verdict.dismissed { color: #6ee7b7; }
+    .cc-verdict.upheld { color: #fca5a5; }
+    .cc-participant-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.3rem;
+    }
+    .cc-participant-chip {
+      font-size: 0.72rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--cc-glass-border);
+      color: var(--cc-text-muted);
+    }
+    .cc-participant-chip .chip-role {
+      color: var(--cc-text-dim);
+      font-size: 0.65rem;
+      margin-left: 0.25rem;
+    }
+    .cc-participant-chip.role-judge { border-color: rgba(139,92,246,0.3); color: #c4b5fd; }
+    .cc-participant-chip.role-defendant { border-color: rgba(234,179,8,0.3); color: #fde68a; }
+
+    /* Empty & loading */
+    .cc-empty {
+      text-align: center; padding: 2.5rem 1rem;
+      color: var(--cc-text-dim); font-size: 0.88rem;
+    }
+    .cc-empty i { font-size: 1.75rem; margin-bottom: 0.5rem; display: block; opacity: 0.4; }
+    .cc-spinner {
+      display: block; width: 24px; height: 24px;
+      border: 2px solid var(--cc-glass-border);
+      border-top-color: var(--cc-accent);
+      border-radius: 50%;
+      animation: cc-spin 0.7s linear infinite;
+      margin: 2rem auto;
+    }
+    @keyframes cc-spin { to { transform: rotate(360deg); } }
+
+    /* Modal */
+    .cc-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      z-index: 10000;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.25s, visibility 0.25s;
+    }
+    .cc-modal-overlay.open { opacity: 1; visibility: visible; }
+    .cc-modal {
+      background: #0f1019;
+      border: 1px solid var(--cc-glass-border);
+      border-radius: var(--cc-radius);
+      width: 92%; max-width: 620px;
+      max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      transform: translateY(12px) scale(0.97);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cc-modal-overlay.open .cc-modal { transform: translateY(0) scale(1); }
+    .cc-modal-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.1rem 1.25rem;
+      border-bottom: 1px solid var(--cc-glass-border);
+    }
+    .cc-modal-title { font-weight: 700; font-size: 1rem; color: #fff; }
+    .cc-modal-close {
+      background: none; border: none; color: var(--cc-text-dim);
+      font-size: 1.3rem; cursor: pointer; padding: 0.25rem;
+      transition: all 0.2s ease;
+    }
+    .cc-modal-close:hover { color: #fff; }
+    .cc-modal-body { padding: 1.25rem; }
+    .cc-form-label {
+      display: block; font-size: 0.75rem; font-weight: 600;
+      color: var(--cc-text-muted); margin-bottom: 0.35rem;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+
+    /* === LIVE SESSION BANNER === */
+    .cc-live-banner {
+      display: none;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: var(--cc-radius);
+      background: linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(239,68,68,0.02) 100%);
+      overflow: hidden;
+      position: relative;
+    }
+    .cc-live-banner.visible { display: block; }
+
+    .cc-live-banner::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cc-red), transparent);
+      animation: cc-banner-sweep 3s ease-in-out infinite;
+    }
+    @keyframes cc-banner-sweep {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    .cc-live-banner-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.65rem 1rem 0.35rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cc-red);
+    }
+    .cc-live-banner-header .cc-live-dot {
+      width: 7px; height: 7px;
+      background: var(--cc-red);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--cc-red);
+      animation: cc-pulse-dot 1.5s ease-in-out infinite;
+    }
+    @keyframes cc-pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--cc-red); }
+      50% { opacity: 0.5; box-shadow: 0 0 10px var(--cc-red), 0 0 20px rgba(239,68,68,0.3); }
+    }
+
+    .cc-live-session-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.55rem 1rem;
+      transition: background 0.15s ease;
+    }
+    .cc-live-session-row:hover {
+      background: rgba(239,68,68,0.04);
+    }
+    .cc-live-session-row + .cc-live-session-row {
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .cc-live-session-info { flex: 1; min-width: 0; }
+    .cc-live-session-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--cc-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .cc-live-session-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--cc-text-muted);
+      margin-top: 0.1rem;
+    }
+    .cc-live-session-meta i { margin-right: 0.25rem; font-size: 0.65rem; }
+
+    .cc-live-join-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: #fff;
+      background: var(--cc-red);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      box-shadow: 0 0 12px rgba(239,68,68,0.2);
+    }
+    .cc-live-join-btn:hover {
+      background: #dc2626;
+      box-shadow: 0 0 20px rgba(239,68,68,0.35);
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 768px) {
+      .cc-metrics { grid-template-columns: repeat(2, 1fr); }
+      .cc-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+      .cc-case-card { flex-wrap: wrap; }
+      .cc-case-actions { width: 100%; justify-content: flex-end; }
+      .cc-live-session-row { flex-wrap: wrap; gap: 0.5rem; }
+      .cc-live-join-btn { width: 100%; justify-content: center; }
+    }
+    /* Case filter pills */
+    .cc-case-filter {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .cc-filter-pill {
+      padding: 0.35rem 0.85rem;
+      border-radius: var(--cc-radius-sm);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 0.8rem;
+      border: 1px solid var(--cc-glass-border);
+      background: var(--cc-glass);
+      color: var(--cc-text-dim);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .cc-filter-pill:hover { color: var(--cc-text-muted); border-color: rgba(255,255,255,0.1); }
+    .cc-filter-pill.active {
+      background: var(--cc-accent-glow);
+      border-color: rgba(139,92,246,0.4);
+      color: var(--cc-accent);
+    }
+
+    @media (max-width: 480px) {
+      .cc-shell { padding: 1rem; }
+      .cc-metrics { grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+      .cc-tab { padding: 0.5rem 0.65rem; font-size: 0.78rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cc-shell">
+  <!-- Header -->
+  <div class="cc-header">
+    <div class="cc-header-left">
+      <div class="cc-header-icon"><i class="fa fa-gavel"></i></div>
+      <div>
+        <div class="cc-title">Court Cases</div>
+        <div class="cc-subtitle"><%= communityName || 'Community' %> court case queue & sessions</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <a href="/help#court-cases" class="cc-refresh-btn" title="Help & Tutorials"><i class="fa fa-circle-question"></i></a>
+      <button class="cc-refresh-btn" id="ccRefreshBtn" onclick="ccRefreshAll()" title="Refresh"><i class="fa fa-arrows-rotate"></i></button>
+      <a href="javascript:void(0)" onclick="ccGoBack()" class="cc-back-btn"><i class="fa fa-arrow-left"></i> Back</a>
+    </div>
+  </div>
+
+  <!-- Live Session Banner -->
+  <div class="cc-live-banner" id="liveSessionsBanner"></div>
+
+  <!-- Metrics -->
+  <div class="cc-metrics">
+    <div class="cc-metric">
+      <div class="cc-metric-value gold" id="metricPending">-</div>
+      <div class="cc-metric-label">Pending Cases</div>
+    </div>
+    <div class="cc-metric">
+      <div class="cc-metric-value blue" id="metricScheduled">-</div>
+      <div class="cc-metric-label">Scheduled</div>
+    </div>
+    <div class="cc-metric">
+      <div class="cc-metric-value red" id="metricActive">-</div>
+      <div class="cc-metric-label">Active Sessions</div>
+    </div>
+    <div class="cc-metric">
+      <div class="cc-metric-value green" id="metricCompleted">-</div>
+      <div class="cc-metric-label">Completed</div>
+    </div>
+  </div>
+
+  <!-- Case Filter -->
+  <div class="cc-case-filter">
+    <button class="cc-filter-pill active" data-filter="yours">Your Cases</button>
+    <button class="cc-filter-pill" data-filter="all">All Cases</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="cc-tabs">
+    <button class="cc-tab active" data-tab="queue">
+      <i class="fa fa-inbox"></i> Case Queue <span class="cc-tab-count" id="countQueue">0</span>
+    </button>
+    <button class="cc-tab" data-tab="scheduled">
+      <i class="fa fa-calendar-check"></i> Scheduled <span class="cc-tab-count" id="countScheduled">0</span>
+    </button>
+    <button class="cc-tab" data-tab="active">
+      <i class="fa fa-circle-play"></i> Sessions <span class="cc-tab-count" id="countActive">0</span>
+    </button>
+    <button class="cc-tab" data-tab="history">
+      <i class="fa fa-clock-rotate-left"></i> History
+    </button>
+  </div>
+
+  <!-- Tab Content -->
+  <div class="cc-tab-content active" id="tab-queue">
+    <div class="cc-spinner"></div>
+    <div class="cc-case-list" id="queueList" style="display:none;"></div>
+  </div>
+  <div class="cc-tab-content" id="tab-scheduled">
+    <div class="cc-spinner"></div>
+    <div class="cc-case-list" id="scheduledList" style="display:none;"></div>
+  </div>
+  <div class="cc-tab-content" id="tab-active">
+    <div class="cc-spinner"></div>
+    <div class="cc-case-list" id="activeList" style="display:none;"></div>
+  </div>
+  <div class="cc-tab-content" id="tab-history">
+    <div class="cc-spinner"></div>
+    <div class="cc-case-list" id="historyList" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- Case Detail Modal -->
+<div class="cc-modal-overlay" id="caseDetailModal">
+  <div class="cc-modal">
+    <div class="cc-modal-head">
+      <div class="cc-modal-title"><i class="fa fa-file-lines" style="color:var(--cc-accent);margin-right:0.4rem;"></i> Case Details</div>
+      <button class="cc-modal-close" onclick="$('#caseDetailModal').removeClass('open')">&times;</button>
+    </div>
+    <div class="cc-modal-body" id="caseDetailBody">
+      <div class="cc-spinner"></div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+  var API_URL = '<%= apiUrl || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+  var communityId = '<%= communityId %>';
+  var currentUserId = '<%= user && user._doc ? user._doc._id : "" %>';
+</script>
+<script src="/static/js/jquery.min.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  var cachedQueue = [];
+  var cachedScheduled = [];
+  var cachedActive = [];
+  var cachedHistory = [];
+  var historyCaseCache = {}; // caseId -> fetched court case data
+  var expandedHistoryId = null;
+  var caseFilter = 'yours'; // 'yours' | 'all'
+
+  function esc(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str || ''));
+    return div.innerHTML;
+  }
+
+  function isValidDate(d) {
+    if (!d) return false;
+    var dt = new Date(d);
+    return !isNaN(dt.getTime()) && dt.getFullYear() > 2000;
+  }
+
+  function getInitials(name) {
+    var parts = (name || '').split(' ').filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    if (parts.length === 1) return parts[0][0].toUpperCase();
+    return '?';
+  }
+
+  function showEmpty($list, msg) {
+    $list.closest('.cc-tab-content').find('.cc-spinner').hide();
+    $list.show().html('<div class="cc-empty"><i class="fa fa-inbox"></i>' + esc(msg) + '</div>');
+  }
+
+  // --- Back navigation ---
+  window.ccGoBack = function() {
+    var ref = document.referrer;
+    // If referrer is from this site and is a dashboard page, use history.back()
+    if (ref && ref.indexOf(window.location.origin) === 0
+        && ref.indexOf('/court-session') === -1
+        && ref.indexOf('/court-cases') === -1
+        && ref.indexOf('/help') === -1) {
+      history.back();
+      return;
+    }
+    // Fallback: go to communities page
+    window.location.href = '/communities';
+  };
+
+  // --- Init ---
+  $(document).ready(function() {
+    bindTabs();
+    window.ccRefreshAll = function() {
+      var $btn = $('#ccRefreshBtn');
+      $btn.addClass('spinning');
+      loadQueue();
+      loadScheduled();
+      loadActiveSessions();
+      loadHistory();
+      setTimeout(function() { $btn.removeClass('spinning'); }, 800);
+    };
+
+    loadQueue();
+    loadScheduled();
+    loadActiveSessions();
+    loadHistory();
+
+    function ccRefreshIfIdle() {
+      if (!communityId) return;
+      var hasExpanded = $('.cc-session-card.expanded').length > 0;
+      loadQueue();
+      loadScheduled();
+      loadActiveSessions();
+      if (!hasExpanded) loadHistory();
+    }
+
+    // Refresh data when user returns to this tab/page
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) ccRefreshIfIdle();
+    });
+
+    // Refresh when navigating back (bfcache restore)
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) ccRefreshIfIdle();
+    });
+
+    // Catch returns that bypass bfcache (e.g. active timers prevent caching)
+    var lastFocusRefresh = 0;
+    window.addEventListener('focus', function() {
+      // Debounce: skip if refreshed within last 3 seconds
+      var now = Date.now();
+      if (now - lastFocusRefresh < 3000) return;
+      lastFocusRefresh = now;
+      ccRefreshIfIdle();
+    });
+  });
+
+  function bindTabs() {
+    $(document).on('click', '.cc-tab', function() {
+      var tab = $(this).data('tab');
+      $('.cc-tab').removeClass('active');
+      $(this).addClass('active');
+      $('.cc-tab-content').removeClass('active');
+      $('#tab-' + tab).addClass('active');
+    });
+
+    // Case filter pills
+    $(document).on('click', '.cc-filter-pill', function() {
+      $('.cc-filter-pill').removeClass('active');
+      $(this).addClass('active');
+      caseFilter = $(this).data('filter');
+      reRenderAll();
+    });
+
+    // Close modal on backdrop
+    $('#caseDetailModal').on('click', function(e) {
+      if (e.target === this) $(this).removeClass('open');
+    });
+  }
+
+  function isMyCase(c) {
+    var d = c.courtCase || c.details || c;
+    return d.userID === currentUserId;
+  }
+
+  function isMySession(s) {
+    var d = s.courtSession || s.details || s;
+    var parts = d.participants || [];
+    for (var i = 0; i < parts.length; i++) {
+      if (parts[i].userID === currentUserId) return true;
+    }
+    var docket = d.docket || [];
+    for (var j = 0; j < docket.length; j++) {
+      if (docket[j].userID === currentUserId) return true;
+    }
+    return false;
+  }
+
+  function getFilteredQueue() {
+    return caseFilter === 'all' ? cachedQueue : cachedQueue.filter(isMyCase);
+  }
+  function getFilteredScheduled() {
+    return caseFilter === 'all' ? cachedScheduled : cachedScheduled.filter(isMyCase);
+  }
+  function getFilteredActive() {
+    return caseFilter === 'all' ? cachedActive : cachedActive.filter(isMySession);
+  }
+  function getFilteredHistory() {
+    return caseFilter === 'all' ? cachedHistory : cachedHistory.filter(isMySession);
+  }
+
+  function reRenderAll() {
+    renderQueue();
+    renderScheduled();
+    renderActive();
+    renderHistory();
+    updateMetrics();
+  }
+
+  function updateMetrics() {
+    var fq = getFilteredQueue();
+    var fs = getFilteredScheduled();
+    var fa = getFilteredActive();
+    var fh = getFilteredHistory();
+    $('#metricPending').text(fq.length);
+    $('#countQueue').text(fq.length);
+    $('#metricScheduled').text(fs.length);
+    $('#countScheduled').text(fs.length);
+    var activeCount = fa.filter(function(s) { return (s.courtSession || s.details || s).status === 'in_progress'; }).length;
+    $('#metricActive').text(activeCount);
+    $('#countActive').text(fa.length);
+    $('#metricCompleted').text(fh.length);
+  }
+
+  // --- Data Loading ---
+
+  function loadQueue() {
+    if (!communityId) return showEmpty($('#queueList'), 'No community selected.');
+    $.ajax({
+      url: API_URL + '/api/v2/court-cases/community/' + communityId + '?status=submitted&limit=50',
+      method: 'GET',
+      success: function(resp) {
+        var submitted = resp.data || [];
+        $.ajax({
+          url: API_URL + '/api/v2/court-cases/community/' + communityId + '?status=in_review&limit=50',
+          method: 'GET',
+          success: function(resp2) {
+            cachedQueue = submitted.concat(resp2.data || []);
+            renderQueue();
+            updateMetrics();
+          },
+          error: function() {
+            cachedQueue = submitted;
+            renderQueue();
+            updateMetrics();
+          }
+        });
+      },
+      error: function() { showEmpty($('#queueList'), 'Failed to load cases.'); }
+    });
+  }
+
+  function loadScheduled() {
+    if (!communityId) return;
+    $.ajax({
+      url: API_URL + '/api/v2/court-cases/community/' + communityId + '?status=scheduled&limit=50',
+      method: 'GET',
+      success: function(resp) {
+        cachedScheduled = resp.data || [];
+        renderScheduled();
+        updateMetrics();
+      },
+      error: function() { showEmpty($('#scheduledList'), 'Failed to load scheduled cases.'); }
+    });
+  }
+
+  function loadActiveSessions() {
+    if (!communityId) return;
+    // Fetch both in_progress and scheduled sessions
+    $.ajax({
+      url: API_URL + '/api/v2/court-sessions/community/' + communityId + '?status=in_progress&limit=50',
+      method: 'GET',
+      success: function(respActive) {
+        var activeSessions = respActive.data || [];
+        renderLiveBanner(activeSessions);
+        $.ajax({
+          url: API_URL + '/api/v2/court-sessions/community/' + communityId + '?status=scheduled&limit=50',
+          method: 'GET',
+          success: function(respSched) {
+            var scheduledSessions = respSched.data || [];
+            cachedActive = activeSessions.concat(scheduledSessions);
+            renderActive();
+            updateMetrics();
+          },
+          error: function() {
+            cachedActive = activeSessions;
+            renderActive();
+            updateMetrics();
+          }
+        });
+      },
+      error: function() { showEmpty($('#activeList'), 'Failed to load sessions.'); }
+    });
+  }
+
+  function loadHistory() {
+    if (!communityId) return;
+    $.ajax({
+      url: API_URL + '/api/v2/court-sessions/community/' + communityId + '?status=completed,cancelled&limit=50',
+      method: 'GET',
+      success: function(resp) {
+        cachedHistory = resp.data || [];
+        renderHistory();
+        updateMetrics();
+      },
+      error: function() { showEmpty($('#historyList'), 'Failed to load history.'); }
+    });
+  }
+
+  // --- Rendering ---
+
+  function renderQueue() {
+    var $list = $('#queueList');
+    $list.closest('.cc-tab-content').find('.cc-spinner').hide();
+    $list.show();
+
+    var filtered = getFilteredQueue();
+    if (filtered.length === 0) {
+      var msg = caseFilter === 'yours' ? 'You have no pending cases.' : 'No pending cases in the queue.';
+      $list.html('<div class="cc-empty"><i class="fa fa-inbox"></i>' + esc(msg) + '</div>');
+      return;
+    }
+
+    var html = filtered.map(function(c) {
+      var d = c.courtCase || c.details || c;
+      var initials = getInitials(d.civilianName || 'Unknown');
+      var itemCount = (d.contestedItems || []).length;
+      var dateStr = d.createdAt ? new Date(d.createdAt).toLocaleDateString() : '';
+      var statusClass = 'cc-badge-' + (d.status || 'submitted');
+      var statusLabel = (d.status || 'submitted').replace('_', ' ');
+      var caseId = c._id || '';
+
+      return '<div class="cc-case-card" onclick="viewCase(\'' + caseId + '\')">' +
+        '<div class="cc-avatar">' + initials + '</div>' +
+        '<div class="cc-case-info">' +
+          '<div class="cc-case-name">' + esc(d.civilianName || 'Unknown Civilian') + '</div>' +
+          '<div class="cc-case-meta">' +
+            '<span class="cc-badge ' + statusClass + '">' + statusLabel + '</span>' +
+            '<span class="cc-case-meta-item"><i class="fa fa-file-lines"></i> ' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + '</span>' +
+            '<span class="cc-case-meta-item"><i class="fa fa-clock"></i> ' + dateStr + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="cc-case-actions">' +
+          '<button class="cc-btn cc-btn-outline" onclick="event.stopPropagation();viewCase(\'' + caseId + '\')"><i class="fa fa-eye"></i> View</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    $list.html(html);
+  }
+
+  function renderScheduled() {
+    var $list = $('#scheduledList');
+    $list.closest('.cc-tab-content').find('.cc-spinner').hide();
+    $list.show();
+
+    var filtered = getFilteredScheduled();
+    if (filtered.length === 0) {
+      var msg = caseFilter === 'yours' ? 'You have no scheduled cases.' : 'No scheduled cases.';
+      $list.html('<div class="cc-empty"><i class="fa fa-calendar-check"></i>' + esc(msg) + '</div>');
+      return;
+    }
+
+    var html = filtered.map(function(c) {
+      var d = c.courtCase || c.details || c;
+      var initials = getInitials(d.civilianName || 'Unknown');
+      var itemCount = (d.contestedItems || []).length;
+      var schedDate = isValidDate(d.scheduledDate) ? new Date(d.scheduledDate).toLocaleString() : 'Not scheduled';
+      var caseId = c._id || '';
+
+      return '<div class="cc-case-card" onclick="viewCase(\'' + caseId + '\')">' +
+        '<div class="cc-avatar">' + initials + '</div>' +
+        '<div class="cc-case-info">' +
+          '<div class="cc-case-name">' + esc(d.civilianName || 'Unknown Civilian') + '</div>' +
+          '<div class="cc-case-meta">' +
+            '<span class="cc-badge cc-badge-scheduled">scheduled</span>' +
+            '<span class="cc-case-meta-item"><i class="fa fa-calendar"></i> ' + schedDate + '</span>' +
+            '<span class="cc-case-meta-item"><i class="fa fa-file-lines"></i> ' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="cc-case-actions">' +
+          '<button class="cc-btn cc-btn-outline" onclick="event.stopPropagation();viewCase(\'' + caseId + '\')"><i class="fa fa-eye"></i> View</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    $list.html(html);
+  }
+
+  function renderLiveBanner(liveSessions) {
+    var $banner = $('#liveSessionsBanner');
+    if (!liveSessions || liveSessions.length === 0) {
+      $banner.removeClass('visible');
+      return;
+    }
+
+    var rows = liveSessions.map(function(s) {
+      var d = s.courtSession || s.details || s;
+      var docketCount = (d.docket || []).length;
+      var sessionId = s._id || '';
+      var startedAt = d.startedAt ? new Date(d.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+      return '<div class="cc-live-session-row">' +
+        '<div class="cc-live-session-info">' +
+          '<div class="cc-live-session-title">' + esc(d.title || 'Court Session') + '</div>' +
+          '<div class="cc-live-session-meta">' +
+            '<span><i class="fa fa-gavel"></i>Judge ' + esc(d.judgeName || 'Unknown') + '</span>' +
+            '<span><i class="fa fa-file-lines"></i>' + docketCount + ' case' + (docketCount !== 1 ? 's' : '') + '</span>' +
+            (startedAt ? '<span><i class="fa fa-clock"></i>' + startedAt + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<a href="/court-session?s=' + sessionId + '" class="cc-live-join-btn"><i class="fa fa-door-open"></i> Join</a>' +
+      '</div>';
+    }).join('');
+
+    $banner.html(
+      '<div class="cc-live-banner-header">' +
+        '<div class="cc-live-dot"></div>' +
+        'Court in Session' +
+      '</div>' +
+      rows
+    ).addClass('visible');
+  }
+
+  function renderActive() {
+    var $list = $('#activeList');
+    $list.closest('.cc-tab-content').find('.cc-spinner').hide();
+    $list.show();
+
+    var filtered = getFilteredActive();
+    if (filtered.length === 0) {
+      var msg = caseFilter === 'yours' ? 'You have no active sessions.' : 'No court sessions.';
+      $list.html('<div class="cc-empty"><i class="fa fa-circle-play"></i>' + esc(msg) + '</div>');
+      return;
+    }
+
+    var html = filtered.map(function(s) {
+      var d = s.courtSession || s.details || s;
+      var docketCount = (d.docket || []).length;
+      var participantCount = (d.participants || []).length;
+      var sessionId = s._id || '';
+      var isLive = d.status === 'in_progress';
+      var isScheduled = d.status === 'scheduled';
+
+      var timeLabel = '';
+      if (isLive && d.startedAt) {
+        timeLabel = '<span><i class="fa fa-clock"></i> Started ' + new Date(d.startedAt).toLocaleTimeString() + '</span>';
+      } else if (isScheduled && d.scheduledStart) {
+        timeLabel = '<span><i class="fa fa-calendar"></i> ' + new Date(d.scheduledStart).toLocaleString() + '</span>';
+      }
+
+      var actionBtn = isLive
+        ? '<a href="/court-session?s=' + sessionId + '" class="cc-btn cc-btn-primary"><i class="fa fa-door-open"></i> Join</a>'
+        : '<a href="/court-session?s=' + sessionId + '" class="cc-btn cc-btn-outline"><i class="fa fa-door-open"></i> Open</a>';
+
+      var titlePrefix = isLive ? '<span class="cc-live-dot"></span>' : '';
+      var statusBadge = isScheduled ? ' <span class="cc-badge cc-badge-scheduled" style="margin-left:0.5rem;">scheduled</span>' : '';
+
+      return '<div class="cc-session-card' + (isLive ? ' live' : '') + '">' +
+        '<div class="cc-session-header">' +
+          '<div>' +
+            '<div class="cc-session-title">' + titlePrefix + esc(d.title || 'Court Session') + statusBadge + '</div>' +
+            '<div class="cc-session-subtitle">Judge ' + esc(d.judgeName || 'Unknown') + '</div>' +
+          '</div>' +
+          actionBtn +
+        '</div>' +
+        '<div class="cc-session-meta">' +
+          '<span><i class="fa fa-file-lines"></i> ' + docketCount + ' case' + (docketCount !== 1 ? 's' : '') + '</span>' +
+          '<span><i class="fa fa-users"></i> ' + participantCount + ' participant' + (participantCount !== 1 ? 's' : '') + '</span>' +
+          timeLabel +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    $list.html(html);
+  }
+
+  function renderHistory() {
+    var $list = $('#historyList');
+    $list.closest('.cc-tab-content').find('.cc-spinner').hide();
+    $list.show();
+
+    var filtered = getFilteredHistory();
+    if (filtered.length === 0) {
+      var msg = caseFilter === 'yours' ? 'You have no completed sessions.' : 'No session history yet.';
+      $list.html('<div class="cc-empty"><i class="fa fa-clock-rotate-left"></i>' + esc(msg) + '</div>');
+      return;
+    }
+
+    var html = filtered.map(function(s) {
+      var d = s.courtSession || s.details || s;
+      var sid = s._id || '';
+      var docketCount = (d.docket || []).length;
+      var endedAt = d.endedAt ? new Date(d.endedAt).toLocaleString() : '';
+      var startedAt = d.startedAt ? new Date(d.startedAt).toLocaleString() : '';
+
+      // Build participants html
+      var participantsHtml = '';
+      var parts = d.participants || [];
+      if (parts.length > 0) {
+        participantsHtml = '<div style="margin-top:0.75rem;">' +
+          '<div class="cc-detail-label">Participants</div>' +
+          '<div class="cc-participant-chips">' +
+          parts.map(function(p) {
+            var roleClass = p.role === 'judge' ? 'role-judge' : p.role === 'defendant' ? 'role-defendant' : '';
+            return '<span class="cc-participant-chip ' + roleClass + '">' +
+              esc(p.userName || 'Unknown') +
+              '<span class="chip-role">' + esc(p.role || '') + '</span>' +
+            '</span>';
+          }).join('') +
+          '</div></div>';
+      }
+
+      // Build docket skeleton
+      var docketHtml = '';
+      var docket = d.docket || [];
+      if (docket.length > 0) {
+        docketHtml = '<div class="cc-detail-label">Docket</div>' +
+          '<div class="cc-docket-entries" data-session-id="' + sid + '">' +
+          docket.map(function(entry) {
+            var cid = entry.courtCaseID || entry.caseID || '';
+            var civName = (entry.civilianName || '').trim() || 'Unknown';
+            return '<div class="cc-docket-entry" data-case-id="' + cid + '">' +
+              '<div class="cc-docket-civ-name"><i class="fa fa-user"></i><span class="cc-docket-civ-text">' + esc(civName) + '</span></div>' +
+              '<div class="cc-docket-resolutions">' +
+                '<span style="font-size:0.78rem;color:var(--cc-text-dim);">Expand to load verdicts...</span>' +
+              '</div>' +
+            '</div>';
+          }).join('') +
+          '</div>';
+      }
+
+      return '<div class="cc-session-card expandable" data-session-id="' + sid + '" onclick="toggleHistorySession(\'' + sid + '\')">' +
+        '<div class="cc-session-header">' +
+          '<div style="flex:1;">' +
+            '<div class="cc-session-title">' + esc(d.title || 'Court Session') + '</div>' +
+            '<div class="cc-session-subtitle">Judge ' + esc(d.judgeName || 'Unknown') + '</div>' +
+          '</div>' +
+          '<span class="cc-badge cc-badge-' + (d.status || 'completed') + '">' + (d.status || 'completed') + '</span>' +
+          '<i class="fa fa-chevron-down cc-session-expand-icon"></i>' +
+        '</div>' +
+        '<div class="cc-session-meta">' +
+          '<span><i class="fa fa-file-lines"></i> ' + docketCount + ' case' + (docketCount !== 1 ? 's' : '') + '</span>' +
+          (startedAt ? '<span><i class="fa fa-play"></i> ' + startedAt + '</span>' : '') +
+          (endedAt ? '<span><i class="fa fa-stop"></i> ' + endedAt + '</span>' : '') +
+        '</div>' +
+        '<div class="cc-session-detail">' +
+          '<div class="cc-session-detail-inner">' +
+            docketHtml +
+            participantsHtml +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    $list.html(html);
+  }
+
+  // --- History expand/collapse ---
+
+  window.toggleHistorySession = function(sessionId) {
+    var $card = $('.cc-session-card[data-session-id="' + sessionId + '"]');
+    var isExpanding = !$card.hasClass('expanded');
+
+    // Accordion: collapse all others
+    $('.cc-session-card.expanded').not($card).removeClass('expanded');
+    $card.toggleClass('expanded');
+
+    if (!isExpanding) return;
+
+    // Fetch case details for each docket entry (if not cached)
+    var $entries = $card.find('.cc-docket-entry');
+    $entries.each(function() {
+      var $entry = $(this);
+      var caseId = $entry.data('case-id');
+      if (!caseId) return;
+
+      var $resArea = $entry.find('.cc-docket-resolutions');
+
+      if (historyCaseCache[caseId]) {
+        renderDocketResolutions($resArea, historyCaseCache[caseId]);
+        return;
+      }
+
+      $resArea.html('<span style="font-size:0.78rem;color:var(--cc-text-dim);"><i class="fa fa-spinner fa-spin"></i> Loading...</span>');
+
+      $.ajax({
+        url: API_URL + '/api/v2/court-cases/' + caseId,
+        method: 'GET',
+        success: function(c) {
+          var cd = c.courtCase || c.details || c;
+          historyCaseCache[caseId] = cd;
+          renderDocketResolutions($resArea, cd);
+          // Backfill civilian name if showing "Unknown"
+          var $nameEl = $entry.find('.cc-docket-civ-text');
+          if ($nameEl.length && (!$nameEl.text().trim() || $nameEl.text() === 'Unknown')) {
+            var name = (cd.civilianName || '').trim();
+            if (name) {
+              $nameEl.text(name);
+            } else if (cd.civilianID) {
+              $.ajax({
+                url: API_URL + '/api/v1/civilian/' + cd.civilianID,
+                method: 'GET',
+                success: function(civ) {
+                  var civD = civ.civilian || civ;
+                  var fullName = (civD.name || '').trim() || ((civD.firstName || '') + ' ' + (civD.lastName || '')).trim();
+                  if (fullName) $nameEl.text(fullName);
+                }
+              });
+            }
+          }
+        },
+        error: function() {
+          $resArea.html('<span style="font-size:0.78rem;color:#f87171;">Failed to load case details</span>');
+        }
+      });
+    });
+  };
+
+  function renderDocketResolutions($container, caseData) {
+    var resolutions = caseData.resolutions || [];
+    var contestedItems = caseData.contestedItems || [];
+
+    if (resolutions.length === 0 && contestedItems.length === 0) {
+      $container.html('<span style="font-size:0.78rem;color:var(--cc-text-dim);">No contested items</span>');
+      return;
+    }
+
+    var resMap = {};
+    for (var i = 0; i < resolutions.length; i++) {
+      resMap[resolutions[i].itemID] = resolutions[i];
+    }
+
+    var html = contestedItems.map(function(item) {
+      var res = resMap[item.itemID];
+      var verdictHtml = res
+        ? '<span class="cc-verdict ' + (res.verdict || '') + '">' + esc(res.verdict || '') + '</span>'
+        : '<span style="font-size:0.72rem;color:var(--cc-text-dim);">pending</span>';
+      var typeClass = (item.itemType || '').toLowerCase();
+
+      return '<div class="cc-resolution-row">' +
+        '<span class="cc-resolution-type ' + typeClass + '">' + esc(item.itemType || '') + '</span>' +
+        '<span class="cc-resolution-summary">' + esc(item.summary || 'No description') + '</span>' +
+        verdictHtml +
+      '</div>';
+    }).join('');
+
+    var notesHtml = '';
+    for (var j = 0; j < resolutions.length; j++) {
+      if (resolutions[j].judgeNotes) {
+        notesHtml += '<div style="font-size:0.75rem;color:var(--cc-text-muted);margin-top:0.35rem;font-style:italic;">' +
+          '<i class="fa fa-quote-left" style="font-size:0.6rem;margin-right:0.3rem;color:var(--cc-text-dim);"></i>' +
+          esc(resolutions[j].judgeNotes) +
+        '</div>';
+      }
+    }
+
+    $container.html(html + notesHtml);
+  }
+
+  // --- View Case Detail ---
+
+  window.viewCase = function(caseId) {
+    $('#caseDetailBody').html('<div class="cc-spinner"></div>');
+    $('#caseDetailModal').addClass('open');
+
+    $.ajax({
+      url: API_URL + '/api/v2/court-cases/' + caseId,
+      method: 'GET',
+      success: function(c) {
+        var d = c.courtCase || c.details || c;
+        var statusClass = 'cc-badge-' + (d.status || 'submitted');
+        var statusLabel = (d.status || 'submitted').replace('_', ' ');
+
+        var itemsHtml = '<div id="cc-contested-items-area">' +
+          (d.contestedItems || []).map(function(item) {
+            var typeClass = item.itemType === 'arrest' ? 'cc-badge-in_progress' : item.itemType === 'citation' ? 'cc-badge-in_review' : 'cc-badge-submitted';
+            return '<div class="cc-contested-item" data-item-id="' + esc(item.itemID) + '" data-item-type="' + esc(item.itemType) + '" style="background:var(--cc-surface);border:1px solid var(--cc-glass-border);border-radius:var(--cc-radius-sm);padding:0.65rem 0.75rem;margin-bottom:0.4rem;">' +
+              '<div style="display:flex;align-items:center;gap:0.6rem;">' +
+                '<span class="cc-badge ' + typeClass + '">' + esc(item.itemType) + '</span>' +
+                '<span style="font-size:0.85rem;color:var(--cc-text);">' + esc(item.summary || 'No description') + '</span>' +
+              '</div>' +
+              '<div class="cc-item-details" style="margin-top:0.4rem;display:none;"></div>' +
+            '</div>';
+          }).join('') +
+        '</div>';
+
+        var historyHtml = (d.history || []).map(function(h) {
+          var judgeActions = ['assigned', 'scheduled', 'started', 'completed'];
+          var displayName = h.userName || '';
+          if (displayName && judgeActions.indexOf(h.action) !== -1) {
+            displayName = 'Judge ' + displayName;
+          }
+          return '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.4rem 0;border-bottom:1px solid var(--cc-glass-border);">' +
+            '<span style="font-size:0.72rem;color:var(--cc-text-dim);min-width:110px;">' + (h.timestamp ? new Date(h.timestamp).toLocaleString() : '') + '</span>' +
+            '<span class="cc-badge cc-badge-' + h.action + '" style="font-size:0.65rem;">' + (h.action || '').replace('_', ' ') + '</span>' +
+            '<span style="font-size:0.78rem;color:var(--cc-text-muted);">' + esc(displayName) + (h.notes ? ' — ' + esc(h.notes) : '') + '</span>' +
+          '</div>';
+        }).join('');
+
+        var resolutionsHtml = '';
+        if (d.resolutions && d.resolutions.length > 0) {
+          resolutionsHtml = '<div style="margin-top:1rem;"><div class="cc-form-label">Resolutions</div>' +
+            d.resolutions.map(function(r) {
+              var verdictColor = r.verdict === 'dismissed' ? 'color:#6ee7b7;' : 'color:#fca5a5;';
+              return '<div style="background:var(--cc-surface);border:1px solid var(--cc-glass-border);border-radius:var(--cc-radius-sm);padding:0.5rem 0.75rem;margin-bottom:0.4rem;display:flex;justify-content:space-between;align-items:center;">' +
+                '<span style="font-size:0.85rem;color:var(--cc-text);">' + esc(r.itemType) + '</span>' +
+                '<span style="font-size:0.78rem;font-weight:600;' + verdictColor + 'text-transform:uppercase;">' + esc(r.verdict) + '</span>' +
+              '</div>';
+            }).join('') +
+          '</div>';
+        }
+
+        var detailHtml = '' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">' +
+            '<div>' +
+              '<div style="font-weight:700;font-size:1.05rem;color:#fff;">' + esc(d.civilianName || 'Unknown') + '</div>' +
+              '<div style="font-size:0.8rem;color:var(--cc-text-muted);margin-top:0.15rem;">Submitted ' + (d.createdAt ? new Date(d.createdAt).toLocaleDateString() : '') + '</div>' +
+            '</div>' +
+            '<span class="cc-badge ' + statusClass + '">' + statusLabel + '</span>' +
+          '</div>' +
+          (d.statement ? '<div style="margin-bottom:1rem;"><div class="cc-form-label">Civilian Statement</div><div style="background:var(--cc-surface);border:1px solid var(--cc-glass-border);border-radius:var(--cc-radius-sm);padding:0.75rem;font-size:0.85rem;color:var(--cc-text);font-style:italic;">' + esc(d.statement) + '</div></div>' : '') +
+          '<div style="margin-bottom:1rem;"><div class="cc-form-label">Contested Items (' + (d.contestedItems || []).length + ')</div>' + itemsHtml + '</div>' +
+          (d.judgeName ? '<div style="margin-bottom:1rem;font-size:0.82rem;color:var(--cc-text-muted);"><i class="fa fa-gavel" style="color:var(--cc-accent);margin-right:0.3rem;"></i> Assigned to <strong style="color:#fff;">Judge ' + esc(d.judgeName) + '</strong></div>' : '') +
+          (isValidDate(d.scheduledDate) ? '<div style="margin-bottom:1rem;font-size:0.82rem;color:var(--cc-text-muted);"><i class="fa fa-calendar" style="color:#4ade80;margin-right:0.3rem;"></i> Scheduled for <strong style="color:#fff;">' + new Date(d.scheduledDate).toLocaleString() + '</strong></div>' : '<div style="margin-bottom:1rem;font-size:0.82rem;color:var(--cc-text-dim);"><i class="fa fa-calendar" style="margin-right:0.3rem;"></i> Not yet scheduled</div>') +
+          resolutionsHtml +
+          (historyHtml ? '<div style="margin-top:1rem;"><div class="cc-form-label">History</div>' + historyHtml + '</div>' : '');
+
+        $('#caseDetailBody').html(detailHtml);
+
+        // Enrich contested items with actual record details
+        enrichContestedItems(d.civilianID, d.contestedItems || []);
+      },
+      error: function() {
+        $('#caseDetailBody').html('<div class="cc-empty"><i class="fa fa-exclamation-triangle"></i>Failed to load case details.</div>');
+      }
+    });
+  };
+
+  function enrichContestedItems(civilianId, contestedItems) {
+    if (!civilianId || !contestedItems.length) return;
+
+    $.ajax({
+      url: API_URL + '/api/v1/civilian/' + civilianId,
+      method: 'GET',
+      success: function(civ) {
+        var civData = civ.civilian || civ;
+        var crimHistory = civData.criminalHistory || [];
+
+        var historyMap = {};
+        for (var i = 0; i < crimHistory.length; i++) {
+          historyMap[crimHistory[i]._id] = crimHistory[i];
+        }
+
+        contestedItems.forEach(function(item) {
+          var $el = $('.cc-contested-item[data-item-id="' + item.itemID + '"]');
+          var $details = $el.find('.cc-item-details');
+
+          if (item.itemType === 'citation' || item.itemType === 'warning') {
+            var entry = historyMap[item.itemID];
+            if (entry) {
+              var fines = entry.fines || [];
+              var detailHtml = '';
+              if (fines.length > 0) {
+                detailHtml += fines.map(function(f) {
+                  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.25rem 0;font-size:0.8rem;">' +
+                    '<span style="color:var(--cc-text);">' + esc(f.fineType || '') + ' <span style="color:var(--cc-text-dim);">(' + esc(f.category || '') + ')</span></span>' +
+                    '<span style="color:var(--cc-amber);font-weight:600;">$' + esc(String(f.fineAmount || 0)) + '</span>' +
+                  '</div>';
+                }).join('');
+              }
+              if (entry.notes) {
+                detailHtml += '<div style="font-size:0.78rem;color:var(--cc-text-muted);margin-top:0.3rem;font-style:italic;">' +
+                  '<i class="fa fa-quote-left" style="font-size:0.6rem;margin-right:0.25rem;color:var(--cc-text-dim);"></i>' +
+                  esc(entry.notes) + '</div>';
+              }
+              if (detailHtml) {
+                $details.html(detailHtml).show();
+              }
+            }
+          } else if (item.itemType === 'arrest') {
+            $.ajax({
+              url: API_URL + '/api/v1/arrest-report/' + item.itemID,
+              method: 'GET',
+              success: function(ar) {
+                var report = ar.arrestReport || ar;
+                var detailHtml = '';
+                if (report.charges) {
+                  detailHtml += '<div style="font-size:0.8rem;padding:0.25rem 0;">' +
+                    '<span style="color:var(--cc-text-dim);">Charges:</span> ' +
+                    '<span style="color:var(--cc-text);">' + esc(report.charges) + '</span></div>';
+                }
+                if (report.arrestLocation) {
+                  detailHtml += '<div style="font-size:0.8rem;padding:0.25rem 0;">' +
+                    '<span style="color:var(--cc-text-dim);">Location:</span> ' +
+                    '<span style="color:var(--cc-text);">' + esc(report.arrestLocation) + '</span></div>';
+                }
+                if (report.narrative) {
+                  detailHtml += '<div style="font-size:0.78rem;color:var(--cc-text-muted);margin-top:0.3rem;font-style:italic;">' +
+                    '<i class="fa fa-quote-left" style="font-size:0.6rem;margin-right:0.25rem;color:var(--cc-text-dim);"></i>' +
+                    esc(report.narrative) + '</div>';
+                }
+                if (detailHtml) {
+                  $details.html(detailHtml).show();
+                }
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
+})();
+</script>
+
+</body>
+</html>

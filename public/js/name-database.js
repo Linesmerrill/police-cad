@@ -6,7 +6,7 @@ function escapeHtml(str) {
 
 function nameSearchPoliceForm() {
   $("#search-results-civilians-loading").show();
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var page = 0;
   var firstName = $("#civ-first-name").val();
   var lastName = $("#civ-last-name").val();
@@ -110,7 +110,7 @@ function getPrevCivPage() {
     $("#prev-civ-page-btn").addClass("isDisabled");
     $("#prev-civ-page-btn").attr("onclick", "").unbind("click");
   }
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     body: {
       communityID: $("#active-community-id").val(),
@@ -145,7 +145,7 @@ function getPrevCivPage() {
 
 function getNextCivPage() {
   page = page + 1;
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     body: {
       communityID: $("#active-community-id").val(),
@@ -446,7 +446,7 @@ function loadConditions(index) {
 }
 
 function loadCivSocketData(civID) {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     civID: civID,
   };
@@ -495,7 +495,7 @@ function populateWarrantDetails(res) {
 }
 
 function loadFirearmSocketData(firearmID) {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     firearmID: firearmID,
   };
@@ -507,7 +507,7 @@ function loadFirearmSocketData(firearmID) {
 }
 
 function loadWarrantSocketData(warrantID) {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     warrantID: warrantID,
   };
@@ -535,7 +535,7 @@ function populateFirearmSocketDetails(res) {
 }
 
 function loadLicenseSocketData(licenseID) {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     licenseID: licenseID,
   };
@@ -885,7 +885,7 @@ function hideFirearmMessage() {
 }
 
 function getFirearms() {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   $("#no-firearms-message").hide();
   var myCivObj = {
     civID: $("#civilianIDView").text(),
@@ -942,7 +942,7 @@ function getFirearms() {
 
 function getNextGunPage() {
   pageGun = pageGun + 1;
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myObj = {
     civID: $("#civilianIDView").text(),
     page: pageGun,
@@ -986,7 +986,7 @@ function getPrevGunPage() {
     $("#prev-gun-page-btn").addClass("isDisabled");
     $("#prev-gun-page-btn").attr("onclick", "").unbind("click");
   }
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myObj = {
     civID: $("#civilianIDView").text(),
     page: pageGun,
@@ -1015,7 +1015,7 @@ function getPrevGunPage() {
 }
 
 function getLicenses() {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   $("#no-licenses-message").hide();
   var myCivObj = {
     civID: $("#civilianIDView").text(),
@@ -1072,7 +1072,7 @@ function getLicenses() {
 
 function getNextLicensePage() {
   pageLicense = pageLicense + 1;
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myObj = {
     civID: $("#civilianIDView").text(),
     page: pageLicense,
@@ -1120,7 +1120,7 @@ function getPrevLicensePage() {
     $("#prev-license-page-btn").addClass("isDisabled");
     $("#prev-license-page-btn").attr("onclick", "").unbind("click");
   }
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myObj = {
     civID: $("#civilianIDView").text(),
     page: pageLicense,
@@ -1191,7 +1191,7 @@ function renderWarrantCard(warrant) {
 }
 
 function getWarrants() {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   $("#no-warrants-message").hide();
   var myCivObj = {
     civID: $("#civilianIDView").text(),
@@ -1236,7 +1236,7 @@ function getWarrants() {
 
 function getNextWarrantPage() {
   pageWarrant = pageWarrant + 1;
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myObj = {
     civID: $("#civilianIDView").text(),
     page: pageWarrant,
@@ -1270,7 +1270,7 @@ function getPrevWarrantPage() {
     $("#prev-warrants-page-btn").addClass("isDisabled");
     $("#prev-warrants-page-btn").attr("onclick", "").unbind("click");
   }
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myObj = {
     civID: $("#civilianIDView").text(),
     page: pageWarrant,

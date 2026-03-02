@@ -675,6 +675,9 @@
           <li>
             <a href="/most-wanted<%= encodedCommunityId ? '?c=' + encodedCommunityId : '' %>"><span class="fa fa-user-secret ml-3 mr-3"></span> Most Wanted</a>
           </li>
+          <li>
+            <a href="/court-cases<%= encodedCommunityId ? '?c=' + encodedCommunityId : '' %>" id="sidebar-court-cases"><span class="fa fa-gavel ml-3 mr-3"></span> Court Cases</a>
+          </li>
         </div>
         <% include departments-sidebar %>
         <% include community-sidebar %>
@@ -4027,12 +4030,14 @@
 <script src="/static/js/dispatch-dashboard.js"></script>
 <script src="/static/js/departments.js"></script>
 <script src="/static/js/search-database.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="/static/js/details-modal.js"></script>
 <script src="/static/js/bootstrap.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <script src="/static/js/scripts.js"></script>
 <script src="/static/js/notifications.js"></script>
+<script src="/static/js/court-session-badge.js"></script>
 <script src="/static/js/ads.js"></script>
 <script>if (window.module) module = window.module;</script>
 <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
@@ -4047,7 +4052,7 @@
 
   $(function () {
     // Use shared socket or create one and share it
-    var socket = window.dashboardSocket || io();
+    var socket = window.dashboardSocket || io({ transports: ["websocket"] });
     window.dashboardSocket = socket;
 
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
@@ -4532,7 +4537,7 @@
     }
     // Fallback: create a new connection if no shared socket exists
     if (typeof io !== 'undefined') {
-      return io();
+      return io({ transports: ["websocket"] });
     }
     return null;
   }
@@ -4547,7 +4552,7 @@
     }
     if (dbUser.user?.lastAccessedCommunity!=null) {
       // Reuse existing socket if available, or create new one
-      dashboardSocket = window.dashboardSocket || io();
+      dashboardSocket = window.dashboardSocket || io({ transports: ["websocket"] });
       window.dashboardSocket = dashboardSocket; // Sync global reference
 
       const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
@@ -5581,7 +5586,7 @@
     $('#registered-firearms-loading').show()
     $('#issue-loading-registered-firearms-alert').hide()
 
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
 
     myReq={
       regOwnerID: registeredOwnerID,
@@ -5634,7 +5639,7 @@
     $(`#registered-cars`).show()
     $('#registered-cars-loading').show()
     $('#issue-loading-registered-cars-alert').hide()
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
 
     myReq={
       regOwner: registeredOwner,
@@ -5834,7 +5839,7 @@
   }
 
   function populateBoloDetails(id) {
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     socket.emit('load_dispatch_bolos', dbUser)
     socket.on('load_dispatch_bolos_result', (res) => {
       for (const i in res) {
@@ -5862,7 +5867,7 @@
   }
 
   function populateCallDetails(id) {
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     socket.emit('load_dispatch_calls', dbUser)
     socket.on('load_dispatch_calls_result', (res) => {
       for (const i in res) {
@@ -5889,7 +5894,7 @@
   }
 
   function setDispatchModalValues(id) {
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     socket.emit('load_statuses', dbUser)
     socket.on('load_status_result', (res) => {
       for (const i in res) {
@@ -5916,7 +5921,7 @@
   }
 
   function setEmsDispatchModalValues(id) {
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     if (dbEmsVehicles != null && dbEmsVehicles != undefined) {
       for (let i=0; i<dbEmsVehicles.length; i++) {
         if (dbEmsVehicles[i]._id==id) {
@@ -5946,7 +5951,7 @@
 
   $('#updateBolo').one('click', function () {
     var val=$(this).attr('value')
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     $('#update-bolo-form').submit(function (e) {
       e.preventDefault(); //prevents page from reloading
 
@@ -5967,7 +5972,7 @@
   $('#deleteBolo').one('click', function () {
     var val=$(this).attr('value')
     // location.assign('/dispatch-dashboard')
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     $('#delete-bolo-form').submit(function (e) {
       e.preventDefault(); //prevents page from reloading
 
@@ -6122,13 +6127,13 @@
   }
 
   function clearHoldTraffic() {
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
       socket.emit('clear_hold_traffic', dbUser.user.activeCommunity)
     $('#hold-traffic-banner').removeClass('show').addClass('hide')
   }
 
   $('#createBolo').one('click', function () {
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
       $('#create-bolo-form').submit(function (e) {
         e.preventDefault(); //prevents page from reloading
         var myCreateReq={
@@ -6147,7 +6152,7 @@
 
   // Legacy create call handler - replaced by createCall() in dispatch-dashboard.js
   // $('#createCall').one('click', function () {
-  //   var socket=io();
+  //   var socket=io({ transports: ["websocket"] });
   //     $('#create-call-form').submit(function (e) {
   //       e.preventDefault();
   //       myCreatedAt=new Date();
@@ -6171,7 +6176,7 @@
   // })
 
   $('#closeCall').click(function () {
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     var myReq={
       callID: $('#callIDDetail').val(),
       communityID: dbUser.user.activeCommunity,
@@ -6180,7 +6185,7 @@
   })
 
   $('#deleteCall').click(function () {
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     var myReq={
       callID: $('#callIDDetail').val(),
       communityID: dbUser.user.activeCommunity,
@@ -6189,7 +6194,7 @@
   })
 
   function updateEmsStatus(status) {
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     var onDuty=null
     var updateDuty=false
     if (status=='10-41') {
@@ -6214,7 +6219,7 @@
   }
 
   function updateStatus(status) {
-    var socket = window.dashboardSocket || io();
+    var socket = window.dashboardSocket || io({ transports: ["websocket"] });
     var onDuty=null
     var updateDuty=false
     if (status=='10-41') {
@@ -6244,7 +6249,7 @@
   }
 
   $('#clearPanic').one('click', function () {
-    var socket = window.dashboardSocket || io();
+    var socket = window.dashboardSocket || io({ transports: ["websocket"] });
     $('#clear-panic-form').submit(function (e) {
       e.preventDefault(); //prevents page from reloading
       const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
@@ -6711,7 +6716,7 @@
   })
 
   function togglePanicBtnSound() {
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     socket.emit('update_panic_btn_sound', dbUser)
     socket.on('load_panic_btn_result', (res) => {
       $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
@@ -6722,7 +6727,7 @@
   }
 
   function adjustAlertVolumeSlider() {
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     var volumeAmount = $('#alert-volume-slider').val()
     var myObj = {
       dbUser: dbUser,
@@ -6881,7 +6886,7 @@
     //if it is already showing we don't want to show it again (there can only be 1 active
     // hold traffic per community)
     if (!$('#hold-traffic-banner').hasClass('show')) {
-      var socket=io();
+      var socket=io({ transports: ["websocket"] });
       myReq={
         userID: dbUser._id,
         userUsername: dbUser.user.username,
@@ -7012,7 +7017,7 @@
       _id: civID,
       status: status
     }
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     socket.emit('update_drivers_license_status', user)
     socket.on('load_updated_drivers_license_status_result', (res) => {
       switch (status) {
@@ -7047,7 +7052,7 @@
     var data = {
       civID: civID
     }
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     socket.emit('search_citation', data)
     socket.on('load_citation_result', (res) => {
       res.forEach(citation => {
@@ -7078,7 +7083,7 @@
     var data = {
       civID: civID
     }
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     socket.emit('search_warnings', data)
     socket.on('load_warnings_result', (res) => {
       res.forEach(citation => {
@@ -7106,7 +7111,7 @@
   //   var data = {
   //     civID: civID
   //   }
-  //   var socket=io();
+  //   var socket=io({ transports: ["websocket"] });
   //   socket.emit('search_arrests', data)
   //   socket.on('load_arrests_result', (res) => {
   //     res.forEach(arrest => {

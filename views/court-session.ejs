@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Court Session - Lines Police CAD</title>
+  <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-void: #0a0a0f;
+      --bg-deep: #0f1019;
+      --bg-card: #171926;
+      --bg-card-hover: #1d2033;
+      --bg-elevated: #23263a;
+      --bg-input: #1a1c2e;
+      --border-subtle: rgba(255,255,255,0.06);
+      --border-focus: rgba(212,175,55,0.4);
+      --text-primary: #f0ede6;
+      --text-secondary: #8a8d9e;
+      --text-muted: #5c5f72;
+      --accent-gold: #d4af37;
+      --accent-gold-dim: rgba(212,175,55,0.15);
+      --accent-gold-glow: rgba(212,175,55,0.08);
+      --accent-primary: #667eea;
+      --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --accent-gold-gradient: linear-gradient(135deg, #d4af37 0%, #b8941e 100%);
+      --status-submitted-bg: #78350f;
+      --status-submitted-text: #fbbf24;
+      --status-review-bg: #1e3a5f;
+      --status-review-text: #60a5fa;
+      --status-scheduled-bg: #065f46;
+      --status-scheduled-text: #6ee7b7;
+      --status-progress-bg: #7f1d1d;
+      --status-progress-text: #fca5a5;
+      --status-completed-bg: #374151;
+      --status-completed-text: #9ca3af;
+      --status-pending-bg: #44403c;
+      --status-pending-text: #d6d3d1;
+      --status-active-bg: #78350f;
+      --status-active-text: #fbbf24;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+      --shadow-card: 0 2px 12px rgba(0,0,0,0.3), 0 0 0 1px var(--border-subtle);
+      --shadow-elevated: 0 8px 32px rgba(0,0,0,0.4);
+      --shadow-gold: 0 0 20px rgba(212,175,55,0.1);
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html { font-size: 15px; }
+    body {
+      background: var(--bg-void);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* === BACKGROUND TEXTURE === */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(212,175,55,0.03) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 100%, rgba(102,126,234,0.03) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* === LAYOUT === */
+    .jd-shell { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.5rem 4rem; }
+
+    .jd-session-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 1.25rem;
+      align-items: start;
+    }
+
+    /* === HEADER === */
+    .jd-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .jd-header-left { display: flex; align-items: center; gap: 1.25rem; }
+    .jd-gavel-icon {
+      width: 48px; height: 48px;
+      background: var(--accent-gold-dim);
+      border: 1px solid rgba(212,175,55,0.2);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; color: var(--accent-gold);
+      box-shadow: var(--shadow-gold);
+    }
+    .jd-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    .jd-subtitle { font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.15rem; }
+    .jd-subtitle a { color: var(--accent-gold); text-decoration: none; }
+    .jd-header-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+    /* === BACK BUTTON === */
+    .jd-back-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      color: var(--text-secondary); font-size: 0.85rem; text-decoration: none;
+      padding: 0.4rem 0.75rem; border-radius: var(--radius-sm);
+      transition: var(--transition);
+      border: 1px solid transparent;
+    }
+    .jd-back-btn:hover { color: var(--text-primary); background: var(--bg-card); border-color: var(--border-subtle); }
+
+    /* === BUTTONS === */
+    .jd-btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.6rem 1.1rem; border-radius: var(--radius-sm);
+      font-family: var(--font-body); font-weight: 600; font-size: 0.88rem;
+      border: none; cursor: pointer; transition: var(--transition);
+      text-decoration: none; white-space: nowrap;
+    }
+    .jd-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+    .jd-btn-primary { background: var(--accent-gradient); color: #fff; box-shadow: 0 2px 8px rgba(102,126,234,0.25); }
+    .jd-btn-primary:hover:not(:disabled) { box-shadow: 0 4px 16px rgba(102,126,234,0.35); transform: translateY(-1px); }
+    .jd-btn-gold { background: var(--accent-gold-gradient); color: #1a1200; box-shadow: 0 2px 8px rgba(212,175,55,0.2); }
+    .jd-btn-gold:hover:not(:disabled) { box-shadow: 0 4px 16px rgba(212,175,55,0.3); transform: translateY(-1px); }
+    .jd-btn-ghost {
+      background: transparent; color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+    }
+    .jd-btn-ghost:hover:not(:disabled) { background: var(--bg-card); color: var(--text-primary); border-color: rgba(255,255,255,0.1); }
+    .jd-btn-sm { padding: 0.4rem 0.75rem; font-size: 0.8rem; }
+    .jd-btn-danger { background: #7f1d1d; color: #fca5a5; }
+    .jd-btn-danger:hover:not(:disabled) { background: #991b1b; }
+    .jd-btn-success { background: #065f46; color: #6ee7b7; }
+    .jd-btn-success:hover:not(:disabled) { background: #047857; }
+
+    /* === STATUS BADGES === */
+    .jd-badge {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+      padding: 0.2rem 0.55rem; border-radius: var(--radius-sm);
+    }
+    .jd-badge-submitted { background: var(--status-submitted-bg); color: var(--status-submitted-text); }
+    .jd-badge-in_review { background: var(--status-review-bg); color: var(--status-review-text); }
+    .jd-badge-scheduled { background: var(--status-scheduled-bg); color: var(--status-scheduled-text); }
+    .jd-badge-in_progress { background: var(--status-progress-bg); color: var(--status-progress-text); }
+    .jd-badge-completed { background: var(--status-completed-bg); color: var(--status-completed-text); }
+    .jd-badge-pending { background: var(--status-pending-bg); color: var(--status-pending-text); }
+    .jd-badge-active { background: var(--status-active-bg); color: var(--status-active-text); }
+    .jd-badge-unresolved { background: #4a1d1d; color: #f59e9e; }
+    .jd-badge-cancelled { background: #78350f; color: #fbbf24; }
+
+    /* === ROLE BADGES === */
+    .jd-role-badge {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+      padding: 0.15rem 0.45rem; border-radius: var(--radius-sm);
+    }
+    .jd-role-judge { background: var(--accent-gold-dim); color: var(--accent-gold); }
+    .jd-role-defendant { background: rgba(96,165,250,0.15); color: #60a5fa; }
+    .jd-role-spectator { background: rgba(156,163,175,0.15); color: #9ca3af; }
+
+    /* === LIVE DOT === */
+    .jd-live-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; background: #ef4444; margin-right: 0.4rem;
+      animation: jd-pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes jd-pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+    }
+
+    /* === CARDS === */
+    .jd-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .jd-card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.85rem 1.1rem;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-deep);
+    }
+    .jd-card-title {
+      font-weight: 600; font-size: 0.85rem; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.04em;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .jd-card-title i { color: var(--accent-gold); font-size: 0.9rem; }
+    .jd-card-body { padding: 1.1rem; }
+
+    /* === SESSION STATUS HEADER === */
+    .jd-session-status-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .jd-session-status-info { display: flex; align-items: center; gap: 1rem; }
+    .jd-session-status-info .jd-badge { font-size: 0.78rem; padding: 0.3rem 0.7rem; }
+    .jd-session-judge {
+      font-size: 0.88rem; color: var(--text-secondary);
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .jd-session-judge i { color: var(--accent-gold); }
+    .jd-session-controls { display: flex; gap: 0.5rem; }
+
+    /* === ACTIVE CASE PANEL === */
+    .jd-active-case {
+      background: var(--bg-card);
+      border: 1px solid rgba(212,175,55,0.2);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1.25rem;
+      box-shadow: var(--shadow-gold);
+    }
+    .jd-active-case-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.85rem 1.1rem;
+      border-bottom: 1px solid rgba(212,175,55,0.1);
+      background: rgba(212,175,55,0.04);
+    }
+    .jd-active-case-title {
+      font-weight: 600; font-size: 0.85rem; color: var(--accent-gold);
+      text-transform: uppercase; letter-spacing: 0.04em;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .jd-active-case-body { padding: 1.25rem; }
+    .jd-active-case-civ {
+      font-family: var(--font-display);
+      font-size: 1.3rem; color: var(--text-primary);
+      margin-bottom: 0.75rem;
+    }
+    .jd-statement-box {
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1rem;
+      font-size: 0.9rem; color: var(--text-primary);
+      font-style: italic;
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+    .jd-contested-items-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .jd-contested-item {
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .jd-contested-item-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.65rem 0.85rem;
+      gap: 0.75rem;
+    }
+    .jd-contested-item-info { flex: 1; display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+    .jd-contested-item-summary { font-size: 0.88rem; color: var(--text-primary); }
+    .jd-contested-item-details {
+      border-top: 1px solid var(--border-subtle);
+      padding: 0.6rem 0.85rem;
+      background: rgba(0,0,0,0.15);
+    }
+    .jd-item-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.4rem 1rem;
+    }
+    .jd-item-detail-row {
+      display: flex; flex-direction: column; gap: 0.1rem;
+    }
+    .jd-item-detail-label {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.04em; color: var(--text-muted);
+    }
+    .jd-item-detail-value {
+      font-size: 0.82rem; color: var(--text-primary);
+    }
+    .jd-item-fines { margin-top: 0.35rem; }
+    .jd-item-fine-row {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.82rem; color: var(--text-primary);
+      padding: 0.2rem 0;
+    }
+    .jd-item-fine-amount {
+      font-weight: 600; color: var(--accent-gold);
+    }
+    .jd-item-fine-category {
+      font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+      padding: 0.1rem 0.4rem; border-radius: 3px;
+      background: rgba(252,165,165,0.12); color: #fca5a5;
+    }
+    .jd-item-fine-category.misdemeanor { background: rgba(251,191,36,0.12); color: #fbbf24; }
+    .jd-item-fine-category.infraction { background: rgba(156,163,175,0.12); color: #9ca3af; }
+    .jd-item-narrative {
+      font-size: 0.82rem; color: var(--text-secondary);
+      font-style: italic; line-height: 1.5; margin-top: 0.35rem;
+      max-height: 4.5em; overflow-y: auto;
+    }
+    .jd-item-detail-loading {
+      padding: 0.4rem 0; font-size: 0.78rem; color: var(--text-muted);
+      font-style: italic;
+    }
+    .jd-resolution-toggles { display: flex; gap: 0.35rem; flex-shrink: 0; }
+    .jd-toggle-btn {
+      padding: 0.3rem 0.65rem; font-size: 0.75rem; font-weight: 600;
+      border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+      background: transparent; color: var(--text-muted); cursor: pointer;
+      transition: var(--transition); font-family: var(--font-body);
+    }
+    .jd-toggle-btn:hover { border-color: rgba(255,255,255,0.15); color: var(--text-secondary); }
+    .jd-toggle-btn.dismiss-active {
+      background: rgba(110,231,183,0.12); color: #6ee7b7;
+      border-color: rgba(110,231,183,0.3);
+    }
+    .jd-toggle-btn.uphold-active {
+      background: rgba(252,165,165,0.12); color: #fca5a5;
+      border-color: rgba(252,165,165,0.3);
+    }
+    .jd-active-case-actions {
+      display: flex; gap: 0.75rem; justify-content: flex-end;
+      padding-top: 1rem; border-top: 1px solid var(--border-subtle);
+    }
+
+    /* === DOCKET LIST === */
+    .jd-docket-list { display: flex; flex-direction: column; gap: 0.4rem; }
+    .jd-docket-entry {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+      margin-bottom: 0.4rem;
+      overflow: hidden;
+    }
+    .jd-docket-entry:hover { background: var(--bg-card-hover); }
+    .jd-docket-entry.docket-active {
+      border-color: rgba(212,175,55,0.35);
+      background: rgba(212,175,55,0.04);
+      box-shadow: inset 0 0 0 1px rgba(212,175,55,0.1);
+    }
+    .jd-docket-entry.docket-completed { opacity: 0.5; }
+    .jd-docket-summary {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.65rem 0.85rem;
+      cursor: pointer;
+    }
+    .jd-docket-order {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--bg-elevated);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+    .jd-docket-entry.docket-active .jd-docket-order {
+      background: var(--accent-gold-dim); color: var(--accent-gold);
+    }
+    .jd-docket-entry.docket-completed .jd-docket-order {
+      background: var(--status-completed-bg); color: var(--status-completed-text);
+    }
+    .jd-docket-entry-info { flex: 1; min-width: 0; }
+    .jd-docket-entry-name { font-size: 0.88rem; font-weight: 500; color: var(--text-primary); }
+    .jd-docket-entry-name .jd-badge { margin-left: 0.5rem; }
+    .jd-docket-owner-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      background: rgba(255,255,255,0.06);
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      margin-left: 0.4rem;
+      vertical-align: middle;
+    }
+    .jd-docket-entry-sub {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      margin-top: 0.15rem;
+    }
+    .jd-docket-entry-sub i { margin-right: 0.2rem; }
+    .jd-docket-chevron {
+      color: var(--text-tertiary);
+      font-size: 0.7rem;
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+    .jd-docket-entry.docket-expanded .jd-docket-chevron { transform: rotate(180deg); }
+    .jd-docket-detail {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .jd-docket-entry.docket-expanded .jd-docket-detail { max-height: 600px; }
+    .jd-docket-detail-inner {
+      padding: 0 0.85rem 0.75rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .jd-docket-detail-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+      margin: 0.6rem 0 0.35rem;
+    }
+    .jd-docket-item-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0;
+      font-size: 0.8rem;
+    }
+    .jd-docket-item-row + .jd-docket-item-row { border-top: 1px solid rgba(255,255,255,0.03); }
+    .jd-docket-item-type {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .jd-docket-item-type.citation { background: rgba(59,130,246,0.15); color: #93c5fd; }
+    .jd-docket-item-type.warning { background: rgba(234,179,8,0.15); color: #fde047; }
+    .jd-docket-item-type.arrest { background: rgba(239,68,68,0.15); color: #fca5a5; }
+    .jd-docket-item-summary { color: var(--text-secondary); flex: 1; }
+    .jd-verdict-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.12rem 0.45rem;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .jd-verdict-dismissed { background: rgba(110,231,183,0.12); color: #6ee7b7; }
+    .jd-verdict-upheld { background: rgba(252,165,165,0.12); color: #fca5a5; }
+    .jd-docket-judge-notes {
+      font-size: 0.72rem;
+      color: var(--text-tertiary);
+      padding: 0.15rem 0 0.15rem 1.8rem;
+      font-style: italic;
+    }
+    .jd-docket-statement {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      padding: 0.4rem 0.6rem;
+      background: rgba(255,255,255,0.02);
+      border-radius: var(--radius-sm);
+      border-left: 2px solid var(--accent-gold-dim);
+    }
+
+    /* === SIDEBAR === */
+    .jd-sidebar { display: flex; flex-direction: column; gap: 1.25rem; }
+
+    /* === PARTICIPANTS === */
+    .jd-participants-section-label {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-muted);
+      padding: 0.5rem 0 0.25rem; border-bottom: 1px solid var(--border-color);
+      margin-bottom: 0.25rem;
+    }
+    .jd-participants-section-label:first-child { padding-top: 0; }
+    .jd-participants-list { display: flex; flex-direction: column; gap: 0.15rem; }
+    .jd-participant {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.4rem 0;
+    }
+    .jd-participant-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--bg-elevated);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; font-weight: 700; color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+    .jd-participant.role-judge .jd-participant-avatar {
+      background: var(--accent-gold-dim); color: var(--accent-gold);
+    }
+    .jd-participant.role-defendant .jd-participant-avatar {
+      background: rgba(96,165,250,0.15); color: #60a5fa;
+    }
+    .jd-participant-name { font-size: 0.82rem; font-weight: 500; color: var(--text-primary); flex: 1; }
+    .jd-participant-count {
+      font-size: 0.78rem; color: var(--text-muted);
+      display: flex; align-items: center; gap: 0.3rem;
+    }
+    .jd-participants-empty {
+      color: var(--text-muted); font-size: 0.8rem; font-style: italic;
+      padding: 0.25rem 0;
+    }
+
+    /* === CHAT === */
+    .jd-chat-container {
+      display: flex; flex-direction: column;
+      height: 420px;
+    }
+    .jd-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.75rem;
+      display: flex; flex-direction: column; gap: 0.6rem;
+      scrollbar-width: thin;
+      scrollbar-color: var(--bg-elevated) transparent;
+    }
+    .jd-chat-messages::-webkit-scrollbar { width: 5px; }
+    .jd-chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .jd-chat-messages::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 3px; }
+
+    .jd-chat-msg {
+      display: flex; gap: 0.5rem; align-items: flex-start;
+    }
+    .jd-chat-msg-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--bg-elevated);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; font-weight: 700; color: var(--text-secondary);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .jd-chat-msg.msg-judge .jd-chat-msg-avatar {
+      background: var(--accent-gold-dim); color: var(--accent-gold);
+    }
+    .jd-chat-msg.msg-defendant .jd-chat-msg-avatar {
+      background: rgba(96,165,250,0.15); color: #60a5fa;
+    }
+    .jd-chat-msg-content { flex: 1; min-width: 0; }
+    .jd-chat-msg-header {
+      display: flex; align-items: center; gap: 0.4rem;
+      margin-bottom: 0.15rem;
+    }
+    .jd-chat-msg-name { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); }
+    .jd-chat-msg-time { font-size: 0.7rem; color: var(--text-muted); margin-left: auto; }
+    .jd-chat-msg-text {
+      font-size: 0.85rem; color: var(--text-secondary);
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .jd-chat-msg.msg-judge .jd-chat-msg-text { color: var(--text-primary); }
+    .jd-chat-link { color: #818cf8; text-decoration: underline; transition: color 0.15s; }
+    .jd-chat-link:hover { color: #a78bfa; }
+
+    .jd-chat-input-area {
+      display: flex; gap: 0.5rem;
+      padding: 0.75rem;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-deep);
+    }
+    .jd-chat-input {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.55rem 0.75rem;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      transition: var(--transition);
+    }
+    .jd-chat-input:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--accent-gold-glow);
+    }
+    .jd-chat-input::placeholder { color: var(--text-muted); }
+    .jd-chat-send-btn {
+      background: var(--accent-gold-gradient);
+      border: none; border-radius: var(--radius-sm);
+      padding: 0 0.85rem; cursor: pointer;
+      color: #1a1200; font-size: 0.9rem;
+      transition: var(--transition);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .jd-chat-send-btn:hover { box-shadow: 0 2px 8px rgba(212,175,55,0.25); }
+
+    /* === EMPTY STATE === */
+    .jd-empty {
+      text-align: center; padding: 2.5rem 1rem;
+      color: var(--text-muted); font-size: 0.9rem;
+    }
+    .jd-empty i { font-size: 1.8rem; margin-bottom: 0.6rem; display: block; opacity: 0.4; }
+
+    /* === LOADING === */
+    .jd-loading {
+      text-align: center; padding: 2.5rem;
+      color: var(--text-muted); font-size: 0.9rem;
+    }
+    .jd-spinner {
+      display: inline-block; width: 24px; height: 24px;
+      border: 2px solid var(--border-subtle);
+      border-top-color: var(--accent-gold);
+      border-radius: 50%;
+      animation: jd-spin 0.7s linear infinite;
+      margin-bottom: 0.5rem;
+    }
+    @keyframes jd-spin { to { transform: rotate(360deg); } }
+
+    /* === ITEM TYPE BADGES === */
+    .jd-type-arrest { background: var(--status-progress-bg); color: var(--status-progress-text); }
+    .jd-type-citation { background: var(--status-review-bg); color: var(--status-review-text); }
+    .jd-type-charge { background: var(--status-submitted-bg); color: var(--status-submitted-text); }
+    .jd-type-default { background: var(--bg-elevated); color: var(--text-secondary); }
+
+    /* === SYSTEM MESSAGE === */
+    .jd-chat-system {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 0.25rem 0;
+    }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 960px) {
+      .jd-session-layout {
+        grid-template-columns: 1fr;
+      }
+      .jd-chat-container { height: 320px; }
+    }
+    @media (max-width: 768px) {
+      .jd-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+      .jd-session-status-bar { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+    }
+    @media (max-width: 480px) {
+      .jd-shell { padding: 1rem; }
+      .jd-contested-item-row { flex-direction: column; align-items: flex-start; }
+      .jd-item-detail-grid { grid-template-columns: 1fr; }
+      .jd-resolution-toggles { width: 100%; }
+      .jd-resolution-toggles .jd-toggle-btn { flex: 1; text-align: center; }
+    }
+
+    /* === CUSTOM MODAL === */
+    .jd-modal-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(5, 5, 10, 0.85);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.25s ease;
+      padding: 1.5rem;
+    }
+    .jd-modal-overlay.open { opacity: 1; }
+    .jd-modal-box {
+      background: var(--bg-card);
+      border: 1px solid rgba(212,175,55,0.18);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 40px rgba(212,175,55,0.06);
+      max-width: 420px; width: 100%;
+      padding: 2rem;
+      transform: scale(0.92) translateY(12px);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+      opacity: 0;
+    }
+    .jd-modal-overlay.open .jd-modal-box { transform: scale(1) translateY(0); opacity: 1; }
+    .jd-modal-icon {
+      width: 48px; height: 48px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; margin-bottom: 1rem;
+    }
+    .jd-modal-icon.icon-warn { background: rgba(251,191,36,0.12); color: #fbbf24; }
+    .jd-modal-icon.icon-error { background: rgba(252,129,129,0.12); color: #fc8181; }
+    .jd-modal-icon.icon-info { background: var(--accent-gold-dim); color: var(--accent-gold); }
+    .jd-modal-icon.icon-danger { background: rgba(220,38,38,0.12); color: #ef4444; }
+    .jd-modal-title {
+      font-family: var(--font-display);
+      font-size: 1.2rem; color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    .jd-modal-message {
+      font-size: 0.9rem; color: var(--text-secondary);
+      line-height: 1.6; margin-bottom: 1.5rem;
+    }
+    .jd-modal-actions {
+      display: flex; gap: 0.6rem; justify-content: flex-end;
+    }
+    .jd-modal-actions .jd-btn { min-width: 90px; justify-content: center; }
+    .jd-btn-danger {
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      color: #fff; border: none; font-weight: 600;
+      padding: 0.5rem 1.1rem; border-radius: var(--radius-sm);
+      cursor: pointer; font-family: var(--font-body); font-size: 0.85rem;
+      transition: var(--transition);
+    }
+    .jd-btn-danger:hover { filter: brightness(1.1); }
+  </style>
+</head>
+<body>
+
+<div class="jd-shell">
+  <!-- Header -->
+  <div class="jd-header">
+    <div class="jd-header-left">
+      <div class="jd-gavel-icon"><i class="fa fa-gavel"></i></div>
+      <div>
+        <div class="jd-title" id="sessionTitle">Court Session</div>
+        <div class="jd-subtitle" id="sessionSubtitle">Loading session...</div>
+      </div>
+    </div>
+    <div class="jd-header-actions">
+      <a id="backToDashboardBtn" href="javascript:history.back()" class="jd-back-btn"><i class="fa fa-arrow-left"></i> Back to Dashboard</a>
+      <button class="jd-btn jd-btn-gold" id="startSessionBtn" style="display:none;"><i class="fa fa-play"></i> Start Session</button>
+      <button class="jd-btn jd-btn-danger" id="endSessionBtn" style="display:none;"><i class="fa fa-stop"></i> End Session</button>
+    </div>
+  </div>
+
+  <!-- Session Status Bar -->
+  <div class="jd-session-status-bar" id="sessionStatusBar">
+    <div class="jd-session-status-info">
+      <span class="jd-badge" id="sessionStatusBadge">Loading</span>
+      <span class="jd-session-judge" id="sessionJudge"><i class="fa fa-gavel"></i> --</span>
+    </div>
+    <div class="jd-session-controls" id="sessionControls"></div>
+  </div>
+
+  <!-- Main Loading State -->
+  <div class="jd-loading" id="mainLoading">
+    <div class="jd-spinner"></div><br>Loading court session...
+  </div>
+
+  <!-- Two-Column Layout -->
+  <div class="jd-session-layout" id="sessionLayout" style="display:none;">
+    <!-- LEFT COLUMN: Session Content -->
+    <div class="jd-main-content">
+      <!-- Active Case Panel -->
+      <div class="jd-active-case" id="activeCasePanel" style="display:none;">
+        <div class="jd-active-case-header">
+          <div class="jd-active-case-title"><i class="fa fa-file-lines"></i> Active Case</div>
+          <span class="jd-badge jd-badge-active"><span class="jd-live-dot" style="margin-right:0.25rem;"></span> In Progress</span>
+        </div>
+        <div class="jd-active-case-body" id="activeCaseBody">
+          <div class="jd-loading"><div class="jd-spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- No Active Case -->
+      <div class="jd-card" id="noActiveCasePanel" style="display:none;">
+        <div class="jd-card-body">
+          <div class="jd-empty">
+            <i class="fa fa-hourglass-half"></i>
+            No case is currently active.<br>
+            <span style="font-size:0.82rem;" id="noActiveCaseHint">Waiting for the judge to call the next case.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Docket List -->
+      <div class="jd-card" style="margin-top:1.25rem;">
+        <div class="jd-card-header">
+          <div class="jd-card-title"><i class="fa fa-list-ol"></i> Session Docket</div>
+          <span class="jd-participant-count" id="docketCount"><i class="fa fa-file-lines"></i> 0 cases</span>
+        </div>
+        <div class="jd-card-body">
+          <div class="jd-docket-list" id="docketList">
+            <div class="jd-loading"><div class="jd-spinner"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Sidebar -->
+    <div class="jd-sidebar">
+      <!-- Participants -->
+      <div class="jd-card">
+        <div class="jd-card-header">
+          <div class="jd-card-title"><i class="fa fa-users"></i> Participants</div>
+          <span class="jd-participant-count" id="participantCount"><i class="fa fa-user"></i> 0</span>
+        </div>
+        <div class="jd-card-body" style="padding:0.75rem 1.1rem;">
+          <div class="jd-participants-list" id="participantsList">
+            <div class="jd-loading" style="padding:1rem;"><div class="jd-spinner"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Chat -->
+      <div class="jd-card">
+        <div class="jd-card-header">
+          <div class="jd-card-title"><i class="fa fa-comments"></i> Live Chat</div>
+        </div>
+        <div class="jd-chat-container">
+          <div class="jd-chat-messages" id="chatMessages">
+            <div class="jd-chat-system">Chat will appear here once the session begins.</div>
+          </div>
+          <div class="jd-chat-input-area">
+            <input type="text" class="jd-chat-input" id="chatInput" placeholder="Type a message..." maxlength="500">
+            <button class="jd-chat-send-btn" id="chatSendBtn"><i class="fa fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Global variables -->
+<script type="text/javascript">
+  var dbUser = <%- JSON.stringify(user || {}) %>;
+  var API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+</script>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script>
+// Custom modal utilities — replaces native alert() and confirm()
+function jdShowModal(opts) {
+  var iconClass = opts.iconClass || 'icon-info';
+  var icon = opts.icon || 'fa-gavel';
+  var title = opts.title || '';
+  var message = opts.message || '';
+  var confirmLabel = opts.confirmLabel || 'OK';
+  var confirmClass = opts.confirmClass || 'jd-btn jd-btn-gold';
+  var showCancel = opts.showCancel !== false;
+  var cancelLabel = opts.cancelLabel || 'Cancel';
+  var onConfirm = opts.onConfirm || function() {};
+
+  var id = 'jdModal-' + Date.now();
+  var html = '<div class="jd-modal-overlay" id="' + id + '">' +
+    '<div class="jd-modal-box">' +
+      '<div class="jd-modal-icon ' + iconClass + '"><i class="fa ' + icon + '"></i></div>' +
+      '<div class="jd-modal-title">' + title + '</div>' +
+      '<div class="jd-modal-message">' + message + '</div>' +
+      '<div class="jd-modal-actions">' +
+        (showCancel ? '<button class="jd-btn jd-btn-ghost jd-modal-cancel">' + cancelLabel + '</button>' : '') +
+        '<button class="' + confirmClass + ' jd-modal-confirm">' + confirmLabel + '</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+
+  $('body').append(html);
+  var $overlay = $('#' + id);
+
+  // Trigger open animation
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { $overlay.addClass('open'); });
+  });
+
+  function close() {
+    $overlay.removeClass('open');
+    setTimeout(function() { $overlay.remove(); }, 300);
+  }
+
+  $overlay.on('click', '.jd-modal-cancel', close);
+  $overlay.on('click', '.jd-modal-confirm', function() { close(); onConfirm(); });
+  // Close on backdrop click
+  $overlay.on('click', function(e) {
+    if ($(e.target).hasClass('jd-modal-overlay')) close();
+  });
+}
+
+function jdAlert(title, message, icon) {
+  jdShowModal({
+    icon: icon || 'fa-circle-exclamation',
+    iconClass: 'icon-warn',
+    title: title,
+    message: message,
+    confirmLabel: 'OK',
+    showCancel: false
+  });
+}
+
+function jdConfirm(opts) {
+  jdShowModal({
+    icon: opts.icon || 'fa-triangle-exclamation',
+    iconClass: opts.iconClass || 'icon-danger',
+    title: opts.title || 'Are you sure?',
+    message: opts.message || '',
+    confirmLabel: opts.confirmLabel || 'Confirm',
+    confirmClass: opts.confirmClass || 'jd-btn jd-btn-danger',
+    cancelLabel: opts.cancelLabel || 'Cancel',
+    showCancel: true,
+    onConfirm: opts.onConfirm || function() {}
+  });
+}
+</script>
+<script src="/static/js/court-session.js"></script>
+
+</body>
+</html>

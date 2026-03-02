@@ -237,7 +237,7 @@ function fillAccountDetails() {
   }
 
   function togglePanicBtnSound() {
-    var socket = io();
+    var socket = io({ transports: ["websocket"] });
     socket.emit('update_panic_btn_sound', <%- JSON.stringify(user) %>)
     socket.on('load_panic_btn_result', (res) => {
       $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
@@ -248,7 +248,7 @@ function fillAccountDetails() {
   }
 
   function adjustAlertVolumeSlider() {
-    var socket=io();
+    var socket=io({ transports: ["websocket"] });
     var volumeAmount = $('#alert-volume-slider').val()
     var myObj = {
       dbUser: dbUser,
