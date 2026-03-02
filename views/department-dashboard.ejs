@@ -3520,6 +3520,9 @@ $('#dd-loading').hide();
                   '<button class="dd-btn dd-btn-deny" onclick="ddReviewWarrant(\'' + w._id + '\', false)">' +
                     '<i class="fa fa-times-circle"></i> Deny' +
                   '</button>' +
+                  '<button class="dd-btn dd-btn-deny" onclick="ddDeleteWarrant(\'' + w._id + '\',\'' + esc((d.accusedFirstName || '') + ' ' + (d.accusedLastName || '')).trim() + '\')" style="margin-left:auto;">' +
+                    '<i class="fa fa-trash"></i> Delete' +
+                  '</button>' +
                 '</div>' +
               '</div>' +
             '</div>' +
@@ -3580,6 +3583,32 @@ $('#dd-loading').hide();
           $(this).toggleClass('expanded');
         } else {
           $(this).removeClass('expanded');
+        }
+      });
+    };
+
+    window.ddDeleteWarrant = function(warrantId, accusedName) {
+      ddModal({
+        type: 'danger',
+        icon: 'fa-trash',
+        title: 'Delete Warrant',
+        message: 'Permanently delete the warrant for <strong>' + esc(accusedName || 'this individual') + '</strong>? This cannot be undone.',
+        confirmText: 'Delete',
+        onConfirm: function() {
+          $.ajax({
+            url: API_URL + '/api/v1/warrant/' + warrantId,
+            method: 'DELETE',
+            success: function() {
+              ddToast('Warrant deleted successfully', 'success');
+              expandedWarrantId = null;
+              expandedAllWarrantId = null;
+              loadPendingWarrants();
+              loadAllWarrants();
+            },
+            error: function() {
+              ddToast('Failed to delete warrant', 'error');
+            }
+          });
         }
       });
     };
@@ -3780,6 +3809,11 @@ $('#dd-loading').hide();
                   '<div class="dd-detail-label">Executed By</div>' +
                   '<p class="dd-detail-value">' + esc(d.executingOfficerName) + (d.executedAt ? ' — ' + formatDate(d.executedAt) : '') + '</p>' +
                 '</div>' : '') +
+              '<div class="dd-judge-actions" style="margin-top:0.75rem;">' +
+                '<button class="dd-btn dd-btn-deny" onclick="ddDeleteWarrant(\'' + w._id + '\',\'' + esc((d.accusedFirstName || '') + ' ' + (d.accusedLastName || '')).trim() + '\')">' +
+                  '<i class="fa fa-trash"></i> Delete Warrant' +
+                '</button>' +
+              '</div>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -5038,6 +5072,9 @@ $('#dd-loading').hide();
             footerHtml = (d.courtSessionID ? '' : '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="ccReturnToQueue(\'' + (c._id || '') + '\',\'' + esc(d.civilianName || 'this case') + '\')"><i class="fa fa-arrow-rotate-left"></i> Unschedule</button>') +
               '<button class="dd-btn dd-btn-sm dd-btn-primary" onclick="ccRescheduleCase(\'' + (c._id || '') + '\',\'' + esc(d.scheduledDate || '') + '\')"><i class="fa fa-clock-rotate-left"></i> Reschedule</button>';
           }
+          if (ccIsJudicial) {
+            footerHtml += '<button class="dd-btn dd-btn-sm dd-btn-deny" style="margin-left:auto;" onclick="ccDeleteCase(\'' + (c._id || '') + '\',\'' + esc(d.civilianName || '') + '\')"><i class="fa fa-trash"></i> Delete Case</button>';
+          }
           $('#dd-cc-case-detail-footer').html(footerHtml);
         },
         error: function() {
@@ -5554,6 +5591,34 @@ $('#dd-loading').hide();
       // Hide the cancel button for alert-style modals
       setTimeout(function() { $('#dd-cc-confirm-cancel').hide(); }, 15);
     }
+
+    window.ccDeleteCase = function(caseId, civilianName) {
+      if (!ccIsJudicial) return;
+      ccShowConfirm({
+        icon: 'fa-trash',
+        iconClass: 'danger',
+        title: 'Delete Court Case',
+        message: 'Permanently delete the court case for <strong>' + esc(civilianName || 'this individual') + '</strong>? If the case is not completed, contested charges will be reverted. This cannot be undone.',
+        confirmLabel: 'Delete Case',
+        confirmIcon: 'fa-trash',
+        confirmClass: 'dd-btn-danger',
+        onConfirm: function() {
+          $.ajax({
+            url: API_URL + '/api/v2/court-cases/' + caseId,
+            method: 'DELETE',
+            success: function() {
+              $('#dd-cc-case-detail-modal').removeClass('open');
+              ddToast('Court case deleted successfully', 'success');
+              ccLoadQueue();
+              ccLoadScheduled();
+            },
+            error: function(xhr) {
+              ccAlert('Delete Failed', (xhr.responseJSON && xhr.responseJSON.message) || 'An unknown error occurred.', 'danger');
+            }
+          });
+        }
+      });
+    };
 
     window.ccDeleteSession = function(sessionId) {
       if (!ccIsJudicial) return;
