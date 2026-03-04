@@ -317,7 +317,7 @@ $(document).ready(function () {
               success: function (data) {
                 arrestReports = data.data || [];
                 totalArrestReports = data.totalCount || 0;
-                currentArrestPage = 1;
+                currentArrestPage = 0;
                 loadingStatuses.find((s) => s.id === "arrestReports").status =
                   "success";
                 updateLoadingStatuses();
@@ -642,8 +642,8 @@ $(document).ready(function () {
       totalArrestReports > 3
         ? `
           <div class="d-flex justify-content-between mt-2">
-            <button class="btn btn-primary" onclick="fetchArrestReports(${currentArrestPage - 1})" ${currentArrestPage === 1 ? "disabled" : ""}>Previous</button>
-            <button class="btn btn-primary" onclick="fetchArrestReports(${currentArrestPage + 1})" ${currentArrestPage * 3 >= totalArrestReports ? "disabled" : ""}>Next</button>
+            <button class="btn btn-primary" onclick="fetchArrestReports(${currentArrestPage - 1})" ${currentArrestPage === 0 ? "disabled" : ""}>Previous</button>
+            <button class="btn btn-primary" onclick="fetchArrestReports(${currentArrestPage + 1})" ${(currentArrestPage + 1) * 3 >= totalArrestReports ? "disabled" : ""}>Next</button>
           </div>
         `
         : ""
