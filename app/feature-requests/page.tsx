@@ -219,9 +219,8 @@ function FeatureCard({ item, onVote, animate }: {
             {/* Top row: title + status */}
             <div style={{
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'flex-start',
               gap: '0.75rem',
-              flexWrap: 'wrap',
               marginBottom: '0.4rem',
             }}>
               <h3 style={{
@@ -232,10 +231,14 @@ function FeatureCard({ item, onVote, animate }: {
                 color: hovered ? '#fbbf24' : 'rgba(255,255,255,0.92)',
                 transition: 'color 0.2s',
                 lineHeight: 1.35,
+                flex: 1,
+                minWidth: 0,
               }}>
                 {item.title}
               </h3>
-              <StatusBadge status={item.status} />
+              <div style={{ flexShrink: 0, paddingTop: '0.1rem' }}>
+                <StatusBadge status={item.status} />
+              </div>
             </div>
 
             {/* Description */}
@@ -589,62 +592,57 @@ export default function FeatureRequests() {
 
             {/* ── Header ─────────────────────────────────── */}
             <div style={{
-              display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'space-between',
+              textAlign: 'center',
               marginBottom: '2rem',
               paddingTop: '2rem',
-              flexWrap: 'wrap',
-              gap: '1rem',
             }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <h1 style={{
-                    fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
-                    fontWeight: 700,
-                    margin: 0,
-                    fontFamily: FONT,
-                    lineHeight: 1.1,
-                  }}>
-                    <span style={{
-                      background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fbbf24 100%)',
-                      backgroundSize: '200% 100%',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}>
-                      Feature Requests
-                    </span>
-                  </h1>
-                  <span style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    padding: '0.2rem 0.55rem',
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    fontFamily: FONT,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase' as const,
-                    color: '#fbbf24',
-                    background: 'rgba(251,191,36,0.1)',
-                    border: '1px solid rgba(251,191,36,0.3)',
-                    borderRadius: '999px',
-                    animation: 'betaPulse 3s ease-in-out infinite',
-                    whiteSpace: 'nowrap',
-                    marginBottom: '0.15rem',
-                  }}>
-                    Beta
-                  </span>
-                </div>
-                <p style={{
-                  margin: '0.4rem 0 0 0',
-                  fontSize: '0.95rem',
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <h1 style={{
+                  fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
+                  fontWeight: 700,
+                  margin: 0,
                   fontFamily: FONT,
-                  color: 'rgba(255,255,255,0.55)',
+                  lineHeight: 1.1,
+                  display: 'inline-block',
                 }}>
-                  Vote on ideas or suggest your own
-                </p>
+                  <span style={{
+                    background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fbbf24 100%)',
+                    backgroundSize: '200% 100%',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}>
+                    Feature Requests
+                  </span>
+                </h1>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '0.2rem 0.55rem',
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  fontFamily: FONT,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase' as const,
+                  color: '#fbbf24',
+                  background: 'rgba(251,191,36,0.1)',
+                  border: '1px solid rgba(251,191,36,0.3)',
+                  borderRadius: '999px',
+                  animation: 'betaPulse 3s ease-in-out infinite',
+                  whiteSpace: 'nowrap',
+                }}>
+                  Beta
+                </span>
               </div>
+              <p style={{
+                margin: '0.6rem auto 0',
+                fontSize: '0.95rem',
+                fontFamily: FONT,
+                color: 'rgba(255,255,255,0.55)',
+                maxWidth: '600px',
+              }}>
+                Vote on ideas or suggest your own
+              </p>
 
               <Link
                 href={currentUser ? '/feature-requests/new' : '/login?redirect=/feature-requests/new'}
@@ -664,6 +662,7 @@ export default function FeatureRequests() {
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   boxShadow: '0 2px 12px rgba(251,191,36,0.3)',
+                  marginTop: '1.25rem',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = '#f59e0b';
