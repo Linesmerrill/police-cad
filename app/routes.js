@@ -3251,17 +3251,17 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
 
   // API route to get current user - MUST be before catch-all
-  app.get("/api/user/current", function (req, res) {
+  app.get("/api/user/current", async function (req, res) {
     if (req.isAuthenticated() && req.user) {
       // Extract user data safely
       const userData = req.user._doc || req.user;
       const user = userData.user || userData;
-      
+
       // Extract ObjectId from top-level _id (document _id, not user._id)
       // Handle both MongoDB extended JSON format { $oid: "..." } and Mongoose ObjectId
       let userIdString = '';
       const documentId = req.user._id || userData._id;
-      
+
       if (documentId) {
         if (typeof documentId === 'object') {
           // Handle MongoDB extended JSON format { $oid: "..." }
@@ -3277,7 +3277,21 @@ module.exports = function (app, passport, server, nextApp, handle) {
           userIdString = String(documentId);
         }
       }
-      
+
+      // Check if user's email matches an admin in admin_users collection
+      let isAdmin = false;
+      if (user.email) {
+        try {
+          const mongoose = require("mongoose");
+          const adminUser = await mongoose.connection.db.collection("admin_users").findOne({
+            email: { $regex: new RegExp('^' + user.email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }
+          });
+          isAdmin = !!adminUser;
+        } catch (e) {
+          // Silently fail — non-critical
+        }
+      }
+
       return res.json({
         user: {
           id: userIdString,
@@ -3290,7 +3304,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
           alertVolumeLevel: user.alertVolumeLevel || 10,
           createdAt: user.createdAt,
           profilePicture: user.profilePicture || '',
-          subscription: user.subscription || null
+          subscription: user.subscription || null,
+          isAdmin: isAdmin
         }
       });
     }
@@ -4018,6 +4033,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
         { headers: { ...config.headers, 'Content-Type': 'application/json' } }
       );
       res.status(201).json(response.data);
+      try {
+        io.to("feature-requests").emit("feature_request_created", {
+          featureRequest: response.data,
+        });
+      } catch (e) {
+        console.error('[FeatureRequests] Socket broadcast error:', e.message);
+      }
     } catch (error) {
       console.error('[FeatureRequests] Error creating:', error.message);
       if (error.response) {
@@ -4038,6 +4060,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
         { headers: { ...config.headers, 'Content-Type': 'application/json' } }
       );
       res.json(response.data);
+      try {
+        var frId = req.params.id;
+        var updatePayload = {
+          featureRequestId: frId,
+          title: req.body.title,
+          description: req.body.description,
+        };
+        io.to("feature-requests").emit("feature_request_updated", updatePayload);
+        io.to("feature-request:" + frId).emit("feature_request_updated", updatePayload);
+      } catch (e) {
+        console.error('[FeatureRequests] Socket broadcast error:', e.message);
+      }
     } catch (error) {
       console.error('[FeatureRequests] Error updating:', error.message);
       if (error.response) {
@@ -4057,6 +4091,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
         { headers: config.headers }
       );
       res.json(response.data);
+      try {
+        var frId = req.params.id;
+        var deletePayload = { featureRequestId: frId };
+        io.to("feature-requests").emit("feature_request_deleted", deletePayload);
+        io.to("feature-request:" + frId).emit("feature_request_deleted", deletePayload);
+      } catch (e) {
+        console.error('[FeatureRequests] Socket broadcast error:', e.message);
+      }
     } catch (error) {
       console.error('[FeatureRequests] Error deleting:', error.message);
       if (error.response) {
@@ -4077,6 +4119,17 @@ module.exports = function (app, passport, server, nextApp, handle) {
         { headers: config.headers }
       );
       res.json(response.data);
+      try {
+        var frId = req.params.id;
+        var votePayload = {
+          featureRequestId: frId,
+          upvoteCount: response.data.upvoteCount,
+        };
+        io.to("feature-requests").emit("feature_request_voted", votePayload);
+        io.to("feature-request:" + frId).emit("feature_request_voted", votePayload);
+      } catch (e) {
+        console.error('[FeatureRequests] Socket broadcast error:', e.message);
+      }
     } catch (error) {
       console.error('[FeatureRequests] Error voting:', error.message);
       if (error.response) {
@@ -4097,6 +4150,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
         { headers: { ...config.headers, 'Content-Type': 'application/json' } }
       );
       res.status(201).json(response.data);
+      try {
+        var frId = req.params.id;
+        io.to("feature-requests").emit("feature_request_comment_added_summary", {
+          featureRequestId: frId,
+        });
+        io.to("feature-request:" + frId).emit("feature_request_comment_added", {
+          featureRequestId: frId,
+          comment: response.data.comment,
+        });
+      } catch (e) {
+        console.error('[FeatureRequests] Socket broadcast error:', e.message);
+      }
     } catch (error) {
       console.error('[FeatureRequests] Error adding comment:', error.message);
       if (error.response) {
@@ -4117,6 +4182,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
         { headers: { ...config.headers, 'Content-Type': 'application/json' } }
       );
       res.json(response.data);
+      try {
+        var frId = req.params.id;
+        io.to("feature-request:" + frId).emit("feature_request_comment_edited", {
+          featureRequestId: frId,
+          commentId: req.params.commentId,
+          content: req.body.content,
+        });
+      } catch (e) {
+        console.error('[FeatureRequests] Socket broadcast error:', e.message);
+      }
     } catch (error) {
       console.error('[FeatureRequests] Error updating comment:', error.message);
       if (error.response) {
@@ -4136,6 +4211,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
         { headers: config.headers }
       );
       res.json(response.data);
+      try {
+        var frId = req.params.id;
+        io.to("feature-requests").emit("feature_request_comment_deleted_summary", {
+          featureRequestId: frId,
+        });
+        io.to("feature-request:" + frId).emit("feature_request_comment_deleted", {
+          featureRequestId: frId,
+          commentId: req.params.commentId,
+        });
+      } catch (e) {
+        console.error('[FeatureRequests] Socket broadcast error:', e.message);
+      }
     } catch (error) {
       console.error('[FeatureRequests] Error deleting comment:', error.message);
       if (error.response) {
@@ -4149,13 +4236,27 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Update feature request status (admin only, requires auth)
   app.put("/api/v1/feature-requests/:id/status", apiAuthCheck, async function (req, res) {
     try {
-      const userId = req.user._id || req.user.id;
+      // Pass email so Go API's checkIsAdmin can match against admin_users collection
+      const userData = req.user._doc || req.user;
+      const user = userData.user || userData;
+      const userEmail = user.email;
       const response = await axios.put(
-        `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}/status?userId=${userId}`,
+        `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}/status?userId=${userEmail}`,
         req.body,
         { headers: { ...config.headers, 'Content-Type': 'application/json' } }
       );
       res.json(response.data);
+      try {
+        var frId = req.params.id;
+        var statusPayload = {
+          featureRequestId: frId,
+          status: response.data.status || req.body.status,
+        };
+        io.to("feature-requests").emit("feature_request_status_changed", statusPayload);
+        io.to("feature-request:" + frId).emit("feature_request_status_changed", statusPayload);
+      } catch (e) {
+        console.error('[FeatureRequests] Socket broadcast error:', e.message);
+      }
     } catch (error) {
       console.error('[FeatureRequests] Error updating status:', error.message);
       if (error.response) {
@@ -6669,6 +6770,29 @@ module.exports = function (app, passport, server, nextApp, handle) {
         socket.communityRoom = null;
         socket.communityId = null;
         socket.emit("left_room", { room: leftRoom });
+      }
+    });
+
+    // ==========================================
+    // FEATURE REQUEST ROOM MANAGEMENT
+    // ==========================================
+    socket.on("join_feature_requests", () => {
+      socket.join("feature-requests");
+    });
+
+    socket.on("leave_feature_requests", () => {
+      socket.leave("feature-requests");
+    });
+
+    socket.on("join_feature_request", (data) => {
+      if (data && data.id) {
+        socket.join("feature-request:" + data.id);
+      }
+    });
+
+    socket.on("leave_feature_request", (data) => {
+      if (data && data.id) {
+        socket.leave("feature-request:" + data.id);
       }
     });
 

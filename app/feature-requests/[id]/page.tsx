@@ -18,6 +18,7 @@ import {
   CheckIcon,
   EllipsisVerticalIcon,
 } from '@heroicons/react/24/solid';
+import { useFeatureRequestSocket } from '@/app/hooks/useFeatureRequestSocket';
 
 // ── Types ──────────────────────────────────────────────────────────
 interface UserSummary {
@@ -543,6 +544,76 @@ export default function FeatureRequestDetail() {
   const [deleting, setDeleting] = useState(false);
   const [authReady, setAuthReady] = useState(false);
 
+  // Admin status change
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Real-time updates via Socket.IO
+  useFeatureRequestSocket({
+    room: 'detail',
+    featureRequestId: id,
+    events: {
+      feature_request_voted: (data: { featureRequestId: string; upvoteCount: number }) => {
+        if (data.featureRequestId === id) {
+          setRequest(prev => prev ? { ...prev, upvoteCount: data.upvoteCount } : prev);
+        }
+      },
+      feature_request_comment_added: (data: { featureRequestId: string; comment: FeatureComment }) => {
+        if (data.featureRequestId === id) {
+          setRequest(prev => {
+            if (!prev) return prev;
+            if (prev.comments.some(c => c._id === data.comment._id)) return prev;
+            return {
+              ...prev,
+              comments: [...prev.comments, data.comment],
+              commentCount: prev.commentCount + 1,
+            };
+          });
+        }
+      },
+      feature_request_comment_edited: (data: { featureRequestId: string; commentId: string; content: string }) => {
+        if (data.featureRequestId === id) {
+          setRequest(prev => prev ? {
+            ...prev,
+            comments: prev.comments.map(c =>
+              c._id === data.commentId ? { ...c, content: data.content, edited: true } : c
+            ),
+          } : prev);
+        }
+      },
+      feature_request_comment_deleted: (data: { featureRequestId: string; commentId: string }) => {
+        if (data.featureRequestId === id) {
+          setRequest(prev => prev ? {
+            ...prev,
+            comments: prev.comments.filter(c => c._id !== data.commentId),
+            commentCount: Math.max(0, prev.commentCount - 1),
+          } : prev);
+        }
+      },
+      feature_request_status_changed: (data: { featureRequestId: string; status: string }) => {
+        if (data.featureRequestId === id) {
+          setRequest(prev => prev ? { ...prev, status: data.status } : prev);
+        }
+      },
+      feature_request_updated: (data: { featureRequestId: string; title?: string; description?: string }) => {
+        if (data.featureRequestId === id) {
+          setRequest(prev => prev ? {
+            ...prev,
+            ...(data.title !== undefined && { title: data.title }),
+            ...(data.description !== undefined && { description: data.description }),
+          } : prev);
+        }
+      },
+      feature_request_deleted: (data: { featureRequestId: string }) => {
+        if (data.featureRequestId === id) {
+          setNotFound(true);
+          setRequest(null);
+        }
+      },
+    },
+  });
+
   // Check auth — must complete before fetch
   useEffect(() => {
     fetch('/api/user/current', { credentials: 'include' })
@@ -642,14 +713,7 @@ export default function FeatureRequestDetail() {
         body: JSON.stringify({ content: commentText.trim(), imageUrls: commentImages }),
       });
       if (!res.ok) throw new Error();
-      const data = await res.json();
-      if (data.comment) {
-        setRequest(prev => prev ? {
-          ...prev,
-          comments: [...prev.comments, data.comment],
-          commentCount: prev.commentCount + 1,
-        } : prev);
-      }
+      // Comment will be added via Socket.IO event (feature_request_comment_added)
       setCommentText('');
       setCommentImages([]);
     } catch (err) {
@@ -735,6 +799,39 @@ export default function FeatureRequestDetail() {
       setShowDeleteConfirm(false);
     }
   };
+
+  // Admin status change handler
+  const handleStatusChange = async (newStatus: string) => {
+    if (!request || updatingStatus) return;
+    setUpdatingStatus(true);
+    setShowStatusDropdown(false);
+    const oldStatus = request.status;
+    setRequest(prev => prev ? { ...prev, status: newStatus } : prev);
+    try {
+      const res = await fetch(`/api/v1/feature-requests/${id}/status`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setRequest(prev => prev ? { ...prev, status: oldStatus } : prev);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  // Close status dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
+        setShowStatusDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   const isAuthor = currentUser && request && currentUser._id === request.author._id;
 
@@ -893,7 +990,82 @@ export default function FeatureRequestDetail() {
                     flexWrap: 'wrap',
                     gap: '0.5rem',
                   }}>
-                    <StatusBadge status={request.status} />
+                    {isAdmin ? (
+                      <div ref={statusDropdownRef} style={{ position: 'relative' }}>
+                        <button
+                          onClick={() => setShowStatusDropdown(prev => !prev)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            cursor: 'pointer',
+                            opacity: updatingStatus ? 0.6 : 1,
+                          }}
+                          disabled={updatingStatus}
+                          title="Change status"
+                        >
+                          <StatusBadge status={request.status} />
+                        </button>
+                        {showStatusDropdown && (
+                          <div style={{
+                            position: 'absolute',
+                            top: 'calc(100% + 0.35rem)',
+                            left: 0,
+                            zIndex: 50,
+                            backgroundColor: 'rgba(15,15,25,0.97)',
+                            border: '1px solid rgba(59,130,246,0.2)',
+                            borderRadius: '0.5rem',
+                            padding: '0.3rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.15rem',
+                            minWidth: '140px',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                          }}>
+                            {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+                              <button
+                                key={key}
+                                onClick={() => handleStatusChange(key)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.5rem',
+                                  padding: '0.4rem 0.6rem',
+                                  fontSize: '0.78rem',
+                                  fontFamily: FONT,
+                                  fontWeight: request.status === key ? 700 : 500,
+                                  color: cfg.color,
+                                  backgroundColor: request.status === key ? cfg.bg : 'transparent',
+                                  border: 'none',
+                                  borderRadius: '0.3rem',
+                                  cursor: 'pointer',
+                                  width: '100%',
+                                  textAlign: 'left',
+                                  whiteSpace: 'nowrap',
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (request.status !== key) (e.target as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.05)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (request.status !== key) (e.target as HTMLElement).style.backgroundColor = 'transparent';
+                                }}
+                              >
+                                <span style={{
+                                  width: '8px',
+                                  height: '8px',
+                                  borderRadius: '50%',
+                                  backgroundColor: cfg.color,
+                                  flexShrink: 0,
+                                }} />
+                                {cfg.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <StatusBadge status={request.status} />
+                    )}
                     {isAuthor && !editingRequest && (
                       <div style={{ display: 'flex', gap: '0.4rem' }}>
                         <button

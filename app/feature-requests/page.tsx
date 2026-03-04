@@ -20,6 +20,7 @@ import {
   ArrowTrendingUpIcon,
   ClockIcon,
 } from '@heroicons/react/24/outline';
+import { useFeatureRequestSocket } from '@/app/hooks/useFeatureRequestSocket';
 
 // ── Types ──────────────────────────────────────────────────────────
 interface UserSummary {
@@ -358,6 +359,52 @@ export default function FeatureRequests() {
   const [votingIds, setVotingIds] = useState<Set<string>>(new Set());
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Real-time updates via Socket.IO
+  useFeatureRequestSocket({
+    room: 'listing',
+    events: {
+      feature_request_created: (data: { featureRequest: FeatureRequest }) => {
+        if (!statusFilter && !debouncedQuery) {
+          setTotalCount(prev => prev + 1);
+          if (page === 1) {
+            setRequests(prev => [data.featureRequest, ...prev].slice(0, LIMIT));
+          }
+        }
+      },
+      feature_request_voted: (data: { featureRequestId: string; upvoteCount: number }) => {
+        setRequests(prev => prev.map(r =>
+          r._id === data.featureRequestId ? { ...r, upvoteCount: data.upvoteCount } : r
+        ));
+      },
+      feature_request_comment_added_summary: (data: { featureRequestId: string }) => {
+        setRequests(prev => prev.map(r =>
+          r._id === data.featureRequestId ? { ...r, commentCount: r.commentCount + 1 } : r
+        ));
+      },
+      feature_request_comment_deleted_summary: (data: { featureRequestId: string }) => {
+        setRequests(prev => prev.map(r =>
+          r._id === data.featureRequestId ? { ...r, commentCount: Math.max(0, r.commentCount - 1) } : r
+        ));
+      },
+      feature_request_status_changed: (data: { featureRequestId: string; status: string }) => {
+        setRequests(prev => prev.map(r =>
+          r._id === data.featureRequestId ? { ...r, status: data.status } : r
+        ));
+      },
+      feature_request_updated: (data: { featureRequestId: string; title?: string; description?: string }) => {
+        setRequests(prev => prev.map(r =>
+          r._id === data.featureRequestId
+            ? { ...r, ...(data.title !== undefined && { title: data.title }), ...(data.description !== undefined && { description: data.description }) }
+            : r
+        ));
+      },
+      feature_request_deleted: (data: { featureRequestId: string }) => {
+        setRequests(prev => prev.filter(r => r._id !== data.featureRequestId));
+        setTotalCount(prev => Math.max(0, prev - 1));
+      },
+    },
+  });
 
   // Check auth — must complete before first fetch
   useEffect(() => {
