@@ -316,7 +316,7 @@
       padding: 0.5em 1em;
     }
 
-    /* Arrest Modal — Clean Stacked Layout */
+    /* Arrest Modal — Full-Width Stacked Layout */
     #arrestModal .modal-dialog {
       width: 95%;
       max-width: 560px;
@@ -345,10 +345,14 @@
       font-weight: 500;
       color: #9ca3af;
     }
-    #arrestModal .form-horizontal .form-group > div[class*="col-"] {
+    #arrestModal .col-md-4,
+    #arrestModal .col-md-10,
+    #arrestModal .col-md-offset-1 {
       width: 100% !important;
+      max-width: 100% !important;
       float: none !important;
-      padding: 0 !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
       margin-left: 0 !important;
     }
     #arrestModal #submitArrestReport {
