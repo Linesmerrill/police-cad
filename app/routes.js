@@ -4241,7 +4241,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       clearTimeout(timeout);
       
       // User is verified (either emailVerified === true or undefined/null for old accounts) - proceed with normal redirect
-      const redirect = req.session.redirect || "/communities";
+      const redirect = req.body.redirect || req.session.redirect || "/communities";
       if (req.session.redirect) {
         delete req.session.redirect; // Clear the session redirect after use
       }
