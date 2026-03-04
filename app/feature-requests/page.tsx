@@ -27,6 +27,7 @@ interface UserSummary {
   _id: string;
   username: string;
   profilePicture?: string | null;
+  adminRole?: string | null;
 }
 
 interface FeatureRequest {
@@ -301,6 +302,32 @@ function FeatureCard({ item, onVote, animate }: {
                 }}>
                   {item.author.username || 'Unknown'}
                 </span>
+                {item.author.adminRole && (
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '0.08rem 0.35rem',
+                    fontSize: '0.55rem',
+                    fontWeight: 700,
+                    fontFamily: FONT,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase' as const,
+                    borderRadius: '999px',
+                    ...(item.author.adminRole === 'owner'
+                      ? {
+                          color: '#fbbf24',
+                          background: 'rgba(251,191,36,0.12)',
+                          border: '1px solid rgba(251,191,36,0.25)',
+                        }
+                      : {
+                          color: '#60a5fa',
+                          background: 'rgba(96,165,250,0.12)',
+                          border: '1px solid rgba(96,165,250,0.25)',
+                        }),
+                  }}>
+                    {item.author.adminRole === 'owner' ? 'Admin' : 'Staff'}
+                  </span>
+                )}
               </div>
 
               {/* Time */}

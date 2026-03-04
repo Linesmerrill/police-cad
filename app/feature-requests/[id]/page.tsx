@@ -25,6 +25,7 @@ interface UserSummary {
   _id: string;
   username: string;
   profilePicture?: string | null;
+  adminRole?: string | null;
 }
 
 interface FeatureComment {
@@ -304,6 +305,32 @@ function Comment({ comment, currentUserId, isAdmin, onEdit, onDelete }: {
             }}>
               {comment.user.username || 'Unknown'}
             </span>
+            {comment.user.adminRole && (
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '0.1rem 0.4rem',
+                fontSize: '0.6rem',
+                fontWeight: 700,
+                fontFamily: FONT,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase' as const,
+                borderRadius: '999px',
+                ...(comment.user.adminRole === 'owner'
+                  ? {
+                      color: '#fbbf24',
+                      background: 'rgba(251,191,36,0.12)',
+                      border: '1px solid rgba(251,191,36,0.25)',
+                    }
+                  : {
+                      color: '#60a5fa',
+                      background: 'rgba(96,165,250,0.12)',
+                      border: '1px solid rgba(96,165,250,0.25)',
+                    }),
+              }}>
+                {comment.user.adminRole === 'owner' ? 'Admin' : 'Staff'}
+              </span>
+            )}
             <span style={{
               fontSize: '0.72rem',
               fontFamily: FONT,
@@ -1316,6 +1343,32 @@ export default function FeatureRequestDetail() {
                         }}>
                           {request.author.username || 'Unknown'}
                         </span>
+                        {request.author.adminRole && (
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '0.1rem 0.4rem',
+                            fontSize: '0.6rem',
+                            fontWeight: 700,
+                            fontFamily: FONT,
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase' as const,
+                            borderRadius: '999px',
+                            ...(request.author.adminRole === 'owner'
+                              ? {
+                                  color: '#fbbf24',
+                                  background: 'rgba(251,191,36,0.12)',
+                                  border: '1px solid rgba(251,191,36,0.25)',
+                                }
+                              : {
+                                  color: '#60a5fa',
+                                  background: 'rgba(96,165,250,0.12)',
+                                  border: '1px solid rgba(96,165,250,0.25)',
+                                }),
+                          }}>
+                            {request.author.adminRole === 'owner' ? 'Admin' : 'Staff'}
+                          </span>
+                        )}
                       </div>
 
                       <span style={{
