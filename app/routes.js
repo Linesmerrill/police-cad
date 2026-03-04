@@ -4267,6 +4267,55 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Merge feature request (admin only, requires auth)
+  app.post("/api/v1/feature-requests/:targetId/merge", apiAuthCheck, async function (req, res) {
+    try {
+      const userData = req.user._doc || req.user;
+      const user = userData.user || userData;
+      const userEmail = user.email;
+      const response = await axios.post(
+        `${policeCadApiUrl}/api/v1/feature-requests/${req.params.targetId}/merge?userId=${userEmail}`,
+        req.body,
+        { headers: { ...config.headers, 'Content-Type': 'application/json' } }
+      );
+      res.json(response.data);
+      try {
+        var sourceId = req.body.sourceId;
+        var targetId = req.params.targetId;
+        // Notify listing: remove source, update target votes
+        io.to("feature-requests").emit("feature_request_merged", {
+          sourceId: sourceId,
+          targetId: targetId,
+          targetUpvoteCount: response.data.targetUpvoteCount,
+          sourceTitle: response.data.sourceTitle,
+          targetTitle: response.data.targetTitle,
+        });
+        // Notify source detail page: show merged banner
+        io.to("feature-request:" + sourceId).emit("feature_request_merged_source", {
+          sourceId: sourceId,
+          targetId: targetId,
+          targetTitle: response.data.targetTitle,
+        });
+        // Notify target detail page: update mergedFrom + votes
+        io.to("feature-request:" + targetId).emit("feature_request_merged_target", {
+          sourceId: sourceId,
+          targetId: targetId,
+          sourceTitle: response.data.sourceTitle,
+          targetUpvoteCount: response.data.targetUpvoteCount,
+        });
+      } catch (e) {
+        console.error('[FeatureRequests] Socket broadcast error:', e.message);
+      }
+    } catch (error) {
+      console.error('[FeatureRequests] Error merging:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to merge feature request" });
+      }
+    }
+  });
+
   // ===========================================
   // END FEATURE REQUEST API ROUTES
   // ===========================================

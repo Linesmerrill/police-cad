@@ -62,6 +62,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
   in_progress:  { label: 'In Progress', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
   released:     { label: 'Released',    color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
   declined:     { label: 'Declined',    color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
+  merged:       { label: 'Merged',      color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
 };
 
 const SORT_OPTIONS = [
@@ -432,6 +433,13 @@ export default function FeatureRequests() {
       feature_request_deleted: (data: { featureRequestId: string }) => {
         setRequests(prev => prev.filter(r => r._id !== data.featureRequestId));
         setTotalCount(prev => Math.max(0, prev - 1));
+      },
+      feature_request_merged: (data: { sourceId: string; targetId: string; targetUpvoteCount: number }) => {
+        setRequests(prev => prev.filter(r => r._id !== data.sourceId));
+        setTotalCount(prev => Math.max(0, prev - 1));
+        setRequests(prev => prev.map(r =>
+          r._id === data.targetId ? { ...r, upvoteCount: data.targetUpvoteCount } : r
+        ));
       },
     },
   });

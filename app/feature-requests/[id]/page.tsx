@@ -38,6 +38,11 @@ interface FeatureComment {
   createdAt: string;
 }
 
+interface MergedRequestSummary {
+  _id: string;
+  title: string;
+}
+
 interface FeatureRequest {
   _id: string;
   title: string;
@@ -48,6 +53,8 @@ interface FeatureRequest {
   upvoteCount: number;
   commentCount: number;
   hasVoted: boolean;
+  mergedInto?: MergedRequestSummary | null;
+  mergedFrom?: MergedRequestSummary[];
   comments: FeatureComment[];
   createdAt: string;
   updatedAt: string;
@@ -63,6 +70,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
   in_progress:  { label: 'In Progress', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
   released:     { label: 'Released',    color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
   declined:     { label: 'Declined',    color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
+  merged:       { label: 'Merged',      color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
 };
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -576,6 +584,16 @@ export default function FeatureRequestDetail() {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Merge state (admin only)
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  const [mergeSearchQuery, setMergeSearchQuery] = useState('');
+  const [mergeSearchResults, setMergeSearchResults] = useState<FeatureRequest[]>([]);
+  const [mergeSearching, setMergeSearching] = useState(false);
+  const [mergeTarget, setMergeTarget] = useState<FeatureRequest | null>(null);
+  const [showMergeConfirm, setShowMergeConfirm] = useState(false);
+  const [merging, setMerging] = useState(false);
+  const mergeSearchTimerRef = useRef<NodeJS.Timeout>();
+
   // Real-time updates via Socket.IO
   useFeatureRequestSocket({
     room: 'detail',
@@ -636,6 +654,27 @@ export default function FeatureRequestDetail() {
         if (data.featureRequestId === id) {
           setNotFound(true);
           setRequest(null);
+        }
+      },
+      feature_request_merged_source: (data: { sourceId: string; targetId: string; targetTitle: string }) => {
+        if (data.sourceId === id) {
+          setRequest(prev => prev ? {
+            ...prev,
+            status: 'merged',
+            mergedInto: { _id: data.targetId, title: data.targetTitle },
+          } : prev);
+        }
+      },
+      feature_request_merged_target: (data: { sourceId: string; targetId: string; sourceTitle: string; targetUpvoteCount: number }) => {
+        if (data.targetId === id) {
+          setRequest(prev => prev ? {
+            ...prev,
+            upvoteCount: data.targetUpvoteCount,
+            mergedFrom: [
+              ...(prev.mergedFrom || []),
+              { _id: data.sourceId, title: data.sourceTitle },
+            ],
+          } : prev);
         }
       },
     },
@@ -861,6 +900,62 @@ export default function FeatureRequestDetail() {
   }, []);
 
   const isAuthor = currentUser && request && currentUser._id === request.author._id;
+  const isMerged = request?.status === 'merged';
+
+  // Merge search handler (debounced)
+  const handleMergeSearch = (query: string) => {
+    setMergeSearchQuery(query);
+    clearTimeout(mergeSearchTimerRef.current);
+    if (!query.trim()) {
+      setMergeSearchResults([]);
+      return;
+    }
+    mergeSearchTimerRef.current = setTimeout(async () => {
+      setMergeSearching(true);
+      try {
+        const params = new URLSearchParams({ page: '1', limit: '10', q: query.trim() });
+        const res = await fetch(`/api/v2/feature-requests?${params}`, { credentials: 'include' });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        setMergeSearchResults((data.data || []).filter(
+          (r: FeatureRequest) => r._id !== id && r.status !== 'merged'
+        ));
+      } catch {
+        setMergeSearchResults([]);
+      } finally {
+        setMergeSearching(false);
+      }
+    }, 350);
+  };
+
+  // Execute merge
+  const handleMerge = async () => {
+    if (!mergeTarget || merging) return;
+    setMerging(true);
+    try {
+      const res = await fetch(`/api/v1/feature-requests/${mergeTarget._id}/merge`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceId: id }),
+      });
+      if (!res.ok) throw new Error();
+      setRequest(prev => prev ? {
+        ...prev,
+        status: 'merged',
+        mergedInto: { _id: mergeTarget._id, title: mergeTarget.title },
+      } : prev);
+      setShowMergeConfirm(false);
+      setShowMergeModal(false);
+      setMergeTarget(null);
+      setMergeSearchQuery('');
+      setMergeSearchResults([]);
+    } catch (err) {
+      console.error('Failed to merge:', err);
+    } finally {
+      setMerging(false);
+    }
+  };
 
   return (
     <main style={{
@@ -1025,6 +1120,47 @@ export default function FeatureRequestDetail() {
                   padding: '1.5rem',
                   marginBottom: '1.5rem',
                 }}>
+                  {/* Merged Banner */}
+                  {isMerged && request.mergedInto && (
+                    <div style={{
+                      padding: '0.85rem 1rem',
+                      marginBottom: '1rem',
+                      backgroundColor: 'rgba(139,92,246,0.08)',
+                      border: '1px solid rgba(139,92,246,0.25)',
+                      borderRadius: '0.6rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      flexWrap: 'wrap',
+                    }}>
+                      <svg style={{ width: '16px', height: '16px', color: '#8b5cf6', flexShrink: 0 }} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                      </svg>
+                      <span style={{
+                        fontSize: '0.85rem',
+                        fontFamily: FONT,
+                        color: 'rgba(255,255,255,0.7)',
+                      }}>
+                        This request has been merged into
+                      </span>
+                      <Link
+                        href={`/feature-requests/${request.mergedInto._id}`}
+                        style={{
+                          fontSize: '0.85rem',
+                          fontWeight: 600,
+                          fontFamily: FONT,
+                          color: '#8b5cf6',
+                          textDecoration: 'none',
+                          transition: 'color 0.2s',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = '#a78bfa'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = '#8b5cf6'; }}
+                      >
+                        {request.mergedInto.title}
+                      </Link>
+                    </div>
+                  )}
+
                   {/* Status + Actions Row */}
                   <div style={{
                     display: 'flex',
@@ -1034,7 +1170,8 @@ export default function FeatureRequestDetail() {
                     flexWrap: 'wrap',
                     gap: '0.5rem',
                   }}>
-                    {isAdmin ? (
+                    {isAdmin && !isMerged ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <div ref={statusDropdownRef} style={{ position: 'relative' }}>
                         <button
                           onClick={() => setShowStatusDropdown(prev => !prev)}
@@ -1066,7 +1203,7 @@ export default function FeatureRequestDetail() {
                             minWidth: '140px',
                             boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
                           }}>
-                            {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+                            {Object.entries(STATUS_CONFIG).filter(([key]) => key !== 'merged').map(([key, cfg]) => (
                               <button
                                 key={key}
                                 onClick={() => handleStatusChange(key)}
@@ -1107,10 +1244,41 @@ export default function FeatureRequestDetail() {
                           </div>
                         )}
                       </div>
-                    ) : (
+                      <button
+                        onClick={() => setShowMergeModal(true)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          padding: '0.35rem 0.65rem',
+                          fontSize: '0.75rem',
+                          fontFamily: FONT,
+                          fontWeight: 600,
+                          color: '#8b5cf6',
+                          backgroundColor: 'transparent',
+                          border: '1px solid rgba(139,92,246,0.3)',
+                          borderRadius: '0.4rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = 'rgba(139,92,246,0.5)';
+                          e.currentTarget.style.backgroundColor = 'rgba(139,92,246,0.06)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)';
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                      >
+                        <svg style={{ width: '13px', height: '13px' }} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                        </svg>
+                        Merge
+                      </button>
+                    </div>) : (
                       <StatusBadge status={request.status} />
                     )}
-                    {isAuthor && !editingRequest && (
+                    {isAuthor && !editingRequest && !isMerged && (
                       <div style={{ display: 'flex', gap: '0.4rem' }}>
                         <button
                           onClick={() => {
@@ -1310,7 +1478,56 @@ export default function FeatureRequestDetail() {
                     </div>
                   )}
 
+                  {/* Merged Requests section (on target ticket) */}
+                  {request.mergedFrom && request.mergedFrom.length > 0 && (
+                    <div style={{
+                      padding: '0.75rem 1rem',
+                      marginBottom: '0.5rem',
+                      backgroundColor: 'rgba(139,92,246,0.05)',
+                      border: '1px solid rgba(139,92,246,0.15)',
+                      borderRadius: '0.5rem',
+                    }}>
+                      <div style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        fontFamily: FONT,
+                        color: 'rgba(139,92,246,0.8)',
+                        textTransform: 'uppercase' as const,
+                        letterSpacing: '0.05em',
+                        marginBottom: '0.4rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                      }}>
+                        <svg style={{ width: '13px', height: '13px' }} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                        </svg>
+                        Merged Requests ({request.mergedFrom.length})
+                      </div>
+                      {request.mergedFrom.map((merged) => (
+                        <Link
+                          key={merged._id}
+                          href={`/feature-requests/${merged._id}`}
+                          style={{
+                            display: 'block',
+                            fontSize: '0.82rem',
+                            fontFamily: FONT,
+                            color: 'rgba(255,255,255,0.6)',
+                            textDecoration: 'none',
+                            padding: '0.2rem 0',
+                            transition: 'color 0.2s',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = '#8b5cf6'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
+                        >
+                          {merged.title}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Vote + Meta Row */}
+                  {!isMerged && (
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1398,6 +1615,7 @@ export default function FeatureRequestDetail() {
                       </div>
                     </div>
                   </div>
+                  )}
                 </div>
 
                 {/* ── Delete Confirm Modal ──────────────────── */}
@@ -1493,6 +1711,188 @@ export default function FeatureRequestDetail() {
                   )}
                 </AnimatePresence>
 
+                {/* ── Merge Modal ──────────────────────────────── */}
+                <AnimatePresence>
+                  {showMergeModal && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      style={{
+                        position: 'fixed',
+                        inset: 0,
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 100,
+                        padding: '1rem',
+                      }}
+                      onClick={() => {
+                        if (!showMergeConfirm) {
+                          setShowMergeModal(false);
+                          setMergeSearchQuery('');
+                          setMergeSearchResults([]);
+                          setMergeTarget(null);
+                        }
+                      }}
+                    >
+                      <motion.div
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.95, opacity: 0 }}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          backgroundColor: 'rgba(15,15,22,0.98)',
+                          border: '1px solid rgba(139,92,246,0.25)',
+                          borderRadius: '0.75rem',
+                          padding: '1.5rem',
+                          maxWidth: '500px',
+                          width: '100%',
+                          maxHeight: '80vh',
+                          overflow: 'auto',
+                          backdropFilter: 'blur(20px)',
+                          boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
+                        }}
+                      >
+                        {showMergeConfirm && mergeTarget ? (
+                          <>
+                            <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1.1rem', fontWeight: 700, fontFamily: FONT, color: 'rgba(255,255,255,0.9)' }}>
+                              Confirm Merge
+                            </h3>
+                            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', fontFamily: FONT, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
+                              Merge <strong style={{ color: 'rgba(255,255,255,0.85)' }}>&ldquo;{request?.title}&rdquo;</strong> into
+                            </p>
+                            <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', fontFamily: FONT, color: '#8b5cf6', fontWeight: 600 }}>
+                              &ldquo;{mergeTarget.title}&rdquo;
+                            </p>
+                            <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.78rem', fontFamily: FONT, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>
+                              Unique votes will be transferred to the target. This request will be marked as merged and become read-only.
+                            </p>
+                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                              <button
+                                onClick={() => setShowMergeConfirm(false)}
+                                style={{
+                                  padding: '0.5rem 1rem',
+                                  fontSize: '0.85rem',
+                                  fontFamily: FONT,
+                                  color: 'rgba(255,255,255,0.6)',
+                                  backgroundColor: 'transparent',
+                                  border: '1px solid rgba(255,255,255,0.15)',
+                                  borderRadius: '0.5rem',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Back
+                              </button>
+                              <button
+                                onClick={handleMerge}
+                                disabled={merging}
+                                style={{
+                                  padding: '0.5rem 1rem',
+                                  fontSize: '0.85rem',
+                                  fontWeight: 600,
+                                  fontFamily: FONT,
+                                  color: '#fff',
+                                  backgroundColor: '#8b5cf6',
+                                  border: 'none',
+                                  borderRadius: '0.5rem',
+                                  cursor: merging ? 'default' : 'pointer',
+                                  opacity: merging ? 0.6 : 1,
+                                }}
+                              >
+                                {merging ? 'Merging...' : 'Merge'}
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: 700, fontFamily: FONT, color: 'rgba(255,255,255,0.9)' }}>
+                              Merge into...
+                            </h3>
+                            <input
+                              type="text"
+                              placeholder="Search feature requests..."
+                              value={mergeSearchQuery}
+                              onChange={(e) => handleMergeSearch(e.target.value)}
+                              autoFocus
+                              style={{
+                                width: '100%',
+                                padding: '0.65rem 0.85rem',
+                                fontSize: '0.88rem',
+                                fontFamily: FONT,
+                                color: 'rgba(255,255,255,0.9)',
+                                backgroundColor: 'rgba(255,255,255,0.04)',
+                                border: '1px solid rgba(139,92,246,0.2)',
+                                borderRadius: '0.5rem',
+                                outline: 'none',
+                                boxSizing: 'border-box',
+                              }}
+                              onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.5)'; }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)'; }}
+                            />
+                            <div style={{ marginTop: '0.75rem', maxHeight: '300px', overflowY: 'auto' }}>
+                              {mergeSearching ? (
+                                <p style={{ fontSize: '0.82rem', fontFamily: FONT, color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '1rem 0' }}>
+                                  Searching...
+                                </p>
+                              ) : mergeSearchResults.length === 0 && mergeSearchQuery ? (
+                                <p style={{ fontSize: '0.82rem', fontFamily: FONT, color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '1rem 0' }}>
+                                  No matching requests found
+                                </p>
+                              ) : (
+                                mergeSearchResults.map((result) => (
+                                  <button
+                                    key={result._id}
+                                    onClick={() => {
+                                      setMergeTarget(result);
+                                      setShowMergeConfirm(true);
+                                    }}
+                                    style={{
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      width: '100%',
+                                      padding: '0.65rem 0.75rem',
+                                      marginBottom: '0.35rem',
+                                      backgroundColor: 'transparent',
+                                      border: '1px solid rgba(255,255,255,0.06)',
+                                      borderRadius: '0.5rem',
+                                      cursor: 'pointer',
+                                      textAlign: 'left',
+                                      transition: 'all 0.15s',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.backgroundColor = 'rgba(139,92,246,0.06)';
+                                      e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.backgroundColor = 'transparent';
+                                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+                                    }}
+                                  >
+                                    <span style={{ fontSize: '0.85rem', fontFamily: FONT, color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
+                                      {result.title}
+                                    </span>
+                                    <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.3rem', alignItems: 'center' }}>
+                                      <StatusBadge status={result.status} />
+                                      <span style={{ fontSize: '0.72rem', fontFamily: FONT, color: 'rgba(255,255,255,0.35)' }}>
+                                        {result.upvoteCount} vote{result.upvoteCount !== 1 ? 's' : ''}
+                                      </span>
+                                      <span style={{ fontSize: '0.72rem', fontFamily: FONT, color: 'rgba(255,255,255,0.35)' }}>
+                                        {result.commentCount} comment{result.commentCount !== 1 ? 's' : ''}
+                                      </span>
+                                    </div>
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 {/* ── Comments Section ──────────────────────── */}
                 <div style={{
                   backgroundColor: 'rgba(15,15,20,0.5)',
@@ -1515,7 +1915,17 @@ export default function FeatureRequestDetail() {
                   </h2>
 
                   {/* Add Comment */}
-                  {currentUser ? (
+                  {isMerged ? (
+                    <p style={{
+                      fontSize: '0.82rem',
+                      fontFamily: FONT,
+                      color: 'rgba(255,255,255,0.35)',
+                      fontStyle: 'italic',
+                      margin: '0 0 1rem 0',
+                    }}>
+                      Commenting is disabled on merged requests.
+                    </p>
+                  ) : currentUser ? (
                     <div style={{
                       marginBottom: request.comments?.length ? '1.25rem' : 0,
                       padding: '1rem',
