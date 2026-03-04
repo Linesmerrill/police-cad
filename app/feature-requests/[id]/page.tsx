@@ -547,9 +547,10 @@ export default function FeatureRequestDetail() {
     fetch('/api/user/current', { credentials: 'include' })
       .then(res => res.ok ? res.json() : null)
       .then(data => {
-        if (data && (data._id || data.id)) {
-          setCurrentUser({ _id: data._id || data.id });
-          if (data.isAdmin) setIsAdmin(true);
+        const user = data?.user || data;
+        if (user && (user._id || user.id)) {
+          setCurrentUser({ _id: user._id || user.id });
+          if (user.isAdmin) setIsAdmin(true);
         }
       })
       .catch(() => {});

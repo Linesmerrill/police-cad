@@ -66,8 +66,9 @@ export default function NewFeatureRequest() {
     fetch('/api/user/current', { credentials: 'include' })
       .then(res => res.ok ? res.json() : null)
       .then(data => {
-        if (data && (data._id || data.id)) {
-          setCurrentUser({ _id: data._id || data.id });
+        const user = data?.user || data;
+        if (user && (user._id || user.id)) {
+          setCurrentUser({ _id: user._id || user.id });
         } else {
           router.push('/login?redirect=/feature-requests/new');
         }
