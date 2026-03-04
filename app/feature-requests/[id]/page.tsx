@@ -541,8 +541,9 @@ export default function FeatureRequestDetail() {
   // Delete confirm
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
 
-  // Check auth
+  // Check auth — must complete before fetch
   useEffect(() => {
     fetch('/api/user/current', { credentials: 'include' })
       .then(res => res.ok ? res.json() : null)
@@ -553,12 +554,13 @@ export default function FeatureRequestDetail() {
           if (user.isAdmin) setIsAdmin(true);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setAuthReady(true));
   }, []);
 
-  // Fetch feature request
+  // Fetch feature request — only after auth resolves
   useEffect(() => {
-    if (!id) return;
+    if (!id || !authReady) return;
     setLoading(true);
     const fetchRequest = async () => {
       try {
@@ -577,7 +579,7 @@ export default function FeatureRequestDetail() {
       }
     };
     fetchRequest();
-  }, [id, currentUser]);
+  }, [id, authReady]);
 
   // Vote handler
   const handleVote = async () => {
