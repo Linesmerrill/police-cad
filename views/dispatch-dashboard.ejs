@@ -5723,58 +5723,6 @@
     });
   });
 
-  // Handle arrest form submission via AJAX (same as police dashboard)
-  $('#arrest-form').on('submit', function(e) {
-    e.preventDefault();
-
-    var formData = {
-      arrestReport: {
-        reportNumber: $('#arrest-report-case-no').val(),
-        arrestDate: $('#arrest-report-date').val(),
-        arrestTime: $('#arrest-report-time').val(),
-        arrestLocation: $('#arrest-location').val(),
-        incidentDate: $('#arrest-report-incident-date').val(),
-        incidentTime: $('#arrest-report-incident-time').val(),
-        incidentLocation: $('#incident-location').val(),
-        arrestee: {
-          id: $('#civIDArrest').val(),
-          name: $('#arrest-civ-first-name').val(),
-          dob: $('#arrest-civ-dob').val(),
-          address: $('#arrest-civ-address').val(),
-          height: $('#arrest-civ-height').val(),
-          weight: $('#arrest-civ-weight').val(),
-          eyeColor: $('#arrest-civ-eyes').val(),
-          hairColor: $('#arrest-civ-hair').val(),
-          phone: $('#arrest-civ-phone').val(),
-        },
-        officer: {
-          name: $('#reporting-officer').val(),
-          badgeNumber: dbUser.user.callSign || 'Unknown',
-        },
-        charges: ($('#arrest-civ-charges').val() || []).filter(function(c) { return c !== 'Other'; }).join(', '),
-        narrative: $('#detail').val(),
-        witnesses: $('#actions-taken').val(),
-        forceUsed: $('#forceUsed').val() === 'Yes',
-        attachedForms: [],
-      },
-    };
-
-    $.ajax({
-      url: API_URL + '/api/v1/arrest-report',
-      method: 'POST',
-      data: JSON.stringify(formData),
-      contentType: 'application/json',
-      success: function() {
-        alert('Arrest report created successfully.');
-        $('#arrestModal').modal('hide');
-      },
-      error: function(xhr) {
-        console.error('Error creating arrest report:', xhr.responseText);
-        alert('Failed to create arrest report: ' + (xhr.responseJSON && xhr.responseJSON.message || 'Unknown error'));
-      }
-    });
-  });
-
   function hideCivPopover() {
     $('#civ-first-name').popover('hide')
     $('#civ-last-name').popover('hide')
