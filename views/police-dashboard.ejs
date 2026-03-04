@@ -326,48 +326,52 @@
     transform: rotate(90deg);
   }
 
-  /* Arrest Modal — Responsive Layout */
+  /* Arrest Modal — Clean Stacked Layout */
+  #arrestModal .modal-dialog {
+    width: 95%;
+    max-width: 560px;
+    margin: 20px auto;
+  }
   #arrestModal .modal-body {
     max-height: 85vh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    padding: 20px 28px;
   }
-  @media (min-width: 992px) {
-    #arrestModal .form-horizontal .form-group > div.col-md-4 {
-      width: 55%;
-    }
+  #arrestModal .form-horizontal .form-group {
+    display: flex;
+    flex-direction: column;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 14px;
   }
-  @media (max-width: 991px) and (min-width: 768px) {
-    #arrestModal .form-horizontal .form-group > div.col-md-4 {
-      width: 60%;
-      float: left;
-    }
-    #arrestModal .form-horizontal .control-label.col-md-4 {
-      width: 35%;
-      float: left;
-    }
+  #arrestModal .form-horizontal .control-label {
+    text-align: left !important;
+    width: 100% !important;
+    float: none !important;
+    padding: 0 !important;
+    margin-bottom: 5px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #9ca3af;
+  }
+  #arrestModal .form-horizontal .form-group > div[class*="col-"] {
+    width: 100% !important;
+    float: none !important;
+    padding: 0 !important;
+    margin-left: 0 !important;
+  }
+  #arrestModal #submitArrestReport {
+    width: 100%;
+    margin-top: 8px;
   }
   @media (max-width: 767px) {
     #arrestModal .modal-dialog {
-      margin: 10px;
       width: auto;
+      margin: 10px;
     }
-    #arrestModal .form-horizontal .control-label {
-      text-align: left !important;
-      margin-bottom: 4px;
-    }
-    #arrestModal .form-horizontal .form-group {
-      margin-left: 0;
-      margin-right: 0;
-    }
-    #arrestModal .col-md-4,
-    #arrestModal .col-md-10 {
-      width: 100%;
-      float: none;
-      padding: 0 15px;
-    }
-    #arrestModal .col-md-offset-1 {
-      margin-left: 0;
+    #arrestModal .modal-body {
+      padding: 15px;
     }
   }
 
