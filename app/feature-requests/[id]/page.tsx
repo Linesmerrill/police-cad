@@ -580,7 +580,7 @@ export default function FeatureRequestDetail() {
 
   // Vote handler
   const handleVote = async () => {
-    if (!currentUser) { router.push('/login'); return; }
+    if (!currentUser) { router.push(`/login?redirect=/feature-requests/${id}`); return; }
     if (voting || !request) return;
     setVoting(true);
 
@@ -628,7 +628,7 @@ export default function FeatureRequestDetail() {
 
   // Submit comment
   const handleSubmitComment = async () => {
-    if (!currentUser) { router.push('/login'); return; }
+    if (!currentUser) { router.push(`/login?redirect=/feature-requests/${id}`); return; }
     if (!commentText.trim() || submittingComment) return;
     setSubmittingComment(true);
     try {
@@ -1428,7 +1428,7 @@ export default function FeatureRequestDetail() {
                         Sign in to leave a comment
                       </p>
                       <Link
-                        href="/login"
+                        href={`/login?redirect=/feature-requests/${id}`}
                         style={{
                           fontSize: '0.85rem',
                           fontFamily: FONT,

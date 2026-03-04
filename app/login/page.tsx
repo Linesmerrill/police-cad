@@ -100,7 +100,7 @@ function LoginForm() {
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ redirect: '/communities' }),
+              body: JSON.stringify({ redirect: searchParams.get('redirect') || '/communities' }),
               credentials: 'include',
               signal: controller.signal
             });

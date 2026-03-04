@@ -69,12 +69,12 @@ export default function NewFeatureRequest() {
         if (data && (data._id || data.id)) {
           setCurrentUser({ _id: data._id || data.id });
         } else {
-          router.push('/login');
+          router.push('/login?redirect=/feature-requests/new');
         }
         setAuthChecked(true);
       })
       .catch(() => {
-        router.push('/login');
+        router.push('/login?redirect=/feature-requests/new');
         setAuthChecked(true);
       });
   }, [router]);

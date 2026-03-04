@@ -421,7 +421,7 @@ export default function FeatureRequests() {
   // Vote handler
   const handleVote = async (id: string) => {
     if (!currentUser) {
-      router.push('/login');
+      router.push('/login?redirect=/feature-requests');
       return;
     }
     if (votingIds.has(id)) return;
@@ -547,7 +547,7 @@ export default function FeatureRequests() {
               </div>
 
               <Link
-                href={currentUser ? '/feature-requests/new' : '/login'}
+                href={currentUser ? '/feature-requests/new' : '/login?redirect=/feature-requests/new'}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -843,7 +843,7 @@ export default function FeatureRequests() {
                   </p>
                   {!(debouncedQuery || statusFilter) && (
                     <Link
-                      href={currentUser ? '/feature-requests/new' : '/login'}
+                      href={currentUser ? '/feature-requests/new' : '/login?redirect=/feature-requests/new'}
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
