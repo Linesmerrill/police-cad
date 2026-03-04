@@ -3961,11 +3961,220 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // END CONTENT CREATOR API ROUTES
   // ===========================================
 
+  // ===========================================
+  // FEATURE REQUEST API ROUTES
+  // These MUST be defined BEFORE the catch-all below
+  // ===========================================
+
+  // List feature requests (public - no auth required)
+  app.get("/api/v2/feature-requests", async function (req, res) {
+    try {
+      const { page = 1, limit = 20, sort, status, q, userId } = req.query;
+      let url = `${policeCadApiUrl}/api/v2/feature-requests?page=${page}&limit=${limit}`;
+      if (sort) url += `&sort=${encodeURIComponent(sort)}`;
+      if (status) url += `&status=${encodeURIComponent(status)}`;
+      if (q) url += `&q=${encodeURIComponent(q)}`;
+      if (userId) url += `&userId=${encodeURIComponent(userId)}`;
+
+      const response = await axios.get(url, { headers: config.headers });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[FeatureRequests] Error fetching list:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch feature requests" });
+      }
+    }
+  });
+
+  // Get single feature request (public - no auth required)
+  app.get("/api/v1/feature-requests/:id", async function (req, res) {
+    try {
+      const { id } = req.params;
+      const { userId } = req.query;
+      let url = `${policeCadApiUrl}/api/v1/feature-requests/${id}`;
+      if (userId) url += `?userId=${encodeURIComponent(userId)}`;
+
+      const response = await axios.get(url, { headers: config.headers });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[FeatureRequests] Error fetching feature request:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch feature request" });
+      }
+    }
+  });
+
+  // Create feature request (requires auth)
+  app.post("/api/v1/feature-requests", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.post(
+        `${policeCadApiUrl}/api/v1/feature-requests?userId=${userId}`,
+        req.body,
+        { headers: { ...config.headers, 'Content-Type': 'application/json' } }
+      );
+      res.status(201).json(response.data);
+    } catch (error) {
+      console.error('[FeatureRequests] Error creating:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to create feature request" });
+      }
+    }
+  });
+
+  // Update feature request (requires auth)
+  app.put("/api/v1/feature-requests/:id", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.put(
+        `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}?userId=${userId}`,
+        req.body,
+        { headers: { ...config.headers, 'Content-Type': 'application/json' } }
+      );
+      res.json(response.data);
+    } catch (error) {
+      console.error('[FeatureRequests] Error updating:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to update feature request" });
+      }
+    }
+  });
+
+  // Delete feature request (requires auth)
+  app.delete("/api/v1/feature-requests/:id", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.delete(
+        `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}?userId=${userId}`,
+        { headers: config.headers }
+      );
+      res.json(response.data);
+    } catch (error) {
+      console.error('[FeatureRequests] Error deleting:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to delete feature request" });
+      }
+    }
+  });
+
+  // Toggle vote on feature request (requires auth)
+  app.post("/api/v1/feature-requests/:id/vote", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.post(
+        `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}/vote?userId=${userId}`,
+        {},
+        { headers: config.headers }
+      );
+      res.json(response.data);
+    } catch (error) {
+      console.error('[FeatureRequests] Error voting:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to vote" });
+      }
+    }
+  });
+
+  // Add comment to feature request (requires auth)
+  app.post("/api/v1/feature-requests/:id/comments", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.post(
+        `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}/comments?userId=${userId}`,
+        req.body,
+        { headers: { ...config.headers, 'Content-Type': 'application/json' } }
+      );
+      res.status(201).json(response.data);
+    } catch (error) {
+      console.error('[FeatureRequests] Error adding comment:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to add comment" });
+      }
+    }
+  });
+
+  // Update comment on feature request (requires auth)
+  app.put("/api/v1/feature-requests/:id/comments/:commentId", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.put(
+        `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}/comments/${req.params.commentId}?userId=${userId}`,
+        req.body,
+        { headers: { ...config.headers, 'Content-Type': 'application/json' } }
+      );
+      res.json(response.data);
+    } catch (error) {
+      console.error('[FeatureRequests] Error updating comment:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to update comment" });
+      }
+    }
+  });
+
+  // Delete comment from feature request (requires auth)
+  app.delete("/api/v1/feature-requests/:id/comments/:commentId", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.delete(
+        `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}/comments/${req.params.commentId}?userId=${userId}`,
+        { headers: config.headers }
+      );
+      res.json(response.data);
+    } catch (error) {
+      console.error('[FeatureRequests] Error deleting comment:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to delete comment" });
+      }
+    }
+  });
+
+  // Update feature request status (admin only, requires auth)
+  app.put("/api/v1/feature-requests/:id/status", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.put(
+        `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}/status?userId=${userId}`,
+        req.body,
+        { headers: { ...config.headers, 'Content-Type': 'application/json' } }
+      );
+      res.json(response.data);
+    } catch (error) {
+      console.error('[FeatureRequests] Error updating status:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to update status" });
+      }
+    }
+  });
+
+  // ===========================================
+  // END FEATURE REQUEST API ROUTES
+  // ===========================================
+
   // Be sure to place all GET requests above this catchall
   // Exclude Next.js internal routes
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/') || req.path.startsWith('/content-creators') || req.path === '/pricing' || req.path === '/community-pricing' || req.path === '/manage-subscription' || req.path.startsWith('/subscription/') || req.path.startsWith('/community-promotion/') || req.path === '/penal-code') {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/') || req.path.startsWith('/content-creators') || req.path.startsWith('/feature-requests') || req.path === '/pricing' || req.path === '/community-pricing' || req.path === '/manage-subscription' || req.path.startsWith('/subscription/') || req.path.startsWith('/community-promotion/') || req.path === '/penal-code') {
       return handle(req, res);
     }
     res.render("page-not-found");
