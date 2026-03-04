@@ -316,62 +316,6 @@
       padding: 0.5em 1em;
     }
 
-    /* Arrest Modal — Full-Width Stacked Layout */
-    #arrestModal .modal-dialog {
-      width: 95%;
-      max-width: 560px;
-      margin: 20px auto;
-    }
-    #arrestModal .modal-body {
-      max-height: 85vh;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 20px 28px;
-    }
-    #arrestModal .form-horizontal .form-group {
-      display: flex;
-      flex-direction: column;
-      margin-left: 0;
-      margin-right: 0;
-      margin-bottom: 14px;
-    }
-    #arrestModal .form-horizontal .control-label {
-      text-align: left !important;
-      width: 100% !important;
-      float: none !important;
-      padding: 0 !important;
-      margin-bottom: 5px;
-      font-size: 13px;
-      font-weight: 500;
-      color: #9ca3af;
-    }
-    #arrestModal .col-md-4,
-    #arrestModal .col-md-10,
-    #arrestModal .col-md-offset-1 {
-      width: 100% !important;
-      max-width: 100% !important;
-      float: none !important;
-      padding-left: 0 !important;
-      padding-right: 0 !important;
-      margin-left: 0 !important;
-    }
-    #arrestModal .select2-container {
-      width: 100% !important;
-    }
-    #arrestModal #submitArrestReport {
-      width: 100%;
-      margin-top: 8px;
-    }
-    @media (max-width: 767px) {
-      #arrestModal .modal-dialog {
-        width: auto;
-        margin: 10px;
-      }
-      #arrestModal .modal-body {
-        padding: 15px;
-      }
-    }
-
     .select2-container--open {
     z-index: 9999 !important; /* Ensure dropdown is above modal (z-index 9000) */
   }
@@ -2042,142 +1986,7 @@
     </div>
   </div>
 
-  <div id="arrestModal" class="modal fade" style="z-index: 9000" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form id="arrest-form" class="form-horizontal" action="/create-arrest-report" method="POST">
-            <fieldset>
-
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                aria-hidden="true">X</button>
-              <h4>San Andreas Arrest Report</h4>
-              <hr style="width: 88%;max-width: 100rem;">
-
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="arrest-report-case-no">Case No:</label>
-                <div class="col-md-4">
-                  <input id="arrest-report-case-no" name="caseNumber" type="number" class="form-control input-md"
-                    readonly="readonly">
-                </div>
-              </div>
-
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="arrest-report-date">Date of Violation:</label>
-                <div class="col-md-4">
-                  <input id="arrest-report-date" name="date" type="date" min="1900-01-01" max="2999-12-31"
-                    class="form-control input-md" required="">
-                </div>
-              </div>
-
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="arrest-report-time">Time:</label>
-                <div class="col-md-4">
-                  <input id="arrest-report-time" name="time" type="time" placeholder="hh:mm"
-                    class="form-control input-md" required="">
-                </div>
-              </div>
-
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="reporting-officer">Reporting Officer:</label>
-                <div class="col-md-4">
-                  <input id="reporting-officer" name="reportingOfficer" type="text" placeholder="Reporting Officer"
-                    class="form-control input-md" style="text-transform:capitalize;" value=<%=user.user.username%>
-                  required="" readonly="readonly">
-                </div>
-              </div>
-
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="arrest-civ-first-name">First Name</label>
-                <div class="col-md-4">
-                  <input id="arrest-civ-first-name" name="accusedFirstName" type="text" placeholder="First Name"
-                    class="form-control input-md" style="text-transform:capitalize;" required="">
-                </div>
-              </div>
-
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="arrest-civ-last-name">Last Name</label>
-                <div class="col-md-4">
-                  <input id="arrest-civ-last-name" name="accusedLastName" type="text" placeholder="Last Name"
-                    class="form-control input-md" style="text-transform:capitalize;" required="">
-                </div>
-              </div>
-
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="arrest-civ-dob">DOB</label>
-                <div class="col-md-4">
-                  <input id="arrest-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy"
-                    class="form-control input-md" required="">
-                </div>
-              </div>
-
-              <div class="form-group" style="display:none">
-                <label class="col-md-4 control-label" for="civIDArrest">Selected ID</label>
-                <div class="col-md-4">
-                  <input id="civIDArrest" name="accusedID" type="text" placeholder="Autofill from searching"
-                    class="form-control input-md disabled-color" data-trigger="arrest-id-popover"
-                    data-content="* ID is required, try using the search button above." required readonly="readonly">
-                </div>
-              </div>
-
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="charge">Charge(s)</label>
-                <div class="col-md-4">
-                  <select id="charge" class="form-control" multiple required>
-                    <optgroup label="Crime not listed">
-                      <option value="Other">Other</option>
-                    </optgroup>
-                  </select>
-                  <input type="hidden" id="charges-hidden" name="charges" value="">
-                  <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
-                </div>
-              </div>
-
-              <hr />
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="detail">Detail of
-                  Event:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                <div class="col-md-10 col-md-offset-1">
-                  <textarea id="detail" name="detailOfEvent" type="text" maxlength="500" placeholder="Detail"
-                    class="form-control input-md" required></textarea>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="actions-taken">Actions
-                  Taken:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                <div class="col-md-10 col-md-offset-1">
-                  <textarea id="actions-taken" name="actionsTaken" type="text" maxlength="500"
-                    placeholder="Actions Taken" class="form-control input-md" required></textarea>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label"
-                  for="summary">Summary:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                <div class="col-md-10 col-md-offset-1">
-                  <textarea id="summary" name="summary" type="text" maxlength="500" placeholder="Summary"
-                    class="form-control input-md" required></textarea>
-                </div>
-              </div>
-
-              <!-- Button -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="submitArrestReport"></label>
-                <div class="col-md-4">
-                  <input type="hidden" name="reportingOfficerID" value="<%=user._id%>">
-                  <input type="hidden" name="route" value="dispatch-dashboard">
-                  <button id="submitArrestReport" class="btn btn-primary"
-                    onclick="hideArrestReportPopover()">Submit</button>
-                </div>
-              </div>
-            </fieldset>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
+  <% include arrest-modal %>
 
   <div id="boloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -5878,7 +5687,7 @@
     var communityId = (typeof dbUser !== 'undefined') ? (dbUser.user && dbUser.user.lastAccessedCommunity && dbUser.user.lastAccessedCommunity.communityID) : null;
     if (!communityId) return;
 
-    var $select = $('#charge');
+    var $select = $('#arrest-civ-charges');
     if ($select.hasClass('select2-hidden-accessible')) {
       $select.select2('destroy');
     }
@@ -5914,10 +5723,56 @@
     });
   });
 
-  // Before form submit, join selected charges into hidden input
-  $('#arrest-form').on('submit', function() {
-    var charges = ($('#charge').val() || []).filter(function(c) { return c !== 'Other'; });
-    $('#charges-hidden').val(charges.join(', '));
+  // Handle arrest form submission via AJAX (same as police dashboard)
+  $('#arrest-form').on('submit', function(e) {
+    e.preventDefault();
+
+    var formData = {
+      arrestReport: {
+        reportNumber: $('#arrest-report-case-no').val(),
+        arrestDate: $('#arrest-report-date').val(),
+        arrestTime: $('#arrest-report-time').val(),
+        arrestLocation: $('#arrest-location').val(),
+        incidentDate: $('#arrest-report-incident-date').val(),
+        incidentTime: $('#arrest-report-incident-time').val(),
+        incidentLocation: $('#incident-location').val(),
+        arrestee: {
+          id: $('#civIDArrest').val(),
+          name: $('#arrest-civ-first-name').val(),
+          dob: $('#arrest-civ-dob').val(),
+          address: $('#arrest-civ-address').val(),
+          height: $('#arrest-civ-height').val(),
+          weight: $('#arrest-civ-weight').val(),
+          eyeColor: $('#arrest-civ-eyes').val(),
+          hairColor: $('#arrest-civ-hair').val(),
+          phone: $('#arrest-civ-phone').val(),
+        },
+        officer: {
+          name: $('#reporting-officer').val(),
+          badgeNumber: dbUser.user.callSign || 'Unknown',
+        },
+        charges: ($('#arrest-civ-charges').val() || []).filter(function(c) { return c !== 'Other'; }).join(', '),
+        narrative: $('#detail').val(),
+        witnesses: $('#actions-taken').val(),
+        forceUsed: $('#forceUsed').val() === 'Yes',
+        attachedForms: [],
+      },
+    };
+
+    $.ajax({
+      url: API_URL + '/api/v1/arrest-report',
+      method: 'POST',
+      data: JSON.stringify(formData),
+      contentType: 'application/json',
+      success: function() {
+        alert('Arrest report created successfully.');
+        $('#arrestModal').modal('hide');
+      },
+      error: function(xhr) {
+        console.error('Error creating arrest report:', xhr.responseText);
+        alert('Failed to create arrest report: ' + (xhr.responseJSON && xhr.responseJSON.message || 'Unknown error'));
+      }
+    });
   });
 
   function hideCivPopover() {
