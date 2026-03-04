@@ -315,6 +315,52 @@
     #statusCallDetail {
       padding: 0.5em 1em;
     }
+
+    /* Arrest Modal — Responsive Layout */
+    #arrestModal .modal-body {
+      max-height: 85vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    @media (min-width: 992px) {
+      #arrestModal .form-horizontal .form-group > div.col-md-4 {
+        width: 55%;
+      }
+    }
+    @media (min-width: 768px) and (max-width: 991px) {
+      #arrestModal .form-horizontal .form-group > div.col-md-4 {
+        width: 60%;
+        float: left;
+      }
+      #arrestModal .form-horizontal .control-label.col-md-4 {
+        width: 35%;
+        float: left;
+      }
+    }
+    @media (max-width: 767px) {
+      #arrestModal .modal-dialog {
+        margin: 10px;
+        width: auto;
+      }
+      #arrestModal .form-horizontal .control-label {
+        text-align: left !important;
+        margin-bottom: 4px;
+      }
+      #arrestModal .form-horizontal .form-group {
+        margin-left: 0;
+        margin-right: 0;
+      }
+      #arrestModal .col-md-4,
+      #arrestModal .col-md-10 {
+        width: 100%;
+        float: none;
+        padding: 0 15px;
+      }
+      #arrestModal .col-md-offset-1 {
+        margin-left: 0;
+      }
+    }
+
     .select2-container--open {
     z-index: 9999 !important; /* Ensure dropdown is above modal (z-index 9000) */
   }
