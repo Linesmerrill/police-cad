@@ -1039,7 +1039,9 @@ $(document).ready(function () {
 
       $("#arrest-location").val("");
       $("#incident-location").val("");
-      $("#arrest-civ-charges").val("");
+      if ($('#arrest-civ-charges').hasClass('select2-hidden-accessible')) {
+        $('#arrest-civ-charges').val(null).trigger('change');
+      }
       $("#forceUsed").val("");
       $("#detail").val("");
       $("#actions-taken").val("");
@@ -1081,7 +1083,7 @@ $(document).ready(function () {
           name: $("#reporting-officer").val(),
           badgeNumber: dbUser.user.callSign || "Unknown",
         },
-        charges: $("#arrest-civ-charges").val(),
+        charges: ($("#arrest-civ-charges").val() || []).filter(function(c) { return c !== 'Other'; }).join(", "),
         narrative: $("#detail").val(),
         witnesses: $("#actions-taken").val(),
         forceUsed: $("#forceUsed").val() === "Yes",

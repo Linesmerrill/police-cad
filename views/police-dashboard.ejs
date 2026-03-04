@@ -2106,8 +2106,12 @@
               <div class="form-group required">
                 <label class="col-md-4 control-label" for="arrest-civ-charges">Charges</label>
                 <div class="col-md-4">
-                  <input id="arrest-civ-charges" name="arrest-civ-charges" type="text" placeholder="Charges"
-                    class="form-control input-md" style="text-transform:capitalize;" required="">
+                  <select id="arrest-civ-charges" name="arrest-civ-charges" class="form-control" multiple required>
+                    <optgroup label="Crime not listed">
+                      <option value="Other">Other</option>
+                    </optgroup>
+                  </select>
+                  <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
                 </div>
               </div>
 

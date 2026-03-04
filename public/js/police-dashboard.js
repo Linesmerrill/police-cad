@@ -429,6 +429,46 @@ $("#warningModal").on("show.bs.modal", function () {
 
 $("#arrestModal").on("show.bs.modal", function () {
   hideArrestReportPopover();
+
+  // Populate charges from penal codes
+  var communityId = (typeof dbUser !== 'undefined') ? (dbUser.user && dbUser.user.lastAccessedCommunity && dbUser.user.lastAccessedCommunity.communityID) : null;
+  if (!communityId) return;
+
+  var $select = $('#arrest-civ-charges');
+  // Destroy existing Select2 if any
+  if ($select.hasClass('select2-hidden-accessible')) {
+    $select.select2('destroy');
+  }
+  $select.find('optgroup:not([label="Crime not listed"])').remove();
+
+  $.ajax({
+    url: API_URL + '/api/v1/community/' + communityId + '/penal-codes',
+    method: 'GET',
+    success: function(data) {
+      var categories = (data && data.categories) || [];
+      categories.forEach(function(cat) {
+        var $g = $('<optgroup label="' + (cat.name || 'Unknown') + '"></optgroup>');
+        (cat.violations || []).forEach(function(v) {
+          $g.append('<option value="' + v.name + '">' + v.name + '</option>');
+        });
+        $select.prepend($g);
+      });
+      $select.select2({
+        placeholder: 'Search charges...',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#arrestModal')
+      });
+    },
+    error: function() {
+      $select.select2({
+        placeholder: 'Search charges...',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#arrestModal')
+      });
+    }
+  });
 });
 
 $("#createWarrantModal").on("show.bs.modal", function () {
