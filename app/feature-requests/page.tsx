@@ -176,17 +176,16 @@ function UpvoteButton({ count, voted, onClick, disabled }: {
 }
 
 // ── Feature Request Card ───────────────────────────────────────────
-function FeatureCard({ item, onVote, index }: {
-  item: FeatureRequest; onVote: (id: string) => void; index: number;
+function FeatureCard({ item, onVote, animate }: {
+  item: FeatureRequest; onVote: (id: string) => void; animate?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.04 }}
-    >
+    <div style={{
+      opacity: 1,
+      transition: animate ? 'opacity 0.3s ease' : 'none',
+    }}>
       <Link
         href={`/feature-requests/${item._id}`}
         style={{ textDecoration: 'none', display: 'block' }}
@@ -336,7 +335,7 @@ function FeatureCard({ item, onVote, index }: {
           </div>
         </div>
       </Link>
-    </motion.div>
+    </div>
   );
 }
 
@@ -346,6 +345,7 @@ export default function FeatureRequests() {
 
   // State
   const [currentUser, setCurrentUser] = useState<{ _id: string } | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [requests, setRequests] = useState<FeatureRequest[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
@@ -354,11 +354,12 @@ export default function FeatureRequests() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [votingIds, setVotingIds] = useState<Set<string>>(new Set());
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Check auth
+  // Check auth — must complete before first fetch
   useEffect(() => {
     fetch('/api/user/current', { credentials: 'include' })
       .then(res => res.ok ? res.json() : null)
@@ -368,7 +369,8 @@ export default function FeatureRequests() {
           setCurrentUser({ _id: user._id || user.id });
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setAuthReady(true));
   }, []);
 
   // Debounce search
@@ -391,8 +393,9 @@ export default function FeatureRequests() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  // Fetch feature requests
+  // Fetch feature requests — only after auth check completes
   const fetchRequests = useCallback(async () => {
+    if (!authReady) return;
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -414,8 +417,9 @@ export default function FeatureRequests() {
       setTotalCount(0);
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
-  }, [page, sort, statusFilter, debouncedQuery, currentUser]);
+  }, [authReady, page, sort, statusFilter, debouncedQuery, currentUser]);
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
@@ -761,8 +765,8 @@ export default function FeatureRequests() {
             )}
 
             {/* ── Cards ──────────────────────────────────── */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-              {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', opacity: loading && !initialLoad ? 0.6 : 1, transition: 'opacity 0.2s ease' }}>
+              {loading && initialLoad ? (
                 // Skeleton loaders
                 Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} style={{
@@ -866,12 +870,11 @@ export default function FeatureRequests() {
                   )}
                 </div>
               ) : (
-                requests.map((item, i) => (
+                requests.map((item) => (
                   <FeatureCard
                     key={item._id}
                     item={item}
                     onVote={handleVote}
-                    index={i}
                   />
                 ))
               )}
