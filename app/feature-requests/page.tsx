@@ -571,23 +571,44 @@ export default function FeatureRequests() {
               gap: '1rem',
             }}>
               <div>
-                <h1 style={{
-                  fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
-                  fontWeight: 700,
-                  margin: 0,
-                  fontFamily: FONT,
-                  lineHeight: 1.1,
-                }}>
-                  <span style={{
-                    background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fbbf24 100%)',
-                    backgroundSize: '200% 100%',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <h1 style={{
+                    fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
+                    fontWeight: 700,
+                    margin: 0,
+                    fontFamily: FONT,
+                    lineHeight: 1.1,
                   }}>
-                    Feature Requests
+                    <span style={{
+                      background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fbbf24 100%)',
+                      backgroundSize: '200% 100%',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}>
+                      Feature Requests
+                    </span>
+                  </h1>
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '0.2rem 0.55rem',
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    fontFamily: FONT,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase' as const,
+                    color: '#fbbf24',
+                    background: 'rgba(251,191,36,0.1)',
+                    border: '1px solid rgba(251,191,36,0.3)',
+                    borderRadius: '999px',
+                    animation: 'betaPulse 3s ease-in-out infinite',
+                    whiteSpace: 'nowrap',
+                    marginBottom: '0.15rem',
+                  }}>
+                    Beta
                   </span>
-                </h1>
+                </div>
                 <p style={{
                   margin: '0.4rem 0 0 0',
                   fontSize: '0.95rem',
@@ -1022,6 +1043,10 @@ export default function FeatureRequests() {
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.4; }
+        }
+        @keyframes betaPulse {
+          0%, 100% { box-shadow: 0 0 4px rgba(251,191,36,0.15); }
+          50% { box-shadow: 0 0 12px rgba(251,191,36,0.3); }
         }
       `}</style>
     </main>

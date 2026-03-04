@@ -875,27 +875,44 @@ export default function FeatureRequestDetail() {
             width: '100%',
             boxSizing: 'border-box',
           }}>
-            {/* Back link */}
-            <Link
-              href="/feature-requests"
-              style={{
+            {/* Back link + Beta badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', paddingTop: '2rem' }}>
+              <Link
+                href="/feature-requests"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontSize: '0.85rem',
+                  fontFamily: FONT,
+                  color: 'rgba(255,255,255,0.5)',
+                  textDecoration: 'none',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#fbbf24'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
+              >
+                <ArrowLeftIcon style={{ width: '14px', height: '14px' }} />
+                Back to Feature Requests
+              </Link>
+              <span style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.35rem',
-                fontSize: '0.85rem',
+                padding: '0.15rem 0.45rem',
+                fontSize: '0.6rem',
+                fontWeight: 700,
                 fontFamily: FONT,
-                color: 'rgba(255,255,255,0.5)',
-                textDecoration: 'none',
-                marginBottom: '1.5rem',
-                paddingTop: '2rem',
-                transition: 'color 0.2s',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = '#fbbf24'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
-            >
-              <ArrowLeftIcon style={{ width: '14px', height: '14px' }} />
-              Back to Feature Requests
-            </Link>
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase' as const,
+                color: '#fbbf24',
+                background: 'rgba(251,191,36,0.1)',
+                border: '1px solid rgba(251,191,36,0.3)',
+                borderRadius: '999px',
+                animation: 'betaPulse 3s ease-in-out infinite',
+              }}>
+                Beta
+              </span>
+            </div>
 
             {loading ? (
               <div style={{
@@ -1655,6 +1672,10 @@ export default function FeatureRequestDetail() {
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.4; }
+        }
+        @keyframes betaPulse {
+          0%, 100% { box-shadow: 0 0 4px rgba(251,191,36,0.15); }
+          50% { box-shadow: 0 0 12px rgba(251,191,36,0.3); }
         }
       `}</style>
     </main>
