@@ -901,6 +901,7 @@ export default function FeatureRequestDetail() {
 
   const isAuthor = currentUser && request && currentUser._id === request.author._id;
   const isMerged = request?.status === 'merged';
+  const isLocked = ['merged', 'released', 'declined'].includes(request?.status ?? '');
 
   // Merge search handler (debounced)
   const handleMergeSearch = (query: string) => {
@@ -1170,7 +1171,7 @@ export default function FeatureRequestDetail() {
                     flexWrap: 'wrap',
                     gap: '0.5rem',
                   }}>
-                    {isAdmin && !isMerged ? (
+                    {isAdmin && !isLocked ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <div ref={statusDropdownRef} style={{ position: 'relative' }}>
                         <button
@@ -1278,7 +1279,7 @@ export default function FeatureRequestDetail() {
                     </div>) : (
                       <StatusBadge status={request.status} />
                     )}
-                    {isAuthor && !editingRequest && !isMerged && (
+                    {isAuthor && !editingRequest && !isLocked && (
                       <div style={{ display: 'flex', gap: '0.4rem' }}>
                         <button
                           onClick={() => {
@@ -1527,7 +1528,7 @@ export default function FeatureRequestDetail() {
                   )}
 
                   {/* Vote + Meta Row */}
-                  {!isMerged && (
+                  {!isLocked && (
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1915,7 +1916,7 @@ export default function FeatureRequestDetail() {
                   </h2>
 
                   {/* Add Comment */}
-                  {isMerged ? (
+                  {isLocked ? (
                     <p style={{
                       fontSize: '0.82rem',
                       fontFamily: FONT,
@@ -1923,7 +1924,7 @@ export default function FeatureRequestDetail() {
                       fontStyle: 'italic',
                       margin: '0 0 1rem 0',
                     }}>
-                      Commenting is disabled on merged requests.
+                      Commenting is disabled on {request.status} requests.
                     </p>
                   ) : currentUser ? (
                     <div style={{
