@@ -1115,12 +1115,56 @@ export default function FeatureRequestDetail() {
               >
                 {/* ── Main Card ──────────────────────────────── */}
                 <div style={{
-                  backgroundColor: 'rgba(15,15,20,0.5)',
-                  border: '1px solid rgba(59,130,246,0.15)',
+                  position: 'relative',
+                  backgroundColor: request.status === 'released'
+                    ? 'rgba(16,185,129,0.04)'
+                    : request.status === 'declined'
+                      ? 'rgba(239,68,68,0.04)'
+                      : 'rgba(15,15,20,0.5)',
+                  border: request.status === 'released'
+                    ? '1px solid rgba(16,185,129,0.2)'
+                    : request.status === 'declined'
+                      ? '1px solid rgba(239,68,68,0.2)'
+                      : '1px solid rgba(59,130,246,0.15)',
                   borderRadius: '0.75rem',
                   padding: '1.5rem',
                   marginBottom: '1.5rem',
+                  overflow: 'hidden',
                 }}>
+                  {/* Released sparkles */}
+                  {request.status === 'released' && (
+                    <>
+                      {[
+                        { top: '5%', left: '80%', delay: '0s', size: 11 },
+                        { top: '25%', left: '92%', delay: '1.4s', size: 9 },
+                        { top: '60%', left: '85%', delay: '0.7s', size: 13 },
+                        { top: '45%', left: '75%', delay: '2.1s', size: 8 },
+                        { top: '80%', left: '90%', delay: '0.3s', size: 10 },
+                        { top: '10%', left: '95%', delay: '1.8s', size: 7 },
+                        { top: '70%', left: '78%', delay: '2.6s', size: 9 },
+                        { top: '35%', left: '88%', delay: '1.0s', size: 6 },
+                        { top: '90%', left: '82%', delay: '2.3s', size: 8 },
+                      ].map((s, i) => (
+                        <span
+                          key={i}
+                          style={{
+                            position: 'absolute',
+                            top: s.top,
+                            left: s.left,
+                            fontSize: `${s.size}px`,
+                            color: '#10b981',
+                            opacity: 0,
+                            pointerEvents: 'none',
+                            animation: `sparkle 3s ease-in-out ${s.delay} infinite, drift 4s ease-in-out ${s.delay} infinite`,
+                            textShadow: '0 0 6px rgba(16,185,129,0.6)',
+                            zIndex: 1,
+                          }}
+                        >
+                          {i % 3 === 0 ? '✦' : '·'}
+                        </span>
+                      ))}
+                    </>
+                  )}
                   {/* Merged Banner */}
                   {isMerged && request.mergedInto && (
                     <div style={{
@@ -2140,6 +2184,15 @@ export default function FeatureRequestDetail() {
         @keyframes betaPulse {
           0%, 100% { box-shadow: 0 0 4px rgba(251,191,36,0.15); }
           50% { box-shadow: 0 0 12px rgba(251,191,36,0.3); }
+        }
+        @keyframes sparkle {
+          0%, 100% { opacity: 0; transform: scale(0.5); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes drift {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-3px); }
+          100% { transform: translateY(0px); }
         }
       `}</style>
     </main>

@@ -122,10 +122,12 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 // ── Upvote Button ──────────────────────────────────────────────────
-function UpvoteButton({ count, voted, onClick, disabled }: {
-  count: number; voted: boolean; onClick: () => void; disabled?: boolean;
+function UpvoteButton({ count, voted, onClick, disabled, status }: {
+  count: number; voted: boolean; onClick: () => void; disabled?: boolean; status?: string;
 }) {
   const [hovering, setHovering] = useState(false);
+  const isClosed = status === 'released' || status === 'declined';
+  const closedColor = status === 'released' ? '#10b981' : status === 'declined' ? '#ef4444' : undefined;
   return (
     <button
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClick(); }}
@@ -141,18 +143,23 @@ function UpvoteButton({ count, voted, onClick, disabled }: {
         width: '52px',
         minHeight: '60px',
         padding: '0.5rem 0',
-        border: voted
-          ? '1px solid rgba(251,191,36,0.5)'
-          : hovering
-            ? '1px solid rgba(255,255,255,0.25)'
-            : '1px solid rgba(255,255,255,0.1)',
+        border: isClosed
+          ? `1px solid ${closedColor}30`
+          : voted
+            ? '1px solid rgba(251,191,36,0.5)'
+            : hovering
+              ? '1px solid rgba(255,255,255,0.25)'
+              : '1px solid rgba(255,255,255,0.1)',
         borderRadius: '0.6rem',
-        backgroundColor: voted
-          ? 'rgba(251,191,36,0.12)'
-          : hovering
-            ? 'rgba(255,255,255,0.06)'
-            : 'rgba(255,255,255,0.03)',
+        backgroundColor: isClosed
+          ? `${closedColor}12`
+          : voted
+            ? 'rgba(251,191,36,0.12)'
+            : hovering
+              ? 'rgba(255,255,255,0.06)'
+              : 'rgba(255,255,255,0.03)',
         cursor: disabled ? 'default' : 'pointer',
+        opacity: isClosed ? 0.6 : 1,
         transition: 'all 0.2s ease',
         flexShrink: 0,
       }}
@@ -160,15 +167,15 @@ function UpvoteButton({ count, voted, onClick, disabled }: {
       <ChevronUpIcon style={{
         width: '18px',
         height: '18px',
-        color: voted ? '#fbbf24' : hovering ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.4)',
+        color: isClosed ? (closedColor + '90') : voted ? '#fbbf24' : hovering ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.4)',
         transition: 'color 0.2s, transform 0.2s',
-        transform: hovering && !voted ? 'translateY(-1px)' : 'none',
+        transform: hovering && !voted && !isClosed ? 'translateY(-1px)' : 'none',
       }} />
       <span style={{
         fontSize: '0.8rem',
         fontWeight: 700,
         fontFamily: FONT,
-        color: voted ? '#fbbf24' : 'rgba(255,255,255,0.7)',
+        color: isClosed ? (closedColor + '90') : voted ? '#fbbf24' : 'rgba(255,255,255,0.7)',
         transition: 'color 0.2s',
         lineHeight: 1,
       }}>
@@ -183,6 +190,8 @@ function FeatureCard({ item, onVote, animate }: {
   item: FeatureRequest; onVote: (id: string) => void; animate?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
+  const isClosed = item.status === 'released' || item.status === 'declined';
+  const closedColor = item.status === 'released' ? '#10b981' : item.status === 'declined' ? '#ef4444' : undefined;
 
   return (
     <div style={{
@@ -196,24 +205,63 @@ function FeatureCard({ item, onVote, animate }: {
         onMouseLeave={() => setHovered(false)}
       >
         <div style={{
+          position: 'relative',
           display: 'flex',
           gap: '1rem',
           alignItems: 'flex-start',
           padding: '1.25rem',
-          backgroundColor: hovered ? 'rgba(15,15,20,0.75)' : 'rgba(15,15,20,0.5)',
-          border: hovered
-            ? '1px solid rgba(251,191,36,0.25)'
-            : '1px solid rgba(59,130,246,0.15)',
+          backgroundColor: isClosed
+            ? (hovered ? `${closedColor}14` : `${closedColor}0a`)
+            : (hovered ? 'rgba(15,15,20,0.75)' : 'rgba(15,15,20,0.5)'),
+          border: isClosed
+            ? `1px solid ${closedColor}${hovered ? '35' : '20'}`
+            : hovered
+              ? '1px solid rgba(251,191,36,0.25)'
+              : '1px solid rgba(59,130,246,0.15)',
           borderRadius: '0.75rem',
           transition: 'all 0.25s ease',
           cursor: 'pointer',
+          overflow: 'hidden',
         }}>
+          {/* Released sparkles */}
+          {item.status === 'released' && (
+            <>
+              {[
+                { top: '8%', left: '75%', delay: '0s', size: 10, char: '✦' },
+                { top: '55%', left: '88%', delay: '1.2s', size: 8, char: '✦' },
+                { top: '15%', left: '93%', delay: '2.4s', size: 12, char: '✦' },
+                { top: '70%', left: '72%', delay: '0.6s', size: 7, char: '✦' },
+                { top: '35%', left: '96%', delay: '1.8s', size: 9, char: '✦' },
+                { top: '80%', left: '83%', delay: '0.3s', size: 6, char: '·' },
+                { top: '5%', left: '85%', delay: '2.0s', size: 8, char: '·' },
+              ].map((s, i) => (
+                <span
+                  key={i}
+                  style={{
+                    position: 'absolute',
+                    top: s.top,
+                    left: s.left,
+                    fontSize: `${s.size}px`,
+                    color: '#10b981',
+                    opacity: 0,
+                    pointerEvents: 'none',
+                    animation: `sparkle 3s ease-in-out ${s.delay} infinite, drift 4s ease-in-out ${s.delay} infinite`,
+                    textShadow: '0 0 6px rgba(16,185,129,0.6)',
+                    zIndex: 1,
+                  }}
+                >
+                  {s.char}
+                </span>
+              ))}
+            </>
+          )}
           {/* Vote column */}
           <UpvoteButton
             count={item.upvoteCount}
             voted={item.hasVoted}
             onClick={() => onVote(item._id)}
             disabled={['released', 'declined', 'merged'].includes(item.status)}
+            status={item.status}
           />
 
           {/* Content column */}
@@ -230,7 +278,9 @@ function FeatureCard({ item, onVote, animate }: {
                 fontSize: '1rem',
                 fontWeight: 600,
                 fontFamily: FONT,
-                color: hovered ? '#fbbf24' : 'rgba(255,255,255,0.92)',
+                color: isClosed
+                  ? (hovered ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.6)')
+                  : (hovered ? '#fbbf24' : 'rgba(255,255,255,0.92)'),
                 transition: 'color 0.2s',
                 lineHeight: 1.35,
                 flex: 1,
@@ -248,7 +298,7 @@ function FeatureCard({ item, onVote, animate }: {
               margin: '0 0 0.75rem 0',
               fontSize: '0.875rem',
               fontFamily: FONT,
-              color: 'rgba(255,255,255,0.5)',
+              color: isClosed ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.5)',
               lineHeight: 1.5,
               display: '-webkit-box',
               WebkitLineClamp: 2,
@@ -1082,6 +1132,15 @@ export default function FeatureRequests() {
         @keyframes betaPulse {
           0%, 100% { box-shadow: 0 0 4px rgba(251,191,36,0.15); }
           50% { box-shadow: 0 0 12px rgba(251,191,36,0.3); }
+        }
+        @keyframes sparkle {
+          0%, 100% { opacity: 0; transform: scale(0.5); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes drift {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-3px); }
+          100% { transform: translateY(0px); }
         }
       `}</style>
     </main>
