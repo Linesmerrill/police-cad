@@ -1171,7 +1171,7 @@ export default function FeatureRequestDetail() {
                     flexWrap: 'wrap',
                     gap: '0.5rem',
                   }}>
-                    {isAdmin && !isLocked ? (
+                    {isAdmin && !isMerged ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <div ref={statusDropdownRef} style={{ position: 'relative' }}>
                         <button
@@ -1528,7 +1528,7 @@ export default function FeatureRequestDetail() {
                   )}
 
                   {/* Vote + Meta Row */}
-                  {!isLocked && (
+                  {!isMerged && (
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1542,7 +1542,7 @@ export default function FeatureRequestDetail() {
                       count={request.upvoteCount}
                       voted={request.hasVoted}
                       onClick={handleVote}
-                      disabled={voting}
+                      disabled={voting || isLocked}
                     />
 
                     <div style={{
