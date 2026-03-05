@@ -41,6 +41,19 @@ var readFile = promisify(fs.readFile);
 
 const redirect = process.env.CLIENT_REDIRECT;
 
+// Validate that a string is a valid MongoDB ObjectId (24 hex characters)
+function isValidObjectId(id) {
+  return /^[a-fA-F0-9]{24}$/.test(id);
+}
+
+// Sanitize a redirect URL to prevent open redirects — only allow relative paths
+function sanitizeRedirect(url, fallback) {
+  if (typeof url !== "string" || !url.startsWith("/") || url.startsWith("//")) {
+    return fallback;
+  }
+  return url;
+}
+
 // Utility functions for base64-url encoding/decoding (used for department and now community IDs)
 function encodeId(id) {
   return Buffer.from(id, 'utf8').toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -4007,6 +4020,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.get("/api/v1/feature-requests/:id", async function (req, res) {
     try {
       const { id } = req.params;
+      if (!isValidObjectId(id)) return res.status(400).json({ error: "Invalid ID" });
       const { userId } = req.query;
       let url = `${policeCadApiUrl}/api/v1/feature-requests/${id}`;
       if (userId) url += `?userId=${encodeURIComponent(userId)}`;
@@ -4053,6 +4067,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Update feature request (requires auth)
   app.put("/api/v1/feature-requests/:id", apiAuthCheck, async function (req, res) {
     try {
+      if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
       const userId = req.user._id || req.user.id;
       const response = await axios.put(
         `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}?userId=${userId}`,
@@ -4085,6 +4100,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Delete feature request (requires auth)
   app.delete("/api/v1/feature-requests/:id", apiAuthCheck, async function (req, res) {
     try {
+      if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
       const userId = req.user._id || req.user.id;
       const response = await axios.delete(
         `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}?userId=${userId}`,
@@ -4112,6 +4128,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Toggle vote on feature request (requires auth)
   app.post("/api/v1/feature-requests/:id/vote", apiAuthCheck, async function (req, res) {
     try {
+      if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
       const userId = req.user._id || req.user.id;
       const response = await axios.post(
         `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}/vote?userId=${userId}`,
@@ -4143,6 +4160,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Add comment to feature request (requires auth)
   app.post("/api/v1/feature-requests/:id/comments", apiAuthCheck, async function (req, res) {
     try {
+      if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
       const userId = req.user._id || req.user.id;
       const response = await axios.post(
         `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}/comments?userId=${userId}`,
@@ -4175,6 +4193,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Update comment on feature request (requires auth)
   app.put("/api/v1/feature-requests/:id/comments/:commentId", apiAuthCheck, async function (req, res) {
     try {
+      if (!isValidObjectId(req.params.id) || !isValidObjectId(req.params.commentId)) return res.status(400).json({ error: "Invalid ID" });
       const userId = req.user._id || req.user.id;
       const response = await axios.put(
         `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}/comments/${req.params.commentId}?userId=${userId}`,
@@ -4205,6 +4224,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Delete comment from feature request (requires auth)
   app.delete("/api/v1/feature-requests/:id/comments/:commentId", apiAuthCheck, async function (req, res) {
     try {
+      if (!isValidObjectId(req.params.id) || !isValidObjectId(req.params.commentId)) return res.status(400).json({ error: "Invalid ID" });
       const userId = req.user._id || req.user.id;
       const response = await axios.delete(
         `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}/comments/${req.params.commentId}?userId=${userId}`,
@@ -4236,6 +4256,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Update feature request status (admin only, requires auth)
   app.put("/api/v1/feature-requests/:id/status", apiAuthCheck, async function (req, res) {
     try {
+      if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
       // Pass email so Go API's checkIsAdmin can match against admin_users collection
       const userData = req.user._doc || req.user;
       const user = userData.user || userData;
@@ -4270,6 +4291,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Merge feature request (admin only, requires auth)
   app.post("/api/v1/feature-requests/:targetId/merge", apiAuthCheck, async function (req, res) {
     try {
+      if (!isValidObjectId(req.params.targetId)) return res.status(400).json({ error: "Invalid ID" });
       const userData = req.user._doc || req.user;
       const user = userData.user || userData;
       const userEmail = user.email;
@@ -4391,7 +4413,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       clearTimeout(timeout);
       
       // User is verified (either emailVerified === true or undefined/null for old accounts) - proceed with normal redirect
-      const redirect = req.body.redirect || req.session.redirect || "/communities";
+      const redirect = sanitizeRedirect(req.body.redirect || req.session.redirect, "/communities");
       if (req.session.redirect) {
         delete req.session.redirect; // Clear the session redirect after use
       }
