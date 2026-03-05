@@ -213,6 +213,7 @@ function FeatureCard({ item, onVote, animate }: {
             count={item.upvoteCount}
             voted={item.hasVoted}
             onClick={() => onVote(item._id)}
+            disabled={['released', 'declined', 'merged'].includes(item.status)}
           />
 
           {/* Content column */}
