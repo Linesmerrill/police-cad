@@ -21,6 +21,7 @@ import {
   ClockIcon,
 } from '@heroicons/react/24/outline';
 import { useFeatureRequestSocket } from '@/app/hooks/useFeatureRequestSocket';
+import { useRefetchOnFocus } from '@/app/hooks/useRefetchOnFocus';
 
 // ── Types ──────────────────────────────────────────────────────────
 interface UserSummary {
@@ -558,6 +559,7 @@ export default function FeatureRequests() {
   }, [authReady, page, sort, statusFilter, debouncedQuery, currentUser]);
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
+  useRefetchOnFocus(fetchRequests, authReady);
 
   // Vote handler
   const handleVote = async (id: string) => {

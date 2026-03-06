@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
@@ -19,6 +19,7 @@ import {
   EllipsisVerticalIcon,
 } from '@heroicons/react/24/solid';
 import { useFeatureRequestSocket } from '@/app/hooks/useFeatureRequestSocket';
+import { useRefetchOnFocus } from '@/app/hooks/useRefetchOnFocus';
 
 // ── Types ──────────────────────────────────────────────────────────
 interface UserSummary {
@@ -696,27 +697,27 @@ export default function FeatureRequestDetail() {
   }, []);
 
   // Fetch feature request — only after auth resolves
-  useEffect(() => {
+  const fetchRequest = useCallback(async () => {
     if (!id || !authReady) return;
     setLoading(true);
-    const fetchRequest = async () => {
-      try {
-        const userParam = currentUser ? `?userId=${currentUser._id}` : '';
-        const res = await fetch(`/api/v1/feature-requests/${id}${userParam}`, { credentials: 'include' });
-        if (!res.ok) {
-          setNotFound(true);
-          return;
-        }
-        const data: FeatureRequest = await res.json();
-        setRequest(data);
-      } catch {
+    try {
+      const userParam = currentUser ? `?userId=${currentUser._id}` : '';
+      const res = await fetch(`/api/v1/feature-requests/${id}${userParam}`, { credentials: 'include' });
+      if (!res.ok) {
         setNotFound(true);
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
-    fetchRequest();
-  }, [id, authReady]);
+      const data: FeatureRequest = await res.json();
+      setRequest(data);
+    } catch {
+      setNotFound(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, authReady, currentUser]);
+
+  useEffect(() => { fetchRequest(); }, [fetchRequest]);
+  useRefetchOnFocus(fetchRequest, authReady && !!id);
 
   // Vote handler
   const handleVote = async () => {
