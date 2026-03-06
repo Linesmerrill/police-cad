@@ -3565,7 +3565,7 @@ function updateDepartmentJoinButton(departmentId, status) {
     emptyState.style.display = 'none';
 
     try {
-      let url = `${API_URL}/api/v2/community/${communityId}/audit-logs?page=${auditLogsPage}&limit=20`;
+      let url = `${API_URL}/api/v2/community/${communityId}/audit-logs?page=${auditLogsPage}&limit=20&userId=${userId}`;
       if (auditLogsCategory) {
         url += `&category=${auditLogsCategory}`;
       }
