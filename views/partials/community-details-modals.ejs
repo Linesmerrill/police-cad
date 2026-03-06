@@ -547,7 +547,10 @@
           %>
 
           <% if (canViewAuditLogs) { %>
-            <div id="auditLogsCard" onclick="openAuditLogsModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#6366f1;">
+            <div id="auditLogsCard" onclick="openAuditLogsModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#6366f1; position:relative;">
+              <% if (new Date() < new Date('2026-03-20')) { %>
+                <span style="position:absolute; top:0.5rem; right:0.5rem; background:#4f46e5; color:#fff; font-size:0.65rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:9999px; text-transform:uppercase; letter-spacing:0.05em;">Beta</span>
+              <% } %>
               <div style="text-align:center;">
                 <div style="margin-bottom:0.5rem;">
                   <i class="fa fa-clipboard-list" style="font-size:2rem; color:#6366f1;"></i>
