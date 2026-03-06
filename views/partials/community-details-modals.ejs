@@ -1375,7 +1375,7 @@ function saveCommunityProfile() {
   // Get the API URL with fallback
   const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
-  fetch(`${apiUrl}/api/v1/community/${communityId}`, {
+  fetch(`${apiUrl}/api/v1/community/${communityId}?userId=${window.dbUser?._id || ''}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -1546,7 +1546,7 @@ async function handleCommunityImageUpload(event) {
     const communityId = '<%= community._id %>';
     const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
-    const updateResponse = await fetch(`${apiUrl}/api/v1/community/${communityId}`, {
+    const updateResponse = await fetch(`${apiUrl}/api/v1/community/${communityId}?userId=${window.dbUser?._id || ''}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -1806,7 +1806,7 @@ async function createRole() {
     const communityId = '<%= community._id %>';
     const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     
-    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles`, {
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles?userId=${window.dbUser?._id || ''}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1854,7 +1854,7 @@ async function goToStep2() {
     const communityId = '<%= community._id %>';
     const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     
-    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles`, {
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles?userId=${window.dbUser?._id || ''}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2116,7 +2116,7 @@ async function finishCreateRole() {
     const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     
     // Add all selected members to the role
-    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${newRoleData._id}/members`, {
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${newRoleData._id}/members?userId=${window.dbUser?._id || ''}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -2184,7 +2184,7 @@ async function updateRoleName(roleId, newName) {
     const communityId = '<%= community._id %>';
     const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     
-    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${roleId}/name`, {
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${roleId}/name?userId=${window.dbUser?._id || ''}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -2233,7 +2233,7 @@ async function deleteRole(roleId) {
     const communityId = '<%= community._id %>';
     const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     
-    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${roleId}`, {
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${roleId}?userId=${window.dbUser?._id || ''}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -3800,7 +3800,7 @@ async function confirmUnbanUser(userId) {
     const communityId = '<%= community._id %>';
     const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     
-    const response = await fetch(`${apiUrl}/api/v1/user/${userId}/unban-community`, {
+    const response = await fetch(`${apiUrl}/api/v1/user/${userId}/unban-community?userId=${window.dbUser?._id || ''}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -3895,7 +3895,7 @@ async function saveRolePermissions() {
     const communityId = '<%= community._id %>';
     const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     
-    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${currentRole._id}/permissions`, {
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${currentRole._id}/permissions?userId=${window.dbUser?._id || ''}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -4090,7 +4090,7 @@ async function addMemberToRole() {
     const currentMembers = (currentRole.membersData || currentRole.members || []).map(m => m.id || m);
     const updatedMembers = [...currentMembers, memberId];
     
-    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${currentRole._id}/members`, {
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${currentRole._id}/members?userId=${window.dbUser?._id || ''}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -4130,7 +4130,7 @@ async function performRemoveMemberFromRole(memberId) {
     const communityId = '<%= community._id %>';
     const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     
-    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${currentRole._id}/members/${memberId}`, {
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${currentRole._id}/members/${memberId}?userId=${window.dbUser?._id || ''}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -4736,7 +4736,7 @@ async function createInviteCode() {
     const communityId = '<%= community._id %>';
     const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
-    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/add-invite-code`, {
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/add-invite-code?userId=${window.dbUser?._id || ''}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code, expiresAt, maxUses })
@@ -4890,7 +4890,7 @@ async function deleteInviteCode() {
     const communityId = '<%= community._id %>';
     const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
-    const response = await fetch(`${apiUrl}/api/v1/invite-code/${deleteInviteCodeId}`, {
+    const response = await fetch(`${apiUrl}/api/v1/invite-code/${deleteInviteCodeId}?userId=${window.dbUser?._id || ''}`, {
       method: 'DELETE'
     });
 
@@ -5971,7 +5971,7 @@ function finishCreateDepartment(skipMembers = false) {
     members: createDeptData.members,
     template: createDeptData.template
   };
-  fetch(`${API_URL}/api/v1/community/${communityId}/departments`, {
+  fetch(`${API_URL}/api/v1/community/${communityId}/departments?userId=${window.dbUser?._id || ''}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -6821,7 +6821,7 @@ async function saveEditDepartment() {
       };
     }
 
-    const updateRes = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`, {
+    const updateRes = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}?userId=${window.dbUser?._id || ''}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -6885,7 +6885,7 @@ async function confirmDeleteDepartment() {
   deleteBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>Deleting...';
 
   try {
-    const response = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`, {
+    const response = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}?userId=${window.dbUser?._id || ''}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -7056,7 +7056,7 @@ document.getElementById('createEventForm').onsubmit = async function(e) {
     required
   };
   try {
-    const res = await fetch(`${API_URL}/api/v1/community/${communityID}/events`, {
+    const res = await fetch(`${API_URL}/api/v1/community/${communityID}/events?userId=${window.dbUser?._id || ''}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -7350,7 +7350,7 @@ async function confirmDeleteEvent() {
   const communityID = '<%= community._id %>';
   const eventIdToDelete = eventToDelete; // Store locally before async operation
   try {
-    const res = await fetch(`${API_URL}/api/v1/community/${communityID}/events/${eventIdToDelete}`, {
+    const res = await fetch(`${API_URL}/api/v1/community/${communityID}/events/${eventIdToDelete}?userId=${window.dbUser?._id || ''}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -7526,7 +7526,7 @@ async function saveEditEvent() {
   }
 
   try {
-    const res = await fetch(`${API_URL}/api/v1/community/${communityID}/events/${currentEditEvent}`, {
+    const res = await fetch(`${API_URL}/api/v1/community/${communityID}/events/${currentEditEvent}?userId=${window.dbUser?._id || ''}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -8178,7 +8178,7 @@ async function saveEditEvent() {
         const communityId = '<%= community._id %>';
         const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
         
-        fetch(`${apiUrl}/api/v1/community/${communityId}`, {
+        fetch(`${apiUrl}/api/v1/community/${communityId}?userId=${window.dbUser?._id || ''}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -8601,7 +8601,7 @@ async function saveEditEvent() {
         var communityId = '<%= community._id %>';
         var apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
-        fetch(apiUrl + '/api/v1/community/' + communityId + '/penal-codes', {
+        fetch(apiUrl + '/api/v1/community/' + communityId + '/penal-codes?userId=' + (window.dbUser?._id || ''), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -8665,7 +8665,7 @@ async function saveEditEvent() {
             var communityId = '<%= community._id %>';
             var apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
-            fetch(apiUrl + '/api/v1/community/' + communityId + '/penal-codes/reset', {
+            fetch(apiUrl + '/api/v1/community/' + communityId + '/penal-codes/reset?userId=' + (window.dbUser?._id || ''), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' }
             })
@@ -9299,7 +9299,7 @@ async function saveEditEvent() {
         const communityId = '<%= community._id %>';
         const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
         
-        fetch(`${apiUrl}/api/v1/community/${communityId}/fines`, {
+        fetch(`${apiUrl}/api/v1/community/${communityId}/fines?userId=${window.dbUser?._id || ''}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(fineSettings)
@@ -10235,7 +10235,7 @@ async function saveEditEvent() {
           const communityId = '<%= community._id %>';
           const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
           
-          const response = await fetch(`${apiUrl}/api/v1/user/${memberId}/remove-community`, {
+          const response = await fetch(`${apiUrl}/api/v1/user/${memberId}/remove-community?userId=${window.dbUser?._id || ''}`, {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
@@ -10301,7 +10301,7 @@ async function saveEditEvent() {
           const communityId = '<%= community._id %>';
           const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
           
-          const response = await fetch(`${apiUrl}/api/v1/user/${memberId}/ban-community`, {
+          const response = await fetch(`${apiUrl}/api/v1/user/${memberId}/ban-community?userId=${window.dbUser?._id || ''}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

@@ -1154,7 +1154,7 @@ function updateDepartmentJoinButton(departmentId, status) {
     }
     
     try {
-      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/add-invite-code`, {
+      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/add-invite-code?userId=${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -3086,7 +3086,7 @@ function updateDepartmentJoinButton(departmentId, status) {
       `Are you sure you want to delete the 10-code "${code}"? This action cannot be undone.`,
       async () => {
         try {
-          const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes/${id}`, {
+          const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes/${id}?userId=${userId}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${window.dbUser?.token || ''}`
@@ -3146,7 +3146,7 @@ function updateDepartmentJoinButton(departmentId, status) {
   // Add new 10-code
   async function addTenCode(code, description) {
     try {
-      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes`, {
+      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes?userId=${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -3270,7 +3270,7 @@ function updateDepartmentJoinButton(departmentId, status) {
           'This will replace all ' + (window.allTenCodes || []).length + ' current 10-codes with ' + parsed.length + ' imported codes. Continue?',
           async function() {
             try {
-              var response = await fetch(API_URL + '/api/v1/community/' + communityId + '/tenCodes/bulk', {
+              var response = await fetch(API_URL + '/api/v1/community/' + communityId + '/tenCodes/bulk?userId=' + (userId || ''), {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',
@@ -3392,7 +3392,7 @@ function updateDepartmentJoinButton(departmentId, status) {
   // Update existing 10-code
   async function updateTenCode(id, code, description) {
     try {
-      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes/${id}`, {
+      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes/${id}?userId=${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
