@@ -3448,6 +3448,7 @@ function updateDepartmentJoinButton(departmentId, status) {
     'department.updated': 'Updated department',
     'department.deleted': 'Deleted department',
     'member.joined': 'Joined community',
+    'member.approved': 'Approved member',
     'member.removed': 'Removed member',
     'member.left': 'Left community',
     'member.banned': 'Banned member',
