@@ -22,10 +22,10 @@ export default function ContactUs() {
     {
       icon: LightBulbIcon,
       title: 'Request a New Feature',
-      description: 'Is there something missing that you wish we could do? Click here to request something new. We actively review all feature requests.',
-      note: 'Note: Before creating a new request, double check it doesn\'t already exist.',
+      description: 'Have an idea for a new feature? Submit it on our Feature Requests board where others can vote and discuss. We prioritize popular requests.',
+      note: 'Note: Before creating a new request, search for existing ones to avoid duplicates.',
       buttonText: 'Request Feature',
-      href: GITHUB_FEATURE_REQUEST,
+      href: '/feature-requests/new',
       color: '#10b981',
       gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
     },

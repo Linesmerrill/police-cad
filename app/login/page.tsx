@@ -100,7 +100,7 @@ function LoginForm() {
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ redirect: '/communities' }),
+              body: JSON.stringify({ redirect: searchParams.get('redirect') || '/communities' }),
               credentials: 'include',
               signal: controller.signal
             });
@@ -125,7 +125,11 @@ function LoginForm() {
         if (hiddenForm && hiddenEmail && hiddenPassword) {
           hiddenEmail.value = trimmedEmail;
           hiddenPassword.value = trimmedPassword;
-          
+          const hiddenRedirect = document.getElementById('hiddenRedirect') as HTMLInputElement;
+          if (hiddenRedirect) {
+            hiddenRedirect.value = searchParams.get('redirect') || '/communities';
+          }
+
           // Submit the form - this will trigger Passport authentication and set the session
           hiddenForm.submit();
         } else {
@@ -144,9 +148,15 @@ function LoginForm() {
           passwordInput.type = 'hidden';
           passwordInput.name = 'password';
           passwordInput.value = trimmedPassword;
-          
+
+          const redirectInput = document.createElement('input');
+          redirectInput.type = 'hidden';
+          redirectInput.name = 'redirect';
+          redirectInput.value = searchParams.get('redirect') || '/communities';
+
           form.appendChild(emailInput);
           form.appendChild(passwordInput);
+          form.appendChild(redirectInput);
           document.body.appendChild(form);
           
           form.submit();
@@ -370,6 +380,7 @@ function LoginForm() {
           >
             <input type="hidden" name="email" id="hiddenEmail" />
             <input type="hidden" name="password" id="hiddenPassword" />
+            <input type="hidden" name="redirect" id="hiddenRedirect" />
           </form>
 
           {/* Login Form */}
