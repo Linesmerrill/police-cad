@@ -33,6 +33,8 @@
     "got": "^12.0.1",
     "graceful-fs": "^4.2.4",
     "handlebars": "^4.7.7",
+    "linkify-react": "^4.3.2",
+    "linkifyjs": "^4.3.2",
     "minimist": "^1.2.6",
     "mocha": "^7.2.0",
     "mongo-sanitize": "^1.1.0",

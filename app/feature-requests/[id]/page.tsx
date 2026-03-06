@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import Linkify from 'linkify-react';
 import {
   ChevronUpIcon,
   ArrowLeftIcon,
@@ -90,6 +91,13 @@ function timeAgo(dateStr: string): string {
   if (months < 12) return `${months}mo ago`;
   return `${Math.floor(months / 12)}y ago`;
 }
+
+const LINKIFY_OPTIONS = {
+  target: '_blank',
+  rel: 'noopener noreferrer',
+  className: 'linkified',
+  defaultProtocol: 'https',
+};
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -520,7 +528,7 @@ function Comment({ comment, currentUserId, isAdmin, onEdit, onDelete }: {
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
             }}>
-              {comment.content}
+              <Linkify options={LINKIFY_OPTIONS}>{comment.content}</Linkify>
             </p>
             {comment.imageUrls && comment.imageUrls.length > 0 && (
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
@@ -1489,7 +1497,7 @@ export default function FeatureRequestDetail() {
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-word',
                       }}>
-                        {request.description}
+                        <Linkify options={LINKIFY_OPTIONS}>{request.description}</Linkify>
                       </p>
                     </>
                   )}
