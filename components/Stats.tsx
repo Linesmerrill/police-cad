@@ -424,7 +424,11 @@ export default function Stats() {
                 color: 'rgba(255, 255, 255, 0.6)',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
               }}>
-                {stat.description}
+                {stat.label === 'Uptime' ? (
+                  <a href="https://status.linespolice-cad.com" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(251, 191, 36, 0.8)', textDecoration: 'none', borderBottom: '1px dashed rgba(251, 191, 36, 0.4)' }}>
+                    View status page &rarr;
+                  </a>
+                ) : stat.description}
               </div>
             </div>
           );
