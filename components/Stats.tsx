@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 
 const stats = [
   { label: 'Active Communities', value: '10K+', description: 'Role-play communities worldwide' },
-  { label: 'Users', value: '500K+', description: 'Active users across all platforms' },
+  { label: 'Users', value: '800K+', description: 'Active users across all platforms' },
   { label: 'Free Forever', value: '100%', description: 'Premium tiers available but completely optional' },
   { label: 'Uptime', value: '99.9%', description: 'Reliable service you can count on' },
 ];
