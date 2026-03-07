@@ -265,3 +265,11 @@
   }
 }
 
+.linkified {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+.linkified:hover {
+  color: #93bbfd;
+}
+

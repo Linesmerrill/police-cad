@@ -1154,7 +1154,7 @@ function updateDepartmentJoinButton(departmentId, status) {
     }
     
     try {
-      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/add-invite-code`, {
+      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/add-invite-code?userId=${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -3086,7 +3086,7 @@ function updateDepartmentJoinButton(departmentId, status) {
       `Are you sure you want to delete the 10-code "${code}"? This action cannot be undone.`,
       async () => {
         try {
-          const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes/${id}`, {
+          const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes/${id}?userId=${userId}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${window.dbUser?.token || ''}`
@@ -3146,7 +3146,7 @@ function updateDepartmentJoinButton(departmentId, status) {
   // Add new 10-code
   async function addTenCode(code, description) {
     try {
-      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes`, {
+      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes?userId=${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -3270,7 +3270,7 @@ function updateDepartmentJoinButton(departmentId, status) {
           'This will replace all ' + (window.allTenCodes || []).length + ' current 10-codes with ' + parsed.length + ' imported codes. Continue?',
           async function() {
             try {
-              var response = await fetch(API_URL + '/api/v1/community/' + communityId + '/tenCodes/bulk', {
+              var response = await fetch(API_URL + '/api/v1/community/' + communityId + '/tenCodes/bulk?userId=' + (userId || ''), {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',
@@ -3392,7 +3392,7 @@ function updateDepartmentJoinButton(departmentId, status) {
   // Update existing 10-code
   async function updateTenCode(id, code, description) {
     try {
-      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes/${id}`, {
+      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes/${id}?userId=${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -3432,5 +3432,203 @@ function updateDepartmentJoinButton(departmentId, status) {
       loadTenCodes(); // Reload the list
     } catch (error) {
       showCustomToast('Error updating 10-code: ' + error.message, 'error');
+    }
+  }
+
+  // ===== AUDIT LOGS =====
+
+  const AUDIT_ACTION_LABELS = {
+    'role.created': 'Created role',
+    'role.deleted': 'Deleted role',
+    'role.renamed': 'Renamed role',
+    'role.permissions_updated': 'Updated role permissions',
+    'role.member_added': 'Added member to role',
+    'role.member_removed': 'Removed member from role',
+    'department.created': 'Created department',
+    'department.updated': 'Updated department',
+    'department.deleted': 'Deleted department',
+    'member.joined': 'Joined community',
+    'member.approved': 'Approved member',
+    'member.removed': 'Removed member',
+    'member.left': 'Left community',
+    'member.banned': 'Banned member',
+    'member.unbanned': 'Unbanned member',
+    'settings.updated': 'Updated community settings',
+    'invite.created': 'Created invite code',
+    'invite.deleted': 'Deleted invite code',
+    'penal_codes.updated': 'Updated penal codes',
+    'fines.updated': 'Updated fines',
+    'ten_codes.updated': 'Updated ten codes',
+    'event.created': 'Created event',
+    'event.updated': 'Updated event',
+    'event.deleted': 'Deleted event',
+  };
+
+  const AUDIT_CATEGORY_COLORS = {
+    role: '#8b5cf6',
+    department: '#f97316',
+    member: '#3b82f6',
+    settings: '#6b7280',
+    invite: '#10b981',
+    penal_codes: '#ef4444',
+    fines: '#eab308',
+    ten_codes: '#06b6d4',
+    event: '#ec4899',
+  };
+
+  const AUDIT_CATEGORY_ICONS = {
+    role: 'fa-shield-alt',
+    department: 'fa-users',
+    member: 'fa-user',
+    settings: 'fa-cog',
+    invite: 'fa-link',
+    penal_codes: 'fa-book',
+    fines: 'fa-money-bill',
+    ten_codes: 'fa-broadcast-tower',
+    event: 'fa-calendar',
+  };
+
+  let auditLogsPage = 1;
+  let auditLogsCategory = '';
+  let auditLogsTotalPages = 1;
+
+  function formatAuditRelativeTime(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+    if (diffSec < 60) return 'just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffHr < 24) return `${diffHr}h ago`;
+    if (diffDay < 7) return `${diffDay}d ago`;
+    return date.toLocaleDateString();
+  }
+
+  window.openAuditLogsModal = function() {
+    document.getElementById('auditLogsModal').style.display = 'flex';
+    auditLogsPage = 1;
+    auditLogsCategory = '';
+    // Reset filter chips
+    document.querySelectorAll('.audit-filter-chip').forEach(function(chip) {
+      if (chip.dataset.category === '') {
+        chip.style.background = '#3b82f6';
+        chip.style.color = '#fff';
+        chip.style.fontWeight = '500';
+      } else {
+        chip.style.background = '#2d3748';
+        chip.style.color = '#a0aec0';
+        chip.style.fontWeight = 'normal';
+      }
+    });
+    loadAuditLogs();
+  };
+
+  window.closeAuditLogsModal = function() {
+    document.getElementById('auditLogsModal').style.display = 'none';
+  };
+
+  window.filterAuditLogs = function(category) {
+    auditLogsCategory = category;
+    auditLogsPage = 1;
+    // Update chip styles
+    document.querySelectorAll('.audit-filter-chip').forEach(function(chip) {
+      if (chip.dataset.category === category) {
+        chip.style.background = '#3b82f6';
+        chip.style.color = '#fff';
+        chip.style.fontWeight = '500';
+      } else {
+        chip.style.background = '#2d3748';
+        chip.style.color = '#a0aec0';
+        chip.style.fontWeight = 'normal';
+      }
+    });
+    loadAuditLogs();
+  };
+
+  window.changeAuditLogsPage = function(delta) {
+    const newPage = auditLogsPage + delta;
+    if (newPage < 1 || newPage > auditLogsTotalPages) return;
+    auditLogsPage = newPage;
+    loadAuditLogs();
+  };
+
+  async function loadAuditLogs() {
+    const loading = document.getElementById('auditLogsLoading');
+    const listContainer = document.getElementById('auditLogsListContainer');
+    const emptyState = document.getElementById('auditLogsEmptyState');
+    const list = document.getElementById('auditLogsList');
+
+    loading.style.display = 'block';
+    listContainer.style.display = 'none';
+    emptyState.style.display = 'none';
+
+    try {
+      let url = `${API_URL}/api/v2/community/${communityId}/audit-logs?page=${auditLogsPage}&limit=20&userId=${userId}`;
+      if (auditLogsCategory) {
+        url += `&category=${auditLogsCategory}`;
+      }
+
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${window.dbUser?.token || ''}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch audit logs');
+      }
+
+      const result = await response.json();
+      const logs = result.data || [];
+      auditLogsTotalPages = result.pagination?.totalPages || 1;
+
+      loading.style.display = 'none';
+
+      if (logs.length === 0) {
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      list.innerHTML = logs.map(function(log) {
+        const color = AUDIT_CATEGORY_COLORS[log.category] || '#6b7280';
+        const icon = AUDIT_CATEGORY_ICONS[log.category] || 'fa-clipboard-list';
+        const label = AUDIT_ACTION_LABELS[log.action] || log.action;
+        const target = log.targetName ? ` "${log.targetName}"` : '';
+        const actor = log.actorName || 'Unknown';
+        const time = formatAuditRelativeTime(log.createdAt);
+
+        return `
+          <div style="display:flex; align-items:flex-start; gap:0.75rem; padding:0.85rem 1rem; border-bottom:1px solid #2d3748;">
+            <div style="background:${color}20; border-radius:9999px; padding:0.5rem; flex-shrink:0; margin-top:0.1rem;">
+              <i class="fa ${icon}" style="color:${color}; font-size:0.85rem; width:16px; text-align:center;"></i>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div style="color:#fff; font-size:0.9rem; font-weight:500;">${label}${target}</div>
+              <div style="color:#a0aec0; font-size:0.78rem; margin-top:0.2rem;">${actor} &middot; ${time}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      listContainer.style.display = 'block';
+
+      // Update pagination
+      const prevBtn = document.getElementById('auditLogsPrevBtn');
+      const nextBtn = document.getElementById('auditLogsNextBtn');
+      const pageInfo = document.getElementById('auditLogsPageInfo');
+
+      prevBtn.disabled = auditLogsPage <= 1;
+      prevBtn.style.opacity = auditLogsPage <= 1 ? '0.5' : '1';
+      nextBtn.disabled = auditLogsPage >= auditLogsTotalPages;
+      nextBtn.style.opacity = auditLogsPage >= auditLogsTotalPages ? '0.5' : '1';
+      pageInfo.textContent = `Page ${auditLogsPage} of ${auditLogsTotalPages}`;
+
+    } catch (error) {
+      loading.style.display = 'none';
+      emptyState.style.display = 'block';
+      console.error('Failed to load audit logs:', error);
     }
   } 
