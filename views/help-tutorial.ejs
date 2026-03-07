@@ -556,10 +556,46 @@
       font-size: 0.7rem;
     }
 
+    /* ── Nav Toggle (hidden on desktop) ── */
+    .ht-nav-toggle {
+      display: none;
+    }
+
     /* ── Mobile ── */
     @media (max-width: 768px) {
       .ht-shell { padding: 1.25rem 1rem 3rem; }
-      .ht-layout { flex-direction: column; gap: 1.5rem; }
+      .ht-layout { flex-direction: column; gap: 0; }
+      .ht-nav-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.7rem 1rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        font-family: inherit;
+        color: var(--ht-text);
+        background: var(--ht-glass);
+        border: 1px solid var(--ht-glass-border);
+        border-radius: var(--ht-radius-sm);
+        cursor: pointer;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s ease;
+      }
+      .ht-nav-toggle:hover,
+      .ht-nav-toggle.active {
+        background: var(--ht-glass-hover);
+        border-color: rgba(139,92,246,0.25);
+        color: #fff;
+      }
+      .ht-nav-toggle .ht-toggle-arrow {
+        margin-left: auto;
+        transition: transform 0.3s ease;
+        font-size: 0.7rem;
+      }
+      .ht-nav-toggle.active .ht-toggle-arrow {
+        transform: rotate(180deg);
+      }
       .ht-sidebar {
         position: static;
         width: 100%;
@@ -568,6 +604,17 @@
         gap: 0.25rem;
         padding-bottom: 1rem;
         border-bottom: 1px solid var(--ht-glass-border);
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+        padding-top: 0;
+        padding-bottom: 0;
+        margin-bottom: 0;
+      }
+      .ht-sidebar.open {
+        max-height: 2000px;
+        padding-bottom: 1rem;
+        margin-bottom: 0.75rem;
       }
       .ht-nav-group-title { margin-top: 0.5rem; width: 100%; }
       .ht-nav-link { padding: 0.35rem 0.65rem; border-left: none; }
@@ -598,6 +645,12 @@
   <!-- ═══ Layout ═══ -->
   <div class="ht-layout">
 
+    <!-- ── Mobile Nav Toggle ── -->
+    <button class="ht-nav-toggle" onclick="this.classList.toggle('active'); document.querySelector('.ht-sidebar').classList.toggle('open')">
+      <i class="fa fa-bars"></i> Navigation
+      <i class="fa fa-chevron-down ht-toggle-arrow"></i>
+    </button>
+
     <!-- ── Sidebar ── -->
     <nav class="ht-sidebar">
       <div class="ht-nav-group-title"><i class="fa fa-gavel"></i> Warrants</div>
@@ -617,6 +670,12 @@
       <a class="ht-nav-link" href="#court-viewing">Viewing Cases</a>
       <a class="ht-nav-link" href="#court-queue">Case Queue</a>
       <a class="ht-nav-link" href="#court-sessions">Court Sessions</a>
+
+      <div class="ht-nav-group-title"><i class="fa fa-gear"></i> Community Settings</div>
+      <a class="ht-nav-link" href="#settings-overview">Overview</a>
+      <a class="ht-nav-link" href="#settings-penal-import">Penal Code Import/Export</a>
+      <a class="ht-nav-link" href="#settings-ten-import">Ten Code Import/Export</a>
+      <a class="ht-nav-link" href="#settings-icons">Category Icons</a>
     </nav>
 
     <!-- ── Content ── -->
@@ -1232,6 +1291,312 @@
         </div>
       </section>
 
+      <!-- ╔═══════════════════════════════════════════╗ -->
+      <!-- ║      COMMUNITY SETTINGS SECTION            ║ -->
+      <!-- ╚═══════════════════════════════════════════╝ -->
+      <section id="community-settings" class="ht-section">
+        <div class="ht-section-header">
+          <div class="ht-section-icon"><i class="fa fa-gear"></i></div>
+          <div>
+            <div class="ht-section-title">Community Settings</div>
+            <div class="ht-section-subtitle">Manage penal codes, ten codes, and community configuration</div>
+          </div>
+        </div>
+
+        <!-- Overview -->
+        <div class="ht-subsection" id="settings-overview">
+          <h3 class="ht-subsection-title">Overview</h3>
+          <p class="ht-text">
+            Community owners and admins can customize penal codes, ten codes, and fine settings through the
+            <strong style="color:#fff;">Community Details</strong> page. These settings control what violations, codes,
+            and fines are available across your entire community &mdash; including citations, arrest reports, and warrants.
+          </p>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Open Community Details</div>
+                <div class="ht-step-desc">Click your community name in the sidebar, then select <strong>Community Details</strong>.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Navigate to the settings tab</div>
+                <div class="ht-step-desc">Choose the relevant tab: <strong>Penal Codes</strong>, <strong>10-Codes</strong>, or <strong>Fine Settings</strong>.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Make your changes</div>
+                <div class="ht-step-desc">Add, edit, remove, import, or export entries. Click <strong>Save Changes</strong> when finished.</div>
+              </div>
+            </div>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-lock ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Only users with the <strong>"Manage Community Settings"</strong> permission can access these features. Community owners have this permission by default.
+            </div>
+          </div>
+        </div>
+
+        <!-- Penal Code Import/Export -->
+        <div class="ht-subsection" id="settings-penal-import">
+          <h3 class="ht-subsection-title">Penal Code Import &amp; Export</h3>
+          <p class="ht-text">
+            Quickly transfer your penal code configuration between communities. Export your current setup as a file,
+            then import it elsewhere &mdash; no need to manually re-enter dozens of violations.
+          </p>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Penal Codes Toolbar</div>
+            <div class="ht-sample-content" style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+              <span class="ht-btn" style="background:rgba(16,185,129,0.15); color:#22c55e; font-size:0.75rem;"><i class="fa fa-download"></i> Export</span>
+              <span class="ht-btn" style="background:rgba(59,130,246,0.15); color:#3b82f6; font-size:0.75rem;"><i class="fa fa-upload"></i> Import</span>
+              <span class="ht-btn" style="background:rgba(245,158,11,0.15); color:#f59e0b; font-size:0.75rem;"><i class="fa fa-undo"></i> Reset</span>
+            </div>
+          </div>
+
+          <p class="ht-text" style="font-weight:600; color:#fff; margin-top:1.25rem;">Exporting Penal Codes</p>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Click "Export"</div>
+                <div class="ht-step-desc">In the Penal Codes settings, click the green <strong>Export</strong> button in the toolbar.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Choose a format</div>
+                <div class="ht-step-desc">Select <strong>JSON</strong> or <strong>CSV</strong>. The file will download automatically.</div>
+              </div>
+            </div>
+          </div>
+
+          <p class="ht-text" style="font-weight:600; color:#fff; margin-top:1.25rem;">Importing Penal Codes</p>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Click "Import"</div>
+                <div class="ht-step-desc">Click the blue <strong>Import</strong> button and select a <code>.json</code> or <code>.csv</code> file from your computer.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Review the imported data</div>
+                <div class="ht-step-desc">The imported penal codes will load into the editor. Review the categories and violations to make sure everything looks correct.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Save Changes</div>
+                <div class="ht-step-desc">Click <strong>Save Changes</strong> to apply the imported penal codes. Until you save, nothing is changed on the server.</div>
+              </div>
+            </div>
+          </div>
+
+          <p class="ht-text" style="font-weight:600; color:#fff; margin-top:1.25rem;">Resetting to Defaults</p>
+          <p class="ht-text">
+            Click the amber <strong>Reset</strong> button to restore the built-in default penal codes. This replaces all current categories and violations
+            with the original set that comes with every new community. You'll be asked to confirm before the reset takes effect.
+          </p>
+
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              <strong>Always export first!</strong> Importing replaces all existing penal codes. Export your current codes as a backup before importing a new set.
+            </div>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-lightbulb ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              <strong>JSON vs CSV:</strong> JSON preserves the full data structure including currency settings and is the recommended format for transferring between communities.
+              CSV is useful if you want to edit violations in a spreadsheet app like Excel or Google Sheets.
+            </div>
+          </div>
+        </div>
+
+        <!-- Ten Code Import/Export -->
+        <div class="ht-subsection" id="settings-ten-import">
+          <h3 class="ht-subsection-title">Ten Code Import &amp; Export</h3>
+          <p class="ht-text">
+            Ten codes (radio codes like 10-4, 10-7, Signal 100) can also be exported and imported. Each ten code is a simple
+            pair: a <strong style="color:#fff;">code</strong> and a <strong style="color:#fff;">description</strong>.
+          </p>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Ten Codes Table</div>
+            <div class="ht-sample-content">
+              <table class="ht-sample-table">
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Signal 100</td>
+                    <td>HOLD ALL BUT EMERGENCY</td>
+                  </tr>
+                  <tr>
+                    <td>10-4</td>
+                    <td>Acknowledgement / OK</td>
+                  </tr>
+                  <tr>
+                    <td>10-7</td>
+                    <td>Out of Service</td>
+                  </tr>
+                  <tr>
+                    <td>10-8</td>
+                    <td>In Service</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Open the 10-Codes tab</div>
+                <div class="ht-step-desc">In Community Details, switch to the <strong>10-Codes</strong> tab and click the edit button to enter edit mode.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Export or Import</div>
+                <div class="ht-step-desc">Click <strong>Export</strong> to download your codes as JSON or CSV. Click <strong>Import</strong> to upload a file and replace all current ten codes.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-tip">
+            <i class="fa fa-triangle-exclamation ht-tip-icon" style="color:var(--ht-amber);"></i>
+            <div class="ht-tip-text">
+              <strong>Ten code imports take effect immediately</strong> after confirmation &mdash; there is no separate "Save Changes" step.
+              Export your current codes first as a backup.
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Icons -->
+        <div class="ht-subsection" id="settings-icons">
+          <h3 class="ht-subsection-title">Category Icons</h3>
+          <p class="ht-text">
+            When editing penal code categories, you can assign a <strong style="color:#fff;">Font Awesome</strong> icon to each category.
+            Icons appear next to the category name throughout the system, making it easy to identify categories at a glance.
+          </p>
+          <p class="ht-text">
+            Browse the full icon library at
+            <a href="https://fontawesome.com/icons" target="_blank" rel="noopener noreferrer" style="color:var(--ht-accent); text-decoration:underline;">fontawesome.com/icons</a>.
+          </p>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Popular Category Icons</div>
+            <div class="ht-sample-content">
+              <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.75rem; text-align:center;">
+                <div style="padding:0.75rem; background:var(--ht-glass); border:1px solid var(--ht-glass-border); border-radius:8px;">
+                  <i class="fa fa-car" style="font-size:1.25rem; color:var(--ht-blue); display:block; margin-bottom:0.35rem;"></i>
+                  <span style="font-size:0.68rem; color:var(--ht-text-muted);">fa-car</span>
+                </div>
+                <div style="padding:0.75rem; background:var(--ht-glass); border:1px solid var(--ht-glass-border); border-radius:8px;">
+                  <i class="fa fa-gavel" style="font-size:1.25rem; color:var(--ht-amber); display:block; margin-bottom:0.35rem;"></i>
+                  <span style="font-size:0.68rem; color:var(--ht-text-muted);">fa-gavel</span>
+                </div>
+                <div style="padding:0.75rem; background:var(--ht-glass); border:1px solid var(--ht-glass-border); border-radius:8px;">
+                  <i class="fa fa-handcuffs" style="font-size:1.25rem; color:var(--ht-red); display:block; margin-bottom:0.35rem;"></i>
+                  <span style="font-size:0.68rem; color:var(--ht-text-muted);">fa-handcuffs</span>
+                </div>
+                <div style="padding:0.75rem; background:var(--ht-glass); border:1px solid var(--ht-glass-border); border-radius:8px;">
+                  <i class="fa fa-shield" style="font-size:1.25rem; color:var(--ht-green); display:block; margin-bottom:0.35rem;"></i>
+                  <span style="font-size:0.68rem; color:var(--ht-text-muted);">fa-shield</span>
+                </div>
+                <div style="padding:0.75rem; background:var(--ht-glass); border:1px solid var(--ht-glass-border); border-radius:8px;">
+                  <i class="fa fa-scale-balanced" style="font-size:1.25rem; color:var(--ht-accent); display:block; margin-bottom:0.35rem;"></i>
+                  <span style="font-size:0.68rem; color:var(--ht-text-muted);">fa-scale-balanced</span>
+                </div>
+                <div style="padding:0.75rem; background:var(--ht-glass); border:1px solid var(--ht-glass-border); border-radius:8px;">
+                  <i class="fa fa-building-columns" style="font-size:1.25rem; color:var(--ht-blue); display:block; margin-bottom:0.35rem;"></i>
+                  <span style="font-size:0.68rem; color:var(--ht-text-muted);">fa-building-columns</span>
+                </div>
+                <div style="padding:0.75rem; background:var(--ht-glass); border:1px solid var(--ht-glass-border); border-radius:8px;">
+                  <i class="fa fa-gun" style="font-size:1.25rem; color:var(--ht-amber); display:block; margin-bottom:0.35rem;"></i>
+                  <span style="font-size:0.68rem; color:var(--ht-text-muted);">fa-gun</span>
+                </div>
+                <div style="padding:0.75rem; background:var(--ht-glass); border:1px solid var(--ht-glass-border); border-radius:8px;">
+                  <i class="fa fa-skull-crossbones" style="font-size:1.25rem; color:var(--ht-red); display:block; margin-bottom:0.35rem;"></i>
+                  <span style="font-size:0.68rem; color:var(--ht-text-muted);">fa-skull-crossbones</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-tip">
+            <i class="fa fa-triangle-exclamation ht-tip-icon" style="color:var(--ht-amber);"></i>
+            <div class="ht-tip-text">
+              <strong>Important:</strong> The Font Awesome website shows icons by their short name (e.g. <strong>"car"</strong>, <strong>"gavel"</strong>).
+              When entering an icon in the settings, you must add the <code style="background:rgba(255,255,255,0.08); padding:0.1rem 0.4rem; border-radius:4px; font-size:0.78rem;">fa-</code> prefix.
+            </div>
+          </div>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Example: Adding the prefix</div>
+            <div class="ht-sample-content" style="display:flex; flex-direction:column; gap:0.75rem;">
+              <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+                <div style="flex:1; min-width:140px;">
+                  <div style="font-size:0.68rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#475569; margin-bottom:0.35rem;">Font Awesome shows</div>
+                  <div style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 0.75rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:6px;">
+                    <i class="fa fa-car" style="color:var(--ht-blue);"></i>
+                    <span style="font-size:0.82rem; color:var(--ht-text-muted);">car</span>
+                  </div>
+                </div>
+                <i class="fa fa-arrow-right" style="color:#475569; flex-shrink:0;"></i>
+                <div style="flex:1; min-width:140px;">
+                  <div style="font-size:0.68rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#475569; margin-bottom:0.35rem;">You enter</div>
+                  <div style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 0.75rem; background:rgba(34,197,94,0.06); border:1px solid rgba(34,197,94,0.15); border-radius:6px;">
+                    <i class="fa fa-car" style="color:var(--ht-green);"></i>
+                    <span style="font-size:0.82rem; color:#22c55e; font-weight:600;">fa-car</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+                <div style="flex:1; min-width:140px;">
+                  <div style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 0.75rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:6px;">
+                    <i class="fa fa-handcuffs" style="color:var(--ht-red);"></i>
+                    <span style="font-size:0.82rem; color:var(--ht-text-muted);">handcuffs</span>
+                  </div>
+                </div>
+                <i class="fa fa-arrow-right" style="color:#475569; flex-shrink:0;"></i>
+                <div style="flex:1; min-width:140px;">
+                  <div style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 0.75rem; background:rgba(34,197,94,0.06); border:1px solid rgba(34,197,94,0.15); border-radius:6px;">
+                    <i class="fa fa-handcuffs" style="color:var(--ht-green);"></i>
+                    <span style="font-size:0.82rem; color:#22c55e; font-weight:600;">fa-handcuffs</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-tip">
+            <i class="fa fa-lightbulb ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Only <strong>free solid</strong> icons are supported. On the Font Awesome website, use the <strong>"Free"</strong> filter and select the <strong>"Solid"</strong> style
+              to browse compatible icons.
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div><!-- /.ht-content -->
   </div><!-- /.ht-layout -->
 
@@ -1255,6 +1620,11 @@
       if (target) {
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         history.replaceState(null, null, this.getAttribute('href'));
+        // Close mobile nav after clicking a link
+        var sidebar = document.querySelector('.ht-sidebar');
+        var toggle = document.querySelector('.ht-nav-toggle');
+        if (sidebar) sidebar.classList.remove('open');
+        if (toggle) toggle.classList.remove('active');
       }
     });
   });
@@ -1301,7 +1671,8 @@
       var sectionMap = {
         '#warrants': '#warrants-overview',
         '#penal-codes': '#penal-overview',
-        '#court-cases': '#court-overview'
+        '#court-cases': '#court-overview',
+        '#community-settings': '#settings-overview'
       };
       var mapped = sectionMap[window.location.hash];
       if (mapped) hashTarget = document.querySelector(mapped);

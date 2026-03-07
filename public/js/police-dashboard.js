@@ -154,7 +154,7 @@ function cancelCallSign() {
 }
 
 // function populateBoloDetails(id) {
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   socket.emit("load_police_bolos", dbUser);
 //   socket.on("load_police_bolos_result", (res) => {
 //     for (const i in res) {
@@ -182,7 +182,7 @@ function cancelCallSign() {
 // }
 
 function populateCallDetails(callID) {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   socket.emit("get_call_by_id", callID);
   socket.on("load_call_by_id_result", (res) => {
     var createdDate = new Date(res.call.createdAt);
@@ -258,7 +258,7 @@ function populatePanicDetails(id) {
 }
 
 function updateStatus(status) {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var onDuty = null;
   var updateDuty = false;
   if (status == "10-41") {
@@ -284,7 +284,7 @@ function updateStatus(status) {
 
 // $("#updateBolo").one("click", function () {
 //   var val = $(this).attr("value");
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   $("#update-bolo-form").submit(function (e) {
 //     e.preventDefault(); //prevents page from reloading
 
@@ -303,7 +303,7 @@ function updateStatus(status) {
 // });
 
 $("#createBolo").one("click", function () {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   $("#create-bolo-form").submit(function (e) {
     e.preventDefault(); //prevents page from reloading
     var myCreateReq = {
@@ -322,7 +322,7 @@ $("#createBolo").one("click", function () {
 
 // $("#deleteBolo").one("click", function () {
 //   var val = $(this).attr("value");
-//   var socket = io();
+//   var socket = io({ transports: ["websocket"] });
 //   $("#delete-bolo-form").submit(function (e) {
 //     e.preventDefault(); //prevents page from reloading
 
@@ -343,7 +343,7 @@ $("#createBolo").one("click", function () {
 // });
 
 $("#clearPanic").one("click", function () {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   $("#clear-panic-form").submit(function (e) {
     e.preventDefault(); //prevents page from reloading
     var myReq = {
@@ -379,7 +379,7 @@ function clearBoloForm() {
 
 // Core dashboard functions and event handlers
 function togglePanicBtnSound() {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     userID: dbUser._id,
     panicButtonSound: $("#panic-button-check-sound").prop("checked"),
@@ -388,7 +388,7 @@ function togglePanicBtnSound() {
 }
 
 function adjustAlertVolumeSlider() {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     userID: dbUser._id,
     alertVolumeLevel: $("#alert-volume-slider").val(),
@@ -397,7 +397,7 @@ function adjustAlertVolumeSlider() {
 }
 
 function loadCitations() {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     userID: dbUser._id,
     communityID: dbUser.user.activeCommunity,
@@ -406,7 +406,7 @@ function loadCitations() {
 }
 
 function loadWarnings() {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     userID: dbUser._id,
     communityID: dbUser.user.activeCommunity,
@@ -429,6 +429,46 @@ $("#warningModal").on("show.bs.modal", function () {
 
 $("#arrestModal").on("show.bs.modal", function () {
   hideArrestReportPopover();
+
+  // Populate charges from penal codes
+  var communityId = (typeof dbUser !== 'undefined') ? (dbUser.user && dbUser.user.lastAccessedCommunity && dbUser.user.lastAccessedCommunity.communityID) : null;
+  if (!communityId) return;
+
+  var $select = $('#arrest-civ-charges');
+  // Destroy existing Select2 if any
+  if ($select.hasClass('select2-hidden-accessible')) {
+    $select.select2('destroy');
+  }
+  $select.find('optgroup:not([label="Crime not listed"])').remove();
+
+  $.ajax({
+    url: API_URL + '/api/v1/community/' + communityId + '/penal-codes',
+    method: 'GET',
+    success: function(data) {
+      var categories = (data && data.categories) || [];
+      categories.forEach(function(cat) {
+        var $g = $('<optgroup label="' + (cat.name || 'Unknown') + '"></optgroup>');
+        (cat.violations || []).forEach(function(v) {
+          $g.append('<option value="' + v.name + '">' + v.name + '</option>');
+        });
+        $select.prepend($g);
+      });
+      $select.select2({
+        placeholder: 'Search charges...',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#arrestModal')
+      });
+    },
+    error: function() {
+      $select.select2({
+        placeholder: 'Search charges...',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#arrestModal')
+      });
+    }
+  });
 });
 
 $("#createWarrantModal").on("show.bs.modal", function () {

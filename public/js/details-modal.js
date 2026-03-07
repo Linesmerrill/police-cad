@@ -317,7 +317,7 @@ $(document).ready(function () {
               success: function (data) {
                 arrestReports = data.data || [];
                 totalArrestReports = data.totalCount || 0;
-                currentArrestPage = 1;
+                currentArrestPage = 0;
                 loadingStatuses.find((s) => s.id === "arrestReports").status =
                   "success";
                 updateLoadingStatuses();
@@ -611,8 +611,15 @@ $(document).ready(function () {
     // Criminal History & Arrest Reports (only if Criminal tab is active)
     if (isCriminalTabActive && currentType === "Civilian") {
       // Arrest Reports
+      const arrestPageSize = 3;
+      const arrestTotalPages = Math.ceil(totalArrestReports / arrestPageSize);
+      const arrestDisplayPage = currentArrestPage + 1;
+
       let arrestReportsHtml = `
-    <h5 class="text-white mb-2">Arrest Reports (${arrestReports.length})</h5>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="text-white m-0">Arrest Reports (${totalArrestReports})</h5>
+      ${totalArrestReports > arrestPageSize ? `<small class="text-gray">Page ${arrestDisplayPage} of ${arrestTotalPages}</small>` : ""}
+    </div>
     ${
       arrestReports.length > 0
         ? arrestReports
@@ -639,11 +646,11 @@ $(document).ready(function () {
         : '<p class="text-gray">No arrest reports found.</p>'
     }
     ${
-      totalArrestReports > 3
+      totalArrestReports > arrestPageSize
         ? `
           <div class="d-flex justify-content-between mt-2">
-            <button class="btn btn-primary" onclick="fetchArrestReports(${currentArrestPage - 1})" ${currentArrestPage === 1 ? "disabled" : ""}>Previous</button>
-            <button class="btn btn-primary" onclick="fetchArrestReports(${currentArrestPage + 1})" ${currentArrestPage * 3 >= totalArrestReports ? "disabled" : ""}>Next</button>
+            <button class="btn btn-primary" onclick="fetchArrestReports(${currentArrestPage - 1})" ${currentArrestPage === 0 ? "disabled" : ""}>Previous</button>
+            <button class="btn btn-primary" onclick="fetchArrestReports(${currentArrestPage + 1})" ${arrestDisplayPage >= arrestTotalPages ? "disabled" : ""}>Next</button>
           </div>
         `
         : ""
@@ -1039,7 +1046,9 @@ $(document).ready(function () {
 
       $("#arrest-location").val("");
       $("#incident-location").val("");
-      $("#arrest-civ-charges").val("");
+      if ($('#arrest-civ-charges').hasClass('select2-hidden-accessible')) {
+        $('#arrest-civ-charges').val(null).trigger('change');
+      }
       $("#forceUsed").val("");
       $("#detail").val("");
       $("#actions-taken").val("");
@@ -1081,7 +1090,7 @@ $(document).ready(function () {
           name: $("#reporting-officer").val(),
           badgeNumber: dbUser.user.callSign || "Unknown",
         },
-        charges: $("#arrest-civ-charges").val(),
+        charges: ($("#arrest-civ-charges").val() || []).filter(function(c) { return c !== 'Other'; }).join(", "),
         narrative: $("#detail").val(),
         witnesses: $("#actions-taken").val(),
         forceUsed: $("#forceUsed").val() === "Yes",

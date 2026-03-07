@@ -640,6 +640,7 @@
     <div class="cc-modal-body" id="caseDetailBody">
       <div class="cc-spinner"></div>
     </div>
+    <div id="caseDetailFoot" style="display:none;padding:0.75rem 1.25rem;border-top:1px solid var(--cc-glass-border);justify-content:flex-end;"></div>
   </div>
 </div>
 
@@ -1265,6 +1266,7 @@
 
   window.viewCase = function(caseId) {
     $('#caseDetailBody').html('<div class="cc-spinner"></div>');
+    $('#caseDetailFoot').hide().empty();
     $('#caseDetailModal').addClass('open');
 
     $.ajax({
@@ -1331,11 +1333,36 @@
 
         $('#caseDetailBody').html(detailHtml);
 
+        // Show delete button for case owner
+        var $foot = $('#caseDetailFoot');
+        if (currentUserId && d.userID && d.userID === currentUserId) {
+          $foot.html('<button class="cc-btn" style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);" onclick="deleteCivilianCase(\'' + caseId + '\')"><i class="fa fa-trash"></i> Delete Case</button>').css('display', 'flex');
+        } else {
+          $foot.hide().empty();
+        }
+
         // Enrich contested items with actual record details
         enrichContestedItems(d.civilianID, d.contestedItems || []);
       },
       error: function() {
         $('#caseDetailBody').html('<div class="cc-empty"><i class="fa fa-exclamation-triangle"></i>Failed to load case details.</div>');
+        $('#caseDetailFoot').hide().empty();
+      }
+    });
+  };
+
+  window.deleteCivilianCase = function(caseId) {
+    if (!confirm('Delete this court case? If it is not completed, contested charges will be reverted. This cannot be undone.')) return;
+    $.ajax({
+      url: API_URL + '/api/v2/court-cases/' + caseId,
+      method: 'DELETE',
+      success: function() {
+        $('#caseDetailModal').removeClass('open');
+        loadQueue();
+        loadScheduled();
+      },
+      error: function(xhr) {
+        alert((xhr.responseJSON && xhr.responseJSON.message) || 'Failed to delete court case.');
       }
     });
   };

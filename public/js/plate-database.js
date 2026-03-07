@@ -5,7 +5,7 @@ function escapeHtml(str) {
 }
 
 function vehicleSearchPoliceForm() {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var pageVeh = 0;
   var plate = $("#plateNumber").val();
   $("#plateNumberStored").val(plate);
@@ -89,7 +89,7 @@ function populateVehicleDetails(res) {
 }
 
 function loadVehSocketData(vehID) {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myReq = {
     vehID: vehID,
   };
@@ -153,7 +153,7 @@ function updateToIsStolen() {
 }
 
 function getVehicles() {
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myCivObj = {
     civID: $("#civilianIDView").text(),
     page: 0,
@@ -211,7 +211,7 @@ function getVehicles() {
 
 function getNextVehPage() {
   pageVeh = pageVeh + 1;
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myObj = {
     civID: $("#civilianIDView").text(),
     page: pageVeh,
@@ -261,7 +261,7 @@ function getPrevVehPage() {
     $("#prev-veh-page-btn").addClass("isDisabled");
     $("#prev-veh-page-btn").attr("onclick", "").unbind("click");
   }
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myObj = {
     civID: $("#civilianIDView").text(),
     page: pageVeh,
@@ -296,7 +296,7 @@ function getPrevVehPage() {
 
 function getNextSearchVehPage() {
   pageVeh = pageVeh + 1;
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myObj = {
     body: {
       communityID: $("#active-community-id").val(),
@@ -353,7 +353,7 @@ function getPrevSearchVehPage() {
     $("#prev-search-veh-page-btn").addClass("isDisabled");
     $("#prev-search-veh-page-btn").attr("onclick", "").unbind("click");
   }
-  var socket = io();
+  var socket = io({ transports: ["websocket"] });
   var myObj = {
     body: {
       communityID: $("#active-community-id").val(),

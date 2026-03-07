@@ -4135,7 +4135,7 @@ function deleteFirearmModern(firearmId) {
 
 
 function loadFirearmSocketData(firearmID) {
-    var socket = io();
+    var socket = io({ transports: ["websocket"] });
     var myReq = {
         firearmID: firearmID,
     };
@@ -4285,7 +4285,7 @@ function cancelCallSign() {
 }
 
 function togglePanicBtnSound() {
-    var socket = io();
+    var socket = io({ transports: ["websocket"] });
     socket.emit('update_panic_btn_sound', dbUser);
     socket.on('load_panic_btn_result', (res) => {
         $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound);
@@ -4294,7 +4294,7 @@ function togglePanicBtnSound() {
 }
 
 function adjustAlertVolumeSlider() {
-    var socket = io();
+    var socket = io({ transports: ["websocket"] });
     var volumeAmount = $('#alert-volume-slider').val();
     var myObj = {
         dbUser: dbUser,
@@ -5703,7 +5703,7 @@ $(document).on('click', '#submitContestBtn', function() {
     url: `${API_URL}/api/v2/court-cases`,
     method: 'POST',
     contentType: 'application/json',
-    data: JSON.stringify(courtCasePayload),
+    data: JSON.stringify({ courtCase: courtCasePayload }),
     success: function(resp) {
       $('#contestModal').remove();
       alert('Your contest has been submitted successfully. A judge will review your case.');

@@ -241,7 +241,7 @@ function handleNotificationAction(notificationId, action) {
   } else if (notification.type === "join_request" && !notification.data3) {
     requests.push(
       $.ajax({
-        url: `${API_URL}/api/v1/user/${notification.sentFromID}/communities?migration=false`,
+        url: `${API_URL}/api/v1/user/${notification.sentFromID}/communities?migration=false&userId=${dbUser._id}`,
         method: "PUT",
         contentType: "application/json",
         data: JSON.stringify({

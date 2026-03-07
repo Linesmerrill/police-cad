@@ -325,7 +325,7 @@
   .rotate.expanded {
     transform: rotate(90deg);
   }
-  
+
   .select2-container--open {
     z-index: 9999 !important; /* Ensure dropdown is above modal (z-index 9000) */
   }
@@ -1959,218 +1959,7 @@
     </div>
   </div>
 
-  <div id="arrestModal" class="modal fade" style="z-index: 9000" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form id="arrest-form" class="form-horizontal">
-            <fieldset>
-
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                aria-hidden="true">X</button>
-              <h4>San Andreas Arrest Report</h4>
-              <hr style="width: 88%;max-width: 100rem;">
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="arrest-report-case-no">Report Number:</label>
-                <div class="col-md-4">
-                  <input id="arrest-report-case-no" name="caseNumber" type="number" class="form-control input-md"
-                    readonly="readonly">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="arrest-report-date">Date of Arrest:</label>
-                <div class="col-md-4">
-                  <input id="arrest-report-date" name="date" type="date" min="1900-01-01" max="2999-12-31"
-                    class="form-control input-md" required="">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="arrest-report-time">Arrest Time:</label>
-                <div class="col-md-4">
-                  <input id="arrest-report-time" name="time" type="time" placeholder="hh:mm"
-                    class="form-control input-md" required="">
-                </div>
-              </div>
-
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="arrest-location">Arrest Location:</label>
-                <div class="col-md-4">
-                  <input id="arrest-location" name="arrest-location" type="text" placeholder="Arrest Location"
-                    class="form-control input-md" style="text-transform:capitalize;"
-                  required="">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="arrest-report-incident-date">Date of Incident:</label>
-                <div class="col-md-4">
-                  <input id="arrest-report-incident-date" name="date" type="date" min="1900-01-01" max="2999-12-31"
-                    class="form-control input-md" required="">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="arrest-report-incident-time">Incident Time:</label>
-                <div class="col-md-4">
-                  <input id="arrest-report-incident-time" name="time" type="time" placeholder="hh:mm"
-                    class="form-control input-md" required="">
-                </div>
-              </div>
-
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="incident-location">Incident Location:</label>
-                <div class="col-md-4">
-                  <input id="incident-location" name="arrest-location" type="text" placeholder="Arrest Location"
-                    class="form-control input-md" style="text-transform:capitalize;"
-                  required="">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="reporting-officer">Reporting Officer:</label>
-                <div class="col-md-4">
-                  <input id="reporting-officer" name="reportingOfficer" type="text" placeholder="Reporting Officer"
-                    class="form-control input-md" style="text-transform:capitalize;" value=<%=user.user.username%>
-                  required="" readonly="readonly">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="arrest-civ-first-name">Name</label>
-                <div class="col-md-4">
-                  <input id="arrest-civ-first-name" name="accusedFirstName" type="text" placeholder="Arrestee Name"
-                    class="form-control input-md" style="text-transform:capitalize;" required="">
-                </div>
-              </div>
-             
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="arrest-civ-dob">DOB</label>
-                <div class="col-md-4">
-                  <input id="arrest-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy"
-                    class="form-control input-md" required="">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="arrest-civ-address">Address</label>
-                <div class="col-md-4">
-                  <input id="arrest-civ-address" name="accusedFirstName" type="text" placeholder="Address"
-                    class="form-control input-md" style="text-transform:capitalize;" required="">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="arrest-civ-height">Height</label>
-                <div class="col-md-4">
-                  <input id="arrest-civ-height" name="accusedFirstName" type="text" placeholder="Height"
-                    class="form-control input-md" style="text-transform:capitalize;" required="">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="arrest-civ-weight">Weight</label>
-                <div class="col-md-4">
-                  <input id="arrest-civ-weight" name="accusedFirstName" type="text" placeholder="Weight"
-                    class="form-control input-md" style="text-transform:capitalize;" required="">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="arrest-civ-eyes">Eye Color</label>
-                <div class="col-md-4">
-                  <input id="arrest-civ-eyes" name="accusedFirstName" type="text" placeholder="Eye Color"
-                    class="form-control input-md" style="text-transform:capitalize;" required="">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="arrest-civ-hair">Hair Color</label>
-                <div class="col-md-4">
-                  <input id="arrest-civ-hair" name="accusedFirstName" type="text" placeholder="Hair Color"
-                    class="form-control input-md" style="text-transform:capitalize;" required="">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="arrest-civ-phone">Phone Number</label>
-                <div class="col-md-4">
-                  <input id="arrest-civ-phone" name="accusedFirstName" type="text" placeholder="Phone Number"
-                    class="form-control input-md" style="text-transform:capitalize;">
-                </div>
-              </div>
-
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="arrest-civ-charges">Charges</label>
-                <div class="col-md-4">
-                  <input id="arrest-civ-charges" name="arrest-civ-charges" type="text" placeholder="Charges"
-                    class="form-control input-md" style="text-transform:capitalize;" required="">
-                </div>
-              </div>
-
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="arrest-civ-dob">Force Used?</label>
-                <div class="col-md-4">
-                  <select id="forceUsed" name="forceUsed" class="form-control" required="">
-                    <option value="">Force Used?</option>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-group" style="display:none">
-                <label class="col-md-4 control-label" for="civIDArrest">Selected ID</label>
-                <div class="col-md-4">
-                  <input id="civIDArrest" name="accusedID" type="text" placeholder="Autofill from searching"
-                    class="form-control input-md disabled-color" data-trigger="arrest-id-popover"
-                    data-content="* ID is required, try using the search button above." required readonly="readonly">
-                </div>
-              </div>
-
-             
-
-              <hr />
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="detail">Narrative of
-                  Events:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                <div class="col-md-10 col-md-offset-1">
-                  <textarea id="detail" name="detailOfEvent" type="text" maxlength="500" placeholder="Narrative of Events"
-                    class="form-control input-md" required></textarea>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="actions-taken">Witnesses
-                  :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                <div class="col-md-10 col-md-offset-1">
-                  <textarea id="actions-taken" name="actionsTaken" type="text" maxlength="500"
-                    placeholder="Witness names and contact info" class="form-control input-md" required></textarea>
-                </div>
-              </div>
-
-              
-
-              <!-- Button -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="submitArrestReport"></label>
-                <div class="col-md-4">
-                  <input type="hidden" name="reportingOfficerID" value="<%=user._id%>">
-                  <input type="hidden" name="route" value="police-dashboard">
-                  <button id="submitArrestReport" type="submit" class="btn btn-primary"
-                    onclick="hideArrestReportPopover()">Submit</button>
-                </div>
-              </div>
-            </fieldset>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
+  <% include arrest-modal %>
 
   <div id="createWarrantModal" class="modal fade" style="z-index: 9000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -6317,7 +6106,7 @@ window.showBoloModal = showBoloModal;
       return;
     }
 
-    dashboardSocket = io();
+    dashboardSocket = io({ transports: ["websocket"] });
     window.dashboardSocket = dashboardSocket; // Sync global reference
 
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;

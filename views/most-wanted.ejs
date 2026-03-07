@@ -2137,7 +2137,7 @@
             item._id = id;
           }
           var status = item.approvalStatus || item.status || '';
-          if (status === 'approved' || status === '') {
+          if (status !== 'denied' && status !== 'require_edits') {
             approved.push(item);
           }
         }
