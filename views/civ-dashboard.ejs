@@ -1281,6 +1281,23 @@
               </div>
     </nav>
 
+    <!-- Beta Dashboard Opt-In Banner -->
+    <div id="beta-dashboard-banner" style="margin:1rem 2rem 0;padding:0.875rem 1.25rem;background:linear-gradient(135deg,rgba(139,92,246,0.12) 0%,rgba(99,102,241,0.10) 100%);border:1px solid rgba(139,92,246,0.25);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:0.75rem;min-width:0;">
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(139,92,246,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="fas fa-flask" style="color:#a78bfa;font-size:0.95rem;"></i>
+        </div>
+        <div style="min-width:0;">
+          <div style="font-size:0.8125rem;font-weight:600;color:#e2e8f0;margin-bottom:0.15rem;">Try the new Civilian Dashboard <span style="font-size:0.625rem;background:rgba(139,92,246,0.2);color:#a78bfa;padding:0.1rem 0.4rem;border-radius:4px;margin-left:0.35rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;">Beta</span></div>
+          <div style="font-size:0.6875rem;color:#94a3b8;line-height:1.4;">A redesigned experience with improved navigation, drag-to-reorder, and new features. You can switch back at any time.</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
+        <button id="beta-try-btn" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border:none;border-radius:8px;padding:0.45rem 1rem;font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.15s;white-space:nowrap;">Try it out</button>
+        <button id="beta-dismiss-btn" style="background:rgba(255,255,255,0.06);color:#94a3b8;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:0.45rem 0.75rem;font-size:0.75rem;font-weight:500;cursor:pointer;transition:all 0.15s;white-space:nowrap;">Not now</button>
+      </div>
+    </div>
+
     <!-- Community Alerts -->
     <% include community-alerts %>
     
@@ -4722,7 +4739,48 @@
   });
   </script>
 
+  <!-- Beta Dashboard Opt-In -->
+  <script>
+  (function() {
+    var banner = document.getElementById('beta-dashboard-banner');
+    if (!banner) return;
 
+    // Auto-hide if dismissed within the last 7 days
+    var dismissed = localStorage.getItem('beta-banner-dismissed');
+    if (dismissed && (Date.now() - parseInt(dismissed, 10)) < 7 * 24 * 60 * 60 * 1000) {
+      banner.style.display = 'none';
+    }
+
+    var apiUrl = '<%= apiUrl %>';
+    var userId = '<%= user._id %>';
+
+    document.getElementById('beta-try-btn').addEventListener('click', function() {
+      this.disabled = true;
+      this.textContent = 'Switching...';
+      fetch(apiUrl + '/api/v1/user-preferences/' + encodeURIComponent(userId), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ betaCivDashboard: true, userId: userId })
+      }).then(function() {
+        window.location.href = '/department-dashboard' + window.location.search;
+      }).catch(function() {
+        window.location.href = '/department-dashboard' + window.location.search;
+      });
+    });
+
+    document.getElementById('beta-dismiss-btn').addEventListener('click', function() {
+      banner.style.transition = 'opacity 0.3s ease, margin 0.3s ease';
+      banner.style.opacity = '0';
+      banner.style.marginTop = '0';
+      banner.style.marginBottom = '0';
+      banner.style.padding = '0 1.25rem';
+      banner.style.height = '0';
+      banner.style.overflow = 'hidden';
+      localStorage.setItem('beta-banner-dismissed', Date.now().toString());
+      setTimeout(function() { banner.style.display = 'none'; }, 300);
+    });
+  })();
+  </script>
 
 </body>
 </html>
