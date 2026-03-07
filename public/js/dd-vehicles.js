@@ -490,20 +490,23 @@
               '<div style="font-size:0.75rem;color:var(--dd-text-muted);">Vehicle Photo</div>' +
             '</div>' +
             '<div class="dd-civ-form-grid">' +
-              formGroup('dd-veh-d-plate', 'Plate') +
-              formGroup('dd-veh-d-plateState', 'Plate State') +
+              formGroup('dd-veh-d-plate', 'Plate', 'e.g. ABC 1234', 'maxlength="8" required style="text-transform:uppercase;"') +
+              formGroup('dd-veh-d-plateState', 'Plate State', 'e.g. CA', 'maxlength="2" style="text-transform:uppercase;"') +
               '<div class="dd-civ-field" style="grid-column:1/-1;">' +
                 '<label for="dd-veh-d-vin">VIN</label>' +
                 '<div style="display:flex;gap:0.5rem;">' +
-                  '<input type="text" id="dd-veh-d-vin" maxlength="17" style="flex:1;">' +
+                  '<input type="text" id="dd-veh-d-vin" minlength="17" maxlength="17" required style="flex:1;text-transform:uppercase;" placeholder="17-character VIN or auto-generate">' +
                   '<button class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small" id="dd-veh-d-vin-gen" type="button" title="Auto-generate VIN"><i class="fa fa-random"></i></button>' +
                 '</div>' +
               '</div>' +
-              formGroup('dd-veh-d-type', 'Type') +
-              formGroup('dd-veh-d-make', 'Make') +
-              formGroup('dd-veh-d-model', 'Model') +
-              formGroup('dd-veh-d-year', 'Year') +
-              formGroup('dd-veh-d-color', 'Color') +
+              formGroup('dd-veh-d-type', 'Type', 'e.g. Sedan, SUV, Truck', 'required') +
+              formGroup('dd-veh-d-make', 'Make', 'e.g. Toyota, Ford') +
+              formGroup('dd-veh-d-model', 'Model', 'e.g. Camry, F-150') +
+              '<div class="dd-civ-field">' +
+                '<label for="dd-veh-d-year">Year</label>' +
+                '<input type="number" id="dd-veh-d-year" placeholder="e.g. 2024" min="1900" max="2099">' +
+              '</div>' +
+              formGroup('dd-veh-d-color', 'Color', 'e.g. Black, White') +
               '<div class="dd-civ-checkbox-row">' +
                 toggleField('dd-veh-d-validReg', 'Valid Registration') +
                 toggleField('dd-veh-d-validIns', 'Valid Insurance') +
@@ -620,7 +623,7 @@
 
     var payload = {
       plate: $.trim($('#dd-veh-d-plate').val()).toUpperCase(),
-      licensePlateState: $.trim($('#dd-veh-d-plateState').val()),
+      licensePlateState: $.trim($('#dd-veh-d-plateState').val()).toUpperCase(),
       vin: $.trim($('#dd-veh-d-vin').val()).toUpperCase(),
       type: $.trim($('#dd-veh-d-type').val()),
       make: $.trim($('#dd-veh-d-make').val()),
@@ -717,20 +720,23 @@
               '<div style="font-size:0.75rem;color:var(--dd-text-muted);">Vehicle Photo</div>' +
             '</div>' +
             '<div class="dd-civ-form-grid">' +
-              formGroup('dd-veh-n-plate', 'Plate') +
-              formGroup('dd-veh-n-plateState', 'Plate State') +
+              formGroup('dd-veh-n-plate', 'Plate', 'e.g. ABC 1234', 'maxlength="8" required style="text-transform:uppercase;"') +
+              formGroup('dd-veh-n-plateState', 'Plate State', 'e.g. CA', 'maxlength="2" style="text-transform:uppercase;"') +
               '<div class="dd-civ-field" style="grid-column:1/-1;">' +
                 '<label for="dd-veh-n-vin">VIN</label>' +
                 '<div style="display:flex;gap:0.5rem;">' +
-                  '<input type="text" id="dd-veh-n-vin" maxlength="17" style="flex:1;">' +
+                  '<input type="text" id="dd-veh-n-vin" minlength="17" maxlength="17" required style="flex:1;text-transform:uppercase;" placeholder="17-character VIN or auto-generate">' +
                   '<button class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small" id="dd-veh-n-vin-gen" type="button" title="Auto-generate VIN"><i class="fa fa-random"></i></button>' +
                 '</div>' +
               '</div>' +
-              formGroup('dd-veh-n-type', 'Type') +
-              formGroup('dd-veh-n-make', 'Make') +
-              formGroup('dd-veh-n-model', 'Model') +
-              formGroup('dd-veh-n-year', 'Year') +
-              formGroup('dd-veh-n-color', 'Color') +
+              formGroup('dd-veh-n-type', 'Type', 'e.g. Sedan, SUV, Truck', 'required') +
+              formGroup('dd-veh-n-make', 'Make', 'e.g. Toyota, Ford') +
+              formGroup('dd-veh-n-model', 'Model', 'e.g. Camry, F-150') +
+              '<div class="dd-civ-field">' +
+                '<label for="dd-veh-n-year">Year</label>' +
+                '<input type="number" id="dd-veh-n-year" placeholder="e.g. 2024" min="1900" max="2099">' +
+              '</div>' +
+              formGroup('dd-veh-n-color', 'Color', 'e.g. Black, White') +
               '<div class="dd-civ-checkbox-row">' +
                 toggleField('dd-veh-n-validReg', 'Valid Registration', true) +
                 toggleField('dd-veh-n-validIns', 'Valid Insurance', true) +
@@ -819,12 +825,22 @@
       window.ddToast('Plate number is required', 'error');
       return;
     }
+    var vin = $.trim($('#dd-veh-n-vin').val()).toUpperCase();
+    if (!vin || vin.length !== 17) {
+      window.ddToast('VIN must be exactly 17 characters', 'error');
+      return;
+    }
+    var type = $.trim($('#dd-veh-n-type').val());
+    if (!type) {
+      window.ddToast('Vehicle type is required', 'error');
+      return;
+    }
 
     var payload = {
       plate: plate,
-      licensePlateState: $.trim($('#dd-veh-n-plateState').val()),
-      vin: $.trim($('#dd-veh-n-vin').val()).toUpperCase(),
-      type: $.trim($('#dd-veh-n-type').val()),
+      licensePlateState: $.trim($('#dd-veh-n-plateState').val()).toUpperCase(),
+      vin: vin,
+      type: type,
       make: $.trim($('#dd-veh-n-make').val()),
       model: $.trim($('#dd-veh-n-model').val()),
       year: $.trim($('#dd-veh-n-year').val()),
@@ -867,20 +883,24 @@
 
   // ── Form Helper Builders ───────────────────────────────────────────
 
-  function formGroup(id, label) {
+  function formGroup(id, label, placeholder, attrs) {
     return (
       '<div class="dd-civ-field">' +
         '<label for="' + id + '">' + esc(label) + '</label>' +
-        '<input type="text" id="' + id + '">' +
+        '<input type="text" id="' + id + '"' +
+          (placeholder ? ' placeholder="' + esc(placeholder) + '"' : '') +
+          (attrs ? ' ' + attrs : '') + '>' +
       '</div>'
     );
   }
 
-  function formGroupFull(id, label) {
+  function formGroupFull(id, label, placeholder, attrs) {
     return (
       '<div class="dd-civ-field" style="grid-column:1/-1;">' +
         '<label for="' + id + '">' + esc(label) + '</label>' +
-        '<input type="text" id="' + id + '">' +
+        '<input type="text" id="' + id + '"' +
+          (placeholder ? ' placeholder="' + esc(placeholder) + '"' : '') +
+          (attrs ? ' ' + attrs : '') + '>' +
       '</div>'
     );
   }

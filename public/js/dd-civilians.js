@@ -322,8 +322,19 @@
     injectStyles();
     ddCivPage = 0;
     ddCivSearchTerm = '';
-    // Fetch community data to check if civilian approval system is enabled
+    wireEvents();
+    if (window.ddLimits) window.ddLimits.check('civilian');
+
+    // Check if community data is already available (fetched by main dashboard)
     var c = cfg();
+    var existing = (c.communityData || {});
+    if (existing.civilianApprovalSystemEnabled !== undefined) {
+      approvalSystemEnabled = !!(existing.civilianApprovalSystemEnabled);
+      loadCivilians();
+      return;
+    }
+
+    // Otherwise fetch community data, then load civilians so badges render correctly
     if (c.communityId) {
       $.ajax({
         url: c.API_URL + '/api/v1/community/' + c.communityId,
@@ -332,12 +343,12 @@
           var comm = data.community || data || {};
           approvalSystemEnabled = !!(comm.civilianApprovalSystemEnabled);
         },
-        error: function () { approvalSystemEnabled = false; }
+        error: function () { approvalSystemEnabled = false; },
+        complete: function () { loadCivilians(); }
       });
+    } else {
+      loadCivilians();
     }
-    loadCivilians();
-    wireEvents();
-    if (window.ddLimits) window.ddLimits.check('civilian');
   };
 
   /* ───────────────────────────────────────────
@@ -710,7 +721,12 @@
     var approvalWarningHtml = '';
     if (approvalSystemEnabled) {
       if (c.approvalStatus && ['rejected', 'denied', 'require_edits', 'requires_edits'].indexOf(c.approvalStatus) >= 0) {
-        approvalWarningHtml = '<div class="dd-civ-approval-warning dd-civ-form-full"><i class="fa fa-exclamation-triangle"></i> This civilian was returned for edits. Make your changes and resubmit for approval.</div>';
+        var notesHtml = c.approvalNotes
+          ? '<div style="margin-top:0.5rem;padding:0.625rem 0.75rem;background:rgba(0,0,0,0.2);border-radius:6px;border-left:3px solid rgba(245,158,11,0.5);font-size:0.8125rem;color:#e2e8f0;line-height:1.5;width:100%;">' +
+            '<div style="color:#fbbf24;font-size:0.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.25rem;">Admin Feedback</div>' +
+            esc(c.approvalNotes) + '</div>'
+          : '';
+        approvalWarningHtml = '<div class="dd-civ-approval-warning dd-civ-form-full" style="flex-wrap:wrap;"><i class="fa fa-exclamation-triangle"></i> This civilian was returned for edits. Make your changes and resubmit for approval.' + notesHtml + '</div>';
       } else if (c.approvalStatus === 'requested_review' || c.approvalStatus === 'pending') {
         approvalWarningHtml = '<div class="dd-civ-approval-warning dd-civ-form-full"><i class="fa fa-clock"></i> This civilian is pending approval. Changes may require re-approval.</div>';
       }
