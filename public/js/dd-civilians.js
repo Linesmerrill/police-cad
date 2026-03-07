@@ -160,7 +160,7 @@
       '.dd-civ-tab-body{flex:1;overflow-y:auto;padding:1.25rem;}' +
 
       /* ── Detail Actions ── */
-      '.dd-civ-detail-actions{display:flex;gap:0.5rem;padding:0.75rem 1.25rem;border-top:1px solid var(--dd-glass-border);flex-wrap:wrap;}' +
+      '.dd-civ-detail-actions{display:flex;gap:0.5rem;padding:0.75rem 1.25rem;border-top:1px solid var(--dd-glass-border);flex-wrap:wrap;padding-bottom:calc(0.75rem + env(safe-area-inset-bottom, 0px));}' +
 
       /* ── Form styles ── */
       '.dd-civ-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;}' +
@@ -218,7 +218,7 @@
       '.dd-civ-new-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--dd-glass-border);}' +
       '.dd-civ-new-title{font-size:1rem;font-weight:700;color:#fff;}' +
       '.dd-civ-new-body{flex:1;overflow-y:auto;padding:1.25rem;}' +
-      '.dd-civ-new-footer{display:flex;justify-content:flex-end;gap:0.5rem;padding:0.75rem 1.25rem;border-top:1px solid var(--dd-glass-border);}' +
+      '.dd-civ-new-footer{display:flex;justify-content:flex-end;gap:0.5rem;padding:0.75rem 1.25rem;border-top:1px solid var(--dd-glass-border);padding-bottom:calc(0.75rem + env(safe-area-inset-bottom, 0px));}' +
 
       /* ── Placeholder tab ── */
       '.dd-civ-placeholder{text-align:center;padding:2rem 1rem;color:var(--dd-text-muted);}' +
@@ -1435,11 +1435,22 @@
 
     var icon = isArrest ? 'fa-handcuffs' : (type === 'Warning' ? 'fa-triangle-exclamation' : 'fa-file-lines');
 
+    var recordId = r._id || '';
+    var deleteHtml = '' +
+      '<button class="dd-civ-btn dd-civ-btn-danger dd-civ-btn-small dd-rec-delete" ' +
+        'data-rec-id="' + esc(recordId) + '" data-rec-type="' + (isArrest ? 'arrest' : 'citation') + '" ' +
+        'title="Delete" style="padding:0.25rem 0.4rem;font-size:0.6875rem;">' +
+        '<i class="fa fa-trash"></i>' +
+      '</button>';
+
     return '' +
       '<div class="dd-civ-record" style="' + cardOpacity + '">' +
         '<div class="dd-civ-record-header">' +
           '<span class="dd-civ-record-type"><i class="fa ' + icon + '" style="margin-right:0.3rem;color:var(--dd-text-muted);"></i>' + esc(type) + statusHtml + '</span>' +
-          '<span class="dd-civ-record-date">' + fmtDate(date) + '</span>' +
+          '<span style="display:flex;align-items:center;gap:0.5rem;">' +
+            '<span class="dd-civ-record-date">' + fmtDate(date) + '</span>' +
+            deleteHtml +
+          '</span>' +
         '</div>' +
         bodyHtml +
         contestHtml +
@@ -1463,9 +1474,52 @@
     // Click card to toggle checkbox
     $body.on('click', '.dd-civ-record', function (e) {
       if ($(e.target).is('.dd-rec-contest-cb') || $(e.target).hasClass('dd-rec-contest-label')) return;
+      if ($(e.target).closest('.dd-rec-delete').length) return;
       var $cb = $(this).find('.dd-rec-contest-cb');
       if ($cb.length) {
         $cb.prop('checked', !$cb.prop('checked')).trigger('change');
+      }
+    });
+
+    // Delete record buttons
+    $body.on('click', '.dd-rec-delete', function (e) {
+      e.stopPropagation();
+      var $btn = $(this);
+      var recId = $btn.attr('data-rec-id');
+      var recType = $btn.attr('data-rec-type');
+      var doDelete = function () {
+        var conf = cfg();
+        var url;
+        if (recType === 'arrest') {
+          url = conf.API_URL + '/api/v1/arrest-report/' + encodeURIComponent(recId);
+        } else {
+          url = conf.API_URL + '/api/v1/civilian/' + encodeURIComponent(currentCiv._id) + '/criminal-history/' + encodeURIComponent(recId);
+        }
+        $.ajax({
+          url: url,
+          method: 'DELETE',
+          success: function () {
+            toast('Record deleted', 'success');
+            if (recType === 'arrest') {
+              cachedArrests = cachedArrests.filter(function (a) { return (a._id || '') !== recId; });
+              renderRecordsContent($body);
+            } else {
+              currentCiv.criminalHistory = (currentCiv.criminalHistory || []).filter(function (r) { return (r._id || '') !== recId; });
+              renderRecordsContent($body);
+            }
+          },
+          error: function () { toast('Failed to delete record', 'error'); }
+        });
+      };
+      if (window.ddModal) {
+        window.ddModal({
+          type: 'danger', icon: 'fa-trash', title: 'Delete Record',
+          message: 'Are you sure you want to delete this record? This cannot be undone.',
+          confirmText: 'Delete',
+          onConfirm: doDelete
+        });
+      } else if (confirm('Delete this record?')) {
+        doDelete();
       }
     });
 
