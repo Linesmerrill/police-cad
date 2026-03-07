@@ -284,6 +284,8 @@
     $(document).off('click.ddVehAdd', '#dd-veh-add-btn').on('click.ddVehAdd', '#dd-veh-add-btn', function () {
       openNewModal();
     });
+
+    if (window.ddLimits) window.ddLimits.check('vehicle');
   }
 
   // ── API: Load Vehicles ─────────────────────────────────────────────
@@ -678,6 +680,7 @@
             window.ddToast('Vehicle deleted', 'success');
             closeDetailModal();
             loadVehicles();
+            if (window.ddLimits) window.ddLimits.check('vehicle');
           },
           error: function () {
             window.ddToast('Failed to delete vehicle', 'error');
@@ -851,6 +854,7 @@
         closeNewModal();
         currentPage = 0;
         loadVehicles();
+        if (window.ddLimits) window.ddLimits.check('vehicle');
       },
       error: function () {
         window.ddToast('Failed to create vehicle', 'error');

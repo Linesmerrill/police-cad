@@ -337,6 +337,7 @@
     }
     loadCivilians();
     wireEvents();
+    if (window.ddLimits) window.ddLimits.check('civilian');
   };
 
   /* ───────────────────────────────────────────
@@ -2033,6 +2034,7 @@
         } else {
           loadCivilians();
         }
+        if (window.ddLimits) window.ddLimits.check('civilian');
       },
       error: function () {
         toast('Failed to delete civilian', 'error');
@@ -2376,6 +2378,7 @@
         ddCivSearchTerm = '';
         $('#dd-civ-search').val('');
         loadCivilians();
+        if (window.ddLimits) window.ddLimits.check('civilian');
       },
       error: function () {
         toast('Failed to create civilian', 'error');

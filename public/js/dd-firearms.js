@@ -748,6 +748,7 @@
     });
 
     loadFirearms();
+    if (window.ddLimits) window.ddLimits.check('firearm');
   }
 
   /* ═════════════════════════════════════════════════════════════════════
@@ -1121,6 +1122,7 @@
         window.ddToast('Firearm deleted', 'success');
         closeDetailModal();
         loadFirearms();
+        if (window.ddLimits) window.ddLimits.check('firearm');
       },
       error: function (xhr, status, err) {
         state.deleting = false;
@@ -1308,6 +1310,7 @@
         // Reset to first page so the new firearm is visible
         state.page = 0;
         loadFirearms();
+        if (window.ddLimits) window.ddLimits.check('firearm');
       },
       error: function (xhr, status, err) {
         state.saving = false;

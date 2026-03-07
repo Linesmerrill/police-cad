@@ -583,7 +583,28 @@
 
     @media (max-width: 768px) {
       .dd-stats-sections { grid-template-columns: 1fr; }
-      .dd-stats-section-grid { grid-template-columns: repeat(2, 1fr); }
+      .dd-stats-section { padding: 0.75rem; }
+      .dd-stats-section-header { margin-bottom: 0.625rem; }
+      .dd-stats-section-grid { grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 0.375rem; }
+      .dd-stat-mini { padding: 0.4rem 0.25rem; }
+      .dd-stat-mini-value { font-size: 1.1rem; }
+      .dd-stat-mini-label { font-size: 0; line-height: 1; margin: 0; }
+      .dd-stat-mini-label::before {
+        font-size: 0.6rem;
+        font-family: 'Font Awesome 5 Free', 'FontAwesome';
+        font-weight: 900;
+        color: var(--dd-text-dim);
+      }
+      .dd-stat-mini-label[data-icon="civilians"]::before { content: '\f0c0'; }
+      .dd-stat-mini-label[data-icon="vehicles"]::before { content: '\f1b9'; }
+      .dd-stat-mini-label[data-icon="firearms"]::before { content: '\f05b'; }
+      .dd-stat-mini-label[data-icon="pending"]::before { content: '\f017'; }
+      .dd-stat-mini-label[data-icon="approved"]::before { content: '\f00c'; }
+      .dd-stat-mini-label[data-icon="denied"]::before { content: '\f00d'; }
+      .dd-stat-mini-label[data-icon="total"]::before { content: '\f0c8'; }
+      .dd-stat-mini-label[data-icon="active"]::before { content: '\f06e'; }
+      .dd-stat-mini-label[data-icon="scheduled"]::before { content: '\f073'; }
+      .dd-stat-mini-label[data-icon="closed"]::before { content: '\f058'; }
     }
 
     /* ── Glass Card ── */
@@ -2135,7 +2156,7 @@
       .dd-sidebar-toggle { display: flex; }
       .dd-sidebar-close { display: flex; }
       .dd-main { margin-left: 0; }
-      .dd-topbar { padding: 1rem 1rem 1rem 3.5rem; }
+      .dd-topbar { padding: 1rem 1rem 1rem 4.25rem; }
       .dd-content { padding: 1rem; }
       .dd-stats { grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem; }
       .dd-stat { padding: 0.75rem 0.875rem; }
@@ -3421,8 +3442,10 @@ $('#dd-loading').hide();
       // Auto-navigate to a section from hash (e.g. #penalCodes) or query param (?section=penalCodes)
       var urlSection = window.location.hash.replace('#', '') ||
                        new URLSearchParams(window.location.search).get('section');
-      if (urlSection === 'overview' || (urlSection && componentRegistry[urlSection] && enabledComponents[urlSection])) {
+      if (urlSection && urlSection !== 'overview' && componentRegistry[urlSection] && enabledComponents[urlSection]) {
         ddNavTo(urlSection);
+      } else {
+        ddNavTo('overview');
       }
     }
 
@@ -3437,10 +3460,19 @@ $('#dd-loading').hide();
       // Keep section label, remove old items
       $nav.find('.dd-nav-item').remove();
 
-      Object.keys(componentRegistry).forEach(function(key) {
+      // Build ordered list: use template.components order, then append
+      // any registry-only items (like departmentSettings) not in the array
+      var dept = window.ddConfig.departmentData || {};
+      var tplComps = (dept.template && dept.template.components) || [];
+      var ordered = [];
+      var seen = {};
+      tplComps.forEach(function(c) { if (c.name) { ordered.push(c.name); seen[c.name] = true; } });
+      Object.keys(componentRegistry).forEach(function(key) { if (!seen[key]) ordered.push(key); });
+
+      ordered.forEach(function(key) {
         if (!enabledComponents[key]) return;
         var comp = componentRegistry[key];
-        if (comp.sidebarHidden) return;
+        if (!comp || comp.sidebarHidden) return;
         var $item = $('<a class="dd-nav-item" data-panel="' + key + '">' +
           '<i class="fa ' + comp.navIcon + '"></i>' +
           comp.label +
@@ -3480,19 +3512,19 @@ $('#dd-loading').hide();
             '<div class="dd-stats-section-grid">' +
               '<div class="dd-stat-mini">' +
                 '<div class="dd-stat-mini-value accent" id="dd-stat-pending">—</div>' +
-                '<div class="dd-stat-mini-label">Pending</div>' +
+                '<div class="dd-stat-mini-label" data-icon="pending">Pending</div>' +
               '</div>' +
               '<div class="dd-stat-mini">' +
                 '<div class="dd-stat-mini-value green" id="dd-stat-approved">—</div>' +
-                '<div class="dd-stat-mini-label">Approved</div>' +
+                '<div class="dd-stat-mini-label" data-icon="approved">Approved</div>' +
               '</div>' +
               '<div class="dd-stat-mini">' +
                 '<div class="dd-stat-mini-value red" id="dd-stat-denied">—</div>' +
-                '<div class="dd-stat-mini-label">Denied</div>' +
+                '<div class="dd-stat-mini-label" data-icon="denied">Denied</div>' +
               '</div>' +
               '<div class="dd-stat-mini">' +
                 '<div class="dd-stat-mini-value amber" id="dd-stat-total">—</div>' +
-                '<div class="dd-stat-mini-label">Total</div>' +
+                '<div class="dd-stat-mini-label" data-icon="total">Total</div>' +
               '</div>' +
             '</div>' +
           '</div>'
@@ -3510,19 +3542,19 @@ $('#dd-loading').hide();
             '<div class="dd-stats-section-grid">' +
               '<div class="dd-stat-mini">' +
                 '<div class="dd-stat-mini-value amber" id="dd-ov-cc-pending">—</div>' +
-                '<div class="dd-stat-mini-label">Pending</div>' +
+                '<div class="dd-stat-mini-label" data-icon="pending">Pending</div>' +
               '</div>' +
               '<div class="dd-stat-mini">' +
                 '<div class="dd-stat-mini-value blue" id="dd-ov-cc-scheduled">—</div>' +
-                '<div class="dd-stat-mini-label">Scheduled</div>' +
+                '<div class="dd-stat-mini-label" data-icon="scheduled">Scheduled</div>' +
               '</div>' +
               '<div class="dd-stat-mini">' +
                 '<div class="dd-stat-mini-value red" id="dd-ov-cc-active">—</div>' +
-                '<div class="dd-stat-mini-label">Active</div>' +
+                '<div class="dd-stat-mini-label" data-icon="active">Active</div>' +
               '</div>' +
               '<div class="dd-stat-mini">' +
                 '<div class="dd-stat-mini-value green" id="dd-ov-cc-completed">—</div>' +
-                '<div class="dd-stat-mini-label">Completed</div>' +
+                '<div class="dd-stat-mini-label" data-icon="closed">Completed</div>' +
               '</div>' +
             '</div>' +
           '</div>'
@@ -3542,9 +3574,9 @@ $('#dd-loading').hide();
               '<div class="dd-stats-section-title">Records</div>' +
             '</div>' +
             '<div class="dd-stats-section-grid">' +
-              (hasCivs ? '<div class="dd-stat-mini"><div class="dd-stat-mini-value blue" id="dd-stat-civs">—</div><div class="dd-stat-mini-label">Civilians</div></div>' : '') +
-              (hasVehs ? '<div class="dd-stat-mini"><div class="dd-stat-mini-value green" id="dd-stat-vehs">—</div><div class="dd-stat-mini-label">Vehicles</div></div>' : '') +
-              (hasFirearms ? '<div class="dd-stat-mini"><div class="dd-stat-mini-value red" id="dd-stat-firearms">—</div><div class="dd-stat-mini-label">Firearms</div></div>' : '') +
+              (hasCivs ? '<div class="dd-stat-mini"><div class="dd-stat-mini-value blue" id="dd-stat-civs">—</div><div class="dd-stat-mini-label" data-icon="civilians">Civilians</div></div>' : '') +
+              (hasVehs ? '<div class="dd-stat-mini"><div class="dd-stat-mini-value green" id="dd-stat-vehs">—</div><div class="dd-stat-mini-label" data-icon="vehicles">Vehicles</div></div>' : '') +
+              (hasFirearms ? '<div class="dd-stat-mini"><div class="dd-stat-mini-value red" id="dd-stat-firearms">—</div><div class="dd-stat-mini-label" data-icon="firearms">Firearms</div></div>' : '') +
             '</div>' +
           '</div>'
         );
@@ -3630,6 +3662,13 @@ $('#dd-loading').hide();
 
           // Re-render settings component now that permissions are available
           if (window.ddSettingsInit) window.ddSettingsInit();
+
+          // Check creation limits now that community data is available
+          if (window.ddLimits) {
+            window.ddLimits.check('civilian');
+            window.ddLimits.check('vehicle');
+            window.ddLimits.check('firearm');
+          }
 
           // Resolve all user roles for sidebar display
           var userRoles = [];
@@ -6955,6 +6994,8 @@ $('#dd-loading').hide();
     window.CLOUDINARY_UPLOAD_PRESET = '<%= process.env.CLOUDINARY_UPLOAD_PRESET || "" %>';
   </script>
   <script src="/static/js/cloudinary-upload.js"></script>
+  <!-- Shared utilities -->
+  <script src="/static/js/dd-limits.js"></script>
   <!-- Civilian template component scripts -->
   <script src="/static/js/dd-civilians.js"></script>
   <script src="/static/js/dd-vehicles.js"></script>
@@ -6962,6 +7003,7 @@ $('#dd-loading').hide();
   <!-- Utility scripts -->
   <script src="/static/js/dd-911.js"></script>
   <script src="/static/js/dd-notifications.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
   <script src="/static/js/dd-settings.js"></script>
 </body>
 </html>

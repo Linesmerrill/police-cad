@@ -217,8 +217,12 @@
 
       /* Component list */
       '.dds-comp-list{display:flex;flex-direction:column;gap:0.25rem;}' +
-      '.dds-comp-row{display:flex;align-items:center;justify-content:space-between;padding:0.625rem 0.75rem;border-radius:8px;background:var(--dd-glass);border:1px solid var(--dd-glass-border);transition:border-color 0.2s;}' +
+      '.dds-comp-row{display:flex;align-items:center;justify-content:space-between;padding:0.625rem 0.75rem;border-radius:8px;background:var(--dd-glass);border:1px solid var(--dd-glass-border);transition:border-color 0.2s,box-shadow 0.2s;}' +
       '.dds-comp-row:hover{border-color:rgba(255,255,255,0.1);}' +
+      '.dds-comp-row .dds-drag-handle{cursor:grab;color:var(--dd-text-muted);padding:0 0.35rem;margin-right:0.4rem;opacity:0.4;transition:opacity 0.2s;}' +
+      '.dds-comp-row:hover .dds-drag-handle{opacity:0.8;}' +
+      '.dds-comp-row.sortable-chosen{border-color:var(--dd-accent);box-shadow:0 0 12px rgba(139,92,246,0.25);}' +
+      '.dds-comp-row.sortable-ghost{opacity:0.3;}' +
       '.dds-comp-name{font-size:0.8125rem;color:var(--dd-text);font-weight:500;}' +
       '.dds-comp-required{font-size:0.625rem;color:var(--dd-text-muted);background:rgba(255,255,255,0.06);padding:0.1rem 0.4rem;border-radius:4px;margin-left:0.5rem;}' +
 
@@ -659,7 +663,8 @@
       var isReq = required.indexOf(compName) !== -1;
 
       html += '<div class="dds-comp-row">' +
-        '<div><span class="dds-comp-name">' + esc(display) + '</span>' +
+        '<span class="dds-drag-handle"><i class="fa fa-grip-vertical"></i></span>' +
+        '<div style="flex:1;"><span class="dds-comp-name">' + esc(display) + '</span>' +
           (isReq ? '<span class="dds-comp-required">Required</span>' : '') +
         '</div>' +
         '<label class="dds-switch">' +
@@ -678,6 +683,20 @@
     $body.find('.dds-comp-row input[type="checkbox"]').on('change', function () {
       debounceSave('components', function () { autoSaveComponents(); }, 400);
     });
+
+    // Drag-to-reorder via SortableJS
+    var listEl = $body.find('.dds-comp-list')[0];
+    if (listEl && typeof Sortable !== 'undefined') {
+      Sortable.create(listEl, {
+        handle: '.dds-drag-handle',
+        animation: 200,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        onEnd: function () {
+          debounceSave('components', function () { autoSaveComponents(); }, 400);
+        }
+      });
+    }
   }
 
   function autoSaveComponents() {
