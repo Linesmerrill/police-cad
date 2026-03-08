@@ -69,7 +69,7 @@ function fetchAndRenderModernDepartments() {
         switch (template.toLowerCase()) {
           case "civilian":
             icon = "fa-user";
-            action = `/civ-dashboard${deptQueryParams}`;
+            action = `/department-dashboard${deptQueryParams}`;
             break;
           case "police":
             icon = "fa-shield";

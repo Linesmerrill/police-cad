@@ -1281,6 +1281,45 @@
               </div>
     </nav>
 
+    <!-- Beta Dashboard Opt-In Banner -->
+    <div id="beta-dashboard-banner" style="margin:1.25rem 2rem 0.5rem;padding:1.1rem 1.5rem;background:linear-gradient(135deg,rgba(139,92,246,0.14) 0%,rgba(99,102,241,0.10) 100%);border:1px solid rgba(139,92,246,0.25);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:1.25rem;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:1rem;min-width:0;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(139,92,246,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="fas fa-flask" style="color:#a78bfa;font-size:1.1rem;"></i>
+        </div>
+        <div style="min-width:0;">
+          <div style="font-size:1rem;font-weight:600;color:#e2e8f0;margin-bottom:0.2rem;">Try the new Civilian Dashboard <span style="font-size:0.7rem;background:rgba(139,92,246,0.2);color:#a78bfa;padding:0.15rem 0.5rem;border-radius:4px;margin-left:0.4rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;vertical-align:middle;">Beta</span></div>
+          <div style="font-size:0.875rem;color:#94a3b8;line-height:1.5;">A redesigned experience with improved navigation, drag-to-reorder, and new features. You can switch back at any time.</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.625rem;flex-shrink:0;">
+        <button id="beta-try-btn" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border:none;border-radius:8px;padding:0.6rem 1.25rem;font-size:0.875rem;font-weight:600;cursor:pointer;transition:all 0.15s;white-space:nowrap;">Try it out</button>
+        <button id="beta-dismiss-btn" style="background:rgba(255,255,255,0.06);color:#94a3b8;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:0.6rem 1rem;font-size:0.875rem;font-weight:500;cursor:pointer;transition:all 0.15s;white-space:nowrap;">Not now</button>
+      </div>
+    </div>
+    <style>
+      @media (max-width: 768px) {
+        #beta-dashboard-banner {
+          margin: 72px 1rem 0.5rem !important;
+          padding: 0.875rem 1rem !important;
+          flex-direction: column;
+          align-items: flex-start !important;
+          gap: 0.75rem !important;
+        }
+        /* Remove container-fluid's header-clearing margin when banner handles it */
+        #beta-dashboard-banner + .community-alerts-wrapper + .alert + .container-fluid,
+        #beta-dashboard-banner ~ .container-fluid {
+          margin-top: 0 !important;
+        }
+        #beta-dashboard-banner > div:last-child {
+          width: 100%;
+        }
+        #beta-try-btn, #beta-dismiss-btn {
+          flex: 1;
+        }
+      }
+    </style>
+
     <!-- Community Alerts -->
     <% include community-alerts %>
     
@@ -3451,7 +3490,30 @@
                </div>
              </div>
            </div>
+
          </form>
+
+         <!-- Beta Features Section (outside form to avoid Bootstrap form font scaling) -->
+         <div style="margin-top:2rem; padding-top:2rem; border-top:1px solid #35385a;">
+           <div style="font-size:1.2rem; font-weight:600; color:#f7fafc; margin-bottom:1.5rem;">
+             <i class="fa fa-flask" style="color:#8b5cf6; margin-right:0.5rem;"></i>
+             Beta Features
+           </div>
+
+           <div style="padding:1.5rem; background:#1e2028; border-radius:8px; border:1px solid #35385a;">
+             <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+               <div style="min-width:0; flex:1;">
+                 <div style="font-size:1.05rem; font-weight:600; color:#f7fafc; margin-bottom:0.35rem;">
+                   <i class="fa fa-desktop" style="color:#8b5cf6; margin-right:0.5rem;"></i>
+                   New Civilian Dashboard
+                   <span style="font-size:0.65rem; background:rgba(139,92,246,0.2); color:#a78bfa; padding:0.15rem 0.45rem; border-radius:4px; margin-left:0.4rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; vertical-align:middle;">Beta</span>
+                 </div>
+                 <div style="font-size:0.875rem; color:#94a3b8; line-height:1.5;">Try the redesigned civilian dashboard with improved navigation, drag-to-reorder components, and new features.</div>
+               </div>
+               <button id="beta-settings-toggle" type="button" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed); color:#fff; border:none; border-radius:8px; padding:0.6rem 1.25rem; font-size:0.875rem; font-weight:600; cursor:pointer; transition:all 0.15s; white-space:nowrap; flex-shrink:0;">Enable Beta</button>
+             </div>
+           </div>
+         </div>
        </div>
     </div>
   </div>
@@ -4722,7 +4784,60 @@
   });
   </script>
 
+  <!-- Beta Dashboard Opt-In -->
+  <script>
+  (function() {
+    var apiUrl = '<%= apiUrl %>';
+    var userId = '<%= user._id %>';
 
+    function enableBetaDashboard(btn) {
+      if (btn) { btn.disabled = true; btn.textContent = 'Switching...'; }
+      fetch(apiUrl + '/api/v1/user-preferences/' + encodeURIComponent(userId), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ betaCivDashboard: true, userId: userId })
+      }).then(function() {
+        window.location.href = '/department-dashboard' + window.location.search;
+      }).catch(function() {
+        window.location.href = '/department-dashboard' + window.location.search;
+      });
+    }
+
+    // Banner: "Try it out"
+    var banner = document.getElementById('beta-dashboard-banner');
+    var dismissed = localStorage.getItem('beta-banner-dismissed');
+    if (banner && dismissed) banner.style.display = 'none';
+
+    var tryBtn = document.getElementById('beta-try-btn');
+    if (tryBtn) tryBtn.addEventListener('click', function() { enableBetaDashboard(this); });
+
+    // Banner: "Not now" — hide banner + show hint toast
+    var dismissBtn = document.getElementById('beta-dismiss-btn');
+    if (dismissBtn) dismissBtn.addEventListener('click', function() {
+      if (banner) {
+        banner.style.transition = 'opacity 0.3s ease';
+        banner.style.opacity = '0';
+        banner.style.overflow = 'hidden';
+        localStorage.setItem('beta-banner-dismissed', '1');
+        setTimeout(function() { banner.style.display = 'none'; }, 300);
+      }
+      // Show hint toast
+      var toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:9999;background:#23263a;border:1px solid rgba(139,92,246,0.3);border-radius:10px;padding:0.75rem 1.25rem;display:flex;align-items:center;gap:0.625rem;box-shadow:0 8px 24px rgba(0,0,0,0.3);max-width:440px;width:90%;';
+      toast.innerHTML = '<i class="fas fa-info-circle" style="color:#a78bfa;font-size:1rem;flex-shrink:0;"></i><span style="font-size:0.875rem;color:#e2e8f0;line-height:1.4;">You can enable the beta dashboard anytime from <strong style="color:#a78bfa;">Account Settings &rarr; Beta Features</strong></span>';
+      document.body.appendChild(toast);
+      setTimeout(function() {
+        toast.style.transition = 'opacity 0.4s ease';
+        toast.style.opacity = '0';
+        setTimeout(function() { toast.remove(); }, 400);
+      }, 5000);
+    });
+
+    // Settings modal: "Enable Beta" button
+    var settingsToggle = document.getElementById('beta-settings-toggle');
+    if (settingsToggle) settingsToggle.addEventListener('click', function() { enableBetaDashboard(this); });
+  })();
+  </script>
 
 </body>
 </html>

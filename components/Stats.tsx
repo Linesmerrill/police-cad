@@ -2,9 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react';
 
+const UPTIME_JSON_URL = 'https://raw.githubusercontent.com/Linesmerrill/police-cad-status/master/api/police-cad-frontend/uptime.json';
+const UPTIME_CACHE_KEY = 'lpc-uptime-cache';
+const UPTIME_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
 const stats = [
   { label: 'Active Communities', value: '10K+', description: 'Role-play communities worldwide' },
-  { label: 'Users', value: '500K+', description: 'Active users across all platforms' },
+  { label: 'Users', value: '800K+', description: 'Active users across all platforms' },
   { label: 'Free Forever', value: '100%', description: 'Premium tiers available but completely optional' },
   { label: 'Uptime', value: '99.9%', description: 'Reliable service you can count on' },
 ];
@@ -206,21 +210,48 @@ function triggerConfetti() {
 export default function Stats() {
   const [displayViews, setDisplayViews] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
+  const [liveUptime, setLiveUptime] = useState<string | null>(null);
   const lastMillionRef = useRef<number>(0);
+
+  // Fetch live uptime from Upptime status page (cached, non-blocking)
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem(UPTIME_CACHE_KEY);
+      if (cached) {
+        const { value, ts } = JSON.parse(cached);
+        if (Date.now() - ts < UPTIME_CACHE_TTL) {
+          setLiveUptime(value);
+          return;
+        }
+      }
+    } catch {}
+
+    fetch(UPTIME_JSON_URL)
+      .then(res => res.json())
+      .then(data => {
+        if (data?.message) {
+          setLiveUptime(data.message);
+          try {
+            localStorage.setItem(UPTIME_CACHE_KEY, JSON.stringify({ value: data.message, ts: Date.now() }));
+          } catch {}
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setIsMounted(true);
-    
+
     try {
       const initialViews = calculatePageViews();
       setDisplayViews(initialViews);
       lastMillionRef.current = Math.floor(initialViews / 1000000);
-      
+
       const interval = setInterval(() => {
         try {
           const newViews = calculatePageViews();
           setDisplayViews(newViews);
-          
+
           // Check if we've crossed a new million milestone
           const currentMillion = Math.floor(newViews / 1000000);
           if (currentMillion > lastMillionRef.current) {
@@ -337,7 +368,9 @@ export default function Stats() {
             boxSizing: 'border-box'
           }}
         >
-          {stats.map((stat, index) => (
+          {stats.map((stat) => {
+            const displayValue = stat.label === 'Uptime' && liveUptime ? liveUptime : stat.value;
+            return (
             <div
               key={stat.label}
               style={{
@@ -375,7 +408,7 @@ export default function Stats() {
                 textShadow: '0 0 20px rgba(251, 191, 36, 0.4)',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
               }}>
-                {stat.value}
+                {displayValue}
               </div>
               <div style={{
                 fontSize: '1rem',
@@ -391,10 +424,15 @@ export default function Stats() {
                 color: 'rgba(255, 255, 255, 0.6)',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
               }}>
-                {stat.description}
+                {stat.label === 'Uptime' ? (
+                  <a href="https://status.linespolice-cad.com" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(251, 191, 36, 0.8)', textDecoration: 'none', borderBottom: '1px dashed rgba(251, 191, 36, 0.4)' }}>
+                    View status page &rarr;
+                  </a>
+                ) : stat.description}
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       </div>
     </div>
