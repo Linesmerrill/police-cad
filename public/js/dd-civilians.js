@@ -2168,12 +2168,20 @@
         '<div class="dd-civ-inline-form-title">Add Medical Report</div>' +
         '<div class="dd-civ-form-grid">' +
           '<div class="dd-civ-field">' +
-            '<label>Date *</label>' +
+            '<label>Report Date *</label>' +
             '<input type="date" name="repDate" />' +
+          '</div>' +
+          '<div class="dd-civ-field">' +
+            '<label>Report Time</label>' +
+            '<input type="time" name="repTime" />' +
           '</div>' +
           '<div class="dd-civ-field">' +
             '<label>Hospitalized</label>' +
             '<select name="repHospitalized"><option value="no">No</option><option value="yes">Yes</option></select>' +
+          '</div>' +
+          '<div class="dd-civ-field">' +
+            '<label>Deceased</label>' +
+            '<select name="repDeceased"><option value="false">No</option><option value="true">Yes</option></select>' +
           '</div>' +
           '<div class="dd-civ-field dd-civ-form-full">' +
             '<label>Details</label>' +
@@ -2197,9 +2205,10 @@
           '<div class="dd-civ-item-card">' +
             '<i class="fa fa-file-medical" style="color:var(--dd-amber, #f59e0b);font-size:1rem;margin-top:0.15rem;"></i>' +
             '<div class="dd-civ-item-card-info">' +
-              '<div class="dd-civ-item-card-title">' + (dateStr ? fmtDate(dateStr) : r.createdAt ? fmtDate(r.createdAt) : 'Medical Report') + '</div>' +
+              '<div class="dd-civ-item-card-title">' + (dateStr ? fmtDate(dateStr) : r.createdAt ? fmtDate(r.createdAt) : 'Medical Report') + (r.reportTime ? ' ' + esc(r.reportTime) : '') + '</div>' +
               '<div class="dd-civ-item-card-meta">' +
                 'Hospitalized: ' + esc(hospitalized || 'no') +
+                (r.deceased === true || r.deceased === 'true' ? ' &middot; <span style="color:#ef4444;">Deceased</span>' : '') +
                 (r.reportingEms && r.reportingEms.name ? ' &middot; ' + esc(r.reportingEms.name) : '') +
               '</div>' +
               (r.details ? '<div class="dd-civ-item-card-meta" style="margin-top:0.15rem;">' + esc(r.details) + '</div>' : '') +
@@ -2232,11 +2241,14 @@
       var date = $content.find('#dd-rep-form-wrap [name="repDate"]').val();
       if (!date) { toast('Date is required', 'error'); return; }
 
+      var timeVal = $content.find('#dd-rep-form-wrap [name="repTime"]').val() || '';
+      var fullDate = timeVal ? date + 'T' + timeVal + ':00' : date;
       var payload = {
         report: {
-          date: date,
+          date: fullDate,
           details: $content.find('#dd-rep-form-wrap [name="repDetails"]').val() || '',
           hospitalized: $content.find('#dd-rep-form-wrap [name="repHospitalized"]').val() === 'yes',
+          deceased: $content.find('#dd-rep-form-wrap [name="repDeceased"]').val() === 'true',
           civilianID: currentCiv._id,
           activeCommunityID: c.communityId,
           name: (currentCiv.firstName || '') + ' ' + (currentCiv.lastName || '')
@@ -2269,9 +2281,12 @@
         '<div class="dd-civ-inline-form dd-rep-inline-edit" style="margin:0.25rem 0 0.75rem;border-left:3px solid var(--dd-accent, #7c3aed);">' +
           '<div class="dd-civ-inline-form-title">Edit Medical Report</div>' +
           '<div class="dd-civ-form-grid">' +
-            '<div class="dd-civ-field"><label>Date *</label><input type="date" name="repDate" /></div>' +
+            '<div class="dd-civ-field"><label>Report Date *</label><input type="date" name="repDate" /></div>' +
+            '<div class="dd-civ-field"><label>Report Time</label><input type="time" name="repTime" /></div>' +
             '<div class="dd-civ-field"><label>Hospitalized</label>' +
               '<select name="repHospitalized"><option value="no">No</option><option value="yes">Yes</option></select></div>' +
+            '<div class="dd-civ-field"><label>Deceased</label>' +
+              '<select name="repDeceased"><option value="false">No</option><option value="true">Yes</option></select></div>' +
             '<div class="dd-civ-field dd-civ-form-full"><label>Details</label>' +
               '<textarea name="repDetails" rows="2" placeholder="Details of medical report..."></textarea></div>' +
             '<div class="dd-civ-form-full" style="display:flex;gap:0.5rem;justify-content:flex-end;">' +
@@ -2282,7 +2297,9 @@
         '</div>');
 
       $ef.find('[name="repDate"]').val(toDateInputVal(r.date || r.reportDate || ''));
+      $ef.find('[name="repTime"]').val(r.reportTime || '');
       $ef.find('[name="repHospitalized"]').val(hospitalized || 'no');
+      $ef.find('[name="repDeceased"]').val(r.deceased === true || r.deceased === 'true' ? 'true' : 'false');
       $ef.find('[name="repDetails"]').val(r.details || '');
       $card.after($ef);
 
@@ -2291,15 +2308,18 @@
         var c = cfg();
         var d = $ef.find('[name="repDate"]').val();
         if (!d) { toast('Date is required', 'error'); return; }
+        var t = $ef.find('[name="repTime"]').val() || '';
+        var fullD = t ? d + 'T' + t + ':00' : d;
         $.ajax({
           url: c.API_URL + '/api/v1/medical-reports/' + medEditId,
           method: 'PUT',
           contentType: 'application/json',
           data: JSON.stringify({
             report: {
-              date: d,
+              date: fullD,
               details: $ef.find('[name="repDetails"]').val() || '',
               hospitalized: $ef.find('[name="repHospitalized"]').val() === 'yes',
+              deceased: $ef.find('[name="repDeceased"]').val() === 'true',
               civilianID: currentCiv._id,
               activeCommunityID: c.communityId,
               name: (currentCiv.firstName || '') + ' ' + (currentCiv.lastName || '')
