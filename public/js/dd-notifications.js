@@ -872,7 +872,8 @@
   function showToast(notification) {
     ensureDOM();
 
-    var toastId = 'dd-notif-toast-' + (notification._id || Date.now());
+    var rawId = String(notification._id || Date.now()).replace(/[^a-zA-Z0-9_-]/g, '');
+    var toastId = 'dd-notif-toast-' + rawId;
     var iconClass;
     var message;
 
