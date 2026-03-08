@@ -1810,7 +1810,7 @@ async function saveRolesOrder() {
 
     const roleIds = filteredRoles.map(r => r._id);
 
-    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/reorder`, {
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/reorder?userId=${window.dbUser?._id || ''}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ roleIds })
