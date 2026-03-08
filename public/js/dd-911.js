@@ -13,7 +13,7 @@
      ─────────────────────────────────────────── */
 
   var cfg = function () { return window.ddConfig || {}; };
-  var esc = function (s) { return window.esc ? window.esc(s) : s || ''; };
+  var esc = function (s) { return window.esc ? window.esc(s) : String(s || '').replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
   var toast = function (m, t) { if (window.ddToast) window.ddToast(m, t); };
 
   /* ───────────────────────────────────────────

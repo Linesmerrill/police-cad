@@ -1340,7 +1340,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (departmentId && departmentName) {
           const communityId = req.user.user.lastAccessedCommunity?.communityID || req.user.user.activeCommunity;
 
-          if (!communityId) {
+          if (!communityId || !/^[a-fA-F0-9]{24}$/.test(communityId)) {
             return res.status(403).render("error", {
               message: "No active community found. Please select a community first.",
               redirect: "/communities",

@@ -13,8 +13,9 @@
      ─────────────────────────────────────────── */
 
   var cfg = function () { return window.ddConfig || {}; };
-  var esc = function (s) { return window.esc ? window.esc(s) : s || ''; };
+  var esc = function (s) { return window.esc ? window.esc(s) : String(s || '').replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
   var toast = function (m, t) { if (window.ddToast) window.ddToast(m, t); };
+  var isObjectId = function (s) { return /^[a-fA-F0-9]{24}$/.test(s); };
 
   var PAGE_SIZE = 100;
   var notifPage = 0;
@@ -744,6 +745,11 @@
         data: JSON.stringify({ friend_id: n.sentFromID })
       }));
     } else if (n.type === 'join_request' && !n.data3) {
+      if (!isObjectId(n.sentFromID) || !isObjectId(n.data1)) {
+        toast('Invalid notification data', 'error');
+        renderNotifications();
+        return;
+      }
       requests.push($.ajax({
         url: c.API_URL + '/api/v1/user/' + n.sentFromID + '/communities?migration=false',
         method: 'PUT',
@@ -751,6 +757,11 @@
         data: JSON.stringify({ communityId: n.data1, status: action })
       }));
     } else if (n.type === 'join_request' && n.data3) {
+      if (!isObjectId(n.data1) || !isObjectId(n.data3) || !isObjectId(n.sentFromID)) {
+        toast('Invalid notification data', 'error');
+        renderNotifications();
+        return;
+      }
       requests.push($.ajax({
         url: c.API_URL + '/api/v1/community/' + n.data1 + '/departments/' + n.data3 + '/join-requests',
         method: 'PUT',
