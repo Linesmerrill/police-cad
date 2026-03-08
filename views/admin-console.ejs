@@ -5615,27 +5615,42 @@
 
       function initMetricsSocket() {
         if (typeof io === 'undefined') {
-          // Socket.IO not loaded, skip gracefully
+          $('#metrics-live-dot').addClass('disconnected');
+          $('#metrics-live-label').text('Live updates unavailable');
+          console.warn('[Metrics] Socket.IO client not loaded');
+          return;
+        }
+
+        try {
+          metricsSocket = io({ transports: ['websocket'], reconnection: true });
+        } catch (e) {
+          console.error('[Metrics] Socket.IO init failed:', e);
           $('#metrics-live-dot').addClass('disconnected');
           $('#metrics-live-label').text('Live updates unavailable');
           return;
         }
 
-        metricsSocket = io({ transports: ['websocket'] });
-
         metricsSocket.on('connect', function() {
+          console.log('[Metrics] Socket connected, joining admin-metrics room');
           metricsSocket.emit('join_admin_metrics');
           $('#metrics-live-dot').removeClass('disconnected');
           $('#metrics-live-label').text('Live');
         });
 
-        metricsSocket.on('disconnect', function() {
+        metricsSocket.on('connect_error', function(err) {
+          console.warn('[Metrics] Socket connect error:', err.message);
+          $('#metrics-live-dot').addClass('disconnected');
+          $('#metrics-live-label').text('Connection error');
+        });
+
+        metricsSocket.on('disconnect', function(reason) {
+          console.log('[Metrics] Socket disconnected:', reason);
           $('#metrics-live-dot').addClass('disconnected');
           $('#metrics-live-label').text('Reconnecting...');
         });
 
-        // Listen for beta metrics updates
         metricsSocket.on('beta_metrics_updated', function(data) {
+          console.log('[Metrics] Live update received:', data);
           applyBetaAdoptionMetrics(data);
         });
       }
