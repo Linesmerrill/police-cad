@@ -32,6 +32,24 @@
     return '';
   }
 
+  // Get the medical condition title from a report.
+  // The 'name' field stores the civilian's name (set by EMS dashboard), NOT the condition.
+  // For records created from the department dashboard, 'name' IS the condition title.
+  // This function detects the difference and returns the correct display title.
+  function getMedicalTitle(r) {
+    var name = (r.name || '').trim();
+    var nameLower = name.toLowerCase();
+    // Build the civilian's full name for comparison
+    var civName = currentCiv
+      ? ((currentCiv.firstName || '') + ' ' + (currentCiv.lastName || '')).trim().toLowerCase()
+      : '';
+    // Skip name if it matches the civilian name, is "undefined undefined", or is empty
+    if (!name || nameLower === civName || /^undefined/.test(nameLower)) {
+      return r.details || 'Medical Report';
+    }
+    return name;
+  }
+
   var PAGE_SIZE = window.innerWidth <= 600 ? 6 : 12;
   var SEARCH_LIMIT = 8;
   var ddCivPage = 0;
@@ -1920,16 +1938,19 @@
     } else {
       html += reports.map(function (r) {
         var id = r._id || r.id || '';
+        var title = getMedicalTitle(r);
+        // Show details as subtitle only if it's different from the title
+        var subtitle = r.details && r.details !== title ? r.details : '';
         return '' +
           '<div class="dd-civ-item-card" data-med-card-id="' + esc(id) + '">' +
             '<i class="fa fa-medkit" style="color:var(--dd-green);font-size:1rem;margin-top:0.15rem;"></i>' +
             '<div class="dd-civ-item-card-info">' +
-              '<div class="dd-civ-item-card-title">' + esc(r.name || r.details || 'Medical Report') + '</div>' +
+              '<div class="dd-civ-item-card-title">' + esc(title) + '</div>' +
               '<div class="dd-civ-item-card-meta">' +
                 (r.date || r.reportDate ? fmtDate(r.date || r.reportDate) : r.createdAt ? fmtDate(r.createdAt) : '') +
                 (r.reportingEms && r.reportingEms.name ? ' &middot; ' + esc(r.reportingEms.name) : '') +
               '</div>' +
-              (r.details && r.name ? '<div class="dd-civ-item-card-meta" style="margin-top:0.25rem;">' + esc(r.details) + '</div>' : '') +
+              (subtitle ? '<div class="dd-civ-item-card-meta" style="margin-top:0.25rem;">' + esc(subtitle) + '</div>' : '') +
             '</div>' +
             '<div class="dd-civ-item-card-actions">' +
               '<button class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small dd-med-edit" data-med=\'' + esc(JSON.stringify(r)) + '\' title="Edit"><i class="fa fa-pen"></i></button>' +
@@ -1957,9 +1978,12 @@
 
       // Build inline edit form and insert after the card
       var $editForm = $(buildInlineEditForm());
-      $editForm.find('[name="medTitle"]').val(r.name || '');
+      var editTitle = getMedicalTitle(r);
+      $editForm.find('[name="medTitle"]').val(editTitle !== 'Medical Report' ? editTitle : '');
       $editForm.find('[name="medDate"]').val(toDateInputVal(r.date || r.reportDate || r.createdAt || ''));
-      $editForm.find('[name="medDescription"]').val(r.details || '');
+      // If title came from details (EMS records), clear description to avoid duplication
+      var editDesc = r.details && r.details !== editTitle ? r.details : (r.details === editTitle ? '' : r.details || '');
+      $editForm.find('[name="medDescription"]').val(editDesc);
       $card.after($editForm);
 
       // Wire inline edit form buttons
