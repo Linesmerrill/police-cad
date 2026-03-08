@@ -17,6 +17,21 @@
   var toast = function (m, t) { if (window.ddToast) window.ddToast(m, t); };
   var fmtDate = function (d) { return window.formatDate ? window.formatDate(d) : d || 'N/A'; };
 
+  // Convert any date value (string, timestamp, ISO) to YYYY-MM-DD for <input type="date">
+  function toDateInputVal(val) {
+    if (!val) return '';
+    // If already YYYY-MM-DD, use as-is
+    if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+    // Try to parse (handles ISO strings, timestamps, locale strings)
+    var d = new Date(val);
+    if (!isNaN(d.getTime()) && d.getFullYear() > 1970) {
+      return d.toISOString().substring(0, 10);
+    }
+    // Last resort: try substring for ISO-like strings
+    if (typeof val === 'string' && val.length >= 10) return val.substring(0, 10);
+    return '';
+  }
+
   var PAGE_SIZE = window.innerWidth <= 600 ? 6 : 12;
   var SEARCH_LIMIT = 8;
   var ddCivPage = 0;
@@ -1933,8 +1948,7 @@
       medEditId = r._id || r.id;
       $body.find('#dd-med-form-title').text('Edit Medical Report');
       $body.find('[name="medTitle"]').val(r.name || '');
-      var dateVal = r.date || r.reportDate || '';
-      $body.find('[name="medDate"]').val(dateVal ? dateVal.substring(0, 10) : '');
+      $body.find('[name="medDate"]').val(toDateInputVal(r.date || r.reportDate || r.createdAt || ''));
       $body.find('[name="medAttending"]').val('');
       $body.find('[name="medDescription"]').val(r.details || '');
       $body.find('#dd-med-form-wrap').show();
