@@ -162,11 +162,11 @@
       '.dd-civ-page-btn:disabled{opacity:0.35;cursor:default;}' +
 
       /* ── Detail Modal Overlay ── */
-      '.dd-civ-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}' +
+      '.dd-civ-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;overflow-y:auto;overscroll-behavior:contain;}' +
       '.dd-civ-overlay.dd-civ-visible{opacity:1;pointer-events:auto;}' +
 
       /* ── Detail Panel ── */
-      '.dd-civ-detail{background:var(--dd-surface,#13131a);border:1px solid var(--dd-glass-border);border-radius:var(--dd-radius);width:94vw;max-width:720px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.5);}' +
+      '.dd-civ-detail{background:var(--dd-surface,#13131a);border:1px solid var(--dd-glass-border);border-radius:var(--dd-radius);width:94vw;max-width:720px;height:88vh;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.5);}' +
       '.dd-civ-detail-header{display:flex;align-items:center;gap:0.75rem;padding:1rem 1.25rem;border-bottom:1px solid var(--dd-glass-border);}' +
       '.dd-civ-detail-avatar{width:52px;height:52px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:#fff;background:var(--dd-blue);overflow:hidden;}' +
       '.dd-civ-detail-avatar img{width:100%;height:100%;object-fit:cover;}' +
@@ -231,12 +231,19 @@
       '.dd-civ-sub-card-title{font-size:0.8125rem;font-weight:600;color:var(--dd-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
       '.dd-civ-sub-card-meta{font-size:0.6875rem;color:var(--dd-text-muted);margin-top:0.1rem;}' +
 
-      /* ── Link search ── */
+      /* ── Link search (top bar) ── */
+      '.dd-civ-link-bar{display:flex;align-items:center;justify-content:space-between;gap:0.75rem;margin-bottom:0.75rem;}' +
+      '.dd-civ-link-bar-label{font-size:0.75rem;font-weight:600;color:var(--dd-text-muted);white-space:nowrap;}' +
+      '.dd-civ-link-search-wrap{position:relative;width:220px;flex-shrink:0;}' +
+      '.dd-civ-link-search-wrap .dd-civ-search{width:100%;padding-right:2rem;font-size:0.75rem;padding:0.4rem 0.65rem;}' +
+      '.dd-civ-link-search-wrap .dd-link-search-icon{position:absolute;right:0.6rem;top:50%;transform:translateY(-50%);color:var(--dd-text-dim);font-size:0.7rem;pointer-events:none;}' +
+      '.dd-civ-link-results{position:absolute;top:100%;right:0;left:0;z-index:100;margin-top:0.25rem;background:var(--dd-surface,#13131a);border:1px solid var(--dd-glass-border);border-radius:var(--dd-radius-sm);box-shadow:0 8px 32px rgba(0,0,0,0.4);max-height:220px;overflow-y:auto;}' +
+      '.dd-civ-link-results:empty{display:none;}' +
       '.dd-civ-link-section{margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--dd-glass-border);}' +
       '.dd-civ-link-title{font-size:0.75rem;font-weight:600;color:var(--dd-text-muted);margin-bottom:0.5rem;}' +
 
       /* ── New Civilian Modal ── */
-      '.dd-civ-new-overlay{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}' +
+      '.dd-civ-new-overlay{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;overflow-y:auto;overscroll-behavior:contain;}' +
       '.dd-civ-new-overlay.dd-civ-visible{opacity:1;pointer-events:auto;}' +
       '.dd-civ-new-panel{background:var(--dd-surface,#13131a);border:1px solid var(--dd-glass-border);border-radius:var(--dd-radius);width:94vw;max-width:560px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.5);}' +
       '.dd-civ-new-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--dd-glass-border);}' +
@@ -290,7 +297,7 @@
         '.dd-civ-form-grid{grid-template-columns:1fr;}' +
         '.dd-civ-toolbar{flex-direction:column;align-items:stretch;}' +
         '.dd-civ-search-wrap{min-width:0;}' +
-        '.dd-civ-detail{width:100vw;max-width:100vw;max-height:100vh;border-radius:0;}' +
+        '.dd-civ-detail{width:100vw;max-width:100vw;height:100vh;max-height:100vh;border-radius:0;}' +
         '.dd-civ-new-panel{width:100vw;max-width:100vw;max-height:100vh;border-radius:0;}' +
         '.dd-rec-filters{flex-wrap:wrap;}' +
         '.dd-rec-filter-btn{flex:0 1 auto;padding:0.35rem 0.5rem;font-size:0.6875rem;}' +
@@ -686,10 +693,12 @@
     renderTabContent('edit');
 
     $detailOverlay.addClass('dd-civ-visible');
+    $('body').css('overflow', 'hidden');
   }
 
   function closeDetailModal() {
     if ($detailOverlay) $detailOverlay.removeClass('dd-civ-visible');
+    $('body').css('overflow', '');
     currentCiv = null;
   }
 
@@ -1030,16 +1039,19 @@
           }
         });
 
+        // Top bar: label left, search right
+        var topBar = buildVehicleLinkBar();
+
         if (!linked.length) {
           $body.html(
-            '<div class="dd-civ-empty"><i class="fa fa-car"></i><p>No vehicles linked to this civilian.</p></div>' +
-            buildVehicleLinkSearch(all, civId)
+            topBar +
+            '<div class="dd-civ-empty"><i class="fa fa-car"></i><p>No vehicles linked to this civilian.</p></div>'
           );
           wireVehicleLinkSearch($body, all);
           return;
         }
 
-        var html = linked.map(function (v) {
+        var cards = linked.map(function (v) {
           return '' +
             '<div class="dd-civ-sub-card">' +
               '<i class="fa fa-car" style="color:var(--dd-green);font-size:1.1rem;"></i>' +
@@ -1051,7 +1063,7 @@
             '</div>';
         }).join('');
 
-        $body.html(html + buildVehicleLinkSearch(all, civId));
+        $body.html(topBar + cards);
         wireVehicleLinkSearch($body, all);
 
         // Delink handler
@@ -1066,12 +1078,15 @@
     });
   }
 
-  function buildVehicleLinkSearch(allVehicles, civId) {
+  function buildVehicleLinkBar() {
     return '' +
-      '<div class="dd-civ-link-section">' +
-        '<div class="dd-civ-link-title">Link a Vehicle</div>' +
-        '<input type="text" class="dd-civ-search" id="dd-civ-veh-link-search" placeholder="Search by plate or model..." style="width:100%;max-width:100%;margin-bottom:0.5rem;" />' +
-        '<div id="dd-civ-veh-link-results"></div>' +
+      '<div class="dd-civ-link-bar">' +
+        '<div class="dd-civ-link-bar-label">Linked Vehicles</div>' +
+        '<div class="dd-civ-link-search-wrap">' +
+          '<input type="text" class="dd-civ-search" id="dd-civ-veh-link-search" placeholder="Search to link..." autocomplete="off" />' +
+          '<i class="fa fa-search dd-link-search-icon"></i>' +
+          '<div class="dd-civ-link-results" id="dd-civ-veh-link-results"></div>' +
+        '</div>' +
       '</div>';
   }
 
@@ -1098,13 +1113,13 @@
       });
 
       if (!matches.length) {
-        $results.html('<div style="font-size:0.75rem;color:var(--dd-text-muted);padding:0.25rem 0;">No unlinked vehicles found.</div>');
+        $results.html('<div style="font-size:0.75rem;color:var(--dd-text-muted);padding:0.5rem 0.75rem;">No unlinked vehicles found.</div>');
         return;
       }
 
       var html = matches.slice(0, 5).map(function (v) {
         return '' +
-          '<div class="dd-civ-sub-card" style="cursor:pointer;" data-link-veh-id="' + esc(v._id) + '">' +
+          '<div class="dd-civ-sub-card" style="cursor:pointer;margin:0;border-radius:0;border-bottom:1px solid var(--dd-glass-border);" data-link-veh-id="' + esc(v._id) + '">' +
             '<i class="fa fa-car" style="color:var(--dd-text-muted);"></i>' +
             '<div class="dd-civ-sub-card-info">' +
               '<div class="dd-civ-sub-card-title">' + esc(v.year || '') + ' ' + esc(v.make || '') + ' ' + esc(v.model || '') + '</div>' +
@@ -1187,16 +1202,19 @@
           }
         });
 
+        // Top bar: label left, search right
+        var topBar = buildFirearmLinkBar();
+
         if (!linked.length) {
           $body.html(
-            '<div class="dd-civ-empty"><i class="fa fa-crosshairs"></i><p>No firearms linked to this civilian.</p></div>' +
-            buildFirearmLinkSearch(all, civId)
+            topBar +
+            '<div class="dd-civ-empty"><i class="fa fa-crosshairs"></i><p>No firearms linked to this civilian.</p></div>'
           );
           wireFirearmLinkSearch($body, all);
           return;
         }
 
-        var html = linked.map(function (f) {
+        var cards = linked.map(function (f) {
           return '' +
             '<div class="dd-civ-sub-card">' +
               '<i class="fa fa-crosshairs" style="color:var(--dd-red);font-size:1.1rem;"></i>' +
@@ -1211,7 +1229,7 @@
             '</div>';
         }).join('');
 
-        $body.html(html + buildFirearmLinkSearch(all, civId));
+        $body.html(topBar + cards);
         wireFirearmLinkSearch($body, all);
 
         // Delink handler
@@ -1226,12 +1244,15 @@
     });
   }
 
-  function buildFirearmLinkSearch(allFirearms, civId) {
+  function buildFirearmLinkBar() {
     return '' +
-      '<div class="dd-civ-link-section">' +
-        '<div class="dd-civ-link-title">Link a Firearm</div>' +
-        '<input type="text" class="dd-civ-search" id="dd-civ-fa-link-search" placeholder="Search by name or serial number..." style="width:100%;max-width:100%;margin-bottom:0.5rem;" />' +
-        '<div id="dd-civ-fa-link-results"></div>' +
+      '<div class="dd-civ-link-bar">' +
+        '<div class="dd-civ-link-bar-label">Linked Firearms</div>' +
+        '<div class="dd-civ-link-search-wrap">' +
+          '<input type="text" class="dd-civ-search" id="dd-civ-fa-link-search" placeholder="Search to link..." autocomplete="off" />' +
+          '<i class="fa fa-search dd-link-search-icon"></i>' +
+          '<div class="dd-civ-link-results" id="dd-civ-fa-link-results"></div>' +
+        '</div>' +
       '</div>';
   }
 
@@ -1258,13 +1279,13 @@
       });
 
       if (!matches.length) {
-        $results.html('<div style="font-size:0.75rem;color:var(--dd-text-muted);padding:0.25rem 0;">No unlinked firearms found.</div>');
+        $results.html('<div style="font-size:0.75rem;color:var(--dd-text-muted);padding:0.5rem 0.75rem;">No unlinked firearms found.</div>');
         return;
       }
 
       var html = matches.slice(0, 5).map(function (f) {
         return '' +
-          '<div class="dd-civ-sub-card" style="cursor:pointer;" data-link-fa-id="' + esc(f._id) + '">' +
+          '<div class="dd-civ-sub-card" style="cursor:pointer;margin:0;border-radius:0;border-bottom:1px solid var(--dd-glass-border);" data-link-fa-id="' + esc(f._id) + '">' +
             '<i class="fa fa-crosshairs" style="color:var(--dd-text-muted);"></i>' +
             '<div class="dd-civ-sub-card-info">' +
               '<div class="dd-civ-sub-card-title">' + esc(f.name || 'Unknown') + '</div>' +
@@ -2660,10 +2681,15 @@
     $newOverlay.find('.dd-civ-weight-imperial').show();
     $newOverlay.find('.dd-civ-weight-metric').hide();
     $newOverlay.addClass('dd-civ-visible');
+    $('body').css('overflow', 'hidden');
   }
 
   function closeNewModal() {
     if ($newOverlay) $newOverlay.removeClass('dd-civ-visible');
+    // Only restore scroll if detail modal isn't also open
+    if (!$detailOverlay || !$detailOverlay.hasClass('dd-civ-visible')) {
+      $('body').css('overflow', '');
+    }
   }
 
   function submitNewCivilian() {
