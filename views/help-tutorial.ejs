@@ -509,6 +509,139 @@
     .ht-badge-active { background: rgba(239,68,68,0.15); color: var(--ht-red); }
     .ht-badge-pending { background: rgba(139,92,246,0.15); color: var(--ht-accent); }
     .ht-badge-approved { background: rgba(34,197,94,0.15); color: var(--ht-green); }
+    .ht-badge-in-review { background: rgba(96,165,250,0.15); color: #60a5fa; }
+    .ht-badge-completed { background: rgba(148,163,184,0.15); color: #94a3b8; }
+    .ht-badge-dismissed { background: rgba(110,231,183,0.15); color: #6ee7b7; }
+    .ht-badge-upheld { background: rgba(252,165,165,0.15); color: #fca5a5; }
+
+    /* ── Extra Button Variants ── */
+    .ht-btn-amber { background: rgba(234,179,8,0.15); border: 1px solid rgba(234,179,8,0.3); color: #eab308; }
+    .ht-btn-indigo { background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.4); color: #818cf8; }
+    .ht-btn-muted { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; }
+
+    /* ── Sample Sidebar ── */
+    .ht-sidebar-sample {
+      background: var(--ht-glass);
+      border: 1px solid var(--ht-glass-border);
+      border-radius: var(--ht-radius-sm);
+      padding: 0.5rem 0;
+      width: 200px;
+    }
+    .ht-sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.55rem 1rem;
+      font-size: 0.8rem;
+      color: var(--ht-text-muted);
+      transition: all 0.15s ease;
+    }
+    .ht-sidebar-item i { width: 16px; text-align: center; font-size: 0.78rem; }
+    .ht-sidebar-item.highlighted {
+      background: var(--ht-accent-glow);
+      color: var(--ht-accent);
+      border-left: 3px solid var(--ht-accent);
+      font-weight: 600;
+    }
+
+    /* ── Case Detail Sample ── */
+    .ht-case-detail {
+      background: var(--ht-glass);
+      border: 1px solid var(--ht-glass-border);
+      border-radius: var(--ht-radius);
+      padding: 1.25rem;
+    }
+    .ht-case-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--ht-glass-border);
+    }
+    .ht-case-detail-title { font-weight: 700; font-size: 0.95rem; color: #fff; }
+    .ht-detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.45rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 0.8rem;
+    }
+    .ht-detail-label { color: var(--ht-text-muted); }
+    .ht-detail-value { color: var(--ht-text); font-weight: 600; }
+    .ht-action-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .ht-action-row .ht-btn { flex: 1; justify-content: center; }
+
+    /* ── Contested Item Sample ── */
+    .ht-contested-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.75rem;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--ht-glass-border);
+      border-radius: 6px;
+      margin-bottom: 0.35rem;
+      font-size: 0.8rem;
+    }
+    .ht-contested-type {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      margin-right: 0.5rem;
+    }
+    .ht-contested-type.citation { background: rgba(59,130,246,0.15); color: #93c5fd; }
+    .ht-contested-type.warning { background: rgba(234,179,8,0.15); color: #fde047; }
+    .ht-contested-type.arrest { background: rgba(239,68,68,0.15); color: #fca5a5; }
+
+    /* ── Session Card Sample ── */
+    .ht-session-card {
+      background: var(--ht-glass);
+      border: 1px solid var(--ht-glass-border);
+      border-radius: var(--ht-radius);
+      padding: 1rem;
+      position: relative;
+    }
+    .ht-session-card.live { border-color: rgba(239,68,68,0.25); }
+    .ht-session-title { font-weight: 700; font-size: 0.9rem; color: #fff; margin-bottom: 0.2rem; }
+    .ht-session-meta { font-size: 0.78rem; color: var(--ht-text-muted); margin-bottom: 0.5rem; }
+    .ht-session-stats {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.75rem;
+      color: var(--ht-text-dim);
+    }
+
+    /* ── Docket Entry Sample ── */
+    .ht-docket-entry {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--ht-glass-border);
+      border-radius: 6px;
+      padding: 0.65rem 0.75rem;
+      margin-bottom: 0.4rem;
+    }
+    .ht-docket-name {
+      font-weight: 600;
+      font-size: 0.82rem;
+      color: #fff;
+      margin-bottom: 0.35rem;
+    }
+    .ht-docket-name i { color: var(--ht-accent); margin-right: 0.3rem; font-size: 0.72rem; }
+    .ht-resolution-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.25rem 0;
+      font-size: 0.78rem;
+    }
+    .ht-resolution-row + .ht-resolution-row { border-top: 1px solid rgba(255,255,255,0.04); }
 
     /* ── Sample Live Banner ── */
     .ht-live-banner {
@@ -667,9 +800,12 @@
 
       <div class="ht-nav-group-title"><i class="fa fa-briefcase"></i> Court Cases</div>
       <a class="ht-nav-link" href="#court-overview">Overview</a>
-      <a class="ht-nav-link" href="#court-viewing">Viewing Cases</a>
+      <a class="ht-nav-link" href="#court-accessing">Accessing Court Cases</a>
       <a class="ht-nav-link" href="#court-queue">Case Queue</a>
+      <a class="ht-nav-link" href="#court-reviewing">Reviewing & Scheduling</a>
+      <a class="ht-nav-link" href="#court-scheduled">Scheduled Cases</a>
       <a class="ht-nav-link" href="#court-sessions">Court Sessions</a>
+      <a class="ht-nav-link" href="#court-history">History</a>
 
       <div class="ht-nav-group-title"><i class="fa fa-gear"></i> Community Settings</div>
       <a class="ht-nav-link" href="#settings-overview">Overview</a>
@@ -1117,34 +1253,58 @@
           <div class="ht-tip">
             <i class="fa fa-circle-info ht-tip-icon"></i>
             <div class="ht-tip-text">
-              Civilians submit cases to contest actions, while judges manage the review and scheduling process. Officers may be called to provide context during court sessions.
+              Civilians submit cases to contest actions, while judges manage the review and scheduling process.
+              <strong>Judges</strong> see the full dashboard with all tabs and action buttons.
+              <strong>Civilians</strong> see a filtered view showing only their own cases.
             </div>
           </div>
         </div>
 
-        <!-- Viewing Cases -->
-        <div class="ht-subsection" id="court-viewing">
-          <h3 class="ht-subsection-title">Viewing Court Cases</h3>
+        <!-- Accessing Court Cases -->
+        <div class="ht-subsection" id="court-accessing">
+          <h3 class="ht-subsection-title">Accessing Court Cases</h3>
           <div class="ht-steps">
             <div class="ht-step">
               <div class="ht-step-number">1</div>
               <div class="ht-step-body">
-                <div class="ht-step-title">Open Court Cases</div>
-                <div class="ht-step-desc">Click <strong>Court Cases</strong> in the sidebar to open the court case management page.</div>
+                <div class="ht-step-title">Open Court Cases from the sidebar</div>
+                <div class="ht-step-desc">From your <strong>Judicial Department</strong> dashboard, click <strong>Court Cases</strong> in the left sidebar navigation. This opens the court case management page for your community.</div>
               </div>
             </div>
+          </div>
+
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              The <strong>Court Cases</strong> link appears in the sidebar of every department, but only the <strong>Judicial Department</strong> sidebar gives you the full judge controls &mdash; assigning cases, scheduling court dates, creating sessions, and resolving verdicts. From other departments, you can view cases but won't have these additional actions.
+            </div>
+          </div>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Sidebar Navigation</div>
+            <div class="ht-sample-content">
+              <div class="ht-sidebar-sample">
+                <div class="ht-sidebar-item"><i class="fa fa-phone"></i> Calls</div>
+                <div class="ht-sidebar-item"><i class="fa fa-map"></i> Map</div>
+                <div class="ht-sidebar-item highlighted"><i class="fa fa-briefcase"></i> Court Cases</div>
+                <div class="ht-sidebar-item"><i class="fa fa-circle-question"></i> Help</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-steps">
             <div class="ht-step">
               <div class="ht-step-number">2</div>
               <div class="ht-step-body">
                 <div class="ht-step-title">Check the metrics bar</div>
-                <div class="ht-step-desc">The metrics bar at the top gives you a quick summary of how many cases are pending, scheduled, active, and completed.</div>
+                <div class="ht-step-desc">At the top of the page, four metric cards give you a quick summary of <strong>Pending</strong> cases, <strong>Scheduled</strong> cases, <strong>Active Sessions</strong>, and <strong>Completed</strong> sessions.</div>
               </div>
             </div>
             <div class="ht-step">
               <div class="ht-step-number">3</div>
               <div class="ht-step-body">
                 <div class="ht-step-title">Navigate using tabs</div>
-                <div class="ht-step-desc">Use the tabs to switch between different views: <strong>Queue</strong> (pending cases), <strong>Scheduled</strong> (upcoming), <strong>Sessions</strong> (active court sessions), and <strong>History</strong> (completed).</div>
+                <div class="ht-step-desc">Below the metrics, four tabs organize all court activity: <strong>Case Queue</strong>, <strong>Scheduled</strong>, <strong>Sessions</strong>, and <strong>History</strong>. Each tab is explained in detail below.</div>
               </div>
             </div>
           </div>
@@ -1171,11 +1331,18 @@
                 </div>
               </div>
               <div class="ht-tabs">
-                <button class="ht-tab active"><i class="fa fa-inbox"></i> Queue <span class="ht-tab-count">3</span></button>
+                <button class="ht-tab active"><i class="fa fa-inbox"></i> Case Queue <span class="ht-tab-count">3</span></button>
                 <button class="ht-tab"><i class="fa fa-calendar-check"></i> Scheduled <span class="ht-tab-count">1</span></button>
                 <button class="ht-tab"><i class="fa fa-circle-play"></i> Sessions <span class="ht-tab-count">1</span></button>
                 <button class="ht-tab"><i class="fa fa-clock-rotate-left"></i> History</button>
               </div>
+            </div>
+          </div>
+
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              You can filter between <strong>Your Cases</strong> (only cases you submitted or are assigned to) and <strong>All Cases</strong> using the filter pills above the tabs.
             </div>
           </div>
         </div>
@@ -1184,13 +1351,15 @@
         <div class="ht-subsection" id="court-queue">
           <h3 class="ht-subsection-title">Case Queue</h3>
           <p class="ht-text">
-            The Case Queue shows all submitted cases that haven't been scheduled yet. Each case card displays the
-            civilian's name, case status, number of contested items, and the submission date. Click on a case to
-            view its full details.
+            The <strong>Case Queue</strong> tab is where all newly submitted court cases appear. When a civilian contests an arrest, citation, or warning, their case lands here with a <strong>Submitted</strong> status. This is the starting point for all judicial work.
+          </p>
+
+          <p class="ht-text">
+            Each case card shows the civilian's name, the number of items they're contesting, and when they submitted their case.
           </p>
 
           <div class="ht-sample-box">
-            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Case Card</div>
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Submitted Case in Queue</div>
             <div class="ht-sample-content">
               <div class="ht-case-card">
                 <div class="ht-avatar">JD</div>
@@ -1204,33 +1373,186 @@
                 </div>
                 <button class="ht-btn ht-btn-outline"><i class="fa fa-eye"></i> View</button>
               </div>
-              <div class="ht-case-card" style="margin-top:0.5rem;">
+            </div>
+          </div>
+
+          <h3 class="ht-subsection-title" style="margin-top:1.5rem;">Assigning a Case</h3>
+          <p class="ht-text">
+            As a judge, you can click the <strong>Assign</strong> button on any submitted case to let other judges in your community know that you would like to take on that case. Assigning moves the case from <strong>Submitted</strong> to <strong>In Review</strong> status and records your name as the assigned judge.
+          </p>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Case Card with Assign Button</div>
+            <div class="ht-sample-content">
+              <div class="ht-case-card">
                 <div class="ht-avatar">AS</div>
                 <div class="ht-case-info">
                   <div class="ht-case-name">Alice Smith</div>
                   <div class="ht-case-meta">
-                    <span class="ht-badge ht-badge-pending">In Review</span>
+                    <span class="ht-badge ht-badge-submitted">Submitted</span>
                     <span><i class="fa fa-file-lines"></i> 1 item</span>
                     <span><i class="fa fa-clock"></i> 2/18/2026</span>
+                  </div>
+                </div>
+                <button class="ht-btn ht-btn-indigo"><i class="fa fa-user-check"></i> Assign</button>
+              </div>
+            </div>
+          </div>
+
+          <p class="ht-text">
+            After assigning, the case stays in the Queue tab but now shows an <strong>In Review</strong> badge with your name as the judge. The case is now ready for you to review and schedule.
+          </p>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Case After Assignment</div>
+            <div class="ht-sample-content">
+              <div class="ht-case-card">
+                <div class="ht-avatar">AS</div>
+                <div class="ht-case-info">
+                  <div class="ht-case-name">Alice Smith</div>
+                  <div class="ht-case-meta">
+                    <span class="ht-badge ht-badge-in-review">In Review</span>
+                    <span><i class="fa fa-file-lines"></i> 1 item</span>
+                    <span><i class="fa fa-user"></i> Judge Williams</span>
                   </div>
                 </div>
                 <button class="ht-btn ht-btn-outline"><i class="fa fa-eye"></i> View</button>
               </div>
             </div>
           </div>
+        </div>
 
+        <!-- Reviewing & Scheduling -->
+        <div class="ht-subsection" id="court-reviewing">
+          <h3 class="ht-subsection-title">Reviewing & Scheduling</h3>
           <p class="ht-text">
-            When viewing a case, you'll see the civilian's statement, the contested items (arrests, citations, or warnings they're disputing),
-            and any judge notes or scheduled dates. Judges can assign themselves to cases and schedule them for a court session.
+            Once you've assigned a case to yourself, click on the case card to open its details. Here you can see the civilian's full statement, all the contested items they're disputing, and take action.
           </p>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Case Detail View (In Review)</div>
+            <div class="ht-sample-content">
+              <div class="ht-case-detail">
+                <div class="ht-case-detail-header">
+                  <div class="ht-avatar" style="width:32px;height:32px;font-size:0.7rem;">AS</div>
+                  <div>
+                    <div class="ht-case-detail-title">Alice Smith</div>
+                    <span class="ht-badge ht-badge-in-review" style="margin-top:0.15rem;">In Review</span>
+                  </div>
+                </div>
+
+                <div class="ht-detail-row">
+                  <span class="ht-detail-label">Judge</span>
+                  <span class="ht-detail-value">Judge Williams</span>
+                </div>
+                <div class="ht-detail-row">
+                  <span class="ht-detail-label">Submitted</span>
+                  <span class="ht-detail-value">Feb 18, 2026</span>
+                </div>
+
+                <div style="margin-top:0.75rem;margin-bottom:0.35rem;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ht-text-dim);">Contested Items</div>
+                <div class="ht-contested-item">
+                  <div><span class="ht-contested-type citation">Citation</span> Speeding &mdash; 85 in a 65 zone</div>
+                </div>
+
+                <div style="margin-top:0.75rem;margin-bottom:0.35rem;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ht-text-dim);">Civilian Statement</div>
+                <p style="font-size:0.8rem;color:var(--ht-text-muted);line-height:1.5;margin-bottom:0.75rem;font-style:italic;">"I believe the radar reading was inaccurate. I was driving at the speed limit."</p>
+
+                <div class="ht-action-row">
+                  <button class="ht-btn ht-btn-accent"><i class="fa fa-calendar"></i> Schedule Court Date</button>
+                  <button class="ht-btn ht-btn-red"><i class="fa fa-trash"></i> Delete Case</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Schedule Court Date</div>
+                <div class="ht-step-desc">Click <strong>Schedule Court Date</strong> to pick a date and time. This notifies the civilian when their case will be taken up in court and moves the case to the <strong>Scheduled</strong> tab.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Delete Case (optional)</div>
+                <div class="ht-step-desc">If the case is invalid or submitted in error, you can permanently remove it by clicking <strong>Delete Case</strong>. If the case hasn't been completed, any contested charges will be reverted to their original state.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              After scheduling, the case automatically moves from the <strong>Case Queue</strong> tab to the <strong>Scheduled</strong> tab. The civilian will be able to see the scheduled date on their end.
+            </div>
+          </div>
+        </div>
+
+        <!-- Scheduled Cases -->
+        <div class="ht-subsection" id="court-scheduled">
+          <h3 class="ht-subsection-title">Scheduled Cases</h3>
+          <p class="ht-text">
+            The <strong>Scheduled</strong> tab shows all cases that have a court date set. Each card displays the civilian's name, the scheduled date, and two action buttons for the judge.
+          </p>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Scheduled Case with Actions</div>
+            <div class="ht-sample-content">
+              <div class="ht-case-card" style="flex-wrap:wrap;">
+                <div class="ht-avatar">AS</div>
+                <div class="ht-case-info">
+                  <div class="ht-case-name">Alice Smith</div>
+                  <div class="ht-case-meta">
+                    <span class="ht-badge ht-badge-scheduled">Scheduled</span>
+                    <span><i class="fa fa-calendar"></i> Mar 15, 2026 at 2:00 PM</span>
+                    <span><i class="fa fa-file-lines"></i> 1 item</span>
+                  </div>
+                </div>
+                <div style="display:flex;gap:0.4rem;width:100%;margin-top:0.5rem;padding-left:calc(38px + 0.875rem);">
+                  <button class="ht-btn ht-btn-muted" style="flex:1;justify-content:center;"><i class="fa fa-rotate-left"></i> Unschedule</button>
+                  <button class="ht-btn ht-btn-amber" style="flex:1;justify-content:center;"><i class="fa fa-calendar-days"></i> Reschedule</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number"><i class="fa fa-rotate-left" style="font-size:0.6rem;"></i></div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Unschedule</div>
+                <div class="ht-step-desc">Moves the case back to the <strong>Case Queue</strong> in <strong>In Review</strong> status. Use this if the court date needs to be cancelled entirely. The judge remains assigned.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number"><i class="fa fa-calendar-days" style="font-size:0.6rem;"></i></div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Reschedule</div>
+                <div class="ht-step-desc">Opens a date picker to select a new court date. The case stays in the <strong>Scheduled</strong> tab with the updated date.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Cases that have already been added to a court session cannot be unscheduled. You'll need to remove them from the session first.
+            </div>
+          </div>
         </div>
 
         <!-- Court Sessions -->
         <div class="ht-subsection" id="court-sessions">
           <h3 class="ht-subsection-title">Court Sessions</h3>
           <p class="ht-text">
-            Court sessions are live proceedings where a judge reviews one or more cases. When a session is active,
-            a red banner appears at the top of the Court Cases page.
+            Court sessions are live proceedings where a judge reviews one or more scheduled cases. Sessions bundle multiple cases together into a single docket that the judge works through in order.
+          </p>
+
+          <p class="ht-text">
+            When a session is actively running, a red banner appears at the top of the Court Cases page so everyone in your community can see that court is in session.
           </p>
 
           <div class="ht-sample-box">
@@ -1244,40 +1566,76 @@
             </div>
           </div>
 
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Session Card (Sessions Tab)</div>
+            <div class="ht-sample-content">
+              <div class="ht-session-card" style="margin-bottom:0.6rem;">
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+                  <span class="ht-badge ht-badge-scheduled">Scheduled</span>
+                </div>
+                <div class="ht-session-title">Morning Docket &mdash; Mar 22</div>
+                <div class="ht-session-meta">Judge Williams</div>
+                <div class="ht-session-stats">
+                  <span><i class="fa fa-scale-balanced"></i> 3 cases</span>
+                  <span><i class="fa fa-users"></i> 0</span>
+                  <span><i class="fa fa-calendar"></i> Mar 22, 2026</span>
+                </div>
+              </div>
+              <div class="ht-session-card live">
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+                  <div style="width:8px;height:8px;border-radius:50%;background:var(--ht-red);"></div>
+                  <span class="ht-badge ht-badge-active">In Session</span>
+                </div>
+                <div class="ht-session-title">Afternoon Docket &mdash; Mar 20</div>
+                <div class="ht-session-meta">Judge Martinez</div>
+                <div class="ht-session-stats">
+                  <span><i class="fa fa-scale-balanced"></i> 2 cases</span>
+                  <span><i class="fa fa-users"></i> 4</span>
+                  <span>Started 2:15 PM</span>
+                </div>
+                <div style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);">
+                  <button class="ht-btn ht-btn-red" style="font-size:0.72rem;padding:0.35rem 0.75rem;">Join</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="ht-subsection-title" style="margin-top:1.5rem;">Running a Court Session</h3>
+
           <div class="ht-steps">
             <div class="ht-step">
               <div class="ht-step-number">1</div>
               <div class="ht-step-body">
                 <div class="ht-step-title">Create a session</div>
-                <div class="ht-step-desc">Judges can create a new court session by clicking <strong>+ Create Session</strong> and selecting which scheduled cases to include in the docket. Only cases that are not already assigned to another session will appear as options.</div>
+                <div class="ht-step-desc">Click <strong>+ Create Session</strong> on the Sessions tab. Enter a session title (e.g., "Morning Docket &mdash; Mar 22"), choose start and end times, and select which <strong>scheduled cases</strong> to include in the docket. Only cases not already assigned to another session will appear as options.</div>
               </div>
             </div>
             <div class="ht-step">
               <div class="ht-step-number">2</div>
               <div class="ht-step-body">
                 <div class="ht-step-title">Start the session</div>
-                <div class="ht-step-desc">Once created, the judge clicks <strong>Start Session</strong> to begin proceedings. A live banner will appear for all users on the Court Cases page.</div>
+                <div class="ht-step-desc">Once created, open the session and click <strong>Start Session</strong> to begin proceedings. A live banner will appear for all users on the Court Cases page, and participants can join.</div>
               </div>
             </div>
             <div class="ht-step">
               <div class="ht-step-number">3</div>
               <div class="ht-step-body">
-                <div class="ht-step-title">Review cases on the docket</div>
-                <div class="ht-step-desc">The judge activates each case in order. For each case, the judge reviews contested items and marks them as <strong>Dismissed</strong> or <strong>Upheld</strong>.</div>
+                <div class="ht-step-title">Activate cases from the docket</div>
+                <div class="ht-step-desc">The judge activates each case in order from the docket. When a case is activated, its details appear in the main panel with all contested items. You can skip a case if it's not ready.</div>
               </div>
             </div>
             <div class="ht-step">
               <div class="ht-step-number">4</div>
               <div class="ht-step-body">
-                <div class="ht-step-title">Submit resolutions</div>
-                <div class="ht-step-desc">After reviewing all contested items, the judge submits the resolution for each case. The verdict is recorded and visible in the History tab.</div>
+                <div class="ht-step-title">Review and resolve contested items</div>
+                <div class="ht-step-desc">For each contested item, the judge marks it as <strong>Dismissed</strong> (charge is dropped) or <strong>Upheld</strong> (charge stands). Add optional judge notes, then click <strong>Submit Resolution</strong>.</div>
               </div>
             </div>
             <div class="ht-step">
               <div class="ht-step-number">5</div>
               <div class="ht-step-body">
                 <div class="ht-step-title">End the session</div>
-                <div class="ht-step-desc">Once all cases have been resolved, the judge ends the session. All completed cases move to the History tab with their verdicts.</div>
+                <div class="ht-step-desc">Once all cases on the docket have been resolved, click <strong>End Session</strong>. All completed cases and their verdicts move to the <strong>History</strong> tab. Any unresolved cases return to <strong>Scheduled</strong> status.</div>
               </div>
             </div>
           </div>
@@ -1285,9 +1643,56 @@
           <div class="ht-tip">
             <i class="fa fa-circle-info ht-tip-icon"></i>
             <div class="ht-tip-text">
-              Court sessions include a real-time chat feature. Participants (judge, defendants, spectators) can communicate during the session. Use the chat to ask questions or provide additional context.
+              Court sessions include a <strong>real-time chat</strong> feature. Participants (judge, defendants, spectators) can communicate during the session. Use the chat to ask questions or provide additional context.
             </div>
           </div>
+        </div>
+
+        <!-- History -->
+        <div class="ht-subsection" id="court-history">
+          <h3 class="ht-subsection-title">History</h3>
+          <p class="ht-text">
+            The <strong>History</strong> tab shows all completed and cancelled court sessions. Click on any session card to expand it and view the full docket with verdicts for each contested item.
+          </p>
+
+          <div class="ht-sample-box">
+            <div class="ht-sample-label"><i class="fa fa-eye"></i> Sample: Completed Session with Verdicts</div>
+            <div class="ht-sample-content">
+              <div class="ht-session-card">
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+                  <span class="ht-badge ht-badge-completed">Completed</span>
+                </div>
+                <div class="ht-session-title">Morning Docket &mdash; Mar 15</div>
+                <div class="ht-session-meta">Judge Williams &middot; 2 cases</div>
+
+                <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--ht-glass-border);">
+                  <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ht-text-dim);margin-bottom:0.5rem;">Docket</div>
+                  <div class="ht-docket-entry">
+                    <div class="ht-docket-name"><i class="fa fa-user"></i> Alice Smith</div>
+                    <div class="ht-resolution-row">
+                      <div><span class="ht-contested-type citation">Citation</span> <span style="color:var(--ht-text-muted);">Speeding &mdash; 85 in a 65 zone</span></div>
+                      <span class="ht-badge ht-badge-dismissed" style="font-size:0.62rem;">Dismissed</span>
+                    </div>
+                  </div>
+                  <div class="ht-docket-entry">
+                    <div class="ht-docket-name"><i class="fa fa-user"></i> John Doe</div>
+                    <div class="ht-resolution-row">
+                      <div><span class="ht-contested-type arrest">Arrest</span> <span style="color:var(--ht-text-muted);">Reckless Driving</span></div>
+                      <span class="ht-badge ht-badge-upheld" style="font-size:0.62rem;">Upheld</span>
+                    </div>
+                    <div class="ht-resolution-row">
+                      <div><span class="ht-contested-type citation">Citation</span> <span style="color:var(--ht-text-muted);">Failure to Signal</span></div>
+                      <span class="ht-badge ht-badge-dismissed" style="font-size:0.62rem;">Dismissed</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class="ht-text">
+            Verdicts are permanent once the session ends. <strong>Dismissed</strong> items have their original charges dropped, while <strong>Upheld</strong> items keep the original charges in place.
+          </p>
         </div>
       </section>
 
