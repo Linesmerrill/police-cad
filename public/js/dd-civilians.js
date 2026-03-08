@@ -1921,7 +1921,7 @@
       html += reports.map(function (r) {
         var id = r._id || r.id || '';
         return '' +
-          '<div class="dd-civ-item-card">' +
+          '<div class="dd-civ-item-card" data-med-card-id="' + esc(id) + '">' +
             '<i class="fa fa-medkit" style="color:var(--dd-green);font-size:1rem;margin-top:0.15rem;"></i>' +
             '<div class="dd-civ-item-card-info">' +
               '<div class="dd-civ-item-card-title">' + esc(r.name || r.details || 'Medical Report') + '</div>' +
@@ -1942,17 +1942,33 @@
     $body.html(html);
     wireMedicalForm($body);
 
-    // Edit handlers
+    // Edit handlers — insert inline edit form directly below the clicked card
     $body.find('.dd-med-edit').off('click').on('click', function () {
       var r = JSON.parse($(this).attr('data-med'));
+      var $card = $(this).closest('.dd-civ-item-card');
+
+      // Remove any existing inline edit form
+      $body.find('.dd-med-inline-edit').remove();
+
+      // Hide the top "Add" form if open
+      $body.find('#dd-med-form-wrap').hide();
+
       medEditId = r._id || r.id;
-      $body.find('#dd-med-form-title').text('Edit Medical Report');
-      $body.find('[name="medTitle"]').val(r.name || '');
-      $body.find('[name="medDate"]').val(toDateInputVal(r.date || r.reportDate || r.createdAt || ''));
-      $body.find('[name="medAttending"]').val('');
-      $body.find('[name="medDescription"]').val(r.details || '');
-      $body.find('#dd-med-form-wrap').show();
-      $body.find('#dd-med-cancel').show();
+
+      // Build inline edit form and insert after the card
+      var $editForm = $(buildInlineEditForm());
+      $editForm.find('[name="medTitle"]').val(r.name || '');
+      $editForm.find('[name="medDate"]').val(toDateInputVal(r.date || r.reportDate || r.createdAt || ''));
+      $editForm.find('[name="medDescription"]').val(r.details || '');
+      $card.after($editForm);
+
+      // Wire inline edit form buttons
+      wireInlineEditForm($editForm, $body);
+
+      // Scroll the form into view smoothly
+      setTimeout(function () {
+        $editForm[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
     });
 
     // Delete handlers
@@ -1992,69 +2008,111 @@
             '<textarea name="medDescription" rows="2" placeholder="Description of condition or treatment..."></textarea>' +
           '</div>' +
           '<div class="dd-civ-form-full" style="display:flex;gap:0.5rem;justify-content:flex-end;">' +
-            '<button type="button" class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small" id="dd-med-cancel" style="display:none;">Cancel</button>' +
             '<button type="button" class="dd-civ-btn dd-civ-btn-primary dd-civ-btn-small" id="dd-med-save"><i class="fa fa-save" style="margin-right:0.3rem;"></i>Save</button>' +
           '</div>' +
         '</div>' +
       '</div>';
   }
 
-  function wireMedicalForm($body) {
-    $body.find('#dd-med-toggle-form').off('click').on('click', function () {
+  // Build the inline edit form that appears below the card being edited
+  function buildInlineEditForm() {
+    return '' +
+      '<div class="dd-civ-inline-form dd-med-inline-edit" style="margin:0.25rem 0 0.75rem;border-left:3px solid var(--dd-accent, #7c3aed);">' +
+        '<div class="dd-civ-inline-form-title">Edit Medical Report</div>' +
+        '<div class="dd-civ-form-grid">' +
+          '<div class="dd-civ-field">' +
+            '<label>Title / Condition *</label>' +
+            '<input type="text" name="medTitle" placeholder="e.g. Annual Checkup" />' +
+          '</div>' +
+          '<div class="dd-civ-field">' +
+            '<label>Date</label>' +
+            '<input type="date" name="medDate" />' +
+          '</div>' +
+          '<div class="dd-civ-field dd-civ-form-full">' +
+            '<label>Description</label>' +
+            '<textarea name="medDescription" rows="2" placeholder="Description of condition or treatment..."></textarea>' +
+          '</div>' +
+          '<div class="dd-civ-form-full" style="display:flex;gap:0.5rem;justify-content:flex-end;">' +
+            '<button type="button" class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small dd-med-inline-cancel">Cancel</button>' +
+            '<button type="button" class="dd-civ-btn dd-civ-btn-primary dd-civ-btn-small dd-med-inline-save"><i class="fa fa-save" style="margin-right:0.3rem;"></i>Save</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  // Wire up save/cancel for the inline edit form
+  function wireInlineEditForm($form, $body) {
+    $form.find('.dd-med-inline-cancel').off('click').on('click', function () {
       medEditId = null;
-      $body.find('#dd-med-form-title').text('Add Medical Report');
-      $body.find('#dd-med-form-wrap input, #dd-med-form-wrap textarea').val('');
-      $body.find('#dd-med-cancel').hide();
-      $body.find('#dd-med-form-wrap').toggle();
+      $form.remove();
     });
 
-    $body.find('#dd-med-cancel').off('click').on('click', function () {
-      medEditId = null;
-      $body.find('#dd-med-form-wrap').hide();
-    });
-
-    $body.find('#dd-med-save').off('click').on('click', function () {
+    $form.find('.dd-med-inline-save').off('click').on('click', function () {
       var c = cfg();
-      var title = $.trim($body.find('[name="medTitle"]').val());
+      var title = $.trim($form.find('[name="medTitle"]').val());
       if (!title) { toast('Title is required', 'error'); return; }
 
-      // API expects { report: { name, details, date, civilianID, activeCommunityID, ... } }
       var payload = {
         report: {
           name: title,
-          date: $body.find('[name="medDate"]').val() || '',
-          details: $body.find('[name="medDescription"]').val() || '',
+          date: $form.find('[name="medDate"]').val() || '',
+          details: $form.find('[name="medDescription"]').val() || '',
           civilianID: currentCiv._id,
           activeCommunityID: c.communityId
         }
       };
 
-      if (medEditId) {
-        $.ajax({
-          url: c.API_URL + '/api/v1/medical-reports/' + medEditId,
-          method: 'PUT',
-          contentType: 'application/json',
-          data: JSON.stringify(payload),
-          success: function () {
-            toast('Medical record updated', 'success');
-            medEditId = null;
-            renderMedicalTab($body);
-          },
-          error: function () { toast('Failed to update record', 'error'); }
-        });
-      } else {
-        $.ajax({
-          url: c.API_URL + '/api/v1/medical-reports',
-          method: 'POST',
-          contentType: 'application/json',
-          data: JSON.stringify(payload),
-          success: function () {
-            toast('Medical record created', 'success');
-            renderMedicalTab($body);
-          },
-          error: function () { toast('Failed to create record', 'error'); }
-        });
-      }
+      $.ajax({
+        url: c.API_URL + '/api/v1/medical-reports/' + medEditId,
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function () {
+          toast('Medical record updated', 'success');
+          medEditId = null;
+          renderMedicalTab($body);
+        },
+        error: function () { toast('Failed to update record', 'error'); }
+      });
+    });
+  }
+
+  function wireMedicalForm($body) {
+    $body.find('#dd-med-toggle-form').off('click').on('click', function () {
+      medEditId = null;
+      // Remove any inline edit form when opening "Add"
+      $body.find('.dd-med-inline-edit').remove();
+      $body.find('#dd-med-form-title').text('Add Medical Report');
+      $body.find('#dd-med-form-wrap input, #dd-med-form-wrap textarea').val('');
+      $body.find('#dd-med-form-wrap').toggle();
+    });
+
+    $body.find('#dd-med-save').off('click').on('click', function () {
+      var c = cfg();
+      var title = $.trim($body.find('#dd-med-form-wrap [name="medTitle"]').val());
+      if (!title) { toast('Title is required', 'error'); return; }
+
+      var payload = {
+        report: {
+          name: title,
+          date: $body.find('#dd-med-form-wrap [name="medDate"]').val() || '',
+          details: $body.find('#dd-med-form-wrap [name="medDescription"]').val() || '',
+          civilianID: currentCiv._id,
+          activeCommunityID: c.communityId
+        }
+      };
+
+      $.ajax({
+        url: c.API_URL + '/api/v1/medical-reports',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function () {
+          toast('Medical record created', 'success');
+          renderMedicalTab($body);
+        },
+        error: function () { toast('Failed to create record', 'error'); }
+      });
     });
   }
 
