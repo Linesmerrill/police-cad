@@ -1680,26 +1680,68 @@ async function loadRoles() {
   }
 }
 
+var isRolesEditMode = false;
+var originalRolesOrder = [];
+
 function renderRolesList() {
   const listContainer = document.getElementById('rolesListContainer');
   const emptyState = document.getElementById('rolesEmptyState');
   const rolesList = document.getElementById('rolesList');
-  
+
   if (filteredRoles.length === 0) {
     listContainer.style.display = 'none';
     emptyState.style.display = 'block';
     return;
   }
-  
+
   listContainer.style.display = 'block';
   emptyState.style.display = 'none';
-  
-  rolesList.innerHTML = filteredRoles.map(role => {
-    // Check if this is a head admin role
-    const isHeadAdmin = (role.permissions || []).some(p => 
+
+  // Switch layout based on edit mode
+  if (isRolesEditMode) {
+    rolesList.style.gridTemplateColumns = '1fr';
+    rolesList.style.maxWidth = '600px';
+    rolesList.style.margin = '0 auto';
+  } else {
+    rolesList.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+    rolesList.style.maxWidth = 'none';
+    rolesList.style.margin = '0';
+  }
+
+  rolesList.innerHTML = filteredRoles.map((role, index) => {
+    const isHeadAdmin = (role.permissions || []).some(p =>
       p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
     );
-    
+
+    if (isRolesEditMode) {
+      const upDisabled = index === 0 || isHeadAdmin;
+      const downDisabled = index === filteredRoles.length - 1 || isHeadAdmin;
+
+      return `
+        <div style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1rem 1.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem;">
+          <div style="display:flex; align-items:center; gap:1rem; flex:1;">
+            <span style="background:#3b82f6; color:#fff; border-radius:50%; width:1.75rem; height:1.75rem; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:bold; flex-shrink:0;">${index + 1}</span>
+            <i class="fa fa-user-shield" style="font-size:1.5rem; color:#8b5cf6;"></i>
+            <div>
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                <span style="color:#fff; font-size:1rem; font-weight:600;">${role.name}</span>
+                ${isHeadAdmin ? '<i class="fa fa-lock" style="color:#60a5fa; font-size:0.7rem;"></i>' : ''}
+              </div>
+              <span style="color:#a0aec0; font-size:0.8rem;">${formatCount(role.members ? role.members.length : 0, 'member', 'members')}</span>
+            </div>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button onclick="moveRoleUp(${index})" ${upDisabled ? 'disabled' : ''} style="background:${upDisabled ? '#374151' : '#4a5568'}; border:none; color:#fff; padding:0.4rem 0.6rem; border-radius:6px; cursor:${upDisabled ? 'not-allowed' : 'pointer'}; opacity:${upDisabled ? '0.4' : '1'}; transition:all 0.15s;">
+              <i class="fa fa-arrow-up"></i>
+            </button>
+            <button onclick="moveRoleDown(${index})" ${downDisabled ? 'disabled' : ''} style="background:${downDisabled ? '#374151' : '#4a5568'}; border:none; color:#fff; padding:0.4rem 0.6rem; border-radius:6px; cursor:${downDisabled ? 'not-allowed' : 'pointer'}; opacity:${downDisabled ? '0.4' : '1'}; transition:all 0.15s;">
+              <i class="fa fa-arrow-down"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
     return `
       <div class="role-card" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;" onclick="openRoleDetails('${role._id}')">
         <div style="text-align:center; position:relative;">
@@ -1722,6 +1764,93 @@ function renderRolesList() {
       </div>
     `;
   }).join('');
+}
+
+function toggleRolesEditMode() {
+  isRolesEditMode = true;
+  originalRolesOrder = [...filteredRoles];
+  document.getElementById('rolesEditModeBanner').style.display = 'block';
+  document.getElementById('editRolesOrderBtn').style.display = 'none';
+  document.getElementById('rolesSearchInput').disabled = true;
+  renderRolesList();
+}
+
+function cancelRolesEditMode() {
+  isRolesEditMode = false;
+  filteredRoles = [...originalRolesOrder];
+  rolesData = [...originalRolesOrder];
+  document.getElementById('rolesEditModeBanner').style.display = 'none';
+  document.getElementById('editRolesOrderBtn').style.display = 'inline-block';
+  document.getElementById('rolesSearchInput').disabled = false;
+  renderRolesList();
+}
+
+function moveRoleUp(index) {
+  if (index <= 0) return;
+  // Don't move above Head Admin
+  const targetRole = filteredRoles[index - 1];
+  const isTargetHeadAdmin = (targetRole.permissions || []).some(p =>
+    p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
+  );
+  if (isTargetHeadAdmin) return;
+
+  [filteredRoles[index], filteredRoles[index - 1]] = [filteredRoles[index - 1], filteredRoles[index]];
+  rolesData = [...filteredRoles];
+  renderRolesList();
+}
+
+function moveRoleDown(index) {
+  if (index >= filteredRoles.length - 1) return;
+  // Don't move Head Admin
+  const currentRole = filteredRoles[index];
+  const isCurrentHeadAdmin = (currentRole.permissions || []).some(p =>
+    p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
+  );
+  if (isCurrentHeadAdmin) return;
+
+  [filteredRoles[index], filteredRoles[index + 1]] = [filteredRoles[index + 1], filteredRoles[index]];
+  rolesData = [...filteredRoles];
+  renderRolesList();
+}
+
+async function saveRolesOrder() {
+  const saveBtn = document.getElementById('saveRolesOrderBtn');
+  saveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+  saveBtn.disabled = true;
+
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+
+    const roleIds = filteredRoles.map(r => r._id);
+
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/reorder`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roleIds })
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || 'Failed to reorder roles');
+    }
+
+    isRolesEditMode = false;
+    document.getElementById('rolesEditModeBanner').style.display = 'none';
+    document.getElementById('editRolesOrderBtn').style.display = 'inline-block';
+    document.getElementById('rolesSearchInput').disabled = false;
+    showToast('Roles reordered successfully!', 3000, 'success');
+    renderRolesList();
+
+  } catch (error) {
+    showToast('Failed to reorder roles: ' + error.message, 3000, 'error');
+    filteredRoles = [...originalRolesOrder];
+    rolesData = [...originalRolesOrder];
+    renderRolesList();
+  } finally {
+    saveBtn.innerHTML = '<i class="fa fa-check" style="margin-right:0.25rem;"></i> Save Order';
+    saveBtn.disabled = false;
+  }
 }
 
 function searchRoles(query) {
@@ -4942,11 +5071,26 @@ async function deleteInviteCode() {
         <div style="color:#a0aec0; font-size:0.875rem;">
           <span id="rolesCount">0</span> <span id="rolesCountText">roles</span>
         </div>
+        <button id="editRolesOrderBtn" onclick="toggleRolesEditMode()" style="background:#3b82f6; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.2s;">
+          <i class="fa fa-arrows-alt" style="margin-right:0.5rem;"></i>
+          Edit Order
+        </button>
         <button onclick="openCreateRoleModal()" style="background:#10b981; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.2s; hover:background:#059669;">
           <i class="fa fa-plus" style="margin-right:0.5rem;"></i>
           Create Role
         </button>
       </div>
+    </div>
+
+    <!-- Edit mode banner -->
+    <div id="rolesEditModeBanner" style="display:none; background:#1e3a8a; padding:0.75rem 1rem; border-radius:8px; margin-bottom:1rem; text-align:center;">
+      <span style="color:#93c5fd; margin-right:1rem;">Use arrows to reorder roles</span>
+      <button onclick="saveRolesOrder()" id="saveRolesOrderBtn" style="background:#10b981; color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:600; cursor:pointer; margin-right:0.5rem;">
+        <i class="fa fa-check" style="margin-right:0.25rem;"></i> Save Order
+      </button>
+      <button onclick="cancelRolesEditMode()" style="background:#6b7280; color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:500; cursor:pointer;">
+        Cancel
+      </button>
     </div>
 
     <!-- Loading state -->
