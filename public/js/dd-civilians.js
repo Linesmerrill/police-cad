@@ -32,23 +32,7 @@
     return '';
   }
 
-  // Get the medical condition title from a report.
-  // The 'name' field stores the civilian's name (set by EMS dashboard), NOT the condition.
-  // For records created from the department dashboard, 'name' IS the condition title.
-  // This function detects the difference and returns the correct display title.
-  function getMedicalTitle(r) {
-    var name = (r.name || '').trim();
-    var nameLower = name.toLowerCase();
-    // Build the civilian's full name for comparison
-    var civName = currentCiv
-      ? ((currentCiv.firstName || '') + ' ' + (currentCiv.lastName || '')).trim().toLowerCase()
-      : '';
-    // Skip name if it matches the civilian name, is "undefined undefined", or is empty
-    if (!name || nameLower === civName || /^undefined/.test(nameLower)) {
-      return r.details || 'Medical Report';
-    }
-    return name;
-  }
+
 
   var PAGE_SIZE = window.innerWidth <= 600 ? 6 : 12;
   var SEARCH_LIMIT = 8;
@@ -134,6 +118,13 @@
       /* ── Add button (outline style) ── */
       '.dd-civ-add-btn{padding:0.5rem 0.875rem;border-radius:var(--dd-radius-sm);border:1px solid rgba(59,130,246,0.25);background:rgba(59,130,246,0.1);color:#93c5fd;font-family:inherit;font-size:0.75rem;font-weight:500;cursor:pointer;transition:all 0.2s;white-space:nowrap;display:inline-flex;align-items:center;gap:0.375rem;}' +
       '.dd-civ-add-btn:hover{background:rgba(59,130,246,0.18);border-color:rgba(59,130,246,0.4);color:#bfdbfe;}' +
+
+      /* ── Medical sub-tab toggles ── */
+      '.dd-med-subtab{padding:0.5rem 1rem;border-radius:var(--dd-radius-sm);border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:var(--dd-text-muted);font-family:inherit;font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:0.35rem;}' +
+      '.dd-med-subtab:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15);}' +
+      '.dd-med-subtab-active{background:rgba(124,58,237,0.15) !important;border-color:rgba(124,58,237,0.4) !important;color:#c4b5fd !important;}' +
+      '.dd-med-subtab-badge{background:rgba(255,255,255,0.1);color:var(--dd-text-muted);font-size:0.7rem;font-weight:600;padding:0.1rem 0.45rem;border-radius:999px;margin-left:0.2rem;}' +
+      '.dd-med-subtab-active .dd-med-subtab-badge{background:rgba(124,58,237,0.3);color:#c4b5fd;}' +
 
       /* ── Modal/action buttons ── */
       '.dd-civ-btn{padding:0.5rem 1rem;border:none;border-radius:var(--dd-radius);font-size:0.8125rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit;}' +
@@ -1903,224 +1894,352 @@
     });
   }
 
-  /* ── Medical Tab ── */
+  /* ── Medical Tab (Medications + Medical Reports sub-tabs) ── */
 
   var medEditId = null;
+  var cachedMedications = [];
+  var cachedMedicalReports = [];
+  var activeMedSubTab = 'medications'; // 'medications' | 'reports'
 
   function renderMedicalTab($body) {
     if (!currentCiv) return;
     var c = cfg();
-    $body.html('<div class="dd-civ-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading medical records...</p></div>');
+    $body.html('<div class="dd-civ-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading medical data...</p></div>');
 
+    var loaded = 0;
+    function checkDone() {
+      loaded++;
+      if (loaded >= 2) renderMedicalShell($body);
+    }
+
+    // Fetch medications
+    $.ajax({
+      url: c.API_URL + '/api/v1/medications?civilian_id=' + currentCiv._id + '&active_community_id=' + encodeURIComponent(c.communityId),
+      method: 'GET',
+      success: function (data) {
+        cachedMedications = (data.medications || []).map(function (m) { return m.medication || m; });
+        checkDone();
+      },
+      error: function () { cachedMedications = []; checkDone(); }
+    });
+
+    // Fetch medical reports
     $.ajax({
       url: c.API_URL + '/api/v1/medical-reports?civilian_id=' + currentCiv._id + '&active_community_id=' + encodeURIComponent(c.communityId),
       method: 'GET',
       success: function (data) {
-        var reports = data.medicalReports || data.data || data || [];
-        if (!Array.isArray(reports)) reports = [];
-        renderMedicalList($body, reports);
+        cachedMedicalReports = data.medicalReports || [];
+        checkDone();
       },
-      error: function () {
-        $body.html(
-          buildMedicalForm() +
-          '<div class="dd-civ-empty"><i class="fa fa-medkit"></i><p>No medical records found.</p></div>'
-        );
-        wireMedicalForm($body);
-      }
+      error: function () { cachedMedicalReports = []; checkDone(); }
     });
   }
 
-  function renderMedicalList($body, reports) {
-    var html = buildMedicalForm();
+  function renderMedicalShell($body) {
+    var medCount = cachedMedications.length;
+    var repCount = cachedMedicalReports.length;
+    var isRep = activeMedSubTab === 'reports';
 
-    if (!reports.length) {
-      html += '<div class="dd-civ-empty"><i class="fa fa-medkit"></i><p>No medical records yet. Add one above.</p></div>';
+    var html = '' +
+      // Sub-tab toggle
+      '<div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">' +
+        '<button class="dd-med-subtab' + (!isRep ? ' dd-med-subtab-active' : '') + '" data-subtab="medications">' +
+          '<i class="fa fa-pills" style="margin-right:0.35rem;"></i>Medications' +
+          '<span class="dd-med-subtab-badge">' + medCount + '</span>' +
+        '</button>' +
+        '<button class="dd-med-subtab' + (isRep ? ' dd-med-subtab-active' : '') + '" data-subtab="reports">' +
+          '<i class="fa fa-file-medical" style="margin-right:0.35rem;"></i>Medical Reports' +
+          '<span class="dd-med-subtab-badge">' + repCount + '</span>' +
+        '</button>' +
+      '</div>' +
+      '<div id="dd-med-content"></div>';
+
+    $body.html(html);
+
+    // Sub-tab click handlers
+    $body.find('.dd-med-subtab').off('click').on('click', function () {
+      activeMedSubTab = $(this).data('subtab');
+      $body.find('.dd-med-subtab').removeClass('dd-med-subtab-active');
+      $(this).addClass('dd-med-subtab-active');
+      renderMedSubContent($body);
+    });
+
+    renderMedSubContent($body);
+  }
+
+  function renderMedSubContent($body) {
+    var $content = $body.find('#dd-med-content');
+    if (activeMedSubTab === 'medications') {
+      renderMedicationsList($content, $body);
     } else {
-      html += reports.map(function (r) {
-        var id = r._id || r.id || '';
-        var title = getMedicalTitle(r);
-        // Show details as subtitle only if it's different from the title
-        var subtitle = r.details && r.details !== title ? r.details : '';
+      renderReportsList($content, $body);
+    }
+  }
+
+  /* ── Medications Sub-Tab ── */
+
+  function renderMedicationsList($content, $body) {
+    var html = '' +
+      '<div style="margin-bottom:0.75rem;">' +
+        '<button class="dd-civ-add-btn" id="dd-medx-toggle-form"><i class="fa fa-plus"></i> Add Medication</button>' +
+      '</div>' +
+      '<div class="dd-civ-inline-form" id="dd-medx-form-wrap" style="display:none;">' +
+        '<div class="dd-civ-inline-form-title" id="dd-medx-form-title">Add Medication</div>' +
+        '<div class="dd-civ-form-grid">' +
+          '<div class="dd-civ-field">' +
+            '<label>Medication Name *</label>' +
+            '<input type="text" name="medxName" placeholder="e.g. Ibuprofen" />' +
+          '</div>' +
+          '<div class="dd-civ-field">' +
+            '<label>Dosage</label>' +
+            '<input type="text" name="medxDosage" placeholder="e.g. 200mg" />' +
+          '</div>' +
+          '<div class="dd-civ-field">' +
+            '<label>Frequency</label>' +
+            '<input type="text" name="medxFrequency" placeholder="e.g. Twice daily" />' +
+          '</div>' +
+          '<div class="dd-civ-field">' +
+            '<label>Start Date</label>' +
+            '<input type="date" name="medxStartDate" />' +
+          '</div>' +
+          '<div class="dd-civ-form-full" style="display:flex;gap:0.5rem;justify-content:flex-end;">' +
+            '<button type="button" class="dd-civ-btn dd-civ-btn-primary dd-civ-btn-small" id="dd-medx-save"><i class="fa fa-save" style="margin-right:0.3rem;"></i>Save</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    if (!cachedMedications.length) {
+      html += '<div class="dd-civ-empty"><i class="fa fa-pills"></i><p>No medications yet. Add one above.</p></div>';
+    } else {
+      html += cachedMedications.map(function (m) {
+        var id = m._id || m.id || '';
         return '' +
-          '<div class="dd-civ-item-card" data-med-card-id="' + esc(id) + '">' +
-            '<i class="fa fa-medkit" style="color:var(--dd-green);font-size:1rem;margin-top:0.15rem;"></i>' +
+          '<div class="dd-civ-item-card">' +
+            '<i class="fa fa-pills" style="color:var(--dd-green);font-size:1rem;margin-top:0.15rem;"></i>' +
             '<div class="dd-civ-item-card-info">' +
-              '<div class="dd-civ-item-card-title">' + esc(title) + '</div>' +
+              '<div class="dd-civ-item-card-title">' + esc(m.name || 'Medication') + '</div>' +
               '<div class="dd-civ-item-card-meta">' +
-                (r.date || r.reportDate ? fmtDate(r.date || r.reportDate) : r.createdAt ? fmtDate(r.createdAt) : '') +
-                (r.reportingEms && r.reportingEms.name ? ' &middot; ' + esc(r.reportingEms.name) : '') +
+                (m.dosage ? esc(m.dosage) : '') +
+                (m.dosage && m.frequency ? ' &middot; ' : '') +
+                (m.frequency ? esc(m.frequency) : '') +
               '</div>' +
-              (subtitle ? '<div class="dd-civ-item-card-meta" style="margin-top:0.25rem;">' + esc(subtitle) + '</div>' : '') +
+              (m.startDate ? '<div class="dd-civ-item-card-meta" style="margin-top:0.15rem;">' + fmtDate(m.startDate) + '</div>' : '') +
             '</div>' +
             '<div class="dd-civ-item-card-actions">' +
-              '<button class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small dd-med-edit" data-med=\'' + esc(JSON.stringify(r)) + '\' title="Edit"><i class="fa fa-pen"></i></button>' +
-              '<button class="dd-civ-btn dd-civ-btn-danger dd-civ-btn-small dd-med-delete" data-med-id="' + esc(id) + '" title="Delete"><i class="fa fa-trash"></i></button>' +
+              '<button class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small dd-medx-edit" data-medx=\'' + esc(JSON.stringify(m)) + '\' data-medx-id="' + esc(id) + '" title="Edit"><i class="fa fa-pen"></i></button>' +
+              '<button class="dd-civ-btn dd-civ-btn-danger dd-civ-btn-small dd-medx-delete" data-medx-id="' + esc(id) + '" title="Delete"><i class="fa fa-trash"></i></button>' +
             '</div>' +
           '</div>';
       }).join('');
     }
 
-    $body.html(html);
-    wireMedicalForm($body);
-
-    // Edit handlers — insert inline edit form directly below the clicked card
-    $body.find('.dd-med-edit').off('click').on('click', function () {
-      var r = JSON.parse($(this).attr('data-med'));
-      var $card = $(this).closest('.dd-civ-item-card');
-
-      // Remove any existing inline edit form
-      $body.find('.dd-med-inline-edit').remove();
-
-      // Hide the top "Add" form if open
-      $body.find('#dd-med-form-wrap').hide();
-
-      medEditId = r._id || r.id;
-
-      // Build inline edit form and insert after the card
-      var $editForm = $(buildInlineEditForm());
-      var editTitle = getMedicalTitle(r);
-      $editForm.find('[name="medTitle"]').val(editTitle !== 'Medical Report' ? editTitle : '');
-      $editForm.find('[name="medDate"]').val(toDateInputVal(r.date || r.reportDate || r.createdAt || ''));
-      $editForm.find('[name="medDescription"]').val(r.details || '');
-      $card.after($editForm);
-
-      // Wire inline edit form buttons
-      wireInlineEditForm($editForm, $body);
-
-      // Scroll the form into view smoothly
-      setTimeout(function () {
-        $editForm[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 50);
-    });
-
-    // Delete handlers
-    $body.find('.dd-med-delete').off('click').on('click', function () {
-      var medId = $(this).attr('data-med-id');
-      if (window.ddModal) {
-        window.ddModal({
-          type: 'danger', icon: 'fa-trash', title: 'Delete Medical Report',
-          message: 'Are you sure you want to delete this medical report?',
-          confirmText: 'Delete',
-          onConfirm: function () { deleteMedical(medId, $body); }
-        });
-      } else if (confirm('Delete this record?')) {
-        deleteMedical(medId, $body);
-      }
-    });
+    $content.html(html);
+    wireMedicationForm($content, $body);
   }
 
-  function buildMedicalForm() {
-    return '' +
-      '<div style="margin-bottom:0.75rem;">' +
-        '<button class="dd-civ-add-btn" id="dd-med-toggle-form"><i class="fa fa-plus"></i> Add Medical Report</button>' +
-      '</div>' +
-      '<div class="dd-civ-inline-form" id="dd-med-form-wrap" style="display:none;">' +
-        '<div class="dd-civ-inline-form-title" id="dd-med-form-title">Add Medical Report</div>' +
-        '<div class="dd-civ-form-grid">' +
-          '<div class="dd-civ-field">' +
-            '<label>Title / Condition *</label>' +
-            '<input type="text" name="medTitle" placeholder="e.g. Annual Checkup" />' +
-          '</div>' +
-          '<div class="dd-civ-field">' +
-            '<label>Date</label>' +
-            '<input type="date" name="medDate" />' +
-          '</div>' +
-          '<div class="dd-civ-field dd-civ-form-full">' +
-            '<label>Description</label>' +
-            '<textarea name="medDescription" rows="2" placeholder="Description of condition or treatment..."></textarea>' +
-          '</div>' +
-          '<div class="dd-civ-form-full" style="display:flex;gap:0.5rem;justify-content:flex-end;">' +
-            '<button type="button" class="dd-civ-btn dd-civ-btn-primary dd-civ-btn-small" id="dd-med-save"><i class="fa fa-save" style="margin-right:0.3rem;"></i>Save</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-  }
-
-  // Build the inline edit form that appears below the card being edited
-  function buildInlineEditForm() {
-    return '' +
-      '<div class="dd-civ-inline-form dd-med-inline-edit" style="margin:0.25rem 0 0.75rem;border-left:3px solid var(--dd-accent, #7c3aed);">' +
-        '<div class="dd-civ-inline-form-title">Edit Medical Report</div>' +
-        '<div class="dd-civ-form-grid">' +
-          '<div class="dd-civ-field">' +
-            '<label>Title / Condition *</label>' +
-            '<input type="text" name="medTitle" placeholder="e.g. Annual Checkup" />' +
-          '</div>' +
-          '<div class="dd-civ-field">' +
-            '<label>Date</label>' +
-            '<input type="date" name="medDate" />' +
-          '</div>' +
-          '<div class="dd-civ-field dd-civ-form-full">' +
-            '<label>Description</label>' +
-            '<textarea name="medDescription" rows="2" placeholder="Description of condition or treatment..."></textarea>' +
-          '</div>' +
-          '<div class="dd-civ-form-full" style="display:flex;gap:0.5rem;justify-content:flex-end;">' +
-            '<button type="button" class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small dd-med-inline-cancel">Cancel</button>' +
-            '<button type="button" class="dd-civ-btn dd-civ-btn-primary dd-civ-btn-small dd-med-inline-save"><i class="fa fa-save" style="margin-right:0.3rem;"></i>Save</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-  }
-
-  // Wire up save/cancel for the inline edit form
-  function wireInlineEditForm($form, $body) {
-    $form.find('.dd-med-inline-cancel').off('click').on('click', function () {
+  function wireMedicationForm($content, $body) {
+    // Toggle add form
+    $content.find('#dd-medx-toggle-form').off('click').on('click', function () {
       medEditId = null;
-      $form.remove();
+      $content.find('.dd-medx-inline-edit').remove();
+      $content.find('#dd-medx-form-title').text('Add Medication');
+      $content.find('#dd-medx-form-wrap input').val('');
+      $content.find('#dd-medx-form-wrap').toggle();
     });
 
-    $form.find('.dd-med-inline-save').off('click').on('click', function () {
+    // Save (add new)
+    $content.find('#dd-medx-save').off('click').on('click', function () {
       var c = cfg();
-      var title = $.trim($form.find('[name="medTitle"]').val());
-      if (!title) { toast('Title is required', 'error'); return; }
+      var name = $.trim($content.find('#dd-medx-form-wrap [name="medxName"]').val());
+      if (!name) { toast('Medication name is required', 'error'); return; }
 
       var payload = {
-        report: {
-          name: title,
-          date: $form.find('[name="medDate"]').val() || '',
-          details: $form.find('[name="medDescription"]').val() || '',
+        medication: {
+          name: name,
+          dosage: $content.find('#dd-medx-form-wrap [name="medxDosage"]').val() || '',
+          frequency: $content.find('#dd-medx-form-wrap [name="medxFrequency"]').val() || '',
+          startDate: $content.find('#dd-medx-form-wrap [name="medxStartDate"]').val() || '',
           civilianID: currentCiv._id,
           activeCommunityID: c.communityId
         }
       };
 
       $.ajax({
-        url: c.API_URL + '/api/v1/medical-reports/' + medEditId,
-        method: 'PUT',
+        url: c.API_URL + '/api/v1/medications',
+        method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(payload),
-        success: function () {
-          toast('Medical record updated', 'success');
-          medEditId = null;
-          renderMedicalTab($body);
-        },
-        error: function () { toast('Failed to update record', 'error'); }
+        success: function () { toast('Medication added', 'success'); renderMedicalTab($body); },
+        error: function () { toast('Failed to add medication', 'error'); }
       });
+    });
+
+    // Edit handlers — inline below card
+    $content.find('.dd-medx-edit').off('click').on('click', function () {
+      var m = JSON.parse($(this).attr('data-medx'));
+      var $card = $(this).closest('.dd-civ-item-card');
+
+      $content.find('.dd-medx-inline-edit').remove();
+      $content.find('#dd-medx-form-wrap').hide();
+      medEditId = m._id || m.id;
+
+      var $ef = $('' +
+        '<div class="dd-civ-inline-form dd-medx-inline-edit" style="margin:0.25rem 0 0.75rem;border-left:3px solid var(--dd-accent, #7c3aed);">' +
+          '<div class="dd-civ-inline-form-title">Edit Medication</div>' +
+          '<div class="dd-civ-form-grid">' +
+            '<div class="dd-civ-field"><label>Medication Name *</label><input type="text" name="medxName" /></div>' +
+            '<div class="dd-civ-field"><label>Dosage</label><input type="text" name="medxDosage" /></div>' +
+            '<div class="dd-civ-field"><label>Frequency</label><input type="text" name="medxFrequency" /></div>' +
+            '<div class="dd-civ-field"><label>Start Date</label><input type="date" name="medxStartDate" /></div>' +
+            '<div class="dd-civ-form-full" style="display:flex;gap:0.5rem;justify-content:flex-end;">' +
+              '<button type="button" class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small dd-medx-inline-cancel">Cancel</button>' +
+              '<button type="button" class="dd-civ-btn dd-civ-btn-primary dd-civ-btn-small dd-medx-inline-save"><i class="fa fa-save" style="margin-right:0.3rem;"></i>Save</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>');
+
+      $ef.find('[name="medxName"]').val(m.name || '');
+      $ef.find('[name="medxDosage"]').val(m.dosage || '');
+      $ef.find('[name="medxFrequency"]').val(m.frequency || '');
+      $ef.find('[name="medxStartDate"]').val(toDateInputVal(m.startDate || ''));
+      $card.after($ef);
+
+      $ef.find('.dd-medx-inline-cancel').on('click', function () { medEditId = null; $ef.remove(); });
+      $ef.find('.dd-medx-inline-save').on('click', function () {
+        var c = cfg();
+        var n = $.trim($ef.find('[name="medxName"]').val());
+        if (!n) { toast('Medication name is required', 'error'); return; }
+        $.ajax({
+          url: c.API_URL + '/api/v1/medications/' + medEditId,
+          method: 'PUT',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            medication: {
+              name: n,
+              dosage: $ef.find('[name="medxDosage"]').val() || '',
+              frequency: $ef.find('[name="medxFrequency"]').val() || '',
+              startDate: $ef.find('[name="medxStartDate"]').val() || '',
+              civilianID: currentCiv._id,
+              activeCommunityID: c.communityId
+            }
+          }),
+          success: function () { toast('Medication updated', 'success'); medEditId = null; renderMedicalTab($body); },
+          error: function () { toast('Failed to update medication', 'error'); }
+        });
+      });
+
+      setTimeout(function () { $ef[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 50);
+    });
+
+    // Delete handlers
+    $content.find('.dd-medx-delete').off('click').on('click', function () {
+      var id = $(this).attr('data-medx-id');
+      if (window.ddModal) {
+        window.ddModal({
+          type: 'danger', icon: 'fa-trash', title: 'Delete Medication',
+          message: 'Are you sure you want to delete this medication?',
+          confirmText: 'Delete',
+          onConfirm: function () { deleteMedication(id, $body); }
+        });
+      } else if (confirm('Delete this medication?')) {
+        deleteMedication(id, $body);
+      }
     });
   }
 
-  function wireMedicalForm($body) {
-    $body.find('#dd-med-toggle-form').off('click').on('click', function () {
+  function deleteMedication(id, $body) {
+    var c = cfg();
+    $.ajax({
+      url: c.API_URL + '/api/v1/medications/' + id,
+      method: 'DELETE',
+      success: function () { toast('Medication deleted', 'success'); renderMedicalTab($body); },
+      error: function () { toast('Failed to delete medication', 'error'); }
+    });
+  }
+
+  /* ── Medical Reports Sub-Tab ── */
+
+  function renderReportsList($content, $body) {
+    var html = '' +
+      '<div style="margin-bottom:0.75rem;">' +
+        '<button class="dd-civ-add-btn" id="dd-rep-toggle-form"><i class="fa fa-plus"></i> Add Medical Report</button>' +
+      '</div>' +
+      '<div class="dd-civ-inline-form" id="dd-rep-form-wrap" style="display:none;">' +
+        '<div class="dd-civ-inline-form-title">Add Medical Report</div>' +
+        '<div class="dd-civ-form-grid">' +
+          '<div class="dd-civ-field">' +
+            '<label>Date *</label>' +
+            '<input type="date" name="repDate" />' +
+          '</div>' +
+          '<div class="dd-civ-field">' +
+            '<label>Hospitalized</label>' +
+            '<select name="repHospitalized"><option value="no">No</option><option value="yes">Yes</option></select>' +
+          '</div>' +
+          '<div class="dd-civ-field dd-civ-form-full">' +
+            '<label>Details</label>' +
+            '<textarea name="repDetails" rows="2" placeholder="Details of medical report..."></textarea>' +
+          '</div>' +
+          '<div class="dd-civ-form-full" style="display:flex;gap:0.5rem;justify-content:flex-end;">' +
+            '<button type="button" class="dd-civ-btn dd-civ-btn-primary dd-civ-btn-small" id="dd-rep-save"><i class="fa fa-save" style="margin-right:0.3rem;"></i>Save</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    if (!cachedMedicalReports.length) {
+      html += '<div class="dd-civ-empty"><i class="fa fa-file-medical"></i><p>No medical reports yet. Add one above.</p></div>';
+    } else {
+      html += cachedMedicalReports.map(function (r) {
+        var id = r._id || r.id || '';
+        var dateStr = r.date || r.reportDate || '';
+        var hospitalized = r.hospitalized;
+        if (typeof hospitalized === 'boolean') hospitalized = hospitalized ? 'yes' : 'no';
+        return '' +
+          '<div class="dd-civ-item-card">' +
+            '<i class="fa fa-file-medical" style="color:var(--dd-amber, #f59e0b);font-size:1rem;margin-top:0.15rem;"></i>' +
+            '<div class="dd-civ-item-card-info">' +
+              '<div class="dd-civ-item-card-title">' + (dateStr ? fmtDate(dateStr) : r.createdAt ? fmtDate(r.createdAt) : 'Medical Report') + '</div>' +
+              '<div class="dd-civ-item-card-meta">' +
+                'Hospitalized: ' + esc(hospitalized || 'no') +
+                (r.reportingEms && r.reportingEms.name ? ' &middot; ' + esc(r.reportingEms.name) : '') +
+              '</div>' +
+              (r.details ? '<div class="dd-civ-item-card-meta" style="margin-top:0.15rem;">' + esc(r.details) + '</div>' : '') +
+            '</div>' +
+            '<div class="dd-civ-item-card-actions">' +
+              '<button class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small dd-rep-edit" data-rep=\'' + esc(JSON.stringify(r)) + '\' title="Edit"><i class="fa fa-pen"></i></button>' +
+              '<button class="dd-civ-btn dd-civ-btn-danger dd-civ-btn-small dd-rep-delete" data-rep-id="' + esc(id) + '" title="Delete"><i class="fa fa-trash"></i></button>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    $content.html(html);
+    wireReportForm($content, $body);
+  }
+
+  function wireReportForm($content, $body) {
+    // Toggle add form
+    $content.find('#dd-rep-toggle-form').off('click').on('click', function () {
       medEditId = null;
-      // Remove any inline edit form when opening "Add"
-      $body.find('.dd-med-inline-edit').remove();
-      $body.find('#dd-med-form-title').text('Add Medical Report');
-      $body.find('#dd-med-form-wrap input, #dd-med-form-wrap textarea').val('');
-      $body.find('#dd-med-form-wrap').toggle();
+      $content.find('.dd-rep-inline-edit').remove();
+      $content.find('#dd-rep-form-wrap input, #dd-rep-form-wrap textarea').val('');
+      $content.find('#dd-rep-form-wrap select').prop('selectedIndex', 0);
+      $content.find('#dd-rep-form-wrap').toggle();
     });
 
-    $body.find('#dd-med-save').off('click').on('click', function () {
+    // Save (add new)
+    $content.find('#dd-rep-save').off('click').on('click', function () {
       var c = cfg();
-      var title = $.trim($body.find('#dd-med-form-wrap [name="medTitle"]').val());
-      if (!title) { toast('Title is required', 'error'); return; }
+      var date = $content.find('#dd-rep-form-wrap [name="repDate"]').val();
+      if (!date) { toast('Date is required', 'error'); return; }
 
       var payload = {
         report: {
-          name: title,
-          date: $body.find('#dd-med-form-wrap [name="medDate"]').val() || '',
-          details: $body.find('#dd-med-form-wrap [name="medDescription"]').val() || '',
+          date: date,
+          details: $content.find('#dd-rep-form-wrap [name="repDetails"]').val() || '',
+          hospitalized: $content.find('#dd-rep-form-wrap [name="repHospitalized"]').val() === 'yes',
           civilianID: currentCiv._id,
-          activeCommunityID: c.communityId
+          activeCommunityID: c.communityId,
+          name: (currentCiv.firstName || '') + ' ' + (currentCiv.lastName || '')
         }
       };
 
@@ -2129,25 +2248,94 @@
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(payload),
-        success: function () {
-          toast('Medical record created', 'success');
-          renderMedicalTab($body);
-        },
-        error: function () { toast('Failed to create record', 'error'); }
+        success: function () { toast('Medical report created', 'success'); renderMedicalTab($body); },
+        error: function () { toast('Failed to create report', 'error'); }
       });
+    });
+
+    // Edit handlers — inline below card
+    $content.find('.dd-rep-edit').off('click').on('click', function () {
+      var r = JSON.parse($(this).attr('data-rep'));
+      var $card = $(this).closest('.dd-civ-item-card');
+
+      $content.find('.dd-rep-inline-edit').remove();
+      $content.find('#dd-rep-form-wrap').hide();
+      medEditId = r._id || r.id;
+
+      var hospitalized = r.hospitalized;
+      if (typeof hospitalized === 'boolean') hospitalized = hospitalized ? 'yes' : 'no';
+
+      var $ef = $('' +
+        '<div class="dd-civ-inline-form dd-rep-inline-edit" style="margin:0.25rem 0 0.75rem;border-left:3px solid var(--dd-accent, #7c3aed);">' +
+          '<div class="dd-civ-inline-form-title">Edit Medical Report</div>' +
+          '<div class="dd-civ-form-grid">' +
+            '<div class="dd-civ-field"><label>Date *</label><input type="date" name="repDate" /></div>' +
+            '<div class="dd-civ-field"><label>Hospitalized</label>' +
+              '<select name="repHospitalized"><option value="no">No</option><option value="yes">Yes</option></select></div>' +
+            '<div class="dd-civ-field dd-civ-form-full"><label>Details</label>' +
+              '<textarea name="repDetails" rows="2" placeholder="Details of medical report..."></textarea></div>' +
+            '<div class="dd-civ-form-full" style="display:flex;gap:0.5rem;justify-content:flex-end;">' +
+              '<button type="button" class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small dd-rep-inline-cancel">Cancel</button>' +
+              '<button type="button" class="dd-civ-btn dd-civ-btn-primary dd-civ-btn-small dd-rep-inline-save"><i class="fa fa-save" style="margin-right:0.3rem;"></i>Save</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>');
+
+      $ef.find('[name="repDate"]').val(toDateInputVal(r.date || r.reportDate || ''));
+      $ef.find('[name="repHospitalized"]').val(hospitalized || 'no');
+      $ef.find('[name="repDetails"]').val(r.details || '');
+      $card.after($ef);
+
+      $ef.find('.dd-rep-inline-cancel').on('click', function () { medEditId = null; $ef.remove(); });
+      $ef.find('.dd-rep-inline-save').on('click', function () {
+        var c = cfg();
+        var d = $ef.find('[name="repDate"]').val();
+        if (!d) { toast('Date is required', 'error'); return; }
+        $.ajax({
+          url: c.API_URL + '/api/v1/medical-reports/' + medEditId,
+          method: 'PUT',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            report: {
+              date: d,
+              details: $ef.find('[name="repDetails"]').val() || '',
+              hospitalized: $ef.find('[name="repHospitalized"]').val() === 'yes',
+              civilianID: currentCiv._id,
+              activeCommunityID: c.communityId,
+              name: (currentCiv.firstName || '') + ' ' + (currentCiv.lastName || '')
+            }
+          }),
+          success: function () { toast('Medical report updated', 'success'); medEditId = null; renderMedicalTab($body); },
+          error: function () { toast('Failed to update report', 'error'); }
+        });
+      });
+
+      setTimeout(function () { $ef[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 50);
+    });
+
+    // Delete handlers
+    $content.find('.dd-rep-delete').off('click').on('click', function () {
+      var id = $(this).attr('data-rep-id');
+      if (window.ddModal) {
+        window.ddModal({
+          type: 'danger', icon: 'fa-trash', title: 'Delete Medical Report',
+          message: 'Are you sure you want to delete this medical report?',
+          confirmText: 'Delete',
+          onConfirm: function () { deleteReport(id, $body); }
+        });
+      } else if (confirm('Delete this report?')) {
+        deleteReport(id, $body);
+      }
     });
   }
 
-  function deleteMedical(medId, $body) {
+  function deleteReport(id, $body) {
     var c = cfg();
     $.ajax({
-      url: c.API_URL + '/api/v1/medical-reports/' + medId,
+      url: c.API_URL + '/api/v1/medical-reports/' + id,
       method: 'DELETE',
-      success: function () {
-        toast('Medical record deleted', 'success');
-        renderMedicalTab($body);
-      },
-      error: function () { toast('Failed to delete record', 'error'); }
+      success: function () { toast('Medical report deleted', 'success'); renderMedicalTab($body); },
+      error: function () { toast('Failed to delete report', 'error'); }
     });
   }
 
