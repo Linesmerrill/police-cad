@@ -6819,7 +6819,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.post("/internal/metrics-broadcast", function (req, res) {
     const apiKey = req.headers["x-internal-api-key"];
     if (!process.env.INTERNAL_API_KEY || apiKey !== process.env.INTERNAL_API_KEY) {
-      console.log("[Metrics Broadcast] Unauthorized request (API key mismatch)");
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -6828,12 +6827,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       return res.status(400).json({ error: "Missing event" });
     }
 
-    console.log("[Metrics Broadcast] Received event:", event, "data:", JSON.stringify(data));
-
     if (event === "beta_metrics_updated") {
-      var room = io.sockets.adapter.rooms.get("admin-metrics");
-      var clientCount = room ? room.size : 0;
-      console.log("[Metrics Broadcast] Broadcasting to admin-metrics room (" + clientCount + " clients)");
       io.to("admin-metrics").emit("beta_metrics_updated", data);
     }
 
@@ -6872,11 +6866,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
     // ==========================================
     socket.on("join_admin_metrics", function () {
       socket.join("admin-metrics");
-      console.log("[Socket] Client joined admin-metrics room, socket id:", socket.id);
     });
     socket.on("leave_admin_metrics", function () {
       socket.leave("admin-metrics");
-      console.log("[Socket] Client left admin-metrics room, socket id:", socket.id);
     });
 
     // ==========================================
