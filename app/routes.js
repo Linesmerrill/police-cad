@@ -6812,6 +6812,28 @@ module.exports = function (app, passport, server, nextApp, handle) {
     res.json({ success: true, event: event, communityId: communityId });
   });
 
+  // ==========================================
+  // INTERNAL WEBHOOK FOR METRICS BROADCASTS
+  // ==========================================
+  // Receives metrics update events from Go API and broadcasts via Socket.IO
+  app.post("/internal/metrics-broadcast", function (req, res) {
+    const apiKey = req.headers["x-internal-api-key"];
+    if (!process.env.INTERNAL_API_KEY || apiKey !== process.env.INTERNAL_API_KEY) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { event, data } = req.body;
+    if (!event) {
+      return res.status(400).json({ error: "Missing event" });
+    }
+
+    if (event === "beta_metrics_updated") {
+      io.to("admin-metrics").emit("beta_metrics_updated", data);
+    }
+
+    res.json({ success: true, event: event });
+  });
+
   io.sockets.on("connection", (socket) => {
     // ==========================================
     // SOCKET ROOM MANAGEMENT
@@ -6837,6 +6859,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
         socket.communityId = null;
         socket.emit("left_room", { room: leftRoom });
       }
+    });
+
+    // ==========================================
+    // ADMIN METRICS ROOM MANAGEMENT
+    // ==========================================
+    socket.on("join_admin_metrics", function () {
+      socket.join("admin-metrics");
+    });
+    socket.on("leave_admin_metrics", function () {
+      socket.leave("admin-metrics");
     });
 
     // ==========================================

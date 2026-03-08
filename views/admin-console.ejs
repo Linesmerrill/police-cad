@@ -182,6 +182,55 @@
         from { opacity:0; transform:translateY(12px); }
         to { opacity:1; transform:translateY(0); }
       }
+      /* ── Metrics Panel ── */
+      .ac-metrics-section {
+        background:var(--ac-surface); border:1px solid var(--ac-glass-border);
+        border-radius:var(--ac-radius); overflow:hidden;
+        margin-bottom:1rem; animation:ac-fadeUp 0.4s ease both;
+      }
+      .ac-metrics-section-header {
+        display:flex; align-items:center; justify-content:space-between;
+        padding:0.875rem 1.125rem; cursor:pointer; user-select:none;
+        transition:background 0.15s;
+      }
+      .ac-metrics-section-header:hover { background:rgba(255,255,255,0.02); }
+      .ac-metrics-section-title {
+        display:flex; align-items:center; gap:0.5rem;
+        font-size:0.8125rem; font-weight:600; color:var(--ac-text);
+      }
+      .ac-metrics-section-title i { color:var(--ac-accent); font-size:0.875rem; }
+      .ac-metrics-section-chevron {
+        color:var(--ac-text-dim); font-size:0.625rem;
+        transition:transform 0.25s ease;
+      }
+      .ac-metrics-section.collapsed .ac-metrics-section-chevron { transform:rotate(-90deg); }
+      .ac-metrics-section-body {
+        padding:0 1.125rem 1.125rem;
+        max-height:600px; overflow:hidden;
+        transition:max-height 0.35s ease, padding 0.35s ease, opacity 0.25s ease;
+        opacity:1;
+      }
+      .ac-metrics-section.collapsed .ac-metrics-section-body {
+        max-height:0; padding-top:0; padding-bottom:0; opacity:0;
+      }
+      .ac-metrics-live-wrap {
+        display:flex; align-items:center; gap:0.5rem;
+        margin-bottom:1rem; padding:0.5rem 0;
+      }
+      .ac-metrics-live-dot {
+        width:7px; height:7px; border-radius:50%;
+        background:#22c55e; display:inline-block;
+        animation:ac-pulse-dot 2s ease-in-out infinite;
+      }
+      .ac-metrics-live-dot.disconnected { background:var(--ac-text-dim); animation:none; }
+      .ac-metrics-live-label {
+        font-size:0.6875rem; color:var(--ac-text-dim);
+        text-transform:uppercase; letter-spacing:0.05em; font-weight:500;
+      }
+      @keyframes ac-pulse-dot {
+        0%, 100% { opacity:1; box-shadow:0 0 0 0 rgba(34,197,94,0.4); }
+        50% { opacity:0.7; box-shadow:0 0 0 4px rgba(34,197,94,0); }
+      }
       .ac-quick-actions {
         display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
         gap:0.875rem; margin-bottom:1.75rem;
@@ -623,8 +672,8 @@
           <div class="ac-nav-item" id="email-tab" data-panel="email" style="display: none;">
             <i class="fas fa-envelope"></i> Email
           </div>
-          <div class="ac-nav-item" data-panel="beta-metrics">
-            <i class="fas fa-flask"></i> Beta Dashboard
+          <div class="ac-nav-item" data-panel="metrics">
+            <i class="fas fa-chart-line"></i> Metrics
           </div>
         </div>
       </nav>
@@ -939,34 +988,46 @@
           </div>
         </div>
 
-        <!-- Panel: Beta Dashboard Metrics -->
-        <div class="ac-panel" id="panel-beta-metrics">
-          <div class="ac-card">
-            <div class="ac-card-body">
-              <div style="margin-bottom:1.5rem;">
-                <h5 style="font-size:0.9375rem;font-weight:600;color:var(--ac-text);margin:0 0 0.25rem;">Beta Civilian Dashboard Adoption</h5>
-                <p style="font-size:0.75rem;color:var(--ac-text-muted);margin:0;">Track how many users have opted into the new civilian dashboard experience.</p>
-              </div>
+        <!-- Panel: Metrics -->
+        <div class="ac-panel" id="panel-metrics">
 
-              <div id="beta-metrics-loading" style="text-align:center;padding:2rem;color:var(--ac-text-muted);">
+          <!-- Live connection indicator -->
+          <div class="ac-metrics-live-wrap">
+            <span class="ac-metrics-live-dot disconnected" id="metrics-live-dot"></span>
+            <span class="ac-metrics-live-label" id="metrics-live-label">Connecting...</span>
+          </div>
+
+          <!-- Section: Beta Civilian Dashboard Adoption -->
+          <div class="ac-metrics-section" id="metrics-section-beta">
+            <div class="ac-metrics-section-header" onclick="toggleMetricsSection('beta')">
+              <div class="ac-metrics-section-title">
+                <i class="fas fa-flask"></i>
+                <span>Beta Civilian Dashboard Adoption</span>
+              </div>
+              <i class="fas fa-chevron-down ac-metrics-section-chevron"></i>
+            </div>
+            <div class="ac-metrics-section-body">
+              <p style="font-size:0.75rem;color:var(--ac-text-muted);margin:0 0 1rem;">Track how many users have opted into the new civilian dashboard experience.</p>
+
+              <div id="metrics-beta-loading" style="text-align:center;padding:2rem;color:var(--ac-text-muted);">
                 <i class="fas fa-spinner fa-spin"></i> Loading metrics...
               </div>
 
-              <div id="beta-metrics-content" style="display:none;">
+              <div id="metrics-beta-content" style="display:none;">
                 <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:1rem;margin-bottom:1.5rem;">
                   <div class="ac-stat" style="--stat-accent:var(--ac-accent);animation-delay:0s;">
                     <i class="fas fa-flask ac-stat-icon"></i>
-                    <div class="ac-stat-value" id="beta-stat-opted">&mdash;</div>
+                    <div class="ac-stat-value" id="metrics-beta-opted">&mdash;</div>
                     <div class="ac-stat-label">Beta Dashboard</div>
                   </div>
                   <div class="ac-stat" style="--stat-accent:var(--ac-blue);animation-delay:0.04s;">
                     <i class="fas fa-desktop ac-stat-icon"></i>
-                    <div class="ac-stat-value" id="beta-stat-classic">&mdash;</div>
+                    <div class="ac-stat-value" id="metrics-beta-classic">&mdash;</div>
                     <div class="ac-stat-label">Classic Dashboard</div>
                   </div>
                   <div class="ac-stat" style="--stat-accent:var(--ac-green);animation-delay:0.08s;">
                     <i class="fas fa-users ac-stat-icon"></i>
-                    <div class="ac-stat-value" id="beta-stat-total">&mdash;</div>
+                    <div class="ac-stat-value" id="metrics-beta-total">&mdash;</div>
                     <div class="ac-stat-label">Total Users</div>
                   </div>
                 </div>
@@ -975,10 +1036,10 @@
                 <div style="background:var(--ac-glass);border:1px solid var(--ac-glass-border);border-radius:var(--ac-radius);padding:1rem;">
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.625rem;">
                     <span style="font-size:0.75rem;font-weight:600;color:var(--ac-text);">Adoption Rate</span>
-                    <span style="font-size:0.8125rem;font-weight:700;color:var(--ac-accent);" id="beta-adoption-pct">&mdash;</span>
+                    <span style="font-size:0.8125rem;font-weight:700;color:var(--ac-accent);" id="metrics-beta-pct">&mdash;</span>
                   </div>
                   <div style="height:10px;border-radius:5px;background:var(--ac-blue);overflow:hidden;">
-                    <div id="beta-adoption-bar" style="height:100%;border-radius:5px 0 0 5px;background:linear-gradient(90deg,var(--ac-accent),#a78bfa);width:0%;transition:width 0.8s ease;min-width:0;"></div>
+                    <div id="metrics-beta-bar" style="height:100%;border-radius:5px 0 0 5px;background:linear-gradient(90deg,var(--ac-accent),#a78bfa);width:0%;transition:width 0.8s ease;min-width:0;"></div>
                   </div>
                   <div style="display:flex;justify-content:space-between;margin-top:0.5rem;">
                     <span style="font-size:0.625rem;color:var(--ac-text-dim);"><i class="fas fa-circle" style="color:var(--ac-accent);font-size:0.375rem;vertical-align:middle;margin-right:0.25rem;"></i>Beta</span>
@@ -988,6 +1049,9 @@
               </div>
             </div>
           </div>
+
+          <!-- Future metric sections go here -->
+
         </div>
 
       </div><!-- end ac-content -->
@@ -1281,6 +1345,14 @@
 
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      if (typeof io === 'undefined') {
+        var _s = document.createElement('script');
+        _s.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+        document.head.appendChild(_s);
+      }
+    </script>
     <script>
       // Global API configuration - using Go backend API
       const API_BASE = '<%= POLICE_CAD_API_URL %>';
@@ -1302,7 +1374,7 @@
         'content-creators': 'Content Creators',
         'admin-management': 'Admin Management',
         'email': 'Email',
-        'beta-metrics': 'Beta Dashboard Metrics'
+        'metrics': 'Metrics'
       };
 
       // Data-load callbacks for lazy-loaded panels
@@ -1310,7 +1382,7 @@
         'dashboard': function() { if (typeof loadDashboardStats === 'function') loadDashboardStats(); if (typeof loadDashboardPendingCC === 'function') loadDashboardPendingCC(); },
         'admin-management': function() { if (typeof loadAllAdmins === 'function') loadAllAdmins(); },
         'content-creators': function() { if (typeof loadCCApplications === 'function') { loadCCApplications(); loadCCStats(); } },
-        'beta-metrics': function() { loadBetaDashboardMetrics(); }
+        'metrics': function() { loadMetricsPanel(); }
       };
 
       // Track which panels have been loaded
@@ -1866,7 +1938,8 @@
             'communities-tab': 'communities',
             'content-creators-tab-content': 'content-creators',
             'admin-management-tab-content': 'admin-management',
-            'email-tab-content': 'email'
+            'email-tab-content': 'email',
+            'beta-metrics': 'metrics'
           };
           const panel = hashMap[panelId] || panelId;
           if (document.getElementById('panel-' + panel)) {
@@ -5484,28 +5557,99 @@
 
 
       // =====================================================
-      // BETA DASHBOARD METRICS
+      // METRICS PANEL
       // =====================================================
-      function loadBetaDashboardMetrics() {
+      var metricsSocket = null;
+      var metricsInitialized = false;
+
+      function loadMetricsPanel() {
+        if (metricsInitialized) {
+          // Already initialized, just re-fetch
+          fetchBetaAdoptionMetrics();
+          return;
+        }
+        metricsInitialized = true;
+        fetchBetaAdoptionMetrics();
+        initMetricsSocket();
+        initMetricsVisibility();
+      }
+
+      // -- Beta Adoption Metrics --
+
+      function fetchBetaAdoptionMetrics() {
         $.ajax({
           url: API_BASE + '/api/v1/admin/beta-dashboard-metrics',
           method: 'GET',
           success: function(data) {
-            var optedIn = data.optedIn || 0;
-            var classic = data.classic || 0;
-            var total = data.total || 0;
-            var pct = total > 0 ? Math.round((optedIn / total) * 100) : 0;
-
-            $('#beta-stat-opted').text(optedIn.toLocaleString());
-            $('#beta-stat-classic').text(classic.toLocaleString());
-            $('#beta-stat-total').text(total.toLocaleString());
-            $('#beta-adoption-pct').text(pct + '%');
-            $('#beta-adoption-bar').css('width', pct + '%');
-            $('#beta-metrics-loading').hide();
-            $('#beta-metrics-content').show();
+            applyBetaAdoptionMetrics(data);
           },
           error: function() {
-            $('#beta-metrics-loading').html('<i class="fas fa-exclamation-triangle" style="color:var(--ac-red);"></i> Failed to load metrics');
+            $('#metrics-beta-loading').html('<i class="fas fa-exclamation-triangle" style="color:var(--ac-red);"></i> Failed to load metrics');
+          }
+        });
+      }
+
+      function applyBetaAdoptionMetrics(data) {
+        var optedIn = data.optedIn || 0;
+        var classic = data.classic || 0;
+        var total = data.total || 0;
+        var pct = total > 0 ? Math.round((optedIn / total) * 100) : 0;
+
+        $('#metrics-beta-opted').text(optedIn.toLocaleString());
+        $('#metrics-beta-classic').text(classic.toLocaleString());
+        $('#metrics-beta-total').text(total.toLocaleString());
+        $('#metrics-beta-pct').text(pct + '%');
+        $('#metrics-beta-bar').css('width', pct + '%');
+        $('#metrics-beta-loading').hide();
+        $('#metrics-beta-content').show();
+      }
+
+      // -- Section Toggle --
+
+      function toggleMetricsSection(id) {
+        var $section = $('#metrics-section-' + id);
+        $section.toggleClass('collapsed');
+      }
+
+      // -- Socket.IO Live Updates --
+
+      function initMetricsSocket() {
+        if (typeof io === 'undefined') {
+          // Socket.IO not loaded, skip gracefully
+          $('#metrics-live-dot').addClass('disconnected');
+          $('#metrics-live-label').text('Live updates unavailable');
+          return;
+        }
+
+        metricsSocket = io({ transports: ['websocket'] });
+
+        metricsSocket.on('connect', function() {
+          metricsSocket.emit('join_admin_metrics');
+          $('#metrics-live-dot').removeClass('disconnected');
+          $('#metrics-live-label').text('Live');
+        });
+
+        metricsSocket.on('disconnect', function() {
+          $('#metrics-live-dot').addClass('disconnected');
+          $('#metrics-live-label').text('Reconnecting...');
+        });
+
+        // Listen for beta metrics updates
+        metricsSocket.on('beta_metrics_updated', function(data) {
+          applyBetaAdoptionMetrics(data);
+        });
+      }
+
+      // -- Visibility API Auto-Refresh --
+
+      function initMetricsVisibility() {
+        document.addEventListener('visibilitychange', function() {
+          if (document.visibilityState === 'visible') {
+            // Check if metrics panel is currently active
+            var $panel = $('#panel-metrics');
+            if ($panel.hasClass('active')) {
+              fetchBetaAdoptionMetrics();
+            }
           }
         });
       }
