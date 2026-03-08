@@ -1981,9 +1981,7 @@
       var editTitle = getMedicalTitle(r);
       $editForm.find('[name="medTitle"]').val(editTitle !== 'Medical Report' ? editTitle : '');
       $editForm.find('[name="medDate"]').val(toDateInputVal(r.date || r.reportDate || r.createdAt || ''));
-      // If title came from details (EMS records), clear description to avoid duplication
-      var editDesc = r.details && r.details !== editTitle ? r.details : (r.details === editTitle ? '' : r.details || '');
-      $editForm.find('[name="medDescription"]').val(editDesc);
+      $editForm.find('[name="medDescription"]').val(r.details || '');
       $card.after($editForm);
 
       // Wire inline edit form buttons
