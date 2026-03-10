@@ -70,7 +70,7 @@
         display:flex; flex-direction:column;
         transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
       }
-      .ac-sidebar-header { padding:1.5rem 1.25rem 1rem; border-bottom:1px solid var(--ac-glass-border); }
+      .ac-sidebar-header { padding:1rem 1.25rem 1rem; border-bottom:1px solid var(--ac-glass-border); }
       .ac-sidebar-brand { display:flex; align-items:center; gap:0.625rem; text-decoration:none; margin-bottom:1rem; }
       .ac-sidebar-brand img { height:26px; width:auto; opacity:0.9; }
       .ac-sidebar-brand span { font-size:0.75rem; color:var(--ac-text-muted); font-weight:500; letter-spacing:0.04em; text-transform:uppercase; }
@@ -123,6 +123,14 @@
         border:1px solid var(--ac-glass-border); color:#fff; font-size:1.125rem;
         cursor:pointer; align-items:center; justify-content:center;
       }
+      .ac-sidebar-close {
+        display:none; width:32px; height:32px; border-radius:var(--ac-radius-sm);
+        background:var(--ac-glass); border:1px solid var(--ac-glass-border);
+        color:var(--ac-text-muted); font-size:0.875rem; cursor:pointer;
+        align-items:center; justify-content:center; flex-shrink:0;
+        transition:all 0.15s;
+      }
+      .ac-sidebar-close:hover { color:#fff; background:var(--ac-glass-hover); }
 
       /* ── Main ── */
       .ac-main { margin-left:var(--ac-sidebar-w); min-height:100vh; position:relative; z-index:1; }
@@ -231,6 +239,66 @@
         0%, 100% { opacity:1; box-shadow:0 0 0 0 rgba(34,197,94,0.4); }
         50% { opacity:0.7; box-shadow:0 0 0 4px rgba(34,197,94,0); }
       }
+
+      /* ── Metric Charts ── */
+      .ac-charts-row {
+        display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1.25rem;
+      }
+      @media (max-width:768px) {
+        .ac-charts-row { grid-template-columns:1fr; }
+      }
+      .ac-chart-card {
+        background:var(--ac-glass); border:1px solid var(--ac-glass-border);
+        border-radius:var(--ac-radius); padding:1.125rem; position:relative;
+        overflow:hidden; animation:ac-fadeUp 0.5s ease both;
+      }
+      .ac-chart-card::before {
+        content:''; position:absolute; top:0; left:0; right:0; height:1px;
+        background:linear-gradient(90deg, transparent, var(--chart-accent, var(--ac-accent)), transparent);
+        opacity:0.5;
+      }
+      .ac-chart-header {
+        display:flex; align-items:center; justify-content:space-between;
+        margin-bottom:1rem;
+      }
+      .ac-chart-title {
+        font-size:0.75rem; font-weight:600; color:var(--ac-text-muted);
+        text-transform:uppercase; letter-spacing:0.06em;
+      }
+      .ac-chart-value {
+        font-size:1.25rem; font-weight:700; color:#fff;
+        font-family:'JetBrains Mono','Outfit',sans-serif;
+        font-variant-numeric:tabular-nums;
+      }
+      .ac-chart-trend {
+        font-size:0.6875rem; font-weight:600; padding:0.125rem 0.5rem;
+        border-radius:99px; display:inline-flex; align-items:center; gap:0.25rem;
+      }
+      .ac-chart-trend.up { color:var(--ac-green); background:rgba(34,197,94,0.1); }
+      .ac-chart-trend.down { color:var(--ac-red); background:rgba(239,68,68,0.1); }
+      .ac-chart-trend.flat { color:var(--ac-text-dim); background:rgba(255,255,255,0.05); }
+      .ac-chart-svg-wrap {
+        position:relative; height:120px; margin:0 -0.25rem;
+      }
+      .ac-chart-svg { width:100%; height:100%; overflow:visible; }
+      .ac-chart-labels {
+        display:flex; justify-content:space-between; padding:0.5rem 0 0;
+      }
+      .ac-chart-label {
+        font-size:0.5625rem; color:var(--ac-text-dim); font-weight:500;
+        font-family:'JetBrains Mono','Outfit',monospace;
+      }
+      .ac-chart-tooltip {
+        position:absolute; pointer-events:none; opacity:0;
+        background:rgba(15,17,23,0.95); backdrop-filter:blur(12px);
+        border:1px solid var(--ac-glass-border); border-radius:8px;
+        padding:0.5rem 0.75rem; z-index:10; transition:opacity 0.15s;
+        white-space:nowrap; transform:translate(-50%, -100%);
+      }
+      .ac-chart-tooltip.visible { opacity:1; }
+      .ac-chart-tooltip-date { font-size:0.625rem; color:var(--ac-text-dim); margin-bottom:0.125rem; }
+      .ac-chart-tooltip-value { font-size:0.8125rem; font-weight:700; color:#fff; font-family:'JetBrains Mono',monospace; }
+
       .ac-quick-actions {
         display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
         gap:0.875rem; margin-bottom:1.75rem;
@@ -608,8 +676,9 @@
         .ac-sidebar { transform:translateX(-100%); }
         .ac-sidebar.open { transform:translateX(0); }
         .ac-sidebar-toggle { display:flex; }
+        .ac-sidebar-close { display:flex; }
         .ac-main { margin-left:0; }
-        .ac-topbar { padding:1rem 1rem 1rem 3.5rem; }
+        .ac-topbar { padding:1rem 1rem 1rem 4.25rem; min-height:calc(40px + 2rem); }
         .ac-content { padding:1rem; }
         .ac-footer { margin-left:0; }
         .ac-footer-inner { flex-direction:column; align-items:flex-start; gap:0.5rem; }
@@ -626,16 +695,21 @@
     <div class="ac-bg-mesh"></div>
     <div class="ac-grain"></div>
 
-    <button class="ac-sidebar-toggle" onclick="document.querySelector('.ac-sidebar').classList.toggle('open')">
+    <button class="ac-sidebar-toggle" id="ac-sidebar-open" onclick="document.querySelector('.ac-sidebar').classList.add('open'); this.style.display='none';">
       <i class="fas fa-bars"></i>
     </button>
 
     <aside class="ac-sidebar">
       <div class="ac-sidebar-header">
-        <a class="ac-sidebar-brand" href="/admin/console">
-          <img src="/static/images/dispatch-logo-512.png" alt="LPC">
-          <span>Lines Police CAD</span>
-        </a>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+          <a class="ac-sidebar-brand" href="/admin/console" style="margin-bottom:0;">
+            <img src="/static/images/dispatch-logo-512.png" alt="LPC">
+            <span>Lines Police CAD</span>
+          </a>
+          <button class="ac-sidebar-close" onclick="document.querySelector('.ac-sidebar').classList.remove('open'); document.getElementById('ac-sidebar-open').style.display='';">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
         <h2 class="ac-sidebar-dept">Admin Console</h2>
         <p class="ac-sidebar-status"><i class="fas fa-circle"></i> Online</p>
       </div>
@@ -1050,7 +1124,50 @@
             </div>
           </div>
 
-          <!-- Future metric sections go here -->
+          <!-- Trend Charts -->
+          <div class="ac-charts-row" id="metrics-charts-row" style="display:none;">
+            <div class="ac-chart-card" style="--chart-accent:var(--ac-accent);animation-delay:0.1s;">
+              <div class="ac-chart-header">
+                <div>
+                  <div class="ac-chart-title">Beta Opt-Ins</div>
+                  <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
+                    <span class="ac-chart-value" id="chart-beta-total">&mdash;</span>
+                    <span class="ac-chart-trend flat" id="chart-beta-trend">&mdash;</span>
+                  </div>
+                </div>
+                <span style="font-size:0.625rem;color:var(--ac-text-dim);font-weight:500;">Last 7 days</span>
+              </div>
+              <div class="ac-chart-svg-wrap" id="chart-beta-wrap">
+                <svg class="ac-chart-svg" id="chart-beta-svg" preserveAspectRatio="none"></svg>
+                <div class="ac-chart-tooltip" id="chart-beta-tooltip">
+                  <div class="ac-chart-tooltip-date"></div>
+                  <div class="ac-chart-tooltip-value"></div>
+                </div>
+              </div>
+              <div class="ac-chart-labels" id="chart-beta-labels"></div>
+            </div>
+
+            <div class="ac-chart-card" style="--chart-accent:var(--ac-green);animation-delay:0.2s;">
+              <div class="ac-chart-header">
+                <div>
+                  <div class="ac-chart-title">New Registrations</div>
+                  <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
+                    <span class="ac-chart-value" id="chart-users-total">&mdash;</span>
+                    <span class="ac-chart-trend flat" id="chart-users-trend">&mdash;</span>
+                  </div>
+                </div>
+                <span style="font-size:0.625rem;color:var(--ac-text-dim);font-weight:500;">Last 7 days</span>
+              </div>
+              <div class="ac-chart-svg-wrap" id="chart-users-wrap">
+                <svg class="ac-chart-svg" id="chart-users-svg" preserveAspectRatio="none"></svg>
+                <div class="ac-chart-tooltip" id="chart-users-tooltip">
+                  <div class="ac-chart-tooltip-date"></div>
+                  <div class="ac-chart-tooltip-value"></div>
+                </div>
+              </div>
+              <div class="ac-chart-labels" id="chart-users-labels"></div>
+            </div>
+          </div>
 
         </div>
 
@@ -1418,7 +1535,11 @@
 
         // Close sidebar on mobile
         var sidebar = document.querySelector('.ac-sidebar');
-        if (sidebar && window.innerWidth < 1024) sidebar.classList.remove('open');
+        if (sidebar && window.innerWidth < 1024) {
+          sidebar.classList.remove('open');
+          var toggleBtn = document.getElementById('ac-sidebar-open');
+          if (toggleBtn) toggleBtn.style.display = '';
+        }
       }
 
       // Sidebar nav click handler
@@ -5570,6 +5691,7 @@
         }
         metricsInitialized = true;
         fetchBetaAdoptionMetrics();
+        fetchDailyMetrics();
         initMetricsSocket();
         initMetricsVisibility();
       }
@@ -5603,6 +5725,213 @@
         $('#metrics-beta-loading').hide();
         $('#metrics-beta-content').show();
       }
+
+      // -- Daily Trend Charts --
+
+      function fetchDailyMetrics() {
+        $.ajax({
+          url: API_BASE + '/api/v1/admin/beta-dashboard-metrics/daily',
+          method: 'GET',
+          success: function(data) {
+            if (data && data.days) {
+              renderTrendCharts(data.days);
+              $('#metrics-charts-row').show();
+            }
+          },
+          error: function() {
+            // Silently fail — charts are supplementary
+          }
+        });
+      }
+
+      function renderTrendCharts(days) {
+        var betaValues = days.map(function(d) { return d.betaOptIns; });
+        var userValues = days.map(function(d) { return d.newUsers; });
+        var labels = days.map(function(d) {
+          var parts = d.date.split('-');
+          var dt = new Date(parts[0], parts[1] - 1, parts[2]);
+          return dt.toLocaleDateString('en-US', { weekday: 'short' });
+        });
+        var fullLabels = days.map(function(d) {
+          var parts = d.date.split('-');
+          var dt = new Date(parts[0], parts[1] - 1, parts[2]);
+          return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+
+        renderLineChart('chart-beta', betaValues, labels, fullLabels, 'var(--ac-accent)', '#a78bfa');
+        renderLineChart('chart-users', userValues, labels, fullLabels, 'var(--ac-green)', '#4ade80');
+
+        // Update totals and trends
+        var betaSum = betaValues.reduce(function(a,b) { return a+b; }, 0);
+        var userSum = userValues.reduce(function(a,b) { return a+b; }, 0);
+        $('#chart-beta-total').text(betaSum.toLocaleString());
+        $('#chart-users-total').text(userSum.toLocaleString());
+
+        // Trend: compare last 3 days vs first 3 days
+        var betaRecent = betaValues.slice(-3).reduce(function(a,b){return a+b;},0);
+        var betaOlder = betaValues.slice(0,3).reduce(function(a,b){return a+b;},0);
+        applyTrend('chart-beta-trend', betaRecent, betaOlder);
+
+        var userRecent = userValues.slice(-3).reduce(function(a,b){return a+b;},0);
+        var userOlder = userValues.slice(0,3).reduce(function(a,b){return a+b;},0);
+        applyTrend('chart-users-trend', userRecent, userOlder);
+      }
+
+      function applyTrend(elId, recent, older) {
+        var $el = $('#' + elId);
+        if (older === 0 && recent === 0) {
+          $el.removeClass('up down').addClass('flat').html('&mdash;');
+        } else if (older === 0) {
+          $el.removeClass('down flat').addClass('up').html('<i class="fas fa-arrow-up" style="font-size:0.5rem;"></i> New');
+        } else {
+          var pct = Math.round(((recent - older) / older) * 100);
+          if (pct > 0) {
+            $el.removeClass('down flat').addClass('up').html('<i class="fas fa-arrow-up" style="font-size:0.5rem;"></i> +' + pct + '%');
+          } else if (pct < 0) {
+            $el.removeClass('up flat').addClass('down').html('<i class="fas fa-arrow-down" style="font-size:0.5rem;"></i> ' + pct + '%');
+          } else {
+            $el.removeClass('up down').addClass('flat').html('<i class="fas fa-minus" style="font-size:0.5rem;"></i> 0%');
+          }
+        }
+      }
+
+      function renderLineChart(prefix, values, labels, fullLabels, color1, color2) {
+        var svg = document.getElementById(prefix + '-svg');
+        var wrap = document.getElementById(prefix + '-wrap');
+        var tooltip = document.getElementById(prefix + '-tooltip');
+        var labelsEl = document.getElementById(prefix + '-labels');
+        if (!svg || !wrap) return;
+
+        var w = wrap.offsetWidth;
+        var h = 120;
+        svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+
+        var maxVal = Math.max.apply(null, values);
+        if (maxVal === 0) maxVal = 1; // prevent division by zero
+
+        var padTop = 8, padBot = 8, padX = 12;
+        var chartH = h - padTop - padBot;
+        var stepX = (w - padX * 2) / (values.length - 1 || 1);
+
+        // Build points
+        var points = values.map(function(v, i) {
+          var x = padX + i * stepX;
+          var y = padTop + chartH - (v / maxVal) * chartH;
+          return { x: x, y: y, val: v };
+        });
+
+        // Build path
+        var linePath = '';
+        points.forEach(function(p, i) {
+          if (i === 0) { linePath += 'M ' + p.x + ' ' + p.y; }
+          else {
+            // Smooth curve
+            var prev = points[i - 1];
+            var cpx = (prev.x + p.x) / 2;
+            linePath += ' C ' + cpx + ' ' + prev.y + ', ' + cpx + ' ' + p.y + ', ' + p.x + ' ' + p.y;
+          }
+        });
+
+        // Area path (fill under curve)
+        var areaPath = linePath + ' L ' + points[points.length - 1].x + ' ' + (h - padBot) +
+          ' L ' + points[0].x + ' ' + (h - padBot) + ' Z';
+
+        // Grid lines (3 horizontal)
+        var gridHTML = '';
+        for (var g = 0; g <= 2; g++) {
+          var gy = padTop + (chartH / 2) * g;
+          gridHTML += '<line x1="' + padX + '" y1="' + gy + '" x2="' + (w - padX) + '" y2="' + gy + '" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>';
+        }
+
+        // Unique gradient IDs
+        var gradId = prefix + '-grad';
+        var areaGradId = prefix + '-area-grad';
+
+        svg.innerHTML =
+          '<defs>' +
+            '<linearGradient id="' + gradId + '" x1="0%" y1="0%" x2="100%" y2="0%">' +
+              '<stop offset="0%" stop-color="' + color1 + '"/>' +
+              '<stop offset="100%" stop-color="' + color2 + '"/>' +
+            '</linearGradient>' +
+            '<linearGradient id="' + areaGradId + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
+              '<stop offset="0%" stop-color="' + color1 + '" stop-opacity="0.15"/>' +
+              '<stop offset="100%" stop-color="' + color1 + '" stop-opacity="0"/>' +
+            '</linearGradient>' +
+          '</defs>' +
+          gridHTML +
+          '<path d="' + areaPath + '" fill="url(#' + areaGradId + ')"/>' +
+          '<path d="' + linePath + '" fill="none" stroke="url(#' + gradId + ')" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 1px 4px rgba(139,92,246,0.3));">' +
+            '<animate attributeName="stroke-dashoffset" from="1000" to="0" dur="1.2s" fill="freeze"/>' +
+            '<animate attributeName="stroke-dasharray" from="1000" to="1000" dur="0.01s" fill="freeze"/>' +
+          '</path>';
+
+        // Add dots
+        points.forEach(function(p, i) {
+          var dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          dot.setAttribute('cx', p.x);
+          dot.setAttribute('cy', p.y);
+          dot.setAttribute('r', '4');
+          dot.setAttribute('fill', '#08090c');
+          dot.setAttribute('stroke', color2);
+          dot.setAttribute('stroke-width', '2');
+          dot.style.opacity = '0';
+          dot.style.transition = 'opacity 0.15s, r 0.15s';
+          dot.style.cursor = 'pointer';
+
+          // Invisible larger hit area
+          var hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          hitArea.setAttribute('cx', p.x);
+          hitArea.setAttribute('cy', p.y);
+          hitArea.setAttribute('r', '16');
+          hitArea.setAttribute('fill', 'transparent');
+          hitArea.style.cursor = 'pointer';
+
+          hitArea.addEventListener('mouseenter', function() {
+            dot.style.opacity = '1';
+            dot.setAttribute('r', '5');
+            tooltip.style.left = p.x + 'px';
+            tooltip.style.top = (p.y - 10) + 'px';
+            tooltip.querySelector('.ac-chart-tooltip-date').textContent = fullLabels[i];
+            tooltip.querySelector('.ac-chart-tooltip-value').textContent = p.val.toLocaleString();
+            tooltip.classList.add('visible');
+          });
+          hitArea.addEventListener('mouseleave', function() {
+            dot.style.opacity = '0';
+            dot.setAttribute('r', '4');
+            tooltip.classList.remove('visible');
+          });
+
+          svg.appendChild(dot);
+          svg.appendChild(hitArea);
+        });
+
+        // Labels
+        labelsEl.innerHTML = '';
+        labels.forEach(function(lbl) {
+          var span = document.createElement('span');
+          span.className = 'ac-chart-label';
+          span.textContent = lbl;
+          labelsEl.appendChild(span);
+        });
+      }
+
+      // Redraw charts on window resize
+      var chartResizeTimer;
+      window.addEventListener('resize', function() {
+        clearTimeout(chartResizeTimer);
+        chartResizeTimer = setTimeout(function() {
+          if (metricsInitialized && window._lastDailyMetrics) {
+            renderTrendCharts(window._lastDailyMetrics);
+          }
+        }, 250);
+      });
+
+      // Store last data for resize re-render
+      var _origRenderTrendCharts = renderTrendCharts;
+      renderTrendCharts = function(days) {
+        window._lastDailyMetrics = days;
+        _origRenderTrendCharts(days);
+      };
 
       // -- Section Toggle --
 
