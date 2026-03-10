@@ -242,10 +242,7 @@
 
       /* ── Metric Charts ── */
       .ac-charts-row {
-        display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1.25rem;
-      }
-      @media (max-width:768px) {
-        .ac-charts-row { grid-template-columns:1fr; }
+        display:grid; grid-template-columns:1fr; gap:1rem; margin-top:1.25rem;
       }
       .ac-chart-card {
         background:var(--ac-glass); border:1px solid var(--ac-glass-border);
@@ -1120,33 +1117,37 @@
                     <span style="font-size:0.625rem;color:var(--ac-text-dim);"><i class="fas fa-circle" style="color:var(--ac-blue);font-size:0.375rem;vertical-align:middle;margin-right:0.25rem;"></i>Classic</span>
                   </div>
                 </div>
+
+                <!-- Beta Opt-Ins Chart (inside collapsible) -->
+                <div id="chart-beta-card" style="display:none;margin-top:1rem;">
+                  <div class="ac-chart-card" style="--chart-accent:var(--ac-accent);animation-delay:0.1s;">
+                    <div class="ac-chart-header">
+                      <div>
+                        <div class="ac-chart-title">Daily Opt-Ins</div>
+                        <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
+                          <span class="ac-chart-value" id="chart-beta-total">&mdash;</span>
+                          <span class="ac-chart-trend flat" id="chart-beta-trend">&mdash;</span>
+                        </div>
+                      </div>
+                      <span style="font-size:0.625rem;color:var(--ac-text-dim);font-weight:500;">Last 7 days</span>
+                    </div>
+                    <div class="ac-chart-svg-wrap" id="chart-beta-wrap">
+                      <svg class="ac-chart-svg" id="chart-beta-svg" preserveAspectRatio="none"></svg>
+                      <div class="ac-chart-tooltip" id="chart-beta-tooltip">
+                        <div class="ac-chart-tooltip-date"></div>
+                        <div class="ac-chart-tooltip-value"></div>
+                      </div>
+                    </div>
+                    <div class="ac-chart-labels" id="chart-beta-labels"></div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
 
           <!-- Trend Charts -->
           <div class="ac-charts-row" id="metrics-charts-row" style="display:none;">
-            <div class="ac-chart-card" style="--chart-accent:var(--ac-accent);animation-delay:0.1s;">
-              <div class="ac-chart-header">
-                <div>
-                  <div class="ac-chart-title">Beta Opt-Ins</div>
-                  <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
-                    <span class="ac-chart-value" id="chart-beta-total">&mdash;</span>
-                    <span class="ac-chart-trend flat" id="chart-beta-trend">&mdash;</span>
-                  </div>
-                </div>
-                <span style="font-size:0.625rem;color:var(--ac-text-dim);font-weight:500;">Last 7 days</span>
-              </div>
-              <div class="ac-chart-svg-wrap" id="chart-beta-wrap">
-                <svg class="ac-chart-svg" id="chart-beta-svg" preserveAspectRatio="none"></svg>
-                <div class="ac-chart-tooltip" id="chart-beta-tooltip">
-                  <div class="ac-chart-tooltip-date"></div>
-                  <div class="ac-chart-tooltip-value"></div>
-                </div>
-              </div>
-              <div class="ac-chart-labels" id="chart-beta-labels"></div>
-            </div>
-
             <div class="ac-chart-card" style="--chart-accent:var(--ac-green);animation-delay:0.2s;">
               <div class="ac-chart-header">
                 <div>
@@ -5734,6 +5735,7 @@
           method: 'GET',
           success: function(data) {
             if (data && data.days) {
+              $('#chart-beta-card').show();
               $('#metrics-charts-row').show();
               renderTrendCharts(data.days);
             }
