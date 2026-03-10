@@ -5734,8 +5734,8 @@
           method: 'GET',
           success: function(data) {
             if (data && data.days) {
-              renderTrendCharts(data.days);
               $('#metrics-charts-row').show();
+              renderTrendCharts(data.days);
             }
           },
           error: function() {
