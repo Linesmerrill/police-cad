@@ -1680,48 +1680,163 @@ async function loadRoles() {
   }
 }
 
+var isRolesEditMode = false;
+var originalRolesOrder = [];
+
 function renderRolesList() {
   const listContainer = document.getElementById('rolesListContainer');
   const emptyState = document.getElementById('rolesEmptyState');
   const rolesList = document.getElementById('rolesList');
-  
+
   if (filteredRoles.length === 0) {
     listContainer.style.display = 'none';
     emptyState.style.display = 'block';
     return;
   }
-  
+
   listContainer.style.display = 'block';
   emptyState.style.display = 'none';
-  
-  rolesList.innerHTML = filteredRoles.map(role => {
-    // Check if this is a head admin role
-    const isHeadAdmin = (role.permissions || []).some(p => 
+
+  rolesList.innerHTML = filteredRoles.map((role, index) => {
+    const isHeadAdmin = (role.permissions || []).some(p =>
       p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
     );
-    
-    return `
-      <div class="role-card" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;" onclick="openRoleDetails('${role._id}')">
-        <div style="text-align:center; position:relative;">
-          ${isHeadAdmin ? `
-            <div style="position:absolute; top:-0.5rem; right:-0.5rem; background:#1e3a8a; border:2px solid #3b82f6; border-radius:50%; width:2rem; height:2rem; display:flex; align-items:center; justify-content:center;">
-              <i class="fa fa-lock" style="color:#60a5fa; font-size:0.75rem;"></i>
-            </div>
-          ` : ''}
-          <div style="margin-bottom:0.5rem;">
-            <i class="fa fa-user-shield" style="font-size:2rem; color:#8b5cf6;"></i>
+    const color = isHeadAdmin ? '#ef4444' : '#8b5cf6';
+    const isLast = index === filteredRoles.length - 1;
+
+    if (isRolesEditMode) {
+      const upDisabled = index === 0 || isHeadAdmin;
+      const downDisabled = isLast || isHeadAdmin;
+
+      return `
+        <div class="role-row" style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; border-bottom:${isLast ? 'none' : '1px solid rgba(255,255,255,0.06)'}; background:transparent;">
+          <span style="background:rgba(56,189,248,0.12); color:#38bdf8; border:1px solid rgba(56,189,248,0.25); border-radius:9999px; width:1.6rem; height:1.6rem; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; flex-shrink:0;">${index + 1}</span>
+          <div style="background:${color}20; border-radius:9999px; padding:0.45rem; flex-shrink:0;">
+            <i class="fa fa-shield-alt" style="color:${color}; font-size:0.8rem; width:14px; text-align:center;"></i>
           </div>
-          <h5 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">${role.name}</h5>
-          <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">${formatCount(role.members ? role.members.length : 0, 'member', 'members')}</p>
-          ${isHeadAdmin ? `
-            <div style="margin-top:0.5rem;">
-              <span style="background:#1e3a8a; color:#60a5fa; padding:0.25rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:500;">Head Admin</span>
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+              <span style="color:#f1f5f9; font-size:0.9rem; font-weight:500;">${role.name}</span>
+              ${isHeadAdmin ? '<i class="fa fa-lock" style="color:#64748b; font-size:0.65rem;"></i>' : ''}
             </div>
-          ` : ''}
+            <div style="color:#64748b; font-size:0.78rem; margin-top:0.15rem;">${formatCount(role.members ? role.members.length : 0, 'member', 'members')}</div>
+          </div>
+          <div style="display:flex; gap:0.35rem;">
+            <button class="role-arrow-btn" onclick="moveRoleUp(${index})" ${upDisabled ? 'disabled' : ''} style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); color:#f1f5f9; padding:0.3rem 0.5rem; border-radius:8px; cursor:${upDisabled ? 'not-allowed' : 'pointer'}; opacity:${upDisabled ? '0.3' : '1'}; font-size:0.75rem;">
+              <i class="fa fa-arrow-up"></i>
+            </button>
+            <button class="role-arrow-btn" onclick="moveRoleDown(${index})" ${downDisabled ? 'disabled' : ''} style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); color:#f1f5f9; padding:0.3rem 0.5rem; border-radius:8px; cursor:${downDisabled ? 'not-allowed' : 'pointer'}; opacity:${downDisabled ? '0.3' : '1'}; font-size:0.75rem;">
+              <i class="fa fa-arrow-down"></i>
+            </button>
+          </div>
         </div>
+      `;
+    }
+
+    return `
+      <div class="role-row" style="display:flex; align-items:center; gap:0.75rem; padding:0.85rem 1rem; border-bottom:${isLast ? 'none' : '1px solid rgba(255,255,255,0.06)'}; cursor:pointer; background:transparent;" onclick="openRoleDetails('${role._id}')">
+        <div style="background:${color}20; border-radius:9999px; padding:0.5rem; flex-shrink:0;">
+          <i class="fa fa-shield-alt" style="color:${color}; font-size:0.85rem; width:16px; text-align:center;"></i>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; gap:0.4rem;">
+            <span style="color:#f1f5f9; font-size:0.9rem; font-weight:500;">${role.name}</span>
+            ${isHeadAdmin ? '<i class="fa fa-lock" style="color:#64748b; font-size:0.65rem;"></i>' : ''}
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.2rem;">
+            <span style="color:#64748b; font-size:0.78rem;">${formatCount(role.members ? role.members.length : 0, 'member', 'members')}</span>
+            ${isHeadAdmin ? `<span style="background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.25); padding:0.1rem 0.5rem; border-radius:9999px; font-size:0.65rem; font-weight:500;">Head Admin</span>` : ''}
+          </div>
+        </div>
+        <i class="fa fa-chevron-right" style="color:#64748b; font-size:0.7rem;"></i>
       </div>
     `;
   }).join('');
+}
+
+function toggleRolesEditMode() {
+  isRolesEditMode = true;
+  originalRolesOrder = [...filteredRoles];
+  document.getElementById('rolesEditModeBanner').style.display = 'flex';
+  document.getElementById('editRolesOrderBtn').style.display = 'none';
+  document.getElementById('rolesSearchInput').disabled = true;
+  renderRolesList();
+}
+
+function cancelRolesEditMode() {
+  isRolesEditMode = false;
+  filteredRoles = [...originalRolesOrder];
+  rolesData = [...originalRolesOrder];
+  document.getElementById('rolesEditModeBanner').style.display = 'none';
+  document.getElementById('editRolesOrderBtn').style.display = 'inline-block';
+  document.getElementById('rolesSearchInput').disabled = false;
+  renderRolesList();
+}
+
+function moveRoleUp(index) {
+  if (index <= 0) return;
+  const targetRole = filteredRoles[index - 1];
+  const isTargetHeadAdmin = (targetRole.permissions || []).some(p =>
+    p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
+  );
+  if (isTargetHeadAdmin) return;
+
+  [filteredRoles[index], filteredRoles[index - 1]] = [filteredRoles[index - 1], filteredRoles[index]];
+  rolesData = [...filteredRoles];
+  renderRolesList();
+}
+
+function moveRoleDown(index) {
+  if (index >= filteredRoles.length - 1) return;
+  const currentRole = filteredRoles[index];
+  const isCurrentHeadAdmin = (currentRole.permissions || []).some(p =>
+    p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
+  );
+  if (isCurrentHeadAdmin) return;
+
+  [filteredRoles[index], filteredRoles[index + 1]] = [filteredRoles[index + 1], filteredRoles[index]];
+  rolesData = [...filteredRoles];
+  renderRolesList();
+}
+
+async function saveRolesOrder() {
+  const saveBtn = document.getElementById('saveRolesOrderBtn');
+  saveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+  saveBtn.disabled = true;
+
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+
+    const roleIds = filteredRoles.map(r => r._id);
+
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/reorder?userId=${window.dbUser?._id || ''}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roleIds })
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || 'Failed to reorder roles');
+    }
+
+    isRolesEditMode = false;
+    document.getElementById('rolesEditModeBanner').style.display = 'none';
+    document.getElementById('editRolesOrderBtn').style.display = 'inline-block';
+    document.getElementById('rolesSearchInput').disabled = false;
+    showToast('Roles reordered successfully!', 3000, 'success');
+    renderRolesList();
+
+  } catch (error) {
+    showToast('Failed to reorder roles: ' + error.message, 3000, 'error');
+    filteredRoles = [...originalRolesOrder];
+    rolesData = [...originalRolesOrder];
+    renderRolesList();
+  } finally {
+    saveBtn.innerHTML = '<i class="fa fa-check" style="margin-right:0.25rem;"></i>Save';
+    saveBtn.disabled = false;
+  }
 }
 
 function searchRoles(query) {
@@ -4918,53 +5033,74 @@ async function deleteInviteCode() {
 <% } %>
 
 <!-- HeroUI Pro Roles Management Modal -->
+<style>
+  .role-row { transition: background 0.15s; }
+  .role-row:hover { background: rgba(255,255,255,0.03) !important; }
+  .role-arrow-btn { transition: all 0.15s; }
+  .role-arrow-btn:hover:not(:disabled) { background: rgba(255,255,255,0.12) !important; }
+</style>
 <div id="rolesModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:900px; width:95%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:800px; width:95%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
     <button onclick="closeRolesModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-    
-    <div style="text-align:center; margin-bottom:2rem;">
-      <i class="fa fa-users-cog" style="font-size:3rem; color:#8b5cf6; margin-bottom:1rem;"></i>
+
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-shield-alt" style="font-size:3rem; color:#8b5cf6; margin-bottom:1rem;"></i>
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Roles Management</h3>
       <p style="color:#a0aec0; margin:0.5rem 0 0 0;">Manage community roles and permissions</p>
     </div>
 
-    <!-- Header with search and create button -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; gap:1rem;">
+    <!-- Header with search and action buttons -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; gap:1rem; flex-wrap:wrap;">
       <div style="flex:1; max-width:400px;">
         <div style="position:relative;">
-          <input type="text" id="rolesSearchInput" placeholder="Search roles..." style="width:100%; padding:0.75rem 1rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+          <input type="text" id="rolesSearchInput" placeholder="Search roles..." oninput="searchRoles(this.value); document.getElementById('rolesSearchClear').style.display = this.value ? 'block' : 'none';" style="width:100%; padding:0.6rem 1rem 0.6rem 2.2rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:9999px; color:#f1f5f9; font-size:0.875rem; outline:none;">
+          <i class="fa fa-search" style="position:absolute; left:0.85rem; top:50%; transform:translateY(-50%); color:#64748b; font-size:0.8rem;"></i>
           <button onclick="clearRolesSearch()" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:#a0aec0; cursor:pointer; display:none;" id="rolesSearchClear">
             <i class="fa fa-times"></i>
           </button>
         </div>
       </div>
-      <div style="display:flex; align-items:center; gap:1rem;">
-        <div style="color:#a0aec0; font-size:0.875rem;">
+      <div style="display:flex; align-items:center; gap:0.5rem;">
+        <span style="color:#64748b; font-size:0.8rem; padding:0.4rem 0.9rem; border-radius:9999px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.05);">
           <span id="rolesCount">0</span> <span id="rolesCountText">roles</span>
-        </div>
-        <button onclick="openCreateRoleModal()" style="background:#10b981; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.2s; hover:background:#059669;">
-          <i class="fa fa-plus" style="margin-right:0.5rem;"></i>
-          Create Role
+        </span>
+        <button id="editRolesOrderBtn" onclick="toggleRolesEditMode()" style="background:rgba(255,255,255,0.05); color:#94a3b8; border:1px solid rgba(255,255,255,0.08); padding:0.4rem 0.9rem; border-radius:9999px; font-size:0.8rem; font-weight:500; cursor:pointer; transition:all 0.2s;">
+          <i class="fa fa-arrows-alt" style="margin-right:0.4rem;"></i>Reorder
+        </button>
+        <button onclick="openCreateRoleModal()" style="background:#3b82f6; color:#fff; border:1px solid #4a5568; padding:0.4rem 0.9rem; border-radius:9999px; font-size:0.8rem; font-weight:500; cursor:pointer; transition:all 0.2s;">
+          <i class="fa fa-plus" style="margin-right:0.4rem;"></i>Create Role
         </button>
       </div>
     </div>
 
+    <!-- Edit mode banner -->
+    <div id="rolesEditModeBanner" style="display:none; background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25); padding:0.6rem 1rem; border-radius:10px; margin-bottom:1rem; display:none; align-items:center; justify-content:center; gap:0.75rem;">
+      <i class="fa fa-arrows-alt" style="color:#38bdf8; font-size:0.85rem;"></i>
+      <span style="color:#38bdf8; font-size:0.8rem; font-weight:500;">Use arrows to reorder roles</span>
+      <button onclick="saveRolesOrder()" id="saveRolesOrderBtn" style="background:rgba(52,211,153,0.12); color:#34d399; border:1px solid rgba(52,211,153,0.25); padding:0.35rem 0.8rem; border-radius:9999px; font-size:0.8rem; font-weight:500; cursor:pointer; margin-left:auto;">
+        <i class="fa fa-check" style="margin-right:0.25rem;"></i>Save
+      </button>
+      <button onclick="cancelRolesEditMode()" style="background:rgba(255,255,255,0.05); color:#94a3b8; border:1px solid rgba(255,255,255,0.08); padding:0.35rem 0.8rem; border-radius:9999px; font-size:0.8rem; font-weight:500; cursor:pointer;">
+        Cancel
+      </button>
+    </div>
+
     <!-- Loading state -->
     <div id="rolesLoading" style="text-align:center; padding:2rem;">
-      <div class="loading-spinner" style="width:60px; height:60px; border:4px solid #4a5568; border-top:4px solid #f59e0b; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+      <div class="loading-spinner" style="width:60px; height:60px; border:4px solid #4a5568; border-top:4px solid #8b5cf6; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
       <p style="color:#a0aec0;">Loading roles...</p>
     </div>
 
     <!-- Roles list -->
     <div id="rolesListContainer" style="display:none;">
-      <div id="rolesList" style="display:grid; gap:1rem; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));">
+      <div id="rolesList" style="border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.06);">
         <!-- Roles will be populated here -->
       </div>
     </div>
 
     <!-- Empty state -->
     <div id="rolesEmptyState" style="display:none; text-align:center; padding:3rem;">
-      <i class="fa fa-users-cog" style="font-size:4rem; color:#4a5568; margin-bottom:1rem;"></i>
+      <i class="fa fa-shield-alt" style="font-size:4rem; color:#4a5568; margin-bottom:1rem;"></i>
       <h4 style="color:#a0aec0; margin:0; font-size:1.25rem; font-weight:600;">No roles found</h4>
       <p style="color:#6b7280; margin:0.5rem 0 0 0;">Create your first role to get started</p>
     </div>
