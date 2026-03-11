@@ -45,5 +45,20 @@
               </div>
             </div>
           </div>
+
+          <!-- Collapsible Rank Ladder Section -->
+          <div id="rankLadderSection" style="display:none;">
+            <button id="rankLadderToggle" onclick="toggleRankLadder()" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:12px; padding:10px; background:rgba(124,58,237,0.08); border:1px solid rgba(124,58,237,0.15); border-radius:10px; color:#a78bfa; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; letter-spacing:0.3px;" onmouseenter="this.style.background='rgba(124,58,237,0.14)'" onmouseleave="this.style.background='rgba(124,58,237,0.08)'">
+              <span id="rankLadderToggleText">View Rank Ladder</span>
+              <i id="rankLadderToggleIcon" class="fa fa-chevron-down" style="font-size:11px; transition:transform 0.3s;"></i>
+            </button>
+            <div id="rankLadderCollapsible" style="max-height:0; overflow:hidden; transition:max-height 0.4s cubic-bezier(0.4,0,0.2,1);">
+              <div style="padding-top:16px;">
+                <div id="rankLadderContainer">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>

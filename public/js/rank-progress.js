@@ -19,13 +19,17 @@ function loadMyRankProgress() {
   var communityId = cfg.user.user?.lastAccessedCommunity?.communityID;
   if (!communityId) return;
 
-  fetch(cfg.apiUrl + '/api/v1/community/' + communityId + '/departments/' + cfg.deptId + '/members/' + cfg.user._id + '/rank-progress')
-    .then(function(r) {
-      if (!r.ok) throw new Error('Rank progress not available');
-      return r.json();
-    })
-    .then(function(data) {
-      renderRankProgress(data);
+  var progressUrl = cfg.apiUrl + '/api/v1/community/' + communityId + '/departments/' + cfg.deptId + '/members/' + cfg.user._id + '/rank-progress';
+  var ranksUrl = cfg.apiUrl + '/api/v1/community/' + communityId + '/departments/' + cfg.deptId + '/ranks';
+
+  Promise.all([
+    fetch(progressUrl).then(function(r) { if (!r.ok) throw new Error('Rank progress not available'); return r.json(); }),
+    fetch(ranksUrl).then(function(r) { if (!r.ok) return { ranks: [] }; return r.json(); }).catch(function() { return { ranks: [] }; })
+  ])
+    .then(function(results) {
+      var data = results[0];
+      var allRanks = results[1].ranks || [];
+      renderRankProgress(data, allRanks);
     })
     .catch(function(err) {
       // Silently ignore - ranks may not be configured for this department
@@ -33,11 +37,12 @@ function loadMyRankProgress() {
     });
 }
 
-function renderRankProgress(data) {
+function renderRankProgress(data, allRanks) {
   var currentRank = data.currentRank;
   var nextRank = data.nextRank;
   var metrics = data.metrics || [];
   var progress = data.progress || [];
+  allRanks = allRanks || [];
 
   if (!currentRank) return; // No rank system configured
 
@@ -168,6 +173,140 @@ function renderRankProgress(data) {
     if (statsSection) statsSection.style.display = 'none';
     gridContainer.innerHTML = '';
   }
+
+  // Rank Ladder
+  var ladderSection = document.getElementById('rankLadderSection');
+  var ladderContainer = document.getElementById('rankLadderContainer');
+  if (ladderSection && ladderContainer && allRanks.length > 0) {
+    ladderSection.style.display = 'block';
+    var sorted = allRanks.slice().sort(function(a, b) { return a.displayOrder - b.displayOrder; });
+    var currentId = currentRank ? currentRank._id : null;
+    var currentOrder = currentRank ? currentRank.displayOrder : -1;
+    var nextId = nextRank ? nextRank._id : null;
+    var ladderHtml = '';
+
+    sorted.forEach(function(rank, index) {
+      var isCurrent = rank._id === currentId;
+      var isPassed = currentId && rank.displayOrder < currentOrder;
+      var isNext = rank._id === nextId;
+      var isFirst = index === 0;
+      var isLast = index === sorted.length - 1;
+      var reqCount = rank.requirements ? rank.requirements.length : 0;
+      var rankElId = 'rankLadderRow_' + (rank._id || index);
+
+      // Node styling
+      var nodeSize = isCurrent ? 28 : 22;
+      var nodeBg, nodeBorder, iconHtml, textColor, fontWeight;
+
+      if (isCurrent) {
+        nodeBg = 'rgba(124,58,237,0.25)';
+        nodeBorder = '#8b5cf6';
+        iconHtml = '<i class="fa fa-shield" style="font-size:11px; color:#a78bfa;"></i>';
+        textColor = '#fff';
+        fontWeight = '700';
+      } else if (isPassed) {
+        nodeBg = 'rgba(52,211,153,0.15)';
+        nodeBorder = 'rgba(52,211,153,0.3)';
+        iconHtml = '<i class="fa fa-check-circle" style="font-size:10px; color:#34d399;"></i>';
+        textColor = '#9ca3af';
+        fontWeight = '500';
+      } else if (isNext) {
+        nodeBg = 'rgba(56,189,248,0.12)';
+        nodeBorder = 'rgba(56,189,248,0.3)';
+        iconHtml = '<i class="fa fa-arrow-up" style="font-size:9px; color:#38bdf8;"></i>';
+        textColor = '#38bdf8';
+        fontWeight = '600';
+      } else if (isFirst) {
+        nodeBg = 'rgba(251,191,36,0.12)';
+        nodeBorder = 'rgba(251,191,36,0.2)';
+        iconHtml = '<i class="fa fa-trophy" style="font-size:9px; color:#fbbf24;"></i>';
+        textColor = '#6b7280';
+        fontWeight = '500';
+      } else {
+        nodeBg = 'rgba(255,255,255,0.06)';
+        nodeBorder = 'rgba(255,255,255,0.08)';
+        iconHtml = '<i class="fa fa-lock" style="font-size:8px; color:rgba(255,255,255,0.2);"></i>';
+        textColor = '#6b7280';
+        fontWeight = '500';
+      }
+
+      var lineAboveColor = (isPassed || isCurrent) ? 'rgba(52,211,153,0.25)' : 'rgba(255,255,255,0.06)';
+      var lineBelowColor = (isPassed && !isCurrent) ? 'rgba(52,211,153,0.25)' : 'rgba(255,255,255,0.06)';
+
+      // Badge
+      var badgeHtml = '';
+      if (isCurrent) {
+        badgeHtml = '<span style="background:rgba(124,58,237,0.15); border:1px solid rgba(124,58,237,0.3); color:#a78bfa; font-size:9px; font-weight:800; letter-spacing:0.8px; padding:1px 6px; border-radius:4px; margin-left:8px;">YOU</span>';
+      } else if (isNext) {
+        badgeHtml = '<span style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.2); color:#38bdf8; font-size:9px; font-weight:700; letter-spacing:0.5px; padding:1px 6px; border-radius:4px; margin-left:8px;">NEXT</span>';
+      }
+
+      // Chevron for expandable rows
+      var chevronHtml = reqCount > 0
+        ? '<i class="fa fa-chevron-down" id="' + rankElId + '_chevron" style="font-size:9px; color:#6b7280; margin-left:auto; padding-left:8px; transition:transform 0.2s;"></i>'
+        : '';
+
+      // Meta
+      var metaParts = [];
+      if (rank.isDefault) metaParts.push('<span style="color:#6b7280; font-size:11px; font-weight:600;">Default</span>');
+      if (reqCount > 0) metaParts.push('<span style="color:#6b7280; font-size:11px;">' + reqCount + ' req' + (reqCount !== 1 ? 's' : '') + '</span>');
+      if (rank.autoPromote) metaParts.push('<span style="color:rgba(52,211,153,0.6); font-size:11px;">Auto</span>');
+      var metaHtml = metaParts.length > 0 ? '<div style="display:flex; gap:8px; margin-top:2px;">' + metaParts.join('') + '</div>' : '';
+
+      var glowStyle = isCurrent ? 'box-shadow:0 0 12px rgba(124,58,237,0.35);' : '';
+      var cursorStyle = reqCount > 0 ? 'cursor:pointer;' : '';
+
+      // Requirements list (hidden by default)
+      var reqsHtml = '';
+      if (reqCount > 0) {
+        reqsHtml = '<div id="' + rankElId + '_reqs" style="display:none; margin-left:46px; padding-left:10px; border-left:1px solid rgba(255,255,255,0.06); margin-bottom:6px;">';
+        rank.requirements.forEach(function(req) {
+          var label = req.metricType === 'custom'
+            ? escapeHtmlRank(req.customLabel || 'Custom Requirement')
+            : escapeHtmlRank(_formatMetricType(req.metricType));
+          var threshHtml = (req.metricType !== 'custom' && req.threshold > 0)
+            ? '<span style="color:#6b7280; font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; margin-left:auto; padding-left:8px;">' + req.threshold + '</span>'
+            : '';
+          reqsHtml += '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;">' +
+            '<div style="width:4px; height:4px; border-radius:2px; background:#6b7280; flex-shrink:0;"></div>' +
+            '<span style="color:#6b7280; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + label + '</span>' +
+            threshHtml +
+          '</div>';
+        });
+        reqsHtml += '</div>';
+      }
+
+      ladderHtml += '<div>' +
+        '<div style="display:flex; align-items:stretch; ' + cursorStyle + '" ' +
+          (reqCount > 0 ? 'onclick="toggleLadderReqs(\'' + rankElId + '\')"' : '') + '>' +
+          '<div style="width:36px; display:flex; flex-direction:column; align-items:center;">' +
+            (isFirst
+              ? '<div style="height:4px;"></div>'
+              : '<div style="width:2px; height:12px; background:' + lineAboveColor + ';"></div>') +
+            '<div style="width:' + nodeSize + 'px; height:' + nodeSize + 'px; border-radius:50%; background:' + nodeBg + '; border:' + (isCurrent ? '2' : '1.5') + 'px solid ' + nodeBorder + '; display:flex; align-items:center; justify-content:center; flex-shrink:0; ' + glowStyle + '">' +
+              iconHtml +
+            '</div>' +
+            (isLast
+              ? '<div style="height:4px;"></div>'
+              : '<div style="width:2px; flex:1; min-height:12px; background:' + lineBelowColor + ';"></div>') +
+          '</div>' +
+          '<div style="flex:1; padding:6px 0 6px 10px; display:flex; flex-direction:column; justify-content:center; min-height:44px;">' +
+            '<div style="display:flex; align-items:center;">' +
+              '<span style="color:' + textColor + '; font-size:' + (isCurrent ? '15' : '14') + 'px; font-weight:' + fontWeight + '; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' +
+                (rank.prefix ? escapeHtmlRank(rank.prefix) + ' &mdash; ' : '') + escapeHtmlRank(rank.name) +
+              '</span>' +
+              badgeHtml +
+              chevronHtml +
+            '</div>' +
+            metaHtml +
+          '</div>' +
+        '</div>' +
+        reqsHtml +
+      '</div>';
+    });
+
+    ladderContainer.innerHTML = ladderHtml;
+  }
 }
 
 window.toggleRankStats = function() {
@@ -184,6 +323,37 @@ window.toggleRankStats = function() {
     collapsible.style.maxHeight = collapsible.scrollHeight + 'px';
     icon.style.transform = 'rotate(180deg)';
     text.textContent = 'Hide My Activity';
+  }
+};
+
+function _formatMetricType(type) {
+  if (!type) return '';
+  return type.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+}
+
+window.toggleLadderReqs = function(rankElId) {
+  var reqs = document.getElementById(rankElId + '_reqs');
+  var chevron = document.getElementById(rankElId + '_chevron');
+  if (!reqs) return;
+  var isOpen = reqs.style.display !== 'none';
+  reqs.style.display = isOpen ? 'none' : 'block';
+  if (chevron) chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+};
+
+window.toggleRankLadder = function() {
+  var collapsible = document.getElementById('rankLadderCollapsible');
+  var icon = document.getElementById('rankLadderToggleIcon');
+  var text = document.getElementById('rankLadderToggleText');
+  if (!collapsible) return;
+  var isOpen = collapsible.style.maxHeight && collapsible.style.maxHeight !== '0px';
+  if (isOpen) {
+    collapsible.style.maxHeight = '0px';
+    icon.style.transform = 'rotate(0deg)';
+    text.textContent = 'View Rank Ladder';
+  } else {
+    collapsible.style.maxHeight = collapsible.scrollHeight + 'px';
+    icon.style.transform = 'rotate(180deg)';
+    text.textContent = 'Hide Rank Ladder';
   }
 };
 
