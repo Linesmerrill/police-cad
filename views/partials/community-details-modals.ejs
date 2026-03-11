@@ -15660,29 +15660,36 @@ async function saveEditEvent() {
         icon: 'fa-ranking-star',
         iconBg: 'rgba(99, 102, 241, 0.15)',
         iconColor: '#818cf8',
-        title: 'New: Department Ranks',
-        text: 'Create rank hierarchies for each department. Officers can track their progress and get auto-promoted when they hit milestones!'
+        title: 'Department Ranks',
+        text: 'Create rank hierarchies for each department. Officers can track their progress and get promoted when they hit milestones &mdash; automatically or with admin approval.'
       },
       {
         icon: 'fa-list-check',
         iconBg: 'rgba(34, 197, 94, 0.12)',
         iconColor: '#4ade80',
         title: 'Setting Up Ranks',
-        text: 'Click the edit icon on any department, then hit <strong>Manage Ranks</strong> at the bottom. Create ranks like Corporal, Sergeant, Lieutenant &mdash; whatever fits your structure.'
+        text: 'Click the edit icon on any department, then hit <strong>Manage Ranks</strong>. Create ranks with a name and optional prefix (e.g., "SGT"). Set a <strong>Default Rank</strong> to auto-assign new members, and reorder with the up/down arrows.'
       },
       {
         icon: 'fa-chart-line',
         iconBg: 'rgba(251, 191, 36, 0.12)',
         iconColor: '#fbbf24',
-        title: 'Requirements &amp; Auto-Promote',
-        text: 'Set thresholds on each rank &mdash; like 50 citations or 100 calls. Enable <strong>Auto Promote</strong> and officers advance automatically when they meet every requirement.'
+        title: 'Requirements &amp; Promotions',
+        text: 'Set thresholds on each rank &mdash; like 50 citations or 100 calls. Enable <strong>Auto Promote</strong> for automatic advancement, or leave it off and review promotions manually from the <strong>Pending Promotions</strong> panel.'
+      },
+      {
+        icon: 'fa-eye',
+        iconBg: 'rgba(56, 189, 248, 0.12)',
+        iconColor: '#38bdf8',
+        title: 'Rank Permissions',
+        text: 'Enable <strong>Can View Stats</strong> on a rank to let officers with that rank view department-wide activity metrics on the Police Dashboard and in the mobile app.'
       },
       {
         icon: 'fa-user-shield',
         iconBg: 'rgba(244, 114, 182, 0.12)',
         iconColor: '#f472b6',
-        title: 'Assigning &amp; Viewing Ranks',
-        text: 'Manually assign ranks in <strong>Members &amp; Ranks</strong>, or let auto-promote handle it. Officers see their rank and progress bars on the Police Dashboard.'
+        title: 'Members &amp; Progress',
+        text: 'Manually assign ranks in <strong>Members &amp; Ranks</strong>, or let auto-promote handle it. Officers see their current rank, next rank, and progress bars on the Police Dashboard and mobile app.'
       }
     ]
   };
