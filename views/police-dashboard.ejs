@@ -541,6 +541,10 @@
               <button type="button" style="background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:5px; padding:0.35rem 1rem; font-size:0.9rem; cursor:pointer;" onclick="cancelSidebarCallSignEdit()">Cancel</button>
             </div>
           </div>
+          <div id="sidebar-rank-badge" style="display:none; margin:0.3rem auto 0.2rem; padding:0.2rem 0.7rem; background:rgba(124,58,237,0.25); border:1px solid rgba(167,139,250,0.4); border-radius:6px; color:#c4b5fd; font-size:0.8rem; font-weight:600; letter-spacing:0.5px; max-width:fit-content;">
+            <i class="fa fa-ranking-star" style="margin-right:0.3rem; font-size:0.7rem;"></i>
+            <span id="sidebar-rank-text"></span>
+          </div>
           <h5>Logged in as: Police Officer</h5>
         </div>
       </div>
@@ -1271,6 +1275,40 @@
         <% include ad-body %>
       </div>
       <% } %>
+      <!-- My Rank & Stats Card -->
+      <div id="myRankStatsCard" style="display:none; max-width:900px; margin:1rem auto; padding:0 15px;">
+        <div style="background:linear-gradient(135deg, #1e1b4b 0%, #1e2028 100%); border:1px solid #35385a; border-radius:14px; padding:1.25rem 1.5rem; box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <div style="width:2.5rem; height:2.5rem; background:rgba(124,58,237,0.2); border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                <i class="fa fa-ranking-star" style="color:#a78bfa; font-size:1.1rem;"></i>
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                  <span id="myRankName" style="color:#fff; font-weight:700; font-size:1.1rem;"></span>
+                  <span id="myRankPrefix" style="background:#7c3aed33; color:#a78bfa; padding:0.1rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:600; display:none;"></span>
+                </div>
+                <span style="color:#6b7280; font-size:0.75rem;">Current Rank</span>
+              </div>
+            </div>
+            <div id="nextRankInfo" style="display:none; text-align:right;">
+              <span style="color:#6b7280; font-size:0.7rem;">Next Rank</span>
+              <div id="nextRankName" style="color:#a0aec0; font-size:0.85rem; font-weight:500;"></div>
+            </div>
+          </div>
+
+          <!-- Progress Bars -->
+          <div id="rankProgressBars" style="display:flex; flex-direction:column; gap:0.6rem;">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Stats Grid -->
+          <div id="rankStatsGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:0.5rem; margin-top:1rem;">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
       <section style='background-image: url("/static/images/blue-clouds.jpg"); padding:0'>
         <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
         <div class="container">
@@ -5998,6 +6036,7 @@ window.showBoloModal = showBoloModal;
       pollDashboardData();
       setInterval(pollDashboardData, 30000); // Poll every 30 seconds (fallback for missed webhooks)
       loadTenCodes();
+      loadMyRankProgress();
       filteredTenCodes = tenCodesCache;
     currentPage = 1;
     displayTenCodes(filteredTenCodes);
@@ -6080,6 +6119,104 @@ window.showBoloModal = showBoloModal;
 
     //load gravatar image
   $('.profile-picture').css("background-image", `url(${dbUser?.user?.profilePicture || 'https://ui-avatars.com/api/?name='+dbUser?.user?.username+'&background=808080&color=fff&size=256'})`)
+
+  // Fetch and display rank progress for current officer
+  function loadMyRankProgress() {
+    var communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+    if (!communityId || !departmentId || departmentId === 'undefined') return;
+
+    fetch(API_URL + '/api/v1/community/' + communityId + '/departments/' + departmentId + '/members/' + dbUser._id + '/rank-progress')
+      .then(function(r) {
+        if (!r.ok) throw new Error('Rank progress not available');
+        return r.json();
+      })
+      .then(function(data) {
+        renderRankProgress(data);
+      })
+      .catch(function(err) {
+        // Silently ignore - ranks may not be configured for this department
+        console.debug('Rank progress not available:', err.message);
+      });
+  }
+
+  function renderRankProgress(data) {
+    var currentRank = data.currentRank;
+    var nextRank = data.nextRank;
+    var stats = data.stats || {};
+    var progress = data.progress || [];
+
+    if (!currentRank) return; // No rank system configured
+
+    // Show sidebar badge
+    var badgeEl = document.getElementById('sidebar-rank-badge');
+    var textEl = document.getElementById('sidebar-rank-text');
+    if (badgeEl && textEl) {
+      textEl.textContent = (currentRank.prefix ? currentRank.prefix + ' ' : '') + currentRank.name;
+      badgeEl.style.display = 'block';
+    }
+
+    // Show stats card
+    var card = document.getElementById('myRankStatsCard');
+    if (!card) return;
+    card.style.display = 'block';
+
+    // Current rank info
+    document.getElementById('myRankName').textContent = currentRank.name;
+    var prefixEl = document.getElementById('myRankPrefix');
+    if (currentRank.prefix) {
+      prefixEl.textContent = currentRank.prefix;
+      prefixEl.style.display = 'inline-block';
+    }
+
+    // Next rank info
+    if (nextRank) {
+      var nextInfo = document.getElementById('nextRankInfo');
+      nextInfo.style.display = 'block';
+      document.getElementById('nextRankName').textContent = nextRank.name;
+    }
+
+    // Progress bars
+    var barsContainer = document.getElementById('rankProgressBars');
+    if (progress.length > 0) {
+      var barsHtml = '';
+      progress.forEach(function(p) {
+        var pct = Math.min(100, Math.round((p.current / p.threshold) * 100)) || 0;
+        var color = pct >= 100 ? '#10b981' : '#7c3aed';
+        barsHtml += '<div>' +
+          '<div style="display:flex; justify-content:space-between; margin-bottom:0.2rem;">' +
+            '<span style="color:#a0aec0; font-size:0.75rem;">' + escapeHtmlRank(p.metricType || p.metric) + '</span>' +
+            '<span style="color:' + (pct >= 100 ? '#34d399' : '#a78bfa') + '; font-size:0.75rem; font-weight:600;">' + p.current + ' / ' + p.threshold + '</span>' +
+          '</div>' +
+          '<div style="width:100%; height:6px; background:#374151; border-radius:3px; overflow:hidden;">' +
+            '<div style="width:' + pct + '%; height:100%; background:' + color + '; border-radius:3px; transition:width 0.5s ease;"></div>' +
+          '</div>' +
+        '</div>';
+      });
+      barsContainer.innerHTML = barsHtml;
+    } else {
+      barsContainer.innerHTML = '';
+    }
+
+    // Stats grid
+    var gridContainer = document.getElementById('rankStatsGrid');
+    if (stats && Object.keys(stats).length > 0) {
+      var gridHtml = '';
+      Object.keys(stats).forEach(function(key) {
+        gridHtml += '<div style="background:#1e2028; border:1px solid #35385a; border-radius:8px; padding:0.6rem 0.75rem; text-align:center;">' +
+          '<div style="color:#fff; font-size:1.1rem; font-weight:700;">' + (stats[key] || 0) + '</div>' +
+          '<div style="color:#6b7280; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.5px;">' + escapeHtmlRank(key) + '</div>' +
+        '</div>';
+      });
+      gridContainer.innerHTML = gridHtml;
+    } else {
+      gridContainer.innerHTML = '';
+    }
+  }
+
+  function escapeHtmlRank(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
 
   }); /* End of document.ready */
 

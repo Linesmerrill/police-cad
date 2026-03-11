@@ -6851,6 +6851,18 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
         </div>
       </div>
       <div id="editDeptError" class="text-red-400 text-sm mb-2" style="display:none;"></div>
+
+      <!-- Manage Ranks Button -->
+      <div class="mb-3" style="border-top:1px solid #374151; padding-top:0.75rem;">
+        <button type="button" onclick="openRankManagementModal(currentEditDepartment)"
+                style="width:100%; display:flex; align-items:center; justify-content:center; gap:0.5rem; padding:0.6rem 1rem; background:#1e2028; border:1px solid #4a5568; border-radius:8px; color:#a78bfa; font-size:0.875rem; font-weight:500; cursor:pointer; transition:all 0.2s;"
+                onmouseenter="this.style.borderColor='#a78bfa'; this.style.background='#2d2048'"
+                onmouseleave="this.style.borderColor='#4a5568'; this.style.background='#1e2028'">
+          <i class="fa fa-ranking-star"></i>
+          Manage Ranks
+        </button>
+      </div>
+
       <div class="flex justify-end gap-2 mt-4">
         <button type="button" onclick="deleteEditDepartment()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded font-semibold text-sm">Delete</button>
         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold text-sm">Save</button>
@@ -12598,3 +12610,345 @@ async function saveEditEvent() {
           }
         } catch (e) { /* no-op */ }
       })();
+
+<!-- ===================== Rank Management Modal ===================== -->
+<div id="rankManagementModal" class="heroui-modal" style="display:none; position:fixed; z-index:3200; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.7); align-items:center; justify-content:center; overflow-y:auto; padding:1rem; box-sizing:border-box;">
+  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:700px; width:95%; max-height:calc(100vh - 2rem); position:relative; border:1px solid #35385a; overflow-y:auto; box-sizing:border-box;">
+    <button onclick="closeRankManagementModal()" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7; z-index:10;"><i class="fa fa-times"></i></button>
+
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-ranking-star" style="font-size:2.5rem; color:#a78bfa; margin-bottom:0.5rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.25rem; font-weight:600;">Manage Ranks</h3>
+      <p id="rankMgmtDeptName" style="color:#a0aec0; margin:0.25rem 0 0 0; font-size:0.875rem;"></p>
+    </div>
+
+    <!-- Ranks List -->
+    <div id="ranksList" style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1rem;">
+      <div style="text-align:center; padding:2rem; color:#6b7280;">
+        <i class="fa fa-spinner fa-spin" style="font-size:1.5rem; margin-bottom:0.5rem; display:block;"></i>
+        Loading ranks...
+      </div>
+    </div>
+
+    <!-- Add Rank Button -->
+    <button onclick="showRankForm()" id="addRankBtn"
+            style="width:100%; padding:0.6rem; background:#2d3748; border:1px dashed #4a5568; border-radius:8px; color:#a78bfa; font-size:0.875rem; font-weight:500; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:0.5rem;"
+            onmouseenter="this.style.borderColor='#a78bfa'" onmouseleave="this.style.borderColor='#4a5568'">
+      <i class="fa fa-plus"></i> Add Rank
+    </button>
+
+    <!-- Rank Form (hidden by default) -->
+    <div id="rankFormContainer" style="display:none; margin-top:1rem; background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.25rem;">
+      <h4 id="rankFormTitle" style="color:#fff; margin:0 0 1rem 0; font-size:1rem; font-weight:600;">
+        <i class="fa fa-plus" style="margin-right:0.4rem; color:#a78bfa;"></i> New Rank
+      </h4>
+      <input type="hidden" id="rankFormId" value="">
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:0.75rem;">
+        <div>
+          <label style="display:block; color:#a0aec0; font-size:0.75rem; margin-bottom:0.25rem; font-weight:500;">Name *</label>
+          <input type="text" id="rankFormName" placeholder="e.g. Sergeant"
+                 style="width:100%; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; padding:0.5rem 0.75rem; font-size:0.875rem;">
+        </div>
+        <div>
+          <label style="display:block; color:#a0aec0; font-size:0.75rem; margin-bottom:0.25rem; font-weight:500;">Prefix</label>
+          <input type="text" id="rankFormPrefix" placeholder="e.g. SGT"
+                 style="width:100%; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; padding:0.5rem 0.75rem; font-size:0.875rem;">
+        </div>
+      </div>
+
+      <div style="display:flex; gap:1.5rem; margin-bottom:0.75rem;">
+        <label style="display:flex; align-items:center; gap:0.4rem; color:#a0aec0; font-size:0.8rem; cursor:pointer;">
+          <input type="checkbox" id="rankFormAutoPromote" style="accent-color:#a78bfa;">
+          Auto Promote
+        </label>
+        <label style="display:flex; align-items:center; gap:0.4rem; color:#a0aec0; font-size:0.8rem; cursor:pointer;">
+          <input type="checkbox" id="rankFormCanViewStats" style="accent-color:#a78bfa;">
+          Can View Stats
+        </label>
+      </div>
+
+      <!-- Requirements Section -->
+      <div style="border-top:1px solid #4a5568; padding-top:0.75rem; margin-bottom:0.75rem;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+          <label style="color:#a0aec0; font-size:0.8rem; font-weight:500;"><i class="fa fa-chart-bar" style="margin-right:0.3rem;"></i> Requirements</label>
+          <button type="button" onclick="addRequirementRow()"
+                  style="background:none; border:1px solid #4a5568; border-radius:4px; color:#a78bfa; font-size:0.7rem; padding:0.2rem 0.5rem; cursor:pointer;">
+            <i class="fa fa-plus"></i> Add
+          </button>
+        </div>
+        <div id="rankRequirementsList" style="display:flex; flex-direction:column; gap:0.4rem;">
+          <!-- Requirement rows added dynamically -->
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+        <button type="button" onclick="hideRankForm()"
+                style="background:#374151; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.8rem; cursor:pointer;">Cancel</button>
+        <button type="button" onclick="saveRank()"
+                style="background:#7c3aed; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.8rem; font-weight:500; cursor:pointer;">Save Rank</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var rankMgmtCommunityId = '<%= community._id %>';
+  var rankMgmtDeptId = null;
+  var rankMgmtRanks = [];
+  var rankMgmtMetricTypes = [];
+  var RANK_API = (typeof API_URL !== 'undefined') ? API_URL : 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+  window.openRankManagementModal = function(departmentId) {
+    rankMgmtDeptId = departmentId;
+    var deptName = '';
+    if (window.departmentsListData) {
+      var dept = window.departmentsListData.find(function(d) { return d._id === departmentId; });
+      if (dept) deptName = dept.name || '';
+    }
+    document.getElementById('rankMgmtDeptName').textContent = deptName;
+    document.getElementById('rankManagementModal').style.display = 'flex';
+    hideRankForm();
+    loadMetricTypes();
+    loadRanks();
+  };
+
+  window.closeRankManagementModal = function() {
+    document.getElementById('rankManagementModal').style.display = 'none';
+    rankMgmtDeptId = null;
+  };
+
+  function loadMetricTypes() {
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/ranks/metric-types')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        rankMgmtMetricTypes = data.metricTypes || data || [];
+      })
+      .catch(function() { rankMgmtMetricTypes = []; });
+  }
+
+  function loadRanks() {
+    var container = document.getElementById('ranksList');
+    container.innerHTML = '<div style="text-align:center; padding:2rem; color:#6b7280;"><i class="fa fa-spinner fa-spin" style="font-size:1.5rem; margin-bottom:0.5rem; display:block;"></i>Loading ranks...</div>';
+
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        rankMgmtRanks = data.ranks || data || [];
+        renderRanks();
+      })
+      .catch(function(err) {
+        console.error('Failed to load ranks:', err);
+        container.innerHTML = '<div style="text-align:center; padding:2rem; color:#ef4444;"><i class="fa fa-exclamation-triangle" style="margin-right:0.4rem;"></i>Failed to load ranks</div>';
+      });
+  }
+
+  function renderRanks() {
+    var container = document.getElementById('ranksList');
+    if (!rankMgmtRanks || rankMgmtRanks.length === 0) {
+      container.innerHTML = '<div style="text-align:center; padding:2rem; color:#6b7280;"><i class="fa fa-list" style="font-size:1.5rem; margin-bottom:0.5rem; display:block;"></i>No ranks configured yet</div>';
+      return;
+    }
+
+    var sorted = rankMgmtRanks.slice().sort(function(a, b) { return (a.displayOrder || 0) - (b.displayOrder || 0); });
+    var html = '';
+    sorted.forEach(function(rank, idx) {
+      var reqHtml = '';
+      if (rank.requirements && rank.requirements.length > 0) {
+        reqHtml = '<div style="margin-top:0.4rem; display:flex; flex-wrap:wrap; gap:0.3rem;">';
+        rank.requirements.forEach(function(req) {
+          reqHtml += '<span style="background:#1e2028; color:#a0aec0; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.7rem;">' +
+            escapeRankHtml(req.metricType || req.metric) + ' &ge; ' + (req.threshold || 0) + '</span>';
+        });
+        reqHtml += '</div>';
+      }
+
+      html += '<div style="background:#2d3748; border:1px solid #4a5568; border-radius:10px; padding:0.75rem 1rem; display:flex; align-items:flex-start; gap:0.75rem; transition:all 0.15s;" data-rank-id="' + rank._id + '">' +
+        '<div style="display:flex; flex-direction:column; align-items:center; gap:0.2rem; min-width:2rem;">' +
+          (idx > 0 ? '<button onclick="moveRank(\'' + rank._id + '\', -1)" style="background:none; border:none; color:#6b7280; cursor:pointer; font-size:0.7rem; padding:0.1rem;"><i class="fa fa-chevron-up"></i></button>' : '<div style="height:1rem;"></div>') +
+          '<span style="color:#a78bfa; font-weight:700; font-size:0.8rem;">#' + (idx + 1) + '</span>' +
+          (idx < sorted.length - 1 ? '<button onclick="moveRank(\'' + rank._id + '\', 1)" style="background:none; border:none; color:#6b7280; cursor:pointer; font-size:0.7rem; padding:0.1rem;"><i class="fa fa-chevron-down"></i></button>' : '<div style="height:1rem;"></div>') +
+        '</div>' +
+        '<div style="flex:1; min-width:0;">' +
+          '<div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">' +
+            '<span style="color:#fff; font-weight:600; font-size:0.9rem;">' + escapeRankHtml(rank.name) + '</span>' +
+            (rank.prefix ? '<span style="background:#7c3aed33; color:#a78bfa; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.7rem; font-weight:500;">' + escapeRankHtml(rank.prefix) + '</span>' : '') +
+            (rank.autoPromote ? '<span style="background:#10b98133; color:#34d399; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.65rem;">Auto</span>' : '') +
+            (rank.canViewStats ? '<span style="background:#3b82f633; color:#60a5fa; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.65rem;">Stats</span>' : '') +
+          '</div>' +
+          reqHtml +
+        '</div>' +
+        '<div style="display:flex; gap:0.3rem; flex-shrink:0;">' +
+          '<button onclick="editRank(\'' + rank._id + '\')" style="background:#374151; border:none; border-radius:6px; color:#a0aec0; padding:0.35rem 0.5rem; cursor:pointer; font-size:0.75rem;" title="Edit"><i class="fa fa-pencil"></i></button>' +
+          '<button onclick="deleteRank(\'' + rank._id + '\')" style="background:#374151; border:none; border-radius:6px; color:#f87171; padding:0.35rem 0.5rem; cursor:pointer; font-size:0.75rem;" title="Delete"><i class="fa fa-trash"></i></button>' +
+        '</div>' +
+      '</div>';
+    });
+    container.innerHTML = html;
+  }
+
+  function escapeRankHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  window.showRankForm = function(rank) {
+    document.getElementById('rankFormContainer').style.display = 'block';
+    document.getElementById('addRankBtn').style.display = 'none';
+    document.getElementById('rankFormId').value = (rank && rank._id) ? rank._id : '';
+    document.getElementById('rankFormName').value = (rank && rank.name) || '';
+    document.getElementById('rankFormPrefix').value = (rank && rank.prefix) || '';
+    document.getElementById('rankFormAutoPromote').checked = (rank && rank.autoPromote) || false;
+    document.getElementById('rankFormCanViewStats').checked = (rank && rank.canViewStats) || false;
+    document.getElementById('rankFormTitle').innerHTML = (rank && rank._id)
+      ? '<i class="fa fa-pencil" style="margin-right:0.4rem; color:#a78bfa;"></i> Edit Rank'
+      : '<i class="fa fa-plus" style="margin-right:0.4rem; color:#a78bfa;"></i> New Rank';
+
+    var reqList = document.getElementById('rankRequirementsList');
+    reqList.innerHTML = '';
+    if (rank && rank.requirements && rank.requirements.length > 0) {
+      rank.requirements.forEach(function(req) {
+        addRequirementRow(req.metricType || req.metric, req.threshold);
+      });
+    }
+  };
+
+  window.hideRankForm = function() {
+    document.getElementById('rankFormContainer').style.display = 'none';
+    document.getElementById('addRankBtn').style.display = 'flex';
+  };
+
+  window.addRequirementRow = function(metricType, threshold) {
+    var container = document.getElementById('rankRequirementsList');
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex; gap:0.4rem; align-items:center;';
+
+    var selectHtml = '<select class="rank-req-metric" style="flex:1; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:4px; padding:0.35rem; font-size:0.8rem;">';
+    selectHtml += '<option value="">Select metric...</option>';
+    if (rankMgmtMetricTypes && rankMgmtMetricTypes.length > 0) {
+      rankMgmtMetricTypes.forEach(function(mt) {
+        var val = mt.value || mt.name || mt;
+        var label = mt.label || mt.name || mt;
+        var selected = (val === metricType) ? ' selected' : '';
+        selectHtml += '<option value="' + escapeRankHtml(val) + '"' + selected + '>' + escapeRankHtml(label) + '</option>';
+      });
+    }
+    selectHtml += '</select>';
+
+    row.innerHTML = selectHtml +
+      '<input type="number" class="rank-req-threshold" placeholder="Threshold" value="' + (threshold || '') + '" min="0" style="width:80px; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:4px; padding:0.35rem; font-size:0.8rem;">' +
+      '<button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#f87171; cursor:pointer; padding:0.2rem;"><i class="fa fa-times"></i></button>';
+
+    container.appendChild(row);
+  };
+
+  window.saveRank = function() {
+    var name = document.getElementById('rankFormName').value.trim();
+    if (!name) {
+      if (typeof showToast === 'function') showToast('Rank name is required', 2500, 'error');
+      else alert('Rank name is required');
+      return;
+    }
+
+    var requirements = [];
+    document.querySelectorAll('#rankRequirementsList > div').forEach(function(row) {
+      var metric = row.querySelector('.rank-req-metric').value;
+      var threshold = parseInt(row.querySelector('.rank-req-threshold').value) || 0;
+      if (metric && threshold > 0) {
+        requirements.push({ metricType: metric, threshold: threshold });
+      }
+    });
+
+    var payload = {
+      name: name,
+      prefix: document.getElementById('rankFormPrefix').value.trim(),
+      autoPromote: document.getElementById('rankFormAutoPromote').checked,
+      canViewStats: document.getElementById('rankFormCanViewStats').checked,
+      requirements: requirements
+    };
+
+    var rankId = document.getElementById('rankFormId').value;
+    var url, method;
+    if (rankId) {
+      url = RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks/' + rankId;
+      method = 'PUT';
+    } else {
+      url = RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks';
+      method = 'POST';
+    }
+
+    fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Failed to save rank');
+      return r.json();
+    })
+    .then(function() {
+      if (typeof showToast === 'function') showToast(rankId ? 'Rank updated' : 'Rank created', 2500, 'success');
+      hideRankForm();
+      loadRanks();
+    })
+    .catch(function(err) {
+      console.error('Error saving rank:', err);
+      if (typeof showToast === 'function') showToast('Failed to save rank', 3000, 'error');
+      else alert('Failed to save rank');
+    });
+  };
+
+  window.editRank = function(rankId) {
+    var rank = rankMgmtRanks.find(function(r) { return r._id === rankId; });
+    if (rank) showRankForm(rank);
+  };
+
+  window.deleteRank = function(rankId) {
+    if (!confirm('Are you sure you want to delete this rank?')) return;
+
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks/' + rankId, {
+      method: 'DELETE'
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Failed to delete rank');
+      if (typeof showToast === 'function') showToast('Rank deleted', 2500, 'success');
+      loadRanks();
+    })
+    .catch(function(err) {
+      console.error('Error deleting rank:', err);
+      if (typeof showToast === 'function') showToast('Failed to delete rank', 3000, 'error');
+      else alert('Failed to delete rank');
+    });
+  };
+
+  window.moveRank = function(rankId, direction) {
+    var sorted = rankMgmtRanks.slice().sort(function(a, b) { return (a.displayOrder || 0) - (b.displayOrder || 0); });
+    var idx = sorted.findIndex(function(r) { return r._id === rankId; });
+    if (idx < 0) return;
+    var newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= sorted.length) return;
+
+    // Swap
+    var temp = sorted[idx];
+    sorted[idx] = sorted[newIdx];
+    sorted[newIdx] = temp;
+
+    var orderedIds = sorted.map(function(r) { return r._id; });
+
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks/reorder', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderedRankIds: orderedIds })
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Failed to reorder');
+      loadRanks();
+    })
+    .catch(function(err) {
+      console.error('Error reordering ranks:', err);
+      if (typeof showToast === 'function') showToast('Failed to reorder ranks', 3000, 'error');
+    });
+  };
+})();
+</script>
