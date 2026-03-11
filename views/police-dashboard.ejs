@@ -1275,23 +1275,101 @@
         <% include ad-body %>
       </div>
       <% } %>
+      <!-- Promotion Celebration Modal -->
+      <style>
+        .promo-modal-overlay {
+          display:none; position:fixed; inset:0; z-index:9999;
+          background:rgba(6,6,12,0.85); backdrop-filter:blur(8px);
+          align-items:center; justify-content:center; padding:1rem;
+        }
+        .promo-modal-overlay.is-open { display:flex; }
+        .promo-modal {
+          position:relative; width:100%; max-width:420px; text-align:center;
+          padding:48px 36px 36px; border-radius:20px;
+          background:linear-gradient(160deg, #1a1740 0%, #13141b 50%, #111318 100%);
+          border:1px solid rgba(251,191,36,0.15);
+          box-shadow:0 40px 100px -20px rgba(0,0,0,0.7), 0 0 80px rgba(251,191,36,0.06);
+          animation:promoModalIn 0.5s cubic-bezier(0.16,1,0.3,1);
+          overflow:visible;
+        }
+        @keyframes promoModalIn {
+          0% { opacity:0; transform:translateY(24px) scale(0.92); }
+          100% { opacity:1; transform:translateY(0) scale(1); }
+        }
+        .promo-modal-stars {
+          position:absolute; top:-28px; left:50%; transform:translateX(-50%);
+          font-size:56px; filter:drop-shadow(0 4px 20px rgba(251,191,36,0.4));
+          animation:promoStarPulse 2s ease-in-out infinite;
+        }
+        @keyframes promoStarPulse {
+          0%,100% { transform:translateX(-50%) scale(1); }
+          50% { transform:translateX(-50%) scale(1.08); }
+        }
+        .promo-modal-badge {
+          display:inline-flex; align-items:center; justify-content:center;
+          width:72px; height:72px; border-radius:50%; margin:12px auto 20px;
+          background:linear-gradient(135deg, rgba(251,191,36,0.15), rgba(124,58,237,0.12));
+          border:2px solid rgba(251,191,36,0.25);
+          box-shadow:0 0 40px rgba(251,191,36,0.1);
+        }
+        .promo-modal-badge i { font-size:28px; color:#fbbf24; }
+        .promo-modal-title {
+          color:#fbbf24; font-size:13px; font-weight:700; text-transform:uppercase;
+          letter-spacing:2px; margin-bottom:8px;
+        }
+        .promo-modal-rank {
+          color:#fff; font-size:32px; font-weight:800; letter-spacing:-0.5px;
+          line-height:1.2; margin-bottom:6px;
+        }
+        .promo-modal-prefix {
+          display:inline-block; background:rgba(124,58,237,0.2); color:#c4b5fd;
+          padding:4px 12px; border-radius:6px; font-size:13px; font-weight:600;
+          letter-spacing:0.5px; margin-bottom:16px;
+        }
+        .promo-modal-transition {
+          display:flex; align-items:center; justify-content:center; gap:12px;
+          margin:16px 0 24px; font-size:14px;
+        }
+        .promo-modal-transition .from { color:#64748b; }
+        .promo-modal-transition .arrow { color:#fbbf24; font-size:16px; }
+        .promo-modal-transition .to { color:#fbbf24; font-weight:700; }
+        .promo-modal-dismiss {
+          background:linear-gradient(135deg, rgba(251,191,36,0.12), rgba(251,191,36,0.06));
+          border:1px solid rgba(251,191,36,0.2); border-radius:10px;
+          color:#fbbf24; font-size:14px; font-weight:600; padding:10px 32px;
+          cursor:pointer; transition:all 0.15s; letter-spacing:0.3px;
+        }
+        .promo-modal-dismiss:hover {
+          background:linear-gradient(135deg, rgba(251,191,36,0.2), rgba(251,191,36,0.1));
+          box-shadow:0 4px 16px rgba(251,191,36,0.15);
+        }
+        .promo-modal canvas {
+          position:absolute; inset:0; width:100%; height:100%; pointer-events:none;
+          z-index:2; border-radius:20px;
+        }
+      </style>
+      <div class="promo-modal-overlay" id="promoModalOverlay">
+        <div class="promo-modal" id="promoModal">
+          <canvas id="promoModalConfetti"></canvas>
+          <div class="promo-modal-stars">&#11088;</div>
+          <div class="promo-modal-badge"><i class="fa fa-angle-double-up"></i></div>
+          <div class="promo-modal-title">Promoted!</div>
+          <div class="promo-modal-rank" id="promoModalRankName"></div>
+          <div id="promoModalPrefixWrap" style="display:none;">
+            <span class="promo-modal-prefix" id="promoModalPrefix"></span>
+          </div>
+          <div class="promo-modal-transition">
+            <span class="from" id="promoModalFrom"></span>
+            <span class="arrow"><i class="fa fa-arrow-right"></i></span>
+            <span class="to" id="promoModalTo"></span>
+          </div>
+          <button class="promo-modal-dismiss" onclick="dismissPromoModal()">Continue</button>
+        </div>
+      </div>
+
       <!-- My Rank & Stats Card -->
       <div id="myRankStatsCard" style="display:none; max-width:920px; margin:20px auto; padding:0 15px;">
-        <div style="position:relative; background:linear-gradient(145deg, #1a1740 0%, #161822 60%, #1a1e2e 100%); border:1px solid rgba(124,58,237,0.15); border-radius:16px; padding:28px 32px; box-shadow:0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03); overflow:hidden;">
-          <canvas id="rankPromoConfetti" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:10;"></canvas>
-
-          <!-- Promotion Celebration Banner -->
-          <div id="rankPromoBanner" style="display:none; margin-bottom:20px; padding:14px 18px; background:linear-gradient(135deg, rgba(251,191,36,0.1) 0%, rgba(16,185,129,0.08) 100%); border:1px solid rgba(251,191,36,0.2); border-radius:12px; text-align:center; animation:rankPromoBannerIn 0.6s cubic-bezier(0.16,1,0.3,1);">
-            <div style="font-size:28px; margin-bottom:6px;">&#127881;</div>
-            <div style="color:#fbbf24; font-size:16px; font-weight:700; letter-spacing:-0.2px;" id="rankPromoBannerTitle">You've been promoted!</div>
-            <div style="color:#94a3b8; font-size:12px; margin-top:4px;" id="rankPromoBannerSubtext"></div>
-          </div>
-          <style>
-            @keyframes rankPromoBannerIn {
-              0% { opacity:0; transform:translateY(-12px) scale(0.96); }
-              100% { opacity:1; transform:translateY(0) scale(1); }
-            }
-          </style>
+        <div style="background:linear-gradient(145deg, #1a1740 0%, #161822 60%, #1a1e2e 100%); border:1px solid rgba(124,58,237,0.15); border-radius:16px; padding:28px 32px; box-shadow:0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03); overflow:hidden;">
 
           <!-- Rank Header -->
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
@@ -6249,16 +6327,9 @@ window.showBoloModal = showBoloModal;
       barsContainer.innerHTML = '';
     }
 
-    // Promotion celebration
-    if (data.promoted) {
-      var banner = document.getElementById('rankPromoBanner');
-      var subtitle = document.getElementById('rankPromoBannerSubtext');
-      if (banner) {
-        subtitle.textContent = 'Congratulations! You are now ' + (currentRank.prefix ? currentRank.prefix + ' ' : '') + currentRank.name;
-        banner.style.display = 'block';
-        // Fire confetti after a short delay for visual impact
-        setTimeout(function() { launchRankConfetti(); }, 300);
-      }
+    // Promotion celebration modal
+    if (data.promoted && currentRank) {
+      showPromoModal(currentRank, data.previousRank || null);
     }
 
     // Stats grid (collapsible)
@@ -6297,54 +6368,67 @@ window.showBoloModal = showBoloModal;
     }
   };
 
-  function launchRankConfetti() {
-    var canvas = document.getElementById('rankPromoConfetti');
-    if (!canvas) return;
-    var rect = canvas.parentElement.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
+  function showPromoModal(newRank, previousRank) {
+    var overlay = document.getElementById('promoModalOverlay');
+    document.getElementById('promoModalRankName').textContent = newRank.name;
+    if (newRank.prefix) {
+      document.getElementById('promoModalPrefix').textContent = newRank.prefix;
+      document.getElementById('promoModalPrefixWrap').style.display = 'block';
+    } else {
+      document.getElementById('promoModalPrefixWrap').style.display = 'none';
+    }
+    var fromName = previousRank ? previousRank.name : 'Unranked';
+    document.getElementById('promoModalFrom').textContent = fromName;
+    document.getElementById('promoModalTo').textContent = newRank.name;
+    overlay.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(function() { launchPromoConfetti(); }, 400);
+  }
+
+  window.dismissPromoModal = function() {
+    var overlay = document.getElementById('promoModalOverlay');
+    overlay.classList.remove('is-open');
+    document.body.style.overflow = '';
+  };
+
+  function launchPromoConfetti() {
+    var canvas = document.getElementById('promoModalConfetti');
+    var modal = document.getElementById('promoModal');
+    if (!canvas || !modal) return;
+    canvas.width = modal.offsetWidth;
+    canvas.height = modal.offsetHeight;
     var ctx = canvas.getContext('2d');
     var particles = [];
     var colors = ['#fbbf24', '#f59e0b', '#34d399', '#a78bfa', '#f87171', '#60a5fa', '#fb923c', '#e879f9', '#fff'];
+    var cw = canvas.width, ch = canvas.height;
 
-    // Two burst points — left and right
-    var origins = [
-      { x: canvas.width * 0.25, y: canvas.height * 0.3 },
-      { x: canvas.width * 0.75, y: canvas.height * 0.3 }
-    ];
-
-    for (var i = 0; i < 100; i++) {
-      var origin = origins[i % 2];
+    for (var i = 0; i < 90; i++) {
       particles.push({
-        x: origin.x + (Math.random() - 0.5) * 40,
-        y: origin.y,
-        vx: (Math.random() - 0.5) * 14,
-        vy: Math.random() * -12 - 3,
+        x: cw * 0.5 + (Math.random() - 0.5) * 60,
+        y: ch * 0.35,
+        vx: (Math.random() - 0.5) * 16,
+        vy: Math.random() * -14 - 2,
         w: Math.random() * 8 + 3,
         h: Math.random() * 5 + 2,
         color: colors[Math.floor(Math.random() * colors.length)],
         rotation: Math.random() * 360,
-        rotSpeed: (Math.random() - 0.5) * 18,
-        gravity: 0.3 + Math.random() * 0.15,
+        rotSpeed: (Math.random() - 0.5) * 20,
+        gravity: 0.32 + Math.random() * 0.12,
         opacity: 1,
-        decay: 0.006 + Math.random() * 0.006
+        decay: 0.005 + Math.random() * 0.005
       });
     }
 
     var frame;
     function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, cw, ch);
       var alive = false;
       for (var i = 0; i < particles.length; i++) {
         var p = particles[i];
         if (p.opacity <= 0) continue;
         alive = true;
-        p.x += p.vx;
-        p.vy += p.gravity;
-        p.y += p.vy;
-        p.vx *= 0.98;
-        p.rotation += p.rotSpeed;
-        p.opacity -= p.decay;
+        p.x += p.vx; p.vy += p.gravity; p.y += p.vy;
+        p.vx *= 0.98; p.rotation += p.rotSpeed; p.opacity -= p.decay;
         if (p.opacity <= 0) continue;
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -6355,13 +6439,13 @@ window.showBoloModal = showBoloModal;
         ctx.restore();
       }
       if (alive) { frame = requestAnimationFrame(animate); }
-      else { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+      else { ctx.clearRect(0, 0, cw, ch); }
     }
     animate();
     setTimeout(function() {
       cancelAnimationFrame(frame);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }, 4000);
+      ctx.clearRect(0, 0, cw, ch);
+    }, 5000);
   }
 
   function escapeHtmlRank(str) {
