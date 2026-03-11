@@ -211,7 +211,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="dismissTutorial()"><span aria-hidden="true">×</span></button>
                     <h4 class="modal-title">Welcome to the Community Dashboard!</h4>
                 </div>
                 <div class="modal-body">
@@ -337,7 +337,9 @@ $(document).ready(function () {
         }
     });
 
-    if (!getCookie('lpc_tutorial_dismissed')) {
+    var dismissed = dbUser && dbUser.user && dbUser.user.dismissedTutorials;
+    var tutorialDismissed = getCookie('lpc_tutorial_dismissed') || (Array.isArray(dismissed) && dismissed.indexOf('community_dashboard') !== -1);
+    if (!tutorialDismissed) {
         $('#tutorialModal').modal('show');
     }
 
@@ -383,6 +385,14 @@ function getCookie(name) {
 
 function dismissTutorial() {
     setCookie('lpc_tutorial_dismissed', 'true', 365);
+    // Also persist to user profile so it stays dismissed across devices
+    if (dbUser && dbUser._id) {
+        fetch(API_URL + '/api/v1/user/' + dbUser._id + '/dismiss-tutorial', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tutorialKey: 'community_dashboard' })
+        }).catch(function(err) { console.error('Failed to dismiss tutorial:', err); });
+    }
 }
 
 function fetchCommunityData(newActiveCommunityId = null) {

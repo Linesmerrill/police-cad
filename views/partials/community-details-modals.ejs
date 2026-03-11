@@ -6625,24 +6625,46 @@ function mergeExpectedComponents(components, templateName) {
 
 function renderEditDeptComponents(components) {
   var container = document.getElementById('editDeptComponentsContainer');
+  var countBadge = document.getElementById('editDeptComponentCount');
   if (!components || components.length === 0) {
-    container.innerHTML = '<div class="text-gray-500 text-sm">No components configured</div>';
+    container.innerHTML = '<div style="color:#64748b; font-size:13px;">No components configured</div>';
+    if (countBadge) countBadge.textContent = '';
     return;
   }
+  var enabledCount = components.filter(function(c) { return c.enabled; }).length;
+  if (countBadge) countBadge.textContent = enabledCount + '/' + components.length + ' active';
+
+  // Color map for component icons (fallback from meta)
+  var iconColorMap = {
+    'text-blue-400': '#60a5fa', 'text-green-400': '#4ade80', 'text-red-400': '#f87171',
+    'text-yellow-400': '#facc15', 'text-purple-400': '#c084fc', 'text-orange-400': '#fb923c',
+    'text-cyan-400': '#22d3ee', 'text-amber-400': '#fbbf24'
+  };
+
   container.innerHTML = components.map(function(comp) {
     var meta = editDeptComponentMeta[comp.name] || { label: comp.name, icon: 'fa-puzzle-piece', color: 'text-gray-400' };
-    return '<div class="flex items-center justify-between">'
-      + '<div class="flex items-center gap-2">'
-      + '<i class="fa ' + meta.icon + ' ' + meta.color + ' text-sm"></i>'
-      + '<span class="text-gray-300 text-sm">' + meta.label + '</span>'
+    var iconColor = iconColorMap[meta.color] || '#94a3b8';
+    return '<div class="edm-comp-row">'
+      + '<div class="edm-comp-info">'
+      + '<i class="fa ' + meta.icon + '" style="color:' + iconColor + ';"></i>'
+      + '<span>' + meta.label + '</span>'
       + '</div>'
-      + '<label class="relative inline-flex items-center cursor-pointer">'
-      + '<input type="checkbox" data-component-name="' + comp.name + '" class="sr-only peer edit-dept-component-toggle"' + (comp.enabled ? ' checked' : '') + '>'
-      + '<div class="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>'
-      + '<div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-4"></div>'
+      + '<label class="edm-toggle">'
+      + '<input type="checkbox" data-component-name="' + comp.name + '" class="edit-dept-component-toggle"' + (comp.enabled ? ' checked' : '') + ' onchange="updateEditDeptComponentCount()">'
+      + '<div class="edm-toggle-track"></div>'
+      + '<div class="edm-toggle-knob"></div>'
       + '</label>'
       + '</div>';
   }).join('');
+}
+
+function updateEditDeptComponentCount() {
+  var toggles = document.querySelectorAll('.edit-dept-component-toggle');
+  var total = toggles.length;
+  var enabled = 0;
+  toggles.forEach(function(t) { if (t.checked) enabled++; });
+  var badge = document.getElementById('editDeptComponentCount');
+  if (badge) badge.textContent = enabled + '/' + total + ' active';
 }
 
 function populateEditDeptModal(dept) {
@@ -6676,7 +6698,14 @@ function populateEditDeptModal(dept) {
   renderEditDeptComponents(mergedComponents);
 
   updateEditDeptVisibilityLabel();
-  document.getElementById('editDepartmentModal').style.display = 'flex';
+  document.getElementById('editDepartmentModal').classList.add('is-open');
+  document.body.style.overflow = 'hidden';
+  // Load department members — reset add-member cache so it refreshes
+  editDeptAddMemberCommunityMembers = null;
+  var addPanel = document.getElementById('editDeptAddMemberPanel');
+  if (addPanel) addPanel.classList.remove('is-open');
+  document.getElementById('editDeptMemberSearch').value = '';
+  loadEditDeptMembers(document.getElementById('editDeptId').value);
 }
 
 function openEditDepartmentModal(departmentId) {
@@ -6695,7 +6724,8 @@ function openEditDepartmentModal(departmentId) {
     });
 }
 function closeEditDepartmentModal() {
-  document.getElementById('editDepartmentModal').style.display = 'none';
+  document.getElementById('editDepartmentModal').classList.remove('is-open');
+  document.body.style.overflow = '';
 }
 
 // Handle department photo upload
@@ -6784,88 +6814,885 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
 </script>
 
 <!-- Edit Department Modal -->
-<div id="editDepartmentModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:420px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
-    <button onclick="closeEditDepartmentModal()" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-    <div style="text-align:center; margin-bottom:1rem;">
-      <i class="fa fa-pencil-alt" style="font-size:2rem; color:#3b82f6; margin-bottom:0.5rem;"></i>
-      <h3 style="color:#fff; margin:0; font-size:1.25rem; font-weight:600;">Edit Department</h3>
+<style>
+  .edm-overlay {
+    display: none;
+    position: fixed;
+    z-index: 3000;
+    left: 0; top: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(8, 9, 14, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+  }
+  .edm-overlay.is-open { display: flex; }
+
+  @keyframes edmSlideIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .edm-card {
+    background: #111318;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    width: 94%;
+    max-width: 720px;
+    max-height: 92vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.02),
+      0 32px 80px rgba(0, 0, 0, 0.55),
+      0 0 100px -30px rgba(56, 125, 255, 0.08);
+    animation: edmSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+  }
+
+  /* Top accent stripe */
+  .edm-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #3b82f6, #6366f1, #3b82f6);
+    z-index: 1;
+  }
+
+  .edm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+  }
+  .edm-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .edm-header-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: rgba(59, 130, 246, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #60a5fa;
+    font-size: 14px;
+  }
+  .edm-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+    letter-spacing: -0.2px;
+  }
+  .edm-close {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.06);
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.15s;
+    padding: 0;
+    line-height: 1;
+  }
+  .edm-close:hover {
+    background: rgba(255,255,255,0.06);
+    color: #94a3b8;
+    border-color: rgba(255,255,255,0.1);
+  }
+
+  .edm-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 0;
+  }
+
+  /* Desktop: 2-column layout */
+  .edm-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 0;
+  }
+
+  .edm-sidebar {
+    padding: 20px;
+    border-right: 1px solid rgba(255, 255, 255, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .edm-main {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Photo area */
+  .edm-photo-area {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #181a22;
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    aspect-ratio: 4/3;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .edm-photo-area:hover {
+    border-color: rgba(59, 130, 246, 0.4);
+  }
+  .edm-photo-area img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+  .edm-photo-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%; height: 100%;
+    color: #4a5568;
+    gap: 4px;
+  }
+  .edm-photo-placeholder i { font-size: 20px; }
+  .edm-photo-placeholder span { font-size: 12px; }
+  .edm-photo-delete {
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 28px; height: 28px;
+    background: rgba(239, 68, 68, 0.9);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 11px;
+    transition: all 0.15s;
+    padding: 0;
+  }
+  .edm-photo-delete:hover {
+    background: #dc2626;
+    transform: scale(1.05);
+  }
+
+  /* Form inputs */
+  .edm-field { margin-bottom: 12px; }
+  .edm-field:last-child { margin-bottom: 0; }
+  .edm-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .edm-input,
+  .edm-textarea {
+    width: 100%;
+    background: #181a22;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #e2e8f0;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+  .edm-input:focus,
+  .edm-textarea:focus {
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+  .edm-textarea { resize: vertical; min-height: 56px; }
+
+  /* Section panels */
+  .edm-section {
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.015);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .edm-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .edm-section-header:hover {
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .edm-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #cbd5e1;
+  }
+  .edm-section-title i {
+    font-size: 12px;
+    width: 16px;
+    text-align: center;
+  }
+  .edm-section-badge {
+    font-size: 11px;
+    color: #64748b;
+    background: rgba(255,255,255,0.04);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .edm-section-chevron {
+    color: #4a5568;
+    font-size: 11px;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .edm-section.is-open .edm-section-chevron {
+    transform: rotate(180deg);
+  }
+  .edm-section-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .edm-section.is-open .edm-section-body {
+    max-height: 600px;
+  }
+  .edm-section-inner {
+    padding: 0 14px 14px;
+  }
+
+  /* Ranks action card */
+  .edm-ranks-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: rgba(99, 102, 241, 0.06);
+    border: 1px solid rgba(99, 102, 241, 0.12);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 12px;
+    text-decoration: none;
+  }
+  .edm-ranks-card:hover {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.25);
+  }
+  .edm-ranks-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: rgba(99, 102, 241, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #818cf8;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .edm-ranks-text {
+    flex: 1;
+    min-width: 0;
+  }
+  .edm-ranks-text strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #c7d2fe;
+    margin-bottom: 1px;
+  }
+  .edm-ranks-text span {
+    font-size: 11px;
+    color: #6366f1;
+    opacity: 0.8;
+  }
+  .edm-ranks-arrow {
+    color: #6366f1;
+    font-size: 12px;
+    opacity: 0.6;
+  }
+
+  /* Component row */
+  .edm-comp-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+  }
+  .edm-comp-row + .edm-comp-row {
+    border-top: 1px solid rgba(255,255,255,0.03);
+  }
+  .edm-comp-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .edm-comp-info i { font-size: 12px; width: 16px; text-align: center; }
+  .edm-comp-info span { font-size: 13px; color: #94a3b8; }
+
+  /* Toggle switch */
+  .edm-toggle {
+    position: relative;
+    width: 36px; height: 20px;
+    flex-shrink: 0;
+  }
+  .edm-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .edm-toggle-track {
+    position: absolute;
+    inset: 0;
+    background: #2a2d3a;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .edm-toggle input:checked + .edm-toggle-track {
+    background: #3b82f6;
+  }
+  .edm-toggle-knob {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 16px; height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .edm-toggle input:checked ~ .edm-toggle-knob {
+    transform: translateX(16px);
+  }
+
+  /* Visibility row */
+  .edm-vis-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+  .edm-vis-labels {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .edm-vis-label {
+    font-size: 12px;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .edm-vis-tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+  .edm-vis-tooltip i {
+    font-size: 11px;
+    color: #4a5568;
+    cursor: help;
+  }
+  .edm-vis-tooltip-text {
+    position: absolute;
+    left: 20px; top: -4px;
+    width: 180px;
+    background: #1e2028;
+    color: #cbd5e1;
+    font-size: 11px;
+    border-radius: 8px;
+    padding: 8px 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.06);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 10;
+    line-height: 1.5;
+  }
+  .edm-vis-tooltip:hover .edm-vis-tooltip-text {
+    opacity: 1;
+  }
+
+  /* Footer */
+  .edm-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+  }
+  .edm-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .edm-btn-delete {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.15);
+  }
+  .edm-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+  .edm-btn-save {
+    background: #3b82f6;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  }
+  .edm-btn-save:hover {
+    background: #2563eb;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+    transform: translateY(-1px);
+  }
+  .edm-btn-save:disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  /* Error */
+  .edm-error {
+    display: none;
+    color: #f87171;
+    font-size: 12px;
+    padding: 8px 14px;
+    background: rgba(239, 68, 68, 0.06);
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  /* Members section */
+  .edm-members-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .edm-members-search {
+    width: 100%;
+    background: #181a22;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    padding: 8px 10px 8px 32px;
+    font-size: 13px;
+    color: #e2e8f0;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+  .edm-members-search:focus { border-color: rgba(59, 130, 246, 0.5); }
+  .edm-members-search-wrap {
+    position: relative;
+    margin-bottom: 10px;
+  }
+  .edm-members-search-wrap i {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #4a5568;
+    font-size: 12px;
+    pointer-events: none;
+  }
+  .edm-member-list {
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #2a2d3a transparent;
+  }
+  .edm-member-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+  }
+  .edm-member-row + .edm-member-row {
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+  }
+  .edm-member-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+  }
+  .edm-member-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: #2a2d3a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 12px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .edm-member-avatar img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .edm-member-name {
+    font-size: 13px;
+    color: #cbd5e1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .edm-member-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .edm-member-remove {
+    background: none;
+    border: 1px solid rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    transition: all 0.15s;
+    padding: 0;
+  }
+  .edm-member-remove:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+  .edm-btn-add-member {
+    background: none;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    line-height: 1;
+  }
+  .edm-btn-add-member:hover {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.35);
+  }
+  .edm-members-empty {
+    text-align: center;
+    color: #4a5568;
+    font-size: 13px;
+    padding: 20px 0;
+  }
+  .edm-members-loading {
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+    padding: 16px 0;
+  }
+  .edm-members-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.03);
+    margin-top: 6px;
+  }
+  .edm-page-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.06);
+    color: #64748b;
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    transition: all 0.15s;
+    padding: 0;
+  }
+  .edm-page-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,0.04);
+    color: #94a3b8;
+  }
+  .edm-page-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+  .edm-page-info {
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  /* Add member overlay (inline in the section) */
+  .edm-add-member-panel {
+    display: none;
+    margin-top: 10px;
+    padding: 12px;
+    background: rgba(59, 130, 246, 0.04);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    border-radius: 8px;
+  }
+  .edm-add-member-panel.is-open { display: block; }
+  .edm-add-member-list {
+    max-height: 160px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #2a2d3a transparent;
+  }
+  .edm-add-member-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+  }
+  .edm-add-member-row + .edm-add-member-row {
+    border-top: 1px solid rgba(255,255,255,0.03);
+  }
+  .edm-add-btn {
+    background: rgba(59, 130, 246, 0.12);
+    border: none;
+    color: #60a5fa;
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    transition: all 0.15s;
+    padding: 0;
+  }
+  .edm-add-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 640px) {
+    .edm-card { max-width: 100%; width: 100%; max-height: 100vh; border-radius: 0; }
+    .edm-layout {
+      grid-template-columns: 1fr;
+    }
+    .edm-sidebar {
+      border-right: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      padding: 16px;
+    }
+    .edm-photo-area { aspect-ratio: 16/9; }
+    .edm-main { padding: 16px; }
+  }
+</style>
+
+<div id="editDepartmentModal" class="edm-overlay heroui-modal">
+  <div class="edm-card">
+    <!-- Header -->
+    <div class="edm-header">
+      <div class="edm-header-left">
+        <div class="edm-header-icon"><i class="fa fa-pen-to-square"></i></div>
+        <h3>Edit Department</h3>
+      </div>
+      <button class="edm-close" onclick="closeEditDepartmentModal()" aria-label="Close"><i class="fa fa-times"></i></button>
     </div>
-    <form onsubmit="event.preventDefault(); saveEditDepartment();">
+
+    <!-- Body -->
+    <form id="editDeptForm" onsubmit="event.preventDefault(); saveEditDepartment();">
       <input type="hidden" id="editDeptId" value="">
       <input type="hidden" id="editDeptImageUrl" value="">
-      <div class="mb-3">
-        <label class="block text-gray-300 mb-1 text-sm font-medium">Department Photo</label>
-        <div class="relative">
-          <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-600 rounded-lg bg-gray-800 cursor-pointer hover:border-blue-500 transition overflow-hidden" style="aspect-ratio: 16/9;" onclick="document.getElementById('editDeptImage').click()">
-            <img id="editDeptImagePreview" src="" alt="Preview" style="display:none; width:100%; height:100%; object-fit:cover;" />
-            <div id="editDeptImagePlaceholder" class="flex flex-col items-center justify-center w-full h-full">
-              <i class="fa fa-camera text-2xl text-gray-500 mb-1"></i>
-              <span class="text-gray-500 text-sm">Click to upload photo</span>
+
+      <div class="edm-body">
+        <div class="edm-layout">
+          <!-- Left: Photo + Identity -->
+          <div class="edm-sidebar">
+            <div class="edm-photo-area" onclick="document.getElementById('editDeptImage').click()">
+              <img id="editDeptImagePreview" src="" alt="Preview" />
+              <div id="editDeptImagePlaceholder" class="edm-photo-placeholder">
+                <i class="fa fa-camera"></i>
+                <span>Upload photo</span>
+              </div>
+              <input type="file" id="editDeptImage" accept="image/*" style="display:none;" onchange="handleEditDeptImageChange(event)" />
+              <button type="button" id="editDeptImageDeleteBtn" class="edm-photo-delete" onclick="event.stopPropagation(); deleteEditDeptImage();">
+                <i class="fa fa-trash"></i>
+              </button>
             </div>
-            <input type="file" id="editDeptImage" accept="image/*" style="display:none;" onchange="handleEditDeptImageChange(event)" />
+
+            <div class="edm-field">
+              <label class="edm-label" for="editDeptName">Name</label>
+              <input type="text" id="editDeptName" required class="edm-input" placeholder="e.g. Police" />
+            </div>
+
+            <div class="edm-field">
+              <label class="edm-label" for="editDeptDescription">Description</label>
+              <textarea id="editDeptDescription" rows="2" class="edm-textarea" placeholder="Brief description..."></textarea>
+            </div>
           </div>
-          <button type="button" id="editDeptImageDeleteBtn" onclick="event.stopPropagation(); deleteEditDeptImage();" style="display:none; position:absolute; top:0.5rem; right:0.5rem; width:2rem; height:2rem; background:rgba(239,68,68,0.9); border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s ease;" onmouseenter="this.style.background='rgba(220,38,38,1)'; this.style.transform='scale(1.1)';" onmouseleave="this.style.background='rgba(239,68,68,0.9)'; this.style.transform='scale(1)';">
-            <i class="fa fa-trash text-white text-sm"></i>
-          </button>
-        </div>
-      </div>
-      <div class="mb-3">
-        <label class="block text-gray-300 mb-1 text-sm font-medium" for="editDeptName">Department Name</label>
-        <input type="text" id="editDeptName" required class="w-full text-gray-200 bg-gray-800 border border-gray-600 rounded p-2.5 text-sm focus:border-blue-500 focus:outline-none" />
-      </div>
-      <div class="mb-3">
-        <label class="block text-gray-300 mb-1 text-sm font-medium" for="editDeptDescription">Description</label>
-        <textarea id="editDeptDescription" rows="2" class="w-full text-gray-200 bg-gray-800 border border-gray-600 rounded p-2.5 text-sm focus:border-blue-500 focus:outline-none"></textarea>
-      </div>
-      
-      <!-- Components Section (dynamically populated) -->
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-1 text-sm font-medium">Components</label>
-        <div id="editDeptComponentsContainer" class="bg-gray-800 border border-gray-600 rounded-lg p-3 space-y-2">
-          <div class="text-gray-500 text-sm">Loading components...</div>
+
+          <!-- Right: Settings -->
+          <div class="edm-main">
+            <!-- Manage Ranks — prominent card -->
+            <div class="edm-ranks-card" onclick="openRankManagementModal(currentEditDepartment)">
+              <div class="edm-ranks-icon"><i class="fa fa-ranking-star"></i></div>
+              <div class="edm-ranks-text">
+                <strong>Manage Ranks</strong>
+                <span>Hierarchy, requirements &amp; auto-promote</span>
+              </div>
+              <i class="fa fa-chevron-right edm-ranks-arrow"></i>
+            </div>
+
+            <!-- Members -->
+            <div class="edm-section is-open">
+              <div class="edm-section-header" onclick="this.parentElement.classList.toggle('is-open')">
+                <div class="edm-section-title">
+                  <i class="fa fa-users"></i>
+                  Members
+                  <span id="editDeptMemberCount" class="edm-section-badge"></span>
+                </div>
+                <i class="fa fa-chevron-down edm-section-chevron"></i>
+              </div>
+              <div class="edm-section-body">
+                <div class="edm-section-inner">
+                  <div class="edm-members-header">
+                    <button type="button" class="edm-btn-add-member" onclick="toggleAddMemberPanel()">
+                      <i class="fa fa-plus"></i> Add Members
+                    </button>
+                  </div>
+
+                  <!-- Add member panel (inline) -->
+                  <div id="editDeptAddMemberPanel" class="edm-add-member-panel">
+                    <div class="edm-members-search-wrap">
+                      <i class="fa fa-search"></i>
+                      <input type="text" class="edm-members-search" id="editDeptAddMemberSearch" placeholder="Search community members..." oninput="filterAddMemberList()">
+                    </div>
+                    <div id="editDeptAddMemberList" class="edm-add-member-list">
+                      <div class="edm-members-loading"><i class="fa fa-spinner fa-spin"></i> Loading...</div>
+                    </div>
+                  </div>
+
+                  <!-- Search existing members -->
+                  <div class="edm-members-search-wrap">
+                    <i class="fa fa-search"></i>
+                    <input type="text" class="edm-members-search" id="editDeptMemberSearch" placeholder="Search members..." oninput="filterEditDeptMembers()">
+                  </div>
+
+                  <!-- Member list -->
+                  <div id="editDeptMemberList" class="edm-member-list">
+                    <div class="edm-members-loading"><i class="fa fa-spinner fa-spin"></i> Loading members...</div>
+                  </div>
+
+                  <!-- Pagination -->
+                  <div id="editDeptMemberPagination" class="edm-members-pagination" style="display:none;">
+                    <button type="button" class="edm-page-btn" id="editDeptMemberPrev" onclick="loadEditDeptMembers(currentEditDepartment, editDeptMembersPage - 1)"><i class="fa fa-chevron-left"></i></button>
+                    <span id="editDeptMemberPageInfo" class="edm-page-info"></span>
+                    <button type="button" class="edm-page-btn" id="editDeptMemberNext" onclick="loadEditDeptMembers(currentEditDepartment, editDeptMembersPage + 1)"><i class="fa fa-chevron-right"></i></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Visibility -->
+            <div class="edm-section is-open">
+              <div class="edm-section-header" onclick="this.parentElement.classList.toggle('is-open')">
+                <div class="edm-section-title">
+                  <i class="fa fa-eye"></i>
+                  Visibility
+                </div>
+                <i class="fa fa-chevron-down edm-section-chevron"></i>
+              </div>
+              <div class="edm-section-body">
+                <div class="edm-section-inner">
+                  <div class="edm-vis-row">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <span class="edm-vis-label" style="color:#94a3b8;">Access Mode</span>
+                      <div class="edm-vis-tooltip">
+                        <i class="fa fa-info-circle"></i>
+                        <div class="edm-vis-tooltip-text">
+                          <strong>Public</strong>: Anyone can access this department.<br/>
+                          <strong>Private</strong>: Users can request to join and be approved from your notifications menu, or you can add members directly.
+                        </div>
+                      </div>
+                    </div>
+                    <div class="edm-vis-labels">
+                      <span id="editDeptVisibilityPublic" class="edm-vis-label" style="color:#64748b;">Public</span>
+                      <label class="edm-toggle">
+                        <input type="checkbox" id="editDeptApprovalRequired" onchange="updateEditDeptVisibilityLabel()">
+                        <div class="edm-toggle-track"></div>
+                        <div class="edm-toggle-knob"></div>
+                      </label>
+                      <span id="editDeptVisibilityPrivate" class="edm-vis-label" style="color:#64748b;">Private</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Components -->
+            <div class="edm-section is-open">
+              <div class="edm-section-header" onclick="this.parentElement.classList.toggle('is-open')">
+                <div class="edm-section-title">
+                  <i class="fa fa-puzzle-piece"></i>
+                  Components
+                  <span id="editDeptComponentCount" class="edm-section-badge"></span>
+                </div>
+                <i class="fa fa-chevron-down edm-section-chevron"></i>
+              </div>
+              <div class="edm-section-body">
+                <div class="edm-section-inner">
+                  <div id="editDeptComponentsContainer">
+                    <div style="color:#64748b; font-size:13px;">Loading...</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="editDeptError" class="edm-error"></div>
+          </div>
         </div>
       </div>
 
-      <div class="mb-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-1.5">
-            <span class="text-gray-300 text-sm font-medium">Visibility</span>
-            <span class="relative group flex items-center">
-              <i class="fa fa-info-circle text-gray-500 cursor-pointer text-xs"></i>
-              <span class="absolute left-5 top-0 w-48 bg-gray-900 text-gray-200 text-xs rounded shadow-lg px-2 py-1.5 z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                <strong>Public</strong>: Anyone can access.<br/>
-                <strong>Private</strong>: Approval required.
-              </span>
-            </span>
-          </div>
-          <div class="flex items-center gap-2" style="height: 20px;">
-            <span id="editDeptVisibilityPublic" class="text-xs text-gray-400 leading-5">Public</span>
-            <label class="relative inline-flex items-center cursor-pointer" style="height: 20px;">
-              <input type="checkbox" id="editDeptApprovalRequired" class="sr-only peer" onchange="updateEditDeptVisibilityLabel()">
-              <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-              <div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-4"></div>
-            </label>
-            <span id="editDeptVisibilityPrivate" class="text-xs text-gray-400 leading-5">Private</span>
-          </div>
-        </div>
-      </div>
-      <div id="editDeptError" class="text-red-400 text-sm mb-2" style="display:none;"></div>
-
-      <!-- Manage Ranks Button -->
-      <div class="mb-3" style="border-top:1px solid #374151; padding-top:0.75rem;">
-        <button type="button" onclick="openRankManagementModal(currentEditDepartment)"
-                style="width:100%; display:flex; align-items:center; justify-content:center; gap:0.5rem; padding:0.6rem 1rem; background:#1e2028; border:1px solid #4a5568; border-radius:8px; color:#a78bfa; font-size:0.875rem; font-weight:500; cursor:pointer; transition:all 0.2s;"
-                onmouseenter="this.style.borderColor='#a78bfa'; this.style.background='#2d2048'"
-                onmouseleave="this.style.borderColor='#4a5568'; this.style.background='#1e2028'">
-          <i class="fa fa-ranking-star"></i>
-          Manage Ranks
+      <!-- Footer -->
+      <div class="edm-footer">
+        <button type="button" class="edm-btn edm-btn-delete" onclick="deleteEditDepartment()">
+          <i class="fa fa-trash"></i> Delete
         </button>
-      </div>
-
-      <div class="flex justify-end gap-2 mt-4">
-        <button type="button" onclick="deleteEditDepartment()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded font-semibold text-sm">Delete</button>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold text-sm">Save</button>
+        <button type="submit" class="edm-btn edm-btn-save">
+          Save Changes
+        </button>
       </div>
     </form>
   </div>
@@ -6890,7 +7717,7 @@ async function saveEditDepartment() {
   }
 
   saveBtn.disabled = true;
-  saveBtn.textContent = 'Saving...';
+  saveBtn.textContent = 'Saving\u2026';
 
   try {
     // Fetch the current department data to preserve all existing structure
@@ -7006,7 +7833,7 @@ async function saveEditDepartment() {
   } finally {
     // Always reset button state
     saveBtn.disabled = false;
-    saveBtn.textContent = 'Save';
+    saveBtn.textContent = 'Save Changes';
   }
 }
 function deleteEditDepartment() {
@@ -7057,9 +7884,223 @@ async function confirmDeleteDepartment() {
 
 <script>
 function updateEditDeptVisibilityLabel() {
-  const checked = document.getElementById('editDeptApprovalRequired').checked;
-  document.getElementById('editDeptVisibilityPublic').className = 'text-sm font-medium ' + (!checked ? 'text-blue-400' : 'text-gray-400');
-  document.getElementById('editDeptVisibilityPrivate').className = 'text-sm font-medium ' + (checked ? 'text-blue-400' : 'text-gray-400');
+  var checked = document.getElementById('editDeptApprovalRequired').checked;
+  document.getElementById('editDeptVisibilityPublic').style.color = !checked ? '#60a5fa' : '#64748b';
+  document.getElementById('editDeptVisibilityPrivate').style.color = checked ? '#60a5fa' : '#64748b';
+}
+
+// ===== Department Members Management =====
+var editDeptMembersPage = 1;
+var editDeptMembersLimit = 10;
+var editDeptMembersData = [];
+var editDeptMembersTotalCount = 0;
+var editDeptAddMemberCommunityMembers = null; // cached
+
+function loadEditDeptMembers(departmentId, page) {
+  if (!departmentId) return;
+  page = page || 1;
+  editDeptMembersPage = page;
+  var communityId = '<%= community._id %>';
+  var listEl = document.getElementById('editDeptMemberList');
+  listEl.innerHTML = '<div class="edm-members-loading"><i class="fa fa-spinner fa-spin"></i> Loading...</div>';
+
+  fetch(API_URL + '/api/v1/community/' + communityId + '/departments/' + departmentId + '/members?page=' + page + '&limit=' + editDeptMembersLimit)
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      // Normalize: API nests user data under .user
+      editDeptMembersData = (data.data || []).map(function(m) {
+        var u = m.user || {};
+        return {
+          userID: u.userID || m._id || '',
+          username: u.username || '',
+          profilePicture: u.profilePicture || '',
+          rankId: m.rankId || ''
+        };
+      });
+      editDeptMembersTotalCount = data.totalCount || 0;
+      var countBadge = document.getElementById('editDeptMemberCount');
+      if (countBadge) countBadge.textContent = editDeptMembersTotalCount + ' member' + (editDeptMembersTotalCount !== 1 ? 's' : '');
+      renderEditDeptMembers();
+      renderEditDeptMemberPagination();
+    })
+    .catch(function(err) {
+      console.error('Failed to load department members:', err);
+      listEl.innerHTML = '<div class="edm-members-empty">Failed to load members</div>';
+    });
+}
+
+function renderEditDeptMembers(filter) {
+  var listEl = document.getElementById('editDeptMemberList');
+  var members = editDeptMembersData;
+  if (filter) {
+    var q = filter.toLowerCase();
+    members = members.filter(function(m) {
+      return (m.username || '').toLowerCase().indexOf(q) !== -1;
+    });
+  }
+  if (members.length === 0) {
+    listEl.innerHTML = '<div class="edm-members-empty">' + (filter ? 'No matching members' : 'No members yet') + '</div>';
+    return;
+  }
+  listEl.innerHTML = members.map(function(m) {
+    var avatar = m.profilePicture
+      ? '<img src="' + m.profilePicture + '" alt="">'
+      : '<i class="fa fa-user"></i>';
+    var userId = m.userID || '';
+    var isCurrentUser = window.dbUser && (window.dbUser._id === userId);
+    var removeBtn = isCurrentUser ? '' :
+      '<button type="button" class="edm-member-remove" onclick="removeEditDeptMember(\'' + userId + '\', \'' + (m.username || '').replace(/'/g, "\\'") + '\')" title="Remove member"><i class="fa fa-times"></i></button>';
+    return '<div class="edm-member-row" data-username="' + (m.username || '').toLowerCase() + '">'
+      + '<div class="edm-member-info">'
+      + '<div class="edm-member-avatar">' + avatar + '</div>'
+      + '<span class="edm-member-name">' + (m.username || 'Unknown') + '</span>'
+      + '</div>'
+      + '<div class="edm-member-actions">' + removeBtn + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function filterEditDeptMembers() {
+  var q = document.getElementById('editDeptMemberSearch').value.trim();
+  renderEditDeptMembers(q || null);
+}
+
+function renderEditDeptMemberPagination() {
+  var paginationEl = document.getElementById('editDeptMemberPagination');
+  var totalPages = Math.ceil(editDeptMembersTotalCount / editDeptMembersLimit);
+  if (totalPages <= 1) {
+    paginationEl.style.display = 'none';
+    return;
+  }
+  paginationEl.style.display = 'flex';
+  document.getElementById('editDeptMemberPageInfo').textContent = 'Page ' + editDeptMembersPage + ' of ' + totalPages;
+  document.getElementById('editDeptMemberPrev').disabled = editDeptMembersPage <= 1;
+  document.getElementById('editDeptMemberNext').disabled = editDeptMembersPage >= totalPages;
+}
+
+function removeEditDeptMember(userId, username) {
+  if (!confirm('Remove ' + username + ' from this department?')) return;
+  var communityId = '<%= community._id %>';
+  var departmentId = currentEditDepartment;
+  fetch(API_URL + '/api/v1/community/' + communityId + '/departments/' + departmentId + '/remove-user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: userId })
+  })
+  .then(function(res) {
+    if (!res.ok) throw new Error('Failed to remove member');
+    return res.json();
+  })
+  .then(function() {
+    if (typeof showToast === 'function') showToast('Member removed', 2000);
+    loadEditDeptMembers(departmentId, editDeptMembersPage);
+  })
+  .catch(function(err) {
+    console.error('Remove member error:', err);
+    if (typeof showToast === 'function') showToast('Failed to remove member', 2500, 'error');
+  });
+}
+
+// ===== Add Members Panel =====
+function toggleAddMemberPanel() {
+  var panel = document.getElementById('editDeptAddMemberPanel');
+  var isOpen = panel.classList.contains('is-open');
+  if (isOpen) {
+    panel.classList.remove('is-open');
+    return;
+  }
+  panel.classList.add('is-open');
+  // Load community members if not cached
+  if (!editDeptAddMemberCommunityMembers) {
+    loadCommunityMembersForAdd();
+  } else {
+    renderAddMemberList();
+  }
+}
+
+function loadCommunityMembersForAdd() {
+  var communityId = '<%= community._id %>';
+  var listEl = document.getElementById('editDeptAddMemberList');
+  listEl.innerHTML = '<div class="edm-members-loading"><i class="fa fa-spinner fa-spin"></i> Loading...</div>';
+
+  // Fetch all community members (v2 with high limit to get all)
+  fetch(API_URL + '/api/v2/community/' + communityId + '/members?page=1&limit=200')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      editDeptAddMemberCommunityMembers = (data.data || []).map(function(m) {
+        return {
+          userId: m.userID || m._id,
+          username: m.username || 'Unknown',
+          profilePicture: m.profilePicture || ''
+        };
+      });
+      renderAddMemberList();
+    })
+    .catch(function(err) {
+      console.error('Failed to load community members:', err);
+      listEl.innerHTML = '<div class="edm-members-empty">Failed to load members</div>';
+    });
+}
+
+function renderAddMemberList() {
+  var listEl = document.getElementById('editDeptAddMemberList');
+  var filter = (document.getElementById('editDeptAddMemberSearch').value || '').trim().toLowerCase();
+  // Filter out members already in the department
+  var existingIds = {};
+  editDeptMembersData.forEach(function(m) { existingIds[m.userID || m._id] = true; });
+
+  var available = (editDeptAddMemberCommunityMembers || []).filter(function(m) {
+    if (existingIds[m.userId]) return false;
+    if (filter && m.username.toLowerCase().indexOf(filter) === -1) return false;
+    return true;
+  });
+
+  if (available.length === 0) {
+    listEl.innerHTML = '<div class="edm-members-empty">' + (filter ? 'No matching members' : 'All community members are already in this department') + '</div>';
+    return;
+  }
+
+  listEl.innerHTML = available.map(function(m) {
+    var avatar = m.profilePicture
+      ? '<img src="' + m.profilePicture + '" alt="" style="width:100%;height:100%;object-fit:cover;">'
+      : '<i class="fa fa-user"></i>';
+    return '<div class="edm-add-member-row">'
+      + '<div class="edm-member-info">'
+      + '<div class="edm-member-avatar">' + avatar + '</div>'
+      + '<span class="edm-member-name">' + m.username + '</span>'
+      + '</div>'
+      + '<button type="button" class="edm-add-btn" onclick="addMemberToDept(\'' + m.userId + '\')" title="Add to department"><i class="fa fa-plus"></i></button>'
+      + '</div>';
+  }).join('');
+}
+
+function filterAddMemberList() {
+  renderAddMemberList();
+}
+
+function addMemberToDept(userId) {
+  var communityId = '<%= community._id %>';
+  var departmentId = currentEditDepartment;
+  fetch(API_URL + '/api/v1/community/' + communityId + '/departments/' + departmentId + '/members', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ members: [userId] })
+  })
+  .then(function(res) {
+    if (!res.ok) throw new Error('Failed to add member');
+    return res.json();
+  })
+  .then(function() {
+    if (typeof showToast === 'function') showToast('Member added', 2000);
+    // Refresh both lists
+    loadEditDeptMembers(departmentId, editDeptMembersPage);
+    // Re-render the add list after a short delay to let the member list refresh
+    setTimeout(function() { renderAddMemberList(); }, 500);
+  })
+  .catch(function(err) {
+    console.error('Add member error:', err);
+    if (typeof showToast === 'function') showToast('Failed to add member', 2500, 'error');
+  });
 }
 </script>
 
@@ -13113,195 +14154,572 @@ async function saveEditEvent() {
 </script>
 
 <% if (typeof canManageDepartments !== 'undefined' && canManageDepartments) { %>
-<!-- LEO Rank System Tutorial Modal -->
-<div id="rankTutorialOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:100000; justify-content:center; align-items:center;">
-  <div style="background:rgba(30,32,44,0.95); backdrop-filter:blur(16px); border:1px solid rgba(167,139,250,0.25); border-radius:16px; max-width:440px; width:92%; padding:2rem 1.8rem 1.4rem; color:#e2e8f0; box-shadow:0 20px 60px rgba(0,0,0,0.5); position:relative;">
-    <!-- Close button -->
-    <button onclick="window._rankTutorial.close()" style="position:absolute; top:0.8rem; right:1rem; background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer; padding:0.2rem;" aria-label="Close"><i class="fa fa-times"></i></button>
+<!-- Reusable Feature Tutorial System -->
+<style>
+  @keyframes lpcTutorialFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes lpcTutorialSlideUp {
+    from { opacity: 0; transform: translateY(24px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes lpcTutorialStepIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes lpcTutorialStepOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(-20px); }
+  }
+  @keyframes lpcTutorialIconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  @keyframes lpcTutorialShimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
 
-    <!-- Step content container -->
-    <div id="rankTutorialContent" style="text-align:center; min-height:180px;">
-      <!-- Populated by JS -->
+  .lpc-tutorial-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 100000;
+    justify-content: center;
+    align-items: center;
+  }
+  .lpc-tutorial-overlay.is-visible {
+    display: flex;
+    animation: lpcTutorialFadeIn 0.3s ease-out;
+  }
+
+  .lpc-tutorial-card {
+    position: relative;
+    max-width: 460px;
+    width: 92%;
+    padding: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #13151e;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.03),
+      0 24px 80px rgba(0, 0, 0, 0.6),
+      0 0 120px -40px rgba(99, 102, 241, 0.15);
+    animation: lpcTutorialSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    color: #e2e8f0;
+  }
+
+  /* Subtle top accent bar */
+  .lpc-tutorial-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #a78bfa, #6366f1);
+    background-size: 200% 100%;
+    animation: lpcTutorialShimmer 3s ease-in-out infinite;
+  }
+
+  .lpc-tutorial-close {
+    position: absolute;
+    top: 14px; right: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #64748b;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.2s;
+    z-index: 2;
+    padding: 0;
+    line-height: 1;
+  }
+  .lpc-tutorial-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .lpc-tutorial-body {
+    padding: 32px 32px 0;
+    min-height: 200px;
+    overflow: hidden;
+  }
+
+  .lpc-tutorial-step {
+    text-align: center;
+    animation: lpcTutorialStepIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .lpc-tutorial-step.is-exiting {
+    animation: lpcTutorialStepOut 0.2s ease-in forwards;
+  }
+
+  .lpc-tutorial-icon-wrap {
+    width: 72px; height: 72px;
+    margin: 0 auto 20px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    animation: lpcTutorialIconPulse 2s ease-in-out infinite;
+    position: relative;
+  }
+  /* Glow behind icon */
+  .lpc-tutorial-icon-wrap::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 24px;
+    background: inherit;
+    opacity: 0.15;
+    filter: blur(16px);
+    z-index: -1;
+  }
+
+  .lpc-tutorial-step h3 {
+    margin: 0 0 10px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: -0.3px;
+    line-height: 1.3;
+  }
+
+  .lpc-tutorial-step p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.65;
+    color: #94a3b8;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+
+  .lpc-tutorial-footer {
+    padding: 20px 32px 24px;
+  }
+
+  .lpc-tutorial-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .lpc-tutorial-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #2a2d3a;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    border: none;
+    padding: 0;
+  }
+  .lpc-tutorial-dot.is-active {
+    width: 24px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #6366f1, #a78bfa);
+  }
+
+  .lpc-tutorial-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .lpc-tutorial-btn-back {
+    background: none;
+    border: 1px solid #2a2d3a;
+    color: #94a3b8;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1;
+  }
+  .lpc-tutorial-btn-back:hover {
+    border-color: #4a5568;
+    color: #cbd5e1;
+  }
+
+  .lpc-tutorial-btn-next {
+    background: linear-gradient(135deg, #6366f1, #7c3aed);
+    border: none;
+    color: #fff;
+    border-radius: 10px;
+    padding: 10px 28px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+    line-height: 1;
+  }
+  .lpc-tutorial-btn-next:hover {
+    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.45);
+    transform: translateY(-1px);
+  }
+
+  .lpc-tutorial-dismiss-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+  }
+  .lpc-tutorial-dismiss-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: #64748b;
+    cursor: pointer;
+    transition: color 0.2s;
+    user-select: none;
+  }
+  .lpc-tutorial-dismiss-row label:hover {
+    color: #94a3b8;
+  }
+  .lpc-tutorial-dismiss-row input[type="checkbox"] {
+    accent-color: #6366f1;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+  }
+
+  .lpc-tutorial-help-link {
+    display: block;
+    text-align: center;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #6366f1;
+    text-decoration: none;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  .lpc-tutorial-help-link:hover {
+    opacity: 1;
+    color: #818cf8;
+  }
+</style>
+
+<div id="lpcTutorialOverlay" class="lpc-tutorial-overlay">
+  <div class="lpc-tutorial-card">
+    <button id="lpcTutorialClose" class="lpc-tutorial-close" aria-label="Close"><i class="fa fa-times"></i></button>
+    <div class="lpc-tutorial-body">
+      <div id="lpcTutorialStep" class="lpc-tutorial-step"></div>
     </div>
-
-    <!-- Dot indicators -->
-    <div id="rankTutorialDots" style="display:flex; justify-content:center; gap:0.5rem; margin:1.2rem 0 1rem;"></div>
-
-    <!-- Navigation -->
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <button id="rankTutorialBack" onclick="window._rankTutorial.prev()" style="background:none; border:1px solid #4a5568; color:#cbd5e1; border-radius:8px; padding:0.45rem 1rem; font-size:0.85rem; cursor:pointer; transition:border-color 0.2s;">Back</button>
-      <button id="rankTutorialNext" onclick="window._rankTutorial.next()" style="background:linear-gradient(135deg,#a78bfa,#7c3aed); border:none; color:#fff; border-radius:8px; padding:0.5rem 1.4rem; font-size:0.85rem; cursor:pointer; font-weight:600; transition:opacity 0.2s;">Next</button>
-    </div>
-
-    <!-- Don't show again (visible on last step) -->
-    <div id="rankTutorialDismissRow" style="display:none; margin-top:0.8rem; text-align:center;">
-      <label style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.78rem; color:#94a3b8; cursor:pointer;">
-        <input type="checkbox" id="rankTutorialDismissCheck" style="accent-color:#a78bfa;">
-        Don't show again
-      </label>
-    </div>
-
-    <!-- Help docs link -->
-    <div style="text-align:center; margin-top:0.7rem;">
-      <a href="/help#ranks-overview" style="color:#a78bfa; font-size:0.75rem; text-decoration:none; opacity:0.8;" target="_blank">Learn more in Help Docs</a>
+    <div class="lpc-tutorial-footer">
+      <div id="lpcTutorialDots" class="lpc-tutorial-dots"></div>
+      <div class="lpc-tutorial-nav">
+        <button id="lpcTutorialBack" class="lpc-tutorial-btn-back">Back</button>
+        <button id="lpcTutorialNext" class="lpc-tutorial-btn-next">Next</button>
+      </div>
+      <div id="lpcTutorialDismiss" class="lpc-tutorial-dismiss-row">
+        <label><input type="checkbox" id="lpcTutorialDismissCheck"> Don&rsquo;t show this again</label>
+      </div>
+      <a id="lpcTutorialHelpLink" class="lpc-tutorial-help-link" target="_blank">Learn more in Help Docs</a>
     </div>
   </div>
 </div>
 
 <script>
+/**
+ * LPC Feature Tutorial System
+ *
+ * Reusable, data-driven tutorial modal. To add a new tutorial, define a config
+ * object and call window.lpcTutorial.register(config).
+ *
+ * Config shape:
+ * {
+ *   key: 'rank_system',              // unique key for cookie/DB dismissal
+ *   helpLink: '/help#ranks-overview', // optional help docs URL
+ *   accentColor: '#6366f1',          // optional accent override
+ *   steps: [
+ *     {
+ *       icon: 'fa-ranking-star',     // FontAwesome class (without 'fa ')
+ *       iconBg: '#2d1f5e',           // icon wrap background color
+ *       iconColor: '#a78bfa',        // icon color
+ *       title: 'New: Department Ranks',
+ *       text: 'Description here...'
+ *     },
+ *     ...
+ *   ]
+ * }
+ */
 (function() {
-  var steps = [
-    {
-      icon: 'fa-ranking-star',
-      title: 'New: Department Ranks',
-      text: 'You can now create rank hierarchies for each department. Officers can track their progress and get auto-promoted!'
-    },
-    {
-      icon: 'fa-list-check',
-      title: 'Setting Up Ranks',
-      text: "Click the edit icon on any department, then click 'Manage Ranks' at the bottom. Create ranks like Corporal, Sergeant, Lieutenant, etc."
-    },
-    {
-      icon: 'fa-chart-line',
-      title: 'Requirements & Auto-Promote',
-      text: "Add requirements to each rank (e.g., 50 citations, 100 calls). Enable 'Auto Promote' and officers will be promoted automatically when they meet all thresholds."
-    },
-    {
-      icon: 'fa-user-shield',
-      title: 'Assigning Ranks',
-      text: "In the Manage Ranks modal, scroll down to 'Members & Ranks' to manually assign ranks. Officers can see their rank and progress on the Police Dashboard."
-    }
-  ];
+  var overlay = document.getElementById('lpcTutorialOverlay');
+  var stepEl = document.getElementById('lpcTutorialStep');
+  var dotsEl = document.getElementById('lpcTutorialDots');
+  var backBtn = document.getElementById('lpcTutorialBack');
+  var nextBtn = document.getElementById('lpcTutorialNext');
+  var closeBtn = document.getElementById('lpcTutorialClose');
+  var dismissRow = document.getElementById('lpcTutorialDismiss');
+  var dismissCheck = document.getElementById('lpcTutorialDismissCheck');
+  var helpLink = document.getElementById('lpcTutorialHelpLink');
 
+  var currentConfig = null;
   var currentStep = 0;
-  var overlay = document.getElementById('rankTutorialOverlay');
-  var contentEl = document.getElementById('rankTutorialContent');
-  var dotsEl = document.getElementById('rankTutorialDots');
-  var backBtn = document.getElementById('rankTutorialBack');
-  var nextBtn = document.getElementById('rankTutorialNext');
-  var dismissRow = document.getElementById('rankTutorialDismissRow');
-  var dismissCheck = document.getElementById('rankTutorialDismissCheck');
+  var isAnimating = false;
 
-  function render() {
-    var step = steps[currentStep];
-    var isLast = currentStep === steps.length - 1;
+  function getCookieKey(key) {
+    return 'lpc_tutorial_' + key;
+  }
+
+  function setCookie(name, value, days) {
+    var expires = '';
+    if (days) {
+      var d = new Date();
+      d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+      expires = '; expires=' + d.toUTCString();
+    }
+    document.cookie = name + '=' + (value || '') + expires + '; path=/';
+  }
+
+  function getCookie(name) {
+    var nameEQ = name + '=';
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+      var c = ca[i].trim();
+      if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length);
+    }
+    return null;
+  }
+
+  function isDismissed(key) {
+    var userId = window.dbUser && window.dbUser._id;
+    // Check DB-persisted dismissals
+    var dismissed = window.dbUser && window.dbUser.user && window.dbUser.user.dismissedTutorials;
+    if (dismissed && Array.isArray(dismissed) && dismissed.indexOf(key) !== -1) return true;
+    // Check cookie
+    if (getCookie(getCookieKey(key))) return true;
+    // Check localStorage fallback
+    try {
+      if (userId && localStorage.getItem(getCookieKey(key) + '_' + userId) === '1') return true;
+    } catch(e) {}
+    return false;
+  }
+
+  function dismissViaCookie(key) {
+    setCookie(getCookieKey(key), '1', 365);
+  }
+
+  function dismissViaDB(key) {
+    var userId = window.dbUser && window.dbUser._id;
+    if (!userId) return;
+    // localStorage fallback
+    try { localStorage.setItem(getCookieKey(key) + '_' + userId, '1'); } catch(e) {}
+    // API call
+    var apiUrl = (typeof API_URL !== 'undefined') ? API_URL : 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+    fetch(apiUrl + '/api/v1/user/' + userId + '/dismiss-tutorial', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tutorialKey: key })
+    }).catch(function(err) { console.error('Failed to persist tutorial dismissal:', err); });
+  }
+
+  function renderStep(direction) {
+    if (!currentConfig) return;
+    var step = currentConfig.steps[currentStep];
+    var isLast = currentStep === currentConfig.steps.length - 1;
     var isFirst = currentStep === 0;
 
-    contentEl.innerHTML =
-      '<div style="margin-bottom:1rem;">' +
-        '<i class="fa ' + step.icon + '" style="font-size:2.4rem; color:#a78bfa;"></i>' +
-      '</div>' +
-      '<h3 style="margin:0 0 0.6rem; font-size:1.15rem; font-weight:700; color:#fff;">' + step.title + '</h3>' +
-      '<p style="margin:0; font-size:0.9rem; line-height:1.55; color:#cbd5e1;">' + step.text + '</p>';
+    // Animate step transition
+    if (direction) {
+      isAnimating = true;
+      stepEl.classList.add('is-exiting');
+      setTimeout(function() {
+        stepEl.classList.remove('is-exiting');
+        updateStepContent(step);
+        isAnimating = false;
+      }, 200);
+    } else {
+      updateStepContent(step);
+    }
 
     // Dots
     var dotsHtml = '';
-    for (var i = 0; i < steps.length; i++) {
-      var active = i === currentStep;
-      dotsHtml += '<span style="width:8px; height:8px; border-radius:50%; background:' + (active ? '#a78bfa' : '#4a5568') + '; transition:background 0.3s; cursor:pointer;" data-step="' + i + '"></span>';
+    for (var i = 0; i < currentConfig.steps.length; i++) {
+      dotsHtml += '<button class="lpc-tutorial-dot' + (i === currentStep ? ' is-active' : '') + '" data-step="' + i + '"></button>';
     }
     dotsEl.innerHTML = dotsHtml;
-
-    // Attach dot click handlers
-    var dotSpans = dotsEl.querySelectorAll('span');
-    for (var j = 0; j < dotSpans.length; j++) {
+    var dots = dotsEl.querySelectorAll('.lpc-tutorial-dot');
+    for (var j = 0; j < dots.length; j++) {
       (function(dot) {
         dot.onclick = function() {
-          currentStep = parseInt(dot.getAttribute('data-step'));
-          render();
+          if (isAnimating) return;
+          var target = parseInt(dot.getAttribute('data-step'));
+          if (target !== currentStep) {
+            currentStep = target;
+            renderStep('jump');
+          }
         };
-      })(dotSpans[j]);
+      })(dots[j]);
     }
 
-    // Back button
+    // Back
     backBtn.style.visibility = isFirst ? 'hidden' : 'visible';
 
-    // Next button
+    // Next
     if (isLast) {
-      nextBtn.textContent = 'Got it';
-      nextBtn.onclick = function() { window._rankTutorial.close(); };
+      nextBtn.textContent = 'Got It';
+      nextBtn.onclick = function() { closeTutorial(); };
     } else {
       nextBtn.textContent = 'Next';
-      nextBtn.onclick = function() { window._rankTutorial.next(); };
+      nextBtn.onclick = function() { goNext(); };
     }
 
-    // Dismiss row
-    dismissRow.style.display = isLast ? 'block' : 'none';
+    // Dismiss row — always visible
+    dismissRow.style.display = 'flex';
+
+    // Help link
+    if (currentConfig.helpLink) {
+      helpLink.href = currentConfig.helpLink;
+      helpLink.style.display = 'block';
+    } else {
+      helpLink.style.display = 'none';
+    }
   }
 
-  function show() {
+  function updateStepContent(step) {
+    var iconBg = step.iconBg || 'rgba(99, 102, 241, 0.12)';
+    var iconColor = step.iconColor || '#a78bfa';
+
+    stepEl.innerHTML =
+      '<div class="lpc-tutorial-icon-wrap" style="background:' + iconBg + '; color:' + iconColor + ';">' +
+        '<i class="fa ' + step.icon + '"></i>' +
+      '</div>' +
+      '<h3>' + step.title + '</h3>' +
+      '<p>' + step.text + '</p>';
+  }
+
+  function goNext() {
+    if (isAnimating) return;
+    if (currentStep < currentConfig.steps.length - 1) {
+      currentStep++;
+      renderStep('next');
+    }
+  }
+
+  function goPrev() {
+    if (isAnimating) return;
+    if (currentStep > 0) {
+      currentStep--;
+      renderStep('prev');
+    }
+  }
+
+  function showTutorial(config) {
+    currentConfig = config;
     currentStep = 0;
-    render();
-    overlay.style.display = 'flex';
+    dismissCheck.checked = false;
+    renderStep(null);
+    overlay.classList.add('is-visible');
   }
 
-  function close() {
-    overlay.style.display = 'none';
+  function closeTutorial() {
+    overlay.classList.remove('is-visible');
+    if (!currentConfig) return;
 
     if (dismissCheck && dismissCheck.checked) {
-      var userId = window.dbUser && window.dbUser._id;
-      if (userId) {
-        // Set localStorage fallback
-        try {
-          localStorage.setItem('lpc_rank_tutorial_dismissed_' + userId, '1');
-        } catch(e) {}
-
-        // Call API to persist dismissal
-        var apiUrl = (typeof API_URL !== 'undefined') ? API_URL : 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
-        fetch(apiUrl + '/api/v1/user/' + userId + '/dismiss-tutorial', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tutorialKey: 'rank_system' })
-        }).catch(function(err) {
-          console.error('Failed to dismiss tutorial:', err);
-        });
-      }
+      // "Don't show again" checked — persist to DB (permanent)
+      dismissViaDB(currentConfig.key);
+      dismissViaCookie(currentConfig.key);
+    } else {
+      // Just "Got It" — cookie only (temporary, this browser)
+      dismissViaCookie(currentConfig.key);
     }
+    currentConfig = null;
   }
 
-  window._rankTutorial = {
-    show: show,
-    close: close,
-    next: function() {
-      if (currentStep < steps.length - 1) {
-        currentStep++;
-        render();
-      }
+  // Wire up static buttons
+  closeBtn.onclick = function() { closeTutorial(); };
+  backBtn.onclick = function() { goPrev(); };
+
+  // Public API
+  window.lpcTutorial = {
+    /**
+     * Register and auto-show a tutorial if not dismissed.
+     * @param {Object} config - Tutorial configuration
+     * @param {number} [delay=800] - Delay before showing (ms)
+     */
+    register: function(config, delay) {
+      if (!config || !config.key || !config.steps || !config.steps.length) return;
+      if (isDismissed(config.key)) return;
+      setTimeout(function() {
+        showTutorial(config);
+      }, delay || 800);
     },
-    prev: function() {
-      if (currentStep > 0) {
-        currentStep--;
-        render();
-      }
-    }
+    /** Manually show a tutorial (ignores dismissal state). */
+    show: function(config) {
+      if (config) showTutorial(config);
+    },
+    /** Close any open tutorial. */
+    close: closeTutorial
   };
 
-  // Auto-show logic
-  function shouldShow() {
-    var userId = window.dbUser && window.dbUser._id;
-    if (!userId) return false;
+  // Backward compat — keep window._rankTutorial working
+  window._rankTutorial = {
+    show: function() {
+      showTutorial(rankSystemConfig);
+    },
+    close: closeTutorial,
+    next: goNext,
+    prev: goPrev
+  };
 
-    // Check dismissedTutorials array on user object
-    var dismissed = window.dbUser && window.dbUser.user && window.dbUser.user.dismissedTutorials;
-    if (dismissed && Array.isArray(dismissed) && dismissed.indexOf('rank_system') !== -1) {
-      return false;
-    }
-
-    // Check localStorage fallback
-    try {
-      if (localStorage.getItem('lpc_rank_tutorial_dismissed_' + userId) === '1') {
-        return false;
+  // ===== Rank System Tutorial Config =====
+  var rankSystemConfig = {
+    key: 'rank_system',
+    helpLink: '/help#ranks-overview',
+    steps: [
+      {
+        icon: 'fa-ranking-star',
+        iconBg: 'rgba(99, 102, 241, 0.15)',
+        iconColor: '#818cf8',
+        title: 'New: Department Ranks',
+        text: 'Create rank hierarchies for each department. Officers can track their progress and get auto-promoted when they hit milestones!'
+      },
+      {
+        icon: 'fa-list-check',
+        iconBg: 'rgba(34, 197, 94, 0.12)',
+        iconColor: '#4ade80',
+        title: 'Setting Up Ranks',
+        text: 'Click the edit icon on any department, then hit <strong>Manage Ranks</strong> at the bottom. Create ranks like Corporal, Sergeant, Lieutenant &mdash; whatever fits your structure.'
+      },
+      {
+        icon: 'fa-chart-line',
+        iconBg: 'rgba(251, 191, 36, 0.12)',
+        iconColor: '#fbbf24',
+        title: 'Requirements &amp; Auto-Promote',
+        text: 'Set thresholds on each rank &mdash; like 50 citations or 100 calls. Enable <strong>Auto Promote</strong> and officers advance automatically when they meet every requirement.'
+      },
+      {
+        icon: 'fa-user-shield',
+        iconBg: 'rgba(244, 114, 182, 0.12)',
+        iconColor: '#f472b6',
+        title: 'Assigning &amp; Viewing Ranks',
+        text: 'Manually assign ranks in <strong>Members &amp; Ranks</strong>, or let auto-promote handle it. Officers see their rank and progress bars on the Police Dashboard.'
       }
-    } catch(e) {}
+    ]
+  };
 
-    return true;
-  }
-
-  setTimeout(function() {
-    if (shouldShow()) {
-      show();
-    }
-  }, 800);
+  // Auto-register the rank system tutorial
+  window.lpcTutorial.register(rankSystemConfig);
 })();
 </script>
 <% } %>
