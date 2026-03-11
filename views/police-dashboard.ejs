@@ -6142,7 +6142,7 @@ window.showBoloModal = showBoloModal;
   function renderRankProgress(data) {
     var currentRank = data.currentRank;
     var nextRank = data.nextRank;
-    var stats = data.stats || {};
+    var metrics = data.metrics || [];
     var progress = data.progress || [];
 
     if (!currentRank) return; // No rank system configured
@@ -6180,12 +6180,12 @@ window.showBoloModal = showBoloModal;
     if (progress.length > 0) {
       var barsHtml = '';
       progress.forEach(function(p) {
-        var pct = Math.min(100, Math.round((p.current / p.threshold) * 100)) || 0;
+        var pct = Math.min(100, Math.round((p.currentValue / p.threshold) * 100)) || 0;
         var color = pct >= 100 ? '#10b981' : '#7c3aed';
         barsHtml += '<div>' +
           '<div style="display:flex; justify-content:space-between; margin-bottom:0.2rem;">' +
-            '<span style="color:#a0aec0; font-size:0.75rem;">' + escapeHtmlRank(p.metricType || p.metric) + '</span>' +
-            '<span style="color:' + (pct >= 100 ? '#34d399' : '#a78bfa') + '; font-size:0.75rem; font-weight:600;">' + p.current + ' / ' + p.threshold + '</span>' +
+            '<span style="color:#a0aec0; font-size:0.75rem;">' + escapeHtmlRank(p.displayName || p.metricType) + '</span>' +
+            '<span style="color:' + (pct >= 100 ? '#34d399' : '#a78bfa') + '; font-size:0.75rem; font-weight:600;">' + p.currentValue + ' / ' + p.threshold + '</span>' +
           '</div>' +
           '<div style="width:100%; height:6px; background:#374151; border-radius:3px; overflow:hidden;">' +
             '<div style="width:' + pct + '%; height:100%; background:' + color + '; border-radius:3px; transition:width 0.5s ease;"></div>' +
@@ -6199,12 +6199,12 @@ window.showBoloModal = showBoloModal;
 
     // Stats grid
     var gridContainer = document.getElementById('rankStatsGrid');
-    if (stats && Object.keys(stats).length > 0) {
+    if (metrics && metrics.length > 0) {
       var gridHtml = '';
-      Object.keys(stats).forEach(function(key) {
+      metrics.forEach(function(m) {
         gridHtml += '<div style="background:#1e2028; border:1px solid #35385a; border-radius:8px; padding:0.6rem 0.75rem; text-align:center;">' +
-          '<div style="color:#fff; font-size:1.1rem; font-weight:700;">' + (stats[key] || 0) + '</div>' +
-          '<div style="color:#6b7280; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.5px;">' + escapeHtmlRank(key) + '</div>' +
+          '<div style="color:#fff; font-size:1.1rem; font-weight:700;">' + (m.currentValue || 0) + '</div>' +
+          '<div style="color:#6b7280; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.5px;">' + escapeHtmlRank(m.displayName || m.metricType) + '</div>' +
         '</div>';
       });
       gridContainer.innerHTML = gridHtml;

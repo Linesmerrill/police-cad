@@ -12610,6 +12610,7 @@ async function saveEditEvent() {
           }
         } catch (e) { /* no-op */ }
       })();
+    </script>
 
 <!-- ===================== Rank Management Modal ===================== -->
 <div id="rankManagementModal" class="heroui-modal" style="display:none; position:fixed; z-index:3200; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.7); align-items:center; justify-content:center; overflow-y:auto; padding:1rem; box-sizing:border-box;">
@@ -12689,6 +12690,21 @@ async function saveEditEvent() {
                 style="background:#7c3aed; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.8rem; font-weight:500; cursor:pointer;">Save Rank</button>
       </div>
     </div>
+
+    <!-- Department Members & Rank Assignment -->
+    <div style="border-top:1px solid #35385a; margin-top:1.25rem; padding-top:1.25rem;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+        <h4 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">
+          <i class="fa fa-users" style="margin-right:0.4rem; color:#a78bfa;"></i> Members & Ranks
+        </h4>
+      </div>
+      <div id="rankMembersList" style="display:flex; flex-direction:column; gap:0.4rem;">
+        <div style="text-align:center; padding:1.5rem; color:#6b7280;">
+          <i class="fa fa-spinner fa-spin" style="font-size:1.25rem; margin-bottom:0.5rem; display:block;"></i>
+          Loading members...
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -12698,6 +12714,7 @@ async function saveEditEvent() {
   var rankMgmtDeptId = null;
   var rankMgmtRanks = [];
   var rankMgmtMetricTypes = [];
+  var rankMgmtMembers = [];
   var RANK_API = (typeof API_URL !== 'undefined') ? API_URL : 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 
   window.openRankManagementModal = function(departmentId) {
@@ -12712,6 +12729,7 @@ async function saveEditEvent() {
     hideRankForm();
     loadMetricTypes();
     loadRanks();
+    loadDeptMembers();
   };
 
   window.closeRankManagementModal = function() {
@@ -12737,6 +12755,7 @@ async function saveEditEvent() {
       .then(function(data) {
         rankMgmtRanks = data.ranks || data || [];
         renderRanks();
+        if (rankMgmtMembers.length > 0) renderDeptMembers();
       })
       .catch(function(err) {
         console.error('Failed to load ranks:', err);
@@ -12793,8 +12812,146 @@ async function saveEditEvent() {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // ---------- Department Members & Rank Assignment ----------
+
+  var rankMembersPage = 1;
+  var rankMembersTotalPages = 1;
+  var rankMembersLimit = 20;
+  var rankMembersDeptRankMap = {};
+
+  function loadDeptMembers(page) {
+    page = page || 1;
+    rankMembersPage = page;
+    var container = document.getElementById('rankMembersList');
+    container.innerHTML = '<div style="text-align:center; padding:1.5rem; color:#6b7280;"><i class="fa fa-spinner fa-spin" style="font-size:1.25rem; margin-bottom:0.5rem; display:block;"></i>Loading members...</div>';
+
+    // On first page load, fetch department members to build rank map
+    var deptPromise = (page === 1)
+      ? fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members?limit=500')
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            rankMembersDeptRankMap = {};
+            (data.data || []).forEach(function(dm) {
+              rankMembersDeptRankMap[dm._id] = dm.rankId || '';
+            });
+          })
+      : Promise.resolve();
+
+    deptPromise.then(function() {
+      return fetch(RANK_API + '/api/v2/community/' + rankMgmtCommunityId + '/members?page=' + page + '&limit=' + rankMembersLimit);
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var communityMembers = data.members || [];
+      var pagination = data.pagination || {};
+      rankMembersTotalPages = pagination.totalPages || 1;
+
+      if (communityMembers.length === 0 && page === 1) {
+        container.innerHTML = '<div style="text-align:center; padding:1.5rem; color:#6b7280;"><i class="fa fa-user-slash" style="font-size:1.25rem; margin-bottom:0.5rem; display:block;"></i>No members found</div>';
+        return;
+      }
+
+      rankMgmtMembers = communityMembers.map(function(m) {
+        return {
+          userID: m.id,
+          rankId: rankMembersDeptRankMap[m.id] || '',
+          username: m.username || m.id || 'Unknown',
+          profilePicture: m.profilePicture || ''
+        };
+      });
+
+      renderDeptMembers();
+    })
+    .catch(function(err) {
+      console.error('Failed to load members:', err);
+      container.innerHTML = '<div style="text-align:center; padding:1.5rem; color:#ef4444;"><i class="fa fa-exclamation-triangle" style="margin-right:0.4rem;"></i>Failed to load members</div>';
+    });
+  }
+
+  function renderDeptMembers() {
+    var container = document.getElementById('rankMembersList');
+    if (!rankMgmtMembers || rankMgmtMembers.length === 0) {
+      container.innerHTML = '<div style="text-align:center; padding:1.5rem; color:#6b7280;">No members</div>';
+      return;
+    }
+
+    var sorted = rankMgmtRanks.slice().sort(function(a, b) { return (a.displayOrder || 0) - (b.displayOrder || 0); });
+
+    var html = '';
+    rankMgmtMembers.forEach(function(member) {
+      var currentRank = sorted.find(function(r) { return r._id === member.rankId; });
+      var rankLabel = currentRank ? currentRank.name : 'Unranked';
+      var rankColor = currentRank ? '#a78bfa' : '#6b7280';
+
+      var optionsHtml = '<option value="">Unranked</option>';
+      sorted.forEach(function(r) {
+        var selected = (r._id === member.rankId) ? ' selected' : '';
+        optionsHtml += '<option value="' + escapeRankHtml(r._id) + '"' + selected + '>' + escapeRankHtml(r.name) + (r.prefix ? ' (' + escapeRankHtml(r.prefix) + ')' : '') + '</option>';
+      });
+
+      var avatarHtml = member.profilePicture
+        ? '<img src="' + escapeRankHtml(member.profilePicture) + '" style="width:28px; height:28px; border-radius:50%; object-fit:cover; border:1px solid #4a5568;">'
+        : '<div style="width:28px; height:28px; border-radius:50%; background:#374151; display:flex; align-items:center; justify-content:center; color:#a0aec0; font-size:0.7rem; font-weight:600; border:1px solid #4a5568;">' + escapeRankHtml(member.username.charAt(0).toUpperCase()) + '</div>';
+
+      html += '<div style="display:flex; align-items:center; gap:0.6rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:0.5rem 0.75rem;">' +
+        avatarHtml +
+        '<div style="flex:1; min-width:0;">' +
+          '<div style="color:#fff; font-size:0.8rem; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + escapeRankHtml(member.username) + '</div>' +
+        '</div>' +
+        '<select onchange="assignRankToMember(\'' + escapeRankHtml(member.userID) + '\', this.value)" ' +
+          'style="background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; padding:0.3rem 0.5rem; font-size:0.75rem; min-width:120px; cursor:pointer;">' +
+          optionsHtml +
+        '</select>' +
+      '</div>';
+    });
+
+    // Pagination controls
+    if (rankMembersTotalPages > 1) {
+      html += '<div style="display:flex; align-items:center; justify-content:center; gap:0.75rem; margin-top:0.75rem;">' +
+        '<button onclick="loadDeptMembers(' + (rankMembersPage - 1) + ')" ' +
+          (rankMembersPage <= 1 ? 'disabled ' : '') +
+          'style="background:#374151; color:' + (rankMembersPage <= 1 ? '#4a5568' : '#fff') + '; border:none; border-radius:6px; padding:0.35rem 0.75rem; font-size:0.75rem; cursor:' + (rankMembersPage <= 1 ? 'default' : 'pointer') + ';">' +
+          '<i class="fa fa-chevron-left"></i></button>' +
+        '<span style="color:#a0aec0; font-size:0.75rem;">Page ' + rankMembersPage + ' of ' + rankMembersTotalPages + '</span>' +
+        '<button onclick="loadDeptMembers(' + (rankMembersPage + 1) + ')" ' +
+          (rankMembersPage >= rankMembersTotalPages ? 'disabled ' : '') +
+          'style="background:#374151; color:' + (rankMembersPage >= rankMembersTotalPages ? '#4a5568' : '#fff') + '; border:none; border-radius:6px; padding:0.35rem 0.75rem; font-size:0.75rem; cursor:' + (rankMembersPage >= rankMembersTotalPages ? 'default' : 'pointer') + ';">' +
+          '<i class="fa fa-chevron-right"></i></button>' +
+      '</div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  window.assignRankToMember = function(userId, rankId) {
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/rank', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rankId: rankId })
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Failed to assign rank');
+      return r.json();
+    })
+    .then(function() {
+      if (typeof showToast === 'function') showToast('Rank assigned', 2000, 'success');
+      // Update local state
+      var member = rankMgmtMembers.find(function(m) { return m.userID === userId; });
+      if (member) member.rankId = rankId;
+      rankMembersDeptRankMap[userId] = rankId;
+    })
+    .catch(function(err) {
+      console.error('Error assigning rank:', err);
+      if (typeof showToast === 'function') showToast('Failed to assign rank', 3000, 'error');
+      else alert('Failed to assign rank');
+      // Revert the select
+      renderDeptMembers();
+    });
+  };
+
   window.showRankForm = function(rank) {
-    document.getElementById('rankFormContainer').style.display = 'block';
+    var formEl = document.getElementById('rankFormContainer');
+    formEl.style.display = 'block';
     document.getElementById('addRankBtn').style.display = 'none';
     document.getElementById('rankFormId').value = (rank && rank._id) ? rank._id : '';
     document.getElementById('rankFormName').value = (rank && rank.name) || '';
@@ -12812,6 +12969,8 @@ async function saveEditEvent() {
         addRequirementRow(req.metricType || req.metric, req.threshold);
       });
     }
+
+    setTimeout(function() { formEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 50);
   };
 
   window.hideRankForm = function() {
@@ -12828,8 +12987,8 @@ async function saveEditEvent() {
     selectHtml += '<option value="">Select metric...</option>';
     if (rankMgmtMetricTypes && rankMgmtMetricTypes.length > 0) {
       rankMgmtMetricTypes.forEach(function(mt) {
-        var val = mt.value || mt.name || mt;
-        var label = mt.label || mt.name || mt;
+        var val = mt.type || mt.value || mt.name || mt;
+        var label = mt.displayName || mt.label || mt.name || mt;
         var selected = (val === metricType) ? ' selected' : '';
         selectHtml += '<option value="' + escapeRankHtml(val) + '"' + selected + '>' + escapeRankHtml(label) + '</option>';
       });
@@ -12939,7 +13098,7 @@ async function saveEditEvent() {
     fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks/reorder', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderedRankIds: orderedIds })
+      body: JSON.stringify({ rankIds: orderedIds })
     })
     .then(function(r) {
       if (!r.ok) throw new Error('Failed to reorder');
