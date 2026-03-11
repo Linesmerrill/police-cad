@@ -14377,46 +14377,47 @@ async function saveEditEvent() {
   var rankMembersLimit = 20;
   var rankMembersDeptRankMap = {};
 
-  function loadDeptMembers(page) {
+  window.loadDeptMembers = function(page) {
     page = page || 1;
     rankMembersPage = page;
     var container = document.getElementById('rankMembersList');
     container.innerHTML = '<div class="rkm-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading members...</p></div>';
 
-    // On first page load, fetch department members to build rank map
-    var deptPromise = (page === 1)
-      ? fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members?limit=500')
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            rankMembersDeptRankMap = {};
-            (data.data || []).forEach(function(dm) {
-              rankMembersDeptRankMap[dm._id] = dm.rankId || '';
-            });
-          })
-      : Promise.resolve();
-
-    deptPromise.then(function() {
-      return fetch(RANK_API + '/api/v2/community/' + rankMgmtCommunityId + '/members?page=' + page + '&limit=' + rankMembersLimit);
-    })
+    // Fetch department members directly (only members in this department)
+    var url = RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members?page=' + page + '&limit=' + rankMembersLimit;
+    fetch(url)
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      var communityMembers = data.members || [];
-      var pagination = data.pagination || {};
-      rankMembersTotalPages = pagination.totalPages || 1;
+      var deptMembers = data.data || [];
+      var totalCount = data.totalCount || 0;
+      rankMembersTotalPages = Math.ceil(totalCount / rankMembersLimit) || 1;
 
-      if (communityMembers.length === 0 && page === 1) {
-        container.innerHTML = '<div class="rkm-empty"><i class="fa fa-user-slash"></i><p>No members found</p></div>';
+      if (deptMembers.length === 0 && page === 1) {
+        container.innerHTML = '<div class="rkm-empty"><i class="fa fa-user-plus" style="color:#4a5568;"></i><p>No members in this department.<br><span style="color:#64748b; font-size:0.7rem;">Add members from the Edit Department modal first.</span></p></div>';
         return;
       }
 
-      rankMgmtMembers = communityMembers.map(function(m) {
+      rankMgmtMembers = deptMembers.map(function(m) {
+        var user = m.user || {};
         return {
-          userID: m.id,
-          rankId: rankMembersDeptRankMap[m.id] || '',
-          username: m.username || m.id || 'Unknown',
-          profilePicture: m.profilePicture || ''
+          userID: m._id || user.userID,
+          rankId: m.rankId || '',
+          username: user.username || m._id || 'Unknown',
+          profilePicture: user.profilePicture || ''
         };
       });
+
+      // If searching, filter client-side
+      if (_rankMemberSearchTerm) {
+        var term = _rankMemberSearchTerm.toLowerCase();
+        rankMgmtMembers = rankMgmtMembers.filter(function(m) {
+          return (m.username || '').toLowerCase().indexOf(term) !== -1;
+        });
+        if (rankMgmtMembers.length === 0) {
+          container.innerHTML = '<div class="rkm-empty"><i class="fa fa-search"></i><p>No members match "' + escapeRankHtml(_rankMemberSearchTerm) + '"</p></div>';
+          return;
+        }
+      }
 
       renderDeptMembers();
     })
@@ -14424,7 +14425,7 @@ async function saveEditEvent() {
       console.error('Failed to load members:', err);
       container.innerHTML = '<div class="rkm-empty"><i class="fa fa-exclamation-triangle" style="color:#ef4444;"></i><p style="color:#ef4444;">Failed to load members</p></div>';
     });
-  }
+  };
 
   function renderDeptMembers() {
     var container = document.getElementById('rankMembersList');
@@ -14435,23 +14436,16 @@ async function saveEditEvent() {
 
     var sorted = rankMgmtRanks.slice().sort(function(a, b) { return (a.displayOrder || 0) - (b.displayOrder || 0); });
 
-    // Filter by search term
-    var membersToShow = rankMgmtMembers;
-    if (_rankMemberSearchTerm) {
-      membersToShow = rankMgmtMembers.filter(function(m) {
-        return (m.username || '').toLowerCase().indexOf(_rankMemberSearchTerm) !== -1;
-      });
-      if (membersToShow.length === 0) {
-        container.innerHTML = '<div class="rkm-empty"><i class="fa fa-search"></i><p>No members match "' + escapeRankHtml(_rankMemberSearchTerm) + '"</p></div>';
-        return;
-      }
-    }
+    // Find default rank
+    var defaultRank = sorted.find(function(r) { return r.isDefault; });
 
     var html = '';
-    membersToShow.forEach(function(member) {
+    rankMgmtMembers.forEach(function(member) {
+      // Apply default rank for unranked members
+      var effectiveRankId = member.rankId || (defaultRank ? defaultRank._id : '');
       var optionsHtml = '<option value="">Unranked</option>';
       sorted.forEach(function(r) {
-        var selected = (r._id === member.rankId) ? ' selected' : '';
+        var selected = (r._id === effectiveRankId) ? ' selected' : '';
         optionsHtml += '<option value="' + escapeRankHtml(r._id) + '"' + selected + '>' + escapeRankHtml(r.name) + (r.prefix ? ' (' + escapeRankHtml(r.prefix) + ')' : '') + '</option>';
       });
 
@@ -14468,8 +14462,8 @@ async function saveEditEvent() {
       '</div>';
     });
 
-    // Pagination (hide when filtering)
-    if (rankMembersTotalPages > 1 && !_rankMemberSearchTerm) {
+    // Pagination
+    if (rankMembersTotalPages > 1) {
       html += '<div class="rkm-members-pagination">' +
         '<button class="rkm-page-btn" onclick="loadDeptMembers(' + (rankMembersPage - 1) + ')" ' + (rankMembersPage <= 1 ? 'disabled' : '') + '><i class="fa fa-chevron-left"></i></button>' +
         '<span class="rkm-page-info">' + rankMembersPage + ' / ' + rankMembersTotalPages + '</span>' +
@@ -14481,9 +14475,13 @@ async function saveEditEvent() {
   }
 
   var _rankMemberSearchTerm = '';
+  var _rankMemberSearchTimer = null;
   window.filterRankMembers = function(query) {
-    _rankMemberSearchTerm = (query || '').toLowerCase().trim();
-    renderDeptMembers();
+    _rankMemberSearchTerm = (query || '').trim();
+    clearTimeout(_rankMemberSearchTimer);
+    _rankMemberSearchTimer = setTimeout(function() {
+      loadDeptMembers(1);
+    }, 300);
   };
 
   window.assignRankToMember = function(userId, rankId) {

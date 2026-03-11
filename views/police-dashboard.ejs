@@ -1296,6 +1296,7 @@
             <div id="nextRankInfo" style="display:none; text-align:right;">
               <span style="color:#7c7f96; font-size:11px; text-transform:uppercase; letter-spacing:1px;">Next Rank</span>
               <div id="nextRankName" style="color:#e2e0f0; font-size:18px; font-weight:600; letter-spacing:-0.2px;"></div>
+              <div id="nextRankPromoType" style="display:none; margin-top:3px;"></div>
             </div>
           </div>
 
@@ -6188,6 +6189,15 @@ window.showBoloModal = showBoloModal;
       var nextInfo = document.getElementById('nextRankInfo');
       nextInfo.style.display = 'block';
       document.getElementById('nextRankName').textContent = nextRank.name;
+      var promoTypeEl = document.getElementById('nextRankPromoType');
+      if (promoTypeEl) {
+        promoTypeEl.style.display = 'inline-flex';
+        if (nextRank.autoPromote) {
+          promoTypeEl.innerHTML = '<span style="display:inline-flex; align-items:center; gap:4px; background:rgba(16,185,129,0.12); color:#34d399; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:600; letter-spacing:0.3px;"><i class="fa fa-bolt" style="font-size:9px;"></i> Auto Promotion</span>';
+        } else {
+          promoTypeEl.innerHTML = '<span style="display:inline-flex; align-items:center; gap:4px; background:rgba(251,191,36,0.12); color:#fbbf24; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:600; letter-spacing:0.3px;"><i class="fa fa-user-check" style="font-size:9px;"></i> Admin Review</span>';
+        }
+      }
     }
 
     // Progress bars
