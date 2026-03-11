@@ -2115,7 +2115,6 @@
         </div>
       </header>
       <% include partials/rank-modals %>
-      <% include partials/rank-progress-card %>
       <section style='background-image: url("/static/images/blue-clouds.jpg");'>
         <div class="container">
 
@@ -2178,6 +2177,11 @@
 
             <!-- Status Set By info (hidden, for compatibility) -->
             <div id="statusSetBy" style="display: none;"></div>
+          </div>
+
+          <!-- Rank Progress Card -->
+          <div class="col-md-12 col-md-offset-0.75">
+            <% include partials/rank-progress-card %>
           </div>
 
           <!--Table for Personas  -->

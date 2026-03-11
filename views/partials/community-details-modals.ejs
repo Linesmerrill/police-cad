@@ -14560,7 +14560,7 @@ async function saveEditEvent() {
   };
 
   function loadMetricTypes() {
-    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/ranks/metric-types')
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks/metric-types')
       .then(function(r) { return r.json(); })
       .then(function(data) {
         rankMgmtMetricTypes = data.metricTypes || data || [];

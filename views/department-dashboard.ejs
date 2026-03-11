@@ -3132,6 +3132,102 @@
 
       <!-- Content panels injected by JS -->
       <div id="dd-panels" style="display:none;"></div>
+
+      <!-- Rank Progress (styled to match DD) -->
+      <div id="dd-rank-wrap" style="margin-bottom:1rem;">
+        <% include partials/rank-progress-card %>
+      </div>
+      <style>
+        #dd-rank-wrap #myRankStatsCard {
+          max-width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        #dd-rank-wrap #myRankStatsCard > div {
+          background: var(--dd-glass) !important;
+          border: 1px solid var(--dd-glass-border) !important;
+          border-radius: var(--dd-radius) !important;
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          box-shadow: none !important;
+          padding: 0.875rem 1.125rem !important;
+          overflow: hidden !important;
+        }
+        /* Compact header row */
+        #dd-rank-wrap #myRankStatsCard > div > div:first-child {
+          margin-bottom: 10px !important;
+          gap: 8px !important;
+        }
+        #dd-rank-wrap #myRankStatsCard > div > div:first-child > div:first-child {
+          gap: 10px !important;
+        }
+        #dd-rank-wrap #myRankStatsCard > div > div:first-child > div:first-child > div:first-child {
+          width: 36px !important; height: 36px !important; border-radius: 8px !important;
+          background: var(--dd-accent-glow) !important; border-color: rgba(139,92,246,0.2) !important;
+        }
+        #dd-rank-wrap #myRankStatsCard > div > div:first-child > div:first-child > div:first-child i {
+          font-size: 16px !important; color: var(--dd-accent) !important;
+        }
+        #dd-rank-wrap #myRankName {
+          font-family: 'Outfit', sans-serif !important;
+          font-size: 0.9375rem !important; line-height: 1.2 !important;
+        }
+        #dd-rank-wrap #myRankPrefix {
+          background: var(--dd-accent-glow) !important;
+          color: var(--dd-accent) !important;
+          font-size: 0.625rem !important; padding: 2px 7px !important;
+        }
+        #dd-rank-wrap span[style*="Current Rank"], #dd-rank-wrap #myRankStatsCard > div > div:first-child > div:first-child > div:last-child > span:last-child {
+          font-size: 0.6875rem !important;
+        }
+        #dd-rank-wrap #nextRankInfo {
+          font-size: 0.75rem !important;
+        }
+        #dd-rank-wrap #nextRankInfo > span:first-child {
+          font-size: 0.5625rem !important;
+        }
+        #dd-rank-wrap #nextRankName {
+          font-size: 0.875rem !important; color: var(--dd-text) !important;
+        }
+        /* Progress bars */
+        #dd-rank-wrap #rankProgressBars {
+          max-height: 120px !important; gap: 8px !important;
+        }
+        /* Toggle button */
+        #dd-rank-wrap #rankStatsToggle {
+          background: var(--dd-glass) !important;
+          border: 1px solid var(--dd-glass-border) !important;
+          border-radius: var(--dd-radius-sm) !important;
+          color: var(--dd-accent) !important;
+          font-family: 'Outfit', sans-serif !important;
+          font-size: 0.75rem !important;
+          margin-top: 10px !important;
+          padding: 7px !important;
+        }
+        #dd-rank-wrap #rankStatsToggle:hover {
+          background: var(--dd-glass-hover) !important;
+        }
+        /* Stats grid */
+        #dd-rank-wrap #rankStatsGrid {
+          gap: 8px !important;
+        }
+        #dd-rank-wrap #rankStatsGrid > div {
+          background: var(--dd-surface) !important;
+          border: 1px solid var(--dd-glass-border) !important;
+          border-radius: var(--dd-radius-sm) !important;
+          padding: 10px 8px !important;
+        }
+        #dd-rank-wrap #rankStatsGrid > div > div:first-child {
+          font-size: 1.25rem !important;
+        }
+        #dd-rank-wrap #rankStatsGrid > div > div:last-child {
+          font-size: 0.5625rem !important; margin-top: 4px !important;
+        }
+        @media (max-width: 640px) {
+          #dd-rank-wrap #myRankStatsCard > div { padding: 0.75rem !important; }
+          #dd-rank-wrap #rankStatsGrid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+      </style>
     </div>
   </main>
 
@@ -3139,7 +3235,6 @@
   <div class="dd-toast" id="dd-toast"></div>
 
   <% include partials/rank-modals %>
-  <% include partials/rank-progress-card %>
 
   <!-- Unified Modal -->
   <div class="dd-modal-overlay" id="dd-modal-overlay">
@@ -3655,6 +3750,13 @@ $('#dd-loading').hide();
       }
 
       $overview.append($grid);
+
+      // Move rank progress card into the overview, between stats and grid
+      var $rankWrap = $('#dd-rank-wrap');
+      if ($rankWrap.length) {
+        $rankWrap.insertAfter($statsRow);
+      }
+
       $panels.append($overview);
 
       // NOTE: We no longer create separate focused panels.
