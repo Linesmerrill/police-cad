@@ -6650,7 +6650,7 @@ function renderEditDeptComponents(components) {
       + '<span>' + meta.label + '</span>'
       + '</div>'
       + '<label class="edm-toggle">'
-      + '<input type="checkbox" data-component-name="' + comp.name + '" class="edit-dept-component-toggle"' + (comp.enabled ? ' checked' : '') + ' onchange="updateEditDeptComponentCount()">'
+      + '<input type="checkbox" data-component-name="' + comp.name + '" class="edit-dept-component-toggle"' + (comp.enabled ? ' checked' : '') + ' onchange="updateEditDeptComponentCount(); triggerEditDeptAutoSaveImmediate()">'
       + '<div class="edm-toggle-track"></div>'
       + '<div class="edm-toggle-knob"></div>'
       + '</label>'
@@ -6698,10 +6698,13 @@ function populateEditDeptModal(dept) {
   renderEditDeptComponents(mergedComponents);
 
   updateEditDeptVisibilityLabel();
+  setEditDeptSaveStatus('idle');
   document.getElementById('editDepartmentModal').classList.add('is-open');
   document.body.style.overflow = 'hidden';
-  // Load department members — reset add-member cache so it refreshes
-  editDeptAddMemberCommunityMembers = null;
+  // Reset add-member toggle button
+  var addBtn = document.getElementById('editDeptAddMemberToggle');
+  if (addBtn) { addBtn.innerHTML = '<i class="fa fa-plus"></i> <span>Add</span>'; addBtn.style.borderColor = ''; addBtn.style.color = ''; addBtn.style.background = ''; }
+  // Load department members — reset add-member panel
   var addPanel = document.getElementById('editDeptAddMemberPanel');
   if (addPanel) addPanel.classList.remove('is-open');
   document.getElementById('editDeptMemberSearch').value = '';
@@ -6769,8 +6772,9 @@ async function handleEditDeptImageChange(event) {
     // Store the URL
     document.getElementById('editDeptImageUrl').value = imageUrl;
 
-    // Show success status
+    // Show success status and auto-save
     showToast('Photo uploaded successfully!', 3000, 'success');
+    triggerEditDeptAutoSaveImmediate();
 
   } catch (error) {
     console.error('Photo upload error:', error);
@@ -6785,7 +6789,15 @@ async function handleEditDeptImageChange(event) {
 }
 
 // Delete department photo
-function deleteEditDeptImage() {
+async function deleteEditDeptImage() {
+  var confirmed = await edmConfirm({
+    icon: 'image', iconBg: 'rgba(239,68,68,0.1)', iconColor: '#ef4444',
+    title: 'Remove Photo?',
+    text: 'The department photo will be permanently removed.',
+    confirmLabel: 'Remove Photo', confirmIcon: 'trash'
+  });
+  if (!confirmed) return;
+
   const preview = document.getElementById('editDeptImagePreview');
   const placeholder = document.getElementById('editDeptImagePlaceholder');
   const deleteBtn = document.getElementById('editDeptImageDeleteBtn');
@@ -6805,6 +6817,23 @@ function deleteEditDeptImage() {
   if (fileInput) fileInput.value = '';
 
   showToast('Photo removed', 2000, 'info');
+  triggerEditDeptAutoSaveImmediate();
+}
+</script>
+
+<!-- Tooltip positioning for fixed tooltips -->
+<script>
+function positionEdmTooltip(el) {
+  var tip = el.querySelector('.edm-vis-tooltip-text');
+  if (!tip) return;
+  var rect = el.getBoundingClientRect();
+  // Position below the icon
+  tip.style.left = (rect.left + rect.width / 2 - 120) + 'px';
+  tip.style.top = (rect.bottom + 8) + 'px';
+}
+function hideEdmTooltip(el) {
+  var tip = el.querySelector('.edm-vis-tooltip-text');
+  if (tip) { tip.style.left = ''; tip.style.top = ''; }
 }
 </script>
 
@@ -6913,10 +6942,20 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
     border-color: rgba(255,255,255,0.1);
   }
 
+  #editDeptForm {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .edm-body {
     overflow-y: auto;
     flex: 1;
     padding: 0;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Desktop: 2-column layout */
@@ -7079,7 +7118,7 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
     transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .edm-section.is-open .edm-section-body {
-    max-height: 600px;
+    max-height: 800px;
   }
   .edm-section-inner {
     padding: 0 14px 14px;
@@ -7214,9 +7253,8 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
     cursor: help;
   }
   .edm-vis-tooltip-text {
-    position: absolute;
-    left: 20px; top: -4px;
-    width: 180px;
+    position: fixed;
+    width: 240px;
     background: #1e2028;
     color: #cbd5e1;
     font-size: 11px;
@@ -7227,11 +7265,12 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s;
-    z-index: 10;
+    z-index: 9999;
     line-height: 1.5;
   }
   .edm-vis-tooltip:hover .edm-vis-tooltip-text {
     opacity: 1;
+    pointer-events: auto;
   }
 
   /* Footer */
@@ -7265,20 +7304,54 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
     background: rgba(239, 68, 68, 0.18);
     border-color: rgba(239, 68, 68, 0.3);
   }
-  .edm-btn-save {
-    background: #3b82f6;
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  /* Auto-save status indicator */
+  @keyframes edmSpin {
+    to { transform: rotate(360deg); }
   }
-  .edm-btn-save:hover {
-    background: #2563eb;
-    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
-    transform: translateY(-1px);
+  @keyframes edmCheckPop {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
   }
-  .edm-btn-save:disabled {
-    opacity: 0.6;
-    pointer-events: none;
+  .edm-save-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    min-height: 20px;
+    transition: opacity 0.3s;
   }
+  .edm-save-status .edm-save-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: edmSpin 0.6s linear infinite;
+  }
+  .edm-save-status .edm-save-check {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: edmCheckPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .edm-save-status .edm-save-check i {
+    font-size: 9px;
+    color: #4ade80;
+  }
+  .edm-save-status .edm-save-error i {
+    font-size: 11px;
+    color: #f87171;
+  }
+  .edm-save-status span {
+    color: #64748b;
+  }
+  .edm-save-status.is-saving span { color: #60a5fa; }
+  .edm-save-status.is-saved span { color: #4ade80; }
+  .edm-save-status.is-error span { color: #f87171; }
 
   /* Error */
   .edm-error {
@@ -7461,18 +7534,20 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
     color: #64748b;
   }
 
-  /* Add member overlay (inline in the section) */
+  /* Add member panel (inline in the section) */
   .edm-add-member-panel {
     display: none;
-    margin-top: 10px;
-    padding: 12px;
-    background: rgba(59, 130, 246, 0.04);
-    border: 1px solid rgba(59, 130, 246, 0.1);
-    border-radius: 8px;
+    margin-bottom: 12px;
+    padding: 14px;
+    background: rgba(59, 130, 246, 0.03);
+    border: 1px solid rgba(59, 130, 246, 0.08);
+    border-radius: 10px;
+    animation: edmSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .edm-add-member-panel.is-open { display: block; }
+  .edm-add-member-panel .edm-members-search-wrap { margin-bottom: 8px; }
   .edm-add-member-list {
-    max-height: 160px;
+    max-height: 200px;
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: #2a2d3a transparent;
@@ -7481,17 +7556,17 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 0;
+    padding: 7px 0;
   }
   .edm-add-member-row + .edm-add-member-row {
     border-top: 1px solid rgba(255,255,255,0.03);
   }
   .edm-add-btn {
-    background: rgba(59, 130, 246, 0.12);
-    border: none;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.15);
     color: #60a5fa;
-    width: 26px; height: 26px;
-    border-radius: 6px;
+    width: 28px; height: 28px;
+    border-radius: 7px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -7502,6 +7577,12 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
   }
   .edm-add-btn:hover {
     background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: scale(1.08);
+  }
+  .edm-add-member-panel .edm-members-pagination {
+    margin-top: 8px;
+    padding-top: 8px;
   }
 
   /* Mobile responsive */
@@ -7532,7 +7613,7 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
     </div>
 
     <!-- Body -->
-    <form id="editDeptForm" onsubmit="event.preventDefault(); saveEditDepartment();">
+    <form id="editDeptForm" onsubmit="event.preventDefault();">
       <input type="hidden" id="editDeptId" value="">
       <input type="hidden" id="editDeptImageUrl" value="">
 
@@ -7554,12 +7635,12 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
 
             <div class="edm-field">
               <label class="edm-label" for="editDeptName">Name</label>
-              <input type="text" id="editDeptName" required class="edm-input" placeholder="e.g. Police" />
+              <input type="text" id="editDeptName" required class="edm-input" placeholder="e.g. Police" oninput="triggerEditDeptAutoSaveDebounced()" />
             </div>
 
             <div class="edm-field">
               <label class="edm-label" for="editDeptDescription">Description</label>
-              <textarea id="editDeptDescription" rows="2" class="edm-textarea" placeholder="Brief description..."></textarea>
+              <textarea id="editDeptDescription" rows="2" class="edm-textarea" placeholder="Brief description..." oninput="triggerEditDeptAutoSaveDebounced()"></textarea>
             </div>
           </div>
 
@@ -7583,24 +7664,28 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
                   Members
                   <span id="editDeptMemberCount" class="edm-section-badge"></span>
                 </div>
-                <i class="fa fa-chevron-down edm-section-chevron"></i>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <button type="button" class="edm-btn-add-member" id="editDeptAddMemberToggle" onclick="event.stopPropagation(); toggleAddMemberPanel()">
+                    <i class="fa fa-plus"></i> <span>Add</span>
+                  </button>
+                  <i class="fa fa-chevron-down edm-section-chevron"></i>
+                </div>
               </div>
               <div class="edm-section-body">
                 <div class="edm-section-inner">
-                  <div class="edm-members-header">
-                    <button type="button" class="edm-btn-add-member" onclick="toggleAddMemberPanel()">
-                      <i class="fa fa-plus"></i> Add Members
-                    </button>
-                  </div>
-
                   <!-- Add member panel (inline) -->
                   <div id="editDeptAddMemberPanel" class="edm-add-member-panel">
                     <div class="edm-members-search-wrap">
                       <i class="fa fa-search"></i>
-                      <input type="text" class="edm-members-search" id="editDeptAddMemberSearch" placeholder="Search community members..." oninput="filterAddMemberList()">
+                      <input type="text" class="edm-members-search" id="editDeptAddMemberSearch" placeholder="Search community members..." oninput="searchAddMemberList()">
                     </div>
                     <div id="editDeptAddMemberList" class="edm-add-member-list">
                       <div class="edm-members-loading"><i class="fa fa-spinner fa-spin"></i> Loading...</div>
+                    </div>
+                    <div id="editDeptAddMemberPagination" class="edm-members-pagination" style="display:none;">
+                      <button type="button" class="edm-page-btn" id="editDeptAddMemberPrev" onclick="loadAddMemberPage(addMemberPage - 1)"><i class="fa fa-chevron-left"></i></button>
+                      <span id="editDeptAddMemberPageInfo" class="edm-page-info"></span>
+                      <button type="button" class="edm-page-btn" id="editDeptAddMemberNext" onclick="loadAddMemberPage(addMemberPage + 1)"><i class="fa fa-chevron-right"></i></button>
                     </div>
                   </div>
 
@@ -7639,7 +7724,7 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
                   <div class="edm-vis-row">
                     <div style="display:flex; align-items:center; gap:6px;">
                       <span class="edm-vis-label" style="color:#94a3b8;">Access Mode</span>
-                      <div class="edm-vis-tooltip">
+                      <div class="edm-vis-tooltip" onmouseenter="positionEdmTooltip(this)" onmouseleave="hideEdmTooltip(this)">
                         <i class="fa fa-info-circle"></i>
                         <div class="edm-vis-tooltip-text">
                           <strong>Public</strong>: Anyone can access this department.<br/>
@@ -7650,7 +7735,7 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
                     <div class="edm-vis-labels">
                       <span id="editDeptVisibilityPublic" class="edm-vis-label" style="color:#64748b;">Public</span>
                       <label class="edm-toggle">
-                        <input type="checkbox" id="editDeptApprovalRequired" onchange="updateEditDeptVisibilityLabel()">
+                        <input type="checkbox" id="editDeptApprovalRequired" onchange="updateEditDeptVisibilityLabel(); triggerEditDeptAutoSaveImmediate()">
                         <div class="edm-toggle-track"></div>
                         <div class="edm-toggle-knob"></div>
                       </label>
@@ -7690,45 +7775,91 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
         <button type="button" class="edm-btn edm-btn-delete" onclick="deleteEditDepartment()">
           <i class="fa fa-trash"></i> Delete
         </button>
-        <button type="submit" class="edm-btn edm-btn-save">
-          Save Changes
-        </button>
+        <div id="editDeptSaveStatus" class="edm-save-status">
+          <!-- Populated by JS: idle / saving / saved / error -->
+        </div>
       </div>
     </form>
   </div>
 </div> 
 
 <script>
+// ===== Auto-Save System =====
+var _edmAutoSaveTimer = null;
+var _edmSaveStatusTimer = null;
+var _edmIsSaving = false;
+
+function setEditDeptSaveStatus(state, message) {
+  var el = document.getElementById('editDeptSaveStatus');
+  if (!el) return;
+  el.className = 'edm-save-status';
+  clearTimeout(_edmSaveStatusTimer);
+
+  if (state === 'saving') {
+    el.className = 'edm-save-status is-saving';
+    el.innerHTML = '<div class="edm-save-spinner"></div><span>Saving\u2026</span>';
+  } else if (state === 'saved') {
+    el.className = 'edm-save-status is-saved';
+    el.innerHTML = '<div class="edm-save-check"><i class="fa fa-check"></i></div><span>Saved</span>';
+    _edmSaveStatusTimer = setTimeout(function() {
+      el.innerHTML = '';
+      el.className = 'edm-save-status';
+    }, 2500);
+  } else if (state === 'error') {
+    el.className = 'edm-save-status is-error';
+    el.innerHTML = '<span class="edm-save-error"><i class="fa fa-exclamation-circle"></i></span><span>' + (message || 'Save failed') + '</span>';
+    _edmSaveStatusTimer = setTimeout(function() {
+      el.innerHTML = '';
+      el.className = 'edm-save-status';
+    }, 4000);
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+function triggerEditDeptAutoSave(delay) {
+  clearTimeout(_edmAutoSaveTimer);
+  _edmAutoSaveTimer = setTimeout(function() {
+    saveEditDepartment();
+  }, delay || 800);
+}
+
+// Immediate save (for toggles)
+function triggerEditDeptAutoSaveImmediate() {
+  triggerEditDeptAutoSave(300);
+}
+
+// Debounced save (for text inputs)
+function triggerEditDeptAutoSaveDebounced() {
+  triggerEditDeptAutoSave(1000);
+}
+
 async function saveEditDepartment() {
-  const deptId = currentEditDepartment;
-  const communityId = '<%= community._id %>';
-  const name = document.getElementById('editDeptName').value.trim();
-  const description = document.getElementById('editDeptDescription').value.trim();
-  const imageUrl = document.getElementById('editDeptImageUrl').value;
-  const saveBtn = document.querySelector('#editDepartmentModal button[type="submit"]');
+  if (_edmIsSaving) return;
+  var deptId = currentEditDepartment;
+  var communityId = '<%= community._id %>';
+  var name = document.getElementById('editDeptName').value.trim();
+  var description = document.getElementById('editDeptDescription').value.trim();
+  var imageUrl = document.getElementById('editDeptImageUrl').value;
 
   if (!name) {
-    if (typeof showToast === 'function') {
-      showToast('Department name is required', 2500);
-    } else {
-      alert('Department name is required');
-    }
+    setEditDeptSaveStatus('error', 'Name is required');
     return;
   }
 
-  saveBtn.disabled = true;
-  saveBtn.textContent = 'Saving\u2026';
+  _edmIsSaving = true;
+  setEditDeptSaveStatus('saving');
 
   try {
     // Fetch the current department data to preserve all existing structure
-    const fetchRes = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`);
+    var fetchRes = await fetch(API_URL + '/api/v1/community/' + communityId + '/departments/' + deptId);
     if (!fetchRes.ok) throw new Error('Failed to fetch department data');
 
-    const response = await fetchRes.json();
-    const currentDept = response.department || response;
+    var response = await fetchRes.json();
+    var currentDept = response.department || response;
 
     // Determine image value: __DELETE__ means explicitly remove, empty means keep existing
-    let finalImage;
+    var finalImage;
     if (imageUrl === '__DELETE__') {
       finalImage = ''; // Explicitly delete the image
     } else if (imageUrl) {
@@ -7738,9 +7869,9 @@ async function saveEditDepartment() {
     }
 
     // Create the department object with only the fields we want to update
-    const payload = {
-      name,
-      description,
+    var payload = {
+      name: name,
+      description: description,
       approvalRequired: document.getElementById('editDeptApprovalRequired').checked,
       image: finalImage
     };
@@ -7748,21 +7879,21 @@ async function saveEditDepartment() {
     // Update the template components - include in the same PATCH request
     if (currentDept.template) {
       // Read toggle states from the dynamically rendered checkboxes (includes merged components)
-      const toggleStates = {};
+      var toggleStates = {};
       document.querySelectorAll('.edit-dept-component-toggle').forEach(function(cb) {
         toggleStates[cb.getAttribute('data-component-name')] = cb.checked;
       });
 
       // Start with existing components from the API
-      const existingComponents = currentDept.template.components || [];
-      const existingNames = {};
-      const updatedComponents = existingComponents.map(component => {
-        const componentName = component.name;
+      var existingComponents = currentDept.template.components || [];
+      var existingNames = {};
+      var updatedComponents = existingComponents.map(function(component) {
+        var componentName = component.name;
         existingNames[componentName] = true;
-        const isEnabled = toggleStates.hasOwnProperty(componentName) ? toggleStates[componentName] : component.enabled;
+        var isEnabled = toggleStates.hasOwnProperty(componentName) ? toggleStates[componentName] : component.enabled;
 
         // Extract component ID - handle both string and {$oid: ...} formats
-        let componentId = component._id;
+        var componentId = component._id;
         if (typeof componentId === 'object' && componentId !== null) {
           componentId = componentId.$oid || String(componentId);
         }
@@ -7774,7 +7905,7 @@ async function saveEditDepartment() {
         };
       });
 
-      // Add any new components from toggles that weren't in the original list (e.g. notepad on legacy depts)
+      // Add any new components from toggles that weren't in the original list
       Object.keys(toggleStates).forEach(function(toggleName) {
         if (!existingNames[toggleName]) {
           updatedComponents.push({
@@ -7785,7 +7916,7 @@ async function saveEditDepartment() {
       });
 
       // Extract template ID - handle both string and {$oid: ...} formats
-      let templateId = currentDept.template._id;
+      var templateId = currentDept.template._id;
       if (typeof templateId === 'object' && templateId !== null) {
         templateId = templateId.$oid || String(templateId);
       }
@@ -7799,41 +7930,29 @@ async function saveEditDepartment() {
       };
     }
 
-    const updateRes = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}?userId=${window.dbUser?._id || ''}`, {
+    var updateRes = await fetch(API_URL + '/api/v1/community/' + communityId + '/departments/' + deptId + '?userId=' + (window.dbUser && window.dbUser._id || ''), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
     if (!updateRes.ok) {
-      const errorText = await updateRes.text();
+      var errorText = await updateRes.text();
       console.error('Update failed with response:', errorText);
       throw new Error('Failed to update department');
     }
 
     await updateRes.json();
-
-    closeEditDepartmentModal();
-    if (typeof showToast === 'function') {
-      showToast('Department updated successfully', 2500);
-    } else {
-      alert('Department updated successfully');
-    }
+    setEditDeptSaveStatus('saved');
     // Set flag to refresh component permissions when user returns to civilian dashboard
     sessionStorage.setItem('refreshComponentPermissions', 'true');
     refreshDepartmentsGrid();
 
   } catch (err) {
     console.error('Error in saveEditDepartment:', err);
-    if (typeof showToast === 'function') {
-      showToast(err.message || 'Failed to update department', 3000, 'error');
-    } else {
-      alert(err.message || 'Failed to update department');
-    }
+    setEditDeptSaveStatus('error', err.message || 'Save failed');
   } finally {
-    // Always reset button state
-    saveBtn.disabled = false;
-    saveBtn.textContent = 'Save Changes';
+    _edmIsSaving = false;
   }
 }
 function deleteEditDepartment() {
@@ -7894,7 +8013,6 @@ var editDeptMembersPage = 1;
 var editDeptMembersLimit = 10;
 var editDeptMembersData = [];
 var editDeptMembersTotalCount = 0;
-var editDeptAddMemberCommunityMembers = null; // cached
 
 function loadEditDeptMembers(departmentId, page) {
   if (!departmentId) return;
@@ -7978,8 +8096,14 @@ function renderEditDeptMemberPagination() {
   document.getElementById('editDeptMemberNext').disabled = editDeptMembersPage >= totalPages;
 }
 
-function removeEditDeptMember(userId, username) {
-  if (!confirm('Remove ' + username + ' from this department?')) return;
+async function removeEditDeptMember(userId, username) {
+  var confirmed = await edmConfirm({
+    icon: 'user-times', iconBg: 'rgba(245,158,11,0.1)', iconColor: '#f59e0b',
+    title: 'Remove Member?',
+    text: 'Remove <strong style="color:#f1f5f9;">' + username + '</strong> from this department?',
+    confirmLabel: 'Remove', confirmIcon: 'user-times'
+  });
+  if (!confirmed) return;
   var communityId = '<%= community._id %>';
   var departmentId = currentEditDepartment;
   fetch(API_URL + '/api/v1/community/' + communityId + '/departments/' + departmentId + '/remove-user', {
@@ -8002,39 +8126,71 @@ function removeEditDeptMember(userId, username) {
 }
 
 // ===== Add Members Panel =====
+var addMemberPage = 1;
+var addMemberLimit = 10;
+var addMemberTotalPages = 1;
+var addMemberSearchTimer = null;
+var addMemberCurrentData = [];
+
 function toggleAddMemberPanel() {
   var panel = document.getElementById('editDeptAddMemberPanel');
+  var btn = document.getElementById('editDeptAddMemberToggle');
   var isOpen = panel.classList.contains('is-open');
   if (isOpen) {
     panel.classList.remove('is-open');
+    btn.innerHTML = '<i class="fa fa-plus"></i> <span>Add</span>';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    btn.style.background = '';
     return;
   }
   panel.classList.add('is-open');
-  // Load community members if not cached
-  if (!editDeptAddMemberCommunityMembers) {
-    loadCommunityMembersForAdd();
-  } else {
-    renderAddMemberList();
-  }
+  btn.innerHTML = '<i class="fa fa-times"></i> <span>Done</span>';
+  btn.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+  btn.style.color = '#f87171';
+  btn.style.background = 'rgba(239, 68, 68, 0.06)';
+  document.getElementById('editDeptAddMemberSearch').value = '';
+  loadAddMemberPage(1);
 }
 
-function loadCommunityMembersForAdd() {
+function loadAddMemberPage(page) {
+  page = page || 1;
+  addMemberPage = page;
   var communityId = '<%= community._id %>';
   var listEl = document.getElementById('editDeptAddMemberList');
   listEl.innerHTML = '<div class="edm-members-loading"><i class="fa fa-spinner fa-spin"></i> Loading...</div>';
 
-  // Fetch all community members (v2 with high limit to get all)
-  fetch(API_URL + '/api/v2/community/' + communityId + '/members?page=1&limit=200')
+  var query = (document.getElementById('editDeptAddMemberSearch').value || '').trim();
+  var url;
+  if (query.length > 0) {
+    // Use search endpoint
+    url = API_URL + '/api/v1/community/' + communityId + '/members/search?q=' + encodeURIComponent(query) + '&page=' + page + '&limit=' + addMemberLimit;
+  } else {
+    // Use v2 members endpoint for browsing
+    url = API_URL + '/api/v2/community/' + communityId + '/members?page=' + page + '&limit=' + addMemberLimit;
+  }
+
+  fetch(url)
     .then(function(res) { return res.json(); })
     .then(function(data) {
-      editDeptAddMemberCommunityMembers = (data.data || []).map(function(m) {
+      var members = (data.members || []).map(function(m) {
         return {
-          userId: m.userID || m._id,
+          userId: m.id,
           username: m.username || 'Unknown',
           profilePicture: m.profilePicture || ''
         };
       });
-      renderAddMemberList();
+
+      // Filter out members already in the department
+      var existingIds = {};
+      editDeptMembersData.forEach(function(m) { existingIds[m.userID] = true; });
+      addMemberCurrentData = members.filter(function(m) { return !existingIds[m.userId]; });
+
+      var pagination = data.pagination || {};
+      addMemberTotalPages = pagination.totalPages || Math.ceil((pagination.totalCount || members.length) / addMemberLimit) || 1;
+
+      renderAddMemberRows();
+      renderAddMemberPagination();
     })
     .catch(function(err) {
       console.error('Failed to load community members:', err);
@@ -8042,25 +8198,14 @@ function loadCommunityMembersForAdd() {
     });
 }
 
-function renderAddMemberList() {
+function renderAddMemberRows() {
   var listEl = document.getElementById('editDeptAddMemberList');
-  var filter = (document.getElementById('editDeptAddMemberSearch').value || '').trim().toLowerCase();
-  // Filter out members already in the department
-  var existingIds = {};
-  editDeptMembersData.forEach(function(m) { existingIds[m.userID || m._id] = true; });
-
-  var available = (editDeptAddMemberCommunityMembers || []).filter(function(m) {
-    if (existingIds[m.userId]) return false;
-    if (filter && m.username.toLowerCase().indexOf(filter) === -1) return false;
-    return true;
-  });
-
-  if (available.length === 0) {
-    listEl.innerHTML = '<div class="edm-members-empty">' + (filter ? 'No matching members' : 'All community members are already in this department') + '</div>';
+  if (addMemberCurrentData.length === 0) {
+    var query = (document.getElementById('editDeptAddMemberSearch').value || '').trim();
+    listEl.innerHTML = '<div class="edm-members-empty">' + (query ? 'No matching members' : 'No members to add on this page') + '</div>';
     return;
   }
-
-  listEl.innerHTML = available.map(function(m) {
+  listEl.innerHTML = addMemberCurrentData.map(function(m) {
     var avatar = m.profilePicture
       ? '<img src="' + m.profilePicture + '" alt="" style="width:100%;height:100%;object-fit:cover;">'
       : '<i class="fa fa-user"></i>';
@@ -8074,8 +8219,24 @@ function renderAddMemberList() {
   }).join('');
 }
 
-function filterAddMemberList() {
-  renderAddMemberList();
+function renderAddMemberPagination() {
+  var paginationEl = document.getElementById('editDeptAddMemberPagination');
+  if (addMemberTotalPages <= 1) {
+    paginationEl.style.display = 'none';
+    return;
+  }
+  paginationEl.style.display = 'flex';
+  document.getElementById('editDeptAddMemberPageInfo').textContent = 'Page ' + addMemberPage + ' of ' + addMemberTotalPages;
+  document.getElementById('editDeptAddMemberPrev').disabled = addMemberPage <= 1;
+  document.getElementById('editDeptAddMemberNext').disabled = addMemberPage >= addMemberTotalPages;
+}
+
+function searchAddMemberList() {
+  // Debounce search input
+  clearTimeout(addMemberSearchTimer);
+  addMemberSearchTimer = setTimeout(function() {
+    loadAddMemberPage(1);
+  }, 300);
 }
 
 function addMemberToDept(userId) {
@@ -8092,15 +8253,103 @@ function addMemberToDept(userId) {
   })
   .then(function() {
     if (typeof showToast === 'function') showToast('Member added', 2000);
-    // Refresh both lists
+    // Refresh department members list, then reload add-member page
     loadEditDeptMembers(departmentId, editDeptMembersPage);
-    // Re-render the add list after a short delay to let the member list refresh
-    setTimeout(function() { renderAddMemberList(); }, 500);
+    setTimeout(function() { loadAddMemberPage(addMemberPage); }, 500);
   })
   .catch(function(err) {
     console.error('Add member error:', err);
     if (typeof showToast === 'function') showToast('Failed to add member', 2500, 'error');
   });
+}
+</script>
+
+<!-- Reusable Confirm Modal -->
+<style>
+  .edm-confirm-overlay {
+    display: none; position: fixed; z-index: 3200; left: 0; top: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0); align-items: center; justify-content: center;
+    transition: background 0.25s ease;
+  }
+  .edm-confirm-overlay.is-open { display: flex; background: rgba(0,0,0,0.7); }
+  .edm-confirm-card {
+    background: #1a1c24; border-radius: 14px; padding: 1.75rem 1.5rem 1.25rem; max-width: 360px; width: 88%;
+    border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 20px 60px -10px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03) inset;
+    transform: scale(0.92) translateY(10px); opacity: 0;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  }
+  .edm-confirm-overlay.is-open .edm-confirm-card { transform: scale(1) translateY(0); opacity: 1; }
+  .edm-confirm-icon {
+    width: 3.25rem; height: 3.25rem; margin: 0 auto 0.875rem; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .edm-confirm-icon i { font-size: 1.35rem; }
+  .edm-confirm-title { color: #f1f5f9; margin: 0 0 0.375rem; font-size: 1.1rem; font-weight: 600; text-align: center; }
+  .edm-confirm-text { color: #8b95a5; margin: 0; font-size: 0.8125rem; line-height: 1.55; text-align: center; }
+  .edm-confirm-actions { display: flex; gap: 0.625rem; margin-top: 1.375rem; }
+  .edm-confirm-btn {
+    flex: 1; padding: 0.625rem 0.875rem; border: none; border-radius: 8px;
+    font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease;
+    display: flex; align-items: center; justify-content: center; gap: 0.375rem;
+  }
+  .edm-confirm-btn-cancel { background: #2a2d38; color: #c4cad4; }
+  .edm-confirm-btn-cancel:hover { background: #363a48; }
+  .edm-confirm-btn-danger { background: #dc2626; color: #fff; }
+  .edm-confirm-btn-danger:hover { background: #b91c1c; }
+</style>
+
+<div id="edmConfirmOverlay" class="edm-confirm-overlay" onclick="if(event.target===this) edmConfirmClose();">
+  <div class="edm-confirm-card">
+    <div id="edmConfirmIcon" class="edm-confirm-icon" style="background:rgba(239,68,68,0.1);">
+      <i class="fa fa-trash" style="color:#ef4444;"></i>
+    </div>
+    <h3 id="edmConfirmTitle" class="edm-confirm-title">Remove Photo?</h3>
+    <p id="edmConfirmText" class="edm-confirm-text">This action cannot be undone.</p>
+    <div class="edm-confirm-actions">
+      <button class="edm-confirm-btn edm-confirm-btn-cancel" onclick="edmConfirmClose();">Cancel</button>
+      <button id="edmConfirmBtn" class="edm-confirm-btn edm-confirm-btn-danger" onclick="edmConfirmResolve();">
+        <i class="fa fa-trash"></i> Remove
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+var _edmConfirmCallback = null;
+
+function edmConfirm(opts) {
+  // opts: { icon, iconBg, iconColor, title, text, confirmLabel, confirmIcon }
+  var overlay = document.getElementById('edmConfirmOverlay');
+  var iconEl = document.getElementById('edmConfirmIcon');
+  var titleEl = document.getElementById('edmConfirmTitle');
+  var textEl = document.getElementById('edmConfirmText');
+  var btnEl = document.getElementById('edmConfirmBtn');
+
+  iconEl.style.background = opts.iconBg || 'rgba(239,68,68,0.1)';
+  iconEl.innerHTML = '<i class="fa fa-' + (opts.icon || 'trash') + '" style="color:' + (opts.iconColor || '#ef4444') + ';"></i>';
+  titleEl.textContent = opts.title || 'Are you sure?';
+  textEl.innerHTML = opts.text || '';
+  btnEl.innerHTML = '<i class="fa fa-' + (opts.confirmIcon || 'trash') + '"></i> ' + (opts.confirmLabel || 'Remove');
+
+  return new Promise(function(resolve) {
+    _edmConfirmCallback = resolve;
+    // Force reflow for animation
+    overlay.classList.remove('is-open');
+    void overlay.offsetWidth;
+    overlay.classList.add('is-open');
+  });
+}
+
+function edmConfirmResolve() {
+  if (_edmConfirmCallback) _edmConfirmCallback(true);
+  _edmConfirmCallback = null;
+  document.getElementById('edmConfirmOverlay').classList.remove('is-open');
+}
+
+function edmConfirmClose() {
+  if (_edmConfirmCallback) _edmConfirmCallback(false);
+  _edmConfirmCallback = null;
+  document.getElementById('edmConfirmOverlay').classList.remove('is-open');
 }
 </script>
 
