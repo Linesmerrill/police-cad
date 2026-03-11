@@ -14237,10 +14237,16 @@ async function saveEditEvent() {
     padding: 0.325rem 0.5rem; font-size: 0.725rem;
   }
   .rkm-req-row select:focus { border-color: #7c3aed; outline: none; }
-  .rkm-req-row input {
+  .rkm-req-row input[type="number"] {
     width: 70px; background: #1a1c24; color: #c4cad4;
     border: 1px solid rgba(255,255,255,0.06); border-radius: 5px;
     padding: 0.325rem 0.5rem; font-size: 0.725rem; box-sizing: border-box;
+  }
+  .rkm-req-row input[type="text"] {
+    flex: 1; background: #1a1c24; color: #c4cad4;
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 5px;
+    padding: 0.325rem 0.5rem; font-size: 0.725rem; box-sizing: border-box;
+    font-style: italic;
   }
   .rkm-req-row input:focus { border-color: #7c3aed; outline: none; }
   .rkm-req-del {
@@ -14866,7 +14872,7 @@ async function saveEditEvent() {
     reqList.innerHTML = '';
     if (rank && rank.requirements && rank.requirements.length > 0) {
       rank.requirements.forEach(function(req) {
-        addRequirementRow(req.metricType || req.metric, req.threshold);
+        addRequirementRow(req.metricType || req.metric, req.threshold, req.customLabel, req.id);
       });
     }
 
@@ -14878,12 +14884,15 @@ async function saveEditEvent() {
     document.getElementById('rankFormBackdrop').classList.remove('is-open');
   };
 
-  window.addRequirementRow = function(metricType, threshold) {
+  window.addRequirementRow = function(metricType, threshold, customLabel, requirementId) {
     var container = document.getElementById('rankRequirementsList');
     var row = document.createElement('div');
     row.className = 'rkm-req-row';
+    if (requirementId) row.setAttribute('data-requirement-id', requirementId);
 
-    var selectHtml = '<select class="rank-req-metric">';
+    var isCustom = metricType === 'custom';
+
+    var selectHtml = '<select class="rank-req-metric" onchange="window._onReqMetricChange(this)">';
     selectHtml += '<option value="">Select metric...</option>';
     if (rankMgmtMetricTypes && rankMgmtMetricTypes.length > 0) {
       rankMgmtMetricTypes.forEach(function(mt) {
@@ -14893,13 +14902,29 @@ async function saveEditEvent() {
         selectHtml += '<option value="' + escapeRankHtml(val) + '"' + selected + '>' + escapeRankHtml(label) + '</option>';
       });
     }
+    selectHtml += '<option value="custom"' + (isCustom ? ' selected' : '') + ' style="border-top:1px solid rgba(124,58,237,0.2); font-style:italic;">Custom Requirement</option>';
     selectHtml += '</select>';
 
     row.innerHTML = selectHtml +
-      '<input type="number" class="rank-req-threshold" placeholder="e.g. 50" value="' + (threshold || '') + '" min="0">' +
+      '<input type="text" class="rank-req-custom-label" placeholder="e.g. Be on server 4 hours" value="' + escapeRankHtml(customLabel || '') + '" style="display:' + (isCustom ? 'block' : 'none') + ';">' +
+      '<input type="number" class="rank-req-threshold" placeholder="e.g. 50" value="' + (threshold || '') + '" min="0" style="display:' + (isCustom ? 'none' : 'block') + ';">' +
       '<button type="button" class="rkm-req-del" onclick="this.parentElement.remove()"><i class="fa fa-times"></i></button>';
 
     container.appendChild(row);
+  };
+
+  window._onReqMetricChange = function(selectEl) {
+    var row = selectEl.closest('.rkm-req-row');
+    var thresholdInput = row.querySelector('.rank-req-threshold');
+    var customInput = row.querySelector('.rank-req-custom-label');
+    if (selectEl.value === 'custom') {
+      thresholdInput.style.display = 'none';
+      customInput.style.display = 'block';
+      customInput.focus();
+    } else {
+      thresholdInput.style.display = 'block';
+      customInput.style.display = 'none';
+    }
   };
 
   window.saveRank = function() {
@@ -14913,9 +14938,21 @@ async function saveEditEvent() {
     var requirements = [];
     document.querySelectorAll('#rankRequirementsList > div').forEach(function(row) {
       var metric = row.querySelector('.rank-req-metric').value;
-      var threshold = parseInt(row.querySelector('.rank-req-threshold').value) || 0;
-      if (metric && threshold > 0) {
-        requirements.push({ metricType: metric, threshold: threshold });
+      var reqId = row.getAttribute('data-requirement-id') || '';
+      if (metric === 'custom') {
+        var label = row.querySelector('.rank-req-custom-label').value.trim();
+        if (label) {
+          var req = { metricType: 'custom', threshold: 0, customLabel: label };
+          if (reqId) req.id = reqId;
+          requirements.push(req);
+        }
+      } else {
+        var threshold = parseInt(row.querySelector('.rank-req-threshold').value) || 0;
+        if (metric && threshold > 0) {
+          var req = { metricType: metric, threshold: threshold };
+          if (reqId) req.id = reqId;
+          requirements.push(req);
+        }
       }
     });
 
@@ -15049,15 +15086,31 @@ async function saveEditEvent() {
       if (p.progress && p.progress.length > 0) {
         metricsHtml = '<div class="rkm-promo-metrics">';
         p.progress.forEach(function(prog) {
-          var pct = Math.min(Math.round((prog.percentage || 0) * 100), 100);
-          metricsHtml +=
-            '<div class="rkm-promo-metric">' +
-              '<div class="rkm-promo-metric-header">' +
-                '<span class="rkm-promo-metric-name">' + escapeRankHtml(prog.displayName || prog.metricType) + '</span>' +
-                '<span class="rkm-promo-metric-val">' + prog.currentValue + ' / ' + prog.threshold + ' <i class="fa fa-check" style="font-size:0.55rem;"></i></span>' +
-              '</div>' +
-              '<div class="rkm-promo-bar"><div class="rkm-promo-bar-fill" style="width:' + pct + '%"></div></div>' +
-            '</div>';
+          if (prog.isCustom) {
+            // Custom requirement: show as toggle for admin
+            var toggleId = 'customReqToggle_' + escapeRankHtml(p.userId) + '_' + escapeRankHtml(prog.requirementId || '');
+            var checkedAttr = prog.met ? ' checked' : '';
+            metricsHtml +=
+              '<div class="rkm-promo-metric" style="display:flex; align-items:center; gap:8px;">' +
+                '<label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex:1; margin:0;">' +
+                  '<input type="checkbox" id="' + toggleId + '"' + checkedAttr +
+                    ' onchange="window.toggleCustomReq(\'' + escapeRankHtml(p.userId) + '\', \'' + escapeRankHtml(prog.requirementId || '') + '\', this.checked)"' +
+                    ' style="accent-color:#7c3aed; width:14px; height:14px; cursor:pointer;">' +
+                  '<span class="rkm-promo-metric-name" style="font-style:italic; color:' + (prog.met ? '#c8c6d8' : '#64748b') + ';">' + escapeRankHtml(prog.customLabel || prog.displayName) + '</span>' +
+                '</label>' +
+                '<span style="font-size:0.6rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Manual</span>' +
+              '</div>';
+          } else {
+            var pct = Math.min(Math.round((prog.percentage || 0) * 100), 100);
+            metricsHtml +=
+              '<div class="rkm-promo-metric">' +
+                '<div class="rkm-promo-metric-header">' +
+                  '<span class="rkm-promo-metric-name">' + escapeRankHtml(prog.displayName || prog.metricType) + '</span>' +
+                  '<span class="rkm-promo-metric-val">' + prog.currentValue + ' / ' + prog.threshold + ' <i class="fa fa-check" style="font-size:0.55rem;"></i></span>' +
+                '</div>' +
+                '<div class="rkm-promo-bar"><div class="rkm-promo-bar-fill" style="width:' + pct + '%"></div></div>' +
+              '</div>';
+          }
         });
         metricsHtml += '</div>';
       }
@@ -15076,9 +15129,17 @@ async function saveEditEvent() {
             '</div>' +
           '</div>' +
           metricsHtml +
-          '<button class="rkm-btn-promote" onclick="promoteOfficer(\'' + escapeRankHtml(p.userId) + '\', \'' + escapeRankHtml(p.nextRank ? p.nextRank._id : '') + '\', this)">' +
-            '<i class="fa fa-arrow-up"></i> Promote to ' + toRank +
-          '</button>' +
+          (function() {
+            var hasUnmetCustom = (p.progress || []).some(function(prog) { return prog.isCustom && !prog.met; });
+            if (hasUnmetCustom) {
+              return '<button class="rkm-btn-promote" disabled style="opacity:0.5; cursor:not-allowed;" title="Complete all custom requirements first">' +
+                '<i class="fa fa-lock"></i> Complete custom requirements first' +
+              '</button>';
+            }
+            return '<button class="rkm-btn-promote" onclick="promoteOfficer(\'' + escapeRankHtml(p.userId) + '\', \'' + escapeRankHtml(p.nextRank ? p.nextRank._id : '') + '\', this)">' +
+              '<i class="fa fa-arrow-up"></i> Promote to ' + toRank +
+            '</button>';
+          })() +
         '</div>';
     });
 
@@ -15147,6 +15208,22 @@ async function saveEditEvent() {
       btnEl.disabled = false;
       btnEl.innerHTML = '<i class="fa fa-arrow-up"></i> Retry Promote';
       if (typeof showToast === 'function') showToast('Failed to promote officer', 3000, 'error');
+    });
+  };
+
+  window.toggleCustomReq = function(userId, requirementId, met) {
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/custom-requirements/' + requirementId, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ met: met })
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Failed to toggle custom requirement');
+      if (typeof showToast === 'function') showToast(met ? 'Requirement marked as met' : 'Requirement unmarked', 2000, 'success');
+    })
+    .catch(function(err) {
+      console.error('Error toggling custom requirement:', err);
+      if (typeof showToast === 'function') showToast('Failed to update requirement', 2500, 'error');
     });
   };
 

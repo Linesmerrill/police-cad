@@ -83,19 +83,33 @@ function renderRankProgress(data) {
   if (progress.length > 0) {
     var barsHtml = '';
     progress.forEach(function(p) {
-      var pct = Math.min(100, Math.round((p.currentValue / p.threshold) * 100)) || 0;
-      var barBg = pct >= 100 ? 'linear-gradient(90deg, #059669, #10b981)' : 'linear-gradient(90deg, #6d28d9, #8b5cf6)';
-      var valColor = pct >= 100 ? '#34d399' : '#c4b5fd';
-      var checkmark = pct >= 100 ? ' <i class="fa fa-check-circle" style="color:#34d399; font-size:13px; margin-left:4px;"></i>' : '';
-      barsHtml += '<div style="padding:0;">' +
-        '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">' +
-          '<span style="color:#c8c6d8; font-size:14px; font-weight:500;">' + escapeHtmlRank(p.displayName || p.metricType) + checkmark + '</span>' +
-          '<span style="color:' + valColor + '; font-size:14px; font-weight:700; font-variant-numeric:tabular-nums;">' + p.currentValue + ' / ' + p.threshold + '</span>' +
-        '</div>' +
-        '<div style="width:100%; height:8px; background:rgba(55,65,81,0.6); border-radius:4px; overflow:hidden;">' +
-          '<div style="width:' + pct + '%; height:100%; background:' + barBg + '; border-radius:4px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1);"></div>' +
-        '</div>' +
-      '</div>';
+      if (p.isCustom) {
+        // Custom requirement: show as check/uncheck item (no progress bar)
+        var icon = p.met
+          ? '<i class="fa fa-check-circle" style="color:#34d399; font-size:15px;"></i>'
+          : '<i class="fa fa-circle-o" style="color:#4a5568; font-size:15px;"></i>';
+        var textColor = p.met ? '#c8c6d8' : '#64748b';
+        var strikeStyle = p.met ? 'text-decoration:line-through; text-decoration-color:rgba(52,211,153,0.3);' : '';
+        barsHtml += '<div style="display:flex; align-items:center; gap:10px; padding:2px 0;">' +
+          icon +
+          '<span style="color:' + textColor + '; font-size:14px; font-weight:500; font-style:italic; ' + strikeStyle + '">' + escapeHtmlRank(p.customLabel || p.displayName) + '</span>' +
+        '</div>';
+      } else {
+        // Tracked metric: show progress bar
+        var pct = Math.min(100, Math.round((p.currentValue / p.threshold) * 100)) || 0;
+        var barBg = pct >= 100 ? 'linear-gradient(90deg, #059669, #10b981)' : 'linear-gradient(90deg, #6d28d9, #8b5cf6)';
+        var valColor = pct >= 100 ? '#34d399' : '#c4b5fd';
+        var checkmark = pct >= 100 ? ' <i class="fa fa-check-circle" style="color:#34d399; font-size:13px; margin-left:4px;"></i>' : '';
+        barsHtml += '<div style="padding:0;">' +
+          '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">' +
+            '<span style="color:#c8c6d8; font-size:14px; font-weight:500;">' + escapeHtmlRank(p.displayName || p.metricType) + checkmark + '</span>' +
+            '<span style="color:' + valColor + '; font-size:14px; font-weight:700; font-variant-numeric:tabular-nums;">' + p.currentValue + ' / ' + p.threshold + '</span>' +
+          '</div>' +
+          '<div style="width:100%; height:8px; background:rgba(55,65,81,0.6); border-radius:4px; overflow:hidden;">' +
+            '<div style="width:' + pct + '%; height:100%; background:' + barBg + '; border-radius:4px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1);"></div>' +
+          '</div>' +
+        '</div>';
+      }
     });
     barsContainer.innerHTML = barsHtml;
     // Show fade hint if content overflows
