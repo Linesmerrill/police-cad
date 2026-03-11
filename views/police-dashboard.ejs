@@ -1276,35 +1276,50 @@
       </div>
       <% } %>
       <!-- My Rank & Stats Card -->
-      <div id="myRankStatsCard" style="display:none; max-width:900px; margin:1rem auto; padding:0 15px;">
-        <div style="background:linear-gradient(135deg, #1e1b4b 0%, #1e2028 100%); border:1px solid #35385a; border-radius:14px; padding:1.25rem 1.5rem; box-shadow:0 4px 20px rgba(0,0,0,0.3);">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-            <div style="display:flex; align-items:center; gap:0.75rem;">
-              <div style="width:2.5rem; height:2.5rem; background:rgba(124,58,237,0.2); border-radius:10px; display:flex; align-items:center; justify-content:center;">
-                <i class="fa fa-ranking-star" style="color:#a78bfa; font-size:1.1rem;"></i>
+      <div id="myRankStatsCard" style="display:none; max-width:920px; margin:20px auto; padding:0 15px;">
+        <div style="background:linear-gradient(145deg, #1a1740 0%, #161822 60%, #1a1e2e 100%); border:1px solid rgba(124,58,237,0.15); border-radius:16px; padding:28px 32px; box-shadow:0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03);">
+
+          <!-- Rank Header -->
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div style="width:48px; height:48px; background:rgba(124,58,237,0.15); border:1px solid rgba(124,58,237,0.25); border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                <i class="fa fa-shield" style="color:#a78bfa; font-size:20px;"></i>
               </div>
               <div>
-                <div style="display:flex; align-items:center; gap:0.5rem;">
-                  <span id="myRankName" style="color:#fff; font-weight:700; font-size:1.1rem;"></span>
-                  <span id="myRankPrefix" style="background:#7c3aed33; color:#a78bfa; padding:0.1rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:600; display:none;"></span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span id="myRankName" style="color:#fff; font-weight:700; font-size:22px; line-height:1.2; letter-spacing:-0.3px;"></span>
+                  <span id="myRankPrefix" style="background:rgba(124,58,237,0.2); color:#c4b5fd; padding:3px 10px; border-radius:6px; font-size:12px; font-weight:600; display:none; letter-spacing:0.5px;"></span>
                 </div>
-                <span style="color:#6b7280; font-size:0.75rem;">Current Rank</span>
+                <span style="color:#7c7f96; font-size:13px; letter-spacing:0.3px;">Current Rank</span>
               </div>
             </div>
             <div id="nextRankInfo" style="display:none; text-align:right;">
-              <span style="color:#6b7280; font-size:0.7rem;">Next Rank</span>
-              <div id="nextRankName" style="color:#a0aec0; font-size:0.85rem; font-weight:500;"></div>
+              <span style="color:#7c7f96; font-size:11px; text-transform:uppercase; letter-spacing:1px;">Next Rank</span>
+              <div id="nextRankName" style="color:#e2e0f0; font-size:18px; font-weight:600; letter-spacing:-0.2px;"></div>
             </div>
           </div>
 
           <!-- Progress Bars -->
-          <div id="rankProgressBars" style="display:flex; flex-direction:column; gap:0.6rem;">
-            <!-- Populated by JS -->
+          <div style="position:relative;">
+            <div id="rankProgressBars" style="display:flex; flex-direction:column; gap:14px; max-height:200px; overflow-y:auto; padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(124,58,237,0.3) transparent;">
+              <!-- Populated by JS -->
+            </div>
+            <div id="rankProgressFade" style="display:none; position:absolute; bottom:0; left:0; right:4px; height:32px; background:linear-gradient(to top, #161822 0%, transparent 100%); pointer-events:none;"></div>
           </div>
 
-          <!-- Stats Grid -->
-          <div id="rankStatsGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:0.5rem; margin-top:1rem;">
-            <!-- Populated by JS -->
+          <!-- Collapsible Stats Section -->
+          <div id="rankStatsSection" style="display:none;">
+            <button id="rankStatsToggle" onclick="toggleRankStats()" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:20px; padding:10px; background:rgba(124,58,237,0.08); border:1px solid rgba(124,58,237,0.15); border-radius:10px; color:#a78bfa; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; letter-spacing:0.3px;" onmouseenter="this.style.background='rgba(124,58,237,0.14)'" onmouseleave="this.style.background='rgba(124,58,237,0.08)'">
+              <span id="rankStatsToggleText">Show My Activity</span>
+              <i id="rankStatsToggleIcon" class="fa fa-chevron-down" style="font-size:11px; transition:transform 0.3s;"></i>
+            </button>
+            <div id="rankStatsCollapsible" style="max-height:0; overflow:hidden; transition:max-height 0.4s cubic-bezier(0.4,0,0.2,1);">
+              <div style="padding-top:16px;">
+                <div id="rankStatsGrid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -6181,37 +6196,70 @@ window.showBoloModal = showBoloModal;
       var barsHtml = '';
       progress.forEach(function(p) {
         var pct = Math.min(100, Math.round((p.currentValue / p.threshold) * 100)) || 0;
-        var color = pct >= 100 ? '#10b981' : '#7c3aed';
-        barsHtml += '<div>' +
-          '<div style="display:flex; justify-content:space-between; margin-bottom:0.2rem;">' +
-            '<span style="color:#a0aec0; font-size:0.75rem;">' + escapeHtmlRank(p.displayName || p.metricType) + '</span>' +
-            '<span style="color:' + (pct >= 100 ? '#34d399' : '#a78bfa') + '; font-size:0.75rem; font-weight:600;">' + p.currentValue + ' / ' + p.threshold + '</span>' +
+        var barBg = pct >= 100 ? 'linear-gradient(90deg, #059669, #10b981)' : 'linear-gradient(90deg, #6d28d9, #8b5cf6)';
+        var valColor = pct >= 100 ? '#34d399' : '#c4b5fd';
+        var checkmark = pct >= 100 ? ' <i class="fa fa-check-circle" style="color:#34d399; font-size:13px; margin-left:4px;"></i>' : '';
+        barsHtml += '<div style="padding:0;">' +
+          '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">' +
+            '<span style="color:#c8c6d8; font-size:14px; font-weight:500;">' + escapeHtmlRank(p.displayName || p.metricType) + checkmark + '</span>' +
+            '<span style="color:' + valColor + '; font-size:14px; font-weight:700; font-variant-numeric:tabular-nums;">' + p.currentValue + ' / ' + p.threshold + '</span>' +
           '</div>' +
-          '<div style="width:100%; height:6px; background:#374151; border-radius:3px; overflow:hidden;">' +
-            '<div style="width:' + pct + '%; height:100%; background:' + color + '; border-radius:3px; transition:width 0.5s ease;"></div>' +
+          '<div style="width:100%; height:8px; background:rgba(55,65,81,0.6); border-radius:4px; overflow:hidden;">' +
+            '<div style="width:' + pct + '%; height:100%; background:' + barBg + '; border-radius:4px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1);"></div>' +
           '</div>' +
         '</div>';
       });
       barsContainer.innerHTML = barsHtml;
+      // Show fade hint if content overflows
+      var fadeEl = document.getElementById('rankProgressFade');
+      if (fadeEl) {
+        setTimeout(function() {
+          fadeEl.style.display = barsContainer.scrollHeight > barsContainer.clientHeight ? 'block' : 'none';
+          barsContainer.addEventListener('scroll', function() {
+            var atBottom = barsContainer.scrollTop + barsContainer.clientHeight >= barsContainer.scrollHeight - 4;
+            fadeEl.style.display = atBottom ? 'none' : 'block';
+          });
+        }, 50);
+      }
     } else {
       barsContainer.innerHTML = '';
     }
 
-    // Stats grid
+    // Stats grid (collapsible)
     var gridContainer = document.getElementById('rankStatsGrid');
+    var statsSection = document.getElementById('rankStatsSection');
     if (metrics && metrics.length > 0) {
+      if (statsSection) statsSection.style.display = 'block';
       var gridHtml = '';
       metrics.forEach(function(m) {
-        gridHtml += '<div style="background:#1e2028; border:1px solid #35385a; border-radius:8px; padding:0.6rem 0.75rem; text-align:center;">' +
-          '<div style="color:#fff; font-size:1.1rem; font-weight:700;">' + (m.currentValue || 0) + '</div>' +
-          '<div style="color:#6b7280; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.5px;">' + escapeHtmlRank(m.displayName || m.metricType) + '</div>' +
+        gridHtml += '<div style="background:rgba(30,32,40,0.7); border:1px solid rgba(53,56,90,0.5); border-radius:10px; padding:14px 12px; text-align:center;">' +
+          '<div style="color:#fff; font-size:24px; font-weight:700; line-height:1.1; font-variant-numeric:tabular-nums;">' + (m.currentValue || 0) + '</div>' +
+          '<div style="color:#7c7f96; font-size:11px; text-transform:uppercase; letter-spacing:0.8px; font-weight:500; margin-top:6px; line-height:1.3;">' + escapeHtmlRank(m.displayName || m.metricType) + '</div>' +
         '</div>';
       });
       gridContainer.innerHTML = gridHtml;
     } else {
+      if (statsSection) statsSection.style.display = 'none';
       gridContainer.innerHTML = '';
     }
   }
+
+  window.toggleRankStats = function() {
+    var collapsible = document.getElementById('rankStatsCollapsible');
+    var icon = document.getElementById('rankStatsToggleIcon');
+    var text = document.getElementById('rankStatsToggleText');
+    if (!collapsible) return;
+    var isOpen = collapsible.style.maxHeight && collapsible.style.maxHeight !== '0px';
+    if (isOpen) {
+      collapsible.style.maxHeight = '0px';
+      icon.style.transform = 'rotate(0deg)';
+      text.textContent = 'Show My Activity';
+    } else {
+      collapsible.style.maxHeight = collapsible.scrollHeight + 'px';
+      icon.style.transform = 'rotate(180deg)';
+      text.textContent = 'Hide My Activity';
+    }
+  };
 
   function escapeHtmlRank(str) {
     if (!str) return '';

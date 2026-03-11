@@ -812,6 +812,13 @@
       <a class="ht-nav-link" href="#settings-penal-import">Penal Code Import/Export</a>
       <a class="ht-nav-link" href="#settings-ten-import">Ten Code Import/Export</a>
       <a class="ht-nav-link" href="#settings-icons">Category Icons</a>
+
+      <div class="ht-nav-group-title"><i class="fa fa-ranking-star"></i> Rank System</div>
+      <a class="ht-nav-link" href="#ranks-overview">Overview</a>
+      <a class="ht-nav-link" href="#ranks-setup">Setting Up Ranks</a>
+      <a class="ht-nav-link" href="#ranks-requirements">Requirements & Auto-Promote</a>
+      <a class="ht-nav-link" href="#ranks-assigning">Assigning Ranks</a>
+      <a class="ht-nav-link" href="#ranks-officer-view">Officer View</a>
     </nav>
 
     <!-- ── Content ── -->
@@ -2002,6 +2009,209 @@
         </div>
       </section>
 
+      <!-- ╔═══════════════════════════════════════════╗ -->
+      <!-- ║           RANK SYSTEM SECTION              ║ -->
+      <!-- ╚═══════════════════════════════════════════╝ -->
+      <section id="rank-system" class="ht-section">
+        <div class="ht-section-header">
+          <div class="ht-section-icon"><i class="fa fa-ranking-star"></i></div>
+          <div>
+            <div class="ht-section-title">Rank System</div>
+            <div class="ht-section-subtitle">Create department rank hierarchies with auto-promotion</div>
+          </div>
+        </div>
+
+        <!-- Overview -->
+        <div class="ht-subsection" id="ranks-overview">
+          <h3 class="ht-subsection-title">Overview</h3>
+          <p class="ht-text">
+            Each department can have its own rank hierarchy. Ranks can have requirements based on officer activity
+            (citations issued, arrests made, calls responded to, and more). When an officer meets all the requirements
+            for a rank, they can be automatically promoted.
+          </p>
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Ranks are department-specific &mdash; an officer can have different ranks in different departments.
+            </div>
+          </div>
+        </div>
+
+        <!-- Setting Up Ranks -->
+        <div class="ht-subsection" id="ranks-setup">
+          <h3 class="ht-subsection-title">Setting Up Ranks</h3>
+          <p class="ht-text">To create and organize ranks for a department:</p>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Go to Community Details page</div>
+                <div class="ht-step-desc">Navigate to the <strong>Community Details</strong> page from the sidebar.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Click the edit icon on a department</div>
+                <div class="ht-step-desc">Find the department you want to configure and click the <strong>pencil icon</strong> to open the Edit Department modal.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Click "Manage Ranks"</div>
+                <div class="ht-step-desc">At the bottom of the Edit Department modal, click the <strong>Manage Ranks</strong> button.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">4</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Click "+ Add Rank" to create a new rank</div>
+                <div class="ht-step-desc">Click <strong>+ Add Rank</strong> to add a new rank to the hierarchy.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">5</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Enter rank name and optional prefix</div>
+                <div class="ht-step-desc">Give the rank a name (e.g., "Sergeant") and an optional prefix (e.g., "SGT") that will appear before the officer's name.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">6</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Reorder ranks with the up/down arrows</div>
+                <div class="ht-step-desc">Use the <strong>up/down arrows</strong> to reorder ranks. A lower number means a higher rank in the hierarchy.</div>
+              </div>
+            </div>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-lightbulb ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              You need the <strong>"manage departments"</strong> or <strong>"administrator"</strong> permission to manage ranks.
+            </div>
+          </div>
+        </div>
+
+        <!-- Requirements & Auto-Promote -->
+        <div class="ht-subsection" id="ranks-requirements">
+          <h3 class="ht-subsection-title">Requirements &amp; Auto-Promote</h3>
+          <p class="ht-text">
+            Each rank can have metric requirements &mdash; thresholds that officers must meet to qualify for the rank.
+            Available metrics include:
+          </p>
+          <p class="ht-text">
+            <strong style="color:#fff;">Citations Issued</strong> &mdash;
+            <strong style="color:#fff;">Warnings Issued</strong> &mdash;
+            <strong style="color:#fff;">Arrests Made</strong> &mdash;
+            <strong style="color:#fff;">Calls Created</strong> &mdash;
+            <strong style="color:#fff;">Calls Responded To</strong> &mdash;
+            <strong style="color:#fff;">Calls Cleared</strong> &mdash;
+            <strong style="color:#fff;">BOLOs Created</strong> &mdash;
+            <strong style="color:#fff;">Warrants Requested</strong> &mdash;
+            <strong style="color:#fff;">Warrants Executed</strong>
+          </p>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Edit a rank and click "+ Add"</div>
+                <div class="ht-step-desc">Open a rank for editing and click <strong>+ Add</strong> in the <strong>Requirements</strong> section.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Select a metric type</div>
+                <div class="ht-step-desc">Choose a metric from the dropdown (e.g., "Arrests Made").</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Enter the threshold value</div>
+                <div class="ht-step-desc">Set the number the officer must reach (e.g., 50 arrests).</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">4</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Check "Auto Promote"</div>
+                <div class="ht-step-desc">Enable <strong>Auto Promote</strong> so officers are automatically promoted when they meet all requirements for this rank.</div>
+              </div>
+            </div>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Auto-promote only promotes upward &mdash; officers are never auto-demoted. An officer who meets the
+              requirements for a rank two levels above will skip the intermediate rank.
+            </div>
+          </div>
+        </div>
+
+        <!-- Assigning Ranks -->
+        <div class="ht-subsection" id="ranks-assigning">
+          <h3 class="ht-subsection-title">Assigning Ranks</h3>
+          <p class="ht-text">
+            Admins can manually assign ranks to members from the Manage Ranks modal.
+          </p>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Open the Manage Ranks modal</div>
+                <div class="ht-step-desc">Open the <strong>Manage Ranks</strong> modal for the department you want to configure.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Scroll to "Members &amp; Ranks"</div>
+                <div class="ht-step-desc">Scroll down to the <strong>Members &amp; Ranks</strong> section at the bottom of the modal.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Assign a rank from the dropdown</div>
+                <div class="ht-step-desc">Use the dropdown next to each member to assign them a rank.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">4</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Remove a rank</div>
+                <div class="ht-step-desc">Select <strong>"Unranked"</strong> from the dropdown to remove a rank assignment.</div>
+              </div>
+            </div>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-lightbulb ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Manual assignments override auto-promotions. The assignment type is tracked (manual vs. auto).
+            </div>
+          </div>
+        </div>
+
+        <!-- Officer View -->
+        <div class="ht-subsection" id="ranks-officer-view">
+          <h3 class="ht-subsection-title">Officer View</h3>
+          <p class="ht-text">
+            Officers can see their rank and progress on the <strong>Police Dashboard</strong>. The rank card shows
+            their current rank, the next rank in the hierarchy, progress bars toward each requirement, and a
+            collapsible activity stats grid.
+          </p>
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              The <strong>"Can View Stats"</strong> option on a rank allows officers with that rank to view
+              department-wide metrics (coming soon to mobile).
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div><!-- /.ht-content -->
   </div><!-- /.ht-layout -->
 
@@ -2077,7 +2287,8 @@
         '#warrants': '#warrants-overview',
         '#penal-codes': '#penal-overview',
         '#court-cases': '#court-overview',
-        '#community-settings': '#settings-overview'
+        '#community-settings': '#settings-overview',
+        '#rank-system': '#ranks-overview'
       };
       var mapped = sectionMap[window.location.hash];
       if (mapped) hashTarget = document.querySelector(mapped);

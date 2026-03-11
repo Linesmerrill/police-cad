@@ -13111,3 +13111,197 @@ async function saveEditEvent() {
   };
 })();
 </script>
+
+<% if (typeof canManageDepartments !== 'undefined' && canManageDepartments) { %>
+<!-- LEO Rank System Tutorial Modal -->
+<div id="rankTutorialOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:100000; justify-content:center; align-items:center;">
+  <div style="background:rgba(30,32,44,0.95); backdrop-filter:blur(16px); border:1px solid rgba(167,139,250,0.25); border-radius:16px; max-width:440px; width:92%; padding:2rem 1.8rem 1.4rem; color:#e2e8f0; box-shadow:0 20px 60px rgba(0,0,0,0.5); position:relative;">
+    <!-- Close button -->
+    <button onclick="window._rankTutorial.close()" style="position:absolute; top:0.8rem; right:1rem; background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer; padding:0.2rem;" aria-label="Close"><i class="fa fa-times"></i></button>
+
+    <!-- Step content container -->
+    <div id="rankTutorialContent" style="text-align:center; min-height:180px;">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Dot indicators -->
+    <div id="rankTutorialDots" style="display:flex; justify-content:center; gap:0.5rem; margin:1.2rem 0 1rem;"></div>
+
+    <!-- Navigation -->
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <button id="rankTutorialBack" onclick="window._rankTutorial.prev()" style="background:none; border:1px solid #4a5568; color:#cbd5e1; border-radius:8px; padding:0.45rem 1rem; font-size:0.85rem; cursor:pointer; transition:border-color 0.2s;">Back</button>
+      <button id="rankTutorialNext" onclick="window._rankTutorial.next()" style="background:linear-gradient(135deg,#a78bfa,#7c3aed); border:none; color:#fff; border-radius:8px; padding:0.5rem 1.4rem; font-size:0.85rem; cursor:pointer; font-weight:600; transition:opacity 0.2s;">Next</button>
+    </div>
+
+    <!-- Don't show again (visible on last step) -->
+    <div id="rankTutorialDismissRow" style="display:none; margin-top:0.8rem; text-align:center;">
+      <label style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.78rem; color:#94a3b8; cursor:pointer;">
+        <input type="checkbox" id="rankTutorialDismissCheck" style="accent-color:#a78bfa;">
+        Don't show again
+      </label>
+    </div>
+
+    <!-- Help docs link -->
+    <div style="text-align:center; margin-top:0.7rem;">
+      <a href="/help#ranks-overview" style="color:#a78bfa; font-size:0.75rem; text-decoration:none; opacity:0.8;" target="_blank">Learn more in Help Docs</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var steps = [
+    {
+      icon: 'fa-ranking-star',
+      title: 'New: Department Ranks',
+      text: 'You can now create rank hierarchies for each department. Officers can track their progress and get auto-promoted!'
+    },
+    {
+      icon: 'fa-list-check',
+      title: 'Setting Up Ranks',
+      text: "Click the edit icon on any department, then click 'Manage Ranks' at the bottom. Create ranks like Corporal, Sergeant, Lieutenant, etc."
+    },
+    {
+      icon: 'fa-chart-line',
+      title: 'Requirements & Auto-Promote',
+      text: "Add requirements to each rank (e.g., 50 citations, 100 calls). Enable 'Auto Promote' and officers will be promoted automatically when they meet all thresholds."
+    },
+    {
+      icon: 'fa-user-shield',
+      title: 'Assigning Ranks',
+      text: "In the Manage Ranks modal, scroll down to 'Members & Ranks' to manually assign ranks. Officers can see their rank and progress on the Police Dashboard."
+    }
+  ];
+
+  var currentStep = 0;
+  var overlay = document.getElementById('rankTutorialOverlay');
+  var contentEl = document.getElementById('rankTutorialContent');
+  var dotsEl = document.getElementById('rankTutorialDots');
+  var backBtn = document.getElementById('rankTutorialBack');
+  var nextBtn = document.getElementById('rankTutorialNext');
+  var dismissRow = document.getElementById('rankTutorialDismissRow');
+  var dismissCheck = document.getElementById('rankTutorialDismissCheck');
+
+  function render() {
+    var step = steps[currentStep];
+    var isLast = currentStep === steps.length - 1;
+    var isFirst = currentStep === 0;
+
+    contentEl.innerHTML =
+      '<div style="margin-bottom:1rem;">' +
+        '<i class="fa ' + step.icon + '" style="font-size:2.4rem; color:#a78bfa;"></i>' +
+      '</div>' +
+      '<h3 style="margin:0 0 0.6rem; font-size:1.15rem; font-weight:700; color:#fff;">' + step.title + '</h3>' +
+      '<p style="margin:0; font-size:0.9rem; line-height:1.55; color:#cbd5e1;">' + step.text + '</p>';
+
+    // Dots
+    var dotsHtml = '';
+    for (var i = 0; i < steps.length; i++) {
+      var active = i === currentStep;
+      dotsHtml += '<span style="width:8px; height:8px; border-radius:50%; background:' + (active ? '#a78bfa' : '#4a5568') + '; transition:background 0.3s; cursor:pointer;" data-step="' + i + '"></span>';
+    }
+    dotsEl.innerHTML = dotsHtml;
+
+    // Attach dot click handlers
+    var dotSpans = dotsEl.querySelectorAll('span');
+    for (var j = 0; j < dotSpans.length; j++) {
+      (function(dot) {
+        dot.onclick = function() {
+          currentStep = parseInt(dot.getAttribute('data-step'));
+          render();
+        };
+      })(dotSpans[j]);
+    }
+
+    // Back button
+    backBtn.style.visibility = isFirst ? 'hidden' : 'visible';
+
+    // Next button
+    if (isLast) {
+      nextBtn.textContent = 'Got it';
+      nextBtn.onclick = function() { window._rankTutorial.close(); };
+    } else {
+      nextBtn.textContent = 'Next';
+      nextBtn.onclick = function() { window._rankTutorial.next(); };
+    }
+
+    // Dismiss row
+    dismissRow.style.display = isLast ? 'block' : 'none';
+  }
+
+  function show() {
+    currentStep = 0;
+    render();
+    overlay.style.display = 'flex';
+  }
+
+  function close() {
+    overlay.style.display = 'none';
+
+    if (dismissCheck && dismissCheck.checked) {
+      var userId = window.dbUser && window.dbUser._id;
+      if (userId) {
+        // Set localStorage fallback
+        try {
+          localStorage.setItem('lpc_rank_tutorial_dismissed_' + userId, '1');
+        } catch(e) {}
+
+        // Call API to persist dismissal
+        var apiUrl = (typeof API_URL !== 'undefined') ? API_URL : 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+        fetch(apiUrl + '/api/v1/user/' + userId + '/dismiss-tutorial', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tutorialKey: 'rank_system' })
+        }).catch(function(err) {
+          console.error('Failed to dismiss tutorial:', err);
+        });
+      }
+    }
+  }
+
+  window._rankTutorial = {
+    show: show,
+    close: close,
+    next: function() {
+      if (currentStep < steps.length - 1) {
+        currentStep++;
+        render();
+      }
+    },
+    prev: function() {
+      if (currentStep > 0) {
+        currentStep--;
+        render();
+      }
+    }
+  };
+
+  // Auto-show logic
+  function shouldShow() {
+    var userId = window.dbUser && window.dbUser._id;
+    if (!userId) return false;
+
+    // Check dismissedTutorials array on user object
+    var dismissed = window.dbUser && window.dbUser.user && window.dbUser.user.dismissedTutorials;
+    if (dismissed && Array.isArray(dismissed) && dismissed.indexOf('rank_system') !== -1) {
+      return false;
+    }
+
+    // Check localStorage fallback
+    try {
+      if (localStorage.getItem('lpc_rank_tutorial_dismissed_' + userId) === '1') {
+        return false;
+      }
+    } catch(e) {}
+
+    return true;
+  }
+
+  setTimeout(function() {
+    if (shouldShow()) {
+      show();
+    }
+  }, 800);
+})();
+</script>
+<% } %>
