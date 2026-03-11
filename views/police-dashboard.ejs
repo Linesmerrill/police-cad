@@ -6327,13 +6327,18 @@ window.showBoloModal = showBoloModal;
       barsContainer.innerHTML = '';
     }
 
-    // Promotion celebration modal — show once per rank change
+    // Promotion celebration modal — show once per rank change (only on promotion, not demotion)
     if (currentRank) {
       var lastSeenRank = localStorage.getItem('last_seen_rank');
+      var lastSeenOrder = parseInt(localStorage.getItem('last_seen_rank_order'));
       if (lastSeenRank && lastSeenRank !== currentRank._id) {
-        showPromoModal(currentRank, data.previousRank || null);
+        // Lower displayOrder = higher rank. Only celebrate if promoted (order went down)
+        if (!isNaN(lastSeenOrder) && currentRank.displayOrder < lastSeenOrder) {
+          showPromoModal(currentRank, data.previousRank || null);
+        }
       }
       localStorage.setItem('last_seen_rank', currentRank._id);
+      localStorage.setItem('last_seen_rank_order', currentRank.displayOrder);
     }
 
     // Stats grid (collapsible)
