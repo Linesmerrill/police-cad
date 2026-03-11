@@ -13903,95 +13903,367 @@ async function saveEditEvent() {
     </script>
 
 <!-- ===================== Rank Management Modal ===================== -->
-<div id="rankManagementModal" class="heroui-modal" style="display:none; position:fixed; z-index:3200; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.7); align-items:center; justify-content:center; overflow-y:auto; padding:1rem; box-sizing:border-box;">
-  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:700px; width:95%; max-height:calc(100vh - 2rem); position:relative; border:1px solid #35385a; overflow-y:auto; box-sizing:border-box;">
-    <button onclick="closeRankManagementModal()" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7; z-index:10;"><i class="fa fa-times"></i></button>
+<style>
+  .rkm-overlay {
+    display: none; position: fixed; z-index: 3200; inset: 0;
+    background: rgba(10,11,18,0.8); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+    padding: 1rem; box-sizing: border-box;
+    animation: rkmFadeIn 0.2s ease;
+  }
+  .rkm-overlay.is-open { display: flex; }
+  @keyframes rkmFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes rkmSlideUp { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-    <div style="text-align:center; margin-bottom:1.5rem;">
-      <i class="fa fa-ranking-star" style="font-size:2.5rem; color:#a78bfa; margin-bottom:0.5rem;"></i>
-      <h3 style="color:#fff; margin:0; font-size:1.25rem; font-weight:600;">Manage Ranks</h3>
-      <p id="rankMgmtDeptName" style="color:#a0aec0; margin:0.25rem 0 0 0; font-size:0.875rem;"></p>
+  .rkm-card {
+    background: #13141b; border-radius: 16px; width: 95%; max-width: 920px;
+    max-height: calc(100vh - 2rem); display: flex; flex-direction: column;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 32px 80px -16px rgba(0,0,0,0.65), 0 0 1px rgba(255,255,255,0.05) inset;
+    animation: rkmSlideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+    overflow: hidden;
+  }
+
+  /* Header */
+  .rkm-header {
+    display: flex; align-items: center; gap: 0.875rem;
+    padding: 1.125rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
+  }
+  .rkm-header-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 0.95rem; flex-shrink: 0;
+  }
+  .rkm-header-text h3 { color: #f1f5f9; margin: 0; font-size: 1.05rem; font-weight: 600; }
+  .rkm-header-text p { color: #64748b; margin: 0.1rem 0 0; font-size: 0.775rem; }
+  .rkm-close {
+    margin-left: auto; background: none; border: none; color: #4a5568;
+    cursor: pointer; font-size: 1.1rem; padding: 0.3rem; border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .rkm-close:hover { color: #94a3b8; background: rgba(255,255,255,0.05); }
+
+  /* Body — 2-column on desktop */
+  .rkm-body {
+    display: grid; grid-template-columns: 1fr 1fr;
+    flex: 1; min-height: 0; overflow: hidden;
+  }
+
+  /* Left panel — ranks list */
+  .rkm-panel-ranks {
+    display: flex; flex-direction: column; min-height: 0;
+    border-right: 1px solid rgba(255,255,255,0.05);
+  }
+  .rkm-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.75rem 1.125rem; flex-shrink: 0;
+  }
+  .rkm-panel-title {
+    color: #94a3b8; font-size: 0.675rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .rkm-btn-add {
+    background: rgba(124,58,237,0.12); border: none; border-radius: 6px;
+    color: #a78bfa; font-size: 0.7rem; font-weight: 500; padding: 0.3rem 0.6rem;
+    cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.3rem;
+  }
+  .rkm-btn-add:hover { background: rgba(124,58,237,0.25); }
+
+  .rkm-ranks-scroll {
+    flex: 1; overflow-y: auto; padding: 0 0.75rem 0.75rem;
+    display: flex; flex-direction: column; gap: 0.375rem;
+  }
+  .rkm-ranks-scroll::-webkit-scrollbar { width: 4px; }
+  .rkm-ranks-scroll::-webkit-scrollbar-track { background: transparent; }
+  .rkm-ranks-scroll::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 4px; }
+
+  /* Rank row */
+  .rkm-rank {
+    display: flex; align-items: center; gap: 0.625rem;
+    padding: 0.6rem 0.75rem; border-radius: 9px;
+    background: rgba(255,255,255,0.025); border: 1px solid transparent;
+    cursor: pointer; transition: all 0.15s; position: relative;
+  }
+  .rkm-rank:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.06); }
+  .rkm-rank.is-active { background: rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.25); }
+
+  .rkm-rank-order {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center;
+    color: #64748b; font-size: 0.675rem; font-weight: 700; flex-shrink: 0;
+  }
+  .rkm-rank.is-active .rkm-rank-order { background: rgba(124,58,237,0.2); color: #a78bfa; }
+
+  .rkm-rank-info { flex: 1; min-width: 0; }
+  .rkm-rank-name { color: #e2e8f0; font-size: 0.8125rem; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rkm-rank-meta { display: flex; align-items: center; gap: 0.375rem; margin-top: 0.15rem; flex-wrap: wrap; }
+  .rkm-rank-tag {
+    font-size: 0.6rem; font-weight: 600; padding: 0.1rem 0.35rem;
+    border-radius: 3px; text-transform: uppercase; letter-spacing: 0.03em;
+    line-height: 1.4;
+  }
+  .rkm-tag-prefix { background: rgba(124,58,237,0.15); color: #a78bfa; }
+  .rkm-tag-default { background: rgba(251,191,36,0.12); color: #fbbf24; }
+  .rkm-tag-auto { background: rgba(16,185,129,0.12); color: #34d399; }
+  .rkm-tag-req { background: rgba(255,255,255,0.04); color: #64748b; font-weight: 500; }
+
+  .rkm-rank-actions {
+    display: flex; gap: 0.2rem; flex-shrink: 0; opacity: 0; transition: opacity 0.15s;
+  }
+  .rkm-rank:hover .rkm-rank-actions { opacity: 1; }
+  .rkm-rank-btn {
+    width: 26px; height: 26px; border: none; border-radius: 5px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; transition: all 0.12s; background: rgba(255,255,255,0.04);
+  }
+  .rkm-rank-btn-move { color: #64748b; }
+  .rkm-rank-btn-move:hover { color: #a78bfa; background: rgba(124,58,237,0.12); }
+  .rkm-rank-btn-edit { color: #94a3b8; }
+  .rkm-rank-btn-edit:hover { color: #a78bfa; background: rgba(124,58,237,0.12); }
+  .rkm-rank-btn-del { color: #6b7280; }
+  .rkm-rank-btn-del:hover { color: #f87171; background: rgba(239,68,68,0.1); }
+
+  .rkm-empty {
+    text-align: center; padding: 2.5rem 1rem; color: #4a5568;
+  }
+  .rkm-empty i { font-size: 1.75rem; margin-bottom: 0.5rem; display: block; color: #374151; }
+  .rkm-empty p { margin: 0; font-size: 0.775rem; }
+
+  /* Right panel — members */
+  .rkm-panel-members {
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  .rkm-search {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: #1a1c24; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px; padding: 0.4rem 0.625rem;
+    transition: border-color 0.15s;
+  }
+  .rkm-search:focus-within { border-color: rgba(124,58,237,0.4); }
+  .rkm-search i { color: #4a5568; font-size: 0.7rem; flex-shrink: 0; }
+  .rkm-search input {
+    flex: 1; background: none; border: none; color: #e2e8f0;
+    font-size: 0.775rem; outline: none; min-width: 0;
+  }
+  .rkm-search input::placeholder { color: #4a5568; }
+  .rkm-members-scroll {
+    flex: 1; overflow-y: auto; padding: 0 0.75rem 0.75rem;
+    display: flex; flex-direction: column; gap: 0.3rem;
+  }
+  .rkm-members-scroll::-webkit-scrollbar { width: 4px; }
+  .rkm-members-scroll::-webkit-scrollbar-track { background: transparent; }
+  .rkm-members-scroll::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 4px; }
+
+  /* Member row */
+  .rkm-member {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.425rem 0.625rem; border-radius: 8px;
+    transition: background 0.12s;
+  }
+  .rkm-member:hover { background: rgba(255,255,255,0.03); }
+  .rkm-member-avatar {
+    width: 26px; height: 26px; border-radius: 50%; object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
+  }
+  .rkm-member-initial {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #1e2028; border: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: center;
+    color: #64748b; font-size: 0.625rem; font-weight: 600; flex-shrink: 0;
+  }
+  .rkm-member-name {
+    flex: 1; min-width: 0; color: #cbd5e1; font-size: 0.775rem; font-weight: 450;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .rkm-member select {
+    background: #1a1c24; color: #c4cad4; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px; padding: 0.275rem 0.5rem; font-size: 0.7rem;
+    min-width: 110px; cursor: pointer; transition: border-color 0.15s;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a5568'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center;
+    padding-right: 22px;
+  }
+  .rkm-member select:focus { border-color: #7c3aed; outline: none; }
+
+  .rkm-members-pagination {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.625rem; padding: 0.5rem 0.75rem; flex-shrink: 0;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .rkm-page-btn {
+    background: rgba(255,255,255,0.04); border: none; border-radius: 5px;
+    color: #64748b; padding: 0.3rem 0.5rem; font-size: 0.7rem;
+    cursor: pointer; transition: all 0.12s;
+  }
+  .rkm-page-btn:hover:not(:disabled) { color: #a78bfa; background: rgba(124,58,237,0.1); }
+  .rkm-page-btn:disabled { opacity: 0.3; cursor: default; }
+  .rkm-page-info { color: #4a5568; font-size: 0.675rem; }
+
+  /* Rank form overlay (slides up inside left panel) */
+  .rkm-form {
+    display: none; flex-direction: column; gap: 0.75rem;
+    padding: 1rem 1.125rem; background: #16171f; border-top: 1px solid rgba(124,58,237,0.15);
+    flex-shrink: 0; max-height: 50%;  overflow-y: auto;
+  }
+  .rkm-form.is-open { display: flex; }
+  .rkm-form-title {
+    color: #e2e8f0; font-size: 0.85rem; font-weight: 600; margin: 0;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .rkm-form-title i { color: #a78bfa; font-size: 0.75rem; }
+  .rkm-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem; }
+  .rkm-field label {
+    display: block; color: #64748b; font-size: 0.65rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;
+  }
+  .rkm-field input[type="text"], .rkm-field input[type="number"] {
+    width: 100%; background: #1a1c24; color: #e2e8f0;
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 7px;
+    padding: 0.45rem 0.625rem; font-size: 0.8rem; transition: border-color 0.15s;
+    box-sizing: border-box;
+  }
+  .rkm-field input:focus { border-color: #7c3aed; outline: none; }
+  .rkm-checks {
+    display: flex; gap: 1rem;
+  }
+  .rkm-check {
+    display: flex; align-items: center; gap: 0.35rem;
+    color: #94a3b8; font-size: 0.75rem; cursor: pointer;
+  }
+  .rkm-check input { accent-color: #7c3aed; }
+  .rkm-reqs-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .rkm-reqs-label { color: #64748b; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .rkm-btn-add-req {
+    background: none; border: 1px solid rgba(255,255,255,0.06); border-radius: 5px;
+    color: #a78bfa; font-size: 0.625rem; padding: 0.2rem 0.45rem; cursor: pointer;
+    transition: all 0.12s;
+  }
+  .rkm-btn-add-req:hover { border-color: #7c3aed; background: rgba(124,58,237,0.08); }
+  .rkm-req-row {
+    display: flex; gap: 0.35rem; align-items: center;
+  }
+  .rkm-req-row select {
+    flex: 1; background: #1a1c24; color: #c4cad4;
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 5px;
+    padding: 0.325rem 0.5rem; font-size: 0.725rem;
+  }
+  .rkm-req-row select:focus { border-color: #7c3aed; outline: none; }
+  .rkm-req-row input {
+    width: 70px; background: #1a1c24; color: #c4cad4;
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 5px;
+    padding: 0.325rem 0.5rem; font-size: 0.725rem; box-sizing: border-box;
+  }
+  .rkm-req-row input:focus { border-color: #7c3aed; outline: none; }
+  .rkm-req-del {
+    background: none; border: none; color: #4a5568; cursor: pointer;
+    padding: 0.2rem; font-size: 0.7rem; transition: color 0.12s;
+  }
+  .rkm-req-del:hover { color: #f87171; }
+  .rkm-form-actions {
+    display: flex; justify-content: flex-end; gap: 0.5rem;
+  }
+  .rkm-btn-cancel {
+    background: rgba(255,255,255,0.04); color: #94a3b8; border: none;
+    border-radius: 7px; padding: 0.45rem 0.875rem; font-size: 0.75rem;
+    font-weight: 500; cursor: pointer; transition: all 0.12s;
+  }
+  .rkm-btn-cancel:hover { background: rgba(255,255,255,0.08); }
+  .rkm-btn-save {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; border: none;
+    border-radius: 7px; padding: 0.45rem 1rem; font-size: 0.75rem;
+    font-weight: 600; cursor: pointer; transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.3);
+  }
+  .rkm-btn-save:hover { box-shadow: 0 4px 16px rgba(124,58,237,0.4); transform: translateY(-1px); }
+
+  /* Mobile: stack panels vertically */
+  @media (max-width: 700px) {
+    .rkm-card { max-width: 100%; width: 100%; max-height: 100vh; border-radius: 12px; }
+    .rkm-body { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+    .rkm-panel-ranks { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .rkm-rank-actions { opacity: 1; }
+    .rkm-form-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .rkm-card { border-radius: 0; max-height: 100vh; height: 100vh; }
+    .rkm-header { padding: 0.875rem 1rem; }
+    .rkm-member select { min-width: 90px; font-size: 0.65rem; }
+  }
+</style>
+
+<div id="rankManagementModal" class="rkm-overlay" onclick="if(event.target===this)closeRankManagementModal()">
+  <div class="rkm-card">
+    <!-- Header -->
+    <div class="rkm-header">
+      <div class="rkm-header-icon"><i class="fa fa-ranking-star"></i></div>
+      <div class="rkm-header-text">
+        <h3>Manage Ranks</h3>
+        <p id="rankMgmtDeptName"></p>
+      </div>
+      <button class="rkm-close" onclick="closeRankManagementModal()" aria-label="Close"><i class="fa fa-times"></i></button>
     </div>
 
-    <!-- Ranks List -->
-    <div id="ranksList" style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1rem;">
-      <div style="text-align:center; padding:2rem; color:#6b7280;">
-        <i class="fa fa-spinner fa-spin" style="font-size:1.5rem; margin-bottom:0.5rem; display:block;"></i>
-        Loading ranks...
-      </div>
-    </div>
-
-    <!-- Add Rank Button -->
-    <button onclick="showRankForm()" id="addRankBtn"
-            style="width:100%; padding:0.6rem; background:#2d3748; border:1px dashed #4a5568; border-radius:8px; color:#a78bfa; font-size:0.875rem; font-weight:500; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:0.5rem;"
-            onmouseenter="this.style.borderColor='#a78bfa'" onmouseleave="this.style.borderColor='#4a5568'">
-      <i class="fa fa-plus"></i> Add Rank
-    </button>
-
-    <!-- Rank Form (hidden by default) -->
-    <div id="rankFormContainer" style="display:none; margin-top:1rem; background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.25rem;">
-      <h4 id="rankFormTitle" style="color:#fff; margin:0 0 1rem 0; font-size:1rem; font-weight:600;">
-        <i class="fa fa-plus" style="margin-right:0.4rem; color:#a78bfa;"></i> New Rank
-      </h4>
-      <input type="hidden" id="rankFormId" value="">
-
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:0.75rem;">
-        <div>
-          <label style="display:block; color:#a0aec0; font-size:0.75rem; margin-bottom:0.25rem; font-weight:500;">Name *</label>
-          <input type="text" id="rankFormName" placeholder="e.g. Sergeant"
-                 style="width:100%; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; padding:0.5rem 0.75rem; font-size:0.875rem;">
+    <!-- Body -->
+    <div class="rkm-body">
+      <!-- Left: Ranks -->
+      <div class="rkm-panel-ranks">
+        <div class="rkm-panel-header">
+          <span class="rkm-panel-title">Rank Hierarchy</span>
+          <button class="rkm-btn-add" id="addRankBtn" onclick="showRankForm()"><i class="fa fa-plus"></i> Add</button>
         </div>
-        <div>
-          <label style="display:block; color:#a0aec0; font-size:0.75rem; margin-bottom:0.25rem; font-weight:500;">Prefix</label>
-          <input type="text" id="rankFormPrefix" placeholder="e.g. SGT"
-                 style="width:100%; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; padding:0.5rem 0.75rem; font-size:0.875rem;">
+        <div class="rkm-ranks-scroll" id="ranksList">
+          <div class="rkm-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading ranks...</p></div>
         </div>
-      </div>
-
-      <div style="display:flex; gap:1.5rem; margin-bottom:0.75rem;">
-        <label style="display:flex; align-items:center; gap:0.4rem; color:#a0aec0; font-size:0.8rem; cursor:pointer;">
-          <input type="checkbox" id="rankFormAutoPromote" style="accent-color:#a78bfa;">
-          Auto Promote
-        </label>
-        <label style="display:flex; align-items:center; gap:0.4rem; color:#a0aec0; font-size:0.8rem; cursor:pointer;">
-          <input type="checkbox" id="rankFormCanViewStats" style="accent-color:#a78bfa;">
-          Can View Stats
-        </label>
-      </div>
-
-      <!-- Requirements Section -->
-      <div style="border-top:1px solid #4a5568; padding-top:0.75rem; margin-bottom:0.75rem;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
-          <label style="color:#a0aec0; font-size:0.8rem; font-weight:500;"><i class="fa fa-chart-bar" style="margin-right:0.3rem;"></i> Requirements</label>
-          <button type="button" onclick="addRequirementRow()"
-                  style="background:none; border:1px solid #4a5568; border-radius:4px; color:#a78bfa; font-size:0.7rem; padding:0.2rem 0.5rem; cursor:pointer;">
-            <i class="fa fa-plus"></i> Add
-          </button>
-        </div>
-        <div id="rankRequirementsList" style="display:flex; flex-direction:column; gap:0.4rem;">
-          <!-- Requirement rows added dynamically -->
+        <!-- Rank Form (inside left panel) -->
+        <div class="rkm-form" id="rankFormContainer">
+          <h4 id="rankFormTitle" class="rkm-form-title"><i class="fa fa-plus"></i> <span>New Rank</span></h4>
+          <input type="hidden" id="rankFormId" value="">
+          <div class="rkm-form-grid">
+            <div class="rkm-field">
+              <label>Name *</label>
+              <input type="text" id="rankFormName" placeholder="e.g. Sergeant">
+            </div>
+            <div class="rkm-field">
+              <label>Prefix</label>
+              <input type="text" id="rankFormPrefix" placeholder="e.g. SGT">
+            </div>
+          </div>
+          <div class="rkm-checks">
+            <label class="rkm-check"><input type="checkbox" id="rankFormAutoPromote"> Auto Promote</label>
+            <label class="rkm-check"><input type="checkbox" id="rankFormIsDefault"> Default Rank</label>
+          </div>
+          <div>
+            <div class="rkm-reqs-header">
+              <span class="rkm-reqs-label"><i class="fa fa-chart-bar" style="margin-right:0.25rem;"></i> Requirements</span>
+              <button type="button" class="rkm-btn-add-req" onclick="addRequirementRow()"><i class="fa fa-plus"></i> Add</button>
+            </div>
+            <div id="rankRequirementsList" style="display:flex; flex-direction:column; gap:0.35rem; margin-top:0.4rem;"></div>
+          </div>
+          <div class="rkm-form-actions">
+            <button type="button" class="rkm-btn-cancel" onclick="hideRankForm()">Cancel</button>
+            <button type="button" class="rkm-btn-save" onclick="saveRank()">Save Rank</button>
+          </div>
         </div>
       </div>
 
-      <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
-        <button type="button" onclick="hideRankForm()"
-                style="background:#374151; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.8rem; cursor:pointer;">Cancel</button>
-        <button type="button" onclick="saveRank()"
-                style="background:#7c3aed; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.8rem; font-weight:500; cursor:pointer;">Save Rank</button>
-      </div>
-    </div>
-
-    <!-- Department Members & Rank Assignment -->
-    <div style="border-top:1px solid #35385a; margin-top:1.25rem; padding-top:1.25rem;">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
-        <h4 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">
-          <i class="fa fa-users" style="margin-right:0.4rem; color:#a78bfa;"></i> Members & Ranks
-        </h4>
-      </div>
-      <div id="rankMembersList" style="display:flex; flex-direction:column; gap:0.4rem;">
-        <div style="text-align:center; padding:1.5rem; color:#6b7280;">
-          <i class="fa fa-spinner fa-spin" style="font-size:1.25rem; margin-bottom:0.5rem; display:block;"></i>
-          Loading members...
+      <!-- Right: Members -->
+      <div class="rkm-panel-members">
+        <div class="rkm-panel-header">
+          <span class="rkm-panel-title">Members & Assignments</span>
+        </div>
+        <div style="padding:0 0.75rem 0.5rem; flex-shrink:0;">
+          <div class="rkm-search">
+            <i class="fa fa-search"></i>
+            <input type="text" id="rankMembersSearch" placeholder="Search members..." oninput="filterRankMembers(this.value)">
+          </div>
+        </div>
+        <div class="rkm-members-scroll" id="rankMembersList">
+          <div class="rkm-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading members...</p></div>
         </div>
       </div>
     </div>
@@ -14015,7 +14287,11 @@ async function saveEditEvent() {
       if (dept) deptName = dept.name || '';
     }
     document.getElementById('rankMgmtDeptName').textContent = deptName;
-    document.getElementById('rankManagementModal').style.display = 'flex';
+    document.getElementById('rankManagementModal').classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    _rankMemberSearchTerm = '';
+    var searchInput = document.getElementById('rankMembersSearch');
+    if (searchInput) searchInput.value = '';
     hideRankForm();
     loadMetricTypes();
     loadRanks();
@@ -14023,7 +14299,8 @@ async function saveEditEvent() {
   };
 
   window.closeRankManagementModal = function() {
-    document.getElementById('rankManagementModal').style.display = 'none';
+    document.getElementById('rankManagementModal').classList.remove('is-open');
+    document.body.style.overflow = '';
     rankMgmtDeptId = null;
   };
 
@@ -14038,7 +14315,7 @@ async function saveEditEvent() {
 
   function loadRanks() {
     var container = document.getElementById('ranksList');
-    container.innerHTML = '<div style="text-align:center; padding:2rem; color:#6b7280;"><i class="fa fa-spinner fa-spin" style="font-size:1.5rem; margin-bottom:0.5rem; display:block;"></i>Loading ranks...</div>';
+    container.innerHTML = '<div class="rkm-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading ranks...</p></div>';
 
     fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks')
       .then(function(r) { return r.json(); })
@@ -14049,48 +14326,39 @@ async function saveEditEvent() {
       })
       .catch(function(err) {
         console.error('Failed to load ranks:', err);
-        container.innerHTML = '<div style="text-align:center; padding:2rem; color:#ef4444;"><i class="fa fa-exclamation-triangle" style="margin-right:0.4rem;"></i>Failed to load ranks</div>';
+        container.innerHTML = '<div class="rkm-empty"><i class="fa fa-exclamation-triangle" style="color:#ef4444;"></i><p style="color:#ef4444;">Failed to load ranks</p></div>';
       });
   }
 
   function renderRanks() {
     var container = document.getElementById('ranksList');
     if (!rankMgmtRanks || rankMgmtRanks.length === 0) {
-      container.innerHTML = '<div style="text-align:center; padding:2rem; color:#6b7280;"><i class="fa fa-list" style="font-size:1.5rem; margin-bottom:0.5rem; display:block;"></i>No ranks configured yet</div>';
+      container.innerHTML = '<div class="rkm-empty"><i class="fa fa-shield"></i><p>No ranks configured yet</p></div>';
       return;
     }
 
     var sorted = rankMgmtRanks.slice().sort(function(a, b) { return (a.displayOrder || 0) - (b.displayOrder || 0); });
     var html = '';
     sorted.forEach(function(rank, idx) {
-      var reqHtml = '';
+      var tags = '';
+      if (rank.prefix) tags += '<span class="rkm-rank-tag rkm-tag-prefix">' + escapeRankHtml(rank.prefix) + '</span>';
+      if (rank.isDefault) tags += '<span class="rkm-rank-tag rkm-tag-default">Default</span>';
+      if (rank.autoPromote) tags += '<span class="rkm-rank-tag rkm-tag-auto">Auto</span>';
       if (rank.requirements && rank.requirements.length > 0) {
-        reqHtml = '<div style="margin-top:0.4rem; display:flex; flex-wrap:wrap; gap:0.3rem;">';
-        rank.requirements.forEach(function(req) {
-          reqHtml += '<span style="background:#1e2028; color:#a0aec0; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.7rem;">' +
-            escapeRankHtml(req.metricType || req.metric) + ' &ge; ' + (req.threshold || 0) + '</span>';
-        });
-        reqHtml += '</div>';
+        tags += '<span class="rkm-rank-tag rkm-tag-req">' + rank.requirements.length + ' req' + (rank.requirements.length > 1 ? 's' : '') + '</span>';
       }
 
-      html += '<div style="background:#2d3748; border:1px solid #4a5568; border-radius:10px; padding:0.75rem 1rem; display:flex; align-items:flex-start; gap:0.75rem; transition:all 0.15s;" data-rank-id="' + rank._id + '">' +
-        '<div style="display:flex; flex-direction:column; align-items:center; gap:0.2rem; min-width:2rem;">' +
-          (idx > 0 ? '<button onclick="moveRank(\'' + rank._id + '\', -1)" style="background:none; border:none; color:#6b7280; cursor:pointer; font-size:0.7rem; padding:0.1rem;"><i class="fa fa-chevron-up"></i></button>' : '<div style="height:1rem;"></div>') +
-          '<span style="color:#a78bfa; font-weight:700; font-size:0.8rem;">#' + (idx + 1) + '</span>' +
-          (idx < sorted.length - 1 ? '<button onclick="moveRank(\'' + rank._id + '\', 1)" style="background:none; border:none; color:#6b7280; cursor:pointer; font-size:0.7rem; padding:0.1rem;"><i class="fa fa-chevron-down"></i></button>' : '<div style="height:1rem;"></div>') +
+      html += '<div class="rkm-rank" data-rank-id="' + rank._id + '">' +
+        '<div class="rkm-rank-order">' + (idx + 1) + '</div>' +
+        '<div class="rkm-rank-info">' +
+          '<div class="rkm-rank-name">' + escapeRankHtml(rank.name) + '</div>' +
+          (tags ? '<div class="rkm-rank-meta">' + tags + '</div>' : '') +
         '</div>' +
-        '<div style="flex:1; min-width:0;">' +
-          '<div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">' +
-            '<span style="color:#fff; font-weight:600; font-size:0.9rem;">' + escapeRankHtml(rank.name) + '</span>' +
-            (rank.prefix ? '<span style="background:#7c3aed33; color:#a78bfa; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.7rem; font-weight:500;">' + escapeRankHtml(rank.prefix) + '</span>' : '') +
-            (rank.autoPromote ? '<span style="background:#10b98133; color:#34d399; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.65rem;">Auto</span>' : '') +
-            (rank.canViewStats ? '<span style="background:#3b82f633; color:#60a5fa; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.65rem;">Stats</span>' : '') +
-          '</div>' +
-          reqHtml +
-        '</div>' +
-        '<div style="display:flex; gap:0.3rem; flex-shrink:0;">' +
-          '<button onclick="editRank(\'' + rank._id + '\')" style="background:#374151; border:none; border-radius:6px; color:#a0aec0; padding:0.35rem 0.5rem; cursor:pointer; font-size:0.75rem;" title="Edit"><i class="fa fa-pencil"></i></button>' +
-          '<button onclick="deleteRank(\'' + rank._id + '\')" style="background:#374151; border:none; border-radius:6px; color:#f87171; padding:0.35rem 0.5rem; cursor:pointer; font-size:0.75rem;" title="Delete"><i class="fa fa-trash"></i></button>' +
+        '<div class="rkm-rank-actions">' +
+          (idx > 0 ? '<button class="rkm-rank-btn rkm-rank-btn-move" onclick="event.stopPropagation(); moveRank(\'' + rank._id + '\', -1)" title="Move up"><i class="fa fa-chevron-up"></i></button>' : '') +
+          (idx < sorted.length - 1 ? '<button class="rkm-rank-btn rkm-rank-btn-move" onclick="event.stopPropagation(); moveRank(\'' + rank._id + '\', 1)" title="Move down"><i class="fa fa-chevron-down"></i></button>' : '') +
+          '<button class="rkm-rank-btn rkm-rank-btn-edit" onclick="event.stopPropagation(); editRank(\'' + rank._id + '\')" title="Edit"><i class="fa fa-pencil"></i></button>' +
+          '<button class="rkm-rank-btn rkm-rank-btn-del" onclick="event.stopPropagation(); deleteRank(\'' + rank._id + '\')" title="Delete"><i class="fa fa-trash"></i></button>' +
         '</div>' +
       '</div>';
     });
@@ -14113,7 +14381,7 @@ async function saveEditEvent() {
     page = page || 1;
     rankMembersPage = page;
     var container = document.getElementById('rankMembersList');
-    container.innerHTML = '<div style="text-align:center; padding:1.5rem; color:#6b7280;"><i class="fa fa-spinner fa-spin" style="font-size:1.25rem; margin-bottom:0.5rem; display:block;"></i>Loading members...</div>';
+    container.innerHTML = '<div class="rkm-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading members...</p></div>';
 
     // On first page load, fetch department members to build rank map
     var deptPromise = (page === 1)
@@ -14137,7 +14405,7 @@ async function saveEditEvent() {
       rankMembersTotalPages = pagination.totalPages || 1;
 
       if (communityMembers.length === 0 && page === 1) {
-        container.innerHTML = '<div style="text-align:center; padding:1.5rem; color:#6b7280;"><i class="fa fa-user-slash" style="font-size:1.25rem; margin-bottom:0.5rem; display:block;"></i>No members found</div>';
+        container.innerHTML = '<div class="rkm-empty"><i class="fa fa-user-slash"></i><p>No members found</p></div>';
         return;
       }
 
@@ -14154,25 +14422,33 @@ async function saveEditEvent() {
     })
     .catch(function(err) {
       console.error('Failed to load members:', err);
-      container.innerHTML = '<div style="text-align:center; padding:1.5rem; color:#ef4444;"><i class="fa fa-exclamation-triangle" style="margin-right:0.4rem;"></i>Failed to load members</div>';
+      container.innerHTML = '<div class="rkm-empty"><i class="fa fa-exclamation-triangle" style="color:#ef4444;"></i><p style="color:#ef4444;">Failed to load members</p></div>';
     });
   }
 
   function renderDeptMembers() {
     var container = document.getElementById('rankMembersList');
     if (!rankMgmtMembers || rankMgmtMembers.length === 0) {
-      container.innerHTML = '<div style="text-align:center; padding:1.5rem; color:#6b7280;">No members</div>';
+      container.innerHTML = '<div class="rkm-empty"><i class="fa fa-users"></i><p>No members</p></div>';
       return;
     }
 
     var sorted = rankMgmtRanks.slice().sort(function(a, b) { return (a.displayOrder || 0) - (b.displayOrder || 0); });
 
-    var html = '';
-    rankMgmtMembers.forEach(function(member) {
-      var currentRank = sorted.find(function(r) { return r._id === member.rankId; });
-      var rankLabel = currentRank ? currentRank.name : 'Unranked';
-      var rankColor = currentRank ? '#a78bfa' : '#6b7280';
+    // Filter by search term
+    var membersToShow = rankMgmtMembers;
+    if (_rankMemberSearchTerm) {
+      membersToShow = rankMgmtMembers.filter(function(m) {
+        return (m.username || '').toLowerCase().indexOf(_rankMemberSearchTerm) !== -1;
+      });
+      if (membersToShow.length === 0) {
+        container.innerHTML = '<div class="rkm-empty"><i class="fa fa-search"></i><p>No members match "' + escapeRankHtml(_rankMemberSearchTerm) + '"</p></div>';
+        return;
+      }
+    }
 
+    var html = '';
+    membersToShow.forEach(function(member) {
       var optionsHtml = '<option value="">Unranked</option>';
       sorted.forEach(function(r) {
         var selected = (r._id === member.rankId) ? ' selected' : '';
@@ -14180,38 +14456,35 @@ async function saveEditEvent() {
       });
 
       var avatarHtml = member.profilePicture
-        ? '<img src="' + escapeRankHtml(member.profilePicture) + '" style="width:28px; height:28px; border-radius:50%; object-fit:cover; border:1px solid #4a5568;">'
-        : '<div style="width:28px; height:28px; border-radius:50%; background:#374151; display:flex; align-items:center; justify-content:center; color:#a0aec0; font-size:0.7rem; font-weight:600; border:1px solid #4a5568;">' + escapeRankHtml(member.username.charAt(0).toUpperCase()) + '</div>';
+        ? '<img class="rkm-member-avatar" src="' + escapeRankHtml(member.profilePicture) + '">'
+        : '<div class="rkm-member-initial">' + escapeRankHtml(member.username.charAt(0).toUpperCase()) + '</div>';
 
-      html += '<div style="display:flex; align-items:center; gap:0.6rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:0.5rem 0.75rem;">' +
+      html += '<div class="rkm-member">' +
         avatarHtml +
-        '<div style="flex:1; min-width:0;">' +
-          '<div style="color:#fff; font-size:0.8rem; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + escapeRankHtml(member.username) + '</div>' +
-        '</div>' +
-        '<select onchange="assignRankToMember(\'' + escapeRankHtml(member.userID) + '\', this.value)" ' +
-          'style="background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; padding:0.3rem 0.5rem; font-size:0.75rem; min-width:120px; cursor:pointer;">' +
+        '<span class="rkm-member-name">' + escapeRankHtml(member.username) + '</span>' +
+        '<select onchange="assignRankToMember(\'' + escapeRankHtml(member.userID) + '\', this.value)">' +
           optionsHtml +
         '</select>' +
       '</div>';
     });
 
-    // Pagination controls
-    if (rankMembersTotalPages > 1) {
-      html += '<div style="display:flex; align-items:center; justify-content:center; gap:0.75rem; margin-top:0.75rem;">' +
-        '<button onclick="loadDeptMembers(' + (rankMembersPage - 1) + ')" ' +
-          (rankMembersPage <= 1 ? 'disabled ' : '') +
-          'style="background:#374151; color:' + (rankMembersPage <= 1 ? '#4a5568' : '#fff') + '; border:none; border-radius:6px; padding:0.35rem 0.75rem; font-size:0.75rem; cursor:' + (rankMembersPage <= 1 ? 'default' : 'pointer') + ';">' +
-          '<i class="fa fa-chevron-left"></i></button>' +
-        '<span style="color:#a0aec0; font-size:0.75rem;">Page ' + rankMembersPage + ' of ' + rankMembersTotalPages + '</span>' +
-        '<button onclick="loadDeptMembers(' + (rankMembersPage + 1) + ')" ' +
-          (rankMembersPage >= rankMembersTotalPages ? 'disabled ' : '') +
-          'style="background:#374151; color:' + (rankMembersPage >= rankMembersTotalPages ? '#4a5568' : '#fff') + '; border:none; border-radius:6px; padding:0.35rem 0.75rem; font-size:0.75rem; cursor:' + (rankMembersPage >= rankMembersTotalPages ? 'default' : 'pointer') + ';">' +
-          '<i class="fa fa-chevron-right"></i></button>' +
+    // Pagination (hide when filtering)
+    if (rankMembersTotalPages > 1 && !_rankMemberSearchTerm) {
+      html += '<div class="rkm-members-pagination">' +
+        '<button class="rkm-page-btn" onclick="loadDeptMembers(' + (rankMembersPage - 1) + ')" ' + (rankMembersPage <= 1 ? 'disabled' : '') + '><i class="fa fa-chevron-left"></i></button>' +
+        '<span class="rkm-page-info">' + rankMembersPage + ' / ' + rankMembersTotalPages + '</span>' +
+        '<button class="rkm-page-btn" onclick="loadDeptMembers(' + (rankMembersPage + 1) + ')" ' + (rankMembersPage >= rankMembersTotalPages ? 'disabled' : '') + '><i class="fa fa-chevron-right"></i></button>' +
       '</div>';
     }
 
     container.innerHTML = html;
   }
+
+  var _rankMemberSearchTerm = '';
+  window.filterRankMembers = function(query) {
+    _rankMemberSearchTerm = (query || '').toLowerCase().trim();
+    renderDeptMembers();
+  };
 
   window.assignRankToMember = function(userId, rankId) {
     fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/rank', {
@@ -14241,16 +14514,17 @@ async function saveEditEvent() {
 
   window.showRankForm = function(rank) {
     var formEl = document.getElementById('rankFormContainer');
-    formEl.style.display = 'block';
+    formEl.classList.add('is-open');
     document.getElementById('addRankBtn').style.display = 'none';
     document.getElementById('rankFormId').value = (rank && rank._id) ? rank._id : '';
     document.getElementById('rankFormName').value = (rank && rank.name) || '';
     document.getElementById('rankFormPrefix').value = (rank && rank.prefix) || '';
     document.getElementById('rankFormAutoPromote').checked = (rank && rank.autoPromote) || false;
-    document.getElementById('rankFormCanViewStats').checked = (rank && rank.canViewStats) || false;
-    document.getElementById('rankFormTitle').innerHTML = (rank && rank._id)
-      ? '<i class="fa fa-pencil" style="margin-right:0.4rem; color:#a78bfa;"></i> Edit Rank'
-      : '<i class="fa fa-plus" style="margin-right:0.4rem; color:#a78bfa;"></i> New Rank';
+    document.getElementById('rankFormIsDefault').checked = (rank && rank.isDefault) || false;
+    var titleEl = document.getElementById('rankFormTitle');
+    titleEl.innerHTML = (rank && rank._id)
+      ? '<i class="fa fa-pencil"></i> <span>Edit Rank</span>'
+      : '<i class="fa fa-plus"></i> <span>New Rank</span>';
 
     var reqList = document.getElementById('rankRequirementsList');
     reqList.innerHTML = '';
@@ -14264,16 +14538,16 @@ async function saveEditEvent() {
   };
 
   window.hideRankForm = function() {
-    document.getElementById('rankFormContainer').style.display = 'none';
+    document.getElementById('rankFormContainer').classList.remove('is-open');
     document.getElementById('addRankBtn').style.display = 'flex';
   };
 
   window.addRequirementRow = function(metricType, threshold) {
     var container = document.getElementById('rankRequirementsList');
     var row = document.createElement('div');
-    row.style.cssText = 'display:flex; gap:0.4rem; align-items:center;';
+    row.className = 'rkm-req-row';
 
-    var selectHtml = '<select class="rank-req-metric" style="flex:1; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:4px; padding:0.35rem; font-size:0.8rem;">';
+    var selectHtml = '<select class="rank-req-metric">';
     selectHtml += '<option value="">Select metric...</option>';
     if (rankMgmtMetricTypes && rankMgmtMetricTypes.length > 0) {
       rankMgmtMetricTypes.forEach(function(mt) {
@@ -14286,8 +14560,8 @@ async function saveEditEvent() {
     selectHtml += '</select>';
 
     row.innerHTML = selectHtml +
-      '<input type="number" class="rank-req-threshold" placeholder="Threshold" value="' + (threshold || '') + '" min="0" style="width:80px; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:4px; padding:0.35rem; font-size:0.8rem;">' +
-      '<button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#f87171; cursor:pointer; padding:0.2rem;"><i class="fa fa-times"></i></button>';
+      '<input type="number" class="rank-req-threshold" placeholder="Threshold" value="' + (threshold || '') + '" min="0">' +
+      '<button type="button" class="rkm-req-del" onclick="this.parentElement.remove()"><i class="fa fa-times"></i></button>';
 
     container.appendChild(row);
   };
@@ -14313,7 +14587,8 @@ async function saveEditEvent() {
       name: name,
       prefix: document.getElementById('rankFormPrefix').value.trim(),
       autoPromote: document.getElementById('rankFormAutoPromote').checked,
-      canViewStats: document.getElementById('rankFormCanViewStats').checked,
+      canViewStats: true,
+      isDefault: document.getElementById('rankFormIsDefault').checked,
       requirements: requirements
     };
 
@@ -14353,8 +14628,16 @@ async function saveEditEvent() {
     if (rank) showRankForm(rank);
   };
 
-  window.deleteRank = function(rankId) {
-    if (!confirm('Are you sure you want to delete this rank?')) return;
+  window.deleteRank = async function(rankId) {
+    var rank = rankMgmtRanks.find(function(r) { return r._id === rankId; });
+    var rankName = rank ? rank.name : 'this rank';
+    var confirmed = await edmConfirm({
+      icon: 'trash', iconBg: 'rgba(239,68,68,0.1)', iconColor: '#ef4444',
+      title: 'Delete Rank?',
+      text: 'Remove <strong style="color:#f1f5f9;">' + escapeRankHtml(rankName) + '</strong> from the hierarchy? Members with this rank will become unranked.',
+      confirmLabel: 'Delete', confirmIcon: 'trash'
+    });
+    if (!confirmed) return;
 
     fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks/' + rankId, {
       method: 'DELETE'
