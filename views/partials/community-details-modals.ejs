@@ -6697,17 +6697,23 @@ function populateEditDeptModal(dept) {
   var mergedComponents = mergeExpectedComponents(existingComponents, templateName);
   renderEditDeptComponents(mergedComponents);
 
-  // Update pending promotions badge on Manage Ranks card
+  // Fetch pending promotions count for this department (lightweight per-dept call)
   var promoBadge = document.getElementById('edmRanksBadge');
   var promoBadgeCount = document.getElementById('edmRanksBadgeCount');
-  if (promoBadge && promoBadgeCount) {
-    var promoCount = (window.pendingPromoCounts || {})[dept._id] || 0;
-    if (promoCount > 0) {
-      promoBadgeCount.textContent = promoCount;
-      promoBadge.classList.add('has-count');
-    } else {
-      promoBadge.classList.remove('has-count');
-    }
+  if (promoBadge) promoBadge.classList.remove('has-count');
+  if (dept._id) {
+    var communityId = '<%= community._id %>';
+    fetch(API_URL + '/api/v1/community/' + communityId + '/departments/' + dept._id + '/pending-promotions')
+      .then(function(res) { return res.ok ? res.json() : null; })
+      .then(function(data) {
+        if (data && data.count > 0 && promoBadge && promoBadgeCount) {
+          promoBadgeCount.textContent = data.count;
+          promoBadge.classList.add('has-count');
+          window.pendingPromoCounts = window.pendingPromoCounts || {};
+          window.pendingPromoCounts[dept._id] = data.count;
+        }
+      })
+      .catch(function() {});
   }
 
   updateEditDeptVisibilityLabel();
