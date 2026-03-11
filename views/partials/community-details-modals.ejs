@@ -7685,7 +7685,7 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
             <div class="edm-ranks-card" onclick="openRankManagementModal(currentEditDepartment)">
               <div class="edm-ranks-icon"><i class="fa fa-ranking-star"></i></div>
               <div class="edm-ranks-text">
-                <strong>Manage Ranks</strong>
+                <strong style="display:flex; align-items:center; gap:8px;">Manage Ranks<% if (new Date() < new Date('2026-03-25')) { %><span style="background:linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25)); color:#c4b5fd; padding:1px 7px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(139,92,246,0.3);">Beta</span><% } %></strong>
                 <span>Hierarchy, requirements &amp; auto-promote</span>
               </div>
               <div class="edm-ranks-badge" id="edmRanksBadge"><i class="fa fa-arrow-up"></i><span id="edmRanksBadgeCount">0</span></div>
