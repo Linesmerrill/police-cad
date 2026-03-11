@@ -1,0 +1,49 @@
+      <!-- My Rank & Stats Card -->
+      <div id="myRankStatsCard" style="display:none; max-width:920px; margin:20px auto; padding:0 15px;">
+        <div style="background:linear-gradient(145deg, #1a1740 0%, #161822 60%, #1a1e2e 100%); border:1px solid rgba(124,58,237,0.15); border-radius:16px; padding:28px 32px; box-shadow:0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03); overflow:hidden;">
+
+          <!-- Rank Header -->
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div style="width:48px; height:48px; background:rgba(124,58,237,0.15); border:1px solid rgba(124,58,237,0.25); border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                <i class="fa fa-shield" style="color:#a78bfa; font-size:20px;"></i>
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span id="myRankName" style="color:#fff; font-weight:700; font-size:22px; line-height:1.2; letter-spacing:-0.3px;"></span>
+                  <span id="myRankPrefix" style="background:rgba(124,58,237,0.2); color:#c4b5fd; padding:3px 10px; border-radius:6px; font-size:12px; font-weight:600; display:none; letter-spacing:0.5px;"></span>
+                </div>
+                <span style="color:#7c7f96; font-size:13px; letter-spacing:0.3px;">Current Rank</span>
+              </div>
+            </div>
+            <div id="nextRankInfo" style="display:none; text-align:right;">
+              <span style="color:#7c7f96; font-size:11px; text-transform:uppercase; letter-spacing:1px;">Next Rank</span>
+              <div id="nextRankName" style="color:#e2e0f0; font-size:18px; font-weight:600; letter-spacing:-0.2px;"></div>
+              <div id="nextRankPromoType" style="display:none; margin-top:3px;"></div>
+            </div>
+          </div>
+
+          <!-- Progress Bars -->
+          <div style="position:relative;">
+            <div id="rankProgressBars" style="display:flex; flex-direction:column; gap:14px; max-height:200px; overflow-y:auto; padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(124,58,237,0.3) transparent;">
+              <!-- Populated by JS -->
+            </div>
+            <div id="rankProgressFade" style="display:none; position:absolute; bottom:0; left:0; right:4px; height:32px; background:linear-gradient(to top, #161822 0%, transparent 100%); pointer-events:none;"></div>
+          </div>
+
+          <!-- Collapsible Stats Section -->
+          <div id="rankStatsSection" style="display:none;">
+            <button id="rankStatsToggle" onclick="toggleRankStats()" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:20px; padding:10px; background:rgba(124,58,237,0.08); border:1px solid rgba(124,58,237,0.15); border-radius:10px; color:#a78bfa; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; letter-spacing:0.3px;" onmouseenter="this.style.background='rgba(124,58,237,0.14)'" onmouseleave="this.style.background='rgba(124,58,237,0.08)'">
+              <span id="rankStatsToggleText">Show My Activity</span>
+              <i id="rankStatsToggleIcon" class="fa fa-chevron-down" style="font-size:11px; transition:transform 0.3s;"></i>
+            </button>
+            <div id="rankStatsCollapsible" style="max-height:0; overflow:hidden; transition:max-height 0.4s cubic-bezier(0.4,0,0.2,1);">
+              <div style="padding-top:16px;">
+                <div id="rankStatsGrid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>

@@ -3099,6 +3099,7 @@
           <div class="dd-user-info">
             <div class="dd-user-name"><%= username %></div>
             <div id="dd-user-role"><span class="dd-user-role-default">Department Member</span></div>
+            <% include partials/rank-sidebar-badge %>
           </div>
         </div>
       </a>
@@ -3136,6 +3137,9 @@
 
   <!-- Toast -->
   <div class="dd-toast" id="dd-toast"></div>
+
+  <% include partials/rank-modals %>
+  <% include partials/rank-progress-card %>
 
   <!-- Unified Modal -->
   <div class="dd-modal-overlay" id="dd-modal-overlay">
@@ -7031,5 +7035,7 @@ $('#dd-loading').hide();
   <script src="/static/js/dd-notifications.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
   <script src="/static/js/dd-settings.js"></script>
+  <script src="/static/js/rank-progress.js"></script>
+  <script>if (typeof loadMyRankProgress === 'function') loadMyRankProgress();</script>
 </body>
 </html>

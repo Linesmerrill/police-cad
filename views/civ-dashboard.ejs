@@ -1128,6 +1128,7 @@
         <i class="fa fa-crown"></i>
         <span id="subscription-text">Premium</span>
       </div>
+      <% include partials/rank-sidebar-badge %>
     </div>
 
     <!-- Navigation -->
@@ -1559,6 +1560,9 @@
 
   <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>
+
+  <% include partials/rank-modals %>
+  <% include partials/rank-progress-card %>
 
   <!-- Keep all existing modals and content -->
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
@@ -2297,7 +2301,10 @@
   <script type="text/javascript">
     var dbUser = <%- JSON.stringify(user || {}) %>;
     var API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
-    
+
+    // Load rank progress
+    if (typeof loadMyRankProgress === 'function') loadMyRankProgress();
+
     // Fetch and display community name
     document.addEventListener('DOMContentLoaded', function() {
       if (dbUser && dbUser.user && dbUser.user.lastAccessedCommunity && dbUser.user.lastAccessedCommunity.communityID) {
@@ -2349,6 +2356,7 @@
     // Make department ID available to JavaScript
     window.currentDepartmentId = '<%= departmentId %>';
   </script>
+  <script src="/static/js/rank-progress.js"></script>
   <script src="/static/js/modern-dashboard.js"></script>
   <script src="/static/js/cloudinary-upload.js"></script>
   

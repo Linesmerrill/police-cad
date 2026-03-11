@@ -39,6 +39,7 @@
     <script src="/static/js/departments.js"></script>
     <script src="/static/js/ems-dashboard.js"></script>
     <script src="/static/js/department-backgrounds.js"></script>
+    <script src="/static/js/rank-progress.js"></script>
   <script src="/static/js/bootstrap.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
   <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
@@ -1973,6 +1974,7 @@
               <button type="button" style="background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:5px; padding:0.35rem 1rem; font-size:0.9rem; cursor:pointer;" onclick="cancelSidebarCallSignEdit()">Cancel</button>
             </div>
           </div>
+          <% include partials/rank-sidebar-badge %>
           <h5>Logged in as: Fire/EMS</h5>
         </div>
       </div>
@@ -2112,6 +2114,8 @@
           </div>
         </div>
       </header>
+      <% include partials/rank-modals %>
+      <% include partials/rank-progress-card %>
       <section style='background-image: url("/static/images/blue-clouds.jpg");'>
         <div class="container">
 
@@ -4524,6 +4528,9 @@ function googleTranslateElementInit() {
 
   // Make function globally available
   window.handleNotificationsClick = handleNotificationsClick;
+
+  // Load rank progress
+  if (typeof loadMyRankProgress === 'function') loadMyRankProgress();
 
   // Set up notification modal close button
   document.addEventListener('DOMContentLoaded', function() {

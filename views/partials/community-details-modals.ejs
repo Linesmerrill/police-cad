@@ -7708,7 +7708,15 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
                 </div>
               </div>
               <div class="edm-section-body">
-                <div class="edm-section-inner">
+                <!-- Public department notice -->
+                <div id="editDeptMemberPublicNotice" style="display:none; padding:16px 20px; text-align:center;">
+                  <div style="color:#94a3b8; font-size:13px; line-height:1.5;">
+                    <i class="fa fa-globe" style="color:#60a5fa; margin-right:6px;"></i>
+                    This department is set to <span style="color:#60a5fa; font-weight:600;">Public</span> — all community members have access.
+                    <br><span style="color:#64748b; font-size:12px;">Change to Private to manage individual members.</span>
+                  </div>
+                </div>
+                <div id="editDeptMemberSectionBody" class="edm-section-inner">
                   <!-- Add member panel (inline) -->
                   <div id="editDeptAddMemberPanel" class="edm-add-member-panel">
                     <div class="edm-members-search-wrap">
@@ -8042,6 +8050,23 @@ function updateEditDeptVisibilityLabel() {
   var checked = document.getElementById('editDeptApprovalRequired').checked;
   document.getElementById('editDeptVisibilityPublic').style.color = !checked ? '#60a5fa' : '#64748b';
   document.getElementById('editDeptVisibilityPrivate').style.color = checked ? '#60a5fa' : '#64748b';
+
+  // Toggle members section based on public/private
+  var isPublic = !checked;
+  var memberBody = document.getElementById('editDeptMemberSectionBody');
+  var publicNotice = document.getElementById('editDeptMemberPublicNotice');
+  var addBtn = document.getElementById('editDeptAddMemberToggle');
+  if (memberBody && publicNotice) {
+    memberBody.style.display = isPublic ? 'none' : '';
+    publicNotice.style.display = isPublic ? 'block' : 'none';
+  }
+  if (addBtn) {
+    addBtn.style.display = isPublic ? 'none' : '';
+  }
+  var memberCount = document.getElementById('editDeptMemberCount');
+  if (memberCount) {
+    memberCount.style.display = isPublic ? 'none' : '';
+  }
 }
 
 // ===== Department Members Management =====
@@ -8303,7 +8328,7 @@ function addMemberToDept(userId) {
 <!-- Reusable Confirm Modal -->
 <style>
   .edm-confirm-overlay {
-    display: none; position: fixed; z-index: 3200; left: 0; top: 0; width: 100vw; height: 100vh;
+    display: none; position: fixed; z-index: 3300; left: 0; top: 0; width: 100vw; height: 100vh;
     background: rgba(0,0,0,0); align-items: center; justify-content: center;
     transition: background 0.25s ease;
   }
@@ -14624,13 +14649,78 @@ async function saveEditEvent() {
   var rankMembersLimit = 20;
   var rankMembersDeptRankMap = {};
 
+  // Check if the current department is public (no approval required)
+  function isDeptPublic() {
+    if (window.departmentsListData && rankMgmtDeptId) {
+      var dept = window.departmentsListData.find(function(d) { return d._id === rankMgmtDeptId; });
+      if (dept) return !dept.approvalRequired;
+    }
+    return false;
+  }
+
   window.loadDeptMembers = function(page) {
     page = page || 1;
     rankMembersPage = page;
     var container = document.getElementById('rankMembersList');
     container.innerHTML = '<div class="rkm-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading members...</p></div>';
 
-    // Fetch department members directly (only members in this department)
+    if (isDeptPublic()) {
+      // PUBLIC department: fetch community members (with server-side search), cross-reference with dept rank data
+      var communityUrl;
+      if (_rankMemberSearchTerm) {
+        communityUrl = RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/members/search?q=' + encodeURIComponent(_rankMemberSearchTerm) + '&page=' + page + '&limit=' + rankMembersLimit;
+      } else {
+        communityUrl = RANK_API + '/api/v2/community/' + rankMgmtCommunityId + '/members?page=' + page + '&limit=' + rankMembersLimit;
+      }
+      var deptUrl = RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members?page=1&limit=9999';
+
+      Promise.all([
+        fetch(communityUrl).then(function(r) { return r.json(); }),
+        fetch(deptUrl).then(function(r) { return r.json(); })
+      ])
+      .then(function(results) {
+        var communityData = results[0];
+        var deptData = results[1];
+
+        // Build rank lookup from department members
+        var deptRankMap = {};
+        (deptData.data || []).forEach(function(m) {
+          if (m.rankId) deptRankMap[m._id] = m.rankId;
+        });
+
+        var communityMembers = communityData.members || [];
+        var pagination = communityData.pagination || {};
+        var totalCount = pagination.totalCount || communityMembers.length;
+        rankMembersTotalPages = Math.ceil(totalCount / rankMembersLimit) || 1;
+
+        if (communityMembers.length === 0 && page === 1) {
+          var msg = _rankMemberSearchTerm
+            ? 'No members match "' + escapeRankHtml(_rankMemberSearchTerm) + '"'
+            : 'No community members found.';
+          container.innerHTML = '<div class="rkm-empty"><i class="fa fa-' + (_rankMemberSearchTerm ? 'search' : 'users') + '" style="color:#4a5568;"></i><p>' + msg + '</p></div>';
+          return;
+        }
+
+        rankMgmtMembers = communityMembers.map(function(m) {
+          var id = m.id || m._id;
+          return {
+            userID: id,
+            rankId: deptRankMap[id] || '',
+            username: m.username || 'Unknown',
+            profilePicture: m.profilePicture || ''
+          };
+        });
+
+        renderDeptMembers();
+      })
+      .catch(function(err) {
+        console.error('Failed to load members:', err);
+        container.innerHTML = '<div class="rkm-empty"><i class="fa fa-exclamation-triangle" style="color:#ef4444;"></i><p style="color:#ef4444;">Failed to load members</p></div>';
+      });
+      return;
+    }
+
+    // PRIVATE department: fetch department members directly
     var url = RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members?page=' + page + '&limit=' + rankMembersLimit;
     fetch(url)
     .then(function(r) { return r.json(); })
