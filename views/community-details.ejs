@@ -910,12 +910,15 @@
 
         function fetchPendingPromotionBadges() {
           fetch(window.API_URL + '/api/v1/community/' + window.communityId + '/pending-promotion-counts')
-            .then(function(res) { return res.json(); })
+            .then(function(res) {
+              if (!res.ok) throw new Error('HTTP ' + res.status);
+              return res.json();
+            })
             .then(function(data) {
               window.pendingPromoCounts = data.counts || {};
               applyPromoBadges();
             })
-            .catch(function() {});
+            .catch(function(err) { console.error('Failed to fetch pending promotion counts:', err); });
         }
 
         function applyPromoBadges() {
