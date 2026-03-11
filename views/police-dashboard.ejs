@@ -6327,12 +6327,13 @@ window.showBoloModal = showBoloModal;
       barsContainer.innerHTML = '';
     }
 
-    // Promotion celebration modal — show once per rank if auto-promoted
-    if (currentRank && data.rankAssignmentType === 'auto') {
-      var dismissKey = 'promo_seen_' + currentRank._id;
-      if (!localStorage.getItem(dismissKey)) {
+    // Promotion celebration modal — show once per rank change
+    if (currentRank) {
+      var lastSeenRank = localStorage.getItem('last_seen_rank');
+      if (lastSeenRank && lastSeenRank !== currentRank._id) {
         showPromoModal(currentRank, data.previousRank || null);
       }
+      localStorage.setItem('last_seen_rank', currentRank._id);
     }
 
     // Stats grid (collapsible)
@@ -6371,10 +6372,7 @@ window.showBoloModal = showBoloModal;
     }
   };
 
-  var _promoRankKey = null;
-
   function showPromoModal(newRank, previousRank) {
-    _promoRankKey = 'promo_seen_' + newRank._id;
     var overlay = document.getElementById('promoModalOverlay');
     document.getElementById('promoModalRankName').textContent = newRank.name;
     if (newRank.prefix) {
@@ -6392,12 +6390,8 @@ window.showBoloModal = showBoloModal;
   }
 
   window.dismissPromoModal = function() {
-    var overlay = document.getElementById('promoModalOverlay');
-    overlay.classList.remove('is-open');
+    document.getElementById('promoModalOverlay').classList.remove('is-open');
     document.body.style.overflow = '';
-    if (_promoRankKey) {
-      try { localStorage.setItem(_promoRankKey, '1'); } catch(e) {}
-    }
   };
 
   function launchPromoConfetti() {
