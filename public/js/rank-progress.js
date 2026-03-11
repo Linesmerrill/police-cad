@@ -284,3 +284,20 @@ function escapeHtmlRank(str) {
   if (!str) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
+// Auto-refresh rank progress when user returns to the page
+(function() {
+  var _rankRefreshCooldown = 0;
+  function refreshRank() {
+    if (typeof loadMyRankProgress !== 'function') return;
+    var now = Date.now();
+    if (now - _rankRefreshCooldown > 30000) {
+      _rankRefreshCooldown = now;
+      loadMyRankProgress();
+    }
+  }
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') refreshRank();
+  });
+  window.addEventListener('focus', refreshRank);
+})();
