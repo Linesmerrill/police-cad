@@ -6328,8 +6328,24 @@ window.showBoloModal = showBoloModal;
     }
 
     // Promotion celebration modal
+    // Show if: (a) just promoted now, or (b) recently auto-promoted and haven't dismissed yet
+    var shouldShowPromo = false;
     if (data.promoted && currentRank) {
-      showPromoModal(currentRank, data.previousRank || null);
+      shouldShowPromo = true;
+    } else if (currentRank && data.rankAssignmentType === 'auto' && data.rankAssignedAt) {
+      var assignedMs = new Date(data.rankAssignedAt).getTime();
+      var fiveMinAgo = Date.now() - (5 * 60 * 1000);
+      var dismissKey = 'promo_dismissed_' + (currentRank._id || currentRank.name);
+      if (assignedMs > fiveMinAgo && !localStorage.getItem(dismissKey)) {
+        shouldShowPromo = true;
+      }
+    }
+    if (shouldShowPromo) {
+      // previousRank is only set when promoted in this request; otherwise use nextRank
+      // (which is the rank above current — after promotion, "next" is above new rank,
+      // so for the modal we want the rank below current as the "from")
+      var fromRank = data.previousRank || null;
+      showPromoModal(currentRank, fromRank);
     }
 
     // Stats grid (collapsible)
@@ -6368,7 +6384,10 @@ window.showBoloModal = showBoloModal;
     }
   };
 
+  var _promoRankKey = null;
+
   function showPromoModal(newRank, previousRank) {
+    _promoRankKey = 'promo_dismissed_' + (newRank._id || newRank.name);
     var overlay = document.getElementById('promoModalOverlay');
     document.getElementById('promoModalRankName').textContent = newRank.name;
     if (newRank.prefix) {
@@ -6389,6 +6408,9 @@ window.showBoloModal = showBoloModal;
     var overlay = document.getElementById('promoModalOverlay');
     overlay.classList.remove('is-open');
     document.body.style.overflow = '';
+    if (_promoRankKey) {
+      try { localStorage.setItem(_promoRankKey, '1'); } catch(e) {}
+    }
   };
 
   function launchPromoConfetti() {
