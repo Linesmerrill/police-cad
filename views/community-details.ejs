@@ -361,6 +361,14 @@
         color: #fff;
         border-color: rgba(59, 130, 246, 0.6);
       }
+      .dept-promo-badge {
+        position: absolute; bottom: 6px; right: 6px; z-index: 10;
+        display: flex; align-items: center;
+        background: rgba(245, 158, 11, 0.9); color: #fff;
+        font-size: 11px; font-weight: 700; line-height: 1;
+        padding: 3px 8px; border-radius: 100px;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+      }
 
       /* Action Button - responsive */
       .action-btn {
@@ -714,6 +722,28 @@
           // departments that weren't in the initial server-rendered page.
           fetchDepartmentsPage(1, true).then(function() {
             if (typeof initDeptCardClicks === 'function') initDeptCardClicks();
+            if (window.canManageDepartments) fetchPendingPromotionBadges();
+
+            // Auto-open manage ranks from notification deep link
+            var urlParams = new URLSearchParams(window.location.search);
+            var openDeptId = urlParams.get('openDept');
+            var openRanks = urlParams.get('openRanks');
+            if (openDeptId && window.canManageDepartments) {
+              // Clean up URL
+              window.history.replaceState({}, '', window.location.pathname);
+              setTimeout(function() {
+                if (typeof openEditDepartmentModal === 'function') {
+                  openEditDepartmentModal(openDeptId);
+                  if (openRanks === 'true') {
+                    setTimeout(function() {
+                      if (typeof openRankManagementModal === 'function') {
+                        openRankManagementModal(openDeptId);
+                      }
+                    }, 500);
+                  }
+                }
+              }, 300);
+            }
           });
         }
 
@@ -873,6 +903,38 @@
             '</div>';
 
           return card;
+        }
+
+        // Pending promotion badge cache (shared with edit dept modal)
+        window.pendingPromoCounts = {};
+
+        function fetchPendingPromotionBadges() {
+          fetch(window.API_URL + '/api/v1/community/' + window.communityId + '/pending-promotion-counts')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+              window.pendingPromoCounts = data.counts || {};
+              applyPromoBadges();
+            })
+            .catch(function() {});
+        }
+
+        function applyPromoBadges() {
+          var cards = document.querySelectorAll('#departments-grid .dept-card');
+          cards.forEach(function(card) {
+            var deptId = card.getAttribute('data-dept-id');
+            // Remove any existing badge
+            var existing = card.querySelector('.dept-promo-badge');
+            if (existing) existing.remove();
+
+            var count = window.pendingPromoCounts[deptId];
+            if (count && count > 0) {
+              var badge = document.createElement('div');
+              badge.className = 'dept-promo-badge';
+              badge.innerHTML = '<i class="fa fa-arrow-up" style="font-size:8px;margin-right:3px;"></i>' + count;
+              badge.title = count + ' pending promotion' + (count > 1 ? 's' : '');
+              card.querySelector('.relative').appendChild(badge);
+            }
+          });
         }
 
         function updateDeptPaginationUI() {

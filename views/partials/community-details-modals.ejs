@@ -6697,6 +6697,19 @@ function populateEditDeptModal(dept) {
   var mergedComponents = mergeExpectedComponents(existingComponents, templateName);
   renderEditDeptComponents(mergedComponents);
 
+  // Update pending promotions badge on Manage Ranks card
+  var promoBadge = document.getElementById('edmRanksBadge');
+  var promoBadgeCount = document.getElementById('edmRanksBadgeCount');
+  if (promoBadge && promoBadgeCount) {
+    var promoCount = (window.pendingPromoCounts || {})[dept._id] || 0;
+    if (promoCount > 0) {
+      promoBadgeCount.textContent = promoCount;
+      promoBadge.classList.add('has-count');
+    } else {
+      promoBadge.classList.remove('has-count');
+    }
+  }
+
   updateEditDeptVisibilityLabel();
   setEditDeptSaveStatus('idle');
   document.getElementById('editDepartmentModal').classList.add('is-open');
@@ -7174,6 +7187,22 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
     font-size: 12px;
     opacity: 0.6;
   }
+  .edm-ranks-badge {
+    display: none;
+    align-items: center;
+    background: rgba(245, 158, 11, 0.9);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 3px 8px;
+    border-radius: 100px;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .edm-ranks-badge i { font-size: 8px; margin-right: 3px; }
+  .edm-ranks-badge.has-count { display: flex; }
 
   /* Component row */
   .edm-comp-row {
@@ -7653,6 +7682,7 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
                 <strong>Manage Ranks</strong>
                 <span>Hierarchy, requirements &amp; auto-promote</span>
               </div>
+              <div class="edm-ranks-badge" id="edmRanksBadge"><i class="fa fa-arrow-up"></i><span id="edmRanksBadgeCount">0</span></div>
               <i class="fa fa-chevron-right edm-ranks-arrow"></i>
             </div>
 
