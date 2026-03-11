@@ -183,11 +183,11 @@ function renderRankProgress(data, allRanks) {
     var currentId = currentRank ? currentRank._id : null;
     var currentOrder = currentRank ? currentRank.displayOrder : -1;
     var nextId = nextRank ? nextRank._id : null;
-    var ladderHtml = '';
+    var ladderHtml = '<div style="display:flex; justify-content:space-between; margin-bottom:10px; padding:0 4px;"><span style="color:#6b7280; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.8px;">Highest Rank</span></div>';
 
     sorted.forEach(function(rank, index) {
       var isCurrent = rank._id === currentId;
-      var isPassed = currentId && rank.displayOrder < currentOrder;
+      var isPassed = currentId && rank.displayOrder > currentOrder;
       var isNext = rank._id === nextId;
       var isFirst = index === 0;
       var isLast = index === sorted.length - 1;
@@ -305,6 +305,7 @@ function renderRankProgress(data, allRanks) {
       '</div>';
     });
 
+    ladderHtml += '<div style="display:flex; justify-content:space-between; margin-top:10px; padding:0 4px;"><span style="color:#6b7280; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.8px;">Lowest Rank</span></div>';
     ladderContainer.innerHTML = ladderHtml;
   }
 }
