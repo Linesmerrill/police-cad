@@ -5580,6 +5580,9 @@ function toggleCaret(event) {
           }
         });
       } else {
+        // Play sound immediately during user gesture (before async AJAX)
+        // so browsers don't block it due to autoplay policy
+        AlertSounds.play('panic');
         $.ajax({
           url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/panic-alerts`,
           method: 'POST',
@@ -5592,7 +5595,6 @@ function toggleCaret(event) {
           }),
           success: function() {
             ensureActiveDepartment();
-            AlertSounds.play('panic');
             loadPanicStatuses();
             resetPanicLoading();
           },

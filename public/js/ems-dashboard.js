@@ -656,6 +656,9 @@ function triggerPanic() {
       }
     });
   } else {
+    // Play sound immediately during user gesture (before async AJAX)
+    // so browsers don't block it due to autoplay policy
+    AlertSounds.play('panic');
     $.ajax({
       url: `${POLICE_CAD_API_URL}/api/v1/community/${communityId}/panic-alerts`,
       method: 'POST',
@@ -668,7 +671,6 @@ function triggerPanic() {
       contentType: 'application/json',
       success: function() {
         ensureActiveDepartment();
-        AlertSounds.play('panic');
         loadPanicStatusesAjax();
         resetPanicLoading();
       },
