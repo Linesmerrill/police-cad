@@ -80,14 +80,14 @@ window.AlertSounds = (function() {
   }
 
   function isSoundEnabled() {
-    var $checkbox = $('#panic-button-check-sound');
-    var checkboxEnabled = $checkbox.length ? $checkbox.prop('checked') : true;
+    // Use the DB user preference as the source of truth.
+    // The checkbox (on dashboards that have it) is just a UI mirror of this value.
     var userPref = window.dbUser?.user?.panicButtonSound;
-    var enabled = checkboxEnabled && userPref !== false;
-    if (!enabled) {
-      console.log('[AlertSounds] Sound disabled — checkbox:', checkboxEnabled, 'userPref:', userPref);
+    if (userPref === false) {
+      console.log('[AlertSounds] Sound disabled — userPref:', userPref);
+      return false;
     }
-    return enabled;
+    return true;
   }
 
   function playNext() {
