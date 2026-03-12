@@ -361,7 +361,6 @@
         color: #fff;
         border-color: rgba(59, 130, 246, 0.6);
       }
-
       /* Action Button - responsive */
       .action-btn {
         display: flex;
@@ -714,6 +713,29 @@
           // departments that weren't in the initial server-rendered page.
           fetchDepartmentsPage(1, true).then(function() {
             if (typeof initDeptCardClicks === 'function') initDeptCardClicks();
+            // Note: pending promotion badges are fetched per-department when the edit modal opens
+            // (bulk fetch across all departments is too heavy)
+
+            // Auto-open manage ranks from notification deep link
+            var urlParams = new URLSearchParams(window.location.search);
+            var openDeptId = urlParams.get('openDept');
+            var openRanks = urlParams.get('openRanks');
+            if (openDeptId && window.canManageDepartments) {
+              // Clean up URL
+              window.history.replaceState({}, '', window.location.pathname);
+              setTimeout(function() {
+                if (typeof openEditDepartmentModal === 'function') {
+                  openEditDepartmentModal(openDeptId);
+                  if (openRanks === 'true') {
+                    setTimeout(function() {
+                      if (typeof openRankManagementModal === 'function') {
+                        openRankManagementModal(openDeptId);
+                      }
+                    }, 500);
+                  }
+                }
+              }, 300);
+            }
           });
         }
 
@@ -874,6 +896,9 @@
 
           return card;
         }
+
+        // Pending promotion count cache (per-department, populated when edit modal opens)
+        window.pendingPromoCounts = {};
 
         function updateDeptPaginationUI() {
           var prevBtn = document.getElementById('dept-prev-btn');

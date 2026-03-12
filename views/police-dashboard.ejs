@@ -541,6 +541,7 @@
               <button type="button" style="background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:5px; padding:0.35rem 1rem; font-size:0.9rem; cursor:pointer;" onclick="cancelSidebarCallSignEdit()">Cancel</button>
             </div>
           </div>
+          <% include partials/rank-sidebar-badge %>
           <h5>Logged in as: Police Officer</h5>
         </div>
       </div>
@@ -1271,6 +1272,8 @@
         <% include ad-body %>
       </div>
       <% } %>
+      <% include partials/rank-modals %>
+      <% include partials/rank-progress-card %>
       <section style='background-image: url("/static/images/blue-clouds.jpg"); padding:0'>
         <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
         <div class="container">
@@ -3315,6 +3318,7 @@
 <script src="/static/js/notifications.js"></script>
 <script src="/static/js/court-session-badge.js"></script>
 <script src="/static/js/ads.js"></script>
+<script src="/static/js/rank-progress.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <script>if (window.module) module = window.module;</script>
@@ -3670,7 +3674,7 @@
     }
 
     var dbUser = <%- JSON.stringify(user) %>;
-    const API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+    var API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 var departmentId = <%- JSON.stringify(departmentId) %>;
 var departmentName = <%- JSON.stringify(departmentName || null) %>;
 var tenCodesCache = [];
@@ -5998,6 +6002,7 @@ window.showBoloModal = showBoloModal;
       pollDashboardData();
       setInterval(pollDashboardData, 30000); // Poll every 30 seconds (fallback for missed webhooks)
       loadTenCodes();
+      loadMyRankProgress();
       filteredTenCodes = tenCodesCache;
     currentPage = 1;
     displayTenCodes(filteredTenCodes);
@@ -6080,6 +6085,7 @@ window.showBoloModal = showBoloModal;
 
     //load gravatar image
   $('.profile-picture').css("background-image", `url(${dbUser?.user?.profilePicture || 'https://ui-avatars.com/api/?name='+dbUser?.user?.username+'&background=808080&color=fff&size=256'})`)
+
 
   }); /* End of document.ready */
 

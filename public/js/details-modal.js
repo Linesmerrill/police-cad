@@ -1066,6 +1066,7 @@ $(document).ready(function () {
 
   // Handle arrest report submission
   function submitArrestReport() {
+    var activeDeptId = (typeof departmentId !== 'undefined') ? departmentId : null;
     const formData = {
       arrestReport: {
         reportNumber: $("#arrest-report-case-no").val(),
@@ -1095,6 +1096,7 @@ $(document).ready(function () {
         witnesses: $("#actions-taken").val(),
         forceUsed: $("#forceUsed").val() === "Yes",
         attachedForms: [], // Placeholder; extend if forms are added
+        departmentId: activeDeptId,
       },
     };
 
@@ -1121,12 +1123,14 @@ $(document).ready(function () {
   function submitWarningReport() {
     const civilianId = $("#civIDWarning").val();
     const currentDate = new Date().toISOString().split("T")[0];
+    var activeDeptIdW = (typeof departmentId !== 'undefined') ? departmentId : null;
     const newEntry = {
       officerID: dbUser._id || "Unknown",
       type: "Warning",
       fines: [],
       notes: $("#warning-civ-additional-notes").val() || null,
       date: currentDate,
+      departmentId: activeDeptIdW,
     };
 
     $.ajax({
@@ -1174,12 +1178,14 @@ $(document).ready(function () {
       });
     }
 
+    var activeDeptIdC = (typeof departmentId !== 'undefined') ? departmentId : null;
     const newEntry = {
       officerID: dbUser._id || "Unknown",
       type: "Citation",
       fines: fines.length > 0 ? fines : [],
       notes: otherFine || selectedFines.join(", ") || null,
       date: currentDate,
+      departmentId: activeDeptIdC,
     };
 
     $.ajax({

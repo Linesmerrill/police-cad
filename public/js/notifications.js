@@ -116,6 +116,28 @@ function renderNotifications() {
             >${isLoading ? "Processing..." : "Deny"}</button>
           </div>
         `;
+    } else if (notification.type === "promotion_eligible") {
+      // data2 = departmentId, data3 = communityId
+      const communityId = notification.data3 || '';
+      const departmentId = notification.data2 || '';
+      actionButtons = `
+          <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <button style="
+              background: rgba(245, 158, 11, 0.12);
+              color: #fbbf24;
+              border: 1px solid rgba(245, 158, 11, 0.2);
+              border-radius: 8px;
+              padding: 7px 16px;
+              font-size: 13px;
+              font-weight: 500;
+              cursor: pointer;
+              transition: all 0.15s;
+            " onclick="handlePromotionReview('${communityId}', '${departmentId}', '${notification.notificationId}')"
+              onmouseover="this.style.background='rgba(245,158,11,0.22)'"
+              onmouseout="this.style.background='rgba(245,158,11,0.12)'"
+            ><i class="fa fa-ranking-star" style="margin-right: 5px;"></i>Review</button>
+          </div>
+        `;
     } else if (notification.status) {
       const statusColor = notification.status === "approved" ? "#4ade80" : "#f87171";
       const statusBg = notification.status === "approved" ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)";
@@ -131,6 +153,8 @@ function renderNotifications() {
       message = `${notification.senderUsername} ${notification.message} ${notification.data2}`;
     } else if (notification.type === "join_request" && notification.data3) {
       message = `${notification.senderUsername} ${notification.message} ${notification.data2}'s department ${notification.data4}`;
+    } else if (notification.type === "promotion_eligible") {
+      message = notification.message || "An officer is eligible for promotion";
     } else if (notification.type === "notification") {
       message = `${notification.message} ${notification.data2}`;
     }
@@ -465,6 +489,35 @@ function deleteNotification() {
   });
 }
 
+function handlePromotionReview(communityId, departmentId, notificationId) {
+  // Mark notification as read
+  const userId = dbUser._id;
+  $.ajax({
+    url: `${API_URL}/api/v1/user/${userId}/notifications/${notificationId}/read`,
+    method: "PUT",
+    contentType: "application/json",
+    data: JSON.stringify({ seen: true }),
+  });
+
+  // Close the notification modal
+  $("#notificationModal").modal("hide");
+
+  // Check if we're on the community-details page for this community
+  if (window.communityId === communityId && typeof openEditDepartmentModal === "function") {
+    // We're on the right page — open the edit department modal, then manage ranks
+    openEditDepartmentModal(departmentId);
+    // Small delay to let modal populate, then click through to manage ranks
+    setTimeout(function () {
+      if (typeof openRankManagementModal === "function") {
+        openRankManagementModal(departmentId);
+      }
+    }, 500);
+  } else {
+    // Navigate to the community page with query params to auto-open manage ranks
+    window.location.href = `/community-details/${communityId}?openDept=${departmentId}&openRanks=true`;
+  }
+}
+
 function showToastNotification(notification) {
   const toastId = `toast-${notification._id}`;
   let message;
@@ -473,6 +526,9 @@ function showToastNotification(notification) {
   if (notification.type === "friend_request") {
     message = "You got a friend request!";
     iconClass = "fas fa-user-plus";
+  } else if (notification.type === "promotion_eligible") {
+    message = notification.message || "An officer is eligible for promotion";
+    iconClass = "fas fa-ranking-star";
   } else {
     message = `New notification: ${notification.message}`;
     iconClass = "fas fa-bell";

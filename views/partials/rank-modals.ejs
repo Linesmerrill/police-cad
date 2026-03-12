@@ -1,0 +1,347 @@
+      <!-- Promotion Celebration Modal -->
+      <style>
+        .promo-modal-overlay {
+          display:none; position:fixed; inset:0; z-index:9999;
+          background:rgba(4,4,10,0.88); backdrop-filter:blur(12px);
+          align-items:center; justify-content:center; padding:1rem;
+        }
+        .promo-modal-overlay.is-open { display:flex; }
+
+        .promo-modal {
+          position:relative; width:100%; max-width:400px; text-align:center;
+          padding:56px 40px 40px; border-radius:24px;
+          background:
+            radial-gradient(ellipse 70% 50% at 50% 0%, rgba(251,191,36,0.08) 0%, transparent 60%),
+            linear-gradient(170deg, #161333 0%, #0e0f18 45%, #0c0d14 100%);
+          border:1px solid rgba(251,191,36,0.12);
+          box-shadow:
+            0 48px 120px -24px rgba(0,0,0,0.8),
+            0 0 0 1px rgba(251,191,36,0.06),
+            inset 0 1px 0 rgba(255,255,255,0.04);
+          opacity:0; transform:translateY(32px) scale(0.9);
+          overflow:visible;
+        }
+        .promo-modal-overlay.is-open .promo-modal {
+          animation:promoCardIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
+        }
+        @keyframes promoCardIn {
+          0% { opacity:0; transform:translateY(32px) scale(0.9); }
+          100% { opacity:1; transform:translateY(0) scale(1); }
+        }
+
+        /* Radial light rays behind the shield */
+        .promo-rays {
+          position:absolute; top:-60px; left:50%; transform:translateX(-50%);
+          width:280px; height:280px; pointer-events:none;
+          background:
+            conic-gradient(from 0deg, transparent 0deg, rgba(251,191,36,0.06) 8deg, transparent 16deg,
+              transparent 30deg, rgba(251,191,36,0.05) 38deg, transparent 46deg,
+              transparent 60deg, rgba(251,191,36,0.06) 68deg, transparent 76deg,
+              transparent 90deg, rgba(251,191,36,0.05) 98deg, transparent 106deg,
+              transparent 120deg, rgba(251,191,36,0.06) 128deg, transparent 136deg,
+              transparent 150deg, rgba(251,191,36,0.05) 158deg, transparent 166deg,
+              transparent 180deg, rgba(251,191,36,0.06) 188deg, transparent 196deg,
+              transparent 210deg, rgba(251,191,36,0.05) 218deg, transparent 226deg,
+              transparent 240deg, rgba(251,191,36,0.06) 248deg, transparent 256deg,
+              transparent 270deg, rgba(251,191,36,0.05) 278deg, transparent 286deg,
+              transparent 300deg, rgba(251,191,36,0.06) 308deg, transparent 316deg,
+              transparent 330deg, rgba(251,191,36,0.05) 338deg, transparent 346deg,
+              transparent 360deg);
+          border-radius:50%;
+          opacity:0;
+        }
+        .promo-modal-overlay.is-open .promo-rays {
+          animation:promoRaysSpin 20s linear infinite, promoRaysFade 0.8s 0.3s ease-out forwards;
+        }
+        @keyframes promoRaysSpin { to { transform:translateX(-50%) rotate(360deg); } }
+        @keyframes promoRaysFade { to { opacity:1; } }
+
+        /* Shield icon — CSS-drawn */
+        .promo-shield-wrap {
+          position:relative; z-index:1; margin:-8px auto 18px;
+          opacity:0; transform:scale(0.5);
+        }
+        .promo-modal-overlay.is-open .promo-shield-wrap {
+          animation:promoShieldIn 0.5s 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards;
+        }
+        @keyframes promoShieldIn {
+          0% { opacity:0; transform:scale(0.5); }
+          100% { opacity:1; transform:scale(1); }
+        }
+        .promo-shield {
+          position:relative; width:80px; height:90px; margin:0 auto;
+        }
+        .promo-shield svg { width:80px; height:90px; filter:drop-shadow(0 4px 24px rgba(251,191,36,0.3)); }
+        .promo-shield-glow {
+          position:absolute; inset:-16px; border-radius:50%;
+          background:radial-gradient(circle, rgba(251,191,36,0.15) 0%, transparent 70%);
+          animation:promoGlowPulse 2.5s ease-in-out infinite;
+        }
+        @keyframes promoGlowPulse {
+          0%,100% { opacity:0.6; transform:scale(1); }
+          50% { opacity:1; transform:scale(1.1); }
+        }
+
+        /* Title — "PROMOTED!" */
+        .promo-modal-title {
+          color:#fbbf24; font-size:11px; font-weight:800; text-transform:uppercase;
+          letter-spacing:4px; margin-bottom:10px;
+          opacity:0; transform:translateY(8px);
+        }
+        .promo-modal-overlay.is-open .promo-modal-title {
+          animation:promoFadeUp 0.4s 0.35s ease-out forwards;
+        }
+
+        /* Rank name */
+        .promo-modal-rank {
+          color:#fff; font-size:36px; font-weight:800; letter-spacing:-0.8px;
+          line-height:1.15; margin-bottom:4px;
+          opacity:0; transform:translateY(8px);
+        }
+        .promo-modal-overlay.is-open .promo-modal-rank {
+          animation:promoFadeUp 0.4s 0.42s ease-out forwards;
+        }
+
+        /* Prefix badge */
+        .promo-modal-prefix-wrap {
+          margin-bottom:20px;
+          opacity:0; transform:translateY(6px);
+        }
+        .promo-modal-overlay.is-open .promo-modal-prefix-wrap {
+          animation:promoFadeUp 0.3s 0.48s ease-out forwards;
+        }
+        .promo-modal-prefix {
+          display:inline-block; background:rgba(251,191,36,0.1); color:#fcd34d;
+          padding:4px 14px; border-radius:100px; font-size:12px; font-weight:700;
+          letter-spacing:1.5px; text-transform:uppercase;
+          border:1px solid rgba(251,191,36,0.15);
+        }
+
+        /* Transition: OldRank → NewRank */
+        .promo-modal-transition {
+          display:flex; align-items:center; justify-content:center; gap:0;
+          margin:16px 0 28px;
+          opacity:0; transform:translateY(6px);
+        }
+        .promo-modal-overlay.is-open .promo-modal-transition {
+          animation:promoFadeUp 0.4s 0.52s ease-out forwards;
+        }
+        .promo-modal-transition .promo-from {
+          color:#64748b; font-size:14px; font-weight:500;
+          text-decoration:line-through; text-decoration-color:rgba(100,116,139,0.4);
+          padding-right:8px;
+        }
+        .promo-modal-transition .promo-arrow-line {
+          display:flex; align-items:center; gap:0; padding:0 6px;
+        }
+        .promo-modal-transition .promo-arrow-line span {
+          display:block; width:32px; height:1px;
+          background:linear-gradient(90deg, rgba(251,191,36,0.1), rgba(251,191,36,0.5));
+        }
+        .promo-modal-transition .promo-arrow-line i {
+          color:#fbbf24; font-size:13px; margin-left:-1px;
+        }
+        .promo-modal-transition .promo-to {
+          color:#fbbf24; font-size:15px; font-weight:700;
+          padding-left:8px;
+        }
+
+        /* Dismiss button */
+        .promo-modal-dismiss {
+          position:relative; overflow:hidden;
+          background:linear-gradient(135deg, rgba(251,191,36,0.14), rgba(251,191,36,0.06));
+          border:1px solid rgba(251,191,36,0.22); border-radius:12px;
+          color:#fbbf24; font-size:14px; font-weight:700; padding:12px 40px;
+          cursor:pointer; transition:all 0.2s ease; letter-spacing:0.5px;
+          text-transform:uppercase;
+          opacity:0; transform:translateY(6px);
+        }
+        .promo-modal-overlay.is-open .promo-modal-dismiss {
+          animation:promoFadeUp 0.4s 0.6s ease-out forwards;
+        }
+        .promo-modal-dismiss:hover {
+          background:linear-gradient(135deg, rgba(251,191,36,0.22), rgba(251,191,36,0.12));
+          box-shadow:0 6px 24px rgba(251,191,36,0.18);
+          transform:translateY(-1px);
+        }
+        .promo-modal-dismiss:active { transform:translateY(0); }
+        /* Shimmer sweep across button */
+        .promo-modal-dismiss::after {
+          content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+          background:linear-gradient(90deg, transparent 0%, rgba(251,191,36,0.12) 50%, transparent 100%);
+          animation:promoBtnShimmer 3s 1s ease-in-out infinite;
+        }
+        @keyframes promoBtnShimmer {
+          0% { left:-100%; }
+          40% { left:100%; }
+          100% { left:100%; }
+        }
+
+        /* Shared fade-up keyframe */
+        @keyframes promoFadeUp {
+          0% { opacity:0; transform:translateY(8px); }
+          100% { opacity:1; transform:translateY(0); }
+        }
+
+        .promo-modal canvas {
+          position:absolute; inset:0; width:100%; height:100%; pointer-events:none;
+          z-index:2; border-radius:24px;
+        }
+
+        /* Decorative corner accents */
+        .promo-corner {
+          position:absolute; width:20px; height:20px; opacity:0.2;
+        }
+        .promo-corner--tl { top:16px; left:16px; border-top:2px solid #fbbf24; border-left:2px solid #fbbf24; }
+        .promo-corner--tr { top:16px; right:16px; border-top:2px solid #fbbf24; border-right:2px solid #fbbf24; }
+        .promo-corner--bl { bottom:16px; left:16px; border-bottom:2px solid #fbbf24; border-left:2px solid #fbbf24; }
+        .promo-corner--br { bottom:16px; right:16px; border-bottom:2px solid #fbbf24; border-right:2px solid #fbbf24; }
+      </style>
+      <div class="promo-modal-overlay" id="promoModalOverlay">
+        <div class="promo-modal" id="promoModal">
+          <canvas id="promoModalConfetti"></canvas>
+
+          <!-- Radial light rays -->
+          <div class="promo-rays"></div>
+
+          <!-- Corner accents -->
+          <div class="promo-corner promo-corner--tl"></div>
+          <div class="promo-corner promo-corner--tr"></div>
+          <div class="promo-corner promo-corner--bl"></div>
+          <div class="promo-corner promo-corner--br"></div>
+
+          <!-- Shield badge -->
+          <div class="promo-shield-wrap">
+            <div class="promo-shield">
+              <div class="promo-shield-glow"></div>
+              <svg viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M40 4L8 18v28c0 22 14 34 32 40 18-6 32-18 32-40V18L40 4z"
+                  fill="url(#shieldGrad)" stroke="url(#shieldStroke)" stroke-width="1.5"/>
+                <path d="M40 30l-3 9h-9l7 5.5-2.5 9L40 48l7.5 5.5-2.5-9 7-5.5h-9L40 30z"
+                  fill="#fbbf24" opacity="0.9"/>
+                <defs>
+                  <linearGradient id="shieldGrad" x1="40" y1="4" x2="40" y2="90" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stop-color="#2a2450"/>
+                    <stop offset="1" stop-color="#141220"/>
+                  </linearGradient>
+                  <linearGradient id="shieldStroke" x1="40" y1="4" x2="40" y2="90" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stop-color="#fbbf24" stop-opacity="0.6"/>
+                    <stop offset="0.5" stop-color="#fbbf24" stop-opacity="0.25"/>
+                    <stop offset="1" stop-color="#fbbf24" stop-opacity="0.1"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
+
+          <div class="promo-modal-title">Promoted!</div>
+          <div class="promo-modal-rank" id="promoModalRankName"></div>
+          <div class="promo-modal-prefix-wrap" id="promoModalPrefixWrap" style="display:none;">
+            <span class="promo-modal-prefix" id="promoModalPrefix"></span>
+          </div>
+          <div class="promo-modal-transition">
+            <span class="promo-from" id="promoModalFrom"></span>
+            <span class="promo-arrow-line"><span></span><i class="fa fa-chevron-right"></i></span>
+            <span class="promo-to" id="promoModalTo"></span>
+          </div>
+          <button class="promo-modal-dismiss" onclick="dismissPromoModal()">Continue</button>
+        </div>
+      </div>
+
+      <!-- Demotion Notice Modal -->
+      <style>
+        .demo-modal-overlay {
+          display:none; position:fixed; inset:0; z-index:9999;
+          background:rgba(4,4,10,0.85); backdrop-filter:blur(10px);
+          align-items:center; justify-content:center; padding:1rem;
+        }
+        .demo-modal-overlay.is-open { display:flex; }
+        .demo-modal {
+          position:relative; width:100%; max-width:380px; text-align:center;
+          padding:44px 36px 36px; border-radius:20px;
+          background:linear-gradient(170deg, #1a1520 0%, #12131a 50%, #0e0f14 100%);
+          border:1px solid rgba(148,163,184,0.1);
+          box-shadow:0 40px 100px -20px rgba(0,0,0,0.7);
+          opacity:0; transform:translateY(24px) scale(0.94);
+        }
+        .demo-modal-overlay.is-open .demo-modal {
+          animation:demoCardIn 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+        }
+        @keyframes demoCardIn {
+          0% { opacity:0; transform:translateY(24px) scale(0.94); }
+          100% { opacity:1; transform:translateY(0) scale(1); }
+        }
+        .demo-modal-icon {
+          width:56px; height:56px; border-radius:50%; margin:0 auto 20px;
+          display:flex; align-items:center; justify-content:center;
+          background:rgba(148,163,184,0.08); border:1.5px solid rgba(148,163,184,0.15);
+        }
+        .demo-modal-icon i { font-size:22px; color:#94a3b8; }
+        .demo-modal-label {
+          color:#94a3b8; font-size:11px; font-weight:700; text-transform:uppercase;
+          letter-spacing:3px; margin-bottom:10px;
+          opacity:0;
+        }
+        .demo-modal-overlay.is-open .demo-modal-label {
+          animation:promoFadeUp 0.4s 0.2s ease-out forwards;
+        }
+        .demo-modal-rank-name {
+          color:#e2e8f0; font-size:28px; font-weight:700; letter-spacing:-0.5px;
+          line-height:1.2; margin-bottom:16px;
+          opacity:0;
+        }
+        .demo-modal-overlay.is-open .demo-modal-rank-name {
+          animation:promoFadeUp 0.4s 0.28s ease-out forwards;
+        }
+        .demo-modal-transition {
+          display:flex; align-items:center; justify-content:center; gap:0;
+          margin-bottom:24px; opacity:0;
+        }
+        .demo-modal-overlay.is-open .demo-modal-transition {
+          animation:promoFadeUp 0.4s 0.35s ease-out forwards;
+        }
+        .demo-modal-transition .demo-from {
+          color:#64748b; font-size:14px; font-weight:500;
+          text-decoration:line-through; text-decoration-color:rgba(100,116,139,0.4);
+          padding-right:8px;
+        }
+        .demo-modal-transition .demo-arrow-line {
+          display:flex; align-items:center; gap:0; padding:0 6px;
+        }
+        .demo-modal-transition .demo-arrow-line span {
+          display:block; width:28px; height:1px;
+          background:linear-gradient(90deg, rgba(148,163,184,0.1), rgba(148,163,184,0.3));
+        }
+        .demo-modal-transition .demo-arrow-line i {
+          color:#64748b; font-size:12px; margin-left:-1px;
+        }
+        .demo-modal-transition .demo-to {
+          color:#e2e8f0; font-size:14px; font-weight:600; padding-left:8px;
+        }
+        .demo-modal-dismiss {
+          background:rgba(148,163,184,0.08); border:1px solid rgba(148,163,184,0.15);
+          border-radius:10px; color:#94a3b8; font-size:13px; font-weight:600;
+          padding:10px 36px; cursor:pointer; transition:all 0.15s;
+          letter-spacing:0.3px; text-transform:uppercase; opacity:0;
+        }
+        .demo-modal-overlay.is-open .demo-modal-dismiss {
+          animation:promoFadeUp 0.4s 0.42s ease-out forwards;
+        }
+        .demo-modal-dismiss:hover {
+          background:rgba(148,163,184,0.14);
+          color:#cbd5e1;
+        }
+      </style>
+      <div class="demo-modal-overlay" id="demoModalOverlay">
+        <div class="demo-modal">
+          <div class="demo-modal-icon"><i class="fa fa-exchange"></i></div>
+          <div class="demo-modal-label">Rank Changed</div>
+          <div class="demo-modal-rank-name" id="demoModalRankName"></div>
+          <div class="demo-modal-transition">
+            <span class="demo-from" id="demoModalFrom"></span>
+            <span class="demo-arrow-line"><span></span><i class="fa fa-chevron-right"></i></span>
+            <span class="demo-to" id="demoModalTo"></span>
+          </div>
+          <button class="demo-modal-dismiss" onclick="dismissDemoModal()">Acknowledged</button>
+        </div>
+      </div>

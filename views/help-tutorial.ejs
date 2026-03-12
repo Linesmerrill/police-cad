@@ -812,6 +812,14 @@
       <a class="ht-nav-link" href="#settings-penal-import">Penal Code Import/Export</a>
       <a class="ht-nav-link" href="#settings-ten-import">Ten Code Import/Export</a>
       <a class="ht-nav-link" href="#settings-icons">Category Icons</a>
+
+      <div class="ht-nav-group-title"><i class="fa fa-ranking-star"></i> Rank System</div>
+      <a class="ht-nav-link" href="#ranks-overview">Overview</a>
+      <a class="ht-nav-link" href="#ranks-setup">Setting Up Ranks</a>
+      <a class="ht-nav-link" href="#ranks-requirements">Requirements & Auto-Promote</a>
+      <a class="ht-nav-link" href="#ranks-pending-promotions">Pending Promotions</a>
+      <a class="ht-nav-link" href="#ranks-assigning">Assigning Ranks</a>
+      <a class="ht-nav-link" href="#ranks-member-view">Member View</a>
     </nav>
 
     <!-- ── Content ── -->
@@ -2002,6 +2010,299 @@
         </div>
       </section>
 
+      <!-- ╔═══════════════════════════════════════════╗ -->
+      <!-- ║           RANK SYSTEM SECTION              ║ -->
+      <!-- ╚═══════════════════════════════════════════╝ -->
+      <section id="rank-system" class="ht-section">
+        <div class="ht-section-header">
+          <div class="ht-section-icon"><i class="fa fa-ranking-star"></i></div>
+          <div>
+            <div class="ht-section-title">Rank System</div>
+            <div class="ht-section-subtitle">Create department rank hierarchies with promotions, permissions, and activity tracking</div>
+          </div>
+        </div>
+
+        <!-- Overview -->
+        <div class="ht-subsection" id="ranks-overview">
+          <h3 class="ht-subsection-title">Overview</h3>
+          <p class="ht-text">
+            Every department type &mdash; Police, EMS, Fire, Dispatch, and Judicial &mdash; can have its own rank hierarchy.
+            Ranks can have requirements based on member activity, and the available metrics automatically adjust based on the
+            department type. When a member meets all the requirements for a rank, they can be promoted automatically or reviewed by an admin first.
+          </p>
+          <p class="ht-text">
+            Key features of the rank system:
+          </p>
+          <ul class="ht-text" style="margin: 0.5rem 0 1rem 1.5rem; color: #cbd5e1; line-height: 1.8;">
+            <li><strong style="color:#fff;">Works Across All Departments</strong> &mdash; Configure ranks for Police, EMS, Fire, Dispatch, and Judicial departments</li>
+            <li><strong style="color:#fff;">Smart Metrics</strong> &mdash; The metric dropdown automatically shows only metrics relevant to the department type (e.g., EMS sees "Medical Reports Created" but not "Citations Issued")</li>
+            <li><strong style="color:#fff;">Default Rank</strong> &mdash; Automatically assigned to new or unranked department members</li>
+            <li><strong style="color:#fff;">Auto Promote</strong> &mdash; Members advance automatically when they meet all requirements</li>
+            <li><strong style="color:#fff;">Pending Promotions</strong> &mdash; Review and approve promotions for ranks without auto-promote</li>
+            <li><strong style="color:#fff;">Activity Stats</strong> &mdash; Members can view their stats and rank progress on their dashboard and mobile app</li>
+            <li><strong style="color:#fff;">Rank Prefix</strong> &mdash; A short label (e.g., "SGT") displayed before the member's name</li>
+          </ul>
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Ranks are department-specific &mdash; a member can have different ranks in different departments.
+            </div>
+          </div>
+        </div>
+
+        <!-- Setting Up Ranks -->
+        <div class="ht-subsection" id="ranks-setup">
+          <h3 class="ht-subsection-title">Setting Up Ranks</h3>
+          <p class="ht-text">To create and organize ranks for a department:</p>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Go to Community Details page</div>
+                <div class="ht-step-desc">Navigate to the <strong>Community Details</strong> page from the sidebar.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Click the edit icon on a department</div>
+                <div class="ht-step-desc">Find the department you want to configure and click the <strong>pencil icon</strong> to open the Edit Department modal.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Click "Manage Ranks"</div>
+                <div class="ht-step-desc">At the bottom of the Edit Department modal, click the <strong>Manage Ranks</strong> button.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">4</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Click "+ Add Rank" to create a new rank</div>
+                <div class="ht-step-desc">Click <strong>+ Add Rank</strong> to add a new rank to the hierarchy.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">5</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Enter rank name and optional prefix</div>
+                <div class="ht-step-desc">Give the rank a name (e.g., "Sergeant") and an optional prefix (e.g., "SGT") that will appear before the member's name.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">6</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Configure rank options</div>
+                <div class="ht-step-desc">
+                  <strong>Default Rank</strong> &mdash; Check this to auto-assign this rank to new or unranked members in the department.<br>
+                  <strong>Auto Promote</strong> &mdash; Check this to automatically promote members when they meet all requirements (see below). Leave unchecked to review and approve promotions manually.
+                </div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">7</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Reorder ranks with the up/down arrows</div>
+                <div class="ht-step-desc">Use the <strong>up/down arrows</strong> to reorder ranks. A lower number means a higher rank in the hierarchy.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">8</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Edit or delete ranks</div>
+                <div class="ht-step-desc">Click the <strong>pencil icon</strong> to edit an existing rank or the <strong>trash icon</strong> to delete it. Deleting a rank will set its members to unranked.</div>
+              </div>
+            </div>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-lightbulb ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              You need the <strong>"manage departments"</strong> or <strong>"administrator"</strong> permission to manage ranks.
+            </div>
+          </div>
+        </div>
+
+        <!-- Requirements & Auto-Promote -->
+        <div class="ht-subsection" id="ranks-requirements">
+          <h3 class="ht-subsection-title">Requirements &amp; Auto-Promote</h3>
+          <p class="ht-text">
+            Each rank can have metric requirements &mdash; thresholds that members must meet to qualify for promotion.
+            The metric dropdown automatically shows only metrics relevant to the department type:
+          </p>
+          <div style="margin: 0.75rem 0 1.25rem 0; display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div style="background:rgba(30,32,40,0.6); border:1px solid rgba(53,56,90,0.4); border-radius:10px; padding:14px 16px;">
+              <div style="color:#a78bfa; font-size:11px; text-transform:uppercase; letter-spacing:1px; font-weight:600; margin-bottom:8px;">Police</div>
+              <div style="color:#cbd5e1; font-size:13px; line-height:1.7;">Citations Issued, Warnings Issued, Arrests Made, Calls Created, Calls Responded To, Calls Cleared, BOLOs Created, Warrants Requested, Warrants Executed</div>
+            </div>
+            <div style="background:rgba(30,32,40,0.6); border:1px solid rgba(53,56,90,0.4); border-radius:10px; padding:14px 16px;">
+              <div style="color:#34d399; font-size:11px; text-transform:uppercase; letter-spacing:1px; font-weight:600; margin-bottom:8px;">EMS / Fire</div>
+              <div style="color:#cbd5e1; font-size:13px; line-height:1.7;">Calls Responded To, Calls Cleared, BOLOs Created, Medical Reports Created</div>
+            </div>
+            <div style="background:rgba(30,32,40,0.6); border:1px solid rgba(53,56,90,0.4); border-radius:10px; padding:14px 16px;">
+              <div style="color:#60a5fa; font-size:11px; text-transform:uppercase; letter-spacing:1px; font-weight:600; margin-bottom:8px;">Dispatch</div>
+              <div style="color:#cbd5e1; font-size:13px; line-height:1.7;">Calls Created, BOLOs Created, Calls Dispatched</div>
+            </div>
+            <div style="background:rgba(30,32,40,0.6); border:1px solid rgba(53,56,90,0.4); border-radius:10px; padding:14px 16px;">
+              <div style="color:#fbbf24; font-size:11px; text-transform:uppercase; letter-spacing:1px; font-weight:600; margin-bottom:8px;">Judicial</div>
+              <div style="color:#cbd5e1; font-size:13px; line-height:1.7;">Warrants Reviewed, Court Cases Completed</div>
+            </div>
+          </div>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Edit a rank and click "+ Add"</div>
+                <div class="ht-step-desc">Open a rank for editing and click <strong>+ Add</strong> in the <strong>Requirements</strong> section.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Select a metric type</div>
+                <div class="ht-step-desc">Choose a metric from the dropdown. The options shown depend on the department type (e.g., Police sees "Arrests Made" while EMS sees "Medical Reports Created").</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Enter the threshold value</div>
+                <div class="ht-step-desc">Set the number the member must reach (e.g., 50 arrests for Police, 20 medical reports for EMS).</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">4</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Check "Auto Promote"</div>
+                <div class="ht-step-desc">Enable <strong>Auto Promote</strong> so members are automatically promoted when they meet all requirements for this rank.</div>
+              </div>
+            </div>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Auto-promote only promotes upward &mdash; members are never auto-demoted. A member who meets the
+              requirements for a rank two levels above will skip the intermediate rank.
+            </div>
+          </div>
+          <div class="ht-tip" style="margin-top: 0.75rem;">
+            <i class="fa fa-lightbulb ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              If <strong>Auto Promote</strong> is off for a rank, members who qualify will appear in the
+              <strong>Pending Promotions</strong> panel for an admin to review and approve.
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending Promotions -->
+        <div class="ht-subsection" id="ranks-pending-promotions">
+          <h3 class="ht-subsection-title">Pending Promotions</h3>
+          <p class="ht-text">
+            When a rank has requirements but <strong>Auto Promote</strong> is turned off, members who meet all the
+            requirements will appear in the <strong>Pending Promotions</strong> panel for admin review.
+          </p>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Look for the promotions banner</div>
+                <div class="ht-step-desc">When members are eligible for promotion, a banner appears at the top of the <strong>Manage Ranks</strong> modal showing the number of pending promotions.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Open the Pending Promotions panel</div>
+                <div class="ht-step-desc">Click the banner to open the panel. Each entry shows the member's name, their current rank, the rank they qualify for, and progress bars for each requirement.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Promote an officer</div>
+                <div class="ht-step-desc">Click <strong>Promote</strong> next to a member to advance them to the next rank. The promotion takes effect immediately.</div>
+              </div>
+            </div>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Pending promotions only appear for ranks where <strong>Auto Promote</strong> is off. If Auto Promote is on, members are promoted automatically without admin review.
+            </div>
+          </div>
+        </div>
+
+        <!-- Assigning Ranks -->
+        <div class="ht-subsection" id="ranks-assigning">
+          <h3 class="ht-subsection-title">Assigning Ranks</h3>
+          <p class="ht-text">
+            Admins can manually assign ranks to members from the Manage Ranks modal.
+          </p>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Open the Manage Ranks modal</div>
+                <div class="ht-step-desc">Open the <strong>Manage Ranks</strong> modal for the department you want to configure.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Scroll to "Members &amp; Ranks"</div>
+                <div class="ht-step-desc">Scroll down to the <strong>Members &amp; Ranks</strong> section at the bottom of the modal.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Assign a rank from the dropdown</div>
+                <div class="ht-step-desc">Use the dropdown next to each member to assign them a rank.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">4</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Remove a rank</div>
+                <div class="ht-step-desc">Select <strong>"Unranked"</strong> from the dropdown to remove a rank assignment.</div>
+              </div>
+            </div>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-lightbulb ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Manual assignments override auto-promotions. The assignment type is tracked (manual vs. auto).
+            </div>
+          </div>
+        </div>
+
+        <!-- Member View -->
+        <div class="ht-subsection" id="ranks-member-view">
+          <h3 class="ht-subsection-title">Member View</h3>
+          <p class="ht-text">
+            Members can see their rank and progress on their <strong>department dashboard</strong> (Police, EMS, Dispatch, etc.)
+            and in the <strong>mobile app</strong>. The rank card shows:
+          </p>
+          <ul class="ht-text" style="margin: 0.5rem 0 1rem 1.5rem; color: #cbd5e1; line-height: 1.8;">
+            <li>Current rank name and prefix</li>
+            <li>Next rank in the hierarchy</li>
+            <li>Progress bars toward each requirement for the next rank</li>
+            <li>Collapsible activity stats grid showing metrics relevant to the department</li>
+          </ul>
+          <p class="ht-text">
+            When a member is promoted, they see a celebration animation with their new rank.
+            If a member is demoted, they see a notification with their updated rank.
+          </p>
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              All members can view their own activity stats and rank progress on their dashboard and mobile app.
+              Stats are tracked automatically from CAD activity relevant to the department type.
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div><!-- /.ht-content -->
   </div><!-- /.ht-layout -->
 
@@ -2077,7 +2378,8 @@
         '#warrants': '#warrants-overview',
         '#penal-codes': '#penal-overview',
         '#court-cases': '#court-overview',
-        '#community-settings': '#settings-overview'
+        '#community-settings': '#settings-overview',
+        '#rank-system': '#ranks-overview'
       };
       var mapped = sectionMap[window.location.hash];
       if (mapped) hashTarget = document.querySelector(mapped);

@@ -6625,24 +6625,46 @@ function mergeExpectedComponents(components, templateName) {
 
 function renderEditDeptComponents(components) {
   var container = document.getElementById('editDeptComponentsContainer');
+  var countBadge = document.getElementById('editDeptComponentCount');
   if (!components || components.length === 0) {
-    container.innerHTML = '<div class="text-gray-500 text-sm">No components configured</div>';
+    container.innerHTML = '<div style="color:#64748b; font-size:13px;">No components configured</div>';
+    if (countBadge) countBadge.textContent = '';
     return;
   }
+  var enabledCount = components.filter(function(c) { return c.enabled; }).length;
+  if (countBadge) countBadge.textContent = enabledCount + '/' + components.length + ' active';
+
+  // Color map for component icons (fallback from meta)
+  var iconColorMap = {
+    'text-blue-400': '#60a5fa', 'text-green-400': '#4ade80', 'text-red-400': '#f87171',
+    'text-yellow-400': '#facc15', 'text-purple-400': '#c084fc', 'text-orange-400': '#fb923c',
+    'text-cyan-400': '#22d3ee', 'text-amber-400': '#fbbf24'
+  };
+
   container.innerHTML = components.map(function(comp) {
     var meta = editDeptComponentMeta[comp.name] || { label: comp.name, icon: 'fa-puzzle-piece', color: 'text-gray-400' };
-    return '<div class="flex items-center justify-between">'
-      + '<div class="flex items-center gap-2">'
-      + '<i class="fa ' + meta.icon + ' ' + meta.color + ' text-sm"></i>'
-      + '<span class="text-gray-300 text-sm">' + meta.label + '</span>'
+    var iconColor = iconColorMap[meta.color] || '#94a3b8';
+    return '<div class="edm-comp-row">'
+      + '<div class="edm-comp-info">'
+      + '<i class="fa ' + meta.icon + '" style="color:' + iconColor + ';"></i>'
+      + '<span>' + meta.label + '</span>'
       + '</div>'
-      + '<label class="relative inline-flex items-center cursor-pointer">'
-      + '<input type="checkbox" data-component-name="' + comp.name + '" class="sr-only peer edit-dept-component-toggle"' + (comp.enabled ? ' checked' : '') + '>'
-      + '<div class="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>'
-      + '<div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-4"></div>'
+      + '<label class="edm-toggle">'
+      + '<input type="checkbox" data-component-name="' + comp.name + '" class="edit-dept-component-toggle"' + (comp.enabled ? ' checked' : '') + ' onchange="updateEditDeptComponentCount(); triggerEditDeptAutoSaveImmediate()">'
+      + '<div class="edm-toggle-track"></div>'
+      + '<div class="edm-toggle-knob"></div>'
       + '</label>'
       + '</div>';
   }).join('');
+}
+
+function updateEditDeptComponentCount() {
+  var toggles = document.querySelectorAll('.edit-dept-component-toggle');
+  var total = toggles.length;
+  var enabled = 0;
+  toggles.forEach(function(t) { if (t.checked) enabled++; });
+  var badge = document.getElementById('editDeptComponentCount');
+  if (badge) badge.textContent = enabled + '/' + total + ' active';
 }
 
 function populateEditDeptModal(dept) {
@@ -6675,8 +6697,37 @@ function populateEditDeptModal(dept) {
   var mergedComponents = mergeExpectedComponents(existingComponents, templateName);
   renderEditDeptComponents(mergedComponents);
 
+  // Fetch pending promotions count for this department (lightweight per-dept call)
+  var promoBadge = document.getElementById('edmRanksBadge');
+  var promoBadgeCount = document.getElementById('edmRanksBadgeCount');
+  if (promoBadge) promoBadge.classList.remove('has-count');
+  if (dept._id) {
+    var communityId = '<%= community._id %>';
+    fetch(API_URL + '/api/v1/community/' + communityId + '/departments/' + dept._id + '/pending-promotions')
+      .then(function(res) { return res.ok ? res.json() : null; })
+      .then(function(data) {
+        if (data && data.count > 0 && promoBadge && promoBadgeCount) {
+          promoBadgeCount.textContent = data.count;
+          promoBadge.classList.add('has-count');
+          window.pendingPromoCounts = window.pendingPromoCounts || {};
+          window.pendingPromoCounts[dept._id] = data.count;
+        }
+      })
+      .catch(function() {});
+  }
+
   updateEditDeptVisibilityLabel();
-  document.getElementById('editDepartmentModal').style.display = 'flex';
+  setEditDeptSaveStatus('idle');
+  document.getElementById('editDepartmentModal').classList.add('is-open');
+  document.body.style.overflow = 'hidden';
+  // Reset add-member toggle button
+  var addBtn = document.getElementById('editDeptAddMemberToggle');
+  if (addBtn) { addBtn.innerHTML = '<i class="fa fa-plus"></i> <span>Add</span>'; addBtn.style.borderColor = ''; addBtn.style.color = ''; addBtn.style.background = ''; }
+  // Load department members — reset add-member panel
+  var addPanel = document.getElementById('editDeptAddMemberPanel');
+  if (addPanel) addPanel.classList.remove('is-open');
+  document.getElementById('editDeptMemberSearch').value = '';
+  loadEditDeptMembers(document.getElementById('editDeptId').value);
 }
 
 function openEditDepartmentModal(departmentId) {
@@ -6695,7 +6746,8 @@ function openEditDepartmentModal(departmentId) {
     });
 }
 function closeEditDepartmentModal() {
-  document.getElementById('editDepartmentModal').style.display = 'none';
+  document.getElementById('editDepartmentModal').classList.remove('is-open');
+  document.body.style.overflow = '';
 }
 
 // Handle department photo upload
@@ -6739,8 +6791,9 @@ async function handleEditDeptImageChange(event) {
     // Store the URL
     document.getElementById('editDeptImageUrl').value = imageUrl;
 
-    // Show success status
+    // Show success status and auto-save
     showToast('Photo uploaded successfully!', 3000, 'success');
+    triggerEditDeptAutoSaveImmediate();
 
   } catch (error) {
     console.error('Photo upload error:', error);
@@ -6755,7 +6808,15 @@ async function handleEditDeptImageChange(event) {
 }
 
 // Delete department photo
-function deleteEditDeptImage() {
+async function deleteEditDeptImage() {
+  var confirmed = await edmConfirm({
+    icon: 'image', iconBg: 'rgba(239,68,68,0.1)', iconColor: '#ef4444',
+    title: 'Remove Photo?',
+    text: 'The department photo will be permanently removed.',
+    confirmLabel: 'Remove Photo', confirmIcon: 'trash'
+  });
+  if (!confirmed) return;
+
   const preview = document.getElementById('editDeptImagePreview');
   const placeholder = document.getElementById('editDeptImagePlaceholder');
   const deleteBtn = document.getElementById('editDeptImageDeleteBtn');
@@ -6775,6 +6836,23 @@ function deleteEditDeptImage() {
   if (fileInput) fileInput.value = '';
 
   showToast('Photo removed', 2000, 'info');
+  triggerEditDeptAutoSaveImmediate();
+}
+</script>
+
+<!-- Tooltip positioning for fixed tooltips -->
+<script>
+function positionEdmTooltip(el) {
+  var tip = el.querySelector('.edm-vis-tooltip-text');
+  if (!tip) return;
+  var rect = el.getBoundingClientRect();
+  // Position below the icon
+  tip.style.left = (rect.left + rect.width / 2 - 120) + 'px';
+  tip.style.top = (rect.bottom + 8) + 'px';
+}
+function hideEdmTooltip(el) {
+  var tip = el.querySelector('.edm-vis-tooltip-text');
+  if (tip) { tip.style.left = ''; tip.style.top = ''; }
 }
 </script>
 
@@ -6784,112 +6862,1048 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
 </script>
 
 <!-- Edit Department Modal -->
-<div id="editDepartmentModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:420px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
-    <button onclick="closeEditDepartmentModal()" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-    <div style="text-align:center; margin-bottom:1rem;">
-      <i class="fa fa-pencil-alt" style="font-size:2rem; color:#3b82f6; margin-bottom:0.5rem;"></i>
-      <h3 style="color:#fff; margin:0; font-size:1.25rem; font-weight:600;">Edit Department</h3>
+<style>
+  .edm-overlay {
+    display: none;
+    position: fixed;
+    z-index: 3000;
+    left: 0; top: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(8, 9, 14, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+  }
+  .edm-overlay.is-open { display: flex; }
+
+  @keyframes edmSlideIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .edm-card {
+    background: #111318;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    width: 94%;
+    max-width: 720px;
+    max-height: 92vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.02),
+      0 32px 80px rgba(0, 0, 0, 0.55),
+      0 0 100px -30px rgba(56, 125, 255, 0.08);
+    animation: edmSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+  }
+
+  /* Top accent stripe */
+  .edm-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #3b82f6, #6366f1, #3b82f6);
+    z-index: 1;
+  }
+
+  .edm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+  }
+  .edm-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .edm-header-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: rgba(59, 130, 246, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #60a5fa;
+    font-size: 14px;
+  }
+  .edm-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+    letter-spacing: -0.2px;
+  }
+  .edm-close {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.06);
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.15s;
+    padding: 0;
+    line-height: 1;
+  }
+  .edm-close:hover {
+    background: rgba(255,255,255,0.06);
+    color: #94a3b8;
+    border-color: rgba(255,255,255,0.1);
+  }
+
+  #editDeptForm {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .edm-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 0;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Desktop: 2-column layout */
+  .edm-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 0;
+  }
+
+  .edm-sidebar {
+    padding: 20px;
+    border-right: 1px solid rgba(255, 255, 255, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .edm-main {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Photo area */
+  .edm-photo-area {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #181a22;
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    aspect-ratio: 4/3;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .edm-photo-area:hover {
+    border-color: rgba(59, 130, 246, 0.4);
+  }
+  .edm-photo-area img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+  .edm-photo-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%; height: 100%;
+    color: #4a5568;
+    gap: 4px;
+  }
+  .edm-photo-placeholder i { font-size: 20px; }
+  .edm-photo-placeholder span { font-size: 12px; }
+  .edm-photo-delete {
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 28px; height: 28px;
+    background: rgba(239, 68, 68, 0.9);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 11px;
+    transition: all 0.15s;
+    padding: 0;
+  }
+  .edm-photo-delete:hover {
+    background: #dc2626;
+    transform: scale(1.05);
+  }
+
+  /* Form inputs */
+  .edm-field { margin-bottom: 12px; }
+  .edm-field:last-child { margin-bottom: 0; }
+  .edm-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .edm-input,
+  .edm-textarea {
+    width: 100%;
+    background: #181a22;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #e2e8f0;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+  .edm-input:focus,
+  .edm-textarea:focus {
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+  .edm-textarea { resize: vertical; min-height: 56px; }
+
+  /* Section panels */
+  .edm-section {
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.015);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .edm-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .edm-section-header:hover {
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .edm-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #cbd5e1;
+  }
+  .edm-section-title i {
+    font-size: 12px;
+    width: 16px;
+    text-align: center;
+  }
+  .edm-section-badge {
+    font-size: 11px;
+    color: #64748b;
+    background: rgba(255,255,255,0.04);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .edm-section-chevron {
+    color: #4a5568;
+    font-size: 11px;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .edm-section.is-open .edm-section-chevron {
+    transform: rotate(180deg);
+  }
+  .edm-section-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .edm-section.is-open .edm-section-body {
+    max-height: 800px;
+  }
+  .edm-section-inner {
+    padding: 0 14px 14px;
+  }
+
+  /* Ranks action card */
+  .edm-ranks-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: rgba(99, 102, 241, 0.06);
+    border: 1px solid rgba(99, 102, 241, 0.12);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 12px;
+    text-decoration: none;
+  }
+  .edm-ranks-card:hover {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.25);
+  }
+  .edm-ranks-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: rgba(99, 102, 241, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #818cf8;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .edm-ranks-text {
+    flex: 1;
+    min-width: 0;
+  }
+  .edm-ranks-text strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #c7d2fe;
+    margin-bottom: 1px;
+  }
+  .edm-ranks-text span {
+    font-size: 11px;
+    color: #6366f1;
+    opacity: 0.8;
+  }
+  .edm-ranks-arrow {
+    color: #6366f1;
+    font-size: 12px;
+    opacity: 0.6;
+  }
+  .edm-ranks-badge {
+    display: none;
+    align-items: center;
+    background: rgba(245, 158, 11, 0.9);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 3px 8px;
+    border-radius: 100px;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .edm-ranks-badge i { font-size: 8px; margin-right: 3px; }
+  .edm-ranks-badge.has-count { display: flex; }
+
+  /* Component row */
+  .edm-comp-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+  }
+  .edm-comp-row + .edm-comp-row {
+    border-top: 1px solid rgba(255,255,255,0.03);
+  }
+  .edm-comp-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .edm-comp-info i { font-size: 12px; width: 16px; text-align: center; }
+  .edm-comp-info span { font-size: 13px; color: #94a3b8; }
+
+  /* Toggle switch */
+  .edm-toggle {
+    position: relative;
+    width: 36px; height: 20px;
+    flex-shrink: 0;
+  }
+  .edm-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .edm-toggle-track {
+    position: absolute;
+    inset: 0;
+    background: #2a2d3a;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .edm-toggle input:checked + .edm-toggle-track {
+    background: #3b82f6;
+  }
+  .edm-toggle-knob {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 16px; height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .edm-toggle input:checked ~ .edm-toggle-knob {
+    transform: translateX(16px);
+  }
+
+  /* Visibility row */
+  .edm-vis-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+  .edm-vis-labels {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .edm-vis-label {
+    font-size: 12px;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .edm-vis-tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+  .edm-vis-tooltip i {
+    font-size: 11px;
+    color: #4a5568;
+    cursor: help;
+  }
+  .edm-vis-tooltip-text {
+    position: fixed;
+    width: 240px;
+    background: #1e2028;
+    color: #cbd5e1;
+    font-size: 11px;
+    border-radius: 8px;
+    padding: 8px 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.06);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 9999;
+    line-height: 1.5;
+  }
+  .edm-vis-tooltip:hover .edm-vis-tooltip-text {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Footer */
+  .edm-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+  }
+  .edm-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .edm-btn-delete {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.15);
+  }
+  .edm-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+  /* Auto-save status indicator */
+  @keyframes edmSpin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes edmCheckPop {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .edm-save-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    min-height: 20px;
+    transition: opacity 0.3s;
+  }
+  .edm-save-status .edm-save-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: edmSpin 0.6s linear infinite;
+  }
+  .edm-save-status .edm-save-check {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: edmCheckPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .edm-save-status .edm-save-check i {
+    font-size: 9px;
+    color: #4ade80;
+  }
+  .edm-save-status .edm-save-error i {
+    font-size: 11px;
+    color: #f87171;
+  }
+  .edm-save-status span {
+    color: #64748b;
+  }
+  .edm-save-status.is-saving span { color: #60a5fa; }
+  .edm-save-status.is-saved span { color: #4ade80; }
+  .edm-save-status.is-error span { color: #f87171; }
+
+  /* Error */
+  .edm-error {
+    display: none;
+    color: #f87171;
+    font-size: 12px;
+    padding: 8px 14px;
+    background: rgba(239, 68, 68, 0.06);
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  /* Members section */
+  .edm-members-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .edm-members-search {
+    width: 100%;
+    background: #181a22;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    padding: 8px 10px 8px 32px;
+    font-size: 13px;
+    color: #e2e8f0;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+  .edm-members-search:focus { border-color: rgba(59, 130, 246, 0.5); }
+  .edm-members-search-wrap {
+    position: relative;
+    margin-bottom: 10px;
+  }
+  .edm-members-search-wrap i {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #4a5568;
+    font-size: 12px;
+    pointer-events: none;
+  }
+  .edm-member-list {
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #2a2d3a transparent;
+  }
+  .edm-member-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+  }
+  .edm-member-row + .edm-member-row {
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+  }
+  .edm-member-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+  }
+  .edm-member-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: #2a2d3a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 12px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .edm-member-avatar img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .edm-member-name {
+    font-size: 13px;
+    color: #cbd5e1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .edm-member-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .edm-member-remove {
+    background: none;
+    border: 1px solid rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    transition: all 0.15s;
+    padding: 0;
+  }
+  .edm-member-remove:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+  .edm-btn-add-member {
+    background: none;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    line-height: 1;
+  }
+  .edm-btn-add-member:hover {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.35);
+  }
+  .edm-members-empty {
+    text-align: center;
+    color: #4a5568;
+    font-size: 13px;
+    padding: 20px 0;
+  }
+  .edm-members-loading {
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+    padding: 16px 0;
+  }
+  .edm-members-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.03);
+    margin-top: 6px;
+  }
+  .edm-page-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.06);
+    color: #64748b;
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    transition: all 0.15s;
+    padding: 0;
+  }
+  .edm-page-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,0.04);
+    color: #94a3b8;
+  }
+  .edm-page-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+  .edm-page-info {
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  /* Add member panel (inline in the section) */
+  .edm-add-member-panel {
+    display: none;
+    margin-bottom: 12px;
+    padding: 14px;
+    background: rgba(59, 130, 246, 0.03);
+    border: 1px solid rgba(59, 130, 246, 0.08);
+    border-radius: 10px;
+    animation: edmSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .edm-add-member-panel.is-open { display: block; }
+  .edm-add-member-panel .edm-members-search-wrap { margin-bottom: 8px; }
+  .edm-add-member-list {
+    max-height: 200px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #2a2d3a transparent;
+  }
+  .edm-add-member-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 0;
+  }
+  .edm-add-member-row + .edm-add-member-row {
+    border-top: 1px solid rgba(255,255,255,0.03);
+  }
+  .edm-add-btn {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    transition: all 0.15s;
+    padding: 0;
+  }
+  .edm-add-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: scale(1.08);
+  }
+  .edm-add-member-panel .edm-members-pagination {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 640px) {
+    .edm-card { max-width: 100%; width: 100%; max-height: 100vh; border-radius: 0; }
+    .edm-layout {
+      grid-template-columns: 1fr;
+    }
+    .edm-sidebar {
+      border-right: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      padding: 16px;
+    }
+    .edm-photo-area { aspect-ratio: 16/9; }
+    .edm-main { padding: 16px; }
+  }
+</style>
+
+<div id="editDepartmentModal" class="edm-overlay heroui-modal">
+  <div class="edm-card">
+    <!-- Header -->
+    <div class="edm-header">
+      <div class="edm-header-left">
+        <div class="edm-header-icon"><i class="fa fa-pen-to-square"></i></div>
+        <h3>Edit Department</h3>
+      </div>
+      <button class="edm-close" onclick="closeEditDepartmentModal()" aria-label="Close"><i class="fa fa-times"></i></button>
     </div>
-    <form onsubmit="event.preventDefault(); saveEditDepartment();">
+
+    <!-- Body -->
+    <form id="editDeptForm" onsubmit="event.preventDefault();">
       <input type="hidden" id="editDeptId" value="">
       <input type="hidden" id="editDeptImageUrl" value="">
-      <div class="mb-3">
-        <label class="block text-gray-300 mb-1 text-sm font-medium">Department Photo</label>
-        <div class="relative">
-          <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-600 rounded-lg bg-gray-800 cursor-pointer hover:border-blue-500 transition overflow-hidden" style="aspect-ratio: 16/9;" onclick="document.getElementById('editDeptImage').click()">
-            <img id="editDeptImagePreview" src="" alt="Preview" style="display:none; width:100%; height:100%; object-fit:cover;" />
-            <div id="editDeptImagePlaceholder" class="flex flex-col items-center justify-center w-full h-full">
-              <i class="fa fa-camera text-2xl text-gray-500 mb-1"></i>
-              <span class="text-gray-500 text-sm">Click to upload photo</span>
+
+      <div class="edm-body">
+        <div class="edm-layout">
+          <!-- Left: Photo + Identity -->
+          <div class="edm-sidebar">
+            <div class="edm-photo-area" onclick="document.getElementById('editDeptImage').click()">
+              <img id="editDeptImagePreview" src="" alt="Preview" />
+              <div id="editDeptImagePlaceholder" class="edm-photo-placeholder">
+                <i class="fa fa-camera"></i>
+                <span>Upload photo</span>
+              </div>
+              <input type="file" id="editDeptImage" accept="image/*" style="display:none;" onchange="handleEditDeptImageChange(event)" />
+              <button type="button" id="editDeptImageDeleteBtn" class="edm-photo-delete" onclick="event.stopPropagation(); deleteEditDeptImage();">
+                <i class="fa fa-trash"></i>
+              </button>
             </div>
-            <input type="file" id="editDeptImage" accept="image/*" style="display:none;" onchange="handleEditDeptImageChange(event)" />
+
+            <div class="edm-field">
+              <label class="edm-label" for="editDeptName">Name</label>
+              <input type="text" id="editDeptName" required class="edm-input" placeholder="e.g. Police" oninput="triggerEditDeptAutoSaveDebounced()" />
+            </div>
+
+            <div class="edm-field">
+              <label class="edm-label" for="editDeptDescription">Description</label>
+              <textarea id="editDeptDescription" rows="2" class="edm-textarea" placeholder="Brief description..." oninput="triggerEditDeptAutoSaveDebounced()"></textarea>
+            </div>
           </div>
-          <button type="button" id="editDeptImageDeleteBtn" onclick="event.stopPropagation(); deleteEditDeptImage();" style="display:none; position:absolute; top:0.5rem; right:0.5rem; width:2rem; height:2rem; background:rgba(239,68,68,0.9); border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s ease;" onmouseenter="this.style.background='rgba(220,38,38,1)'; this.style.transform='scale(1.1)';" onmouseleave="this.style.background='rgba(239,68,68,0.9)'; this.style.transform='scale(1)';">
-            <i class="fa fa-trash text-white text-sm"></i>
-          </button>
-        </div>
-      </div>
-      <div class="mb-3">
-        <label class="block text-gray-300 mb-1 text-sm font-medium" for="editDeptName">Department Name</label>
-        <input type="text" id="editDeptName" required class="w-full text-gray-200 bg-gray-800 border border-gray-600 rounded p-2.5 text-sm focus:border-blue-500 focus:outline-none" />
-      </div>
-      <div class="mb-3">
-        <label class="block text-gray-300 mb-1 text-sm font-medium" for="editDeptDescription">Description</label>
-        <textarea id="editDeptDescription" rows="2" class="w-full text-gray-200 bg-gray-800 border border-gray-600 rounded p-2.5 text-sm focus:border-blue-500 focus:outline-none"></textarea>
-      </div>
-      
-      <!-- Components Section (dynamically populated) -->
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-1 text-sm font-medium">Components</label>
-        <div id="editDeptComponentsContainer" class="bg-gray-800 border border-gray-600 rounded-lg p-3 space-y-2">
-          <div class="text-gray-500 text-sm">Loading components...</div>
+
+          <!-- Right: Settings -->
+          <div class="edm-main">
+            <!-- Manage Ranks — prominent card -->
+            <div class="edm-ranks-card" onclick="openRankManagementModal(currentEditDepartment)">
+              <div class="edm-ranks-icon"><i class="fa fa-ranking-star"></i></div>
+              <div class="edm-ranks-text">
+                <strong style="display:flex; align-items:center; gap:8px;">Manage Ranks<% if (new Date() < new Date('2026-03-25')) { %><span style="background:linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25)); color:#c4b5fd; padding:1px 7px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(139,92,246,0.3);">Beta</span><% } %></strong>
+                <span>Hierarchy, requirements &amp; auto-promote</span>
+              </div>
+              <div class="edm-ranks-badge" id="edmRanksBadge"><i class="fa fa-arrow-up"></i><span id="edmRanksBadgeCount">0</span></div>
+              <i class="fa fa-chevron-right edm-ranks-arrow"></i>
+            </div>
+
+            <!-- Members -->
+            <div class="edm-section is-open">
+              <div class="edm-section-header" onclick="this.parentElement.classList.toggle('is-open')">
+                <div class="edm-section-title">
+                  <i class="fa fa-users"></i>
+                  Members
+                  <span id="editDeptMemberCount" class="edm-section-badge"></span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <button type="button" class="edm-btn-add-member" id="editDeptAddMemberToggle" onclick="event.stopPropagation(); toggleAddMemberPanel()">
+                    <i class="fa fa-plus"></i> <span>Add</span>
+                  </button>
+                  <i class="fa fa-chevron-down edm-section-chevron"></i>
+                </div>
+              </div>
+              <div class="edm-section-body">
+                <!-- Public department notice -->
+                <div id="editDeptMemberPublicNotice" style="display:none; padding:16px 20px; text-align:center;">
+                  <div style="color:#94a3b8; font-size:13px; line-height:1.5;">
+                    <i class="fa fa-globe" style="color:#60a5fa; margin-right:6px;"></i>
+                    This department is set to <span style="color:#60a5fa; font-weight:600;">Public</span> — all community members have access.
+                    <br><span style="color:#64748b; font-size:12px;">Change to Private to manage individual members.</span>
+                  </div>
+                </div>
+                <div id="editDeptMemberSectionBody" class="edm-section-inner">
+                  <!-- Add member panel (inline) -->
+                  <div id="editDeptAddMemberPanel" class="edm-add-member-panel">
+                    <div class="edm-members-search-wrap">
+                      <i class="fa fa-search"></i>
+                      <input type="text" class="edm-members-search" id="editDeptAddMemberSearch" placeholder="Search community members..." oninput="searchAddMemberList()">
+                    </div>
+                    <div id="editDeptAddMemberList" class="edm-add-member-list">
+                      <div class="edm-members-loading"><i class="fa fa-spinner fa-spin"></i> Loading...</div>
+                    </div>
+                    <div id="editDeptAddMemberPagination" class="edm-members-pagination" style="display:none;">
+                      <button type="button" class="edm-page-btn" id="editDeptAddMemberPrev" onclick="loadAddMemberPage(addMemberPage - 1)"><i class="fa fa-chevron-left"></i></button>
+                      <span id="editDeptAddMemberPageInfo" class="edm-page-info"></span>
+                      <button type="button" class="edm-page-btn" id="editDeptAddMemberNext" onclick="loadAddMemberPage(addMemberPage + 1)"><i class="fa fa-chevron-right"></i></button>
+                    </div>
+                  </div>
+
+                  <!-- Search existing members -->
+                  <div class="edm-members-search-wrap">
+                    <i class="fa fa-search"></i>
+                    <input type="text" class="edm-members-search" id="editDeptMemberSearch" placeholder="Search members..." oninput="filterEditDeptMembers()">
+                  </div>
+
+                  <!-- Member list -->
+                  <div id="editDeptMemberList" class="edm-member-list">
+                    <div class="edm-members-loading"><i class="fa fa-spinner fa-spin"></i> Loading members...</div>
+                  </div>
+
+                  <!-- Pagination -->
+                  <div id="editDeptMemberPagination" class="edm-members-pagination" style="display:none;">
+                    <button type="button" class="edm-page-btn" id="editDeptMemberPrev" onclick="loadEditDeptMembers(currentEditDepartment, editDeptMembersPage - 1)"><i class="fa fa-chevron-left"></i></button>
+                    <span id="editDeptMemberPageInfo" class="edm-page-info"></span>
+                    <button type="button" class="edm-page-btn" id="editDeptMemberNext" onclick="loadEditDeptMembers(currentEditDepartment, editDeptMembersPage + 1)"><i class="fa fa-chevron-right"></i></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Visibility -->
+            <div class="edm-section is-open">
+              <div class="edm-section-header" onclick="this.parentElement.classList.toggle('is-open')">
+                <div class="edm-section-title">
+                  <i class="fa fa-eye"></i>
+                  Visibility
+                </div>
+                <i class="fa fa-chevron-down edm-section-chevron"></i>
+              </div>
+              <div class="edm-section-body">
+                <div class="edm-section-inner">
+                  <div class="edm-vis-row">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <span class="edm-vis-label" style="color:#94a3b8;">Access Mode</span>
+                      <div class="edm-vis-tooltip" onmouseenter="positionEdmTooltip(this)" onmouseleave="hideEdmTooltip(this)">
+                        <i class="fa fa-info-circle"></i>
+                        <div class="edm-vis-tooltip-text">
+                          <strong>Public</strong>: Anyone can access this department.<br/>
+                          <strong>Private</strong>: Users can request to join and be approved from your notifications menu, or you can add members directly.
+                        </div>
+                      </div>
+                    </div>
+                    <div class="edm-vis-labels">
+                      <span id="editDeptVisibilityPublic" class="edm-vis-label" style="color:#64748b;">Public</span>
+                      <label class="edm-toggle">
+                        <input type="checkbox" id="editDeptApprovalRequired" onchange="updateEditDeptVisibilityLabel(); triggerEditDeptAutoSaveImmediate()">
+                        <div class="edm-toggle-track"></div>
+                        <div class="edm-toggle-knob"></div>
+                      </label>
+                      <span id="editDeptVisibilityPrivate" class="edm-vis-label" style="color:#64748b;">Private</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Components -->
+            <div class="edm-section is-open">
+              <div class="edm-section-header" onclick="this.parentElement.classList.toggle('is-open')">
+                <div class="edm-section-title">
+                  <i class="fa fa-puzzle-piece"></i>
+                  Components
+                  <span id="editDeptComponentCount" class="edm-section-badge"></span>
+                </div>
+                <i class="fa fa-chevron-down edm-section-chevron"></i>
+              </div>
+              <div class="edm-section-body">
+                <div class="edm-section-inner">
+                  <div id="editDeptComponentsContainer">
+                    <div style="color:#64748b; font-size:13px;">Loading...</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="editDeptError" class="edm-error"></div>
+          </div>
         </div>
       </div>
 
-      <div class="mb-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-1.5">
-            <span class="text-gray-300 text-sm font-medium">Visibility</span>
-            <span class="relative group flex items-center">
-              <i class="fa fa-info-circle text-gray-500 cursor-pointer text-xs"></i>
-              <span class="absolute left-5 top-0 w-48 bg-gray-900 text-gray-200 text-xs rounded shadow-lg px-2 py-1.5 z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                <strong>Public</strong>: Anyone can access.<br/>
-                <strong>Private</strong>: Approval required.
-              </span>
-            </span>
-          </div>
-          <div class="flex items-center gap-2" style="height: 20px;">
-            <span id="editDeptVisibilityPublic" class="text-xs text-gray-400 leading-5">Public</span>
-            <label class="relative inline-flex items-center cursor-pointer" style="height: 20px;">
-              <input type="checkbox" id="editDeptApprovalRequired" class="sr-only peer" onchange="updateEditDeptVisibilityLabel()">
-              <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-              <div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-4"></div>
-            </label>
-            <span id="editDeptVisibilityPrivate" class="text-xs text-gray-400 leading-5">Private</span>
-          </div>
+      <!-- Footer -->
+      <div class="edm-footer">
+        <button type="button" class="edm-btn edm-btn-delete" onclick="deleteEditDepartment()">
+          <i class="fa fa-trash"></i> Delete
+        </button>
+        <div id="editDeptSaveStatus" class="edm-save-status">
+          <!-- Populated by JS: idle / saving / saved / error -->
         </div>
-      </div>
-      <div id="editDeptError" class="text-red-400 text-sm mb-2" style="display:none;"></div>
-      <div class="flex justify-end gap-2 mt-4">
-        <button type="button" onclick="deleteEditDepartment()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded font-semibold text-sm">Delete</button>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold text-sm">Save</button>
       </div>
     </form>
   </div>
 </div> 
 
 <script>
+// ===== Auto-Save System =====
+var _edmAutoSaveTimer = null;
+var _edmSaveStatusTimer = null;
+var _edmIsSaving = false;
+
+function setEditDeptSaveStatus(state, message) {
+  var el = document.getElementById('editDeptSaveStatus');
+  if (!el) return;
+  el.className = 'edm-save-status';
+  clearTimeout(_edmSaveStatusTimer);
+
+  if (state === 'saving') {
+    el.className = 'edm-save-status is-saving';
+    el.innerHTML = '<div class="edm-save-spinner"></div><span>Saving\u2026</span>';
+  } else if (state === 'saved') {
+    el.className = 'edm-save-status is-saved';
+    el.innerHTML = '<div class="edm-save-check"><i class="fa fa-check"></i></div><span>Saved</span>';
+    _edmSaveStatusTimer = setTimeout(function() {
+      el.innerHTML = '';
+      el.className = 'edm-save-status';
+    }, 2500);
+  } else if (state === 'error') {
+    el.className = 'edm-save-status is-error';
+    el.innerHTML = '<span class="edm-save-error"><i class="fa fa-exclamation-circle"></i></span><span>' + (message || 'Save failed') + '</span>';
+    _edmSaveStatusTimer = setTimeout(function() {
+      el.innerHTML = '';
+      el.className = 'edm-save-status';
+    }, 4000);
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+function triggerEditDeptAutoSave(delay) {
+  clearTimeout(_edmAutoSaveTimer);
+  _edmAutoSaveTimer = setTimeout(function() {
+    saveEditDepartment();
+  }, delay || 800);
+}
+
+// Immediate save (for toggles)
+function triggerEditDeptAutoSaveImmediate() {
+  triggerEditDeptAutoSave(300);
+}
+
+// Debounced save (for text inputs)
+function triggerEditDeptAutoSaveDebounced() {
+  triggerEditDeptAutoSave(1000);
+}
+
 async function saveEditDepartment() {
-  const deptId = currentEditDepartment;
-  const communityId = '<%= community._id %>';
-  const name = document.getElementById('editDeptName').value.trim();
-  const description = document.getElementById('editDeptDescription').value.trim();
-  const imageUrl = document.getElementById('editDeptImageUrl').value;
-  const saveBtn = document.querySelector('#editDepartmentModal button[type="submit"]');
+  if (_edmIsSaving) return;
+  var deptId = currentEditDepartment;
+  var communityId = '<%= community._id %>';
+  var name = document.getElementById('editDeptName').value.trim();
+  var description = document.getElementById('editDeptDescription').value.trim();
+  var imageUrl = document.getElementById('editDeptImageUrl').value;
 
   if (!name) {
-    if (typeof showToast === 'function') {
-      showToast('Department name is required', 2500);
-    } else {
-      alert('Department name is required');
-    }
+    setEditDeptSaveStatus('error', 'Name is required');
     return;
   }
 
-  saveBtn.disabled = true;
-  saveBtn.textContent = 'Saving...';
+  _edmIsSaving = true;
+  setEditDeptSaveStatus('saving');
 
   try {
     // Fetch the current department data to preserve all existing structure
-    const fetchRes = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`);
+    var fetchRes = await fetch(API_URL + '/api/v1/community/' + communityId + '/departments/' + deptId);
     if (!fetchRes.ok) throw new Error('Failed to fetch department data');
 
-    const response = await fetchRes.json();
-    const currentDept = response.department || response;
+    var response = await fetchRes.json();
+    var currentDept = response.department || response;
 
     // Determine image value: __DELETE__ means explicitly remove, empty means keep existing
-    let finalImage;
+    var finalImage;
     if (imageUrl === '__DELETE__') {
       finalImage = ''; // Explicitly delete the image
     } else if (imageUrl) {
@@ -6899,9 +7913,9 @@ async function saveEditDepartment() {
     }
 
     // Create the department object with only the fields we want to update
-    const payload = {
-      name,
-      description,
+    var payload = {
+      name: name,
+      description: description,
       approvalRequired: document.getElementById('editDeptApprovalRequired').checked,
       image: finalImage
     };
@@ -6909,21 +7923,21 @@ async function saveEditDepartment() {
     // Update the template components - include in the same PATCH request
     if (currentDept.template) {
       // Read toggle states from the dynamically rendered checkboxes (includes merged components)
-      const toggleStates = {};
+      var toggleStates = {};
       document.querySelectorAll('.edit-dept-component-toggle').forEach(function(cb) {
         toggleStates[cb.getAttribute('data-component-name')] = cb.checked;
       });
 
       // Start with existing components from the API
-      const existingComponents = currentDept.template.components || [];
-      const existingNames = {};
-      const updatedComponents = existingComponents.map(component => {
-        const componentName = component.name;
+      var existingComponents = currentDept.template.components || [];
+      var existingNames = {};
+      var updatedComponents = existingComponents.map(function(component) {
+        var componentName = component.name;
         existingNames[componentName] = true;
-        const isEnabled = toggleStates.hasOwnProperty(componentName) ? toggleStates[componentName] : component.enabled;
+        var isEnabled = toggleStates.hasOwnProperty(componentName) ? toggleStates[componentName] : component.enabled;
 
         // Extract component ID - handle both string and {$oid: ...} formats
-        let componentId = component._id;
+        var componentId = component._id;
         if (typeof componentId === 'object' && componentId !== null) {
           componentId = componentId.$oid || String(componentId);
         }
@@ -6935,7 +7949,7 @@ async function saveEditDepartment() {
         };
       });
 
-      // Add any new components from toggles that weren't in the original list (e.g. notepad on legacy depts)
+      // Add any new components from toggles that weren't in the original list
       Object.keys(toggleStates).forEach(function(toggleName) {
         if (!existingNames[toggleName]) {
           updatedComponents.push({
@@ -6946,7 +7960,7 @@ async function saveEditDepartment() {
       });
 
       // Extract template ID - handle both string and {$oid: ...} formats
-      let templateId = currentDept.template._id;
+      var templateId = currentDept.template._id;
       if (typeof templateId === 'object' && templateId !== null) {
         templateId = templateId.$oid || String(templateId);
       }
@@ -6960,41 +7974,29 @@ async function saveEditDepartment() {
       };
     }
 
-    const updateRes = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}?userId=${window.dbUser?._id || ''}`, {
+    var updateRes = await fetch(API_URL + '/api/v1/community/' + communityId + '/departments/' + deptId + '?userId=' + (window.dbUser && window.dbUser._id || ''), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
     if (!updateRes.ok) {
-      const errorText = await updateRes.text();
+      var errorText = await updateRes.text();
       console.error('Update failed with response:', errorText);
       throw new Error('Failed to update department');
     }
 
     await updateRes.json();
-
-    closeEditDepartmentModal();
-    if (typeof showToast === 'function') {
-      showToast('Department updated successfully', 2500);
-    } else {
-      alert('Department updated successfully');
-    }
+    setEditDeptSaveStatus('saved');
     // Set flag to refresh component permissions when user returns to civilian dashboard
     sessionStorage.setItem('refreshComponentPermissions', 'true');
     refreshDepartmentsGrid();
 
   } catch (err) {
     console.error('Error in saveEditDepartment:', err);
-    if (typeof showToast === 'function') {
-      showToast(err.message || 'Failed to update department', 3000, 'error');
-    } else {
-      alert(err.message || 'Failed to update department');
-    }
+    setEditDeptSaveStatus('error', err.message || 'Save failed');
   } finally {
-    // Always reset button state
-    saveBtn.disabled = false;
-    saveBtn.textContent = 'Save';
+    _edmIsSaving = false;
   }
 }
 function deleteEditDepartment() {
@@ -7045,9 +8047,370 @@ async function confirmDeleteDepartment() {
 
 <script>
 function updateEditDeptVisibilityLabel() {
-  const checked = document.getElementById('editDeptApprovalRequired').checked;
-  document.getElementById('editDeptVisibilityPublic').className = 'text-sm font-medium ' + (!checked ? 'text-blue-400' : 'text-gray-400');
-  document.getElementById('editDeptVisibilityPrivate').className = 'text-sm font-medium ' + (checked ? 'text-blue-400' : 'text-gray-400');
+  var checked = document.getElementById('editDeptApprovalRequired').checked;
+  document.getElementById('editDeptVisibilityPublic').style.color = !checked ? '#60a5fa' : '#64748b';
+  document.getElementById('editDeptVisibilityPrivate').style.color = checked ? '#60a5fa' : '#64748b';
+
+  // Toggle members section based on public/private
+  var isPublic = !checked;
+  var memberBody = document.getElementById('editDeptMemberSectionBody');
+  var publicNotice = document.getElementById('editDeptMemberPublicNotice');
+  var addBtn = document.getElementById('editDeptAddMemberToggle');
+  if (memberBody && publicNotice) {
+    memberBody.style.display = isPublic ? 'none' : '';
+    publicNotice.style.display = isPublic ? 'block' : 'none';
+  }
+  if (addBtn) {
+    addBtn.style.display = isPublic ? 'none' : '';
+  }
+  var memberCount = document.getElementById('editDeptMemberCount');
+  if (memberCount) {
+    memberCount.style.display = isPublic ? 'none' : '';
+  }
+}
+
+// ===== Department Members Management =====
+var editDeptMembersPage = 1;
+var editDeptMembersLimit = 10;
+var editDeptMembersData = [];
+var editDeptMembersTotalCount = 0;
+
+function loadEditDeptMembers(departmentId, page) {
+  if (!departmentId) return;
+  page = page || 1;
+  editDeptMembersPage = page;
+  var communityId = '<%= community._id %>';
+  var listEl = document.getElementById('editDeptMemberList');
+  listEl.innerHTML = '<div class="edm-members-loading"><i class="fa fa-spinner fa-spin"></i> Loading...</div>';
+
+  fetch(API_URL + '/api/v1/community/' + communityId + '/departments/' + departmentId + '/members?page=' + page + '&limit=' + editDeptMembersLimit)
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      // Normalize: API nests user data under .user
+      editDeptMembersData = (data.data || []).map(function(m) {
+        var u = m.user || {};
+        return {
+          userID: u.userID || m._id || '',
+          username: u.username || '',
+          profilePicture: u.profilePicture || '',
+          rankId: m.rankId || ''
+        };
+      });
+      editDeptMembersTotalCount = data.totalCount || 0;
+      var countBadge = document.getElementById('editDeptMemberCount');
+      if (countBadge) countBadge.textContent = editDeptMembersTotalCount + ' member' + (editDeptMembersTotalCount !== 1 ? 's' : '');
+      renderEditDeptMembers();
+      renderEditDeptMemberPagination();
+    })
+    .catch(function(err) {
+      console.error('Failed to load department members:', err);
+      listEl.innerHTML = '<div class="edm-members-empty">Failed to load members</div>';
+    });
+}
+
+function renderEditDeptMembers(filter) {
+  var listEl = document.getElementById('editDeptMemberList');
+  var members = editDeptMembersData;
+  if (filter) {
+    var q = filter.toLowerCase();
+    members = members.filter(function(m) {
+      return (m.username || '').toLowerCase().indexOf(q) !== -1;
+    });
+  }
+  if (members.length === 0) {
+    listEl.innerHTML = '<div class="edm-members-empty">' + (filter ? 'No matching members' : 'No members yet') + '</div>';
+    return;
+  }
+  listEl.innerHTML = members.map(function(m) {
+    var avatar = m.profilePicture
+      ? '<img src="' + m.profilePicture + '" alt="">'
+      : '<i class="fa fa-user"></i>';
+    var userId = m.userID || '';
+    var isCurrentUser = window.dbUser && (window.dbUser._id === userId);
+    var removeBtn = isCurrentUser ? '' :
+      '<button type="button" class="edm-member-remove" onclick="removeEditDeptMember(\'' + userId + '\', \'' + (m.username || '').replace(/'/g, "\\'") + '\')" title="Remove member"><i class="fa fa-times"></i></button>';
+    return '<div class="edm-member-row" data-username="' + (m.username || '').toLowerCase() + '">'
+      + '<div class="edm-member-info">'
+      + '<div class="edm-member-avatar">' + avatar + '</div>'
+      + '<span class="edm-member-name">' + (m.username || 'Unknown') + '</span>'
+      + '</div>'
+      + '<div class="edm-member-actions">' + removeBtn + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function filterEditDeptMembers() {
+  var q = document.getElementById('editDeptMemberSearch').value.trim();
+  renderEditDeptMembers(q || null);
+}
+
+function renderEditDeptMemberPagination() {
+  var paginationEl = document.getElementById('editDeptMemberPagination');
+  var totalPages = Math.ceil(editDeptMembersTotalCount / editDeptMembersLimit);
+  if (totalPages <= 1) {
+    paginationEl.style.display = 'none';
+    return;
+  }
+  paginationEl.style.display = 'flex';
+  document.getElementById('editDeptMemberPageInfo').textContent = 'Page ' + editDeptMembersPage + ' of ' + totalPages;
+  document.getElementById('editDeptMemberPrev').disabled = editDeptMembersPage <= 1;
+  document.getElementById('editDeptMemberNext').disabled = editDeptMembersPage >= totalPages;
+}
+
+async function removeEditDeptMember(userId, username) {
+  var confirmed = await edmConfirm({
+    icon: 'user-times', iconBg: 'rgba(245,158,11,0.1)', iconColor: '#f59e0b',
+    title: 'Remove Member?',
+    text: 'Remove <strong style="color:#f1f5f9;">' + username + '</strong> from this department?',
+    confirmLabel: 'Remove', confirmIcon: 'user-times'
+  });
+  if (!confirmed) return;
+  var communityId = '<%= community._id %>';
+  var departmentId = currentEditDepartment;
+  fetch(API_URL + '/api/v1/community/' + communityId + '/departments/' + departmentId + '/remove-user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: userId })
+  })
+  .then(function(res) {
+    if (!res.ok) throw new Error('Failed to remove member');
+    return res.json();
+  })
+  .then(function() {
+    if (typeof showToast === 'function') showToast('Member removed', 2000);
+    loadEditDeptMembers(departmentId, editDeptMembersPage);
+  })
+  .catch(function(err) {
+    console.error('Remove member error:', err);
+    if (typeof showToast === 'function') showToast('Failed to remove member', 2500, 'error');
+  });
+}
+
+// ===== Add Members Panel =====
+var addMemberPage = 1;
+var addMemberLimit = 10;
+var addMemberTotalPages = 1;
+var addMemberSearchTimer = null;
+var addMemberCurrentData = [];
+
+function toggleAddMemberPanel() {
+  var panel = document.getElementById('editDeptAddMemberPanel');
+  var btn = document.getElementById('editDeptAddMemberToggle');
+  var isOpen = panel.classList.contains('is-open');
+  if (isOpen) {
+    panel.classList.remove('is-open');
+    btn.innerHTML = '<i class="fa fa-plus"></i> <span>Add</span>';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    btn.style.background = '';
+    return;
+  }
+  panel.classList.add('is-open');
+  btn.innerHTML = '<i class="fa fa-times"></i> <span>Done</span>';
+  btn.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+  btn.style.color = '#f87171';
+  btn.style.background = 'rgba(239, 68, 68, 0.06)';
+  document.getElementById('editDeptAddMemberSearch').value = '';
+  loadAddMemberPage(1);
+}
+
+function loadAddMemberPage(page) {
+  page = page || 1;
+  addMemberPage = page;
+  var communityId = '<%= community._id %>';
+  var listEl = document.getElementById('editDeptAddMemberList');
+  listEl.innerHTML = '<div class="edm-members-loading"><i class="fa fa-spinner fa-spin"></i> Loading...</div>';
+
+  var query = (document.getElementById('editDeptAddMemberSearch').value || '').trim();
+  var url;
+  if (query.length > 0) {
+    // Use search endpoint
+    url = API_URL + '/api/v1/community/' + communityId + '/members/search?q=' + encodeURIComponent(query) + '&page=' + page + '&limit=' + addMemberLimit;
+  } else {
+    // Use v2 members endpoint for browsing
+    url = API_URL + '/api/v2/community/' + communityId + '/members?page=' + page + '&limit=' + addMemberLimit;
+  }
+
+  fetch(url)
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      var members = (data.members || []).map(function(m) {
+        return {
+          userId: m.id,
+          username: m.username || 'Unknown',
+          profilePicture: m.profilePicture || ''
+        };
+      });
+
+      // Filter out members already in the department
+      var existingIds = {};
+      editDeptMembersData.forEach(function(m) { existingIds[m.userID] = true; });
+      addMemberCurrentData = members.filter(function(m) { return !existingIds[m.userId]; });
+
+      var pagination = data.pagination || {};
+      addMemberTotalPages = pagination.totalPages || Math.ceil((pagination.totalCount || members.length) / addMemberLimit) || 1;
+
+      renderAddMemberRows();
+      renderAddMemberPagination();
+    })
+    .catch(function(err) {
+      console.error('Failed to load community members:', err);
+      listEl.innerHTML = '<div class="edm-members-empty">Failed to load members</div>';
+    });
+}
+
+function renderAddMemberRows() {
+  var listEl = document.getElementById('editDeptAddMemberList');
+  if (addMemberCurrentData.length === 0) {
+    var query = (document.getElementById('editDeptAddMemberSearch').value || '').trim();
+    listEl.innerHTML = '<div class="edm-members-empty">' + (query ? 'No matching members' : 'No members to add on this page') + '</div>';
+    return;
+  }
+  listEl.innerHTML = addMemberCurrentData.map(function(m) {
+    var avatar = m.profilePicture
+      ? '<img src="' + m.profilePicture + '" alt="" style="width:100%;height:100%;object-fit:cover;">'
+      : '<i class="fa fa-user"></i>';
+    return '<div class="edm-add-member-row">'
+      + '<div class="edm-member-info">'
+      + '<div class="edm-member-avatar">' + avatar + '</div>'
+      + '<span class="edm-member-name">' + m.username + '</span>'
+      + '</div>'
+      + '<button type="button" class="edm-add-btn" onclick="addMemberToDept(\'' + m.userId + '\')" title="Add to department"><i class="fa fa-plus"></i></button>'
+      + '</div>';
+  }).join('');
+}
+
+function renderAddMemberPagination() {
+  var paginationEl = document.getElementById('editDeptAddMemberPagination');
+  if (addMemberTotalPages <= 1) {
+    paginationEl.style.display = 'none';
+    return;
+  }
+  paginationEl.style.display = 'flex';
+  document.getElementById('editDeptAddMemberPageInfo').textContent = 'Page ' + addMemberPage + ' of ' + addMemberTotalPages;
+  document.getElementById('editDeptAddMemberPrev').disabled = addMemberPage <= 1;
+  document.getElementById('editDeptAddMemberNext').disabled = addMemberPage >= addMemberTotalPages;
+}
+
+function searchAddMemberList() {
+  // Debounce search input
+  clearTimeout(addMemberSearchTimer);
+  addMemberSearchTimer = setTimeout(function() {
+    loadAddMemberPage(1);
+  }, 300);
+}
+
+function addMemberToDept(userId) {
+  var communityId = '<%= community._id %>';
+  var departmentId = currentEditDepartment;
+  fetch(API_URL + '/api/v1/community/' + communityId + '/departments/' + departmentId + '/members', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ members: [userId] })
+  })
+  .then(function(res) {
+    if (!res.ok) throw new Error('Failed to add member');
+    return res.json();
+  })
+  .then(function() {
+    if (typeof showToast === 'function') showToast('Member added', 2000);
+    // Refresh department members list, then reload add-member page
+    loadEditDeptMembers(departmentId, editDeptMembersPage);
+    setTimeout(function() { loadAddMemberPage(addMemberPage); }, 500);
+  })
+  .catch(function(err) {
+    console.error('Add member error:', err);
+    if (typeof showToast === 'function') showToast('Failed to add member', 2500, 'error');
+  });
+}
+</script>
+
+<!-- Reusable Confirm Modal -->
+<style>
+  .edm-confirm-overlay {
+    display: none; position: fixed; z-index: 3300; left: 0; top: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0); align-items: center; justify-content: center;
+    transition: background 0.25s ease;
+  }
+  .edm-confirm-overlay.is-open { display: flex; background: rgba(0,0,0,0.7); }
+  .edm-confirm-card {
+    background: #1a1c24; border-radius: 14px; padding: 1.75rem 1.5rem 1.25rem; max-width: 360px; width: 88%;
+    border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 20px 60px -10px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03) inset;
+    transform: scale(0.92) translateY(10px); opacity: 0;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  }
+  .edm-confirm-overlay.is-open .edm-confirm-card { transform: scale(1) translateY(0); opacity: 1; }
+  .edm-confirm-icon {
+    width: 3.25rem; height: 3.25rem; margin: 0 auto 0.875rem; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .edm-confirm-icon i { font-size: 1.35rem; }
+  .edm-confirm-title { color: #f1f5f9; margin: 0 0 0.375rem; font-size: 1.1rem; font-weight: 600; text-align: center; }
+  .edm-confirm-text { color: #8b95a5; margin: 0; font-size: 0.8125rem; line-height: 1.55; text-align: center; }
+  .edm-confirm-actions { display: flex; gap: 0.625rem; margin-top: 1.375rem; }
+  .edm-confirm-btn {
+    flex: 1; padding: 0.625rem 0.875rem; border: none; border-radius: 8px;
+    font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease;
+    display: flex; align-items: center; justify-content: center; gap: 0.375rem;
+  }
+  .edm-confirm-btn-cancel { background: #2a2d38; color: #c4cad4; }
+  .edm-confirm-btn-cancel:hover { background: #363a48; }
+  .edm-confirm-btn-danger { background: #dc2626; color: #fff; }
+  .edm-confirm-btn-danger:hover { background: #b91c1c; }
+</style>
+
+<div id="edmConfirmOverlay" class="edm-confirm-overlay" onclick="if(event.target===this) edmConfirmClose();">
+  <div class="edm-confirm-card">
+    <div id="edmConfirmIcon" class="edm-confirm-icon" style="background:rgba(239,68,68,0.1);">
+      <i class="fa fa-trash" style="color:#ef4444;"></i>
+    </div>
+    <h3 id="edmConfirmTitle" class="edm-confirm-title">Remove Photo?</h3>
+    <p id="edmConfirmText" class="edm-confirm-text">This action cannot be undone.</p>
+    <div class="edm-confirm-actions">
+      <button class="edm-confirm-btn edm-confirm-btn-cancel" onclick="edmConfirmClose();">Cancel</button>
+      <button id="edmConfirmBtn" class="edm-confirm-btn edm-confirm-btn-danger" onclick="edmConfirmResolve();">
+        <i class="fa fa-trash"></i> Remove
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+var _edmConfirmCallback = null;
+
+function edmConfirm(opts) {
+  // opts: { icon, iconBg, iconColor, title, text, confirmLabel, confirmIcon }
+  var overlay = document.getElementById('edmConfirmOverlay');
+  var iconEl = document.getElementById('edmConfirmIcon');
+  var titleEl = document.getElementById('edmConfirmTitle');
+  var textEl = document.getElementById('edmConfirmText');
+  var btnEl = document.getElementById('edmConfirmBtn');
+
+  iconEl.style.background = opts.iconBg || 'rgba(239,68,68,0.1)';
+  iconEl.innerHTML = '<i class="fa fa-' + (opts.icon || 'trash') + '" style="color:' + (opts.iconColor || '#ef4444') + ';"></i>';
+  titleEl.textContent = opts.title || 'Are you sure?';
+  textEl.innerHTML = opts.text || '';
+  btnEl.innerHTML = '<i class="fa fa-' + (opts.confirmIcon || 'trash') + '"></i> ' + (opts.confirmLabel || 'Remove');
+
+  return new Promise(function(resolve) {
+    _edmConfirmCallback = resolve;
+    // Force reflow for animation
+    overlay.classList.remove('is-open');
+    void overlay.offsetWidth;
+    overlay.classList.add('is-open');
+  });
+}
+
+function edmConfirmResolve() {
+  if (_edmConfirmCallback) _edmConfirmCallback(true);
+  _edmConfirmCallback = null;
+  document.getElementById('edmConfirmOverlay').classList.remove('is-open');
+}
+
+function edmConfirmClose() {
+  if (_edmConfirmCallback) _edmConfirmCallback(false);
+  _edmConfirmCallback = null;
+  document.getElementById('edmConfirmOverlay').classList.remove('is-open');
 }
 </script>
 
@@ -12598,3 +13961,1944 @@ async function saveEditEvent() {
           }
         } catch (e) { /* no-op */ }
       })();
+    </script>
+
+<!-- ===================== Rank Management Modal ===================== -->
+<style>
+  .rkm-overlay {
+    display: none; position: fixed; z-index: 3200; inset: 0;
+    background: rgba(10,11,18,0.8); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+    padding: 1rem; box-sizing: border-box;
+    animation: rkmFadeIn 0.2s ease;
+  }
+  .rkm-overlay.is-open { display: flex; }
+  @keyframes rkmFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes rkmSlideUp { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+  .rkm-card {
+    background: #13141b; border-radius: 16px; width: 95%; max-width: 920px;
+    max-height: calc(100vh - 2rem); display: flex; flex-direction: column;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 32px 80px -16px rgba(0,0,0,0.65), 0 0 1px rgba(255,255,255,0.05) inset;
+    animation: rkmSlideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+    overflow: hidden; position: relative;
+  }
+
+  /* Header */
+  .rkm-header {
+    display: flex; align-items: center; gap: 0.875rem;
+    padding: 1.125rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
+  }
+  .rkm-header-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 0.95rem; flex-shrink: 0;
+  }
+  .rkm-header-text h3 { color: #f1f5f9; margin: 0; font-size: 1.05rem; font-weight: 600; }
+  .rkm-header-text p { color: #64748b; margin: 0.1rem 0 0; font-size: 0.775rem; }
+  .rkm-close {
+    margin-left: auto; background: none; border: none; color: #4a5568;
+    cursor: pointer; font-size: 1.1rem; padding: 0.3rem; border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .rkm-close:hover { color: #94a3b8; background: rgba(255,255,255,0.05); }
+
+  /* Body — 2-column on desktop */
+  .rkm-body {
+    display: grid; grid-template-columns: 1fr 1fr;
+    flex: 1; min-height: 0; overflow: hidden;
+  }
+
+  /* Left panel — ranks list */
+  .rkm-panel-ranks {
+    display: flex; flex-direction: column; min-height: 0;
+    border-right: 1px solid rgba(255,255,255,0.05);
+  }
+  .rkm-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.75rem 1.125rem; flex-shrink: 0;
+  }
+  .rkm-panel-title {
+    color: #94a3b8; font-size: 0.675rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .rkm-btn-add {
+    background: rgba(124,58,237,0.12); border: none; border-radius: 6px;
+    color: #a78bfa; font-size: 0.7rem; font-weight: 500; padding: 0.3rem 0.6rem;
+    cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.3rem;
+  }
+  .rkm-btn-add:hover { background: rgba(124,58,237,0.25); }
+
+  .rkm-ranks-scroll {
+    flex: 1; overflow-y: auto; padding: 0 0.75rem 0.75rem;
+    display: flex; flex-direction: column; gap: 0.375rem;
+  }
+  .rkm-ranks-scroll::-webkit-scrollbar { width: 4px; }
+  .rkm-ranks-scroll::-webkit-scrollbar-track { background: transparent; }
+  .rkm-ranks-scroll::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 4px; }
+
+  /* Rank row */
+  .rkm-rank {
+    display: flex; align-items: center; gap: 0.625rem;
+    padding: 0.6rem 0.75rem; border-radius: 9px;
+    background: rgba(255,255,255,0.025); border: 1px solid transparent;
+    cursor: pointer; transition: all 0.15s; position: relative;
+  }
+  .rkm-rank:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.06); }
+  .rkm-rank.is-active { background: rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.25); }
+
+  .rkm-rank-order {
+    width: 24px; display: flex; flex-direction: column; align-items: center;
+    flex-shrink: 0; position: relative;
+  }
+  .rkm-rank-order-icon {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center;
+    color: #4a5568; font-size: 0.6rem; position: relative; z-index: 1;
+  }
+  .rkm-rank-order-icon.is-top { background: rgba(251,191,36,0.12); color: #fbbf24; }
+  .rkm-rank-order-icon.is-bottom { background: rgba(99,102,241,0.1); color: #818cf8; }
+  .rkm-rank-order-line {
+    position: absolute; top: 24px; bottom: -12px; width: 2px;
+    background: linear-gradient(to bottom, rgba(100,116,139,0.2), rgba(100,116,139,0.05));
+  }
+  .rkm-rank:last-child .rkm-rank-order-line { display: none; }
+
+  .rkm-rank-info { flex: 1; min-width: 0; }
+  .rkm-rank-name { color: #e2e8f0; font-size: 0.8125rem; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rkm-rank-meta { display: flex; align-items: center; gap: 0.375rem; margin-top: 0.15rem; flex-wrap: wrap; }
+  .rkm-rank-tag {
+    font-size: 0.6rem; font-weight: 600; padding: 0.1rem 0.35rem;
+    border-radius: 3px; text-transform: uppercase; letter-spacing: 0.03em;
+    line-height: 1.4;
+  }
+  .rkm-tag-prefix { background: rgba(124,58,237,0.15); color: #a78bfa; }
+  .rkm-tag-default { background: rgba(251,191,36,0.12); color: #fbbf24; }
+  .rkm-tag-auto { background: rgba(16,185,129,0.12); color: #34d399; }
+  .rkm-tag-req { background: rgba(255,255,255,0.04); color: #64748b; font-weight: 500; }
+
+  .rkm-rank-actions {
+    display: flex; gap: 0.2rem; flex-shrink: 0; opacity: 0; transition: opacity 0.15s;
+  }
+  .rkm-rank:hover .rkm-rank-actions { opacity: 1; }
+  .rkm-rank-btn {
+    width: 26px; height: 26px; border: none; border-radius: 5px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; transition: all 0.12s; background: rgba(255,255,255,0.04);
+  }
+  .rkm-rank-btn-move { color: #64748b; }
+  .rkm-rank-btn-move:hover { color: #a78bfa; background: rgba(124,58,237,0.12); }
+  .rkm-rank-btn-edit { color: #94a3b8; }
+  .rkm-rank-btn-edit:hover { color: #a78bfa; background: rgba(124,58,237,0.12); }
+  .rkm-rank-btn-del { color: #6b7280; }
+  .rkm-rank-btn-del:hover { color: #f87171; background: rgba(239,68,68,0.1); }
+
+  .rkm-empty {
+    text-align: center; padding: 2.5rem 1rem; color: #4a5568;
+  }
+  .rkm-empty i { font-size: 1.75rem; margin-bottom: 0.5rem; display: block; color: #374151; }
+  .rkm-empty p { margin: 0; font-size: 0.775rem; }
+
+  /* Right panel — members */
+  .rkm-panel-members {
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  .rkm-search {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: #1a1c24; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px; padding: 0.4rem 0.625rem;
+    transition: border-color 0.15s;
+  }
+  .rkm-search:focus-within { border-color: rgba(124,58,237,0.4); }
+  .rkm-search i { color: #4a5568; font-size: 0.7rem; flex-shrink: 0; }
+  .rkm-search input {
+    flex: 1; background: none; border: none; color: #e2e8f0;
+    font-size: 0.775rem; outline: none; min-width: 0;
+  }
+  .rkm-search input::placeholder { color: #4a5568; }
+  .rkm-members-scroll {
+    flex: 1; overflow-y: auto; padding: 0 0.75rem 0.75rem;
+    display: flex; flex-direction: column; gap: 0.3rem;
+  }
+  .rkm-members-scroll::-webkit-scrollbar { width: 4px; }
+  .rkm-members-scroll::-webkit-scrollbar-track { background: transparent; }
+  .rkm-members-scroll::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 4px; }
+
+  /* Member row */
+  .rkm-member {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.425rem 0.625rem; border-radius: 8px;
+    transition: background 0.12s;
+  }
+  .rkm-member:hover { background: rgba(255,255,255,0.03); }
+  .rkm-member-avatar {
+    width: 26px; height: 26px; border-radius: 50%; object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
+  }
+  .rkm-member-initial {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #1e2028; border: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: center;
+    color: #64748b; font-size: 0.625rem; font-weight: 600; flex-shrink: 0;
+  }
+  .rkm-member-name {
+    flex: 1; min-width: 0; color: #cbd5e1; font-size: 0.775rem; font-weight: 450;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .rkm-member select {
+    background: #1a1c24; color: #c4cad4; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px; padding: 0.275rem 0.5rem; font-size: 0.7rem;
+    min-width: 110px; cursor: pointer; transition: border-color 0.15s;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a5568'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center;
+    padding-right: 22px;
+  }
+  .rkm-member select:focus { border-color: #7c3aed; outline: none; }
+
+  .rkm-members-pagination {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.625rem; padding: 0.5rem 0.75rem; flex-shrink: 0;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .rkm-page-btn {
+    background: rgba(255,255,255,0.04); border: none; border-radius: 5px;
+    color: #64748b; padding: 0.3rem 0.5rem; font-size: 0.7rem;
+    cursor: pointer; transition: all 0.12s;
+  }
+  .rkm-page-btn:hover:not(:disabled) { color: #a78bfa; background: rgba(124,58,237,0.1); }
+  .rkm-page-btn:disabled { opacity: 0.3; cursor: default; }
+  .rkm-page-info { color: #4a5568; font-size: 0.675rem; }
+
+  /* Rank form — slide-over panel */
+  .rkm-form-backdrop {
+    position: absolute; inset: 0; z-index: 20;
+    background: rgba(10,11,18,0.6); backdrop-filter: blur(2px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .rkm-form-backdrop.is-open { opacity: 1; pointer-events: auto; }
+  .rkm-form {
+    position: absolute; top: 0; right: 0; bottom: 0; z-index: 21;
+    width: 380px; max-width: 100%;
+    display: flex; flex-direction: column; gap: 0.75rem;
+    padding: 1.25rem; background: #13141b;
+    border-left: 1px solid rgba(124,58,237,0.15);
+    box-shadow: -16px 0 48px rgba(0,0,0,0.4);
+    overflow-y: auto;
+    transform: translateX(100%); opacity: 0;
+    transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease;
+  }
+  .rkm-form.is-open { transform: translateX(0); opacity: 1; }
+  .rkm-form-title {
+    color: #e2e8f0; font-size: 0.85rem; font-weight: 600; margin: 0;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .rkm-form-title i { color: #a78bfa; font-size: 0.75rem; }
+  .rkm-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem; }
+  .rkm-field label {
+    display: block; color: #64748b; font-size: 0.65rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;
+  }
+  .rkm-field input[type="text"], .rkm-field input[type="number"] {
+    width: 100%; background: #1a1c24; color: #e2e8f0;
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 7px;
+    padding: 0.45rem 0.625rem; font-size: 0.8rem; transition: border-color 0.15s;
+    box-sizing: border-box;
+  }
+  .rkm-field input:focus { border-color: #7c3aed; outline: none; }
+  .rkm-checks {
+    display: flex; gap: 1rem;
+  }
+  .rkm-check {
+    display: flex; align-items: center; gap: 0.35rem;
+    color: #94a3b8; font-size: 0.75rem; cursor: pointer;
+  }
+  .rkm-check input { accent-color: #7c3aed; }
+  .rkm-reqs-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .rkm-reqs-label { color: #64748b; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .rkm-btn-add-req {
+    background: none; border: 1px solid rgba(255,255,255,0.06); border-radius: 5px;
+    color: #a78bfa; font-size: 0.625rem; padding: 0.2rem 0.45rem; cursor: pointer;
+    transition: all 0.12s;
+  }
+  .rkm-btn-add-req:hover { border-color: #7c3aed; background: rgba(124,58,237,0.08); }
+  .rkm-req-row {
+    display: flex; gap: 0.35rem; align-items: center;
+  }
+  .rkm-req-row select {
+    flex: 1; background: #1a1c24; color: #c4cad4;
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 5px;
+    padding: 0.325rem 0.5rem; font-size: 0.725rem;
+  }
+  .rkm-req-row select:focus { border-color: #7c3aed; outline: none; }
+  .rkm-req-row input[type="number"] {
+    width: 70px; background: #1a1c24; color: #c4cad4;
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 5px;
+    padding: 0.325rem 0.5rem; font-size: 0.725rem; box-sizing: border-box;
+  }
+  .rkm-req-row input[type="text"] {
+    flex: 1; background: #1a1c24; color: #c4cad4;
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 5px;
+    padding: 0.325rem 0.5rem; font-size: 0.725rem; box-sizing: border-box;
+    font-style: italic;
+  }
+  .rkm-req-row input:focus { border-color: #7c3aed; outline: none; }
+  .rkm-req-del {
+    background: none; border: none; color: #4a5568; cursor: pointer;
+    padding: 0.2rem; font-size: 0.7rem; transition: color 0.12s;
+  }
+  .rkm-req-del:hover { color: #f87171; }
+  .rkm-form-actions {
+    display: flex; justify-content: flex-end; gap: 0.5rem;
+  }
+  .rkm-btn-cancel {
+    background: rgba(255,255,255,0.04); color: #94a3b8; border: none;
+    border-radius: 7px; padding: 0.45rem 0.875rem; font-size: 0.75rem;
+    font-weight: 500; cursor: pointer; transition: all 0.12s;
+  }
+  .rkm-btn-cancel:hover { background: rgba(255,255,255,0.08); }
+  .rkm-btn-save {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; border: none;
+    border-radius: 7px; padding: 0.45rem 1rem; font-size: 0.75rem;
+    font-weight: 600; cursor: pointer; transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.3);
+  }
+  .rkm-btn-save:hover { box-shadow: 0 4px 16px rgba(124,58,237,0.4); transform: translateY(-1px); }
+
+  /* Promotions banner */
+  .rkm-promo-banner {
+    display: none; align-items: center; gap: 0.625rem;
+    padding: 0.6rem 1.25rem; flex-shrink: 0;
+    background: linear-gradient(90deg, rgba(251,191,36,0.06) 0%, rgba(251,191,36,0.02) 100%);
+    border-bottom: 1px solid rgba(251,191,36,0.1);
+    cursor: pointer; transition: background 0.15s;
+  }
+  .rkm-promo-banner:hover { background: linear-gradient(90deg, rgba(251,191,36,0.1) 0%, rgba(251,191,36,0.04) 100%); }
+  .rkm-promo-banner.has-pending { display: flex; }
+  .rkm-promo-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 22px; height: 22px; border-radius: 11px; padding: 0 6px;
+    background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;
+    font-size: 0.65rem; font-weight: 700; flex-shrink: 0;
+  }
+  .rkm-promo-banner-text { flex: 1; min-width: 0; }
+  .rkm-promo-banner-text strong { color: #fbbf24; font-size: 0.775rem; font-weight: 600; }
+  .rkm-promo-banner-text span { color: #94a3b8; font-size: 0.7rem; margin-left: 0.35rem; }
+  .rkm-promo-arrow { color: #fbbf24; font-size: 0.7rem; flex-shrink: 0; transition: transform 0.15s; }
+  .rkm-promo-banner:hover .rkm-promo-arrow { transform: translateX(3px); }
+
+  /* Promotions review slide-over */
+  .rkm-promo-backdrop {
+    position: absolute; inset: 0; z-index: 22;
+    background: rgba(10,11,18,0.65); backdrop-filter: blur(3px);
+    opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+  }
+  .rkm-promo-backdrop.is-open { opacity: 1; pointer-events: auto; }
+  .rkm-promo-panel {
+    position: absolute; top: 0; right: 0; bottom: 0; z-index: 23;
+    width: 440px; max-width: 100%;
+    display: flex; flex-direction: column;
+    background: #13141b;
+    border-left: 1px solid rgba(251,191,36,0.12);
+    box-shadow: -20px 0 60px rgba(0,0,0,0.5);
+    transform: translateX(100%); opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease;
+  }
+  .rkm-promo-panel.is-open { transform: translateX(0); opacity: 1; }
+  .rkm-promo-panel-header {
+    display: flex; align-items: center; gap: 0.625rem;
+    padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;
+  }
+  .rkm-promo-panel-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(217,119,6,0.1));
+    display: flex; align-items: center; justify-content: center;
+    color: #fbbf24; font-size: 0.8rem; flex-shrink: 0;
+  }
+  .rkm-promo-panel-title { color: #f1f5f9; font-size: 0.9rem; font-weight: 600; margin: 0; flex: 1; }
+  .rkm-promo-panel-close {
+    background: none; border: none; color: #4a5568; cursor: pointer;
+    font-size: 1rem; padding: 0.25rem; border-radius: 5px; transition: all 0.12s;
+  }
+  .rkm-promo-panel-close:hover { color: #94a3b8; background: rgba(255,255,255,0.05); }
+  .rkm-promo-scroll {
+    flex: 1; overflow-y: auto; padding: 0.75rem;
+    display: flex; flex-direction: column; gap: 0.625rem;
+  }
+  .rkm-promo-scroll::-webkit-scrollbar { width: 4px; }
+  .rkm-promo-scroll::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 4px; }
+
+  /* Promotion candidate card */
+  .rkm-promo-card {
+    background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px; padding: 0.875rem; transition: border-color 0.15s;
+  }
+  .rkm-promo-card:hover { border-color: rgba(251,191,36,0.15); }
+  .rkm-promo-card-header {
+    display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.625rem;
+  }
+  .rkm-promo-card-avatar {
+    width: 32px; height: 32px; border-radius: 50%; object-fit: cover;
+    border: 2px solid rgba(251,191,36,0.2); flex-shrink: 0;
+  }
+  .rkm-promo-card-initial {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(251,191,36,0.1); border: 2px solid rgba(251,191,36,0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #fbbf24; font-size: 0.7rem; font-weight: 600; flex-shrink: 0;
+  }
+  .rkm-promo-card-info { flex: 1; min-width: 0; }
+  .rkm-promo-card-name {
+    color: #e2e8f0; font-size: 0.8rem; font-weight: 550;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .rkm-promo-card-ranks {
+    display: flex; align-items: center; gap: 0.3rem; margin-top: 0.1rem;
+    font-size: 0.65rem; color: #64748b;
+  }
+  .rkm-promo-card-ranks .from { color: #94a3b8; }
+  .rkm-promo-card-ranks .arrow { color: #fbbf24; }
+  .rkm-promo-card-ranks .to { color: #fbbf24; font-weight: 600; }
+
+  /* Progress bars in promo card */
+  .rkm-promo-metrics { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.625rem; }
+  .rkm-promo-metric { display: flex; flex-direction: column; gap: 0.15rem; }
+  .rkm-promo-metric-header {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.625rem;
+  }
+  .rkm-promo-metric-name { color: #94a3b8; }
+  .rkm-promo-metric-val { color: #34d399; font-weight: 600; }
+  .rkm-promo-bar {
+    height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;
+  }
+  .rkm-promo-bar-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    transition: width 0.4s ease;
+  }
+
+  /* Promote button */
+  .rkm-btn-promote {
+    width: 100%; padding: 0.5rem; border: none; border-radius: 8px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff; font-size: 0.75rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+    box-shadow: 0 2px 8px rgba(245,158,11,0.25);
+  }
+  .rkm-btn-promote:hover {
+    box-shadow: 0 4px 16px rgba(245,158,11,0.35);
+    transform: translateY(-1px);
+  }
+  .rkm-btn-promote:active { transform: translateY(0); }
+  .rkm-btn-promote:disabled {
+    opacity: 0.5; cursor: default; transform: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Confetti canvas */
+  .rkm-confetti-canvas {
+    position: absolute; inset: 0; z-index: 30; pointer-events: none;
+  }
+
+  /* Mobile: stack panels vertically */
+  @media (max-width: 700px) {
+    .rkm-card { max-width: 100%; width: 100%; max-height: 100vh; border-radius: 12px; }
+    .rkm-body { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+    .rkm-panel-ranks { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .rkm-rank-actions { opacity: 1; }
+    .rkm-form { width: 100%; }
+    .rkm-promo-panel { width: 100%; }
+    .rkm-form-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .rkm-card { border-radius: 0; max-height: 100vh; height: 100vh; }
+    .rkm-header { padding: 0.875rem 1rem; }
+    .rkm-member select { min-width: 90px; font-size: 0.65rem; }
+  }
+</style>
+
+<div id="rankManagementModal" class="rkm-overlay" onclick="if(event.target===this)closeRankManagementModal()">
+  <div class="rkm-card">
+    <!-- Header -->
+    <div class="rkm-header">
+      <div class="rkm-header-icon"><i class="fa fa-ranking-star"></i></div>
+      <div class="rkm-header-text">
+        <h3>Manage Ranks</h3>
+        <p id="rankMgmtDeptName"></p>
+      </div>
+      <button class="rkm-close" onclick="closeRankManagementModal()" aria-label="Close"><i class="fa fa-times"></i></button>
+    </div>
+
+    <!-- Promotions Banner -->
+    <div class="rkm-promo-banner" id="rkmPromoBanner" onclick="openPromotionsPanel()">
+      <div class="rkm-promo-badge" id="rkmPromoCount">0</div>
+      <div class="rkm-promo-banner-text">
+        <strong>Pending Promotions</strong>
+        <span id="rkmPromoBannerSubtext">Members ready for review</span>
+      </div>
+      <i class="fa fa-chevron-right rkm-promo-arrow"></i>
+    </div>
+
+    <!-- Body -->
+    <div class="rkm-body">
+      <!-- Left: Ranks -->
+      <div class="rkm-panel-ranks">
+        <div class="rkm-panel-header">
+          <span class="rkm-panel-title"><i class="fa fa-crown" style="color:#fbbf24; margin-right:4px; font-size:0.6rem;"></i> Highest → Lowest</span>
+          <button class="rkm-btn-add" id="addRankBtn" onclick="showRankForm()"><i class="fa fa-plus"></i> Add</button>
+        </div>
+        <div class="rkm-ranks-scroll" id="ranksList">
+          <div class="rkm-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading ranks...</p></div>
+        </div>
+      </div>
+
+      <!-- Right: Members -->
+      <div class="rkm-panel-members">
+        <div class="rkm-panel-header">
+          <span class="rkm-panel-title">Members & Assignments</span>
+        </div>
+        <div style="padding:0 0.75rem 0.5rem; flex-shrink:0;">
+          <div class="rkm-search">
+            <i class="fa fa-search"></i>
+            <input type="text" id="rankMembersSearch" placeholder="Search members..." oninput="filterRankMembers(this.value)">
+          </div>
+        </div>
+        <div class="rkm-members-scroll" id="rankMembersList">
+          <div class="rkm-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading members...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Promotions Review Slide-Over -->
+    <div class="rkm-promo-backdrop" id="rkmPromoBackdrop" onclick="closePromotionsPanel()"></div>
+    <div class="rkm-promo-panel" id="rkmPromoPanel">
+      <div class="rkm-promo-panel-header">
+        <div class="rkm-promo-panel-icon"><i class="fa fa-arrow-up"></i></div>
+        <h4 class="rkm-promo-panel-title">Pending Promotions</h4>
+        <button class="rkm-promo-panel-close" onclick="closePromotionsPanel()"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="rkm-promo-scroll" id="rkmPromoList">
+        <div class="rkm-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading...</p></div>
+      </div>
+    </div>
+    <canvas class="rkm-confetti-canvas" id="rkmConfettiCanvas"></canvas>
+
+    <!-- Rank Form Slide-Over -->
+    <div class="rkm-form-backdrop" id="rankFormBackdrop" onclick="hideRankForm()"></div>
+    <div class="rkm-form" id="rankFormContainer">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.25rem;">
+        <h4 id="rankFormTitle" class="rkm-form-title"><i class="fa fa-plus"></i> <span>New Rank</span></h4>
+        <button type="button" onclick="hideRankForm()" style="background:none; border:none; color:#4a5568; cursor:pointer; font-size:1rem; padding:0.2rem; border-radius:5px; transition:all 0.12s;" onmouseenter="this.style.color='#94a3b8'" onmouseleave="this.style.color='#4a5568'"><i class="fa fa-times"></i></button>
+      </div>
+      <input type="hidden" id="rankFormId" value="">
+      <div class="rkm-form-grid">
+        <div class="rkm-field">
+          <label>Name *</label>
+          <input type="text" id="rankFormName" placeholder="e.g. Sergeant">
+        </div>
+        <div class="rkm-field">
+          <label>Prefix</label>
+          <input type="text" id="rankFormPrefix" placeholder="e.g. SGT">
+        </div>
+      </div>
+      <div class="rkm-checks">
+        <label class="rkm-check"><input type="checkbox" id="rankFormAutoPromote"> Auto Promote</label>
+        <label class="rkm-check"><input type="checkbox" id="rankFormIsDefault"> Default Rank</label>
+      </div>
+      <div>
+        <div class="rkm-reqs-header">
+          <span class="rkm-reqs-label"><i class="fa fa-chart-bar" style="margin-right:0.25rem;"></i> Requirements</span>
+          <button type="button" class="rkm-btn-add-req" onclick="addRequirementRow()"><i class="fa fa-plus"></i> Add</button>
+        </div>
+        <div id="rankRequirementsList" style="display:flex; flex-direction:column; gap:0.35rem; margin-top:0.4rem;"></div>
+      </div>
+      <div style="flex:1;"></div>
+      <div class="rkm-form-actions">
+        <button type="button" class="rkm-btn-cancel" onclick="hideRankForm()">Cancel</button>
+        <button type="button" class="rkm-btn-save" onclick="saveRank()">Save Rank</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var rankMgmtCommunityId = '<%= community._id %>';
+  var rankMgmtDeptId = null;
+  var rankMgmtRanks = [];
+  var rankMgmtMetricTypes = [];
+  var rankMgmtMembers = [];
+  var RANK_API = (typeof API_URL !== 'undefined') ? API_URL : 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+  window.openRankManagementModal = function(departmentId) {
+    rankMgmtDeptId = departmentId;
+    var deptName = '';
+    if (window.departmentsListData) {
+      var dept = window.departmentsListData.find(function(d) { return d._id === departmentId; });
+      if (dept) deptName = dept.name || '';
+    }
+    document.getElementById('rankMgmtDeptName').textContent = deptName;
+    document.getElementById('rankManagementModal').classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    _rankMemberSearchTerm = '';
+    var searchInput = document.getElementById('rankMembersSearch');
+    if (searchInput) searchInput.value = '';
+    hideRankForm();
+    if (window.closePromotionsPanel) window.closePromotionsPanel();
+    loadMetricTypes();
+    loadRanks();
+    loadDeptMembers();
+    loadPendingPromotions();
+  };
+
+  window.closeRankManagementModal = function() {
+    document.getElementById('rankManagementModal').classList.remove('is-open');
+    document.body.style.overflow = '';
+    rankMgmtDeptId = null;
+  };
+
+  function loadMetricTypes() {
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks/metric-types')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        rankMgmtMetricTypes = data.metricTypes || data || [];
+      })
+      .catch(function() { rankMgmtMetricTypes = []; });
+  }
+
+  function loadRanks() {
+    var container = document.getElementById('ranksList');
+    container.innerHTML = '<div class="rkm-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading ranks...</p></div>';
+
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        rankMgmtRanks = data.ranks || data || [];
+        renderRanks();
+        if (rankMgmtMembers.length > 0) renderDeptMembers();
+      })
+      .catch(function(err) {
+        console.error('Failed to load ranks:', err);
+        container.innerHTML = '<div class="rkm-empty"><i class="fa fa-exclamation-triangle" style="color:#ef4444;"></i><p style="color:#ef4444;">Failed to load ranks</p></div>';
+      });
+  }
+
+  function renderRanks() {
+    var container = document.getElementById('ranksList');
+    if (!rankMgmtRanks || rankMgmtRanks.length === 0) {
+      container.innerHTML = '<div class="rkm-empty"><i class="fa fa-shield"></i><p>No ranks configured yet</p></div>';
+      return;
+    }
+
+    var sorted = rankMgmtRanks.slice().sort(function(a, b) { return (a.displayOrder || 0) - (b.displayOrder || 0); });
+    var html = '';
+    sorted.forEach(function(rank, idx) {
+      var tags = '';
+      if (rank.prefix) tags += '<span class="rkm-rank-tag rkm-tag-prefix">' + escapeRankHtml(rank.prefix) + '</span>';
+      if (rank.isDefault) tags += '<span class="rkm-rank-tag rkm-tag-default">Default</span>';
+      if (rank.autoPromote) tags += '<span class="rkm-rank-tag rkm-tag-auto">Auto</span>';
+      if (rank.requirements && rank.requirements.length > 0) {
+        tags += '<span class="rkm-rank-tag rkm-tag-req">' + rank.requirements.length + ' req' + (rank.requirements.length > 1 ? 's' : '') + '</span>';
+      }
+
+      var isTop = idx === 0;
+      var isBottom = idx === sorted.length - 1;
+      var orderIcon, orderClass;
+      if (isTop) {
+        orderIcon = '<i class="fa fa-crown"></i>';
+        orderClass = 'is-top';
+      } else if (isBottom) {
+        orderIcon = '<i class="fa fa-angle-double-down"></i>';
+        orderClass = 'is-bottom';
+      } else {
+        orderIcon = '<i class="fa fa-minus" style="font-size:0.5rem;"></i>';
+        orderClass = '';
+      }
+
+      html += '<div class="rkm-rank" data-rank-id="' + rank._id + '">' +
+        '<div class="rkm-rank-order">' +
+          '<div class="rkm-rank-order-icon ' + orderClass + '">' + orderIcon + '</div>' +
+          '<div class="rkm-rank-order-line"></div>' +
+        '</div>' +
+        '<div class="rkm-rank-info">' +
+          '<div class="rkm-rank-name">' + escapeRankHtml(rank.name) + '</div>' +
+          (tags ? '<div class="rkm-rank-meta">' + tags + '</div>' : '') +
+        '</div>' +
+        '<div class="rkm-rank-actions">' +
+          (idx > 0 ? '<button class="rkm-rank-btn rkm-rank-btn-move" onclick="event.stopPropagation(); moveRank(\'' + rank._id + '\', -1)" title="Move up"><i class="fa fa-chevron-up"></i></button>' : '') +
+          (idx < sorted.length - 1 ? '<button class="rkm-rank-btn rkm-rank-btn-move" onclick="event.stopPropagation(); moveRank(\'' + rank._id + '\', 1)" title="Move down"><i class="fa fa-chevron-down"></i></button>' : '') +
+          '<button class="rkm-rank-btn rkm-rank-btn-edit" onclick="event.stopPropagation(); editRank(\'' + rank._id + '\')" title="Edit"><i class="fa fa-pencil"></i></button>' +
+          '<button class="rkm-rank-btn rkm-rank-btn-del" onclick="event.stopPropagation(); deleteRank(\'' + rank._id + '\')" title="Delete"><i class="fa fa-trash"></i></button>' +
+        '</div>' +
+      '</div>';
+    });
+    container.innerHTML = html;
+  }
+
+  function escapeRankHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ---------- Department Members & Rank Assignment ----------
+
+  var rankMembersPage = 1;
+  var rankMembersTotalPages = 1;
+  var rankMembersLimit = 20;
+  var rankMembersDeptRankMap = {};
+
+  // Check if the current department is public (no approval required)
+  function isDeptPublic() {
+    if (window.departmentsListData && rankMgmtDeptId) {
+      var dept = window.departmentsListData.find(function(d) { return d._id === rankMgmtDeptId; });
+      if (dept) return !dept.approvalRequired;
+    }
+    return false;
+  }
+
+  window.loadDeptMembers = function(page) {
+    page = page || 1;
+    rankMembersPage = page;
+    var container = document.getElementById('rankMembersList');
+    container.innerHTML = '<div class="rkm-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading members...</p></div>';
+
+    if (isDeptPublic()) {
+      // PUBLIC department: fetch community members (with server-side search), cross-reference with dept rank data
+      var communityUrl;
+      if (_rankMemberSearchTerm) {
+        communityUrl = RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/members/search?q=' + encodeURIComponent(_rankMemberSearchTerm) + '&page=' + page + '&limit=' + rankMembersLimit;
+      } else {
+        communityUrl = RANK_API + '/api/v2/community/' + rankMgmtCommunityId + '/members?page=' + page + '&limit=' + rankMembersLimit;
+      }
+      var deptUrl = RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members?page=1&limit=9999';
+
+      Promise.all([
+        fetch(communityUrl).then(function(r) { return r.json(); }),
+        fetch(deptUrl).then(function(r) { return r.json(); })
+      ])
+      .then(function(results) {
+        var communityData = results[0];
+        var deptData = results[1];
+
+        // Build rank lookup from department members
+        var deptRankMap = {};
+        (deptData.data || []).forEach(function(m) {
+          if (m.rankId) deptRankMap[m._id] = m.rankId;
+        });
+
+        var communityMembers = communityData.members || [];
+        var pagination = communityData.pagination || {};
+        var totalCount = pagination.totalCount || communityMembers.length;
+        rankMembersTotalPages = Math.ceil(totalCount / rankMembersLimit) || 1;
+
+        if (communityMembers.length === 0 && page === 1) {
+          var msg = _rankMemberSearchTerm
+            ? 'No members match "' + escapeRankHtml(_rankMemberSearchTerm) + '"'
+            : 'No community members found.';
+          container.innerHTML = '<div class="rkm-empty"><i class="fa fa-' + (_rankMemberSearchTerm ? 'search' : 'users') + '" style="color:#4a5568;"></i><p>' + msg + '</p></div>';
+          return;
+        }
+
+        rankMgmtMembers = communityMembers.map(function(m) {
+          var id = m.id || m._id;
+          return {
+            userID: id,
+            rankId: deptRankMap[id] || '',
+            username: m.username || 'Unknown',
+            profilePicture: m.profilePicture || ''
+          };
+        });
+
+        renderDeptMembers();
+      })
+      .catch(function(err) {
+        console.error('Failed to load members:', err);
+        container.innerHTML = '<div class="rkm-empty"><i class="fa fa-exclamation-triangle" style="color:#ef4444;"></i><p style="color:#ef4444;">Failed to load members</p></div>';
+      });
+      return;
+    }
+
+    // PRIVATE department: fetch department members directly
+    var url = RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members?page=' + page + '&limit=' + rankMembersLimit;
+    fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var deptMembers = data.data || [];
+      var totalCount = data.totalCount || 0;
+      rankMembersTotalPages = Math.ceil(totalCount / rankMembersLimit) || 1;
+
+      if (deptMembers.length === 0 && page === 1) {
+        container.innerHTML = '<div class="rkm-empty"><i class="fa fa-user-plus" style="color:#4a5568;"></i><p>No members in this department.<br><span style="color:#64748b; font-size:0.7rem;">Add members from the Edit Department modal first.</span></p></div>';
+        return;
+      }
+
+      rankMgmtMembers = deptMembers.map(function(m) {
+        var user = m.user || {};
+        return {
+          userID: m._id || user.userID,
+          rankId: m.rankId || '',
+          username: user.username || m._id || 'Unknown',
+          profilePicture: user.profilePicture || ''
+        };
+      });
+
+      // If searching, filter client-side
+      if (_rankMemberSearchTerm) {
+        var term = _rankMemberSearchTerm.toLowerCase();
+        rankMgmtMembers = rankMgmtMembers.filter(function(m) {
+          return (m.username || '').toLowerCase().indexOf(term) !== -1;
+        });
+        if (rankMgmtMembers.length === 0) {
+          container.innerHTML = '<div class="rkm-empty"><i class="fa fa-search"></i><p>No members match "' + escapeRankHtml(_rankMemberSearchTerm) + '"</p></div>';
+          return;
+        }
+      }
+
+      renderDeptMembers();
+    })
+    .catch(function(err) {
+      console.error('Failed to load members:', err);
+      container.innerHTML = '<div class="rkm-empty"><i class="fa fa-exclamation-triangle" style="color:#ef4444;"></i><p style="color:#ef4444;">Failed to load members</p></div>';
+    });
+  };
+
+  function renderDeptMembers() {
+    var container = document.getElementById('rankMembersList');
+    if (!rankMgmtMembers || rankMgmtMembers.length === 0) {
+      container.innerHTML = '<div class="rkm-empty"><i class="fa fa-users"></i><p>No members</p></div>';
+      return;
+    }
+
+    var sorted = rankMgmtRanks.slice().sort(function(a, b) { return (a.displayOrder || 0) - (b.displayOrder || 0); });
+
+    // Find default rank
+    var defaultRank = sorted.find(function(r) { return r.isDefault; });
+
+    var html = '';
+    rankMgmtMembers.forEach(function(member) {
+      // Apply default rank for unranked members
+      var effectiveRankId = member.rankId || (defaultRank ? defaultRank._id : '');
+      var optionsHtml = '<option value="">Unranked</option>';
+      sorted.forEach(function(r) {
+        var selected = (r._id === effectiveRankId) ? ' selected' : '';
+        optionsHtml += '<option value="' + escapeRankHtml(r._id) + '"' + selected + '>' + escapeRankHtml(r.name) + (r.prefix ? ' (' + escapeRankHtml(r.prefix) + ')' : '') + '</option>';
+      });
+
+      var avatarHtml = member.profilePicture
+        ? '<img class="rkm-member-avatar" src="' + escapeRankHtml(member.profilePicture) + '">'
+        : '<div class="rkm-member-initial">' + escapeRankHtml(member.username.charAt(0).toUpperCase()) + '</div>';
+
+      html += '<div class="rkm-member">' +
+        avatarHtml +
+        '<span class="rkm-member-name">' + escapeRankHtml(member.username) + '</span>' +
+        '<select onchange="assignRankToMember(\'' + escapeRankHtml(member.userID) + '\', this.value)">' +
+          optionsHtml +
+        '</select>' +
+      '</div>';
+    });
+
+    // Pagination
+    if (rankMembersTotalPages > 1) {
+      html += '<div class="rkm-members-pagination">' +
+        '<button class="rkm-page-btn" onclick="loadDeptMembers(' + (rankMembersPage - 1) + ')" ' + (rankMembersPage <= 1 ? 'disabled' : '') + '><i class="fa fa-chevron-left"></i></button>' +
+        '<span class="rkm-page-info">' + rankMembersPage + ' / ' + rankMembersTotalPages + '</span>' +
+        '<button class="rkm-page-btn" onclick="loadDeptMembers(' + (rankMembersPage + 1) + ')" ' + (rankMembersPage >= rankMembersTotalPages ? 'disabled' : '') + '><i class="fa fa-chevron-right"></i></button>' +
+      '</div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  var _rankMemberSearchTerm = '';
+  var _rankMemberSearchTimer = null;
+  window.filterRankMembers = function(query) {
+    _rankMemberSearchTerm = (query || '').trim();
+    clearTimeout(_rankMemberSearchTimer);
+    _rankMemberSearchTimer = setTimeout(function() {
+      loadDeptMembers(1);
+    }, 300);
+  };
+
+  window.assignRankToMember = function(userId, rankId) {
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/rank', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rankId: rankId })
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Failed to assign rank');
+      return r.json();
+    })
+    .then(function() {
+      if (typeof showToast === 'function') showToast('Rank assigned', 2000, 'success');
+      // Update local state
+      var member = rankMgmtMembers.find(function(m) { return m.userID === userId; });
+      if (member) member.rankId = rankId;
+      rankMembersDeptRankMap[userId] = rankId;
+    })
+    .catch(function(err) {
+      console.error('Error assigning rank:', err);
+      if (typeof showToast === 'function') showToast('Failed to assign rank', 3000, 'error');
+      else alert('Failed to assign rank');
+      // Revert the select
+      renderDeptMembers();
+    });
+  };
+
+  window.showRankForm = function(rank) {
+    var formEl = document.getElementById('rankFormContainer');
+    var backdrop = document.getElementById('rankFormBackdrop');
+    formEl.classList.add('is-open');
+    backdrop.classList.add('is-open');
+    document.getElementById('rankFormId').value = (rank && rank._id) ? rank._id : '';
+    document.getElementById('rankFormName').value = (rank && rank.name) || '';
+    document.getElementById('rankFormPrefix').value = (rank && rank.prefix) || '';
+    document.getElementById('rankFormAutoPromote').checked = (rank && rank.autoPromote) || false;
+    document.getElementById('rankFormIsDefault').checked = (rank && rank.isDefault) || false;
+    var titleEl = document.getElementById('rankFormTitle');
+    titleEl.innerHTML = (rank && rank._id)
+      ? '<i class="fa fa-pencil"></i> <span>Edit Rank</span>'
+      : '<i class="fa fa-plus"></i> <span>New Rank</span>';
+
+    var reqList = document.getElementById('rankRequirementsList');
+    reqList.innerHTML = '';
+    if (rank && rank.requirements && rank.requirements.length > 0) {
+      rank.requirements.forEach(function(req) {
+        addRequirementRow(req.metricType || req.metric, req.threshold, req.customLabel, req.id);
+      });
+    }
+
+    setTimeout(function() { document.getElementById('rankFormName').focus(); }, 100);
+  };
+
+  window.hideRankForm = function() {
+    document.getElementById('rankFormContainer').classList.remove('is-open');
+    document.getElementById('rankFormBackdrop').classList.remove('is-open');
+  };
+
+  window.addRequirementRow = function(metricType, threshold, customLabel, requirementId) {
+    var container = document.getElementById('rankRequirementsList');
+    var row = document.createElement('div');
+    row.className = 'rkm-req-row';
+    if (requirementId) row.setAttribute('data-requirement-id', requirementId);
+
+    var isCustom = metricType === 'custom';
+
+    var selectHtml = '<select class="rank-req-metric" onchange="window._onReqMetricChange(this)">';
+    selectHtml += '<option value="">Select metric...</option>';
+    if (rankMgmtMetricTypes && rankMgmtMetricTypes.length > 0) {
+      rankMgmtMetricTypes.forEach(function(mt) {
+        var val = mt.type || mt.value || mt.name || mt;
+        var label = mt.displayName || mt.label || mt.name || mt;
+        var selected = (val === metricType) ? ' selected' : '';
+        selectHtml += '<option value="' + escapeRankHtml(val) + '"' + selected + '>' + escapeRankHtml(label) + '</option>';
+      });
+    }
+    selectHtml += '<option value="custom"' + (isCustom ? ' selected' : '') + ' style="border-top:1px solid rgba(124,58,237,0.2); font-style:italic;">Custom Requirement</option>';
+    selectHtml += '</select>';
+
+    row.innerHTML = selectHtml +
+      '<input type="text" class="rank-req-custom-label" placeholder="e.g. Be on server 4 hours" value="' + escapeRankHtml(customLabel || '') + '" style="display:' + (isCustom ? 'block' : 'none') + ';">' +
+      '<input type="number" class="rank-req-threshold" placeholder="e.g. 50" value="' + (threshold || '') + '" min="0" style="display:' + (isCustom ? 'none' : 'block') + ';">' +
+      '<button type="button" class="rkm-req-del" onclick="this.parentElement.remove()"><i class="fa fa-times"></i></button>';
+
+    container.appendChild(row);
+  };
+
+  window._onReqMetricChange = function(selectEl) {
+    var row = selectEl.closest('.rkm-req-row');
+    var thresholdInput = row.querySelector('.rank-req-threshold');
+    var customInput = row.querySelector('.rank-req-custom-label');
+    if (selectEl.value === 'custom') {
+      thresholdInput.style.display = 'none';
+      customInput.style.display = 'block';
+      customInput.focus();
+    } else {
+      thresholdInput.style.display = 'block';
+      customInput.style.display = 'none';
+    }
+  };
+
+  window.saveRank = function() {
+    var name = document.getElementById('rankFormName').value.trim();
+    if (!name) {
+      if (typeof showToast === 'function') showToast('Rank name is required', 2500, 'error');
+      else alert('Rank name is required');
+      return;
+    }
+
+    var requirements = [];
+    document.querySelectorAll('#rankRequirementsList > div').forEach(function(row) {
+      var metric = row.querySelector('.rank-req-metric').value;
+      var reqId = row.getAttribute('data-requirement-id') || '';
+      if (metric === 'custom') {
+        var label = row.querySelector('.rank-req-custom-label').value.trim();
+        if (label) {
+          var req = { metricType: 'custom', threshold: 0, customLabel: label };
+          if (reqId) req.id = reqId;
+          requirements.push(req);
+        }
+      } else {
+        var threshold = parseInt(row.querySelector('.rank-req-threshold').value) || 0;
+        if (metric && threshold > 0) {
+          var req = { metricType: metric, threshold: threshold };
+          if (reqId) req.id = reqId;
+          requirements.push(req);
+        }
+      }
+    });
+
+    var payload = {
+      name: name,
+      prefix: document.getElementById('rankFormPrefix').value.trim(),
+      autoPromote: document.getElementById('rankFormAutoPromote').checked,
+      canViewStats: true,
+      isDefault: document.getElementById('rankFormIsDefault').checked,
+      requirements: requirements
+    };
+
+    var rankId = document.getElementById('rankFormId').value;
+    var url, method;
+    if (rankId) {
+      url = RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks/' + rankId;
+      method = 'PUT';
+    } else {
+      url = RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks';
+      method = 'POST';
+    }
+
+    fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Failed to save rank');
+      return r.json();
+    })
+    .then(function() {
+      if (typeof showToast === 'function') showToast(rankId ? 'Rank updated' : 'Rank created', 2500, 'success');
+      hideRankForm();
+      loadRanks();
+    })
+    .catch(function(err) {
+      console.error('Error saving rank:', err);
+      if (typeof showToast === 'function') showToast('Failed to save rank', 3000, 'error');
+      else alert('Failed to save rank');
+    });
+  };
+
+  window.editRank = function(rankId) {
+    var rank = rankMgmtRanks.find(function(r) { return r._id === rankId; });
+    if (rank) showRankForm(rank);
+  };
+
+  window.deleteRank = async function(rankId) {
+    var rank = rankMgmtRanks.find(function(r) { return r._id === rankId; });
+    var rankName = rank ? rank.name : 'this rank';
+    var confirmed = await edmConfirm({
+      icon: 'trash', iconBg: 'rgba(239,68,68,0.1)', iconColor: '#ef4444',
+      title: 'Delete Rank?',
+      text: 'Remove <strong style="color:#f1f5f9;">' + escapeRankHtml(rankName) + '</strong> from the hierarchy? Members with this rank will become unranked.',
+      confirmLabel: 'Delete', confirmIcon: 'trash'
+    });
+    if (!confirmed) return;
+
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks/' + rankId, {
+      method: 'DELETE'
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Failed to delete rank');
+      if (typeof showToast === 'function') showToast('Rank deleted', 2500, 'success');
+      loadRanks();
+    })
+    .catch(function(err) {
+      console.error('Error deleting rank:', err);
+      if (typeof showToast === 'function') showToast('Failed to delete rank', 3000, 'error');
+      else alert('Failed to delete rank');
+    });
+  };
+
+  // ---------- Pending Promotions ----------
+
+  var _pendingPromotions = [];
+
+  function loadPendingPromotions() {
+    if (!rankMgmtDeptId) return;
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/pending-promotions')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        _pendingPromotions = data.pending || [];
+        var count = _pendingPromotions.length;
+        var banner = document.getElementById('rkmPromoBanner');
+        var countEl = document.getElementById('rkmPromoCount');
+        var subtext = document.getElementById('rkmPromoBannerSubtext');
+        countEl.textContent = count;
+        subtext.textContent = count === 1 ? '1 member ready for review' : count + ' members ready for review';
+        if (count > 0) {
+          banner.classList.add('has-pending');
+        } else {
+          banner.classList.remove('has-pending');
+        }
+      })
+      .catch(function() {
+        _pendingPromotions = [];
+        document.getElementById('rkmPromoBanner').classList.remove('has-pending');
+      });
+  }
+
+  window.openPromotionsPanel = function() {
+    document.getElementById('rkmPromoBackdrop').classList.add('is-open');
+    document.getElementById('rkmPromoPanel').classList.add('is-open');
+    renderPendingPromotions();
+  };
+
+  window.closePromotionsPanel = function() {
+    document.getElementById('rkmPromoBackdrop').classList.remove('is-open');
+    document.getElementById('rkmPromoPanel').classList.remove('is-open');
+  };
+
+  function renderPendingPromotions() {
+    var container = document.getElementById('rkmPromoList');
+    if (!_pendingPromotions || _pendingPromotions.length === 0) {
+      container.innerHTML = '<div class="rkm-empty" style="padding:3rem 1rem;"><i class="fa fa-check-circle" style="color:#34d399; font-size:2rem;"></i><p style="color:#94a3b8; margin-top:0.5rem;">All caught up! No pending promotions.</p></div>';
+      return;
+    }
+
+    var html = '';
+    _pendingPromotions.forEach(function(p) {
+      var avatarHtml = p.profilePicture
+        ? '<img class="rkm-promo-card-avatar" src="' + escapeRankHtml(p.profilePicture) + '">'
+        : '<div class="rkm-promo-card-initial">' + escapeRankHtml((p.username || '?').charAt(0).toUpperCase()) + '</div>';
+
+      var fromRank = p.currentRank ? escapeRankHtml(p.currentRank.name) : 'Unranked';
+      var toRank = p.nextRank ? escapeRankHtml(p.nextRank.name) : '—';
+
+      var metricsHtml = '';
+      if (p.progress && p.progress.length > 0) {
+        metricsHtml = '<div class="rkm-promo-metrics">';
+        p.progress.forEach(function(prog) {
+          if (prog.isCustom) {
+            // Custom requirement: show as toggle for admin
+            var toggleId = 'customReqToggle_' + escapeRankHtml(p.userId) + '_' + escapeRankHtml(prog.requirementId || '');
+            var checkedAttr = prog.met ? ' checked' : '';
+            metricsHtml +=
+              '<div class="rkm-promo-metric" style="display:flex; align-items:center; gap:8px;">' +
+                '<label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex:1; margin:0;">' +
+                  '<input type="checkbox" id="' + toggleId + '"' + checkedAttr +
+                    ' onchange="window.toggleCustomReq(\'' + escapeRankHtml(p.userId) + '\', \'' + escapeRankHtml(prog.requirementId || '') + '\', this.checked)"' +
+                    ' style="accent-color:#7c3aed; width:14px; height:14px; cursor:pointer;">' +
+                  '<span class="rkm-promo-metric-name" style="font-style:italic; color:' + (prog.met ? '#c8c6d8' : '#64748b') + ';">' + escapeRankHtml(prog.customLabel || prog.displayName) + '</span>' +
+                '</label>' +
+                '<span style="font-size:0.6rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Manual</span>' +
+              '</div>';
+          } else {
+            var pct = Math.min(Math.round((prog.percentage || 0) * 100), 100);
+            metricsHtml +=
+              '<div class="rkm-promo-metric">' +
+                '<div class="rkm-promo-metric-header">' +
+                  '<span class="rkm-promo-metric-name">' + escapeRankHtml(prog.displayName || prog.metricType) + '</span>' +
+                  '<span class="rkm-promo-metric-val">' + prog.currentValue + ' / ' + prog.threshold + ' <i class="fa fa-check" style="font-size:0.55rem;"></i></span>' +
+                '</div>' +
+                '<div class="rkm-promo-bar"><div class="rkm-promo-bar-fill" style="width:' + pct + '%"></div></div>' +
+              '</div>';
+          }
+        });
+        metricsHtml += '</div>';
+      }
+
+      html +=
+        '<div class="rkm-promo-card" id="promoCard_' + escapeRankHtml(p.userId) + '">' +
+          '<div class="rkm-promo-card-header">' +
+            avatarHtml +
+            '<div class="rkm-promo-card-info">' +
+              '<div class="rkm-promo-card-name">' + escapeRankHtml(p.username) + '</div>' +
+              '<div class="rkm-promo-card-ranks">' +
+                '<span class="from">' + fromRank + '</span>' +
+                '<span class="arrow"><i class="fa fa-arrow-right"></i></span>' +
+                '<span class="to">' + toRank + '</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          metricsHtml +
+          (function() {
+            var hasUnmetCustom = (p.progress || []).some(function(prog) { return prog.isCustom && !prog.met; });
+            if (hasUnmetCustom) {
+              return '<button class="rkm-btn-promote" disabled style="opacity:0.5; cursor:not-allowed;" title="Complete all custom requirements first">' +
+                '<i class="fa fa-lock"></i> Complete custom requirements first' +
+              '</button>';
+            }
+            return '<button class="rkm-btn-promote" onclick="promoteOfficer(\'' + escapeRankHtml(p.userId) + '\', \'' + escapeRankHtml(p.nextRank ? p.nextRank._id : '') + '\', this)">' +
+              '<i class="fa fa-arrow-up"></i> Promote to ' + toRank +
+            '</button>';
+          })() +
+        '</div>';
+    });
+
+    container.innerHTML = html;
+  }
+
+  window.promoteOfficer = function(userId, nextRankId, btnEl) {
+    if (!nextRankId) return;
+    btnEl.disabled = true;
+    btnEl.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Promoting...';
+
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/rank', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rankId: nextRankId })
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Failed to promote');
+      return r.json();
+    })
+    .then(function() {
+      // Success! Show confetti
+      launchConfetti();
+
+      // Animate the card out
+      var card = document.getElementById('promoCard_' + userId);
+      if (card) {
+        btnEl.innerHTML = '<i class="fa fa-check"></i> Promoted!';
+        btnEl.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        btnEl.style.boxShadow = '0 2px 8px rgba(16,185,129,0.3)';
+        setTimeout(function() {
+          card.style.transition = 'all 0.4s ease';
+          card.style.opacity = '0';
+          card.style.transform = 'translateX(30px) scale(0.95)';
+          card.style.maxHeight = card.offsetHeight + 'px';
+          card.style.overflow = 'hidden';
+          setTimeout(function() {
+            card.style.maxHeight = '0';
+            card.style.padding = '0';
+            card.style.margin = '0';
+            card.style.borderWidth = '0';
+          }, 200);
+        }, 800);
+      }
+
+      if (typeof showToast === 'function') showToast('Officer promoted!', 3000, 'success');
+
+      // Refresh data
+      loadRanks();
+      loadDeptMembers();
+      // Update pending count
+      _pendingPromotions = _pendingPromotions.filter(function(p) { return p.userId !== userId; });
+      var countEl = document.getElementById('rkmPromoCount');
+      var subtext = document.getElementById('rkmPromoBannerSubtext');
+      countEl.textContent = _pendingPromotions.length;
+      subtext.textContent = _pendingPromotions.length === 1 ? '1 member ready for review' : _pendingPromotions.length + ' members ready for review';
+      if (_pendingPromotions.length === 0) {
+        document.getElementById('rkmPromoBanner').classList.remove('has-pending');
+        setTimeout(function() {
+          renderPendingPromotions(); // show "all caught up" state
+        }, 1200);
+      }
+    })
+    .catch(function(err) {
+      console.error('Error promoting officer:', err);
+      btnEl.disabled = false;
+      btnEl.innerHTML = '<i class="fa fa-arrow-up"></i> Retry Promote';
+      if (typeof showToast === 'function') showToast('Failed to promote officer', 3000, 'error');
+    });
+  };
+
+  window.toggleCustomReq = function(userId, requirementId, met) {
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/custom-requirements/' + requirementId, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ met: met })
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Failed to toggle custom requirement');
+      if (typeof showToast === 'function') showToast(met ? 'Requirement marked as met' : 'Requirement unmarked', 2000, 'success');
+    })
+    .catch(function(err) {
+      console.error('Error toggling custom requirement:', err);
+      if (typeof showToast === 'function') showToast('Failed to update requirement', 2500, 'error');
+    });
+  };
+
+  // ---------- Confetti ----------
+
+  function launchConfetti() {
+    var canvas = document.getElementById('rkmConfettiCanvas');
+    var card = document.querySelector('.rkm-card');
+    if (!canvas || !card) return;
+    canvas.width = card.offsetWidth;
+    canvas.height = card.offsetHeight;
+    var ctx = canvas.getContext('2d');
+    var particles = [];
+    var colors = ['#fbbf24', '#f59e0b', '#34d399', '#a78bfa', '#f87171', '#60a5fa', '#fb923c', '#e879f9'];
+
+    for (var i = 0; i < 80; i++) {
+      particles.push({
+        x: canvas.width * 0.5 + (Math.random() - 0.5) * 100,
+        y: canvas.height * 0.4,
+        vx: (Math.random() - 0.5) * 12,
+        vy: Math.random() * -14 - 4,
+        w: Math.random() * 8 + 4,
+        h: Math.random() * 4 + 2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 15,
+        gravity: 0.35 + Math.random() * 0.15,
+        opacity: 1,
+        decay: 0.008 + Math.random() * 0.008
+      });
+    }
+
+    var frame;
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      var alive = false;
+      particles.forEach(function(p) {
+        if (p.opacity <= 0) return;
+        alive = true;
+        p.x += p.vx;
+        p.vy += p.gravity;
+        p.y += p.vy;
+        p.vx *= 0.98;
+        p.rotation += p.rotSpeed;
+        p.opacity -= p.decay;
+        if (p.opacity <= 0) return;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation * Math.PI / 180);
+        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+      if (alive) {
+        frame = requestAnimationFrame(animate);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+    animate();
+
+    // Auto-clean after 3s
+    setTimeout(function() {
+      cancelAnimationFrame(frame);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }, 3000);
+  }
+
+  window.moveRank = function(rankId, direction) {
+    var sorted = rankMgmtRanks.slice().sort(function(a, b) { return (a.displayOrder || 0) - (b.displayOrder || 0); });
+    var idx = sorted.findIndex(function(r) { return r._id === rankId; });
+    if (idx < 0) return;
+    var newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= sorted.length) return;
+
+    // Swap
+    var temp = sorted[idx];
+    sorted[idx] = sorted[newIdx];
+    sorted[newIdx] = temp;
+
+    var orderedIds = sorted.map(function(r) { return r._id; });
+
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks/reorder', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rankIds: orderedIds })
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Failed to reorder');
+      loadRanks();
+    })
+    .catch(function(err) {
+      console.error('Error reordering ranks:', err);
+      if (typeof showToast === 'function') showToast('Failed to reorder ranks', 3000, 'error');
+    });
+  };
+})();
+</script>
+
+<% if (typeof canManageDepartments !== 'undefined' && canManageDepartments) { %>
+<!-- Reusable Feature Tutorial System -->
+<style>
+  @keyframes lpcTutorialFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes lpcTutorialSlideUp {
+    from { opacity: 0; transform: translateY(24px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes lpcTutorialStepIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes lpcTutorialStepOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(-20px); }
+  }
+  @keyframes lpcTutorialIconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  @keyframes lpcTutorialShimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  .lpc-tutorial-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 100000;
+    justify-content: center;
+    align-items: center;
+  }
+  .lpc-tutorial-overlay.is-visible {
+    display: flex;
+    animation: lpcTutorialFadeIn 0.3s ease-out;
+  }
+
+  .lpc-tutorial-card {
+    position: relative;
+    max-width: 460px;
+    width: 92%;
+    padding: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #13151e;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.03),
+      0 24px 80px rgba(0, 0, 0, 0.6),
+      0 0 120px -40px rgba(99, 102, 241, 0.15);
+    animation: lpcTutorialSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    color: #e2e8f0;
+  }
+
+  /* Subtle top accent bar */
+  .lpc-tutorial-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #a78bfa, #6366f1);
+    background-size: 200% 100%;
+    animation: lpcTutorialShimmer 3s ease-in-out infinite;
+  }
+
+  .lpc-tutorial-close {
+    position: absolute;
+    top: 14px; right: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #64748b;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.2s;
+    z-index: 2;
+    padding: 0;
+    line-height: 1;
+  }
+  .lpc-tutorial-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .lpc-tutorial-body {
+    padding: 32px 32px 0;
+    min-height: 200px;
+    overflow: hidden;
+  }
+
+  .lpc-tutorial-step {
+    text-align: center;
+    animation: lpcTutorialStepIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .lpc-tutorial-step.is-exiting {
+    animation: lpcTutorialStepOut 0.2s ease-in forwards;
+  }
+
+  .lpc-tutorial-icon-wrap {
+    width: 72px; height: 72px;
+    margin: 0 auto 20px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    animation: lpcTutorialIconPulse 2s ease-in-out infinite;
+    position: relative;
+  }
+  /* Glow behind icon */
+  .lpc-tutorial-icon-wrap::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 24px;
+    background: inherit;
+    opacity: 0.15;
+    filter: blur(16px);
+    z-index: -1;
+  }
+
+  .lpc-tutorial-step h3 {
+    margin: 0 0 10px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: -0.3px;
+    line-height: 1.3;
+  }
+
+  .lpc-tutorial-step p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.65;
+    color: #94a3b8;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+
+  .lpc-tutorial-footer {
+    padding: 20px 32px 24px;
+  }
+
+  .lpc-tutorial-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .lpc-tutorial-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #2a2d3a;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    border: none;
+    padding: 0;
+  }
+  .lpc-tutorial-dot.is-active {
+    width: 24px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #6366f1, #a78bfa);
+  }
+
+  .lpc-tutorial-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .lpc-tutorial-btn-back {
+    background: none;
+    border: 1px solid #2a2d3a;
+    color: #94a3b8;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1;
+  }
+  .lpc-tutorial-btn-back:hover {
+    border-color: #4a5568;
+    color: #cbd5e1;
+  }
+
+  .lpc-tutorial-btn-next {
+    background: linear-gradient(135deg, #6366f1, #7c3aed);
+    border: none;
+    color: #fff;
+    border-radius: 10px;
+    padding: 10px 28px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+    line-height: 1;
+  }
+  .lpc-tutorial-btn-next:hover {
+    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.45);
+    transform: translateY(-1px);
+  }
+
+  .lpc-tutorial-dismiss-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+  }
+  .lpc-tutorial-dismiss-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: #64748b;
+    cursor: pointer;
+    transition: color 0.2s;
+    user-select: none;
+  }
+  .lpc-tutorial-dismiss-row label:hover {
+    color: #94a3b8;
+  }
+  .lpc-tutorial-dismiss-row input[type="checkbox"] {
+    accent-color: #6366f1;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+  }
+
+  .lpc-tutorial-help-link {
+    display: block;
+    text-align: center;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #6366f1;
+    text-decoration: none;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  .lpc-tutorial-help-link:hover {
+    opacity: 1;
+    color: #818cf8;
+  }
+</style>
+
+<div id="lpcTutorialOverlay" class="lpc-tutorial-overlay">
+  <div class="lpc-tutorial-card">
+    <button id="lpcTutorialClose" class="lpc-tutorial-close" aria-label="Close"><i class="fa fa-times"></i></button>
+    <div class="lpc-tutorial-body">
+      <div id="lpcTutorialStep" class="lpc-tutorial-step"></div>
+    </div>
+    <div class="lpc-tutorial-footer">
+      <div id="lpcTutorialDots" class="lpc-tutorial-dots"></div>
+      <div class="lpc-tutorial-nav">
+        <button id="lpcTutorialBack" class="lpc-tutorial-btn-back">Back</button>
+        <button id="lpcTutorialNext" class="lpc-tutorial-btn-next">Next</button>
+      </div>
+      <div id="lpcTutorialDismiss" class="lpc-tutorial-dismiss-row">
+        <label><input type="checkbox" id="lpcTutorialDismissCheck"> Don&rsquo;t show this again</label>
+      </div>
+      <a id="lpcTutorialHelpLink" class="lpc-tutorial-help-link" target="_blank">Learn more in Help Docs</a>
+    </div>
+  </div>
+</div>
+
+<script>
+/**
+ * LPC Feature Tutorial System
+ *
+ * Reusable, data-driven tutorial modal. To add a new tutorial, define a config
+ * object and call window.lpcTutorial.register(config).
+ *
+ * Config shape:
+ * {
+ *   key: 'rank_system',              // unique key for cookie/DB dismissal
+ *   helpLink: '/help#ranks-overview', // optional help docs URL
+ *   accentColor: '#6366f1',          // optional accent override
+ *   steps: [
+ *     {
+ *       icon: 'fa-ranking-star',     // FontAwesome class (without 'fa ')
+ *       iconBg: '#2d1f5e',           // icon wrap background color
+ *       iconColor: '#a78bfa',        // icon color
+ *       title: 'New: Department Ranks',
+ *       text: 'Description here...'
+ *     },
+ *     ...
+ *   ]
+ * }
+ */
+(function() {
+  var overlay = document.getElementById('lpcTutorialOverlay');
+  var stepEl = document.getElementById('lpcTutorialStep');
+  var dotsEl = document.getElementById('lpcTutorialDots');
+  var backBtn = document.getElementById('lpcTutorialBack');
+  var nextBtn = document.getElementById('lpcTutorialNext');
+  var closeBtn = document.getElementById('lpcTutorialClose');
+  var dismissRow = document.getElementById('lpcTutorialDismiss');
+  var dismissCheck = document.getElementById('lpcTutorialDismissCheck');
+  var helpLink = document.getElementById('lpcTutorialHelpLink');
+
+  var currentConfig = null;
+  var currentStep = 0;
+  var isAnimating = false;
+
+  function getCookieKey(key) {
+    return 'lpc_tutorial_' + key;
+  }
+
+  function setCookie(name, value, days) {
+    var expires = '';
+    if (days) {
+      var d = new Date();
+      d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+      expires = '; expires=' + d.toUTCString();
+    }
+    document.cookie = name + '=' + (value || '') + expires + '; path=/';
+  }
+
+  function getCookie(name) {
+    var nameEQ = name + '=';
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+      var c = ca[i].trim();
+      if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length);
+    }
+    return null;
+  }
+
+  function isDismissed(key) {
+    var userId = window.dbUser && window.dbUser._id;
+    // Check DB-persisted dismissals
+    var dismissed = window.dbUser && window.dbUser.user && window.dbUser.user.dismissedTutorials;
+    if (dismissed && Array.isArray(dismissed) && dismissed.indexOf(key) !== -1) return true;
+    // Check cookie
+    if (getCookie(getCookieKey(key))) return true;
+    // Check localStorage fallback
+    try {
+      if (userId && localStorage.getItem(getCookieKey(key) + '_' + userId) === '1') return true;
+    } catch(e) {}
+    return false;
+  }
+
+  function dismissViaCookie(key) {
+    setCookie(getCookieKey(key), '1', 365);
+  }
+
+  function dismissViaDB(key) {
+    var userId = window.dbUser && window.dbUser._id;
+    if (!userId) return;
+    // localStorage fallback
+    try { localStorage.setItem(getCookieKey(key) + '_' + userId, '1'); } catch(e) {}
+    // API call
+    var apiUrl = (typeof API_URL !== 'undefined') ? API_URL : 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+    fetch(apiUrl + '/api/v1/user/' + userId + '/dismiss-tutorial', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tutorialKey: key })
+    }).catch(function(err) { console.error('Failed to persist tutorial dismissal:', err); });
+  }
+
+  function renderStep(direction) {
+    if (!currentConfig) return;
+    var step = currentConfig.steps[currentStep];
+    var isLast = currentStep === currentConfig.steps.length - 1;
+    var isFirst = currentStep === 0;
+
+    // Animate step transition
+    if (direction) {
+      isAnimating = true;
+      stepEl.classList.add('is-exiting');
+      setTimeout(function() {
+        stepEl.classList.remove('is-exiting');
+        updateStepContent(step);
+        isAnimating = false;
+      }, 200);
+    } else {
+      updateStepContent(step);
+    }
+
+    // Dots
+    var dotsHtml = '';
+    for (var i = 0; i < currentConfig.steps.length; i++) {
+      dotsHtml += '<button class="lpc-tutorial-dot' + (i === currentStep ? ' is-active' : '') + '" data-step="' + i + '"></button>';
+    }
+    dotsEl.innerHTML = dotsHtml;
+    var dots = dotsEl.querySelectorAll('.lpc-tutorial-dot');
+    for (var j = 0; j < dots.length; j++) {
+      (function(dot) {
+        dot.onclick = function() {
+          if (isAnimating) return;
+          var target = parseInt(dot.getAttribute('data-step'));
+          if (target !== currentStep) {
+            currentStep = target;
+            renderStep('jump');
+          }
+        };
+      })(dots[j]);
+    }
+
+    // Back
+    backBtn.style.visibility = isFirst ? 'hidden' : 'visible';
+
+    // Next
+    if (isLast) {
+      nextBtn.textContent = 'Got It';
+      nextBtn.onclick = function() { closeTutorial(); };
+    } else {
+      nextBtn.textContent = 'Next';
+      nextBtn.onclick = function() { goNext(); };
+    }
+
+    // Dismiss row — always visible
+    dismissRow.style.display = 'flex';
+
+    // Help link
+    if (currentConfig.helpLink) {
+      helpLink.href = currentConfig.helpLink;
+      helpLink.style.display = 'block';
+    } else {
+      helpLink.style.display = 'none';
+    }
+  }
+
+  function updateStepContent(step) {
+    var iconBg = step.iconBg || 'rgba(99, 102, 241, 0.12)';
+    var iconColor = step.iconColor || '#a78bfa';
+
+    stepEl.innerHTML =
+      '<div class="lpc-tutorial-icon-wrap" style="background:' + iconBg + '; color:' + iconColor + ';">' +
+        '<i class="fa ' + step.icon + '"></i>' +
+      '</div>' +
+      '<h3>' + step.title + '</h3>' +
+      '<p>' + step.text + '</p>';
+  }
+
+  function goNext() {
+    if (isAnimating) return;
+    if (currentStep < currentConfig.steps.length - 1) {
+      currentStep++;
+      renderStep('next');
+    }
+  }
+
+  function goPrev() {
+    if (isAnimating) return;
+    if (currentStep > 0) {
+      currentStep--;
+      renderStep('prev');
+    }
+  }
+
+  function showTutorial(config) {
+    currentConfig = config;
+    currentStep = 0;
+    dismissCheck.checked = false;
+    renderStep(null);
+    overlay.classList.add('is-visible');
+  }
+
+  function closeTutorial() {
+    overlay.classList.remove('is-visible');
+    if (!currentConfig) return;
+
+    if (dismissCheck && dismissCheck.checked) {
+      // "Don't show again" checked — persist to DB (permanent)
+      dismissViaDB(currentConfig.key);
+      dismissViaCookie(currentConfig.key);
+    } else {
+      // Just "Got It" — cookie only (temporary, this browser)
+      dismissViaCookie(currentConfig.key);
+    }
+    currentConfig = null;
+  }
+
+  // Wire up static buttons
+  closeBtn.onclick = function() { closeTutorial(); };
+  backBtn.onclick = function() { goPrev(); };
+
+  // Public API
+  window.lpcTutorial = {
+    /**
+     * Register and auto-show a tutorial if not dismissed.
+     * @param {Object} config - Tutorial configuration
+     * @param {number} [delay=800] - Delay before showing (ms)
+     */
+    register: function(config, delay) {
+      if (!config || !config.key || !config.steps || !config.steps.length) return;
+      if (isDismissed(config.key)) return;
+      setTimeout(function() {
+        showTutorial(config);
+      }, delay || 800);
+    },
+    /** Manually show a tutorial (ignores dismissal state). */
+    show: function(config) {
+      if (config) showTutorial(config);
+    },
+    /** Close any open tutorial. */
+    close: closeTutorial
+  };
+
+  // Backward compat — keep window._rankTutorial working
+  window._rankTutorial = {
+    show: function() {
+      showTutorial(rankSystemConfig);
+    },
+    close: closeTutorial,
+    next: goNext,
+    prev: goPrev
+  };
+
+  // ===== Rank System Tutorial Config =====
+  var rankSystemConfig = {
+    key: 'rank_system',
+    helpLink: '/help#ranks-overview',
+    steps: [
+      {
+        icon: 'fa-ranking-star',
+        iconBg: 'rgba(99, 102, 241, 0.15)',
+        iconColor: '#818cf8',
+        title: 'Department Ranks',
+        text: 'Create rank hierarchies for each department. Members can track their progress and get promoted when they hit milestones &mdash; automatically or with admin approval.'
+      },
+      {
+        icon: 'fa-list-check',
+        iconBg: 'rgba(34, 197, 94, 0.12)',
+        iconColor: '#4ade80',
+        title: 'Setting Up Ranks',
+        text: 'Click the edit icon on any department, then hit <strong>Manage Ranks</strong>. Create ranks with a name and optional prefix (e.g., "SGT"). Set a <strong>Default Rank</strong> to auto-assign new members, and reorder with the up/down arrows.'
+      },
+      {
+        icon: 'fa-chart-line',
+        iconBg: 'rgba(251, 191, 36, 0.12)',
+        iconColor: '#fbbf24',
+        title: 'Requirements &amp; Promotions',
+        text: 'Set thresholds on each rank &mdash; like 50 citations or 100 calls. You can also add custom requirements for things that aren\'t automatically tracked. Enable <strong>Auto Promote</strong> for automatic advancement, or leave it off and review promotions manually from the <strong>Pending Promotions</strong> panel.'
+      },
+      {
+        icon: 'fa-chart-bar',
+        iconBg: 'rgba(56, 189, 248, 0.12)',
+        iconColor: '#38bdf8',
+        title: 'Member Stats &amp; Tracking',
+        text: 'Members can view their activity stats, current rank, and progress toward the next rank on their <strong>department dashboard</strong> and in the <strong>mobile app</strong>. Stats are tracked automatically from CAD activity. Available metrics vary by department type.'
+      },
+      {
+        icon: 'fa-user-shield',
+        iconBg: 'rgba(244, 114, 182, 0.12)',
+        iconColor: '#f472b6',
+        title: 'Members &amp; Progress',
+        text: 'Manually assign ranks in <strong>Members &amp; Ranks</strong>, or let auto-promote handle it. Members see their current rank, next rank, and progress bars on their department dashboard and mobile app.'
+      }
+    ]
+  };
+
+  // Auto-register the rank system tutorial
+  window.lpcTutorial.register(rankSystemConfig);
+})();
+</script>
+<% } %>
