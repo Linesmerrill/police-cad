@@ -4331,8 +4331,7 @@
       }
     })
 
-    $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
-    $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 10)
+    if (typeof initSoundSettings === 'function') initSoundSettings();
 
     
     // if (dbVehicles!=null) {
@@ -6623,31 +6622,7 @@
     $('#stolenMessage').removeAttr("style").hide()
   })
 
-  function togglePanicBtnSound() {
-    var socket=io({ transports: ["websocket"] });
-    socket.emit('update_panic_btn_sound', dbUser)
-    socket.on('load_panic_btn_result', (res) => {
-      $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
-      $('#successfully-updated-alert').removeClass('hide').addClass('show').delay(2000).fadeOut(1000, function () {
-        $(this).addClass('hide').removeClass('show');
-      });
-    })
-  }
-
-  function adjustAlertVolumeSlider() {
-    var socket=io({ transports: ["websocket"] });
-    var volumeAmount = $('#alert-volume-slider').val()
-    var myObj = {
-      dbUser: dbUser,
-      volume: volumeAmount
-    }
-    socket.emit('update_alert_volume_slider', myObj)
-    socket.on('load_alert_volume_result', (res) => {
-      $('#successfully-updated-alert').removeClass('hide').addClass('show').delay(2000).fadeOut(1000, function () {
-        $(this).addClass('hide').removeClass('show');
-      });
-    })
-  }
+  // togglePanicBtnSound() and adjustAlertVolumeSlider() are now provided by alert-sounds.js
 
   function signal100(aboutUserId, aboutCallSign, aboutUsername) {
     //if it is already showing we don't want to show it again (there can only be 1 active

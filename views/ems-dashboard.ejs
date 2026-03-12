@@ -4468,6 +4468,9 @@
     var departmentName = <%- JSON.stringify(departmentName || null) %>;
     var POLICE_CAD_API_URL = '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     var API_URL = POLICE_CAD_API_URL; // For notifications.js compatibility
+
+    // Initialize sound settings checkbox and volume slider
+    if (typeof initSoundSettings === 'function') initSoundSettings();
   </script>
 
   <!-- Panic Detail Modal -->

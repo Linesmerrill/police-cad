@@ -5929,10 +5929,7 @@ window.showBoloModal = showBoloModal;
         }
       });
 
-      $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound);
-      $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 10);
-
-     
+      if (typeof initSoundSettings === 'function') initSoundSettings();
 
       $("#civ-first-name").keydown(function (event) {
         if (event.keyCode == 32) {
@@ -6016,10 +6013,7 @@ window.showBoloModal = showBoloModal;
       }
     })
 
-    $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
-    $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 10)
-
-    
+    if (typeof initSoundSettings === 'function') initSoundSettings();
 
     $("#civ-first-name").keydown(function (event) {
       if (event.keyCode==32) {

@@ -4269,9 +4269,8 @@ function fillAccountDetails() {
 }
 
 function initializeAccountSettings() {
-    $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound);
-    $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 50);
-    $('#volume-display').text(dbUser.user.alertVolumeLevel || 50);
+    // Sound settings are now initialized by initSoundSettings() in alert-sounds.js
+    if (typeof initSoundSettings === 'function') initSoundSettings();
 }
 
 function cancelUsername() {
@@ -4284,33 +4283,7 @@ function cancelCallSign() {
     $('#updateCallSignBtns').hide();
 }
 
-function togglePanicBtnSound() {
-    var socket = io({ transports: ["websocket"] });
-    socket.emit('update_panic_btn_sound', dbUser);
-    socket.on('load_panic_btn_result', (res) => {
-        $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound);
-        showSuccessAlert();
-    });
-}
-
-function adjustAlertVolumeSlider() {
-    var socket = io({ transports: ["websocket"] });
-    var volumeAmount = $('#alert-volume-slider').val();
-    var myObj = {
-        dbUser: dbUser,
-        volume: volumeAmount
-    };
-    socket.emit('update_alert_volume_slider', myObj);
-    socket.on('load_alert_volume_result', (res) => {
-        showSuccessAlert();
-    });
-}
-
-function showSuccessAlert() {
-    $('#successfully-updated-alert').show().delay(2000).fadeOut(1000, function() {
-        $(this).hide();
-    });
-}
+// togglePanicBtnSound() and adjustAlertVolumeSlider() are now provided by alert-sounds.js
 
 function openAlertVolumeHelp() {
     showToast('Alert volume controls the sound level for notifications and alerts in the application.');

@@ -144,3 +144,59 @@ window.AlertSounds = (function() {
     }
   };
 })();
+
+/**
+ * Initialize the sound settings UI (checkbox + volume slider) from the
+ * user's saved DB preferences. Call this after dbUser is available.
+ */
+window.initSoundSettings = function() {
+  var pref = window.dbUser?.user?.panicButtonSound;
+  // Default to enabled if never set (undefined)
+  $('#panic-button-check-sound').prop('checked', pref !== false);
+  $('#alert-volume-slider').val(window.dbUser?.user?.alertVolumeLevel || 50);
+};
+
+/**
+ * Open the account modal directly to the Settings tab.
+ */
+window.openSoundSettings = function() {
+  var modal = document.getElementById('accountModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    var settingsTab = document.getElementById('settings-tab');
+    if (settingsTab) settingsTab.click();
+  }
+  // Ensure settings are initialized when opening
+  if (typeof window.initSoundSettings === 'function') {
+    window.initSoundSettings();
+  }
+};
+
+/**
+ * Toggle the panic button sound preference and save to DB.
+ * Shared across all dashboards — replaces per-dashboard implementations.
+ */
+window.togglePanicBtnSound = function() {
+  var socket = io({ transports: ['websocket'] });
+  socket.emit('update_panic_btn_sound', window.dbUser);
+  socket.on('load_panic_btn_result', function(res) {
+    var newVal = !res.user.panicButtonSound;
+    $('#panic-button-check-sound').prop('checked', newVal);
+    window.dbUser.user.panicButtonSound = newVal;
+    $('#successfully-updated-alert').show().delay(2000).fadeOut(1000);
+  });
+};
+
+/**
+ * Save the alert volume slider value to DB.
+ * Shared across all dashboards — replaces per-dashboard implementations.
+ */
+window.adjustAlertVolumeSlider = function() {
+  var socket = io({ transports: ['websocket'] });
+  var vol = $('#alert-volume-slider').val();
+  socket.emit('update_alert_volume_slider', { dbUser: window.dbUser, volume: vol });
+  socket.on('load_alert_volume_result', function() {
+    window.dbUser.user.alertVolumeLevel = vol;
+    $('#successfully-updated-alert').show().delay(2000).fadeOut(1000);
+  });
+};
