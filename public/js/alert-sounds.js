@@ -157,14 +157,12 @@ window.initSoundSettings = function() {
 };
 
 /**
- * Open the account modal directly to the Settings tab.
+ * Open the sound settings modal.
  */
 window.openSoundSettings = function() {
   var modal = document.getElementById('accountModal');
   if (modal) {
     modal.style.display = 'flex';
-    var settingsTab = document.getElementById('settings-tab');
-    if (settingsTab) settingsTab.click();
   }
   // Ensure settings are initialized when opening
   if (typeof window.initSoundSettings === 'function') {
