@@ -34,6 +34,7 @@
   <script src="/static/js/popper.js"></script>
   <script src="/static/js/main.js"></script>
   <script src="/static/js/notepad.js"></script>
+  <script src="/static/js/alert-sounds.js"></script>
   <script src="/static/js/dispatch-dashboard.js"></script>
   <script src="/static/js/department-backgrounds.js"></script>
   <script src="/static/js/bootstrap.min.js"></script>
@@ -4031,12 +4032,7 @@
 
     socket.on('panic_button_updated', (map, origReq) => {
       if (communityId == origReq.activeCommunity) {
-        if ($('#panic-button-check-sound').prop('checked')) {
-          var audioElement=document.createElement('audio');
-          audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
-          audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
-          audioElement.play();
-        }
+        AlertSounds.play('panic');
         if (window.loadPanicStatusesAjax) window.loadPanicStatusesAjax();
         // Refresh unit data so activeDepartmentId and callsigns are up to date
         if (typeof loadUnitsPanel === 'function') loadUnitsPanel();
@@ -4050,24 +4046,14 @@
 
     socket.on('signal_100_button_updated', (origReq) => {
       if (communityId == origReq.activeCommunity) {
-        if ($('#panic-button-check-sound').prop('checked')) {
-          var audioElement=document.createElement('audio');
-          audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
-          audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
-          audioElement.play();
-        }
+        AlertSounds.play('signal100');
         updateSignal100Banner(origReq);
       }
     })
 
     socket.on('hold_traffic_button_updated', (origReq) => {
       if (communityId == origReq.activeCommunity) {
-        if ($('#panic-button-check-sound').prop('checked')) {
-          var audioElement=document.createElement('audio');
-          audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound_adj.mp3');
-          audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
-          audioElement.play();
-        }
+        AlertSounds.play('holdTraffic');
         $('#hold-traffic-banner').removeClass('hide').addClass('show')
       }
     })
@@ -6685,12 +6671,7 @@
         aboutUsername: aboutUsername || null,
         timestamp: new Date().toISOString()
       }
-      if ($('#panic-button-check-sound').prop('checked')) {
-        var audioElement=document.createElement('audio');
-        audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
-        audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
-        audioElement.play();
-      }
+      AlertSounds.play('signal100');
 
       // Persist via Go API, then broadcast via Socket.IO
       $.ajax({
@@ -6814,12 +6795,7 @@
         userUsername: dbUser.user.username,
         activeCommunity: dbUser.user.activeCommunity
       }
-      if ($('#panic-button-check-sound').prop('checked')) {
-        var audioElement=document.createElement('audio');
-        audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound_adj.mp3');
-        audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
-        audioElement.play();
-      }
+      AlertSounds.play('holdTraffic');
 
       socket.emit('hold_traffic_button_update', myReq)
     }

@@ -414,13 +414,7 @@ function initializeSocket() {
   socket.on('panic_button_updated', function(map, origReq) {
     if (origReq && origReq.activeCommunity && dbUser.user?.lastAccessedCommunity?.communityID !== origReq.activeCommunity) return;
 
-    // Play panic alert sound if enabled
-    if (dbUser.user?.panicButtonSound) {
-      var audioElement = document.createElement('audio');
-      audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
-      audioElement.volume = dbUser.user?.alertVolumeLevel / 100 || 0.1;
-      audioElement.play().catch(function(e) { console.log('Audio play failed:', e); });
-    }
+    AlertSounds.play('panic');
 
     // Refresh panic alerts from API (styled banners)
     loadPanicStatusesAjax();
@@ -461,13 +455,7 @@ function initializeSocket() {
   socket.on('signal_100_button_updated', function(data) {
     if (data.activeCommunity && data.activeCommunity !== communityId) return;
 
-    // Play alert sound if enabled
-    if (dbUser.panicButtonSound) {
-      var audioElement = document.createElement('audio');
-      audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
-      audioElement.volume = dbUser.user?.alertVolumeLevel / 100 || 0.5;
-      audioElement.play().catch(e => console.log('Audio play failed:', e));
-    }
+    AlertSounds.play('signal100');
 
     // Update the banner with details
     updateSignal100Banner(data);
@@ -621,12 +609,7 @@ function triggerSignal100() {
     aboutUsername: dbUser.user.username
   });
 
-  if (dbUser.user?.panicButtonSound) {
-    var audioElement = document.createElement('audio');
-    audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
-    audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
-    audioElement.play().catch(function(e) { console.log('Audio play failed:', e); });
-  }
+  AlertSounds.play('signal100');
 
   // Reset after brief delay (socket emit is fire-and-forget)
   setTimeout(function() {
@@ -685,12 +668,7 @@ function triggerPanic() {
       contentType: 'application/json',
       success: function() {
         ensureActiveDepartment();
-        if (dbUser.user?.panicButtonSound) {
-          var audioElement = document.createElement('audio');
-          audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
-          audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
-          audioElement.play().catch(function(e) { console.log('Audio play failed:', e); });
-        }
+        AlertSounds.play('panic');
         loadPanicStatusesAjax();
         resetPanicLoading();
       },
