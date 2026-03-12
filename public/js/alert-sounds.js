@@ -131,6 +131,22 @@ window.AlertSounds = (function() {
     },
 
     /**
+     * Preview a sound at a specific volume (0-100). Ignores the enabled check
+     * so users can hear the level they're setting in the settings modal.
+     * Stops any currently-playing preview before starting a new one.
+     * @param {string} soundKey - e.g. 'signal100'
+     * @param {number} volumePercent - 0–100
+     */
+    preview: function(soundKey, volumePercent) {
+      var src = resolveUrl(soundKey);
+      if (!src) return;
+      var audio = getOrCreateAudio(src);
+      audio.volume = Math.max(0, Math.min(1, volumePercent / 100));
+      audio.currentTime = 0;
+      audio.play().catch(function() {});
+    },
+
+    /**
      * Override default sound URLs (e.g. with community-uploaded files).
      * @param {Object} soundMap - e.g. { panic: 'https://cdn.example.com/custom.mp3' }
      */

@@ -1,53 +1,290 @@
-<div id="accountModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:90%; max-height:90vh; overflow-y:auto; position:relative; border:1px solid #35385a;">
-    <button id="accountModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+<style>
+  /* Sound Settings Modal */
+  .ss-backdrop {
+    display: none; position: fixed; z-index: 2000; inset: 0;
+    background: rgba(8, 10, 18, 0.75);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    align-items: center; justify-content: center;
+    animation: ss-fadeIn 0.2s ease;
+  }
+  @keyframes ss-fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes ss-slideUp { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-    <!-- Success Alert -->
-    <div id="successfully-updated-alert" style="display:none; background:#48bb78; color:#fff; border-radius:8px; padding:1rem; margin-bottom:1.5rem; border:1px solid #38a169;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <strong>Success!</strong> Settings updated!
-        <button type="button" onclick="document.getElementById('successfully-updated-alert').style.display='none'" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">
-          <i class="fa fa-times"></i>
-        </button>
+  .ss-panel {
+    background: linear-gradient(165deg, #181b2a 0%, #12141f 100%);
+    border-radius: 20px; padding: 0; max-width: 420px; width: 92%;
+    max-height: 90vh; overflow-y: auto; position: relative;
+    border: 1px solid rgba(99, 130, 255, 0.12);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.03) inset, 0 1px 0 rgba(255,255,255,0.04) inset;
+    animation: ss-slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .ss-header {
+    padding: 1.75rem 1.75rem 0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ss-header-title {
+    display: flex; align-items: center; gap: 0.65rem;
+    color: #e8ecf4; font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em;
+  }
+  .ss-icon-ring {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, rgba(99, 130, 255, 0.15), rgba(99, 130, 255, 0.05));
+    border: 1px solid rgba(99, 130, 255, 0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #7b9cff; font-size: 0.95rem;
+  }
+  .ss-close {
+    width: 32px; height: 32px; border-radius: 8px; border: none;
+    background: rgba(255, 255, 255, 0.04); color: #6b7394;
+    font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .ss-close:hover { background: rgba(255, 255, 255, 0.08); color: #a0a8c4; }
+
+  .ss-body { padding: 1.5rem 1.75rem 1.75rem; }
+
+  /* Success toast */
+  .ss-toast {
+    display: none; margin-bottom: 1.25rem; padding: 0.7rem 1rem;
+    background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.2);
+    border-radius: 10px; color: #6ee7b7; font-size: 0.85rem; font-weight: 500;
+  }
+  .ss-toast i { margin-right: 0.4rem; }
+
+  /* Toggle switch */
+  .ss-toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.15rem; border-radius: 14px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    margin-bottom: 1.5rem;
+    transition: border-color 0.2s;
+  }
+  .ss-toggle-row:hover { border-color: rgba(99, 130, 255, 0.15); }
+  .ss-toggle-label { color: #c9d0e0; font-size: 0.92rem; font-weight: 500; }
+  .ss-toggle-desc { color: #5a6178; font-size: 0.78rem; font-weight: 400; margin-top: 0.25rem; line-height: 1.4; }
+
+  .ss-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; margin-left: 1rem; }
+  .ss-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .ss-switch-track {
+    position: absolute; inset: 0; border-radius: 12px; cursor: pointer;
+    background: #2a2d3e; border: 1px solid rgba(255,255,255,0.06);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .ss-switch-track::after {
+    content: ''; position: absolute; left: 2px; top: 2px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #6b7394; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .ss-switch input:checked + .ss-switch-track {
+    background: linear-gradient(135deg, #5b7cfa, #7b9cff);
+    border-color: rgba(99, 130, 255, 0.4);
+  }
+  .ss-switch input:checked + .ss-switch-track::after {
+    transform: translateX(20px); background: #fff;
+    box-shadow: 0 1px 4px rgba(91, 124, 250, 0.4);
+  }
+
+  /* Volume section */
+  .ss-volume-section { margin-bottom: 1.5rem; }
+  .ss-volume-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0.85rem;
+  }
+  .ss-volume-label { color: #c9d0e0; font-size: 0.92rem; font-weight: 500; }
+  .ss-volume-value {
+    font-size: 0.8rem; font-weight: 600; color: #7b9cff;
+    background: rgba(99, 130, 255, 0.1); padding: 0.15rem 0.55rem;
+    border-radius: 6px; min-width: 36px; text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Custom range slider */
+  .ss-slider { width: 100%; height: 32px; position: relative; }
+  .ss-slider input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 6px; border-radius: 3px;
+    background: #2a2d3e; outline: none; cursor: pointer;
+    position: relative;
+  }
+  .ss-slider input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, #7b9cff, #5b7cfa);
+    border: 2px solid rgba(255,255,255,0.15);
+    box-shadow: 0 2px 8px rgba(91, 124, 250, 0.35), 0 0 0 4px rgba(91, 124, 250, 0.08);
+    cursor: pointer; transition: box-shadow 0.15s;
+  }
+  .ss-slider input[type="range"]::-webkit-slider-thumb:hover {
+    box-shadow: 0 2px 12px rgba(91, 124, 250, 0.5), 0 0 0 6px rgba(91, 124, 250, 0.12);
+  }
+  .ss-slider input[type="range"]::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15);
+    background: linear-gradient(135deg, #7b9cff, #5b7cfa);
+    box-shadow: 0 2px 8px rgba(91, 124, 250, 0.35);
+    cursor: pointer;
+  }
+  .ss-slider input[type="range"]::-moz-range-track {
+    height: 6px; border-radius: 3px; background: #2a2d3e; border: none;
+  }
+
+  /* Volume bars visualization */
+  .ss-volume-bars {
+    display: flex; align-items: flex-end; gap: 3px; height: 18px;
+    margin-top: 0.6rem; padding: 0 2px;
+  }
+  .ss-volume-bars span {
+    flex: 1; border-radius: 2px; background: #2a2d3e; min-height: 3px;
+    transition: background 0.15s, height 0.2s;
+  }
+  .ss-volume-bars span.active { background: rgba(99, 130, 255, 0.45); }
+  .ss-volume-bars span.active.bright { background: #7b9cff; }
+
+  /* Divider */
+  .ss-divider { height: 1px; background: rgba(255,255,255,0.04); margin: 0; }
+
+  /* Footer */
+  .ss-footer {
+    padding: 1rem 1.75rem; display: flex; align-items: center; justify-content: center;
+  }
+  .ss-footer a {
+    color: #5a6178; text-decoration: none; font-size: 0.82rem; font-weight: 500;
+    display: flex; align-items: center; gap: 0.4rem;
+    transition: color 0.15s;
+  }
+  .ss-footer a:hover { color: #7b9cff; }
+</style>
+
+<div id="accountModal" class="ss-backdrop">
+  <div class="ss-panel">
+    <div class="ss-header">
+      <div class="ss-header-title">
+        <div class="ss-icon-ring"><i class="fa fa-volume-up"></i></div>
+        Sound Settings
+      </div>
+      <button id="accountModalClose" class="ss-close" aria-label="Close"><i class="fa fa-times"></i></button>
+    </div>
+
+    <div class="ss-body">
+      <!-- Success toast -->
+      <div id="successfully-updated-alert" class="ss-toast">
+        <i class="fa fa-check-circle"></i> Settings saved
+      </div>
+
+      <!-- Hidden backward-compat elements -->
+      <button id="account-tab" style="display:none;"></button>
+      <button id="settings-tab" style="display:none;"></button>
+      <div id="account-content" style="display:none;"></div>
+
+      <div id="settings-content">
+        <!-- Enable Sound Toggle -->
+        <div class="ss-toggle-row">
+          <div>
+            <div class="ss-toggle-label">Alert Sounds</div>
+            <div class="ss-toggle-desc">Panic alerts, Signal 100 & emergency tones</div>
+          </div>
+          <label class="ss-switch">
+            <input id="panic-button-check-sound" type="checkbox" name="enableSound" onclick="togglePanicBtnSound()">
+            <span class="ss-switch-track"></span>
+          </label>
+        </div>
+
+        <!-- Alert Volume -->
+        <div class="ss-volume-section">
+          <div class="ss-volume-header">
+            <span class="ss-volume-label">Alert Volume</span>
+            <span id="ss-vol-display" class="ss-volume-value">50%</span>
+          </div>
+          <div class="ss-slider">
+            <input type="range" id="alert-volume-slider" min="0" max="100" value="50"
+              oninput="updateVolumeUI(this.value)"
+              onclick="if(window.AlertSounds) AlertSounds.preview('signal100', this.value);"
+              onchange="adjustAlertVolumeSlider(); if(window.AlertSounds) AlertSounds.preview('signal100', this.value);">
+          </div>
+          <div id="ss-volume-bars" class="ss-volume-bars"></div>
+        </div>
       </div>
     </div>
 
-    <!-- Hidden tab buttons (kept for backward compatibility with existing JS) -->
-    <button id="account-tab" style="display:none;"></button>
-    <button id="settings-tab" style="display:none;"></button>
-    <div id="account-content" style="display:none;"></div>
-
-    <!-- Sound Settings Content -->
-    <div id="settings-content">
-      <h3 style="color:#fff; margin:0 0 2rem 0; font-size:1.5rem; font-weight:600;">
-        <i class="fa fa-volume-up" style="margin-right:0.5rem; color:#667eea;"></i>
-        Sound Settings
-      </h3>
-
-      <!-- Enable Sound -->
-      <div style="margin-bottom:2rem;">
-        <label style="display:flex; align-items:center; color:#e2e8f0; font-weight:500; cursor:pointer;">
-          <input id="panic-button-check-sound" type="checkbox" name="enableSound" onclick="togglePanicBtnSound()" style="margin-right:0.75rem; width:18px; height:18px; accent-color:#667eea;">
-          Enable Alert Sounds
-        </label>
-        <small style="color:#718096; margin-top:0.5rem; display:block;">Play sounds for panic alerts, Signal 100, and other emergency notifications</small>
-      </div>
-
-      <!-- Alert Volume -->
-      <div style="padding-top:1.5rem; border-top:1px solid #35385a;">
-        <label style="display:block; color:#e2e8f0; margin-bottom:0.75rem; font-weight:500;">Alert Volume</label>
-        <input type="range" id="alert-volume-slider" min="0" max="100" onclick="adjustAlertVolumeSlider()" style="width:100%; height:6px; border-radius:3px; background:#4a5568; outline:none; -webkit-appearance:none; accent-color:#667eea;">
-      </div>
-
-      <!-- Manage Account Link -->
-      <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid #35385a; text-align:center;">
-        <a href="/profile" style="color:#667eea; text-decoration:none; font-size:0.9rem;">
-          <i class="fa fa-user" style="margin-right:0.3rem;"></i> Manage Account
-        </a>
-      </div>
+    <div class="ss-divider"></div>
+    <div class="ss-footer">
+      <a href="/profile"><i class="fa fa-user-circle"></i> Manage Account</a>
     </div>
   </div>
 </div>
+
+<script>
+// Volume bars visualization
+(function() {
+  var barCount = 20;
+  var container = document.getElementById('ss-volume-bars');
+  if (!container) return;
+  for (var i = 0; i < barCount; i++) {
+    var bar = document.createElement('span');
+    // Varying heights for visual interest
+    var h = 3 + (i / barCount) * 15;
+    bar.style.height = h + 'px';
+    container.appendChild(bar);
+  }
+
+  // Make updateVolumeUI global
+  window.updateVolumeUI = function(val) {
+    var display = document.getElementById('ss-vol-display');
+    if (display) display.textContent = val + '%';
+    var bars = container.children;
+    var filled = Math.round((val / 100) * barCount);
+    for (var i = 0; i < bars.length; i++) {
+      if (i < filled) {
+        bars[i].classList.add('active');
+        bars[i].classList.toggle('bright', i >= filled - 3);
+      } else {
+        bars[i].classList.remove('active', 'bright');
+      }
+    }
+    // Update slider track fill via CSS gradient
+    var slider = document.getElementById('alert-volume-slider');
+    if (slider) {
+      var pct = val + '%';
+      slider.style.background = 'linear-gradient(to right, rgba(99,130,255,0.35) 0%, rgba(123,156,255,0.5) ' + pct + ', #2a2d3e ' + pct + ')';
+    }
+  };
+
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', function() {
+    var slider = document.getElementById('alert-volume-slider');
+    if (slider) window.updateVolumeUI(slider.value);
+  });
+})();
+
+// Patch initSoundSettings to also update the volume UI
+var _origInitSoundSettings = window.initSoundSettings;
+window.initSoundSettings = function() {
+  if (typeof _origInitSoundSettings === 'function') _origInitSoundSettings();
+  var slider = document.getElementById('alert-volume-slider');
+  if (slider && typeof window.updateVolumeUI === 'function') {
+    window.updateVolumeUI(slider.value);
+  }
+};
+
+// Close modal on close button click or backdrop click
+document.addEventListener('DOMContentLoaded', function() {
+  var modal = document.getElementById('accountModal');
+  var closeBtn = document.getElementById('accountModalClose');
+
+  function closeModal() {
+    if (modal) modal.style.display = 'none';
+  }
+
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) closeModal();
+    });
+  }
+});
+</script>
 
 <!-- Deactivate Account Modal -->
 <div id="deactivateAccountModal" class="heroui-modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
