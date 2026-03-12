@@ -1,5 +1,5 @@
 <style>
-  /* Sound Settings Modal */
+  /* Sound Settings Modal — all sizes in px to avoid Bootstrap/root font-size issues */
   .ss-backdrop {
     display: none; position: fixed; z-index: 2000; inset: 0;
     background: rgba(8, 10, 18, 0.75);
@@ -12,69 +12,70 @@
 
   .ss-panel {
     background: linear-gradient(165deg, #181b2a 0%, #12141f 100%);
-    border-radius: 20px; padding: 0; max-width: 420px; width: 92%;
+    border-radius: 20px; padding: 0; max-width: 440px; width: 92%;
     max-height: 90vh; overflow-y: auto; position: relative;
     border: 1px solid rgba(99, 130, 255, 0.12);
     box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.03) inset, 0 1px 0 rgba(255,255,255,0.04) inset;
     animation: ss-slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    font-size: 16px; line-height: 1.5;
   }
 
   .ss-header {
-    padding: 1.75rem 1.75rem 0;
+    padding: 28px 28px 0;
     display: flex; align-items: center; justify-content: space-between;
   }
   .ss-header-title {
-    display: flex; align-items: center; gap: 0.65rem;
-    color: #e8ecf4; font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 10px;
+    color: #e8ecf4; font-size: 20px; font-weight: 600; letter-spacing: -0.01em;
   }
   .ss-icon-ring {
-    width: 36px; height: 36px; border-radius: 10px;
+    width: 40px; height: 40px; border-radius: 10px;
     background: linear-gradient(135deg, rgba(99, 130, 255, 0.15), rgba(99, 130, 255, 0.05));
     border: 1px solid rgba(99, 130, 255, 0.2);
     display: flex; align-items: center; justify-content: center;
-    color: #7b9cff; font-size: 0.95rem;
+    color: #7b9cff; font-size: 16px;
   }
   .ss-close {
-    width: 32px; height: 32px; border-radius: 8px; border: none;
+    width: 34px; height: 34px; border-radius: 8px; border: none;
     background: rgba(255, 255, 255, 0.04); color: #6b7394;
-    font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;
     transition: all 0.15s;
   }
   .ss-close:hover { background: rgba(255, 255, 255, 0.08); color: #a0a8c4; }
 
-  .ss-body { padding: 1.5rem 1.75rem 1.75rem; }
+  .ss-body { padding: 24px 28px 28px; }
 
   /* Success toast */
   .ss-toast {
-    display: none; margin-bottom: 1.25rem; padding: 0.7rem 1rem;
+    display: none; margin-bottom: 20px; padding: 12px 16px;
     background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.2);
-    border-radius: 10px; color: #6ee7b7; font-size: 0.85rem; font-weight: 500;
+    border-radius: 10px; color: #6ee7b7; font-size: 15px; font-weight: 500;
   }
-  .ss-toast i { margin-right: 0.4rem; }
+  .ss-toast i { margin-right: 6px; }
 
   /* Toggle switch */
   .ss-toggle-row {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 1rem 1.15rem; border-radius: 14px;
+    padding: 16px 18px; border-radius: 14px;
     background: rgba(255, 255, 255, 0.025);
     border: 1px solid rgba(255, 255, 255, 0.04);
-    margin-bottom: 1.5rem;
+    margin-bottom: 24px;
     transition: border-color 0.2s;
   }
   .ss-toggle-row:hover { border-color: rgba(99, 130, 255, 0.15); }
-  .ss-toggle-label { color: #c9d0e0; font-size: 0.92rem; font-weight: 500; }
-  .ss-toggle-desc { color: #5a6178; font-size: 0.78rem; font-weight: 400; margin-top: 0.25rem; line-height: 1.4; }
+  .ss-toggle-label { color: #c9d0e0; font-size: 16px; font-weight: 500; }
+  .ss-toggle-desc { color: #7a8194; font-size: 13px; font-weight: 400; margin-top: 4px; line-height: 1.4; }
 
-  .ss-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; margin-left: 1rem; }
+  .ss-switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; margin-left: 16px; }
   .ss-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
   .ss-switch-track {
-    position: absolute; inset: 0; border-radius: 12px; cursor: pointer;
+    position: absolute; inset: 0; border-radius: 13px; cursor: pointer;
     background: #2a2d3e; border: 1px solid rgba(255,255,255,0.06);
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .ss-switch-track::after {
-    content: ''; position: absolute; left: 2px; top: 2px;
-    width: 18px; height: 18px; border-radius: 50%;
+    content: ''; position: absolute; left: 3px; top: 3px;
+    width: 20px; height: 20px; border-radius: 50%;
     background: #6b7394; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -83,21 +84,21 @@
     border-color: rgba(99, 130, 255, 0.4);
   }
   .ss-switch input:checked + .ss-switch-track::after {
-    transform: translateX(20px); background: #fff;
+    transform: translateX(22px); background: #fff;
     box-shadow: 0 1px 4px rgba(91, 124, 250, 0.4);
   }
 
   /* Volume section */
-  .ss-volume-section { margin-bottom: 1.5rem; }
+  .ss-volume-section { margin-bottom: 24px; }
   .ss-volume-header {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 0.85rem;
+    margin-bottom: 14px;
   }
-  .ss-volume-label { color: #c9d0e0; font-size: 0.92rem; font-weight: 500; }
+  .ss-volume-label { color: #c9d0e0; font-size: 16px; font-weight: 500; }
   .ss-volume-value {
-    font-size: 0.8rem; font-weight: 600; color: #7b9cff;
-    background: rgba(99, 130, 255, 0.1); padding: 0.15rem 0.55rem;
-    border-radius: 6px; min-width: 36px; text-align: center;
+    font-size: 14px; font-weight: 600; color: #7b9cff;
+    background: rgba(99, 130, 255, 0.1); padding: 3px 10px;
+    border-radius: 6px; min-width: 42px; text-align: center;
     font-variant-numeric: tabular-nums;
   }
 
@@ -111,7 +112,7 @@
   }
   .ss-slider input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none; appearance: none;
-    width: 20px; height: 20px; border-radius: 50%;
+    width: 22px; height: 22px; border-radius: 50%;
     background: linear-gradient(135deg, #7b9cff, #5b7cfa);
     border: 2px solid rgba(255,255,255,0.15);
     box-shadow: 0 2px 8px rgba(91, 124, 250, 0.35), 0 0 0 4px rgba(91, 124, 250, 0.08);
@@ -121,7 +122,7 @@
     box-shadow: 0 2px 12px rgba(91, 124, 250, 0.5), 0 0 0 6px rgba(91, 124, 250, 0.12);
   }
   .ss-slider input[type="range"]::-moz-range-thumb {
-    width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15);
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15);
     background: linear-gradient(135deg, #7b9cff, #5b7cfa);
     box-shadow: 0 2px 8px rgba(91, 124, 250, 0.35);
     cursor: pointer;
@@ -132,8 +133,8 @@
 
   /* Volume bars visualization */
   .ss-volume-bars {
-    display: flex; align-items: flex-end; gap: 3px; height: 18px;
-    margin-top: 0.6rem; padding: 0 2px;
+    display: flex; align-items: flex-end; gap: 3px; height: 20px;
+    margin-top: 10px; padding: 0 2px;
   }
   .ss-volume-bars span {
     flex: 1; border-radius: 2px; background: #2a2d3e; min-height: 3px;
@@ -147,11 +148,11 @@
 
   /* Footer */
   .ss-footer {
-    padding: 1rem 1.75rem; display: flex; align-items: center; justify-content: center;
+    padding: 16px 28px; display: flex; align-items: center; justify-content: center;
   }
   .ss-footer a {
-    color: #5a6178; text-decoration: none; font-size: 0.82rem; font-weight: 500;
-    display: flex; align-items: center; gap: 0.4rem;
+    color: #7a8194; text-decoration: none; font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; gap: 6px;
     transition: color 0.15s;
   }
   .ss-footer a:hover { color: #7b9cff; }
