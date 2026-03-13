@@ -6317,55 +6317,299 @@ window.expandTemplateCard = function(idx) {
   </div>
 </div>
 
+<!-- Announcement Modal Styles -->
+<style>
+  .anm-overlay {
+    display: none;
+    position: fixed;
+    z-index: 3000;
+    left: 0; top: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(8, 9, 14, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+  }
+  .anm-overlay.is-open { display: flex; }
+
+  @keyframes anmSlideIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .anm-card {
+    background: #111318;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    width: 94%;
+    max-width: 580px;
+    max-height: 92vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.02),
+      0 32px 80px rgba(0, 0, 0, 0.55),
+      0 0 100px -30px rgba(56, 125, 255, 0.08);
+    animation: anmSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+  }
+  .anm-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #3b82f6, #6366f1, #3b82f6);
+    z-index: 1;
+  }
+
+  .anm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+  }
+  .anm-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .anm-header-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: rgba(59, 130, 246, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #60a5fa;
+    font-size: 14px;
+  }
+  .anm-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+    letter-spacing: -0.2px;
+  }
+  .anm-close {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.15s;
+    padding: 0;
+    line-height: 1;
+  }
+  .anm-close:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #94a3b8;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .anm-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 20px;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .anm-field { margin-bottom: 14px; }
+  .anm-field:last-child { margin-bottom: 0; }
+  .anm-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .anm-label .anm-req { color: #f87171; margin-left: 2px; }
+  .anm-input,
+  .anm-select,
+  .anm-textarea {
+    width: 100%;
+    background: #181a22;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #e2e8f0;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+  .anm-input:focus,
+  .anm-select:focus,
+  .anm-textarea:focus {
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+  .anm-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+  .anm-textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  .anm-hint {
+    font-size: 11px;
+    color: #475569;
+    margin-top: 5px;
+  }
+  .anm-hint code {
+    font-size: 10px;
+    color: #64748b;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+  .anm-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 480px) {
+    .anm-row { grid-template-columns: 1fr; }
+  }
+
+  .anm-link {
+    color: #60a5fa;
+    text-decoration: underline;
+    text-decoration-color: rgba(96, 165, 250, 0.4);
+    transition: text-decoration-color 0.15s;
+  }
+  .anm-link:hover {
+    text-decoration-color: #60a5fa;
+  }
+
+  .anm-error {
+    font-size: 13px;
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.15);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    display: none;
+  }
+
+  .anm-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 14px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+    gap: 10px;
+  }
+  .anm-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .anm-btn-cancel {
+    background: rgba(255, 255, 255, 0.04);
+    color: #94a3b8;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .anm-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #cbd5e1;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .anm-btn-primary {
+    background: rgba(59, 130, 246, 0.9);
+    color: #fff;
+  }
+  .anm-btn-primary:hover {
+    background: rgba(59, 130, 246, 1);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+  }
+</style>
+
 <!-- Create Announcement Modal -->
-<div id="createAnnouncementModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:95%; position:relative; border:1px solid #35385a;">
-    <button onclick="closeCreateAnnouncementModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-    <div style="text-align:center; margin-bottom:1.5rem;">
-      <i class="fa fa-bullhorn" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
-      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create Announcement</h3>
+<div id="createAnnouncementModal" class="anm-overlay">
+  <div class="anm-card">
+    <div class="anm-header">
+      <div class="anm-header-left">
+        <div class="anm-header-icon"><i class="fas fa-bullhorn"></i></div>
+        <h3>Create Announcement</h3>
+      </div>
+      <button class="anm-close" onclick="closeCreateAnnouncementModal()" aria-label="Close"><i class="fas fa-times"></i></button>
     </div>
     <form id="createAnnouncementForm" action="javascript:void(0)" method="post">
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="announcement-title">Title <span style="color: #f87171;">*</span></label>
-        <input type="text" id="announcement-title" maxlength="200" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" style="border: 1px solid transparent;" placeholder="Enter announcement title" />
-      </div>
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="announcement-type">Type <span style="color: #f87171;">*</span></label>
-        <select id="announcement-type" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" style="border: 1px solid transparent;">
-          <option value="">Select type</option>
-          <option value="main">Main Announcement</option>
-          <option value="session">Session Announcement</option>
-          <option value="training">Training Announcement</option>
-        </select>
-      </div>
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="announcement-priority">Priority</label>
-        <select id="announcement-priority" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base">
-          <option value="low">Low</option>
-          <option value="medium" selected>Medium</option>
-          <option value="high">High</option>
-          <option value="urgent">Urgent</option>
-        </select>
-      </div>
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="announcement-content">Content <span style="color: #f87171;">*</span></label>
-        <textarea id="announcement-content" maxlength="5000" rows="6" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" style="border: 1px solid transparent;" placeholder="Enter announcement content"></textarea>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div>
-          <label class="block text-gray-300 mb-2 text-base" for="announcement-start-time">Start Time (Optional)</label>
-          <input type="datetime-local" id="announcement-start-time" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" />
+      <div class="anm-body">
+        <div class="anm-field">
+          <label class="anm-label" for="announcement-title">Title <span class="anm-req">*</span></label>
+          <input type="text" id="announcement-title" maxlength="200" class="anm-input" placeholder="Enter announcement title" />
         </div>
-        <div>
-          <label class="block text-gray-300 mb-2 text-base" for="announcement-end-time">End Time (Optional)</label>
-          <input type="datetime-local" id="announcement-end-time" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" />
+        <div class="anm-row">
+          <div class="anm-field">
+            <label class="anm-label" for="announcement-type">Type <span class="anm-req">*</span></label>
+            <select id="announcement-type" class="anm-select">
+              <option value="">Select type</option>
+              <option value="main">Main</option>
+              <option value="session">Session</option>
+              <option value="training">Training</option>
+            </select>
+          </div>
+          <div class="anm-field">
+            <label class="anm-label" for="announcement-priority">Priority</label>
+            <select id="announcement-priority" class="anm-select">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
         </div>
+        <div class="anm-field">
+          <label class="anm-label" for="announcement-content">Content <span class="anm-req">*</span></label>
+          <textarea id="announcement-content" maxlength="5000" rows="5" class="anm-textarea" placeholder="Enter announcement content"></textarea>
+          <p class="anm-hint">Formatting: <code>**bold**</code> <code>_underline_</code> &middot; URLs auto-link</p>
+        </div>
+        <div class="anm-row">
+          <div class="anm-field">
+            <label class="anm-label" for="announcement-start-time">Start Time</label>
+            <input type="datetime-local" id="announcement-start-time" class="anm-input" />
+          </div>
+          <div class="anm-field">
+            <label class="anm-label" for="announcement-end-time">End Time</label>
+            <input type="datetime-local" id="announcement-end-time" class="anm-input" />
+          </div>
+        </div>
+        <div id="createAnnouncementError" class="anm-error"></div>
       </div>
-      <div id="createAnnouncementError" class="text-red-400 text-sm mb-4" style="display:none;"></div>
-      <div class="flex justify-end gap-3">
-        <button type="button" onclick="closeCreateAnnouncementModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded text-base font-medium">Cancel</button>
-        <button type="button" onclick="submitAnnouncement();" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-semibold text-base">Create Announcement</button>
+      <div class="anm-footer">
+        <button type="button" onclick="closeCreateAnnouncementModal()" class="anm-btn anm-btn-cancel">Cancel</button>
+        <button type="button" onclick="submitAnnouncement();" class="anm-btn anm-btn-primary"><i class="fas fa-bullhorn" style="font-size:11px;"></i> Create</button>
       </div>
     </form>
   </div>
@@ -6392,45 +6636,52 @@ window.expandTemplateCard = function(idx) {
 </div>
 
 <!-- Edit Announcement Modal -->
-<div id="editAnnouncementModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:95%; position:relative; border:1px solid #35385a;">
-    <button onclick="closeEditAnnouncementModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-    <div style="text-align:center; margin-bottom:1.5rem;">
-      <i class="fa fa-edit" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
-      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Edit Announcement</h3>
+<div id="editAnnouncementModal" class="anm-overlay">
+  <div class="anm-card">
+    <div class="anm-header">
+      <div class="anm-header-left">
+        <div class="anm-header-icon"><i class="fas fa-pencil"></i></div>
+        <h3>Edit Announcement</h3>
+      </div>
+      <button class="anm-close" onclick="closeEditAnnouncementModal()" aria-label="Close"><i class="fas fa-times"></i></button>
     </div>
     <form onsubmit="event.preventDefault(); submitEditAnnouncement();">
       <input type="hidden" id="edit-announcement-id" />
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="edit-announcement-title">Title <span style="color: #f87171;">*</span></label>
-        <input type="text" id="edit-announcement-title" required maxlength="200" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" style="border: 1px solid transparent; transition: border-color 0.2s;" placeholder="Enter announcement title" />
+      <div class="anm-body">
+        <div class="anm-field">
+          <label class="anm-label" for="edit-announcement-title">Title <span class="anm-req">*</span></label>
+          <input type="text" id="edit-announcement-title" required maxlength="200" class="anm-input" placeholder="Enter announcement title" />
+        </div>
+        <div class="anm-row">
+          <div class="anm-field">
+            <label class="anm-label" for="edit-announcement-type">Type <span class="anm-req">*</span></label>
+            <select id="edit-announcement-type" required class="anm-select">
+              <option value="">Select type</option>
+              <option value="main">Main</option>
+              <option value="session">Session</option>
+              <option value="training">Training</option>
+            </select>
+          </div>
+          <div class="anm-field">
+            <label class="anm-label" for="edit-announcement-priority">Priority</label>
+            <select id="edit-announcement-priority" class="anm-select">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+        </div>
+        <div class="anm-field">
+          <label class="anm-label" for="edit-announcement-content">Content <span class="anm-req">*</span></label>
+          <textarea id="edit-announcement-content" required maxlength="5000" rows="5" class="anm-textarea" placeholder="Enter announcement content"></textarea>
+          <p class="anm-hint">Formatting: <code>**bold**</code> <code>_underline_</code> &middot; URLs auto-link</p>
+        </div>
+        <div id="editAnnouncementError" class="anm-error"></div>
       </div>
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="edit-announcement-type">Type <span style="color: #f87171;">*</span></label>
-        <select id="edit-announcement-type" required class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" style="border: 1px solid transparent; transition: border-color 0.2s;">
-          <option value="">Select type</option>
-          <option value="main">Main Announcement</option>
-          <option value="session">Session Announcement</option>
-          <option value="training">Training Announcement</option>
-        </select>
-      </div>
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="edit-announcement-priority">Priority</label>
-        <select id="edit-announcement-priority" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base">
-          <option value="low">Low</option>
-          <option value="medium" selected>Medium</option>
-          <option value="high">High</option>
-          <option value="urgent">Urgent</option>
-        </select>
-      </div>
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="edit-announcement-content">Content <span style="color: #f87171;">*</span></label>
-        <textarea id="edit-announcement-content" required maxlength="5000" rows="6" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" style="border: 1px solid transparent; transition: border-color 0.2s;" placeholder="Enter announcement content"></textarea>
-      </div>
-      <div id="editAnnouncementError" class="text-red-400 text-sm mb-4" style="display:none;"></div>
-      <div class="flex justify-end gap-3">
-        <button type="button" onclick="closeEditAnnouncementModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded text-base font-medium">Cancel</button>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-semibold text-base">Update Announcement</button>
+      <div class="anm-footer">
+        <button type="button" onclick="closeEditAnnouncementModal()" class="anm-btn anm-btn-cancel">Cancel</button>
+        <button type="submit" class="anm-btn anm-btn-primary"><i class="fas fa-check" style="font-size:11px;"></i> Update</button>
       </div>
     </form>
   </div>
@@ -9130,6 +9381,9 @@ async function saveEditEvent() {
       }
       
     </script>
+    <!-- Linkify for URL detection in announcements -->
+<script src="https://cdn.jsdelivr.net/npm/linkifyjs@4.3.2/dist/linkify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/linkify-html@4.3.2/dist/linkify-html.min.js"></script>
     <!-- Include announcements.js for announcement functionality -->
 <script src="/static/js/announcements.js"></script>
 
