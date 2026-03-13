@@ -14799,7 +14799,7 @@ async function saveEditEvent() {
       html += '<div class="rkm-member">' +
         avatarHtml +
         '<span class="rkm-member-name">' + escapeRankHtml(member.username) + '</span>' +
-        '<select onchange="assignRankToMember(\'' + escapeRankHtml(member.userID) + '\', this.value)">' +
+        '<select data-userid="' + escapeRankHtml(member.userID) + '" onchange="assignRankToMember(\'' + escapeRankHtml(member.userID) + '\', this.value, this)">' +
           optionsHtml +
         '</select>' +
       '</div>';
@@ -14827,7 +14827,19 @@ async function saveEditEvent() {
     }, 300);
   };
 
-  window.assignRankToMember = function(userId, rankId) {
+  var _rankAssignInFlight = {};
+  window.assignRankToMember = function(userId, rankId, selectEl) {
+    // Prevent concurrent assignments for the same member
+    if (_rankAssignInFlight[userId]) return;
+    _rankAssignInFlight[userId] = true;
+
+    // Save previous rank so we can revert on error
+    var member = rankMgmtMembers.find(function(m) { return m.userID === userId; });
+    var previousRankId = member ? member.rankId : '';
+
+    // Disable the dropdown while request is in-flight
+    if (selectEl) selectEl.disabled = true;
+
     fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/rank', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -14840,16 +14852,21 @@ async function saveEditEvent() {
     .then(function() {
       if (typeof showToast === 'function') showToast('Rank assigned', 2000, 'success');
       // Update local state
-      var member = rankMgmtMembers.find(function(m) { return m.userID === userId; });
       if (member) member.rankId = rankId;
       rankMembersDeptRankMap[userId] = rankId;
+      if (selectEl) selectEl.disabled = false;
     })
     .catch(function(err) {
       console.error('Error assigning rank:', err);
       if (typeof showToast === 'function') showToast('Failed to assign rank', 3000, 'error');
       else alert('Failed to assign rank');
-      // Revert the select
+      // Revert local state to previous value
+      if (member) member.rankId = previousRankId;
+      rankMembersDeptRankMap[userId] = previousRankId;
       renderDeptMembers();
+    })
+    .finally(function() {
+      delete _rankAssignInFlight[userId];
     });
   };
 
