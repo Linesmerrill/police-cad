@@ -3341,6 +3341,52 @@
         render: renderCourtCasesPanel,
         init: loadCourtCases
       },
+      // ── EMS/Fire template components ──
+      personSearch: {
+        label: 'Personnel',
+        icon: 'fa-id-badge',
+        navIcon: 'fa-id-badge',
+        gridClass: 'dd-grid-full',
+        accentColor: 'var(--dd-blue)',
+        render: function(key) { return window.ddEmsPersonaRender ? window.ddEmsPersonaRender(key) : '<div class="dd-empty"><i class="fa fa-id-badge"></i><p>Loading personnel...</p></div>'; },
+        init: function() { if (window.ddEmsPersonaInit) window.ddEmsPersonaInit(); }
+      },
+      vehicleSearch: {
+        label: 'Vehicles',
+        icon: 'fa-ambulance',
+        navIcon: 'fa-ambulance',
+        gridClass: 'dd-grid-full',
+        accentColor: 'var(--dd-green)',
+        render: function(key) { return window.ddEmsVehRender ? window.ddEmsVehRender(key) : '<div class="dd-empty"><i class="fa fa-ambulance"></i><p>Loading vehicles...</p></div>'; },
+        init: function() { if (window.ddEmsVehInit) window.ddEmsVehInit(); }
+      },
+      medicalDatabase: {
+        label: 'Medical Database',
+        icon: 'fa-heartbeat',
+        navIcon: 'fa-heartbeat',
+        gridClass: 'dd-grid-full',
+        accentColor: 'var(--dd-red)',
+        render: function(key) { return window.ddMedicalRender ? window.ddMedicalRender(key) : '<div class="dd-empty"><i class="fa fa-heartbeat"></i><p>Loading medical database...</p></div>'; },
+        init: function() { if (window.ddMedicalInit) window.ddMedicalInit(); }
+      },
+      createBolos: {
+        label: 'BOLOs',
+        icon: 'fa-bullhorn',
+        navIcon: 'fa-bullhorn',
+        gridClass: 'dd-grid-full',
+        accentColor: 'var(--dd-amber)',
+        render: function(key) { return window.ddBoloCreateRender ? window.ddBoloCreateRender(key) : '<div class="dd-empty"><i class="fa fa-bullhorn"></i><p>Loading BOLOs...</p></div>'; },
+        init: function() { if (window.ddBoloCreateInit) window.ddBoloCreateInit(); }
+      },
+      viewBolosAndWarrants: {
+        label: 'BOLOs & Warrants',
+        icon: 'fa-eye',
+        navIcon: 'fa-eye',
+        gridClass: 'dd-grid-full',
+        accentColor: 'var(--dd-amber)',
+        render: function(key) { return window.ddBoloViewRender ? window.ddBoloViewRender(key) : '<div class="dd-empty"><i class="fa fa-eye"></i><p>Loading BOLOs & warrants...</p></div>'; },
+        init: function() { if (window.ddBoloViewInit) window.ddBoloViewInit(); }
+      },
       // ── Civilian template components ──
       createCivilians: {
         label: 'Civilians',
@@ -3435,8 +3481,8 @@
     var deptTypeConfig = {
       police:   { icon: 'fa-shield',          color: '#3b82f6', route: 'police' },
       dispatch: { icon: 'fa-headset',         color: '#8b5cf6', route: 'dispatch' },
-      fire:     { icon: 'fa-fire-extinguisher', color: '#f97316', route: 'ems' },
-      ems:      { icon: 'fa-medkit',           color: '#22c55e', route: 'ems' },
+      fire:     { icon: 'fa-fire-extinguisher', color: '#f97316', route: 'department' },
+      ems:      { icon: 'fa-medkit',           color: '#22c55e', route: 'department' },
       civilian: { icon: 'fa-user',             color: '#6b7280', route: 'department' },
       judicial: { icon: 'fa-gavel',            color: '#f59e0b', route: 'department' }
     };
@@ -6854,15 +6900,15 @@ $('#dd-loading').hide();
             href = '/department-dashboard' + params;
           } else if (template === 'judicial') {
             href = '/department-dashboard' + params;
-          } else if (['police', 'dispatch', 'fire', 'ems'].indexOf(template) !== -1) {
+          } else if (['police', 'dispatch'].indexOf(template) !== -1) {
             useFormPost = true;
             if (template === 'police') {
               redirect = '/police-dashboard' + params;
-            } else if (template === 'dispatch') {
-              redirect = '/dispatch-dashboard' + params;
             } else {
-              redirect = '/ems-dashboard' + params;
+              redirect = '/dispatch-dashboard' + params;
             }
+          } else if (template === 'fire' || template === 'ems') {
+            href = '/department-dashboard' + params;
           }
         }
 
@@ -7132,6 +7178,11 @@ $('#dd-loading').hide();
   <script src="/static/js/dd-civilians.js"></script>
   <script src="/static/js/dd-vehicles.js"></script>
   <script src="/static/js/dd-firearms.js"></script>
+  <!-- EMS/Fire template component scripts -->
+  <script src="/static/js/dd-ems-personas.js"></script>
+  <script src="/static/js/dd-ems-vehicles.js"></script>
+  <script src="/static/js/dd-medical.js"></script>
+  <script src="/static/js/dd-bolos.js"></script>
   <!-- Utility scripts -->
   <script src="/static/js/dd-911.js"></script>
   <script src="/static/js/dd-notifications.js"></script>

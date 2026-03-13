@@ -136,12 +136,12 @@ function fetchAndRenderDepartments() {
           case "fire":
             icon = "fa-fire-extinguisher";
             action = "/select-department";
-            redirect = `/ems-dashboard${deptQueryParams}`;
+            redirect = `/department-dashboard${deptQueryParams}`;
             break;
           case "ems":
             icon = "fa-medkit";
             action = "/select-department";
-            redirect = `/ems-dashboard${deptQueryParams}`;
+            redirect = `/department-dashboard${deptQueryParams}`;
             break;
           case "judicial":
             icon = "fa-gavel";

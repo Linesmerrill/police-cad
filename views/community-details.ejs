@@ -69,7 +69,7 @@
         } else if (templateType.includes('police')) {
           dashboardUrl = `/police-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}&c=${encodedCommunityId}`;
         } else if (templateType.includes('fire') || templateType.includes('ems')) {
-          dashboardUrl = `/ems-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}&c=${encodedCommunityId}`;
+          dashboardUrl = `/department-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}&c=${encodedCommunityId}`;
         } else if (templateType.includes('dispatch')) {
           dashboardUrl = `/dispatch-dashboard?dept=${encodeURIComponent(departmentName)}&d=${encodeDepartmentId(departmentId)}&c=${encodedCommunityId}`;
         } else if (templateType.includes('judicial')) {

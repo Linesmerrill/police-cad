@@ -81,11 +81,11 @@ function fetchAndRenderModernDepartments() {
             break;
           case "fire":
             icon = "fa-fire-extinguisher";
-            action = `/ems-dashboard${deptQueryParams}`;
+            action = `/department-dashboard${deptQueryParams}`;
             break;
           case "ems":
             icon = "fa-medkit";
-            action = `/ems-dashboard${deptQueryParams}`;
+            action = `/department-dashboard${deptQueryParams}`;
             break;
           case "judicial":
             icon = "fa-gavel";
