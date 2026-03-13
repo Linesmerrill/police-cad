@@ -124,6 +124,7 @@
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 3;
       line-clamp: 3;
+      white-space: pre-wrap;
     }
 
     .announcement-content.expanded {
