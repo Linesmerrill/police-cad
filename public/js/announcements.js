@@ -120,16 +120,32 @@
 
     .announcement-content {
       overflow: hidden;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 3;
-      line-clamp: 3;
       white-space: pre-wrap;
+      max-height: 3.6em;
+      line-height: 1.2em;
+      position: relative;
+      transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      word-break: break-word;
     }
 
     .announcement-content.expanded {
-      -webkit-line-clamp: unset;
-      line-clamp: unset;
+      max-height: 300px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.1) transparent;
+    }
+    .announcement-content.expanded::-webkit-scrollbar {
+      width: 4px;
+    }
+    .announcement-content.expanded::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .announcement-content.expanded::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+    }
+    .announcement-content.expanded::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.2);
     }
 
     .comment-content-preview {
