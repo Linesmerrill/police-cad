@@ -190,6 +190,7 @@
   let totalPages = 0;
   let currentFilterType = 'all';
   let markedAsReadIds = new Set(); // Track IDs we've already sent to API this session
+  const announcementDataMap = new Map(); // Store announcement data for edit/delete modals
 
   // Check if announcement is unread (based on isRead flag from backend)
   function isAnnouncementUnread(announcement) {
@@ -384,6 +385,26 @@
     return div.innerHTML;
   }
 
+  // Format announcement content with basic markup (call AFTER escapeHtml)
+  // Supports: **bold**, __underline__ / _underline_, and auto-linked URLs via linkifyjs
+  function formatAnnouncementContent(escapedText) {
+    // Bold: **text** (supports spaces and multiline)
+    let formatted = escapedText.replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>');
+    // Underline: __text__ or _text_ (double takes priority, then single)
+    formatted = formatted.replace(/__([\s\S]+?)__/g, '<u>$1</u>');
+    formatted = formatted.replace(/(?<!\w)_([\s\S]+?)_(?!\w)/g, '<u>$1</u>');
+    // Auto-linkify URLs using linkifyjs (handles edge cases like dots, parens, etc.)
+    if (typeof linkifyHtml === 'function') {
+      formatted = linkifyHtml(formatted, {
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        className: 'anm-link',
+        defaultProtocol: 'https'
+      });
+    }
+    return formatted;
+  }
+
   // Generate a consistent color based on username (deterministic hash)
   function getUsernameColor(username) {
     if (!username) return '#6366f1'; // default indigo
@@ -454,6 +475,14 @@
       comments: (announcement.comments && Array.isArray(announcement.comments)) ? announcement.comments : [],
       isRead: announcement.isRead || false
     };
+
+    // Store announcement data for edit/delete modals (avoids inline JS string issues)
+    announcementDataMap.set(safeAnnouncement._id, {
+      title: safeAnnouncement.title,
+      content: safeAnnouncement.content,
+      type: safeAnnouncement.type,
+      priority: safeAnnouncement.priority
+    });
 
     const isUnread = isAnnouncementUnread(safeAnnouncement);
     const unreadClass = isUnread ? 'border-l-4 border-blue-500' : '';
@@ -561,11 +590,11 @@
                <i class="fas fa-chart-simple"></i>${safeAnnouncement.viewCount}
              </span>
              ${(safeAnnouncement.creator._id === window.dbUser._id || window.canManageAnnouncements) ? `
-               <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openEditAnnouncementModal('${safeAnnouncement._id}', '${escapeHtml(safeAnnouncement.title)}', '${escapeHtml(safeAnnouncement.content)}', '${safeAnnouncement.type}', '${safeAnnouncement.priority}')"
+               <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openEditAnnouncementModal('${safeAnnouncement._id}')"
                        class="announcement-action-btn" title="Edit">
                  <i class="fas fa-pencil text-xs"></i>
                </button>
-               <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openDeleteAnnouncementModal('${safeAnnouncement._id}', '${escapeHtml(safeAnnouncement.title)}')"
+               <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openDeleteAnnouncementModal('${safeAnnouncement._id}')"
                        class="announcement-action-btn" style="color: #f87171;" title="Delete">
                  <i class="fas fa-trash text-xs"></i>
                </button>
@@ -586,7 +615,7 @@
 
          <!-- Content -->
          <div class="mb-3">
-           <p id="content-${safeAnnouncement._id}" class="announcement-content text-slate-300 text-xs leading-relaxed">${escapeHtml(safeAnnouncement.content)}</p>
+           <p id="content-${safeAnnouncement._id}" class="announcement-content text-slate-300 text-xs leading-relaxed">${formatAnnouncementContent(escapeHtml(safeAnnouncement.content))}</p>
            <button onclick="toggleAnnouncementContent('${safeAnnouncement._id}')" id="content-toggle-${safeAnnouncement._id}" class="show-more-btn" style="display: none;">Show more</button>
          </div>
 
@@ -1241,12 +1270,13 @@
   function openCreateAnnouncementModal() {
     const modal = document.getElementById('createAnnouncementModal');
     if (modal) {
-      modal.style.display = 'flex';
+      modal.classList.add('is-open');
       document.getElementById('announcement-title').value = '';
       document.getElementById('announcement-content').value = '';
       document.getElementById('announcement-type').value = 'main';
       document.getElementById('announcement-priority').value = 'medium';
-      
+      const err = document.getElementById('createAnnouncementError');
+      if (err) err.style.display = 'none';
     } else {
       console.error('Modal element not found');
     }
@@ -1256,7 +1286,7 @@
   function closeCreateAnnouncementModal() {
     const modal = document.getElementById('createAnnouncementModal');
     if (modal) {
-      modal.style.display = 'none';
+      modal.classList.remove('is-open');
     }
   }
 
@@ -1277,20 +1307,26 @@
   }
 
   // Open edit announcement modal
-  function openEditAnnouncementModal(announcementId, title, content, type, priority) {
+  function openEditAnnouncementModal(announcementId) {
+    const data = announcementDataMap.get(announcementId);
+    if (!data) {
+      console.error('Announcement data not found for ID:', announcementId);
+      return;
+    }
 
-    
     // Set the form values
     document.getElementById('edit-announcement-id').value = announcementId;
-    document.getElementById('edit-announcement-title').value = title;
-    document.getElementById('edit-announcement-content').value = content;
-    document.getElementById('edit-announcement-type').value = type;
-    document.getElementById('edit-announcement-priority').value = priority;
-    
+    document.getElementById('edit-announcement-title').value = data.title;
+    document.getElementById('edit-announcement-content').value = data.content;
+    document.getElementById('edit-announcement-type').value = data.type;
+    document.getElementById('edit-announcement-priority').value = data.priority;
+
     // Show the modal
     const modal = document.getElementById('editAnnouncementModal');
     if (modal) {
-      modal.style.display = 'flex';
+      modal.classList.add('is-open');
+      const err = document.getElementById('editAnnouncementError');
+      if (err) err.style.display = 'none';
     }
   }
 
@@ -1298,18 +1334,22 @@
   function closeEditAnnouncementModal() {
     const modal = document.getElementById('editAnnouncementModal');
     if (modal) {
-      modal.style.display = 'none';
+      modal.classList.remove('is-open');
     }
   }
 
   // Open delete announcement modal
-  function openDeleteAnnouncementModal(announcementId, title) {
+  function openDeleteAnnouncementModal(announcementId) {
+    const data = announcementDataMap.get(announcementId);
+    if (!data) {
+      console.error('Announcement data not found for ID:', announcementId);
+      return;
+    }
 
-    
     // Set the announcement details
     document.getElementById('delete-announcement-id').value = announcementId;
-    document.getElementById('delete-announcement-title').textContent = title;
-    
+    document.getElementById('delete-announcement-title').textContent = data.title;
+
     // Show the modal
     const modal = document.getElementById('deleteAnnouncementModal');
     if (modal) {
