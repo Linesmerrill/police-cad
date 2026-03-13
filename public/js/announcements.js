@@ -118,6 +118,23 @@
       letter-spacing: 0.5px;
     }
 
+    .announcement-content-wrap {
+      position: relative;
+    }
+    .announcement-content-wrap.is-truncated::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2em;
+      background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.05) 40%, #111318);
+      pointer-events: none;
+      border-radius: 0 0 0.5rem 0.5rem;
+      transition: opacity 0.3s ease;
+    }
+    .announcement-content-wrap.is-expanded::after {
+      opacity: 0;
+    }
+
     .announcement-content {
       overflow: hidden;
       white-space: pre-wrap;
@@ -632,7 +649,9 @@
 
          <!-- Content -->
          <div class="mb-3">
-           <p id="content-${safeAnnouncement._id}" class="announcement-content text-slate-300 text-xs leading-relaxed">${formatAnnouncementContent(escapeHtml(safeAnnouncement.content))}</p>
+           <div id="content-wrap-${safeAnnouncement._id}" class="announcement-content-wrap">
+             <p id="content-${safeAnnouncement._id}" class="announcement-content text-slate-300 text-xs leading-relaxed">${formatAnnouncementContent(escapeHtml(safeAnnouncement.content))}</p>
+           </div>
            <button onclick="toggleAnnouncementContent('${safeAnnouncement._id}')" id="content-toggle-${safeAnnouncement._id}" class="show-more-btn" style="display: none;">Show more</button>
          </div>
 
@@ -1008,9 +1027,11 @@
   // Toggle announcement content expansion
   function toggleAnnouncementContent(announcementId) {
     const contentEl = document.getElementById(`content-${announcementId}`);
+    const wrapEl = document.getElementById(`content-wrap-${announcementId}`);
     const toggleBtn = document.getElementById(`content-toggle-${announcementId}`);
     if (contentEl && toggleBtn) {
       const isExpanded = contentEl.classList.toggle('expanded');
+      if (wrapEl) wrapEl.classList.toggle('is-expanded', isExpanded);
       toggleBtn.textContent = isExpanded ? 'Show less' : 'Show more';
     }
   }
@@ -1029,11 +1050,13 @@
   // Check if content is truncated and show toggle button
   function checkContentTruncation(announcementId) {
     const contentEl = document.getElementById(`content-${announcementId}`);
+    const wrapEl = document.getElementById(`content-wrap-${announcementId}`);
     const toggleBtn = document.getElementById(`content-toggle-${announcementId}`);
     if (contentEl && toggleBtn) {
       // Check if content is actually truncated
       if (contentEl.scrollHeight > contentEl.clientHeight) {
         toggleBtn.style.display = 'inline';
+        if (wrapEl) wrapEl.classList.add('is-truncated');
       }
     }
   }
