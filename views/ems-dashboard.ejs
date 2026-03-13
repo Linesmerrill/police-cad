@@ -34,6 +34,7 @@
   <script src="/static/js/popper.js"></script>
       <script src="/static/js/main.js"></script>
     <script src="/static/js/notepad.js"></script>
+    <script src="/static/js/alert-sounds.js"></script>
     <script src="/static/js/notifications.js"></script>
     <script src="/static/js/court-session-badge.js"></script>
     <script src="/static/js/departments.js"></script>
@@ -4467,6 +4468,9 @@
     var departmentName = <%- JSON.stringify(departmentName || null) %>;
     var POLICE_CAD_API_URL = '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     var API_URL = POLICE_CAD_API_URL; // For notifications.js compatibility
+
+    // Initialize sound settings checkbox and volume slider
+    if (typeof initSoundSettings === 'function') initSoundSettings();
   </script>
 
   <!-- Panic Detail Modal -->

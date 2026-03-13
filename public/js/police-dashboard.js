@@ -377,24 +377,7 @@ function clearBoloForm() {
 
 // All notepad functionality is now provided by the shared notepad.js module
 
-// Core dashboard functions and event handlers
-function togglePanicBtnSound() {
-  var socket = io({ transports: ["websocket"] });
-  var myReq = {
-    userID: dbUser._id,
-    panicButtonSound: $("#panic-button-check-sound").prop("checked"),
-  };
-  socket.emit("update_panic_button_sound", myReq);
-}
-
-function adjustAlertVolumeSlider() {
-  var socket = io({ transports: ["websocket"] });
-  var myReq = {
-    userID: dbUser._id,
-    alertVolumeLevel: $("#alert-volume-slider").val(),
-  };
-  socket.emit("update_alert_volume", myReq);
-}
+// togglePanicBtnSound() and adjustAlertVolumeSlider() are now provided by alert-sounds.js
 
 function loadCitations() {
   var socket = io({ transports: ["websocket"] });

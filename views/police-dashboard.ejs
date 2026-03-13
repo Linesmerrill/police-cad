@@ -36,6 +36,7 @@
   <script src="/static/js/popper.js"></script>
   <script src="/static/js/main.js"></script>
   <script src="/static/js/notepad.js"></script>
+  <script src="/static/js/alert-sounds.js"></script>
   <script src="/static/js/police-dashboard.js"></script>
   <script src="/static/js/department-backgrounds.js"></script>
   <script src="/static/js/name-database.js"></script>
@@ -5579,6 +5580,9 @@ function toggleCaret(event) {
           }
         });
       } else {
+        // Play sound immediately during user gesture (before async AJAX)
+        // so browsers don't block it due to autoplay policy
+        AlertSounds.play('panic');
         $.ajax({
           url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/panic-alerts`,
           method: 'POST',
@@ -5591,12 +5595,6 @@ function toggleCaret(event) {
           }),
           success: function() {
             ensureActiveDepartment();
-            if ($('#panic-button-check-sound').prop('checked')) {
-              var audioElement = document.createElement('audio');
-              audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
-              audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
-              audioElement.play();
-            }
             loadPanicStatuses();
             resetPanicLoading();
           },
@@ -5652,12 +5650,7 @@ function toggleCaret(event) {
           aboutUsername: dbUser.user.username
         });
 
-        if ($('#panic-button-check-sound').prop('checked')) {
-          var audioElement = document.createElement('audio');
-          audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
-          audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
-          audioElement.play().catch(e => console.log('Audio play failed:', e));
-        }
+        AlertSounds.play('signal100');
       }
 
       // Reset after brief delay (socket emit is fire-and-forget)
@@ -5936,10 +5929,7 @@ window.showBoloModal = showBoloModal;
         }
       });
 
-      $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound);
-      $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 10);
-
-     
+      if (typeof initSoundSettings === 'function') initSoundSettings();
 
       $("#civ-first-name").keydown(function (event) {
         if (event.keyCode == 32) {
@@ -6023,10 +6013,7 @@ window.showBoloModal = showBoloModal;
       }
     })
 
-    $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
-    $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 10)
-
-    
+    if (typeof initSoundSettings === 'function') initSoundSettings();
 
     $("#civ-first-name").keydown(function (event) {
       if (event.keyCode==32) {
@@ -6261,12 +6248,7 @@ window.showBoloModal = showBoloModal;
     // Listen for panic alert events — immediate refresh
     dashboardSocket.on('panic_button_updated', function(map, origReq) {
       if (origReq && origReq.activeCommunity && origReq.activeCommunity !== communityId) return;
-      if ($('#panic-button-check-sound').prop('checked')) {
-        var audioElement = document.createElement('audio');
-        audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
-        audioElement.volume = dbUser.user?.alertVolumeLevel / 100 || 0.1;
-        audioElement.play().catch(e => console.log('Audio play failed:', e));
-      }
+      AlertSounds.play('panic');
       loadPanicStatuses();
     });
 
@@ -6278,13 +6260,7 @@ window.showBoloModal = showBoloModal;
     dashboardSocket.on('signal_100_button_updated', function(data) {
       if (data.activeCommunity && data.activeCommunity !== communityId) return;
 
-      // Play alert sound if enabled
-      if (dbUser.panicButtonSound) {
-        var audioElement = document.createElement('audio');
-        audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
-        audioElement.volume = dbUser.user?.alertVolumeLevel / 100 || 0.5;
-        audioElement.play().catch(e => console.log('Audio play failed:', e));
-      }
+      AlertSounds.play('signal100');
 
       // Update the banner with details
       updateSignal100Banner(data);
