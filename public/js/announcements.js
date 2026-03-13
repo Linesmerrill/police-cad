@@ -10,7 +10,6 @@
   style.textContent = `
     /* Glass Card Styling for Announcements */
     .announcement-card {
-      --card-bg: #0d0d14;
       background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(10px);
       border: 1px solid rgba(59, 130, 246, 0.2);
@@ -119,22 +118,6 @@
       letter-spacing: 0.5px;
     }
 
-    .announcement-content-wrap {
-      position: relative;
-    }
-    .announcement-content-wrap.is-truncated::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 1.8em;
-      background: linear-gradient(to bottom, transparent, var(--card-bg, rgba(17, 19, 24, 0.97)));
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-    .announcement-content-wrap.is-expanded::after {
-      opacity: 0;
-    }
-
     .announcement-content {
       overflow: hidden;
       white-space: pre-wrap;
@@ -145,9 +128,16 @@
       word-break: break-word;
     }
 
+    .announcement-content.is-clamped {
+      -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
+      mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
+    }
+
     .announcement-content.expanded {
       max-height: 300px;
       overflow-y: auto;
+      -webkit-mask-image: none;
+      mask-image: none;
       scrollbar-width: thin;
       scrollbar-color: rgba(255,255,255,0.1) transparent;
     }
@@ -649,9 +639,7 @@
 
          <!-- Content -->
          <div class="mb-3">
-           <div id="content-wrap-${safeAnnouncement._id}" class="announcement-content-wrap">
-             <p id="content-${safeAnnouncement._id}" class="announcement-content text-slate-300 text-xs leading-relaxed">${formatAnnouncementContent(escapeHtml(safeAnnouncement.content))}</p>
-           </div>
+           <p id="content-${safeAnnouncement._id}" class="announcement-content text-slate-300 text-xs leading-relaxed">${formatAnnouncementContent(escapeHtml(safeAnnouncement.content))}</p>
            <button onclick="toggleAnnouncementContent('${safeAnnouncement._id}')" id="content-toggle-${safeAnnouncement._id}" class="show-more-btn" style="display: none;">Show more</button>
          </div>
 
@@ -1027,11 +1015,10 @@
   // Toggle announcement content expansion
   function toggleAnnouncementContent(announcementId) {
     const contentEl = document.getElementById(`content-${announcementId}`);
-    const wrapEl = document.getElementById(`content-wrap-${announcementId}`);
     const toggleBtn = document.getElementById(`content-toggle-${announcementId}`);
     if (contentEl && toggleBtn) {
       const isExpanded = contentEl.classList.toggle('expanded');
-      if (wrapEl) wrapEl.classList.toggle('is-expanded', isExpanded);
+      contentEl.classList.toggle('is-clamped', !isExpanded);
       toggleBtn.textContent = isExpanded ? 'Show less' : 'Show more';
     }
   }
@@ -1050,13 +1037,12 @@
   // Check if content is truncated and show toggle button
   function checkContentTruncation(announcementId) {
     const contentEl = document.getElementById(`content-${announcementId}`);
-    const wrapEl = document.getElementById(`content-wrap-${announcementId}`);
     const toggleBtn = document.getElementById(`content-toggle-${announcementId}`);
     if (contentEl && toggleBtn) {
       // Check if content is actually truncated
       if (contentEl.scrollHeight > contentEl.clientHeight) {
         toggleBtn.style.display = 'inline';
-        if (wrapEl) wrapEl.classList.add('is-truncated');
+        contentEl.classList.add('is-clamped');
       }
     }
   }
