@@ -10,6 +10,7 @@
   style.textContent = `
     /* Glass Card Styling for Announcements */
     .announcement-card {
+      --card-bg: #0d0d14;
       background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(10px);
       border: 1px solid rgba(59, 130, 246, 0.2);
@@ -125,10 +126,9 @@
       content: '';
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      height: 2em;
-      background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.05) 40%, #111318);
+      height: 1.8em;
+      background: linear-gradient(to bottom, transparent, var(--card-bg, rgba(17, 19, 24, 0.97)));
       pointer-events: none;
-      border-radius: 0 0 0.5rem 0.5rem;
       transition: opacity 0.3s ease;
     }
     .announcement-content-wrap.is-expanded::after {
