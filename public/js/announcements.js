@@ -121,7 +121,7 @@
     .announcement-content {
       overflow: hidden;
       white-space: pre-wrap;
-      max-height: 3.6em;
+      max-height: 4.2em;
       line-height: 1.2em;
       position: relative;
       transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
