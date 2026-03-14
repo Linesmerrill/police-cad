@@ -14321,10 +14321,31 @@ async function saveEditEvent() {
       </div>
     </div>
 
+    <!-- Delete Tone Confirmation Modal -->
+    <div id="deleteToneModal" class="heroui-modal" style="display:none; position:fixed; z-index:4000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:440px; width:90%; position:relative; border:1px solid #35385a;">
+        <button onclick="closeDeleteToneModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-trash" style="font-size:2.5rem; color:#ef4444; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.25rem; font-weight:600;">Delete Tone</h3>
+        </div>
+        <div style="color:#a0aec0; text-align:center; padding:0 1rem; margin-bottom:1.5rem;">
+          <p style="font-size:1rem; margin:0 0 0.75rem 0;">Delete "<span id="deleteToneName" style="color:#fff; font-weight:500;"></span>"?</p>
+          <p style="font-size:0.875rem; color:#fca5a5; margin:0;">Departments using this tone will revert to the built-in default.</p>
+        </div>
+        <div style="display:flex; gap:1rem; justify-content:center;">
+          <button onclick="closeDeleteToneModal()" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.5rem; font-weight:500; cursor:pointer; font-size:0.95rem;">Cancel</button>
+          <button id="deleteToneConfirmBtn" onclick="confirmDeleteTone()" style="background:#ef4444; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.5rem; font-weight:500; cursor:pointer; font-size:0.95rem;">Delete</button>
+        </div>
+      </div>
+    </div>
+
     <script>
     (function() {
       var toneSettingsData = { sounds: [], defaults: { leo: '', fd: '', ems: '' } };
       var tonePreviewAudio = null;
+      var pendingDeleteKey = null;
+      var pendingDeleteName = null;
 
       window.openToneSettingsModal = function() {
         var modal = document.getElementById('toneSettingsModal');
@@ -14526,9 +14547,29 @@ async function saveEditEvent() {
       };
 
       window.deleteToneSound = function(key, name) {
-        if (!confirm('Delete "' + name + '"? Departments using this tone will revert to the built-in default.')) return;
+        pendingDeleteKey = key;
+        pendingDeleteName = name;
+        var nameEl = document.getElementById('deleteToneName');
+        if (nameEl) nameEl.textContent = name;
+        var modal = document.getElementById('deleteToneModal');
+        if (modal) modal.style.display = 'flex';
+      };
+
+      window.closeDeleteToneModal = function() {
+        var modal = document.getElementById('deleteToneModal');
+        if (modal) modal.style.display = 'none';
+        pendingDeleteKey = null;
+        pendingDeleteName = null;
+      };
+
+      window.confirmDeleteTone = function() {
+        var key = pendingDeleteKey;
+        if (!key) return;
         var communityId = window.communityId;
         if (!communityId) return;
+
+        var btn = document.getElementById('deleteToneConfirmBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Deleting...'; }
 
         $.ajax({
           url: window.API_URL + '/api/v1/community/' + communityId + '/tone-sounds/' + key,
@@ -14537,7 +14578,6 @@ async function saveEditEvent() {
           success: function(res) {
             if (res.success) {
               toneSettingsData.sounds = toneSettingsData.sounds.filter(function(s) { return s.key !== key; });
-              // Clear any defaults referencing this sound
               ['leo', 'fd', 'ems'].forEach(function(tmpl) {
                 if (toneSettingsData.defaults[tmpl] === key) toneSettingsData.defaults[tmpl] = '';
               });
@@ -14545,9 +14585,14 @@ async function saveEditEvent() {
               renderTemplateDefaults();
               showToneSuccess('Tone deleted');
             }
+            closeDeleteToneModal();
           },
           error: function() {
-            alert('Failed to delete tone. Please try again.');
+            showToneSuccess('Failed to delete tone. Please try again.');
+            closeDeleteToneModal();
+          },
+          complete: function() {
+            if (btn) { btn.disabled = false; btn.textContent = 'Delete'; }
           }
         });
       };
