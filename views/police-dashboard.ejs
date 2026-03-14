@@ -6362,11 +6362,8 @@ window.showBoloModal = showBoloModal;
         return;
       }
 
-      // Check if this user's active department is targeted
-      var userDeptId = dbUser.user?.lastAccessedCommunity?.activeDepartmentId || '';
-      console.log('[ToneAlert] My deptId:', userDeptId, '| Target depts:', data.targetDeptIds);
-      if (data.targetDeptIds && data.targetDeptIds.length > 0 && data.targetDeptIds.indexOf(userDeptId) === -1) {
-        console.log('[ToneAlert] Skipping — department not targeted');
+      // Check if this dashboard's department is targeted
+      if (data.targetDeptIds && data.targetDeptIds.length > 0 && typeof departmentId !== 'undefined' && departmentId && data.targetDeptIds.indexOf(departmentId) === -1) {
         return;
       }
 

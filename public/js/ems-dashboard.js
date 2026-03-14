@@ -486,9 +486,8 @@ function initializeSocket() {
   socket.on('tone_activated', function(data) {
     if (data.communityId && data.communityId !== communityId) return;
 
-    // Check if this user's active department is targeted
-    var userDeptId = dbUser.user?.lastAccessedCommunity?.activeDepartmentId || '';
-    if (data.targetDeptIds && data.targetDeptIds.length > 0 && data.targetDeptIds.indexOf(userDeptId) === -1) return;
+    // Check if this dashboard's department is targeted
+    if (data.targetDeptIds && data.targetDeptIds.length > 0 && typeof departmentId !== 'undefined' && departmentId && data.targetDeptIds.indexOf(departmentId) === -1) return;
 
     var soundKey = data.toneType === 'fd' ? 'toneFd' : data.toneType === 'ems' ? 'toneEms' : 'toneLeo';
     AlertSounds.play(soundKey);
