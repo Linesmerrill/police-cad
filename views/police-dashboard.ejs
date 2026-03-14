@@ -6158,11 +6158,13 @@ window.showBoloModal = showBoloModal;
 
     dashboardSocket = io({ transports: ["websocket"] });
     window.dashboardSocket = dashboardSocket; // Sync global reference
+    console.log('[ToneAlert] Socket created, id:', dashboardSocket.id);
 
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
 
     // Function to join room and send initial requests
     function onSocketConnected() {
+      console.log('[ToneAlert] Socket connected! id:', dashboardSocket.id, 'communityId:', communityId);
       // Join community room for targeted broadcasts
       if (communityId) {
         dashboardSocket.emit('join_community_room', { communityId: communityId });
@@ -6186,7 +6188,7 @@ window.showBoloModal = showBoloModal;
 
     // Listen for room join confirmation
     dashboardSocket.on('joined_room', function(data) {
-      // Room joined successfully
+      console.log('[ToneAlert] Joined room:', data);
     });
     dashboardSocket.on('room_error', function(data) {
       console.error('Room error:', data);
@@ -6348,6 +6350,8 @@ window.showBoloModal = showBoloModal;
       const msg = clearedBy ? 'Signal 100 cleared by ' + clearedBy : 'Signal 100 Cleared';
       showRealTimeToast('status', msg, 'success');
     });
+
+    console.log('[ToneAlert] Listener registered on dashboardSocket. Connected:', dashboardSocket.connected);
 
     // Listen for tone alerts
     dashboardSocket.on('tone_activated', function(data) {
