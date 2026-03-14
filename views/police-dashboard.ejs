@@ -6375,11 +6375,17 @@ window.showBoloModal = showBoloModal;
       }
 
       var banner = document.getElementById('tone-alert-banner');
+      console.log('[ToneAlert] Banner element:', banner);
+      console.log('[ToneAlert] Banner computed style display:', banner ? window.getComputedStyle(banner).display : 'NO ELEMENT');
+      console.log('[ToneAlert] Banner parent:', banner ? banner.parentElement : 'NO PARENT');
+      console.log('[ToneAlert] Banner parent display:', banner ? window.getComputedStyle(banner.parentElement).display : 'N/A');
       banner.className = 'tone-alert-banner tone-' + data.toneType;
       document.getElementById('tone-alert-title').textContent = 'TONE OUT \u2014 ' + data.toneName;
       var triggeredBy = data.triggeredByCallSign ? data.triggeredByCallSign + ' (' + data.triggeredByName + ')' : data.triggeredByName;
       document.getElementById('tone-alert-details').textContent = triggeredBy + ' \u2014 Stand by for voice dispatch.';
       banner.style.display = 'block';
+      console.log('[ToneAlert] Banner display set to block. Offset:', banner.offsetHeight, 'x', banner.offsetWidth);
+      console.log('[ToneAlert] Banner bounding rect:', JSON.stringify(banner.getBoundingClientRect()));
       if (typeof adjustBannerOffsets === 'function') adjustBannerOffsets();
 
       setTimeout(function() {
