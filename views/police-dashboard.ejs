@@ -6325,8 +6325,13 @@ window.showBoloModal = showBoloModal;
       var userDeptId = dbUser.user?.lastAccessedCommunity?.activeDepartmentId || '';
       if (data.targetDeptIds && data.targetDeptIds.length > 0 && data.targetDeptIds.indexOf(userDeptId) === -1) return;
 
-      var soundKey = data.toneType === 'fd' ? 'toneFd' : data.toneType === 'ems' ? 'toneEms' : 'toneLeo';
-      AlertSounds.play(soundKey);
+      // Play tone sound — use custom URL if provided, otherwise fall back to built-in
+      if (data.toneSoundUrl) {
+        AlertSounds.playUrl(data.toneSoundUrl);
+      } else {
+        var soundKey = data.toneType === 'fd' ? 'toneFd' : data.toneType === 'ems' ? 'toneEms' : 'toneLeo';
+        AlertSounds.play(soundKey);
+      }
 
       var banner = document.getElementById('tone-alert-banner');
       banner.className = 'tone-alert-banner tone-' + data.toneType;

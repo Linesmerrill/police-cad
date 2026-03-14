@@ -547,6 +547,19 @@
           %>
 
           <% if (canViewAuditLogs) { %>
+            <div id="toneSettingsCard" onclick="openToneSettingsModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; position:relative;">
+              <span style="position:absolute; top:0.5rem; right:0.5rem; background:#7c3aed; color:#fff; font-size:0.65rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:9999px; text-transform:uppercase; letter-spacing:0.05em;">Beta</span>
+              <div style="text-align:center;">
+                <div style="margin-bottom:0.5rem;">
+                  <i class="fa fa-volume-high" style="font-size:2rem; color:#a855f7;"></i>
+                </div>
+                <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Tone Settings</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage dispatch alert tones</p>
+              </div>
+            </div>
+          <% } %>
+
+          <% if (canViewAuditLogs) { %>
             <div id="auditLogsCard" onclick="openAuditLogsModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#6366f1; position:relative;">
               <% if (new Date() < new Date('2026-03-20')) { %>
                 <span style="position:absolute; top:0.5rem; right:0.5rem; background:#4f46e5; color:#fff; font-size:0.65rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:9999px; text-transform:uppercase; letter-spacing:0.05em;">Beta</span>
@@ -6944,9 +6957,43 @@ function populateEditDeptModal(dept) {
     if (deleteBtn) deleteBtn.style.display = 'none';
   }
 
-  // Set tone sound dropdown
+  // Set tone sound dropdown and populate with custom tones
   var toneSoundSelect = document.getElementById('editDeptToneSound');
-  if (toneSoundSelect) toneSoundSelect.value = dept.toneSound || '';
+  if (toneSoundSelect) {
+    // Rebuild options: static built-ins + dynamic custom tones
+    var currentVal = dept.toneSound || '';
+    var optionsHtml = '<option value="">Default</option>';
+    optionsHtml += '<option value="leo">LEO Tone</option>';
+    optionsHtml += '<option value="fd">Fire Dept Tone</option>';
+    optionsHtml += '<option value="ems">EMS Tone</option>';
+
+    // Fetch custom tones and add them
+    if (window.communityId && window.API_URL) {
+      $.ajax({
+        url: window.API_URL + '/api/v1/community/' + window.communityId + '/tone-sounds',
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + window.userToken },
+        success: function(res) {
+          if (res.success && res.sounds && res.sounds.length > 0) {
+            optionsHtml += '<option disabled>──────────</option>';
+            res.sounds.forEach(function(s) {
+              var sel = s.key === currentVal ? ' selected' : '';
+              optionsHtml += '<option value="' + s.key + '"' + sel + '>' + (s.name || s.key).replace(/</g, '&lt;') + '</option>';
+            });
+          }
+          toneSoundSelect.innerHTML = optionsHtml;
+          toneSoundSelect.value = currentVal;
+        },
+        error: function() {
+          toneSoundSelect.innerHTML = optionsHtml;
+          toneSoundSelect.value = currentVal;
+        }
+      });
+    } else {
+      toneSoundSelect.innerHTML = optionsHtml;
+      toneSoundSelect.value = currentVal;
+    }
+  }
 
   // Dynamically render components from template, merging in any missing expected components
   var templateName = (dept.template && dept.template.name) ? dept.template.name : '';
@@ -14219,6 +14266,375 @@ async function saveEditEvent() {
         </form>
       </div>
     </div>
+
+    <!-- Tone Settings Modal -->
+    <div id="toneSettingsModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:700px; width:95%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+        <!-- Close Button -->
+        <button onclick="closeToneSettingsModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+
+        <!-- Header -->
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-volume-high" style="font-size:3rem; color:#a855f7; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Tone Settings</h3>
+          <p style="color:#a0aec0; margin:0.5rem 0 0 0;">Upload custom tones and set department defaults</p>
+        </div>
+
+        <!-- Template Defaults Section -->
+        <div style="margin-bottom:2rem;">
+          <h4 style="color:#fff; font-size:1.1rem; font-weight:600; margin:0 0 0.75rem 0;">
+            <i class="fa fa-sliders" style="color:#a855f7; margin-right:0.5rem;"></i>Template Defaults
+          </h4>
+          <p style="color:#9ca3af; font-size:0.8rem; margin:0 0 1rem 0;">Set the default alert tone for each department type. Departments can still override individually.</p>
+          <div id="toneDefaultsList" style="display:flex; flex-direction:column; gap:0.75rem;">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid #35385a; margin:1.5rem 0;">
+
+        <!-- Custom Tones Section -->
+        <div>
+          <h4 style="color:#fff; font-size:1.1rem; font-weight:600; margin:0 0 0.75rem 0;">
+            <i class="fa fa-music" style="color:#a855f7; margin-right:0.5rem;"></i>Custom Tones
+          </h4>
+          <p style="color:#9ca3af; font-size:0.8rem; margin:0 0 1rem 0;">Upload custom alert sounds. Accepted formats: .mp3, .wav, .ogg (max 2MB).</p>
+
+          <div id="customTonesList" style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1rem;">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Upload Button -->
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <label for="toneUploadInput" style="display:inline-flex; align-items:center; gap:0.5rem; background:#7c3aed; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer; font-size:0.9rem;">
+              <i class="fa fa-upload"></i> Upload New Tone
+            </label>
+            <input type="file" id="toneUploadInput" accept=".mp3,.wav,.ogg" style="display:none;" onchange="handleToneUpload(this)">
+            <span id="toneUploadStatus" style="color:#9ca3af; font-size:0.8rem;"></span>
+          </div>
+        </div>
+
+        <!-- Success Alert -->
+        <div id="toneSettingsSuccess" style="display:none; margin-top:1rem; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:8px; padding:0.75rem 1rem; color:#22c55e; font-size:0.85rem; text-align:center;">
+          <i class="fa fa-check-circle" style="margin-right:0.5rem;"></i><span></span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    (function() {
+      var toneSettingsData = { sounds: [], defaults: { leo: '', fd: '', ems: '' } };
+      var tonePreviewAudio = null;
+
+      window.openToneSettingsModal = function() {
+        var modal = document.getElementById('toneSettingsModal');
+        if (modal) {
+          modal.style.display = 'flex';
+          loadToneSettings();
+        }
+      };
+
+      window.closeToneSettingsModal = function() {
+        var modal = document.getElementById('toneSettingsModal');
+        if (modal) modal.style.display = 'none';
+        stopTonePreview();
+      };
+
+      function showToneSuccess(msg) {
+        var el = document.getElementById('toneSettingsSuccess');
+        if (el) {
+          el.querySelector('span').textContent = msg;
+          el.style.display = 'block';
+          setTimeout(function() { el.style.display = 'none'; }, 3000);
+        }
+      }
+
+      function stopTonePreview() {
+        if (tonePreviewAudio) {
+          tonePreviewAudio.pause();
+          tonePreviewAudio.currentTime = 0;
+          tonePreviewAudio = null;
+        }
+      }
+
+      function previewTone(url) {
+        stopTonePreview();
+        if (!url) return;
+        tonePreviewAudio = new Audio(url);
+        tonePreviewAudio.volume = 0.5;
+        tonePreviewAudio.play().catch(function() {});
+      }
+
+      function loadToneSettings() {
+        var communityId = window.communityId;
+        if (!communityId) return;
+
+        $.ajax({
+          url: window.API_URL + '/api/v1/community/' + communityId + '/tone-sounds',
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + window.userToken },
+          success: function(res) {
+            if (res.success) {
+              toneSettingsData.sounds = res.sounds || [];
+              toneSettingsData.defaults = res.defaults || { leo: '', fd: '', ems: '' };
+              renderTemplateDefaults();
+              renderCustomTones();
+            }
+          },
+          error: function(xhr) {
+            console.warn('[ToneSettings] Failed to load:', xhr.status);
+          }
+        });
+      }
+
+      var BUILTIN_TONES = {
+        leo: { name: 'Built-in LEO Tone', url: '/static/audio/Tone_leo_alert.mp3' },
+        fd: { name: 'Built-in Fire Dept Tone', url: '/static/audio/Tone_fd_alert.mp3' },
+        ems: { name: 'Built-in EMS Tone', url: '/static/audio/Tone_ems_alert.mp3' }
+      };
+
+      var TEMPLATE_LABELS = {
+        leo: { name: 'LEO (Police)', color: '#3b82f6', icon: 'fa-shield-halved' },
+        fd: { name: 'Fire Department', color: '#ef4444', icon: 'fa-fire' },
+        ems: { name: 'EMS', color: '#22c55e', icon: 'fa-truck-medical' }
+      };
+
+      function renderTemplateDefaults() {
+        var container = document.getElementById('toneDefaultsList');
+        if (!container) return;
+        var html = '';
+
+        ['leo', 'fd', 'ems'].forEach(function(tmpl) {
+          var label = TEMPLATE_LABELS[tmpl];
+          var currentKey = toneSettingsData.defaults[tmpl] || '';
+          var currentName = BUILTIN_TONES[tmpl].name;
+          var currentUrl = BUILTIN_TONES[tmpl].url;
+
+          // If a custom tone is set as default, find its name/url
+          if (currentKey) {
+            var found = toneSettingsData.sounds.find(function(s) { return s.key === currentKey; });
+            if (found) {
+              currentName = found.name;
+              currentUrl = found.url;
+            } else {
+              currentName = 'Unknown (reset recommended)';
+              currentUrl = '';
+            }
+          }
+
+          // Build dropdown options
+          var options = '<option value="">Built-in Default</option>';
+          toneSettingsData.sounds.forEach(function(s) {
+            var selected = s.key === currentKey ? ' selected' : '';
+            options += '<option value="' + s.key + '"' + selected + '>' + escapeHtml(s.name) + '</option>';
+          });
+
+          html += '<div style="display:flex; align-items:center; gap:0.75rem; background:#2d3748; border-radius:10px; padding:0.75rem 1rem;">';
+          html += '<i class="fa ' + label.icon + '" style="color:' + label.color + '; font-size:1.2rem; width:1.5rem; text-align:center;"></i>';
+          html += '<div style="flex:1; min-width:0;">';
+          html += '<div style="color:#fff; font-size:0.9rem; font-weight:500;">' + label.name + '</div>';
+          html += '<div style="color:#9ca3af; font-size:0.75rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Current: ' + escapeHtml(currentName) + '</div>';
+          html += '</div>';
+          html += '<button onclick="previewToneDefault(\'' + tmpl + '\')" style="background:none; border:none; color:#a855f7; cursor:pointer; font-size:1rem; padding:0.25rem;" title="Preview"><i class="fa fa-play"></i></button>';
+          html += '<select onchange="setToneDefault(\'' + tmpl + '\', this.value)" style="background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; padding:0.4rem 0.5rem; font-size:0.8rem; max-width:160px;">';
+          html += options;
+          html += '</select>';
+          html += '</div>';
+        });
+
+        container.innerHTML = html;
+      }
+
+      window.previewToneDefault = function(tmpl) {
+        var key = toneSettingsData.defaults[tmpl] || '';
+        var url = BUILTIN_TONES[tmpl].url;
+        if (key) {
+          var found = toneSettingsData.sounds.find(function(s) { return s.key === key; });
+          if (found) url = found.url;
+        }
+        previewTone(url);
+      };
+
+      window.setToneDefault = function(tmpl, soundKey) {
+        var communityId = window.communityId;
+        if (!communityId) return;
+
+        $.ajax({
+          url: window.API_URL + '/api/v1/community/' + communityId + '/tone-defaults',
+          method: 'PUT',
+          headers: { 'Authorization': 'Bearer ' + window.userToken },
+          contentType: 'application/json',
+          data: JSON.stringify({ template: tmpl, soundKey: soundKey }),
+          success: function(res) {
+            if (res.success) {
+              toneSettingsData.defaults[tmpl] = soundKey;
+              renderTemplateDefaults();
+              showToneSuccess('Default updated for ' + TEMPLATE_LABELS[tmpl].name);
+            }
+          },
+          error: function() {
+            alert('Failed to update default. Please try again.');
+          }
+        });
+      };
+
+      function renderCustomTones() {
+        var container = document.getElementById('customTonesList');
+        if (!container) return;
+
+        if (toneSettingsData.sounds.length === 0) {
+          container.innerHTML = '<div style="color:#6b7280; font-size:0.85rem; padding:0.5rem 0;">No custom tones uploaded yet.</div>';
+          return;
+        }
+
+        var html = '';
+        toneSettingsData.sounds.forEach(function(sound) {
+          html += '<div style="display:flex; align-items:center; gap:0.75rem; background:#2d3748; border-radius:10px; padding:0.6rem 1rem;" data-key="' + sound.key + '">';
+          html += '<i class="fa fa-music" style="color:#a855f7; font-size:0.9rem; width:1.2rem; text-align:center;"></i>';
+          html += '<input type="text" value="' + escapeHtml(sound.name) + '" onchange="renameToneSound(\'' + sound.key + '\', this.value)" style="flex:1; background:transparent; color:#fff; border:none; border-bottom:1px solid transparent; font-size:0.85rem; padding:0.2rem 0; outline:none;" onfocus="this.style.borderBottomColor=\'#7c3aed\'" onblur="this.style.borderBottomColor=\'transparent\'">';
+          html += '<button onclick="previewTone(\'' + escapeHtml(sound.url) + '\')" style="background:none; border:none; color:#a855f7; cursor:pointer; font-size:0.9rem; padding:0.25rem;" title="Preview"><i class="fa fa-play"></i></button>';
+          html += '<button onclick="deleteToneSound(\'' + sound.key + '\', \'' + escapeHtml(sound.name) + '\')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:0.9rem; padding:0.25rem;" title="Delete"><i class="fa fa-trash"></i></button>';
+          html += '</div>';
+        });
+
+        container.innerHTML = html;
+      }
+
+      window.renameToneSound = function(key, newName) {
+        if (!newName || !newName.trim()) return;
+        var communityId = window.communityId;
+        if (!communityId) return;
+
+        $.ajax({
+          url: window.API_URL + '/api/v1/community/' + communityId + '/tone-sounds/' + key,
+          method: 'PATCH',
+          headers: { 'Authorization': 'Bearer ' + window.userToken },
+          contentType: 'application/json',
+          data: JSON.stringify({ name: newName.trim() }),
+          success: function(res) {
+            if (res.success) {
+              var s = toneSettingsData.sounds.find(function(s) { return s.key === key; });
+              if (s) s.name = newName.trim();
+              renderTemplateDefaults(); // Update dropdown labels
+              showToneSuccess('Tone renamed');
+            }
+          },
+          error: function() {
+            alert('Failed to rename tone. Please try again.');
+          }
+        });
+      };
+
+      window.deleteToneSound = function(key, name) {
+        if (!confirm('Delete "' + name + '"? Departments using this tone will revert to the built-in default.')) return;
+        var communityId = window.communityId;
+        if (!communityId) return;
+
+        $.ajax({
+          url: window.API_URL + '/api/v1/community/' + communityId + '/tone-sounds/' + key,
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + window.userToken },
+          success: function(res) {
+            if (res.success) {
+              toneSettingsData.sounds = toneSettingsData.sounds.filter(function(s) { return s.key !== key; });
+              // Clear any defaults referencing this sound
+              ['leo', 'fd', 'ems'].forEach(function(tmpl) {
+                if (toneSettingsData.defaults[tmpl] === key) toneSettingsData.defaults[tmpl] = '';
+              });
+              renderCustomTones();
+              renderTemplateDefaults();
+              showToneSuccess('Tone deleted');
+            }
+          },
+          error: function() {
+            alert('Failed to delete tone. Please try again.');
+          }
+        });
+      };
+
+      window.handleToneUpload = async function(input) {
+        var file = input.files && input.files[0];
+        if (!file) return;
+
+        // Validate file size (2MB max)
+        if (file.size > 2 * 1024 * 1024) {
+          alert('File too large. Maximum size is 2MB.');
+          input.value = '';
+          return;
+        }
+
+        // Validate file type
+        var validTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp3'];
+        if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|ogg)$/i)) {
+          alert('Invalid file type. Please upload an .mp3, .wav, or .ogg file.');
+          input.value = '';
+          return;
+        }
+
+        var statusEl = document.getElementById('toneUploadStatus');
+        statusEl.textContent = 'Uploading...';
+
+        try {
+          // Get signature
+          var sigRes = await fetch(window.API_URL + '/api/v1/generate-signature', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+          if (!sigRes.ok) throw new Error('Failed to get upload signature');
+          var sig = await sigRes.json();
+
+          // Upload to Cloudinary (use video/upload endpoint for audio files)
+          var formData = new FormData();
+          formData.append('file', file);
+          formData.append('api_key', window.CLOUDINARY_API_KEY || '');
+          formData.append('timestamp', sig.timestamp);
+          formData.append('signature', sig.signature);
+          formData.append('upload_preset', window.CLOUDINARY_UPLOAD_PRESET || '');
+          formData.append('folder', 'tones');
+          formData.append('resource_type', 'video');
+
+          var cloudRes = await fetch('https://api.cloudinary.com/v1_1/' + (window.CLOUDINARY_CLOUD_NAME || '') + '/video/upload', {
+            method: 'POST',
+            body: formData
+          });
+          var cloudData = await cloudRes.json();
+
+          if (cloudData.error) throw new Error(cloudData.error.message || 'Upload failed');
+
+          var secureUrl = cloudData.secure_url;
+          var toneName = file.name.replace(/\.[^.]+$/, ''); // Strip extension for default name
+
+          // Save to backend
+          var saveRes = await $.ajax({
+            url: window.API_URL + '/api/v1/community/' + window.communityId + '/tone-sounds',
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + window.userToken },
+            contentType: 'application/json',
+            data: JSON.stringify({ name: toneName, url: secureUrl })
+          });
+
+          if (saveRes.success) {
+            toneSettingsData.sounds.push(saveRes.sound);
+            renderCustomTones();
+            renderTemplateDefaults();
+            showToneSuccess('Tone "' + toneName + '" uploaded successfully');
+          }
+        } catch (err) {
+          console.error('[ToneSettings] Upload error:', err);
+          alert('Upload failed: ' + err.message);
+        }
+
+        statusEl.textContent = '';
+        input.value = '';
+      };
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+    })();
+    </script>
 
     <!-- Audit Logs Modal -->
     <div id="auditLogsModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">

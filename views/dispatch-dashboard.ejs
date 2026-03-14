@@ -995,14 +995,14 @@
                                 .tone-board-title {
                                   display: flex;
                                   align-items: center;
-                                  gap: 0.5rem;
-                                  font-size: 0.9rem;
-                                  font-weight: 600;
-                                  color: #e2e8f0;
+                                  gap: 0.75rem;
+                                  font-size: 1.35rem;
+                                  font-weight: 700;
+                                  color: #a78bfa;
                                   text-transform: uppercase;
-                                  letter-spacing: 1px;
+                                  letter-spacing: 0.05em;
                                 }
-                                .tone-board-title i { color: #a78bfa; }
+                                .tone-board-title i { color: #a78bfa; font-size: 1.4rem; }
                                 .tone-board-buttons {
                                   display: flex;
                                   flex-wrap: wrap;
@@ -1012,12 +1012,12 @@
                                 .tone-btn {
                                   display: flex;
                                   align-items: center;
-                                  gap: 0.5rem;
-                                  padding: 0.6rem 1.2rem;
+                                  gap: 0.6rem;
+                                  padding: 0.75rem 1.5rem;
                                   border-radius: 8px;
                                   border: 1px solid rgba(255,255,255,0.15);
                                   cursor: pointer;
-                                  font-size: 0.85rem;
+                                  font-size: 1rem;
                                   font-weight: 600;
                                   color: white;
                                   text-transform: uppercase;
@@ -1033,7 +1033,7 @@
                                 .tone-btn.tone-custom { background: linear-gradient(135deg, #6b21a8, #9333ea); }
                                 .tone-loading {
                                   color: #94a3b8;
-                                  font-size: 0.85rem;
+                                  font-size: 1rem;
                                   display: flex;
                                   align-items: center;
                                   gap: 0.5rem;
@@ -1045,10 +1045,10 @@
                                   display: flex;
                                   justify-content: space-between;
                                   align-items: center;
-                                  padding: 0.6rem 1.5rem;
+                                  padding: 0.75rem 1.5rem;
                                   cursor: pointer;
                                   color: #94a3b8;
-                                  font-size: 0.8rem;
+                                  font-size: 0.95rem;
                                   transition: color 0.15s;
                                 }
                                 .tone-log-header:hover { color: #e2e8f0; }
@@ -1061,9 +1061,9 @@
                                   display: flex;
                                   justify-content: space-between;
                                   align-items: center;
-                                  padding: 0.4rem 0;
+                                  padding: 0.5rem 0;
                                   border-bottom: 1px solid rgba(255,255,255,0.05);
-                                  font-size: 0.8rem;
+                                  font-size: 0.95rem;
                                   color: #cbd5e1;
                                 }
                                 .tone-log-entry:last-child { border-bottom: none; }
@@ -4265,12 +4265,15 @@
     socket.on('tone_activated', (data) => {
       if (data.communityId && data.communityId !== communityId) return;
 
-      // Determine sound key from tone type
-      var soundKey = 'toneLeo';
-      if (data.toneType === 'fd') soundKey = 'toneFd';
-      else if (data.toneType === 'ems') soundKey = 'toneEms';
-
-      AlertSounds.play(soundKey);
+      // Play tone sound — use custom URL if provided, otherwise fall back to built-in
+      if (data.toneSoundUrl) {
+        AlertSounds.playUrl(data.toneSoundUrl);
+      } else {
+        var soundKey = 'toneLeo';
+        if (data.toneType === 'fd') soundKey = 'toneFd';
+        else if (data.toneType === 'ems') soundKey = 'toneEms';
+        AlertSounds.play(soundKey);
+      }
 
       // Show the tone alert banner
       var banner = document.getElementById('tone-alert-banner');
@@ -6994,8 +6997,13 @@
           renderToneButtons();
         }
       },
-      error: function() {
-        document.getElementById('toneBoardButtons').innerHTML = '<span class="tone-loading">Failed to load tone groups</span>';
+      error: function(xhr) {
+        console.warn('[ToneBoard] Failed to load tone groups:', xhr.status, xhr.statusText);
+        if (xhr.status === 404) {
+          document.getElementById('toneBoardButtons').innerHTML = '<span class="tone-loading">Tone board API not available yet</span>';
+        } else {
+          document.getElementById('toneBoardButtons').innerHTML = '<span class="tone-loading">Failed to load tone groups</span>';
+        }
       }
     });
   }

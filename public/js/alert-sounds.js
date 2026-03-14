@@ -150,6 +150,18 @@ window.AlertSounds = (function() {
     },
 
     /**
+     * Play a sound by direct URL. Queues if another sound is already playing.
+     * Used for custom tone sounds where the URL comes from the server.
+     * @param {string} url - Direct URL to the audio file
+     */
+    playUrl: function(url) {
+      if (!isSoundEnabled()) return;
+      if (!url) return;
+      queue.push(url);
+      if (!isPlaying) playNext();
+    },
+
+    /**
      * Override default sound URLs (e.g. with community-uploaded files).
      * @param {Object} soundMap - e.g. { panic: 'https://cdn.example.com/custom.mp3' }
      */
