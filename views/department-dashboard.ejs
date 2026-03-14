@@ -3915,9 +3915,12 @@ $('#dd-loading').hide();
       var $grid = $overview.find('.dd-grid');
       var $allCards = $grid.children('.dd-card');
 
+      var $rankWrap = $('#dd-rank-wrap');
+
       if (panel === 'overview') {
         // Show everything except overview-hidden components
         $statsRow.show();
+        $rankWrap.show();
         $warrantBanner.show();
         $allCards.each(function() {
           var $c = $(this);
@@ -3937,8 +3940,9 @@ $('#dd-loading').hide();
           }
         });
       } else {
-        // Focus on one component: hide stats, hide other cards, make target full-width
+        // Focus on one component: hide stats, rank, hide other cards, make target full-width
         $statsRow.hide();
+        $rankWrap.hide();
         $warrantBanner.hide();
         $allCards.hide();
 
