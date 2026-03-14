@@ -127,6 +127,44 @@
       width: 210px;
       flex-shrink: 0;
       align-self: flex-start;
+      max-height: calc(100vh - 4rem);
+      overflow-y: auto;
+      padding-right: 0.35rem;
+    }
+    .ht-sidebar::-webkit-scrollbar { width: 3px; }
+    .ht-sidebar::-webkit-scrollbar-track { background: transparent; }
+    .ht-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    .ht-sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+    /* Search */
+    .ht-nav-search {
+      position: relative;
+      margin-bottom: 0.75rem;
+    }
+    .ht-nav-search input {
+      width: 100%;
+      padding: 0.45rem 0.65rem 0.45rem 2rem;
+      background: var(--ht-glass);
+      border: 1px solid var(--ht-glass-border);
+      border-radius: var(--ht-radius-sm);
+      color: var(--ht-text);
+      font-size: 0.78rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .ht-nav-search input::placeholder { color: var(--ht-text-dim); }
+    .ht-nav-search input:focus {
+      border-color: rgba(139,92,246,0.35);
+      background: var(--ht-glass-hover);
+    }
+    .ht-nav-search i {
+      position: absolute;
+      left: 0.65rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.7rem;
+      color: var(--ht-text-dim);
+      pointer-events: none;
     }
     .ht-nav-group-title {
       display: flex;
@@ -749,6 +787,7 @@
         padding-bottom: 1rem;
         margin-bottom: 0.75rem;
       }
+      .ht-nav-search { width: 100%; margin-bottom: 0.5rem; margin-top: 0.5rem; }
       .ht-nav-group-title { margin-top: 0.5rem; width: 100%; }
       .ht-nav-link { padding: 0.35rem 0.65rem; border-left: none; }
       .ht-metrics { grid-template-columns: repeat(2, 1fr); }
@@ -767,7 +806,7 @@
       <div class="ht-header-icon"><i class="fa fa-circle-question"></i></div>
       <div>
         <div class="ht-title">Help & Tutorials</div>
-        <div class="ht-subtitle">Learn how to use warrants, penal codes & court cases</div>
+        <div class="ht-subtitle">Learn how to use warrants, penal codes, court cases & more</div>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:0.75rem;">
@@ -786,6 +825,10 @@
 
     <!-- ── Sidebar ── -->
     <nav class="ht-sidebar">
+      <div class="ht-nav-search">
+        <i class="fa fa-search"></i>
+        <input type="text" id="htNavSearch" placeholder="Search sections..." oninput="filterHelpNav(this.value)">
+      </div>
       <div class="ht-nav-group-title"><i class="fa fa-gavel"></i> Warrants</div>
       <a class="ht-nav-link" href="#warrants-overview">Overview</a>
       <a class="ht-nav-link" href="#warrants-creating">Creating a Warrant</a>
@@ -820,6 +863,13 @@
       <a class="ht-nav-link" href="#ranks-pending-promotions">Pending Promotions</a>
       <a class="ht-nav-link" href="#ranks-assigning">Assigning Ranks</a>
       <a class="ht-nav-link" href="#ranks-member-view">Member View</a>
+
+      <div class="ht-nav-group-title"><i class="fa fa-broadcast-tower"></i> Tone Board</div>
+      <a class="ht-nav-link" href="#tones-overview">Overview</a>
+      <a class="ht-nav-link" href="#tones-admin-setup">Admin Setup</a>
+      <a class="ht-nav-link" href="#tones-dispatching">Dispatching Tones</a>
+      <a class="ht-nav-link" href="#tones-rp-examples">Roleplay Examples</a>
+      <a class="ht-nav-link" href="#tones-tips">Tips</a>
     </nav>
 
     <!-- ── Content ── -->
@@ -2303,6 +2353,297 @@
         </div>
       </section>
 
+      <!-- ╔═══════════════════════════════════════════╗ -->
+      <!-- ║          TONE BOARD SECTION                ║ -->
+      <!-- ╚═══════════════════════════════════════════╝ -->
+      <section id="tone-board" class="ht-section">
+        <div class="ht-section-header">
+          <div class="ht-section-icon"><i class="fa fa-broadcast-tower"></i></div>
+          <div>
+            <div class="ht-section-title">Tone Board</div>
+            <div class="ht-section-subtitle">Set up and use dispatch alert tones for your community</div>
+          </div>
+        </div>
+
+        <!-- Overview -->
+        <div class="ht-subsection" id="tones-overview">
+          <h3 class="ht-subsection-title">Overview</h3>
+          <p class="ht-text">
+            The Tone Board is a dispatch tool that simulates real-world station alerting tones.
+            When a dispatcher presses a tone button, every on-duty member in the targeted department(s) receives
+            an audible alert tone and a visual banner on their dashboard &mdash; just like a real fire station
+            or police precinct alerting system.
+          </p>
+          <p class="ht-text">
+            After the tone plays, the dispatcher switches to their voice channel (e.g. Discord) to deliver
+            the dispatch message with the incident details.
+          </p>
+          <div class="ht-flow">
+            <span class="ht-flow-item">Dispatcher presses tone</span>
+            <i class="fa fa-arrow-right ht-flow-arrow"></i>
+            <span class="ht-flow-item">Alert plays on targeted dashboards</span>
+            <i class="fa fa-arrow-right ht-flow-arrow"></i>
+            <span class="ht-flow-item">Voice dispatch over comms</span>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              The Tone Board is available on the <strong>Dispatch Dashboard</strong>. Only users with dispatch access can trigger tones.
+              All department dashboard users (Police, Fire, EMS) will receive alerts if their department is targeted.
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Setup -->
+        <div class="ht-subsection" id="tones-admin-setup">
+          <h3 class="ht-subsection-title">Admin Setup</h3>
+          <p class="ht-text">Administrators set up tone groups and configure which departments receive alerts. Here's how:</p>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Open Community Settings</div>
+                <div class="ht-step-desc">Navigate to your <strong>Community Settings</strong> page and find the <strong>Tone Board</strong> card.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Create Tone Groups</div>
+                <div class="ht-step-desc">
+                  Tone groups organize which departments get toned together. For example, you might create a group called
+                  <strong>"Structure Fire &mdash; North"</strong> that includes Engine 1, Ladder 5, and Rescue 12.
+                  Each group becomes a button on the dispatch Tone Board.
+                </div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Assign Departments to Groups</div>
+                <div class="ht-step-desc">
+                  Each tone group targets one or more departments. When the tone is activated, <strong>only dashboards belonging
+                  to those departments</strong> will receive the alert. Departments are automatically categorized as
+                  Police (blue), Fire (orange), or EMS (green) based on their template.
+                </div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">4</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Configure Alert Sounds (Optional)</div>
+                <div class="ht-step-desc">
+                  Each department template has a default alert tone (Police, Fire, EMS). You can customize which tone sound plays
+                  for a specific department by editing the department and changing the <strong>Dispatch Tone</strong> dropdown.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-lightbulb ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Members control their own alert volume through <strong>Sound Settings</strong> (the speaker icon on their dashboard).
+              Make sure your members have sounds enabled and the volume set to their preference.
+            </div>
+          </div>
+        </div>
+
+        <!-- Dispatching Tones -->
+        <div class="ht-subsection" id="tones-dispatching">
+          <h3 class="ht-subsection-title">Dispatching Tones</h3>
+          <p class="ht-text">To send a tone from the Dispatch Dashboard:</p>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number">1</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Find the department or tone group</div>
+                <div class="ht-step-desc">
+                  Use the <strong>filter chips</strong> (All / Police / Fire / EMS) to narrow by department type,
+                  or use the <strong>search bar</strong> to find a specific department by name.
+                </div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">2</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Press the tone button</div>
+                <div class="ht-step-desc">
+                  Click the department button to trigger the tone. The button will show a <strong>"Sending..."</strong>
+                  state followed by a brief cooldown (3 seconds) to prevent accidental double-triggers.
+                </div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number">3</div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Deliver the dispatch over voice</div>
+                <div class="ht-step-desc">
+                  After the tone plays on all targeted dashboards, switch to your voice channel (e.g. Discord)
+                  and deliver the dispatch message with the incident details. See the roleplay examples below.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ht-tip">
+            <i class="fa fa-circle-info ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              The <strong>Recent Activity</strong> log at the bottom of the Tone Board shows who triggered what and when,
+              giving you a history of all dispatched tones.
+            </div>
+          </div>
+        </div>
+
+        <!-- Roleplay Examples -->
+        <div class="ht-subsection" id="tones-rp-examples">
+          <h3 class="ht-subsection-title">Roleplay Examples</h3>
+          <p class="ht-text">
+            These examples show how real-world dispatchers communicate after sending a tone.
+            Use these as a guide for your roleplay dispatch calls.
+          </p>
+
+          <!-- Fire Example -->
+          <div class="ht-sample-box" style="border-left: 3px solid #ea580c;">
+            <div class="ht-sample-label"><i class="fa fa-fire-flame-curved" style="color:#ea580c;"></i> Fire Dispatch</div>
+            <div class="ht-sample-content">
+              <div class="ht-steps" style="margin-bottom: 0.5rem;">
+                <div class="ht-step">
+                  <div class="ht-step-number" style="background:rgba(234,88,12,0.15); border-color:rgba(234,88,12,0.25); color:#ea580c;">1</div>
+                  <div class="ht-step-body">
+                    <div class="ht-step-title">Press the tone button for the target fire department(s)</div>
+                  </div>
+                </div>
+                <div class="ht-step">
+                  <div class="ht-step-number" style="background:rgba(234,88,12,0.15); border-color:rgba(234,88,12,0.25); color:#ea580c;">2</div>
+                  <div class="ht-step-body">
+                    <div class="ht-step-title">Wait for the tone to finish playing (~3 seconds)</div>
+                  </div>
+                </div>
+                <div class="ht-step">
+                  <div class="ht-step-number" style="background:rgba(234,88,12,0.15); border-color:rgba(234,88,12,0.25); color:#ea580c;">3</div>
+                  <div class="ht-step-body">
+                    <div class="ht-step-title">Key up on your voice channel and dispatch:</div>
+                  </div>
+                </div>
+              </div>
+              <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(234,88,12,0.12); border-radius:var(--ht-radius-sm); padding:1rem 1.25rem; margin-top:0.5rem;">
+                <i class="fa fa-quote-left" style="color:#475569; font-size:0.75rem; display:block; margin-bottom:0.4rem;"></i>
+                <p style="color:#cbd5e1; font-style:italic; line-height:1.65; margin:0; font-size:0.92rem;">
+                  "Station 5, Ladder 11 &mdash; structure fire reported at 742 Evergreen Terrace.
+                  Two-story residential, possible entrapment. Engine 3 and Rescue 7 also responding. Time out: 14:32."
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- EMS Example -->
+          <div class="ht-sample-box" style="border-left: 3px solid #16a34a;">
+            <div class="ht-sample-label"><i class="fa fa-kit-medical" style="color:#16a34a;"></i> EMS Dispatch</div>
+            <div class="ht-sample-content">
+              <div class="ht-steps" style="margin-bottom: 0.5rem;">
+                <div class="ht-step">
+                  <div class="ht-step-number" style="background:rgba(22,163,74,0.15); border-color:rgba(22,163,74,0.25); color:#16a34a;">1</div>
+                  <div class="ht-step-body">
+                    <div class="ht-step-title">Press the tone button for the target EMS unit(s)</div>
+                  </div>
+                </div>
+                <div class="ht-step">
+                  <div class="ht-step-number" style="background:rgba(22,163,74,0.15); border-color:rgba(22,163,74,0.25); color:#16a34a;">2</div>
+                  <div class="ht-step-body">
+                    <div class="ht-step-title">Wait for the tone, then key up:</div>
+                  </div>
+                </div>
+              </div>
+              <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(22,163,74,0.12); border-radius:var(--ht-radius-sm); padding:1rem 1.25rem; margin-top:0.5rem;">
+                <i class="fa fa-quote-left" style="color:#475569; font-size:0.75rem; display:block; margin-bottom:0.4rem;"></i>
+                <p style="color:#cbd5e1; font-style:italic; line-height:1.65; margin:0; font-size:0.92rem;">
+                  "Medic 4, respond to 1600 Pennsylvania Avenue for a medical emergency &mdash; 45-year-old male,
+                  chest pains, conscious and breathing. ALS response requested. Time out: 09:17."
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Police Example -->
+          <div class="ht-sample-box" style="border-left: 3px solid #3b82f6;">
+            <div class="ht-sample-label"><i class="fa fa-shield-halved" style="color:#3b82f6;"></i> Police Dispatch</div>
+            <div class="ht-sample-content">
+              <div class="ht-steps" style="margin-bottom: 0.5rem;">
+                <div class="ht-step">
+                  <div class="ht-step-number" style="background:rgba(59,130,246,0.15); border-color:rgba(59,130,246,0.25); color:#3b82f6;">1</div>
+                  <div class="ht-step-body">
+                    <div class="ht-step-title">Press the tone button for the target police unit(s)</div>
+                  </div>
+                </div>
+                <div class="ht-step">
+                  <div class="ht-step-number" style="background:rgba(59,130,246,0.15); border-color:rgba(59,130,246,0.25); color:#3b82f6;">2</div>
+                  <div class="ht-step-body">
+                    <div class="ht-step-title">Wait for the tone, then key up:</div>
+                  </div>
+                </div>
+              </div>
+              <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(59,130,246,0.12); border-radius:var(--ht-radius-sm); padding:1rem 1.25rem; margin-top:0.5rem;">
+                <i class="fa fa-quote-left" style="color:#475569; font-size:0.75rem; display:block; margin-bottom:0.4rem;"></i>
+                <p style="color:#cbd5e1; font-style:italic; line-height:1.65; margin:0; font-size:0.92rem;">
+                  "All units, priority traffic &mdash; armed robbery in progress at First National Bank, 400 Main Street.
+                  Suspect described as male, black hoodie, armed with a handgun. Units 12 and 15 respond code 3. Time out: 22:45."
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="ht-tip">
+            <i class="fa fa-lightbulb ht-tip-icon"></i>
+            <div class="ht-tip-text">
+              Always include key details: <strong>unit assignment</strong>, <strong>incident type</strong>,
+              <strong>location</strong>, <strong>relevant details</strong> (suspect description, patient condition, etc.),
+              and <strong>time out</strong>. This mirrors real-world dispatch protocol.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="ht-subsection" id="tones-tips">
+          <h3 class="ht-subsection-title">Tips</h3>
+          <div class="ht-steps">
+            <div class="ht-step">
+              <div class="ht-step-number" style="background:rgba(34,197,94,0.15); border-color:rgba(34,197,94,0.25); color:#22c55e;"><i class="fa fa-check" style="font-size:0.7rem;"></i></div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Use Filter Chips</div>
+                <div class="ht-step-desc">Use the <strong>Police / Fire / EMS</strong> filter chips to narrow the tone board when you have many departments.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number" style="background:rgba(34,197,94,0.15); border-color:rgba(34,197,94,0.25); color:#22c55e;"><i class="fa fa-check" style="font-size:0.7rem;"></i></div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Search for Departments</div>
+                <div class="ht-step-desc">Use the <strong>search bar</strong> to quickly find a specific department by name &mdash; especially useful with 20+ departments.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number" style="background:rgba(34,197,94,0.15); border-color:rgba(34,197,94,0.25); color:#22c55e;"><i class="fa fa-check" style="font-size:0.7rem;"></i></div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Cooldown Prevention</div>
+                <div class="ht-step-desc">There's a <strong>3-second cooldown</strong> after pressing a tone button to prevent accidental double-triggers.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number" style="background:rgba(34,197,94,0.15); border-color:rgba(34,197,94,0.25); color:#22c55e;"><i class="fa fa-check" style="font-size:0.7rem;"></i></div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Activity Log</div>
+                <div class="ht-step-desc">Check the <strong>Recent Activity</strong> log to see who triggered what tone and when.</div>
+              </div>
+            </div>
+            <div class="ht-step">
+              <div class="ht-step-number" style="background:rgba(34,197,94,0.15); border-color:rgba(34,197,94,0.25); color:#22c55e;"><i class="fa fa-check" style="font-size:0.7rem;"></i></div>
+              <div class="ht-step-body">
+                <div class="ht-step-title">Sound Settings</div>
+                <div class="ht-step-desc">Members can adjust their alert volume via the <strong>speaker icon</strong> on their dashboard. Remind members to check their settings so they don't miss a tone.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div><!-- /.ht-content -->
   </div><!-- /.ht-layout -->
 
@@ -2379,7 +2720,8 @@
         '#penal-codes': '#penal-overview',
         '#court-cases': '#court-overview',
         '#community-settings': '#settings-overview',
-        '#rank-system': '#ranks-overview'
+        '#rank-system': '#ranks-overview',
+        '#tone-board': '#tones-overview'
       };
       var mapped = sectionMap[window.location.hash];
       if (mapped) hashTarget = document.querySelector(mapped);
@@ -2391,6 +2733,45 @@
     }
   }
 })();
+
+// Sidebar search filter
+function filterHelpNav(query) {
+  var q = query.toLowerCase().trim();
+  var sidebar = document.querySelector('.ht-sidebar');
+  var groups = sidebar.querySelectorAll('.ht-nav-group-title');
+  var links = sidebar.querySelectorAll('.ht-nav-link');
+
+  if (!q) {
+    // Show everything
+    groups.forEach(function(g) { g.style.display = ''; });
+    links.forEach(function(l) { l.style.display = ''; });
+    return;
+  }
+
+  // First pass: check which links match
+  var visibleGroups = new Set();
+  links.forEach(function(link) {
+    var text = link.textContent.toLowerCase();
+    // Also check the group title above this link
+    var prev = link.previousElementSibling;
+    while (prev && !prev.classList.contains('ht-nav-group-title')) {
+      prev = prev.previousElementSibling;
+    }
+    var groupText = prev ? prev.textContent.toLowerCase() : '';
+
+    if (text.indexOf(q) !== -1 || groupText.indexOf(q) !== -1) {
+      link.style.display = '';
+      if (prev) visibleGroups.add(prev);
+    } else {
+      link.style.display = 'none';
+    }
+  });
+
+  // Show/hide group titles
+  groups.forEach(function(g) {
+    g.style.display = visibleGroups.has(g) ? '' : 'none';
+  });
+}
 </script>
 
 </body>

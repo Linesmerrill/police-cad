@@ -6768,15 +6768,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
 
     const { event, communityId, data } = req.body;
-    console.log('[Webhook] Received event:', event, '| communityId:', communityId);
     if (!event || !communityId) {
-      console.log('[Webhook] Missing event or communityId');
       return res.status(400).json({ error: "Missing event or communityId" });
     }
 
     const roomName = `community:${communityId}`;
-    const room = io.sockets.adapter.rooms.get(roomName);
-    console.log('[Webhook] Room:', roomName, '| Clients in room:', room ? room.size : 0);
 
     if (event === "panic_created") {
       // Broadcast panic_button_updated to match existing socket event format
@@ -6861,8 +6857,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
       socket.join(roomName);
       socket.communityRoom = roomName;
       socket.communityId = data.communityId;
-      const room = io.sockets.adapter.rooms.get(roomName);
-      console.log('[Socket] Client joined room:', roomName, '| Total in room:', room ? room.size : 0);
       socket.emit("joined_room", { room: roomName, communityId: data.communityId });
     });
 
