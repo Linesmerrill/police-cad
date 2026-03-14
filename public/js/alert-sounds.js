@@ -9,7 +9,10 @@ window.AlertSounds = (function() {
   var defaults = {
     panic: '/static/audio/Police_panic_button_sound_adj.mp3',
     signal100: '/static/audio/Dispatch_signal_100_beep_adj.mp3',
-    holdTraffic: '/static/audio/Hold_traffic_sound_adj.mp3'
+    holdTraffic: '/static/audio/Hold_traffic_sound_adj.mp3',
+    toneLeo: '/static/audio/Tone_leo_alert.mp3',
+    toneFd: '/static/audio/Tone_fd_alert.mp3',
+    toneEms: '/static/audio/Tone_ems_alert.mp3'
   };
 
   var overrides = {};
@@ -120,7 +123,7 @@ window.AlertSounds = (function() {
   return {
     /**
      * Play a sound by key. Queues if another sound is already playing.
-     * @param {string} soundKey - One of: 'panic', 'signal100', 'holdTraffic'
+     * @param {string} soundKey - One of: 'panic', 'signal100', 'holdTraffic', 'toneLeo', 'toneFd', 'toneEms'
      */
     play: function(soundKey) {
       if (!isSoundEnabled()) return;

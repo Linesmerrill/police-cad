@@ -400,6 +400,19 @@
     html += '<div class="dds-section">';
     html += '<div class="dds-section-title-row"><span class="dds-section-title" style="margin-bottom:0;">General</span><span class="dds-autosave" id="dds-settings-status" style="opacity:0;"></span></div>';
     if (canEdit) {
+      var toneSound = dept.toneSound || '';
+      var toneSoundOptions = [
+        { value: '', label: 'Default (based on department type)' },
+        { value: 'leo', label: 'LEO Tone' },
+        { value: 'fd', label: 'Fire Dept Tone' },
+        { value: 'ems', label: 'EMS Tone' }
+      ];
+      var toneSoundSelect = '<select class="dds-input" id="dds-toneSound" style="cursor:pointer;">';
+      for (var i = 0; i < toneSoundOptions.length; i++) {
+        var opt = toneSoundOptions[i];
+        toneSoundSelect += '<option value="' + opt.value + '"' + (toneSound === opt.value ? ' selected' : '') + '>' + opt.label + '</option>';
+      }
+      toneSoundSelect += '</select>';
       html += '<div class="dds-field">' +
           '<label class="dds-field-label">Department Name</label>' +
           '<input type="text" class="dds-input" id="dds-name" maxlength="50" value="' + esc(deptName) + '" />' +
@@ -407,6 +420,11 @@
         '<div class="dds-field">' +
           '<label class="dds-field-label">Description</label>' +
           '<textarea class="dds-textarea" id="dds-desc" maxlength="250" placeholder="Add a description...">' + esc(deptDesc) + '</textarea>' +
+        '</div>' +
+        '<div class="dds-field">' +
+          '<label class="dds-field-label">Tone Sound</label>' +
+          '<span class="dds-toggle-desc" style="display:block;margin-bottom:6px;">The alert tone played when this department is dispatched</span>' +
+          toneSoundSelect +
         '</div>';
     } else {
       html += '<div class="dds-field">' +
@@ -459,6 +477,11 @@
         var v = $(this).is(':checked');
         $('#dds-privacy-desc').text(v ? 'Members must be approved to join' : 'All community members can access');
         autoSavePrivacy(v);
+      });
+
+      // Immediate save on tone sound change
+      $body.find('#dds-toneSound').on('change', function () {
+        autoSaveToneSound($(this).val());
       });
     }
   }
@@ -525,6 +548,28 @@
       },
       error: function () {
         showSaveStatus('#dds-privacy-status', 'error', 'Save failed');
+      }
+    });
+  }
+
+  /** Immediate save for the tone sound dropdown. */
+  function autoSaveToneSound(toneSound) {
+    var c = cfg();
+    var dept = getDept();
+
+    showSaveStatus('#dds-settings-status', 'saving');
+
+    $.ajax({
+      url: c.API_URL + '/api/v1/community/' + c.communityId + '/departments/' + c.departmentId,
+      method: 'PATCH',
+      contentType: 'application/json',
+      data: JSON.stringify({ toneSound: toneSound }),
+      success: function () {
+        dept.toneSound = toneSound;
+        showSaveStatus('#dds-settings-status', 'saved');
+      },
+      error: function () {
+        showSaveStatus('#dds-settings-status', 'error', 'Save failed');
       }
     });
   }

@@ -482,6 +482,33 @@ function initializeSocket() {
     showRealTimeToast('status', msg, 'success');
   });
 
+  // Listen for tone alerts
+  socket.on('tone_activated', function(data) {
+    if (data.communityId && data.communityId !== communityId) return;
+
+    // Check if this user's active department is targeted
+    var userDeptId = dbUser.user?.lastAccessedCommunity?.activeDepartmentId || '';
+    if (data.targetDeptIds && data.targetDeptIds.length > 0 && data.targetDeptIds.indexOf(userDeptId) === -1) return;
+
+    var soundKey = data.toneType === 'fd' ? 'toneFd' : data.toneType === 'ems' ? 'toneEms' : 'toneLeo';
+    AlertSounds.play(soundKey);
+
+    var banner = document.getElementById('tone-alert-banner');
+    banner.className = 'tone-alert-banner tone-' + data.toneType;
+    document.getElementById('tone-alert-title').textContent = 'TONE OUT \u2014 ' + data.toneName;
+    var triggeredBy = data.triggeredByCallSign ? data.triggeredByCallSign + ' (' + data.triggeredByName + ')' : data.triggeredByName;
+    document.getElementById('tone-alert-details').textContent = triggeredBy + ' \u2014 Stand by for voice dispatch.';
+    banner.style.display = 'block';
+    if (typeof adjustBannerOffsets === 'function') adjustBannerOffsets();
+
+    setTimeout(function() {
+      banner.style.display = 'none';
+      if (typeof adjustBannerOffsets === 'function') adjustBannerOffsets();
+    }, 3000);
+
+    showRealTimeToast('status', data.toneName + ' tone activated', 'info');
+  });
+
   // Listen for new BOLOs
   socket.on('created_bolo', function(data) {
     // Check community match

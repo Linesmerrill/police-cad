@@ -6807,6 +6807,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
         clearedByUsername: data.username,
         clearedByCallSign: data.callSign || "",
       });
+    } else if (event === "tone_activated") {
+      io.to(roomName).emit("tone_activated", {
+        toneType: data.toneType,
+        toneName: data.toneName,
+        targetDeptIds: data.targetDeptIds,
+        triggeredByName: data.triggeredByName,
+        triggeredByCallSign: data.triggeredByCallSign,
+        communityId: communityId,
+        createdAt: data.createdAt,
+      });
     }
 
     res.json({ success: true, event: event, communityId: communityId });
