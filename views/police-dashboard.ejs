@@ -6319,11 +6319,20 @@ window.showBoloModal = showBoloModal;
 
     // Listen for tone alerts
     dashboardSocket.on('tone_activated', function(data) {
-      if (data.communityId && data.communityId !== communityId) return;
+      console.log('[ToneAlert] Received tone_activated event:', data);
+      console.log('[ToneAlert] My communityId:', communityId, '| Event communityId:', data.communityId);
+      if (data.communityId && data.communityId !== communityId) {
+        console.log('[ToneAlert] Skipping — community mismatch');
+        return;
+      }
 
       // Check if this user's active department is targeted
       var userDeptId = dbUser.user?.lastAccessedCommunity?.activeDepartmentId || '';
-      if (data.targetDeptIds && data.targetDeptIds.length > 0 && data.targetDeptIds.indexOf(userDeptId) === -1) return;
+      console.log('[ToneAlert] My deptId:', userDeptId, '| Target depts:', data.targetDeptIds);
+      if (data.targetDeptIds && data.targetDeptIds.length > 0 && data.targetDeptIds.indexOf(userDeptId) === -1) {
+        console.log('[ToneAlert] Skipping — department not targeted');
+        return;
+      }
 
       // Play tone sound — use custom URL if provided, otherwise fall back to built-in
       if (data.toneSoundUrl) {
