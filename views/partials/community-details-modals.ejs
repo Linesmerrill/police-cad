@@ -14791,6 +14791,7 @@ async function saveEditEvent() {
   var rankMgmtMetricTypes = [];
   var rankMgmtMembers = [];
   var RANK_API = (typeof API_URL !== 'undefined') ? API_URL : 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+  var rankMgmtUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
 
   window.openRankManagementModal = function(departmentId) {
     rankMgmtDeptId = departmentId;
@@ -15094,7 +15095,7 @@ async function saveEditEvent() {
     // Disable the dropdown while request is in-flight
     if (selectEl) selectEl.disabled = true;
 
-    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/rank', {
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/rank?userId=' + rankMgmtUserId, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rankId: rankId })
@@ -15246,7 +15247,7 @@ async function saveEditEvent() {
       method = 'POST';
     }
 
-    fetch(url, {
+    fetch(url + (url.indexOf('?') === -1 ? '?' : '&') + 'userId=' + rankMgmtUserId, {
       method: method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -15283,7 +15284,7 @@ async function saveEditEvent() {
     });
     if (!confirmed) return;
 
-    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks/' + rankId, {
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks/' + rankId + '?userId=' + rankMgmtUserId, {
       method: 'DELETE'
     })
     .then(function(r) {
@@ -15422,7 +15423,7 @@ async function saveEditEvent() {
     btnEl.disabled = true;
     btnEl.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Promoting...';
 
-    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/rank', {
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/rank?userId=' + rankMgmtUserId, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rankId: nextRankId })
@@ -15483,7 +15484,7 @@ async function saveEditEvent() {
   };
 
   window.toggleCustomReq = function(userId, requirementId, met) {
-    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/custom-requirements/' + requirementId, {
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/custom-requirements/' + requirementId + '?userId=' + rankMgmtUserId, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ met: met })
@@ -15579,7 +15580,7 @@ async function saveEditEvent() {
 
     var orderedIds = sorted.map(function(r) { return r._id; });
 
-    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks/reorder', {
+    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/ranks/reorder?userId=' + rankMgmtUserId, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rankIds: orderedIds })
