@@ -93,16 +93,24 @@ window.AlertSounds = (function() {
     return true;
   }
 
+  // Custom/uploaded tones are typically mastered at full volume (~0 dB).
+  // Our built-in _adj files are normalized to ~-22 dB. This multiplier
+  // brings custom uploads roughly in line with the built-in sounds.
+  var CUSTOM_TONE_GAIN = 0.15;
+
   function playNext() {
     if (queue.length === 0) {
       isPlaying = false;
       return;
     }
     isPlaying = true;
-    var src = queue.shift();
+    var item = queue.shift();
+    var src = typeof item === 'string' ? item : item.src;
+    var isCustom = typeof item === 'object' && item.custom;
     var audio = getOrCreateAudio(src);
 
-    audio.volume = getVolume();
+    var vol = getVolume();
+    audio.volume = isCustom ? vol * CUSTOM_TONE_GAIN : vol;
     audio.currentTime = 0;
 
     // Clean up listeners from any previous play on this element
@@ -157,7 +165,7 @@ window.AlertSounds = (function() {
     playUrl: function(url) {
       if (!isSoundEnabled()) return;
       if (!url) return;
-      queue.push(url);
+      queue.push({ src: url, custom: true });
       if (!isPlaying) playNext();
     },
 
