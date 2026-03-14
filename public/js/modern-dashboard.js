@@ -3880,22 +3880,22 @@ function linkVehicle(vehicleId) {
 
 // Delink a vehicle from the civilian
 function delinkVehicle(vehicleId) {
-    if (!confirm('Are you sure you want to delink this vehicle?')) return;
-    
-    $.ajax({
-        url: `${API_URL}/api/v1/vehicle/${vehicleId}`,
-        method: 'PUT',
-        contentType: 'application/json',
-        data: JSON.stringify({
-            linkedCivilianID: "",
-        }),
-        success: function(response) {
-            showToast('Vehicle delinked successfully!');
-            getLinkedVehicles(linkedVehiclePage);
-        },
-        error: function(xhr) {
-            showToast('Error delinking vehicle: ' + (xhr.responseJSON?.message || 'Please try again.'));
-        }
+    showConfirmModal('Are you sure you want to delink this vehicle?', function() {
+        $.ajax({
+            url: `${API_URL}/api/v1/vehicle/${vehicleId}`,
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                linkedCivilianID: "",
+            }),
+            success: function(response) {
+                showToast('Vehicle delinked successfully!');
+                getLinkedVehicles(linkedVehiclePage);
+            },
+            error: function(xhr) {
+                showToast('Error delinking vehicle: ' + (xhr.responseJSON?.message || 'Please try again.'));
+            }
+        });
     });
 } 
 
@@ -4095,21 +4095,18 @@ function updateFirearmModern(firearmId) {
 }
 
 function deleteFirearmModern(firearmId) {
-    if (!confirm('Are you sure you want to delete this firearm? This action cannot be undone.')) {
-        return;
-    }
-    
-    $.ajax({
-        url: `${API_URL}/api/v1/firearm/${firearmId}`,
-        method: 'DELETE',
-        success: function(response) {
-            showToast('Firearm deleted successfully!');
-            closeFirearmDetailsModal();
-            
-            // Refresh firearms with a slight delay to ensure API has processed the deletion
-            setTimeout(function() {
-                // Reset to first page to ensure we see the updated list
-                currentGunPage = 0;
+    showConfirmModal('Are you sure you want to delete this firearm? This action cannot be undone.', function() {
+        $.ajax({
+            url: `${API_URL}/api/v1/firearm/${firearmId}`,
+            method: 'DELETE',
+            success: function(response) {
+                showToast('Firearm deleted successfully!');
+                closeFirearmDetailsModal();
+
+                // Refresh firearms with a slight delay to ensure API has processed the deletion
+                setTimeout(function() {
+                    // Reset to first page to ensure we see the updated list
+                    currentGunPage = 0;
                 // Wait a bit more if firearms are currently loading
                 if (isLoadingFirearms) {
                     setTimeout(function() {
@@ -4130,6 +4127,7 @@ function deleteFirearmModern(firearmId) {
             showToast('Error deleting firearm: ' + (xhr.responseJSON?.message || 'Unknown error'));
         }
     });
+  });
 }
 
 
@@ -4682,22 +4680,22 @@ function linkFirearm(firearmId) {
 
 // Delink a firearm from the civilian
 function delinkFirearm(firearmId) {
-    if (!confirm('Are you sure you want to delink this firearm?')) return;
-    
-    $.ajax({
-        url: `${API_URL}/api/v1/firearm/${firearmId}`,
-        method: 'PUT',
-        contentType: 'application/json',
-        data: JSON.stringify({
-            linkedCivilianID: "",
-        }),
-        success: function(response) {
-            showToast('Firearm delinked successfully!');
-            getLinkedFirearms(linkedFirearmPage);
-        },
-        error: function(xhr) {
-            showToast('Error delinking firearm: ' + (xhr.responseJSON?.message || 'Please try again.'));
-        }
+    showConfirmModal('Are you sure you want to delink this firearm?', function() {
+        $.ajax({
+            url: `${API_URL}/api/v1/firearm/${firearmId}`,
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                linkedCivilianID: "",
+            }),
+            success: function(response) {
+                showToast('Firearm delinked successfully!');
+                getLinkedFirearms(linkedFirearmPage);
+            },
+            error: function(xhr) {
+                showToast('Error delinking firearm: ' + (xhr.responseJSON?.message || 'Please try again.'));
+            }
+        });
     });
 }
 
@@ -4926,22 +4924,22 @@ function linkLicense(licenseId) {
 
 // Delink a license from the civilian
 function delinkLicense(licenseId) {
-    if (!confirm('Are you sure you want to delink this license?')) return;
-    
-    $.ajax({
-        url: `${API_URL}/api/v1/license/${licenseId}`,
-        method: 'PUT',
-        contentType: 'application/json',
-        data: JSON.stringify({
-            civilianID: "",
-        }),
-        success: function(response) {
-            showToast('License delinked successfully!');
-            getLinkedLicenses(linkedLicensePage);
-        },
-        error: function(xhr) {
-            showToast('Error delinking license: ' + (xhr.responseJSON?.message || 'Please try again.'));
-        }
+    showConfirmModal('Are you sure you want to delink this license?', function() {
+        $.ajax({
+            url: `${API_URL}/api/v1/license/${licenseId}`,
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                civilianID: "",
+            }),
+            success: function(response) {
+                showToast('License delinked successfully!');
+                getLinkedLicenses(linkedLicensePage);
+            },
+            error: function(xhr) {
+                showToast('Error delinking license: ' + (xhr.responseJSON?.message || 'Please try again.'));
+            }
+        });
     });
 }
 
@@ -5243,26 +5241,24 @@ function updateLicenseModern() {
 // Delete license
 function deleteLicenseModern() {
     const licenseId = document.getElementById('licenseIdHidden').value;
-    
-    if (!confirm('Are you sure you want to delete this license? This action cannot be undone.')) {
-        return;
-    }
-    
-    $.ajax({
-        url: `${API_URL}/api/v1/license/${licenseId}`,
-        method: 'DELETE',
-        success: function(response) {
-            showToast('License deleted successfully!');
-            closeLicenseDetailsModal();
-            
-            // Refresh licenses
-            setTimeout(function() {
-                getLinkedLicenses(linkedLicensePage);
-            }, 500);
-        },
-        error: function(xhr) {
-            showToast('Error deleting license: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
+
+    showConfirmModal('Are you sure you want to delete this license? This action cannot be undone.', function() {
+        $.ajax({
+            url: `${API_URL}/api/v1/license/${licenseId}`,
+            method: 'DELETE',
+            success: function(response) {
+                showToast('License deleted successfully!');
+                closeLicenseDetailsModal();
+
+                // Refresh licenses
+                setTimeout(function() {
+                    getLinkedLicenses(linkedLicensePage);
+                }, 500);
+            },
+            error: function(xhr) {
+                showToast('Error deleting license: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            }
+        });
     });
 }
 
@@ -5901,72 +5897,106 @@ $(document).on('click', '.medical-toggle-btn', function() {
   renderMedicalEntries(type);
 });
 
+// Confirmation modal — sits above all other modals (z-index: 3000)
+function showConfirmModal(message, onConfirm) {
+  // Remove any existing confirm modal
+  $('#heroui-confirm-overlay').remove();
+
+  var html = '<div id="heroui-confirm-overlay" style="display:flex;position:fixed;z-index:3000;inset:0;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;animation:heroui-confirm-fade 0.15s ease;">' +
+    '<div style="background:#1e2028;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:1.75rem;max-width:400px;width:92%;box-shadow:0 16px 48px rgba(0,0,0,0.5);animation:heroui-confirm-scale 0.2s cubic-bezier(0.16,1,0.3,1);">' +
+      '<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">' +
+        '<div style="width:36px;height:36px;border-radius:10px;background:rgba(239,68,68,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+          '<i class="fa fa-triangle-exclamation" style="color:#ef4444;font-size:1rem;"></i>' +
+        '</div>' +
+        '<h4 style="color:#f1f5f9;font-size:1.05rem;font-weight:600;margin:0;">Confirm Delete</h4>' +
+      '</div>' +
+      '<p style="color:#94a3b8;font-size:0.9rem;line-height:1.55;margin:0 0 1.5rem;">' + message + '</p>' +
+      '<div style="display:flex;gap:0.75rem;justify-content:flex-end;">' +
+        '<button id="heroui-confirm-cancel" style="background:rgba(255,255,255,0.06);color:#cbd5e1;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:0.55rem 1.15rem;font-size:0.88rem;font-weight:500;cursor:pointer;">Cancel</button>' +
+        '<button id="heroui-confirm-delete" style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:0.55rem 1.15rem;font-size:0.88rem;font-weight:600;cursor:pointer;">Delete</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+
+  $('body').append(html);
+
+  $('#heroui-confirm-cancel').on('click', function() {
+    $('#heroui-confirm-overlay').remove();
+  });
+  $('#heroui-confirm-overlay').on('click', function(e) {
+    if (e.target === this) $('#heroui-confirm-overlay').remove();
+  });
+  $('#heroui-confirm-delete').on('click', function() {
+    $('#heroui-confirm-overlay').remove();
+    onConfirm();
+  });
+}
+
 // Delete logic
 $(document).on('click', '.heroui-trash-btn', function() {
   const $btn = $(this);
   const type = $btn.data('type');
   const id = $btn.data('id');
   const civId = $('#civIdHidden').val();
-  if (!confirm('Are you sure you want to delete this record? This action cannot be undone.')) return;
-  
-  if (type === 'medication') {
-    $.ajax({
-      url: `${API_URL}/api/v1/medications/${id}`,
-      method: 'DELETE',
-      success: function() {
-        showToast('Medication deleted successfully');
-        renderCivMedicalTabs(); // Refresh the medical tab
-      },
-      error: function() {
-        showToast('Error deleting medication', 'error');
-      }
-    });
-  } else if (type === 'medicalReport') {
-    $.ajax({
-      url: `${API_URL}/api/v1/medical-reports/${id}`,
-      method: 'DELETE',
-      success: function() {
-        showToast('Medical report deleted successfully');
-        renderCivMedicalTabs(); // Refresh the medical tab
-      },
-      error: function() {
-        showToast('Error deleting medical report', 'error');
-      }
-    });
-  } else if (type === 'criminal') {
-    $.ajax({
-      url: `${API_URL}/api/v1/civilian/${civId}/criminal-history/${id}`,
-      method: 'DELETE',
-      success: function() {
-        const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
-        const civData = civ?.civilian || civ || {};
-        civData.criminalHistory = (civData.criminalHistory || []).filter(e => e._id !== id);
-        // Remove card from DOM and update metrics without resetting the active tab
-        $btn.closest('.heroui-criminal-card').remove();
-        updateCriminalHistoryMetrics(civData);
-      },
-      error: function() {
-        showToast('Failed to delete record.');
-      }
-    });
-  } else if (type === 'arrest') {
-    $.ajax({
-      url: `${API_URL}/api/v1/arrest-report/${id}`,
-      method: 'DELETE',
-      success: function() {
-        cachedArrestReports = cachedArrestReports.filter(e => e._id !== id);
-        cachedArrestReportsCount--;
-        const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
-        const civData = civ?.civilian || civ || {};
-        // Remove card from DOM and update metrics without resetting the active tab
-        $btn.closest('.heroui-criminal-card').remove();
-        updateCriminalHistoryMetrics(civData);
-      },
-      error: function() {
-        showToast('Failed to delete arrest report.');
-      }
-    });
-  }
+
+  showConfirmModal('Are you sure you want to delete this record? This action cannot be undone.', function() {
+    if (type === 'medication') {
+      $.ajax({
+        url: `${API_URL}/api/v1/medications/${id}`,
+        method: 'DELETE',
+        success: function() {
+          showToast('Medication deleted successfully');
+          renderCivMedicalTabs();
+        },
+        error: function() {
+          showToast('Error deleting medication', 'error');
+        }
+      });
+    } else if (type === 'medicalReport') {
+      $.ajax({
+        url: `${API_URL}/api/v1/medical-reports/${id}`,
+        method: 'DELETE',
+        success: function() {
+          showToast('Medical report deleted successfully');
+          renderCivMedicalTabs();
+        },
+        error: function() {
+          showToast('Error deleting medical report', 'error');
+        }
+      });
+    } else if (type === 'criminal') {
+      $.ajax({
+        url: `${API_URL}/api/v1/civilian/${civId}/criminal-history/${id}`,
+        method: 'DELETE',
+        success: function() {
+          const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
+          const civData = civ?.civilian || civ || {};
+          civData.criminalHistory = (civData.criminalHistory || []).filter(e => e._id !== id);
+          $btn.closest('.heroui-criminal-card').remove();
+          updateCriminalHistoryMetrics(civData);
+        },
+        error: function() {
+          showToast('Failed to delete record.');
+        }
+      });
+    } else if (type === 'arrest') {
+      $.ajax({
+        url: `${API_URL}/api/v1/arrest-report/${id}`,
+        method: 'DELETE',
+        success: function() {
+          cachedArrestReports = cachedArrestReports.filter(e => e._id !== id);
+          cachedArrestReportsCount--;
+          const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
+          const civData = civ?.civilian || civ || {};
+          $btn.closest('.heroui-criminal-card').remove();
+          updateCriminalHistoryMetrics(civData);
+        },
+        error: function() {
+          showToast('Failed to delete arrest report.');
+        }
+      });
+    }
+  });
 });
 
 // Edit logic for medical items
@@ -5990,7 +6020,7 @@ $(document).on('click', '.heroui-edit-btn', function() {
 function openEditMedicationModal(medication) {
   // Create modal HTML
   const modalHtml = `
-    <div id="editMedicationModal" class="heroui-modal" style="display:flex; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+    <div id="editMedicationModal" class="heroui-modal" style="display:flex; position:fixed; z-index:2500; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
       <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:500px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2rem; position:relative;">
         <div style="text-align:right;margin-bottom:1.5rem;">
           <button class="heroui-modal-close" onclick="closeEditMedicationModal()" style="font-size:2rem;background:none;border:none;color:#fff;cursor:pointer;">&times;</button>
@@ -6073,7 +6103,7 @@ function updateMedication() {
 function openEditMedicalReportModal(report) {
   // Create modal HTML
   const modalHtml = `
-    <div id="editMedicalReportModal" class="heroui-modal" style="display:flex; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+    <div id="editMedicalReportModal" class="heroui-modal" style="display:flex; position:fixed; z-index:2500; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
       <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:500px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2rem; position:relative;">
         <div style="text-align:right;margin-bottom:1.5rem;">
           <button class="heroui-modal-close" onclick="closeEditMedicalReportModal()" style="font-size:2rem;background:none;border:none;color:#fff;cursor:pointer;">&times;</button>
@@ -6168,7 +6198,7 @@ function updateMedicalReport() {
 function openAddMedicationModal() {
   // Create modal HTML
   const modalHtml = `
-    <div id="addMedicationModal" class="heroui-modal" style="display:flex; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+    <div id="addMedicationModal" class="heroui-modal" style="display:flex; position:fixed; z-index:2500; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
       <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:500px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2rem; position:relative;">
         <div style="text-align:right;margin-bottom:1.5rem;">
           <button class="heroui-modal-close" onclick="closeAddMedicationModal()" style="font-size:2rem;background:none;border:none;color:#fff;cursor:pointer;">&times;</button>
@@ -6255,7 +6285,7 @@ function openAddMedicalReportModal() {
   
   // Create modal HTML
   const modalHtml = `
-    <div id="addMedicalReportModal" class="heroui-modal" style="display:flex; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+    <div id="addMedicalReportModal" class="heroui-modal" style="display:flex; position:fixed; z-index:2500; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
       <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:500px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2rem; position:relative;">
         <div style="text-align:right;margin-bottom:1.5rem;">
           <button class="heroui-modal-close" onclick="closeAddMedicalReportModal()" style="font-size:2rem;background:none;border:none;color:#fff;cursor:pointer;">&times;</button>

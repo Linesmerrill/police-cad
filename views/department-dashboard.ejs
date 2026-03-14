@@ -2244,7 +2244,7 @@
     .dd-modal-overlay {
       position: fixed;
       inset: 0;
-      z-index: 9000;
+      z-index: 10001;
       background: rgba(0, 0, 0, 0.55);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
@@ -6619,7 +6619,10 @@ $('#dd-loading').hide();
     };
 
     window.pcResetToDefaults = function() {
-      if (!confirm('Reset all penal codes to defaults? This will overwrite any customizations.')) return;
+      ddModal({
+        type: 'warning', icon: 'fa-rotate-left', title: 'Reset Penal Codes',
+        message: 'Reset all penal codes to defaults? This will overwrite any customizations.',
+        confirmText: 'Reset', onConfirm: function() {
       $.ajax({
         url: API_URL + '/api/v1/community/' + communityId + '/penal-codes/reset',
         method: 'POST',
@@ -6640,6 +6643,7 @@ $('#dd-loading').hide();
           alert('Failed to reset penal codes.');
         }
       });
+    }});
     };
 
     // ── Penal Codes: Category CRUD ──
@@ -6677,10 +6681,15 @@ $('#dd-loading').hide();
     window.pcDeleteCategory = function(catIdx) {
       var cat = penalCodesData[catIdx];
       if (!cat) return;
-      if (!confirm('Delete "' + cat.name + '" and all its violations?')) return;
-      penalCodesData.splice(catIdx, 1);
-      pcSaveAll(function() {
-        renderPenalCodesCategories(penalCodesData);
+      ddModal({
+        type: 'danger', icon: 'fa-trash', title: 'Delete Category',
+        message: 'Delete "' + esc(cat.name) + '" and all its violations?',
+        confirmText: 'Delete', onConfirm: function() {
+          penalCodesData.splice(catIdx, 1);
+          pcSaveAll(function() {
+            renderPenalCodesCategories(penalCodesData);
+          });
+        }
       });
     };
 
@@ -6710,10 +6719,15 @@ $('#dd-loading').hide();
     window.pcDeleteViolation = function(catIdx, vIdx) {
       var v = penalCodesData[catIdx] && penalCodesData[catIdx].violations[vIdx];
       if (!v) return;
-      if (!confirm('Delete "' + v.name + '"?')) return;
-      penalCodesData[catIdx].violations.splice(vIdx, 1);
-      pcSaveAll(function() {
-        renderPenalCodesCategories(penalCodesData);
+      ddModal({
+        type: 'danger', icon: 'fa-trash', title: 'Delete Violation',
+        message: 'Delete "' + esc(v.name) + '"?',
+        confirmText: 'Delete', onConfirm: function() {
+          penalCodesData[catIdx].violations.splice(vIdx, 1);
+          pcSaveAll(function() {
+            renderPenalCodesCategories(penalCodesData);
+          });
+        }
       });
     };
 
