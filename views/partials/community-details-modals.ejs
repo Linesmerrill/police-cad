@@ -14575,11 +14575,11 @@ async function saveEditEvent() {
         statusEl.textContent = 'Uploading...';
 
         try {
-          // Get signature
+          // Get signature (include folder so it's part of the signed string)
           var sigRes = await fetch(window.API_URL + '/api/v1/generate-signature', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
+            body: JSON.stringify({ folder: 'tones' })
           });
           if (!sigRes.ok) throw new Error('Failed to get upload signature');
           var sig = await sigRes.json();
@@ -14592,7 +14592,6 @@ async function saveEditEvent() {
           formData.append('signature', sig.signature);
           formData.append('upload_preset', window.CLOUDINARY_UPLOAD_PRESET || '');
           formData.append('folder', 'tones');
-          formData.append('resource_type', 'video');
 
           var cloudRes = await fetch('https://api.cloudinary.com/v1_1/' + (window.CLOUDINARY_CLOUD_NAME || '') + '/video/upload', {
             method: 'POST',
