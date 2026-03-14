@@ -5898,7 +5898,9 @@ function renderTemplateCards() {
           hasUnsavedChanges
             ? `<button type="button" class="w-full bg-green-600 hover:bg-green-700 text-white py-1.5 rounded mt-2 font-semibold transition text-sm" onclick="saveTemplatePermissionChanges('${template.name}')"><i class='fa fa-save mr-1'></i>Save</button>`
             : `<button type="button" class="w-full bg-gray-600 text-gray-300 cursor-not-allowed py-1.5 rounded mt-2 font-semibold transition text-sm" disabled>Selected</button>`
-        ) : `<button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded mt-2 font-semibold transition text-sm" onclick="selectCreateDeptTemplate('${template.name}')">Select</button>`}
+        ) : template.name === 'Custom'
+            ? `<button type="button" class="w-full bg-gray-600 text-gray-300 cursor-not-allowed py-1.5 rounded mt-2 font-semibold transition text-sm" disabled>Coming Soon</button>`
+            : `<button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded mt-2 font-semibold transition text-sm" onclick="selectCreateDeptTemplate('${template.name}')">Select</button>`}
       </div>
     `;
     container.appendChild(card);
