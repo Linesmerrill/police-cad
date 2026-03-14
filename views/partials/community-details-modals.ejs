@@ -8058,7 +8058,7 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
             <div class="edm-tone-card">
               <div class="edm-tone-icon"><i class="fa fa-volume-high"></i></div>
               <div class="edm-tone-content">
-                <strong style="display:flex; align-items:center; gap:8px;">Dispatch Tone<% if (new Date() < new Date('2026-06-01')) { %><span style="background:linear-gradient(135deg, rgba(245,158,11,0.25), rgba(234,88,12,0.25)); color:#fbbf24; padding:1px 7px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(245,158,11,0.3);">Beta</span><% } %></strong>
+                <strong style="display:flex; align-items:center; gap:8px;">Dispatch Tone<% if (new Date() < new Date('2026-03-28')) { %><span style="background:linear-gradient(135deg, rgba(245,158,11,0.25), rgba(234,88,12,0.25)); color:#fbbf24; padding:1px 7px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(245,158,11,0.3);">Beta</span><% } %></strong>
                 <span>Alert tone played when this department is dispatched</span>
               </div>
               <select id="editDeptToneSound" class="edm-tone-select" onchange="triggerEditDeptAutoSaveImmediate()">

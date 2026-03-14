@@ -943,7 +943,7 @@
                                   <div class="tone-board-title">
                                     <i class="fa fa-broadcast-tower"></i>
                                     <span>TONE BOARD</span>
-                                    <span class="tb-beta-badge">BETA</span>
+                                    <% if (new Date() < new Date('2026-03-28')) { %><span class="tb-beta-badge">BETA</span><% } %>
                                   </div>
                                   <div class="tone-board-status">
                                     <span class="tb-status-dot"></span>
