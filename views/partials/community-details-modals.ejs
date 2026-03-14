@@ -6944,6 +6944,10 @@ function populateEditDeptModal(dept) {
     if (deleteBtn) deleteBtn.style.display = 'none';
   }
 
+  // Set tone sound dropdown
+  var toneSoundSelect = document.getElementById('editDeptToneSound');
+  if (toneSoundSelect) toneSoundSelect.value = dept.toneSound || '';
+
   // Dynamically render components from template, merging in any missing expected components
   var templateName = (dept.template && dept.template.name) ? dept.template.name : '';
   var existingComponents = (dept.template && dept.template.components) ? dept.template.components : [];
@@ -7463,6 +7467,64 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
   .edm-ranks-badge i { font-size: 8px; margin-right: 3px; }
   .edm-ranks-badge.has-count { display: flex; }
 
+  /* Tone sound card */
+  .edm-tone-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: rgba(245, 158, 11, 0.06);
+    border: 1px solid rgba(245, 158, 11, 0.12);
+    border-radius: 10px;
+    margin-bottom: 12px;
+  }
+  .edm-tone-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: rgba(245, 158, 11, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f59e0b;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .edm-tone-content {
+    flex: 1;
+    min-width: 0;
+  }
+  .edm-tone-content strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fde68a;
+    margin-bottom: 1px;
+  }
+  .edm-tone-content span {
+    font-size: 11px;
+    color: #f59e0b;
+    opacity: 0.8;
+  }
+  .edm-tone-select {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    color: #fde68a;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+    flex-shrink: 0;
+  }
+  .edm-tone-select:hover {
+    border-color: rgba(245, 158, 11, 0.4);
+    background: rgba(245, 158, 11, 0.15);
+  }
+  .edm-tone-select option {
+    background: #1e293b;
+    color: #e2e8f0;
+  }
+
   /* Component row */
   .edm-comp-row {
     display: flex;
@@ -7945,6 +8007,21 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
               <i class="fa fa-chevron-right edm-ranks-arrow"></i>
             </div>
 
+            <!-- Tone Sound -->
+            <div class="edm-tone-card">
+              <div class="edm-tone-icon"><i class="fa fa-volume-high"></i></div>
+              <div class="edm-tone-content">
+                <strong style="display:flex; align-items:center; gap:8px;">Dispatch Tone<% if (new Date() < new Date('2026-06-01')) { %><span style="background:linear-gradient(135deg, rgba(245,158,11,0.25), rgba(234,88,12,0.25)); color:#fbbf24; padding:1px 7px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(245,158,11,0.3);">Beta</span><% } %></strong>
+                <span>Alert tone played when this department is dispatched</span>
+              </div>
+              <select id="editDeptToneSound" class="edm-tone-select" onchange="triggerEditDeptAutoSaveImmediate()">
+                <option value="">Default</option>
+                <option value="leo">LEO Tone</option>
+                <option value="fd">Fire Dept Tone</option>
+                <option value="ems">EMS Tone</option>
+              </select>
+            </div>
+
             <!-- Members -->
             <div class="edm-section is-open">
               <div class="edm-section-header" onclick="this.parentElement.classList.toggle('is-open')">
@@ -8166,11 +8243,13 @@ async function saveEditDepartment() {
     }
 
     // Create the department object with only the fields we want to update
+    var toneSound = document.getElementById('editDeptToneSound') ? document.getElementById('editDeptToneSound').value : '';
     var payload = {
       name: name,
       description: description,
       approvalRequired: document.getElementById('editDeptApprovalRequired').checked,
-      image: finalImage
+      image: finalImage,
+      toneSound: toneSound
     };
 
     // Update the template components - include in the same PATCH request
