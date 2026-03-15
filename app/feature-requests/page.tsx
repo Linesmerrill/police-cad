@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
@@ -424,7 +424,15 @@ function FeatureCard({ item, onVote, animate }: {
 }
 
 // ── Main Page ──────────────────────────────────────────────────────
-export default function FeatureRequests() {
+export default function FeatureRequestsPage() {
+  return (
+    <Suspense>
+      <FeatureRequests />
+    </Suspense>
+  );
+}
+
+function FeatureRequests() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
