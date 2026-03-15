@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MagnifyingGlassIcon,
@@ -426,6 +426,13 @@ function FeatureCard({ item, onVote, animate }: {
 // ── Main Page ──────────────────────────────────────────────────────
 export default function FeatureRequests() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Read initial filter values from URL query params
+  const validSorts = SORT_OPTIONS.map(o => o.key);
+  const validStatuses = STATUS_FILTERS.map(f => f.key);
+  const initialSort = validSorts.includes(searchParams.get('sort') || '') ? searchParams.get('sort')! : 'trending';
+  const initialStatus = validStatuses.includes(searchParams.get('status') || '') ? searchParams.get('status')! : '';
 
   // State
   const [currentUser, setCurrentUser] = useState<{ _id: string } | null>(null);
@@ -433,8 +440,8 @@ export default function FeatureRequests() {
   const [requests, setRequests] = useState<FeatureRequest[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
-  const [sort, setSort] = useState('trending');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [sort, setSort] = useState(initialSort);
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -442,6 +449,16 @@ export default function FeatureRequests() {
   const [votingIds, setVotingIds] = useState<Set<string>>(new Set());
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Sync sort & status filter to URL query params
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (sort !== 'trending') params.set('sort', sort);
+    if (statusFilter) params.set('status', statusFilter);
+    const qs = params.toString();
+    const newPath = '/feature-requests' + (qs ? '?' + qs : '');
+    router.replace(newPath, { scroll: false });
+  }, [sort, statusFilter, router]);
 
   // Real-time updates via Socket.IO
   useFeatureRequestSocket({
