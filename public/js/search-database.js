@@ -136,7 +136,7 @@ $(document).ready(function () {
     });
 
     if (searchType === "Civilian") {
-      params.append("name", encodeURIComponent(query));
+      params.append("name", query);
       params.append("active_community_id", communityId);
       url = `${API_URL}/api/v1/civilians/search?${params.toString()}`;
     } else if (searchType === "Vehicle") {
