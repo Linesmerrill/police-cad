@@ -9,7 +9,10 @@ window.AlertSounds = (function() {
   var defaults = {
     panic: '/static/audio/Police_panic_button_sound_adj.mp3',
     signal100: '/static/audio/Dispatch_signal_100_beep_adj.mp3',
-    holdTraffic: '/static/audio/Hold_traffic_sound_adj.mp3'
+    holdTraffic: '/static/audio/Hold_traffic_sound_adj.mp3',
+    toneLeo: '/static/audio/Tone_leo_alert_adj.mp3',
+    toneFd: '/static/audio/Tone_fd_alert_adj.mp3',
+    toneEms: '/static/audio/Tone_ems_alert_adj.mp3'
   };
 
   var overrides = {};
@@ -90,16 +93,24 @@ window.AlertSounds = (function() {
     return true;
   }
 
+  // Custom/uploaded tones are typically mastered at full volume (~0 dB).
+  // Our built-in _adj files are normalized to ~-22 dB. This multiplier
+  // brings custom uploads roughly in line with the built-in sounds.
+  var CUSTOM_TONE_GAIN = 0.15;
+
   function playNext() {
     if (queue.length === 0) {
       isPlaying = false;
       return;
     }
     isPlaying = true;
-    var src = queue.shift();
+    var item = queue.shift();
+    var src = typeof item === 'string' ? item : item.src;
+    var isCustom = typeof item === 'object' && item.custom;
     var audio = getOrCreateAudio(src);
 
-    audio.volume = getVolume();
+    var vol = getVolume();
+    audio.volume = isCustom ? vol * CUSTOM_TONE_GAIN : vol;
     audio.currentTime = 0;
 
     // Clean up listeners from any previous play on this element
@@ -120,7 +131,7 @@ window.AlertSounds = (function() {
   return {
     /**
      * Play a sound by key. Queues if another sound is already playing.
-     * @param {string} soundKey - One of: 'panic', 'signal100', 'holdTraffic'
+     * @param {string} soundKey - One of: 'panic', 'signal100', 'holdTraffic', 'toneLeo', 'toneFd', 'toneEms'
      */
     play: function(soundKey) {
       if (!isSoundEnabled()) return;
@@ -144,6 +155,18 @@ window.AlertSounds = (function() {
       audio.volume = Math.max(0, Math.min(1, volumePercent / 100));
       audio.currentTime = 0;
       audio.play().catch(function() {});
+    },
+
+    /**
+     * Play a sound by direct URL. Queues if another sound is already playing.
+     * Used for custom tone sounds where the URL comes from the server.
+     * @param {string} url - Direct URL to the audio file
+     */
+    playUrl: function(url) {
+      if (!isSoundEnabled()) return;
+      if (!url) return;
+      queue.push({ src: url, custom: true });
+      if (!isPlaying) playNext();
     },
 
     /**

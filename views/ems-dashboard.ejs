@@ -68,6 +68,18 @@
         left: 300px;
       }
     }
+    /* Tone Alert Banner */
+    .tone-alert-banner { padding: 8px 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); animation: toneFadeIn 0.2s ease-out; }
+    .tone-alert-banner.tone-leo { background: linear-gradient(135deg, #1e40af, #1d4ed8); }
+    .tone-alert-banner.tone-fd { background: linear-gradient(135deg, #c2410c, #ea580c); }
+    .tone-alert-banner.tone-ems { background: linear-gradient(135deg, #166534, #16a34a); }
+    .tone-alert-content { display: flex; align-items: center; gap: 12px; }
+    .tone-alert-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; }
+    .tone-alert-text { flex: 1; }
+    .tone-alert-title { font-size: 13px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 1.5px; }
+    .tone-alert-details { font-size: 11px; color: rgba(255,255,255,0.9); margin-top: 1px; }
+    @keyframes toneFadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
     .signal-100-banner {
       background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
       padding: 6px 16px;
@@ -2084,6 +2096,15 @@
         </div>
         <div id="panic-alerts-banner" class="panic-alerts-banner"></div>
         <div id="panic-scroll-hint" class="panic-scroll-hint" style="display:none;"></div>
+        <div id="tone-alert-banner" class="tone-alert-banner" style="display:none;">
+          <div class="tone-alert-content">
+            <div class="tone-alert-icon"><i class="fa fa-broadcast-tower"></i></div>
+            <div class="tone-alert-text">
+              <div class="tone-alert-title" id="tone-alert-title">TONE OUT</div>
+              <div class="tone-alert-details" id="tone-alert-details"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Clear Signal 100 Confirmation Modal (outside nav for proper z-index) -->

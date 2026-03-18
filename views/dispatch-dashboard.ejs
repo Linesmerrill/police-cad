@@ -64,6 +64,47 @@
         left: 300px;
       }
     }
+    /* Tone Alert Banner */
+    .tone-alert-banner {
+      padding: 8px 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      animation: toneFadeIn 0.2s ease-out;
+    }
+    .tone-alert-banner.tone-leo { background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%); }
+    .tone-alert-banner.tone-fd { background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%); }
+    .tone-alert-banner.tone-ems { background: linear-gradient(135deg, #166534 0%, #16a34a 100%); }
+    .tone-alert-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .tone-alert-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+    }
+    .tone-alert-text { flex: 1; }
+    .tone-alert-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .tone-alert-details {
+      font-size: 11px;
+      color: rgba(255,255,255,0.9);
+      margin-top: 1px;
+    }
+    @keyframes toneFadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .signal-100-banner {
       background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
       padding: 6px 16px;
@@ -749,6 +790,17 @@
         </div>
         <div id="panic-alerts-banner" class="panic-alerts-banner"></div>
         <div id="panic-scroll-hint" class="panic-scroll-hint" style="display:none;"></div>
+        <div id="tone-alert-banner" class="tone-alert-banner" style="display:none;">
+          <div class="tone-alert-content">
+            <div class="tone-alert-icon">
+              <i class="fa fa-broadcast-tower"></i>
+            </div>
+            <div class="tone-alert-text">
+              <div class="tone-alert-title" id="tone-alert-title">TONE OUT</div>
+              <div class="tone-alert-details" id="tone-alert-details"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Clear Signal 100 Confirmation Modal (outside nav for proper z-index) -->
@@ -885,6 +937,53 @@
                                 </div>
                               </div>
 
+                              <!-- Tone Board Panel -->
+                              <div id="toneBoardPanel" class="tone-board-panel">
+                                <div class="tone-board-header">
+                                  <div class="tone-board-title">
+                                    <i class="fa fa-broadcast-tower"></i>
+                                    <span>TONE BOARD</span>
+                                    <% if (new Date() < new Date('2026-03-28')) { %><span class="tb-beta-badge">BETA</span><% } %>
+                                  </div>
+                                  <div class="tone-board-status">
+                                    <span class="tb-status-dot"></span>
+                                    <span class="tb-status-text">READY</span>
+                                  </div>
+                                </div>
+                                <div class="tone-board-controls">
+                                  <div class="tone-filter-bar">
+                                    <button class="tone-filter-chip active" data-filter="all" onclick="filterTones('all', this)">All</button>
+                                    <button class="tone-filter-chip chip-leo" data-filter="leo" onclick="filterTones('leo', this)"><i class="fa fa-shield-halved"></i> Police</button>
+                                    <button class="tone-filter-chip chip-fd" data-filter="fd" onclick="filterTones('fd', this)"><i class="fa fa-fire-flame-curved"></i> Fire</button>
+                                    <button class="tone-filter-chip chip-ems" data-filter="ems" onclick="filterTones('ems', this)"><i class="fa fa-kit-medical"></i> EMS</button>
+                                  </div>
+                                  <div class="tone-search-wrap">
+                                    <i class="fa fa-search"></i>
+                                    <input type="text" id="toneSearchInput" placeholder="Search departments..." oninput="searchTones(this.value)">
+                                  </div>
+                                </div>
+                                <div class="tone-board-buttons" id="toneBoardButtons">
+                                  <!-- Populated by JavaScript -->
+                                  <div class="tone-loading">
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                    <span>Loading tones...</span>
+                                  </div>
+                                </div>
+                                <div id="toneNoResults" class="tone-no-results" style="display:none;">
+                                  <i class="fa fa-search"></i>
+                                  <span>No matching departments</span>
+                                </div>
+                                <div class="tone-log-section">
+                                  <div class="tone-log-header" onclick="toggleToneLog()">
+                                    <span><i class="fa fa-clock-rotate-left"></i> Recent Activity</span>
+                                    <i id="toneLogToggleIcon" class="fa fa-chevron-down"></i>
+                                  </div>
+                                  <div id="toneLogList" class="tone-log-list" style="display:none;">
+                                    <!-- Populated by JavaScript -->
+                                  </div>
+                                </div>
+                              </div>
+
                               <!-- Hidden old table for backward compatibility -->
                               <table id="officerListTable" class="table table-hover table-bordered" style="display: none !important;">
                                 <thead>
@@ -898,6 +997,370 @@
                               </table>
 
                               <style>
+                                /* ============================
+                                   Tone Board — Dispatch Console
+                                   ============================ */
+                                .tone-board-panel {
+                                  background: #13161d;
+                                  border-radius: 14px;
+                                  border: 1px solid rgba(255,255,255,0.06);
+                                  box-shadow: 0 2px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+                                  margin: 1.5rem 0;
+                                  overflow: hidden;
+                                  position: relative;
+                                }
+                                /* Subtle top accent line */
+                                .tone-board-panel::before {
+                                  content: '';
+                                  position: absolute;
+                                  top: 0; left: 0; right: 0;
+                                  height: 2px;
+                                  background: linear-gradient(90deg, transparent, #a78bfa 30%, #7c3aed 50%, #a78bfa 70%, transparent);
+                                  opacity: 0.7;
+                                }
+                                .tone-board-header {
+                                  display: flex;
+                                  justify-content: space-between;
+                                  align-items: center;
+                                  padding: 0.9rem 1.25rem;
+                                  background: rgba(255,255,255,0.02);
+                                }
+                                .tone-board-title {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 0.6rem;
+                                  font-size: 1.1rem !important;
+                                  font-weight: 700;
+                                  color: #94a3b8;
+                                  text-transform: uppercase;
+                                  letter-spacing: 0.12em;
+                                }
+                                .tone-board-title i {
+                                  color: #a78bfa;
+                                  font-size: 1.15rem !important;
+                                }
+                                .tb-beta-badge {
+                                  font-size: 0.8rem !important;
+                                  font-weight: 700;
+                                  letter-spacing: 0.08em;
+                                  padding: 0.2rem 0.5rem;
+                                  border-radius: 4px;
+                                  background: rgba(167,139,250,0.2);
+                                  color: #a78bfa;
+                                  border: 1px solid rgba(167,139,250,0.3);
+                                  line-height: 1;
+                                  text-transform: uppercase;
+                                }
+                                .tone-board-status {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 0.4rem;
+                                  font-size: 0.8rem !important;
+                                  font-weight: 600;
+                                  text-transform: uppercase;
+                                  letter-spacing: 0.1em;
+                                  color: #4ade80;
+                                }
+                                .tb-status-dot {
+                                  width: 7px; height: 7px;
+                                  border-radius: 50%;
+                                  background: #4ade80;
+                                  box-shadow: 0 0 6px #4ade80;
+                                  animation: tb-pulse 2s ease-in-out infinite;
+                                }
+                                @keyframes tb-pulse {
+                                  0%, 100% { opacity: 1; }
+                                  50% { opacity: 0.4; }
+                                }
+                                .tone-board-status.sending {
+                                  color: #facc15;
+                                }
+                                .tone-board-status.sending .tb-status-dot {
+                                  background: #facc15;
+                                  box-shadow: 0 0 6px #facc15;
+                                  animation: none;
+                                }
+                                .tone-board-buttons {
+                                  display: flex;
+                                  flex-wrap: wrap;
+                                  gap: 0.5rem;
+                                  padding: 0.75rem 1.25rem 1rem;
+                                  max-height: 280px;
+                                  overflow-y: auto;
+                                }
+                                .tone-board-buttons::-webkit-scrollbar { width: 4px; }
+                                .tone-board-buttons::-webkit-scrollbar-track { background: transparent; }
+                                .tone-board-buttons::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+                                /* --- Tone Buttons --- */
+                                .tone-btn {
+                                  position: relative;
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 0.55rem;
+                                  padding: 0.65rem 1.2rem;
+                                  border-radius: 8px;
+                                  border: none;
+                                  cursor: pointer;
+                                  font-size: 1rem !important;
+                                  font-weight: 700;
+                                  color: white !important;
+                                  text-transform: uppercase;
+                                  letter-spacing: 0.06em;
+                                  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+                                  user-select: none;
+                                  overflow: hidden;
+                                }
+                                .tone-btn::before {
+                                  content: '';
+                                  position: absolute;
+                                  inset: 0;
+                                  border-radius: 8px;
+                                  border: 1px solid rgba(255,255,255,0.1);
+                                  pointer-events: none;
+                                }
+                                .tone-btn .tone-btn-icon {
+                                  width: 26px; height: 26px;
+                                  border-radius: 5px;
+                                  display: flex;
+                                  align-items: center;
+                                  justify-content: center;
+                                  font-size: 0.8rem !important;
+                                  background: rgba(255,255,255,0.15);
+                                  flex-shrink: 0;
+                                }
+                                .tone-btn:hover {
+                                  transform: translateY(-1px);
+                                  box-shadow: 0 4px 16px var(--tone-glow);
+                                }
+                                .tone-btn:active {
+                                  transform: translateY(0) scale(0.98);
+                                }
+                                /* Color variants */
+                                .tone-btn.tone-leo {
+                                  background: #1d4ed8;
+                                  --tone-glow: rgba(59,130,246,0.4);
+                                }
+                                .tone-btn.tone-fd {
+                                  background: #c2410c;
+                                  --tone-glow: rgba(234,88,12,0.4);
+                                }
+                                .tone-btn.tone-ems {
+                                  background: #15803d;
+                                  --tone-glow: rgba(22,163,74,0.4);
+                                }
+                                .tone-btn.tone-custom {
+                                  background: #7e22ce;
+                                  --tone-glow: rgba(147,51,234,0.4);
+                                }
+                                /* Sending state */
+                                .tone-btn.sending {
+                                  pointer-events: none;
+                                  opacity: 0.7;
+                                }
+                                .tone-btn.sending .tone-btn-label {
+                                  opacity: 0;
+                                }
+                                .tone-btn .tone-btn-sending {
+                                  display: none;
+                                  position: absolute;
+                                  inset: 0;
+                                  align-items: center;
+                                  justify-content: center;
+                                  font-size: 0.85rem !important;
+                                  font-weight: 700;
+                                  letter-spacing: 0.1em;
+                                  gap: 0.4rem;
+                                }
+                                .tone-btn.sending .tone-btn-sending {
+                                  display: flex;
+                                }
+                                /* Cooldown state */
+                                .tone-btn.cooldown {
+                                  pointer-events: none;
+                                  opacity: 0.45;
+                                  filter: saturate(0.5);
+                                }
+                                /* Sent flash */
+                                @keyframes tone-sent-flash {
+                                  0% { box-shadow: 0 0 0 0 var(--tone-glow); }
+                                  50% { box-shadow: 0 0 20px 4px var(--tone-glow); }
+                                  100% { box-shadow: none; }
+                                }
+                                .tone-btn.sent {
+                                  animation: tone-sent-flash 0.6s ease-out;
+                                }
+
+                                .tone-loading {
+                                  color: #64748b;
+                                  font-size: 1rem !important;
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 0.5rem;
+                                  padding: 0.5rem 0;
+                                }
+                                /* --- Recent Tones Log --- */
+                                .tone-log-section {
+                                  border-top: 1px solid rgba(255,255,255,0.05);
+                                }
+                                .tone-log-header {
+                                  display: flex;
+                                  justify-content: space-between;
+                                  align-items: center;
+                                  padding: 0.65rem 1.25rem;
+                                  cursor: pointer;
+                                  color: #64748b;
+                                  font-size: 0.9rem !important;
+                                  font-weight: 600;
+                                  text-transform: uppercase;
+                                  letter-spacing: 0.08em;
+                                  transition: color 0.15s;
+                                }
+                                .tone-log-header:hover { color: #94a3b8; }
+                                .tone-log-header i { font-size: 0.85rem !important; }
+                                .tone-log-list {
+                                  padding: 0 1.25rem 0.75rem;
+                                  max-height: 220px;
+                                  overflow-y: auto;
+                                }
+                                .tone-log-list::-webkit-scrollbar { width: 4px; }
+                                .tone-log-list::-webkit-scrollbar-track { background: transparent; }
+                                .tone-log-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+                                .tone-log-entry {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 0.75rem;
+                                  padding: 0.45rem 0;
+                                  border-bottom: 1px solid rgba(255,255,255,0.03);
+                                  font-size: 0.95rem !important;
+                                  color: #cbd5e1;
+                                }
+                                .tone-log-entry:last-child { border-bottom: none; }
+                                .tone-log-dot {
+                                  width: 7px; height: 7px;
+                                  border-radius: 50%;
+                                  flex-shrink: 0;
+                                }
+                                .tone-log-dot.dot-leo { background: #3b82f6; }
+                                .tone-log-dot.dot-fd { background: #ea580c; }
+                                .tone-log-dot.dot-ems { background: #16a34a; }
+                                .tone-log-dot.dot-custom { background: #9333ea; }
+                                .tone-log-name {
+                                  font-weight: 600;
+                                  font-size: 0.95rem !important;
+                                  white-space: nowrap;
+                                  width: 140px;
+                                  flex-shrink: 0;
+                                  overflow: hidden;
+                                  text-overflow: ellipsis;
+                                }
+                                .tone-log-by {
+                                  color: #64748b;
+                                  font-size: 0.9rem !important;
+                                  flex: 1;
+                                  min-width: 0;
+                                  overflow: hidden;
+                                  text-overflow: ellipsis;
+                                  white-space: nowrap;
+                                }
+                                .tone-log-time {
+                                  color: #475569;
+                                  font-size: 0.85rem !important;
+                                  font-variant-numeric: tabular-nums;
+                                  white-space: nowrap;
+                                  flex-shrink: 0;
+                                }
+                                .tone-log-empty {
+                                  text-align: center;
+                                  color: #475569;
+                                  padding: 0.75rem;
+                                  font-size: 0.9rem !important;
+                                }
+                                /* --- Filter & Search Controls --- */
+                                .tone-board-controls {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 0.5rem;
+                                  padding: 0 1.25rem;
+                                  padding-top: 0.75rem;
+                                  flex-wrap: wrap;
+                                }
+                                .tone-filter-bar {
+                                  display: flex;
+                                  gap: 0.3rem;
+                                  flex-wrap: wrap;
+                                }
+                                .tone-filter-chip {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 0.35rem;
+                                  padding: 0.35rem 0.75rem;
+                                  border-radius: 6px;
+                                  border: 1px solid rgba(255,255,255,0.08);
+                                  background: rgba(255,255,255,0.04);
+                                  color: #64748b;
+                                  font-size: 0.85rem !important;
+                                  font-weight: 600;
+                                  text-transform: uppercase;
+                                  letter-spacing: 0.06em;
+                                  cursor: pointer;
+                                  transition: all 0.15s ease;
+                                  white-space: nowrap;
+                                }
+                                .tone-filter-chip:hover {
+                                  background: rgba(255,255,255,0.08);
+                                  color: #94a3b8;
+                                }
+                                .tone-filter-chip.active {
+                                  background: rgba(255,255,255,0.1);
+                                  color: #e2e8f0;
+                                  border-color: rgba(255,255,255,0.15);
+                                }
+                                .tone-filter-chip.chip-leo.active { background: rgba(59,130,246,0.2); color: #93c5fd; border-color: rgba(59,130,246,0.3); }
+                                .tone-filter-chip.chip-fd.active { background: rgba(234,88,12,0.2); color: #fdba74; border-color: rgba(234,88,12,0.3); }
+                                .tone-filter-chip.chip-ems.active { background: rgba(22,163,74,0.2); color: #86efac; border-color: rgba(22,163,74,0.3); }
+                                .tone-search-wrap {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 0.4rem;
+                                  background: rgba(255,255,255,0.04);
+                                  border: 1px solid rgba(255,255,255,0.08);
+                                  border-radius: 6px;
+                                  padding: 0.3rem 0.6rem;
+                                  margin-left: auto;
+                                  min-width: 0;
+                                  max-width: 200px;
+                                  flex: 1;
+                                }
+                                .tone-search-wrap i {
+                                  color: #475569;
+                                  font-size: 0.8rem !important;
+                                  flex-shrink: 0;
+                                }
+                                .tone-search-wrap input {
+                                  background: none;
+                                  border: none;
+                                  outline: none;
+                                  color: #e2e8f0;
+                                  font-size: 0.9rem !important;
+                                  width: 100%;
+                                  min-width: 0;
+                                }
+                                .tone-search-wrap input::placeholder {
+                                  color: #475569;
+                                }
+                                .tone-search-wrap:focus-within {
+                                  border-color: rgba(167,139,250,0.3);
+                                }
+                                .tone-no-results {
+                                  display: flex;
+                                  align-items: center;
+                                  justify-content: center;
+                                  gap: 0.5rem;
+                                  padding: 1rem 1.25rem;
+                                  color: #475569;
+                                  font-size: 0.95rem !important;
+                                }
+
                                 /* Unit Status Panel Styles */
                                 .unit-status-panel {
                                   background: linear-gradient(135deg, #1a1f2e 0%, #2d3548 100%);
@@ -4082,6 +4545,43 @@
       }
     })
 
+    // Tone alert received
+    socket.on('tone_activated', (data) => {
+      if (data.communityId && data.communityId !== communityId) return;
+
+      // Play tone sound — use custom URL if provided, otherwise fall back to built-in
+      if (data.toneSoundUrl) {
+        AlertSounds.playUrl(data.toneSoundUrl);
+      } else {
+        var soundKey = 'toneLeo';
+        if (data.toneType === 'fd') soundKey = 'toneFd';
+        else if (data.toneType === 'ems') soundKey = 'toneEms';
+        AlertSounds.play(soundKey);
+      }
+
+      // Show the tone alert banner
+      var banner = document.getElementById('tone-alert-banner');
+      banner.className = 'tone-alert-banner tone-' + data.toneType;
+      document.getElementById('tone-alert-title').textContent = 'TONE OUT — ' + data.toneName;
+      var triggeredBy = data.triggeredByCallSign
+        ? data.triggeredByCallSign + ' (' + data.triggeredByName + ')'
+        : data.triggeredByName;
+      document.getElementById('tone-alert-details').textContent = triggeredBy + ' — Stand by for voice dispatch.';
+      banner.style.display = 'block';
+      adjustContentOffset();
+
+      // Auto-clear after 3 seconds
+      setTimeout(function() {
+        banner.style.display = 'none';
+        adjustContentOffset();
+      }, 3000);
+
+      showRealTimeToast('tone', data.toneName + ' tone activated by ' + (data.triggeredByCallSign || data.triggeredByName), 'info');
+
+      // Refresh tone log
+      loadToneLog();
+    })
+
     socket.on('updated_bolo', res => {
       $('#'+res.boloID+"-type").text(res.boloType)
       $('#'+res.boloID+"-location").text(res.location)
@@ -4769,7 +5269,7 @@
     }
 
     const toast = document.createElement('div');
-    const icons = { status: 'fa-broadcast-tower', bolo: 'fa-exclamation-triangle', call: 'fa-phone' };
+    const icons = { status: 'fa-broadcast-tower', bolo: 'fa-exclamation-triangle', call: 'fa-phone', tone: 'fa-broadcast-tower' };
     const colors = {
       info: 'rgba(59, 130, 246, 0.95)',
       warning: 'rgba(245, 158, 11, 0.95)',
@@ -6759,6 +7259,261 @@
       header.style.marginTop = h > 0 ? h + 'px' : '0';
     }
   }
+
+  // ==========================================
+  // TONE BOARD FUNCTIONS
+  // ==========================================
+
+  var toneBoardData = { presets: [], customGroups: [] };
+
+  function loadToneBoard() {
+    var communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+    if (!communityId) return;
+
+    $.ajax({
+      url: API_URL + '/api/v1/community/' + communityId + '/tone-groups',
+      method: 'GET',
+      headers: { 'x-access-token': dbUser.user.userAuthToken },
+      success: function(res) {
+        if (res.success) {
+          toneBoardData.presets = res.presets || [];
+          toneBoardData.customGroups = res.customGroups || [];
+          renderToneButtons();
+        }
+      },
+      error: function(xhr) {
+        console.warn('[ToneBoard] Failed to load tone groups:', xhr.status, xhr.statusText);
+        if (xhr.status === 404) {
+          document.getElementById('toneBoardButtons').innerHTML = '<span class="tone-loading">Tone board API not available yet</span>';
+        } else {
+          document.getElementById('toneBoardButtons').innerHTML = '<span class="tone-loading">Failed to load tone groups</span>';
+        }
+      }
+    });
+  }
+
+  var TONE_COOLDOWN_MS = 3000; // 3 second cooldown per button
+
+  function renderToneButtons() {
+    var container = document.getElementById('toneBoardButtons');
+    if (!container) return;
+    container.innerHTML = '';
+
+    var iconMap = { leo: 'fa-shield-halved', fd: 'fa-fire-flame-curved', ems: 'fa-kit-medical' };
+
+    // Preset buttons
+    toneBoardData.presets.forEach(function(preset) {
+      var btn = document.createElement('div');
+      var toneClass = 'tone-' + preset.toneSound;
+      btn.className = 'tone-btn ' + toneClass;
+      btn.setAttribute('data-tone-id', preset.toneSound + '_' + (preset.departmentIds || []).join(','));
+      btn.setAttribute('data-tone-type', preset.toneSound);
+      btn.setAttribute('data-tone-name', (preset.name || '').toLowerCase());
+      var icon = iconMap[preset.toneSound] || 'fa-broadcast-tower';
+      btn.innerHTML = '<span class="tone-btn-icon"><i class="fa ' + icon + '"></i></span>'
+        + '<span class="tone-btn-label">' + escapeHtml(preset.name) + '</span>'
+        + '<span class="tone-btn-sending"><i class="fa fa-circle-notch fa-spin"></i> SENDING</span>';
+      btn.onclick = function() { sendTone(preset.toneSound, preset.name, preset.departmentIds, btn); };
+      container.appendChild(btn);
+    });
+
+    // Custom group buttons
+    toneBoardData.customGroups.forEach(function(group) {
+      var btn = document.createElement('div');
+      btn.className = 'tone-btn tone-custom';
+      btn.setAttribute('data-tone-id', 'custom_' + group.key);
+      btn.setAttribute('data-tone-type', 'custom');
+      btn.setAttribute('data-tone-name', (group.name || '').toLowerCase());
+      var icon = iconMap[group.toneSound] || 'fa-broadcast-tower';
+      btn.innerHTML = '<span class="tone-btn-icon"><i class="fa ' + icon + '"></i></span>'
+        + '<span class="tone-btn-label">' + escapeHtml(group.name) + '</span>'
+        + '<span class="tone-btn-sending"><i class="fa fa-circle-notch fa-spin"></i> SENDING</span>';
+      btn.onclick = function() { sendTone(group.toneSound, group.name, group.departmentIds, btn); };
+      container.appendChild(btn);
+    });
+
+    if (toneBoardData.presets.length === 0 && toneBoardData.customGroups.length === 0) {
+      container.innerHTML = '<span class="tone-loading">No departments configured</span>';
+    }
+
+    // Re-apply current filter/search
+    applyToneFilters();
+  }
+
+  var activeToneFilter = 'all';
+  var activeToneSearch = '';
+
+  function filterTones(type, chipEl) {
+    activeToneFilter = type;
+    // Update active chip
+    document.querySelectorAll('.tone-filter-chip').forEach(function(c) { c.classList.remove('active'); });
+    if (chipEl) chipEl.classList.add('active');
+    applyToneFilters();
+  }
+
+  function searchTones(query) {
+    activeToneSearch = (query || '').toLowerCase().trim();
+    applyToneFilters();
+  }
+
+  function applyToneFilters() {
+    var buttons = document.querySelectorAll('#toneBoardButtons .tone-btn');
+    var noResults = document.getElementById('toneNoResults');
+    var visibleCount = 0;
+
+    buttons.forEach(function(btn) {
+      var type = btn.getAttribute('data-tone-type') || '';
+      var name = btn.getAttribute('data-tone-name') || '';
+      var matchFilter = activeToneFilter === 'all' || type === activeToneFilter;
+      var matchSearch = !activeToneSearch || name.indexOf(activeToneSearch) !== -1;
+      var visible = matchFilter && matchSearch;
+      btn.style.display = visible ? '' : 'none';
+      if (visible) visibleCount++;
+    });
+
+    if (noResults) {
+      noResults.style.display = (buttons.length > 0 && visibleCount === 0) ? 'flex' : 'none';
+    }
+  }
+
+  function setToneBoardStatus(status, text) {
+    var statusEl = document.querySelector('.tone-board-status');
+    var textEl = document.querySelector('.tb-status-text');
+    if (statusEl) {
+      statusEl.className = 'tone-board-status' + (status === 'sending' ? ' sending' : '');
+    }
+    if (textEl) textEl.textContent = text || (status === 'sending' ? 'SENDING' : 'READY');
+  }
+
+  function sendTone(toneType, toneName, targetDeptIds, btnEl) {
+    var communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+    if (!communityId) return;
+
+    // Prevent duplicate sends — check cooldown
+    if (btnEl && (btnEl.classList.contains('sending') || btnEl.classList.contains('cooldown'))) return;
+
+    var member = dbUser.user?.lastAccessedCommunity || {};
+    var callSign = '';
+    if (member.departmentCallSigns) {
+      callSign = Object.values(member.departmentCallSigns)[0] || '';
+    }
+
+    // Set sending state
+    if (btnEl) btnEl.classList.add('sending');
+    setToneBoardStatus('sending', 'SENDING');
+
+    $.ajax({
+      url: API_URL + '/api/v1/community/' + communityId + '/tones',
+      method: 'POST',
+      headers: { 'x-access-token': dbUser.user.userAuthToken },
+      contentType: 'application/json',
+      data: JSON.stringify({
+        toneType: toneType,
+        toneName: toneName,
+        targetDeptIds: targetDeptIds,
+        triggeredById: dbUser._id,
+        triggeredByName: dbUser.user.username,
+        triggeredByCallSign: callSign
+      }),
+      success: function() {
+        if (btnEl) {
+          btnEl.classList.remove('sending');
+          btnEl.classList.add('sent');
+          setTimeout(function() { btnEl.classList.remove('sent'); }, 600);
+          // Enter cooldown
+          btnEl.classList.add('cooldown');
+          setTimeout(function() { btnEl.classList.remove('cooldown'); }, TONE_COOLDOWN_MS);
+        }
+        setToneBoardStatus('ready', 'READY');
+      },
+      error: function() {
+        if (btnEl) btnEl.classList.remove('sending');
+        setToneBoardStatus('ready', 'READY');
+        showRealTimeToast('tone', 'Failed to send tone', 'error');
+      }
+    });
+  }
+
+  function loadToneLog() {
+    var communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+    if (!communityId) return;
+
+    $.ajax({
+      url: API_URL + '/api/v1/community/' + communityId + '/tones?limit=20',
+      method: 'GET',
+      headers: { 'x-access-token': dbUser.user.userAuthToken },
+      success: function(res) {
+        renderToneLog(res.logs || []);
+      }
+    });
+  }
+
+  function getToneDotClass(toneType) {
+    if (toneType === 'leo') return 'dot-leo';
+    if (toneType === 'fd') return 'dot-fd';
+    if (toneType === 'ems') return 'dot-ems';
+    return 'dot-custom';
+  }
+
+  function renderToneLog(logs) {
+    var container = document.getElementById('toneLogList');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (logs.length === 0) {
+      container.innerHTML = '<div class="tone-log-empty">No tones sent yet</div>';
+      return;
+    }
+
+    logs.forEach(function(log) {
+      var entry = document.createElement('div');
+      entry.className = 'tone-log-entry';
+
+      var dot = document.createElement('span');
+      dot.className = 'tone-log-dot ' + getToneDotClass(log.toneType);
+      entry.appendChild(dot);
+
+      var nameSpan = document.createElement('span');
+      nameSpan.className = 'tone-log-name';
+      nameSpan.textContent = log.toneName;
+      entry.appendChild(nameSpan);
+
+      var bySpan = document.createElement('span');
+      bySpan.className = 'tone-log-by';
+      bySpan.textContent = log.triggeredByCallSign
+        ? log.triggeredByCallSign + ' (' + log.triggeredByName + ')'
+        : log.triggeredByName;
+      entry.appendChild(bySpan);
+
+      var timeSpan = document.createElement('span');
+      timeSpan.className = 'tone-log-time';
+      var d = new Date(log.createdAt);
+      timeSpan.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      entry.appendChild(timeSpan);
+
+      container.appendChild(entry);
+    });
+  }
+
+  function toggleToneLog() {
+    var list = document.getElementById('toneLogList');
+    var icon = document.getElementById('toneLogToggleIcon');
+    if (list.style.display === 'none') {
+      list.style.display = 'block';
+      icon.className = 'fa fa-chevron-up';
+      loadToneLog();
+    } else {
+      list.style.display = 'none';
+      icon.className = 'fa fa-chevron-down';
+    }
+  }
+
+  // Initialize tone board on page load
+  $(document).ready(function() {
+    if (dbUser.user?.lastAccessedCommunity?.communityID) {
+      loadToneBoard();
+    }
+  });
 
   function holdTraffic() {
     //if it is already showing we don't want to show it again (there can only be 1 active

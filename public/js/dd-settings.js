@@ -460,6 +460,8 @@
         $('#dds-privacy-desc').text(v ? 'Members must be approved to join' : 'All community members can access');
         autoSavePrivacy(v);
       });
+
+
     }
   }
 

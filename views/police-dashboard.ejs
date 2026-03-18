@@ -68,6 +68,54 @@
       left: 300px;
     }
   }
+  /* Tone Alert Banner */
+  .tone-alert-banner {
+    padding: 12px 20px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    animation: tonePulseIn 0.3s ease-out, tonePulseGlow 1.5s ease-in-out 0.3s infinite;
+    border-bottom: 2px solid rgba(255,255,255,0.15);
+    z-index: 9999 !important;
+    position: relative;
+  }
+  .tone-alert-banner.tone-leo {
+    background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+    box-shadow: 0 4px 24px rgba(29,78,216,0.4);
+  }
+  .tone-alert-banner.tone-fd {
+    background: linear-gradient(135deg, #9a3412, #ea580c);
+    box-shadow: 0 4px 24px rgba(234,88,12,0.4);
+  }
+  .tone-alert-banner.tone-ems {
+    background: linear-gradient(135deg, #14532d, #16a34a);
+    box-shadow: 0 4px 24px rgba(22,163,74,0.4);
+  }
+  .tone-alert-content { display: flex; align-items: center; gap: 14px; }
+  .tone-alert-icon {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 18px !important;
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .tone-alert-text { flex: 1; }
+  .tone-alert-title {
+    font-size: 1rem !important; font-weight: 700; color: white !important;
+    text-transform: uppercase; letter-spacing: 1.5px;
+  }
+  .tone-alert-details {
+    font-size: 0.85rem !important; color: rgba(255,255,255,0.85) !important;
+    margin-top: 2px;
+  }
+  @keyframes tonePulseIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes tonePulseGlow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+  }
+
   .signal-100-banner {
     background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
     padding: 6px 16px;
@@ -677,6 +725,15 @@
         </div>
         <div id="panic-alerts-banner" class="panic-alerts-banner"></div>
         <div id="panic-scroll-hint" class="panic-scroll-hint" style="display:none;"></div>
+        <div id="tone-alert-banner" class="tone-alert-banner" style="display:none;">
+          <div class="tone-alert-content">
+            <div class="tone-alert-icon"><i class="fa fa-broadcast-tower"></i></div>
+            <div class="tone-alert-text">
+              <div class="tone-alert-title" id="tone-alert-title">TONE OUT</div>
+              <div class="tone-alert-details" id="tone-alert-details"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Clear Signal 100 Confirmation Modal (outside nav for proper z-index) -->
@@ -6129,7 +6186,6 @@ window.showBoloModal = showBoloModal;
 
     // Listen for room join confirmation
     dashboardSocket.on('joined_room', function(data) {
-      // Room joined successfully
     });
     dashboardSocket.on('room_error', function(data) {
       console.error('Room error:', data);
@@ -6290,6 +6346,41 @@ window.showBoloModal = showBoloModal;
         : (typeof data === 'object' && data.clearedByUsername) ? data.clearedByUsername : '';
       const msg = clearedBy ? 'Signal 100 cleared by ' + clearedBy : 'Signal 100 Cleared';
       showRealTimeToast('status', msg, 'success');
+    });
+
+    // Listen for tone alerts
+    dashboardSocket.on('tone_activated', function(data) {
+      if (data.communityId && data.communityId !== communityId) {
+        return;
+      }
+
+      // Check if this dashboard's department is targeted
+      if (data.targetDeptIds && data.targetDeptIds.length > 0 && typeof departmentId !== 'undefined' && departmentId && data.targetDeptIds.indexOf(departmentId) === -1) {
+        return;
+      }
+
+      // Play tone sound — use custom URL if provided, otherwise fall back to built-in
+      if (data.toneSoundUrl) {
+        AlertSounds.playUrl(data.toneSoundUrl);
+      } else {
+        var soundKey = data.toneType === 'fd' ? 'toneFd' : data.toneType === 'ems' ? 'toneEms' : 'toneLeo';
+        AlertSounds.play(soundKey);
+      }
+
+      var banner = document.getElementById('tone-alert-banner');
+      banner.className = 'tone-alert-banner tone-' + data.toneType;
+      document.getElementById('tone-alert-title').textContent = 'TONE OUT \u2014 ' + data.toneName;
+      var triggeredBy = data.triggeredByCallSign ? data.triggeredByCallSign + ' (' + data.triggeredByName + ')' : data.triggeredByName;
+      document.getElementById('tone-alert-details').textContent = triggeredBy + ' \u2014 Stand by for voice dispatch.';
+      banner.style.display = 'block';
+      if (typeof adjustBannerOffsets === 'function') adjustBannerOffsets();
+
+      setTimeout(function() {
+        banner.style.display = 'none';
+        if (typeof adjustBannerOffsets === 'function') adjustBannerOffsets();
+      }, 8000);
+
+      showRealTimeToast('status', data.toneName + ' tone activated', 'info');
     });
 
   }
