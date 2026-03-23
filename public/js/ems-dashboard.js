@@ -28,7 +28,22 @@ function ensureActiveDepartment() {
       departmentID: departmentId,
       activeDepartmentId: departmentId,
       activeDepartmentName: (typeof departmentName !== 'undefined' ? departmentName : '') || ''
-    })
+    }),
+    success: function() {
+      // Notify dispatch panel of department change so callsign updates in real-time
+      if (socket && socket.connected) {
+        socket.emit('update_status', {
+          userID: dbUser._id,
+          status: '',
+          statusCode: null,
+          setBy: dbUser.user?.username || '',
+          communityId: communityId,
+          updateDuty: false,
+          activeDepartmentId: departmentId,
+          activeDepartmentName: (typeof departmentName !== 'undefined' ? departmentName : '') || ''
+        });
+      }
+    }
   });
 }
 
