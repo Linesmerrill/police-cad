@@ -3756,7 +3756,22 @@ var filteredTenCodes = [];
           departmentID: departmentId,
           activeDepartmentId: departmentId,
           activeDepartmentName: departmentName || ''
-        })
+        }),
+        success: function() {
+          // Notify dispatch panel of department change so callsign updates in real-time
+          if (dashboardSocket && dashboardSocket.connected) {
+            dashboardSocket.emit('update_status', {
+              userID: dbUser._id,
+              status: '',
+              statusCode: null,
+              setBy: dbUser.user?.username || '',
+              communityId: communityId,
+              updateDuty: false,
+              activeDepartmentId: departmentId,
+              activeDepartmentName: departmentName || ''
+            });
+          }
+        }
       });
     }
 var currentPage = 1;

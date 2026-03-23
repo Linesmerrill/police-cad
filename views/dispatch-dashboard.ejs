@@ -5167,6 +5167,14 @@
             }
           }
 
+          // Update callsign display (may change when active department changes)
+          if (data.activeDepartmentId) {
+            const unit = unitsCache.find(u => u._id === userId);
+            const resolvedCS = getResolvedCallSign(userId, unit?.user?.callSign || data.callSign);
+            const callSignText = resolvedCS ? `Unit ${escapeHtml(resolvedCS)}` : 'No Unit #';
+            $unitCard.find('.unit-callsign').text(callSignText);
+          }
+
           // Trigger the highlight animation
           $unitCard.removeClass('status-updated');
           // Force reflow to restart animation
@@ -5377,11 +5385,15 @@
 
         memberDataCache = commData.community?.members || {};
 
-        // Restore preserved active department info
+        // Restore preserved active department info only if server data is missing it
         Object.keys(preservedActiveDepts).forEach(userId => {
           if (!memberDataCache[userId]) memberDataCache[userId] = {};
-          memberDataCache[userId].activeDepartmentId = preservedActiveDepts[userId].activeDepartmentId;
-          memberDataCache[userId].activeDepartmentName = preservedActiveDepts[userId].activeDepartmentName;
+          if (!memberDataCache[userId].activeDepartmentId) {
+            memberDataCache[userId].activeDepartmentId = preservedActiveDepts[userId].activeDepartmentId;
+          }
+          if (!memberDataCache[userId].activeDepartmentName) {
+            memberDataCache[userId].activeDepartmentName = preservedActiveDepts[userId].activeDepartmentName;
+          }
         });
 
         // Update community name in header

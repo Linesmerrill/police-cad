@@ -7842,7 +7842,32 @@ module.exports = function (app, passport, server, nextApp, handle) {
     socket.on("update_status", (req) => {
       if (!exists(req.userID) || req.userID == "") {
         return console.error("cannot update an empty userID");
-      } else if (!exists(req.status) || req.status == "") {
+      }
+
+      // Department-change-only event (no status update needed)
+      if ((!exists(req.status) || req.status == "") && req.activeDepartmentId) {
+        var isValid = isValidObjectIdLength(
+          req.userID,
+          "cannot lookup invalid length userID, socket: update_status (dept change)"
+        );
+        if (!isValid) return;
+        User.findById(ObjectId(req.userID), function (err, user) {
+          if (err) return console.error(err);
+          const statusUpdateData = {
+            userID: req.userID,
+            communityId: req.communityId,
+            username: user ? user.user.username : null,
+            callSign: user ? user.user.callSign : null,
+            activeDepartmentId: req.activeDepartmentId,
+            activeDepartmentName: req.activeDepartmentName || null,
+            timestamp: new Date().toISOString()
+          };
+          broadcastToCommunity("member_status_updated", statusUpdateData, req.communityId);
+        });
+        return;
+      }
+
+      if (!exists(req.status) || req.status == "") {
         return console.error("cannot update an empty status");
       }
       if (req.updateDuty) {
