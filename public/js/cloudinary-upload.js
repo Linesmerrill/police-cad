@@ -20,7 +20,10 @@ async function uploadToCloudinary(file, folder, publicId) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({})
+      body: JSON.stringify({
+        ...(folder && { folder }),
+        ...(publicId && { public_id: publicId }),
+      })
     });
 
     if (!signatureResponse.ok) {
@@ -36,6 +39,12 @@ async function uploadToCloudinary(file, folder, publicId) {
     formData.append('timestamp', timestamp);
     formData.append('signature', signature);
     formData.append('upload_preset', window.CLOUDINARY_UPLOAD_PRESET || '');
+    if (folder) {
+      formData.append('folder', folder);
+    }
+    if (publicId) {
+      formData.append('public_id', publicId);
+    }
 
     const cloudinaryResponse = await fetch(`https://api.cloudinary.com/v1_1/${window.CLOUDINARY_CLOUD_NAME || ''}/image/upload`, {
       method: 'POST',

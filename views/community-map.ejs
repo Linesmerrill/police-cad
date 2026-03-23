@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community Map - <%= community.community.name %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --cm-bg: #08090c;
+      --cm-surface: rgba(255, 255, 255, 0.03);
+      --cm-glass: rgba(255, 255, 255, 0.04);
+      --cm-glass-border: rgba(255, 255, 255, 0.06);
+      --cm-glass-hover: rgba(255, 255, 255, 0.07);
+      --cm-text: #e2e8f0;
+      --cm-text-muted: #64748b;
+      --cm-text-dim: #475569;
+      --cm-accent: #8b5cf6;
+      --cm-accent-glow: rgba(139, 92, 246, 0.15);
+      --cm-green: #22c55e;
+      --cm-red: #ef4444;
+      --cm-radius: 12px;
+      --cm-radius-sm: 8px;
+    }
+
+    body {
+      background: var(--cm-bg);
+      color: var(--cm-text);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 0.8125rem;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background effects */
+    .cm-bg-mesh {
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(245, 158, 11, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 50%);
+      animation: cm-mesh-drift 20s ease-in-out infinite alternate;
+    }
+    @keyframes cm-mesh-drift { 0% { opacity: 1; } 100% { opacity: 0.6; } }
+
+    .cm-grain {
+      position: fixed; inset: 0; z-index: 1;
+      opacity: 0.035; pointer-events: none;
+    }
+
+    /* Layout */
+    .cm-wrapper { position: relative; z-index: 2; min-height: 100vh; }
+
+    .cm-header {
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--cm-glass-border);
+      background: rgba(12, 13, 18, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    .cm-back-link {
+      display: inline-flex; align-items: center; gap: 0.625rem;
+      color: var(--cm-text-muted); text-decoration: none;
+      font-weight: 500; font-size: 0.875rem;
+      transition: color 0.15s;
+    }
+    .cm-back-link:hover { color: var(--cm-text); }
+    .cm-back-link i { font-size: 0.75rem; }
+
+    .cm-content { padding: 1.5rem 2rem; max-width: 1400px; margin: 0 auto; }
+
+    /* Card */
+    .cm-card {
+      background: var(--cm-glass);
+      border: 1px solid var(--cm-glass-border);
+      border-radius: var(--cm-radius);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    .cm-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 2px; background: var(--cm-accent); opacity: 0.7;
+      z-index: 1;
+    }
+    .cm-card:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .cm-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--cm-glass-border);
+    }
+
+    .cm-card-title {
+      display: flex; align-items: center; gap: 0.625rem;
+      font-size: 0.875rem; font-weight: 600; color: var(--cm-text);
+    }
+
+    .cm-card-actions { display: flex; gap: 0.5rem; }
+
+    /* Buttons */
+    .cm-btn {
+      padding: 0.5rem 1rem; border-radius: var(--cm-radius-sm);
+      font-family: 'Outfit', sans-serif; font-size: 0.75rem; font-weight: 600;
+      border: none; cursor: pointer; transition: all 0.15s ease;
+      display: inline-flex; align-items: center; gap: 0.375rem;
+    }
+    .cm-btn-accent {
+      background: var(--cm-accent-glow); color: var(--cm-accent);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+    .cm-btn-accent:hover {
+      background: rgba(139, 92, 246, 0.25);
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+    }
+    .cm-btn-danger {
+      background: rgba(239, 68, 68, 0.15); color: var(--cm-red);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .cm-btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
+    .cm-btn-glass {
+      background: var(--cm-glass); color: var(--cm-text-muted);
+      border: 1px solid var(--cm-glass-border);
+    }
+    .cm-btn-glass:hover { background: var(--cm-glass-hover); color: var(--cm-text); }
+
+    /* Default label */
+    .cm-default-label {
+      padding: 0.5rem 1.25rem;
+      color: var(--cm-text-dim); font-size: 0.75rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      background: rgba(139, 92, 246, 0.05);
+      border-bottom: 1px solid var(--cm-glass-border);
+    }
+
+    /* Map container */
+    .cm-map-container {
+      position: relative; overflow: hidden;
+      max-height: calc(100vh - 240px); min-height: 400px;
+      cursor: grab; background: rgba(0, 0, 0, 0.3);
+    }
+    .cm-map-container:active { cursor: grabbing; }
+    .cm-map-container img {
+      display: block; width: 100%;
+      transform-origin: 0 0; transition: none;
+      user-select: none; -webkit-user-drag: none;
+    }
+
+    /* Loading overlay */
+    .cm-loading-overlay {
+      position: absolute; inset: 0; z-index: 10;
+      background: rgba(8, 9, 12, 0.8);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 0.75rem;
+      color: var(--cm-text-muted); font-size: 0.8125rem;
+    }
+    .cm-spinner {
+      width: 32px; height: 32px;
+      border: 2px solid var(--cm-glass-border);
+      border-top-color: var(--cm-accent);
+      border-radius: 50%;
+      animation: cm-spin 0.8s linear infinite;
+    }
+    @keyframes cm-spin { to { transform: rotate(360deg); } }
+
+    /* Zoom controls */
+    .cm-zoom-controls {
+      display: flex; gap: 0.375rem;
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--cm-glass-border);
+      justify-content: center;
+    }
+
+    /* Error banner */
+    .cm-error-banner {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: var(--cm-radius-sm);
+      color: var(--cm-red); padding: 0.625rem 1rem;
+      font-size: 0.8125rem; margin-bottom: 1rem;
+    }
+
+    /* Modal */
+    .cm-modal-overlay {
+      position: fixed; inset: 0; z-index: 10001;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cm-modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .cm-modal {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.92);
+      background: rgba(16, 17, 24, 0.97);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--cm-radius);
+      width: 90%; max-width: 400px;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      padding: 1.5rem; overflow: hidden;
+    }
+    .cm-modal-overlay.active .cm-modal { transform: translate(-50%, -50%) scale(1); }
+    .cm-modal-accent {
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px; background: var(--cm-red); opacity: 0.8;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .cm-content { padding: 1rem; }
+      .cm-header { padding: 0.75rem 1rem; }
+      .cm-card-header { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+      .cm-map-container { min-height: 300px; max-height: calc(100vh - 280px); }
+      .cm-btn .cm-btn-label { display: none; }
+    }
+    @media (min-width: 769px) {
+      .cm-btn .cm-btn-label { display: inline; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background effects -->
+  <div class="cm-bg-mesh"></div>
+  <div class="cm-grain">
+    <svg width="100%" height="100%"><filter id="cmNoise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#cmNoise)"/></svg>
+  </div>
+
+  <!-- Main content -->
+  <div class="cm-wrapper">
+    <!-- Header -->
+    <header class="cm-header">
+      <a href="#" onclick="event.preventDefault(); if (document.referrer && document.referrer.includes(window.location.host)) { history.back(); } else { window.location.href = '/community/<%= encodedCommunityId %>'; }" class="cm-back-link">
+        <i class="fa fa-arrow-left"></i>
+        <span><%= community.community.name %></span>
+      </a>
+    </header>
+
+    <!-- Content -->
+    <div class="cm-content">
+      <!-- Error banner -->
+      <div id="errorBanner" class="cm-error-banner" style="display: none;"></div>
+
+      <!-- Map card -->
+      <div class="cm-card">
+        <!-- Card header with title and admin buttons -->
+        <div class="cm-card-header">
+          <div class="cm-card-title">
+            <i class="fa fa-map" style="color: var(--cm-accent); opacity: 0.7;"></i>
+            <span>Community Map</span>
+          </div>
+          <div class="cm-card-actions">
+            <%
+              // Permission check — same pattern as community-details.ejs
+              const userId = user && user._doc ? user._doc._id : (user && user._id ? user._id : null);
+              let canManageSettings = false;
+              if (userId && community.community && Array.isArray(community.community.roles)) {
+                community.community.roles.forEach(function(role) {
+                  if (Array.isArray(role.members) && role.members.includes(userId)) {
+                    if (Array.isArray(role.permissions)) {
+                      role.permissions.forEach(function(perm) {
+                        if ((perm.name === "administrator" && perm.enabled === true) || (perm.name === "manage community settings" && perm.enabled === true)) {
+                          canManageSettings = true;
+                        }
+                      });
+                    }
+                  }
+                });
+              }
+              // Also check if user is the community owner
+              if (userId && community.community && String(community.community.ownerID) === String(userId)) {
+                canManageSettings = true;
+              }
+            %>
+            <% if (canManageSettings) { %>
+              <button class="cm-btn cm-btn-accent" onclick="triggerUpload()">
+                <i class="fa fa-upload"></i>
+                <span class="cm-btn-label">Upload Map</span>
+              </button>
+              <button id="removeBtn" class="cm-btn cm-btn-danger" onclick="confirmRemoveMap()" style="display: <%= community.community.mapLink ? 'inline-flex' : 'none' %>;">
+                <i class="fa fa-trash"></i>
+                <span class="cm-btn-label">Remove</span>
+              </button>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Default map label -->
+        <div id="defaultLabel" class="cm-default-label" style="display: <%= community.community.mapLink ? 'none' : 'flex' %>;">
+          <i class="fa fa-info-circle"></i>
+          Default Map — Upload a custom map for your community
+        </div>
+
+        <!-- Map viewer -->
+        <div id="mapContainer" class="cm-map-container">
+          <!-- Loading overlay -->
+          <div id="loadingOverlay" class="cm-loading-overlay" style="display: none;">
+            <div class="cm-spinner"></div>
+            <span>Loading...</span>
+          </div>
+          <img
+            id="mapImage"
+            src="<%= community.community.mapLink || '/static/images/GTA-V-Custom-Postal-Code-Map.jpg' %>"
+            alt="Community Map"
+            draggable="false"
+          />
+        </div>
+
+        <!-- Zoom controls -->
+        <div class="cm-zoom-controls">
+          <button class="cm-btn cm-btn-glass" onclick="zoomOut()" title="Zoom Out">
+            <i class="fa fa-minus"></i>
+          </button>
+          <button class="cm-btn cm-btn-glass" onclick="resetView()" title="Reset View">
+            <i class="fa fa-expand"></i>
+          </button>
+          <button class="cm-btn cm-btn-glass" onclick="zoomIn()" title="Zoom In">
+            <i class="fa fa-plus"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Remove confirmation modal -->
+  <div id="removeModal" class="cm-modal-overlay">
+    <div class="cm-modal">
+      <div class="cm-modal-accent"></div>
+      <h3 style="color: var(--cm-text); font-family: 'Outfit'; font-size: 1rem; font-weight: 600; margin: 0 0 0.75rem 0;">Remove Custom Map?</h3>
+      <p style="color: var(--cm-text-muted); font-size: 0.8125rem; margin: 0 0 1.25rem 0;">This will revert to the default GTA-V map. You can upload a new map at any time.</p>
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button class="cm-btn cm-btn-glass" onclick="closeRemoveModal()">Cancel</button>
+        <button class="cm-btn cm-btn-danger" onclick="removeMap()">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden file input -->
+  <input type="file" id="mapFileInput" accept=".jpg,.jpeg,.png,.webp" style="display: none;" />
+
+  <!-- Cloudinary config and upload utility -->
+  <script>
+    window.API_URL = '<%= process.env.POLICE_CAD_API_URL || "" %>';
+    window.CLOUDINARY_CLOUD_NAME = '<%= process.env.CLOUDINARY_CLOUD_NAME || "" %>';
+    window.CLOUDINARY_API_KEY = '<%= process.env.CLOUDINARY_API_KEY || "" %>';
+    window.CLOUDINARY_UPLOAD_PRESET = '<%= process.env.CLOUDINARY_UPLOAD_PRESET || "" %>';
+  </script>
+  <script src="/static/js/cloudinary-upload.js"></script>
+
+  <script>
+    // ===== Map Pan/Zoom =====
+    var scale = 1;
+    var translateX = 0;
+    var translateY = 0;
+    var isDragging = false;
+    var startX, startY;
+    var MIN_SCALE = 0.5;
+    var MAX_SCALE = 10;
+
+    var mapImg = document.getElementById('mapImage');
+    var mapContainer = document.getElementById('mapContainer');
+
+    function updateTransform() {
+      mapImg.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ')';
+    }
+
+    // Mouse drag
+    mapContainer.addEventListener('mousedown', function(e) {
+      isDragging = true;
+      startX = e.clientX - translateX;
+      startY = e.clientY - translateY;
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (!isDragging) return;
+      translateX = e.clientX - startX;
+      translateY = e.clientY - startY;
+      updateTransform();
+    });
+    document.addEventListener('mouseup', function() { isDragging = false; });
+
+    // Touch drag
+    mapContainer.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        startX = e.touches[0].clientX - translateX;
+        startY = e.touches[0].clientY - translateY;
+      }
+    }, { passive: true });
+    mapContainer.addEventListener('touchmove', function(e) {
+      if (!isDragging || e.touches.length !== 1) return;
+      e.preventDefault();
+      translateX = e.touches[0].clientX - startX;
+      translateY = e.touches[0].clientY - startY;
+      updateTransform();
+    }, { passive: false });
+    mapContainer.addEventListener('touchend', function() { isDragging = false; });
+
+    // Scroll wheel zoom (zooms toward cursor)
+    mapContainer.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      var delta = e.deltaY > 0 ? 0.9 : 1.1;
+      var newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * delta));
+      var rect = mapContainer.getBoundingClientRect();
+      var mouseX = e.clientX - rect.left;
+      var mouseY = e.clientY - rect.top;
+      var ratio = newScale / scale;
+      translateX = mouseX - ratio * (mouseX - translateX);
+      translateY = mouseY - ratio * (mouseY - translateY);
+      scale = newScale;
+      updateTransform();
+    }, { passive: false });
+
+    // Double-click reset
+    mapContainer.addEventListener('dblclick', resetView);
+
+    function resetView() {
+      scale = 1; translateX = 0; translateY = 0;
+      updateTransform();
+    }
+    function zoomIn() {
+      scale = Math.min(MAX_SCALE, scale * 1.3);
+      updateTransform();
+    }
+    function zoomOut() {
+      scale = Math.max(MIN_SCALE, scale / 1.3);
+      updateTransform();
+    }
+
+    // ===== Upload & Remove =====
+    var communityId = '<%= communityId %>';
+    var fileInput = document.getElementById('mapFileInput');
+
+    function triggerUpload() {
+      fileInput.click();
+    }
+
+    fileInput.addEventListener('change', async function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+
+      // Validate file type
+      var validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (validTypes.indexOf(file.type) === -1) {
+        showError('Please select a JPG, PNG, or WebP image.');
+        fileInput.value = '';
+        return;
+      }
+
+      // Validate file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        showError('Image must be under 10MB.');
+        fileInput.value = '';
+        return;
+      }
+
+      showLoading(true);
+
+      try {
+        var url = await uploadToCloudinary(file, 'community-maps', communityId);
+
+        // Save mapLink to community via proxy route
+        var response = await fetch('/api/v1/community/' + communityId + '/map', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mapLink: url }),
+        });
+
+        if (!response.ok) throw new Error('Failed to save map');
+
+        // Update the displayed image (clear handlers first to prevent stale triggers)
+        mapImg.onload = null;
+        mapImg.onerror = null;
+        mapImg.src = url;
+        mapImg.onload = function() {
+          mapImg.onload = null;
+          resetView();
+          showLoading(false);
+          updateDefaultLabel(false);
+        };
+        mapImg.onerror = function() {
+          mapImg.onerror = null;
+          showLoading(false);
+          showError('Map uploaded but failed to display. Refresh the page.');
+        };
+      } catch (err) {
+        console.error('Upload error:', err);
+        showLoading(false);
+        showError('Failed to upload map. Please try again.');
+      }
+
+      fileInput.value = '';
+    });
+
+    // Remove map
+    function confirmRemoveMap() {
+      document.getElementById('removeModal').classList.add('active');
+    }
+    function closeRemoveModal() {
+      document.getElementById('removeModal').classList.remove('active');
+    }
+    async function removeMap() {
+      closeRemoveModal();
+      showLoading(true);
+      try {
+        var response = await fetch('/api/v1/community/' + communityId + '/map', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mapLink: null }),
+        });
+        if (!response.ok) throw new Error('Failed to remove map');
+        mapImg.onload = null;
+        mapImg.onerror = null;
+        mapImg.src = '/static/images/GTA-V-Custom-Postal-Code-Map.jpg';
+        resetView();
+        showLoading(false);
+        updateDefaultLabel(true);
+      } catch (err) {
+        console.error('Remove error:', err);
+        showLoading(false);
+        showError('Failed to remove map. Please try again.');
+      }
+    }
+
+    // ===== Helpers =====
+    function showError(msg) {
+      var banner = document.getElementById('errorBanner');
+      banner.textContent = msg;
+      banner.style.display = 'block';
+      setTimeout(function() { banner.style.display = 'none'; }, 5000);
+    }
+    function showLoading(show) {
+      document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+    }
+    function updateDefaultLabel(isDefault) {
+      var label = document.getElementById('defaultLabel');
+      if (label) label.style.display = isDefault ? 'flex' : 'none';
+      var removeBtn = document.getElementById('removeBtn');
+      if (removeBtn) removeBtn.style.display = isDefault ? 'none' : 'inline-flex';
+    }
+
+    // ===== Image Load Timeout (5s) =====
+    var loadTimeout = setTimeout(function() {
+      if (!mapImg.complete) {
+        mapImg.src = '/static/images/GTA-V-Custom-Postal-Code-Map.jpg';
+        updateDefaultLabel(true);
+      }
+    }, 5000);
+    mapImg.addEventListener('load', function() { clearTimeout(loadTimeout); });
+    mapImg.addEventListener('error', function() {
+      clearTimeout(loadTimeout);
+      mapImg.src = '/static/images/GTA-V-Custom-Postal-Code-Map.jpg';
+      updateDefaultLabel(true);
+    });
+  </script>
+</body>
+</html>

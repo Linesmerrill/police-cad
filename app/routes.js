@@ -202,6 +202,54 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Community Map page - community-specific map with upload/remove (matches mobile app)
+  app.get("/community/:hash/map", authCheck, async function (req, res) {
+    try {
+      const hash = req.params.hash;
+      const communityId = decodeId(hash);
+
+      if (!/^[a-fA-F0-9]{24}$/.test(communityId)) {
+        return res.status(404).render("error", {
+          message: "Community not found or an error occurred.",
+          redirect: "/communities",
+        });
+      }
+
+      const apiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}`;
+      const response = await axios.get(apiUrl, config);
+      const community = response.data || {};
+
+      const userId = req.user && req.user._doc ? req.user._doc._id : (req.user && req.user._id ? req.user._id : null);
+
+      // Check if user is an approved member
+      let isMemberApproved = false;
+      if (req.user && req.user._doc && req.user._doc.user && Array.isArray(req.user._doc.user.communities) && community && community._id) {
+        req.user._doc.user.communities.forEach(function(c) {
+          if (String(c.communityId) === String(community._id) && c.status === 'approved') {
+            isMemberApproved = true;
+          }
+        });
+      }
+
+      if (!isMemberApproved) {
+        return res.redirect(`/community/${hash}`);
+      }
+
+      res.render("community-map", {
+        user: req.user,
+        community,
+        communityId,
+        encodedCommunityId: hash,
+      });
+    } catch (error) {
+      console.error("[community-map] Error loading map page:", error.message);
+      return res.status(404).render("error", {
+        message: "Community not found or an error occurred.",
+        redirect: "/communities",
+      });
+    }
+  });
+
   // FAQ page is now handled by Next.js at app/faq/page.tsx
   // app.get("/faq", function (req, res) {
   //   res.render("faq");
@@ -3519,6 +3567,32 @@ module.exports = function (app, passport, server, nextApp, handle) {
       return res.status(401).json({ error: "Unauthorized", message: "Please log in to continue" });
     }
   }
+
+  // Update community map link (proxy to Go backend)
+  app.post("/api/v1/community/:id/map", apiAuthCheck, async function (req, res) {
+    try {
+      const communityId = req.params.id;
+      if (!/^[a-fA-F0-9]{24}$/.test(communityId)) {
+        return res.status(400).json({ error: "Invalid community ID" });
+      }
+
+      const userId = req.user._doc ? req.user._doc._id : req.user._id;
+      const response = await axios.patch(
+        `${policeCadApiUrl}/api/v1/community/${communityId}?userId=${userId}`,
+        { mapLink: req.body.mapLink },
+        { headers: { ...config.headers, 'Content-Type': 'application/json' } }
+      );
+
+      res.json(response.data);
+    } catch (error) {
+      console.error("[community-map] Error updating map:", error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to update map" });
+      }
+    }
+  });
 
   // Get all content creators (public)
   app.get("/api/v1/content-creators", async function (req, res) {
