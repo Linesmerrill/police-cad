@@ -134,6 +134,19 @@
     }
     .cm-btn-glass:hover { background: var(--cm-glass-hover); color: var(--cm-text); }
 
+    /* Beta badge */
+    .cm-beta-badge {
+      padding: 0.125rem 0.5rem;
+      border-radius: 99px;
+      font-size: 0.625rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--cm-accent-glow);
+      color: var(--cm-accent);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+
     /* Default label */
     .cm-default-label {
       padding: 0.5rem 1.25rem;
@@ -258,6 +271,9 @@
           <div class="cm-card-title">
             <i class="fa fa-map" style="color: var(--cm-accent); opacity: 0.7;"></i>
             <span>Community Map</span>
+            <% if (new Date() < new Date('2026-04-06T00:00:00Z')) { %>
+              <span class="cm-beta-badge">BETA</span>
+            <% } %>
           </div>
           <div class="cm-card-actions">
             <%
