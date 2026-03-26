@@ -1146,6 +1146,84 @@
             </div>
           </div>
 
+          <!-- Section: Command Dashboard Adoption -->
+          <div class="ac-metrics-section" id="metrics-section-cmd">
+            <div class="ac-metrics-section-header" onclick="toggleMetricsSection('cmd')">
+              <div class="ac-metrics-section-title">
+                <i class="fas fa-terminal"></i>
+                <span>Command Dashboard Adoption</span>
+              </div>
+              <i class="fas fa-chevron-down ac-metrics-section-chevron"></i>
+            </div>
+            <div class="ac-metrics-section-body">
+              <p style="font-size:0.75rem;color:var(--ac-text-muted);margin:0 0 1rem;">Track how many users have opted into the new command dashboard for police/LEO departments.</p>
+
+              <div id="metrics-cmd-loading" style="text-align:center;padding:2rem;color:var(--ac-text-muted);">
+                <i class="fas fa-spinner fa-spin"></i> Loading metrics...
+              </div>
+
+              <div id="metrics-cmd-content" style="display:none;">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:1rem;margin-bottom:1.5rem;">
+                  <div class="ac-stat" style="--stat-accent:#38bdf8;animation-delay:0s;">
+                    <i class="fas fa-terminal ac-stat-icon"></i>
+                    <div class="ac-stat-value" id="metrics-cmd-opted">&mdash;</div>
+                    <div class="ac-stat-label">Command Dashboard</div>
+                  </div>
+                  <div class="ac-stat" style="--stat-accent:var(--ac-blue);animation-delay:0.04s;">
+                    <i class="fas fa-desktop ac-stat-icon"></i>
+                    <div class="ac-stat-value" id="metrics-cmd-classic">&mdash;</div>
+                    <div class="ac-stat-label">Classic Police</div>
+                  </div>
+                  <div class="ac-stat" style="--stat-accent:var(--ac-green);animation-delay:0.08s;">
+                    <i class="fas fa-users ac-stat-icon"></i>
+                    <div class="ac-stat-value" id="metrics-cmd-total">&mdash;</div>
+                    <div class="ac-stat-label">Total Users</div>
+                  </div>
+                </div>
+
+                <!-- Adoption bar -->
+                <div style="background:var(--ac-glass);border:1px solid var(--ac-glass-border);border-radius:var(--ac-radius);padding:1rem;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.625rem;">
+                    <span style="font-size:0.75rem;font-weight:600;color:var(--ac-text);">Adoption Rate</span>
+                    <span style="font-size:0.8125rem;font-weight:700;color:#38bdf8;" id="metrics-cmd-pct">&mdash;</span>
+                  </div>
+                  <div style="height:10px;border-radius:5px;background:var(--ac-blue);overflow:hidden;">
+                    <div id="metrics-cmd-bar" style="height:100%;border-radius:5px 0 0 5px;background:linear-gradient(90deg,#38bdf8,#7dd3fc);width:0%;transition:width 0.8s ease;min-width:0;"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;margin-top:0.5rem;">
+                    <span style="font-size:0.625rem;color:var(--ac-text-dim);"><i class="fas fa-circle" style="color:#38bdf8;font-size:0.375rem;vertical-align:middle;margin-right:0.25rem;"></i>Command</span>
+                    <span style="font-size:0.625rem;color:var(--ac-text-dim);"><i class="fas fa-circle" style="color:var(--ac-blue);font-size:0.375rem;vertical-align:middle;margin-right:0.25rem;"></i>Classic</span>
+                  </div>
+                </div>
+
+                <!-- Command Opt-Ins Chart -->
+                <div id="chart-cmd-card" style="display:none;margin-top:1rem;">
+                  <div class="ac-chart-card" style="--chart-accent:#38bdf8;animation-delay:0.1s;">
+                    <div class="ac-chart-header">
+                      <div>
+                        <div class="ac-chart-title">Daily Opt-Ins</div>
+                        <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
+                          <span class="ac-chart-value" id="chart-cmd-total">&mdash;</span>
+                          <span class="ac-chart-trend flat" id="chart-cmd-trend">&mdash;</span>
+                        </div>
+                      </div>
+                      <span style="font-size:0.625rem;color:var(--ac-text-dim);font-weight:500;">Last 7 days</span>
+                    </div>
+                    <div class="ac-chart-svg-wrap" id="chart-cmd-wrap">
+                      <svg class="ac-chart-svg" id="chart-cmd-svg" preserveAspectRatio="none"></svg>
+                      <div class="ac-chart-tooltip" id="chart-cmd-tooltip">
+                        <div class="ac-chart-tooltip-date"></div>
+                        <div class="ac-chart-tooltip-value"></div>
+                      </div>
+                    </div>
+                    <div class="ac-chart-labels" id="chart-cmd-labels"></div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
           <!-- Trend Charts -->
           <div class="ac-charts-row" id="metrics-charts-row" style="display:none;">
             <div class="ac-chart-card" style="--chart-accent:var(--ac-green);animation-delay:0.2s;">
@@ -5725,6 +5803,19 @@
         $('#metrics-beta-bar').css('width', pct + '%');
         $('#metrics-beta-loading').hide();
         $('#metrics-beta-content').show();
+
+        // Command dashboard metrics
+        var cmdOptedIn = data.cmdOptedIn || 0;
+        var cmdClassic = data.cmdClassic || 0;
+        var cmdPct = total > 0 ? Math.round((cmdOptedIn / total) * 100) : 0;
+
+        $('#metrics-cmd-opted').text(cmdOptedIn.toLocaleString());
+        $('#metrics-cmd-classic').text(cmdClassic.toLocaleString());
+        $('#metrics-cmd-total').text(total.toLocaleString());
+        $('#metrics-cmd-pct').text(cmdPct + '%');
+        $('#metrics-cmd-bar').css('width', cmdPct + '%');
+        $('#metrics-cmd-loading').hide();
+        $('#metrics-cmd-content').show();
       }
 
       // -- Daily Trend Charts --
@@ -5748,6 +5839,7 @@
 
       function renderTrendCharts(days) {
         var betaValues = days.map(function(d) { return d.betaOptIns; });
+        var cmdValues = days.map(function(d) { return d.cmdOptIns || 0; });
         var userValues = days.map(function(d) { return d.newUsers; });
         var labels = days.map(function(d) {
           var parts = d.date.split('-');
@@ -5761,18 +5853,28 @@
         });
 
         renderLineChart('chart-beta', betaValues, labels, fullLabels, 'var(--ac-accent)', '#a78bfa');
+        renderLineChart('chart-cmd', cmdValues, labels, fullLabels, '#38bdf8', '#7dd3fc');
         renderLineChart('chart-users', userValues, labels, fullLabels, 'var(--ac-green)', '#4ade80');
 
         // Update totals and trends
         var betaSum = betaValues.reduce(function(a,b) { return a+b; }, 0);
+        var cmdSum = cmdValues.reduce(function(a,b) { return a+b; }, 0);
         var userSum = userValues.reduce(function(a,b) { return a+b; }, 0);
         $('#chart-beta-total').text(betaSum.toLocaleString());
+        $('#chart-cmd-total').text(cmdSum.toLocaleString());
         $('#chart-users-total').text(userSum.toLocaleString());
+
+        // Show command dashboard chart card
+        $('#chart-cmd-card').show();
 
         // Trend: compare last 3 days vs first 3 days
         var betaRecent = betaValues.slice(-3).reduce(function(a,b){return a+b;},0);
         var betaOlder = betaValues.slice(0,3).reduce(function(a,b){return a+b;},0);
         applyTrend('chart-beta-trend', betaRecent, betaOlder);
+
+        var cmdRecent = cmdValues.slice(-3).reduce(function(a,b){return a+b;},0);
+        var cmdOlder = cmdValues.slice(0,3).reduce(function(a,b){return a+b;},0);
+        applyTrend('chart-cmd-trend', cmdRecent, cmdOlder);
 
         var userRecent = userValues.slice(-3).reduce(function(a,b){return a+b;},0);
         var userOlder = userValues.slice(0,3).reduce(function(a,b){return a+b;},0);
