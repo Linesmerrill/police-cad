@@ -35,7 +35,7 @@
 
     var css =
       /* ── Shared banner ── */
-      '.cd-alert-banner{position:sticky;top:0;z-index:90;width:100%;overflow:hidden;transition:max-height .35s ease,opacity .35s ease;}' +
+      '.cd-alert-banner{position:sticky;top:0;z-index:250;width:100%;overflow:hidden;transition:max-height .35s ease,opacity .35s ease;}' +
 
       /* ── Signal 100 ── */
       '.cd-alert-signal100{' +

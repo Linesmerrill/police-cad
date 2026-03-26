@@ -163,11 +163,16 @@
     @keyframes cd-spin { to { transform: rotate(360deg); } }
 
     /* Mobile sidebar toggle */
-    .cd-sidebar-toggle { display: none; position: fixed; top: 0.75rem; left: 0.75rem; z-index: 200; width: 2.25rem; height: 2.25rem; border-radius: var(--cd-radius-sm); border: 1px solid var(--cd-glass-border); background: rgba(5, 10, 18, 0.9); color: var(--cd-text); font-size: 1rem; cursor: pointer; align-items: center; justify-content: center; }
+    .cd-sidebar-toggle { display: none; width: 2.25rem; height: 2.25rem; border-radius: var(--cd-radius-sm); border: 1px solid var(--cd-glass-border); background: var(--cd-glass); color: var(--cd-text-muted); font-size: 1rem; cursor: pointer; align-items: center; justify-content: center; transition: all 0.15s; }
+    .cd-sidebar-toggle:hover { background: var(--cd-glass-hover); color: var(--cd-text); }
 
-    /* Toast */
-    .cd-toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--cd-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--cd-glass-border); border-radius: var(--cd-radius-sm); padding: 0.75rem 1rem; font-size: 0.8125rem; color: var(--cd-text); z-index: 9999; opacity: 0; transform: translateY(0.5rem); transition: all 0.3s; pointer-events: none; }
-    .cd-toast.show { opacity: 1; transform: translateY(0); }
+    /* Toast stack */
+    .cd-toast-stack { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column-reverse; gap: 0.5rem; pointer-events: none; }
+    .cd-toast-item { background: rgba(5,10,18,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--cd-glass-border); border-radius: var(--cd-radius-sm); padding: 0.625rem 1rem; font-size: 0.8125rem; color: var(--cd-text); pointer-events: auto; opacity: 0; transform: translateY(0.5rem) scale(0.97); transition: all 0.25s cubic-bezier(0.4,0,0.2,1); border-left: 3px solid var(--cd-accent); display: flex; align-items: center; gap: 0.5rem; max-width: 22rem; cursor: pointer; }
+    .cd-toast-item.show { opacity: 1; transform: translateY(0) scale(1); }
+    .cd-toast-item.hide { opacity: 0; transform: translateY(-0.5rem) scale(0.97); }
+    .cd-toast-icon { font-size: 0.875rem; flex-shrink: 0; }
+    .cd-toast-msg { flex: 1; line-height: 1.4; }
 
     /* ═══ dd- classes reused from department-dashboard for component compatibility ═══ */
 
@@ -384,7 +389,6 @@
       .cd-sidebar-close { display: block; }
       .cd-sidebar-toggle { display: flex; }
       .cd-main { margin-left: 0; }
-      .cd-topbar { padding-left: 3.5rem; }
       .dd-stats-sections { grid-template-columns: 1fr; }
       .dd-grid { grid-template-columns: 1fr; }
       .cd-content { padding: 0.5rem; }
@@ -417,9 +421,6 @@
   <div class="cd-bg-mesh"></div>
   <div class="cd-grain"></div>
 
-  <button class="cd-sidebar-toggle" id="cd-sidebar-open" onclick="document.querySelector('.cd-sidebar').classList.add('open'); this.style.display='none';">
-    <i class="fa fa-bars"></i>
-  </button>
 
   <%
     var communityId = user.user?.lastAccessedCommunity?.communityID || '';
@@ -437,7 +438,7 @@
           <img src="/static/images/lines-police-cad-discord-logo-2024-github-profile.png" alt="">
           <span>Lines Police CAD</span>
         </a>
-        <button class="cd-sidebar-close" onclick="document.querySelector('.cd-sidebar').classList.remove('open'); document.getElementById('cd-sidebar-open').style.display=''">
+        <button class="cd-sidebar-close" onclick="document.querySelector('.cd-sidebar').classList.remove('open')">
           <i class="fa fa-times"></i>
         </button>
       </div>
@@ -557,6 +558,9 @@
   <main class="cd-main">
     <div class="cd-topbar">
       <div class="cd-topbar-left">
+        <button class="cd-sidebar-toggle" id="cd-sidebar-open" onclick="document.querySelector('.cd-sidebar').classList.add('open');">
+          <i class="fa fa-bars"></i>
+        </button>
         <div class="cd-topbar-title" id="dd-topbar-title">Overview</div>
         <span class="cd-topbar-dept-badge" id="dd-topbar-dept-badge" style="display:none;"></span>
       </div>
@@ -582,7 +586,7 @@
     </div>
   </main>
 
-  <div class="cd-toast" id="cd-toast"></div>
+  <div class="cd-toast-stack" id="cd-toast-stack"></div>
 
   <!-- Config must be set before dd-components.js loads -->
   <script>
@@ -612,12 +616,42 @@
       return div.innerHTML;
     };
     window.ddToast = function(msg, type) {
-      var el = document.getElementById('cd-toast');
-      if (!el) return;
-      el.textContent = msg;
-      el.style.borderLeftColor = type === 'success' ? 'var(--cd-green)' : type === 'error' ? 'var(--cd-red)' : 'var(--cd-accent)';
-      el.classList.add('show');
-      setTimeout(function() { el.classList.remove('show'); }, 2500);
+      var stack = document.getElementById('cd-toast-stack');
+      if (!stack) return;
+
+      var colors = { success: 'var(--cd-green)', error: 'var(--cd-red)', warning: 'var(--cd-amber)' };
+      var icons = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-circle' };
+      var color = colors[type] || 'var(--cd-accent)';
+      var icon = icons[type] || 'fa-info-circle';
+
+      var el = document.createElement('div');
+      el.className = 'cd-toast-item';
+      el.style.borderLeftColor = color;
+      el.innerHTML = '<i class="fa ' + icon + ' cd-toast-icon" style="color:' + color + ';"></i><span class="cd-toast-msg">' + msg + '</span>';
+
+      // Click to dismiss
+      el.onclick = function() { dismiss(); };
+
+      stack.appendChild(el);
+
+      // Cap at 5 visible toasts
+      while (stack.children.length > 5) {
+        stack.removeChild(stack.children[0]);
+      }
+
+      // Trigger show animation
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { el.classList.add('show'); });
+      });
+
+      // Auto dismiss
+      var timer = setTimeout(dismiss, 3000);
+      function dismiss() {
+        clearTimeout(timer);
+        el.classList.remove('show');
+        el.classList.add('hide');
+        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 250);
+      }
     };
     window.cdToast = window.ddToast;
   </script>
@@ -1100,6 +1134,11 @@
 
     // ── Emergency buttons (immediate action) ──
     window.cdMdtSignal100 = function() {
+      // Only 1 Signal 100 per community — check if already active
+      if ($('#cd-signal100-banner').is(':visible')) {
+        window.ddToast('Signal 100 is already active', 'warning');
+        return;
+      }
       if (window.ddModal) {
         window.ddModal({
           type: 'danger', icon: 'fa-exclamation-triangle', title: 'Activate Signal 100',
@@ -1120,13 +1159,21 @@
     };
 
     window.cdMdtPanic = function() {
+      // Only 1 panic per person — check if user already has an active panic
+      var hasMyPanic = false;
+      $('#cd-panic-list .cd-panic-row').each(function() {
+        if ($(this).find('.cd-panic-clear').length) hasMyPanic = true; // clear button only shows for owner
+      });
+      if (hasMyPanic) {
+        window.ddToast('You already have an active panic alert', 'warning');
+        return;
+      }
       if (window.ddModal) {
         window.ddModal({
           type: 'warning', icon: 'fa-bolt', title: 'Activate Panic Alert',
           message: 'This will send a <strong>Panic Alert</strong> to all units, indicating you need immediate assistance.',
           confirmText: 'Send Panic Alert',
           onConfirm: function() {
-            var deptName = (window.ddConfig.departmentData || {}).name || '';
             $.ajax({
               url: API_URL + '/api/v1/community/' + communityId + '/panic-alerts',
               method: 'POST', contentType: 'application/json',
@@ -1139,6 +1186,7 @@
       }
     };
 
+    window.applyMDTStatus = applyMDTStatus;
     function applyMDTStatus() {
       var communityData = (window.ddConfig || {}).communityData;
       if (!communityData) return;
@@ -1301,7 +1349,7 @@
 
       // Close mobile sidebar
       $('.cd-sidebar').removeClass('open');
-      $('#cd-sidebar-open').css('display', '');
+      document.querySelector('.cd-sidebar').classList.remove('open');
     }
     window.ddNavTo = ddNavTo;
 

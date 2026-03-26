@@ -309,14 +309,14 @@
 
     // Warrants section (clickable — opens warrant database filtered by this person)
     if (warrants.length > 0) {
-      var fullName = ((person.firstName || '') + ' ' + (person.lastName || '')).trim();
+      var searchName = (person.lastName || person.firstName || '').trim();
       html += '<div class="cd-ps-detail-section">' +
         '<div class="cd-ps-detail-section-title"><i class="fa fa-gavel"></i> Active Warrants (' + warrants.length + ')</div>';
       for (var i = 0; i < warrants.length; i++) {
         var w = warrants[i].warrant || warrants[i];
         var wType = w.warrantType || w.type || 'arrest';
         var wCharges = Array.isArray(w.charges) ? w.charges.join(', ') : (w.charges || 'No charges');
-        html += '<div class="cd-ps-detail-list-item cd-ps-clickable" onclick="event.stopPropagation(); if(window.cdWarrantDbOpenWith) window.cdWarrantDbOpenWith({name:\'' + esc(fullName.replace(/'/g, "\\'")) + '\'})">' +
+        html += '<div class="cd-ps-detail-list-item cd-ps-clickable" onclick="event.stopPropagation(); if(window.cdWarrantDbOpenWith) window.cdWarrantDbOpenWith({name:\'' + esc(searchName.replace(/'/g, "\\'")) + '\'})">' +
           '<span class="cd-ps-badge cd-ps-badge-' + (wType === 'arrest' ? 'red' : wType === 'search' ? 'amber' : 'blue') + '" style="font-size:0.5625rem;">' + esc(wType.toUpperCase()) + '</span> ' +
           esc(wCharges) +
           '<i class="fa fa-external-link" style="margin-left:auto;font-size:0.5625rem;opacity:0.4;"></i>' +

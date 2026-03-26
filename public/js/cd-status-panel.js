@@ -35,14 +35,12 @@
      State
      ─────────────────────────────────────────── */
 
-  var QUICK_COUNT = 8;
   var ALL_PAGE_SIZE = 20;
 
   var state = {
     tenCodes: [],
     activeTenCodeID: null,
     communityData: null,
-    allExpanded: false,
     searchQuery: '',
     allPage: 1,
     loading: false,
@@ -241,7 +239,6 @@
 
   function setTenCode(codeId, onDone) {
     state.settingCode = codeId;
-    renderQuickGrid();
     renderAllGrid();
 
     $.ajax({
@@ -261,15 +258,22 @@
         var tc = findCodeById(codeId);
         toast('Status set to ' + (tc ? tc.code : 'updated'), 'success');
         updateStatusBadge();
-        renderQuickGrid();
         renderAllGrid();
+        // Update the MDT status bar if available
+        if (window.ddConfig && window.ddConfig.communityData) {
+          var members = window.ddConfig.communityData.members || {};
+          var userId = cfg().userId;
+          if (members[userId]) {
+            members[userId].tenCodeID = codeId;
+          }
+        }
+        if (window.applyMDTStatus) window.applyMDTStatus();
         if (onDone) onDone(true);
       },
       error: function (xhr, status, err) {
         state.settingCode = null;
         toast('Failed to set status', 'error');
         console.error('[cd-status-panel] Set ten-code error:', status, err);
-        renderQuickGrid();
         renderAllGrid();
         if (onDone) onDone(false);
       }
@@ -285,9 +289,10 @@
       url: apiUrl() + '/api/v1/community/' + encodeURIComponent(cfg().communityId) + '/signal-100',
       method: 'POST',
       contentType: 'application/json',
-      data: JSON.stringify({}),
+      data: JSON.stringify({ userId: cfg().userId, username: cfg().userName || '' }),
       success: function () {
         toast('Signal 100 activated', 'success');
+        if (window.cdFetchSignal100) window.cdFetchSignal100();
       },
       error: function (xhr, status, err) {
         toast('Failed to send Signal 100', 'error');
@@ -305,10 +310,11 @@
         userId: cfg().userId,
         username: cfg().userName || '',
         callSign: '',
-        department: deptName()
+        departmentType: cfg().currentTemplateName || 'police'
       }),
       success: function () {
         toast('Panic alert sent', 'success');
+        if (window.cdFetchPanicAlerts) window.cdFetchPanicAlerts();
       },
       error: function (xhr, status, err) {
         toast('Failed to send panic alert', 'error');
@@ -354,27 +360,6 @@
       $badge.text('No Status')
         .css({ background: 'rgba(255,255,255,0.06)', color: 'var(--cd-text-dim)' });
     }
-  }
-
-  /* ───────────────────────────────────────────
-     Rendering — Quick Grid
-     ─────────────────────────────────────────── */
-
-  function renderQuickGrid() {
-    var $grid = $('#cd-sp-quick-grid');
-    if (!$grid.length) return;
-
-    var codes = state.tenCodes.slice(0, QUICK_COUNT);
-    if (!codes.length) {
-      $grid.html('<div class="cd-sp-empty"><i class="fas fa-broadcast-tower"></i>No status codes configured</div>');
-      return;
-    }
-
-    var html = '';
-    for (var i = 0; i < codes.length; i++) {
-      html += renderCodeCard(codes[i]);
-    }
-    $grid.html(html);
   }
 
   /* ───────────────────────────────────────────
@@ -470,26 +455,16 @@
           '</button>' +
         '</div>' +
 
-        /* Quick grid */
-        '<div class="cd-sp-grid-section">' +
-          '<div class="cd-sp-grid" id="cd-sp-quick-grid">' +
+        /* Search + full code grid */
+        '<div class="cd-sp-grid-section" id="cd-sp-all-body">' +
+          '<div class="cd-sp-search-wrap">' +
+            '<i class="fas fa-search cd-sp-search-icon"></i>' +
+            '<input type="text" class="cd-sp-search-input" id="cd-sp-search" placeholder="Search codes&hellip;">' +
+          '</div>' +
+          '<div class="cd-sp-grid" id="cd-sp-all-grid">' +
             '<div class="cd-sp-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading codes&hellip;</div>' +
           '</div>' +
-        '</div>' +
-
-        /* Expand section */
-        '<div class="cd-sp-expand-section">' +
-          '<button class="cd-sp-expand-toggle" id="cd-sp-expand-toggle">' +
-            '<span id="cd-sp-expand-label">Show All Codes</span> <i class="fas fa-chevron-down" id="cd-sp-expand-icon"></i>' +
-          '</button>' +
-          '<div class="cd-sp-expand-body" id="cd-sp-all-body">' +
-            '<div class="cd-sp-search-wrap">' +
-              '<i class="fas fa-search cd-sp-search-icon"></i>' +
-              '<input type="text" class="cd-sp-search-input" id="cd-sp-search" placeholder="Search codes&hellip;">' +
-            '</div>' +
-            '<div class="cd-sp-grid" id="cd-sp-all-grid"></div>' +
-            '<div class="cd-sp-pagination" id="cd-sp-pagination" style="display:none;"></div>' +
-          '</div>' +
+          '<div class="cd-sp-pagination" id="cd-sp-pagination" style="display:none;"></div>' +
         '</div>' +
 
       '</div>';
@@ -518,7 +493,7 @@
       state.activeTenCodeID = extractActiveTenCodeID(community);
 
       updateStatusBadge();
-      renderQuickGrid();
+      renderAllGrid();
     });
 
     /* ── Code card click (delegated for both grids) ── */
@@ -534,6 +509,12 @@
     $(document).off('click.cdSpSignal').on('click.cdSpSignal', '#cd-sp-signal100', function () {
       var $btn = $(this);
       if ($btn.prop('disabled')) return;
+
+      // Only 1 Signal 100 per community
+      if ($('#cd-signal100-banner').is(':visible')) {
+        toast('Signal 100 is already active', 'warning');
+        return;
+      }
 
       if (window.ddModal) {
         window.ddModal({
@@ -562,6 +543,16 @@
       var $btn = $(this);
       if ($btn.prop('disabled')) return;
 
+      // Only 1 panic per person
+      var hasMyPanic = false;
+      $('#cd-panic-list .cd-panic-row').each(function() {
+        if ($(this).find('.cd-panic-clear').length) hasMyPanic = true;
+      });
+      if (hasMyPanic) {
+        toast('You already have an active panic alert', 'warning');
+        return;
+      }
+
       if (window.ddModal) {
         window.ddModal({
           type: 'danger',
@@ -581,28 +572,6 @@
         $btn.prop('disabled', true);
         sendPanic();
         setTimeout(function () { $btn.prop('disabled', false); }, 3000);
-      }
-    });
-
-    /* ── Expand / Collapse toggle ── */
-    $(document).off('click.cdSpExpand').on('click.cdSpExpand', '#cd-sp-expand-toggle', function () {
-      state.allExpanded = !state.allExpanded;
-      var $body = $('#cd-sp-all-body');
-      var $label = $('#cd-sp-expand-label');
-      var $icon = $('#cd-sp-expand-icon');
-
-      if (state.allExpanded) {
-        $body.addClass('cd-sp-expanded');
-        $label.text('Hide All Codes');
-        $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
-        state.allPage = 1;
-        state.searchQuery = '';
-        $('#cd-sp-search').val('');
-        renderAllGrid();
-      } else {
-        $body.removeClass('cd-sp-expanded');
-        $label.text('Show All Codes');
-        $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
       }
     });
 

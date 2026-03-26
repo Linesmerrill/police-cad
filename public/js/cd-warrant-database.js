@@ -540,25 +540,19 @@
    */
   function cdWarrantDbOpenWith(opts) {
     opts = opts || {};
-    // Navigate to the warrant database focused view
+    // Set state BEFORE navigating so init()'s loadWarrants() uses the filters
+    if (opts.name) state.nameQuery = opts.name;
+    if (opts.type) state.warrantType = opts.type;
+    if (opts.status) state.status = opts.status;
+    state.page = 1;
+    // Navigate to the warrant database focused view (triggers init -> loadWarrants with filters)
     if (window.ddNavTo) window.ddNavTo('warrantDatabase');
-    // Wait for DOM to render, then pre-fill filters and search
+    // Also pre-fill the input fields after DOM renders
     setTimeout(function () {
-      if (opts.name) {
-        $('#cd-wd-name').val(opts.name);
-        state.nameQuery = opts.name;
-      }
-      if (opts.type) {
-        $('#cd-wd-type').val(opts.type);
-        state.warrantType = opts.type;
-      }
-      if (opts.status) {
-        $('#cd-wd-status').val(opts.status);
-        state.status = opts.status;
-      }
-      state.page = 1;
-      loadWarrants();
-    }, 150);
+      if (opts.name) $('#cd-wd-name').val(opts.name);
+      if (opts.type) $('#cd-wd-type').val(opts.type);
+      if (opts.status) $('#cd-wd-status').val(opts.status);
+    }, 50);
   }
 
   window.cdWarrantDbRender = cdWarrantDbRender;
