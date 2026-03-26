@@ -534,7 +534,35 @@
      REGISTER ON WINDOW
      ═══════════════════════════════════════════════════════════ */
 
+  /**
+   * Navigate to warrant database with pre-filled search filters.
+   * Called from person search when clicking an active warrant.
+   */
+  function cdWarrantDbOpenWith(opts) {
+    opts = opts || {};
+    // Navigate to the warrant database focused view
+    if (window.ddNavTo) window.ddNavTo('warrantDatabase');
+    // Wait for DOM to render, then pre-fill filters and search
+    setTimeout(function () {
+      if (opts.name) {
+        $('#cd-wd-name').val(opts.name);
+        state.nameQuery = opts.name;
+      }
+      if (opts.type) {
+        $('#cd-wd-type').val(opts.type);
+        state.warrantType = opts.type;
+      }
+      if (opts.status) {
+        $('#cd-wd-status').val(opts.status);
+        state.status = opts.status;
+      }
+      state.page = 1;
+      loadWarrants();
+    }, 150);
+  }
+
   window.cdWarrantDbRender = cdWarrantDbRender;
   window.cdWarrantDbInit = cdWarrantDbInit;
+  window.cdWarrantDbOpenWith = cdWarrantDbOpenWith;
 
 })();

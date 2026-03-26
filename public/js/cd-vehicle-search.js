@@ -96,7 +96,7 @@
 
       /* Detail panel */
       '.cd-vs-item-detail{max-height:0;overflow:hidden;transition:max-height 0.35s ease;}' +
-      '.cd-vs-expanded .cd-vs-item-detail{max-height:600px;}' +
+      '.cd-vs-expanded .cd-vs-item-detail{max-height:5000px;}' +
       '.cd-vs-detail-inner{padding:0.75rem 1rem 1rem;border-top:1px solid var(--cd-glass-border);}' +
       '.cd-vs-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 1rem;}' +
       '.cd-vs-detail-field{display:flex;flex-direction:column;gap:0.125rem;}' +
@@ -453,8 +453,11 @@
   function init() {
     injectStyles();
 
+    // Remove previous handlers to avoid duplicates (init can be called multiple times)
+    $(document).off('.cdVehicleSearch');
+
     // Search input debounce
-    $(document).on('input', '#cd-vs-input', function () {
+    $(document).on('input.cdVehicleSearch', '#cd-vs-input', function () {
       var val = $(this).val().trim();
       clearTimeout(searchTimer);
       searchTimer = setTimeout(function () {
@@ -463,16 +466,16 @@
     });
 
     // Click to expand/collapse
-    $(document).on('click', '.cd-vs-item-summary', function () {
+    $(document).on('click.cdVehicleSearch', '.cd-vs-item-summary', function () {
       var id = $(this).closest('.cd-vs-item').data('id');
       if (id) toggleExpand(String(id));
     });
 
     // Pagination
-    $(document).on('click', '#cd-vs-prev', function () {
+    $(document).on('click.cdVehicleSearch', '#cd-vs-prev', function () {
       if (state.page > 1) doSearch(state.searchQuery, state.page - 1);
     });
-    $(document).on('click', '#cd-vs-next', function () {
+    $(document).on('click.cdVehicleSearch', '#cd-vs-next', function () {
       if (state.page < state.totalPages) doSearch(state.searchQuery, state.page + 1);
     });
 

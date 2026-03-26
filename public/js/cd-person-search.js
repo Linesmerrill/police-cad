@@ -116,8 +116,8 @@
       '.cd-ps-expanded .cd-ps-expand-icon{transform:rotate(180deg);}' +
 
       /* Detail panel */
-      '.cd-ps-item-detail{max-height:0;overflow:hidden;transition:max-height 0.35s ease;}' +
-      '.cd-ps-expanded .cd-ps-item-detail{max-height:1200px;}' +
+      '.cd-ps-item-detail{max-height:0;overflow:hidden;transition:max-height 0.4s ease;}' +
+      '.cd-ps-expanded .cd-ps-item-detail{max-height:5000px;}' +
       '.cd-ps-detail-inner{padding:0.75rem 1rem 1rem;border-top:1px solid var(--cd-glass-border);}' +
       '.cd-ps-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 1rem;}' +
       '.cd-ps-detail-field{display:flex;flex-direction:column;gap:0.125rem;}' +
@@ -127,8 +127,10 @@
       /* Sections inside detail */
       '.cd-ps-detail-section{margin-top:0.75rem;}' +
       '.cd-ps-detail-section-title{font-size:0.6875rem;font-weight:700;color:var(--cd-text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;}' +
-      '.cd-ps-detail-list-item{font-size:0.75rem;color:var(--cd-text);padding:0.35rem 0;border-bottom:1px solid var(--cd-glass-border);}' +
+      '.cd-ps-detail-list-item{font-size:0.75rem;color:var(--cd-text);padding:0.35rem 0;border-bottom:1px solid var(--cd-glass-border);display:flex;align-items:center;gap:0.375rem;}' +
       '.cd-ps-detail-list-item:last-child{border-bottom:none;}' +
+      '.cd-ps-detail-list-item.cd-ps-clickable{cursor:pointer;border-radius:4px;padding:0.35rem 0.375rem;margin:0 -0.375rem;transition:background 0.15s;}' +
+      '.cd-ps-detail-list-item.cd-ps-clickable:hover{background:rgba(56,189,248,0.08);}' +
 
       /* Action buttons */
       '.cd-ps-actions{display:flex;flex-wrap:wrap;gap:0.375rem;margin-bottom:0.75rem;}' +
@@ -305,17 +307,19 @@
           '</button>' +
         '</div>';
 
-    // Warrants section
+    // Warrants section (clickable — opens warrant database filtered by this person)
     if (warrants.length > 0) {
+      var fullName = ((person.firstName || '') + ' ' + (person.lastName || '')).trim();
       html += '<div class="cd-ps-detail-section">' +
         '<div class="cd-ps-detail-section-title"><i class="fa fa-gavel"></i> Active Warrants (' + warrants.length + ')</div>';
       for (var i = 0; i < warrants.length; i++) {
         var w = warrants[i].warrant || warrants[i];
         var wType = w.warrantType || w.type || 'arrest';
         var wCharges = Array.isArray(w.charges) ? w.charges.join(', ') : (w.charges || 'No charges');
-        html += '<div class="cd-ps-detail-list-item">' +
+        html += '<div class="cd-ps-detail-list-item cd-ps-clickable" onclick="event.stopPropagation(); if(window.cdWarrantDbOpenWith) window.cdWarrantDbOpenWith({name:\'' + esc(fullName.replace(/'/g, "\\'")) + '\'})">' +
           '<span class="cd-ps-badge cd-ps-badge-' + (wType === 'arrest' ? 'red' : wType === 'search' ? 'amber' : 'blue') + '" style="font-size:0.5625rem;">' + esc(wType.toUpperCase()) + '</span> ' +
           esc(wCharges) +
+          '<i class="fa fa-external-link" style="margin-left:auto;font-size:0.5625rem;opacity:0.4;"></i>' +
         '</div>';
       }
       html += '</div>';
@@ -806,8 +810,11 @@
   function init() {
     injectStyles();
 
+    // Remove previous handlers to avoid duplicates (init can be called multiple times)
+    $(document).off('.cdPersonSearch');
+
     // Search input debounce
-    $(document).on('input', '#cd-ps-input', function () {
+    $(document).on('input.cdPersonSearch', '#cd-ps-input', function () {
       var val = $(this).val().trim();
       clearTimeout(searchTimer);
       searchTimer = setTimeout(function () {
@@ -816,16 +823,16 @@
     });
 
     // Click to expand/collapse
-    $(document).on('click', '.cd-ps-item-summary', function () {
+    $(document).on('click.cdPersonSearch', '.cd-ps-item-summary', function () {
       var id = $(this).closest('.cd-ps-item').data('id');
       if (id) toggleExpand(String(id));
     });
 
     // Pagination
-    $(document).on('click', '#cd-ps-prev', function () {
+    $(document).on('click.cdPersonSearch', '#cd-ps-prev', function () {
       if (state.page > 1) doSearch(state.searchQuery, state.page - 1);
     });
-    $(document).on('click', '#cd-ps-next', function () {
+    $(document).on('click.cdPersonSearch', '#cd-ps-next', function () {
       if (state.page < state.totalPages) doSearch(state.searchQuery, state.page + 1);
     });
 

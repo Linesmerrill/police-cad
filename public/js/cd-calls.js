@@ -60,6 +60,7 @@
   };
 
   var refreshTimer = null;
+  var userNameCache = {}; // userId -> display name
 
   /* ───────────────────────────────────────────
      Inline Styles (<style> injected once)
@@ -99,7 +100,7 @@
       '.cd-call-tab.cd-call-tab-active .cd-call-tab-count{background:rgba(56,189,248,0.2);}' +
 
       /* ── List ── */
-      '.cd-call-list{padding:0.625rem 1rem;display:flex;flex-direction:column;gap:0.5rem;max-height:600px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.06) transparent;}' +
+      '.cd-call-list{padding:0.625rem 1rem;display:flex;flex-direction:column;gap:0.5rem;max-height:none;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.06) transparent;}' +
       '.cd-call-list::-webkit-scrollbar{width:4px;}' +
       '.cd-call-list::-webkit-scrollbar-track{background:transparent;}' +
       '.cd-call-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.06);border-radius:2px;}' +
@@ -126,7 +127,7 @@
 
       /* ── Expanded Detail ── */
       '.cd-call-detail{max-height:0;overflow:hidden;transition:max-height 0.3s ease;}' +
-      '.cd-call-item.cd-call-expanded .cd-call-detail{max-height:600px;}' +
+      '.cd-call-item.cd-call-expanded .cd-call-detail{max-height:5000px;}' +
       '.cd-call-detail-inner{padding:0.75rem 1rem 1rem;border-top:1px solid var(--cd-glass-border);margin-left:1.75rem;}' +
       '.cd-call-detail-section{margin-top:0.75rem;}' +
       '.cd-call-detail-section:first-child{margin-top:0;}' +
@@ -403,10 +404,39 @@
     var html = '';
     for (var i = 0; i < assigned.length; i++) {
       var uid = assigned[i];
-      var label = uid === currentUserId ? 'You' : uid;
-      html += '<span class="cd-call-officer-chip">' + esc(label) + '</span>';
+      var label;
+      if (uid === currentUserId) {
+        label = 'You';
+      } else if (userNameCache[uid]) {
+        label = userNameCache[uid];
+      } else {
+        label = 'Loading...';
+        resolveUserName(uid);
+      }
+      html += '<span class="cd-call-officer-chip" data-uid="' + esc(uid) + '">' + esc(label) + '</span>';
     }
     return html;
+  }
+
+  function resolveUserName(uid) {
+    if (userNameCache[uid] || userNameCache[uid] === null) return; // already resolved or in-flight
+    userNameCache[uid] = null; // mark in-flight
+    $.ajax({
+      url: apiUrl() + '/api/v1/user/' + encodeURIComponent(uid),
+      method: 'GET',
+      success: function (resp) {
+        var user = resp && resp.user ? resp.user : resp;
+        var name = user.username || 'Unknown';
+        if (user.callSign) name = user.callSign + ' (' + name + ')';
+        userNameCache[uid] = name;
+        // Update any visible chips with this uid
+        $('.cd-call-officer-chip[data-uid="' + uid + '"]').text(name);
+      },
+      error: function () {
+        userNameCache[uid] = 'Unknown';
+        $('.cd-call-officer-chip[data-uid="' + uid + '"]').text('Unknown');
+      }
+    });
   }
 
   function renderNotes(notes) {
