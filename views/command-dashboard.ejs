@@ -839,15 +839,16 @@
         success: function(dept) {
           window.ddConfig.departmentData = dept?.department || dept || {};
           var template = dept?.department?.template;
+          // Map backend template names to registry keys where they differ
+          var tplToReg = { viewBolosAndWarrants: 'warrantDatabase' };
           if (template && template.components) {
             template.components.forEach(function(comp) {
-              enabledComponents[comp.name] = comp.enabled;
+              var key = tplToReg[comp.name] || comp.name;
+              enabledComponents[key] = comp.enabled;
             });
           }
           currentTemplateName = (template && template.name || '').toLowerCase() || 'police';
           enabledComponents['departmentSettings'] = true;
-          enabledComponents['activeCalls'] = true;
-          enabledComponents['warrantDatabase'] = true;
           buildDashboard();
         },
         error: function() {
@@ -919,11 +920,22 @@
       var $nav = $('#dd-nav-components');
       $nav.find('.dd-nav-item').remove();
 
+      // Map backend template component names to frontend registry keys
+      // where they differ (most are the same)
+      var templateToRegistry = {
+        viewBolosAndWarrants: 'warrantDatabase'
+      };
+
       var dept = window.ddConfig.departmentData || {};
       var tplComps = (dept.template && dept.template.components) || [];
       var ordered = [];
       var seen = {};
-      tplComps.forEach(function(c) { if (c.name) { ordered.push(c.name); seen[c.name] = true; } });
+      tplComps.forEach(function(c) {
+        if (!c.name) return;
+        var key = templateToRegistry[c.name] || c.name;
+        ordered.push(key);
+        seen[key] = true;
+      });
       Object.keys(componentRegistry).forEach(function(key) { if (!seen[key]) ordered.push(key); });
 
       ordered.forEach(function(key) {

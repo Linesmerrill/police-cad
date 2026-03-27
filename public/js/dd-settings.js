@@ -864,6 +864,9 @@
    * after component toggles change. Also adds/removes cards from the
    * overview panel for newly enabled/disabled components.
    */
+  // Map backend template component names to frontend registry keys where they differ
+  var templateToRegistryMap = { viewBolosAndWarrants: 'warrantDatabase' };
+
   function syncEnabledComponents(updated) {
     // Access the global enabledComponents from the dashboard scope
     if (!window.ddConfig || !window.ddConfig._enabledComponents) return;
@@ -873,19 +876,20 @@
 
     updated.forEach(function (comp) {
       if (!comp.name) return;
-      var wasEnabled = !!ec[comp.name];
+      var regKey = templateToRegistryMap[comp.name] || comp.name;
+      var wasEnabled = !!ec[regKey];
       var nowEnabled = comp.enabled;
 
       if (nowEnabled && !wasEnabled) {
         // Newly enabled — add to map
-        ec[comp.name] = true;
+        ec[regKey] = true;
         // Add card to overview grid if component exists in registry
-        if (registry[comp.name]) {
-          var regComp = registry[comp.name];
+        if (registry[regKey]) {
+          var regComp = registry[regKey];
           var $grid = $('#dd-panel-overview .dd-grid');
-          if ($grid.length && !$('#dd-component-' + comp.name).length) {
-            var $card = $('<div class="dd-card ' + regComp.gridClass + ' dd-animate-in" id="dd-component-' + comp.name + '" style="--card-accent:' + regComp.accentColor + ';"></div>');
-            $card.html(regComp.render(comp.name));
+          if ($grid.length && !$('#dd-component-' + regKey).length) {
+            var $card = $('<div class="dd-card ' + regComp.gridClass + ' dd-animate-in" id="dd-component-' + regKey + '" style="--card-accent:' + regComp.accentColor + ';"></div>');
+            $card.html(regComp.render(regKey));
             if (regComp.overviewHidden) $card.addClass('dd-overview-hidden');
             // If we're in a focused view (not overview), hide the new card
             // so it doesn't appear below the current panel
@@ -897,8 +901,8 @@
         }
       } else if (!nowEnabled && wasEnabled) {
         // Disabled — remove card and nav item
-        $('#dd-component-' + comp.name).remove();
-        ec[comp.name] = false;
+        $('#dd-component-' + regKey).remove();
+        ec[regKey] = false;
       }
     });
 

@@ -221,7 +221,7 @@
   /* ───────────────────────── Build result item HTML ───────────────────────── */
 
   function buildResultItem(person) {
-    var name = esc((person.firstName || '') + ' ' + (person.lastName || ''));
+    var name = esc(((person.firstName || '') + ' ' + (person.lastName || '')).trim() || person.name || '');
     var dob = fmtDate(person.birthday);
     var age = calcAge(person.birthday);
     var ageStr = age ? ' (Age ' + esc(age) + ')' : '';
@@ -438,7 +438,7 @@
   window.cdPsIssueCitation = function(civId) {
     var person = state.results.find(function(r) { return r._id === civId; });
     if (!person) return;
-    var name = ((person.firstName || '') + ' ' + (person.lastName || '')).trim();
+    var name = ((person.firstName || '') + ' ' + (person.lastName || '')).trim() || person.name || '';
     if (window.cdShowCitationForm) {
       window.cdShowCitationForm(civId, name, function() { doSearch(state.searchQuery, state.page); });
     } else {
@@ -449,7 +449,7 @@
   window.cdPsIssueWarning = function(civId) {
     var person = state.results.find(function(r) { return r._id === civId; });
     if (!person) return;
-    var name = ((person.firstName || '') + ' ' + (person.lastName || '')).trim();
+    var name = ((person.firstName || '') + ' ' + (person.lastName || '')).trim() || person.name || '';
     if (window.cdShowWarningForm) {
       window.cdShowWarningForm(civId, name, function() { doSearch(state.searchQuery, state.page); });
     } else {
@@ -460,7 +460,7 @@
   window.cdPsArrest = function(civId) {
     var person = state.results.find(function(r) { return r._id === civId; });
     if (!person) return;
-    var name = ((person.firstName || '') + ' ' + (person.lastName || '')).trim();
+    var name = ((person.firstName || '') + ' ' + (person.lastName || '')).trim() || person.name || '';
     if (window.cdShowArrestForm) {
       window.cdShowArrestForm(civId, name, person);
     } else {
@@ -471,7 +471,7 @@
   window.cdPsRequestWarrant = function(civId) {
     var person = state.results.find(function(r) { return r._id === civId; });
     if (!person) return;
-    var name = ((person.firstName || '') + ' ' + (person.lastName || '')).trim();
+    var name = ((person.firstName || '') + ' ' + (person.lastName || '')).trim() || person.name || '';
     if (window.cdShowWarrantForm) {
       window.cdShowWarrantForm(civId, name, person);
     } else {
@@ -693,7 +693,7 @@
       // Save to search history if we got results
       if (state.results.length > 0) {
         var first = state.results[0];
-        var label = ((first.firstName || '') + ' ' + (first.lastName || '')).trim();
+        var label = ((first.firstName || '') + ' ' + (first.lastName || '')).trim() || first.name || '';
         saveToHistory(query, label);
       }
 
@@ -772,8 +772,7 @@
     }
 
     $.ajax({
-      url: apiUrl() + '/api/v1/vehicles/search?owner_id=' + encodeURIComponent(civId) +
-        '&active_community_id=' + encodeURIComponent(cfg().communityId) + '&limit=50',
+      url: apiUrl() + '/api/v1/vehicles/registered-owner/' + encodeURIComponent(civId) + '?limit=50',
       method: 'GET',
       dataType: 'json'
     })
