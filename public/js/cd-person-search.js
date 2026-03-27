@@ -430,20 +430,16 @@
         '<div class="cd-ps-detail-section-title"><i class="fa fa-handcuffs"></i> Arrest Reports (' + arrests.length + ')</div>';
       for (var ai = 0; ai < arrests.length; ai++) {
         var ar = arrests[ai].arrestReport || arrests[ai];
-        var arId = arrests[ai]._id || ('ar' + ai);
         var arDate = ar.arrestDate || '';
         var arCharges = ar.charges || '';
         var arOfficer = (ar.officer && ar.officer.name) || '';
-        var arLocation = ar.arrestLocation || '';
-        var arNarrative = ar.narrative || '';
         var arStatus = ar.status || '';
-        var arIdx = 'ar-' + pid + '-' + ai;
 
         var arStatusBadge = '';
         if (arStatus === 'contested') arStatusBadge = '<span class="cd-ps-badge cd-ps-badge-amber" style="font-size:0.5rem;">CONTESTED</span>';
         else if (arStatus === 'dismissed') arStatusBadge = '<span class="cd-ps-badge" style="font-size:0.5rem;background:rgba(99,102,241,0.15);color:#818cf8;">DISMISSED</span>';
 
-        html += '<div class="cd-ps-sub-item" onclick="cdPsToggleSub(\'' + arIdx + '\')">' +
+        html += '<div class="cd-ps-sub-item" onclick="event.stopPropagation();cdPsViewArrestReport(\'' + pid + '\',' + ai + ')" style="cursor:pointer;">' +
           '<div class="cd-ps-sub-item-header" style="gap:0.625rem;">' +
             '<div style="width:32px;height:32px;border-radius:6px;background:rgba(244,114,182,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa fa-handcuffs" style="color:#f472b6;font-size:0.75rem;"></i></div>' +
             '<div style="flex:1;min-width:0;">' +
@@ -451,18 +447,7 @@
               '<div style="font-size:0.6875rem;color:var(--cd-text-dim);">' + (arDate ? esc(arDate) : '') + (arOfficer ? ' &middot; Officer: ' + esc(arOfficer) : '') + '</div>' +
             '</div>' +
             arStatusBadge +
-            '<i class="fa fa-chevron-down cd-ps-sub-chevron"></i>' +
-          '</div>' +
-          '<div class="cd-ps-sub-item-detail" id="' + arIdx + '">' +
-            '<div class="cd-ps-sub-detail-grid">' +
-              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Report #</div><div class="cd-ps-detail-value" style="font-family:\'JetBrains Mono\',monospace;">' + esc(ar.reportNumber || 'N/A') + '</div></div>' +
-              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Arrest Date</div><div class="cd-ps-detail-value">' + esc(arDate || 'N/A') + '</div></div>' +
-              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Location</div><div class="cd-ps-detail-value">' + esc(arLocation || 'N/A') + '</div></div>' +
-              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Officer</div><div class="cd-ps-detail-value">' + esc(arOfficer || 'N/A') + (ar.officer && ar.officer.badgeNumber ? ' <span style="color:var(--cd-text-dim);">#' + esc(ar.officer.badgeNumber) + '</span>' : '') + '</div></div>' +
-              '<div class="cd-ps-detail-field" style="grid-column:1/-1;"><div class="cd-ps-detail-label">Charges</div><div class="cd-ps-detail-value">' + esc(arCharges || 'N/A') + '</div></div>' +
-              (arNarrative ? '<div class="cd-ps-detail-field" style="grid-column:1/-1;"><div class="cd-ps-detail-label">Narrative</div><div class="cd-ps-detail-value" style="white-space:pre-wrap;">' + esc(arNarrative) + '</div></div>' : '') +
-              (ar.forceUsed ? '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Force Used</div><div class="cd-ps-detail-value" style="color:var(--cd-red);font-weight:600;">Yes</div></div>' : '') +
-            '</div>' +
+            '<i class="fa fa-arrow-up-right-from-square" style="font-size:0.625rem;color:var(--cd-text-dim);flex-shrink:0;"></i>' +
           '</div>' +
         '</div>';
       }
@@ -511,7 +496,7 @@
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Year</div><div class="cd-ps-detail-value">' + esc(v.year || 'N/A') + '</div></div>' +
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Color</div><div class="cd-ps-detail-value">' + esc(v.color || 'N/A') + '</div></div>' +
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Plate State</div><div class="cd-ps-detail-value">' + esc(v.licensePlateState || 'N/A') + '</div></div>' +
-              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Owner</div><div class="cd-ps-detail-value">' + esc(v.registeredOwner || 'N/A') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Owner</div><div class="cd-ps-detail-value">' + esc(v.registeredOwner || name || 'N/A') + '</div></div>' +
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Registration</div><div class="cd-ps-detail-value" style="color:' + (vRegOk ? 'var(--cd-green)' : 'var(--cd-amber)') + ';font-weight:600;">' + (vRegOk ? 'Valid' : 'Invalid') + '</div></div>' +
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Insurance</div><div class="cd-ps-detail-value" style="color:' + (vInsOk ? 'var(--cd-green)' : 'var(--cd-amber)') + ';font-weight:600;">' + (vInsOk ? 'Valid' : 'Invalid') + '</div></div>' +
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Stolen</div><div class="cd-ps-detail-value" style="color:' + (vStolen ? 'var(--cd-red)' : 'var(--cd-green)') + ';font-weight:600;">' + (vStolen ? 'Yes' : 'No') + '</div></div>' +
@@ -1262,6 +1247,126 @@
 
     fetchPage(0);
   }
+
+  /* ───────────────────────── Arrest Report Modal ───────────────────────── */
+
+  window.cdPsViewArrestReport = function(civId, index) {
+    var arrests = state.arrestCache[civId] || [];
+    if (!arrests[index]) return;
+    var ar = arrests[index].arrestReport || arrests[index];
+    var arrestee = ar.arrestee || {};
+    var officer = ar.officer || {};
+    var forms = ar.attachedForms || [];
+
+    function field(label, value) {
+      return '<div style="margin-bottom:0.75rem;">' +
+        '<div style="font-size:0.5625rem;text-transform:uppercase;letter-spacing:0.08em;color:#475569;font-weight:600;margin-bottom:2px;">' + esc(label) + '</div>' +
+        '<div style="font-size:0.8125rem;color:#e2e8f0;">' + esc(value || 'N/A') + '</div>' +
+      '</div>';
+    }
+    function row2(l1, v1, l2, v2) {
+      return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 1rem;">' + field(l1, v1) + field(l2, v2) + '</div>';
+    }
+    function sectionHead(title) {
+      return '<div style="font-size:0.625rem;text-transform:uppercase;letter-spacing:0.1em;color:#38bdf8;font-weight:700;margin:1rem 0 0.5rem;padding-bottom:0.375rem;border-bottom:1px solid rgba(56,189,248,0.15);">' + title + '</div>';
+    }
+
+    // Status ribbon
+    var statusText = ar.status === 'contested' ? 'CONTESTED' : ar.status === 'dismissed' ? 'DISMISSED' : '';
+    var statusColor = ar.status === 'contested' ? '#f59e0b' : ar.status === 'dismissed' ? '#818cf8' : '';
+
+    var modalHtml =
+      '<div style="width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;border-radius:16px;background:linear-gradient(165deg,#1e293b 0%,#0f172a 100%);border:1px solid rgba(56,189,248,0.1);box-shadow:0 24px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.03) inset;font-family:Outfit,sans-serif;">' +
+        // Header
+        '<div style="padding:1.25rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.04);position:relative;">' +
+          '<button id="cd-ar-close-btn" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.06);border:none;color:#64748b;width:28px;height:28px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.75rem;transition:all 0.15s;" onmouseover="this.style.background=\'rgba(255,255,255,0.1)\';this.style.color=\'#e2e8f0\'" onmouseout="this.style.background=\'rgba(255,255,255,0.06)\';this.style.color=\'#64748b\'"><i class="fa fa-times"></i></button>' +
+          '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">' +
+            '<div style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;"></div>' +
+            '<div style="font-size:0.625rem;text-transform:uppercase;letter-spacing:0.12em;color:#64748b;font-weight:600;">Arrest Report</div>' +
+          '</div>' +
+          '<div style="font-size:1.25rem;font-weight:700;color:#f1f5f9;letter-spacing:-0.01em;">Case #' + esc(ar.reportNumber || '—') + '</div>' +
+          (statusText ? '<div style="position:absolute;top:1rem;right:1.5rem;font-size:0.625rem;font-weight:700;letter-spacing:0.08em;color:' + statusColor + ';background:' + statusColor + '1a;padding:0.2rem 0.625rem;border-radius:4px;">' + statusText + '</div>' : '') +
+        '</div>' +
+        // Body
+        '<div style="padding:0.75rem 1.5rem 1.5rem;">' +
+          // Arrest info
+          sectionHead('Arrest Information') +
+          row2('Date', ar.arrestDate, 'Time', ar.arrestTime) +
+          field('Location', ar.arrestLocation) +
+
+          // Incident info
+          sectionHead('Incident Information') +
+          row2('Date', ar.incidentDate, 'Time', ar.incidentTime) +
+          field('Location', ar.incidentLocation) +
+
+          // Arrestee
+          sectionHead('Arrestee') +
+          row2('Name', arrestee.name, 'Date of Birth', arrestee.dob) +
+          field('Address', arrestee.address) +
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 1rem;">' +
+            field('Height', arrestee.height) +
+            field('Weight', arrestee.weight) +
+            field('Phone', arrestee.phone) +
+          '</div>' +
+          row2('Eye Color', arrestee.eyeColor, 'Hair Color', arrestee.hairColor) +
+
+          // Officer
+          sectionHead('Arresting Officer') +
+          row2('Name', officer.name, 'Badge #', officer.badgeNumber) +
+
+          // Charges
+          sectionHead('Charges') +
+          '<div style="font-size:0.875rem;color:#f1f5f9;font-weight:500;line-height:1.5;margin-bottom:0.75rem;">' + esc(ar.charges || 'None') + '</div>' +
+
+          // Narrative
+          sectionHead('Narrative') +
+          '<div style="font-size:0.8125rem;color:#cbd5e1;line-height:1.6;white-space:pre-wrap;background:rgba(0,0,0,0.2);border-radius:8px;padding:0.75rem;border:1px solid rgba(255,255,255,0.03);margin-bottom:0.75rem;">' + esc(ar.narrative || 'No narrative provided.') + '</div>' +
+
+          // Witnesses
+          (ar.witnesses ? sectionHead('Witnesses') + '<div style="font-size:0.8125rem;color:#cbd5e1;margin-bottom:0.75rem;">' + esc(ar.witnesses) + '</div>' : '') +
+
+          // Force used
+          '<div style="display:flex;gap:1rem;margin-top:0.5rem;">' +
+            '<div style="display:flex;align-items:center;gap:0.375rem;">' +
+              '<div style="font-size:0.625rem;text-transform:uppercase;letter-spacing:0.08em;color:#475569;font-weight:600;">Force Used</div>' +
+              '<div style="font-size:0.75rem;font-weight:700;color:' + (ar.forceUsed ? 'var(--cd-red)' : 'var(--cd-green)') + ';">' + (ar.forceUsed ? 'YES' : 'NO') + '</div>' +
+            '</div>' +
+          '</div>' +
+
+          // Attached forms
+          (forms.length > 0 ?
+            sectionHead('Attached Forms (' + forms.length + ')') +
+            forms.map(function(f) {
+              var fType = (f.type || 'form').replace(/_/g, ' ');
+              var fData = f.data || {};
+              var fDetails = Object.keys(fData).map(function(k) { return esc(k) + ': ' + esc(String(fData[k])); }).join(' &middot; ');
+              return '<div style="padding:0.5rem 0.625rem;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);margin-bottom:0.25rem;font-size:0.75rem;">' +
+                '<span style="color:var(--cd-accent);font-weight:600;text-transform:capitalize;">' + esc(fType) + '</span>' +
+                (fDetails ? '<span style="color:#64748b;margin-left:0.5rem;">' + fDetails + '</span>' : '') +
+              '</div>';
+            }).join('') : '') +
+
+          // Dismissed by
+          (ar.dismissedBy ? '<div style="margin-top:0.75rem;padding:0.5rem 0.75rem;border-radius:6px;background:rgba(129,140,248,0.08);border:1px solid rgba(129,140,248,0.15);font-size:0.75rem;color:#818cf8;">Dismissed by Judge ' + esc(ar.dismissedBy) + '</div>' : '') +
+        '</div>' +
+      '</div>';
+
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;animation:cdVsFadeIn 0.15s ease;overflow-y:auto;';
+    overlay.innerHTML = '<div style="padding:1rem 0;margin:auto;">' + modalHtml + '</div>';
+    document.body.style.overflow = 'hidden';
+    function closeArrestModal() {
+      overlay.remove();
+      document.body.style.overflow = '';
+    }
+    overlay.onclick = function(e) { if (e.target === overlay) closeArrestModal(); };
+    var closeBtn = overlay.querySelector('#cd-ar-close-btn');
+    if (closeBtn) closeBtn.onclick = function(e) { e.stopPropagation(); closeArrestModal(); };
+    document.addEventListener('keydown', function onKey(e) {
+      if (e.key === 'Escape') { closeArrestModal(); document.removeEventListener('keydown', onKey); }
+    });
+    document.body.appendChild(overlay);
+  };
 
   /* ───────────────────────── License actions (suspend/revoke/reinstate) ───────────────────────── */
 
