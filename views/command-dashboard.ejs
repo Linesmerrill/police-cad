@@ -923,7 +923,7 @@
     // ══════════════════════════════════════════
     function buildSidebarNav() {
       var $nav = $('#dd-nav-components');
-      $nav.find('.dd-nav-item').remove();
+      $nav.find('.dd-nav-item, .dd-nav-empty').remove();
 
       // Map backend template component names to frontend registry keys
       // where they differ (most are the same)
@@ -959,6 +959,11 @@
         }
         $nav.append($item);
       });
+
+      // Show empty state if no components are visible
+      if (!$nav.find('.dd-nav-item').length) {
+        $nav.append('<div class="dd-nav-empty" style="padding:0.5rem 0.625rem;font-size:0.6875rem;color:var(--cd-text-dim);font-style:italic;">No components enabled</div>');
+      }
     }
 
     // ══════════════════════════════════════════
@@ -976,11 +981,12 @@
 
           // Status bar
           '<div class="cd-mdt-status">' +
-            '<div class="cd-mdt-status-code" id="cd-mdt-status-badge" onclick="ddNavTo(\'10CodesInterface\')" title="Click to change status">' +
-              '<i class="fa fa-broadcast-tower"></i> <span id="cd-mdt-status-text">Loading...</span> <i class="fa fa-chevron-down"></i>' +
-            '</div>' +
-            '<button class="cd-mdt-btn-signal" onclick="cdMdtSignal100()"><i class="fa fa-exclamation-triangle"></i> Signal 100</button>' +
-            '<button class="cd-mdt-btn-panic" onclick="cdMdtPanic()"><i class="fa fa-bolt"></i> Panic</button>' +
+            (enabledComponents['10CodesInterface'] ?
+              '<div class="cd-mdt-status-code" id="cd-mdt-status-badge" onclick="ddNavTo(\'10CodesInterface\')" title="Click to change status">' +
+                '<i class="fa fa-broadcast-tower"></i> <span id="cd-mdt-status-text">Loading...</span> <i class="fa fa-chevron-down"></i>' +
+              '</div>' +
+              '<button class="cd-mdt-btn-signal" onclick="cdMdtSignal100()"><i class="fa fa-exclamation-triangle"></i> Signal 100</button>' +
+              '<button class="cd-mdt-btn-panic" onclick="cdMdtPanic()"><i class="fa fa-bolt"></i> Panic</button>' : '') +
             '<div class="cd-mdt-rank-pill" id="cd-mdt-rank" onclick="cdShowRankPanel()" title="View rank progress">' +
               '<i class="fa fa-shield"></i> <span id="cd-mdt-rank-text">—</span> <i class="fa fa-chevron-right" style="font-size:0.5rem;opacity:0.5;"></i>' +
             '</div>' +
@@ -1020,46 +1026,33 @@
           // Mobile launcher (hidden on desktop)
           '<div class="cd-mdt-launcher">' +
             '<div class="cd-mdt-launcher-grid">' +
-              '<div class="cd-mdt-launcher-item" onclick="ddNavTo(\'personSearch\')"><i class="fa fa-user-shield" style="color:var(--cd-blue);"></i><span>Person</span></div>' +
-              '<div class="cd-mdt-launcher-item" onclick="ddNavTo(\'vehicleSearch\')"><i class="fa fa-car" style="color:var(--cd-green);"></i><span>Vehicle</span></div>' +
-              '<div class="cd-mdt-launcher-item" onclick="ddNavTo(\'firearmSearch\')"><i class="fa fa-crosshairs" style="color:var(--cd-red);"></i><span>Firearm</span></div>' +
-              '<div class="cd-mdt-launcher-item" onclick="ddNavTo(\'activeCalls\')"><i class="fa fa-radio" style="color:var(--cd-green);"></i><span>Calls</span><span class="cd-mdt-launcher-badge" id="cd-mdt-mob-calls">&mdash;</span></div>' +
-              '<div class="cd-mdt-launcher-item" onclick="ddNavTo(\'createBolos\')"><i class="fa fa-bullhorn" style="color:var(--cd-amber);"></i><span>BOLOs</span></div>' +
-              '<div class="cd-mdt-launcher-item" onclick="ddNavTo(\'10CodesInterface\')"><i class="fa fa-broadcast-tower" style="color:var(--cd-amber);"></i><span>Status</span></div>' +
+              (enabledComponents['personSearch'] ? '<div class="cd-mdt-launcher-item" onclick="ddNavTo(\'personSearch\')"><i class="fa fa-user-shield" style="color:var(--cd-blue);"></i><span>Person</span></div>' : '') +
+              (enabledComponents['vehicleSearch'] ? '<div class="cd-mdt-launcher-item" onclick="ddNavTo(\'vehicleSearch\')"><i class="fa fa-car" style="color:var(--cd-green);"></i><span>Vehicle</span></div>' : '') +
+              (enabledComponents['firearmSearch'] ? '<div class="cd-mdt-launcher-item" onclick="ddNavTo(\'firearmSearch\')"><i class="fa fa-crosshairs" style="color:var(--cd-red);"></i><span>Firearm</span></div>' : '') +
+              (enabledComponents['activeCalls'] ? '<div class="cd-mdt-launcher-item" onclick="ddNavTo(\'activeCalls\')"><i class="fa fa-radio" style="color:var(--cd-green);"></i><span>Calls</span><span class="cd-mdt-launcher-badge" id="cd-mdt-mob-calls">&mdash;</span></div>' : '') +
+              (enabledComponents['createBolos'] ? '<div class="cd-mdt-launcher-item" onclick="ddNavTo(\'createBolos\')"><i class="fa fa-bullhorn" style="color:var(--cd-amber);"></i><span>BOLOs</span></div>' : '') +
+              (enabledComponents['10CodesInterface'] ? '<div class="cd-mdt-launcher-item" onclick="ddNavTo(\'10CodesInterface\')"><i class="fa fa-broadcast-tower" style="color:var(--cd-amber);"></i><span>Status</span></div>' : '') +
             '</div>' +
-            // Mobile quick-glance: recent calls feed
-            '<div style="padding:0 0.75rem 0.75rem;">' +
-              '<div style="font-size:0.625rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--cd-text-dim);padding:0.75rem 0 0.5rem;border-top:1px solid var(--cd-glass-border);margin-top:0.25rem;">Recent Calls &mdash; ' + esc(deptName) + '</div>' +
-              '<div id="cd-mob-recent-calls" style="display:flex;flex-direction:column;gap:0.375rem;">' +
-                '<div style="text-align:center;padding:1rem 0;color:var(--cd-text-dim);font-size:0.75rem;"><i class="fa fa-circle-notch fa-spin"></i></div>' +
-              '</div>' +
-            '</div>' +
-            // Mobile quick-glance: quick nav to other tools
-            '<div style="padding:0 0.75rem 1rem;">' +
-              '<div style="font-size:0.625rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--cd-text-dim);padding:0.5rem 0;border-top:1px solid var(--cd-glass-border);">More Tools</div>' +
-              '<div style="display:flex;flex-direction:column;gap:0.25rem;">' +
-                '<div onclick="ddNavTo(\'warrantDatabase\')" style="display:flex;align-items:center;gap:0.625rem;padding:0.625rem 0.75rem;border-radius:var(--cd-radius-sm);background:var(--cd-glass);border:1px solid var(--cd-glass-border);cursor:pointer;">' +
-                  '<i class="fa fa-gavel" style="color:var(--cd-accent);font-size:0.75rem;width:1.25rem;text-align:center;"></i>' +
-                  '<span style="font-size:0.8125rem;color:var(--cd-text-muted);font-weight:500;">Warrant Database</span>' +
-                  '<i class="fa fa-chevron-right" style="margin-left:auto;font-size:0.625rem;color:var(--cd-text-dim);"></i>' +
+            // Mobile quick-glance: recent calls feed (only if calls enabled)
+            (enabledComponents['activeCalls'] ?
+              '<div style="padding:0 0.75rem 0.75rem;">' +
+                '<div style="font-size:0.625rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--cd-text-dim);padding:0.75rem 0 0.5rem;border-top:1px solid var(--cd-glass-border);margin-top:0.25rem;">Recent Calls &mdash; ' + esc(deptName) + '</div>' +
+                '<div id="cd-mob-recent-calls" style="display:flex;flex-direction:column;gap:0.375rem;">' +
+                  '<div style="text-align:center;padding:1rem 0;color:var(--cd-text-dim);font-size:0.75rem;"><i class="fa fa-circle-notch fa-spin"></i></div>' +
                 '</div>' +
-                '<div onclick="ddNavTo(\'notepad\')" style="display:flex;align-items:center;gap:0.625rem;padding:0.625rem 0.75rem;border-radius:var(--cd-radius-sm);background:var(--cd-glass);border:1px solid var(--cd-glass-border);cursor:pointer;">' +
-                  '<i class="fa fa-sticky-note" style="color:var(--cd-amber);font-size:0.75rem;width:1.25rem;text-align:center;"></i>' +
-                  '<span style="font-size:0.8125rem;color:var(--cd-text-muted);font-weight:500;">Notepad</span>' +
-                  '<i class="fa fa-chevron-right" style="margin-left:auto;font-size:0.625rem;color:var(--cd-text-dim);"></i>' +
-                '</div>' +
-                '<div onclick="ddNavTo(\'courtCases\')" style="display:flex;align-items:center;gap:0.625rem;padding:0.625rem 0.75rem;border-radius:var(--cd-radius-sm);background:var(--cd-glass);border:1px solid var(--cd-glass-border);cursor:pointer;">' +
-                  '<i class="fa fa-briefcase" style="color:var(--cd-accent);font-size:0.75rem;width:1.25rem;text-align:center;"></i>' +
-                  '<span style="font-size:0.8125rem;color:var(--cd-text-muted);font-weight:500;">Court Cases</span>' +
-                  '<i class="fa fa-chevron-right" style="margin-left:auto;font-size:0.625rem;color:var(--cd-text-dim);"></i>' +
-                '</div>' +
-                '<div onclick="ddNavTo(\'penalCodes\')" style="display:flex;align-items:center;gap:0.625rem;padding:0.625rem 0.75rem;border-radius:var(--cd-radius-sm);background:var(--cd-glass);border:1px solid var(--cd-glass-border);cursor:pointer;">' +
-                  '<i class="fa fa-scale-balanced" style="color:var(--cd-amber);font-size:0.75rem;width:1.25rem;text-align:center;"></i>' +
-                  '<span style="font-size:0.8125rem;color:var(--cd-text-muted);font-weight:500;">Penal Codes</span>' +
-                  '<i class="fa fa-chevron-right" style="margin-left:auto;font-size:0.625rem;color:var(--cd-text-dim);"></i>' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
+              '</div>' : '') +
+            // Mobile quick-glance: quick nav to other tools (only show enabled ones)
+            (function() {
+              var tools = [];
+              if (enabledComponents['warrantDatabase']) tools.push('<div onclick="ddNavTo(\'warrantDatabase\')" style="display:flex;align-items:center;gap:0.625rem;padding:0.625rem 0.75rem;border-radius:var(--cd-radius-sm);background:var(--cd-glass);border:1px solid var(--cd-glass-border);cursor:pointer;"><i class="fa fa-gavel" style="color:var(--cd-accent);font-size:0.75rem;width:1.25rem;text-align:center;"></i><span style="font-size:0.8125rem;color:var(--cd-text-muted);font-weight:500;">Warrant Database</span><i class="fa fa-chevron-right" style="margin-left:auto;font-size:0.625rem;color:var(--cd-text-dim);"></i></div>');
+              if (enabledComponents['notepad']) tools.push('<div onclick="ddNavTo(\'notepad\')" style="display:flex;align-items:center;gap:0.625rem;padding:0.625rem 0.75rem;border-radius:var(--cd-radius-sm);background:var(--cd-glass);border:1px solid var(--cd-glass-border);cursor:pointer;"><i class="fa fa-sticky-note" style="color:var(--cd-amber);font-size:0.75rem;width:1.25rem;text-align:center;"></i><span style="font-size:0.8125rem;color:var(--cd-text-muted);font-weight:500;">Notepad</span><i class="fa fa-chevron-right" style="margin-left:auto;font-size:0.625rem;color:var(--cd-text-dim);"></i></div>');
+              if (enabledComponents['courtCases']) tools.push('<div onclick="ddNavTo(\'courtCases\')" style="display:flex;align-items:center;gap:0.625rem;padding:0.625rem 0.75rem;border-radius:var(--cd-radius-sm);background:var(--cd-glass);border:1px solid var(--cd-glass-border);cursor:pointer;"><i class="fa fa-briefcase" style="color:var(--cd-accent);font-size:0.75rem;width:1.25rem;text-align:center;"></i><span style="font-size:0.8125rem;color:var(--cd-text-muted);font-weight:500;">Court Cases</span><i class="fa fa-chevron-right" style="margin-left:auto;font-size:0.625rem;color:var(--cd-text-dim);"></i></div>');
+              if (enabledComponents['penalCodes']) tools.push('<div onclick="ddNavTo(\'penalCodes\')" style="display:flex;align-items:center;gap:0.625rem;padding:0.625rem 0.75rem;border-radius:var(--cd-radius-sm);background:var(--cd-glass);border:1px solid var(--cd-glass-border);cursor:pointer;"><i class="fa fa-scale-balanced" style="color:var(--cd-amber);font-size:0.75rem;width:1.25rem;text-align:center;"></i><span style="font-size:0.8125rem;color:var(--cd-text-muted);font-weight:500;">Penal Codes</span><i class="fa fa-chevron-right" style="margin-left:auto;font-size:0.625rem;color:var(--cd-text-dim);"></i></div>');
+              if (!tools.length) return '';
+              return '<div style="padding:0 0.75rem 1rem;">' +
+                '<div style="font-size:0.625rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--cd-text-dim);padding:0.5rem 0;border-top:1px solid var(--cd-glass-border);">More Tools</div>' +
+                '<div style="display:flex;flex-direction:column;gap:0.25rem;">' + tools.join('') + '</div></div>';
+            })() +
           '</div>' +
 
         '</div>';
@@ -1092,30 +1085,80 @@
     }
 
     function populateMDTColumns() {
-      // Left column: render search components inline
-      if (window.cdPersonSearchRender) {
+      // Left column: render search components inline (only if enabled)
+      if (enabledComponents['personSearch'] && window.cdPersonSearchRender) {
         $('#cd-mdt-pane-person').html(window.cdPersonSearchRender('personSearch'));
         if (window.cdPersonSearchInit) window.cdPersonSearchInit();
+      } else {
+        $('#cd-mdt-pane-person').empty();
       }
-      if (window.cdVehicleSearchRender) {
+      if (enabledComponents['vehicleSearch'] && window.cdVehicleSearchRender) {
         $('#cd-mdt-pane-vehicle').html(window.cdVehicleSearchRender('vehicleSearch'));
         if (window.cdVehicleSearchInit) window.cdVehicleSearchInit();
+      } else {
+        $('#cd-mdt-pane-vehicle').empty();
       }
-      if (window.cdFirearmSearchRender) {
+      if (enabledComponents['firearmSearch'] && window.cdFirearmSearchRender) {
         $('#cd-mdt-pane-firearm').html(window.cdFirearmSearchRender('firearmSearch'));
         if (window.cdFirearmSearchInit) window.cdFirearmSearchInit();
+      } else {
+        $('#cd-mdt-pane-firearm').empty();
       }
 
-      // Center column: render calls inline
-      if (window.cdCallsRender) {
+      // Hide search tabs for disabled components
+      $('.cd-mdt-search-tab[data-search="person"]').toggle(!!enabledComponents['personSearch']);
+      $('.cd-mdt-search-tab[data-search="vehicle"]').toggle(!!enabledComponents['vehicleSearch']);
+      $('.cd-mdt-search-tab[data-search="firearm"]').toggle(!!enabledComponents['firearmSearch']);
+
+      // Hide entire search column if no search components enabled
+      var anySearch = enabledComponents['personSearch'] || enabledComponents['vehicleSearch'] || enabledComponents['firearmSearch'];
+      $('#cd-mdt-col-search').toggle(!!anySearch);
+
+      // Auto-select first visible search tab
+      if (anySearch) {
+        var $visibleTabs = $('.cd-mdt-search-tab:visible');
+        if ($visibleTabs.length && !$visibleTabs.filter('.active').length) {
+          $visibleTabs.first().trigger('click');
+        }
+      }
+
+      // Center column: render calls inline (only if enabled)
+      if (enabledComponents['activeCalls'] && window.cdCallsRender) {
         $('#cd-mdt-calls-content').html(window.cdCallsRender('activeCalls'));
         if (window.cdCallsInit) window.cdCallsInit();
+        $('#cd-mdt-col-calls').show();
+      } else {
+        $('#cd-mdt-calls-content').empty();
+        $('#cd-mdt-col-calls').hide();
       }
 
-      // Right column: render BOLOs inline
-      if (window.cdBolosRender) {
+      // Right column: render BOLOs inline (only if enabled)
+      if (enabledComponents['createBolos'] && window.cdBolosRender) {
         $('#cd-mdt-intel-content').html(window.cdBolosRender('createBolos'));
         if (window.cdBolosInit) window.cdBolosInit();
+        $('#cd-mdt-col-intel').show();
+      } else {
+        $('#cd-mdt-intel-content').empty();
+        $('#cd-mdt-col-intel').hide();
+      }
+
+      // Show empty state in main area if all MDT columns are hidden
+      var anyMDT = anySearch || enabledComponents['activeCalls'] || enabledComponents['createBolos'];
+      if (!anyMDT) {
+        $('#cd-mdt-overview .cd-mdt-main').hide();
+        $('#cd-mdt-overview .cd-mdt-bottom').hide();
+        var $empty = $('#cd-mdt-empty-state');
+        if (!$empty.length) {
+          $('#cd-mdt-overview').append(
+            '<div id="cd-mdt-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 1rem;text-align:center;">' +
+              '<i class="fa fa-puzzle-piece" style="font-size:2rem;color:var(--cd-text-dim);margin-bottom:1rem;opacity:0.4;"></i>' +
+              '<div style="font-size:0.9375rem;font-weight:600;color:var(--cd-text-muted);margin-bottom:0.375rem;">No Components Enabled</div>' +
+              '<div style="font-size:0.8125rem;color:var(--cd-text-dim);max-width:320px;line-height:1.5;">Ask your community admin to enable components in <strong style="color:var(--cd-text-muted);">Settings &rarr; Components</strong> to get started.</div>' +
+            '</div>'
+          );
+        }
+      } else {
+        $('#cd-mdt-empty-state').remove();
       }
 
       // Update status badge
