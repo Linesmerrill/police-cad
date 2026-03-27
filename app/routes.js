@@ -3320,6 +3320,49 @@ module.exports = function (app, passport, server, nextApp, handle) {
     return res.json({ user: null });
   });
 
+  // API route to deactivate user account
+  app.delete("/api/v1/user/:userId/deactivate", apiAuthCheck, async function (req, res) {
+    try {
+      const mongoose = require("mongoose");
+      const { ObjectId } = mongoose.Types;
+
+      const requestedUserId = req.params.userId;
+      const userData = req.user._doc || req.user;
+      const documentId = req.user._id || userData._id;
+      let currentUserId = '';
+      if (documentId) {
+        currentUserId = typeof documentId === 'object'
+          ? (documentId.$oid || documentId.toString())
+          : String(documentId);
+      }
+
+      // Ensure user can only deactivate their own account
+      if (requestedUserId !== currentUserId) {
+        return res.status(403).json({ message: "You can only deactivate your own account" });
+      }
+
+      const now = new Date();
+      const restoreUntil = new Date(now);
+      restoreUntil.setDate(restoreUntil.getDate() + 30);
+
+      await mongoose.connection.db.collection("users").updateOne(
+        { _id: new ObjectId(requestedUserId) },
+        {
+          $set: {
+            "user.isDeactivated": true,
+            "user.deactivatedAt": now,
+            "user.restoreUntil": restoreUntil,
+          }
+        }
+      );
+
+      return res.json({ message: "User account deactivated successfully" });
+    } catch (err) {
+      console.error("[Deactivate] Error:", err);
+      return res.status(500).json({ message: "Failed to deactivate account" });
+    }
+  });
+
   // API route to verify password
   app.post("/api/verify-password", auth, function (req, res) {
     if (!req.isAuthenticated() || !req.user) {
