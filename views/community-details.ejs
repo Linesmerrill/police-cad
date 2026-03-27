@@ -1536,6 +1536,11 @@
                 <span id="shareBtnText">Share</span>
               </button>
 
+              <a href="/community/<%= Buffer.from((community.community._id || community._id).toString()).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '') %>/map" class="action-btn" style="color: #8b5cf6; text-decoration: none;">
+                <i class="fa fa-map"></i>
+                <span>Map</span>
+              </a>
+
               <button onclick="scrollToSection('announcements-section')" class="action-btn" style="color: #f472b6;">
                 <i class="fa fa-bullhorn"></i>
                 <span>News</span>
