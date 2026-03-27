@@ -973,6 +973,8 @@
   border: 1px solid var(--dd-glass-border);
   border-radius: var(--dd-radius-sm);
   overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
