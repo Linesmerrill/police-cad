@@ -316,7 +316,7 @@
         var w = warrants[i].warrant || warrants[i];
         var wType = w.warrantType || w.type || 'arrest';
         var wCharges = Array.isArray(w.charges) ? w.charges.join(', ') : (w.charges || 'No charges');
-        html += '<div class="cd-ps-detail-list-item cd-ps-clickable" onclick="event.stopPropagation(); if(window.cdWarrantDbOpenWith) window.cdWarrantDbOpenWith({name:\'' + esc(searchName.replace(/'/g, "\\'")) + '\'})">' +
+        html += '<div class="cd-ps-detail-list-item cd-ps-clickable" onclick="event.stopPropagation(); if(window.cdWarrantDbOpenWith) window.cdWarrantDbOpenWith({name:\'' + esc(searchName.replace(/\\/g, '\\\\').replace(/'/g, "\\'")) + '\'})">' +
           '<span class="cd-ps-badge cd-ps-badge-' + (wType === 'arrest' ? 'red' : wType === 'search' ? 'amber' : 'blue') + '" style="font-size:0.5625rem;">' + esc(wType.toUpperCase()) + '</span> ' +
           esc(wCharges) +
           '<i class="fa fa-external-link" style="margin-left:auto;font-size:0.5625rem;opacity:0.4;"></i>' +

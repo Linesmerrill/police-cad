@@ -451,7 +451,7 @@
     if (sub) {
       sub.innerHTML = busy
         ? '<i class="fa fa-circle-notch fa-spin"></i> Submitting...'
-        : sub.getAttribute('data-label') || 'Submit';
+        : esc(sub.getAttribute('data-label') || 'Submit');
     }
   }
 
