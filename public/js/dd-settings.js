@@ -1121,7 +1121,9 @@
       });
     }
 
-    addMembersOverlay.addClass('visible');
+    // Force display in case transition doesn't fire
+    addMembersOverlay.css('display', 'flex');
+    setTimeout(function() { addMembersOverlay.addClass('visible'); }, 10);
     selectedMemberIds = [];
     communityMembersPage = 1;
     allCommunityMembers = [];
@@ -1140,7 +1142,10 @@
   }
 
   function closeAddMembersModal() {
-    if (addMembersOverlay) addMembersOverlay.removeClass('visible');
+    if (addMembersOverlay) {
+      addMembersOverlay.removeClass('visible');
+      setTimeout(function() { addMembersOverlay.css('display', 'none'); }, 300);
+    }
   }
 
   function loadCommunityMembers() {

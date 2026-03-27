@@ -1120,11 +1120,14 @@
 
 .dd-pc-cat-body.open {
   display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Violations Table */
 .dd-pc-table {
   width: 100%;
+  min-width: 500px;
   border-collapse: collapse;
   font-size: 0.8125rem;
 }
