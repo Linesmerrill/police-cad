@@ -722,7 +722,7 @@
         init: function() { if (window.cdStatusPanelInit) window.cdStatusPanelInit(); }
       },
       activeCalls: {
-        label: 'Active Calls', icon: 'fa-phone-volume', navIcon: 'fa-phone-volume',
+        label: 'Calls', icon: 'fa-phone-volume', navIcon: 'fa-phone-volume',
         gridClass: 'dd-grid-full', accentColor: 'var(--dd-green)',
         render: function(key) { return window.cdCallsRender ? window.cdCallsRender(key) : '<div class="dd-empty"><i class="fa fa-phone-volume"></i><p>Loading calls...</p></div>'; },
         init: function() { if (window.cdCallsInit) window.cdCallsInit(); }
@@ -1302,7 +1302,10 @@
       if (panel === 'overview') {
         $('.cd-nav-item[data-panel="overview"]').addClass('active');
       } else {
-        $('.dd-nav-item[data-panel="' + panel + '"]').addClass('active');
+        // Check both cd-nav-item and dd-nav-item (Settings uses cd-nav-item)
+        var $navTarget = $('.dd-nav-item[data-panel="' + panel + '"]');
+        if (!$navTarget.length) $navTarget = $('.cd-nav-item[data-panel="' + panel + '"]');
+        $navTarget.addClass('active');
       }
 
       // Update topbar title
@@ -1577,6 +1580,16 @@
   </script>
 
   <!-- External component scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    if (typeof io === 'undefined') {
+      var script = document.createElement('script');
+      script.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+      script.crossOrigin = 'anonymous';
+      document.head.appendChild(script);
+    }
+  </script>
+  <script src="/static/js/alert-sounds.js"></script>
   <script src="/static/js/dd-limits.js"></script>
   <script src="/static/js/dd-911.js"></script>
   <script src="/static/js/dd-notifications.js"></script>

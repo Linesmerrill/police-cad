@@ -196,6 +196,20 @@
       '.dds-btn-danger{background:rgba(239,68,68,0.12);color:var(--dd-red);border:1px solid rgba(239,68,68,0.2);}' +
       '.dds-btn-danger:hover{background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.35);}' +
 
+      /* Custom range slider */
+      '.dds-slider-wrap{width:100%;height:32px;position:relative;}' +
+      '.dds-slider-wrap input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;background:#1e2235;outline:none;cursor:pointer;}' +
+      '.dds-slider-wrap input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#0ea5e9);border:2px solid rgba(255,255,255,0.15);box-shadow:0 2px 8px rgba(56,189,248,0.35),0 0 0 4px rgba(56,189,248,0.08);cursor:pointer;transition:box-shadow 0.15s;}' +
+      '.dds-slider-wrap input[type="range"]::-webkit-slider-thumb:hover{box-shadow:0 2px 12px rgba(56,189,248,0.5),0 0 0 6px rgba(56,189,248,0.12);}' +
+      '.dds-slider-wrap input[type="range"]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,0.15);background:linear-gradient(135deg,#38bdf8,#0ea5e9);box-shadow:0 2px 8px rgba(56,189,248,0.35);cursor:pointer;}' +
+      '.dds-slider-wrap input[type="range"]::-moz-range-track{height:6px;border-radius:3px;background:#1e2235;border:none;}' +
+
+      /* Volume bars visualization */
+      '.dds-volume-bars{display:flex;align-items:flex-end;gap:3px;height:20px;margin-top:10px;padding:0 2px;}' +
+      '.dds-volume-bars span{flex:1;border-radius:2px;background:#1e2235;min-height:3px;transition:background 0.15s,height 0.2s;}' +
+      '.dds-volume-bars span.active{background:rgba(56,189,248,0.4);}' +
+      '.dds-volume-bars span.active.bright{background:#38bdf8;}' +
+
       /* Save bar (legacy, kept for potential future use) */
       '.dds-save-bar{display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--dd-glass-border);}' +
 
@@ -439,7 +453,104 @@
       '</label>' +
     '</div></div>';
 
+    // Sound settings
+    var soundEnabled = window.dbUser && window.dbUser.user && window.dbUser.user.panicButtonSound;
+    var volumeLevel = (window.dbUser && window.dbUser.user && window.dbUser.user.alertVolumeLevel != null) ? window.dbUser.user.alertVolumeLevel : 50;
+
+    html += '<div class="dds-section">';
+    html += '<div class="dds-section-title-row"><span class="dds-section-title" style="margin-bottom:0;">Sound</span><span class="dds-autosave" id="dds-sound-status" style="opacity:0;"></span></div>';
+    html += '<div class="dds-toggle-row" style="padding:14px 16px;border-radius:12px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.04);margin-bottom:1rem;">' +
+      '<div class="dds-toggle-info">' +
+        '<span class="dds-toggle-label">Alert Sounds</span>' +
+        '<span class="dds-toggle-desc">Panic alerts, Signal 100 & emergency tones</span>' +
+      '</div>' +
+      '<label class="dds-switch">' +
+        '<input type="checkbox" id="dds-sound-toggle"' + (soundEnabled ? ' checked' : '') + ' />' +
+        '<span class="dds-switch-track"></span>' +
+      '</label>' +
+    '</div>';
+    html += '<div style="margin-bottom:0;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">' +
+        '<span style="color:var(--dd-text);font-size:0.8125rem;font-weight:500;">Alert Volume</span>' +
+        '<span id="dds-vol-display" style="font-size:0.8125rem;font-weight:600;color:var(--dd-accent);background:rgba(56,189,248,0.1);padding:2px 10px;border-radius:6px;min-width:42px;text-align:center;font-variant-numeric:tabular-nums;">' + esc(String(volumeLevel)) + '%</span>' +
+      '</div>' +
+      '<div class="dds-slider-wrap">' +
+        '<input type="range" id="dds-volume-slider" min="0" max="100" value="' + esc(String(volumeLevel)) + '" />' +
+      '</div>' +
+      '<div class="dds-volume-bars" id="dds-volume-bars"></div>' +
+    '</div>';
+    html += '</div>';
+
     $body.html(html);
+
+    // Build volume bars visualization
+    var barCount = 20;
+    var barsContainer = document.getElementById('dds-volume-bars');
+    if (barsContainer) {
+      for (var bi = 0; bi < barCount; bi++) {
+        var bar = document.createElement('span');
+        bar.style.height = (3 + (bi / barCount) * 15) + 'px';
+        barsContainer.appendChild(bar);
+      }
+    }
+
+    function updateVolumeBars(val) {
+      if (!barsContainer) return;
+      var bars = barsContainer.children;
+      var filled = Math.round((val / 100) * barCount);
+      for (var i = 0; i < bars.length; i++) {
+        if (i < filled) {
+          bars[i].classList.add('active');
+          bars[i].classList.toggle('bright', i >= filled - 3);
+        } else {
+          bars[i].classList.remove('active', 'bright');
+        }
+      }
+      // Update slider track fill
+      var slider = document.getElementById('dds-volume-slider');
+      if (slider) {
+        var pct = val + '%';
+        slider.style.background = 'linear-gradient(to right, rgba(56,189,248,0.35) 0%, rgba(56,189,248,0.5) ' + pct + ', #1e2235 ' + pct + ')';
+      }
+    }
+    updateVolumeBars(volumeLevel);
+
+    // Sound toggle handler — emit socket event directly
+    $body.find('#dds-sound-toggle').on('change', function () {
+      showSaveStatus('#dds-sound-status', 'saving');
+      var socket = io({ transports: ['websocket'] });
+      socket.emit('update_panic_btn_sound', window.dbUser);
+      socket.on('load_panic_btn_result', function(res) {
+        var newVal = !res.user.panicButtonSound;
+        window.dbUser.user.panicButtonSound = newVal;
+        $('#dds-sound-toggle').prop('checked', newVal);
+        $('#panic-button-check-sound').prop('checked', newVal);
+        showSaveStatus('#dds-sound-status', 'saved');
+      });
+    });
+
+    // Volume slider handler — preview only on click and release, not every drag tick
+    $body.find('#dds-volume-slider').on('input', function () {
+      $('#dds-vol-display').text(this.value + '%');
+      updateVolumeBars(this.value);
+    });
+    $body.find('#dds-volume-slider').on('click', function () {
+      if (window.AlertSounds) window.AlertSounds.preview('signal100', this.value);
+    });
+    $body.find('#dds-volume-slider').on('change', function () {
+      var vol = this.value;
+      showSaveStatus('#dds-sound-status', 'saving');
+      var socket = io({ transports: ['websocket'] });
+      socket.emit('update_alert_volume_slider', { dbUser: window.dbUser, volume: vol });
+      socket.on('load_alert_volume_result', function() {
+        window.dbUser.user.alertVolumeLevel = vol;
+        showSaveStatus('#dds-sound-status', 'saved');
+      });
+      // Sync legacy slider if it exists
+      var legacySlider = document.getElementById('alert-volume-slider');
+      if (legacySlider) legacySlider.value = vol;
+      if (window.AlertSounds) window.AlertSounds.preview('signal100', vol);
+    });
 
     // Track original values to only save when changed
     var origName = deptName;
@@ -541,12 +652,12 @@
     createFirearms:        'Firearms',
     call911:               'Call 911',
     notepad:               'Notepad',
-    '10CodesInterface':    '10 Codes',
+    '10CodesInterface':    'Status Codes',
     personSearch:          'Person Search',
     vehicleSearch:         'Vehicle Search',
     firearmSearch:         'Firearm Search',
     createBolos:           'BOLOs',
-    viewBolosAndWarrants:  'BOLOs & Warrants',
+    viewBolosAndWarrants:  'Warrant Database',
     dispatchUnits:         'Dispatch Units',
     createAndManageCalls:  'Calls for Service',
     manage911Calls:        'Manage 911 Calls',
@@ -555,6 +666,8 @@
     allWarrants:           'All Warrants',
     penalCodes:            'Penal Codes',
     courtCases:            'Court Cases',
+    activeCalls:           'Calls',
+    warrantDatabase:       'Warrant Database',
     medicalDatabase:       'Medical Database'
   };
 

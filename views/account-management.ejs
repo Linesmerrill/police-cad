@@ -162,8 +162,8 @@
   <div class="ss-panel">
     <div class="ss-header">
       <div class="ss-header-title">
-        <div class="ss-icon-ring"><i class="fa fa-volume-up"></i></div>
-        Sound Settings
+        <div class="ss-icon-ring"><i class="fa fa-cog"></i></div>
+        Settings
       </div>
       <button id="accountModalClose" class="ss-close" aria-label="Close"><i class="fa fa-times"></i></button>
     </div>
@@ -180,6 +180,11 @@
       <div id="account-content" style="display:none;"></div>
 
       <div id="settings-content">
+        <!-- Sound Section Header -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          <i class="fa fa-volume-up" style="color:#7b9cff;font-size:14px;"></i>
+          <span style="color:#e8ecf4;font-size:16px;font-weight:600;">Sound</span>
+        </div>
         <!-- Enable Sound Toggle -->
         <div class="ss-toggle-row">
           <div>
@@ -205,6 +210,25 @@
               onchange="adjustAlertVolumeSlider(); if(window.AlertSounds) AlertSounds.preview('signal100', this.value);">
           </div>
           <div id="ss-volume-bars" class="ss-volume-bars"></div>
+        </div>
+      </div>
+
+      <!-- Beta Features -->
+      <div class="ss-divider" style="margin:4px 0 0;"></div>
+      <div style="padding:20px 0 0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          <i class="fa fa-flask" style="color:#38bdf8;font-size:14px;"></i>
+          <span style="color:#e8ecf4;font-size:16px;font-weight:600;">Beta Features</span>
+        </div>
+        <div class="ss-toggle-row" style="margin-bottom:0;">
+          <div style="min-width:0;flex:1;">
+            <div class="ss-toggle-label" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              Command Dashboard
+              <span style="font-size:11px;background:rgba(56,189,248,0.15);color:#38bdf8;padding:2px 6px;border-radius:4px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Beta</span>
+            </div>
+            <div class="ss-toggle-desc">A modern tactical command center for your department</div>
+          </div>
+          <button id="ss-cmd-dashboard-btn" type="button" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#050a12;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:opacity 0.15s;">Enable</button>
         </div>
       </div>
     </div>
@@ -268,6 +292,33 @@ window.initSoundSettings = function() {
     window.updateVolumeUI(slider.value);
   }
 };
+
+// Command Dashboard beta toggle
+(function() {
+  var btn = document.getElementById('ss-cmd-dashboard-btn');
+  if (!btn) return;
+  btn.addEventListener('click', function() {
+    btn.disabled = true;
+    btn.textContent = 'Switching...';
+    btn.style.opacity = '0.6';
+    if (typeof window.cdOptIn === 'function') {
+      window.cdOptIn();
+    } else {
+      // Fallback: call the API directly
+      var userId = '<%= user._id %>';
+      var apiUrl = '<%= apiUrl %>';
+      $.ajax({
+        url: apiUrl + '/api/v1/user-preferences/' + encodeURIComponent(userId),
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ betaCommandDashboard: true, userId: userId }),
+        complete: function() {
+          window.location.href = '/command-dashboard' + window.location.search;
+        }
+      });
+    }
+  });
+})();
 
 // Close modal on close button click or backdrop click
 document.addEventListener('DOMContentLoaded', function() {
