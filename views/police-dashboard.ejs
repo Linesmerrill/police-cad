@@ -843,8 +843,8 @@
                                     if (banner) banner.style.display = 'none';
                                     // Show toast informing user they can enable from settings
                                     var toast = document.createElement('div');
-                                    toast.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:9999;background:#181b2a;border:1px solid rgba(56,189,248,0.25);border-radius:10px;padding:0.75rem 1.25rem;display:flex;align-items:center;gap:0.625rem;box-shadow:0 8px 24px rgba(0,0,0,0.3);max-width:440px;width:90%;animation:ss-fadeIn 0.2s ease;';
-                                    toast.innerHTML = '<i class="fas fa-info-circle" style="color:#38bdf8;font-size:1rem;flex-shrink:0;"></i><span style="font-size:0.875rem;color:#e2e8f0;line-height:1.4;">You can enable the Command Dashboard anytime from <strong style="color:#38bdf8;">Settings &rarr; Beta Features</strong></span>';
+                                    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;background:#181b2a;border:1px solid rgba(56,189,248,0.25);border-radius:10px;padding:12px 20px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,0.3);max-width:480px;width:90%;animation:ss-fadeIn 0.2s ease;';
+                                    toast.innerHTML = '<i class="fas fa-info-circle" style="color:#38bdf8;font-size:16px;flex-shrink:0;"></i><span style="font-size:14px;color:#e2e8f0;line-height:1.4;">You can enable the Command Dashboard anytime from <strong style="color:#38bdf8;">Settings &rarr; Beta Features</strong></span>';
                                     document.body.appendChild(toast);
                                     setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(function() { toast.remove(); }, 300); }, 5000);
                                   }

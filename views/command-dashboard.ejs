@@ -506,10 +506,6 @@
           <i class="fa fa-map"></i>
           Map
         </a>
-        <a class="cd-nav-item" href="/court-cases?c=<%= encodedCommunityId %>">
-          <i class="fa fa-briefcase"></i>
-          Court Cases
-        </a>
         <a class="cd-nav-item" href="/help">
           <i class="fa fa-circle-question"></i>
           Help & Tutorials
@@ -857,6 +853,7 @@
           // Default new components to enabled if not yet in stored template
           if (!enabledComponents.hasOwnProperty('activeCalls')) enabledComponents['activeCalls'] = true;
           if (!enabledComponents.hasOwnProperty('warrantDatabase')) enabledComponents['warrantDatabase'] = true;
+          if (!enabledComponents.hasOwnProperty('penalCodes')) enabledComponents['penalCodes'] = true;
           buildDashboard();
         },
         error: function() {
@@ -1054,6 +1051,11 @@
                 '<div onclick="ddNavTo(\'courtCases\')" style="display:flex;align-items:center;gap:0.625rem;padding:0.625rem 0.75rem;border-radius:var(--cd-radius-sm);background:var(--cd-glass);border:1px solid var(--cd-glass-border);cursor:pointer;">' +
                   '<i class="fa fa-briefcase" style="color:var(--cd-accent);font-size:0.75rem;width:1.25rem;text-align:center;"></i>' +
                   '<span style="font-size:0.8125rem;color:var(--cd-text-muted);font-weight:500;">Court Cases</span>' +
+                  '<i class="fa fa-chevron-right" style="margin-left:auto;font-size:0.625rem;color:var(--cd-text-dim);"></i>' +
+                '</div>' +
+                '<div onclick="ddNavTo(\'penalCodes\')" style="display:flex;align-items:center;gap:0.625rem;padding:0.625rem 0.75rem;border-radius:var(--cd-radius-sm);background:var(--cd-glass);border:1px solid var(--cd-glass-border);cursor:pointer;">' +
+                  '<i class="fa fa-scale-balanced" style="color:var(--cd-amber);font-size:0.75rem;width:1.25rem;text-align:center;"></i>' +
+                  '<span style="font-size:0.8125rem;color:var(--cd-text-muted);font-weight:500;">Penal Codes</span>' +
                   '<i class="fa fa-chevron-right" style="margin-left:auto;font-size:0.625rem;color:var(--cd-text-dim);"></i>' +
                 '</div>' +
               '</div>' +
