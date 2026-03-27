@@ -2463,14 +2463,20 @@ function renderPenalCodesCategories(categories) {
     var violationRows = '';
 
     violations.forEach(function(v, vIdx) {
-      violationRows += '<tr>' +
+      var rowId = 'pc-row-' + catIdx + '-' + vIdx;
+      violationRows += '<tr class="dd-pc-v-row" onclick="pcToggleExplanation(\'' + rowId + '\')">' +
         '<td class="dd-pc-v-name">' + esc(v.name || '') + '</td>' +
         '<td class="dd-pc-v-jail">' + esc(v.jailTime || 'N/A') + '</td>' +
         '<td class="dd-pc-v-fine">' + pcFormatFine(v.fine) + '</td>' +
         '<td class="dd-pc-v-explanation" title="' + esc(v.explanation || '') + '">' + esc(v.explanation || '\u2014') + '</td>' +
         '<td class="dd-pc-v-actions">' +
-          '<button class="dd-pc-icon-btn" onclick="pcEditViolation(' + catIdx + ',' + vIdx + ')" title="Edit"><i class="fa fa-pen"></i></button>' +
-          '<button class="dd-pc-icon-btn danger" onclick="pcDeleteViolation(' + catIdx + ',' + vIdx + ')" title="Delete"><i class="fa fa-trash"></i></button>' +
+          '<button class="dd-pc-icon-btn" onclick="event.stopPropagation();pcEditViolation(' + catIdx + ',' + vIdx + ')" title="Edit"><i class="fa fa-pen"></i></button>' +
+          '<button class="dd-pc-icon-btn danger" onclick="event.stopPropagation();pcDeleteViolation(' + catIdx + ',' + vIdx + ')" title="Delete"><i class="fa fa-trash"></i></button>' +
+        '</td>' +
+      '</tr>' +
+      '<tr class="dd-pc-v-explain-row" id="' + rowId + '">' +
+        '<td colspan="5" class="dd-pc-v-explain-cell">' +
+          '<div class="dd-pc-v-explain-content">' + esc(v.explanation || 'No explanation provided.') + '</div>' +
         '</td>' +
       '</tr>';
     });
@@ -2511,6 +2517,11 @@ function renderPenalCodesCategories(categories) {
   // Auto-expand first category
   if (categories.length > 0) pcToggleCategory(0);
 }
+
+window.pcToggleExplanation = function(rowId) {
+  var $row = $('#' + rowId);
+  if ($row.length) $row.toggleClass('open');
+};
 
 window.pcToggleCategory = function(catIdx) {
   var $body = $('.dd-pc-cat-body-' + catIdx);

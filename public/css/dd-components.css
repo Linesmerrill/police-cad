@@ -1192,6 +1192,24 @@
   font-size: 0.75rem;
 }
 
+/* Expandable explanation row — hidden on desktop (column is visible), shown on mobile tap */
+.dd-pc-v-explain-row {
+  display: none;
+}
+
+.dd-pc-v-explain-cell {
+  padding: 0;
+}
+
+.dd-pc-v-explain-content {
+  padding: 0.5rem 0.75rem 0.625rem;
+  font-size: 0.75rem;
+  color: var(--dd-text-muted);
+  line-height: 1.5;
+  background: rgba(0, 0, 0, 0.15);
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
 @media (max-width: 768px) {
   .dd-pc-v-name {
     white-space: normal;
@@ -1215,6 +1233,15 @@
   }
   .dd-pc-category {
     overflow-x: visible;
+  }
+  .dd-pc-v-row {
+    cursor: pointer;
+  }
+  .dd-pc-v-row:active {
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .dd-pc-v-explain-row.open {
+    display: table-row;
   }
 }
 
