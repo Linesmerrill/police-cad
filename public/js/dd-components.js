@@ -2464,8 +2464,8 @@ function renderPenalCodesCategories(categories) {
 
     violations.forEach(function(v, vIdx) {
       var rowId = 'pc-row-' + catIdx + '-' + vIdx;
-      violationRows += '<tr class="dd-pc-v-row" onclick="pcToggleExplanation(\'' + rowId + '\')">' +
-        '<td class="dd-pc-v-name">' + esc(v.name || '') + '</td>' +
+      violationRows += '<tr class="dd-pc-v-row" id="' + rowId + '-row" onclick="pcToggleExplanation(\'' + rowId + '\')">' +
+        '<td class="dd-pc-v-name"><span>' + esc(v.name || '') + '</span> <i class="fa fa-chevron-down dd-pc-v-chevron"></i></td>' +
         '<td class="dd-pc-v-jail">' + esc(v.jailTime || 'N/A') + '</td>' +
         '<td class="dd-pc-v-fine">' + pcFormatFine(v.fine) + '</td>' +
         '<td class="dd-pc-v-explanation" title="' + esc(v.explanation || '') + '">' + esc(v.explanation || '\u2014') + '</td>' +
@@ -2521,7 +2521,11 @@ function renderPenalCodesCategories(categories) {
 
 window.pcToggleExplanation = function(rowId) {
   var $row = $('#' + rowId);
-  if ($row.length) $row.toggleClass('open');
+  var $tr = $('#' + rowId + '-row');
+  if ($row.length) {
+    $row.toggleClass('open');
+    $tr.toggleClass('expanded');
+  }
 };
 
 window.pcToggleCategory = function(catIdx) {

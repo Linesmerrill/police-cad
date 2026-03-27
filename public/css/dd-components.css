@@ -1192,6 +1192,9 @@
   font-size: 0.75rem;
 }
 
+/* Chevron and hint — hidden on desktop */
+.dd-pc-v-chevron { display: none; }
+
 /* Mobile tap hint — hidden on desktop */
 .dd-pc-mobile-hint {
   display: none;
@@ -1251,19 +1254,16 @@
   .dd-pc-v-row:active {
     background: rgba(255, 255, 255, 0.04);
   }
-  /* Chevron hint on violation name */
-  .dd-pc-v-row .dd-pc-v-name::after {
-    content: '\f078';
-    font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free', 'FontAwesome';
-    font-weight: 900;
+  /* Chevron hint on violation row */
+  .dd-pc-v-row .dd-pc-v-chevron {
+    display: inline-flex;
     font-size: 0.5rem;
     color: var(--dd-text-dim);
-    margin-left: 0.375rem;
+    margin-left: 0.25rem;
     transition: transform 0.2s;
-    display: inline-block;
+    flex-shrink: 0;
   }
-  .dd-pc-v-explain-row.open + .dd-pc-v-row .dd-pc-v-name::after,
-  .dd-pc-v-row:has(+ .dd-pc-v-explain-row.open) .dd-pc-v-name::after {
+  .dd-pc-v-row.expanded .dd-pc-v-chevron {
     transform: rotate(180deg);
     color: var(--dd-accent);
   }
