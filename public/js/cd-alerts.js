@@ -366,6 +366,8 @@
     alertSocket.on('signal_100_button_updated', function (data) {
       if (!data || data.activeCommunity !== communityId) return;
 
+      if (window.AlertSounds) window.AlertSounds.play('signal100');
+
       var parts = [];
       if (data.activatedByCallSign) parts.push(data.activatedByCallSign);
       if (data.activatedByUsername) parts.push('(' + data.activatedByUsername + ')');
@@ -389,12 +391,50 @@
     /* ── Panic activated ── */
     alertSocket.on('panic_button_updated', function (data) {
       if (data && data.activeCommunity && data.activeCommunity !== communityId) return;
+      if (window.AlertSounds) window.AlertSounds.play('panic');
       fetchPanicAlerts();
     });
 
     /* ── Panic cleared ── */
     alertSocket.on('cleared_panic', function () {
       fetchPanicAlerts();
+    });
+
+    /* ── Tone alert (LEO/FD/EMS tone-out) ── */
+    alertSocket.on('tone_activated', function (data) {
+      if (data.communityId && data.communityId !== communityId) return;
+
+      // Check if this department is targeted
+      var deptId = cfg().departmentId;
+      if (data.targetDeptIds && data.targetDeptIds.length > 0 && deptId && data.targetDeptIds.indexOf(deptId) === -1) return;
+
+      // Play tone sound — custom URL or built-in
+      if (window.AlertSounds) {
+        if (data.toneSoundUrl) {
+          window.AlertSounds.playUrl(data.toneSoundUrl);
+        } else {
+          var soundKey = data.toneType === 'fd' ? 'toneFd' : data.toneType === 'ems' ? 'toneEms' : 'toneLeo';
+          window.AlertSounds.play(soundKey);
+        }
+      }
+
+      // Show tone banner overlay
+      var toneColor = data.toneType === 'fd' ? '#f97316' : data.toneType === 'ems' ? '#22c55e' : '#3b82f6';
+      var triggeredBy = data.triggeredByCallSign ? data.triggeredByCallSign + ' (' + data.triggeredByName + ')' : (data.triggeredByName || 'Unknown');
+      var banner = document.createElement('div');
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:10000;padding:1rem 1.5rem;display:flex;align-items:center;gap:0.75rem;animation:cdVsFadeIn 0.2s ease;background:linear-gradient(135deg,' + toneColor + '22,' + toneColor + '11);border-bottom:2px solid ' + toneColor + ';backdrop-filter:blur(12px);';
+      banner.innerHTML =
+        '<div style="width:36px;height:36px;border-radius:8px;background:' + toneColor + '33;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa fa-volume-high" style="color:' + toneColor + ';font-size:1rem;animation:cd-badge-pulse 1s ease-in-out infinite;"></i></div>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:0.875rem;font-weight:700;color:#fff;letter-spacing:0.02em;">TONE OUT — ' + (window.esc ? window.esc(data.toneName || 'Alert') : (data.toneName || 'Alert')) + '</div>' +
+          '<div style="font-size:0.75rem;color:rgba(255,255,255,0.7);margin-top:0.125rem;">' + (window.esc ? window.esc(triggeredBy) : triggeredBy) + ' — Stand by for voice dispatch.</div>' +
+        '</div>';
+      document.body.appendChild(banner);
+      setTimeout(function () {
+        banner.style.transition = 'opacity 0.3s';
+        banner.style.opacity = '0';
+        setTimeout(function () { banner.remove(); }, 300);
+      }, 8000);
     });
   }
 
