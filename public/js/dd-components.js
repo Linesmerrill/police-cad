@@ -2497,6 +2497,7 @@ function renderPenalCodesCategories(categories) {
       '</div>' +
       '<div class="dd-pc-cat-body dd-pc-cat-body-' + catIdx + '">' +
         (violationRows ?
+          '<div class="dd-pc-mobile-hint"><i class="fa fa-hand-pointer" style="margin-right:0.25rem;"></i> Tap a violation to see details</div>' +
           '<table class="dd-pc-table">' +
             '<thead><tr>' +
               '<th>Violation</th>' +

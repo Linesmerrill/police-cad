@@ -1192,6 +1192,17 @@
   font-size: 0.75rem;
 }
 
+/* Mobile tap hint — hidden on desktop */
+.dd-pc-mobile-hint {
+  display: none;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.625rem;
+  color: var(--dd-text-dim);
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.1);
+}
+
 /* Expandable explanation row — hidden on desktop (column is visible), shown on mobile tap */
 .dd-pc-v-explain-row {
   display: none;
@@ -1240,8 +1251,27 @@
   .dd-pc-v-row:active {
     background: rgba(255, 255, 255, 0.04);
   }
+  /* Chevron hint on violation name */
+  .dd-pc-v-row .dd-pc-v-name::after {
+    content: '\f078';
+    font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free', 'FontAwesome';
+    font-weight: 900;
+    font-size: 0.5rem;
+    color: var(--dd-text-dim);
+    margin-left: 0.375rem;
+    transition: transform 0.2s;
+    display: inline-block;
+  }
+  .dd-pc-v-explain-row.open + .dd-pc-v-row .dd-pc-v-name::after,
+  .dd-pc-v-row:has(+ .dd-pc-v-explain-row.open) .dd-pc-v-name::after {
+    transform: rotate(180deg);
+    color: var(--dd-accent);
+  }
   .dd-pc-v-explain-row.open {
     display: table-row;
+  }
+  .dd-pc-mobile-hint {
+    display: block;
   }
 }
 
