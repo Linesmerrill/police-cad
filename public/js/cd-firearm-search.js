@@ -91,7 +91,9 @@
       /* Search input */
       '.cd-fs-search-wrap{position:relative;margin-bottom:1rem;}' +
       '.cd-fs-search-icon{position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:var(--cd-text-muted);font-size:0.875rem;pointer-events:none;}' +
-      '.cd-fs-search-input{width:100%;background:rgba(0,0,0,0.25);border:1px solid var(--cd-glass-border);border-radius:var(--cd-radius-sm);padding:0.6rem 0.75rem 0.6rem 2.25rem;color:var(--cd-text);font-size:0.8125rem;outline:none;transition:border-color 0.2s;box-sizing:border-box;}' +
+      '.cd-fs-search-input{width:100%;background:rgba(0,0,0,0.25);border:1px solid var(--cd-glass-border);border-radius:var(--cd-radius-sm);padding:0.6rem 2rem 0.6rem 2.25rem;color:var(--cd-text);font-size:0.8125rem;outline:none;transition:border-color 0.2s;box-sizing:border-box;}' +
+      '.cd-fs-search-clear{position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cd-text-dim);font-size:0.75rem;cursor:pointer;padding:0.25rem;display:none;transition:color 0.15s;line-height:1;}' +
+      '.cd-fs-search-clear:hover{color:var(--cd-text);}' +
       '.cd-fs-search-input::placeholder{color:var(--cd-text-dim);}' +
       '.cd-fs-search-input:focus{border-color:var(--cd-accent);}' +
 
@@ -181,6 +183,7 @@
         '<div class="cd-fs-search-wrap">' +
           '<i class="fa fa-search cd-fs-search-icon"></i>' +
           '<input type="text" class="cd-fs-search-input" id="cd-fs-input" placeholder="Search by name or serial..." autocomplete="off" />' +
+          '<button class="cd-fs-search-clear" id="cd-fs-clear" type="button"><i class="fa fa-times"></i></button>' +
         '</div>' +
         '<div id="cd-fs-results" class="cd-fs-results"></div>' +
         '<div id="cd-fs-pagination"></div>' +
@@ -203,7 +206,9 @@
     var html =
       '<div class="cd-fs-item' + (isExpanded ? ' cd-fs-expanded' : '') + '" data-id="' + esc(firearm._id) + '">' +
         '<div class="cd-fs-item-summary">' +
-          '<i class="fa fa-crosshairs cd-fs-icon"></i>' +
+          (firearm.image
+            ? '<img src="' + esc(firearm.image) + '" alt="" onclick="event.stopPropagation();cdVsShowImage(this.src)" style="width:28px;height:28px;border-radius:6px;object-fit:cover;flex-shrink:0;cursor:zoom-in;" />'
+            : '<i class="fa fa-crosshairs cd-fs-icon"></i>') +
           '<div class="cd-fs-item-info">' +
             '<div class="cd-fs-item-serial">' + serial + '</div>' +
             '<div class="cd-fs-item-sub">' + (sub || '&mdash;') + '</div>' +
@@ -552,6 +557,16 @@
 
     // Remove previous handlers to avoid duplicates (init can be called multiple times)
     $(document).off('.cdFirearmSearch');
+
+    // Show/hide clear button
+    $(document).on('input.cdFirearmSearch', '#cd-fs-input', function () {
+      $('#cd-fs-clear').toggle($(this).val().length > 0);
+    });
+    $(document).on('click.cdFirearmSearch', '#cd-fs-clear', function () {
+      $('#cd-fs-input').val('').focus();
+      $(this).hide();
+      doSearch('', 1);
+    });
 
     // Search input debounce
     $(document).on('input.cdFirearmSearch', '#cd-fs-input', function () {

@@ -68,7 +68,9 @@
       /* Search input */
       '.cd-vs-search-wrap{position:relative;margin-bottom:1rem;}' +
       '.cd-vs-search-icon{position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:var(--cd-text-muted);font-size:0.875rem;pointer-events:none;}' +
-      '.cd-vs-search-input{width:100%;background:rgba(0,0,0,0.25);border:1px solid var(--cd-glass-border);border-radius:var(--cd-radius-sm);padding:0.6rem 0.75rem 0.6rem 2.25rem;color:var(--cd-text);font-size:0.8125rem;outline:none;transition:border-color 0.2s;box-sizing:border-box;}' +
+      '.cd-vs-search-input{width:100%;background:rgba(0,0,0,0.25);border:1px solid var(--cd-glass-border);border-radius:var(--cd-radius-sm);padding:0.6rem 2rem 0.6rem 2.25rem;color:var(--cd-text);font-size:0.8125rem;outline:none;transition:border-color 0.2s;box-sizing:border-box;}' +
+      '.cd-vs-search-clear{position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cd-text-dim);font-size:0.75rem;cursor:pointer;padding:0.25rem;display:none;transition:color 0.15s;line-height:1;}' +
+      '.cd-vs-search-clear:hover{color:var(--cd-text);}' +
       '.cd-vs-search-input::placeholder{color:var(--cd-text-dim);}' +
       '.cd-vs-search-input:focus{border-color:var(--cd-accent);}' +
 
@@ -154,7 +156,8 @@
         '</div>' +
         '<div class="cd-vs-search-wrap">' +
           '<i class="fa fa-search cd-vs-search-icon"></i>' +
-          '<input type="text" class="cd-vs-search-input" id="cd-vs-input" placeholder="Search by plate..." autocomplete="off" />' +
+          '<input type="text" class="cd-vs-search-input" id="cd-vs-input" placeholder="Search by plate, VIN, make, or model..." autocomplete="off" />' +
+          '<button class="cd-vs-search-clear" id="cd-vs-clear" type="button"><i class="fa fa-times"></i></button>' +
         '</div>' +
         '<div id="cd-vs-results" class="cd-vs-results"></div>' +
         '<div id="cd-vs-pagination"></div>' +
@@ -169,7 +172,7 @@
     var color = esc(veh.color || '');
     var model = esc(veh.model || '');
     var desc = [color, model].filter(Boolean).join(' ');
-    var ownerName = esc(veh.registeredOwnerName || veh.registrationOwner || '');
+    var ownerName = esc(veh._resolvedOwner || veh.registeredOwner || '');
     var isStolen = toBool(veh.isStolen);
     var invalidReg = !toBool(veh.validRegistration);
     var invalidIns = !toBool(veh.validInsurance);
@@ -182,7 +185,9 @@
     var html =
       '<div class="cd-vs-item' + (isExpanded ? ' cd-vs-expanded' : '') + '" data-id="' + esc(veh._id) + '">' +
         '<div class="cd-vs-item-summary">' +
-          '<i class="fa fa-car cd-vs-icon"></i>' +
+          (veh.image
+            ? '<img src="' + esc(veh.image) + '" alt="" onclick="event.stopPropagation();cdVsShowImage(this.src)" style="width:28px;height:28px;border-radius:6px;object-fit:cover;flex-shrink:0;cursor:zoom-in;" />'
+            : '<i class="fa fa-car cd-vs-icon"></i>') +
           '<div class="cd-vs-item-info">' +
             '<div class="cd-vs-item-plate">' + plate + '</div>' +
             '<div class="cd-vs-item-sub">' + sub.join(' &middot; ') + '</div>' +
@@ -216,8 +221,10 @@
           detailField('Year', veh.year) +
           detailField('Color', veh.color) +
           detailField('Type', veh.type) +
-          detailField('Owner', veh.registeredOwnerName || veh.registrationOwner) +
+          detailField('Plate State', veh.licensePlateState) +
+          '<div class="cd-vs-detail-field"><div class="cd-vs-detail-label">Owner</div><div class="cd-vs-detail-value" id="cd-vs-owner-' + esc(veh._id) + '">' + (veh.registeredOwner ? '<a href="#" onclick="event.preventDefault();event.stopPropagation();cdVsSearchOwner(\'' + esc(veh.registeredOwner.replace(/'/g, "\\'")) + '\')" style="color:var(--cd-accent);text-decoration:none;">' + esc(veh.registeredOwner) + '</a>' : '') + (veh.linkedCivilianID && !veh.registeredOwner ? '<i class="fa fa-circle-notch fa-spin" style="font-size:0.625rem;color:var(--cd-text-dim);"></i>' : (!veh.registeredOwner && !veh.linkedCivilianID ? 'N/A' : '')) + '</div></div>' +
           detailField('Stolen', isStolen ? 'Yes' : 'No', isStolen ? 'var(--cd-red)' : 'var(--cd-green)') +
+          detailField('Exempt', toBool(veh.isExempt) ? 'Yes' : 'No', toBool(veh.isExempt) ? 'var(--cd-accent)' : '') +
           detailField('Registration', toBool(veh.validRegistration) ? 'Valid' : 'Invalid', toBool(veh.validRegistration) ? 'var(--cd-green)' : 'var(--cd-amber)') +
           detailField('Insurance', toBool(veh.validInsurance) ? 'Valid' : 'Invalid', toBool(veh.validInsurance) ? 'var(--cd-green)' : 'var(--cd-amber)') +
         '</div>' +
@@ -232,6 +239,17 @@
       '</div>'
     );
   }
+
+  window.cdVsSearchOwner = function(name) {
+    // Navigate to person search and search for the owner name
+    if (window.ddNavTo) window.ddNavTo('personSearch');
+    setTimeout(function() {
+      var $input = $('#cd-ps-input');
+      if ($input.length) {
+        $input.val(name).trigger('input');
+      }
+    }, 200);
+  };
 
   window.cdVsToggleStolen = function(vehicleId, value) {
     $.ajax({
@@ -390,7 +408,9 @@
     state.expandedId = null;
     renderResults();
 
-    var url = apiUrl() + '/api/v1/vehicles/search?plate=' + encodeURIComponent(query) +
+    var q = encodeURIComponent(query);
+    var url = apiUrl() + '/api/v1/vehicles/search?plate=' + q +
+      '&vin=' + q + '&make=' + q + '&model=' + q +
       '&active_community_id=' + encodeURIComponent(cfg().communityId) +
       '&limit=' + PAGE_SIZE +
       '&page=' + (state.page - 1);
@@ -446,6 +466,32 @@
       state.expandedId = vehId;
     }
     renderResults();
+    // Resolve owner name from linkedCivilianID if needed
+    if (state.expandedId) {
+      var veh = state.results.find(function(r) { return r._id === vehId; });
+      if (veh && veh.linkedCivilianID && !veh._resolvedOwner) {
+        $.ajax({
+          url: apiUrl() + '/api/v1/civilian/' + encodeURIComponent(veh.linkedCivilianID),
+          method: 'GET', dataType: 'json'
+        }).done(function(data) {
+          var civ = data.civilian || data.details || data;
+          var name = ((civ.firstName || '') + ' ' + (civ.lastName || '')).trim() || civ.name || '';
+          veh._resolvedOwner = name || 'Unknown';
+          var $el = $('#cd-vs-owner-' + veh._id);
+          if ($el.length) {
+            if (name) {
+              $el.html('<a href="#" onclick="event.preventDefault();event.stopPropagation();cdVsSearchOwner(\'' + esc(name.replace(/'/g, "\\'")) + '\')" style="color:var(--cd-accent);text-decoration:none;">' + esc(name) + '</a>');
+            } else {
+              $el.text('Unknown');
+            }
+          }
+        }).fail(function() {
+          veh._resolvedOwner = 'Unknown';
+          var $el = $('#cd-vs-owner-' + veh._id);
+          if ($el.length) $el.text('Unknown');
+        });
+      }
+    }
   }
 
   /* ───────────────────────── Init ───────────────────────── */
@@ -455,6 +501,16 @@
 
     // Remove previous handlers to avoid duplicates (init can be called multiple times)
     $(document).off('.cdVehicleSearch');
+
+    // Show/hide clear button
+    $(document).on('input.cdVehicleSearch', '#cd-vs-input', function () {
+      $('#cd-vs-clear').toggle($(this).val().length > 0);
+    });
+    $(document).on('click.cdVehicleSearch', '#cd-vs-clear', function () {
+      $('#cd-vs-input').val('').focus();
+      $(this).hide();
+      doSearch('', 1);
+    });
 
     // Search input debounce
     $(document).on('input.cdVehicleSearch', '#cd-vs-input', function () {
@@ -487,5 +543,22 @@
 
   window.cdVehicleSearchRender = render;
   window.cdVehicleSearchInit = init;
+
+  window.cdVsShowImage = function(src) {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;cursor:zoom-out;animation:cdVsFadeIn 0.15s ease;';
+    overlay.innerHTML = '<img src="' + src + '" style="max-width:90vw;max-height:85vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.5);object-fit:contain;" />';
+    overlay.onclick = function() { overlay.remove(); };
+    document.addEventListener('keydown', function onKey(e) {
+      if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', onKey); }
+    });
+    if (!document.getElementById('cdVsFadeStyle')) {
+      var s = document.createElement('style');
+      s.id = 'cdVsFadeStyle';
+      s.textContent = '@keyframes cdVsFadeIn{from{opacity:0}to{opacity:1}}';
+      document.head.appendChild(s);
+    }
+    document.body.appendChild(overlay);
+  };
 
 })();

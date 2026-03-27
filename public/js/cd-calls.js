@@ -474,7 +474,9 @@
     if (!state.calls.length) {
       var msg = state.tab === 'mine'
         ? 'No calls assigned to you'
-        : 'No active calls';
+        : state.tab === 'dept'
+        ? 'No active calls for this department'
+        : 'No active calls for this community';
       $list.html(
         '<div class="cd-call-empty">' +
           '<i class="fas fa-radio"></i>' +

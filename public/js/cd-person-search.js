@@ -28,6 +28,9 @@
     expandedId: null,
     warrantCache: {},   // { civilianId: [warrants] }
     vehicleCache: {},   // { civilianId: [vehicles] }
+    firearmCache: {},   // { civilianId: [firearms] }
+    licenseCache: {},   // { civilianId: [licenses] }
+    arrestCache: {},    // { civilianId: [arrestReports] }
     detailCache: {}     // { civilianId: fullCivilian }
   };
 
@@ -89,7 +92,9 @@
       /* Search input */
       '.cd-ps-search-wrap{position:relative;margin-bottom:1rem;}' +
       '.cd-ps-search-icon{position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:var(--cd-text-muted);font-size:0.875rem;pointer-events:none;}' +
-      '.cd-ps-search-input{width:100%;background:rgba(0,0,0,0.25);border:1px solid var(--cd-glass-border);border-radius:var(--cd-radius-sm);padding:0.6rem 0.75rem 0.6rem 2.25rem;color:var(--cd-text);font-size:0.8125rem;outline:none;transition:border-color 0.2s;box-sizing:border-box;}' +
+      '.cd-ps-search-input{width:100%;background:rgba(0,0,0,0.25);border:1px solid var(--cd-glass-border);border-radius:var(--cd-radius-sm);padding:0.6rem 2rem 0.6rem 2.25rem;color:var(--cd-text);font-size:0.8125rem;outline:none;transition:border-color 0.2s;box-sizing:border-box;}' +
+      '.cd-ps-search-clear{position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cd-text-dim);font-size:0.75rem;cursor:pointer;padding:0.25rem;display:none;transition:color 0.15s;line-height:1;}' +
+      '.cd-ps-search-clear:hover{color:var(--cd-text);}' +
       '.cd-ps-search-input::placeholder{color:var(--cd-text-dim);}' +
       '.cd-ps-search-input:focus{border-color:var(--cd-accent);}' +
 
@@ -211,6 +216,7 @@
         '<div class="cd-ps-search-wrap">' +
           '<i class="fa fa-search cd-ps-search-icon"></i>' +
           '<input type="text" class="cd-ps-search-input" id="cd-ps-input" placeholder="Search by name..." autocomplete="off" />' +
+          '<button class="cd-ps-search-clear" id="cd-ps-clear" type="button"><i class="fa fa-times"></i></button>' +
         '</div>' +
         '<div id="cd-ps-results" class="cd-ps-results"></div>' +
         '<div id="cd-ps-pagination"></div>' +
@@ -239,7 +245,9 @@
     var html =
       '<div class="cd-ps-item' + (isExpanded ? ' cd-ps-expanded' : '') + '" data-id="' + esc(person._id) + '">' +
         '<div class="cd-ps-item-summary">' +
-          '<i class="fa fa-user cd-ps-icon"></i>' +
+          (person.image
+            ? '<img src="' + esc(person.image) + '" alt="" onclick="event.stopPropagation();cdVsShowImage(this.src)" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;cursor:zoom-in;" />'
+            : '<i class="fa fa-user cd-ps-icon"></i>') +
           '<div class="cd-ps-item-info">' +
             '<div class="cd-ps-item-name">' + name + '</div>' +
             '<div class="cd-ps-item-sub">' + sub.join(' &middot; ') + '</div>' +
@@ -262,6 +270,9 @@
   function buildDetailHTML(person) {
     var warrants = state.warrantCache[person._id] || [];
     var vehicles = state.vehicleCache[person._id] || [];
+    var firearms = state.firearmCache[person._id] || [];
+    var licenses = state.licenseCache[person._id] || [];
+    var arrests = state.arrestCache[person._id] || [];
     var criminalHistory = person.criminalHistory || [];
     var citations = criminalHistory.filter(function(h) { return h.type === 'Citation'; });
     var warnings = criminalHistory.filter(function(h) { return h.type === 'Warning'; });
@@ -275,6 +286,7 @@
           '<button class="cd-ps-action-btn cd-ps-action-warn" onclick="cdPsIssueWarning(\'' + pid + '\')"><i class="fa fa-triangle-exclamation"></i> Warning</button>' +
           '<button class="cd-ps-action-btn cd-ps-action-danger" onclick="cdPsArrest(\'' + pid + '\')"><i class="fa fa-handcuffs"></i> Arrest</button>' +
           '<button class="cd-ps-action-btn cd-ps-action-accent" onclick="cdPsRequestWarrant(\'' + pid + '\')"><i class="fa fa-gavel"></i> Warrant</button>' +
+          '<button class="cd-ps-action-btn" style="background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.25);color:#818cf8;" onclick="event.stopPropagation();cdPsViewId(\'' + pid + '\')"><i class="fa fa-id-card"></i> View ID</button>' +
         '</div>' +
         // Status badges
         '<div class="cd-ps-status-row">' +
@@ -307,10 +319,35 @@
           '</button>' +
         '</div>';
 
+    // Stats nav bar — clickable pills that scroll to sections
+    var statItems = [];
+    if (warrants.length > 0) statItems.push({ id: 'sec-warrants-' + pid, icon: 'fa-gavel', label: 'Warrants', count: warrants.length, color: 'var(--cd-red)' });
+    if (citations.length > 0) statItems.push({ id: 'sec-citations-' + pid, icon: 'fa-file-lines', label: 'Citations', count: citations.length, color: 'var(--cd-blue)' });
+    if (warnings.length > 0) statItems.push({ id: 'sec-warnings-' + pid, icon: 'fa-triangle-exclamation', label: 'Warnings', count: warnings.length, color: 'var(--cd-amber)' });
+    if (arrests.length > 0) statItems.push({ id: 'sec-arrests-' + pid, icon: 'fa-handcuffs', label: 'Arrests', count: arrests.length, color: '#f472b6' });
+    if (vehicles.length > 0) statItems.push({ id: 'sec-vehicles-' + pid, icon: 'fa-car', label: 'Vehicles', count: vehicles.length, color: 'var(--cd-accent)' });
+    if (firearms.length > 0) statItems.push({ id: 'sec-firearms-' + pid, icon: 'fa-crosshairs', label: 'Firearms', count: firearms.length, color: 'var(--cd-red)' });
+    if (licenses.length > 0) statItems.push({ id: 'sec-licenses-' + pid, icon: 'fa-id-card', label: 'Licenses', count: licenses.length, color: '#818cf8' });
+
+    if (statItems.length > 0) {
+      html += '<div style="display:flex;flex-wrap:wrap;gap:0.375rem;margin:0.75rem 0;padding:0.75rem 0;border-top:1px solid var(--cd-glass-border);border-bottom:1px solid var(--cd-glass-border);">';
+      for (var si = 0; si < statItems.length; si++) {
+        var st = statItems[si];
+        html += '<button onclick="event.stopPropagation();document.getElementById(\'' + st.id + '\').scrollIntoView({behavior:\'smooth\',block:\'start\'})" ' +
+          'style="display:flex;align-items:center;gap:0.375rem;padding:0.35rem 0.625rem;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);cursor:pointer;transition:all 0.15s;font-family:Outfit,sans-serif;" ' +
+          'onmouseover="this.style.background=\'rgba(255,255,255,0.06)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.03)\'">' +
+          '<i class="fa ' + st.icon + '" style="font-size:0.625rem;color:' + st.color + ';"></i>' +
+          '<span style="font-size:0.6875rem;color:var(--cd-text-muted);font-weight:500;">' + st.label + '</span>' +
+          '<span style="font-size:0.6875rem;font-weight:700;color:var(--cd-text);background:rgba(255,255,255,0.06);padding:0.1rem 0.375rem;border-radius:4px;min-width:18px;text-align:center;">' + st.count + '</span>' +
+        '</button>';
+      }
+      html += '</div>';
+    }
+
     // Warrants section (clickable — opens warrant database filtered by this person)
     if (warrants.length > 0) {
       var searchName = (person.lastName || person.firstName || '').trim();
-      html += '<div class="cd-ps-detail-section">' +
+      html += '<div class="cd-ps-detail-section" id="sec-warrants-' + pid + '">' +
         '<div class="cd-ps-detail-section-title"><i class="fa fa-gavel"></i> Active Warrants (' + warrants.length + ')</div>';
       for (var i = 0; i < warrants.length; i++) {
         var w = warrants[i].warrant || warrants[i];
@@ -327,7 +364,7 @@
 
     // Criminal history - Citations (clickable to expand)
     if (citations.length > 0) {
-      html += '<div class="cd-ps-detail-section">' +
+      html += '<div class="cd-ps-detail-section" id="sec-citations-' + pid + '">' +
         '<div class="cd-ps-detail-section-title"><i class="fa fa-file-lines"></i> Citations (' + citations.length + ')</div>';
       for (var ci = 0; ci < citations.length; ci++) {
         var c = citations[ci];
@@ -364,7 +401,7 @@
 
     // Criminal history - Warnings (clickable to expand)
     if (warnings.length > 0) {
-      html += '<div class="cd-ps-detail-section">' +
+      html += '<div class="cd-ps-detail-section" id="sec-warnings-' + pid + '">' +
         '<div class="cd-ps-detail-section-title"><i class="fa fa-triangle-exclamation"></i> Warnings (' + warnings.length + ')</div>';
       for (var wi = 0; wi < warnings.length; wi++) {
         var wn = warnings[wi];
@@ -387,21 +424,82 @@
       html += '</div>';
     }
 
-    // Vehicles section (clickable to expand with full details)
-    if (vehicles.length > 0) {
+    // Arrest reports section
+    if (arrests.length > 0) {
+      html += '<div class="cd-ps-detail-section" id="sec-arrests-' + pid + '">' +
+        '<div class="cd-ps-detail-section-title"><i class="fa fa-handcuffs"></i> Arrest Reports (' + arrests.length + ')</div>';
+      for (var ai = 0; ai < arrests.length; ai++) {
+        var ar = arrests[ai].arrestReport || arrests[ai];
+        var arId = arrests[ai]._id || ('ar' + ai);
+        var arDate = ar.arrestDate || '';
+        var arCharges = ar.charges || '';
+        var arOfficer = (ar.officer && ar.officer.name) || '';
+        var arLocation = ar.arrestLocation || '';
+        var arNarrative = ar.narrative || '';
+        var arStatus = ar.status || '';
+        var arIdx = 'ar-' + pid + '-' + ai;
+
+        var arStatusBadge = '';
+        if (arStatus === 'contested') arStatusBadge = '<span class="cd-ps-badge cd-ps-badge-amber" style="font-size:0.5rem;">CONTESTED</span>';
+        else if (arStatus === 'dismissed') arStatusBadge = '<span class="cd-ps-badge" style="font-size:0.5rem;background:rgba(99,102,241,0.15);color:#818cf8;">DISMISSED</span>';
+
+        html += '<div class="cd-ps-sub-item" onclick="cdPsToggleSub(\'' + arIdx + '\')">' +
+          '<div class="cd-ps-sub-item-header" style="gap:0.625rem;">' +
+            '<div style="width:32px;height:32px;border-radius:6px;background:rgba(244,114,182,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa fa-handcuffs" style="color:#f472b6;font-size:0.75rem;"></i></div>' +
+            '<div style="flex:1;min-width:0;">' +
+              '<div style="font-size:0.8125rem;font-weight:600;color:var(--cd-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(arCharges || 'No charges listed') + '</div>' +
+              '<div style="font-size:0.6875rem;color:var(--cd-text-dim);">' + (arDate ? esc(arDate) : '') + (arOfficer ? ' &middot; Officer: ' + esc(arOfficer) : '') + '</div>' +
+            '</div>' +
+            arStatusBadge +
+            '<i class="fa fa-chevron-down cd-ps-sub-chevron"></i>' +
+          '</div>' +
+          '<div class="cd-ps-sub-item-detail" id="' + arIdx + '">' +
+            '<div class="cd-ps-sub-detail-grid">' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Report #</div><div class="cd-ps-detail-value" style="font-family:\'JetBrains Mono\',monospace;">' + esc(ar.reportNumber || 'N/A') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Arrest Date</div><div class="cd-ps-detail-value">' + esc(arDate || 'N/A') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Location</div><div class="cd-ps-detail-value">' + esc(arLocation || 'N/A') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Officer</div><div class="cd-ps-detail-value">' + esc(arOfficer || 'N/A') + (ar.officer && ar.officer.badgeNumber ? ' <span style="color:var(--cd-text-dim);">#' + esc(ar.officer.badgeNumber) + '</span>' : '') + '</div></div>' +
+              '<div class="cd-ps-detail-field" style="grid-column:1/-1;"><div class="cd-ps-detail-label">Charges</div><div class="cd-ps-detail-value">' + esc(arCharges || 'N/A') + '</div></div>' +
+              (arNarrative ? '<div class="cd-ps-detail-field" style="grid-column:1/-1;"><div class="cd-ps-detail-label">Narrative</div><div class="cd-ps-detail-value" style="white-space:pre-wrap;">' + esc(arNarrative) + '</div></div>' : '') +
+              (ar.forceUsed ? '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Force Used</div><div class="cd-ps-detail-value" style="color:var(--cd-red);font-weight:600;">Yes</div></div>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }
+      html += '</div>';
+    } else if (state.expandedId === person._id) {
       html += '<div class="cd-ps-detail-section">' +
+        '<div class="cd-ps-detail-section-title"><i class="fa fa-handcuffs"></i> Arrest Reports</div>' +
+        '<div class="cd-ps-detail-list-item" style="color:var(--cd-text-dim);">No arrest reports found</div>' +
+      '</div>';
+    }
+
+    // Vehicles section
+    if (vehicles.length > 0) {
+      html += '<div class="cd-ps-detail-section" id="sec-vehicles-' + pid + '">' +
         '<div class="cd-ps-detail-section-title"><i class="fa fa-car"></i> Registered Vehicles (' + vehicles.length + ')</div>';
       for (var j = 0; j < vehicles.length; j++) {
         var v = vehicles[j].vehicle || vehicles[j];
-        var vId = vehicles[j]._id || v._id || ('v' + j);
         var plate = v.plate || 'N/A';
-        var desc = [v.color, v.model].filter(Boolean).join(' ');
+        var vMakeModel = [v.year, v.make, v.model].filter(Boolean).join(' ');
         var vIdx = 'veh-' + pid + '-' + j;
+        var vRegOk = toBool(v.validRegistration);
+        var vInsOk = toBool(v.validInsurance);
+        var vStolen = toBool(v.isStolen);
         html += '<div class="cd-ps-sub-item" onclick="cdPsToggleSub(\'' + vIdx + '\')">' +
-          '<div class="cd-ps-sub-item-header">' +
-            '<span style="font-family:\'JetBrains Mono\',monospace;font-weight:600;color:var(--cd-accent);font-size:0.75rem;">' + esc(plate) + '</span>' +
-            '<span style="flex:1;font-size:0.75rem;color:var(--cd-text-muted);">' + esc(desc) + '</span>' +
-            (toBool(v.isStolen) ? '<span class="cd-ps-badge cd-ps-badge-red" style="font-size:0.5625rem;">STOLEN</span>' : '') +
+          '<div class="cd-ps-sub-item-header" style="gap:0.625rem;">' +
+            (v.image
+              ? '<img src="' + esc(v.image) + '" alt="" onclick="event.stopPropagation();cdVsShowImage(this.src)" style="width:32px;height:32px;border-radius:6px;object-fit:cover;flex-shrink:0;cursor:zoom-in;" />'
+              : '<div style="width:32px;height:32px;border-radius:6px;background:rgba(56,189,248,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa fa-car" style="color:var(--cd-text-dim);font-size:0.75rem;"></i></div>') +
+            '<div style="flex:1;min-width:0;">' +
+              '<div style="font-size:0.8125rem;font-weight:600;color:var(--cd-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(vMakeModel || 'Unknown Vehicle') + (v.color ? '<span style="color:var(--cd-text-muted);font-weight:400;"> &middot; ' + esc(v.color) + '</span>' : '') + '</div>' +
+              '<div style="font-size:0.6875rem;color:var(--cd-text-dim);font-family:\'JetBrains Mono\',monospace;letter-spacing:0.03em;">' + esc(plate) + '</div>' +
+            '</div>' +
+            '<div style="display:flex;gap:0.25rem;flex-shrink:0;">' +
+              (vStolen ? '<span class="cd-ps-badge cd-ps-badge-red" style="font-size:0.5625rem;">STOLEN</span>' : '') +
+              (!vRegOk ? '<span class="cd-ps-badge cd-ps-badge-amber" style="font-size:0.5rem;">REG</span>' : '') +
+              (!vInsOk ? '<span class="cd-ps-badge cd-ps-badge-amber" style="font-size:0.5rem;">INS</span>' : '') +
+            '</div>' +
             '<i class="fa fa-chevron-down cd-ps-sub-chevron"></i>' +
           '</div>' +
           '<div class="cd-ps-sub-item-detail" id="' + vIdx + '">' +
@@ -412,9 +510,12 @@
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Model</div><div class="cd-ps-detail-value">' + esc(v.model || 'N/A') + '</div></div>' +
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Year</div><div class="cd-ps-detail-value">' + esc(v.year || 'N/A') + '</div></div>' +
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Color</div><div class="cd-ps-detail-value">' + esc(v.color || 'N/A') + '</div></div>' +
-              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Registration</div><div class="cd-ps-detail-value" style="color:' + (toBool(v.validRegistration) ? 'var(--cd-green)' : 'var(--cd-amber)') + ';font-weight:600;">' + (toBool(v.validRegistration) ? 'Valid' : 'Invalid') + '</div></div>' +
-              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Insurance</div><div class="cd-ps-detail-value" style="color:' + (toBool(v.validInsurance) ? 'var(--cd-green)' : 'var(--cd-amber)') + ';font-weight:600;">' + (toBool(v.validInsurance) ? 'Valid' : 'Invalid') + '</div></div>' +
-              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Stolen</div><div class="cd-ps-detail-value" style="color:' + (toBool(v.isStolen) ? 'var(--cd-red)' : 'var(--cd-green)') + ';font-weight:600;">' + (toBool(v.isStolen) ? 'Yes' : 'No') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Plate State</div><div class="cd-ps-detail-value">' + esc(v.licensePlateState || 'N/A') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Owner</div><div class="cd-ps-detail-value">' + esc(v.registeredOwner || 'N/A') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Registration</div><div class="cd-ps-detail-value" style="color:' + (vRegOk ? 'var(--cd-green)' : 'var(--cd-amber)') + ';font-weight:600;">' + (vRegOk ? 'Valid' : 'Invalid') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Insurance</div><div class="cd-ps-detail-value" style="color:' + (vInsOk ? 'var(--cd-green)' : 'var(--cd-amber)') + ';font-weight:600;">' + (vInsOk ? 'Valid' : 'Invalid') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Stolen</div><div class="cd-ps-detail-value" style="color:' + (vStolen ? 'var(--cd-red)' : 'var(--cd-green)') + ';font-weight:600;">' + (vStolen ? 'Yes' : 'No') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Exempt</div><div class="cd-ps-detail-value" style="' + (toBool(v.isExempt) ? 'color:var(--cd-accent);font-weight:600;' : '') + '">' + (toBool(v.isExempt) ? 'Yes' : 'No') + '</div></div>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -424,6 +525,117 @@
       html += '<div class="cd-ps-detail-section">' +
         '<div class="cd-ps-detail-section-title"><i class="fa fa-car"></i> Registered Vehicles</div>' +
         '<div class="cd-ps-detail-list-item" style="color:var(--cd-text-dim);">No vehicles found</div>' +
+      '</div>';
+    }
+
+    // Firearms section
+    var firearms = state.firearmCache[person._id] || [];
+    if (firearms.length > 0) {
+      html += '<div class="cd-ps-detail-section" id="sec-firearms-' + pid + '">' +
+        '<div class="cd-ps-detail-section-title"><i class="fa fa-crosshairs"></i> Registered Firearms (' + firearms.length + ')</div>';
+      for (var fi = 0; fi < firearms.length; fi++) {
+        var fa = firearms[fi].firearm || firearms[fi];
+        var faSerial = fa.serialNumber || 'N/A';
+        var faName = fa.name || '';
+        var faType = fa.weaponType || '';
+        var faCaliber = fa.caliber || '';
+        var faStolen = toBool(fa.isStolen);
+        var faIdx = 'fa-' + pid + '-' + fi;
+        var faDesc = [faType, faCaliber].filter(Boolean).join(' &middot; ');
+        html += '<div class="cd-ps-sub-item" onclick="cdPsToggleSub(\'' + faIdx + '\')">' +
+          '<div class="cd-ps-sub-item-header" style="gap:0.625rem;">' +
+            (fa.image
+              ? '<img src="' + esc(fa.image) + '" alt="" onclick="event.stopPropagation();cdVsShowImage(this.src)" style="width:32px;height:32px;border-radius:6px;object-fit:cover;flex-shrink:0;cursor:zoom-in;" />'
+              : '<div style="width:32px;height:32px;border-radius:6px;background:rgba(239,68,68,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa fa-crosshairs" style="color:var(--cd-text-dim);font-size:0.75rem;"></i></div>') +
+            '<div style="flex:1;min-width:0;">' +
+              '<div style="font-size:0.8125rem;font-weight:600;color:var(--cd-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(faName || 'Unknown Firearm') + '</div>' +
+              '<div style="font-size:0.6875rem;color:var(--cd-text-dim);">' + (faDesc || 'S/N: ' + esc(faSerial)) + '</div>' +
+            '</div>' +
+            (faStolen ? '<span class="cd-ps-badge cd-ps-badge-red" style="font-size:0.5625rem;">STOLEN</span>' : '') +
+            '<i class="fa fa-chevron-down cd-ps-sub-chevron"></i>' +
+          '</div>' +
+          '<div class="cd-ps-sub-item-detail" id="' + faIdx + '">' +
+            '<div class="cd-ps-sub-detail-grid">' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Serial Number</div><div class="cd-ps-detail-value" style="font-family:\'JetBrains Mono\',monospace;">' + esc(faSerial) + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Name</div><div class="cd-ps-detail-value">' + esc(faName || 'N/A') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Type</div><div class="cd-ps-detail-value">' + esc(faType || 'N/A') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Caliber</div><div class="cd-ps-detail-value">' + esc(faCaliber || 'N/A') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Stolen</div><div class="cd-ps-detail-value" style="color:' + (faStolen ? 'var(--cd-red)' : 'var(--cd-green)') + ';font-weight:600;">' + (faStolen ? 'Yes' : 'No') + '</div></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }
+      html += '</div>';
+    } else if (state.expandedId === person._id) {
+      html += '<div class="cd-ps-detail-section">' +
+        '<div class="cd-ps-detail-section-title"><i class="fa fa-crosshairs"></i> Registered Firearms</div>' +
+        '<div class="cd-ps-detail-list-item" style="color:var(--cd-text-dim);">No firearms found</div>' +
+      '</div>';
+    }
+
+    // Licenses section
+    var licenses = state.licenseCache[person._id] || [];
+    if (licenses.length > 0) {
+      html += '<div class="cd-ps-detail-section" id="sec-licenses-' + pid + '">' +
+        '<div class="cd-ps-detail-section-title"><i class="fa fa-id-card"></i> Licenses (' + licenses.length + ')</div>';
+      for (var li = 0; li < licenses.length; li++) {
+        var lic = licenses[li].license || licenses[li];
+        var licId = licenses[li]._id || lic._id || ('lic' + li);
+        var licType = lic.type || lic.licenseType || 'License';
+        var licStatus = (lic.status || 'Valid');
+        var licStatusLower = licStatus.toLowerCase();
+        var licExp = fmtDate(lic.expirationDate);
+        var licNotes = lic.notes || '';
+        var isExpired = false;
+        if (lic.expirationDate) {
+          var expDate = new Date(lic.expirationDate);
+          isExpired = !isNaN(expDate.getTime()) && expDate < new Date();
+        }
+
+        var statusColor = 'var(--cd-green)';
+        if (licStatusLower === 'suspended') statusColor = 'var(--cd-amber)';
+        else if (licStatusLower === 'revoked') statusColor = 'var(--cd-red)';
+
+        var licIdx = 'lic-' + pid + '-' + li;
+        html += '<div class="cd-ps-sub-item" onclick="cdPsToggleSub(\'' + licIdx + '\')">' +
+          '<div class="cd-ps-sub-item-header" style="gap:0.625rem;">' +
+            '<div style="width:32px;height:32px;border-radius:6px;background:rgba(99,102,241,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa fa-id-card" style="color:var(--cd-text-dim);font-size:0.75rem;"></i></div>' +
+            '<div style="flex:1;min-width:0;">' +
+              '<div style="font-size:0.8125rem;font-weight:600;color:var(--cd-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(licType) + '</div>' +
+              '<div style="font-size:0.6875rem;color:var(--cd-text-dim);">' + (licExp !== 'N/A' ? 'Expires: ' + licExp : '') + '</div>' +
+            '</div>' +
+            '<div style="display:flex;gap:0.25rem;flex-shrink:0;align-items:center;">' +
+              '<span style="font-size:0.6875rem;font-weight:600;color:' + statusColor + ';">' + esc(licStatus) + '</span>' +
+              (isExpired ? '<span class="cd-ps-badge cd-ps-badge-amber" style="font-size:0.5rem;">EXPIRED</span>' : '') +
+            '</div>' +
+            '<i class="fa fa-chevron-down cd-ps-sub-chevron"></i>' +
+          '</div>' +
+          '<div class="cd-ps-sub-item-detail" id="' + licIdx + '">' +
+            '<div class="cd-ps-sub-detail-grid">' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Type</div><div class="cd-ps-detail-value">' + esc(licType) + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Status</div><div class="cd-ps-detail-value" style="color:' + statusColor + ';font-weight:600;">' + esc(licStatus) + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Expiration</div><div class="cd-ps-detail-value">' + esc(licExp) + '</div></div>' +
+              (licNotes ? '<div class="cd-ps-detail-field" style="grid-column:1/-1;"><div class="cd-ps-detail-label">Notes</div><div class="cd-ps-detail-value">' + esc(licNotes) + '</div></div>' : '') +
+            '</div>' +
+            '<div style="display:flex;gap:0.375rem;padding:0.625rem 0.875rem 0.75rem;border-top:1px solid var(--cd-glass-border);">' +
+              (licStatusLower !== 'suspended'
+                ? '<button class="cd-ps-action-btn cd-ps-action-warn" onclick="event.stopPropagation();cdPsLicenseAction(\'' + esc(licId) + '\',\'suspend\')"><i class="fa fa-pause"></i> Suspend</button>'
+                : '') +
+              (licStatusLower !== 'revoked'
+                ? '<button class="cd-ps-action-btn cd-ps-action-danger" onclick="event.stopPropagation();cdPsLicenseAction(\'' + esc(licId) + '\',\'revoke\')"><i class="fa fa-ban"></i> Revoke</button>'
+                : '') +
+              (licStatusLower === 'suspended' || licStatusLower === 'revoked'
+                ? '<button class="cd-ps-action-btn cd-ps-action-accent" onclick="event.stopPropagation();cdPsLicenseAction(\'' + esc(licId) + '\',\'reinstate\')"><i class="fa fa-check"></i> Reinstate</button>'
+                : '') +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }
+      html += '</div>';
+    } else if (state.expandedId === person._id) {
+      html += '<div class="cd-ps-detail-section">' +
+        '<div class="cd-ps-detail-section-title"><i class="fa fa-id-card"></i> Licenses</div>' +
+        '<div class="cd-ps-detail-list-item" style="color:var(--cd-text-dim);">No licenses found</div>' +
       '</div>';
     }
 
@@ -516,6 +728,135 @@
     $el.toggleClass('sub-expanded');
     // Stop propagation so the parent item doesn't collapse
     event && event.stopPropagation && event.stopPropagation();
+  };
+
+  // ── View ID Card ──
+
+  function cdPsGenLicNum(name, birthday, weight) {
+    var seed = '' + name + birthday + weight;
+    var hash = 0;
+    for (var i = 0; i < seed.length; i++) {
+      hash = (hash << 5) - hash + seed.charCodeAt(i);
+      hash |= 0;
+    }
+    return String(Math.abs(hash)).substring(0, 8).padStart(8, '0');
+  }
+
+  function cdPsGenBarcode(licNum) {
+    function sr(s) { var x = Math.sin(s) * 10000; return x - Math.floor(x); }
+    var seed = parseInt(licNum, 36) || 12345;
+    var html = '';
+    for (var i = 0; i < 45; i++) {
+      var w = 1 + Math.floor(sr(seed + i) * 3);
+      var isBar = (Math.floor(sr(seed * (i + 3)) * 7) % 2) === 0;
+      html += '<div style="display:inline-block;width:' + w + 'px;height:18px;background:' + (isBar ? '#c8d6e5' : 'transparent') + ';margin-right:0.5px;border-radius:0.5px;"></div>';
+    }
+    return html;
+  }
+
+  function cdPsFmtHeight(h, cls) {
+    if (!h || h <= 0) return 'N/A';
+    if (cls === 'Imperial') return Math.floor(h / 12) + "' " + (h % 12) + '"';
+    return h + ' cm';
+  }
+
+  window.cdPsViewId = function(civId) {
+    var person = state.results.find(function(r) { return r._id === civId; });
+    if (!person) return;
+
+    var name = ((person.firstName || '') + ' ' + (person.lastName || '')).trim() || person.name || 'Unknown';
+    var dob = person.birthday || 'N/A';
+    var licNum = cdPsGenLicNum(name, dob, person.weight || '');
+    var expDate = new Date();
+    expDate.setFullYear(expDate.getFullYear() + 8);
+    var expStr = expDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+    var height = cdPsFmtHeight(person.height, person.heightClassification);
+    var gender = person.gender || 'N/A';
+    var address = person.address || 'N/A';
+    var eyeColor = person.eyeColor || 'N/A';
+    var imgUrl = person.image || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=1e293b&color=94a3b8&size=256';
+
+    var overlay = document.createElement('div');
+    overlay.id = 'cd-ps-id-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;animation:cdVsFadeIn 0.15s ease;';
+
+    var cardHtml =
+      '<div id="cd-ps-id-card" style="width:420px;max-width:92vw;border-radius:16px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.06) inset;font-family:\'Outfit\',sans-serif;">' +
+        // Header band
+        '<div style="background:linear-gradient(135deg,#0f172a,#1e293b);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<div style="width:28px;height:28px;border-radius:6px;background:rgba(56,189,248,0.15);display:flex;align-items:center;justify-content:center;"><i class="fa fa-shield" style="color:#38bdf8;font-size:0.75rem;"></i></div>' +
+            '<div style="font-size:0.625rem;text-transform:uppercase;letter-spacing:0.12em;color:#64748b;font-weight:600;">Identification Card</div>' +
+          '</div>' +
+          '<div style="font-size:0.625rem;color:#475569;font-family:\'JetBrains Mono\',monospace;">ID-' + esc(licNum) + '</div>' +
+        '</div>' +
+        // Body
+        '<div style="background:linear-gradient(165deg,#1e293b 0%,#0f172a 100%);padding:20px;">' +
+          '<div style="display:flex;gap:16px;">' +
+            // Photo
+            '<div style="flex-shrink:0;">' +
+              '<img src="' + esc(imgUrl) + '" style="width:96px;height:112px;border-radius:10px;object-fit:cover;border:2px solid rgba(56,189,248,0.2);display:block;" crossorigin="anonymous" />' +
+              '<div style="margin-top:8px;text-align:center;">' + cdPsGenBarcode(licNum) + '</div>' +
+            '</div>' +
+            // Info
+            '<div style="flex:1;min-width:0;">' +
+              '<div style="font-size:1.125rem;font-weight:700;color:#f1f5f9;letter-spacing:0.01em;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(name.toUpperCase()) + '</div>' +
+              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:10px;">' +
+                '<div><div style="font-size:0.5625rem;text-transform:uppercase;letter-spacing:0.08em;color:#475569;font-weight:600;">Date of Birth</div><div style="font-size:0.8125rem;color:#cbd5e1;font-weight:500;margin-top:1px;">' + esc(dob) + '</div></div>' +
+                '<div><div style="font-size:0.5625rem;text-transform:uppercase;letter-spacing:0.08em;color:#475569;font-weight:600;">Gender</div><div style="font-size:0.8125rem;color:#cbd5e1;font-weight:500;margin-top:1px;">' + esc(gender) + '</div></div>' +
+                '<div><div style="font-size:0.5625rem;text-transform:uppercase;letter-spacing:0.08em;color:#475569;font-weight:600;">Height</div><div style="font-size:0.8125rem;color:#cbd5e1;font-weight:500;margin-top:1px;">' + esc(height) + '</div></div>' +
+                '<div><div style="font-size:0.5625rem;text-transform:uppercase;letter-spacing:0.08em;color:#475569;font-weight:600;">Eye Color</div><div style="font-size:0.8125rem;color:#cbd5e1;font-weight:500;margin-top:1px;">' + esc(eyeColor) + '</div></div>' +
+              '</div>' +
+              '<div style="margin-top:10px;"><div style="font-size:0.5625rem;text-transform:uppercase;letter-spacing:0.08em;color:#475569;font-weight:600;">Address</div><div style="font-size:0.8125rem;color:#cbd5e1;font-weight:500;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(address) + '</div></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        // Footer
+        '<div style="background:#0f172a;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.04);">' +
+          '<div style="font-size:0.5625rem;color:#475569;">EXP: ' + esc(expStr) + '</div>' +
+          '<div style="font-size:0.5625rem;color:#334155;font-family:\'JetBrains Mono\',monospace;">LPC-' + esc(licNum.substring(0,4)) + '</div>' +
+        '</div>' +
+      '</div>';
+
+    var buttonsHtml =
+      '<div style="display:flex;gap:0.5rem;">' +
+        '<button id="cd-ps-id-download" style="background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.25);color:#38bdf8;border-radius:8px;padding:8px 16px;font-size:0.8125rem;font-weight:600;cursor:pointer;font-family:Outfit,sans-serif;display:flex;align-items:center;gap:6px;"><i class="fa fa-download"></i> Download ID</button>' +
+        '<button id="cd-ps-id-close" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);color:#94a3b8;border-radius:8px;padding:8px 16px;font-size:0.8125rem;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;">Close</button>' +
+      '</div>';
+
+    overlay.innerHTML = cardHtml + buttonsHtml;
+    document.body.appendChild(overlay);
+
+    document.getElementById('cd-ps-id-close').onclick = function() { overlay.remove(); };
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+    document.addEventListener('keydown', function onKey(e) {
+      if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', onKey); }
+    });
+
+    document.getElementById('cd-ps-id-download').onclick = function() {
+      var card = document.getElementById('cd-ps-id-card');
+      if (!card) return;
+      if (typeof html2canvas === 'undefined') {
+        // Load html2canvas dynamically
+        var s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload = function() { doCapture(card, name); };
+        document.head.appendChild(s);
+      } else {
+        doCapture(card, name);
+      }
+    };
+
+    function doCapture(el, civName) {
+      html2canvas(el, { backgroundColor: '#0f172a', scale: 2, useCORS: true, allowTaint: false, logging: false })
+      .then(function(canvas) {
+        var a = document.createElement('a');
+        a.download = civName.replace(/\s+/g, '_') + '_ID.png';
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+      })
+      .catch(function() { window.ddToast('Failed to download ID', 'error'); });
+    }
   };
 
   function detailField(label, value) {
@@ -771,20 +1112,195 @@
       return;
     }
 
-    $.ajax({
-      url: apiUrl() + '/api/v1/vehicles/registered-owner/' + encodeURIComponent(civId) + '?limit=50',
-      method: 'GET',
-      dataType: 'json'
-    })
-    .done(function (data) {
-      var arr = Array.isArray(data) ? data : (data.data || data.vehicles || []);
-      state.vehicleCache[civId] = arr;
-    })
-    .fail(function () {
-      state.vehicleCache[civId] = [];
-    })
-    .always(callback);
+    var PAGE_LIMIT = 25;
+    var allVehicles = [];
+
+    function fetchPage(page) {
+      $.ajax({
+        url: apiUrl() + '/api/v1/vehicles/registered-owner/' + encodeURIComponent(civId) +
+          '?limit=' + PAGE_LIMIT + '&page=' + page,
+        method: 'GET',
+        dataType: 'json'
+      })
+      .done(function (data) {
+        var arr = data.vehicles || data.data || [];
+        allVehicles = allVehicles.concat(arr);
+        var total = data.total || 0;
+        var fetched = (page + 1) * PAGE_LIMIT;
+        if (fetched < total) {
+          fetchPage(page + 1);
+        } else {
+          state.vehicleCache[civId] = allVehicles;
+          callback();
+        }
+      })
+      .fail(function () {
+        state.vehicleCache[civId] = allVehicles;
+        callback();
+      });
+    }
+
+    fetchPage(0);
   }
+
+  /* ───────────────────────── API: Fetch firearms for expanded detail ───────────────────────── */
+
+  function fetchFirearms(civId, callback) {
+    if (state.firearmCache.hasOwnProperty(civId)) {
+      callback();
+      return;
+    }
+
+    var PAGE_LIMIT = 25;
+    var allFirearms = [];
+
+    function fetchPage(page) {
+      $.ajax({
+        url: apiUrl() + '/api/v1/firearms/registered-owner/' + encodeURIComponent(civId) +
+          '?limit=' + PAGE_LIMIT + '&page=' + page,
+        method: 'GET',
+        dataType: 'json'
+      })
+      .done(function (data) {
+        var arr = data.firearms || data.data || [];
+        if (Array.isArray(data) && !data.firearms) arr = data;
+        allFirearms = allFirearms.concat(arr);
+        var total = data.total || data.totalCount || 0;
+        var fetched = (page + 1) * PAGE_LIMIT;
+        if (total > 0 && fetched < total) {
+          fetchPage(page + 1);
+        } else {
+          state.firearmCache[civId] = allFirearms;
+          callback();
+        }
+      })
+      .fail(function () {
+        state.firearmCache[civId] = allFirearms;
+        callback();
+      });
+    }
+
+    fetchPage(0);
+  }
+
+  /* ───────────────────────── API: Fetch arrest reports for expanded detail ───────────────────────── */
+
+  function fetchArrests(civId, callback) {
+    if (state.arrestCache.hasOwnProperty(civId)) {
+      callback();
+      return;
+    }
+
+    var PAGE_LIMIT = 25;
+    var allArrests = [];
+
+    function fetchPage(page) {
+      $.ajax({
+        url: apiUrl() + '/api/v1/arrest-report/arrestee/' + encodeURIComponent(civId) +
+          '?limit=' + PAGE_LIMIT + '&page=' + page,
+        method: 'GET',
+        dataType: 'json'
+      })
+      .done(function (data) {
+        var arr = data.data || data.arrestReports || [];
+        if (Array.isArray(data) && !data.data) arr = data;
+        allArrests = allArrests.concat(arr);
+        var total = data.totalCount || data.total || 0;
+        var fetched = (page + 1) * PAGE_LIMIT;
+        if (total > 0 && fetched < total) {
+          fetchPage(page + 1);
+        } else {
+          state.arrestCache[civId] = allArrests;
+          callback();
+        }
+      })
+      .fail(function () {
+        state.arrestCache[civId] = allArrests;
+        callback();
+      });
+    }
+
+    fetchPage(0);
+  }
+
+  /* ───────────────────────── API: Fetch licenses for expanded detail ───────────────────────── */
+
+  function fetchLicenses(civId, callback) {
+    if (state.licenseCache.hasOwnProperty(civId)) {
+      callback();
+      return;
+    }
+
+    var PAGE_LIMIT = 25;
+    var allLicenses = [];
+
+    function fetchPage(page) {
+      $.ajax({
+        url: apiUrl() + '/api/v1/licenses/civilian/' + encodeURIComponent(civId) +
+          '?limit=' + PAGE_LIMIT + '&page=' + page,
+        method: 'GET',
+        dataType: 'json'
+      })
+      .done(function (data) {
+        var arr = data.licenses || data.data || [];
+        if (Array.isArray(data) && !data.licenses) arr = data;
+        allLicenses = allLicenses.concat(arr);
+        var total = data.total || data.totalCount || 0;
+        var fetched = (page + 1) * PAGE_LIMIT;
+        if (total > 0 && fetched < total) {
+          fetchPage(page + 1);
+        } else {
+          state.licenseCache[civId] = allLicenses;
+          callback();
+        }
+      })
+      .fail(function () {
+        state.licenseCache[civId] = allLicenses;
+        callback();
+      });
+    }
+
+    fetchPage(0);
+  }
+
+  /* ───────────────────────── License actions (suspend/revoke/reinstate) ───────────────────────── */
+
+  window.cdPsLicenseAction = function(licenseId, action) {
+    var newStatus = '';
+    switch (action) {
+      case 'suspend': newStatus = 'Suspended'; break;
+      case 'revoke': newStatus = 'Revoked'; break;
+      case 'reinstate': newStatus = 'Valid'; break;
+      default: return;
+    }
+
+    $.ajax({
+      url: apiUrl() + '/api/v1/license/' + encodeURIComponent(licenseId),
+      method: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify({ status: newStatus }),
+      success: function() {
+        window.ddToast('License ' + action + 'd', 'success');
+        // Update cached license status and re-render
+        var civId = state.expandedId;
+        if (civId && state.licenseCache[civId]) {
+          for (var i = 0; i < state.licenseCache[civId].length; i++) {
+            var entry = state.licenseCache[civId][i];
+            var id = entry._id || (entry.license && entry.license._id);
+            if (id === licenseId) {
+              var lic = entry.license || entry;
+              lic.status = newStatus;
+              break;
+            }
+          }
+          renderResults();
+        }
+      },
+      error: function() {
+        window.ddToast('Failed to ' + action + ' license', 'error');
+      }
+    });
+  };
 
   /* ───────────────────────── Toggle expand ───────────────────────── */
 
@@ -798,10 +1314,16 @@
 
     state.expandedId = civId;
 
-    // Ensure warrants are cached (they should be from search), then fetch vehicles
-    fetchVehicles(civId, function () {
-      renderResults();
-    });
+    // Fetch vehicles, firearms, licenses, and arrests in parallel
+    var pending = 4;
+    function done() {
+      pending--;
+      if (pending <= 0) renderResults();
+    }
+    fetchVehicles(civId, done);
+    fetchFirearms(civId, done);
+    fetchLicenses(civId, done);
+    fetchArrests(civId, done);
   }
 
   /* ───────────────────────── Init ───────────────────────── */
@@ -811,6 +1333,16 @@
 
     // Remove previous handlers to avoid duplicates (init can be called multiple times)
     $(document).off('.cdPersonSearch');
+
+    // Show/hide clear button based on input content
+    $(document).on('input.cdPersonSearch', '#cd-ps-input', function () {
+      $('#cd-ps-clear').toggle($(this).val().length > 0);
+    });
+    $(document).on('click.cdPersonSearch', '#cd-ps-clear', function () {
+      $('#cd-ps-input').val('').focus();
+      $(this).hide();
+      doSearch('', 1);
+    });
 
     // Search input debounce
     $(document).on('input.cdPersonSearch', '#cd-ps-input', function () {
