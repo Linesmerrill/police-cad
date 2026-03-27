@@ -1193,21 +1193,28 @@
 }
 
 @media (max-width: 768px) {
-  .dd-pc-v-explanation {
-    max-width: none;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
-  }
   .dd-pc-v-name {
     white-space: normal;
-    min-width: 100px;
+    min-width: 80px;
+  }
+  .dd-pc-v-explanation {
+    display: none;
+  }
+  .dd-pc-table thead th:nth-child(4) {
+    display: none;
   }
   .dd-pc-table {
     min-width: 0;
   }
   .dd-pc-table td, .dd-pc-table thead th {
-    padding: 0.5rem 0.5rem;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  .dd-pc-v-jail, .dd-pc-v-fine {
+    font-size: 0.6875rem;
+  }
+  .dd-pc-category {
+    overflow-x: visible;
   }
 }
 
