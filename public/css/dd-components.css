@@ -1192,6 +1192,25 @@
   font-size: 0.75rem;
 }
 
+@media (max-width: 768px) {
+  .dd-pc-v-explanation {
+    max-width: none;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+  .dd-pc-v-name {
+    white-space: normal;
+    min-width: 100px;
+  }
+  .dd-pc-table {
+    min-width: 0;
+  }
+  .dd-pc-table td, .dd-pc-table thead th {
+    padding: 0.5rem 0.5rem;
+  }
+}
+
 .dd-pc-v-actions {
   text-align: right;
   white-space: nowrap;
