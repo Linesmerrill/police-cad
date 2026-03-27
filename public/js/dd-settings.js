@@ -1155,7 +1155,7 @@
       url: c.API_URL + '/api/v2/community/' + c.communityId + '/members?limit=' + communityMembersLimit + '&page=' + communityMembersPage,
       method: 'GET',
       success: function (res) {
-        var members = res.data || [];
+        var members = res.members || res.data || [];
         if (communityMembersPage === 1) {
           allCommunityMembers = members;
         } else {
@@ -1183,13 +1183,15 @@
     var $list = $('#dds-add-list');
     var existingIds = {};
     membersData.forEach(function (m) {
-      var uid = (m.user && m.user.userID) || m._id || '';
-      if (uid) existingIds[uid] = true;
+      var uid = (m.user && m.user.userID) || m.id || m._id || '';
+      if (uid && typeof uid === 'object' && uid.$oid) uid = uid.$oid;
+      if (uid) existingIds[String(uid)] = true;
     });
 
     var available = members.filter(function (m) {
-      var uid = (m.user && m.user.userID) || m._id || '';
-      return !existingIds[uid];
+      var uid = (m.user && m.user.userID) || m.id || m._id || '';
+      if (uid && typeof uid === 'object' && uid.$oid) uid = uid.$oid;
+      return !existingIds[String(uid)];
     });
 
     if (!available.length) {
@@ -1200,7 +1202,8 @@
     var html = '';
     available.forEach(function (m) {
       var user = m.user || {};
-      var uid = user.userID || m._id || '';
+      var uid = user.userID || m.id || m._id || '';
+      if (uid && typeof uid === 'object' && uid.$oid) uid = uid.$oid;
       var name = user.username || m.username || 'Unknown';
       var checked = selectedMemberIds.indexOf(uid) !== -1;
 
