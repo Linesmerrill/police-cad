@@ -20,6 +20,7 @@ export default function Profile() {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [emailVisible, setEmailVisible] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [deactivating, setDeactivating] = useState<'processing' | 'success' | null>(null);
   const [showChangeEmailModal, setShowChangeEmailModal] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -391,9 +392,10 @@ export default function Profile() {
     if (!user) return;
 
     setSaving('deactivate');
+    setDeactivating('processing');
+    setShowDeactivateModal(false);
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? window.location.origin : '');
-      const response = await fetch(`${API_URL}/api/v1/user/${user.id}/deactivate`, {
+      const response = await fetch(`/api/v1/user/${user.id}/deactivate`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -402,20 +404,21 @@ export default function Profile() {
       });
 
       if (response.ok) {
-        showMessage('success', 'Your account has been deactivated. You can reactivate it within 30 days by contacting us via Discord assistance ticket.');
+        setDeactivating('success');
         setTimeout(() => {
           window.location.href = '/logout';
         }, 2000);
       } else {
         const data = await response.json().catch(() => ({}));
+        setDeactivating(null);
+        setSaving(null);
         showMessage('error', data.message || 'There was an error deactivating your account. Please try again later.');
       }
     } catch (error) {
       console.error('Error deactivating account:', error);
-      showMessage('error', 'An error occurred while deactivating your account');
-    } finally {
+      setDeactivating(null);
       setSaving(null);
-      setShowDeactivateModal(false);
+      showMessage('error', 'An error occurred while deactivating your account');
     }
   };
 
@@ -2321,6 +2324,73 @@ export default function Profile() {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Deactivation Loading Overlay */}
+        {deactivating && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 10001,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '1.5rem',
+            animation: 'deactivateOverlayIn 0.3s ease-out',
+          }}>
+            <style>{`
+              @keyframes deactivateOverlayIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+              }
+              @keyframes deactivateSpin {
+                to { transform: rotate(360deg); }
+              }
+              @keyframes deactivatePulse {
+                0%, 100% { opacity: 0.6; }
+                50% { opacity: 1; }
+              }
+            `}</style>
+            {deactivating === 'processing' ? (
+              <>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  border: '3px solid rgba(255, 255, 255, 0.1)',
+                  borderTopColor: 'rgba(239, 68, 68, 0.8)',
+                  borderRadius: '50%',
+                  animation: 'deactivateSpin 0.8s linear infinite',
+                }} />
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '1rem',
+                  fontWeight: '500',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                  animation: 'deactivatePulse 1.5s ease-in-out infinite',
+                }}>
+                  Deactivating your account...
+                </p>
+              </>
+            ) : (
+              <>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(239, 68, 68, 0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '1rem',
+                  fontWeight: '500',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                }}>
+                  Account deactivated. Logging you out...
+                </p>
+              </>
+            )}
           </div>
         )}
 
