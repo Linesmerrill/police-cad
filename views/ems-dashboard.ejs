@@ -2032,8 +2032,7 @@
             <a href="#" onclick="event.preventDefault(); pcOpenSearch();"><span class="fa fa-scale-balanced ml-3 mr-3"></span> Penal Codes</a>
           </li>
           <li>
-            <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
-                class="fa fa-external-link-alt"></i></a>
+            <a href="<%= encodedCommunityId ? '/community/' + encodedCommunityId + '/map' : '/map-interactive' %>"><span class="fa fa-map ml-3 mr-3"></span> Map</a>
           </li>
           <li>
             <a href="/most-wanted<%= encodedCommunityId ? '?c=' + encodedCommunityId : '' %>"><span class="fa fa-user-secret ml-3 mr-3"></span> Most Wanted</a>
