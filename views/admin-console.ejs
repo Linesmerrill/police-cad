@@ -4350,7 +4350,7 @@
       ]).then(function([communityRes, rolesRes]) {
         wizardState.community = communityRes.community;
         wizardState.roles = rolesRes.roles || [];
-        wizardState.dangerousRoles = wizardState.roles.filter(function(r) { return r.hasAdminPermission && r.name !== 'Head Admin'; });
+        wizardState.dangerousRoles = wizardState.roles.filter(function(r) { return r.hasAdminPermission && !r.isHeadAdmin; });
         if (wizardState.community.owner) {
           wizardState.oldOwner = {
             id: wizardState.community.owner.id,
@@ -4508,7 +4508,7 @@
             method: 'GET',
             success: function(rolesRes) {
               wizardState.roles = rolesRes.roles || [];
-              wizardState.dangerousRoles = wizardState.roles.filter(function(r) { return r.hasAdminPermission && r.name !== 'Head Admin'; });
+              wizardState.dangerousRoles = wizardState.roles.filter(function(r) { return r.hasAdminPermission && !r.isHeadAdmin; });
               renderWizardStep();
             },
             error: function() { renderWizardStep(); }
@@ -4522,7 +4522,7 @@
 
     // -- Step 2: Head Admin Check --
     function renderStep2_HeadAdmin() {
-      var headAdminRole = wizardState.roles.find(function(r) { return r.name === 'Head Admin'; });
+      var headAdminRole = wizardState.roles.find(function(r) { return r.isHeadAdmin; });
       var newOwnerInHeadAdmin = headAdminRole && headAdminRole.members.some(function(m) { return m.id === wizardState.newOwner.id; });
       var html = renderWizardStepper();
       if (wizardState.addedToHeadAdmin || newOwnerInHeadAdmin) {
@@ -4601,9 +4601,9 @@
       text += 'New Owner: ' + newOwner.username + ' (' + newOwner.email + ')\n';
       text += 'Previous Owner: ' + (oldOwner ? oldOwner.username + ' (' + oldOwner.email + ')' : 'Unknown') + '\n\n';
       text += 'Roles with Administrator Permission:\n';
-      var headAdmin = wizardState.roles.find(function(r) { return r.name === 'Head Admin'; });
+      var headAdmin = wizardState.roles.find(function(r) { return r.isHeadAdmin; });
       if (headAdmin) {
-        text += '\u2022 Head Admin \u2014 Members: ' + (headAdmin.members.map(function(m) { return m.username + ' (' + m.id + ')'; }).join(', ') || 'None') + '\n';
+        text += '\u2022 ' + headAdmin.name + ' (Head Admin) \u2014 Members: ' + (headAdmin.members.map(function(m) { return m.username + ' (' + m.id + ')'; }).join(', ') || 'None') + '\n';
       }
       wizardState.dangerousRoles.forEach(function(role) {
         text += '\u2022 ' + role.name + ' \u2014 Members: ' + (role.members.map(function(m) { return m.username + ' (' + m.id + ')'; }).join(', ') || 'None') + '\n';
