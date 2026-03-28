@@ -5309,17 +5309,21 @@
     }
 
     function promptCancelCase(caseId) {
-      // Replace the case row with a cancel form inline
       var html = '<div style="padding: 1rem;">';
-      html += '<label style="color: var(--ac-text-muted); font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">Why is this case being cancelled?</label>';
-      html += '<textarea id="cancelCaseReason" class="form-control" rows="2" placeholder="Enter cancellation reason..." style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem; resize: vertical;"></textarea>';
+      html += '<label style="color: var(--ac-text-muted); font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">Why is this case being cancelled? <span style="color: var(--ac-red);">*</span></label>';
+      html += '<textarea id="cancelCaseReason" class="form-control" rows="2" placeholder="Enter cancellation reason..." oninput="toggleCancelCaseBtn()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem; resize: vertical;"></textarea>';
       html += '<div id="cancelCaseError" style="display: none; color: var(--ac-red); font-size: 0.85rem; margin-top: 0.5rem;"></div>';
       html += '<div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">';
       html += '<button class="ac-btn" onclick="loadCases(casesCurrentFilter, casesCurrentPage)" style="color: var(--ac-red);">Nevermind</button>';
-      html += '<button class="ac-btn ac-btn-accent" id="cancelCaseBtn" onclick="executeCancelCase(\'' + caseId + '\')"><i class="fas fa-times"></i> Cancel Case</button>';
+      html += '<button class="ac-btn ac-btn-accent" id="cancelCaseBtn" disabled onclick="executeCancelCase(\'' + caseId + '\')" style="opacity: 0.5; cursor: not-allowed;"><i class="fas fa-times"></i> Cancel Case</button>';
       html += '</div>';
       html += '</div>';
       showInfoModal('Cancel Case', html);
+    }
+
+    function toggleCancelCaseBtn() {
+      var hasReason = $('#cancelCaseReason').val().trim().length > 0;
+      $('#cancelCaseBtn').prop('disabled', !hasReason).css({ opacity: hasReason ? 1 : 0.5, cursor: hasReason ? 'pointer' : 'not-allowed' });
     }
 
     function executeCancelCase(caseId) {
@@ -5333,7 +5337,7 @@
         url: API_BASE + '/api/v1/admin/cases/' + caseId + '/cancel',
         method: 'PATCH',
         contentType: 'application/json',
-        data: JSON.stringify({ reason: reason, currentUser: { email: currentUserEmail, roles: roles } }),
+        data: JSON.stringify({ reason: reason, currentUser: { email: currentUserEmail, roles: roles, name: currentUserName } }),
         success: function() {
           $('#infoModal').modal('hide');
           $('body').removeClass('modal-open');
@@ -5905,7 +5909,35 @@
 
     function caseGenerateSummaryText() {
       var steps = caseState.steps;
+      var isCancelled = caseState.status === 'cancelled';
       var now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+
+      if (isCancelled) {
+        var text = '\u274c CASE CANCELLED \u2014 Community: "' + caseState.communityName + '"\n';
+        text += 'Cancelled by: ' + (caseState.cancelledBy || 'Unknown') + ' on ' + now + '\n';
+        text += 'Reason: ' + (caseState.cancelledReason || 'No reason provided') + '\n';
+        // Show any actions that were taken before cancellation
+        var hasActions = steps.transferOwnership.completed || steps.removeBadActor.completed;
+        if (hasActions) {
+          text += '\nActions taken before cancellation:\n';
+          var n = 1;
+          if (steps.transferOwnership.completed && steps.transferOwnership.newOwner) {
+            var oldOwnerName = steps.transferOwnership.oldOwner ? steps.transferOwnership.oldOwner.username : 'Unknown';
+            text += n++ + '. Ownership transferred: ' + oldOwnerName + ' \u2192 ' + steps.transferOwnership.newOwner.username + '\n';
+          }
+          if (steps.transferOwnership.addedToHeadAdmin && steps.transferOwnership.newOwner) {
+            text += n++ + '. ' + steps.transferOwnership.newOwner.username + ' added to Head Admin role\n';
+          }
+          if (steps.removeBadActor.completed && !steps.removeBadActor.skipped && steps.removeBadActor.badActor) {
+            text += n++ + '. ' + steps.removeBadActor.badActor.username + ' removed from community\n';
+          }
+          if (steps.removeBadActor.banned && steps.removeBadActor.badActor) {
+            text += n++ + '. ' + steps.removeBadActor.badActor.username + ' banned from community\n';
+          }
+        }
+        return text;
+      }
+
       var text = '\u2705 OWNERSHIP RESET COMPLETE \u2014 Community: "' + caseState.communityName + '"\n';
       text += 'Performed by: ' + (caseState.createdBy.adminName || caseState.createdBy.adminEmail) + ' (' + (caseState.createdBy.adminRole || 'admin') + ') on ' + now + '\n\n';
       text += 'Actions taken:\n';
