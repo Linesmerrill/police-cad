@@ -4623,12 +4623,14 @@
     function renderStep4_RemoveBadActor() {
       var html = renderWizardStepper();
       html += '<div style="margin-bottom: 1rem;">';
-      html += '<h5 style="color: #fff;">Remove a User from This Community</h5>';
-      html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">This step is optional. Use it to remove a bad actor who hijacked the community.</p>';
+      html += '<h5 style="color: #fff;">Remove a User from This Community <span style="color: var(--ac-text-muted); font-weight: 400; font-size: 0.85rem;">(Optional)</span></h5>';
+      html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">Use this to remove a bad actor who hijacked the community.</p>';
       html += '</div>';
+      // Pre-fill with old owner email if available
+      var prefillEmail = wizardState.oldOwner ? wizardState.oldOwner.email : '';
       html += '<div style="margin-bottom: 1rem;">';
       html += '<label style="color: var(--ac-text-muted); font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">User Email to Remove</label>';
-      html += '<input type="email" id="wizardBadActorEmail" class="form-control" placeholder="Enter the bad actor\'s email address" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem;">';
+      html += '<input type="email" id="wizardBadActorEmail" class="form-control" value="' + prefillEmail + '" placeholder="Enter the bad actor\'s email address" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem;">';
       html += '</div>';
       html += '<div id="wizardBadActorPreview" style="display: none;"></div>';
       html += '<div id="wizardBadActorError" style="display: none; color: var(--ac-red); font-size: 0.85rem; margin-bottom: 1rem;"></div>';
