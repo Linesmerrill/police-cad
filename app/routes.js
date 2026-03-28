@@ -1872,6 +1872,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   app.get("/police-dashboard", authCheck, async function (req, res) {
     try {
+      // Check if user opted into the beta command dashboard
+      try {
+        const prefsRes = await axios.get(
+          `${policeCadApiUrl}/api/v1/user-preferences/${req.user._id}`, config
+        );
+        if (prefsRes.data && prefsRes.data.betaCommandDashboard === true) {
+          const queryString = req.originalUrl.split('?')[1] || '';
+          return res.redirect(`/command-dashboard${queryString ? '?' + queryString : ''}`);
+        }
+      } catch (prefErr) {
+        // If preferences fetch fails, fall through to classic dashboard
+      }
+
       var context = req.app.locals.specialContext;
       req.app.locals.specialContext = null;
       
@@ -2013,6 +2026,133 @@ module.exports = function (app, passport, server, nextApp, handle) {
       });
     } catch (error) {
       console.error('🚨 Error in police-dashboard route:', error);
+      return res.status(500).render("error", {
+        message: "An error occurred while loading the dashboard. Please try again.",
+        redirect: "/communities",
+      });
+    }
+  });
+
+  // Command dashboard - new tactical-themed police dashboard (beta opt-in)
+  app.get("/command-dashboard", authCheck, async function (req, res) {
+    try {
+      var context = req.app.locals.specialContext;
+      req.app.locals.specialContext = null;
+
+      const departmentName = req.query.dept || null;
+      const encodedDeptId = req.query.d || null;
+
+      let departmentId = null;
+      if (encodedDeptId) {
+        try {
+          let base64 = encodedDeptId
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          departmentId = Buffer.from(base64, 'base64').toString('utf8');
+        } catch (e) {
+          console.error('Failed to decode department ID:', e);
+          departmentId = null;
+        }
+      }
+
+      const encodedCommunityId = req.query.c || null;
+      let urlCommunityId = null;
+      const communityIdPattern = /^[a-fA-F0-9]{24}$/;
+      if (encodedCommunityId) {
+        try {
+          let base64 = encodedCommunityId
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          const decoded = Buffer.from(base64, 'base64').toString('utf8');
+          if (communityIdPattern.test(decoded)) {
+            urlCommunityId = decoded;
+          } else {
+            console.warn('Rejected invalid community ID from URL:', decoded);
+          }
+        } catch (e) {
+          console.error('Failed to decode community ID from URL:', e);
+        }
+      }
+
+      const communityId = urlCommunityId || req.user.user?.lastAccessedCommunity?.communityID || req.user.user?.activeCommunity;
+
+      if (departmentId && departmentName) {
+        if (!communityId) {
+          return res.status(403).render("error", {
+            message: "No active community found. Please select a community first.",
+            redirect: "/communities",
+          });
+        }
+
+        let isAdmin = false;
+        try {
+          const rolesApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/roles`;
+          const rolesResponse = await axios.get(rolesApiUrl, config);
+          const roles = rolesResponse.data || [];
+          roles.forEach(role => {
+            if (Array.isArray(role.members) && role.members.includes(String(req.user._id))) {
+              if (Array.isArray(role.permissions)) {
+                role.permissions.forEach(perm => {
+                  if (perm.name === 'administrator' && perm.enabled === true) {
+                    isAdmin = true;
+                  }
+                });
+              }
+            }
+          });
+        } catch (err) {
+          console.error('Error fetching community roles:', err.message);
+        }
+
+        if (!isAdmin) {
+          const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
+          try {
+            const userDepartmentsResponse = await axios.get(apiUrl, config);
+            const userDepartments = userDepartmentsResponse.data.data || [];
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId && dept.accessStatus === 'approved');
+            if (!userHasAccess) {
+              return res.status(403).render("error", {
+                message: "You don't have access to this department. Please contact the department administrator.",
+                redirect: "/departments",
+              });
+            }
+          } catch (apiError) {
+            console.error('API Error:', apiError.message);
+          }
+        }
+      }
+
+      let communityName = null;
+      if (communityId) {
+        try {
+          const communityResponse = await axios.get(
+            `${policeCadApiUrl}/api/v1/community/${communityId}`,
+            config
+          );
+          communityName = communityResponse.data?.community?.name || null;
+        } catch (err) {
+          console.error('Error fetching community:', err.message);
+        }
+      }
+
+      res.render("command-dashboard", {
+        user: req.user,
+        referer: encodeURIComponent("/command-dashboard"),
+        redirect: encodeURIComponent("/command-dashboard"),
+        context: null,
+        departmentId: departmentId || req.session.departmentId || null,
+        departmentName: departmentName,
+        communityName: communityName,
+        apiUrl: policeCadApiUrl,
+      });
+    } catch (error) {
+      console.error('Error in command-dashboard route:', error);
       return res.status(500).render("error", {
         message: "An error occurred while loading the dashboard. Please try again.",
         redirect: "/communities",

@@ -87,7 +87,7 @@ window.AlertSounds = (function() {
     // The checkbox (on dashboards that have it) is just a UI mirror of this value.
     var userPref = window.dbUser?.user?.panicButtonSound;
     if (userPref === false) {
-      console.log('[AlertSounds] Sound disabled — userPref:', userPref);
+      // Sound disabled by user preference
       return false;
     }
     return true;
@@ -121,7 +121,7 @@ window.AlertSounds = (function() {
     };
 
     audio.play().then(function() {
-      console.log('[AlertSounds] Playing:', src, 'volume:', audio.volume);
+      // Playing successfully
     }).catch(function(e) {
       console.warn('[AlertSounds] Play failed:', src, e.message);
       playNext();
