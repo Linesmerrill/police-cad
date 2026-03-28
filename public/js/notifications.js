@@ -526,6 +526,11 @@ function showToastNotification(notification) {
   if (notification.type === "friend_request") {
     message = "You got a friend request!";
     iconClass = "fas fa-user-plus";
+  } else if (notification.type === "join_request") {
+    const who = notification.senderUsername || "Someone";
+    const where = notification.data2 ? ` ${notification.data2}` : "";
+    message = `${who} has requested to join${where}`;
+    iconClass = "fas fa-user-plus";
   } else if (notification.type === "promotion_eligible") {
     message = notification.message || "An officer is eligible for promotion";
     iconClass = "fas fa-ranking-star";
