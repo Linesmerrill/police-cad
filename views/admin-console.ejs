@@ -5805,11 +5805,25 @@
 
     function renderCaseStep5_SummaryContent(isReadOnly) {
       var steps = caseState.steps;
+      var isCancelled = caseState.status === 'cancelled';
       var html = renderCaseStepper(5);
       html += '<div style="text-align: center; margin-bottom: 1.5rem;">';
-      html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(34,197,94,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
-      html += '<i class="fas fa-check" style="color: var(--ac-green); font-size: 1.5rem;"></i></div>';
-      html += '<h5 style="color: #fff;">Ownership Reset ' + (isReadOnly ? 'Completed' : 'Complete') + '</h5></div>';
+      if (isCancelled) {
+        html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(239,68,68,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
+        html += '<i class="fas fa-times" style="color: var(--ac-red); font-size: 1.5rem;"></i></div>';
+        html += '<h5 style="color: #fff;">Case Cancelled</h5>';
+        if (caseState.cancelledReason) {
+          html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">Reason: ' + caseState.cancelledReason + '</p>';
+        }
+        if (caseState.cancelledBy) {
+          html += '<p style="color: var(--ac-text-muted); font-size: 0.8rem;">By: ' + caseState.cancelledBy + '</p>';
+        }
+      } else {
+        html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(34,197,94,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
+        html += '<i class="fas fa-check" style="color: var(--ac-green); font-size: 1.5rem;"></i></div>';
+        html += '<h5 style="color: #fff;">Ownership Reset ' + (isReadOnly ? 'Completed' : 'Complete') + '</h5>';
+      }
+      html += '</div>';
 
       html += '<div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">';
       html += '<h6 style="color: #fff; margin-bottom: 0.75rem;">Actions Taken</h6>';
