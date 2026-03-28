@@ -358,8 +358,10 @@
         display:inline-flex; align-items:center; justify-content:center; gap:0.5rem;
         padding:0.625rem 1.25rem; border-radius:var(--ac-radius-sm); font-weight:600;
         font-size:0.875rem; font-family:'Outfit',sans-serif; cursor:pointer;
-        border:1px solid transparent; transition:all 0.15s; text-decoration:none;
+        border:1px solid var(--ac-glass-border); transition:all 0.15s; text-decoration:none;
+        background:var(--ac-glass); color:var(--ac-text);
       }
+      .ac-btn:hover { background:var(--ac-glass-hover); color:#fff; border-color:rgba(255,255,255,0.12); }
       .ac-btn-accent { background:var(--ac-accent); color:#fff; border-color:var(--ac-accent); }
       .ac-btn-accent:hover { background:#7c3aed; border-color:#7c3aed; transform:translateY(-1px); color:#fff; }
       .ac-btn-block { width:100%; }
@@ -1299,10 +1301,10 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
           <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
-            <h4 class="modal-title" id="wizardModalTitle">Reset Owner & Roles</h4>
             <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;">
               <span>&times;</span>
             </button>
+            <h4 class="modal-title" id="wizardModalTitle">Reset Owner & Roles</h4>
           </div>
           <div class="modal-body" id="wizardModalBody">
           </div>
