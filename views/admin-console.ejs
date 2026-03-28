@@ -4587,7 +4587,19 @@
         contentType: 'application/json',
         data: JSON.stringify(data),
         success: function(res) {
+          // Preserve transient fields that aren't in the DB
+          var transient = {
+            _community: caseState._community,
+            _roles: caseState._roles,
+            _dangerousRoles: caseState._dangerousRoles,
+            _oldOwner: caseState._oldOwner,
+            _newOwner: caseState._newOwner,
+            _badActor: caseState._badActor
+          };
           caseState = res['case'];
+          for (var key in transient) {
+            if (transient[key] !== undefined) caseState[key] = transient[key];
+          }
           if (onSuccess) onSuccess();
         },
         error: function() {
