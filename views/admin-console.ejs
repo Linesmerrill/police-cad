@@ -7879,8 +7879,11 @@
           });
         });
 
-        // Scroll spy — update active link and URL hash as user scrolls
+        // Scroll spy — only runs when wiki panel is active
         function onScroll() {
+          var wikiPanel = document.getElementById('panel-wiki');
+          if (!wikiPanel || !wikiPanel.classList.contains('active')) return;
+
           var scrollY = window.scrollY + 200;
           var current = '';
           subsections.forEach(function(section) {
