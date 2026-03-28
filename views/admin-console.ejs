@@ -5191,14 +5191,108 @@
               }
             })()}
           </div>
-          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06);">
+          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06); display: flex; gap: 0.75rem; flex-wrap: wrap;">
             <button class="ac-btn ac-btn-accent" onclick="openOwnershipResetWizard('${community.id}', '${(community.name || '').replace(/'/g, "\\'")}')">
               <i class="fas fa-shield-alt"></i> Reset Owner & Roles
+            </button>
+            <button class="ac-btn" onclick="openRemoveMemberForm('${community.id}', '${(community.name || '').replace(/'/g, "\\'")}')">
+              <i class="fas fa-user-slash"></i> Remove Member
             </button>
           </div>
         `);
       }
-      
+
+      // ── Standalone Remove Member ──
+      function openRemoveMemberForm(communityId, communityName) {
+        var html = '';
+        html += '<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06);">';
+        html += '<h6 style="color: #fff; margin-bottom: 0.75rem;"><i class="fas fa-user-slash"></i> Remove Member</h6>';
+        html += '<div style="margin-bottom: 0.75rem;">';
+        html += '<input type="email" id="removeMemberEmail" class="form-control" placeholder="Enter user email to remove" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem;">';
+        html += '</div>';
+        html += '<div id="removeMemberPreview" style="display: none;"></div>';
+        html += '<div id="removeMemberError" style="display: none; color: var(--ac-red); font-size: 0.85rem; margin-bottom: 0.75rem;"></div>';
+        html += '<div style="display: flex; gap: 0.5rem;">';
+        html += '<button class="ac-btn ac-btn-accent" id="removeMemberBtn" onclick="removeMemberLookup(\'' + communityId + '\', \'' + communityName.replace(/'/g, "\\'") + '\')"><i class="fas fa-search"></i> Look Up User</button>';
+        html += '<button class="ac-btn" onclick="cancelRemoveMember()">Cancel</button>';
+        html += '</div>';
+        html += '</div>';
+        $('#removeMemberFormArea').remove();
+        $('#communityModalBody').append('<div id="removeMemberFormArea">' + html + '</div>');
+      }
+
+      function cancelRemoveMember() {
+        $('#removeMemberFormArea').remove();
+      }
+
+      var _removeMemberTarget = null;
+
+      function removeMemberLookup(communityId, communityName) {
+        var email = $('#removeMemberEmail').val().trim();
+        if (!email) { $('#removeMemberError').text('Please enter an email address.').show(); return; }
+        $('#removeMemberBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Looking up...');
+        $('#removeMemberError').hide();
+        $.ajax({
+          url: API_BASE + '/api/v1/admin/search/users',
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ query: email, page: 0, limit: 1 }),
+          success: function(data) {
+            var users = data.users || [];
+            var exactMatch = users.find(function(u) { return u.email && u.email.toLowerCase() === email.toLowerCase(); });
+            if (!exactMatch) {
+              $('#removeMemberError').text('No user found with that email address.').show();
+              $('#removeMemberBtn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
+              return;
+            }
+            _removeMemberTarget = { id: exactMatch.id, email: exactMatch.email, username: exactMatch.username, communityId: communityId, communityName: communityName };
+            var previewHtml = '<div style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem;">';
+            previewHtml += '<div style="color: #fff; font-weight: 600;">' + exactMatch.username + '</div>';
+            previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.85rem;">' + exactMatch.email + '</div>';
+            previewHtml += '<div style="margin-top: 0.75rem;"><label style="display: flex; align-items: center; cursor: pointer; color: var(--ac-text);"><input type="checkbox" id="removeMemberBan" style="margin-right: 0.5rem;"> Also ban this user from rejoining</label></div>';
+            previewHtml += '</div>';
+            $('#removeMemberPreview').html(previewHtml).show();
+            $('#removeMemberBtn').prop('disabled', false).html('<i class="fas fa-user-slash"></i> Remove User').off('click').on('click', function() { removeMemberConfirm(); });
+          },
+          error: function() {
+            $('#removeMemberError').text('Failed to search for user.').show();
+            $('#removeMemberBtn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
+          }
+        });
+      }
+
+      function removeMemberConfirm() {
+        var ban = $('#removeMemberBan').is(':checked');
+        var user = _removeMemberTarget;
+        showConfirmModal(
+          'Confirm Member Removal',
+          '<p>Remove <strong>' + user.username + ' (' + user.email + ')</strong> from <strong>' + user.communityName + '</strong>?</p>' +
+          '<ul><li>Remove from all roles</li><li>Remove community from their account</li>' +
+          (ban ? '<li style="color: var(--ac-red);"><strong>Ban from rejoining</strong></li>' : '') +
+          '</ul><p style="color: var(--ac-amber);"><i class="fas fa-exclamation-triangle"></i> This action will be logged.</p>',
+          function() { removeMemberExecute(ban); }
+        );
+      }
+
+      function removeMemberExecute(ban) {
+        var user = _removeMemberTarget;
+        $('#removeMemberBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Removing...');
+        $.ajax({
+          url: API_BASE + '/api/v1/admin/communities/' + user.communityId + '/remove-member',
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ userEmail: user.email, ban: ban, currentUser: { email: currentUserEmail, roles: roles } }),
+          success: function() {
+            $('#removeMemberFormArea').html('<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06); color: var(--ac-green);"><i class="fas fa-check"></i> ' + user.username + ' has been removed from the community.' + (ban ? ' They have been banned from rejoining.' : '') + '</div>');
+            _removeMemberTarget = null;
+          },
+          error: function(xhr) {
+            $('#removeMemberError').text('Failed to remove user: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error')).show();
+            $('#removeMemberBtn').prop('disabled', false).html('<i class="fas fa-user-slash"></i> Remove User');
+          }
+        });
+      }
+
       function viewCommunityMembers(communityId) {
         // Implementation for viewing community members
         alert('Community members view - to be implemented');
