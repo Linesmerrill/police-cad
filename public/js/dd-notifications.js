@@ -880,6 +880,11 @@
     if (notification.type === 'friend_request') {
       message = 'You got a friend request!';
       iconClass = 'fas fa-user-plus';
+    } else if (notification.type === 'join_request') {
+      var who = notification.senderUsername || 'Someone';
+      var where = notification.data2 ? ' ' + esc(notification.data2) : '';
+      message = esc(who) + ' has requested to join' + where;
+      iconClass = 'fas fa-user-plus';
     } else {
       message = 'New notification: ' + esc(notification.message || '');
       iconClass = 'fas fa-bell';
