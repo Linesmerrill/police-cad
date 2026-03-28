@@ -966,6 +966,7 @@
                     <button class="ac-btn ac-btn-accent" onclick="loadCases('')" id="caseFilterAll">All</button>
                     <button class="ac-btn" onclick="loadCases('open')" id="caseFilterOpen">Open</button>
                     <button class="ac-btn" onclick="loadCases('completed')" id="caseFilterCompleted">Completed</button>
+                    <button class="ac-btn" onclick="loadCases('cancelled')" id="caseFilterCancelled">Cancelled</button>
                   </div>
                 </div>
                 <div id="cases-list"></div>
@@ -4354,13 +4355,14 @@
       casesCurrentPage = page;
 
       // Update filter button styles
-      ['caseFilterAll', 'caseFilterOpen', 'caseFilterCompleted'].forEach(function(id) {
+      ['caseFilterAll', 'caseFilterOpen', 'caseFilterCompleted', 'caseFilterCancelled'].forEach(function(id) {
         var btn = document.getElementById(id);
         if (btn) {
           btn.className = 'ac-btn' + (
             (id === 'caseFilterAll' && status === '') ||
             (id === 'caseFilterOpen' && status === 'open') ||
-            (id === 'caseFilterCompleted' && status === 'completed')
+            (id === 'caseFilterCompleted' && status === 'completed') ||
+            (id === 'caseFilterCancelled' && status === 'cancelled')
             ? ' ac-btn-accent' : '');
         }
       });
@@ -4382,9 +4384,9 @@
 
           var html = '';
           cases.forEach(function(c) {
-            var statusColor = c.status === 'open' ? 'var(--ac-amber)' : 'var(--ac-green)';
-            var statusBg = c.status === 'open' ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.1)';
-            var statusLabel = c.status === 'open' ? 'OPEN' : 'COMPLETED';
+            var statusColor = c.status === 'open' ? 'var(--ac-amber)' : c.status === 'cancelled' ? 'var(--ac-red)' : 'var(--ac-green)';
+            var statusBg = c.status === 'open' ? 'rgba(245,158,11,0.1)' : c.status === 'cancelled' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)';
+            var statusLabel = c.status === 'open' ? 'OPEN' : c.status === 'cancelled' ? 'CANCELLED' : 'COMPLETED';
             var typeLabel = c.type === 'ownership_reset' ? 'Ownership Reset' : c.type;
             var createdAt = new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
             var btnLabel = c.status === 'open' ? '<i class="fas fa-play"></i> Resume' : '<i class="fas fa-eye"></i> View';
@@ -4401,8 +4403,16 @@
             html += typeLabel + ' &middot; Created by ' + (c.createdBy.adminName || c.createdBy.adminEmail || 'Unknown') + ' &middot; ' + createdAt;
             html += '</div>';
             html += '</div>';
+            html += '<div style="display: flex; gap: 0.5rem;">';
+            if (c.status === 'open') {
+              html += '<button class="ac-btn" onclick="promptCancelCase(\'' + c.id + '\')" style="white-space: nowrap; color: var(--ac-red);"><i class="fas fa-times"></i> Cancel</button>';
+            }
             html += '<button class="ac-btn ac-btn-accent" onclick="viewCase(\'' + c.id + '\')" style="white-space: nowrap;">' + btnLabel + '</button>';
             html += '</div>';
+            html += '</div>';
+            if (c.status === 'cancelled' && c.cancelledReason) {
+              html += '<div style="color: var(--ac-text-muted); font-size: 0.8rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.06);"><strong style="color: var(--ac-red);">Cancelled:</strong> ' + c.cancelledReason + (c.cancelledBy ? ' — by ' + c.cancelledBy : '') + '</div>';
+            }
             html += '</div>';
           });
 
@@ -4432,6 +4442,45 @@
       $('#case-detail-view').hide();
       $('#cases-list-view').show();
       loadCases(casesCurrentFilter, casesCurrentPage);
+    }
+
+    function promptCancelCase(caseId) {
+      // Replace the case row with a cancel form inline
+      var html = '<div style="padding: 1rem;">';
+      html += '<label style="color: var(--ac-text-muted); font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">Why is this case being cancelled?</label>';
+      html += '<textarea id="cancelCaseReason" class="form-control" rows="2" placeholder="Enter cancellation reason..." style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem; resize: vertical;"></textarea>';
+      html += '<div id="cancelCaseError" style="display: none; color: var(--ac-red); font-size: 0.85rem; margin-top: 0.5rem;"></div>';
+      html += '<div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">';
+      html += '<button class="ac-btn" onclick="loadCases(casesCurrentFilter, casesCurrentPage)" style="color: var(--ac-red);">Nevermind</button>';
+      html += '<button class="ac-btn ac-btn-accent" id="cancelCaseBtn" onclick="executeCancelCase(\'' + caseId + '\')"><i class="fas fa-times"></i> Cancel Case</button>';
+      html += '</div>';
+      html += '</div>';
+      showInfoModal('Cancel Case', html);
+    }
+
+    function executeCancelCase(caseId) {
+      var reason = $('#cancelCaseReason').val().trim();
+      if (!reason) {
+        $('#cancelCaseError').text('Please enter a reason for cancellation.').show();
+        return;
+      }
+      $('#cancelCaseBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Cancelling...');
+      $.ajax({
+        url: API_BASE + '/api/v1/admin/cases/' + caseId + '/cancel',
+        method: 'PATCH',
+        contentType: 'application/json',
+        data: JSON.stringify({ reason: reason, currentUser: { email: currentUserEmail, roles: roles } }),
+        success: function() {
+          $('#infoModal').modal('hide');
+          $('body').removeClass('modal-open');
+          $('.modal-backdrop').remove();
+          loadCases(casesCurrentFilter, casesCurrentPage);
+        },
+        error: function(xhr) {
+          $('#cancelCaseError').text('Failed to cancel: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error')).show();
+          $('#cancelCaseBtn').prop('disabled', false).html('<i class="fas fa-times"></i> Cancel Case');
+        }
+      });
     }
 
     function viewCase(caseId) {
