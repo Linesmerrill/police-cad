@@ -2456,7 +2456,18 @@
         'admin-management': function() { if (typeof loadAllAdmins === 'function') loadAllAdmins(); },
         'content-creators': function() { if (typeof loadCCApplications === 'function') { loadCCApplications(); loadCCStats(); } },
         'metrics': function() { loadMetricsPanel(); },
-        'cases': function() { loadCases(''); },
+        'cases': function() {
+          var hash = window.location.hash.replace('#', '');
+          // Handle cases/N deep link
+          if (hash.indexOf('cases/') === 0) {
+            var caseId = hash.split('/')[1];
+            if (caseId) { viewCase(caseId); return; }
+          }
+          // Handle cases?status=X filter
+          var statusMatch = hash.match(/[?&]status=([^&]+)/);
+          var status = statusMatch ? statusMatch[1] : '';
+          loadCases(status);
+        },
         'wiki': function() { initAdminWiki(); }
       };
 
@@ -5201,6 +5212,11 @@
       if (typeof page === 'undefined') page = 0;
       casesCurrentFilter = status;
       casesCurrentPage = page;
+
+      // Update URL hash with filter
+      var hashStr = 'cases';
+      if (status) hashStr += '?status=' + status;
+      history.replaceState(null, null, '#' + hashStr);
 
       // Update filter button styles
       ['caseFilterAll', 'caseFilterOpen', 'caseFilterCompleted', 'caseFilterCancelled'].forEach(function(id) {
