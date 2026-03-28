@@ -5259,7 +5259,7 @@
             html += '<div style="display: flex; justify-content: space-between; align-items: center;">';
             html += '<div style="flex: 1;">';
             html += '<div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">';
-            html += '<i class="fas fa-briefcase" style="color: var(--ac-accent);"></i>';
+            html += '<span style="color: var(--ac-accent); font-weight: 700; font-size: 0.8rem; font-family: \'JetBrains Mono\', monospace;">#' + (c.caseNumber || '?') + '</span>';
             html += '<strong style="color: #fff;">' + (c.communityName || 'Unknown') + '</strong>';
             html += '<span style="color: ' + statusColor + '; background: ' + statusBg + '; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">' + statusLabel + '</span>';
             html += '</div>';
@@ -5357,6 +5357,10 @@
         method: 'GET',
         success: function(data) {
           caseState = data['case'];
+          // Update URL hash with case number for direct linking
+          if (caseState.caseNumber) {
+            history.replaceState(null, null, '#cases/' + caseState.caseNumber);
+          }
           // Also load community and roles data for the workflow
           Promise.all([
             $.ajax({ url: API_BASE + '/api/v1/admin/communities/' + caseState.communityId, method: 'GET' }),
@@ -5399,10 +5403,10 @@
 
     function renderCaseStep() {
       var step = getCurrentCaseStep();
-      var isCompleted = caseState.status === 'completed';
-      // If case is completed, show summary
-      if (isCompleted || step >= 5) {
-        renderCaseStep5_Summary(isCompleted);
+      var isReadOnly = caseState.status === 'completed' || caseState.status === 'cancelled';
+      // If case is completed or cancelled, show summary (read-only)
+      if (isReadOnly || step >= 5) {
+        renderCaseStep5_Summary(isReadOnly);
         return;
       }
       switch (step) {
