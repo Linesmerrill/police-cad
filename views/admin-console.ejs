@@ -3022,7 +3022,11 @@
             'email-tab-content': 'email',
             'beta-metrics': 'metrics'
           };
-          const panel = hashMap[panelId] || panelId;
+          var panel = hashMap[panelId] || panelId;
+          // Handle deep link formats: cases/N and wiki/section-id
+          if (panel.indexOf('cases/') === 0 || panel.indexOf('wiki/') === 0) {
+            panel = panel.split('/')[0];
+          }
           if (document.getElementById('panel-' + panel)) {
             acNavTo(panel);
 
@@ -7806,6 +7810,17 @@
       // =====================================================
       function initAdminWiki() {
         updateAdminWikiActiveLink();
+        // Check for deep link (e.g. #wiki/reset-owner)
+        var hash = window.location.hash.replace('#', '');
+        var parts = hash.split('/');
+        if (parts.length === 2 && parts[0] === 'wiki' && parts[1]) {
+          var target = document.getElementById(parts[1]);
+          if (target) {
+            setTimeout(function() {
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 200);
+          }
+        }
       }
 
       function filterAdminWiki(query) {
@@ -7850,18 +7865,21 @@
         var links = document.querySelectorAll('.aw-nav-link');
         var subsections = content.querySelectorAll('.aw-subsection[id]');
 
-        // Click handlers for smooth scrolling
+        // Click handlers for smooth scrolling + URL update
         links.forEach(function(link) {
           link.addEventListener('click', function(e) {
             e.preventDefault();
-            var target = document.querySelector(this.getAttribute('href'));
+            var href = this.getAttribute('href');
+            var sectionId = href.replace('#', '');
+            var target = document.querySelector(href);
             if (target) {
               target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, null, '#wiki/' + sectionId);
             }
           });
         });
 
-        // Scroll spy
+        // Scroll spy — update active link and URL hash as user scrolls
         function onScroll() {
           var scrollY = window.scrollY + 200;
           var current = '';
@@ -7876,6 +7894,9 @@
               link.classList.add('active');
             }
           });
+          if (current) {
+            history.replaceState(null, null, '#wiki/' + current);
+          }
         }
 
         window.addEventListener('scroll', onScroll);
