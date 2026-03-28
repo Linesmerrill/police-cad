@@ -1959,6 +1959,8 @@
       $(document).ready(function() {
         // Check if current user is owner (you can modify this logic based on your backend)
         currentUserEmail = '<%= admin && admin.email ? admin.email : "" %>';
+        var currentUserName = '<%= admin && admin.firstName ? admin.firstName + (admin.lastName ? " " + admin.lastName : "") : "Admin" %>';
+        var currentUserRole = roles.length > 0 ? roles[0] : 'admin';
         const currentUserRoles = '<%= admin && admin.roles ? JSON.stringify(admin.roles) : (admin && admin.role ? JSON.stringify([admin.role]) : "[]") %>';
         
         // Parse roles array - handle HTML entity encoding
@@ -4598,8 +4600,8 @@
       var oldOwner = wizardState.oldOwner;
       var text = '';
       text += '\u26a0\ufe0f ADMIN ROLES AUDIT \u2014 Community: "' + wizardState.communityName + '" (ID: ' + wizardState.communityId + ')\n';
-      text += 'New Owner: ' + newOwner.username + ' (' + newOwner.email + ')\n';
-      text += 'Previous Owner: ' + (oldOwner ? oldOwner.username + ' (' + oldOwner.email + ')' : 'Unknown') + '\n\n';
+      text += 'New Owner: ' + newOwner.username + '\n';
+      text += 'Previous Owner: ' + (oldOwner ? oldOwner.username : 'Unknown') + '\n\n';
       text += 'Roles with Administrator Permission:\n';
       var headAdmin = wizardState.roles.find(function(r) { return r.isHeadAdmin; });
       if (headAdmin) {
@@ -4782,17 +4784,17 @@
     function generateSummaryText() {
       var now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
       var text = '\u2705 OWNERSHIP RESET COMPLETE \u2014 Community: "' + wizardState.communityName + '"\n';
-      text += 'Performed by: ' + currentUserEmail + ' on ' + now + '\n\n';
+      text += 'Performed by: ' + currentUserName + ' (' + currentUserRole + ') on ' + now + '\n\n';
       text += 'Actions taken:\n';
       var n = 1;
       if (wizardState.ownerTransferred) {
-        text += n++ + '. Ownership transferred: ' + (wizardState.oldOwner ? wizardState.oldOwner.username : 'Unknown') + ' \u2192 ' + wizardState.newOwner.username + ' (' + wizardState.newOwner.email + ')\n';
+        text += n++ + '. Ownership transferred: ' + (wizardState.oldOwner ? wizardState.oldOwner.username : 'Unknown') + ' \u2192 ' + wizardState.newOwner.username + '\n';
       }
       if (wizardState.addedToHeadAdmin) {
         text += n++ + '. ' + wizardState.newOwner.username + ' added to Head Admin role\n';
       }
       if (wizardState.badActorRemoved) {
-        text += n++ + '. ' + wizardState.badActorUser.username + ' (' + wizardState.badActorUser.email + ') removed from community\n';
+        text += n++ + '. ' + wizardState.badActorUser.username + ' removed from community\n';
       }
       if (wizardState.badActorBanned) {
         text += n++ + '. ' + wizardState.badActorUser.username + ' banned from community\n';
