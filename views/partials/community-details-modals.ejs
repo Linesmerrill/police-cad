@@ -1176,17 +1176,19 @@
           }
           const community = await communityResponse.json();
           
-          // Get user IDs of roles with "manage members" or "administrator" permissions
-          const userIds = community.community.roles
-            .filter((role) =>
-              role.permissions.some(
-                (permission) =>
-                  (permission.name === "manage members" ||
-                    permission.name === "administrator") &&
-                  permission.enabled
+          // Get unique user IDs of roles with "manage members" or "administrator" permissions
+          const userIds = [...new Set(
+            community.community.roles
+              .filter((role) =>
+                role.permissions.some(
+                  (permission) =>
+                    (permission.name === "manage members" ||
+                      permission.name === "administrator") &&
+                    permission.enabled
+                )
               )
-            )
-            .flatMap((role) => role.members);
+              .flatMap((role) => role.members)
+          )];
 
           // Send notification to each user
           for (const recipientId of userIds) {
