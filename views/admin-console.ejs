@@ -5809,7 +5809,21 @@
     function renderCaseStep5_SummaryContent(isReadOnly) {
       var steps = caseState.steps;
       var isCancelled = caseState.status === 'cancelled';
-      var html = renderCaseStepper(5);
+      // For cancelled cases, show the step where it was cancelled; for completed, show step 5
+      var displayStep = 5;
+      if (isCancelled) {
+        var stepKeys = ['transferOwnership', 'headAdmin', 'roleAudit', 'removeBadActor', 'summary'];
+        displayStep = 1;
+        for (var si = 0; si < stepKeys.length; si++) {
+          if (steps[stepKeys[si]] && steps[stepKeys[si]].completed) {
+            displayStep = si + 2;
+          } else {
+            break;
+          }
+        }
+        if (displayStep > 5) displayStep = 5;
+      }
+      var html = renderCaseStepper(displayStep);
       html += '<div style="text-align: center; margin-bottom: 1.5rem;">';
       if (isCancelled) {
         html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(239,68,68,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
