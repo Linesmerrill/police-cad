@@ -3943,9 +3943,7 @@
           const ownerId = community.owner?.id || community.owner?._id || 'Unknown';
           
           // Count roles
-          const roleCount = community.owner?.roles ? 
-            (Array.isArray(community.owner.roles) ? community.owner.roles.length : 1) : 
-            (community.owner?.role ? 1 : 0);
+          const roleCount = community.rolesCount || 0;
           
           // Format created date with time
           const createdAt = community.createdAt ? (() => {
