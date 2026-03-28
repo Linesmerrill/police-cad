@@ -5309,17 +5309,21 @@
     }
 
     function promptCancelCase(caseId) {
-      // Replace the case row with a cancel form inline
       var html = '<div style="padding: 1rem;">';
-      html += '<label style="color: var(--ac-text-muted); font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">Why is this case being cancelled?</label>';
-      html += '<textarea id="cancelCaseReason" class="form-control" rows="2" placeholder="Enter cancellation reason..." style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem; resize: vertical;"></textarea>';
+      html += '<label style="color: var(--ac-text-muted); font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">Why is this case being cancelled? <span style="color: var(--ac-red);">*</span></label>';
+      html += '<textarea id="cancelCaseReason" class="form-control" rows="2" placeholder="Enter cancellation reason..." oninput="toggleCancelCaseBtn()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem; resize: vertical;"></textarea>';
       html += '<div id="cancelCaseError" style="display: none; color: var(--ac-red); font-size: 0.85rem; margin-top: 0.5rem;"></div>';
       html += '<div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">';
       html += '<button class="ac-btn" onclick="loadCases(casesCurrentFilter, casesCurrentPage)" style="color: var(--ac-red);">Nevermind</button>';
-      html += '<button class="ac-btn ac-btn-accent" id="cancelCaseBtn" onclick="executeCancelCase(\'' + caseId + '\')"><i class="fas fa-times"></i> Cancel Case</button>';
+      html += '<button class="ac-btn ac-btn-accent" id="cancelCaseBtn" disabled onclick="executeCancelCase(\'' + caseId + '\')" style="opacity: 0.5; cursor: not-allowed;"><i class="fas fa-times"></i> Cancel Case</button>';
       html += '</div>';
       html += '</div>';
       showInfoModal('Cancel Case', html);
+    }
+
+    function toggleCancelCaseBtn() {
+      var hasReason = $('#cancelCaseReason').val().trim().length > 0;
+      $('#cancelCaseBtn').prop('disabled', !hasReason).css({ opacity: hasReason ? 1 : 0.5, cursor: hasReason ? 'pointer' : 'not-allowed' });
     }
 
     function executeCancelCase(caseId) {
