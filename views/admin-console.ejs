@@ -7717,7 +7717,20 @@
         svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
 
         var maxVal = Math.max.apply(null, values);
+        var allZero = maxVal === 0;
         if (maxVal === 0) maxVal = 1; // prevent division by zero
+
+        // Show "no data" overlay if all values are zero
+        var existingOverlay = wrap.querySelector('.ac-chart-no-data');
+        if (existingOverlay) existingOverlay.remove();
+        if (allZero) {
+          var overlay = document.createElement('div');
+          overlay.className = 'ac-chart-no-data';
+          overlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ac-text-dim);font-size:0.8rem;font-weight:500;';
+          overlay.textContent = 'No activity in the last 7 days';
+          wrap.style.position = 'relative';
+          wrap.appendChild(overlay);
+        }
 
         var padTop = 8, padBot = 8, padX = 12;
         var chartH = h - padTop - padBot;
