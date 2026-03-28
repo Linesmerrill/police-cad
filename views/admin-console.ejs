@@ -1294,6 +1294,22 @@
       </div>
     </div>
 
+    <!-- Ownership Reset Wizard Modal -->
+    <div class="modal fade" id="ownershipWizardModal" tabindex="-1" role="dialog" data-backdrop="static">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
+          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
+            <h4 class="modal-title" id="wizardModalTitle">Reset Owner & Roles</h4>
+            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;">
+              <span>&times;</span>
+            </button>
+          </div>
+          <div class="modal-body" id="wizardModalBody">
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Confirmation Modal -->
     <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog">
       <div class="modal-dialog">
@@ -4140,15 +4156,17 @@
             <h5 style="color: #9aa0b4; margin-bottom: 1rem;">Communities</h5>
             ${communities && communities.length > 0 ? communities.map(c => `
               <div style="display: flex; justify-content: space-between; align-items: center; background: #2a2d45; padding: 1rem; border-radius: 8px; margin: 0.5rem 0; border: 1px solid #2a2d45;">
-                <div>
+                <div style="flex: 1; min-width: 0;">
                   <strong style="color: #ffffff;">${c.name || 'Unnamed Community'}</strong>
                   <span class="status-badge ${c.status === 'approved' ? 'status-active' : c.status === 'pending' ? 'status-pending' : 'status-inactive'}" style="margin-left: 0.5rem;">${c.status?.toUpperCase() || 'UNKNOWN'}</span>
                   ${c.role ? `<span style="color: #9aa0b4; margin-left: 0.5rem;">(${c.role})</span>` : ''}
                   ${c.department ? `<span style="color: #9aa0b4; margin-left: 0.5rem;">[${c.department}]</span>` : ''}
-                  ${c.joinedAt ? `<br><small style="color: #9aa0b4;">Joined: ${new Date(c.joinedAt).toLocaleDateString()}</small>` : ''}
+                  <br><small style="color: #9aa0b4;">ID: ${c.id}</small>
+                  <small style="color: #9aa0b4; margin-left: 1rem;">Members: ${c.memberCount || 0}</small>
+                  ${c.joinedAt ? `<small style="color: #9aa0b4; margin-left: 1rem;">Joined: ${new Date(c.joinedAt).toLocaleDateString()}</small>` : ''}
                 </div>
-                <button class="btn btn-secondary btn-sm" onclick="searchCommunityByName('${c.name || ''}')" style="margin-left: 0.5rem;">
-                  <i class="fas fa-search"></i> View
+                <button class="btn btn-secondary btn-sm" onclick="viewCommunityDetails('${c.id}')" style="margin-left: 0.5rem;">
+                  <i class="fas fa-eye"></i> View
                 </button>
               </div>
             `).join('') : '<p style="color: #9aa0b4;">No communities</p>'}
@@ -4276,7 +4294,504 @@
           trackAdminAction('community_search', `Searched for community from user details: "${communityName}"`);
         }, 300);
       }
-      
+
+    // ════════════════════════════════════════════════════
+    // OWNERSHIP RESET WIZARD
+    // ════════════════════════════════════════════════════
+
+    let wizardState = {
+      communityId: '',
+      communityName: '',
+      currentStep: 1,
+      totalSteps: 5,
+      community: null,
+      roles: null,
+      oldOwner: null,
+      newOwner: null,
+      ownerTransferred: false,
+      addedToHeadAdmin: false,
+      badActorRemoved: false,
+      badActorBanned: false,
+      badActorUser: null,
+      dangerousRoles: [],
+    };
+
+    function openOwnershipResetWizard(communityId, communityName) {
+      wizardState = {
+        communityId: communityId,
+        communityName: communityName,
+        currentStep: 1,
+        totalSteps: 5,
+        community: null,
+        roles: null,
+        oldOwner: null,
+        newOwner: null,
+        ownerTransferred: false,
+        addedToHeadAdmin: false,
+        badActorRemoved: false,
+        badActorBanned: false,
+        badActorUser: null,
+        dangerousRoles: [],
+      };
+      $('#communityModal').modal('hide');
+      setTimeout(() => {
+        $('#ownershipWizardModal').modal('show');
+        loadWizardCommunityData();
+      }, 300);
+    }
+
+    function loadWizardCommunityData() {
+      renderWizardLoading('Loading community data...');
+      Promise.all([
+        $.ajax({ url: API_BASE + '/api/v1/admin/communities/' + wizardState.communityId, method: 'GET' }),
+        $.ajax({ url: API_BASE + '/api/v1/admin/communities/' + wizardState.communityId + '/roles', method: 'GET' }),
+      ]).then(function([communityRes, rolesRes]) {
+        wizardState.community = communityRes.community;
+        wizardState.roles = rolesRes.roles || [];
+        wizardState.dangerousRoles = wizardState.roles.filter(function(r) { return r.hasAdminPermission && r.name !== 'Head Admin'; });
+        if (wizardState.community.owner) {
+          wizardState.oldOwner = {
+            id: wizardState.community.owner.id,
+            email: wizardState.community.owner.email,
+            username: wizardState.community.owner.username,
+          };
+        }
+        renderWizardStep();
+      }).catch(function(err) {
+        renderWizardError('Failed to load community data. Please try again.');
+      });
+    }
+
+    function renderWizardLoading(message) {
+      $('#wizardModalBody').html('<div style="text-align: center; padding: 2rem;"><div class="loading">' + message + '</div></div>');
+    }
+
+    function renderWizardError(message) {
+      $('#wizardModalBody').html(
+        '<div style="text-align: center; padding: 2rem;">' +
+        '<div style="color: var(--ac-red); margin-bottom: 1rem;"><i class="fas fa-exclamation-triangle"></i> ' + message + '</div>' +
+        '<button class="ac-btn" onclick="loadWizardCommunityData()">Retry</button>' +
+        '</div>'
+      );
+    }
+
+    function renderWizardStepper() {
+      const steps = ['Owner', 'Head Admin', 'Role Audit', 'Remove User', 'Summary'];
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        return '<div style="text-align: center; color: var(--ac-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Step ' + wizardState.currentStep + ' of ' + wizardState.totalSteps + ': ' + steps[wizardState.currentStep - 1] + '</div>';
+      }
+      var html = '<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; gap: 0.25rem;">';
+      steps.forEach(function(step, i) {
+        var stepNum = i + 1;
+        var isActive = stepNum === wizardState.currentStep;
+        var isCompleted = stepNum < wizardState.currentStep;
+        var circleColor = isCompleted ? 'var(--ac-green)' : isActive ? 'var(--ac-accent)' : 'rgba(255,255,255,0.1)';
+        var textColor = isActive ? '#fff' : 'var(--ac-text-muted)';
+        html += '<div style="display: flex; align-items: center;">';
+        html += '<div style="display: flex; flex-direction: column; align-items: center; min-width: 60px;">';
+        html += '<div style="width: 28px; height: 28px; border-radius: 50%; background: ' + circleColor + '; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: #fff; font-weight: 600;">';
+        html += isCompleted ? '<i class="fas fa-check" style="font-size: 0.7rem;"></i>' : stepNum;
+        html += '</div>';
+        html += '<span style="font-size: 0.7rem; color: ' + textColor + '; margin-top: 0.25rem;">' + step + '</span>';
+        html += '</div>';
+        if (stepNum < 5) {
+          html += '<div style="width: 30px; height: 2px; background: ' + (isCompleted ? 'var(--ac-green)' : 'rgba(255,255,255,0.1)') + '; margin: 0 0.25rem; margin-bottom: 1rem;"></div>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+      return html;
+    }
+
+    function renderWizardStep() {
+      switch (wizardState.currentStep) {
+        case 1: renderStep1_TransferOwnership(); break;
+        case 2: renderStep2_HeadAdmin(); break;
+        case 3: renderStep3_RoleAudit(); break;
+        case 4: renderStep4_RemoveBadActor(); break;
+        case 5: renderStep5_Summary(); break;
+      }
+    }
+
+    // -- Step 1: Transfer Ownership --
+    function renderStep1_TransferOwnership() {
+      var owner = wizardState.oldOwner;
+      var html = renderWizardStepper();
+      html += '<div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">';
+      html += '<div style="color: var(--ac-text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Current Owner</div>';
+      html += '<div style="color: #fff; font-weight: 600;">' + (owner ? owner.username : 'Unknown') + '</div>';
+      html += '<div style="color: var(--ac-text-muted); font-size: 0.85rem;">' + (owner ? owner.email : 'N/A') + '</div>';
+      html += '<div style="color: var(--ac-text-muted); font-size: 0.75rem;">ID: ' + (owner ? owner.id : 'N/A') + '</div>';
+      html += '</div>';
+      html += '<div style="margin-bottom: 1rem;">';
+      html += '<label style="color: var(--ac-text-muted); font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">New Owner Email</label>';
+      html += '<input type="email" id="wizardNewOwnerEmail" class="form-control" placeholder="Enter the new owner\'s email address" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem;">';
+      html += '</div>';
+      html += '<div id="wizardNewOwnerPreview" style="display: none; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;"></div>';
+      html += '<div id="wizardNewOwnerError" style="display: none; color: var(--ac-red); font-size: 0.85rem; margin-bottom: 1rem;"></div>';
+      html += '<div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">';
+      html += '<button class="ac-btn" data-dismiss="modal">Cancel</button>';
+      html += '<button class="ac-btn ac-btn-accent" id="wizardStep1Btn" onclick="wizardLookupNewOwner()"><i class="fas fa-search"></i> Look Up User</button>';
+      html += '</div>';
+      $('#wizardModalBody').html(html);
+    }
+
+    function wizardLookupNewOwner() {
+      var email = $('#wizardNewOwnerEmail').val().trim();
+      if (!email) {
+        $('#wizardNewOwnerError').text('Please enter an email address.').show();
+        return;
+      }
+      $('#wizardStep1Btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Looking up...');
+      $('#wizardNewOwnerError').hide();
+      $.ajax({
+        url: API_BASE + '/api/v1/admin/search/users',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ query: email, page: 0, limit: 1 }),
+        success: function(data) {
+          var users = data.users || [];
+          var exactMatch = users.find(function(u) { return u.email && u.email.toLowerCase() === email.toLowerCase(); });
+          if (!exactMatch) {
+            $('#wizardNewOwnerError').text('No user found with that email address.').show();
+            $('#wizardStep1Btn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
+            return;
+          }
+          wizardState.newOwner = { id: exactMatch.id, email: exactMatch.email, username: exactMatch.username };
+          var previewHtml = '<div style="color: var(--ac-text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">New Owner</div>';
+          previewHtml += '<div style="color: #fff; font-weight: 600;">' + exactMatch.username + '</div>';
+          previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.85rem;">' + exactMatch.email + '</div>';
+          previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.75rem;">ID: ' + exactMatch.id + '</div>';
+          $('#wizardNewOwnerPreview').html(previewHtml).show();
+          $('#wizardStep1Btn').prop('disabled', false).html('<i class="fas fa-exchange-alt"></i> Transfer Ownership').off('click').on('click', wizardConfirmTransfer);
+        },
+        error: function() {
+          $('#wizardNewOwnerError').text('Failed to search for user. Please try again.').show();
+          $('#wizardStep1Btn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
+        }
+      });
+    }
+
+    function wizardConfirmTransfer() {
+      var oldOwner = wizardState.oldOwner;
+      var newOwner = wizardState.newOwner;
+      showConfirmModal(
+        'Confirm Ownership Transfer',
+        '<p>You are about to transfer ownership of <strong>' + wizardState.communityName + '</strong>:</p>' +
+        '<p><strong>From:</strong> ' + (oldOwner ? oldOwner.username + ' (' + oldOwner.email + ')' : 'Unknown') + '</p>' +
+        '<p><strong>To:</strong> ' + newOwner.username + ' (' + newOwner.email + ')</p>' +
+        '<p style="color: var(--ac-amber);"><i class="fas fa-exclamation-triangle"></i> This action will be logged.</p>',
+        function() { wizardExecuteTransfer(); }
+      );
+    }
+
+    function wizardExecuteTransfer() {
+      renderWizardLoading('Transferring ownership...');
+      $.ajax({
+        url: API_BASE + '/api/v1/admin/communities/' + wizardState.communityId + '/transfer-ownership',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          newOwnerEmail: wizardState.newOwner.email,
+          currentUser: { email: currentUserEmail, roles: roles },
+        }),
+        success: function(data) {
+          wizardState.ownerTransferred = true;
+          wizardState.addedToHeadAdmin = data.addedToHeadAdmin || false;
+          wizardState.currentStep = 2;
+          // Refresh roles data
+          $.ajax({
+            url: API_BASE + '/api/v1/admin/communities/' + wizardState.communityId + '/roles',
+            method: 'GET',
+            success: function(rolesRes) {
+              wizardState.roles = rolesRes.roles || [];
+              wizardState.dangerousRoles = wizardState.roles.filter(function(r) { return r.hasAdminPermission && r.name !== 'Head Admin'; });
+              renderWizardStep();
+            },
+            error: function() { renderWizardStep(); }
+          });
+        },
+        error: function(xhr) {
+          renderWizardError('Failed to transfer ownership: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error'));
+        }
+      });
+    }
+
+    // -- Step 2: Head Admin Check --
+    function renderStep2_HeadAdmin() {
+      var headAdminRole = wizardState.roles.find(function(r) { return r.name === 'Head Admin'; });
+      var newOwnerInHeadAdmin = headAdminRole && headAdminRole.members.some(function(m) { return m.id === wizardState.newOwner.id; });
+      var html = renderWizardStepper();
+      if (wizardState.addedToHeadAdmin || newOwnerInHeadAdmin) {
+        html += '<div style="text-align: center; padding: 1rem;">';
+        html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(34,197,94,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
+        html += '<i class="fas fa-check" style="color: var(--ac-green); font-size: 1.5rem;"></i></div>';
+        html += '<h5 style="color: #fff; margin-bottom: 0.5rem;">' + wizardState.newOwner.username + ' is in the Head Admin role</h5>';
+        html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">' + (wizardState.addedToHeadAdmin ? 'They were automatically added during the ownership transfer.' : 'They were already a member of this role.') + '</p>';
+        html += '</div>';
+      } else {
+        html += '<div style="text-align: center; padding: 1rem;">';
+        html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(245,158,11,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
+        html += '<i class="fas fa-exclamation-triangle" style="color: var(--ac-amber); font-size: 1.5rem;"></i></div>';
+        html += '<h5 style="color: #fff; margin-bottom: 0.5rem;">' + wizardState.newOwner.username + ' is NOT in the Head Admin role</h5>';
+        html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">This is unusual — the new owner should typically be in the Head Admin role.</p>';
+        html += '</div>';
+      }
+      html += '<div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">';
+      html += '<button class="ac-btn ac-btn-accent" onclick="wizardState.currentStep = 3; renderWizardStep();">Continue <i class="fas fa-arrow-right"></i></button>';
+      html += '</div>';
+      $('#wizardModalBody').html(html);
+      if (wizardState.addedToHeadAdmin || newOwnerInHeadAdmin) {
+        setTimeout(function() {
+          if (wizardState.currentStep === 2) { wizardState.currentStep = 3; renderWizardStep(); }
+        }, 2000);
+      }
+    }
+
+    // -- Step 3: Dangerous Roles Audit --
+    function renderStep3_RoleAudit() {
+      var html = renderWizardStepper();
+      if (wizardState.dangerousRoles.length === 0) {
+        html += '<div style="text-align: center; padding: 1rem;">';
+        html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(34,197,94,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
+        html += '<i class="fas fa-check" style="color: var(--ac-green); font-size: 1.5rem;"></i></div>';
+        html += '<h5 style="color: #fff; margin-bottom: 0.5rem;">No other roles have Administrator permission</h5>';
+        html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">Only the Head Admin role has full admin access.</p>';
+        html += '</div>';
+      } else {
+        html += '<div style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">';
+        html += '<div style="color: var(--ac-amber); font-weight: 600; margin-bottom: 0.5rem;">';
+        html += '<i class="fas fa-exclamation-triangle"></i> ' + wizardState.dangerousRoles.length + ' other role' + (wizardState.dangerousRoles.length > 1 ? 's' : '') + ' with Administrator permission</div>';
+        html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem; margin: 0;">Members of these roles can still kick users, change settings, and perform admin actions.</p>';
+        html += '</div>';
+        wizardState.dangerousRoles.forEach(function(role) {
+          html += '<div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem;">';
+          html += '<div style="color: #fff; font-weight: 600; margin-bottom: 0.5rem;">' + role.name + '</div>';
+          if (role.members.length > 0) {
+            role.members.forEach(function(m) {
+              html += '<div style="display: flex; align-items: center; padding: 0.35rem 0; color: var(--ac-text-muted); font-size: 0.85rem;">';
+              html += '<i class="fas fa-user" style="margin-right: 0.5rem; font-size: 0.75rem;"></i>';
+              html += m.username + ' <span style="margin-left: 0.5rem; font-size: 0.75rem;">(' + m.id + ')</span></div>';
+            });
+          } else {
+            html += '<div style="color: var(--ac-text-muted); font-size: 0.85rem;">No members</div>';
+          }
+          html += '</div>';
+        });
+        // Copy to clipboard block
+        html += '<div style="position: relative; margin-top: 1rem;">';
+        html += '<button class="ac-btn" onclick="wizardCopyRoleAudit()" style="position: absolute; top: 0.5rem; right: 0.5rem; font-size: 0.75rem; padding: 0.25rem 0.75rem;" id="wizardCopyRoleAuditBtn"><i class="fas fa-copy"></i> Copy</button>';
+        html += '<pre id="wizardRoleAuditText" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; padding-right: 5rem; color: var(--ac-text-muted); font-size: 0.8rem; white-space: pre-wrap; word-break: break-word; max-height: 200px; overflow-y: auto; font-family: \'JetBrains Mono\', monospace;">' + generateRoleAuditText() + '</pre>';
+        html += '</div>';
+      }
+      html += '<div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">';
+      html += '<button class="ac-btn ac-btn-accent" onclick="wizardState.currentStep = 4; renderWizardStep();">Continue <i class="fas fa-arrow-right"></i></button>';
+      html += '</div>';
+      $('#wizardModalBody').html(html);
+    }
+
+    function generateRoleAuditText() {
+      var newOwner = wizardState.newOwner;
+      var oldOwner = wizardState.oldOwner;
+      var text = '';
+      text += '\u26a0\ufe0f ADMIN ROLES AUDIT \u2014 Community: "' + wizardState.communityName + '" (ID: ' + wizardState.communityId + ')\n';
+      text += 'New Owner: ' + newOwner.username + ' (' + newOwner.email + ')\n';
+      text += 'Previous Owner: ' + (oldOwner ? oldOwner.username + ' (' + oldOwner.email + ')' : 'Unknown') + '\n\n';
+      text += 'Roles with Administrator Permission:\n';
+      var headAdmin = wizardState.roles.find(function(r) { return r.name === 'Head Admin'; });
+      if (headAdmin) {
+        text += '\u2022 Head Admin \u2014 Members: ' + (headAdmin.members.map(function(m) { return m.username + ' (' + m.id + ')'; }).join(', ') || 'None') + '\n';
+      }
+      wizardState.dangerousRoles.forEach(function(role) {
+        text += '\u2022 ' + role.name + ' \u2014 Members: ' + (role.members.map(function(m) { return m.username + ' (' + m.id + ')'; }).join(', ') || 'None') + '\n';
+      });
+      text += '\nPlease confirm these role assignments are correct.';
+      return text;
+    }
+
+    function wizardCopyRoleAudit() {
+      navigator.clipboard.writeText(generateRoleAuditText()).then(function() {
+        $('#wizardCopyRoleAuditBtn').html('<i class="fas fa-check"></i> Copied!');
+        setTimeout(function() { $('#wizardCopyRoleAuditBtn').html('<i class="fas fa-copy"></i> Copy'); }, 2000);
+      });
+    }
+
+    // -- Step 4: Remove Bad Actor --
+    function renderStep4_RemoveBadActor() {
+      var html = renderWizardStepper();
+      html += '<div style="margin-bottom: 1rem;">';
+      html += '<h5 style="color: #fff;">Remove a User from This Community</h5>';
+      html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">This step is optional. Use it to remove a bad actor who hijacked the community.</p>';
+      html += '</div>';
+      html += '<div style="margin-bottom: 1rem;">';
+      html += '<label style="color: var(--ac-text-muted); font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">User Email to Remove</label>';
+      html += '<input type="email" id="wizardBadActorEmail" class="form-control" placeholder="Enter the bad actor\'s email address" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem;">';
+      html += '</div>';
+      html += '<div id="wizardBadActorPreview" style="display: none;"></div>';
+      html += '<div id="wizardBadActorError" style="display: none; color: var(--ac-red); font-size: 0.85rem; margin-bottom: 1rem;"></div>';
+      html += '<div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">';
+      html += '<button class="ac-btn" onclick="wizardState.currentStep = 5; renderWizardStep();">Skip <i class="fas fa-forward"></i></button>';
+      html += '<button class="ac-btn ac-btn-accent" id="wizardStep4Btn" onclick="wizardLookupBadActor()"><i class="fas fa-search"></i> Look Up User</button>';
+      html += '</div>';
+      $('#wizardModalBody').html(html);
+    }
+
+    function wizardLookupBadActor() {
+      var email = $('#wizardBadActorEmail').val().trim();
+      if (!email) { $('#wizardBadActorError').text('Please enter an email address.').show(); return; }
+      $('#wizardStep4Btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Looking up...');
+      $('#wizardBadActorError').hide();
+      $.ajax({
+        url: API_BASE + '/api/v1/admin/search/users',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ query: email, page: 0, limit: 1 }),
+        success: function(data) {
+          var users = data.users || [];
+          var exactMatch = users.find(function(u) { return u.email && u.email.toLowerCase() === email.toLowerCase(); });
+          if (!exactMatch) {
+            $('#wizardBadActorError').text('No user found with that email address.').show();
+            $('#wizardStep4Btn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
+            return;
+          }
+          wizardState.badActorUser = { id: exactMatch.id, email: exactMatch.email, username: exactMatch.username };
+          var userRoles = wizardState.roles.filter(function(r) { return r.members.some(function(m) { return m.id === exactMatch.id; }); }).map(function(r) { return r.name; });
+          var previewHtml = '<div style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">';
+          previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">User to Remove</div>';
+          previewHtml += '<div style="color: #fff; font-weight: 600;">' + exactMatch.username + '</div>';
+          previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.85rem;">' + exactMatch.email + '</div>';
+          previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.75rem;">ID: ' + exactMatch.id + '</div>';
+          if (userRoles.length > 0) {
+            previewHtml += '<div style="margin-top: 0.5rem; color: var(--ac-amber); font-size: 0.85rem;"><i class="fas fa-shield-alt"></i> In roles: ' + userRoles.join(', ') + '</div>';
+          }
+          previewHtml += '<div style="margin-top: 1rem;"><label style="display: flex; align-items: center; cursor: pointer; color: var(--ac-text);"><input type="checkbox" id="wizardBanCheckbox" style="margin-right: 0.5rem;"> Also ban this user from rejoining this community</label></div>';
+          previewHtml += '</div>';
+          $('#wizardBadActorPreview').html(previewHtml).show();
+          $('#wizardStep4Btn').prop('disabled', false).html('<i class="fas fa-user-slash"></i> Remove User').off('click').on('click', wizardConfirmRemoval);
+        },
+        error: function() {
+          $('#wizardBadActorError').text('Failed to search for user. Please try again.').show();
+          $('#wizardStep4Btn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
+        }
+      });
+    }
+
+    function wizardConfirmRemoval() {
+      var ban = $('#wizardBanCheckbox').is(':checked');
+      var user = wizardState.badActorUser;
+      showConfirmModal(
+        'Confirm User Removal',
+        '<p>You are about to remove <strong>' + user.username + ' (' + user.email + ')</strong> from <strong>' + wizardState.communityName + '</strong>.</p>' +
+        '<p>This will:</p><ul>' +
+        '<li>Remove them from all roles</li>' +
+        '<li>Remove the community from their account</li>' +
+        '<li>Clear their last accessed community</li>' +
+        (ban ? '<li style="color: var(--ac-red);"><strong>Ban them from rejoining</strong></li>' : '') +
+        '</ul><p style="color: var(--ac-amber);"><i class="fas fa-exclamation-triangle"></i> This action will be logged.</p>',
+        function() { wizardExecuteRemoval(ban); }
+      );
+    }
+
+    function wizardExecuteRemoval(ban) {
+      renderWizardLoading('Removing user...');
+      $.ajax({
+        url: API_BASE + '/api/v1/admin/communities/' + wizardState.communityId + '/remove-member',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          userEmail: wizardState.badActorUser.email,
+          ban: ban,
+          currentUser: { email: currentUserEmail, roles: roles },
+        }),
+        success: function(data) {
+          wizardState.badActorRemoved = true;
+          wizardState.badActorBanned = ban;
+          wizardState.currentStep = 5;
+          renderWizardStep();
+        },
+        error: function(xhr) {
+          renderWizardError('Failed to remove user: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error'));
+        }
+      });
+    }
+
+    // -- Step 5: Summary --
+    function renderStep5_Summary() {
+      var html = renderWizardStepper();
+      html += '<div style="text-align: center; margin-bottom: 1.5rem;">';
+      html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(34,197,94,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
+      html += '<i class="fas fa-check" style="color: var(--ac-green); font-size: 1.5rem;"></i></div>';
+      html += '<h5 style="color: #fff;">Ownership Reset Complete</h5></div>';
+      html += '<div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">';
+      html += '<h6 style="color: #fff; margin-bottom: 0.75rem;">Actions Taken</h6>';
+      html += '<div style="color: var(--ac-text); font-size: 0.85rem;">';
+      if (wizardState.ownerTransferred) {
+        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> Ownership transferred to ' + wizardState.newOwner.username + ' (' + wizardState.newOwner.email + ')</div>';
+      }
+      if (wizardState.addedToHeadAdmin) {
+        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + wizardState.newOwner.username + ' added to Head Admin role</div>';
+      }
+      if (wizardState.badActorRemoved) {
+        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + wizardState.badActorUser.username + ' removed from community</div>';
+      }
+      if (wizardState.badActorBanned) {
+        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + wizardState.badActorUser.username + ' banned from rejoining</div>';
+      }
+      if (wizardState.dangerousRoles.length > 0) {
+        html += '<div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.06);">';
+        html += '<div style="color: var(--ac-amber); font-size: 0.85rem;"><i class="fas fa-exclamation-triangle"></i> Roles with Administrator permission still active:</div>';
+        wizardState.dangerousRoles.forEach(function(role) {
+          html += '<div style="padding: 0.25rem 0; padding-left: 1.5rem; color: var(--ac-text-muted); font-size: 0.85rem;">\u2022 ' + role.name + ' \u2014 ' + (role.members.map(function(m) { return m.username; }).join(', ') || 'No members') + '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</div></div>';
+      // Copy block
+      html += '<div style="position: relative; margin-top: 1rem;">';
+      html += '<button class="ac-btn" onclick="wizardCopySummary()" style="position: absolute; top: 0.5rem; right: 0.5rem; font-size: 0.75rem; padding: 0.25rem 0.75rem;" id="wizardCopySummaryBtn"><i class="fas fa-copy"></i> Copy</button>';
+      html += '<pre id="wizardSummaryText" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; padding-right: 5rem; color: var(--ac-text-muted); font-size: 0.8rem; white-space: pre-wrap; word-break: break-word; max-height: 250px; overflow-y: auto; font-family: \'JetBrains Mono\', monospace;">' + generateSummaryText() + '</pre>';
+      html += '</div>';
+      html += '<div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">';
+      html += '<button class="ac-btn ac-btn-accent" data-dismiss="modal"><i class="fas fa-check"></i> Done</button>';
+      html += '</div>';
+      $('#wizardModalBody').html(html);
+    }
+
+    function generateSummaryText() {
+      var now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+      var text = '\u2705 OWNERSHIP RESET COMPLETE \u2014 Community: "' + wizardState.communityName + '" (' + wizardState.communityId + ')\n';
+      text += 'Performed by: ' + currentUserEmail + ' on ' + now + '\n\n';
+      text += 'Actions taken:\n';
+      var n = 1;
+      if (wizardState.ownerTransferred) {
+        text += n++ + '. Ownership transferred: ' + (wizardState.oldOwner ? wizardState.oldOwner.username : 'Unknown') + ' \u2192 ' + wizardState.newOwner.username + ' (' + wizardState.newOwner.email + ')\n';
+      }
+      if (wizardState.addedToHeadAdmin) {
+        text += n++ + '. ' + wizardState.newOwner.username + ' added to Head Admin role\n';
+      }
+      if (wizardState.badActorRemoved) {
+        text += n++ + '. ' + wizardState.badActorUser.username + ' (' + wizardState.badActorUser.email + ') removed from community\n';
+      }
+      if (wizardState.badActorBanned) {
+        text += n++ + '. ' + wizardState.badActorUser.username + ' banned from community\n';
+      }
+      if (wizardState.dangerousRoles.length > 0) {
+        text += '\n\u26a0\ufe0f Roles with Administrator permission still active:\n';
+        wizardState.dangerousRoles.forEach(function(role) {
+          text += '\u2022 ' + role.name + ' \u2014 Members: ' + (role.members.map(function(m) { return m.username + ' (' + m.id + ')'; }).join(', ') || 'None') + '\n';
+        });
+      }
+      return text;
+    }
+
+    function wizardCopySummary() {
+      navigator.clipboard.writeText(generateSummaryText()).then(function() {
+        $('#wizardCopySummaryBtn').html('<i class="fas fa-check"></i> Copied!');
+        setTimeout(function() { $('#wizardCopySummaryBtn').html('<i class="fas fa-copy"></i> Copy'); }, 2000);
+      });
+    }
+
       function initiateUserPasswordReset(userId, userEmail) {
         showConfirmModal(
           'Initiate User Password Reset',
@@ -4489,6 +5004,11 @@
                 return '<p style="color: #9aa0b4; text-align: center;">No departments</p>';
               }
             })()}
+          </div>
+          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06);">
+            <button class="ac-btn ac-btn-accent" onclick="openOwnershipResetWizard('${community.id}', '${(community.name || '').replace(/'/g, "\\'")}')">
+              <i class="fas fa-shield-alt"></i> Reset Owner & Roles
+            </button>
           </div>
         `);
       }
