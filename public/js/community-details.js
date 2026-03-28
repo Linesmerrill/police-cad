@@ -563,17 +563,19 @@ async function sendJoinRequestNotification(communityId, user) {
     if (!res.ok) throw new Error('Failed to fetch community details');
     const community = await res.json();
 
-    // Get user IDs of roles with "manage members" or "administrator" permissions
-    const userIds = (community.community.roles || [])
-      .filter((role) =>
-        (role.permissions || []).some(
-          (permission) =>
-            (permission.name === "manage members" ||
-              permission.name === "administrator") &&
-            permission.enabled
+    // Get unique user IDs of roles with "manage members" or "administrator" permissions
+    const userIds = [...new Set(
+      (community.community.roles || [])
+        .filter((role) =>
+          (role.permissions || []).some(
+            (permission) =>
+              (permission.name === "manage members" ||
+                permission.name === "administrator") &&
+              permission.enabled
+          )
         )
-      )
-      .flatMap((role) => role.members);
+        .flatMap((role) => role.members)
+    )];
 
     // Send notification to each user
     for (const recipientId of userIds) {
@@ -635,17 +637,19 @@ async function sendJoinDepartmentRequestNotification(communityId, departmentId, 
     if (!departmentRes.ok) throw new Error('Failed to fetch department details');
     const department = await departmentRes.json();
 
-    // Get user IDs of roles with "manage members" or "administrator" permissions
-    const userIds = (community.community.roles || [])
-      .filter((role) =>
-        (role.permissions || []).some(
-          (permission) =>
-            (permission.name === "manage members" ||
-              permission.name === "administrator") &&
-            permission.enabled
+    // Get unique user IDs of roles with "manage members" or "administrator" permissions
+    const userIds = [...new Set(
+      (community.community.roles || [])
+        .filter((role) =>
+          (role.permissions || []).some(
+            (permission) =>
+              (permission.name === "manage members" ||
+                permission.name === "administrator") &&
+              permission.enabled
+          )
         )
-      )
-      .flatMap((role) => role.members);
+        .flatMap((role) => role.members)
+    )];
 
     // Send notification to each user
     for (const recipientId of userIds) {
