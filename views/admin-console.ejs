@@ -735,6 +735,9 @@
 
         <div class="ac-nav-section">
           <div class="ac-nav-section-label">Management</div>
+          <div class="ac-nav-item" data-panel="cases">
+            <i class="fas fa-briefcase"></i> Cases
+          </div>
           <div class="ac-nav-item" id="content-creators-tab" data-panel="content-creators" style="display: none;">
             <i class="fas fa-video"></i> Content Creators
             <span id="ccPendingBadge" class="ac-nav-badge" style="display: none;"></span>
@@ -948,6 +951,33 @@
                 <div class="recent-searches-list" id="recentSearchesListCommunities"></div>
               </div>
               <div id="communityResults"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel: Cases -->
+        <div class="ac-panel" id="panel-cases">
+          <div class="ac-card">
+            <div class="ac-card-body">
+              <!-- Cases list view -->
+              <div id="cases-list-view">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                  <div style="display: flex; gap: 0.5rem;">
+                    <button class="ac-btn ac-btn-accent" onclick="loadCases('')" id="caseFilterAll">All</button>
+                    <button class="ac-btn" onclick="loadCases('open')" id="caseFilterOpen">Open</button>
+                    <button class="ac-btn" onclick="loadCases('completed')" id="caseFilterCompleted">Completed</button>
+                  </div>
+                </div>
+                <div id="cases-list"></div>
+                <div id="cases-pagination"></div>
+              </div>
+              <!-- Case detail/workflow view -->
+              <div id="case-detail-view" style="display: none;">
+                <div style="margin-bottom: 1rem;">
+                  <button class="ac-btn" onclick="backToCasesList()"><i class="fas fa-arrow-left"></i> Back to Cases</button>
+                </div>
+                <div id="case-detail-content"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -1296,22 +1326,6 @@
       </div>
     </div>
 
-    <!-- Ownership Reset Wizard Modal -->
-    <div class="modal fade" id="ownershipWizardModal" tabindex="-1" role="dialog" data-backdrop="static">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
-          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
-            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;">
-              <span>&times;</span>
-            </button>
-            <h4 class="modal-title" id="wizardModalTitle">Reset Owner & Roles</h4>
-          </div>
-          <div class="modal-body" id="wizardModalBody">
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Confirmation Modal -->
     <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog">
       <div class="modal-dialog">
@@ -1585,6 +1599,7 @@
         'users': 'Users',
         'pending-users': 'Pending Users',
         'communities': 'Communities',
+        'cases': 'Cases',
         'content-creators': 'Content Creators',
         'admin-management': 'Admin Management',
         'email': 'Email',
@@ -1596,7 +1611,8 @@
         'dashboard': function() { if (typeof loadDashboardStats === 'function') loadDashboardStats(); if (typeof loadDashboardPendingCC === 'function') loadDashboardPendingCC(); },
         'admin-management': function() { if (typeof loadAllAdmins === 'function') loadAllAdmins(); },
         'content-creators': function() { if (typeof loadCCApplications === 'function') { loadCCApplications(); loadCCStats(); } },
-        'metrics': function() { loadMetricsPanel(); }
+        'metrics': function() { loadMetricsPanel(); },
+        'cases': function() { loadCases(''); }
       };
 
       // Track which panels have been loaded
@@ -1959,8 +1975,8 @@
       $(document).ready(function() {
         // Check if current user is owner (you can modify this logic based on your backend)
         currentUserEmail = '<%= admin && admin.email ? admin.email : "" %>';
-        var currentUserName = '<%= admin && admin.firstName ? admin.firstName + (admin.lastName ? " " + admin.lastName : "") : "Admin" %>';
-        var currentUserRole = roles.length > 0 ? roles[0] : 'admin';
+        currentUserName = '<%= admin && admin.firstName ? admin.firstName + (admin.lastName ? " " + admin.lastName : "") : "Admin" %>';
+        currentUserRole = roles.length > 0 ? roles[0] : 'admin';
         const currentUserRoles = '<%= admin && admin.roles ? JSON.stringify(admin.roles) : (admin && admin.role ? JSON.stringify([admin.role]) : "[]") %>';
         
         // Parse roles array - handle HTML entity encoding
@@ -4298,96 +4314,204 @@
       }
 
     // ════════════════════════════════════════════════════
-    // OWNERSHIP RESET WIZARD
+    // ADMIN CASES
     // ════════════════════════════════════════════════════
 
-    let wizardState = {
-      communityId: '',
-      communityName: '',
-      currentStep: 1,
-      totalSteps: 5,
-      community: null,
-      roles: null,
-      oldOwner: null,
-      newOwner: null,
-      ownerTransferred: false,
-      addedToHeadAdmin: false,
-      badActorRemoved: false,
-      badActorBanned: false,
-      badActorUser: null,
-      dangerousRoles: [],
-    };
-
     function openOwnershipResetWizard(communityId, communityName) {
-      wizardState = {
-        communityId: communityId,
-        communityName: communityName,
-        currentStep: 1,
-        totalSteps: 5,
-        community: null,
-        roles: null,
-        oldOwner: null,
-        newOwner: null,
-        ownerTransferred: false,
-        addedToHeadAdmin: false,
-        badActorRemoved: false,
-        badActorBanned: false,
-        badActorUser: null,
-        dangerousRoles: [],
-      };
+      // Close community modal
       $('#communityModal').modal('hide');
-      setTimeout(() => {
-        $('#ownershipWizardModal').modal('show');
-        loadWizardCommunityData();
+
+      // Create or resume a case
+      setTimeout(function() {
+        $.ajax({
+          url: API_BASE + '/api/v1/admin/cases',
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            communityId: communityId,
+            communityName: communityName,
+            currentUser: { email: currentUserEmail, roles: roles, name: currentUserName }
+          }),
+          success: function(data) {
+            var caseObj = data['case'];
+            acNavTo('cases');
+            setTimeout(function() { viewCase(caseObj.id); }, 100);
+          },
+          error: function() {
+            showInfoModal('Error', 'Failed to create case. Please try again.');
+          }
+        });
       }, 300);
     }
 
-    function loadWizardCommunityData() {
-      renderWizardLoading('Loading community data...');
-      Promise.all([
-        $.ajax({ url: API_BASE + '/api/v1/admin/communities/' + wizardState.communityId, method: 'GET' }),
-        $.ajax({ url: API_BASE + '/api/v1/admin/communities/' + wizardState.communityId + '/roles', method: 'GET' }),
-      ]).then(function([communityRes, rolesRes]) {
-        wizardState.community = communityRes.community;
-        wizardState.roles = rolesRes.roles || [];
-        wizardState.dangerousRoles = wizardState.roles.filter(function(r) { return r.hasAdminPermission && !r.isHeadAdmin; });
-        if (wizardState.community.owner) {
-          wizardState.oldOwner = {
-            id: wizardState.community.owner.id,
-            email: wizardState.community.owner.email,
-            username: wizardState.community.owner.username,
-          };
+    var caseState = null;
+    var casesCurrentFilter = '';
+    var casesCurrentPage = 0;
+
+    function loadCases(status, page) {
+      if (typeof page === 'undefined') page = 0;
+      casesCurrentFilter = status;
+      casesCurrentPage = page;
+
+      // Update filter button styles
+      ['caseFilterAll', 'caseFilterOpen', 'caseFilterCompleted'].forEach(function(id) {
+        var btn = document.getElementById(id);
+        if (btn) {
+          btn.className = 'ac-btn' + (
+            (id === 'caseFilterAll' && status === '') ||
+            (id === 'caseFilterOpen' && status === 'open') ||
+            (id === 'caseFilterCompleted' && status === 'completed')
+            ? ' ac-btn-accent' : '');
         }
-        renderWizardStep();
-      }).catch(function(err) {
-        renderWizardError('Failed to load community data. Please try again.');
+      });
+
+      var url = API_BASE + '/api/v1/admin/cases?page=' + page + '&limit=20';
+      if (status) url += '&status=' + status;
+
+      $('#cases-list').html('<div class="loading">Loading cases...</div>');
+      $.ajax({
+        url: url,
+        method: 'GET',
+        success: function(data) {
+          var cases = data.cases || [];
+          if (cases.length === 0) {
+            $('#cases-list').html('<p style="color: var(--ac-text-muted); text-align: center; padding: 2rem;">No cases found.</p>');
+            $('#cases-pagination').html('');
+            return;
+          }
+
+          var html = '';
+          cases.forEach(function(c) {
+            var statusColor = c.status === 'open' ? 'var(--ac-amber)' : 'var(--ac-green)';
+            var statusBg = c.status === 'open' ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.1)';
+            var statusLabel = c.status === 'open' ? 'OPEN' : 'COMPLETED';
+            var typeLabel = c.type === 'ownership_reset' ? 'Ownership Reset' : c.type;
+            var createdAt = new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+            var btnLabel = c.status === 'open' ? '<i class="fas fa-play"></i> Resume' : '<i class="fas fa-eye"></i> View';
+
+            html += '<div class="result-card" style="margin-bottom: 0.75rem;">';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center;">';
+            html += '<div style="flex: 1;">';
+            html += '<div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">';
+            html += '<i class="fas fa-briefcase" style="color: var(--ac-accent);"></i>';
+            html += '<strong style="color: #fff;">' + (c.communityName || 'Unknown') + '</strong>';
+            html += '<span style="color: ' + statusColor + '; background: ' + statusBg + '; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">' + statusLabel + '</span>';
+            html += '</div>';
+            html += '<div style="color: var(--ac-text-muted); font-size: 0.85rem;">';
+            html += typeLabel + ' &middot; Created by ' + (c.createdBy.adminName || c.createdBy.adminEmail || 'Unknown') + ' &middot; ' + createdAt;
+            html += '</div>';
+            html += '</div>';
+            html += '<button class="ac-btn ac-btn-accent" onclick="viewCase(\'' + c.id + '\')" style="white-space: nowrap;">' + btnLabel + '</button>';
+            html += '</div>';
+            html += '</div>';
+          });
+
+          $('#cases-list').html(html);
+
+          // Pagination
+          var totalPages = Math.ceil(data.totalCount / data.limit);
+          if (totalPages > 1) {
+            var pagHtml = '<div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem;">';
+            if (page > 0) pagHtml += '<button class="ac-btn" onclick="loadCases(\'' + status + '\', ' + (page - 1) + ')">Previous</button>';
+            pagHtml += '<span style="color: var(--ac-text-muted); padding: 0.5rem;">Page ' + (page + 1) + ' of ' + totalPages + '</span>';
+            if (page < totalPages - 1) pagHtml += '<button class="ac-btn" onclick="loadCases(\'' + status + '\', ' + (page + 1) + ')">Next</button>';
+            pagHtml += '</div>';
+            $('#cases-pagination').html(pagHtml);
+          } else {
+            $('#cases-pagination').html('');
+          }
+        },
+        error: function() {
+          $('#cases-list').html('<p style="color: var(--ac-red); text-align: center; padding: 2rem;">Failed to load cases.</p>');
+        }
       });
     }
 
-    function renderWizardLoading(message) {
-      $('#wizardModalBody').html('<div style="text-align: center; padding: 2rem;"><div class="loading">' + message + '</div></div>');
+    function backToCasesList() {
+      caseState = null;
+      $('#case-detail-view').hide();
+      $('#cases-list-view').show();
+      loadCases(casesCurrentFilter, casesCurrentPage);
     }
 
-    function renderWizardError(message) {
-      $('#wizardModalBody').html(
-        '<div style="text-align: center; padding: 2rem;">' +
-        '<div style="color: var(--ac-red); margin-bottom: 1rem;"><i class="fas fa-exclamation-triangle"></i> ' + message + '</div>' +
-        '<button class="ac-btn" onclick="loadWizardCommunityData()">Retry</button>' +
-        '</div>'
-      );
+    function viewCase(caseId) {
+      $('#cases-list-view').hide();
+      $('#case-detail-view').show();
+      $('#case-detail-content').html('<div class="loading">Loading case...</div>');
+
+      $.ajax({
+        url: API_BASE + '/api/v1/admin/cases/' + caseId,
+        method: 'GET',
+        success: function(data) {
+          caseState = data['case'];
+          // Also load community and roles data for the workflow
+          Promise.all([
+            $.ajax({ url: API_BASE + '/api/v1/admin/communities/' + caseState.communityId, method: 'GET' }),
+            $.ajax({ url: API_BASE + '/api/v1/admin/communities/' + caseState.communityId + '/roles', method: 'GET' }),
+          ]).then(function(results) {
+            caseState._community = results[0].community;
+            caseState._roles = results[1].roles || [];
+            caseState._dangerousRoles = caseState._roles.filter(function(r) { return r.hasAdminPermission && !r.isHeadAdmin; });
+            // Set old owner from community data if not already in step 1
+            if (caseState._community.owner && !caseState.steps.transferOwnership.oldOwner) {
+              caseState._oldOwner = {
+                id: caseState._community.owner.id,
+                email: caseState._community.owner.email,
+                username: caseState._community.owner.username
+              };
+            } else if (caseState.steps.transferOwnership.oldOwner) {
+              caseState._oldOwner = caseState.steps.transferOwnership.oldOwner;
+            }
+            renderCaseStep();
+          }).catch(function() {
+            $('#case-detail-content').html('<div style="color: var(--ac-red); padding: 2rem; text-align: center;">Failed to load community data. <button class="ac-btn" onclick="viewCase(\'' + caseId + '\')">Retry</button></div>');
+          });
+        },
+        error: function() {
+          $('#case-detail-content').html('<div style="color: var(--ac-red); padding: 2rem; text-align: center;">Failed to load case.</div>');
+        }
+      });
     }
 
-    function renderWizardStepper() {
-      const steps = ['Owner', 'Head Admin', 'Role Audit', 'Remove User', 'Summary'];
-      const isMobile = window.innerWidth < 768;
+    function getCurrentCaseStep() {
+      if (!caseState) return 1;
+      var steps = caseState.steps;
+      if (!steps.transferOwnership.completed) return 1;
+      if (!steps.headAdmin.completed) return 2;
+      if (!steps.roleAudit.completed) return 3;
+      if (!steps.removeBadActor.completed) return 4;
+      if (!steps.summary.completed) return 5;
+      return 6; // all complete — show read-only summary
+    }
+
+    function renderCaseStep() {
+      var step = getCurrentCaseStep();
+      var isCompleted = caseState.status === 'completed';
+      // If case is completed, show summary
+      if (isCompleted || step >= 5) {
+        renderCaseStep5_Summary(isCompleted);
+        return;
+      }
+      switch (step) {
+        case 1: renderCaseStep1_TransferOwnership(); break;
+        case 2: renderCaseStep2_HeadAdmin(); break;
+        case 3: renderCaseStep3_RoleAudit(); break;
+        case 4: renderCaseStep4_RemoveBadActor(); break;
+        case 5: renderCaseStep5_Summary(false); break;
+      }
+    }
+
+    function renderCaseStepper(currentStep) {
+      var steps = ['Owner', 'Head Admin', 'Role Audit', 'Remove User', 'Summary'];
+      var isMobile = window.innerWidth < 768;
       if (isMobile) {
-        return '<div style="text-align: center; color: var(--ac-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Step ' + wizardState.currentStep + ' of ' + wizardState.totalSteps + ': ' + steps[wizardState.currentStep - 1] + '</div>';
+        return '<div style="text-align: center; color: var(--ac-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Step ' + currentStep + ' of 5: ' + steps[currentStep - 1] + '</div>';
       }
       var html = '<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; gap: 0.25rem;">';
       steps.forEach(function(step, i) {
         var stepNum = i + 1;
-        var isActive = stepNum === wizardState.currentStep;
-        var isCompleted = stepNum < wizardState.currentStep;
+        var isActive = stepNum === currentStep;
+        var isCompleted = stepNum < currentStep;
         var circleColor = isCompleted ? 'var(--ac-green)' : isActive ? 'var(--ac-accent)' : 'rgba(255,255,255,0.1)';
         var textColor = isActive ? '#fff' : 'var(--ac-text-muted)';
         html += '<div style="display: flex; align-items: center;">';
@@ -4406,20 +4530,27 @@
       return html;
     }
 
-    function renderWizardStep() {
-      switch (wizardState.currentStep) {
-        case 1: renderStep1_TransferOwnership(); break;
-        case 2: renderStep2_HeadAdmin(); break;
-        case 3: renderStep3_RoleAudit(); break;
-        case 4: renderStep4_RemoveBadActor(); break;
-        case 5: renderStep5_Summary(); break;
-      }
+    function saveCaseStep(stepName, data, onSuccess) {
+      data.currentUser = { email: currentUserEmail, roles: roles };
+      $.ajax({
+        url: API_BASE + '/api/v1/admin/cases/' + caseState.id + '/steps/' + stepName,
+        method: 'PATCH',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function(res) {
+          caseState = res['case'];
+          if (onSuccess) onSuccess();
+        },
+        error: function() {
+          showInfoModal('Error', 'Failed to save case progress. Your action was completed but the case state could not be updated. Please try again.');
+        }
+      });
     }
 
-    // -- Step 1: Transfer Ownership --
-    function renderStep1_TransferOwnership() {
-      var owner = wizardState.oldOwner;
-      var html = renderWizardStepper();
+    // ── Case Step 1: Transfer Ownership ──
+    function renderCaseStep1_TransferOwnership() {
+      var owner = caseState._oldOwner;
+      var html = renderCaseStepper(1);
       html += '<div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">';
       html += '<div style="color: var(--ac-text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Current Owner</div>';
       html += '<div style="color: #fff; font-weight: 600;">' + (owner ? owner.username : 'Unknown') + '</div>';
@@ -4428,25 +4559,21 @@
       html += '</div>';
       html += '<div style="margin-bottom: 1rem;">';
       html += '<label style="color: var(--ac-text-muted); font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">New Owner Email</label>';
-      html += '<input type="email" id="wizardNewOwnerEmail" class="form-control" placeholder="Enter the new owner\'s email address" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem;">';
+      html += '<input type="email" id="caseNewOwnerEmail" class="form-control" placeholder="Enter the new owner\'s email address" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem;">';
       html += '</div>';
-      html += '<div id="wizardNewOwnerPreview" style="display: none; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;"></div>';
-      html += '<div id="wizardNewOwnerError" style="display: none; color: var(--ac-red); font-size: 0.85rem; margin-bottom: 1rem;"></div>';
-      html += '<div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">';
-      html += '<button class="ac-btn" data-dismiss="modal">Cancel</button>';
-      html += '<button class="ac-btn ac-btn-accent" id="wizardStep1Btn" onclick="wizardLookupNewOwner()"><i class="fas fa-search"></i> Look Up User</button>';
+      html += '<div id="caseNewOwnerPreview" style="display: none; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;"></div>';
+      html += '<div id="caseNewOwnerError" style="display: none; color: var(--ac-red); font-size: 0.85rem; margin-bottom: 1rem;"></div>';
+      html += '<div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">';
+      html += '<button class="ac-btn ac-btn-accent" id="caseStep1Btn" onclick="caseLookupNewOwner()"><i class="fas fa-search"></i> Look Up User</button>';
       html += '</div>';
-      $('#wizardModalBody').html(html);
+      $('#case-detail-content').html(html);
     }
 
-    function wizardLookupNewOwner() {
-      var email = $('#wizardNewOwnerEmail').val().trim();
-      if (!email) {
-        $('#wizardNewOwnerError').text('Please enter an email address.').show();
-        return;
-      }
-      $('#wizardStep1Btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Looking up...');
-      $('#wizardNewOwnerError').hide();
+    function caseLookupNewOwner() {
+      var email = $('#caseNewOwnerEmail').val().trim();
+      if (!email) { $('#caseNewOwnerError').text('Please enter an email address.').show(); return; }
+      $('#caseStep1Btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Looking up...');
+      $('#caseNewOwnerError').hide();
       $.ajax({
         url: API_BASE + '/api/v1/admin/search/users',
         method: 'POST',
@@ -4456,105 +4583,112 @@
           var users = data.users || [];
           var exactMatch = users.find(function(u) { return u.email && u.email.toLowerCase() === email.toLowerCase(); });
           if (!exactMatch) {
-            $('#wizardNewOwnerError').text('No user found with that email address.').show();
-            $('#wizardStep1Btn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
+            $('#caseNewOwnerError').text('No user found with that email address.').show();
+            $('#caseStep1Btn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
             return;
           }
-          wizardState.newOwner = { id: exactMatch.id, email: exactMatch.email, username: exactMatch.username };
+          caseState._newOwner = { id: exactMatch.id, email: exactMatch.email, username: exactMatch.username };
           var previewHtml = '<div style="color: var(--ac-text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">New Owner</div>';
           previewHtml += '<div style="color: #fff; font-weight: 600;">' + exactMatch.username + '</div>';
           previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.85rem;">' + exactMatch.email + '</div>';
           previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.75rem;">ID: ' + exactMatch.id + '</div>';
-          $('#wizardNewOwnerPreview').html(previewHtml).show();
-          $('#wizardStep1Btn').prop('disabled', false).html('<i class="fas fa-exchange-alt"></i> Transfer Ownership').off('click').on('click', wizardConfirmTransfer);
+          $('#caseNewOwnerPreview').html(previewHtml).show();
+          $('#caseStep1Btn').prop('disabled', false).html('<i class="fas fa-exchange-alt"></i> Transfer Ownership').off('click').on('click', caseConfirmTransfer);
         },
         error: function() {
-          $('#wizardNewOwnerError').text('Failed to search for user. Please try again.').show();
-          $('#wizardStep1Btn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
+          $('#caseNewOwnerError').text('Failed to search for user.').show();
+          $('#caseStep1Btn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
         }
       });
     }
 
-    function wizardConfirmTransfer() {
-      var oldOwner = wizardState.oldOwner;
-      var newOwner = wizardState.newOwner;
+    function caseConfirmTransfer() {
+      var oldOwner = caseState._oldOwner;
+      var newOwner = caseState._newOwner;
       showConfirmModal(
         'Confirm Ownership Transfer',
-        '<p>You are about to transfer ownership of <strong>' + wizardState.communityName + '</strong>:</p>' +
+        '<p>You are about to transfer ownership of <strong>' + caseState.communityName + '</strong>:</p>' +
         '<p><strong>From:</strong> ' + (oldOwner ? oldOwner.username + ' (' + oldOwner.email + ')' : 'Unknown') + '</p>' +
         '<p><strong>To:</strong> ' + newOwner.username + ' (' + newOwner.email + ')</p>' +
         '<p style="color: var(--ac-amber);"><i class="fas fa-exclamation-triangle"></i> This action will be logged.</p>',
-        function() { wizardExecuteTransfer(); }
+        function() { caseExecuteTransfer(); }
       );
     }
 
-    function wizardExecuteTransfer() {
-      renderWizardLoading('Transferring ownership...');
+    function caseExecuteTransfer() {
+      $('#case-detail-content').html('<div style="text-align: center; padding: 2rem;"><div class="loading">Transferring ownership...</div></div>');
       $.ajax({
-        url: API_BASE + '/api/v1/admin/communities/' + wizardState.communityId + '/transfer-ownership',
+        url: API_BASE + '/api/v1/admin/communities/' + caseState.communityId + '/transfer-ownership',
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({
-          newOwnerEmail: wizardState.newOwner.email,
-          currentUser: { email: currentUserEmail, roles: roles },
-        }),
+        data: JSON.stringify({ newOwnerEmail: caseState._newOwner.email, currentUser: { email: currentUserEmail, roles: roles } }),
         success: function(data) {
-          wizardState.ownerTransferred = true;
-          wizardState.addedToHeadAdmin = data.addedToHeadAdmin || false;
-          wizardState.currentStep = 2;
-          // Refresh roles data
-          $.ajax({
-            url: API_BASE + '/api/v1/admin/communities/' + wizardState.communityId + '/roles',
-            method: 'GET',
-            success: function(rolesRes) {
-              wizardState.roles = rolesRes.roles || [];
-              wizardState.dangerousRoles = wizardState.roles.filter(function(r) { return r.hasAdminPermission && !r.isHeadAdmin; });
-              renderWizardStep();
-            },
-            error: function() { renderWizardStep(); }
+          // Save step to case
+          saveCaseStep('transferOwnership', {
+            oldOwner: caseState._oldOwner,
+            newOwner: caseState._newOwner,
+            addedToHeadAdmin: data.addedToHeadAdmin || false
+          }, function() {
+            // Refresh roles data
+            $.ajax({
+              url: API_BASE + '/api/v1/admin/communities/' + caseState.communityId + '/roles',
+              method: 'GET',
+              success: function(rolesRes) {
+                caseState._roles = rolesRes.roles || [];
+                caseState._dangerousRoles = caseState._roles.filter(function(r) { return r.hasAdminPermission && !r.isHeadAdmin; });
+                renderCaseStep();
+              },
+              error: function() { renderCaseStep(); }
+            });
           });
         },
         error: function(xhr) {
-          renderWizardError('Failed to transfer ownership: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error'));
+          $('#case-detail-content').html('<div style="color: var(--ac-red); padding: 2rem; text-align: center;">Failed to transfer ownership: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error') + ' <button class="ac-btn" onclick="renderCaseStep()">Retry</button></div>');
         }
       });
     }
 
-    // -- Step 2: Head Admin Check --
-    function renderStep2_HeadAdmin() {
-      var headAdminRole = wizardState.roles.find(function(r) { return r.isHeadAdmin; });
-      var newOwnerInHeadAdmin = headAdminRole && headAdminRole.members.some(function(m) { return m.id === wizardState.newOwner.id; });
-      var html = renderWizardStepper();
-      if (wizardState.addedToHeadAdmin || newOwnerInHeadAdmin) {
+    // ── Case Step 2: Head Admin Check ──
+    function renderCaseStep2_HeadAdmin() {
+      var headAdminRole = caseState._roles.find(function(r) { return r.isHeadAdmin; });
+      var newOwner = caseState.steps.transferOwnership.newOwner;
+      var newOwnerInHeadAdmin = headAdminRole && headAdminRole.members.some(function(m) { return m.id === newOwner.id; });
+      var addedToHeadAdmin = caseState.steps.transferOwnership.addedToHeadAdmin;
+
+      var html = renderCaseStepper(2);
+      if (addedToHeadAdmin || newOwnerInHeadAdmin) {
         html += '<div style="text-align: center; padding: 1rem;">';
         html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(34,197,94,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
         html += '<i class="fas fa-check" style="color: var(--ac-green); font-size: 1.5rem;"></i></div>';
-        html += '<h5 style="color: #fff; margin-bottom: 0.5rem;">' + wizardState.newOwner.username + ' is in the Head Admin role</h5>';
-        html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">' + (wizardState.addedToHeadAdmin ? 'They were automatically added during the ownership transfer.' : 'They were already a member of this role.') + '</p>';
+        html += '<h5 style="color: #fff; margin-bottom: 0.5rem;">' + newOwner.username + ' is in the Head Admin role</h5>';
+        html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">' + (addedToHeadAdmin ? 'They were automatically added during the ownership transfer.' : 'They were already a member of this role.') + '</p>';
         html += '</div>';
       } else {
         html += '<div style="text-align: center; padding: 1rem;">';
         html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(245,158,11,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
         html += '<i class="fas fa-exclamation-triangle" style="color: var(--ac-amber); font-size: 1.5rem;"></i></div>';
-        html += '<h5 style="color: #fff; margin-bottom: 0.5rem;">' + wizardState.newOwner.username + ' is NOT in the Head Admin role</h5>';
+        html += '<h5 style="color: #fff; margin-bottom: 0.5rem;">' + newOwner.username + ' is NOT in the Head Admin role</h5>';
         html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">This is unusual — the new owner should typically be in the Head Admin role.</p>';
         html += '</div>';
       }
       html += '<div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">';
-      html += '<button class="ac-btn ac-btn-accent" onclick="wizardState.currentStep = 3; renderWizardStep();">Continue <i class="fas fa-arrow-right"></i></button>';
+      html += '<button class="ac-btn ac-btn-accent" onclick="caseCompleteStep2()">Continue <i class="fas fa-arrow-right"></i></button>';
       html += '</div>';
-      $('#wizardModalBody').html(html);
-      if (wizardState.addedToHeadAdmin || newOwnerInHeadAdmin) {
-        setTimeout(function() {
-          if (wizardState.currentStep === 2) { wizardState.currentStep = 3; renderWizardStep(); }
-        }, 2000);
-      }
+      $('#case-detail-content').html(html);
     }
 
-    // -- Step 3: Dangerous Roles Audit --
-    function renderStep3_RoleAudit() {
-      var html = renderWizardStepper();
-      if (wizardState.dangerousRoles.length === 0) {
+    function caseCompleteStep2() {
+      saveCaseStep('headAdmin', {
+        addedToHeadAdmin: caseState.steps.transferOwnership.addedToHeadAdmin || false
+      }, function() { renderCaseStep(); });
+    }
+
+    // ── Case Step 3: Role Audit ──
+    function renderCaseStep3_RoleAudit() {
+      var html = renderCaseStepper(3);
+      var dangerousRoles = caseState._dangerousRoles || [];
+
+      if (dangerousRoles.length === 0) {
         html += '<div style="text-align: center; padding: 1rem;">';
         html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(34,197,94,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
         html += '<i class="fas fa-check" style="color: var(--ac-green); font-size: 1.5rem;"></i></div>';
@@ -4564,13 +4698,13 @@
       } else {
         html += '<div style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">';
         html += '<div style="color: var(--ac-amber); font-weight: 600; margin-bottom: 0.5rem;">';
-        html += '<i class="fas fa-exclamation-triangle"></i> ' + wizardState.dangerousRoles.length + ' other role' + (wizardState.dangerousRoles.length > 1 ? 's' : '') + ' with Administrator permission</div>';
+        html += '<i class="fas fa-exclamation-triangle"></i> ' + dangerousRoles.length + ' other role' + (dangerousRoles.length > 1 ? 's' : '') + ' with Administrator permission</div>';
         html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem; margin: 0;">Members of these roles can still kick users, change settings, and perform admin actions.</p>';
         html += '</div>';
-        wizardState.dangerousRoles.forEach(function(role) {
+        dangerousRoles.forEach(function(role) {
           html += '<div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem;">';
           html += '<div style="color: #fff; font-weight: 600; margin-bottom: 0.5rem;">' + role.name + '</div>';
-          if (role.members.length > 0) {
+          if (role.members && role.members.length > 0) {
             role.members.forEach(function(m) {
               html += '<div style="display: flex; align-items: center; padding: 0.35rem 0; color: var(--ac-text-muted); font-size: 0.85rem;">';
               html += '<i class="fas fa-user" style="margin-right: 0.5rem; font-size: 0.75rem;"></i>';
@@ -4581,71 +4715,79 @@
           }
           html += '</div>';
         });
-        // Copy to clipboard block
+        // Copy block
         html += '<div style="position: relative; margin-top: 1rem;">';
-        html += '<button class="ac-btn" onclick="wizardCopyRoleAudit()" style="position: absolute; top: 0.5rem; right: 0.5rem; font-size: 0.75rem; padding: 0.25rem 0.75rem;" id="wizardCopyRoleAuditBtn"><i class="fas fa-copy"></i> Copy</button>';
-        html += '<pre id="wizardRoleAuditText" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; padding-right: 5rem; color: var(--ac-text-muted); font-size: 0.8rem; white-space: pre-wrap; word-break: break-word; max-height: 200px; overflow-y: auto; font-family: \'JetBrains Mono\', monospace;">' + generateRoleAuditText() + '</pre>';
+        html += '<button class="ac-btn" onclick="caseCopyRoleAudit()" style="position: absolute; top: 0.5rem; right: 0.5rem; font-size: 0.75rem; padding: 0.25rem 0.75rem;" id="caseCopyRoleAuditBtn"><i class="fas fa-copy"></i> Copy</button>';
+        html += '<pre style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; padding-right: 5rem; color: var(--ac-text-muted); font-size: 0.8rem; white-space: pre-wrap; word-break: break-word; max-height: 200px; overflow-y: auto; font-family: \'JetBrains Mono\', monospace;">' + caseGenerateRoleAuditText() + '</pre>';
         html += '</div>';
       }
       html += '<div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">';
-      html += '<button class="ac-btn ac-btn-accent" onclick="wizardState.currentStep = 4; renderWizardStep();">Continue <i class="fas fa-arrow-right"></i></button>';
+      html += '<button class="ac-btn ac-btn-accent" onclick="caseCompleteStep3()">Continue <i class="fas fa-arrow-right"></i></button>';
       html += '</div>';
-      $('#wizardModalBody').html(html);
+      $('#case-detail-content').html(html);
     }
 
-    function generateRoleAuditText() {
-      var newOwner = wizardState.newOwner;
-      var oldOwner = wizardState.oldOwner;
-      var text = '';
-      text += '\u26a0\ufe0f ADMIN ROLES AUDIT \u2014 Community: "' + wizardState.communityName + '" (ID: ' + wizardState.communityId + ')\n';
+    function caseGenerateRoleAuditText() {
+      var newOwner = caseState.steps.transferOwnership.newOwner;
+      var oldOwner = caseState.steps.transferOwnership.oldOwner || caseState._oldOwner;
+      var text = '\u26a0\ufe0f ADMIN ROLES AUDIT \u2014 Community: "' + caseState.communityName + '"\n';
       text += 'New Owner: ' + newOwner.username + '\n';
       text += 'Previous Owner: ' + (oldOwner ? oldOwner.username : 'Unknown') + '\n\n';
       text += 'Roles with Administrator Permission:\n';
-      var headAdmin = wizardState.roles.find(function(r) { return r.isHeadAdmin; });
+      var headAdmin = caseState._roles.find(function(r) { return r.isHeadAdmin; });
       if (headAdmin) {
         text += '\u2022 ' + headAdmin.name + ' (Head Admin) \u2014 Members: ' + (headAdmin.members.map(function(m) { return m.username; }).join(', ') || 'None') + '\n';
       }
-      wizardState.dangerousRoles.forEach(function(role) {
+      (caseState._dangerousRoles || []).forEach(function(role) {
         text += '\u2022 ' + role.name + ' \u2014 Members: ' + (role.members.map(function(m) { return m.username; }).join(', ') || 'None') + '\n';
       });
       text += '\nPlease confirm these role assignments are correct.';
       return text;
     }
 
-    function wizardCopyRoleAudit() {
-      navigator.clipboard.writeText(generateRoleAuditText()).then(function() {
-        $('#wizardCopyRoleAuditBtn').html('<i class="fas fa-check"></i> Copied!');
-        setTimeout(function() { $('#wizardCopyRoleAuditBtn').html('<i class="fas fa-copy"></i> Copy'); }, 2000);
+    function caseCopyRoleAudit() {
+      navigator.clipboard.writeText(caseGenerateRoleAuditText()).then(function() {
+        $('#caseCopyRoleAuditBtn').html('<i class="fas fa-check"></i> Copied!');
+        setTimeout(function() { $('#caseCopyRoleAuditBtn').html('<i class="fas fa-copy"></i> Copy'); }, 2000);
       });
     }
 
-    // -- Step 4: Remove Bad Actor --
-    function renderStep4_RemoveBadActor() {
-      var html = renderWizardStepper();
+    function caseCompleteStep3() {
+      saveCaseStep('roleAudit', {
+        dangerousRoles: caseState._dangerousRoles || []
+      }, function() { renderCaseStep(); });
+    }
+
+    // ── Case Step 4: Remove Bad Actor ──
+    function renderCaseStep4_RemoveBadActor() {
+      var html = renderCaseStepper(4);
+      var prefillEmail = caseState._oldOwner ? caseState._oldOwner.email : '';
       html += '<div style="margin-bottom: 1rem;">';
       html += '<h5 style="color: #fff;">Remove a User from This Community <span style="color: var(--ac-text-muted); font-weight: 400; font-size: 0.85rem;">(Optional)</span></h5>';
       html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">Use this to remove a bad actor who hijacked the community.</p>';
       html += '</div>';
-      // Pre-fill with old owner email if available
-      var prefillEmail = wizardState.oldOwner ? wizardState.oldOwner.email : '';
       html += '<div style="margin-bottom: 1rem;">';
       html += '<label style="color: var(--ac-text-muted); font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">User Email to Remove</label>';
-      html += '<input type="email" id="wizardBadActorEmail" class="form-control" value="' + prefillEmail + '" placeholder="Enter the bad actor\'s email address" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem;">';
+      html += '<input type="email" id="caseBadActorEmail" class="form-control" value="' + prefillEmail + '" placeholder="Enter the bad actor\'s email address" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem;">';
       html += '</div>';
-      html += '<div id="wizardBadActorPreview" style="display: none;"></div>';
-      html += '<div id="wizardBadActorError" style="display: none; color: var(--ac-red); font-size: 0.85rem; margin-bottom: 1rem;"></div>';
+      html += '<div id="caseBadActorPreview" style="display: none;"></div>';
+      html += '<div id="caseBadActorError" style="display: none; color: var(--ac-red); font-size: 0.85rem; margin-bottom: 1rem;"></div>';
       html += '<div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">';
-      html += '<button class="ac-btn" onclick="wizardState.currentStep = 5; renderWizardStep();">Skip <i class="fas fa-forward"></i></button>';
-      html += '<button class="ac-btn ac-btn-accent" id="wizardStep4Btn" onclick="wizardLookupBadActor()"><i class="fas fa-search"></i> Look Up User</button>';
+      html += '<button class="ac-btn" onclick="caseSkipStep4()">Skip <i class="fas fa-forward"></i></button>';
+      html += '<button class="ac-btn ac-btn-accent" id="caseStep4Btn" onclick="caseLookupBadActor()"><i class="fas fa-search"></i> Look Up User</button>';
       html += '</div>';
-      $('#wizardModalBody').html(html);
+      $('#case-detail-content').html(html);
     }
 
-    function wizardLookupBadActor() {
-      var email = $('#wizardBadActorEmail').val().trim();
-      if (!email) { $('#wizardBadActorError').text('Please enter an email address.').show(); return; }
-      $('#wizardStep4Btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Looking up...');
-      $('#wizardBadActorError').hide();
+    function caseSkipStep4() {
+      saveCaseStep('removeBadActor', { skipped: true }, function() { renderCaseStep(); });
+    }
+
+    function caseLookupBadActor() {
+      var email = $('#caseBadActorEmail').val().trim();
+      if (!email) { $('#caseBadActorError').text('Please enter an email address.').show(); return; }
+      $('#caseStep4Btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Looking up...');
+      $('#caseBadActorError').hide();
       $.ajax({
         url: API_BASE + '/api/v1/admin/search/users',
         method: 'POST',
@@ -4655,12 +4797,12 @@
           var users = data.users || [];
           var exactMatch = users.find(function(u) { return u.email && u.email.toLowerCase() === email.toLowerCase(); });
           if (!exactMatch) {
-            $('#wizardBadActorError').text('No user found with that email address.').show();
-            $('#wizardStep4Btn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
+            $('#caseBadActorError').text('No user found with that email address.').show();
+            $('#caseStep4Btn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
             return;
           }
-          wizardState.badActorUser = { id: exactMatch.id, email: exactMatch.email, username: exactMatch.username };
-          var userRoles = wizardState.roles.filter(function(r) { return r.members.some(function(m) { return m.id === exactMatch.id; }); }).map(function(r) { return r.name; });
+          caseState._badActor = { id: exactMatch.id, email: exactMatch.email, username: exactMatch.username };
+          var userRoles = (caseState._roles || []).filter(function(r) { return r.members.some(function(m) { return m.id === exactMatch.id; }); }).map(function(r) { return r.name; });
           var previewHtml = '<div style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">';
           previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">User to Remove</div>';
           previewHtml += '<div style="color: #fff; font-weight: 600;">' + exactMatch.username + '</div>';
@@ -4669,147 +4811,170 @@
           if (userRoles.length > 0) {
             previewHtml += '<div style="margin-top: 0.5rem; color: var(--ac-amber); font-size: 0.85rem;"><i class="fas fa-shield-alt"></i> In roles: ' + userRoles.join(', ') + '</div>';
           }
-          previewHtml += '<div style="margin-top: 1rem;"><label style="display: flex; align-items: center; cursor: pointer; color: var(--ac-text);"><input type="checkbox" id="wizardBanCheckbox" style="margin-right: 0.5rem;"> Also ban this user from rejoining this community</label></div>';
+          previewHtml += '<div style="margin-top: 1rem;"><label style="display: flex; align-items: center; cursor: pointer; color: var(--ac-text);"><input type="checkbox" id="caseBanCheckbox" style="margin-right: 0.5rem;"> Also ban this user from rejoining this community</label></div>';
           previewHtml += '</div>';
-          $('#wizardBadActorPreview').html(previewHtml).show();
-          $('#wizardStep4Btn').prop('disabled', false).html('<i class="fas fa-user-slash"></i> Remove User').off('click').on('click', wizardConfirmRemoval);
+          $('#caseBadActorPreview').html(previewHtml).show();
+          $('#caseStep4Btn').prop('disabled', false).html('<i class="fas fa-user-slash"></i> Remove User').off('click').on('click', caseConfirmRemoval);
         },
         error: function() {
-          $('#wizardBadActorError').text('Failed to search for user. Please try again.').show();
-          $('#wizardStep4Btn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
+          $('#caseBadActorError').text('Failed to search for user.').show();
+          $('#caseStep4Btn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
         }
       });
     }
 
-    function wizardConfirmRemoval() {
-      var ban = $('#wizardBanCheckbox').is(':checked');
-      var user = wizardState.badActorUser;
+    function caseConfirmRemoval() {
+      var ban = $('#caseBanCheckbox').is(':checked');
+      var user = caseState._badActor;
       showConfirmModal(
         'Confirm User Removal',
-        '<p>You are about to remove <strong>' + user.username + ' (' + user.email + ')</strong> from <strong>' + wizardState.communityName + '</strong>.</p>' +
+        '<p>You are about to remove <strong>' + user.username + ' (' + user.email + ')</strong> from <strong>' + caseState.communityName + '</strong>.</p>' +
         '<p>This will:</p><ul>' +
         '<li>Remove them from all roles</li>' +
         '<li>Remove the community from their account</li>' +
         '<li>Clear their last accessed community</li>' +
         (ban ? '<li style="color: var(--ac-red);"><strong>Ban them from rejoining</strong></li>' : '') +
         '</ul><p style="color: var(--ac-amber);"><i class="fas fa-exclamation-triangle"></i> This action will be logged.</p>',
-        function() { wizardExecuteRemoval(ban); }
+        function() { caseExecuteRemoval(ban); }
       );
     }
 
-    function wizardExecuteRemoval(ban) {
-      renderWizardLoading('Removing user...');
+    function caseExecuteRemoval(ban) {
+      $('#case-detail-content').html('<div style="text-align: center; padding: 2rem;"><div class="loading">Removing user...</div></div>');
       $.ajax({
-        url: API_BASE + '/api/v1/admin/communities/' + wizardState.communityId + '/remove-member',
+        url: API_BASE + '/api/v1/admin/communities/' + caseState.communityId + '/remove-member',
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({
-          userEmail: wizardState.badActorUser.email,
-          ban: ban,
-          currentUser: { email: currentUserEmail, roles: roles },
-        }),
-        success: function(data) {
-          wizardState.badActorRemoved = true;
-          wizardState.badActorBanned = ban;
-          wizardState.currentStep = 5;
-          renderWizardStep();
+        data: JSON.stringify({ userEmail: caseState._badActor.email, ban: ban, currentUser: { email: currentUserEmail, roles: roles } }),
+        success: function() {
+          saveCaseStep('removeBadActor', {
+            badActor: caseState._badActor,
+            banned: ban,
+            skipped: false
+          }, function() { renderCaseStep(); });
         },
         error: function(xhr) {
-          renderWizardError('Failed to remove user: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error'));
+          $('#case-detail-content').html('<div style="color: var(--ac-red); padding: 2rem; text-align: center;">Failed to remove user: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error') + ' <button class="ac-btn" onclick="renderCaseStep()">Retry</button></div>');
         }
       });
     }
 
-    // -- Step 5: Summary --
-    function renderStep5_Summary() {
-      // Refresh roles data to get resolved usernames (may have changed during wizard)
+    // ── Case Step 5: Summary ──
+    function renderCaseStep5_Summary(isReadOnly) {
+      // Refresh roles for accurate summary
       $.ajax({
-        url: API_BASE + '/api/v1/admin/communities/' + wizardState.communityId + '/roles',
+        url: API_BASE + '/api/v1/admin/communities/' + caseState.communityId + '/roles',
         method: 'GET',
         success: function(rolesRes) {
-          wizardState.roles = rolesRes.roles || [];
-          wizardState.dangerousRoles = wizardState.roles.filter(function(r) { return r.hasAdminPermission && !r.isHeadAdmin; });
-          renderStep5_SummaryContent();
+          caseState._roles = rolesRes.roles || [];
+          caseState._dangerousRoles = caseState._roles.filter(function(r) { return r.hasAdminPermission && !r.isHeadAdmin; });
+          renderCaseStep5_SummaryContent(isReadOnly);
         },
-        error: function() {
-          // Proceed with existing data if refresh fails
-          renderStep5_SummaryContent();
-        }
+        error: function() { renderCaseStep5_SummaryContent(isReadOnly); }
       });
     }
 
-    function renderStep5_SummaryContent() {
-      var html = renderWizardStepper();
+    function renderCaseStep5_SummaryContent(isReadOnly) {
+      var steps = caseState.steps;
+      var html = renderCaseStepper(5);
       html += '<div style="text-align: center; margin-bottom: 1.5rem;">';
       html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(34,197,94,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
       html += '<i class="fas fa-check" style="color: var(--ac-green); font-size: 1.5rem;"></i></div>';
-      html += '<h5 style="color: #fff;">Ownership Reset Complete</h5></div>';
+      html += '<h5 style="color: #fff;">Ownership Reset ' + (isReadOnly ? 'Completed' : 'Complete') + '</h5></div>';
+
       html += '<div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">';
       html += '<h6 style="color: #fff; margin-bottom: 0.75rem;">Actions Taken</h6>';
       html += '<div style="color: var(--ac-text); font-size: 0.85rem;">';
-      if (wizardState.ownerTransferred) {
-        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> Ownership transferred to ' + wizardState.newOwner.username + ' (' + wizardState.newOwner.email + ')</div>';
+      if (steps.transferOwnership.completed && steps.transferOwnership.newOwner) {
+        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> Ownership transferred to ' + steps.transferOwnership.newOwner.username + ' (' + steps.transferOwnership.newOwner.email + ')</div>';
       }
-      if (wizardState.addedToHeadAdmin) {
-        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + wizardState.newOwner.username + ' added to Head Admin role</div>';
+      if (steps.transferOwnership.addedToHeadAdmin) {
+        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + steps.transferOwnership.newOwner.username + ' added to Head Admin role</div>';
       }
-      if (wizardState.badActorRemoved) {
-        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + wizardState.badActorUser.username + ' removed from community</div>';
+      if (steps.removeBadActor.completed && !steps.removeBadActor.skipped && steps.removeBadActor.badActor) {
+        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + steps.removeBadActor.badActor.username + ' removed from community</div>';
       }
-      if (wizardState.badActorBanned) {
-        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + wizardState.badActorUser.username + ' banned from rejoining</div>';
+      if (steps.removeBadActor.banned && steps.removeBadActor.badActor) {
+        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + steps.removeBadActor.badActor.username + ' banned from rejoining</div>';
       }
-      if (wizardState.dangerousRoles.length > 0) {
+      if (steps.removeBadActor.skipped) {
+        html += '<div style="padding: 0.25rem 0; color: var(--ac-text-muted);"><i class="fas fa-forward" style="margin-right: 0.5rem;"></i> Bad actor removal skipped</div>';
+      }
+      if (caseState._dangerousRoles && caseState._dangerousRoles.length > 0) {
         html += '<div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.06);">';
         html += '<div style="color: var(--ac-amber); font-size: 0.85rem;"><i class="fas fa-exclamation-triangle"></i> Roles with Administrator permission still active:</div>';
-        wizardState.dangerousRoles.forEach(function(role) {
+        caseState._dangerousRoles.forEach(function(role) {
           html += '<div style="padding: 0.25rem 0; padding-left: 1.5rem; color: var(--ac-text-muted); font-size: 0.85rem;">\u2022 ' + role.name + ' \u2014 ' + (role.members.map(function(m) { return m.username; }).join(', ') || 'No members') + '</div>';
         });
         html += '</div>';
       }
       html += '</div></div>';
+
       // Copy block
       html += '<div style="position: relative; margin-top: 1rem;">';
-      html += '<button class="ac-btn" onclick="wizardCopySummary()" style="position: absolute; top: 0.5rem; right: 0.5rem; font-size: 0.75rem; padding: 0.25rem 0.75rem;" id="wizardCopySummaryBtn"><i class="fas fa-copy"></i> Copy</button>';
-      html += '<pre id="wizardSummaryText" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; padding-right: 5rem; color: var(--ac-text-muted); font-size: 0.8rem; white-space: pre-wrap; word-break: break-word; max-height: 250px; overflow-y: auto; font-family: \'JetBrains Mono\', monospace;">' + generateSummaryText() + '</pre>';
+      html += '<button class="ac-btn" onclick="caseCopySummary()" style="position: absolute; top: 0.5rem; right: 0.5rem; font-size: 0.75rem; padding: 0.25rem 0.75rem;" id="caseCopySummaryBtn"><i class="fas fa-copy"></i> Copy</button>';
+      html += '<pre style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; padding-right: 5rem; color: var(--ac-text-muted); font-size: 0.8rem; white-space: pre-wrap; word-break: break-word; max-height: 250px; overflow-y: auto; font-family: \'JetBrains Mono\', monospace;">' + caseGenerateSummaryText() + '</pre>';
       html += '</div>';
-      html += '<div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">';
-      html += '<button class="ac-btn ac-btn-accent" data-dismiss="modal"><i class="fas fa-check"></i> Done</button>';
-      html += '</div>';
-      $('#wizardModalBody').html(html);
+
+      if (!isReadOnly) {
+        html += '<div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">';
+        html += '<button class="ac-btn ac-btn-accent" onclick="caseComplete()"><i class="fas fa-check"></i> Done</button>';
+        html += '</div>';
+      } else {
+        html += '<div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">';
+        html += '<button class="ac-btn" onclick="backToCasesList()"><i class="fas fa-arrow-left"></i> Back to Cases</button>';
+        html += '</div>';
+      }
+
+      $('#case-detail-content').html(html);
     }
 
-    function generateSummaryText() {
+    function caseGenerateSummaryText() {
+      var steps = caseState.steps;
       var now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
-      var text = '\u2705 OWNERSHIP RESET COMPLETE \u2014 Community: "' + wizardState.communityName + '"\n';
-      text += 'Performed by: ' + currentUserName + ' (' + currentUserRole + ') on ' + now + '\n\n';
+      var text = '\u2705 OWNERSHIP RESET COMPLETE \u2014 Community: "' + caseState.communityName + '"\n';
+      text += 'Performed by: ' + (caseState.createdBy.adminName || caseState.createdBy.adminEmail) + ' (' + (caseState.createdBy.adminRole || 'admin') + ') on ' + now + '\n\n';
       text += 'Actions taken:\n';
       var n = 1;
-      if (wizardState.ownerTransferred) {
-        text += n++ + '. Ownership transferred: ' + (wizardState.oldOwner ? wizardState.oldOwner.username : 'Unknown') + ' \u2192 ' + wizardState.newOwner.username + '\n';
+      if (steps.transferOwnership.completed && steps.transferOwnership.newOwner) {
+        var oldOwnerName = steps.transferOwnership.oldOwner ? steps.transferOwnership.oldOwner.username : 'Unknown';
+        text += n++ + '. Ownership transferred: ' + oldOwnerName + ' \u2192 ' + steps.transferOwnership.newOwner.username + '\n';
       }
-      if (wizardState.addedToHeadAdmin) {
-        text += n++ + '. ' + wizardState.newOwner.username + ' added to Head Admin role\n';
+      if (steps.transferOwnership.addedToHeadAdmin) {
+        text += n++ + '. ' + steps.transferOwnership.newOwner.username + ' added to Head Admin role\n';
       }
-      if (wizardState.badActorRemoved) {
-        text += n++ + '. ' + wizardState.badActorUser.username + ' removed from community\n';
+      if (steps.removeBadActor.completed && !steps.removeBadActor.skipped && steps.removeBadActor.badActor) {
+        text += n++ + '. ' + steps.removeBadActor.badActor.username + ' removed from community\n';
       }
-      if (wizardState.badActorBanned) {
-        text += n++ + '. ' + wizardState.badActorUser.username + ' banned from community\n';
+      if (steps.removeBadActor.banned) {
+        text += n++ + '. ' + steps.removeBadActor.badActor.username + ' banned from community\n';
       }
-      if (wizardState.dangerousRoles.length > 0) {
+      if (caseState._dangerousRoles && caseState._dangerousRoles.length > 0) {
         text += '\n\u26a0\ufe0f Roles with Administrator permission still active:\n';
-        wizardState.dangerousRoles.forEach(function(role) {
+        caseState._dangerousRoles.forEach(function(role) {
           text += '\u2022 ' + role.name + ' \u2014 Members: ' + (role.members.map(function(m) { return m.username; }).join(', ') || 'None') + '\n';
         });
       }
       return text;
     }
 
-    function wizardCopySummary() {
-      navigator.clipboard.writeText(generateSummaryText()).then(function() {
-        $('#wizardCopySummaryBtn').html('<i class="fas fa-check"></i> Copied!');
-        setTimeout(function() { $('#wizardCopySummaryBtn').html('<i class="fas fa-copy"></i> Copy'); }, 2000);
+    function caseCopySummary() {
+      navigator.clipboard.writeText(caseGenerateSummaryText()).then(function() {
+        $('#caseCopySummaryBtn').html('<i class="fas fa-check"></i> Copied!');
+        setTimeout(function() { $('#caseCopySummaryBtn').html('<i class="fas fa-copy"></i> Copy'); }, 2000);
+      });
+    }
+
+    function caseComplete() {
+      saveCaseStep('summary', {}, function() {
+        $.ajax({
+          url: API_BASE + '/api/v1/admin/cases/' + caseState.id + '/complete',
+          method: 'PATCH',
+          contentType: 'application/json',
+          data: JSON.stringify({}),
+          success: function() { backToCasesList(); },
+          error: function() { backToCasesList(); }
+        });
       });
     }
 
