@@ -4603,10 +4603,10 @@
       text += 'Roles with Administrator Permission:\n';
       var headAdmin = wizardState.roles.find(function(r) { return r.isHeadAdmin; });
       if (headAdmin) {
-        text += '\u2022 ' + headAdmin.name + ' (Head Admin) \u2014 Members: ' + (headAdmin.members.map(function(m) { return m.username + ' (' + m.id + ')'; }).join(', ') || 'None') + '\n';
+        text += '\u2022 ' + headAdmin.name + ' (Head Admin) \u2014 Members: ' + (headAdmin.members.map(function(m) { return m.username; }).join(', ') || 'None') + '\n';
       }
       wizardState.dangerousRoles.forEach(function(role) {
-        text += '\u2022 ' + role.name + ' \u2014 Members: ' + (role.members.map(function(m) { return m.username + ' (' + m.id + ')'; }).join(', ') || 'None') + '\n';
+        text += '\u2022 ' + role.name + ' \u2014 Members: ' + (role.members.map(function(m) { return m.username; }).join(', ') || 'None') + '\n';
       });
       text += '\nPlease confirm these role assignments are correct.';
       return text;
@@ -4781,7 +4781,7 @@
       if (wizardState.dangerousRoles.length > 0) {
         text += '\n\u26a0\ufe0f Roles with Administrator permission still active:\n';
         wizardState.dangerousRoles.forEach(function(role) {
-          text += '\u2022 ' + role.name + ' \u2014 Members: ' + (role.members.map(function(m) { return m.username + ' (' + m.id + ')'; }).join(', ') || 'None') + '\n';
+          text += '\u2022 ' + role.name + ' \u2014 Members: ' + (role.members.map(function(m) { return m.username; }).join(', ') || 'None') + '\n';
         });
       }
       return text;
