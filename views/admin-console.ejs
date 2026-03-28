@@ -4318,30 +4318,30 @@
     // ════════════════════════════════════════════════════
 
     function openOwnershipResetWizard(communityId, communityName) {
-      // Close community modal
+      // Force-close community modal and clean up backdrop
       $('#communityModal').modal('hide');
+      $('body').removeClass('modal-open');
+      $('.modal-backdrop').remove();
 
       // Create or resume a case
-      setTimeout(function() {
-        $.ajax({
-          url: API_BASE + '/api/v1/admin/cases',
-          method: 'POST',
-          contentType: 'application/json',
-          data: JSON.stringify({
-            communityId: communityId,
-            communityName: communityName,
-            currentUser: { email: currentUserEmail, roles: roles, name: currentUserName }
-          }),
-          success: function(data) {
-            var caseObj = data['case'];
-            acNavTo('cases');
-            setTimeout(function() { viewCase(caseObj.id); }, 100);
-          },
-          error: function() {
-            showInfoModal('Error', 'Failed to create case. Please try again.');
-          }
-        });
-      }, 300);
+      $.ajax({
+        url: API_BASE + '/api/v1/admin/cases',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          communityId: communityId,
+          communityName: communityName,
+          currentUser: { email: currentUserEmail, roles: roles, name: currentUserName }
+        }),
+        success: function(data) {
+          var caseObj = data['case'];
+          acNavTo('cases');
+          viewCase(caseObj.id);
+        },
+        error: function() {
+          showInfoModal('Error', 'Failed to create case. Please try again.');
+        }
+      });
     }
 
     var caseState = null;
