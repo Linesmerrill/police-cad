@@ -7658,6 +7658,9 @@
           return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         });
 
+        // Show command dashboard chart card BEFORE rendering so it has width
+        $('#chart-cmd-card').show();
+
         renderLineChart('chart-beta', betaValues, labels, fullLabels, 'var(--ac-accent)', '#a78bfa');
         renderLineChart('chart-cmd', cmdValues, labels, fullLabels, '#38bdf8', '#7dd3fc');
         renderLineChart('chart-users', userValues, labels, fullLabels, 'var(--ac-green)', '#4ade80');
@@ -7669,9 +7672,6 @@
         $('#chart-beta-total').text(betaSum.toLocaleString());
         $('#chart-cmd-total').text(cmdSum.toLocaleString());
         $('#chart-users-total').text(userSum.toLocaleString());
-
-        // Show command dashboard chart card
-        $('#chart-cmd-card').show();
 
         // Trend: compare last 3 days vs first 3 days
         var betaRecent = betaValues.slice(-3).reduce(function(a,b){return a+b;},0);
