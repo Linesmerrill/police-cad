@@ -4318,8 +4318,8 @@
     // ════════════════════════════════════════════════════
 
     function openOwnershipResetWizard(communityId, communityName) {
-      // Force-close community modal and clean up backdrop
-      $('#communityModal').modal('hide');
+      // Force-close all modals and clean up backdrop
+      $('.modal').modal('hide');
       $('body').removeClass('modal-open');
       $('.modal-backdrop').remove();
 
