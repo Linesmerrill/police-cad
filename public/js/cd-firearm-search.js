@@ -435,7 +435,9 @@
     state.expandedId = null;
     renderResults();
 
-    var url = apiUrl() + '/api/v1/firearms/search?name=' + encodeURIComponent(query) +
+    var encoded = encodeURIComponent(query);
+    var url = apiUrl() + '/api/v1/firearms/search?name=' + encoded +
+      '&serialNumber=' + encoded +
       '&communityId=' + encodeURIComponent(cfg().communityId) +
       '&limit=' + PAGE_SIZE +
       '&page=' + (state.page - 1);
