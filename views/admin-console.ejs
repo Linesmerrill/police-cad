@@ -5420,6 +5420,8 @@
 
     function renderCaseStepper(currentStep) {
       var steps = ['Owner', 'Head Admin', 'Role Audit', 'Remove User', 'Summary'];
+      var stepKeys = ['transferOwnership', 'headAdmin', 'roleAudit', 'removeBadActor', 'summary'];
+      var isCancelled = caseState && caseState.status === 'cancelled';
       var isMobile = window.innerWidth < 768;
       if (isMobile) {
         return '<div style="text-align: center; color: var(--ac-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Step ' + currentStep + ' of 5: ' + steps[currentStep - 1] + '</div>';
@@ -5428,7 +5430,8 @@
       steps.forEach(function(step, i) {
         var stepNum = i + 1;
         var isActive = stepNum === currentStep;
-        var isCompleted = stepNum < currentStep;
+        // Check actual completion from case data, not just position
+        var isCompleted = caseState && caseState.steps && caseState.steps[stepKeys[i]] ? caseState.steps[stepKeys[i]].completed : false;
         var circleColor = isCompleted ? 'var(--ac-green)' : isActive ? 'var(--ac-accent)' : 'rgba(255,255,255,0.1)';
         var textColor = isActive ? '#fff' : 'var(--ac-text-muted)';
         html += '<div style="display: flex; align-items: center;">';
@@ -5812,6 +5815,20 @@
         html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(239,68,68,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
         html += '<i class="fas fa-times" style="color: var(--ac-red); font-size: 1.5rem;"></i></div>';
         html += '<h5 style="color: #fff;">Case Cancelled</h5>';
+        // Show which step it was cancelled at
+        var cancelStepNames = ['Owner', 'Head Admin', 'Role Audit', 'Remove User', 'Summary'];
+        var cancelStepKeys = ['transferOwnership', 'headAdmin', 'roleAudit', 'removeBadActor', 'summary'];
+        var cancelledAtStep = 1;
+        for (var si = 0; si < cancelStepKeys.length; si++) {
+          if (steps[cancelStepKeys[si]] && steps[cancelStepKeys[si]].completed) {
+            cancelledAtStep = si + 2;
+          } else {
+            break;
+          }
+        }
+        if (cancelledAtStep <= 5) {
+          html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">Cancelled at Step ' + cancelledAtStep + ': ' + cancelStepNames[cancelledAtStep - 1] + '</p>';
+        }
         if (caseState.cancelledReason) {
           html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">Reason: ' + caseState.cancelledReason + '</p>';
         }
