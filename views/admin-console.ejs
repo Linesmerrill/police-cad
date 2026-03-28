@@ -738,6 +738,9 @@
           <div class="ac-nav-item" data-panel="cases">
             <i class="fas fa-briefcase"></i> Cases
           </div>
+          <div class="ac-nav-item" data-panel="wiki">
+            <i class="fas fa-book"></i> Wiki
+          </div>
           <div class="ac-nav-item" id="content-creators-tab" data-panel="content-creators" style="display: none;">
             <i class="fas fa-video"></i> Content Creators
             <span id="ccPendingBadge" class="ac-nav-badge" style="display: none;"></span>
@@ -981,6 +984,845 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Panel: Wiki -->
+        <div class="ac-panel" id="panel-wiki">
+          <style>
+            /* ── Admin Wiki Layout ── */
+            .aw-layout { display:flex; gap:2.5rem; align-items:flex-start; }
+            .aw-sidebar {
+              position:sticky; top:2rem; width:210px; flex-shrink:0;
+              align-self:flex-start; max-height:calc(100vh - 4rem);
+              overflow-y:auto; padding-right:0.35rem;
+            }
+            .aw-sidebar::-webkit-scrollbar { width:3px; }
+            .aw-sidebar::-webkit-scrollbar-track { background:transparent; }
+            .aw-sidebar::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:3px; }
+            .aw-content { flex:1; min-width:0; }
+
+            /* ── Search ── */
+            .aw-nav-search { position:relative; margin-bottom:0.75rem; }
+            .aw-nav-search input {
+              width:100%; padding:0.45rem 0.65rem 0.45rem 2rem;
+              background:var(--ac-glass); border:1px solid var(--ac-glass-border);
+              border-radius:var(--ac-radius-sm); color:var(--ac-text);
+              font-size:0.78rem; font-family:inherit; outline:none;
+              transition:border-color 0.2s, background 0.2s;
+            }
+            .aw-nav-search input::placeholder { color:var(--ac-text-dim); }
+            .aw-nav-search input:focus { border-color:rgba(139,92,246,0.35); background:var(--ac-glass-hover); }
+
+            /* ── Sidebar Nav ── */
+            .aw-nav-group-title {
+              display:flex; align-items:center; gap:0.4rem;
+              font-size:0.68rem; font-weight:700; text-transform:uppercase;
+              letter-spacing:0.08em; color:var(--ac-text-dim);
+              padding:0.5rem 0.75rem; margin-top:1rem;
+            }
+            .aw-nav-group-title:first-child { margin-top:0; }
+            .aw-nav-link {
+              display:block; padding:0.4rem 0.75rem 0.4rem 1.5rem;
+              font-size:0.8rem; color:var(--ac-text-muted); text-decoration:none;
+              border-radius:var(--ac-radius-sm); border-left:2px solid transparent;
+              transition:all 0.2s ease; cursor:pointer;
+            }
+            .aw-nav-link:hover { color:#fff; background:var(--ac-surface); }
+            .aw-nav-link.active { color:var(--ac-accent); border-left-color:var(--ac-accent); background:var(--ac-accent-glow); }
+
+            /* ── Section ── */
+            .aw-section { margin-bottom:3rem; }
+            .aw-section-header {
+              display:flex; align-items:center; gap:0.875rem;
+              margin-bottom:1.5rem; padding-bottom:1rem;
+              border-bottom:1px solid var(--ac-glass-border);
+            }
+            .aw-section-icon {
+              width:38px; height:38px; border-radius:10px;
+              background:var(--ac-glass); border:1px solid var(--ac-glass-border);
+              display:flex; align-items:center; justify-content:center;
+              color:var(--ac-accent); font-size:0.95rem;
+            }
+            .aw-section-title { font-size:1.1rem; font-weight:700; color:#fff; }
+
+            /* ── Subsection ── */
+            .aw-subsection { margin-bottom:2rem; scroll-margin-top:2rem; }
+            .aw-subsection-title { font-size:0.95rem; font-weight:600; color:#fff; margin-bottom:0.6rem; }
+            .aw-text { font-size:0.84rem; color:var(--ac-text-muted); line-height:1.65; margin-bottom:0.75rem; }
+
+            /* ── Steps ── */
+            .aw-steps { display:flex; flex-direction:column; gap:0.6rem; margin:0.75rem 0 1rem; }
+            .aw-step {
+              display:flex; gap:0.875rem; padding:0.75rem 1rem;
+              background:var(--ac-surface); border:1px solid var(--ac-glass-border);
+              border-radius:var(--ac-radius-sm);
+            }
+            .aw-step-number {
+              width:26px; height:26px; border-radius:50%;
+              background:var(--ac-accent-glow); border:1px solid rgba(139,92,246,0.2);
+              display:flex; align-items:center; justify-content:center;
+              color:var(--ac-accent); font-weight:700; font-size:0.75rem; flex-shrink:0;
+            }
+
+            /* ── Tip Box ── */
+            .aw-tip {
+              display:flex; gap:0.75rem; padding:0.875rem 1rem;
+              background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.15);
+              border-left:3px solid var(--ac-blue); border-radius:var(--ac-radius-sm);
+              margin:0.75rem 0 1rem;
+            }
+            .aw-tip-icon { color:var(--ac-blue); font-size:0.85rem; flex-shrink:0; margin-top:0.1rem; }
+            .aw-tip-text { font-size:0.8rem; color:var(--ac-text); line-height:1.55; }
+
+            /* ── Sample Box ── */
+            .aw-sample-box {
+              background:var(--ac-surface); border:1px solid var(--ac-glass-border);
+              border-radius:var(--ac-radius); margin:1rem 0 1.5rem; overflow:hidden;
+            }
+            .aw-sample-label {
+              display:flex; align-items:center; gap:0.4rem;
+              padding:0.55rem 1rem; font-size:0.7rem; font-weight:700;
+              text-transform:uppercase; letter-spacing:0.06em;
+              color:var(--ac-text-dim); background:rgba(255,255,255,0.02);
+              border-bottom:1px solid var(--ac-glass-border);
+            }
+            .aw-sample-content { padding:1.25rem; pointer-events:none; opacity:0.85; user-select:none; }
+
+            /* ── Sample form elements ── */
+            .aw-form-group { margin-bottom:0.875rem; }
+            .aw-form-label {
+              display:block; font-size:0.75rem; font-weight:600;
+              color:var(--ac-text-muted); margin-bottom:0.3rem;
+              text-transform:uppercase; letter-spacing:0.04em;
+            }
+            .aw-form-input {
+              width:100%; padding:0.5rem 0.75rem; font-size:0.82rem;
+              font-family:inherit; color:var(--ac-text);
+              background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+              border-radius:6px; outline:none;
+            }
+            .aw-btn {
+              display:inline-flex; align-items:center; gap:0.35rem;
+              padding:0.5rem 1rem; font-size:0.8rem; font-weight:600;
+              font-family:inherit; border:none; border-radius:6px; cursor:default;
+            }
+            .aw-btn-accent { background:var(--ac-accent); color:#fff; }
+            .aw-btn-green { background:var(--ac-green); color:#fff; }
+            .aw-btn-red { background:var(--ac-red); color:#fff; }
+            .aw-btn-outline { background:transparent; border:1px solid var(--ac-glass-border); color:var(--ac-text); }
+            .aw-btn-amber { background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.3); color:#eab308; }
+            .aw-badge {
+              display:inline-flex; align-items:center; padding:0.15rem 0.5rem;
+              font-size:0.65rem; font-weight:700; text-transform:uppercase;
+              letter-spacing:0.04em; border-radius:4px;
+            }
+            .aw-badge-active { background:rgba(34,197,94,0.15); color:var(--ac-green); }
+            .aw-badge-deactivated { background:rgba(239,68,68,0.15); color:var(--ac-red); }
+            .aw-badge-open { background:rgba(59,130,246,0.15); color:var(--ac-blue); }
+            .aw-badge-completed { background:rgba(148,163,184,0.15); color:#94a3b8; }
+            .aw-badge-cancelled { background:rgba(239,68,68,0.15); color:var(--ac-red); }
+
+            /* ── Detail rows ── */
+            .aw-detail-row {
+              display:flex; justify-content:space-between; align-items:center;
+              padding:0.45rem 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.8rem;
+            }
+            .aw-detail-label { color:var(--ac-text-muted); }
+            .aw-detail-value { color:var(--ac-text); font-weight:600; }
+
+            /* ── Stepper sample ── */
+            .aw-stepper { display:flex; gap:0.25rem; margin-bottom:1rem; }
+            .aw-stepper-step {
+              flex:1; text-align:center; padding:0.5rem 0.25rem;
+              font-size:0.7rem; font-weight:600; border-radius:4px;
+              background:var(--ac-glass); border:1px solid var(--ac-glass-border);
+              color:var(--ac-text-dim);
+            }
+            .aw-stepper-step.active { background:var(--ac-accent-glow); border-color:rgba(139,92,246,0.3); color:var(--ac-accent); }
+            .aw-stepper-step.done { background:rgba(34,197,94,0.1); border-color:rgba(34,197,94,0.2); color:var(--ac-green); }
+
+            /* ── Checkbox mock ── */
+            .aw-checkbox {
+              display:inline-flex; align-items:center; gap:0.4rem;
+              font-size:0.8rem; color:var(--ac-text-muted);
+            }
+            .aw-checkbox-box {
+              width:14px; height:14px; border:1px solid rgba(255,255,255,0.15);
+              border-radius:3px; background:rgba(255,255,255,0.05);
+            }
+
+            /* ── Responsive ── */
+            @media (max-width:768px) {
+              .aw-layout { flex-direction:column; gap:0; }
+              .aw-sidebar {
+                position:static; width:100%; max-height:none;
+                padding-bottom:1rem; border-bottom:1px solid var(--ac-glass-border);
+                margin-bottom:1rem;
+              }
+            }
+          </style>
+
+          <div class="aw-layout">
+            <!-- Sidebar Navigation -->
+            <div class="aw-sidebar" id="aw-sidebar">
+              <div class="aw-nav-search">
+                <i class="fas fa-search" style="position:absolute; left:0.65rem; top:50%; transform:translateY(-50%); color:var(--ac-text-muted); font-size:0.75rem;"></i>
+                <input type="text" placeholder="Search articles..." oninput="filterAdminWiki(this.value)">
+              </div>
+
+              <div class="aw-nav-group-title">Getting Started</div>
+              <a class="aw-nav-link" href="#aw-dashboard-overview">Dashboard Overview</a>
+
+              <div class="aw-nav-group-title">User Management</div>
+              <a class="aw-nav-link" href="#aw-lookup-user">Look Up a User</a>
+              <a class="aw-nav-link" href="#aw-reset-password">Reset Password</a>
+              <a class="aw-nav-link" href="#aw-reactivate-account">Reactivate Account</a>
+
+              <div class="aw-nav-group-title">Community Management</div>
+              <a class="aw-nav-link" href="#aw-lookup-community">Look Up a Community</a>
+              <a class="aw-nav-link" href="#aw-reset-owner">Reset Owner &amp; Roles</a>
+              <a class="aw-nav-link" href="#aw-remove-member">Remove a Member</a>
+              <a class="aw-nav-link" href="#aw-roles-permissions">Roles &amp; Permissions</a>
+
+              <div class="aw-nav-group-title">Content Creators</div>
+              <a class="aw-nav-link" href="#aw-review-applications">Review Applications</a>
+
+              <div class="aw-nav-group-title">Cases</div>
+              <a class="aw-nav-link" href="#aw-creating-case">Creating a Case</a>
+              <a class="aw-nav-link" href="#aw-resuming-case">Resuming a Case</a>
+              <a class="aw-nav-link" href="#aw-cancelling-case">Cancelling a Case</a>
+              <a class="aw-nav-link" href="#aw-viewing-past-cases">Viewing Past Cases</a>
+            </div>
+
+            <!-- Main Content -->
+            <div class="aw-content" id="aw-content">
+
+              <!-- ════════════════════════════════════════════ -->
+              <!-- GETTING STARTED                              -->
+              <!-- ════════════════════════════════════════════ -->
+              <section class="aw-section">
+                <div class="aw-section-header">
+                  <div class="aw-section-icon"><i class="fas fa-rocket"></i></div>
+                  <div>
+                    <div class="aw-section-title">Getting Started</div>
+                    <div style="font-size:0.8rem; color:var(--ac-text-muted);">Orientation for new support staff</div>
+                  </div>
+                </div>
+
+                <div class="aw-subsection" id="aw-dashboard-overview">
+                  <h3 class="aw-subsection-title">Dashboard Overview</h3>
+                  <p class="aw-text">The admin console Dashboard is your home base. It shows key metrics at a glance: total users, total communities, users registered today, and pending content creator applications. Use these numbers to quickly gauge platform health without digging into individual panels.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Review the stats cards</div>
+                        <div class="aw-text">The top row shows total users, total communities, signups today, and pending CC applications. A spike in signups may indicate a content creator drove traffic; a pending CC count above zero means reviews are waiting.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Check pending CC applications</div>
+                        <div class="aw-text">Below the stats, any pending content creator applications are listed. Click one to jump directly to its review. You can also use the Content Creators panel for the full list with filters.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Navigate using the sidebar</div>
+                        <div class="aw-text">The left sidebar groups panels into Lookup (Users, Pending Users, Communities) and Management (Cases, Wiki, Content Creators, etc.). Click any item to switch panels. The header title updates to reflect the active panel.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Bookmark the admin console URL. If you need to link a colleague directly to a case, share the URL with the <code>#cases/N</code> hash (e.g., <code>/admin-console#cases/5</code>).</div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ════════════════════════════════════════════ -->
+              <!-- USER MANAGEMENT                              -->
+              <!-- ════════════════════════════════════════════ -->
+              <section class="aw-section">
+                <div class="aw-section-header">
+                  <div class="aw-section-icon"><i class="fas fa-users"></i></div>
+                  <div>
+                    <div class="aw-section-title">User Management</div>
+                    <div style="font-size:0.8rem; color:var(--ac-text-muted);">Finding users, resetting passwords, and reactivating accounts</div>
+                  </div>
+                </div>
+
+                <!-- Look Up a User -->
+                <div class="aw-subsection" id="aw-lookup-user">
+                  <h3 class="aw-subsection-title">Look Up a User</h3>
+                  <p class="aw-text">When a user contacts support, the first step is almost always to look them up. You can search by email address or username. The search is case-insensitive and matches partial strings, so entering "john" will return "john_doe" and "johnny123".</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Go to the Users panel</div>
+                        <div class="aw-text">Click "Users" in the sidebar under the Lookup section. The search bar will appear at the top of the panel.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Enter their email or username and click Search</div>
+                        <div class="aw-text">Type the user's email address or username into the search field and press Enter or click the Search button. Results will appear below.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click "View Details" on a result</div>
+                        <div class="aw-text">Each result card shows the user's email, username, and account status. Click "View Details" to expand their profile and see which communities they belong to, their role in each, and account metadata.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: User Search</div>
+                    <div class="aw-sample-content">
+                      <div class="aw-form-group">
+                        <div style="display:flex; gap:0.5rem;">
+                          <div style="flex:1;"><input class="aw-form-input" value="john_doe@email.com" readonly></div>
+                          <div class="aw-btn aw-btn-accent"><i class="fas fa-search"></i> Search</div>
+                        </div>
+                      </div>
+                      <div style="background:var(--ac-glass); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius-sm); padding:0.875rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <div>
+                            <div style="font-weight:600; color:#fff; font-size:0.85rem;">john_doe</div>
+                            <div style="font-size:0.75rem; color:var(--ac-text-muted);">john_doe@email.com</div>
+                          </div>
+                          <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <span class="aw-badge aw-badge-active">Active</span>
+                            <div class="aw-btn aw-btn-outline" style="font-size:0.75rem; padding:0.35rem 0.75rem;">View Details</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Reset Password -->
+                <div class="aw-subsection" id="aw-reset-password">
+                  <h3 class="aw-subsection-title">Reset a User's Password</h3>
+                  <p class="aw-text">If a user is locked out or has forgotten their password and is unable to use the self-service reset (e.g., they no longer have access to the email on file), you can trigger a password reset from the admin console. This sends a reset link to the user's email address.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Search for the user</div>
+                        <div class="aw-text">Use the Users panel to find their account by email or username.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click "Reset Password"</div>
+                        <div class="aw-text">On the user's result card, click the "Reset Password" button. A confirmation dialog will appear.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Confirm the reset</div>
+                        <div class="aw-text">Click "Confirm" in the dialog. A password reset email is sent to the user's registered email address. They must click the link in that email to set a new password.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">You will <strong>not</strong> see the reset link yourself. The user must complete the password reset from their own email inbox. If they say they did not receive it, ask them to check their spam folder.</div>
+                  </div>
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: Reset Password Card</div>
+                    <div class="aw-sample-content">
+                      <div style="background:var(--ac-glass); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius-sm); padding:0.875rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <div>
+                            <div style="font-weight:600; color:#fff; font-size:0.85rem;">jane_smith</div>
+                            <div style="font-size:0.75rem; color:var(--ac-text-muted);">jane@example.com</div>
+                          </div>
+                          <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <span class="aw-badge aw-badge-active">Active</span>
+                            <div class="aw-btn aw-btn-amber" style="font-size:0.75rem; padding:0.35rem 0.75rem;"><i class="fas fa-key"></i> Reset Password</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Reactivate Account -->
+                <div class="aw-subsection" id="aw-reactivate-account">
+                  <h3 class="aw-subsection-title">Reactivate a Deactivated Account</h3>
+                  <p class="aw-text">Users can deactivate their own accounts, which prevents them from logging in. If a user contacts support asking to get back in, you can reactivate their account from the admin console. Deactivated accounts show a red "DEACTIVATED" badge in search results.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Search for the user</div>
+                        <div class="aw-text">Look them up in the Users panel. Their result card will display a red "DEACTIVATED" badge instead of the green "ACTIVE" badge.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click "Reactivate Account"</div>
+                        <div class="aw-text">This button appears only on deactivated accounts. Click it and confirm when prompted.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Verify the account is active</div>
+                        <div class="aw-text">After confirmation, the badge changes to "ACTIVE" and the user can log in immediately. Let them know they can use their existing password.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: Deactivated Account Card</div>
+                    <div class="aw-sample-content">
+                      <div style="background:var(--ac-glass); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius-sm); padding:0.875rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <div>
+                            <div style="font-weight:600; color:#fff; font-size:0.85rem;">former_user</div>
+                            <div style="font-size:0.75rem; color:var(--ac-text-muted);">former@example.com</div>
+                          </div>
+                          <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <span class="aw-badge aw-badge-deactivated">Deactivated</span>
+                            <div class="aw-btn aw-btn-green" style="font-size:0.75rem; padding:0.35rem 0.75rem;"><i class="fas fa-user-check"></i> Reactivate</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ════════════════════════════════════════════ -->
+              <!-- COMMUNITY MANAGEMENT                         -->
+              <!-- ════════════════════════════════════════════ -->
+              <section class="aw-section">
+                <div class="aw-section-header">
+                  <div class="aw-section-icon"><i class="fas fa-building"></i></div>
+                  <div>
+                    <div class="aw-section-title">Community Management</div>
+                    <div style="font-size:0.8rem; color:var(--ac-text-muted);">Managing communities, ownership transfers, and member removal</div>
+                  </div>
+                </div>
+
+                <!-- Look Up a Community -->
+                <div class="aw-subsection" id="aw-lookup-community">
+                  <h3 class="aw-subsection-title">Look Up a Community</h3>
+                  <p class="aw-text">The Communities panel lets you search for any community by name. Once you find it, you can view its owner, member list, role configuration, departments, and subscription status. This is the starting point for most community-related support actions.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Go to the Communities panel</div>
+                        <div class="aw-text">Click "Communities" in the sidebar under the Lookup section.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Search by community name</div>
+                        <div class="aw-text">Type the community name (or a partial match) into the search field and press Enter. Results show the community name, owner, and member count.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">View community details</div>
+                        <div class="aw-text">Click on a community result to open its detail view. Here you can see the owner's email, total members, role configuration, departments, and subscription information.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: Community Detail Card</div>
+                    <div class="aw-sample-content">
+                      <div style="background:var(--ac-glass); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius); padding:1rem;">
+                        <div style="font-weight:700; color:#fff; font-size:0.95rem; margin-bottom:0.75rem;">Los Santos Police Department</div>
+                        <div class="aw-detail-row">
+                          <span class="aw-detail-label">Owner</span>
+                          <span class="aw-detail-value">chief_admin@email.com</span>
+                        </div>
+                        <div class="aw-detail-row">
+                          <span class="aw-detail-label">Members</span>
+                          <span class="aw-detail-value">47</span>
+                        </div>
+                        <div class="aw-detail-row">
+                          <span class="aw-detail-label">Roles</span>
+                          <span class="aw-detail-value">5 roles configured</span>
+                        </div>
+                        <div class="aw-detail-row">
+                          <span class="aw-detail-label">Subscription</span>
+                          <span class="aw-detail-value" style="color:var(--ac-green);">Pro</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Reset Owner & Roles -->
+                <div class="aw-subsection" id="aw-reset-owner">
+                  <h3 class="aw-subsection-title">Reset Owner &amp; Roles</h3>
+                  <p class="aw-text">This is the most complex admin action. It is used when a community's owner has gone rogue, left without transferring ownership, or when the role structure has been compromised. This action creates a tracked Case (a multi-step workflow) that guides you through the entire process.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click "Reset Owner &amp; Roles" from the community detail view</div>
+                        <div class="aw-text">This creates a new Case and navigates you to the Cases panel. You will see a stepper UI showing all the steps you need to complete.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Step 1: Transfer Ownership</div>
+                        <div class="aw-text">Enter the new owner's email address. The system will verify the user exists and is a member of the community, then transfer ownership to them.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Step 2: Confirm Head Admin Role</div>
+                        <div class="aw-text">Verify that the new owner has been placed in the Head Admin role. The system checks this automatically. If the role assignment looks correct, confirm and proceed.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">4</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Step 3: Review Roles with Administrator Permission</div>
+                        <div class="aw-text">The system lists every role that has the "administrator" permission enabled, along with the members in those roles. Roles with active members other than the new owner are flagged as potentially dangerous. Copy the audit text and paste it into the Discord support channel for the record.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">5</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Step 4 (Optional): Remove the Bad Actor</div>
+                        <div class="aw-text">If the former owner (or another problematic user) should be removed from the community, enter their email here. You can optionally check "Ban from rejoining" to prevent them from being re-invited.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">6</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Step 5: Review Summary</div>
+                        <div class="aw-text">Review a summary of everything that was done: ownership transfer, role audit, and any member removals. Copy the final report to the Discord support channel, then mark the case as complete.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">You do not have to finish all steps in one sitting. Cases save progress automatically. Close the browser and come back later &mdash; pick up right where you left off by clicking "Resume" in the Cases panel.</div>
+                  </div>
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: Case Stepper UI</div>
+                    <div class="aw-sample-content">
+                      <div class="aw-stepper">
+                        <div class="aw-stepper-step done"><i class="fas fa-check" style="margin-right:0.25rem;"></i> Transfer</div>
+                        <div class="aw-stepper-step done"><i class="fas fa-check" style="margin-right:0.25rem;"></i> Head Admin</div>
+                        <div class="aw-stepper-step active"><i class="fas fa-circle" style="font-size:0.4rem; margin-right:0.25rem;"></i> Role Audit</div>
+                        <div class="aw-stepper-step">Remove</div>
+                        <div class="aw-stepper-step">Summary</div>
+                      </div>
+                      <div style="background:var(--ac-glass); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius-sm); padding:0.875rem;">
+                        <div style="font-weight:600; color:#fff; font-size:0.85rem; margin-bottom:0.5rem;">Step 3: Review Administrator Roles</div>
+                        <div style="font-size:0.8rem; color:var(--ac-text-muted); margin-bottom:0.75rem;">The following roles have the administrator permission. Review each one and copy the audit to Discord.</div>
+                        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--ac-glass-border); border-radius:6px; padding:0.6rem 0.75rem; margin-bottom:0.4rem;">
+                          <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:600; color:#fff; font-size:0.82rem;">Head Admin</span>
+                            <span style="font-size:0.7rem; color:var(--ac-green);">1 member (new owner)</span>
+                          </div>
+                        </div>
+                        <div style="background:rgba(239,68,68,0.04); border:1px solid rgba(239,68,68,0.15); border-radius:6px; padding:0.6rem 0.75rem;">
+                          <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:600; color:#fff; font-size:0.82rem;">Co-Owner</span>
+                            <span style="font-size:0.7rem; color:var(--ac-red);">2 members &mdash; review needed</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Remove a Member -->
+                <div class="aw-subsection" id="aw-remove-member">
+                  <h3 class="aw-subsection-title">Remove a Member</h3>
+                  <p class="aw-text">You can remove any member from a community except the owner. If you need to remove the owner, you must first use "Reset Owner &amp; Roles" to transfer ownership to someone else. Removal is immediate and the user will lose access to all community data.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Open the community detail modal</div>
+                        <div class="aw-text">Find the community in the Communities panel and open its detail view.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click "Remove Member"</div>
+                        <div class="aw-text">A form will appear asking for the user's email. If you navigated here from a user search, the email may be pre-filled.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Optionally ban from rejoining</div>
+                        <div class="aw-text">Check the "Ban from rejoining" checkbox if this person should not be able to rejoin the community via invite link or invite code. This is useful for bad actors.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">4</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Confirm removal</div>
+                        <div class="aw-text">Review the details and confirm. The user is removed immediately.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">You <strong>cannot</strong> remove the community owner. If the owner is the problem, use the "Reset Owner &amp; Roles" workflow first to transfer ownership, then remove the former owner in Step 4 of that case.</div>
+                  </div>
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: Remove Member Form</div>
+                    <div class="aw-sample-content">
+                      <div style="background:var(--ac-glass); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius-sm); padding:0.875rem;">
+                        <div class="aw-form-group">
+                          <label class="aw-form-label">User Email</label>
+                          <input class="aw-form-input" value="badactor@example.com" readonly>
+                        </div>
+                        <div style="margin-bottom:0.875rem;">
+                          <label class="aw-checkbox">
+                            <span class="aw-checkbox-box" style="background:var(--ac-accent); border-color:var(--ac-accent); display:inline-flex; align-items:center; justify-content:center;"><i class="fas fa-check" style="font-size:0.5rem; color:#fff;"></i></span>
+                            Ban from rejoining
+                          </label>
+                        </div>
+                        <div class="aw-btn aw-btn-red" style="font-size:0.78rem;"><i class="fas fa-user-minus"></i> Remove Member</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Roles & Permissions -->
+                <div class="aw-subsection" id="aw-roles-permissions">
+                  <h3 class="aw-subsection-title">Roles &amp; Permissions</h3>
+                  <p class="aw-text">Every community has a set of roles that control what members can do. Understanding roles is essential for the "Reset Owner &amp; Roles" workflow and for answering user questions about access control.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-shield-alt" style="font-size:0.6rem;"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">The "administrator" permission</div>
+                        <div class="aw-text">A role with the "administrator" permission grants full control over the community: managing members, editing roles, changing settings, and more. This is the most powerful permission and should be treated with care.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-crown" style="font-size:0.6rem;"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Head Admin role identification</div>
+                        <div class="aw-text">The Head Admin role is not identified by its name &mdash; community owners can rename it to anything. It is identified by its permission structure (specifically, the highest-priority role with the administrator permission). During ownership reset, the system automatically identifies it.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-exclamation-triangle" style="font-size:0.6rem;"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Dangerous roles</div>
+                        <div class="aw-text">During the ownership reset workflow (Step 3), any role that has the "administrator" permission <em>and</em> has active members other than the new owner is flagged as "dangerous." This means those members currently have full control and may need to be reviewed or removed.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">If a user asks "why can't I do X in my community?", the answer is almost always that their role does not have the required permission. Ask them to check with their community owner or Head Admin to adjust role permissions.</div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ════════════════════════════════════════════ -->
+              <!-- CONTENT CREATORS                             -->
+              <!-- ════════════════════════════════════════════ -->
+              <section class="aw-section">
+                <div class="aw-section-header">
+                  <div class="aw-section-icon"><i class="fas fa-video"></i></div>
+                  <div>
+                    <div class="aw-section-title">Content Creators</div>
+                    <div style="font-size:0.8rem; color:var(--ac-text-muted);">Reviewing and managing content creator applications</div>
+                  </div>
+                </div>
+
+                <div class="aw-subsection" id="aw-review-applications">
+                  <h3 class="aw-subsection-title">Review Applications</h3>
+                  <p class="aw-text">Content creators can apply for verified status, which gives them a badge and promotional benefits. Applications arrive in the Content Creators panel and must be reviewed by an admin. Each application includes the creator's channel/platform information and a description of their content.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Go to the Content Creators panel</div>
+                        <div class="aw-text">Click "Content Creators" in the sidebar (this tab is only visible to admins with the appropriate permission). The panel shows applications organized by status.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Filter by status</div>
+                        <div class="aw-text">Use the status filter tabs at the top: Submitted (new, unreviewed), Under Review (being evaluated), Approved, or Rejected. Start with "Submitted" to process new applications.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click an application to review</div>
+                        <div class="aw-text">Open the application detail to see the creator's profile, links to their content, subscriber/follower count, and their pitch. Evaluate whether they meet the program requirements.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">4</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Approve or reject</div>
+                        <div class="aw-text">Click "Approve" to grant verified creator status, or "Reject" and provide a reason. The creator receives an email notification with the decision. Rejected creators can re-apply later.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Check the Dashboard for a quick count of pending applications. If the pending count is above zero, there are applications waiting for review.</div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ════════════════════════════════════════════ -->
+              <!-- CASES                                        -->
+              <!-- ════════════════════════════════════════════ -->
+              <section class="aw-section">
+                <div class="aw-section-header">
+                  <div class="aw-section-icon"><i class="fas fa-briefcase"></i></div>
+                  <div>
+                    <div class="aw-section-title">Cases</div>
+                    <div style="font-size:0.8rem; color:var(--ac-text-muted);">Tracked workflows for complex admin operations</div>
+                  </div>
+                </div>
+
+                <!-- Creating a Case -->
+                <div class="aw-subsection" id="aw-creating-case">
+                  <h3 class="aw-subsection-title">Creating a Case</h3>
+                  <p class="aw-text">Cases are not created manually &mdash; they are created automatically when you initiate an action that requires a multi-step workflow. Currently, the only action that creates a case is "Reset Owner &amp; Roles" from a community detail view.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Trigger the action</div>
+                        <div class="aw-text">From the community detail view, click "Reset Owner &amp; Roles." The system creates a new case with a unique case number (e.g., #1, #2, #3) and navigates you to the Cases panel.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">One case at a time</div>
+                        <div class="aw-text">Only one open case is allowed per community at a time. If a case is already open for that community, you will see a message directing you to resume the existing case instead of creating a new one.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Case numbers are global and auto-incrementing. They are unique across all communities and provide a reliable reference for support discussions.</div>
+                  </div>
+                </div>
+
+                <!-- Resuming a Case -->
+                <div class="aw-subsection" id="aw-resuming-case">
+                  <h3 class="aw-subsection-title">Resuming a Case</h3>
+                  <p class="aw-text">If you need to step away or close your browser before finishing a case, all progress is saved automatically. You can pick up exactly where you left off at any time.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Go to the Cases panel</div>
+                        <div class="aw-text">Click "Cases" in the sidebar. You will see a list of all cases, filterable by status (All, Open, Completed, Cancelled).</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Find the open case and click "Resume"</div>
+                        <div class="aw-text">Open cases show a blue "OPEN" badge. Click "Resume" on the case card. The workflow UI will open at the next incomplete step, with all previously completed steps marked as done.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Progress is saved server-side, not in your browser. Another admin could resume the same case from a different computer if needed (though only one person should work a case at a time to avoid conflicts).</div>
+                  </div>
+                </div>
+
+                <!-- Cancelling a Case -->
+                <div class="aw-subsection" id="aw-cancelling-case">
+                  <h3 class="aw-subsection-title">Cancelling a Case</h3>
+                  <p class="aw-text">Sometimes a case needs to be abandoned &mdash; the support request was resolved another way, or it was opened by mistake. Cancelling a case does not undo any steps that have already been completed (e.g., if ownership was already transferred, that transfer stands).</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click "Cancel" on an open case</div>
+                        <div class="aw-text">From the Cases panel, find the open case and click "Cancel." A dialog will appear asking for a cancellation reason.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Enter a reason (required)</div>
+                        <div class="aw-text">Provide a clear reason for the cancellation. This is required and will be stored with the case for auditing purposes. Examples: "User resolved issue themselves," "Opened in error &mdash; wrong community."</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Confirm cancellation</div>
+                        <div class="aw-text">After confirming, the case status changes to "Cancelled." Cancelled cases are read-only &mdash; they can be viewed for reference but no further steps can be taken.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Cancelling a case frees the community to have a new case opened for it in the future. Remember: completed steps are <strong>not</strong> rolled back.</div>
+                  </div>
+                </div>
+
+                <!-- Viewing Past Cases -->
+                <div class="aw-subsection" id="aw-viewing-past-cases">
+                  <h3 class="aw-subsection-title">Viewing Past Cases</h3>
+                  <p class="aw-text">Completed and cancelled cases serve as an audit trail. You can review what was done, who did it, and when. This is invaluable when a community contacts support again about the same issue, or when you need to verify that a previous action was taken.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Filter by Completed or Cancelled</div>
+                        <div class="aw-text">In the Cases panel, use the filter buttons at the top to show only "Completed" or "Cancelled" cases. Each case card shows the community name, case number, date, and status.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click "View" to see the full summary</div>
+                        <div class="aw-text">Open the case detail to see a complete record of every step: what was done, any data entered, the outcome, and timestamps. For cancelled cases, the cancellation reason is also shown.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Share a direct link</div>
+                        <div class="aw-text">To link a colleague directly to a specific case, share the admin console URL with the hash <code>#cases/N</code> (e.g., <code>/admin-console#cases/5</code>). This will open the admin console and navigate directly to that case.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+            </div><!-- /.aw-content -->
+          </div><!-- /.aw-layout -->
         </div>
 
         <!-- Panel: Content Creators -->
@@ -1604,7 +2446,8 @@
         'content-creators': 'Content Creators',
         'admin-management': 'Admin Management',
         'email': 'Email',
-        'metrics': 'Metrics'
+        'metrics': 'Metrics',
+        'wiki': 'Wiki'
       };
 
       // Data-load callbacks for lazy-loaded panels
@@ -1613,7 +2456,8 @@
         'admin-management': function() { if (typeof loadAllAdmins === 'function') loadAllAdmins(); },
         'content-creators': function() { if (typeof loadCCApplications === 'function') { loadCCApplications(); loadCCStats(); } },
         'metrics': function() { loadMetricsPanel(); },
-        'cases': function() { loadCases(''); }
+        'cases': function() { loadCases(''); },
+        'wiki': function() { initAdminWiki(); }
       };
 
       // Track which panels have been loaded
@@ -6955,6 +7799,87 @@
             }
           }
         });
+      }
+
+      // =====================================================
+      // ADMIN WIKI
+      // =====================================================
+      function initAdminWiki() {
+        updateAdminWikiActiveLink();
+      }
+
+      function filterAdminWiki(query) {
+        var q = query.toLowerCase().trim();
+        var sidebar = document.getElementById('aw-sidebar');
+        if (!sidebar) return;
+        var groups = sidebar.querySelectorAll('.aw-nav-group-title');
+        var links = sidebar.querySelectorAll('.aw-nav-link');
+
+        if (!q) {
+          groups.forEach(function(g) { g.style.display = ''; });
+          links.forEach(function(l) { l.style.display = ''; });
+          return;
+        }
+
+        var visibleGroups = new Set();
+        links.forEach(function(link) {
+          var text = link.textContent.toLowerCase();
+          var prev = link.previousElementSibling;
+          while (prev && !prev.classList.contains('aw-nav-group-title')) {
+            prev = prev.previousElementSibling;
+          }
+          var groupText = prev ? prev.textContent.toLowerCase() : '';
+
+          if (text.indexOf(q) !== -1 || groupText.indexOf(q) !== -1) {
+            link.style.display = '';
+            if (prev) visibleGroups.add(prev);
+          } else {
+            link.style.display = 'none';
+          }
+        });
+
+        groups.forEach(function(g) {
+          g.style.display = visibleGroups.has(g) ? '' : 'none';
+        });
+      }
+
+      function updateAdminWikiActiveLink() {
+        var content = document.getElementById('aw-content');
+        if (!content) return;
+
+        var links = document.querySelectorAll('.aw-nav-link');
+        var subsections = content.querySelectorAll('.aw-subsection[id]');
+
+        // Click handlers for smooth scrolling
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            e.preventDefault();
+            var target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          });
+        });
+
+        // Scroll spy
+        function onScroll() {
+          var scrollY = window.scrollY + 200;
+          var current = '';
+          subsections.forEach(function(section) {
+            if (section.offsetTop <= scrollY) {
+              current = section.id;
+            }
+          });
+          links.forEach(function(link) {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === '#' + current) {
+              link.classList.add('active');
+            }
+          });
+        }
+
+        window.addEventListener('scroll', onScroll);
+        onScroll();
       }
 
     </script>
