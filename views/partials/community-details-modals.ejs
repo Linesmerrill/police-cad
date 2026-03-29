@@ -1541,24 +1541,8 @@ async function handleCommunityImageUpload(event) {
   }
 
   try {
-    // Upload to Cloudinary
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', window.CLOUDINARY_UPLOAD_PRESET);
-
-    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${window.CLOUDINARY_CLOUD_NAME}/image/upload`;
-
-    const uploadResponse = await fetch(cloudinaryUrl, {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!uploadResponse.ok) {
-      throw new Error('Failed to upload image');
-    }
-
-    const uploadData = await uploadResponse.json();
-    const imageUrl = uploadData.secure_url;
+    // Upload to Cloudinary using signed upload helper
+    const imageUrl = await uploadToCloudinary(file, 'communities', `community_<%= community._id %>`);
 
     // Update community with new image
     const communityId = '<%= community._id %>';
