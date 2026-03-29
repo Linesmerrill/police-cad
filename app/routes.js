@@ -1714,6 +1714,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         departmentId: departmentId || req.session.departmentId || null,
         departmentName: departmentName,
         communityName: communityName,
+        apiUrl: policeCadApiUrl,
       });
     } catch (error) {
       console.error('🚨 Error in ems-dashboard route:', error);
