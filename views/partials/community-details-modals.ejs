@@ -11944,7 +11944,20 @@ async function saveEditEvent() {
         
         if (canManageMembers || isOwner) {
           // Don't allow actions on yourself
-          if (member._id !== '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>') {
+          if (member._id === '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>') {
+            actionsContainer.innerHTML = `
+              <div style="color:#a0aec0; font-style:italic; padding:1rem;">
+                You cannot perform actions on yourself.
+              </div>
+            `;
+          // Don't allow kicking/banning the community owner
+          } else if (member._id === '<%= community.community.ownerID %>') {
+            actionsContainer.innerHTML = `
+              <div style="color:#a0aec0; font-style:italic; padding:1rem;">
+                You cannot kick or ban the community owner.
+              </div>
+            `;
+          } else {
             actionsContainer.innerHTML = `
               <button onclick="kickMember('${member._id}')" style="background:#f59e0b; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
                 <i class="fa fa-user-times" style="margin-right:0.5rem;"></i>
@@ -11960,12 +11973,6 @@ async function saveEditEvent() {
                   Transfer Ownership
                 </button>
               ` : ''}
-            `;
-          } else {
-            actionsContainer.innerHTML = `
-              <div style="color:#a0aec0; font-style:italic; padding:1rem;">
-                You cannot perform actions on yourself.
-              </div>
             `;
           }
         } else {
