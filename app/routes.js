@@ -4237,6 +4237,28 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Update user online status (proxy to Go backend)
+  // PUT for normal requests, POST for sendBeacon (which only supports POST)
+  async function handleOnlineStatus(req, res) {
+    try {
+      const response = await axios.put(`${policeCadApiUrl}/api/v1/user/online-status`, req.body, {
+        headers: {
+          ...config.headers,
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to update online status" });
+      }
+    }
+  }
+  app.put("/api/v1/user/online-status", apiAuthCheck, handleOnlineStatus);
+  app.post("/api/v1/user/online-status", apiAuthCheck, handleOnlineStatus);
+
   // ===========================================
   // END CONTENT CREATOR API ROUTES
   // ===========================================
