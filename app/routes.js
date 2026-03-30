@@ -1685,10 +1685,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
       try {
         const vehiclesResponse = await axios.get(
-          `${policeCadApiUrl}/api/v1/emsVehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`,
+          `${policeCadApiUrl}/api/v1/ems-vehicles?user_id=${req.session.passport.user}&active_community_id=${req.user.user.activeCommunity}`,
           config
         );
-        dbEmsVehicles = vehiclesResponse.data;
+        dbEmsVehicles = vehiclesResponse.data.vehicles || vehiclesResponse.data;
       } catch (err) {
         console.error('Error fetching EMS vehicles:', err);
       }
@@ -1714,6 +1714,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         departmentId: departmentId || req.session.departmentId || null,
         departmentName: departmentName,
         communityName: communityName,
+        apiUrl: policeCadApiUrl,
       });
     } catch (error) {
       console.error('🚨 Error in ems-dashboard route:', error);
