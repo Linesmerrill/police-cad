@@ -1677,7 +1677,7 @@
         url: conf.API_URL + '/api/v2/court-cases',
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify(payload),
+        data: JSON.stringify({ courtCase: payload }),
         success: function () {
           $('#dd-contest-overlay').remove();
           toast('Contest submitted — a judge will review your case.', 'success');
