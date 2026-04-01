@@ -7058,13 +7058,15 @@ module.exports = function (app, passport, server, nextApp, handle) {
       // Broadcast panic_button_updated to match existing socket event format
       const panicMap = {};
       panicMap[data.userId] = data;
-      io.to(roomName).emit("panic_button_updated", panicMap, {
+      const panicReq = {
         userID: data.userId,
         userUsername: data.username,
         activeCommunity: communityId,
         callSign: data.callSign || "",
         departmentType: data.departmentType || "police",
-      });
+      };
+      if (data.panicSoundUrl) panicReq.panicSoundUrl = data.panicSoundUrl;
+      io.to(roomName).emit("panic_button_updated", panicMap, panicReq);
     } else if (event === "panic_cleared") {
       io.to(roomName).emit("cleared_panic", {
         userID: data.userId,
@@ -7073,13 +7075,15 @@ module.exports = function (app, passport, server, nextApp, handle) {
         clearedBy: data.clearedBy,
       });
     } else if (event === "signal_100_activated") {
-      io.to(roomName).emit("signal_100_button_updated", {
+      const signal100Data = {
         activeCommunity: communityId,
         activatedByUserId: data.userId,
         activatedByUsername: data.username,
         activatedByCallSign: data.callSign || "",
         activatedByDepartment: data.departmentType || "",
-      });
+      };
+      if (data.signal100SoundUrl) signal100Data.signal100SoundUrl = data.signal100SoundUrl;
+      io.to(roomName).emit("signal_100_button_updated", signal100Data);
     } else if (event === "signal_100_cleared") {
       io.to(roomName).emit("clear_signal_100_updated", {
         activeCommunity: communityId,
@@ -7088,7 +7092,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         clearedByCallSign: data.callSign || "",
       });
     } else if (event === "tone_activated") {
-      io.to(roomName).emit("tone_activated", {
+      const toneData = {
         toneType: data.toneType,
         toneName: data.toneName,
         targetDeptIds: data.targetDeptIds,
@@ -7096,7 +7100,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
         triggeredByCallSign: data.triggeredByCallSign,
         communityId: communityId,
         createdAt: data.createdAt,
-      });
+      };
+      if (data.toneSoundUrl) toneData.toneSoundUrl = data.toneSoundUrl;
+      io.to(roomName).emit("tone_activated", toneData);
     }
 
     res.json({ success: true, event: event, communityId: communityId });

@@ -366,7 +366,13 @@
     alertSocket.on('signal_100_button_updated', function (data) {
       if (!data || data.activeCommunity !== communityId) return;
 
-      if (window.AlertSounds) window.AlertSounds.play('signal100');
+      if (window.AlertSounds) {
+        if (data.signal100SoundUrl) {
+          window.AlertSounds.playUrl(data.signal100SoundUrl);
+        } else {
+          window.AlertSounds.play('signal100');
+        }
+      }
 
       var parts = [];
       if (data.activatedByCallSign) parts.push(data.activatedByCallSign);
@@ -391,7 +397,13 @@
     /* ── Panic activated ── */
     alertSocket.on('panic_button_updated', function (data) {
       if (data && data.activeCommunity && data.activeCommunity !== communityId) return;
-      if (window.AlertSounds) window.AlertSounds.play('panic');
+      if (window.AlertSounds) {
+        if (data && data.panicSoundUrl) {
+          window.AlertSounds.playUrl(data.panicSoundUrl);
+        } else {
+          window.AlertSounds.play('panic');
+        }
+      }
       fetchPanicAlerts();
     });
 

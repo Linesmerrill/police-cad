@@ -548,13 +548,12 @@
 
           <% if (canViewAuditLogs) { %>
             <div id="toneSettingsCard" onclick="openToneSettingsModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; position:relative;">
-              <span style="position:absolute; top:0.5rem; right:0.5rem; background:#7c3aed; color:#fff; font-size:0.65rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:9999px; text-transform:uppercase; letter-spacing:0.05em;">Beta</span>
               <div style="text-align:center;">
                 <div style="margin-bottom:0.5rem;">
                   <i class="fa fa-volume-high" style="font-size:2rem; color:#a855f7;"></i>
                 </div>
-                <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Tone Settings</h5>
-                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage dispatch alert tones</p>
+                <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Sound Settings</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage community alert sounds</p>
               </div>
             </div>
           <% } %>
@@ -14269,14 +14268,27 @@ async function saveEditEvent() {
         <!-- Header -->
         <div style="text-align:center; margin-bottom:1.5rem;">
           <i class="fa fa-volume-high" style="font-size:3rem; color:#a855f7; margin-bottom:1rem;"></i>
-          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Tone Settings</h3>
-          <p style="color:#a0aec0; margin:0.5rem 0 0 0;">Upload custom tones and set department defaults</p>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Sound Settings</h3>
+          <p style="color:#a0aec0; margin:0.5rem 0 0 0;">Manage alert sounds and dispatch tones</p>
         </div>
 
-        <!-- Template Defaults Section -->
+        <!-- Alert Sounds Section -->
         <div style="margin-bottom:2rem;">
           <h4 style="color:#fff; font-size:1.1rem; font-weight:600; margin:0 0 0.75rem 0;">
-            <i class="fa fa-sliders" style="color:#a855f7; margin-right:0.5rem;"></i>Template Defaults
+            <i class="fa fa-bell" style="color:#ef4444; margin-right:0.5rem;"></i>Alert Sounds
+          </h4>
+          <p style="color:#9ca3af; font-size:0.8rem; margin:0 0 1rem 0;">Set custom sounds for emergency alerts. Leave as built-in to use the default sound.</p>
+          <div id="alertSoundsList" style="display:flex; flex-direction:column; gap:0.75rem;">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid #35385a; margin:1.5rem 0;">
+
+        <!-- Dispatch Tones Section -->
+        <div style="margin-bottom:2rem;">
+          <h4 style="color:#fff; font-size:1.1rem; font-weight:600; margin:0 0 0.75rem 0;">
+            <i class="fa fa-sliders" style="color:#a855f7; margin-right:0.5rem;"></i>Dispatch Tones
           </h4>
           <p style="color:#9ca3af; font-size:0.8rem; margin:0 0 1rem 0;">Set the default alert tone for each department type. Departments can still override individually.</p>
           <div id="toneDefaultsList" style="display:flex; flex-direction:column; gap:0.75rem;">
@@ -14335,7 +14347,7 @@ async function saveEditEvent() {
 
     <script>
     (function() {
-      var toneSettingsData = { sounds: [], defaults: { leo: '', fd: '', ems: '' } };
+      var toneSettingsData = { sounds: [], defaults: { leo: '', fd: '', ems: '', panic: '', signal100: '' } };
       var tonePreviewAudio = null;
       var pendingDeleteKey = null;
       var pendingDeleteName = null;
@@ -14390,7 +14402,8 @@ async function saveEditEvent() {
           success: function(res) {
             if (res.success) {
               toneSettingsData.sounds = res.sounds || [];
-              toneSettingsData.defaults = res.defaults || { leo: '', fd: '', ems: '' };
+              toneSettingsData.defaults = res.defaults || { leo: '', fd: '', ems: '', panic: '', signal100: '' };
+              renderAlertSounds();
               renderTemplateDefaults();
               renderCustomTones();
             }
@@ -14407,10 +14420,74 @@ async function saveEditEvent() {
         ems: { name: 'Built-in EMS Tone', url: '/static/audio/Tone_ems_alert.mp3' }
       };
 
+      var BUILTIN_ALERTS = {
+        panic: { name: 'Built-in Panic Sound', url: '/static/audio/Police_panic_button_sound_adj.mp3' },
+        signal100: { name: 'Built-in Signal 100 Sound', url: '/static/audio/Dispatch_signal_100_beep_adj.mp3' }
+      };
+
+      var ALERT_LABELS = {
+        panic: { name: 'Panic Button', color: '#ef4444', icon: 'fa-triangle-exclamation' },
+        signal100: { name: 'Signal 100', color: '#f59e0b', icon: 'fa-tower-broadcast' }
+      };
+
       var TEMPLATE_LABELS = {
         leo: { name: 'LEO (Police)', color: '#3b82f6', icon: 'fa-shield-halved' },
         fd: { name: 'Fire Department', color: '#ef4444', icon: 'fa-fire' },
         ems: { name: 'EMS', color: '#22c55e', icon: 'fa-truck-medical' }
+      };
+
+      function renderAlertSounds() {
+        var container = document.getElementById('alertSoundsList');
+        if (!container) return;
+        var html = '';
+
+        ['panic', 'signal100'].forEach(function(alertType) {
+          var label = ALERT_LABELS[alertType];
+          var currentKey = toneSettingsData.defaults[alertType] || '';
+          var currentName = BUILTIN_ALERTS[alertType].name;
+          var currentUrl = BUILTIN_ALERTS[alertType].url;
+
+          if (currentKey) {
+            var found = toneSettingsData.sounds.find(function(s) { return s.key === currentKey; });
+            if (found) {
+              currentName = found.name;
+              currentUrl = found.url;
+            } else {
+              currentName = 'Unknown (reset recommended)';
+              currentUrl = '';
+            }
+          }
+
+          var options = '<option value="">Built-in Default</option>';
+          toneSettingsData.sounds.forEach(function(s) {
+            var selected = s.key === currentKey ? ' selected' : '';
+            options += '<option value="' + s.key + '"' + selected + '>' + escapeHtml(s.name) + '</option>';
+          });
+
+          html += '<div style="display:flex; align-items:center; gap:0.75rem; background:#2d3748; border-radius:10px; padding:0.75rem 1rem;">';
+          html += '<i class="fa ' + label.icon + '" style="color:' + label.color + '; font-size:1.2rem; width:1.5rem; text-align:center;"></i>';
+          html += '<div style="flex:1; min-width:0;">';
+          html += '<div style="color:#fff; font-size:0.9rem; font-weight:500;">' + label.name + '</div>';
+          html += '<div style="color:#9ca3af; font-size:0.75rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Current: ' + escapeHtml(currentName) + '</div>';
+          html += '</div>';
+          html += '<button onclick="previewAlertSound(\'' + alertType + '\')" style="background:none; border:none; color:#a855f7; cursor:pointer; font-size:1rem; padding:0.25rem;" title="Preview"><i class="fa fa-play"></i></button>';
+          html += '<select onchange="setToneDefault(\'' + alertType + '\', this.value)" style="background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; padding:0.4rem 0.5rem; font-size:0.8rem; max-width:160px;">';
+          html += options;
+          html += '</select>';
+          html += '</div>';
+        });
+
+        container.innerHTML = html;
+      }
+
+      window.previewAlertSound = function(alertType) {
+        var key = toneSettingsData.defaults[alertType] || '';
+        var url = BUILTIN_ALERTS[alertType].url;
+        if (key) {
+          var found = toneSettingsData.sounds.find(function(s) { return s.key === key; });
+          if (found) url = found.url;
+        }
+        previewTone(url);
       };
 
       function renderTemplateDefaults() {
@@ -14482,8 +14559,10 @@ async function saveEditEvent() {
           success: function(res) {
             if (res.success) {
               toneSettingsData.defaults[tmpl] = soundKey;
+              renderAlertSounds();
               renderTemplateDefaults();
-              showToneSuccess('Default updated for ' + TEMPLATE_LABELS[tmpl].name);
+              var labelName = TEMPLATE_LABELS[tmpl] ? TEMPLATE_LABELS[tmpl].name : (ALERT_LABELS[tmpl] ? ALERT_LABELS[tmpl].name : tmpl);
+              showToneSuccess('Default updated for ' + labelName);
             }
           },
           error: function() {
@@ -14529,7 +14608,8 @@ async function saveEditEvent() {
             if (res.success) {
               var s = toneSettingsData.sounds.find(function(s) { return s.key === key; });
               if (s) s.name = newName.trim();
-              renderTemplateDefaults(); // Update dropdown labels
+              renderAlertSounds();
+              renderTemplateDefaults();
               showToneSuccess('Tone renamed');
             }
           },
@@ -14571,10 +14651,11 @@ async function saveEditEvent() {
           success: function(res) {
             if (res.success) {
               toneSettingsData.sounds = toneSettingsData.sounds.filter(function(s) { return s.key !== key; });
-              ['leo', 'fd', 'ems'].forEach(function(tmpl) {
+              ['leo', 'fd', 'ems', 'panic', 'signal100'].forEach(function(tmpl) {
                 if (toneSettingsData.defaults[tmpl] === key) toneSettingsData.defaults[tmpl] = '';
               });
               renderCustomTones();
+              renderAlertSounds();
               renderTemplateDefaults();
               showToneSuccess('Tone deleted');
             }
@@ -14654,6 +14735,7 @@ async function saveEditEvent() {
           if (saveRes.success) {
             toneSettingsData.sounds.push(saveRes.sound);
             renderCustomTones();
+            renderAlertSounds();
             renderTemplateDefaults();
             showToneSuccess('Tone "' + toneName + '" uploaded successfully');
           }

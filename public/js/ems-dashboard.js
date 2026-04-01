@@ -429,7 +429,11 @@ function initializeSocket() {
   socket.on('panic_button_updated', function(map, origReq) {
     if (origReq && origReq.activeCommunity && dbUser.user?.lastAccessedCommunity?.communityID !== origReq.activeCommunity) return;
 
-    AlertSounds.play('panic');
+    if (origReq && origReq.panicSoundUrl) {
+      AlertSounds.playUrl(origReq.panicSoundUrl);
+    } else {
+      AlertSounds.play('panic');
+    }
 
     // Refresh panic alerts from API (styled banners)
     loadPanicStatusesAjax();
@@ -470,7 +474,11 @@ function initializeSocket() {
   socket.on('signal_100_button_updated', function(data) {
     if (data.activeCommunity && data.activeCommunity !== communityId) return;
 
-    AlertSounds.play('signal100');
+    if (data.signal100SoundUrl) {
+      AlertSounds.playUrl(data.signal100SoundUrl);
+    } else {
+      AlertSounds.play('signal100');
+    }
 
     // Update the banner with details
     updateSignal100Banner(data);
