@@ -829,7 +829,7 @@
 
       var payload = {
         arrestReport: {
-          reportNumber: reportNum,
+          reportNumber: String(reportNum),
           arrestDate: document.getElementById('cd-af-arr-date').value || today,
           arrestTime: document.getElementById('cd-af-arr-time').value || now,
           arrestLocation: arrestLoc,
@@ -873,7 +873,7 @@
         },
         error: function (xhr) {
           var msg = 'Failed to submit arrest report';
-          try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e) {}
+          try { var body = JSON.parse(xhr.responseText); msg = (body.response && body.response.message) || body.message || msg; } catch (e) {}
           toast(msg, 'error');
           setSubmitting(false);
         }
