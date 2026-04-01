@@ -367,6 +367,19 @@
       '  border-bottom: 1px solid var(--cd-glass-border, rgba(255,255,255,0.06));',
       '}',
 
+      /* Inline validation error */
+      '.cd-af-error-banner {',
+      '  background: rgba(239,68,68,0.12);',
+      '  border: 1px solid rgba(239,68,68,0.3);',
+      '  border-radius: 6px;',
+      '  padding: 8px 12px;',
+      '  margin-bottom: 10px;',
+      '  font-size: 13px;',
+      '  color: #fca5a5;',
+      '  display: flex; align-items: center; gap: 8px;',
+      '}',
+      '.cd-af-error-banner i { color: #ef4444; flex-shrink: 0; }',
+
       /* Responsive */
       '@media (max-width: 480px) {',
       '  .cd-af-panel { width: 100%; }',
@@ -441,6 +454,21 @@
 
   function onEscKey(e) {
     if (e.key === 'Escape' || e.keyCode === 27) closePanel();
+  }
+
+  function showPanelError(msg) {
+    clearPanelError();
+    var footer = document.querySelector('.cd-af-footer');
+    if (!footer) return;
+    var banner = document.createElement('div');
+    banner.className = 'cd-af-error-banner';
+    banner.innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + esc(msg);
+    footer.insertBefore(banner, footer.firstChild);
+  }
+
+  function clearPanelError() {
+    var existing = document.querySelectorAll('.cd-af-error-banner');
+    for (var i = 0; i < existing.length; i++) existing[i].remove();
   }
 
   function setSubmitting(busy) {
@@ -605,8 +633,9 @@
     var panel = document.getElementById('cd-af-panel');
     panel.querySelector('.cd-af-btn-cancel').addEventListener('click', closePanel);
     panel.querySelector('.cd-af-btn-submit').addEventListener('click', function () {
+      clearPanelError();
       var sel = getSelected();
-      if (!sel.length) { toast('Select at least one violation', 'error'); return; }
+      if (!sel.length) { showPanelError('Select at least one violation'); return; }
       if (submitting) return;
 
       var fines = [];
@@ -638,8 +667,8 @@
         },
         error: function (xhr) {
           var msg = 'Failed to issue citation';
-          try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e) {}
-          toast(msg, 'error');
+          try { var body = JSON.parse(xhr.responseText); msg = (body.response && body.response.message) || body.message || msg; } catch (e) {}
+          showPanelError(msg);
           setSubmitting(false);
         }
       });
@@ -666,8 +695,9 @@
     var panel = document.getElementById('cd-af-panel');
     panel.querySelector('.cd-af-btn-cancel').addEventListener('click', closePanel);
     panel.querySelector('.cd-af-btn-submit').addEventListener('click', function () {
+      clearPanelError();
       var reason = (document.getElementById('cd-af-warn-reason').value || '').trim();
-      if (!reason) { toast('Warning reason is required', 'error'); return; }
+      if (!reason) { showPanelError('Warning reason is required'); return; }
       if (submitting) return;
 
       var c = cfg();
@@ -694,8 +724,8 @@
         },
         error: function (xhr) {
           var msg = 'Failed to issue warning';
-          try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e) {}
-          toast(msg, 'error');
+          try { var body = JSON.parse(xhr.responseText); msg = (body.response && body.response.message) || body.message || msg; } catch (e) {}
+          showPanelError(msg);
           setSubmitting(false);
         }
       });
@@ -808,18 +838,25 @@
     var panel = document.getElementById('cd-af-panel');
     panel.querySelector('.cd-af-btn-cancel').addEventListener('click', closePanel);
     panel.querySelector('.cd-af-btn-submit').addEventListener('click', function () {
+      clearPanelError();
       var arrestLoc = (document.getElementById('cd-af-arr-loc').value || '').trim();
       var narrative = (document.getElementById('cd-af-arr-narrative').value || '').trim();
       var sel = getSelected();
 
-      if (!arrestLoc) { toast('Arrest location is required', 'error'); return; }
-      if (!sel.length) { toast('Select at least one charge', 'error'); return; }
-      if (!narrative) { toast('Narrative is required', 'error'); return; }
-      if (narrative.length > 500) { toast('Narrative exceeds 500 characters', 'error'); return; }
-      if (submitting) return;
+      var errors = [];
+      if (!arrestLoc) errors.push('Arrest location');
+      if (!sel.length) errors.push('At least one charge');
+      if (!narrative) errors.push('Narrative');
+      if (narrative && narrative.length > 500) errors.push('Narrative exceeds 500 characters');
 
       var witnesses = (document.getElementById('cd-af-arr-witnesses').value || '').trim();
-      if (witnesses.length > 500) { toast('Witnesses field exceeds 500 characters', 'error'); return; }
+      if (witnesses.length > 500) errors.push('Witnesses exceeds 500 characters');
+
+      if (errors.length) {
+        showPanelError('Required: ' + errors.join(', '));
+        return;
+      }
+      if (submitting) return;
 
       var chargeNames = [];
       for (var i = 0; i < sel.length; i++) chargeNames.push(sel[i].name);
@@ -829,7 +866,7 @@
 
       var payload = {
         arrestReport: {
-          reportNumber: reportNum,
+          reportNumber: String(reportNum),
           arrestDate: document.getElementById('cd-af-arr-date').value || today,
           arrestTime: document.getElementById('cd-af-arr-time').value || now,
           arrestLocation: arrestLoc,
@@ -873,8 +910,8 @@
         },
         error: function (xhr) {
           var msg = 'Failed to submit arrest report';
-          try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e) {}
-          toast(msg, 'error');
+          try { var body = JSON.parse(xhr.responseText); msg = (body.response && body.response.message) || body.message || msg; } catch (e) {}
+          showPanelError(msg);
           setSubmitting(false);
         }
       });
@@ -931,14 +968,17 @@
     var panel = document.getElementById('cd-af-panel');
     panel.querySelector('.cd-af-btn-cancel').addEventListener('click', closePanel);
     panel.querySelector('.cd-af-btn-submit').addEventListener('click', function () {
+      clearPanelError();
       var warrantType = typeSelect.value;
       var cause = (document.getElementById('cd-af-war-cause').value || '').trim();
       var searchLoc = (document.getElementById('cd-af-war-search-loc').value || '').trim();
       var sel = getSelected();
 
-      if (!sel.length) { toast('Select at least one charge', 'error'); return; }
-      if (!cause) { toast('Probable cause is required', 'error'); return; }
-      if (warrantType === 'search' && !searchLoc) { toast('Search location is required for search warrants', 'error'); return; }
+      var errors = [];
+      if (!sel.length) errors.push('At least one charge');
+      if (!cause) errors.push('Probable cause');
+      if (warrantType === 'search' && !searchLoc) errors.push('Search location');
+      if (errors.length) { showPanelError('Required: ' + errors.join(', ')); return; }
       if (submitting) return;
 
       /* Split civilian name into first/last */
@@ -977,8 +1017,8 @@
         },
         error: function (xhr) {
           var msg = 'Failed to submit warrant request';
-          try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e) {}
-          toast(msg, 'error');
+          try { var body = JSON.parse(xhr.responseText); msg = (body.response && body.response.message) || body.message || msg; } catch (e) {}
+          showPanelError(msg);
           setSubmitting(false);
         }
       });

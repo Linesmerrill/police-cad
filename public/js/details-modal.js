@@ -1066,6 +1066,69 @@ $(document).ready(function () {
 
   // Handle arrest report submission
   function submitArrestReport() {
+    // Client-side validation with visual feedback
+    var requiredFields = [
+      { id: "#arrest-report-date", label: "Date of Arrest" },
+      { id: "#arrest-report-time", label: "Arrest Time" },
+      { id: "#arrest-location", label: "Arrest Location" },
+      { id: "#arrest-report-incident-date", label: "Date of Incident" },
+      { id: "#arrest-report-incident-time", label: "Incident Time" },
+      { id: "#incident-location", label: "Incident Location" },
+      { id: "#arrest-civ-first-name", label: "Arrestee Name" },
+      { id: "#arrest-civ-dob", label: "Date of Birth" },
+      { id: "#arrest-civ-address", label: "Address" },
+      { id: "#arrest-civ-height", label: "Height" },
+      { id: "#arrest-civ-weight", label: "Weight" },
+      { id: "#arrest-civ-eyes", label: "Eye Color" },
+      { id: "#arrest-civ-hair", label: "Hair Color" },
+      { id: "#detail", label: "Narrative of Events" },
+      { id: "#actions-taken", label: "Witnesses" },
+    ];
+
+    // Clear previous validation styles
+    $("#arrestModal .form-control").css("border-color", "");
+    $("#arrestModal .arrest-validation-error").remove();
+
+    var missingFields = [];
+    requiredFields.forEach(function (field) {
+      if (!$(field.id).val() || $(field.id).val().trim() === "") {
+        $(field.id).css("border-color", "#e74c3c");
+        missingFields.push(field.label);
+      }
+    });
+
+    // Validate charges (multi-select)
+    var charges = ($("#arrest-civ-charges").val() || []).filter(function(c) { return c !== 'Other'; });
+    if (charges.length === 0) {
+      $("#arrest-civ-charges").closest(".form-group").find(".select2-container, select").css("border-color", "#e74c3c");
+      missingFields.push("Charges");
+    }
+
+    // Validate force used dropdown
+    if (!$("#forceUsed").val()) {
+      $("#forceUsed").css("border-color", "#e74c3c");
+      missingFields.push("Force Used");
+    }
+
+    // Validate civilian ID (set from search)
+    if (!$("#civIDArrest").val()) {
+      missingFields.push("Civilian (search and select a civilian first)");
+    }
+
+    if (missingFields.length > 0) {
+      var errorHtml = '<div class="alert alert-danger arrest-validation-error" style="margin-top:10px;">' +
+        '<strong>Please fill in the following required fields:</strong><ul style="margin-bottom:0;padding-left:20px;">' +
+        missingFields.map(function(f) { return '<li>' + f + '</li>'; }).join('') +
+        '</ul></div>';
+      $("#arrestModal #submitArrestReport").before(errorHtml);
+      // Scroll to first invalid field
+      var firstInvalid = $("#arrestModal .form-control[style*='border-color']").first();
+      if (firstInvalid.length) {
+        firstInvalid[0].scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+
     var activeDeptId = (typeof departmentId !== 'undefined') ? departmentId : null;
     const formData = {
       arrestReport: {
@@ -1091,11 +1154,11 @@ $(document).ready(function () {
           name: $("#reporting-officer").val(),
           badgeNumber: dbUser.user.callSign || "Unknown",
         },
-        charges: ($("#arrest-civ-charges").val() || []).filter(function(c) { return c !== 'Other'; }).join(", "),
+        charges: charges.join(", "),
         narrative: $("#detail").val(),
         witnesses: $("#actions-taken").val(),
         forceUsed: $("#forceUsed").val() === "Yes",
-        attachedForms: [], // Placeholder; extend if forms are added
+        attachedForms: [],
         departmentId: activeDeptId,
       },
     };
@@ -1112,10 +1175,14 @@ $(document).ready(function () {
       },
       error: function (xhr) {
         console.error("Error creating arrest report:", xhr.responseText);
-        alert(
-          "Failed to create arrest report: " +
-            (xhr.responseJSON?.message || "Unknown error")
-        );
+        var errorMsg = xhr.responseJSON?.response?.message ||
+          xhr.responseJSON?.message ||
+          "Unknown error";
+        var errorHtml = '<div class="alert alert-danger arrest-validation-error" style="margin-top:10px;">' +
+          '<strong>Failed to create arrest report:</strong> ' + $('<span>').text(errorMsg).html() +
+          '</div>';
+        $("#arrestModal .arrest-validation-error").remove();
+        $("#arrestModal #submitArrestReport").before(errorHtml);
       },
     });
   }

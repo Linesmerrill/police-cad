@@ -339,7 +339,7 @@ function saveNote(noteData) {
       },
       error: function(xhr) {
         console.error('Error creating note:', xhr.responseText);
-        alert('Failed to create note: ' + (xhr.responseJSON?.Response?.Message || 'Unknown error'));
+        alert('Failed to create note: ' + (xhr.responseJSON?.response?.message || 'Unknown error'));
       }
     });
   }
