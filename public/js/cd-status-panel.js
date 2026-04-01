@@ -285,6 +285,10 @@
      ─────────────────────────────────────────── */
 
   function sendSignal100() {
+    // Play sound immediately so the triggering user hears it without
+    // waiting for the Go API → webhook → Socket.IO round-trip.
+    if (window.AlertSounds) window.AlertSounds.play('signal100');
+
     $.ajax({
       url: apiUrl() + '/api/v1/community/' + encodeURIComponent(cfg().communityId) + '/signal-100',
       method: 'POST',
@@ -302,6 +306,10 @@
   }
 
   function sendPanic() {
+    // Play sound immediately so the triggering user hears it without
+    // waiting for the Go API → webhook → Socket.IO round-trip.
+    if (window.AlertSounds) window.AlertSounds.play('panic');
+
     $.ajax({
       url: apiUrl() + '/api/v1/community/' + encodeURIComponent(cfg().communityId) + '/panic-alerts',
       method: 'POST',
