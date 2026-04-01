@@ -4483,6 +4483,7 @@
   <script type="text/javascript">
     // all global router vars declared here to reduce duplication
     var dbUser = <%-JSON.stringify(user)%>;
+    window.dbUser = dbUser;
     var dbVehicles = <%-JSON.stringify(vehicles)%>;
     var departmentId = <%- JSON.stringify(departmentId || null) %>;
     var departmentName = <%- JSON.stringify(departmentName || null) %>;
