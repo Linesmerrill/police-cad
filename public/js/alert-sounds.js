@@ -43,22 +43,21 @@ window.AlertSounds = (function() {
   }
 
   // Warm up audio on first user interaction.
-  // Creates a temporary silent Audio element and plays it to unlock
-  // the browser's autoplay policy for the AudioContext.
+  // Plays each pre-loaded Audio at volume 0 to unlock the browser's
+  // autoplay policy for that element, then pauses and rewinds.
   function warmUp() {
     if (warmedUp) return;
     warmedUp = true;
 
-    // Play a brief silent audio to unlock the browser AudioContext
-    // without touching the cached elements (avoids race conditions
-    // where a .then(pause) could kill real playback that starts
-    // in the same click event).
-    try {
-      var silent = new Audio();
-      silent.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';
-      silent.volume = 0;
-      silent.play().then(function() { silent.pause(); }).catch(function() {});
-    } catch (e) {}
+    for (var src in audioCache) {
+      if (audioCache.hasOwnProperty(src)) {
+        var audio = audioCache[src];
+        audio.volume = 0;
+        audio.play().then(function(a) {
+          return function() { a.pause(); a.currentTime = 0; };
+        }(audio)).catch(function() {});
+      }
+    }
 
     // Remove listeners after warm-up
     ['click', 'touchstart', 'keydown'].forEach(function(event) {
