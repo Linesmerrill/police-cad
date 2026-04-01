@@ -659,7 +659,7 @@
     if (!person) return;
     var name = ((person.firstName || '') + ' ' + (person.lastName || '')).trim() || person.name || '';
     if (window.cdShowArrestForm) {
-      window.cdShowArrestForm(civId, name, person);
+      window.cdShowArrestForm(civId, name, person, function() { doSearch(state.searchQuery, state.page); });
     } else {
       window.ddToast('Arrest form not available', 'error');
     }
