@@ -4670,6 +4670,7 @@
 
   // Router variables should be used over allocating per use
   var dbUser= <%- JSON.stringify(user)%>;
+  window.dbUser = dbUser;
   var departmentId = <%- JSON.stringify(departmentId) %>;
 
   var page = 0;
