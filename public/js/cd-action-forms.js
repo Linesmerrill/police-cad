@@ -661,6 +661,7 @@
         data: JSON.stringify(payload),
         success: function () {
           toast('Citation issued successfully', 'success');
+          if (typeof loadMyRankProgress === 'function') loadMyRankProgress();
           var cb = activeCallback;
           closePanel();
           if (typeof cb === 'function') cb();
@@ -718,6 +719,7 @@
         data: JSON.stringify(payload),
         success: function () {
           toast('Warning issued successfully', 'success');
+          if (typeof loadMyRankProgress === 'function') loadMyRankProgress();
           var cb = activeCallback;
           closePanel();
           if (typeof cb === 'function') cb();
@@ -905,6 +907,7 @@
         data: JSON.stringify(payload),
         success: function () {
           toast('Arrest report submitted successfully', 'success');
+          if (typeof loadMyRankProgress === 'function') loadMyRankProgress();
           var cb = activeCallback;
           closePanel();
           if (typeof cb === 'function') cb();

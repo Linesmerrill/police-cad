@@ -1174,6 +1174,7 @@ $(document).ready(function () {
         alert("Arrest report created successfully.");
         $("#arrestModal").modal("hide");
         fetchDetails();
+        if (typeof loadMyRankProgress === 'function') loadMyRankProgress();
       },
       error: function (xhr) {
         console.error("Error creating arrest report:", xhr.responseText);
@@ -1211,6 +1212,7 @@ $(document).ready(function () {
         alert("Warning issued successfully.");
         $("#warningModal").modal("hide");
         fetchDetails();
+        if (typeof loadMyRankProgress === 'function') loadMyRankProgress();
       },
       error: function (xhr) {
         console.error("Error issuing warning:", xhr.responseText);
@@ -1266,6 +1268,7 @@ $(document).ready(function () {
         alert("Citation issued successfully.");
         $("#ticketModal").modal("hide");
         fetchDetails();
+        if (typeof loadMyRankProgress === 'function') loadMyRankProgress();
       },
       error: function (xhr) {
         console.error("Error issuing citation:", xhr.responseText);
