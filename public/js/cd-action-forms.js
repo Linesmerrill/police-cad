@@ -891,6 +891,7 @@
           narrative: narrative,
           witnesses: witnesses,
           forceUsed: forceUsed,
+          officerID: c.userId,
           departmentId: c.departmentId,
           activeCommunityID: c.communityId
         }

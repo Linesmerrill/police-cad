@@ -1159,6 +1159,8 @@ $(document).ready(function () {
         witnesses: $("#actions-taken").val(),
         forceUsed: $("#forceUsed").val() === "Yes",
         attachedForms: [],
+        officerID: dbUser._id || "",
+        activeCommunityID: dbUser.user?.lastAccessedCommunity?.communityID || "",
         departmentId: activeDeptId,
       },
     };
