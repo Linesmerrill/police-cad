@@ -6026,21 +6026,26 @@
       return tName !== 'civilian' && tName !== 'judicial';
     });
 
+    // If user has no departments, show all community departments
+    if (filteredDepts.length === 0) {
+      filteredDepts = departmentsCache.filter(function(d) {
+        var tName = (d.template && d.template.name) ? d.template.name.toLowerCase() : '';
+        return tName !== 'civilian' && tName !== 'judicial';
+      });
+    }
+
     // Build department select options
     var $select = $('#csModalDeptSelect');
     $select.empty();
-    if (filteredDepts.length > 0) {
-      filteredDepts.forEach(function(d) {
-        $select.append('<option value="' + d._id + '">' + escapeHtml(d.name) + '</option>');
-      });
-      // Default to active department if they have one
-      var activeDeptId = member.activeDepartmentId;
-      if (activeDeptId && filteredDepts.some(function(d) { return d._id === activeDeptId; })) {
-        $select.val(activeDeptId);
-      }
-    } else {
-      // No departments — allow editing global call sign
-      $select.append('<option value="">Global (Profile Call Sign)</option>');
+    // Always include global option
+    $select.append('<option value="">Global (Profile Call Sign)</option>');
+    filteredDepts.forEach(function(d) {
+      $select.append('<option value="' + d._id + '">' + escapeHtml(d.name) + '</option>');
+    });
+    // Default to active department if they have one
+    var activeDeptId = member.activeDepartmentId;
+    if (activeDeptId && filteredDepts.some(function(d) { return d._id === activeDeptId; })) {
+      $select.val(activeDeptId);
     }
 
     var selectedDeptId = $select.val();
@@ -6159,19 +6164,23 @@
       return tName !== 'civilian' && tName !== 'judicial';
     });
 
+    // If user has no departments, show all community departments
+    if (filteredDepts.length === 0) {
+      filteredDepts = departmentsCache.filter(function(d) {
+        var tName = (d.template && d.template.name) ? d.template.name.toLowerCase() : '';
+        return tName !== 'civilian' && tName !== 'judicial';
+      });
+    }
+
     // Build department select
     var $deptSelect = $('#statusModalDeptSelect');
     $deptSelect.empty();
-    if (filteredDepts.length > 0) {
-      filteredDepts.forEach(function(d) {
-        $deptSelect.append('<option value="' + d._id + '">' + escapeHtml(d.name) + '</option>');
-      });
-      var activeDeptId = member.activeDepartmentId;
-      if (activeDeptId && filteredDepts.some(function(d) { return d._id === activeDeptId; })) {
-        $deptSelect.val(activeDeptId);
-      }
-    } else {
-      $deptSelect.append('<option value="">No Department</option>');
+    filteredDepts.forEach(function(d) {
+      $deptSelect.append('<option value="' + d._id + '">' + escapeHtml(d.name) + '</option>');
+    });
+    var activeDeptId = member.activeDepartmentId;
+    if (activeDeptId && filteredDepts.some(function(d) { return d._id === activeDeptId; })) {
+      $deptSelect.val(activeDeptId);
     }
 
     // Build status code select
