@@ -6117,6 +6117,19 @@
           if (!memberDataCache[userId].departmentCallSigns) memberDataCache[userId].departmentCallSigns = {};
           memberDataCache[userId].departmentCallSigns[deptId] = callSign;
 
+          // Set active department so badge shows
+          var allDepts = departmentsCache;
+          var dept = allDepts.find(function(d) { return d._id === deptId; });
+          if (dept) {
+            memberDataCache[userId].activeDepartmentId = deptId;
+            memberDataCache[userId].activeDepartmentName = dept.name;
+            // Ensure userDepartmentMap includes this department
+            if (!userDepartmentMap[userId]) userDepartmentMap[userId] = [];
+            if (!userDepartmentMap[userId].some(function(d) { return d._id === deptId; })) {
+              userDepartmentMap[userId].push({ _id: dept._id, name: dept.name, template: dept.template });
+            }
+          }
+
           renderUnitsGrid();
         },
         error: function(xhr) {
