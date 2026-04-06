@@ -1912,6 +1912,10 @@
                                   overflow: visible;
                                 }
 
+                                .unit-card.menu-open {
+                                  z-index: 150;
+                                }
+
                                 .unit-action-dropdown.show {
                                   display: block;
                                 }
@@ -5994,14 +5998,19 @@
   // Toggle unit action dropdown menu
   function toggleUnitMenu(btn, event) {
     event.stopPropagation();
-    // Close all other open menus
+    // Close all other open menus and reset z-index on their cards
     $('.unit-action-dropdown.show').not($(btn).siblings('.unit-action-dropdown')).removeClass('show');
-    $(btn).siblings('.unit-action-dropdown').toggleClass('show');
+    $('.unit-card.menu-open').removeClass('menu-open');
+    var $dropdown = $(btn).siblings('.unit-action-dropdown');
+    $dropdown.toggleClass('show');
+    // Raise the parent card above siblings so dropdown isn't clipped
+    $(btn).closest('.unit-card').toggleClass('menu-open', $dropdown.hasClass('show'));
   }
 
   // Close unit menus when clicking elsewhere
   $(document).on('click', function() {
     $('.unit-action-dropdown.show').removeClass('show');
+    $('.unit-card.menu-open').removeClass('menu-open');
   });
 
   // Open the Manage Call Sign modal for a specific unit
