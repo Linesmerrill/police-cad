@@ -1561,10 +1561,10 @@
 
                                 .unit-grid {
                                   display: grid;
-                                  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                                  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
                                   gap: 10px;
                                   padding: 16px;
-                                  max-height: 500px;
+                                  max-height: 600px;
                                   overflow-y: auto;
                                 }
 
@@ -1738,11 +1738,14 @@
                                 .unit-callsign {
                                   font-weight: 700;
                                   color: #f1f5f9;
-                                  font-size: 18px;
+                                  font-size: 16px;
+                                  white-space: nowrap;
+                                  overflow: hidden;
+                                  text-overflow: ellipsis;
                                 }
 
                                 .unit-name {
-                                  font-size: 14px;
+                                  font-size: 13px;
                                   color: #94a3b8;
                                   white-space: nowrap;
                                   overflow: hidden;
@@ -1754,24 +1757,6 @@
                                   flex-wrap: wrap;
                                   gap: 4px;
                                   margin-top: 5px;
-                                  max-height: 50px; /* ~2 lines of badges */
-                                  overflow-y: auto;
-                                  overflow-x: hidden;
-                                  scrollbar-width: thin;
-                                  scrollbar-color: rgba(99, 102, 241, 0.4) transparent;
-                                }
-
-                                .unit-departments::-webkit-scrollbar {
-                                  width: 4px;
-                                }
-
-                                .unit-departments::-webkit-scrollbar-track {
-                                  background: transparent;
-                                }
-
-                                .unit-departments::-webkit-scrollbar-thumb {
-                                  background: rgba(99, 102, 241, 0.4);
-                                  border-radius: 2px;
                                 }
 
                                 .dept-badge {
@@ -1862,15 +1847,15 @@
                                 }
 
                                 .unit-status-select {
-                                  padding: 6px 10px;
+                                  padding: 5px 8px;
                                   border-radius: 6px;
                                   border: 1px solid rgba(71, 85, 105, 0.5);
                                   background: rgba(30, 41, 59, 0.8);
                                   color: #f1f5f9;
-                                  font-size: 14px;
+                                  font-size: 13px;
                                   cursor: pointer;
                                   outline: none;
-                                  min-width: 120px;
+                                  min-width: 110px;
                                 }
 
                                 .unit-status-select:focus {
