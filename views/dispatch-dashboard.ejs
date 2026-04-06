@@ -5523,129 +5523,87 @@
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
     if (!communityId) return;
 
-    // First, fetch ten codes and member data
-    $.ajax({
-      url: `${API_URL}/api/v1/community/${communityId}`,
-      method: 'GET',
-      success: function(commData) {
-        tenCodesCache = commData.community?.tenCodes || [];
-        communityOwnerID = commData.community?.ownerID || '';
-        communityRoles = commData.community?.roles || [];
+    // Fetch community data (for ten codes, roles, permissions) and v2 units in parallel
+    $.when(
+      $.ajax({ url: `${API_URL}/api/v1/community/${communityId}`, method: 'GET' }),
+      $.ajax({ url: `${API_URL}/api/v2/community/${communityId}/units?limit=100`, method: 'GET' })
+    ).done(function(commResult, unitsResult) {
+      var commData = commResult[0];
+      var unitsData = unitsResult[0];
 
-        // Preserve active department info from previous cache before overwriting
-        const preservedActiveDepts = {};
-        Object.keys(memberDataCache).forEach(userId => {
-          if (memberDataCache[userId]?.activeDepartmentId || memberDataCache[userId]?.activeDepartmentName) {
-            preservedActiveDepts[userId] = {
-              activeDepartmentId: memberDataCache[userId].activeDepartmentId,
-              activeDepartmentName: memberDataCache[userId].activeDepartmentName
-            };
-          }
-        });
+      // Process community data (ten codes, roles, permissions)
+      tenCodesCache = commData.community?.tenCodes || [];
+      communityOwnerID = commData.community?.ownerID || '';
+      communityRoles = commData.community?.roles || [];
+      memberDataCache = commData.community?.members || {};
 
-        memberDataCache = commData.community?.members || {};
-
-        // Restore preserved active department info only if server data is missing it
-        Object.keys(preservedActiveDepts).forEach(userId => {
-          if (!memberDataCache[userId]) memberDataCache[userId] = {};
-          if (!memberDataCache[userId].activeDepartmentId) {
-            memberDataCache[userId].activeDepartmentId = preservedActiveDepts[userId].activeDepartmentId;
-          }
-          if (!memberDataCache[userId].activeDepartmentName) {
-            memberDataCache[userId].activeDepartmentName = preservedActiveDepts[userId].activeDepartmentName;
-          }
-        });
-
-        // Update community name in header
-        if (commData.community?.name) {
-          $('#community-name').text(commData.community.name);
-        }
-
-        // Update callsign displays with resolved (department-specific) callsign
-        // For the sidebar, prefer the callsign for this page's department context over activeDepartmentId
-        var myMember = memberDataCache[dbUser._id];
-        var sidebarCS = '';
-        if (myMember && myMember.departmentCallSigns && departmentId) {
-          sidebarCS = myMember.departmentCallSigns[departmentId] || '';
-        }
-        if (!sidebarCS) {
-          sidebarCS = getResolvedCallSign(dbUser._id, dbUser.user?.callSign);
-        }
-        if (sidebarCS) {
-          $('#sidebar-callsign').text(sidebarCS);
-          $('#createdByUsername').val(dbUser.user?.username + ' (' + sidebarCS + ')');
-          $('#bolo-clearingOfficerUsername').val(dbUser.user?.username + ' (' + sidebarCS + ')');
-        }
-
-        // Fetch departments to build user-department mapping
-        $.ajax({
-          url: `${API_URL}/api/v1/community/${communityId}/departments`,
-          method: 'GET',
-          success: function(deptResponse) {
-            departmentsCache = (deptResponse.departments || []).filter(d => d.template?.name !== 'Civilian');
-
-            // Build user -> departments mapping
-            userDepartmentMap = {};
-            departmentsCache.forEach(dept => {
-              if (dept.members && Array.isArray(dept.members)) {
-                dept.members.forEach(member => {
-                  const userId = member.userID || member._id;
-                  if (userId) {
-                    if (!userDepartmentMap[userId]) {
-                      userDepartmentMap[userId] = [];
-                    }
-                    userDepartmentMap[userId].push({
-                      _id: dept._id,
-                      name: dept.name,
-                      template: dept.template
-                    });
-                  }
-                });
-              }
-            });
-
-            // Populate department filter dropdown
-            populateDepartmentFilter();
-
-            // Then fetch all members
-            fetchMembers(communityId);
-          },
-          error: function(xhr) {
-            console.error('Error loading departments:', xhr.responseText);
-            // Still fetch members even if departments fail
-            fetchMembers(communityId);
-          }
-        });
-      },
-      error: function(xhr) {
-        console.error('Error loading community data:', xhr.responseText);
+      // Update community name in header
+      if (commData.community?.name) {
+        $('#community-name').text(commData.community.name);
       }
-    });
-  }
 
-  // Fetch members (separated for reuse)
-  function fetchMembers(communityId) {
-    $.ajax({
-      url: `${API_URL}/api/v1/community/${communityId}/members?limit=100`,
-      method: 'GET',
-      success: function(response) {
-        // Handle various response formats
-        if (Array.isArray(response)) {
-          unitsCache = response;
-        } else if (response && Array.isArray(response.data)) {
-          unitsCache = response.data;
-        } else if (response && Array.isArray(response.members)) {
-          unitsCache = response.members;
-        } else {
-          console.warn('Unexpected members response format:', response);
-          unitsCache = [];
+      // Process v2 units — build unitsCache and userDepartmentMap from enriched data
+      var v2Units = unitsData.units || [];
+      unitsCache = [];
+      userDepartmentMap = {};
+      var deptSet = {};  // track unique departments for filter dropdown
+
+      v2Units.forEach(function(u) {
+        // Convert v2 unit to the shape expected by renderUnitsGrid
+        unitsCache.push({
+          _id: u.id,
+          user: {
+            username: u.username,
+            callSign: u.globalCallSign || '',
+            profilePicture: u.profilePicture
+          }
+        });
+
+        // Update memberDataCache with v2 enriched data
+        if (!memberDataCache[u.id]) memberDataCache[u.id] = {};
+        if (u.activeDepartmentId) memberDataCache[u.id].activeDepartmentId = u.activeDepartmentId;
+        if (u.activeDepartmentName) memberDataCache[u.id].activeDepartmentName = u.activeDepartmentName;
+        if (u.departmentCallSigns) memberDataCache[u.id].departmentCallSigns = u.departmentCallSigns;
+        if (u.tenCode) memberDataCache[u.id].tenCodeID = u.tenCode.id;
+
+        // Build user -> departments mapping
+        if (u.departments && u.departments.length > 0) {
+          userDepartmentMap[u.id] = u.departments.map(function(d) {
+            // Track for filter dropdown
+            if (!deptSet[d.id]) {
+              deptSet[d.id] = { _id: d.id, name: d.name, template: { name: d.template } };
+            }
+            return { _id: d.id, name: d.name, template: { name: d.template } };
+          });
         }
-        renderUnitsGrid();
-      },
-      error: function(xhr) {
-        console.error('Error loading units:', xhr.responseText);
-        $('#unitGrid').html('<div class="unit-empty"><i class="fa fa-exclamation-circle"></i> Failed to load units</div>');
+      });
+
+      // Build departmentsCache from unique departments (filter out Civilian)
+      departmentsCache = Object.values(deptSet).filter(function(d) {
+        return d.template?.name !== 'Civilian';
+      });
+
+      // Update sidebar callsign
+      var myMember = memberDataCache[dbUser._id];
+      var sidebarCS = '';
+      if (myMember && myMember.departmentCallSigns && departmentId) {
+        sidebarCS = myMember.departmentCallSigns[departmentId] || '';
       }
+      if (!sidebarCS) {
+        sidebarCS = getResolvedCallSign(dbUser._id, dbUser.user?.callSign);
+      }
+      if (sidebarCS) {
+        $('#sidebar-callsign').text(sidebarCS);
+        $('#createdByUsername').val(dbUser.user?.username + ' (' + sidebarCS + ')');
+        $('#bolo-clearingOfficerUsername').val(dbUser.user?.username + ' (' + sidebarCS + ')');
+      }
+
+      // Populate department filter and render
+      populateDepartmentFilter();
+      renderUnitsGrid();
+    }).fail(function(xhr) {
+      console.error('Error loading units panel:', xhr.responseText);
+      $('#unitGrid').html('<div class="unit-empty"><i class="fa fa-exclamation-circle"></i> Failed to load units</div>');
     });
   }
 
