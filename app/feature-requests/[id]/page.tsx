@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Linkify from 'linkify-react';
 import {
   ChevronUpIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   ArrowLeftIcon,
   ChatBubbleLeftIcon,
   PencilIcon,
@@ -260,12 +262,13 @@ async function uploadImageToCloudinary(file: File): Promise<string> {
 }
 
 // ── Comment Component ─────────────────────────────────────────────
-function Comment({ comment, currentUserId, isAdmin, onEdit, onDelete }: {
+function Comment({ comment, currentUserId, isAdmin, onEdit, onDelete, onImageClick }: {
   comment: FeatureComment;
   currentUserId: string | null;
   isAdmin: boolean;
   onEdit: (commentId: string, content: string) => void;
   onDelete: (commentId: string) => void;
+  onImageClick: (images: string[], index: number) => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -533,20 +536,20 @@ function Comment({ comment, currentUserId, isAdmin, onEdit, onDelete }: {
             {comment.imageUrls && comment.imageUrls.length > 0 && (
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                 {comment.imageUrls.map((url, i) => (
-                  <a key={i} href={url} target="_blank" rel="noopener noreferrer">
-                    <img
-                      src={url}
-                      alt=""
-                      style={{
-                        maxWidth: '200px',
-                        maxHeight: '150px',
-                        borderRadius: '0.4rem',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        objectFit: 'cover',
-                        cursor: 'pointer',
-                      }}
-                    />
-                  </a>
+                  <img
+                    key={i}
+                    src={url}
+                    alt=""
+                    onClick={() => onImageClick(comment.imageUrls, i)}
+                    style={{
+                      maxWidth: '200px',
+                      maxHeight: '150px',
+                      borderRadius: '0.4rem',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      objectFit: 'cover',
+                      cursor: 'pointer',
+                    }}
+                  />
                 ))}
               </div>
             )}
@@ -592,6 +595,21 @@ export default function FeatureRequestDetail() {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Lightbox state
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  const openLightbox = useCallback((images: string[], index: number) => {
+    setLightboxImages(images);
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  }, []);
+
+  const closeLightbox = useCallback(() => {
+    setLightboxOpen(false);
+  }, []);
 
   // Merge state (admin only)
   const [showMergeModal, setShowMergeModal] = useState(false);
@@ -1511,23 +1529,23 @@ export default function FeatureRequestDetail() {
                       flexWrap: 'wrap',
                     }}>
                       {request.imageUrls.map((url, i) => (
-                        <a key={i} href={url} target="_blank" rel="noopener noreferrer">
-                          <img
-                            src={url}
-                            alt=""
-                            style={{
-                              maxWidth: '280px',
-                              maxHeight: '200px',
-                              borderRadius: '0.5rem',
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              objectFit: 'cover',
-                              cursor: 'pointer',
-                              transition: 'border-color 0.2s',
-                            }}
-                            onMouseEnter={(e) => { (e.target as HTMLImageElement).style.borderColor = 'rgba(251,191,36,0.4)'; }}
-                            onMouseLeave={(e) => { (e.target as HTMLImageElement).style.borderColor = 'rgba(255,255,255,0.1)'; }}
-                          />
-                        </a>
+                        <img
+                          key={i}
+                          src={url}
+                          alt=""
+                          onClick={() => openLightbox(request.imageUrls, i)}
+                          style={{
+                            maxWidth: '280px',
+                            maxHeight: '200px',
+                            borderRadius: '0.5rem',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            objectFit: 'cover',
+                            cursor: 'pointer',
+                            transition: 'border-color 0.2s',
+                          }}
+                          onMouseEnter={(e) => { (e.target as HTMLImageElement).style.borderColor = 'rgba(251,191,36,0.4)'; }}
+                          onMouseLeave={(e) => { (e.target as HTMLImageElement).style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                        />
                       ))}
                     </div>
                   )}
@@ -2162,6 +2180,7 @@ export default function FeatureRequestDetail() {
                           isAdmin={isAdmin}
                           onEdit={handleEditComment}
                           onDelete={handleDeleteComment}
+                          onImageClick={openLightbox}
                         />
                       ))}
                     </div>
@@ -2204,6 +2223,156 @@ export default function FeatureRequestDetail() {
           100% { transform: translateY(0px); }
         }
       `}</style>
+
+      {/* ── Image Lightbox Modal ── */}
+      <AnimatePresence>
+        {lightboxOpen && lightboxImages.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={closeLightbox}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') closeLightbox();
+              if (e.key === 'ArrowLeft' && lightboxIndex > 0) setLightboxIndex(lightboxIndex - 1);
+              if (e.key === 'ArrowRight' && lightboxIndex < lightboxImages.length - 1) setLightboxIndex(lightboxIndex + 1);
+            }}
+            tabIndex={0}
+            ref={(el) => el?.focus()}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0,0,0,0.85)',
+              backdropFilter: 'blur(8px)',
+              outline: 'none',
+            }}
+          >
+            {/* Close button */}
+            <button
+              onClick={closeLightbox}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: '50%',
+                width: '2.5rem',
+                height: '2.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'white',
+                zIndex: 10000,
+                transition: 'background 0.2s',
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.2)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.1)'; }}
+            >
+              <XMarkIcon style={{ width: '1.25rem', height: '1.25rem' }} />
+            </button>
+
+            {/* Image counter */}
+            {lightboxImages.length > 1 && (
+              <div style={{
+                position: 'absolute',
+                top: '1.25rem',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: '0.8rem',
+                fontFamily: FONT,
+                color: 'rgba(255,255,255,0.5)',
+                zIndex: 10000,
+              }}>
+                {lightboxIndex + 1} / {lightboxImages.length}
+              </div>
+            )}
+
+            {/* Previous button */}
+            {lightboxIndex > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex - 1); }}
+                style={{
+                  position: 'absolute',
+                  left: '1rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '50%',
+                  width: '2.75rem',
+                  height: '2.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'white',
+                  zIndex: 10000,
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.2)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.1)'; }}
+              >
+                <ChevronLeftIcon style={{ width: '1.25rem', height: '1.25rem' }} />
+              </button>
+            )}
+
+            {/* Next button */}
+            {lightboxIndex < lightboxImages.length - 1 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex + 1); }}
+                style={{
+                  position: 'absolute',
+                  right: '1rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '50%',
+                  width: '2.75rem',
+                  height: '2.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'white',
+                  zIndex: 10000,
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.2)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.1)'; }}
+              >
+                <ChevronRightIcon style={{ width: '1.25rem', height: '1.25rem' }} />
+              </button>
+            )}
+
+            {/* Main image */}
+            <motion.img
+              key={lightboxIndex}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              src={lightboxImages[lightboxIndex]}
+              alt=""
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                maxWidth: '90vw',
+                maxHeight: '85vh',
+                borderRadius: '0.75rem',
+                objectFit: 'contain',
+                boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
