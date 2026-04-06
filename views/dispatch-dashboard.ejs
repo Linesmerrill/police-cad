@@ -3308,18 +3308,54 @@
           </div>
           <div class="modal-body">
             <p style="color: #94a3b8; margin-bottom: 4px;">Member: <strong id="csModalUsername" style="color: #f1f5f9;"></strong></p>
-            <p style="color: #94a3b8; margin-bottom: 12px;">Department: <strong id="csModalDeptName" style="color: #f1f5f9;"></strong></p>
             <input type="hidden" id="csModalUserId" />
-            <input type="hidden" id="csModalDeptId" />
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label style="color: #94a3b8; font-weight: 500;">Department</label>
+              <select id="csModalDeptSelect" class="form-control" onchange="onCsModalDeptChange()"
+                style="background-color: #0f172a; border: 1px solid #334155; color: #f1f5f9;">
+              </select>
+            </div>
             <div class="form-group" style="margin-bottom: 0;">
               <label style="color: #94a3b8; font-weight: 500;">Call Sign <span style="font-weight: 400; color: #64748b;">(max 10 chars)</span></label>
               <input type="text" id="csModalInput" class="form-control" maxlength="10" placeholder="Enter call sign"
-                style="background-color: #0f172a; border: 1px solid #334155; color: #f1f5f9;" />
+                style="background-color: #0f172a; border: 1px solid #334155; color: #f1f5f9;" oninput="toggleCsModalSaveBtn()" />
             </div>
           </div>
           <div class="modal-footer" style="border-top: 1px solid #334155;">
             <button type="button" class="btn btn-default" data-dismiss="modal" style="background-color: #334155; border-color: #475569; color: #e2e8f0;">Cancel</button>
-            <button type="button" class="btn btn-primary" onclick="saveCallSignFromModal()" style="background-color: #3b82f6; border-color: #2563eb;">Save</button>
+            <button type="button" id="csModalSaveBtn" class="btn btn-primary" onclick="saveCallSignFromModal()" disabled style="background-color: #3b82f6; border-color: #2563eb; opacity: 0.5;">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Set Status Modal (department-aware) -->
+    <div id="setStatusModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content" style="background-color: #1e293b; border: 1px solid #334155; color: #e2e8f0;">
+          <div class="modal-header" style="border-bottom: 1px solid #334155;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #94a3b8; text-shadow: none; opacity: 0.8;">&times;</button>
+            <h4 class="modal-title" style="color: #f1f5f9;"><i class="fa fa-signal"></i> Set Unit Status</h4>
+          </div>
+          <div class="modal-body">
+            <p style="color: #94a3b8; margin-bottom: 4px;">Member: <strong id="statusModalUsername" style="color: #f1f5f9;"></strong></p>
+            <input type="hidden" id="statusModalUserId" />
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label style="color: #94a3b8; font-weight: 500;">Department</label>
+              <select id="statusModalDeptSelect" class="form-control" onchange="onStatusModalDeptChange()"
+                style="background-color: #0f172a; border: 1px solid #334155; color: #f1f5f9;">
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="color: #94a3b8; font-weight: 500;">Status Code</label>
+              <select id="statusModalCodeSelect" class="form-control"
+                style="background-color: #0f172a; border: 1px solid #334155; color: #f1f5f9;">
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #334155;">
+            <button type="button" class="btn btn-default" data-dismiss="modal" style="background-color: #334155; border-color: #475569; color: #e2e8f0;">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveStatusFromModal()" style="background-color: #3b82f6; border-color: #2563eb;">Save</button>
           </div>
         </div>
       </div>
@@ -5469,9 +5505,15 @@
   // Resolve the callsign for a user: prefer department-specific, fall back to global
   function getResolvedCallSign(userId, globalCallSign) {
     const member = memberDataCache[userId];
-    if (member && member.departmentCallSigns && member.activeDepartmentId) {
-      const deptCallSign = member.departmentCallSigns[member.activeDepartmentId];
-      if (deptCallSign) return deptCallSign;
+    if (member && member.departmentCallSigns) {
+      // Prefer active department call sign
+      if (member.activeDepartmentId) {
+        const deptCallSign = member.departmentCallSigns[member.activeDepartmentId];
+        if (deptCallSign) return deptCallSign;
+      }
+      // Fall back to any department call sign
+      const values = Object.values(member.departmentCallSigns);
+      if (values.length > 0 && values[0]) return values[0];
     }
     return globalCallSign || '';
   }
@@ -5845,6 +5887,7 @@
                 <i class="fa fa-ellipsis-v"></i>
               </button>
               <div class="unit-action-dropdown">
+                <a href="#" onclick="openSetStatusModal('${safeUserId}'); return false;" class="unit-action-item"><i class="fa fa-signal"></i> Set Status (by Dept)</a>
                 <a href="#" ${manageCsAttr} class="unit-action-item${manageCsClass}">${lockIcon}${manageCsLabel}</a>
               </div>
             </div>
@@ -6020,57 +6063,244 @@
     var unit = unitsCache.find(function(u) { return u._id === userId; });
     var member = memberDataCache[userId] || {};
     var username = (unit && unit.user && unit.user.username) ? unit.user.username : 'Unknown';
-
-    // Determine department: prefer activeDepartmentId, fall back to page departmentId
-    var deptId = member.activeDepartmentId || departmentId;
     var userDepts = userDepartmentMap[userId] || [];
-    var dept = userDepts.find(function(d) { return d._id === deptId; });
-    var deptName = (dept && dept.name) ? dept.name : (member.activeDepartmentName || 'Current Department');
 
-    // Get current call sign for this department
-    var currentCS = (member.departmentCallSigns && deptId) ? (member.departmentCallSigns[deptId] || '') : '';
+    // Filter out Civilian and Judicial template departments
+    var filteredDepts = userDepts.filter(function(d) {
+      var tName = (d.template && d.template.name) ? d.template.name.toLowerCase() : '';
+      return tName !== 'civilian' && tName !== 'judicial';
+    });
+
+    // Build department select options
+    var $select = $('#csModalDeptSelect');
+    $select.empty();
+    if (filteredDepts.length > 0) {
+      filteredDepts.forEach(function(d) {
+        $select.append('<option value="' + d._id + '">' + escapeHtml(d.name) + '</option>');
+      });
+      // Default to active department if they have one
+      var activeDeptId = member.activeDepartmentId;
+      if (activeDeptId && filteredDepts.some(function(d) { return d._id === activeDeptId; })) {
+        $select.val(activeDeptId);
+      }
+    } else {
+      // No departments — allow editing global call sign
+      $select.append('<option value="">Global (Profile Call Sign)</option>');
+    }
+
+    var selectedDeptId = $select.val();
+    var currentCS = '';
+    if (selectedDeptId && member.departmentCallSigns) {
+      currentCS = member.departmentCallSigns[selectedDeptId] || '';
+    } else if (!selectedDeptId) {
+      currentCS = (unit && unit.user) ? (unit.user.callSign || '') : '';
+    }
 
     $('#csModalUserId').val(userId);
-    $('#csModalDeptId').val(deptId);
     $('#csModalUsername').text(username);
-    $('#csModalDeptName').text(deptName);
     $('#csModalInput').val(currentCS);
+    toggleCsModalSaveBtn();
     $('#manageCallSignModal').modal('show');
+  }
+
+  // When department changes in call sign modal, load that dept's current call sign
+  function onCsModalDeptChange() {
+    var userId = $('#csModalUserId').val();
+    var deptId = $('#csModalDeptSelect').val();
+    var member = memberDataCache[userId] || {};
+    var unit = unitsCache.find(function(u) { return u._id === userId; });
+    var currentCS = '';
+
+    if (deptId && member.departmentCallSigns) {
+      currentCS = member.departmentCallSigns[deptId] || '';
+    } else if (!deptId) {
+      currentCS = (unit && unit.user) ? (unit.user.callSign || '') : '';
+    }
+
+    $('#csModalInput').val(currentCS);
+    toggleCsModalSaveBtn();
+  }
+
+  // Enable/disable save button based on input
+  function toggleCsModalSaveBtn() {
+    var val = ($('#csModalInput').val() || '').trim();
+    var $btn = $('#csModalSaveBtn');
+    if (val.length > 0) {
+      $btn.prop('disabled', false).css('opacity', '1');
+    } else {
+      $btn.prop('disabled', true).css('opacity', '0.5');
+    }
   }
 
   // Save call sign from the modal
   function saveCallSignFromModal() {
     var userId = $('#csModalUserId').val();
-    var deptId = $('#csModalDeptId').val();
+    var deptId = $('#csModalDeptSelect').val();
     var callSign = $('#csModalInput').val().trim();
     var communityId = dbUser.user && dbUser.user.lastAccessedCommunity ? dbUser.user.lastAccessedCommunity.communityID : null;
 
-    if (!communityId || !userId || !deptId) return;
+    if (!communityId || !userId || callSign.length < 1) return;
+
+    if (deptId) {
+      // Department-specific call sign
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityId + '/members/' + userId + '/department-callsigns',
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ departmentId: deptId, callSign: callSign, requestingUserId: dbUser._id }),
+        success: function() {
+          hideModal('manageCallSignModal');
+          showToast('Call sign updated successfully.', 'success');
+
+          // Update local cache
+          if (!memberDataCache[userId]) memberDataCache[userId] = {};
+          if (!memberDataCache[userId].departmentCallSigns) memberDataCache[userId].departmentCallSigns = {};
+          memberDataCache[userId].departmentCallSigns[deptId] = callSign;
+
+          renderUnitsGrid();
+        },
+        error: function(xhr) {
+          var msg = 'Unknown error';
+          try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e) {}
+          showToast('Failed to update call sign: ' + msg, 'error');
+        }
+      });
+    } else {
+      // Global call sign (no departments)
+      $.ajax({
+        url: API_URL + '/api/v1/user/' + userId,
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ callSign: callSign }),
+        success: function() {
+          hideModal('manageCallSignModal');
+          showToast('Call sign updated successfully.', 'success');
+
+          // Update local cache
+          var unit = unitsCache.find(function(u) { return u._id === userId; });
+          if (unit && unit.user) unit.user.callSign = callSign;
+
+          renderUnitsGrid();
+        },
+        error: function(xhr) {
+          var msg = 'Unknown error';
+          try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e) {}
+          showToast('Failed to update call sign: ' + msg, 'error');
+        }
+      });
+    }
+  }
+
+  // Open status modal with department picker
+  function openSetStatusModal(userId) {
+    var unit = unitsCache.find(function(u) { return u._id === userId; });
+    var member = memberDataCache[userId] || {};
+    var username = (unit && unit.user && unit.user.username) ? unit.user.username : 'Unknown';
+    var userDepts = userDepartmentMap[userId] || [];
+
+    // Filter out Civilian and Judicial template departments
+    var filteredDepts = userDepts.filter(function(d) {
+      var tName = (d.template && d.template.name) ? d.template.name.toLowerCase() : '';
+      return tName !== 'civilian' && tName !== 'judicial';
+    });
+
+    // Build department select
+    var $deptSelect = $('#statusModalDeptSelect');
+    $deptSelect.empty();
+    if (filteredDepts.length > 0) {
+      filteredDepts.forEach(function(d) {
+        $deptSelect.append('<option value="' + d._id + '">' + escapeHtml(d.name) + '</option>');
+      });
+      var activeDeptId = member.activeDepartmentId;
+      if (activeDeptId && filteredDepts.some(function(d) { return d._id === activeDeptId; })) {
+        $deptSelect.val(activeDeptId);
+      }
+    } else {
+      $deptSelect.append('<option value="">No Department</option>');
+    }
+
+    // Build status code select
+    var $codeSelect = $('#statusModalCodeSelect');
+    $codeSelect.empty();
+    $codeSelect.append('<option value="">No Status</option>');
+    tenCodesCache.forEach(function(tc) {
+      var selected = tc._id === member.tenCodeID ? 'selected' : '';
+      $codeSelect.append('<option value="' + escapeHtml(tc._id) + '" ' + selected + '>' + escapeHtml(tc.code) + (tc.description ? ' - ' + escapeHtml(tc.description) : '') + '</option>');
+    });
+
+    $('#statusModalUserId').val(userId);
+    $('#statusModalUsername').text(username);
+    $('#setStatusModal').modal('show');
+  }
+
+  // When department changes in status modal (for future use)
+  function onStatusModalDeptChange() {
+    // Currently just a placeholder — department selection is used on save
+  }
+
+  // Save status from the modal
+  function saveStatusFromModal() {
+    var userId = $('#statusModalUserId').val();
+    var deptId = $('#statusModalDeptSelect').val();
+    var tenCodeId = $('#statusModalCodeSelect').val();
+    var communityId = dbUser.user && dbUser.user.lastAccessedCommunity ? dbUser.user.lastAccessedCommunity.communityID : null;
+
+    if (!communityId || !userId) return;
+
+    // Find the department name for the selected department
+    var deptName = '';
+    if (deptId) {
+      var userDepts = userDepartmentMap[userId] || [];
+      var dept = userDepts.find(function(d) { return d._id === deptId; });
+      deptName = dept ? dept.name : '';
+    }
 
     $.ajax({
-      url: API_URL + '/api/v1/community/' + communityId + '/members/' + userId + '/department-callsigns',
+      url: API_URL + '/api/v1/community/' + communityId + '/members/' + userId + '/tenCode',
       method: 'PUT',
       contentType: 'application/json',
-      data: JSON.stringify({ departmentId: deptId, callSign: callSign, requestingUserId: dbUser._id }),
+      data: JSON.stringify({
+        departmentId: deptId || departmentId,
+        tenCodeID: tenCodeId || null,
+        activeDepartmentId: deptId || '',
+        activeDepartmentName: deptName
+      }),
       success: function() {
-        hideModal('manageCallSignModal');
-        showToast('Call sign updated successfully.', 'success');
+        hideModal('setStatusModal');
+        showToast('Status updated successfully.', 'success');
 
         // Update local cache
         if (!memberDataCache[userId]) memberDataCache[userId] = {};
-        if (!memberDataCache[userId].departmentCallSigns) memberDataCache[userId].departmentCallSigns = {};
-        if (callSign) {
-          memberDataCache[userId].departmentCallSigns[deptId] = callSign;
-        } else {
-          delete memberDataCache[userId].departmentCallSigns[deptId];
+        memberDataCache[userId].tenCodeID = tenCodeId || null;
+        if (deptId) {
+          memberDataCache[userId].activeDepartmentId = deptId;
+          memberDataCache[userId].activeDepartmentName = deptName;
         }
 
         renderUnitsGrid();
+
+        // Emit socket event for real-time updates
+        var tenCode = tenCodesCache.find(function(tc) { return tc._id === tenCodeId; });
+        var statusCode = tenCode ? tenCode.code : 'No Status';
+
+        if (dashboardSocket) {
+          var shouldBroadcast = tenCode && isBroadcastStatus(tenCode.code, tenCode.description);
+          dashboardSocket.emit('update_status', {
+            userID: userId,
+            status: statusCode,
+            statusCode: tenCodeId,
+            setBy: dbUser.user?.username || 'Dispatch',
+            communityId: communityId,
+            broadcastToAll: shouldBroadcast,
+            activeDepartmentId: deptId || '',
+            activeDepartmentName: deptName
+          });
+        }
       },
       error: function(xhr) {
         var msg = 'Unknown error';
         try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e) {}
-        showToast('Failed to update call sign: ' + msg, 'error');
+        showToast('Failed to update status: ' + msg, 'error');
       }
     });
   }
@@ -6083,6 +6313,11 @@
   window.toggleUnitMenu = toggleUnitMenu;
   window.openManageCallSignModal = openManageCallSignModal;
   window.saveCallSignFromModal = saveCallSignFromModal;
+  window.onCsModalDeptChange = onCsModalDeptChange;
+  window.toggleCsModalSaveBtn = toggleCsModalSaveBtn;
+  window.openSetStatusModal = openSetStatusModal;
+  window.saveStatusFromModal = saveStatusFromModal;
+  window.onStatusModalDeptChange = onStatusModalDeptChange;
 
   // Initialize socket on window load
   window.onload = function() {
