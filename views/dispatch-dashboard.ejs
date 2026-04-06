@@ -1877,6 +1877,83 @@
                                   border-color: #3b82f6;
                                 }
 
+                                /* Unit card actions wrapper */
+                                .unit-card-actions {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 0.5rem;
+                                  margin-left: auto;
+                                  flex-shrink: 0;
+                                }
+
+                                /* Unit action menu (3-dot) */
+                                .unit-action-menu {
+                                  position: relative;
+                                }
+
+                                .unit-action-btn {
+                                  background: transparent;
+                                  border: 1px solid rgba(71, 85, 105, 0.5);
+                                  border-radius: 6px;
+                                  color: #94a3b8;
+                                  padding: 0.5rem 0.6rem;
+                                  cursor: pointer;
+                                  transition: all 0.15s ease;
+                                  font-size: 1rem;
+                                  line-height: 1;
+                                }
+
+                                .unit-action-btn:hover {
+                                  background: rgba(59, 130, 246, 0.15);
+                                  border-color: rgba(59, 130, 246, 0.5);
+                                  color: #e2e8f0;
+                                }
+
+                                .unit-action-dropdown {
+                                  display: none;
+                                  position: absolute;
+                                  right: 0;
+                                  bottom: 100%;
+                                  margin-bottom: 4px;
+                                  background: #1e293b;
+                                  border: 1px solid #334155;
+                                  border-radius: 8px;
+                                  min-width: 200px;
+                                  z-index: 100;
+                                  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+                                  overflow: hidden;
+                                }
+
+                                .unit-action-dropdown.show {
+                                  display: block;
+                                }
+
+                                .unit-action-item {
+                                  display: block;
+                                  padding: 0.6rem 1rem;
+                                  color: #e2e8f0;
+                                  text-decoration: none;
+                                  font-size: 0.9rem;
+                                  transition: background 0.15s ease;
+                                  white-space: nowrap;
+                                }
+
+                                .unit-action-item:hover {
+                                  background: rgba(59, 130, 246, 0.15);
+                                  color: #f1f5f9;
+                                  text-decoration: none;
+                                }
+
+                                .unit-action-item.disabled {
+                                  color: #475569;
+                                  cursor: not-allowed;
+                                  pointer-events: none;
+                                }
+
+                                .unit-action-item.disabled:hover {
+                                  background: transparent;
+                                }
+
                                 .unit-loading {
                                   grid-column: 1 / -1;
                                   display: flex;
@@ -3221,9 +3298,34 @@
       </div>
     </div>
 
-    
+    <!-- Manage Call Sign Modal -->
+    <div id="manageCallSignModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content" style="background-color: #1e293b; border: 1px solid #334155; color: #e2e8f0;">
+          <div class="modal-header" style="border-bottom: 1px solid #334155;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #94a3b8; text-shadow: none; opacity: 0.8;">&times;</button>
+            <h4 class="modal-title" style="color: #f1f5f9;"><i class="fa fa-id-badge"></i> Manage Call Sign</h4>
+          </div>
+          <div class="modal-body">
+            <p style="color: #94a3b8; margin-bottom: 4px;">Member: <strong id="csModalUsername" style="color: #f1f5f9;"></strong></p>
+            <p style="color: #94a3b8; margin-bottom: 12px;">Department: <strong id="csModalDeptName" style="color: #f1f5f9;"></strong></p>
+            <input type="hidden" id="csModalUserId" />
+            <input type="hidden" id="csModalDeptId" />
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="color: #94a3b8; font-weight: 500;">Call Sign <span style="font-weight: 400; color: #64748b;">(max 10 chars)</span></label>
+              <input type="text" id="csModalInput" class="form-control" maxlength="10" placeholder="Enter call sign"
+                style="background-color: #0f172a; border: 1px solid #334155; color: #f1f5f9;" />
+            </div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #334155;">
+            <button type="button" class="btn btn-default" data-dismiss="modal" style="background-color: #334155; border-color: #475569; color: #e2e8f0;">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveCallSignFromModal()" style="background-color: #3b82f6; border-color: #2563eb;">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    
+
 
     <div id="officerHelpModal" class="modal" tabindex="-1" role="dialog">
       <div class="modal-dialog" role="document">
@@ -5346,9 +5448,23 @@
   var memberDataCache = {};
   var departmentsCache = [];
   var userDepartmentMap = {}; // Maps userId -> array of department objects
+  var communityOwnerID = '';
+  var communityRoles = [];
   var currentUnitFilter = 'all';
   var currentDepartmentFilter = 'all';
   var currentUnitSearch = '';
+
+  // Check if the current logged-in user has admin/owner permissions in the community
+  function isCurrentUserAdmin() {
+    var uid = dbUser._id;
+    if (communityOwnerID === uid) return true;
+    return communityRoles.some(function(role) {
+      if (!role.members || role.members.indexOf(uid) === -1) return false;
+      return role.permissions && role.permissions.some(function(p) {
+        return p.enabled && (p.name === 'administrator' || p.name === 'manage members');
+      });
+    });
+  }
 
   // Resolve the callsign for a user: prefer department-specific, fall back to global
   function getResolvedCallSign(userId, globalCallSign) {
@@ -5371,6 +5487,8 @@
       method: 'GET',
       success: function(commData) {
         tenCodesCache = commData.community?.tenCodes || [];
+        communityOwnerID = commData.community?.ownerID || '';
+        communityRoles = commData.community?.roles || [];
 
         // Preserve active department info from previous cache before overwriting
         const preservedActiveDepts = {};
@@ -5703,6 +5821,12 @@
       }
 
       const safeUserId = escapeHtml(unit._id);
+      const adminUser = isCurrentUserAdmin();
+      const manageCsAttr = adminUser ? `onclick="openManageCallSignModal('${safeUserId}'); return false;"` : 'onclick="return false;"';
+      const manageCsClass = adminUser ? '' : ' disabled';
+      const lockIcon = adminUser ? '<i class="fa fa-id-badge"></i> ' : '<i class="fa fa-lock"></i> ';
+      const manageCsLabel = adminUser ? 'Manage Call Sign' : 'Manage Call Sign (Admin)';
+
       const cardHtml = `
         <div class="unit-card ${statusCategory}" data-user-id="${safeUserId}">
           <div class="unit-status-indicator ${statusCategory}"></div>
@@ -5712,9 +5836,19 @@
             ${alertBadgeHtml}
             ${deptBadgesHtml}
           </div>
-          <select class="unit-status-select" data-user-id="${safeUserId}" onchange="updateUnitStatus(this)">
-            ${selectOptions}
-          </select>
+          <div class="unit-card-actions">
+            <select class="unit-status-select" data-user-id="${safeUserId}" onchange="updateUnitStatus(this)">
+              ${selectOptions}
+            </select>
+            <div class="unit-action-menu">
+              <button type="button" class="unit-action-btn" onclick="toggleUnitMenu(this, event)">
+                <i class="fa fa-ellipsis-v"></i>
+              </button>
+              <div class="unit-action-dropdown">
+                <a href="#" ${manageCsAttr} class="unit-action-item${manageCsClass}">${lockIcon}${manageCsLabel}</a>
+              </div>
+            </div>
+          </div>
         </div>
       `;
       $grid.append(cardHtml);
@@ -5868,11 +6002,87 @@
     }
   }
 
+  // Toggle unit action dropdown menu
+  function toggleUnitMenu(btn, event) {
+    event.stopPropagation();
+    // Close all other open menus
+    $('.unit-action-dropdown.show').not($(btn).siblings('.unit-action-dropdown')).removeClass('show');
+    $(btn).siblings('.unit-action-dropdown').toggleClass('show');
+  }
+
+  // Close unit menus when clicking elsewhere
+  $(document).on('click', function() {
+    $('.unit-action-dropdown.show').removeClass('show');
+  });
+
+  // Open the Manage Call Sign modal for a specific unit
+  function openManageCallSignModal(userId) {
+    var unit = unitsCache.find(function(u) { return u._id === userId; });
+    var member = memberDataCache[userId] || {};
+    var username = (unit && unit.user && unit.user.username) ? unit.user.username : 'Unknown';
+
+    // Determine department: prefer activeDepartmentId, fall back to page departmentId
+    var deptId = member.activeDepartmentId || departmentId;
+    var userDepts = userDepartmentMap[userId] || [];
+    var dept = userDepts.find(function(d) { return d._id === deptId; });
+    var deptName = (dept && dept.name) ? dept.name : (member.activeDepartmentName || 'Current Department');
+
+    // Get current call sign for this department
+    var currentCS = (member.departmentCallSigns && deptId) ? (member.departmentCallSigns[deptId] || '') : '';
+
+    $('#csModalUserId').val(userId);
+    $('#csModalDeptId').val(deptId);
+    $('#csModalUsername').text(username);
+    $('#csModalDeptName').text(deptName);
+    $('#csModalInput').val(currentCS);
+    $('#manageCallSignModal').modal('show');
+  }
+
+  // Save call sign from the modal
+  function saveCallSignFromModal() {
+    var userId = $('#csModalUserId').val();
+    var deptId = $('#csModalDeptId').val();
+    var callSign = $('#csModalInput').val().trim();
+    var communityId = dbUser.user && dbUser.user.lastAccessedCommunity ? dbUser.user.lastAccessedCommunity.communityID : null;
+
+    if (!communityId || !userId || !deptId) return;
+
+    $.ajax({
+      url: API_URL + '/api/v1/community/' + communityId + '/members/' + userId + '/department-callsigns',
+      method: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify({ departmentId: deptId, callSign: callSign, requestingUserId: dbUser._id }),
+      success: function() {
+        hideModal('manageCallSignModal');
+        showToast('Call sign updated successfully.', 'success');
+
+        // Update local cache
+        if (!memberDataCache[userId]) memberDataCache[userId] = {};
+        if (!memberDataCache[userId].departmentCallSigns) memberDataCache[userId].departmentCallSigns = {};
+        if (callSign) {
+          memberDataCache[userId].departmentCallSigns[deptId] = callSign;
+        } else {
+          delete memberDataCache[userId].departmentCallSigns[deptId];
+        }
+
+        renderUnitsGrid();
+      },
+      error: function(xhr) {
+        var msg = 'Unknown error';
+        try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e) {}
+        showToast('Failed to update call sign: ' + msg, 'error');
+      }
+    });
+  }
+
   // Make function globally available
   window.filterUnits = filterUnits;
   window.filterByDepartment = filterByDepartment;
   window.updateUnitStatus = updateUnitStatus;
   window.toggleDeptExpand = toggleDeptExpand;
+  window.toggleUnitMenu = toggleUnitMenu;
+  window.openManageCallSignModal = openManageCallSignModal;
+  window.saveCallSignFromModal = saveCallSignFromModal;
 
   // Initialize socket on window load
   window.onload = function() {
