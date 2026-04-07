@@ -475,6 +475,13 @@
     // Fetch current state on load
     fetchSignal100();
     fetchPanicAlerts();
+
+    // Poll every 30s as a fallback for missed socket events (e.g. brief
+    // disconnection, browser tab throttling). Matches dispatch dashboard behavior.
+    setInterval(function () {
+      fetchSignal100();
+      fetchPanicAlerts();
+    }, 30000);
   }
 
   $(document).ready(init);
