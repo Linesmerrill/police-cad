@@ -170,6 +170,25 @@ window.AlertSounds = (function() {
     },
 
     /**
+     * Stop all currently playing and queued sounds immediately.
+     * Call this when the user actively clears an alert (panic, signal 100)
+     * so the alarm doesn't keep blaring after acknowledgement.
+     */
+    stop: function() {
+      queue.length = 0;
+      isPlaying = false;
+      for (var src in audioCache) {
+        if (audioCache.hasOwnProperty(src)) {
+          var audio = audioCache[src];
+          if (!audio.paused) {
+            audio.pause();
+            audio.currentTime = 0;
+          }
+        }
+      }
+    },
+
+    /**
      * Override default sound URLs (e.g. with community-uploaded files).
      * @param {Object} soundMap - e.g. { panic: 'https://cdn.example.com/custom.mp3' }
      */

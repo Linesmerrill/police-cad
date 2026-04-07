@@ -689,6 +689,7 @@ function triggerPanic() {
   }
 
   if (_userHasActivePanic) {
+    AlertSounds.stop();
     $.ajax({
       url: `${POLICE_CAD_API_URL}/api/v1/community/${communityId}/panic-alerts/user/${userId}`,
       method: 'DELETE',
@@ -759,6 +760,8 @@ function hideClearSignal100Modal(event) {
 // Confirm and broadcast Signal 100 cleared
 function confirmClearSignal100() {
   const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+
+  AlertSounds.stop();
 
   if (window.dashboardSocket && window.dashboardSocket.connected) {
     window.dashboardSocket.emit('clear_signal_100', {

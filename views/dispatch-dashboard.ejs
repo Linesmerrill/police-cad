@@ -5196,6 +5196,7 @@
 
       function clearPanicAlert(alertId) {
         if (!communityId) return;
+        AlertSounds.stop();
         $.ajax({
           url: API_URL + '/api/v1/community/' + communityId + '/panic-alerts/' + alertId,
           method: 'DELETE',
@@ -6855,6 +6856,8 @@
   function confirmClearSignal100() {
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
     if (!communityId) return;
+
+    AlertSounds.stop();
 
     var clearCallSign = getResolvedCallSign(dbUser._id, dbUser.user?.callSign);
 
