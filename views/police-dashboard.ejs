@@ -4101,6 +4101,7 @@ function selectTenCode(tenCodeID) {
     function clearPanicAlert(alertId) {
       var communityId = dbUser.user?.lastAccessedCommunity?.communityID;
       if (!communityId) return;
+      AlertSounds.stop();
       $.ajax({
         url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/' + communityId + '/panic-alerts/' + alertId,
         method: 'DELETE',
@@ -4951,6 +4952,8 @@ function hideClearSignal100Modal(event) {
 function confirmClearSignal100() {
   const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
 
+  AlertSounds.stop();
+
   // Emit clear signal to server with user info for tracking
   if (dashboardSocket && dashboardSocket.connected) {
     dashboardSocket.emit('clear_signal_100', {
@@ -5695,6 +5698,7 @@ function toggleCaret(event) {
       }
 
       if (_userHasActivePanic) {
+        AlertSounds.stop();
         $.ajax({
           url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/panic-alerts/user/${userId}`,
           method: 'DELETE',

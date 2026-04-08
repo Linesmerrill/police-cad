@@ -892,7 +892,7 @@
                                     <i class="fa fa-users"></i>
                                     <span>UNIT STATUS</span>
                                   </div>
-                                  <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                     <div id="signal100ActionBtn" class="dispatch-signal100-btn" onclick="dispatchToggleSignal100()">
                                       <i id="signal100BtnIcon" class="fa fa-exclamation-triangle"></i>
                                       <span id="signal100BtnText">Signal 100</span>
@@ -1374,36 +1374,36 @@
                                   display: flex;
                                   justify-content: space-between;
                                   align-items: center;
-                                  padding: 1rem 1.5rem;
+                                  padding: 14px 20px;
                                   background: rgba(59, 130, 246, 0.1);
                                   border-bottom: 1px solid rgba(59, 130, 246, 0.2);
                                   flex-wrap: wrap;
-                                  gap: 1rem;
+                                  gap: 12px;
                                 }
 
                                 .unit-panel-title {
                                   display: flex;
                                   align-items: center;
-                                  gap: 0.75rem;
+                                  gap: 10px;
                                   color: #60a5fa;
                                   font-weight: 700;
-                                  font-size: 1.35rem;
+                                  font-size: 18px;
                                   letter-spacing: 0.05em;
                                 }
 
                                 .unit-panel-title i {
-                                  font-size: 1.4rem;
+                                  font-size: 18px;
                                 }
 
                                 .unit-stats {
                                   display: flex;
-                                  gap: 0.75rem;
+                                  gap: 10px;
                                 }
 
                                 .stat-badge {
-                                  padding: 0.5rem 0.9rem;
+                                  padding: 6px 12px;
                                   border-radius: 20px;
-                                  font-size: 1.05rem;
+                                  font-size: 13px;
                                   font-weight: 600;
                                 }
 
@@ -1428,14 +1428,14 @@
                                 .dispatch-signal100-btn {
                                   display: flex;
                                   align-items: center;
-                                  gap: 0.5rem;
-                                  padding: 0.5rem 1rem;
+                                  gap: 6px;
+                                  padding: 6px 14px;
                                   border: 2px solid #dc2626;
                                   border-radius: 8px;
                                   background: rgba(153, 27, 27, 0.3);
                                   color: #fca5a5;
                                   font-weight: 700;
-                                  font-size: 0.85rem;
+                                  font-size: 13px;
                                   letter-spacing: 0.05em;
                                   cursor: pointer;
                                   transition: all 0.2s ease;
@@ -1462,8 +1462,8 @@
 
                                 .unit-controls {
                                   display: flex;
-                                  gap: 1rem;
-                                  padding: 1rem 1.5rem;
+                                  gap: 12px;
+                                  padding: 12px 20px;
                                   background: rgba(15, 23, 42, 0.5);
                                   flex-wrap: wrap;
                                 }
@@ -1471,11 +1471,11 @@
                                 .unit-search-container {
                                   display: flex;
                                   align-items: center;
-                                  gap: 0.75rem;
+                                  gap: 10px;
                                   background: rgba(30, 41, 59, 0.8);
                                   border: 1px solid rgba(71, 85, 105, 0.5);
                                   border-radius: 8px;
-                                  padding: 0.6rem 1rem;
+                                  padding: 8px 14px;
                                   flex: 1;
                                   min-width: 200px;
                                 }
@@ -1489,7 +1489,7 @@
                                   background: transparent;
                                   border: none;
                                   color: #f1f5f9;
-                                  font-size: 0.95rem;
+                                  font-size: 14px;
                                   outline: none;
                                 }
 
@@ -1500,17 +1500,17 @@
                                 .unit-filter-row {
                                   display: flex;
                                   align-items: center;
-                                  gap: 1rem;
+                                  gap: 12px;
                                   flex-wrap: wrap;
                                 }
 
                                 .dept-filter-select {
-                                  padding: 0.5rem 1rem;
+                                  padding: 6px 14px;
                                   border: 1px solid rgba(71, 85, 105, 0.5);
                                   border-radius: 6px;
                                   background: rgba(30, 41, 59, 0.8);
                                   color: #f1f5f9;
-                                  font-size: 0.9rem;
+                                  font-size: 14px;
                                   cursor: pointer;
                                   min-width: 180px;
                                   transition: all 0.2s ease;
@@ -1533,11 +1533,11 @@
 
                                 .unit-filter-buttons {
                                   display: flex;
-                                  gap: 0.5rem;
+                                  gap: 6px;
                                 }
 
                                 .filter-btn {
-                                  padding: 0.5rem 1rem;
+                                  padding: 6px 14px;
                                   border: 1px solid rgba(71, 85, 105, 0.5);
                                   border-radius: 6px;
                                   background: rgba(30, 41, 59, 0.6);
@@ -1561,11 +1561,13 @@
 
                                 .unit-grid {
                                   display: grid;
-                                  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                                  gap: 0.75rem;
-                                  padding: 1.25rem;
-                                  max-height: 500px;
+                                  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+                                  gap: 10px;
+                                  padding: 16px;
+                                  padding-bottom: 60px;
+                                  max-height: 600px;
                                   overflow-y: auto;
+                                  overflow-x: visible;
                                 }
 
                                 .unit-grid::-webkit-scrollbar {
@@ -1584,13 +1586,14 @@
                                 .unit-card {
                                   display: flex;
                                   align-items: center;
-                                  gap: 1.25rem;
-                                  padding: 1rem 1.25rem;
+                                  gap: 14px;
+                                  padding: 12px 16px;
                                   background: rgba(30, 41, 59, 0.7);
                                   border: 1px solid rgba(71, 85, 105, 0.4);
                                   border-radius: 10px;
                                   transition: all 0.2s ease;
                                   cursor: pointer;
+                                  position: relative;
                                 }
 
                                 .unit-card:hover {
@@ -1738,11 +1741,14 @@
                                 .unit-callsign {
                                   font-weight: 700;
                                   color: #f1f5f9;
-                                  font-size: 1.35rem;
+                                  font-size: 16px;
+                                  white-space: nowrap;
+                                  overflow: hidden;
+                                  text-overflow: ellipsis;
                                 }
 
                                 .unit-name {
-                                  font-size: 1.1rem;
+                                  font-size: 13px;
                                   color: #94a3b8;
                                   white-space: nowrap;
                                   overflow: hidden;
@@ -1752,33 +1758,15 @@
                                 .unit-departments {
                                   display: flex;
                                   flex-wrap: wrap;
-                                  gap: 0.3rem;
-                                  margin-top: 0.35rem;
-                                  max-height: 3.2rem; /* ~2 lines of badges */
-                                  overflow-y: auto;
-                                  overflow-x: hidden;
-                                  scrollbar-width: thin;
-                                  scrollbar-color: rgba(99, 102, 241, 0.4) transparent;
-                                }
-
-                                .unit-departments::-webkit-scrollbar {
-                                  width: 4px;
-                                }
-
-                                .unit-departments::-webkit-scrollbar-track {
-                                  background: transparent;
-                                }
-
-                                .unit-departments::-webkit-scrollbar-thumb {
-                                  background: rgba(99, 102, 241, 0.4);
-                                  border-radius: 2px;
+                                  gap: 4px;
+                                  margin-top: 5px;
                                 }
 
                                 .dept-badge {
                                   display: inline-block;
-                                  padding: 0.15rem 0.5rem;
+                                  padding: 2px 8px;
                                   border-radius: 4px;
-                                  font-size: 0.7rem;
+                                  font-size: 11px;
                                   font-weight: 600;
                                   background: rgba(99, 102, 241, 0.2);
                                   color: #818cf8;
@@ -1789,9 +1777,9 @@
                                 /* Active department badge - highlighted */
                                 .active-dept-badge {
                                   display: inline-block;
-                                  padding: 0.15rem 0.5rem;
+                                  padding: 2px 8px;
                                   border-radius: 4px;
-                                  font-size: 0.7rem;
+                                  font-size: 11px;
                                   font-weight: 700;
                                   background: rgba(16, 185, 129, 0.3);
                                   color: #34d399;
@@ -1803,9 +1791,9 @@
                                 /* Expand button for showing more departments */
                                 .dept-expand-btn {
                                   display: inline-block;
-                                  padding: 0.1rem 0.4rem;
+                                  padding: 2px 6px;
                                   border-radius: 4px;
-                                  font-size: 0.65rem;
+                                  font-size: 10px;
                                   font-weight: 600;
                                   background: rgba(71, 85, 105, 0.4);
                                   color: #94a3b8;
@@ -1823,9 +1811,9 @@
                                 .dept-expanded {
                                   display: flex;
                                   flex-wrap: wrap;
-                                  gap: 0.3rem;
-                                  margin-top: 0.3rem;
-                                  padding-top: 0.3rem;
+                                  gap: 4px;
+                                  margin-top: 4px;
+                                  padding-top: 4px;
                                   border-top: 1px solid rgba(71, 85, 105, 0.3);
                                 }
 
@@ -1834,9 +1822,9 @@
                                 }
 
                                 .unit-status-badge {
-                                  padding: 0.3rem 0.6rem;
+                                  padding: 4px 8px;
                                   border-radius: 6px;
-                                  font-size: 0.75rem;
+                                  font-size: 12px;
                                   font-weight: 600;
                                   white-space: nowrap;
                                 }
@@ -1862,12 +1850,12 @@
                                 }
 
                                 .unit-status-select {
-                                  padding: 0.5rem 0.75rem;
+                                  padding: 5px 8px;
                                   border-radius: 6px;
                                   border: 1px solid rgba(71, 85, 105, 0.5);
                                   background: rgba(30, 41, 59, 0.8);
                                   color: #f1f5f9;
-                                  font-size: 1.05rem;
+                                  font-size: 13px;
                                   cursor: pointer;
                                   outline: none;
                                   min-width: 110px;
@@ -1877,20 +1865,101 @@
                                   border-color: #3b82f6;
                                 }
 
+                                /* Unit card actions wrapper */
+                                .unit-card-actions {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 6px;
+                                  margin-left: auto;
+                                  flex-shrink: 0;
+                                }
+
+                                /* Unit action menu (3-dot) */
+                                .unit-action-menu {
+                                  position: relative;
+                                }
+
+                                .unit-action-btn {
+                                  background: transparent;
+                                  border: 1px solid rgba(71, 85, 105, 0.5);
+                                  border-radius: 6px;
+                                  color: #94a3b8;
+                                  padding: 6px 8px;
+                                  cursor: pointer;
+                                  transition: all 0.15s ease;
+                                  font-size: 14px;
+                                  line-height: 1;
+                                }
+
+                                .unit-action-btn:hover {
+                                  background: rgba(59, 130, 246, 0.15);
+                                  border-color: rgba(59, 130, 246, 0.5);
+                                  color: #e2e8f0;
+                                }
+
+                                .unit-action-dropdown {
+                                  display: none;
+                                  position: absolute;
+                                  right: 0;
+                                  top: 100%;
+                                  margin-top: 4px;
+                                  background: #1e293b;
+                                  border: 1px solid #334155;
+                                  border-radius: 8px;
+                                  min-width: 210px;
+                                  z-index: 200;
+                                  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+                                  overflow: visible;
+                                }
+
+                                .unit-card.menu-open {
+                                  z-index: 150;
+                                }
+
+                                .unit-action-dropdown.show {
+                                  display: block;
+                                }
+
+                                .unit-action-item {
+                                  display: block;
+                                  padding: 8px 14px;
+                                  color: #e2e8f0;
+                                  text-decoration: none;
+                                  font-size: 13px;
+                                  transition: background 0.15s ease;
+                                  white-space: nowrap;
+                                }
+
+                                .unit-action-item:hover {
+                                  background: rgba(59, 130, 246, 0.15);
+                                  color: #f1f5f9;
+                                  text-decoration: none;
+                                }
+
+                                .unit-action-item.disabled {
+                                  color: #475569;
+                                  cursor: not-allowed;
+                                  pointer-events: none;
+                                }
+
+                                .unit-action-item.disabled:hover {
+                                  background: transparent;
+                                }
+
                                 .unit-loading {
                                   grid-column: 1 / -1;
                                   display: flex;
                                   align-items: center;
                                   justify-content: center;
-                                  gap: 0.75rem;
-                                  padding: 2rem;
+                                  gap: 10px;
+                                  padding: 24px;
                                   color: #64748b;
                                 }
 
                                 .unit-empty {
                                   grid-column: 1 / -1;
                                   text-align: center;
-                                  padding: 2rem;
+                                  padding: 24px;
                                   color: #64748b;
                                 }
 
@@ -1899,7 +1968,7 @@
                                 }
 
                                 .page-btn {
-                                  padding: 0.4rem 0.8rem;
+                                  padding: 6px 12px;
                                   border: 1px solid rgba(71, 85, 105, 0.5);
                                   border-radius: 6px;
                                   background: rgba(30, 41, 59, 0.6);
@@ -3221,9 +3290,70 @@
       </div>
     </div>
 
-    
+    <!-- Manage Call Sign Modal -->
+    <div id="manageCallSignModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content" style="background-color: #1e293b; border: 1px solid #334155; color: #e2e8f0;">
+          <div class="modal-header" style="border-bottom: 1px solid #334155;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #94a3b8; text-shadow: none; opacity: 0.8;">&times;</button>
+            <h4 class="modal-title" style="color: #f1f5f9;"><i class="fa fa-id-badge"></i> Manage Call Sign</h4>
+          </div>
+          <div class="modal-body">
+            <p style="color: #94a3b8; margin-bottom: 4px;">Member: <strong id="csModalUsername" style="color: #f1f5f9;"></strong></p>
+            <input type="hidden" id="csModalUserId" />
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label style="color: #94a3b8; font-weight: 500;">Department</label>
+              <select id="csModalDeptSelect" class="form-control" onchange="onCsModalDeptChange()"
+                style="background-color: #0f172a; border: 1px solid #334155; color: #f1f5f9;">
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="color: #94a3b8; font-weight: 500;">Call Sign <span style="font-weight: 400; color: #64748b;">(max 10 chars)</span></label>
+              <input type="text" id="csModalInput" class="form-control" maxlength="10" placeholder="Enter call sign"
+                style="background-color: #0f172a; border: 1px solid #334155; color: #f1f5f9;" oninput="toggleCsModalSaveBtn()" />
+            </div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #334155;">
+            <button type="button" class="btn btn-default" data-dismiss="modal" style="background-color: #334155; border-color: #475569; color: #e2e8f0;">Cancel</button>
+            <button type="button" id="csModalSaveBtn" class="btn btn-primary" onclick="saveCallSignFromModal()" disabled style="background-color: #3b82f6; border-color: #2563eb; opacity: 0.5;">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    
+    <!-- Set Status Modal (department-aware) -->
+    <div id="setStatusModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content" style="background-color: #1e293b; border: 1px solid #334155; color: #e2e8f0;">
+          <div class="modal-header" style="border-bottom: 1px solid #334155;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #94a3b8; text-shadow: none; opacity: 0.8;">&times;</button>
+            <h4 class="modal-title" style="color: #f1f5f9;"><i class="fa fa-signal"></i> Set Unit Status</h4>
+          </div>
+          <div class="modal-body">
+            <p style="color: #94a3b8; margin-bottom: 4px;">Member: <strong id="statusModalUsername" style="color: #f1f5f9;"></strong></p>
+            <input type="hidden" id="statusModalUserId" />
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label style="color: #94a3b8; font-weight: 500;">Department</label>
+              <select id="statusModalDeptSelect" class="form-control" onchange="onStatusModalDeptChange()"
+                style="background-color: #0f172a; border: 1px solid #334155; color: #f1f5f9;">
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="color: #94a3b8; font-weight: 500;">Status Code</label>
+              <select id="statusModalCodeSelect" class="form-control"
+                style="background-color: #0f172a; border: 1px solid #334155; color: #f1f5f9;">
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #334155;">
+            <button type="button" class="btn btn-default" data-dismiss="modal" style="background-color: #334155; border-color: #475569; color: #e2e8f0;">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveStatusFromModal()" style="background-color: #3b82f6; border-color: #2563eb;">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
 
     <div id="officerHelpModal" class="modal" tabindex="-1" role="dialog">
       <div class="modal-dialog" role="document">
@@ -5066,6 +5196,7 @@
 
       function clearPanicAlert(alertId) {
         if (!communityId) return;
+        AlertSounds.stop();
         $.ajax({
           url: API_URL + '/api/v1/community/' + communityId + '/panic-alerts/' + alertId,
           method: 'DELETE',
@@ -5346,16 +5477,36 @@
   var memberDataCache = {};
   var departmentsCache = [];
   var userDepartmentMap = {}; // Maps userId -> array of department objects
+  var communityOwnerID = '';
+  var communityRoles = [];
   var currentUnitFilter = 'all';
   var currentDepartmentFilter = 'all';
   var currentUnitSearch = '';
 
+  // Check if the current logged-in user has admin/owner permissions in the community
+  function isCurrentUserAdmin() {
+    var uid = dbUser._id;
+    if (communityOwnerID === uid) return true;
+    return communityRoles.some(function(role) {
+      if (!role.members || role.members.indexOf(uid) === -1) return false;
+      return role.permissions && role.permissions.some(function(p) {
+        return p.enabled && (p.name === 'administrator' || p.name === 'manage members');
+      });
+    });
+  }
+
   // Resolve the callsign for a user: prefer department-specific, fall back to global
   function getResolvedCallSign(userId, globalCallSign) {
     const member = memberDataCache[userId];
-    if (member && member.departmentCallSigns && member.activeDepartmentId) {
-      const deptCallSign = member.departmentCallSigns[member.activeDepartmentId];
-      if (deptCallSign) return deptCallSign;
+    if (member && member.departmentCallSigns) {
+      // Prefer active department call sign
+      if (member.activeDepartmentId) {
+        const deptCallSign = member.departmentCallSigns[member.activeDepartmentId];
+        if (deptCallSign) return deptCallSign;
+      }
+      // Fall back to any department call sign
+      const values = Object.values(member.departmentCallSigns);
+      if (values.length > 0 && values[0]) return values[0];
     }
     return globalCallSign || '';
   }
@@ -5365,127 +5516,87 @@
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
     if (!communityId) return;
 
-    // First, fetch ten codes and member data
-    $.ajax({
-      url: `${API_URL}/api/v1/community/${communityId}`,
-      method: 'GET',
-      success: function(commData) {
-        tenCodesCache = commData.community?.tenCodes || [];
+    // Fetch community data (for ten codes, roles, permissions) and v2 units in parallel
+    $.when(
+      $.ajax({ url: `${API_URL}/api/v1/community/${communityId}`, method: 'GET' }),
+      $.ajax({ url: `${API_URL}/api/v2/community/${communityId}/units?limit=100`, method: 'GET' })
+    ).done(function(commResult, unitsResult) {
+      var commData = commResult[0];
+      var unitsData = unitsResult[0];
 
-        // Preserve active department info from previous cache before overwriting
-        const preservedActiveDepts = {};
-        Object.keys(memberDataCache).forEach(userId => {
-          if (memberDataCache[userId]?.activeDepartmentId || memberDataCache[userId]?.activeDepartmentName) {
-            preservedActiveDepts[userId] = {
-              activeDepartmentId: memberDataCache[userId].activeDepartmentId,
-              activeDepartmentName: memberDataCache[userId].activeDepartmentName
-            };
-          }
-        });
+      // Process community data (ten codes, roles, permissions)
+      tenCodesCache = commData.community?.tenCodes || [];
+      communityOwnerID = commData.community?.ownerID || '';
+      communityRoles = commData.community?.roles || [];
+      memberDataCache = commData.community?.members || {};
 
-        memberDataCache = commData.community?.members || {};
-
-        // Restore preserved active department info only if server data is missing it
-        Object.keys(preservedActiveDepts).forEach(userId => {
-          if (!memberDataCache[userId]) memberDataCache[userId] = {};
-          if (!memberDataCache[userId].activeDepartmentId) {
-            memberDataCache[userId].activeDepartmentId = preservedActiveDepts[userId].activeDepartmentId;
-          }
-          if (!memberDataCache[userId].activeDepartmentName) {
-            memberDataCache[userId].activeDepartmentName = preservedActiveDepts[userId].activeDepartmentName;
-          }
-        });
-
-        // Update community name in header
-        if (commData.community?.name) {
-          $('#community-name').text(commData.community.name);
-        }
-
-        // Update callsign displays with resolved (department-specific) callsign
-        // For the sidebar, prefer the callsign for this page's department context over activeDepartmentId
-        var myMember = memberDataCache[dbUser._id];
-        var sidebarCS = '';
-        if (myMember && myMember.departmentCallSigns && departmentId) {
-          sidebarCS = myMember.departmentCallSigns[departmentId] || '';
-        }
-        if (!sidebarCS) {
-          sidebarCS = getResolvedCallSign(dbUser._id, dbUser.user?.callSign);
-        }
-        if (sidebarCS) {
-          $('#sidebar-callsign').text(sidebarCS);
-          $('#createdByUsername').val(dbUser.user?.username + ' (' + sidebarCS + ')');
-          $('#bolo-clearingOfficerUsername').val(dbUser.user?.username + ' (' + sidebarCS + ')');
-        }
-
-        // Fetch departments to build user-department mapping
-        $.ajax({
-          url: `${API_URL}/api/v1/community/${communityId}/departments`,
-          method: 'GET',
-          success: function(deptResponse) {
-            departmentsCache = (deptResponse.departments || []).filter(d => d.template?.name !== 'Civilian');
-
-            // Build user -> departments mapping
-            userDepartmentMap = {};
-            departmentsCache.forEach(dept => {
-              if (dept.members && Array.isArray(dept.members)) {
-                dept.members.forEach(member => {
-                  const userId = member.userID || member._id;
-                  if (userId) {
-                    if (!userDepartmentMap[userId]) {
-                      userDepartmentMap[userId] = [];
-                    }
-                    userDepartmentMap[userId].push({
-                      _id: dept._id,
-                      name: dept.name,
-                      template: dept.template
-                    });
-                  }
-                });
-              }
-            });
-
-            // Populate department filter dropdown
-            populateDepartmentFilter();
-
-            // Then fetch all members
-            fetchMembers(communityId);
-          },
-          error: function(xhr) {
-            console.error('Error loading departments:', xhr.responseText);
-            // Still fetch members even if departments fail
-            fetchMembers(communityId);
-          }
-        });
-      },
-      error: function(xhr) {
-        console.error('Error loading community data:', xhr.responseText);
+      // Update community name in header
+      if (commData.community?.name) {
+        $('#community-name').text(commData.community.name);
       }
-    });
-  }
 
-  // Fetch members (separated for reuse)
-  function fetchMembers(communityId) {
-    $.ajax({
-      url: `${API_URL}/api/v1/community/${communityId}/members?limit=100`,
-      method: 'GET',
-      success: function(response) {
-        // Handle various response formats
-        if (Array.isArray(response)) {
-          unitsCache = response;
-        } else if (response && Array.isArray(response.data)) {
-          unitsCache = response.data;
-        } else if (response && Array.isArray(response.members)) {
-          unitsCache = response.members;
-        } else {
-          console.warn('Unexpected members response format:', response);
-          unitsCache = [];
+      // Process v2 units — build unitsCache and userDepartmentMap from enriched data
+      var v2Units = unitsData.units || [];
+      unitsCache = [];
+      userDepartmentMap = {};
+      var deptSet = {};  // track unique departments for filter dropdown
+
+      v2Units.forEach(function(u) {
+        // Convert v2 unit to the shape expected by renderUnitsGrid
+        unitsCache.push({
+          _id: u.id,
+          user: {
+            username: u.username,
+            callSign: u.globalCallSign || '',
+            profilePicture: u.profilePicture
+          }
+        });
+
+        // Update memberDataCache with v2 enriched data
+        if (!memberDataCache[u.id]) memberDataCache[u.id] = {};
+        if (u.activeDepartmentId) memberDataCache[u.id].activeDepartmentId = u.activeDepartmentId;
+        if (u.activeDepartmentName) memberDataCache[u.id].activeDepartmentName = u.activeDepartmentName;
+        if (u.departmentCallSigns) memberDataCache[u.id].departmentCallSigns = u.departmentCallSigns;
+        if (u.tenCode) memberDataCache[u.id].tenCodeID = u.tenCode.id;
+
+        // Build user -> departments mapping
+        if (u.departments && u.departments.length > 0) {
+          userDepartmentMap[u.id] = u.departments.map(function(d) {
+            // Track for filter dropdown
+            if (!deptSet[d.id]) {
+              deptSet[d.id] = { _id: d.id, name: d.name, template: { name: d.template } };
+            }
+            return { _id: d.id, name: d.name, template: { name: d.template } };
+          });
         }
-        renderUnitsGrid();
-      },
-      error: function(xhr) {
-        console.error('Error loading units:', xhr.responseText);
-        $('#unitGrid').html('<div class="unit-empty"><i class="fa fa-exclamation-circle"></i> Failed to load units</div>');
+      });
+
+      // Build departmentsCache from unique departments (filter out Civilian)
+      departmentsCache = Object.values(deptSet).filter(function(d) {
+        return d.template?.name !== 'Civilian';
+      });
+
+      // Update sidebar callsign
+      var myMember = memberDataCache[dbUser._id];
+      var sidebarCS = '';
+      if (myMember && myMember.departmentCallSigns && departmentId) {
+        sidebarCS = myMember.departmentCallSigns[departmentId] || '';
       }
+      if (!sidebarCS) {
+        sidebarCS = getResolvedCallSign(dbUser._id, dbUser.user?.callSign);
+      }
+      if (sidebarCS) {
+        $('#sidebar-callsign').text(sidebarCS);
+        $('#createdByUsername').val(dbUser.user?.username + ' (' + sidebarCS + ')');
+        $('#bolo-clearingOfficerUsername').val(dbUser.user?.username + ' (' + sidebarCS + ')');
+      }
+
+      // Populate department filter and render
+      populateDepartmentFilter();
+      renderUnitsGrid();
+    }).fail(function(xhr) {
+      console.error('Error loading units panel:', xhr.responseText);
+      $('#unitGrid').html('<div class="unit-empty"><i class="fa fa-exclamation-circle"></i> Failed to load units</div>');
     });
   }
 
@@ -5703,6 +5814,12 @@
       }
 
       const safeUserId = escapeHtml(unit._id);
+      const adminUser = isCurrentUserAdmin();
+      const manageCsAttr = adminUser ? `onclick="openManageCallSignModal('${safeUserId}'); return false;"` : 'onclick="return false;"';
+      const manageCsClass = adminUser ? '' : ' disabled';
+      const lockIcon = adminUser ? '<i class="fa fa-id-badge"></i> ' : '<i class="fa fa-lock"></i> ';
+      const manageCsLabel = adminUser ? 'Manage Call Sign' : 'Manage Call Sign (Admin)';
+
       const cardHtml = `
         <div class="unit-card ${statusCategory}" data-user-id="${safeUserId}">
           <div class="unit-status-indicator ${statusCategory}"></div>
@@ -5712,9 +5829,20 @@
             ${alertBadgeHtml}
             ${deptBadgesHtml}
           </div>
-          <select class="unit-status-select" data-user-id="${safeUserId}" onchange="updateUnitStatus(this)">
-            ${selectOptions}
-          </select>
+          <div class="unit-card-actions">
+            <select class="unit-status-select" data-user-id="${safeUserId}" onchange="updateUnitStatus(this)">
+              ${selectOptions}
+            </select>
+            <div class="unit-action-menu">
+              <button type="button" class="unit-action-btn" onclick="toggleUnitMenu(this, event)">
+                <i class="fa fa-ellipsis-v"></i>
+              </button>
+              <div class="unit-action-dropdown">
+                <a href="#" onclick="openSetStatusModal('${safeUserId}'); return false;" class="unit-action-item"><i class="fa fa-signal"></i> Set Status (by Dept)</a>
+                <a href="#" ${manageCsAttr} class="unit-action-item${manageCsClass}">${lockIcon}${manageCsLabel}</a>
+              </div>
+            </div>
+          </div>
         </div>
       `;
       $grid.append(cardHtml);
@@ -5868,11 +5996,306 @@
     }
   }
 
+  // Toggle unit action dropdown menu
+  function toggleUnitMenu(btn, event) {
+    event.stopPropagation();
+    // Close all other open menus and reset z-index on their cards
+    $('.unit-action-dropdown.show').not($(btn).siblings('.unit-action-dropdown')).removeClass('show');
+    $('.unit-card.menu-open').removeClass('menu-open');
+    var $dropdown = $(btn).siblings('.unit-action-dropdown');
+    $dropdown.toggleClass('show');
+    // Raise the parent card above siblings so dropdown isn't clipped
+    $(btn).closest('.unit-card').toggleClass('menu-open', $dropdown.hasClass('show'));
+  }
+
+  // Close unit menus when clicking elsewhere
+  $(document).on('click', function() {
+    $('.unit-action-dropdown.show').removeClass('show');
+    $('.unit-card.menu-open').removeClass('menu-open');
+  });
+
+  // Open the Manage Call Sign modal for a specific unit
+  function openManageCallSignModal(userId) {
+    var unit = unitsCache.find(function(u) { return u._id === userId; });
+    var member = memberDataCache[userId] || {};
+    var username = (unit && unit.user && unit.user.username) ? unit.user.username : 'Unknown';
+    var userDepts = userDepartmentMap[userId] || [];
+
+    // Filter out Civilian and Judicial template departments
+    var filteredDepts = userDepts.filter(function(d) {
+      var tName = (d.template && d.template.name) ? d.template.name.toLowerCase() : '';
+      return tName !== 'civilian' && tName !== 'judicial';
+    });
+
+    // If user has no departments, show all community departments
+    if (filteredDepts.length === 0) {
+      filteredDepts = departmentsCache.filter(function(d) {
+        var tName = (d.template && d.template.name) ? d.template.name.toLowerCase() : '';
+        return tName !== 'civilian' && tName !== 'judicial';
+      });
+    }
+
+    // Build department select options
+    var $select = $('#csModalDeptSelect');
+    $select.empty();
+    // Always include global option
+    $select.append('<option value="">Global (Profile Call Sign)</option>');
+    filteredDepts.forEach(function(d) {
+      $select.append('<option value="' + d._id + '">' + escapeHtml(d.name) + '</option>');
+    });
+    // Default to active department if they have one
+    var activeDeptId = member.activeDepartmentId;
+    if (activeDeptId && filteredDepts.some(function(d) { return d._id === activeDeptId; })) {
+      $select.val(activeDeptId);
+    }
+
+    var selectedDeptId = $select.val();
+    var currentCS = '';
+    if (selectedDeptId && member.departmentCallSigns) {
+      currentCS = member.departmentCallSigns[selectedDeptId] || '';
+    } else if (!selectedDeptId) {
+      currentCS = (unit && unit.user) ? (unit.user.callSign || '') : '';
+    }
+
+    $('#csModalUserId').val(userId);
+    $('#csModalUsername').text(username);
+    $('#csModalInput').val(currentCS);
+    toggleCsModalSaveBtn();
+    $('#manageCallSignModal').modal('show');
+  }
+
+  // When department changes in call sign modal, load that dept's current call sign
+  function onCsModalDeptChange() {
+    var userId = $('#csModalUserId').val();
+    var deptId = $('#csModalDeptSelect').val();
+    var member = memberDataCache[userId] || {};
+    var unit = unitsCache.find(function(u) { return u._id === userId; });
+    var currentCS = '';
+
+    if (deptId && member.departmentCallSigns) {
+      currentCS = member.departmentCallSigns[deptId] || '';
+    } else if (!deptId) {
+      currentCS = (unit && unit.user) ? (unit.user.callSign || '') : '';
+    }
+
+    $('#csModalInput').val(currentCS);
+    toggleCsModalSaveBtn();
+  }
+
+  // Enable/disable save button based on input
+  function toggleCsModalSaveBtn() {
+    var val = ($('#csModalInput').val() || '').trim();
+    var $btn = $('#csModalSaveBtn');
+    if (val.length > 0) {
+      $btn.prop('disabled', false).css('opacity', '1');
+    } else {
+      $btn.prop('disabled', true).css('opacity', '0.5');
+    }
+  }
+
+  // Save call sign from the modal
+  function saveCallSignFromModal() {
+    var userId = $('#csModalUserId').val();
+    var deptId = $('#csModalDeptSelect').val();
+    var callSign = $('#csModalInput').val().trim();
+    var communityId = dbUser.user && dbUser.user.lastAccessedCommunity ? dbUser.user.lastAccessedCommunity.communityID : null;
+
+    if (!communityId || !userId || callSign.length < 1) return;
+
+    if (deptId) {
+      // Department-specific call sign
+      $.ajax({
+        url: API_URL + '/api/v1/community/' + communityId + '/members/' + userId + '/department-callsigns',
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ departmentId: deptId, callSign: callSign, requestingUserId: dbUser._id }),
+        success: function() {
+          hideModal('manageCallSignModal');
+          showToast('Call sign updated successfully.', 'success');
+
+          // Update local cache
+          if (!memberDataCache[userId]) memberDataCache[userId] = {};
+          if (!memberDataCache[userId].departmentCallSigns) memberDataCache[userId].departmentCallSigns = {};
+          memberDataCache[userId].departmentCallSigns[deptId] = callSign;
+
+          // Set active department so badge shows
+          var allDepts = departmentsCache;
+          var dept = allDepts.find(function(d) { return d._id === deptId; });
+          if (dept) {
+            memberDataCache[userId].activeDepartmentId = deptId;
+            memberDataCache[userId].activeDepartmentName = dept.name;
+            // Ensure userDepartmentMap includes this department
+            if (!userDepartmentMap[userId]) userDepartmentMap[userId] = [];
+            if (!userDepartmentMap[userId].some(function(d) { return d._id === deptId; })) {
+              userDepartmentMap[userId].push({ _id: dept._id, name: dept.name, template: dept.template });
+            }
+          }
+
+          renderUnitsGrid();
+        },
+        error: function(xhr) {
+          var msg = 'Unknown error';
+          try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e) {}
+          showToast('Failed to update call sign: ' + msg, 'error');
+        }
+      });
+    } else {
+      // Global call sign (no departments)
+      $.ajax({
+        url: API_URL + '/api/v1/user/' + userId,
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ callSign: callSign }),
+        success: function() {
+          hideModal('manageCallSignModal');
+          showToast('Call sign updated successfully.', 'success');
+
+          // Update local cache
+          var unit = unitsCache.find(function(u) { return u._id === userId; });
+          if (unit && unit.user) unit.user.callSign = callSign;
+
+          renderUnitsGrid();
+        },
+        error: function(xhr) {
+          var msg = 'Unknown error';
+          try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e) {}
+          showToast('Failed to update call sign: ' + msg, 'error');
+        }
+      });
+    }
+  }
+
+  // Open status modal with department picker
+  function openSetStatusModal(userId) {
+    var unit = unitsCache.find(function(u) { return u._id === userId; });
+    var member = memberDataCache[userId] || {};
+    var username = (unit && unit.user && unit.user.username) ? unit.user.username : 'Unknown';
+    var userDepts = userDepartmentMap[userId] || [];
+
+    // Filter out Civilian and Judicial template departments
+    var filteredDepts = userDepts.filter(function(d) {
+      var tName = (d.template && d.template.name) ? d.template.name.toLowerCase() : '';
+      return tName !== 'civilian' && tName !== 'judicial';
+    });
+
+    // If user has no departments, show all community departments
+    if (filteredDepts.length === 0) {
+      filteredDepts = departmentsCache.filter(function(d) {
+        var tName = (d.template && d.template.name) ? d.template.name.toLowerCase() : '';
+        return tName !== 'civilian' && tName !== 'judicial';
+      });
+    }
+
+    // Build department select
+    var $deptSelect = $('#statusModalDeptSelect');
+    $deptSelect.empty();
+    filteredDepts.forEach(function(d) {
+      $deptSelect.append('<option value="' + d._id + '">' + escapeHtml(d.name) + '</option>');
+    });
+    var activeDeptId = member.activeDepartmentId;
+    if (activeDeptId && filteredDepts.some(function(d) { return d._id === activeDeptId; })) {
+      $deptSelect.val(activeDeptId);
+    }
+
+    // Build status code select
+    var $codeSelect = $('#statusModalCodeSelect');
+    $codeSelect.empty();
+    $codeSelect.append('<option value="">No Status</option>');
+    tenCodesCache.forEach(function(tc) {
+      var selected = tc._id === member.tenCodeID ? 'selected' : '';
+      $codeSelect.append('<option value="' + escapeHtml(tc._id) + '" ' + selected + '>' + escapeHtml(tc.code) + (tc.description ? ' - ' + escapeHtml(tc.description) : '') + '</option>');
+    });
+
+    $('#statusModalUserId').val(userId);
+    $('#statusModalUsername').text(username);
+    $('#setStatusModal').modal('show');
+  }
+
+  // When department changes in status modal (for future use)
+  function onStatusModalDeptChange() {
+    // Currently just a placeholder — department selection is used on save
+  }
+
+  // Save status from the modal
+  function saveStatusFromModal() {
+    var userId = $('#statusModalUserId').val();
+    var deptId = $('#statusModalDeptSelect').val();
+    var tenCodeId = $('#statusModalCodeSelect').val();
+    var communityId = dbUser.user && dbUser.user.lastAccessedCommunity ? dbUser.user.lastAccessedCommunity.communityID : null;
+
+    if (!communityId || !userId) return;
+
+    // Find the department name for the selected department
+    var deptName = '';
+    if (deptId) {
+      var userDepts = userDepartmentMap[userId] || [];
+      var dept = userDepts.find(function(d) { return d._id === deptId; });
+      deptName = dept ? dept.name : '';
+    }
+
+    $.ajax({
+      url: API_URL + '/api/v1/community/' + communityId + '/members/' + userId + '/tenCode',
+      method: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        departmentId: deptId || departmentId,
+        tenCodeID: tenCodeId || null,
+        activeDepartmentId: deptId || '',
+        activeDepartmentName: deptName
+      }),
+      success: function() {
+        hideModal('setStatusModal');
+        showToast('Status updated successfully.', 'success');
+
+        // Update local cache
+        if (!memberDataCache[userId]) memberDataCache[userId] = {};
+        memberDataCache[userId].tenCodeID = tenCodeId || null;
+        if (deptId) {
+          memberDataCache[userId].activeDepartmentId = deptId;
+          memberDataCache[userId].activeDepartmentName = deptName;
+        }
+
+        renderUnitsGrid();
+
+        // Emit socket event for real-time updates
+        var tenCode = tenCodesCache.find(function(tc) { return tc._id === tenCodeId; });
+        var statusCode = tenCode ? tenCode.code : 'No Status';
+
+        if (dashboardSocket) {
+          var shouldBroadcast = tenCode && isBroadcastStatus(tenCode.code, tenCode.description);
+          dashboardSocket.emit('update_status', {
+            userID: userId,
+            status: statusCode,
+            statusCode: tenCodeId,
+            setBy: dbUser.user?.username || 'Dispatch',
+            communityId: communityId,
+            broadcastToAll: shouldBroadcast,
+            activeDepartmentId: deptId || '',
+            activeDepartmentName: deptName
+          });
+        }
+      },
+      error: function(xhr) {
+        var msg = 'Unknown error';
+        try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e) {}
+        showToast('Failed to update status: ' + msg, 'error');
+      }
+    });
+  }
+
   // Make function globally available
   window.filterUnits = filterUnits;
   window.filterByDepartment = filterByDepartment;
   window.updateUnitStatus = updateUnitStatus;
   window.toggleDeptExpand = toggleDeptExpand;
+  window.toggleUnitMenu = toggleUnitMenu;
+  window.openManageCallSignModal = openManageCallSignModal;
+  window.saveCallSignFromModal = saveCallSignFromModal;
+  window.onCsModalDeptChange = onCsModalDeptChange;
+  window.toggleCsModalSaveBtn = toggleCsModalSaveBtn;
+  window.openSetStatusModal = openSetStatusModal;
+  window.saveStatusFromModal = saveStatusFromModal;
+  window.onStatusModalDeptChange = onStatusModalDeptChange;
 
   // Initialize socket on window load
   window.onload = function() {
@@ -6433,6 +6856,8 @@
   function confirmClearSignal100() {
     const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
     if (!communityId) return;
+
+    AlertSounds.stop();
 
     var clearCallSign = getResolvedCallSign(dbUser._id, dbUser.user?.callSign);
 

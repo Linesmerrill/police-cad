@@ -266,6 +266,8 @@
   };
 
   function doClearSignal100() {
+    if (window.AlertSounds) window.AlertSounds.stop();
+
     // Emit socket event
     if (alertSocket && alertSocket.connected) {
       alertSocket.emit('clear_signal_100', {
@@ -295,6 +297,7 @@
 
   window.cdClearPanic = function (alertId) {
     if (!alertId) return;
+    if (window.AlertSounds) window.AlertSounds.stop();
 
     $.ajax({
       url: apiUrl() + '/api/v1/community/' + encodeURIComponent(communityId) + '/panic-alerts/' + encodeURIComponent(alertId),
@@ -472,6 +475,13 @@
     // Fetch current state on load
     fetchSignal100();
     fetchPanicAlerts();
+
+    // Poll every 30s as a fallback for missed socket events (e.g. brief
+    // disconnection, browser tab throttling). Matches dispatch dashboard behavior.
+    setInterval(function () {
+      fetchSignal100();
+      fetchPanicAlerts();
+    }, 30000);
   }
 
   $(document).ready(init);
