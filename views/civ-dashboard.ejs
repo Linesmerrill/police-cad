@@ -5,7 +5,7 @@
   <title>LPC - Civilian Dashboard</title>
   <meta charset="utf-8">
   <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
   <!-- Favicon -->
   <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
@@ -2118,9 +2118,13 @@
         margin: 0 !important;
         width: 100% !important;
         border-radius: 12px !important;
-        padding: 1.5rem 1rem 1rem 1rem !important;
+        padding: 1.5rem 1rem calc(2rem + env(safe-area-inset-bottom, 0px)) 1rem !important;
       }
-      
+
+      .modal .modal-body {
+        padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px)) !important;
+      }
+
       /* Ensure form elements are properly sized on mobile */
       .firearm-input {
         font-size: 16px !important; /* Prevents zoom on iOS */
