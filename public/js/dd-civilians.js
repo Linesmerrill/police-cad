@@ -231,14 +231,45 @@
       '.dd-civ-sub-card-title{font-size:0.8125rem;font-weight:600;color:var(--dd-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
       '.dd-civ-sub-card-meta{font-size:0.6875rem;color:var(--dd-text-muted);margin-top:0.1rem;}' +
 
+      /* ── Vehicle card enhancements ── */
+      '.dd-veh-card{background:var(--dd-glass);border:1px solid var(--dd-glass-border);border-radius:var(--dd-radius);padding:0.55rem 0.85rem;display:flex;align-items:center;gap:0.7rem;margin-bottom:0.4rem;transition:border-color 0.15s;}' +
+      '.dd-veh-card:hover{border-color:rgba(56,189,248,0.25);}' +
+      '.dd-veh-card-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.8rem;}' +
+      '.dd-veh-card-icon.veh-ok{background:rgba(34,197,94,0.12);color:#22c55e;}' +
+      '.dd-veh-card-icon.veh-stolen{background:rgba(239,68,68,0.15);color:#ef4444;}' +
+      '.dd-veh-card-body{flex:1;min-width:0;}' +
+      '.dd-veh-card-row{display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;}' +
+      '.dd-veh-card-plate{font-size:0.8125rem;font-weight:700;color:var(--dd-text);letter-spacing:0.03em;white-space:nowrap;}' +
+      '.dd-veh-plate-state{font-size:0.5625rem;font-weight:500;color:var(--dd-text-muted);background:rgba(255,255,255,0.06);padding:0.05rem 0.3rem;border-radius:3px;white-space:nowrap;}' +
+      '.dd-veh-sep{color:var(--dd-text-dim);font-size:0.55rem;opacity:0.35;}' +
+      '.dd-veh-card-desc{font-size:0.75rem;color:var(--dd-text-muted);white-space:nowrap;}' +
+      '.dd-veh-card-detail{font-size:0.6875rem;color:var(--dd-text-dim);display:inline-flex;align-items:center;gap:0.2rem;white-space:nowrap;}' +
+      '.dd-veh-card-detail i{font-size:0.55rem;opacity:0.6;}' +
+      '.dd-veh-badges{display:flex;flex-wrap:wrap;gap:0.25rem;margin-top:0.25rem;}' +
+      '.dd-veh-badge{font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:0.1rem 0.35rem;border-radius:4px;display:inline-flex;align-items:center;gap:0.2rem;line-height:1.3;}' +
+      '.dd-veh-badge i{font-size:0.5rem;}' +
+      '.dd-veh-badge.badge-stolen{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.25);}' +
+      '.dd-veh-badge.badge-exempt{background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.2);}' +
+      '.dd-veh-badge.badge-reg{background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.2);}' +
+      '.dd-veh-badge.badge-ins{background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.2);}' +
+      '.dd-veh-card-action{flex-shrink:0;align-self:center;}' +
+
       /* ── Link search (top bar) ── */
-      '.dd-civ-link-bar{display:flex;align-items:center;justify-content:space-between;gap:0.75rem;margin-bottom:0.75rem;}' +
+      '.dd-civ-link-bar{display:flex;align-items:center;justify-content:space-between;gap:0.75rem;margin-bottom:0.75rem;position:relative;z-index:200;}' +
       '.dd-civ-link-bar-label{font-size:0.75rem;font-weight:600;color:var(--dd-text-muted);white-space:nowrap;}' +
-      '.dd-civ-link-search-wrap{position:relative;width:220px;flex-shrink:0;}' +
+      '.dd-civ-link-search-wrap{position:relative;width:260px;flex-shrink:0;}' +
       '.dd-civ-link-search-wrap .dd-civ-search{width:100%;padding-right:2rem;font-size:0.75rem;padding:0.4rem 0.65rem;}' +
       '.dd-civ-link-search-wrap .dd-link-search-icon{position:absolute;right:0.6rem;top:50%;transform:translateY(-50%);color:var(--dd-text-dim);font-size:0.7rem;pointer-events:none;}' +
-      '.dd-civ-link-results{position:absolute;top:100%;right:0;left:0;z-index:100;margin-top:0.25rem;background:var(--dd-surface,#13131a);border:1px solid var(--dd-glass-border);border-radius:var(--dd-radius-sm);box-shadow:0 8px 32px rgba(0,0,0,0.4);max-height:220px;overflow-y:auto;}' +
+      '.dd-civ-link-results{position:absolute;top:100%;right:0;width:340px;z-index:9999;margin-top:0.25rem;background:#111118;border:1px solid rgba(255,255,255,0.12);border-radius:var(--dd-radius-sm);box-shadow:0 12px 40px rgba(0,0,0,0.7),0 0 0 1px rgba(0,0,0,0.3);max-height:320px;overflow-y:auto;}' +
       '.dd-civ-link-results:empty{display:none;}' +
+      '.dd-civ-link-results .dd-veh-card{margin:0;border-radius:0;border:none;border-bottom:1px solid rgba(255,255,255,0.07);cursor:pointer;padding:0.6rem 0.85rem;background:transparent;}' +
+      '.dd-civ-link-results .dd-veh-card:last-child{border-bottom:0;}' +
+      '.dd-civ-link-results .dd-veh-card:hover{background:rgba(56,189,248,0.06);}' +
+      '.dd-civ-link-results .dd-veh-card-body{display:flex;flex-direction:column;gap:0.15rem;}' +
+      '.dd-civ-link-results .dd-veh-card-row{flex-direction:column;align-items:flex-start;gap:0.15rem;}' +
+      '.dd-civ-link-results .dd-veh-card-row .dd-veh-sep:first-of-type{display:none;}' +
+      '.dd-civ-link-results .dd-veh-card-plate{font-size:0.85rem;}' +
+      '.dd-civ-link-results .dd-veh-meta-line{display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap;}' +
       '.dd-civ-link-section{margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--dd-glass-border);}' +
       '.dd-civ-link-title{font-size:0.75rem;font-weight:600;color:var(--dd-text-muted);margin-bottom:0.5rem;}' +
 
@@ -1052,12 +1083,30 @@
         }
 
         var cards = linked.map(function (v) {
+          // Title: plate (always present)
+          var title = esc(v.plate || 'N/A');
+
+          // Meta line: collect available fields separated by middots
+          var meta = [];
+          var ymm = [v.year, v.make, v.model].filter(Boolean).map(function(p) { return esc(p); }).join(' ');
+          if (ymm) meta.push(ymm);
+          if (v.type) meta.push(esc(v.type));
+          if (v.color) meta.push('Color: ' + esc(v.color));
+          if (v.vin) meta.push('VIN: ' + esc(v.vin));
+          if (v.licensePlateState) meta.push(esc(v.licensePlateState));
+          var metaStr = meta.length ? meta.join(' &middot; ') : 'No details';
+
+          // Stolen indicator changes icon color
+          var isStolen = v.isStolen === true || v.isStolen === 'true';
+          var iconColor = isStolen ? 'var(--dd-red)' : 'var(--dd-green)';
+          var stolenBadge = isStolen ? ' <span style="color:var(--dd-red);font-size:0.6rem;font-weight:700;text-transform:uppercase;margin-left:0.3rem;">STOLEN</span>' : '';
+
           return '' +
             '<div class="dd-civ-sub-card">' +
-              '<i class="fa fa-car" style="color:var(--dd-green);font-size:1.1rem;"></i>' +
+              '<i class="fa fa-car" style="color:' + iconColor + ';font-size:1.1rem;"></i>' +
               '<div class="dd-civ-sub-card-info">' +
-                '<div class="dd-civ-sub-card-title">' + esc(v.year || '') + ' ' + esc(v.make || '') + ' ' + esc(v.model || '') + '</div>' +
-                '<div class="dd-civ-sub-card-meta">Plate: ' + esc(v.plate || 'N/A') + ' &middot; Color: ' + esc(v.color || 'N/A') + '</div>' +
+                '<div class="dd-civ-sub-card-title">' + title + stolenBadge + '</div>' +
+                '<div class="dd-civ-sub-card-meta">' + metaStr + '</div>' +
               '</div>' +
               '<button class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small dd-civ-delink-veh" data-veh-id="' + esc(v._id) + '" title="Unlink vehicle"><i class="fa fa-unlink"></i></button>' +
             '</div>';
@@ -1076,6 +1125,59 @@
         $body.html('<div class="dd-civ-empty"><i class="fa fa-exclamation-triangle"></i><p>Failed to load vehicles.</p></div>');
       }
     });
+  }
+
+  function buildVehicleCard(v, mode) {
+    var isStolen = v.isStolen === true || v.isStolen === 'true';
+    var iconClass = isStolen ? 'veh-stolen' : 'veh-ok';
+    var sep = '<span class="dd-veh-sep">&middot;</span>';
+
+    // Collect meta parts (everything except plate)
+    var metaParts = [];
+    if (v.licensePlateState) metaParts.push('<span class="dd-veh-plate-state">' + esc(v.licensePlateState) + '</span>');
+    var ymm = [v.year, v.make, v.model].filter(Boolean).map(function(p) { return esc(p); }).join(' ');
+    if (ymm) metaParts.push('<span class="dd-veh-card-desc">' + ymm + '</span>');
+    if (v.type) metaParts.push('<span class="dd-veh-card-desc">' + esc(v.type) + '</span>');
+    if (v.color) metaParts.push('<span class="dd-veh-card-detail"><i class="fa fa-palette"></i> ' + esc(v.color) + '</span>');
+    if (v.vin) metaParts.push('<span class="dd-veh-card-detail"><i class="fa fa-barcode"></i> ' + esc(v.vin) + '</span>');
+
+    // Status badges
+    var badges = '';
+    if (isStolen) badges += '<span class="dd-veh-badge badge-stolen"><i class="fa fa-exclamation-triangle"></i> Stolen</span>';
+    if (v.isExempt === true || v.isExempt === 'true') badges += '<span class="dd-veh-badge badge-exempt"><i class="fa fa-shield"></i> Exempt</span>';
+    if (v.validRegistration === false || v.validRegistration === 'false') badges += '<span class="dd-veh-badge badge-reg"><i class="fa fa-file-circle-xmark"></i> Invalid Reg</span>';
+    if (v.validInsurance === false || v.validInsurance === 'false') badges += '<span class="dd-veh-badge badge-ins"><i class="fa fa-file-shield"></i> No Insurance</span>';
+
+    // Action button
+    var action = '';
+    if (mode === 'linked') {
+      action = '<div class="dd-veh-card-action"><button class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small dd-civ-delink-veh" data-veh-id="' + esc(v._id) + '" title="Unlink vehicle"><i class="fa fa-unlink"></i></button></div>';
+    } else {
+      action = '<div class="dd-veh-card-action"><i class="fa fa-link" style="color:var(--dd-accent);font-size:0.85rem;"></i></div>';
+    }
+
+    var dataAttr = mode === 'search' ? ' data-link-veh-id="' + esc(v._id) + '"' : '';
+    var bodyHtml = '';
+
+    if (mode === 'search') {
+      // Dropdown: stacked layout — plate on top, meta line below
+      bodyHtml = '<div class="dd-veh-card-plate">' + esc(v.plate || 'N/A') + '</div>';
+      if (metaParts.length) bodyHtml += '<div class="dd-veh-meta-line">' + metaParts.join(sep) + '</div>';
+      if (badges) bodyHtml += '<div class="dd-veh-badges">' + badges + '</div>';
+    } else {
+      // Linked list: compact single row — plate + meta inline
+      var rowParts = ['<span class="dd-veh-card-plate">' + esc(v.plate || 'N/A') + '</span>'];
+      rowParts = rowParts.concat(metaParts);
+      bodyHtml = '<div class="dd-veh-card-row">' + rowParts.join(sep) + '</div>';
+      if (badges) bodyHtml += '<div class="dd-veh-badges">' + badges + '</div>';
+    }
+
+    return '' +
+      '<div class="dd-veh-card"' + dataAttr + '>' +
+        '<div class="dd-veh-card-icon ' + iconClass + '"><i class="fa fa-car"></i></div>' +
+        '<div class="dd-veh-card-body">' + bodyHtml + '</div>' +
+        action +
+      '</div>';
   }
 
   function buildVehicleLinkBar() {
@@ -1108,7 +1210,7 @@
         flat._id = v._id || v.id || '';
         if (flat.linkedCivilianID === civId || flat.registeredOwnerID === civId) return; // already linked
 
-        var searchStr = ((flat.plate || '') + ' ' + (flat.make || '') + ' ' + (flat.model || '') + ' ' + (flat.year || '')).toLowerCase();
+        var searchStr = ((flat.plate || '') + ' ' + (flat.make || '') + ' ' + (flat.model || '') + ' ' + (flat.year || '') + ' ' + (flat.color || '') + ' ' + (flat.vin || '')).toLowerCase();
         if (searchStr.indexOf(term) !== -1) matches.push(flat);
       });
 
@@ -1118,15 +1220,7 @@
       }
 
       var html = matches.slice(0, 5).map(function (v) {
-        return '' +
-          '<div class="dd-civ-sub-card" style="cursor:pointer;margin:0;border-radius:0;border-bottom:1px solid var(--dd-glass-border);" data-link-veh-id="' + esc(v._id) + '">' +
-            '<i class="fa fa-car" style="color:var(--dd-text-muted);"></i>' +
-            '<div class="dd-civ-sub-card-info">' +
-              '<div class="dd-civ-sub-card-title">' + esc(v.year || '') + ' ' + esc(v.make || '') + ' ' + esc(v.model || '') + '</div>' +
-              '<div class="dd-civ-sub-card-meta">Plate: ' + esc(v.plate || 'N/A') + '</div>' +
-            '</div>' +
-            '<i class="fa fa-link" style="color:var(--dd-accent);"></i>' +
-          '</div>';
+        return buildVehicleCard(v, 'search');
       }).join('');
 
       $results.html(html);

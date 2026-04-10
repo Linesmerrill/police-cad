@@ -555,31 +555,137 @@ let joinRequestLoading = false;
   }
 })();
 
+// Cancel a pending community join request
+async function cancelJoinRequest() {
+  if (joinRequestLoading) return;
+  joinRequestLoading = true;
+
+  const userId = window.dbUser && window.dbUser._id;
+  const communityId = window.communityId;
+  const apiUrl = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+  try {
+    const res = await fetch(`${apiUrl}/api/v1/user/${userId}/pending-community-request`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ communityId: communityId }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || 'Failed to cancel request.');
+    }
+
+    // Show success toast
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toast-message');
+    if (toast && toastMsg) {
+      toastMsg.textContent = 'Join request cancelled.';
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    // Swap primary cancel button back to "Request to Join"
+    const cancelBtn = document.getElementById('cancelJoinBtn');
+    if (cancelBtn) {
+      cancelBtn.id = 'requestJoinBtn';
+      cancelBtn.className = 'btn-primary w-full text-center';
+      cancelBtn.removeAttribute('style');
+      cancelBtn.setAttribute('onclick', 'openRequestJoinModal()');
+      cancelBtn.innerHTML = '<i class="fa fa-user-plus mr-2"></i>Request to Join Community';
+    }
+
+    // Swap secondary cancel button (departments locked section) back to "Request to Join"
+    const deptLockedBtns = document.querySelectorAll('button[onclick="cancelJoinRequest()"]');
+    deptLockedBtns.forEach(btn => {
+      btn.className = 'btn-primary';
+      btn.removeAttribute('style');
+      btn.setAttribute('onclick', 'openRequestJoinModal()');
+      btn.innerHTML = 'Request to Join';
+    });
+  } catch (err) {
+    alert('Error: ' + (err.message || 'Failed to cancel request.'));
+  } finally {
+    joinRequestLoading = false;
+  }
+}
+
+// Cancel a pending department join request
+async function cancelDepartmentJoinRequest(departmentId) {
+  if (joinRequestLoading) return;
+  joinRequestLoading = true;
+
+  const userId = window.dbUser && window.dbUser._id;
+  const communityId = window.communityId;
+  const apiUrl = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+  try {
+    const res = await fetch(`${apiUrl}/api/v1/user/${userId}/pending-department-request`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ communityId: communityId, departmentId: departmentId }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || 'Failed to cancel request.');
+    }
+
+    // Show success toast
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toast-message');
+    if (toast && toastMsg) {
+      toastMsg.textContent = 'Department join request cancelled.';
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    // Find the department card and swap button back to "Request to Join"
+    const deptCard = document.querySelector(`[data-dept-id="${departmentId}"]`);
+    if (deptCard) {
+      const cancelBtn = deptCard.querySelector('button[onclick*="cancelDepartmentJoinRequest"]');
+      if (cancelBtn) {
+        const deptName = (deptCard.getAttribute('data-dept-name') || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        cancelBtn.setAttribute('style', 'color: #3b82f6; background: rgba(59, 130, 246, 0.1);');
+        cancelBtn.setAttribute('onclick', `event.stopPropagation(); openRequestJoinDepartmentModal('${departmentId}', '${deptName}');`);
+        cancelBtn.innerHTML = 'Request to Join';
+      }
+    }
+  } catch (err) {
+    alert('Error: ' + (err.message || 'Failed to cancel request.'));
+  } finally {
+    joinRequestLoading = false;
+  }
+}
+
 // Send join request notification to admins/managers
 async function sendJoinRequestNotification(communityId, user) {
+  const apiUrl = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
   try {
     // Fetch community details to get roles and permissions
-    const res = await fetch(`${API_URL}/community/${communityId}`);
+    const res = await fetch(`${apiUrl}/api/v1/community/${communityId}`);
     if (!res.ok) throw new Error('Failed to fetch community details');
     const community = await res.json();
 
     // Get unique user IDs of roles with "manage members" or "administrator" permissions
-    const userIds = [...new Set(
-      (community.community.roles || [])
-        .filter((role) =>
-          (role.permissions || []).some(
-            (permission) =>
-              (permission.name === "manage members" ||
-                permission.name === "administrator") &&
-              permission.enabled
-          )
+    const roleUserIds = (community.community.roles || [])
+      .filter((role) =>
+        (role.permissions || []).some(
+          (permission) =>
+            (permission.name === "manage members" ||
+              permission.name === "administrator") &&
+            permission.enabled
         )
-        .flatMap((role) => role.members)
-    )];
+      )
+      .flatMap((role) => role.members);
+
+    // Always include the community owner
+    const ownerID = community.community.ownerID;
+    const userIds = [...new Set([...roleUserIds, ...(ownerID ? [ownerID] : [])])];
 
     // Send notification to each user
     for (const recipientId of userIds) {
-      await fetch(`${API_URL}/users/notifications`, {
+      await fetch(`${apiUrl}/api/v1/users/notifications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -601,8 +707,9 @@ async function sendJoinRequestNotification(communityId, user) {
 
 // Department Join Request Functions
 async function sendUserPendingDepartmentRequest(communityId, departmentId, userId) {
+  const apiUrl = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
   try {
-    const response = await fetch(`${API_URL}/api/v1/user/${userId}/pending-department-request`, {
+    const response = await fetch(`${apiUrl}/api/v1/user/${userId}/pending-department-request`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -626,34 +733,37 @@ async function sendUserPendingDepartmentRequest(communityId, departmentId, userI
 }
 
 async function sendJoinDepartmentRequestNotification(communityId, departmentId, user) {
+  const apiUrl = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
   try {
     // Fetch community details to get roles and permissions
-    const communityRes = await fetch(`${API_URL}/api/v1/community/${communityId}`);
+    const communityRes = await fetch(`${apiUrl}/api/v1/community/${communityId}`);
     if (!communityRes.ok) throw new Error('Failed to fetch community details');
     const community = await communityRes.json();
 
     // Fetch department details
-    const departmentRes = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${departmentId}`);
+    const departmentRes = await fetch(`${apiUrl}/api/v1/community/${communityId}/departments/${departmentId}`);
     if (!departmentRes.ok) throw new Error('Failed to fetch department details');
     const department = await departmentRes.json();
 
     // Get unique user IDs of roles with "manage members" or "administrator" permissions
-    const userIds = [...new Set(
-      (community.community.roles || [])
-        .filter((role) =>
-          (role.permissions || []).some(
-            (permission) =>
-              (permission.name === "manage members" ||
-                permission.name === "administrator") &&
-              permission.enabled
-          )
+    const roleUserIds = (community.community.roles || [])
+      .filter((role) =>
+        (role.permissions || []).some(
+          (permission) =>
+            (permission.name === "manage members" ||
+              permission.name === "administrator") &&
+            permission.enabled
         )
-        .flatMap((role) => role.members)
-    )];
+      )
+      .flatMap((role) => role.members);
+
+    // Always include the community owner
+    const ownerID = community.community.ownerID;
+    const userIds = [...new Set([...roleUserIds, ...(ownerID ? [ownerID] : [])])];
 
     // Send notification to each user
     for (const recipientId of userIds) {
-      await fetch(`${API_URL}/api/v1/users/notifications`, {
+      await fetch(`${apiUrl}/api/v1/users/notifications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

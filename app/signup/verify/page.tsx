@@ -227,15 +227,16 @@ function VerifyForm() {
       <Navbar />
       
       {/* Hero Section Background */}
-      <div 
-        className="relative isolate overflow-hidden"
+      <div
         style={{
-          background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%)',
+          backgroundImage: 'linear-gradient(180deg, rgba(10, 10, 15, 0.85) 0%, rgba(26, 26, 46, 0.8) 50%, rgba(22, 33, 62, 0.85) 100%), url(/static/static/images/landing-bg.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
           minHeight: 'calc(100vh - 80px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          position: 'relative',
           paddingTop: 'clamp(80px, 15vw, 120px)',
           paddingBottom: '80px',
           width: '100%',
@@ -246,25 +247,6 @@ function VerifyForm() {
           flex: 1,
         }}
       >
-        {/* Background Image */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: 'url(/static/static/images/landing-bg.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          zIndex: 0
-        }} />
-        
-        {/* Dark Overlay */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'linear-gradient(180deg, rgba(10, 10, 15, 0.85) 0%, rgba(26, 26, 46, 0.8) 50%, rgba(22, 33, 62, 0.85) 100%)',
-          zIndex: 1
-        }} />
-
         {/* Main Content */}
         <div
           style={{
@@ -273,8 +255,6 @@ function VerifyForm() {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '0 20px',
-            position: 'relative',
-            zIndex: 2,
             width: '100%',
             maxWidth: '100%',
           }}

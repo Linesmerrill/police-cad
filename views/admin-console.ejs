@@ -4112,8 +4112,8 @@
                 <div class="no-users-found">
                   <div class="no-users-message">
                     <i class="fas fa-user-clock" style="font-size: 2rem; color: #a0aec0; margin-bottom: 1rem;"></i>
-                    <h5 style="color: #f7fafc; margin-bottom: 0.5rem;">No pending users found</h5>
-                    <p style="color: #a0aec0; margin-bottom: 1.5rem;">No pending verification codes match your search.</p>
+                    <h5 style="color: #f7fafc; margin-bottom: 0.5rem;">No unverified users found</h5>
+                    <p style="color: #a0aec0; margin-bottom: 1.5rem;">No users with unverified emails match your search.</p>
                     <div class="no-users-suggestion">
                       <p style="color: #a0aec0; font-size: 0.9rem; margin-bottom: 1rem;">
                         <i class="fas fa-info-circle" style="margin-right: 0.5rem; color: #667eea;"></i>
@@ -4186,7 +4186,7 @@
         
         // Check for suspicious patterns
         const suspiciousPatterns = [
-          /[^a-zA-Z0-9@._-]/, // Contains invalid characters
+          /[^a-zA-Z0-9@._+\-]/, // Contains invalid characters
           /\.{2,}/, // Multiple consecutive dots
           /^\.|\.$/, // Starts or ends with dot
           /@.*@/, // Multiple @ symbols
@@ -4254,16 +4254,16 @@
       
       function displayPendingUserResultsPage(pendingUsers, currentPage, totalRecords, totalPages) {
         let html = '';
-        
+
         pendingUsers.forEach((pendingUser, index) => {
           // Validate email
           const emailValidation = getEmailValidationLevel(pendingUser.email);
           const warningIcon = getEmailWarningIcon(emailValidation);
           const warningMessage = getEmailWarningMessage(emailValidation, pendingUser.email);
-          
+
           const createdAt = new Date(pendingUser.createdAt).toLocaleString();
           html += `
-            <div class="pending-user-card">
+            <div class="pending-user-card" id="pending-user-${pendingUser.id}">
               <div class="pending-user-header">
                 <div class="pending-user-email">
                   <i class="fas fa-envelope" style="margin-right: 8px; color: #667eea;"></i>
@@ -4271,10 +4271,10 @@
                   ${warningIcon}
                 </div>
                 <div class="pending-user-actions">
-                  <button class="btn btn-sm copy-btn" 
-                          onclick="copyToClipboard('${pendingUser.code}', event)" 
-                          title="Copy verification code">
-                    <i class="fas fa-copy"></i> Copy Code
+                  <button class="btn btn-sm ac-btn ac-btn-accent"
+                          onclick="verifyUserEmail('${pendingUser.id}', '${pendingUser.email}')"
+                          title="Verify this user's email">
+                    <i class="fas fa-check-circle"></i> Verify Email
                   </button>
                 </div>
               </div>
@@ -4282,12 +4282,8 @@
               <div class="pending-user-details">
                 <div class="pending-user-info">
                   <div class="info-item">
-                    <span class="info-label">Verification Code:</span>
-                    <span class="code-value">${pendingUser.code}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Attempts:</span>
-                    <span class="info-value">${pendingUser.attempts}</span>
+                    <span class="info-label">Username:</span>
+                    <span class="info-value">${pendingUser.username || 'N/A'}</span>
                   </div>
                   <div class="info-item">
                     <span class="info-label">Created:</span>
@@ -4299,9 +4295,47 @@
             ${index < pendingUsers.length - 1 ? '<div class="pending-user-divider"></div>' : ''}
           `;
         });
-        
+
         html += generatePaginationControls('pendingUser', totalRecords, currentPage);
         $('#pendingUserResults').html(html);
+      }
+
+      function verifyUserEmail(userId, email) {
+        if (!confirm('Are you sure you want to verify the email for ' + email + '?')) {
+          return;
+        }
+
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/users/${userId}/verify-email`,
+          method: 'POST',
+          contentType: 'application/json',
+          success: function(response) {
+            showInfoModal('Email Verified', 'Email for ' + email + ' has been verified successfully.');
+            // Remove the card from the results
+            $(`#pending-user-${userId}`).fadeOut(300, function() {
+              $(this).remove();
+              // If no more cards, show empty state
+              if ($('.pending-user-card').length === 0) {
+                $('#pendingUserResults').html(`
+                  <div class="no-users-found">
+                    <div class="no-users-message">
+                      <i class="fas fa-check-circle" style="font-size: 2rem; color: #38a169; margin-bottom: 1rem;"></i>
+                      <h5 style="color: #f7fafc; margin-bottom: 0.5rem;">All done!</h5>
+                      <p style="color: #a0aec0;">No more unverified users matching your search.</p>
+                    </div>
+                  </div>
+                `);
+              }
+            });
+          },
+          error: function(xhr) {
+            let errorMessage = 'Failed to verify email';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+              errorMessage = xhr.responseJSON.error;
+            }
+            showInfoModal('Error', errorMessage);
+          }
+        });
       }
       
       function searchUsers(query, page = 0) {

@@ -1448,6 +1448,12 @@
                   <i class="fa fa-user-plus mr-2"></i>Request to Join Community
                 </button>
               </div>
+            <% } else if (user && !isMemberApproved && isMemberPending) { %>
+              <div class="mt-4 pt-4" style="border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <button id="cancelJoinBtn" onclick="cancelJoinRequest()" class="btn-secondary w-full text-center" style="border-color: rgba(239, 68, 68, 0.5); color: #ef4444;">
+                  <i class="fa fa-times mr-2"></i>Cancel Join Request
+                </button>
+              </div>
             <% } %>
 
             <% if (isMemberApproved) { %>
@@ -1590,8 +1596,8 @@
                   Request to Join
                 </button>
               <% } else { %>
-                <button disabled class="btn-secondary opacity-50 cursor-not-allowed">
-                  Request Pending
+                <button onclick="cancelJoinRequest()" class="btn-secondary" style="border-color: rgba(239, 68, 68, 0.5); color: #ef4444;">
+                  <i class="fa fa-times mr-1"></i>Cancel Request
                 </button>
               <% } %>
             </div>
@@ -1739,7 +1745,9 @@
                       <% if (canAccess) { %>
                         <span class="text-xs" style="color: #fbbf24;">Enter <i class="fa fa-arrow-right ml-1"></i></span>
                       <% } else if (isDeptPending) { %>
-                        <span class="text-xs px-2 py-1 rounded" style="color: #94a3b8; background: rgba(148, 163, 184, 0.1);">Request Pending</span>
+                        <button class="text-xs px-2 py-1 rounded transition-colors" style="color: #ef4444; background: rgba(239, 68, 68, 0.1);" onclick="event.stopPropagation(); cancelDepartmentJoinRequest('<%= dept._id %>');">
+                          <i class="fa fa-times mr-1"></i>Cancel Request
+                        </button>
                       <% } else { %>
                         <button class="text-xs px-2 py-1 rounded transition-colors" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);" onclick="event.stopPropagation(); openRequestJoinDepartmentModal('<%= dept._id %>', '<%= dept.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'") %>');">Request to Join</button>
                       <% } %>
