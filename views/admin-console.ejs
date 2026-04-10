@@ -4186,7 +4186,7 @@
         
         // Check for suspicious patterns
         const suspiciousPatterns = [
-          /[^a-zA-Z0-9@._-]/, // Contains invalid characters
+          /[^a-zA-Z0-9@._+\-]/, // Contains invalid characters
           /\.{2,}/, // Multiple consecutive dots
           /^\.|\.$/, // Starts or ends with dot
           /@.*@/, // Multiple @ symbols
