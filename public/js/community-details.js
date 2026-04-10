@@ -660,9 +660,10 @@ async function cancelDepartmentJoinRequest(departmentId) {
 
 // Send join request notification to admins/managers
 async function sendJoinRequestNotification(communityId, user) {
+  const apiUrl = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
   try {
     // Fetch community details to get roles and permissions
-    const res = await fetch(`${API_URL}/api/v1/community/${communityId}`);
+    const res = await fetch(`${apiUrl}/api/v1/community/${communityId}`);
     if (!res.ok) throw new Error('Failed to fetch community details');
     const community = await res.json();
 
@@ -682,7 +683,7 @@ async function sendJoinRequestNotification(communityId, user) {
 
     // Send notification to each user
     for (const recipientId of userIds) {
-      await fetch(`${API_URL}/api/v1/users/notifications`, {
+      await fetch(`${apiUrl}/api/v1/users/notifications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -704,8 +705,9 @@ async function sendJoinRequestNotification(communityId, user) {
 
 // Department Join Request Functions
 async function sendUserPendingDepartmentRequest(communityId, departmentId, userId) {
+  const apiUrl = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
   try {
-    const response = await fetch(`${API_URL}/api/v1/user/${userId}/pending-department-request`, {
+    const response = await fetch(`${apiUrl}/api/v1/user/${userId}/pending-department-request`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -729,14 +731,15 @@ async function sendUserPendingDepartmentRequest(communityId, departmentId, userI
 }
 
 async function sendJoinDepartmentRequestNotification(communityId, departmentId, user) {
+  const apiUrl = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
   try {
     // Fetch community details to get roles and permissions
-    const communityRes = await fetch(`${API_URL}/api/v1/community/${communityId}`);
+    const communityRes = await fetch(`${apiUrl}/api/v1/community/${communityId}`);
     if (!communityRes.ok) throw new Error('Failed to fetch community details');
     const community = await communityRes.json();
 
     // Fetch department details
-    const departmentRes = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${departmentId}`);
+    const departmentRes = await fetch(`${apiUrl}/api/v1/community/${communityId}/departments/${departmentId}`);
     if (!departmentRes.ok) throw new Error('Failed to fetch department details');
     const department = await departmentRes.json();
 
@@ -756,7 +759,7 @@ async function sendJoinDepartmentRequestNotification(communityId, departmentId, 
 
     // Send notification to each user
     for (const recipientId of userIds) {
-      await fetch(`${API_URL}/api/v1/users/notifications`, {
+      await fetch(`${apiUrl}/api/v1/users/notifications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
