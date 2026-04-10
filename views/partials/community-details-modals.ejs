@@ -1034,6 +1034,12 @@
             }
           });
 
+          // Always include the community owner
+          var ownerID = community.community.ownerID;
+          if (ownerID && !adminUserIds.includes(ownerID)) {
+            adminUserIds.push(ownerID);
+          }
+
           // Send notification to each admin/manager
           for (const recipientId of adminUserIds) {
             await fetch(`${apiUrl}/api/v1/users/notifications`, {
@@ -1179,18 +1185,20 @@
           const community = await communityResponse.json();
           
           // Get unique user IDs of roles with "manage members" or "administrator" permissions
-          const userIds = [...new Set(
-            community.community.roles
-              .filter((role) =>
-                role.permissions.some(
-                  (permission) =>
-                    (permission.name === "manage members" ||
-                      permission.name === "administrator") &&
-                    permission.enabled
-                )
+          const roleUserIds = (community.community.roles || [])
+            .filter((role) =>
+              (role.permissions || []).some(
+                (permission) =>
+                  (permission.name === "manage members" ||
+                    permission.name === "administrator") &&
+                  permission.enabled
               )
-              .flatMap((role) => role.members)
-          )];
+            )
+            .flatMap((role) => role.members);
+
+          // Always include the community owner
+          const ownerID = community.community.ownerID;
+          const userIds = [...new Set([...roleUserIds, ...(ownerID ? [ownerID] : [])])];
 
           // Send notification to each user
           for (const recipientId of userIds) {
