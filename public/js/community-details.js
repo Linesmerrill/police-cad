@@ -559,7 +559,7 @@ let joinRequestLoading = false;
 async function sendJoinRequestNotification(communityId, user) {
   try {
     // Fetch community details to get roles and permissions
-    const res = await fetch(`${API_URL}/community/${communityId}`);
+    const res = await fetch(`${API_URL}/api/v1/community/${communityId}`);
     if (!res.ok) throw new Error('Failed to fetch community details');
     const community = await res.json();
 
@@ -579,7 +579,7 @@ async function sendJoinRequestNotification(communityId, user) {
 
     // Send notification to each user
     for (const recipientId of userIds) {
-      await fetch(`${API_URL}/users/notifications`, {
+      await fetch(`${API_URL}/api/v1/users/notifications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
