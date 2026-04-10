@@ -555,6 +555,84 @@ let joinRequestLoading = false;
   }
 })();
 
+// Cancel a pending community join request
+async function cancelJoinRequest() {
+  if (joinRequestLoading) return;
+  joinRequestLoading = true;
+
+  const userId = window.dbUser && window.dbUser._id;
+  const communityId = window.communityId;
+  const apiUrl = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+  try {
+    const res = await fetch(`${apiUrl}/api/v1/user/${userId}/pending-community-request`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ communityId: communityId }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || 'Failed to cancel request.');
+    }
+
+    // Show success toast
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toast-message');
+    if (toast && toastMsg) {
+      toastMsg.textContent = 'Join request cancelled.';
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    // Reload to reset server-rendered state
+    setTimeout(() => window.location.reload(), 800);
+  } catch (err) {
+    alert('Error: ' + (err.message || 'Failed to cancel request.'));
+  } finally {
+    joinRequestLoading = false;
+  }
+}
+
+// Cancel a pending department join request
+async function cancelDepartmentJoinRequest(departmentId) {
+  if (joinRequestLoading) return;
+  joinRequestLoading = true;
+
+  const userId = window.dbUser && window.dbUser._id;
+  const communityId = window.communityId;
+  const apiUrl = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+  try {
+    const res = await fetch(`${apiUrl}/api/v1/user/${userId}/pending-department-request`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ communityId: communityId, departmentId: departmentId }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || 'Failed to cancel request.');
+    }
+
+    // Show success toast
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toast-message');
+    if (toast && toastMsg) {
+      toastMsg.textContent = 'Department join request cancelled.';
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    // Reload to reset server-rendered state
+    setTimeout(() => window.location.reload(), 800);
+  } catch (err) {
+    alert('Error: ' + (err.message || 'Failed to cancel request.'));
+  } finally {
+    joinRequestLoading = false;
+  }
+}
+
 // Send join request notification to admins/managers
 async function sendJoinRequestNotification(communityId, user) {
   try {
