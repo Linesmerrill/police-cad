@@ -668,18 +668,20 @@ async function sendJoinRequestNotification(communityId, user) {
     const community = await res.json();
 
     // Get unique user IDs of roles with "manage members" or "administrator" permissions
-    const userIds = [...new Set(
-      (community.community.roles || [])
-        .filter((role) =>
-          (role.permissions || []).some(
-            (permission) =>
-              (permission.name === "manage members" ||
-                permission.name === "administrator") &&
-              permission.enabled
-          )
+    const roleUserIds = (community.community.roles || [])
+      .filter((role) =>
+        (role.permissions || []).some(
+          (permission) =>
+            (permission.name === "manage members" ||
+              permission.name === "administrator") &&
+            permission.enabled
         )
-        .flatMap((role) => role.members)
-    )];
+      )
+      .flatMap((role) => role.members);
+
+    // Always include the community owner
+    const ownerID = community.community.ownerID;
+    const userIds = [...new Set([...roleUserIds, ...(ownerID ? [ownerID] : [])])];
 
     // Send notification to each user
     for (const recipientId of userIds) {
@@ -744,18 +746,20 @@ async function sendJoinDepartmentRequestNotification(communityId, departmentId, 
     const department = await departmentRes.json();
 
     // Get unique user IDs of roles with "manage members" or "administrator" permissions
-    const userIds = [...new Set(
-      (community.community.roles || [])
-        .filter((role) =>
-          (role.permissions || []).some(
-            (permission) =>
-              (permission.name === "manage members" ||
-                permission.name === "administrator") &&
-              permission.enabled
-          )
+    const roleUserIds = (community.community.roles || [])
+      .filter((role) =>
+        (role.permissions || []).some(
+          (permission) =>
+            (permission.name === "manage members" ||
+              permission.name === "administrator") &&
+            permission.enabled
         )
-        .flatMap((role) => role.members)
-    )];
+      )
+      .flatMap((role) => role.members);
+
+    // Always include the community owner
+    const ownerID = community.community.ownerID;
+    const userIds = [...new Set([...roleUserIds, ...(ownerID ? [ownerID] : [])])];
 
     // Send notification to each user
     for (const recipientId of userIds) {
