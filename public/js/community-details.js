@@ -585,8 +585,24 @@ async function cancelJoinRequest() {
       setTimeout(() => { toast.style.display = 'none'; }, 2500);
     }
 
-    // Reload to reset server-rendered state
-    setTimeout(() => window.location.reload(), 800);
+    // Swap primary cancel button back to "Request to Join"
+    const cancelBtn = document.getElementById('cancelJoinBtn');
+    if (cancelBtn) {
+      cancelBtn.id = 'requestJoinBtn';
+      cancelBtn.className = 'btn-primary w-full text-center';
+      cancelBtn.removeAttribute('style');
+      cancelBtn.setAttribute('onclick', 'openRequestJoinModal()');
+      cancelBtn.innerHTML = '<i class="fa fa-user-plus mr-2"></i>Request to Join Community';
+    }
+
+    // Swap secondary cancel button (departments locked section) back to "Request to Join"
+    const deptLockedBtns = document.querySelectorAll('button[onclick="cancelJoinRequest()"]');
+    deptLockedBtns.forEach(btn => {
+      btn.className = 'btn-primary';
+      btn.removeAttribute('style');
+      btn.setAttribute('onclick', 'openRequestJoinModal()');
+      btn.innerHTML = 'Request to Join';
+    });
   } catch (err) {
     alert('Error: ' + (err.message || 'Failed to cancel request.'));
   } finally {
@@ -624,8 +640,17 @@ async function cancelDepartmentJoinRequest(departmentId) {
       setTimeout(() => { toast.style.display = 'none'; }, 2500);
     }
 
-    // Reload to reset server-rendered state
-    setTimeout(() => window.location.reload(), 800);
+    // Find the department card and swap button back to "Request to Join"
+    const deptCard = document.querySelector(`[data-dept-id="${departmentId}"]`);
+    if (deptCard) {
+      const cancelBtn = deptCard.querySelector('button[onclick*="cancelDepartmentJoinRequest"]');
+      if (cancelBtn) {
+        const deptName = (deptCard.getAttribute('data-dept-name') || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        cancelBtn.setAttribute('style', 'color: #3b82f6; background: rgba(59, 130, 246, 0.1);');
+        cancelBtn.setAttribute('onclick', `event.stopPropagation(); openRequestJoinDepartmentModal('${departmentId}', '${deptName}');`);
+        cancelBtn.innerHTML = 'Request to Join';
+      }
+    }
   } catch (err) {
     alert('Error: ' + (err.message || 'Failed to cancel request.'));
   } finally {
