@@ -1064,12 +1064,12 @@
         })
         .done(function (data) {
           var warrants = Array.isArray(data) ? data : (data.warrants || data.data || []);
-          // Only keep active warrants
+          // Only keep active warrants (approved by judicial) and pending ones
           var active = [];
           for (var k = 0; k < warrants.length; k++) {
             var w = warrants[k].warrant || warrants[k];
             var status = (w.status || '').toLowerCase();
-            if (status === 'active' || status === 'pending' || status === '') {
+            if (status === 'approved' || status === 'pending') {
               active.push(warrants[k]);
             }
           }
