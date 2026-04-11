@@ -314,20 +314,129 @@
       '  background: rgba(239,68,68,0.06);',
       '  border-radius: var(--cd-radius-sm, 8px);',
       '}',
-      '.cd-af-cat-group { margin-bottom: 14px; }',
+
+      /* Search input */
+      '.cd-af-search-wrap {',
+      '  position: relative; margin-bottom: 10px;',
+      '}',
+      '.cd-af-search-icon {',
+      '  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);',
+      '  color: var(--cd-text-dim, #475569); font-size: 13px;',
+      '  pointer-events: none; transition: color 0.15s;',
+      '}',
+      '.cd-af-search-input {',
+      '  width: 100%; padding: 9px 12px 9px 34px;',
+      '  font-size: 13px; font-family: inherit;',
+      '  color: var(--cd-text, #e2e8f0);',
+      '  background: var(--cd-glass, rgba(255,255,255,0.04));',
+      '  border: 1px solid var(--cd-glass-border, rgba(255,255,255,0.06));',
+      '  border-radius: 8px; outline: none;',
+      '  transition: border-color 0.15s, box-shadow 0.15s;',
+      '}',
+      '.cd-af-search-input::placeholder {',
+      '  color: var(--cd-text-dim, #475569);',
+      '}',
+      '.cd-af-search-input:focus {',
+      '  border-color: rgba(56,189,248,0.4);',
+      '  box-shadow: 0 0 0 3px rgba(56,189,248,0.08);',
+      '}',
+      '.cd-af-search-input:focus + .cd-af-search-icon {',
+      '  color: var(--cd-accent, #38bdf8);',
+      '}',
+      '.cd-af-search-clear {',
+      '  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);',
+      '  width: 22px; height: 22px; border: none; background: transparent;',
+      '  color: var(--cd-text-dim, #475569); font-size: 12px;',
+      '  cursor: pointer; border-radius: 4px;',
+      '  display: none; align-items: center; justify-content: center;',
+      '  transition: color 0.12s, background 0.12s;',
+      '}',
+      '.cd-af-search-clear:hover {',
+      '  color: var(--cd-text, #e2e8f0);',
+      '  background: rgba(255,255,255,0.08);',
+      '}',
+      '.cd-af-search-clear.cd-af-visible { display: flex; }',
+      '.cd-af-search-empty {',
+      '  padding: 20px 12px; text-align: center;',
+      '  font-size: 13px; color: var(--cd-text-dim, #475569);',
+      '  display: none;',
+      '}',
+      '.cd-af-search-empty.cd-af-visible { display: block; }',
+
+      /* Selected pills tray */
+      '.cd-af-pills-tray {',
+      '  display: flex; flex-wrap: wrap; gap: 6px;',
+      '  margin-bottom: 10px; min-height: 0;',
+      '}',
+      '.cd-af-pills-tray:empty { display: none; }',
+      '.cd-af-pill {',
+      '  display: inline-flex; align-items: center; gap: 5px;',
+      '  padding: 4px 8px 4px 10px;',
+      '  font-size: 11px; font-weight: 600;',
+      '  color: #050a12;',
+      '  background: var(--cd-accent, #38bdf8);',
+      '  border-radius: 20px; cursor: default;',
+      '  animation: cd-af-pill-in 0.15s ease-out;',
+      '  white-space: nowrap; max-width: 100%;',
+      '}',
+      '@keyframes cd-af-pill-in {',
+      '  from { opacity: 0; transform: scale(0.85); }',
+      '  to   { opacity: 1; transform: scale(1); }',
+      '}',
+      '.cd-af-pill-text {',
+      '  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;',
+      '}',
+      '.cd-af-pill-x {',
+      '  width: 16px; height: 16px; flex-shrink: 0;',
+      '  display: flex; align-items: center; justify-content: center;',
+      '  font-size: 10px; font-weight: 900; line-height: 1;',
+      '  border-radius: 50%;',
+      '  background: rgba(0,0,0,0.18);',
+      '  color: rgba(5,10,18,0.7);',
+      '  cursor: pointer; border: none; padding: 0;',
+      '  transition: background 0.12s, color 0.12s;',
+      '}',
+      '.cd-af-pill-x:hover {',
+      '  background: rgba(0,0,0,0.35);',
+      '  color: #050a12;',
+      '}',
+
+      /* Scrollable list container */
+      '.cd-af-violations-scroll {',
+      '  max-height: 300px; overflow-y: auto;',
+      '  border: 1px solid var(--cd-glass-border, rgba(255,255,255,0.06));',
+      '  border-radius: 8px;',
+      '  background: rgba(0,0,0,0.15);',
+      '  overscroll-behavior: contain;',
+      '  padding: 4px;',
+      '}',
+      '.cd-af-violations-scroll::-webkit-scrollbar { width: 5px; }',
+      '.cd-af-violations-scroll::-webkit-scrollbar-track { background: transparent; }',
+      '.cd-af-violations-scroll::-webkit-scrollbar-thumb {',
+      '  background: rgba(255,255,255,0.1); border-radius: 3px;',
+      '}',
+      '.cd-af-violations-scroll::-webkit-scrollbar-thumb:hover {',
+      '  background: rgba(255,255,255,0.18);',
+      '}',
+
+      '.cd-af-cat-group { margin-bottom: 6px; }',
+      '.cd-af-cat-group.cd-af-hidden { display: none; }',
       '.cd-af-cat-header {',
       '  font-size: 11px; font-weight: 700;',
       '  color: var(--cd-text-dim, #475569);',
       '  text-transform: uppercase; letter-spacing: 0.06em;',
-      '  padding: 6px 0; margin-bottom: 4px;',
+      '  padding: 10px 6px 4px; margin-bottom: 2px;',
       '  border-bottom: 1px solid rgba(255,255,255,0.04);',
+      '  position: sticky; top: -4px; z-index: 1;',
+      '  background: rgba(12,13,18,1);',
       '}',
       '.cd-af-cb-item {',
       '  display: flex; align-items: center; gap: 10px;',
-      '  padding: 8px 10px; border-radius: 6px;',
+      '  padding: 7px 10px; border-radius: 6px;',
       '  cursor: pointer; transition: background 0.12s;',
       '  border: 1px solid transparent;',
       '}',
+      '.cd-af-cb-item.cd-af-hidden { display: none; }',
       '.cd-af-cb-item:hover {',
       '  background: var(--cd-glass-hover, rgba(255,255,255,0.07));',
       '}',
@@ -510,13 +619,14 @@
       }
 
       var currency = data.currency || 'USD';
-      var html = '';
 
+      /* Build list HTML */
+      var listHtml = '';
       for (var ci = 0; ci < data.categories.length; ci++) {
         var cat = data.categories[ci];
         if (!cat.violations || !cat.violations.length) continue;
-        html += '<div class="cd-af-cat-group">';
-        html += '<div class="cd-af-cat-header">' + esc(cat.name) + '</div>';
+        listHtml += '<div class="cd-af-cat-group">';
+        listHtml += '<div class="cd-af-cat-header">' + esc(cat.name) + '</div>';
 
         for (var vi = 0; vi < cat.violations.length; vi++) {
           var v = cat.violations[vi];
@@ -524,24 +634,103 @@
           var fineStr = (opts.showFines !== false && v.fine)
             ? formatCurrency(v.fine, currency)
             : '';
-          html += '<div class="cd-af-cb-item" data-uid="' + uid + '" data-name="' + esc(v.name) + '" data-fine="' + (v.fine || 0) + '" data-cat="' + esc(cat.name) + '">';
-          html += '  <div class="cd-af-cb-box"><i class="fa fa-check cd-af-cb-check"></i></div>';
-          html += '  <span class="cd-af-cb-label">' + esc(v.name) + '</span>';
-          if (fineStr) html += '  <span class="cd-af-cb-fine">' + esc(fineStr) + '</span>';
-          html += '</div>';
+          listHtml += '<div class="cd-af-cb-item" data-uid="' + uid + '" data-name="' + esc(v.name) + '" data-fine="' + (v.fine || 0) + '" data-cat="' + esc(cat.name) + '">';
+          listHtml += '  <div class="cd-af-cb-box"><i class="fa fa-check cd-af-cb-check"></i></div>';
+          listHtml += '  <span class="cd-af-cb-label">' + esc(v.name) + '</span>';
+          if (fineStr) listHtml += '  <span class="cd-af-cb-fine">' + esc(fineStr) + '</span>';
+          listHtml += '</div>';
         }
-        html += '</div>';
+        listHtml += '</div>';
       }
 
-      if (!html) {
+      if (!listHtml) {
         container.innerHTML = '<div class="cd-af-violations-error">No penal codes found for this community.</div>';
         return;
       }
 
-      container.innerHTML = html;
+      /* Assemble: search + pills + scrollable list */
+      container.innerHTML =
+        '<div class="cd-af-search-wrap">' +
+          '<input type="text" class="cd-af-search-input" placeholder="Search charges..." autocomplete="off" />' +
+          '<i class="fa fa-search cd-af-search-icon"></i>' +
+          '<button type="button" class="cd-af-search-clear" title="Clear search"><i class="fa fa-times"></i></button>' +
+        '</div>' +
+        '<div class="cd-af-pills-tray"></div>' +
+        '<div class="cd-af-violations-scroll">' + listHtml + '</div>' +
+        '<div class="cd-af-search-empty">No charges match your search</div>';
 
-      /* Attach click handlers */
-      var items = container.querySelectorAll('.cd-af-cb-item');
+      var searchInput = container.querySelector('.cd-af-search-input');
+      var searchClear = container.querySelector('.cd-af-search-clear');
+      var pillsTray = container.querySelector('.cd-af-pills-tray');
+      var scrollWrap = container.querySelector('.cd-af-violations-scroll');
+      var emptyMsg = container.querySelector('.cd-af-search-empty');
+
+      /* ── Search filtering ── */
+      function filterList() {
+        var q = (searchInput.value || '').toLowerCase().trim();
+        searchClear.classList.toggle('cd-af-visible', q.length > 0);
+
+        var groups = scrollWrap.querySelectorAll('.cd-af-cat-group');
+        var anyVisible = false;
+
+        for (var gi = 0; gi < groups.length; gi++) {
+          var items = groups[gi].querySelectorAll('.cd-af-cb-item');
+          var groupHasVisible = false;
+
+          for (var ii = 0; ii < items.length; ii++) {
+            var name = (items[ii].getAttribute('data-name') || '').toLowerCase();
+            var match = !q || name.indexOf(q) !== -1;
+            items[ii].classList.toggle('cd-af-hidden', !match);
+            if (match) groupHasVisible = true;
+          }
+
+          groups[gi].classList.toggle('cd-af-hidden', !groupHasVisible);
+          if (groupHasVisible) anyVisible = true;
+        }
+
+        emptyMsg.classList.toggle('cd-af-visible', !anyVisible);
+      }
+
+      searchInput.addEventListener('input', filterList);
+      searchClear.addEventListener('click', function () {
+        searchInput.value = '';
+        filterList();
+        searchInput.focus();
+      });
+
+      /* ── Pills management ── */
+      function refreshPills() {
+        pillsTray.innerHTML = '';
+        var keys = Object.keys(selected);
+        for (var i = 0; i < keys.length; i++) {
+          var s = selected[keys[i]];
+          var uid = keys[i];
+          var pill = document.createElement('span');
+          pill.className = 'cd-af-pill';
+          pill.innerHTML =
+            '<span class="cd-af-pill-text">' + esc(s.name) + '</span>' +
+            '<button type="button" class="cd-af-pill-x" data-uid="' + uid + '"><i class="fa fa-times"></i></button>';
+          pillsTray.appendChild(pill);
+        }
+
+        /* Attach dismiss handlers */
+        var xBtns = pillsTray.querySelectorAll('.cd-af-pill-x');
+        for (var j = 0; j < xBtns.length; j++) {
+          xBtns[j].addEventListener('click', function (e) {
+            e.stopPropagation();
+            var removeUid = this.getAttribute('data-uid');
+            delete selected[removeUid];
+            /* Uncheck the corresponding item */
+            var el = scrollWrap.querySelector('[data-uid="' + removeUid + '"]');
+            if (el) el.classList.remove('cd-af-cb-checked');
+            refreshPills();
+            if (typeof opts.onChange === 'function') opts.onChange(getSelected());
+          });
+        }
+      }
+
+      /* ── Checkbox click handlers ── */
+      var items = scrollWrap.querySelectorAll('.cd-af-cb-item');
       for (var i = 0; i < items.length; i++) {
         items[i].addEventListener('click', function () {
           var uid = this.getAttribute('data-uid');
@@ -556,6 +745,7 @@
             };
             this.classList.add('cd-af-cb-checked');
           }
+          refreshPills();
           if (typeof opts.onChange === 'function') opts.onChange(getSelected());
         });
       }
