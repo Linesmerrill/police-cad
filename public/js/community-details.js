@@ -1710,7 +1710,7 @@ function updateDepartmentJoinButton(departmentId, status) {
             </div>
             <div>
               <span style="color:#a0aec0; font-size:0.75rem; text-transform:uppercase; font-weight:600;">Birthday</span>
-              <p style="color:#fff; margin:0.25rem 0 0 0; font-size:0.875rem;">${civ.birthday ? new Date(civ.birthday).toLocaleDateString() : 'N/A'}</p>
+              <p style="color:#fff; margin:0.25rem 0 0 0; font-size:0.875rem;">${civ.birthday ? new Date(civ.birthday).toLocaleDateString('en-US', { timeZone: 'UTC' }) : 'N/A'}</p>
             </div>
             <div>
               <span style="color:#a0aec0; font-size:0.75rem; text-transform:uppercase; font-weight:600;">Occupation</span>
