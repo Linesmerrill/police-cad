@@ -1904,7 +1904,7 @@ function updateDepartmentJoinButton(departmentId, status) {
 
     // Populate form fields
     document.getElementById('editName').value = civ.name || '';
-    document.getElementById('editBirthday').value = civ.birthday || '';
+    document.getElementById('editBirthday').value = civ.birthday ? new Date(civ.birthday).toISOString().split('T')[0] : '';
     document.getElementById('editGender').value = civ.gender || '';
     document.getElementById('editHairColor').value = civ.hairColor || '';
     document.getElementById('editEyeColor').value = civ.eyeColor || '';
