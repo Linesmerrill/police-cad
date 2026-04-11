@@ -2062,9 +2062,7 @@ function updateDepartmentJoinButton(departmentId, status) {
         veteran: document.getElementById('editVeteran').checked,
         onParole: document.getElementById('editOnParole').checked,
         onProbation: document.getElementById('editOnProbation').checked,
-        image: imageUrl,
-        userID: window.dbUser?._id,
-        activeCommunityID: window.communityId
+        image: imageUrl
       };
 
       // Validate required fields
