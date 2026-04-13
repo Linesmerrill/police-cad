@@ -1,22 +1,17 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('BOLO Management', { tag: '@auth' }, () => {
-  test('can navigate to BOLOs section', async ({ page }) => {
+  test('can view BOLOs section on command dashboard', async ({ page }) => {
     await page.goto('/command-dashboard');
     await expect(page).not.toHaveURL(/\/login/);
 
-    // Navigate to BOLOs via the launcher or tab
-    const boloNav = page.locator(
-      '.cd-mdt-launcher-item:has-text("BOLO"), ' +
-      '.cd-mdt-search-tab[data-search="bolos"], ' +
-      '[onclick*="createBolos"], ' +
-      'button:has-text("BOLO")'
-    ).first();
-    await expect(boloNav).toBeVisible({ timeout: 15_000 });
-    await boloNav.click();
+    // Wait for dashboard to finish loading
+    await expect(page.locator('#dd-panels')).toBeVisible({ timeout: 15_000 });
 
-    // The BOLO section should now be visible with the new BOLO button
-    const newBoloBtn = page.locator('#cd-bolo-new-btn, .cd-bolo-new-btn').first();
-    await expect(newBoloBtn).toBeVisible({ timeout: 10_000 });
+    // On desktop, BOLOs are in the right MDT column (visible).
+    // There are duplicate #cd-bolo-new-btn elements (overview + hidden focused card),
+    // so scope to the visible MDT intel column.
+    const boloBtn = page.locator('#cd-mdt-intel-content #cd-bolo-new-btn');
+    await expect(boloBtn).toBeVisible({ timeout: 10_000 });
   });
 });
