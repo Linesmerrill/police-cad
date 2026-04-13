@@ -14,6 +14,9 @@ export default defineConfig({
     : [['html', { outputFolder: 'e2e/playwright-report' }]],
   outputDir: 'e2e/test-results',
 
+  globalSetup: './e2e/global-setup.ts',
+  globalTeardown: './e2e/global-teardown.ts',
+
   use: {
     baseURL,
     trace: 'on-first-retry',
@@ -37,10 +40,7 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: 'npm run dev',
-    url: baseURL,
-    reuseExistingServer: true,
-    timeout: 60_000,
-  },
+  // No webServer config — start the dev server manually before running tests.
+  // In CI, the GitHub Actions workflow starts the server.
+  // Locally, run `npm run dev` in a separate terminal.
 });
