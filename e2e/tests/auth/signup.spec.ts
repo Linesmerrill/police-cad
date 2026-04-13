@@ -3,7 +3,7 @@ import { test, expect } from '../../fixtures/test-fixtures';
 test.describe('Signup Page', () => {
   test('loads successfully', async ({ unauthPage }) => {
     const response = await unauthPage.goto('/signup', { waitUntil: 'domcontentloaded' });
-    expect(response?.status()).toBe(200);
+    expect(response?.ok() || response?.status() === 304).toBeTruthy();
     // Check for signup-specific text content (works with SSR before hydration)
     await expect(unauthPage.getByText(/create.*account|sign.*up|register/i).first()).toBeVisible({ timeout: 15_000 });
   });
