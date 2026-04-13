@@ -22,6 +22,7 @@ services:
       BASE_URL: http://localhost:8081
       LOG_LEVEL: warn
       STRIPE_SECRET_KEY: sk_test_placeholder_for_e2e_tests
+      ENV: local
     depends_on:
       mongo-test:
         condition: service_healthy
