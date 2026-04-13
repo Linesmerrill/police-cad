@@ -6,7 +6,7 @@ test.describe('Plate Search', { tag: '@auth' }, () => {
     await page.goto('/command-dashboard');
     await expect(page).not.toHaveURL(/\/login/);
 
-    const searchInput = page.locator('#cd-vs-input');
+    const searchInput = page.locator('#cd-vs-input').first();
     await expect(searchInput).toBeVisible({ timeout: 15_000 });
 
     await searchInput.fill(TEST_VEHICLE_PLATE);
@@ -17,7 +17,7 @@ test.describe('Plate Search', { tag: '@auth' }, () => {
 
   test('shows vehicle details (make, model, color)', async ({ page }) => {
     await page.goto('/command-dashboard');
-    const searchInput = page.locator('#cd-vs-input');
+    const searchInput = page.locator('#cd-vs-input').first();
     await expect(searchInput).toBeVisible({ timeout: 15_000 });
 
     await searchInput.fill(TEST_VEHICLE_PLATE);

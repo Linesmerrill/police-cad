@@ -6,7 +6,7 @@ test.describe('Firearm Search', { tag: '@auth' }, () => {
     await page.goto('/command-dashboard');
     await expect(page).not.toHaveURL(/\/login/);
 
-    const searchInput = page.locator('#cd-fs-input');
+    const searchInput = page.locator('#cd-fs-input').first();
     await expect(searchInput).toBeVisible({ timeout: 15_000 });
 
     await searchInput.fill(TEST_FIREARM_SERIAL);
@@ -17,7 +17,7 @@ test.describe('Firearm Search', { tag: '@auth' }, () => {
 
   test('shows firearm details (name, type, caliber)', async ({ page }) => {
     await page.goto('/command-dashboard');
-    const searchInput = page.locator('#cd-fs-input');
+    const searchInput = page.locator('#cd-fs-input').first();
     await expect(searchInput).toBeVisible({ timeout: 15_000 });
 
     await searchInput.fill(TEST_FIREARM_SERIAL);

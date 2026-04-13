@@ -7,7 +7,7 @@ test.describe('Name Search', { tag: '@auth' }, () => {
     await expect(page).not.toHaveURL(/\/login/);
 
     // Wait for the search input to be available
-    const searchInput = page.locator('#cd-ps-input');
+    const searchInput = page.locator('#cd-ps-input').first();
     await expect(searchInput).toBeVisible({ timeout: 15_000 });
 
     // Type the civilian's first name — triggers debounced search
@@ -20,7 +20,7 @@ test.describe('Name Search', { tag: '@auth' }, () => {
 
   test('shows no results for non-existent name', async ({ page }) => {
     await page.goto('/command-dashboard');
-    const searchInput = page.locator('#cd-ps-input');
+    const searchInput = page.locator('#cd-ps-input').first();
     await expect(searchInput).toBeVisible({ timeout: 15_000 });
 
     await searchInput.fill('ZzNonExistentPerson99');

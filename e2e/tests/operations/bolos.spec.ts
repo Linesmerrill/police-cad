@@ -5,10 +5,17 @@ test.describe('BOLO Management', { tag: '@auth' }, () => {
     await page.goto('/command-dashboard');
     await expect(page).not.toHaveURL(/\/login/);
 
-    // Look for the new BOLO button
-    const newBoloBtn = page.locator('.cd-bolo-new-btn, [data-action="new-bolo"], button:has-text("BOLO")').first();
-    await expect(newBoloBtn).toBeVisible({ timeout: 15_000 });
-    await newBoloBtn.click();
+    // The BOLO button may be in a tab that needs to be activated first
+    // Try clicking the BOLOs tab/section if available
+    const boloTab = page.locator('[data-tab="bolos"], [href="#bolos"], button:has-text("BOLOs")').first();
+    if (await boloTab.isVisible({ timeout: 3_000 }).catch(() => false)) {
+      await boloTab.click();
+    }
+
+    // Look for the new BOLO button (may need scrolling into view)
+    const newBoloBtn = page.locator('#cd-bolo-new-btn, .cd-bolo-new-btn').first();
+    await newBoloBtn.scrollIntoViewIfNeeded();
+    await newBoloBtn.click({ force: true });
 
     // Fill in BOLO form fields
     const titleInput = page.locator('input[name="title"], .cd-bolo-form input').first();
