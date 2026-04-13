@@ -1,10 +1,9 @@
 import { test, expect } from '../../fixtures/test-fixtures';
-import { BasePage } from '../../pages/base.page';
 
 test.describe('Contact Us Page', () => {
   test('loads and displays contact information', async ({ unauthPage: page }) => {
-    await page.goto('/contact-us');
-    const basePage = new BasePage(page);
-    await basePage.expectPageLoaded();
+    const response = await page.goto('/contact-us', { waitUntil: 'domcontentloaded' });
+    expect(response?.status()).toBe(200);
+    await expect(page.getByText('Discord')).toBeVisible({ timeout: 15_000 });
   });
 });
