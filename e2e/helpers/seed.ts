@@ -28,6 +28,7 @@ export async function seedTestData(): Promise<void> {
   const client = new MongoClient(DB_URI, { serverSelectionTimeoutMS: 3000 });
   try {
     await client.connect();
+    const db = client.db(DB_NAME);
 
     // Seed test user
     await db.collection('users').updateOne(
