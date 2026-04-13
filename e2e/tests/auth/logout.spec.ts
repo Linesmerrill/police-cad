@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Auth Guards', () => {
-  test('authenticated user can access communities page', async ({ page }) => {
-    // This test uses the default authenticated page from storageState
+  test('authenticated user can access communities page', { tag: '@auth' }, async ({ page }) => {
+    // This test uses the default authenticated page from storageState.
+    // Requires auth setup to have run (skipped in CI without test user seeding).
     await page.goto('/communities');
     // Should not redirect to login
     await expect(page).not.toHaveURL(/\/login/);
