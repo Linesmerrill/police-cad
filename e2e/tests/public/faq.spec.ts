@@ -1,17 +1,15 @@
-import { test, expect } from '@playwright/test';
-import { BasePage } from '../../pages/base.page';
+import { test, expect } from '../../fixtures/test-fixtures';
 
 test.describe('FAQ Page', () => {
-  test('loads and displays FAQ categories', async ({ page }) => {
-    await page.goto('/faq');
-    const basePage = new BasePage(page);
-    await basePage.expectPageLoaded();
-    await expect(page.locator('text=Getting Started')).toBeVisible();
+  test('loads and displays FAQ categories', async ({ unauthPage: page }) => {
+    const response = await page.goto('/faq', { waitUntil: 'domcontentloaded' });
+    expect(response?.status()).toBe(200);
+    await expect(page.getByText('Getting Started')).toBeVisible({ timeout: 15_000 });
   });
 
-  test('FAQ items are expandable', async ({ page }) => {
-    await page.goto('/faq');
-    const firstQuestion = page.locator('text=What is Lines Police CAD?');
-    await expect(firstQuestion).toBeVisible();
+  test('FAQ items are expandable', async ({ unauthPage: page }) => {
+    const response = await page.goto('/faq', { waitUntil: 'domcontentloaded' });
+    expect(response?.status()).toBe(200);
+    await expect(page.getByText('What is Lines Police CAD?')).toBeVisible({ timeout: 15_000 });
   });
 });

@@ -36,7 +36,7 @@ app.set("trust proxy", 1);
 
 const limiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 500, // limit each IP to 100 requests per windowMs
+  max: parseInt(process.env.RATE_LIMIT_MAX || '500', 10),
 });
 
 //  apply to all requests

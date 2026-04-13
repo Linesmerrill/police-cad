@@ -53,17 +53,22 @@ jobs:
           PORT: 8080
           DB_URI: mongodb://localhost:27018/policecad_test
           POLICE_CAD_API_URL: http://localhost:8081
-          NODE_ENV: test
+          NODE_ENV: production
+          RATE_LIMIT_MAX: "10000"
 
       - name: Wait for services
         run: npx wait-on http://localhost:8080/health http://localhost:8081/health --timeout 60000
 
       - name: Run Playwright tests
         working-directory: police-cad
-        run: npx playwright test --project=chromium --no-deps --grep-invert @auth
+        run: npx playwright test
         env:
           CI: true
           BASE_URL: http://localhost:8080
+          DB_URI: mongodb://localhost:27018
+          DB_NAME: policecad_test
+          TEST_USER_EMAIL: testuser@test.com
+          TEST_USER_PASSWORD: TestPass123!
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4

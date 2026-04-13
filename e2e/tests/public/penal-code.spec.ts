@@ -1,10 +1,9 @@
-import { test, expect } from '@playwright/test';
-import { BasePage } from '../../pages/base.page';
+import { test, expect } from '../../fixtures/test-fixtures';
 
 test.describe('Penal Code Page', () => {
-  test('loads and displays penal code content', async ({ page }) => {
-    await page.goto('/penal-code');
-    const basePage = new BasePage(page);
-    await basePage.expectPageLoaded();
+  test('loads and displays penal code content', async ({ unauthPage: page }) => {
+    const response = await page.goto('/penal-code', { waitUntil: 'domcontentloaded' });
+    expect(response?.status()).toBe(200);
+    await expect(page.getByText(/penal code/i).first()).toBeVisible({ timeout: 15_000 });
   });
 });

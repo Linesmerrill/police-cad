@@ -1,12 +1,9 @@
-import { test, expect } from '@playwright/test';
-import { BasePage } from '../../pages/base.page';
+import { test, expect } from '../../fixtures/test-fixtures';
 
 test.describe('Pricing Page', () => {
-  test('loads and displays pricing tiers', async ({ page }) => {
-    await page.goto('/pricing');
-    const basePage = new BasePage(page);
-    await basePage.expectPageLoaded();
-    // Pricing page fetches tiers from API, so check the page structure loads
-    await expect(page.locator('h1')).toBeVisible();
+  test('loads and displays pricing tiers', async ({ unauthPage: page }) => {
+    const response = await page.goto('/pricing', { waitUntil: 'domcontentloaded' });
+    expect(response?.status()).toBe(200);
+    await expect(page.getByText(/pricing/i).first()).toBeVisible({ timeout: 15_000 });
   });
 });
