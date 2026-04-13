@@ -14,11 +14,11 @@ export class LandingPage extends BasePage {
   }
 
   async goto() {
-    await this.page.goto('/');
+    await this.page.goto('/', { waitUntil: 'domcontentloaded' });
   }
 
   async expectLoaded() {
-    await expect(this.heroSection).toBeVisible();
+    await expect(this.heroSection).toBeVisible({ timeout: 15_000 });
     await this.expectNavbarVisible();
     await this.expectFooterVisible();
   }

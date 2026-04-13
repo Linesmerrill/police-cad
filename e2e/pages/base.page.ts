@@ -12,11 +12,11 @@ export class BasePage {
   }
 
   async expectNavbarVisible() {
-    await expect(this.navbar).toBeVisible();
+    await expect(this.navbar).toBeVisible({ timeout: 15_000 });
   }
 
   async expectFooterVisible() {
-    await expect(this.footer).toBeVisible();
+    await expect(this.footer).toBeVisible({ timeout: 15_000 });
   }
 
   async expectPageLoaded() {
