@@ -36,19 +36,15 @@ jobs:
           cache: 'npm'
           cache-dependency-path: police-cad/package-lock.json
 
-      - name: Install dependencies
+      - name: Install dependencies and build
         working-directory: police-cad
         run: npm ci
+        env:
+          NEXT_PUBLIC_POLICE_CAD_API_URL: http://localhost:8081
 
       - name: Install Playwright browsers
         working-directory: police-cad
         run: npx playwright install --with-deps chromium
-
-      - name: Build Next.js
-        working-directory: police-cad
-        run: npx next build
-        env:
-          NEXT_PUBLIC_POLICE_CAD_API_URL: http://localhost:8081
 
       - name: Start website
         working-directory: police-cad

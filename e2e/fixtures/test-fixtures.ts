@@ -1,4 +1,4 @@
-import { test as base, expect } from '@playwright/test';
+import { test as base, expect, Page, Browser } from '@playwright/test';
 
 /**
  * Extended test fixtures for the police-cad E2E tests.
@@ -11,9 +11,9 @@ import { test as base, expect } from '@playwright/test';
  */
 export const test = base.extend<{
   /** A page that is NOT authenticated — useful for testing login, public pages, etc. */
-  unauthPage: ReturnType<typeof base.extend> extends infer T ? any : never;
+  unauthPage: Page;
 }>({
-  unauthPage: async ({ browser }, use) => {
+  unauthPage: async ({ browser }: { browser: Browser }, use: (page: Page) => Promise<void>) => {
     const context = await browser.newContext({ storageState: undefined });
     const page = await context.newPage();
     await use(page);
