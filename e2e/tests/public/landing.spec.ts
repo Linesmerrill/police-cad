@@ -1,10 +1,7 @@
 import { test, expect } from '../../fixtures/test-fixtures';
 
 test.describe('Landing Page', () => {
-  // Skip in CI — Next.js SSR pages intermittently fail to render in the test environment
-  // due to client-side API calls (Stats component) that depend on production data.
-  // TODO: Fix by mocking or seeding the stats API data.
-  test.skip(({ }, testInfo) => !!process.env.CI, 'Flaky in CI — SSR hydration issue');
+  test.skip(() => !!process.env.CI, 'Next.js SSR pages need production API data');
   test('loads and displays hero content', async ({ unauthPage: page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
     await expect(page.locator('nav').first()).toBeVisible({ timeout: 15_000 });

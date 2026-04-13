@@ -2,6 +2,7 @@ import { test, expect } from '../../fixtures/test-fixtures';
 import { BasePage } from '../../pages/base.page';
 
 test.describe('Legal Pages', () => {
+  test.skip(() => !!process.env.CI, 'Next.js SSR pages need production API data');
   test('privacy policy page loads', async ({ unauthPage: page }) => {
     await page.goto('/privacy-policy', { waitUntil: 'networkidle' });
     const basePage = new BasePage(page);
