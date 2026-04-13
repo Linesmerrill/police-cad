@@ -3,16 +3,15 @@ import { BasePage } from '../../pages/base.page';
 
 test.describe('Legal Pages', () => {
   test('privacy policy page loads', async ({ unauthPage: page }) => {
-    await page.goto('/privacy-policy');
+    await page.goto('/privacy-policy', { waitUntil: 'networkidle' });
     const basePage = new BasePage(page);
     await basePage.expectPageLoaded();
-    // Title uses shimmer text pattern (duplicate spans), so check for page-specific content instead
     await expect(page.locator('h1')).toBeVisible();
     await expect(page.getByText('Effective date: December')).toBeVisible({ timeout: 15_000 });
   });
 
   test('terms and conditions page loads', async ({ unauthPage: page }) => {
-    await page.goto('/terms-and-conditions');
+    await page.goto('/terms-and-conditions', { waitUntil: 'networkidle' });
     const basePage = new BasePage(page);
     await basePage.expectPageLoaded();
     await expect(page.getByText(/terms/i).first()).toBeVisible({ timeout: 15_000 });
