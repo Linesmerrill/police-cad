@@ -1710,7 +1710,7 @@ function updateDepartmentJoinButton(departmentId, status) {
             </div>
             <div>
               <span style="color:#a0aec0; font-size:0.75rem; text-transform:uppercase; font-weight:600;">Birthday</span>
-              <p style="color:#fff; margin:0.25rem 0 0 0; font-size:0.875rem;">${civ.birthday ? new Date(civ.birthday).toLocaleDateString() : 'N/A'}</p>
+              <p style="color:#fff; margin:0.25rem 0 0 0; font-size:0.875rem;">${civ.birthday ? new Date(civ.birthday).toLocaleDateString('en-US', { timeZone: 'UTC' }) : 'N/A'}</p>
             </div>
             <div>
               <span style="color:#a0aec0; font-size:0.75rem; text-transform:uppercase; font-weight:600;">Occupation</span>
@@ -1904,7 +1904,7 @@ function updateDepartmentJoinButton(departmentId, status) {
 
     // Populate form fields
     document.getElementById('editName').value = civ.name || '';
-    document.getElementById('editBirthday').value = civ.birthday || '';
+    document.getElementById('editBirthday').value = civ.birthday ? new Date(civ.birthday).toISOString().split('T')[0] : '';
     document.getElementById('editGender').value = civ.gender || '';
     document.getElementById('editHairColor').value = civ.hairColor || '';
     document.getElementById('editEyeColor').value = civ.eyeColor || '';
@@ -2062,9 +2062,7 @@ function updateDepartmentJoinButton(departmentId, status) {
         veteran: document.getElementById('editVeteran').checked,
         onParole: document.getElementById('editOnParole').checked,
         onProbation: document.getElementById('editOnProbation').checked,
-        image: imageUrl,
-        userID: window.dbUser?._id,
-        activeCommunityID: window.communityId
+        image: imageUrl
       };
 
       // Validate required fields
@@ -2297,7 +2295,7 @@ function updateDepartmentJoinButton(departmentId, status) {
               <button onclick="event.stopPropagation(); editVehicle('${item._id}')" style="background:#3b82f6; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
                 <i class="fa fa-pencil"></i> Edit
               </button>
-              <button onclick="event.stopPropagation(); deleteVehicle('${item._id}', ${JSON.stringify(plate)})" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
+              <button onclick="event.stopPropagation(); deleteVehicle('${item._id}', '${plate.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}')" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
                 <i class="fa fa-trash"></i> Delete
               </button>
             </div>
@@ -2588,7 +2586,7 @@ function updateDepartmentJoinButton(departmentId, status) {
               <button onclick="event.stopPropagation(); editFirearm('${item._id}')" style="background:#3b82f6; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
                 <i class="fa fa-pencil"></i> Edit
               </button>
-              <button onclick="event.stopPropagation(); deleteFirearm('${item._id}', ${JSON.stringify(displayName)})" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
+              <button onclick="event.stopPropagation(); deleteFirearm('${item._id}', '${displayName.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}')" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
                 <i class="fa fa-trash"></i> Delete
               </button>
             </div>
