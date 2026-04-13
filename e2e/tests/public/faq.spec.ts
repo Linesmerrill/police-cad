@@ -2,7 +2,7 @@ import { test, expect } from '../../fixtures/test-fixtures';
 import { BasePage } from '../../pages/base.page';
 
 test.describe('FAQ Page', () => {
-  test.skip(() => !!process.env.CI, 'Next.js SSR pages need production API data');
+  test.fixme(() => !!process.env.CI, 'Next.js SSR pages need production API data — fix by seeding stats/pricing data');
   test('loads and displays FAQ categories', async ({ unauthPage: page }) => {
     await page.goto('/faq', { waitUntil: 'networkidle' });
     const basePage = new BasePage(page);

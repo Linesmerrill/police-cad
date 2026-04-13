@@ -1,7 +1,7 @@
 import { test, expect } from '../../fixtures/test-fixtures';
 
 test.describe('Landing Page', () => {
-  test.skip(() => !!process.env.CI, 'Next.js SSR pages need production API data');
+  test.fixme(() => !!process.env.CI, 'Next.js SSR pages need production API data — fix by seeding stats/pricing data');
   test('loads and displays hero content', async ({ unauthPage: page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
     await expect(page.locator('nav').first()).toBeVisible({ timeout: 15_000 });
