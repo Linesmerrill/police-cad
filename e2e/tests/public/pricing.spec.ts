@@ -1,8 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/test-fixtures';
 import { BasePage } from '../../pages/base.page';
 
 test.describe('Pricing Page', () => {
-  test('loads and displays pricing tiers', async ({ page }) => {
+  test('loads and displays pricing tiers', async ({ unauthPage: page }) => {
     await page.goto('/pricing');
     const basePage = new BasePage(page);
     await basePage.expectPageLoaded();

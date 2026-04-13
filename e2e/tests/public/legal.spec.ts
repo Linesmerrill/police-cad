@@ -1,8 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/test-fixtures';
 import { BasePage } from '../../pages/base.page';
 
 test.describe('Legal Pages', () => {
-  test('privacy policy page loads', async ({ page }) => {
+  test('privacy policy page loads', async ({ unauthPage: page }) => {
     await page.goto('/privacy-policy');
     const basePage = new BasePage(page);
     await basePage.expectPageLoaded();
@@ -11,7 +11,7 @@ test.describe('Legal Pages', () => {
     await expect(page.getByText('Effective date: December')).toBeVisible({ timeout: 15_000 });
   });
 
-  test('terms and conditions page loads', async ({ page }) => {
+  test('terms and conditions page loads', async ({ unauthPage: page }) => {
     await page.goto('/terms-and-conditions');
     const basePage = new BasePage(page);
     await basePage.expectPageLoaded();
