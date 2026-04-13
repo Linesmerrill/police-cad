@@ -2295,7 +2295,7 @@ function updateDepartmentJoinButton(departmentId, status) {
               <button onclick="event.stopPropagation(); editVehicle('${item._id}')" style="background:#3b82f6; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
                 <i class="fa fa-pencil"></i> Edit
               </button>
-              <button onclick="event.stopPropagation(); deleteVehicle('${item._id}', '${plate.replace(/'/g, "\\'")}')" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
+              <button onclick="event.stopPropagation(); deleteVehicle('${item._id}', '${plate.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}')" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
                 <i class="fa fa-trash"></i> Delete
               </button>
             </div>
@@ -2586,7 +2586,7 @@ function updateDepartmentJoinButton(departmentId, status) {
               <button onclick="event.stopPropagation(); editFirearm('${item._id}')" style="background:#3b82f6; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
                 <i class="fa fa-pencil"></i> Edit
               </button>
-              <button onclick="event.stopPropagation(); deleteFirearm('${item._id}', '${displayName.replace(/'/g, "\\'")}')" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
+              <button onclick="event.stopPropagation(); deleteFirearm('${item._id}', '${displayName.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}')" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer;">
                 <i class="fa fa-trash"></i> Delete
               </button>
             </div>
