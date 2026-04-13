@@ -2,7 +2,6 @@ import { test, expect } from '../../fixtures/test-fixtures';
 import { BasePage } from '../../pages/base.page';
 
 test.describe('Pricing Page', () => {
-  test.fixme(() => !!process.env.CI, 'Next.js SSR pages need production API data — fix by seeding stats/pricing data');
   test('loads and displays pricing tiers', async ({ unauthPage: page }) => {
     await page.goto('/pricing');
     const basePage = new BasePage(page);

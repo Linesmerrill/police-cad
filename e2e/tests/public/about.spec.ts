@@ -2,7 +2,6 @@ import { test, expect } from '../../fixtures/test-fixtures';
 import { BasePage } from '../../pages/base.page';
 
 test.describe('About Us Page', () => {
-  test.fixme(() => !!process.env.CI, 'Next.js SSR pages need production API data — fix by seeding stats/pricing data');
   test('loads and displays content', async ({ unauthPage: page }) => {
     await page.goto('/about-us');
     const basePage = new BasePage(page);

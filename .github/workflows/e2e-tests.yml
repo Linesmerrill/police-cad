@@ -53,7 +53,7 @@ jobs:
           PORT: 8080
           DB_URI: mongodb://localhost:27018/policecad_test
           POLICE_CAD_API_URL: http://localhost:8081
-          NODE_ENV: test
+          NODE_ENV: production
 
       - name: Wait for services
         run: npx wait-on http://localhost:8080/health http://localhost:8081/health --timeout 60000
