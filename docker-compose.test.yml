@@ -1,0 +1,35 @@
+services:
+  mongo-test:
+    image: mongo:7
+    ports:
+      - "27018:27017"
+    tmpfs:
+      - /data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api-test:
+    build:
+      context: ../police-cad-api
+      dockerfile: Dockerfile.test
+    environment:
+      DB_URI: mongodb://mongo-test:27017
+      DB_NAME: policecad_test
+      PORT: "8081"
+      BASE_URL: http://localhost:8081
+      LOG_LEVEL: warn
+      STRIPE_SECRET_KEY: sk_test_placeholder_for_e2e_tests
+    depends_on:
+      mongo-test:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8081/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s

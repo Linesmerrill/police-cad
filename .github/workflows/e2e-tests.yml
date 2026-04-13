@@ -1,0 +1,79 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  e2e:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout police-cad
+        uses: actions/checkout@v4
+        with:
+          path: police-cad
+
+      - name: Checkout police-cad-api
+        uses: actions/checkout@v4
+        with:
+          repository: Linesmerrill/police-cad-api
+          path: police-cad-api
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Start test services (MongoDB + API)
+        working-directory: police-cad
+        run: docker compose -f docker-compose.test.yml up -d --wait --wait-timeout 60
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: police-cad/package-lock.json
+
+      - name: Install dependencies and build
+        working-directory: police-cad
+        run: npm ci
+        env:
+          NEXT_PUBLIC_POLICE_CAD_API_URL: http://localhost:8081
+
+      - name: Install Playwright browsers
+        working-directory: police-cad
+        run: npx playwright install --with-deps chromium
+
+      - name: Start website
+        working-directory: police-cad
+        run: node server.js &
+        env:
+          PORT: 8080
+          DB_URI: mongodb://localhost:27018/policecad_test
+          POLICE_CAD_API_URL: http://localhost:8081
+          NODE_ENV: test
+
+      - name: Wait for services
+        run: npx wait-on http://localhost:8080/health http://localhost:8081/health --timeout 60000
+
+      - name: Run Playwright tests
+        working-directory: police-cad
+        run: npx playwright test --project=chromium --no-deps --grep-invert @auth
+        env:
+          CI: true
+          BASE_URL: http://localhost:8080
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: police-cad/e2e/playwright-report/
+          retention-days: 7
+
+      - name: Stop test services
+        if: always()
+        working-directory: police-cad
+        run: docker compose -f docker-compose.test.yml down
