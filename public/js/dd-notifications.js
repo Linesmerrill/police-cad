@@ -751,7 +751,7 @@
         return;
       }
       requests.push($.ajax({
-        url: c.API_URL + '/api/v1/user/' + n.sentFromID + '/communities?migration=false',
+        url: c.API_URL + '/api/v1/user/' + n.sentFromID + '/communities?migration=false&userId=' + c.userId,
         method: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify({ communityId: n.data1, status: action })
