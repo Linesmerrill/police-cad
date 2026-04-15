@@ -4642,10 +4642,12 @@
 
     socket.on('signal_100_button_updated', (origReq) => {
       if (communityId == origReq.activeCommunity) {
-        if (origReq.signal100SoundUrl) {
-          AlertSounds.playUrl(origReq.signal100SoundUrl);
-        } else {
-          AlertSounds.play('signal100');
+        if (!_suppressSignal100Sound) {
+          if (origReq.signal100SoundUrl) {
+            AlertSounds.playUrl(origReq.signal100SoundUrl);
+          } else {
+            AlertSounds.play('signal100');
+          }
         }
         updateSignal100Banner(origReq);
       }
@@ -7569,6 +7571,9 @@
 
   // togglePanicBtnSound() and adjustAlertVolumeSlider() are now provided by alert-sounds.js
 
+  // Suppress sound on socket echo when this client just triggered the alert
+  var _suppressSignal100Sound = false;
+
   function signal100(aboutUserId, aboutCallSign, aboutUsername) {
     //if it is already showing we don't want to show it again (there can only be 1 active
     // signal 100 per community)
@@ -7592,6 +7597,8 @@
         timestamp: new Date().toISOString()
       }
       AlertSounds.play('signal100');
+      _suppressSignal100Sound = true;
+      setTimeout(function() { _suppressSignal100Sound = false; }, 5000);
 
       // Persist via Go API, then broadcast via Socket.IO
       $.ajax({
