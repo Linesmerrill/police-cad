@@ -4,7 +4,6 @@ import {
   deleteUserByEmail,
   generateToken,
   getUserByEmail,
-  setResetToken,
   uniqueTestEmail,
 } from '../../helpers/db';
 import { ResetPasswordPage } from '../../pages/reset-password.page';
@@ -19,9 +18,15 @@ test.describe('Password reset', () => {
     const email = uniqueTestEmail('reset');
     const oldPassword = 'OldPass123!';
     const newPassword = 'NewPass456!';
-    await createTestUser({ email, password: oldPassword });
     const token = generateToken();
-    await setResetToken(email, token);
+    // Seed the reset token in the same insert (proven to work in signup-verify);
+    // setResetToken via updateOne was racing with the GET handler.
+    await createTestUser({
+      email,
+      password: oldPassword,
+      resetPasswordToken: token,
+      resetPasswordExpires: Date.now() + 60 * 60 * 1000,
+    });
 
     try {
       const resetPage = new ResetPasswordPage(unauthPage);
@@ -62,9 +67,13 @@ test.describe('Password reset', () => {
 
   test('expired token is rejected', async ({ unauthPage }) => {
     const email = uniqueTestEmail('reset-expired');
-    await createTestUser({ email, password: 'TestPass123!' });
     const token = generateToken();
-    await setResetToken(email, token, -60_000); // already expired
+    await createTestUser({
+      email,
+      password: 'TestPass123!',
+      resetPasswordToken: token,
+      resetPasswordExpires: Date.now() - 60_000, // already expired
+    });
 
     try {
       const resetPage = new ResetPasswordPage(unauthPage);
