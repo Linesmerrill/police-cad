@@ -7039,6 +7039,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
     transports: ["websocket"],
   });
 
+  // Dedup: when the socket handler already broadcast an alert event for a
+  // community, the Go API webhook should NOT re-broadcast the same event.
+  // Keys are "signal100:<communityId>" or "panic:<communityId>", auto-expire after 10s.
+  const recentAlertBroadcasts = new Set();
+  function markAlertBroadcast(type, communityId) {
+    const key = `${type}:${communityId}`;
+    recentAlertBroadcasts.add(key);
+    setTimeout(() => recentAlertBroadcasts.delete(key), 10000);
+  }
+
   // ==========================================
   // INTERNAL WEBHOOK ENDPOINT FOR GO API
   // ==========================================
@@ -7057,6 +7067,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
     const roomName = `community:${communityId}`;
 
     if (event === "panic_created") {
+      // Skip if socket handler already broadcast this event (web-triggered)
+      if (recentAlertBroadcasts.has(`panic:${communityId}`)) {
+        return res.json({ success: true, event, communityId, deduped: true });
+      }
       // Broadcast panic_button_updated to match existing socket event format
       const panicMap = {};
       panicMap[data.userId] = data;
@@ -7077,6 +7091,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         clearedBy: data.clearedBy,
       });
     } else if (event === "signal_100_activated") {
+      // Skip if socket handler already broadcast this event (web-triggered)
+      if (recentAlertBroadcasts.has(`signal100:${communityId}`)) {
+        return res.json({ success: true, event, communityId, deduped: true });
+      }
       const signal100Data = {
         activeCommunity: communityId,
         activatedByUserId: data.userId,
@@ -8510,6 +8528,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
             req.panicSoundUrl = panicSoundUrl;
           }
 
+          // Mark as broadcast so the Go API webhook doesn't re-broadcast
+          markAlertBroadcast('panic', req.activeCommunity);
+
           // Broadcast to community room
           // Emit both map and req for backward compat with old listeners that expect (map, origReq)
           const roomName = `community:${req.activeCommunity}`;
@@ -8653,6 +8674,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
           const signal100SoundUrl = await resolveCustomSoundUrl(req.activeCommunity, 'signal100');
           const broadcastData = Object.assign({}, req);
           if (signal100SoundUrl) broadcastData.signal100SoundUrl = signal100SoundUrl;
+
+          // Mark as broadcast so the Go API webhook doesn't re-broadcast
+          markAlertBroadcast('signal100', req.activeCommunity);
 
           return broadcastToCommunity(
             "signal_100_button_updated",
