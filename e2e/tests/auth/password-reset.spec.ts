@@ -33,15 +33,35 @@ test.describe('Password reset', () => {
       await resetPage.goto(token);
       await resetPage.submitNewPassword(newPassword);
 
-      // On success the server auto-logs-in and redirects to /communities.
-      await unauthPage.waitForURL(/\/communities/, { timeout: 20_000 });
+      // The server auto-login + redirect to /communities happens *after* a
+      // confirmation email send. With no MAIL_API_KEY in the test env that
+      // step errors and the waterfall lands on /forgot-password — but the
+      // password update itself succeeded. Wait for the URL to settle, then
+      // assert the actual outcome via DB + a fresh login.
+      await unauthPage.waitForURL(/\/communities|\/forgot-password|\/reset/, {
+        timeout: 20_000,
+      });
 
-      const updated = await getUserByEmail(email);
-      expect(updated?.user.resetPasswordToken).toBeFalsy();
-      expect(updated?.user.resetPasswordExpires).toBeFalsy();
-      // Password hash should have changed.
-      // (Not verifying the bcrypt match here — the auto-login redirect is the proof.)
-      expect(typeof updated?.user.password).toBe('string');
+      // Poll the DB — the user.save in the route is async w.r.t. the redirect.
+      await expect
+        .poll(
+          async () => {
+            const u = await getUserByEmail(email);
+            return {
+              token: u?.user.resetPasswordToken ?? null,
+              expires: u?.user.resetPasswordExpires ?? null,
+            };
+          },
+          { timeout: 10_000, intervals: [500, 1000, 2000] }
+        )
+        .toEqual({ token: null, expires: null });
+
+      // Final proof: the new password works for login.
+      await unauthPage.goto('/login');
+      await unauthPage.locator('#email').fill(email);
+      await unauthPage.locator('#password').fill(newPassword);
+      await unauthPage.locator('button[type="submit"]').click();
+      await unauthPage.waitForURL('**/communities**', { timeout: 15_000 });
     } finally {
       await deleteUserByEmail(email);
     }
