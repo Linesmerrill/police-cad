@@ -19,4 +19,18 @@ test.describe('Auth Guards', () => {
 
     await context.close();
   });
+
+  test('logout invalidates session — protected route redirects to login', { tag: '@auth' }, async ({ page }) => {
+    // Start authenticated (via default storageState) and prove access works.
+    await page.goto('/communities');
+    await expect(page).not.toHaveURL(/\/login/);
+
+    // Logout destroys the server-side session.
+    await page.goto('/logout');
+
+    // Subsequent protected-route access must redirect to /login — proves
+    // the session was destroyed server-side, not just the client cookie.
+    await page.goto('/civ-dashboard');
+    await expect(page).toHaveURL(/\/login/, { timeout: 10_000 });
+  });
 });
