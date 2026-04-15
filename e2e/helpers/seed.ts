@@ -220,6 +220,7 @@ export async function cleanupTestData(): Promise<void> {
     // Clean up any data created during tests
     const communityId = TEST_COMMUNITY_ID.toHexString();
     await db.collection('bolos').deleteMany({ 'bolo.communityID': communityId });
+    await db.collection('calls').deleteMany({ 'call.communityID': communityId });
     console.log('[seed] Test data cleaned up');
   } catch (err: any) {
     if (err?.message?.includes('ECONNREFUSED')) {

@@ -17,3 +17,17 @@ const communityIdB64 = Buffer.from(TEST_COMMUNITY_ID.toHexString()).toString('ba
 export function dashboardUrl(path: string): string {
   return `${path}?c=${encodeURIComponent(communityIdB64)}`;
 }
+
+/** URL-safe base64 encoding (matches the app's encodeId pattern) */
+function toUrlSafeBase64(hex: string): string {
+  return Buffer.from(hex)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+/** Returns the community details page URL for the test community */
+export function communityDetailsUrl(): string {
+  return `/community/${toUrlSafeBase64(TEST_COMMUNITY_ID.toHexString())}`;
+}
