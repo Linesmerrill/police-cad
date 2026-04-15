@@ -33,9 +33,9 @@ export interface TestUserRecord {
     password: string;
     emailVerified?: boolean;
     emailVerificationToken?: string;
-    emailVerificationExpires?: number;
+    emailVerificationExpires?: Date;
     resetPasswordToken?: string;
-    resetPasswordExpires?: number;
+    resetPasswordExpires?: Date;
     isDeactivated?: boolean;
     deactivatedAt?: Date;
     restoreUntil?: Date;
@@ -57,8 +57,10 @@ export async function createTestUser(opts: {
   username?: string;
   emailVerified?: boolean;
   emailVerificationToken?: string;
+  /** Milliseconds since epoch — converted to Date for Mongoose schema compat. */
   emailVerificationExpires?: number;
   resetPasswordToken?: string;
+  /** Milliseconds since epoch — converted to Date for Mongoose schema compat. */
   resetPasswordExpires?: number;
 }): Promise<ObjectId> {
   const _id = new ObjectId();
@@ -77,9 +79,15 @@ export async function createTestUser(opts: {
         discordConnected: false,
         emailVerified: opts.emailVerified ?? true,
         emailVerificationToken: opts.emailVerificationToken,
-        emailVerificationExpires: opts.emailVerificationExpires,
+        emailVerificationExpires:
+          opts.emailVerificationExpires !== undefined
+            ? new Date(opts.emailVerificationExpires)
+            : undefined,
         resetPasswordToken: opts.resetPasswordToken,
-        resetPasswordExpires: opts.resetPasswordExpires,
+        resetPasswordExpires:
+          opts.resetPasswordExpires !== undefined
+            ? new Date(opts.resetPasswordExpires)
+            : undefined,
         isDeactivated: false,
         subscription: { plan: 'free', active: false },
         createdAt: now,
@@ -115,7 +123,7 @@ export async function setResetToken(
       {
         $set: {
           'user.resetPasswordToken': token,
-          'user.resetPasswordExpires': Date.now() + expiresInMs,
+          'user.resetPasswordExpires': new Date(Date.now() + expiresInMs),
         },
       }
     );
@@ -134,7 +142,7 @@ export async function setEmailVerificationToken(
         $set: {
           'user.emailVerified': false,
           'user.emailVerificationToken': token,
-          'user.emailVerificationExpires': Date.now() + expiresInMs,
+          'user.emailVerificationExpires': new Date(Date.now() + expiresInMs),
         },
       }
     );

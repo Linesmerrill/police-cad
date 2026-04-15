@@ -44,8 +44,10 @@ test.describe('Signup email verification', () => {
     await expect(unauthPage).toHaveURL(/\/signup\/verify\?error=invalid_token/, {
       timeout: 15_000,
     });
+    // Multiple elements may match (descriptive paragraph + bold error message);
+    // assert the exact-match span is visible.
     await expect(
-      unauthPage.getByText(/verification link is invalid or has expired/i)
+      unauthPage.getByText('Verification link is invalid or has expired.', { exact: true })
     ).toBeVisible({ timeout: 15_000 });
   });
 

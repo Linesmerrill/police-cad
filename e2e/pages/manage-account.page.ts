@@ -13,7 +13,7 @@ export class ProfilePage extends BasePage {
     this.changeEmailButton = page.getByRole('button', { name: /Change Email/i });
     this.deactivateButton = page.getByRole('button', { name: /Deactivate Account/i });
     this.confirmDeactivateButton = page.getByRole('button', {
-      name: /yes.*deactivate|confirm.*deactivate|deactivate.*account/i,
+      name: /^deactivate$|^deactivating/i,
     });
   }
 

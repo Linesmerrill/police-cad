@@ -35,10 +35,10 @@ test.describe('Account deactivation (Danger Zone)', { tag: '@auth' }, () => {
       await expect(page.getByText('Danger Zone')).toBeVisible();
       await page.getByRole('button', { name: /Deactivate Account/i }).click();
 
-      // Confirm in the modal. The confirm button text may vary — match broadly.
+      // Modal confirm button is plain "Deactivate" (or "Deactivating..." while
+      // the request is in-flight). Match the exact word, scoped to the modal.
       await page
-        .getByRole('button', { name: /yes.*deactivate|confirm.*deactivate|deactivate.*account/i })
-        .last()
+        .getByRole('button', { name: /^deactivate$|^deactivating/i })
         .click();
 
       // DB should reflect deactivation.
