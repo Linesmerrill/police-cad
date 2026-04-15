@@ -196,6 +196,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         redirect: encodeURIComponent(redirect),
       });
     } catch (error) {
+      console.error("[LPS] [level=error] /community/:hash error:", error.message);
       return res.status(404).render("error", {
         message: "Community not found or an error occurred.",
         redirect: "/communities",

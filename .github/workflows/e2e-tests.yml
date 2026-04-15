@@ -57,7 +57,8 @@ jobs:
           RATE_LIMIT_MAX: "10000"
 
       - name: Wait for services
-        run: npx wait-on http://localhost:8080/health http://localhost:8081/health --timeout 60000
+        working-directory: police-cad
+        run: npx wait-on http://localhost:8080 http://localhost:8081/health --timeout 60000
 
       - name: Run Playwright tests
         working-directory: police-cad
