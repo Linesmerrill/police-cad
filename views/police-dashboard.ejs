@@ -6286,9 +6286,11 @@ window.showBoloModal = showBoloModal;
       updateUnitsDisplay(data);
 
       // Check if this update is for the current user (e.g., dispatch changed our status)
-      if (data.userID === dbUser._id) {
+      // Skip status display update if this is a department-change-only event
+      // (ensureActiveDepartment emits update_status with empty status)
+      if (data.userID === dbUser._id && data.status) {
         // Update our own status display
-        const statusCode = data.status || 'Unknown';
+        const statusCode = data.status;
         const setBy = data.setBy || 'Unknown';
 
         // Update the current status text
