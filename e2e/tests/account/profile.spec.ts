@@ -14,16 +14,16 @@ test.describe('Profile Page', { tag: '@auth' }, () => {
     await page.goto('/profile');
     await expect(page.getByText('Account Overview')).toBeVisible({ timeout: 15_000 });
 
-    // Test user's username should appear
-    await expect(page.getByText('testuser')).toBeVisible({ timeout: 5_000 });
+    // Test user's username should appear (use first() since it may appear in multiple places)
+    await expect(page.getByText('testuser').first()).toBeVisible({ timeout: 5_000 });
   });
 
   test('displays call sign in account overview', async ({ page }) => {
     await page.goto('/profile');
     await expect(page.getByText('Account Overview')).toBeVisible({ timeout: 15_000 });
 
-    // Test user's call sign T-1 should appear
-    await expect(page.getByText('T-1')).toBeVisible({ timeout: 5_000 });
+    // Test user's call sign T-1 should appear (use first() since it may appear in multiple places)
+    await expect(page.getByText('T-1').first()).toBeVisible({ timeout: 5_000 });
   });
 
   test('shows account settings section with edit buttons', async ({ page }) => {
