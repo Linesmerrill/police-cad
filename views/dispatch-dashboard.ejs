@@ -4624,7 +4624,11 @@
 
     socket.on('panic_button_updated', (map, origReq) => {
       if (communityId == origReq.activeCommunity) {
-        AlertSounds.play('panic');
+        if (origReq.panicSoundUrl) {
+          AlertSounds.playUrl(origReq.panicSoundUrl);
+        } else {
+          AlertSounds.play('panic');
+        }
         if (window.loadPanicStatusesAjax) window.loadPanicStatusesAjax();
         // Refresh unit data so activeDepartmentId and callsigns are up to date
         if (typeof loadUnitsPanel === 'function') loadUnitsPanel();
@@ -4638,7 +4642,11 @@
 
     socket.on('signal_100_button_updated', (origReq) => {
       if (communityId == origReq.activeCommunity) {
-        AlertSounds.play('signal100');
+        if (origReq.signal100SoundUrl) {
+          AlertSounds.playUrl(origReq.signal100SoundUrl);
+        } else {
+          AlertSounds.play('signal100');
+        }
         updateSignal100Banner(origReq);
       }
     })
