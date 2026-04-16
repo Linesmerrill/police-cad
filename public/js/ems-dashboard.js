@@ -11,6 +11,10 @@ var dbUser;
 var dbVehicles;
 var socket;
 
+// Suppress sound on socket echo when this client just triggered the alert
+var _suppressSignal100Sound = false;
+var _suppressPanicSound = false;
+
 // Get resolved callsign: prefer department-specific, fall back to global
 function getMyResolvedCallSign() {
   return window._resolvedDeptCallSign || (dbUser && dbUser.user ? dbUser.user.callSign : '') || '';
@@ -429,10 +433,12 @@ function initializeSocket() {
   socket.on('panic_button_updated', function(map, origReq) {
     if (origReq && origReq.activeCommunity && dbUser.user?.lastAccessedCommunity?.communityID !== origReq.activeCommunity) return;
 
-    if (origReq && origReq.panicSoundUrl) {
-      AlertSounds.playUrl(origReq.panicSoundUrl);
-    } else {
-      AlertSounds.play('panic');
+    if (!_suppressPanicSound) {
+      if (origReq && origReq.panicSoundUrl) {
+        AlertSounds.playUrl(origReq.panicSoundUrl);
+      } else {
+        AlertSounds.play('panic');
+      }
     }
 
     // Refresh panic alerts from API (styled banners)
@@ -474,10 +480,12 @@ function initializeSocket() {
   socket.on('signal_100_button_updated', function(data) {
     if (data.activeCommunity && data.activeCommunity !== communityId) return;
 
-    if (data.signal100SoundUrl) {
-      AlertSounds.playUrl(data.signal100SoundUrl);
-    } else {
-      AlertSounds.play('signal100');
+    if (!_suppressSignal100Sound) {
+      if (data.signal100SoundUrl) {
+        AlertSounds.playUrl(data.signal100SoundUrl);
+      } else {
+        AlertSounds.play('signal100');
+      }
     }
 
     // Update the banner with details
@@ -659,6 +667,8 @@ function triggerSignal100() {
   });
 
   AlertSounds.play('signal100');
+  _suppressSignal100Sound = true;
+  setTimeout(function() { _suppressSignal100Sound = false; }, 5000);
 
   // Reset after brief delay (socket emit is fire-and-forget)
   setTimeout(function() {
@@ -709,6 +719,8 @@ function triggerPanic() {
     // Play sound immediately during user gesture (before async AJAX)
     // so browsers don't block it due to autoplay policy
     AlertSounds.play('panic');
+    _suppressPanicSound = true;
+    setTimeout(function() { _suppressPanicSound = false; }, 5000);
     $.ajax({
       url: `${POLICE_CAD_API_URL}/api/v1/community/${communityId}/panic-alerts`,
       method: 'POST',
