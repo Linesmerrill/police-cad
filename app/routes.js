@@ -1866,6 +1866,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         isAdmin: isAdmin || isOwner,
         isDepartmentMember: isDepartmentMember,
         communityId: communityId,
+        apiUrl: policeCadApiUrl,
       });
     } catch (err) {
       console.error('Error loading most-wanted page:', err);

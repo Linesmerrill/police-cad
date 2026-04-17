@@ -202,7 +202,7 @@ $(document).ready(function () {
       },
     };
     $.ajax({
-      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolo`,
+      url: `${API_URL}/api/v1/bolo`,
       method: "POST",
       data: JSON.stringify(payload),
       contentType: "application/json",
@@ -282,7 +282,7 @@ $(document).ready(function () {
       return;
     }
     $.ajax({
-      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolo/${boloId}`,
+      url: `${API_URL}/api/v1/bolo/${boloId}`,
       method: "PUT",
       data: JSON.stringify({ title: boloTitle, location, description }),
       contentType: "application/json",
@@ -348,7 +348,7 @@ $(document).ready(function () {
       return;
     }
     $.ajax({
-      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolo/${boloId}`,
+      url: `${API_URL}/api/v1/bolo/${boloId}`,
       method: "DELETE",
       success: function () {
         $(`#${boloId}-row`).fadeOut(1, function () {
@@ -374,7 +374,7 @@ $(document).ready(function () {
   // Populate BOLO details in modal
   function populateBoloDetails(boloId) {
     $.ajax({
-      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolo/${boloId}`,
+      url: `${API_URL}/api/v1/bolo/${boloId}`,
       method: "GET",
       success: function (bolo) {
         $("#boloIDDetail").val(bolo._id);
