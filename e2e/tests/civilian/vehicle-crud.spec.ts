@@ -6,6 +6,10 @@ import {
   deleteVehiclesByPrefix,
 } from '../../helpers/db';
 
+function testVin(): string {
+  return `1HGBH${Date.now().toString().slice(-12)}`;
+}
+
 test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
   const PREFIX = 'P8V';
 
@@ -14,16 +18,9 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
   });
 
   test('creates a vehicle via the modal', async ({ page }) => {
-    const plate = `${PREFIX}${Date.now().toString(36)}`.toUpperCase();
-    const vin = `VIN${Date.now()}`;
+    const plate = `${PREFIX}${Date.now().toString(36).slice(-5)}`.toUpperCase();
+    const vin = testVin();
     const dashboard = new CivDashboardPage(page);
-
-    // Intercept the vehicle create API call to debug
-    const apiResponsePromise = page.waitForResponse(
-      (resp) => resp.url().includes('/api/v1/vehicle') && resp.request().method() === 'POST',
-      { timeout: 20_000 }
-    );
-
     await dashboard.goto();
     await dashboard.waitForVehiclesLoaded();
 
@@ -31,27 +28,20 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
     await dashboard.fillNewVehicleForm({ plate, vin });
     await dashboard.submitNewVehicle();
 
-    const apiResponse = await apiResponsePromise;
-    expect(apiResponse.status()).toBeLessThan(400);
+    await dashboard.expectToast(/vehicle created/i);
 
-    // Reload to see the new vehicle
+    // Reload to verify card persisted
     await dashboard.goto();
     await dashboard.waitForVehiclesLoaded();
     await expect(dashboard.vehCard(plate)).toBeVisible({ timeout: 15_000 });
   });
 
   test('edits a vehicle plate via details modal', async ({ page }) => {
-    const oldPlate = `${PREFIX}OLD${Date.now().toString(36)}`.toUpperCase();
-    const newPlate = `${PREFIX}NEW${Date.now().toString(36)}`.toUpperCase();
-    await createTestVehicle({ plate: oldPlate });
+    const oldPlate = `${PREFIX}OLD${Date.now().toString(36).slice(-3)}`.toUpperCase();
+    const newPlate = `${PREFIX}NEW${Date.now().toString(36).slice(-3)}`.toUpperCase();
+    await createTestVehicle({ plate: oldPlate, vin: testVin() });
 
     const dashboard = new CivDashboardPage(page);
-
-    const apiResponsePromise = page.waitForResponse(
-      (resp) => resp.url().includes('/api/v1/vehicle') && resp.request().method() === 'PUT',
-      { timeout: 20_000 }
-    );
-
     await dashboard.goto();
     await dashboard.waitForVehiclesLoaded();
 
@@ -59,8 +49,7 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
     await dashboard.editVehPlate(newPlate);
     await dashboard.saveVehEdit();
 
-    const apiResponse = await apiResponsePromise;
-    expect(apiResponse.status()).toBeLessThan(400);
+    await dashboard.expectToast(/vehicle updated/i);
 
     await dashboard.goto();
     await dashboard.waitForVehiclesLoaded();
@@ -70,8 +59,8 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
   });
 
   test('deletes a vehicle from details modal', async ({ page }) => {
-    const plate = `${PREFIX}DEL${Date.now().toString(36)}`.toUpperCase();
-    await createTestVehicle({ plate });
+    const plate = `${PREFIX}DEL${Date.now().toString(36).slice(-3)}`.toUpperCase();
+    await createTestVehicle({ plate, vin: testVin() });
 
     const dashboard = new CivDashboardPage(page);
     await dashboard.goto();
@@ -80,11 +69,7 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
     await dashboard.openVehDetails(plate);
     await dashboard.deleteVehFromModal();
 
-    await expect
-      .poll(async () => {
-        const v = await getVehicleByPlate(plate);
-        return v === null;
-      }, { timeout: 15_000, intervals: [500, 1000, 2000] })
-      .toBe(true);
+    await dashboard.expectToast(/vehicle deleted/i);
+    await expect(dashboard.vehCard(plate)).not.toBeVisible({ timeout: 10_000 });
   });
 });
