@@ -24,13 +24,8 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
     await dashboard.fillNewVehicleForm({ plate, vin });
     await dashboard.submitNewVehicle();
 
-    // DB poll — toast may be transient, DB is the source of truth
-    await expect
-      .poll(async () => {
-        const v = await getVehicleByPlate(plate);
-        return v !== null;
-      }, { timeout: 15_000, intervals: [500, 1000, 2000] })
-      .toBe(true);
+    // Wait for the vehicle card to appear (loadVehicles() is called on success)
+    await expect(dashboard.vehCard(plate)).toBeVisible({ timeout: 15_000 });
   });
 
   test('edits a vehicle plate via details modal', async ({ page }) => {
@@ -46,13 +41,11 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
     await dashboard.editVehPlate(newPlate);
     await dashboard.saveVehEdit();
 
-    // DB poll for the update
-    await expect
-      .poll(async () => {
-        const v = await getVehicleByPlate(newPlate);
-        return v !== null;
-      }, { timeout: 15_000, intervals: [500, 1000, 2000] })
-      .toBe(true);
+    // Reload and check
+    await page.waitForTimeout(1000);
+    await dashboard.goto();
+    await dashboard.waitForVehiclesLoaded();
+    await expect(dashboard.vehCard(newPlate)).toBeVisible({ timeout: 15_000 });
 
     await deleteVehiclesByPrefix(newPlate.slice(0, 3));
   });
