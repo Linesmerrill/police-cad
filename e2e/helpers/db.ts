@@ -539,7 +539,9 @@ export async function createTestBolo(opts: {
         title: opts.title,
         location: opts.location ?? 'E2E Test Location',
         description: opts.description ?? 'E2E test BOLO description',
-        scope: opts.scope ?? 'community',
+        // API FetchDepartmentBolosHandler filters by exact-match `bolo.scope`:
+        // must be "Community" or "Department" — capital first letter.
+        scope: opts.scope ?? 'Community',
         communityID: TEST_COMMUNITY_ID,
         departmentID: '',
         reportedByID: TEST_USER_ID,
