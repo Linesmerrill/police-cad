@@ -456,3 +456,342 @@ export async function deleteCallsByPrefix(prefix: string): Promise<void> {
     });
   });
 }
+
+// ---------------------------------------------------------------------------
+// Phase 10 — Record helpers (warrants, BOLOs, most wanted, arrests, tickets,
+// warnings, medical reports)
+//
+// All helpers attach records to TEST_COMMUNITY_ID and, where applicable,
+// TEST_CIVILIAN_ID so tests don't need to create a civilian per case.
+// ---------------------------------------------------------------------------
+
+export async function createTestWarrant(opts: {
+  accusedFirstName: string;
+  accusedLastName: string;
+  accusedId?: string;
+  warrantType?: string;
+  status?: string;
+  charges?: string[];
+}): Promise<string> {
+  const _id = new ObjectId();
+  const now = new Date();
+  await withDb(async (db) => {
+    await db.collection('warrants').insertOne({
+      _id,
+      warrant: {
+        warrantType: opts.warrantType ?? 'arrest',
+        status: opts.status ?? 'approved',
+        accusedID: opts.accusedId ?? '',
+        accusedFirstName: opts.accusedFirstName,
+        accusedLastName: opts.accusedLastName,
+        probableCause: 'E2E test probable cause',
+        charges: opts.charges ?? ['E2E Test Charge'],
+        searchLocation: '',
+        requestingOfficerID: TEST_USER_ID,
+        requestingOfficerName: 'testuser',
+        judgeID: '',
+        judgeName: '',
+        judgeNotes: '',
+        reportingOfficerID: TEST_USER_ID,
+        reportingOfficerUsername: 'testuser',
+        clearingOfficerID: '',
+        reasons: opts.charges ?? ['E2E Test Charge'],
+        communityID: TEST_COMMUNITY_ID,
+        activeCommunityID: TEST_COMMUNITY_ID,
+        createdAt: now,
+        updatedAt: now,
+      },
+      __v: 0,
+    });
+  });
+  return _id.toHexString();
+}
+
+export async function getWarrantById(id: string) {
+  return withDb(async (db) =>
+    db.collection('warrants').findOne({ _id: new ObjectId(id) })
+  );
+}
+
+export async function deleteWarrantsByAccusedLastName(
+  lastName: string
+): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('warrants').deleteMany({
+      'warrant.accusedLastName': { $regex: `^${lastName}`, $options: 'i' },
+    });
+  });
+}
+
+export async function createTestBolo(opts: {
+  title: string;
+  description?: string;
+  location?: string;
+  scope?: string;
+  status?: boolean;
+}): Promise<string> {
+  const _id = new ObjectId();
+  const now = new Date();
+  await withDb(async (db) => {
+    await db.collection('bolos').insertOne({
+      _id,
+      bolo: {
+        title: opts.title,
+        location: opts.location ?? 'E2E Test Location',
+        description: opts.description ?? 'E2E test BOLO description',
+        scope: opts.scope ?? 'community',
+        communityID: TEST_COMMUNITY_ID,
+        departmentID: '',
+        reportedByID: TEST_USER_ID,
+        reportingOfficerUsername: 'testuser',
+        reportingOfficerID: TEST_USER_ID,
+        status: opts.status ?? true,
+        createdAt: now,
+        updatedAt: now,
+      },
+      __v: 0,
+    });
+  });
+  return _id.toHexString();
+}
+
+export async function getBoloById(id: string) {
+  return withDb(async (db) =>
+    db.collection('bolos').findOne({ _id: new ObjectId(id) })
+  );
+}
+
+export async function deleteBolosByTitlePrefix(prefix: string): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('bolos').deleteMany({
+      'bolo.title': { $regex: `^${prefix}`, $options: 'i' },
+    });
+  });
+}
+
+export async function createTestMostWanted(opts: {
+  civilianId?: string;
+  charges?: string[];
+  description?: string;
+  stars?: number;
+  status?: string;
+}): Promise<string> {
+  const _id = new ObjectId();
+  const now = new Date();
+  await withDb(async (db) => {
+    await db.collection('most_wanted_entries').insertOne({
+      _id,
+      mostWanted: {
+        communityID: TEST_COMMUNITY_ID,
+        civilianID: opts.civilianId ?? 'cccccccccccccccccccccccc',
+        listOrder: 0,
+        stars: opts.stars ?? 3,
+        charges: opts.charges ?? ['E2E Test Charge'],
+        description: opts.description ?? 'E2E test most wanted',
+        status: opts.status ?? 'active',
+        addedByUserID: TEST_USER_ID,
+        customFields: {},
+        civilianSnapshot: {},
+        createdAt: now,
+        updatedAt: now,
+      },
+      __v: 0,
+    });
+  });
+  return _id.toHexString();
+}
+
+export async function getMostWantedById(id: string) {
+  return withDb(async (db) =>
+    db.collection('most_wanted_entries').findOne({ _id: new ObjectId(id) })
+  );
+}
+
+export async function deleteMostWantedByDescriptionPrefix(
+  prefix: string
+): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('most_wanted_entries').deleteMany({
+      'mostWanted.description': { $regex: `^${prefix}`, $options: 'i' },
+    });
+  });
+}
+
+export async function createTestArrestReport(opts: {
+  reportNumber: string;
+  arresteeFirstName?: string;
+  arresteeLastName?: string;
+  civilianId?: string;
+  charges?: string;
+}): Promise<string> {
+  const _id = new ObjectId();
+  const now = new Date();
+  const firstName = opts.arresteeFirstName ?? 'Test';
+  const lastName = opts.arresteeLastName ?? 'Suspect';
+  await withDb(async (db) => {
+    await db.collection('arrestreports').insertOne({
+      _id,
+      arrestReport: {
+        reportNumber: opts.reportNumber,
+        arrestDate: '04/17/2026',
+        arrestTime: '14:30',
+        arrestLocation: '123 Test St',
+        incidentDate: '04/17/2026',
+        incidentTime: '14:00',
+        incidentLocation: '123 Test St',
+        arrestee: {
+          id: opts.civilianId ?? 'cccccccccccccccccccccccc',
+          name: `${firstName} ${lastName}`,
+          dob: '01/15/1990',
+          address: '123 Test Street',
+          height: '5\'10"',
+          weight: '180',
+          eyeColor: 'Brown',
+          hairColor: 'Black',
+          phone: '',
+        },
+        officer: {
+          id: TEST_USER_ID,
+          name: 'testuser',
+          badge: 'T-1',
+        },
+        officerID: TEST_USER_ID,
+        activeCommunityID: TEST_COMMUNITY_ID,
+        departmentId: '',
+        charges: opts.charges ?? 'E2E Test Charge',
+        narrative: 'E2E test narrative',
+        witnesses: '',
+        forceUsed: false,
+        attachedForms: [],
+        status: '',
+        dismissedBy: '',
+        courtCaseID: '',
+        createdAt: now,
+        updatedAt: now,
+      },
+      __v: 0,
+    });
+  });
+  return _id.toHexString();
+}
+
+export async function getArrestReportById(id: string) {
+  return withDb(async (db) =>
+    db.collection('arrestreports').findOne({ _id: new ObjectId(id) })
+  );
+}
+
+export async function deleteArrestReportsByPrefix(prefix: string): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('arrestreports').deleteMany({
+      'arrestReport.reportNumber': { $regex: `^${prefix}`, $options: 'i' },
+    });
+  });
+}
+
+/**
+ * Tickets and warnings share one collection — a warning is a ticket with
+ * `ticket.isWarning === true`. The create-ticket form POST on the Node.js
+ * side sets this flag based on a form field.
+ */
+export async function createTestTicket(opts: {
+  caseNumber: string;
+  civilianId?: string;
+  civFirstName?: string;
+  civLastName?: string;
+  violations?: string[];
+  amount?: string;
+  isWarning?: boolean;
+}): Promise<string> {
+  const _id = new ObjectId();
+  const now = new Date();
+  await withDb(async (db) => {
+    await db.collection('tickets').insertOne({
+      _id,
+      ticket: {
+        officerID: TEST_USER_ID,
+        caseNumber: opts.caseNumber,
+        violation: opts.violations ?? ['E2E Test Violation'],
+        plate: '',
+        model: '',
+        color: '',
+        registeredOwner: '',
+        amount: opts.amount ?? '100',
+        date: '2026-04-17',
+        time: '14:30',
+        civID: opts.civilianId ?? 'cccccccccccccccccccccccc',
+        civEmail: '',
+        civFirstName: opts.civFirstName ?? 'Test',
+        civLastName: opts.civLastName ?? 'Civilian',
+        isWarning: opts.isWarning ?? false,
+        createdAt: now,
+        updatedAt: now,
+      },
+      __v: 0,
+    });
+  });
+  return _id.toHexString();
+}
+
+export async function getTicketByCaseNumber(caseNumber: string) {
+  return withDb(async (db) =>
+    db.collection('tickets').findOne({ 'ticket.caseNumber': caseNumber })
+  );
+}
+
+export async function deleteTicketsByCaseNumberPrefix(
+  prefix: string
+): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('tickets').deleteMany({
+      'ticket.caseNumber': { $regex: `^${prefix}`, $options: 'i' },
+    });
+  });
+}
+
+export async function createTestMedicalReport(opts: {
+  details: string;
+  civilianId?: string;
+  hospitalized?: boolean;
+  deceased?: boolean;
+}): Promise<string> {
+  const _id = new ObjectId();
+  const now = new Date();
+  await withDb(async (db) => {
+    await db.collection('medicalreports').insertOne({
+      _id,
+      report: {
+        date: '2026-04-17',
+        details: opts.details,
+        civilianID: opts.civilianId ?? 'cccccccccccccccccccccccc',
+        reportingEmsID: TEST_USER_ID,
+        hospitalized: opts.hospitalized ?? false,
+        deceased: opts.deceased ?? false,
+        activeCommunityID: TEST_COMMUNITY_ID,
+        userID: TEST_USER_ID,
+        name: 'Test Civilian',
+        dateOfBirth: '1990-01-15',
+        createdAt: now,
+        updatedAt: now,
+      },
+      __v: 0,
+    });
+  });
+  return _id.toHexString();
+}
+
+export async function getMedicalReportById(id: string) {
+  return withDb(async (db) =>
+    db.collection('medicalreports').findOne({ _id: new ObjectId(id) })
+  );
+}
+
+export async function deleteMedicalReportsByDetailsPrefix(
+  prefix: string
+): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('medicalreports').deleteMany({
+      'report.details': { $regex: `^${prefix}`, $options: 'i' },
+    });
+  });
+}
