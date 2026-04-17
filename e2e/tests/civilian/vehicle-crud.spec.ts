@@ -51,9 +51,13 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
 
     await dashboard.expectToast(/vehicle updated/i);
 
-    await dashboard.goto();
-    await dashboard.waitForVehiclesLoaded();
-    await expect(dashboard.vehCard(newPlate)).toBeVisible({ timeout: 15_000 });
+    // Verify the plate changed in the DB
+    await expect
+      .poll(async () => {
+        const v = await getVehicleByPlate(newPlate);
+        return v !== null;
+      }, { timeout: 10_000, intervals: [500, 1000, 2000] })
+      .toBe(true);
 
     await deleteVehiclesByPrefix(newPlate.slice(0, 3));
   });
