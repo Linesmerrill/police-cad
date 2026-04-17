@@ -31,15 +31,27 @@ export class CivDashboardPage {
   }
 
   async waitForCivsLoaded() {
-    await expect(this.page.locator('#personas-thumbnail')).toBeVisible({ timeout: 15_000 });
+    // Either civilians grid or "no civilians found" — both mean loading finished.
+    await expect(
+      this.page.locator('#personas-thumbnail, #no-civilians-found-alert').first()
+    ).toBeVisible({ timeout: 15_000 });
   }
 
   async waitForVehiclesLoaded() {
-    await expect(this.page.locator('#vehicles-thumbnail')).toBeVisible({ timeout: 15_000 });
+    await expect(
+      this.page.locator('#vehicles-thumbnail, #no-vehicles-found-alert').first()
+    ).toBeVisible({ timeout: 15_000 });
   }
 
   async waitForFirearmsLoaded() {
-    await expect(this.page.locator('#firearms-thumbnail')).toBeVisible({ timeout: 15_000 });
+    await expect(
+      this.page.locator('#firearms-thumbnail, #no-firearms-found-alert').first()
+    ).toBeVisible({ timeout: 15_000 });
+  }
+
+  /** True if at least one civilian card is rendered. */
+  async hasCivilians(): Promise<boolean> {
+    return this.page.locator('#personas-thumbnail').isVisible();
   }
 
   // ── Create civilian ──────────────────────────────────────────────
