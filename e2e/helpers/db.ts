@@ -207,10 +207,13 @@ export async function createTestCivilian(opts: {
   return _id.toHexString();
 }
 
-export async function getCivilianByName(firstName: string) {
+export async function getCivilianByName(name: string) {
   return withDb(async (db) =>
     db.collection('civilians').findOne({
-      'civilian.firstName': firstName.toLowerCase(),
+      $or: [
+        { 'civilian.name': { $regex: name, $options: 'i' } },
+        { 'civilian.firstName': name.toLowerCase() },
+      ],
       'civilian.activeCommunityID': TEST_COMMUNITY_ID,
     })
   );
@@ -368,8 +371,10 @@ export async function createTestLicense(opts: {
 export async function getLicenseByType(type: string) {
   return withDb(async (db) =>
     db.collection('licenses').findOne({
-      'license.licenseType': type,
-      'license.activeCommunityID': TEST_COMMUNITY_ID,
+      $or: [
+        { 'license.type': type },
+        { 'license.licenseType': type },
+      ],
     })
   );
 }

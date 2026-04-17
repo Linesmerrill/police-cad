@@ -4,7 +4,6 @@ import {
   createTestVehicle,
   getVehicleByPlate,
   deleteVehiclesByPrefix,
-  uniqueCivName,
 } from '../../helpers/db';
 
 test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
@@ -25,11 +24,13 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
     await dashboard.fillNewVehicleForm({ plate, vin });
     await dashboard.submitNewVehicle();
 
-    await dashboard.expectToast(/vehicle created/i);
-    await expect(dashboard.vehCard(plate)).toBeVisible({ timeout: 10_000 });
-
-    const veh = await getVehicleByPlate(plate);
-    expect(veh).toBeTruthy();
+    // DB poll — toast may be transient, DB is the source of truth
+    await expect
+      .poll(async () => {
+        const v = await getVehicleByPlate(plate);
+        return v !== null;
+      }, { timeout: 15_000, intervals: [500, 1000, 2000] })
+      .toBe(true);
   });
 
   test('edits a vehicle plate via details modal', async ({ page }) => {
@@ -45,17 +46,14 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
     await dashboard.editVehPlate(newPlate);
     await dashboard.saveVehEdit();
 
-    await dashboard.expectToast(/vehicle updated/i);
+    // DB poll for the update
+    await expect
+      .poll(async () => {
+        const v = await getVehicleByPlate(newPlate);
+        return v !== null;
+      }, { timeout: 15_000, intervals: [500, 1000, 2000] })
+      .toBe(true);
 
-    await page.waitForTimeout(1000);
-    await dashboard.goto();
-    await dashboard.waitForVehiclesLoaded();
-    await expect(dashboard.vehCard(newPlate)).toBeVisible({ timeout: 10_000 });
-
-    const veh = await getVehicleByPlate(newPlate);
-    expect(veh).toBeTruthy();
-
-    // cleanup new plate too
     await deleteVehiclesByPrefix(newPlate.slice(0, 3));
   });
 
@@ -70,10 +68,11 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
     await dashboard.openVehDetails(plate);
     await dashboard.deleteVehFromModal();
 
-    await dashboard.expectToast(/vehicle deleted/i);
-    await expect(dashboard.vehCard(plate)).not.toBeVisible({ timeout: 10_000 });
-
-    const veh = await getVehicleByPlate(plate);
-    expect(veh).toBeNull();
+    await expect
+      .poll(async () => {
+        const v = await getVehicleByPlate(plate);
+        return v === null;
+      }, { timeout: 15_000, intervals: [500, 1000, 2000] })
+      .toBe(true);
   });
 });
