@@ -17,6 +17,13 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
     const plate = `${PREFIX}${Date.now().toString(36)}`.toUpperCase();
     const vin = `VIN${Date.now()}`;
     const dashboard = new CivDashboardPage(page);
+
+    // Intercept the vehicle create API call to debug
+    const apiResponsePromise = page.waitForResponse(
+      (resp) => resp.url().includes('/api/v1/vehicle') && resp.request().method() === 'POST',
+      { timeout: 20_000 }
+    );
+
     await dashboard.goto();
     await dashboard.waitForVehiclesLoaded();
 
@@ -24,7 +31,12 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
     await dashboard.fillNewVehicleForm({ plate, vin });
     await dashboard.submitNewVehicle();
 
-    // Wait for the vehicle card to appear (loadVehicles() is called on success)
+    const apiResponse = await apiResponsePromise;
+    expect(apiResponse.status()).toBeLessThan(400);
+
+    // Reload to see the new vehicle
+    await dashboard.goto();
+    await dashboard.waitForVehiclesLoaded();
     await expect(dashboard.vehCard(plate)).toBeVisible({ timeout: 15_000 });
   });
 
@@ -34,6 +46,12 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
     await createTestVehicle({ plate: oldPlate });
 
     const dashboard = new CivDashboardPage(page);
+
+    const apiResponsePromise = page.waitForResponse(
+      (resp) => resp.url().includes('/api/v1/vehicle') && resp.request().method() === 'PUT',
+      { timeout: 20_000 }
+    );
+
     await dashboard.goto();
     await dashboard.waitForVehiclesLoaded();
 
@@ -41,8 +59,9 @@ test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
     await dashboard.editVehPlate(newPlate);
     await dashboard.saveVehEdit();
 
-    // Reload and check
-    await page.waitForTimeout(1000);
+    const apiResponse = await apiResponsePromise;
+    expect(apiResponse.status()).toBeLessThan(400);
+
     await dashboard.goto();
     await dashboard.waitForVehiclesLoaded();
     await expect(dashboard.vehCard(newPlate)).toBeVisible({ timeout: 15_000 });
