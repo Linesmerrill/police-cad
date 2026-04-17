@@ -5,9 +5,11 @@
 - **Phase 1**: Foundation — scaffold, public page tests, auth tests (PR #885, merged)
 - **Phase 2**: Dashboard smoke tests — all 8 dashboard types, navigation, auth redirects (PR #885, merged)
 - **Phase 3**: Search & BOLO tests — name/plate/firearm search, BOLO section (PR #888, merged)
+- **Phase 8**: Civilian CRUD + vehicle/firearm/license writes (merged) — shipped the `createTestCivilian`/`createTestVehicle`/`createTestFirearm`/`createTestLicense` DB helpers and the `policecad_test` Docker Compose test rig
+- **Phase 9**: Dispatch call CRUD (PR #897, green) — create/note/complete/delete a call via the modal + via seeded data. Uncovered and fixed the hardcoded-production-`API_URL` bug in `public/js/dispatch-dashboard.js` (commit 62e2c0fb). Same pattern was already fixed in `civ-dashboard.ejs` in Phase 8 (53771cd); assume every other dashboard JS still has it and fix pre-emptively in later phases.
 - **CI Workflow**: `.github/workflows/e2e-tests.yml` running on every PR (Docker Compose + Playwright)
 
-**Current test count: 51 passing**
+**Current test count: ~113 passing** (51 from Phase 1–3 + Phase 8 civ/vehicle/firearm/license + Phase 9's 4 call CRUD)
 
 ## Phase 4: Community & Real-Time Features
 
@@ -138,19 +140,67 @@
 
 **Goal**: CRUD for every record a user can file against a civilian.
 
-**Branch**: `feature/playwright-phase10-records-crud`
+**Branch**: `feature/playwright-phase10-records-crud` (branched off phase 9 head so PR #897 can land first or both can rebase onto main cleanly)
 
-**Steps**:
-1. Create / edit / delete warrant (`/create-warrant`)
-2. Create / edit / delete BOLO — actual form submission, not just button visibility. Use the `#createBolos` hash workaround noted in Phase 3 quirks so the button is reachable in 1280px CI viewport.
-3. Most Wanted add / edit / remove
-4. Arrest report create / edit / delete (`/create-arrest-report`, `arrest-modal.ejs`)
-5. Ticket / citation create (`/create-ticket`)
-6. Warning create
-7. Medical report create (`/create-medical-report`)
-8. Reuse the seeded civilian from Phase 8 fixtures if possible
+### Surface-area map (confirmed via repo exploration, 2026-04-17)
 
-**Catches**: Record-form regressions, modal submit handlers, record-to-civilian linkage.
+| Record | Create route / API | Modal / view | Collection | Dashboard |
+|---|---|---|---|---|
+| Warrant | POST `/create-warrant`, clear via POST `/clear-warrant` | `#createWarrantModal` in `views/police-dashboard.ejs` | `warrants` — `{ _id, warrant: {...}, __v }` | police-dashboard |
+| BOLO | POST `/create-bolo`, update/delete via `/updateOrDeleteBolo` + `/api/v1/bolo/{id}` | `#createBolos` component in `command-dashboard.ejs`, rendered by `cdBolosRender()` | `bolos` — `{ _id, bolo: {...}, __v }` | command-dashboard & dispatch-dashboard |
+| Most Wanted | POST `/api/v1/most-wanted`, PUT/DELETE `/api/v1/most-wanted/{id}` | `#addMostWantedModal` (custom overlay, NOT Bootstrap `.modal`) in `views/most-wanted.ejs` | `mostwanted` (TBC) — `{ _id, civilianId, charges[], threatLevel, ... }` | standalone `/most-wanted` page |
+| Arrest report | POST `/create-arrest-report` (server route) | `#arrestModal` in `views/arrest-modal.ejs`, included from police-dashboard | `arrestreports` — `{ _id, arrestReport: {...}, __v }` | police-dashboard |
+| Ticket / citation | POST `/create-ticket` (server route) | `#ticketModal` in dispatch-dashboard.ejs and police-dashboard.ejs | `tickets` — `{ _id, ticket: {...}, __v }` | police & dispatch dashboards |
+| Warning | POST `/api/v1/civilian/{id}/criminal-history` (no dedicated collection) | `#warningModal` in dispatch-dashboard.ejs | stored inline as `civilians.criminalHistory[] { type: "Warning", ... }` | police & dispatch dashboards |
+| Medical report | POST `/create-medical-report` (form POST, not AJAX) | form embedded in `ems-dashboard.ejs` — no modal ID, likely inline | `medicalreports` — `{ _id, report: {...}, __v }` | ems-dashboard |
+
+### Key findings from exploration
+
+- **Existing helpers** in `e2e/helpers/db.ts` cover civilian / vehicle / firearm / license / call only. Phase 10 must add: `createTestWarrant`, `createTestBolo`, `createTestArrestReport`, `createTestTicket`, `createTestMostWanted`, `createTestMedicalReport`, plus matching `getXxxById` + `deleteXxxByPrefix`. Warnings have no collection — seed via `$push` into `civilians.criminalHistory[]` on the seeded civilian.
+- **Reuse `TEST_CIVILIAN_ID` = `'cccccccccccccccccccccccc'`** from `e2e/helpers/seed.ts` for every record — no per-test civilian creation.
+- **Admin/role gating (confirmed with user 2026-04-17, rechecked against `police-cad-api` 2026-04-17)**:
+  - The dashboard admin check in `app/routes.js` calls `/api/v1/community/{id}/roles` and looks for a role with `{ permissions: [{ name: 'administrator', enabled: true }] }` whose `members` includes the user ID string. Community owner alone is NOT automatically admin — the API's `CreateCommunity` handler seeds a "Head Admin" role on creation, but our `e2e/helpers/seed.ts` short-circuits that and inserts a community without any `roles[]` array. Result: today's test user has zero roles.
+  - HOWEVER the dashboards have a fallback path: if `department.approvalRequired === false` (public department), `accessStatus` defaults to `"approved"` regardless of admin status (`community.go:4538`). Our seed creates Test PD with `approvalRequired: false`. So the user CAN reach `/police-dashboard?d=<b64-dept-id>&dept=Test%20PD` and `/ems-dashboard?...` without any roles edits. **No seed change needed for Phase 10.**
+  - Record-creation routes (`/create-warrant`, `/create-bolo`, `/create-arrest-report`, `/create-ticket`, `/create-medical-report`) only use `auth` middleware with no permission checks — auth alone is enough.
+  - For Phase 11's permissions-matrix tests we'll need to seed a non-admin / department-less user and assert rejections. Out of scope here.
+- **Hardcoded-`API_URL` audit (completed 2026-04-17)** — real offenders that will break Phase 10 CI:
+  - `views/police-dashboard.ejs:3794` — `var API_URL = 'https://...herokuapp.com';`. Must switch to `<%= typeof apiUrl !== 'undefined' && apiUrl ? apiUrl : 'fallback' %>` pattern (same fix Phase 8 applied to `civ-dashboard.ejs`).
+  - `views/most-wanted.ejs:1647` — same bug, same fix.
+  - `public/js/dispatch-dashboard.js:205,285,351,377` — four inline BOLO AJAX URLs hardcoded to Heroku (template-literal backticks with the full prod URL baked in). Only hit if BOLO tests go through dispatch-dashboard. Prefer routing BOLO tests through `command-dashboard` (`views/command-dashboard.ejs:604` wires `window.ddConfig.API_URL` from the `apiUrl` template var correctly → `cd-bolos.js` reads it → no bug).
+  - `views/command-dashboard.ejs` — OK (uses `<%= apiUrl %>`).
+  - `public/js/ems-dashboard.js` — OK (uses `POLICE_CAD_API_URL` which `ems-dashboard.ejs:4490` sets from env at render time).
+  - `public/js/police-dashboard.js` — references a bare `API_URL` (global), so will be correct once the EJS is fixed.
+  - `views/civ-dashboard-backup.ejs` — dead file, ignore.
+- **BOLO 1280px CI quirk**: phase 3 worked around the MDT overview column clipping the "New BOLO" button by navigating via the `#createBolos` hash to force the focused view. Reuse that pattern for phase 10 BOLO writes.
+
+### Work order
+
+**Step 0 — Scaffolding (single commit)**
+- Probe `/police-dashboard` and `/ems-dashboard` with current auth to confirm role gating and discover the medical-report form shape. If blocked, extend `e2e/helpers/seed.ts` to add an administrator role with the test user as a member.
+- Add all DB helpers to `e2e/helpers/db.ts` (see "Key findings" above).
+- Audit `public/js/police-dashboard.js`, `public/js/ems-dashboard.js`, `public/js/command-dashboard.js` for hardcoded `API_URL` and fix by deleting the local declaration to use the EJS global (same pattern as dispatch-dashboard.js in commit 62e2c0fb).
+
+**Step 1 — Warrants** — `e2e/pages/police-dashboard.page.ts`, `e2e/tests/records/warrants.spec.ts` — 3–4 tests (create via `#createWarrantModal`, edit, delete/clear).
+
+**Step 2 — BOLOs** — `e2e/pages/bolo.page.ts`, `e2e/tests/records/bolos.spec.ts` — 3 tests using `#createBolos` hash for focused view.
+
+**Step 3 — Most Wanted** — `e2e/pages/most-wanted.page.ts`, `e2e/tests/records/most-wanted.spec.ts` — 3 tests. Note custom overlay, not Bootstrap `.modal`.
+
+**Step 4 — Arrest reports** — extend police-dashboard page object, `e2e/tests/records/arrests.spec.ts` — 3 tests via `#arrestModal`.
+
+**Step 5 — Tickets / Citations** — `e2e/tests/records/tickets.spec.ts` — 2 tests (create + verify linkage to civilian criminal history).
+
+**Step 6 — Warnings** — `e2e/tests/records/warnings.spec.ts` — 2 tests (create + assert `criminalHistory[].type === "Warning"`).
+
+**Step 7 — Medical reports** — `e2e/pages/ems-dashboard.page.ts`, `e2e/tests/records/medical.spec.ts` — 2–3 tests. Form POST, not AJAX — may need to assert via DB polling rather than toast.
+
+**Step 8 — Verify** — run full suite locally, push, verify CI green.
+
+**Catches**: Record-form regressions, modal submit handlers, record-to-civilian linkage, and (pre-emptively) any remaining hardcoded-`API_URL` bugs in other dashboard JS files.
+
+### Deferred to Phase 11
+- Permissions matrix: civilian-only user hitting officer-only routes should be rejected (403/redirect, not 500).
+- Owner vs admin vs member role distinctions.
 
 ---
 
