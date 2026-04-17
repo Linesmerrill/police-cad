@@ -10,7 +10,7 @@ jobs:
   e2e:
     name: Playwright E2E Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout police-cad
@@ -48,7 +48,16 @@ jobs:
 
       - name: Start website
         working-directory: police-cad
-        run: node server.js &
+        run: |
+          node server.js > /tmp/server.log 2>&1 &
+          SERVER_PID=$!
+          sleep 3
+          if ! kill -0 $SERVER_PID 2>/dev/null; then
+            echo "::error::Server failed to start"
+            cat /tmp/server.log
+            exit 1
+          fi
+          echo "Server started (PID $SERVER_PID)"
         env:
           PORT: 8080
           DB_URI: mongodb://localhost:27018/policecad_test
@@ -58,7 +67,7 @@ jobs:
 
       - name: Wait for services
         working-directory: police-cad
-        run: npx wait-on http://localhost:8080 http://localhost:8081/health --timeout 60000
+        run: npx wait-on http://localhost:8080 http://localhost:8081/health --timeout 90000 --interval 2000
 
       - name: Run Playwright tests
         working-directory: police-cad
