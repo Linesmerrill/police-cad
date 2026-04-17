@@ -204,6 +204,84 @@ window.AlertSounds = (function() {
 })();
 
 /**
+ * Auto-configure custom sound overrides from the community's tone sound
+ * settings. Fetches the tone sounds API and calls AlertSounds.configure()
+ * so that all calls to .play('panic'), .play('signal100'), etc. will use
+ * the community's custom sounds when configured.
+ *
+ * Runs automatically when the DOM is ready and dbUser is available.
+ */
+(function() {
+  function loadCustomSounds() {
+    var dbUser = window.dbUser;
+    if (!dbUser || !dbUser.user) return;
+    var communityId = dbUser.user.lastAccessedCommunity && dbUser.user.lastAccessedCommunity.communityID;
+    if (!communityId) return;
+
+    // Resolve API URL from whichever global is available
+    var apiBase = (window.ddConfig && window.ddConfig.API_URL)
+      || window.POLICE_CAD_API_URL
+      || window.API_URL
+      || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+    var url = apiBase + '/api/v1/community/' + encodeURIComponent(communityId) + '/tone-sounds';
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status !== 200) return;
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (!data || !data.sounds || !data.defaults) return;
+
+        var sounds = data.sounds;
+        var defaults = data.defaults;
+        var overrideMap = {};
+
+        // Build a key→URL lookup from the custom sounds array
+        var soundsByKey = {};
+        for (var i = 0; i < sounds.length; i++) {
+          soundsByKey[sounds[i].key] = sounds[i].url;
+        }
+
+        // Map each default template to its custom sound URL
+        if (defaults.panic && soundsByKey[defaults.panic]) {
+          overrideMap.panic = soundsByKey[defaults.panic];
+        }
+        if (defaults.signal100 && soundsByKey[defaults.signal100]) {
+          overrideMap.signal100 = soundsByKey[defaults.signal100];
+        }
+        if (defaults.leo && soundsByKey[defaults.leo]) {
+          overrideMap.toneLeo = soundsByKey[defaults.leo];
+        }
+        if (defaults.fd && soundsByKey[defaults.fd]) {
+          overrideMap.toneFd = soundsByKey[defaults.fd];
+        }
+        if (defaults.ems && soundsByKey[defaults.ems]) {
+          overrideMap.toneEms = soundsByKey[defaults.ems];
+        }
+
+        if (Object.keys(overrideMap).length > 0) {
+          window.AlertSounds.configure(overrideMap);
+        }
+      } catch (e) {
+        console.warn('[AlertSounds] Failed to parse tone sounds response:', e.message);
+      }
+    };
+    xhr.send();
+  }
+
+  // Wait for DOM ready, then try to load custom sounds.
+  // Use a short delay to ensure dbUser is populated by the host page.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { setTimeout(loadCustomSounds, 100); });
+  } else {
+    setTimeout(loadCustomSounds, 100);
+  }
+})();
+
+/**
  * Initialize the sound settings UI (checkbox + volume slider) from the
  * user's saved DB preferences. Call this after dbUser is available.
  */
