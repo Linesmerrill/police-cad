@@ -156,3 +156,230 @@ export function generateToken(): string {
 export function uniqueTestEmail(prefix: string): string {
   return `phase7-${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}@test.com`;
 }
+
+// ---------------------------------------------------------------------------
+// Phase 8 — Civilian / Vehicle / Firearm / License helpers
+// ---------------------------------------------------------------------------
+
+const TEST_USER_ID = 'aaaaaaaaaaaaaaaaaaaaaaaa';
+const TEST_COMMUNITY_ID = 'bbbbbbbbbbbbbbbbbbbbbbbb';
+
+export async function createTestCivilian(opts: {
+  firstName: string;
+  lastName?: string;
+  birthday?: string;
+}): Promise<string> {
+  const _id = new ObjectId();
+  const now = new Date();
+  await withDb(async (db) => {
+    await db.collection('civilians').insertOne({
+      _id,
+      civilian: {
+        firstName: opts.firstName.toLowerCase(),
+        lastName: (opts.lastName ?? 'TestSurname').toLowerCase(),
+        name: `${opts.firstName} ${opts.lastName ?? 'TestSurname'}`,
+        searchName: `${opts.firstName} ${opts.lastName ?? 'TestSurname'}`.toLowerCase(),
+        birthday: opts.birthday ?? '1990-01-15',
+        address: '123 E2E Street',
+        occupation: 'Tester',
+        gender: 'Male',
+        height: '180',
+        heightClassification: 'Metric',
+        weight: '75',
+        weightClassification: 'kg',
+        eyeColor: 'Brown',
+        hairColor: 'Black',
+        organDonor: false,
+        veteran: false,
+        onProbation: false,
+        onParole: false,
+        licenseStatus: 'Valid',
+        ticketCount: '0',
+        deceased: false,
+        activeCommunityID: TEST_COMMUNITY_ID,
+        userID: TEST_USER_ID,
+        createdAt: now,
+        updatedAt: now,
+      },
+      __v: 0,
+    });
+  });
+  return _id.toHexString();
+}
+
+export async function getCivilianByName(firstName: string) {
+  return withDb(async (db) =>
+    db.collection('civilians').findOne({
+      'civilian.firstName': firstName.toLowerCase(),
+      'civilian.activeCommunityID': TEST_COMMUNITY_ID,
+    })
+  );
+}
+
+export async function deleteCivilianById(id: string): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('civilians').deleteOne({ _id: new ObjectId(id) });
+  });
+}
+
+export async function deleteCiviliansByPrefix(prefix: string): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('civilians').deleteMany({
+      'civilian.firstName': { $regex: `^${prefix.toLowerCase()}` },
+      'civilian.activeCommunityID': TEST_COMMUNITY_ID,
+    });
+  });
+}
+
+export async function createTestVehicle(opts: {
+  plate: string;
+  civilianId?: string;
+  vin?: string;
+}): Promise<string> {
+  const _id = new ObjectId();
+  const now = new Date();
+  await withDb(async (db) => {
+    await db.collection('vehicles').insertOne({
+      _id,
+      vehicle: {
+        plate: opts.plate.toUpperCase(),
+        licensePlateState: 'CA',
+        vin: opts.vin ?? `VIN${Date.now()}`,
+        type: 'Sedan',
+        make: 'TestMake',
+        model: 'TestModel',
+        year: '2024',
+        color: 'Blue',
+        validRegistration: 'true',
+        validInsurance: 'true',
+        isStolen: 'false',
+        isExempt: 'false',
+        registeredOwner: '',
+        linkedCivilianID: opts.civilianId ?? '',
+        activeCommunityID: TEST_COMMUNITY_ID,
+        userID: TEST_USER_ID,
+        createdAt: now,
+        updatedAt: now,
+      },
+      __v: 0,
+    });
+  });
+  return _id.toHexString();
+}
+
+export async function getVehicleByPlate(plate: string) {
+  return withDb(async (db) =>
+    db.collection('vehicles').findOne({
+      'vehicle.plate': plate.toUpperCase(),
+      'vehicle.activeCommunityID': TEST_COMMUNITY_ID,
+    })
+  );
+}
+
+export async function deleteVehicleById(id: string): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('vehicles').deleteOne({ _id: new ObjectId(id) });
+  });
+}
+
+export async function deleteVehiclesByPrefix(prefix: string): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('vehicles').deleteMany({
+      'vehicle.plate': { $regex: `^${prefix.toUpperCase()}` },
+      'vehicle.activeCommunityID': TEST_COMMUNITY_ID,
+    });
+  });
+}
+
+export async function createTestFirearm(opts: {
+  serialNumber: string;
+  name: string;
+  weaponType?: string;
+}): Promise<string> {
+  const _id = new ObjectId();
+  const now = new Date();
+  await withDb(async (db) => {
+    await db.collection('firearms').insertOne({
+      _id,
+      firearm: {
+        serialNumber: opts.serialNumber,
+        name: opts.name,
+        weaponType: opts.weaponType ?? 'Pistol',
+        caliber: '9mm',
+        color: 'Black',
+        isStolen: 'false',
+        registeredOwner: '',
+        linkedCivilianID: '',
+        activeCommunityID: TEST_COMMUNITY_ID,
+        userID: TEST_USER_ID,
+        createdAt: now,
+        updatedAt: now,
+      },
+      __v: 0,
+    });
+  });
+  return _id.toHexString();
+}
+
+export async function getFirearmBySerial(serial: string) {
+  return withDb(async (db) =>
+    db.collection('firearms').findOne({
+      'firearm.serialNumber': serial,
+      'firearm.activeCommunityID': TEST_COMMUNITY_ID,
+    })
+  );
+}
+
+export async function deleteFirearmById(id: string): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('firearms').deleteOne({ _id: new ObjectId(id) });
+  });
+}
+
+export async function createTestLicense(opts: {
+  type: string;
+  status: string;
+  expirationDate: string;
+  civilianId?: string;
+}): Promise<string> {
+  const _id = new ObjectId();
+  const now = new Date();
+  await withDb(async (db) => {
+    await db.collection('licenses').insertOne({
+      _id,
+      license: {
+        licenseType: opts.type,
+        status: opts.status,
+        expirationDate: opts.expirationDate,
+        additionalNotes: '',
+        ownerID: opts.civilianId ?? '',
+        ownerName: '',
+        activeCommunityID: TEST_COMMUNITY_ID,
+        userID: TEST_USER_ID,
+        createdAt: now,
+        updatedAt: now,
+      },
+      __v: 0,
+    });
+  });
+  return _id.toHexString();
+}
+
+export async function getLicenseByType(type: string) {
+  return withDb(async (db) =>
+    db.collection('licenses').findOne({
+      'license.licenseType': type,
+      'license.activeCommunityID': TEST_COMMUNITY_ID,
+    })
+  );
+}
+
+export async function deleteLicenseById(id: string): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('licenses').deleteOne({ _id: new ObjectId(id) });
+  });
+}
+
+export function uniqueCivName(prefix: string): string {
+  return `P8${prefix}${Date.now().toString(36)}`;
+}
