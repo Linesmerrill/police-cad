@@ -1,5 +1,16 @@
 import { Page, Locator, expect } from '@playwright/test';
 
+// Department ID from seed.ts — encoded as URL-safe base64 for the `d` query param.
+const TEST_DEPT_ID = 'ffffffffffffffffffffffff';
+const TEST_DEPT_NAME = 'Test PD';
+function encodeId(id: string): string {
+  return Buffer.from(id, 'utf8')
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
 export class CivDashboardPage {
   readonly page: Page;
   readonly civSection: Locator;
@@ -14,7 +25,8 @@ export class CivDashboardPage {
   }
 
   async goto() {
-    await this.page.goto('/civ-dashboard');
+    const d = encodeId(TEST_DEPT_ID);
+    await this.page.goto(`/civ-dashboard?dept=${encodeURIComponent(TEST_DEPT_NAME)}&d=${d}`);
     await expect(this.civSection).toBeVisible({ timeout: 20_000 });
   }
 
