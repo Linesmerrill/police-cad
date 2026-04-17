@@ -388,3 +388,71 @@ export async function deleteLicenseById(id: string): Promise<void> {
 export function uniqueCivName(prefix: string): string {
   return `P8${prefix}${Date.now().toString(36)}`;
 }
+
+// ---------------------------------------------------------------------------
+// Phase 9 — Call helpers
+// ---------------------------------------------------------------------------
+
+export async function createTestCall(opts: {
+  title: string;
+  details?: string;
+  status?: boolean;
+}): Promise<string> {
+  const _id = new ObjectId();
+  const now = new Date();
+  await withDb(async (db) => {
+    await db.collection('calls').insertOne({
+      _id,
+      call: {
+        title: opts.title,
+        details: opts.details ?? 'E2E test call details',
+        shortDescription: opts.title,
+        classifier: [],
+        departments: [],
+        assignedOfficers: [],
+        assignedFireEms: [],
+        assignedTo: [],
+        callNotes: [],
+        communityID: TEST_COMMUNITY_ID,
+        createdByUsername: 'testuser',
+        createdByID: TEST_USER_ID,
+        status: opts.status ?? true,
+        createdAt: now,
+        updatedAt: now,
+      },
+      __v: 0,
+    });
+  });
+  return _id.toHexString();
+}
+
+export async function getCallByTitle(title: string) {
+  return withDb(async (db) =>
+    db.collection('calls').findOne({
+      $or: [
+        { 'call.title': { $regex: title, $options: 'i' } },
+        { 'call.shortDescription': { $regex: title, $options: 'i' } },
+      ],
+    })
+  );
+}
+
+export async function getCallById(id: string) {
+  return withDb(async (db) =>
+    db.collection('calls').findOne({ _id: new ObjectId(id) })
+  );
+}
+
+export async function deleteCallById(id: string): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('calls').deleteOne({ _id: new ObjectId(id) });
+  });
+}
+
+export async function deleteCallsByPrefix(prefix: string): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('calls').deleteMany({
+      'call.title': { $regex: `^${prefix}`, $options: 'i' },
+    });
+  });
+}
