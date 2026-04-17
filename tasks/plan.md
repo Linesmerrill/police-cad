@@ -75,6 +75,144 @@
 
 ---
 
+## Phase 7: Account Management & Auth Flows
+
+**Goal**: Cover the full auth lifecycle beyond form rendering.
+
+**Branch**: `feature/playwright-phase7-account-auth`
+
+**Steps**:
+1. Signup → email verification (`/signup/verify/:token`) end-to-end
+2. Password reset end-to-end: request → `/reset/:token` → login with new password
+3. Password change flow in `/manageAccount`
+4. Email change flow
+5. Account deactivation ("Danger Zone" button, `/api/v1/user/:userId/deactivate`)
+6. Invalid / expired reset token handling
+7. Logout + session invalidation (subsequent protected-route access redirects)
+
+**Catches**: Broken verification links, reset-token regressions, deactivation bugs, session-teardown gaps.
+
+---
+
+## Phase 8: Civilian CRUD
+
+**Goal**: Exercise civilian dashboard write paths — currently only reads are tested.
+
+**Branch**: `feature/playwright-phase8-civilian-crud`
+
+**Steps**:
+1. Create civilian
+2. Edit civilian fields
+3. Delete civilian
+4. Add / edit / delete vehicle (`/updateOrDeleteVeh`)
+5. Add / edit / delete firearm (`/updateOrDeleteFirearm`)
+6. Add / edit / delete license (`/updateOrDeleteLicense`)
+7. Clean up all created records at end of each test
+
+**Note**: `views/civ-dashboard.ejs` is ~248 KB with many duplicate IDs across civilian cards — use scoped selectors (parent card → child control).
+
+**Catches**: Civilian form regressions, orphaned vehicle/firearm/license rows, modal wiring bugs.
+
+---
+
+## Phase 9: Dispatch Operations & Call Management
+
+**Goal**: Cover active-duty officer/dispatcher write paths.
+
+**Branch**: `feature/playwright-phase9-dispatch-ops`
+
+**Steps**:
+1. Create call via `/create-call` (UI form submission)
+2. Assign unit(s) to a call
+3. Change officer status via `/updateUserDispatchStatus`
+4. Update call notes / status
+5. Close call (`/updateOrDeleteCall`)
+6. 10-code selection
+7. Round-trip check: UI-driven write should trigger the socket events already asserted in `call-realtime.spec`
+
+**Catches**: Call-creation regressions, status-broadcast mismatches, unit-assignment bugs.
+
+---
+
+## Phase 10: Records — Warrants, BOLOs, Most Wanted, Arrests & Citations
+
+**Goal**: CRUD for every record a user can file against a civilian.
+
+**Branch**: `feature/playwright-phase10-records-crud`
+
+**Steps**:
+1. Create / edit / delete warrant (`/create-warrant`)
+2. Create / edit / delete BOLO — actual form submission, not just button visibility. Use the `#createBolos` hash workaround noted in Phase 3 quirks so the button is reachable in 1280px CI viewport.
+3. Most Wanted add / edit / remove
+4. Arrest report create / edit / delete (`/create-arrest-report`, `arrest-modal.ejs`)
+5. Ticket / citation create (`/create-ticket`)
+6. Warning create
+7. Medical report create (`/create-medical-report`)
+8. Reuse the seeded civilian from Phase 8 fixtures if possible
+
+**Catches**: Record-form regressions, modal submit handlers, record-to-civilian linkage.
+
+---
+
+## Phase 11: Community & Admin Management
+
+**Goal**: Community lifecycle + admin console + real permission enforcement.
+
+**Branch**: `feature/playwright-phase11-community-admin`
+
+**Steps**:
+1. Create community: `/createCommunity` plus police (`/createPoliceCommunity`) and EMS (`/createEmsCommunity`) variants
+2. Edit community name / settings (`/updateCommunityName`)
+3. Delete community (`/delete-community`)
+4. Invite join flow (`/invite/:code`)
+5. Role assignment: owner / member / guest
+6. Admin login + `/admin/console` user search & edit
+7. `/admin/reset-user-password`
+8. Permissions matrix: civilian user attempting officer-only routes should be rejected (403 / redirect, not 500)
+
+**Catches**: Community-creation regressions, invite-link bugs, admin privilege-escalation gaps.
+
+---
+
+## Phase 12: Court, Billing, Content Creators & Feature Requests
+
+**Goal**: Peripheral but business-critical flows. Mock Stripe at the network boundary — do not hit the live Stripe API from CI.
+
+**Branch**: `feature/playwright-phase12-court-billing`
+
+**Steps**:
+1. Court case create / edit / view (`/court-cases`, 57 KB view)
+2. Court session scheduling (`/court-session`)
+3. Subscription checkout: click through, assert redirect URL shape from `/api/v1/user/create-checkout-session` and `/api/v1/community/create-checkout-session`
+4. `/manage-subscription` page renders
+5. `/subscription/success` and `/subscription/cancel` return pages render
+6. Feature request: create (`/feature-requests/new`), upvote, comment
+7. Announcement create + visibility in community dashboard
+8. Content creator apply (`/app/content-creators/apply`) + directory browse (`/app/content-creators`)
+
+**Catches**: Checkout-redirect regressions, court-case form bugs, feature-request voting logic, content-creator portal regressions.
+
+---
+
+## Phase 13: Uploads, Validation & Responsive
+
+**Goal**: Boundary and polish coverage that doesn't fit elsewhere.
+
+**Branch**: `feature/playwright-phase13-uploads-validation`
+
+**Steps**:
+1. Avatar upload via Cloudinary signed request (small test image fixture, uses `/api/v1/cloudinary-config` and `/api/v1/generate-signature`)
+2. Evidence photo upload on arrest / incident report
+3. Signup rejects duplicate email + duplicate username
+4. XSS-ish payloads in name / plate fields are escaped in rendered output
+5. Max-length field rejection
+6. Empty-results state for search (name / plate / firearm)
+7. Mobile-viewport runs for landing + civilian dashboard + one officer flow (iPhone 13 preset via Playwright `devices`)
+
+**Catches**: Upload regressions, validation bypasses, XSS rendering bugs, mobile layout breakage.
+
+---
+
 ## Infrastructure Notes
 
 ### Running tests locally
