@@ -7039,6 +7039,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
     transports: ["websocket"],
   });
 
+  // Dedup: when the socket handler already broadcast an alert event for a
+  // community, the Go API webhook should NOT re-broadcast the same event.
+  // Keys are "signal100:<communityId>" or "panic:<communityId>", auto-expire after 10s.
+  const recentAlertBroadcasts = new Set();
+  function markAlertBroadcast(type, communityId) {
+    const key = `${type}:${communityId}`;
+    recentAlertBroadcasts.add(key);
+    setTimeout(() => recentAlertBroadcasts.delete(key), 10000);
+  }
+
   // ==========================================
   // INTERNAL WEBHOOK ENDPOINT FOR GO API
   // ==========================================
@@ -7057,6 +7067,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
     const roomName = `community:${communityId}`;
 
     if (event === "panic_created") {
+      // Skip if socket handler already broadcast this event (web-triggered)
+      if (recentAlertBroadcasts.has(`panic:${communityId}`)) {
+        return res.json({ success: true, event, communityId, deduped: true });
+      }
       // Broadcast panic_button_updated to match existing socket event format
       const panicMap = {};
       panicMap[data.userId] = data;
@@ -7077,6 +7091,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         clearedBy: data.clearedBy,
       });
     } else if (event === "signal_100_activated") {
+      // Skip if socket handler already broadcast this event (web-triggered)
+      if (recentAlertBroadcasts.has(`signal100:${communityId}`)) {
+        return res.json({ success: true, event, communityId, deduped: true });
+      }
       const signal100Data = {
         activeCommunity: communityId,
         activatedByUserId: data.userId,
@@ -7202,6 +7220,25 @@ module.exports = function (app, passport, server, nextApp, handle) {
       } else {
         // Fallback to global broadcast for backward compatibility
         io.emit(eventName, data);
+      }
+    };
+
+    // Resolve a community's custom tone sound URL for a given sound type.
+    // soundType: 'panic' | 'signal100'
+    // Returns the Cloudinary URL string, or null if no custom sound is configured.
+    const resolveCustomSoundUrl = async (communityId, soundType) => {
+      try {
+        const community = await Community.findById(communityId).lean();
+        if (!community || !community.community) return null;
+        const details = community.community;
+        const key = soundType === 'panic' ? details.defaultPanicSound : details.defaultSignal100Sound;
+        if (!key) return null;
+        const sounds = details.customToneSounds || [];
+        const match = sounds.find((s) => s.key === key);
+        return match ? match.url : null;
+      } catch (err) {
+        console.error(`[resolveCustomSoundUrl] Error for ${soundType}:`, err.message);
+        return null;
       }
     };
 
@@ -8469,6 +8506,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
             departmentType: req.departmentType || "police",
           }, config);
 
+          // Resolve custom panic sound URL (if community has one configured)
+          const panicSoundUrl = await resolveCustomSoundUrl(req.activeCommunity, 'panic');
+
           // Build an object keyed by userId for backward compatibility with existing frontend listeners
           const alertData = {
             userId: req.userID,
@@ -8480,6 +8520,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
           };
           const activePanicsMap = {};
           activePanicsMap[req.userID] = alertData;
+
+          // Include custom sound URL on both args so all listeners can find it
+          // (cd-alerts.js reads first arg, ems-dashboard.js reads second arg)
+          if (panicSoundUrl) {
+            activePanicsMap.panicSoundUrl = panicSoundUrl;
+            req.panicSoundUrl = panicSoundUrl;
+          }
+
+          // Mark as broadcast so the Go API webhook doesn't re-broadcast
+          markAlertBroadcast('panic', req.activeCommunity);
 
           // Broadcast to community room
           // Emit both map and req for backward compat with old listeners that expect (map, origReq)
@@ -8499,15 +8549,29 @@ module.exports = function (app, passport, server, nextApp, handle) {
             function (dbErr, resp) {
               if (dbErr) return console.error(dbErr);
               if (resp != null && resp.community != null) {
+                // Resolve custom panic sound URL from the community document
+                var panicSoundUrl = null;
+                var defaultKey = resp.community.defaultPanicSound;
+                if (defaultKey && resp.community.customToneSounds) {
+                  var sounds = resp.community.customToneSounds;
+                  for (var i = 0; i < sounds.length; i++) {
+                    if (sounds[i].key === defaultKey) { panicSoundUrl = sounds[i].url; break; }
+                  }
+                }
+
+                var broadcastMap, broadcastReq = Object.assign({}, req);
+                if (panicSoundUrl) broadcastReq.panicSoundUrl = panicSoundUrl;
+
                 if (!resp.community.activePanics) {
                   var mapInsert = {};
                   mapInsert[req.userID] = values;
+                  if (panicSoundUrl) mapInsert.panicSoundUrl = panicSoundUrl;
                   Community.findByIdAndUpdate(
                     { _id: ObjectId(req.activeCommunity) },
                     { $set: { "community.activePanics": mapInsert } },
                     function (updateErr) {
                       if (updateErr) return console.error(updateErr);
-                      return socket.broadcast.emit("panic_button_updated", mapInsert, req);
+                      return socket.broadcast.emit("panic_button_updated", mapInsert, broadcastReq);
                     }
                   );
                 } else {
@@ -8516,12 +8580,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
                     ? Object.fromEntries(resp.community.activePanics)
                     : (resp.community.activePanics || {});
                   panics[req.userID] = values;
+                  if (panicSoundUrl) panics.panicSoundUrl = panicSoundUrl;
                   Community.findByIdAndUpdate(
                     { _id: ObjectId(req.activeCommunity) },
                     { $set: { "community.activePanics": panics } },
                     function (updateErr) {
                       if (updateErr) return console.error(updateErr);
-                      return socket.broadcast.emit("panic_button_updated", panics, req);
+                      return socket.broadcast.emit("panic_button_updated", panics, broadcastReq);
                     }
                   );
                 }
@@ -8605,9 +8670,17 @@ module.exports = function (app, passport, server, nextApp, handle) {
             departmentName: req.activatedBy || "",
           }, config);
 
+          // Resolve custom signal 100 sound URL (if community has one configured)
+          const signal100SoundUrl = await resolveCustomSoundUrl(req.activeCommunity, 'signal100');
+          const broadcastData = Object.assign({}, req);
+          if (signal100SoundUrl) broadcastData.signal100SoundUrl = signal100SoundUrl;
+
+          // Mark as broadcast so the Go API webhook doesn't re-broadcast
+          markAlertBroadcast('signal100', req.activeCommunity);
+
           return broadcastToCommunity(
             "signal_100_button_updated",
-            req,
+            broadcastData,
             req.activeCommunity
           );
         } catch (err) {
@@ -8616,11 +8689,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
           Community.findByIdAndUpdate(
             { _id: ObjectId(req.activeCommunity) },
             { $set: { "community.activeSignal100": true } },
-            function (dbErr) {
+            async function (dbErr) {
               if (dbErr) return console.error(dbErr);
+              const signal100SoundUrl = await resolveCustomSoundUrl(req.activeCommunity, 'signal100');
+              const broadcastData = Object.assign({}, req);
+              if (signal100SoundUrl) broadcastData.signal100SoundUrl = signal100SoundUrl;
               return broadcastToCommunity(
                 "signal_100_button_updated",
-                req,
+                broadcastData,
                 req.activeCommunity
               );
             }

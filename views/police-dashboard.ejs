@@ -5718,6 +5718,8 @@ function toggleCaret(event) {
         // Play sound immediately during user gesture (before async AJAX)
         // so browsers don't block it due to autoplay policy
         AlertSounds.play('panic');
+        _suppressPanicSound = true;
+        setTimeout(function() { _suppressPanicSound = false; }, 5000);
         $.ajax({
           url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/panic-alerts`,
           method: 'POST',
@@ -5741,6 +5743,10 @@ function toggleCaret(event) {
         });
       }
     }
+
+    // Suppress sound on socket echo when this client just triggered the alert
+    var _suppressSignal100Sound = false;
+    var _suppressPanicSound = false;
 
     // Handle Signal 100 button press
     var _signal100Loading = false;
@@ -5786,6 +5792,8 @@ function toggleCaret(event) {
         });
 
         AlertSounds.play('signal100');
+        _suppressSignal100Sound = true;
+        setTimeout(function() { _suppressSignal100Sound = false; }, 5000);
       }
 
       // Reset after brief delay (socket emit is fire-and-forget)
@@ -6286,9 +6294,11 @@ window.showBoloModal = showBoloModal;
       updateUnitsDisplay(data);
 
       // Check if this update is for the current user (e.g., dispatch changed our status)
-      if (data.userID === dbUser._id) {
+      // Skip status display update if this is a department-change-only event
+      // (ensureActiveDepartment emits update_status with empty status)
+      if (data.userID === dbUser._id && data.status) {
         // Update our own status display
-        const statusCode = data.status || 'Unknown';
+        const statusCode = data.status;
         const setBy = data.setBy || 'Unknown';
 
         // Update the current status text
@@ -6382,7 +6392,13 @@ window.showBoloModal = showBoloModal;
     // Listen for panic alert events — immediate refresh
     dashboardSocket.on('panic_button_updated', function(map, origReq) {
       if (origReq && origReq.activeCommunity && origReq.activeCommunity !== communityId) return;
-      AlertSounds.play('panic');
+      if (!_suppressPanicSound) {
+        if (origReq && origReq.panicSoundUrl) {
+          AlertSounds.playUrl(origReq.panicSoundUrl);
+        } else {
+          AlertSounds.play('panic');
+        }
+      }
       loadPanicStatuses();
     });
 
@@ -6394,7 +6410,13 @@ window.showBoloModal = showBoloModal;
     dashboardSocket.on('signal_100_button_updated', function(data) {
       if (data.activeCommunity && data.activeCommunity !== communityId) return;
 
-      AlertSounds.play('signal100');
+      if (!_suppressSignal100Sound) {
+        if (data.signal100SoundUrl) {
+          AlertSounds.playUrl(data.signal100SoundUrl);
+        } else {
+          AlertSounds.play('signal100');
+        }
+      }
 
       // Update the banner with details
       updateSignal100Banner(data);
