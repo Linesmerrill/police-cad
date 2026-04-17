@@ -25,8 +25,9 @@ test.describe('Warrant records', { tag: '@auth' }, () => {
     });
 
     // Hit the API directly (no auth required for community-scoped reads in test env).
+    // Note: pagination is 0-based here — page=1 with limit=100 skips the first 100.
     const res = await request.get(
-      `${API_URL}/api/v2/warrants/community/${TEST_COMMUNITY_ID}?limit=100&page=1`
+      `${API_URL}/api/v2/warrants/community/${TEST_COMMUNITY_ID}?limit=100&page=0`
     );
     expect(res.ok()).toBe(true);
     const body = await res.json();
