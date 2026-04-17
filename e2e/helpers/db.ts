@@ -247,7 +247,7 @@ export async function createTestVehicle(opts: {
       vehicle: {
         plate: opts.plate.toUpperCase(),
         licensePlateState: 'CA',
-        vin: opts.vin ?? `VIN${Date.now()}`,
+        vin: opts.vin ?? `1HGBH${Date.now().toString().slice(-12)}`,
         type: 'Sedan',
         make: 'TestMake',
         model: 'TestModel',
