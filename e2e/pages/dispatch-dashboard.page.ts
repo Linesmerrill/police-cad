@@ -37,7 +37,7 @@ export class DispatchDashboardPage {
 
   async expectToast(text: string | RegExp) {
     await expect(
-      this.page.locator('.toast, .toast-message, [class*="toast"]').filter({ hasText: text }).first()
+      this.page.locator('#dispatch-toast-container div').filter({ hasText: text }).first()
     ).toBeVisible({ timeout: 10_000 });
   }
 

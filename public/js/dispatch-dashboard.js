@@ -1,5 +1,8 @@
 $(document).ready(function () {
-  const API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+  // API_URL is defined as a global `var` in dispatch-dashboard.ejs, populated from
+  // the server-side `apiUrl` template variable (POLICE_CAD_API_URL env). Do not
+  // redeclare it here — a local const would shadow the global and pin every
+  // AJAX call to production, breaking local dev and E2E tests.
   let currentBoloPage = 0;
   const boloLimit = 10;
   let currentCallPage = 1;
