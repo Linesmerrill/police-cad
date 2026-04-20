@@ -62,6 +62,7 @@ jobs:
           PORT: 8080
           DB_URI: mongodb://localhost:27018/policecad_test
           POLICE_CAD_API_URL: http://localhost:8081
+          POLICE_CAD_API_TOKEN: e2e-placeholder-token
           NODE_ENV: production
           RATE_LIMIT_MAX: "10000"
 

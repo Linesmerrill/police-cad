@@ -851,8 +851,9 @@
         success: function(dept) {
           window.ddConfig.departmentData = dept?.department || dept || {};
           var template = dept?.department?.template;
-          // Map backend template names to registry keys where they differ
-          var tplToReg = { viewBolosAndWarrants: 'warrantDatabase' };
+          // Map backend template names to registry keys where they differ.
+          // Dispatch template uses `nameSearch`; the registry implements it as `personSearch`.
+          var tplToReg = { viewBolosAndWarrants: 'warrantDatabase', nameSearch: 'personSearch' };
           if (template && template.components) {
             template.components.forEach(function(comp) {
               var key = tplToReg[comp.name] || comp.name;
@@ -939,7 +940,8 @@
       // Map backend template component names to frontend registry keys
       // where they differ (most are the same)
       var templateToRegistry = {
-        viewBolosAndWarrants: 'warrantDatabase'
+        viewBolosAndWarrants: 'warrantDatabase',
+        nameSearch: 'personSearch'
       };
 
       var dept = window.ddConfig.departmentData || {};

@@ -388,3 +388,105 @@ export async function deleteLicenseById(id: string): Promise<void> {
 export function uniqueCivName(prefix: string): string {
   return `P8${prefix}${Date.now().toString(36)}`;
 }
+
+// ---------------------------------------------------------------------------
+// Dispatch beta / person-search helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Upsert the test user's beta-command-dashboard opt-in.
+ * Filter is on `userId` (hex string) — matches the API handler's lookup.
+ */
+export async function setBetaCommandDashboard(enabled: boolean): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('userpreferences').updateOne(
+      { userId: TEST_USER_ID },
+      {
+        $set: {
+          userId: TEST_USER_ID,
+          betaCommandDashboard: enabled,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { _id: new ObjectId(), createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+  });
+}
+
+export async function deleteUserPreferences(): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('userpreferences').deleteOne({ userId: TEST_USER_ID });
+  });
+}
+
+/**
+ * Push a Dispatch department onto the seeded test community so the command
+ * dashboard can resolve a real template.components list. `nameSearch` is the
+ * canonical dispatch-template key for person search; enabling it should light
+ * up the Person Search UI after the tplToReg alias.
+ */
+export async function addDispatchDepartment(opts: {
+  name?: string;
+  nameSearchEnabled?: boolean;
+}): Promise<string> {
+  const deptId = new ObjectId();
+  const now = new Date();
+  await withDb(async (db) => {
+    await db.collection('communities').updateOne(
+      { _id: new ObjectId(TEST_COMMUNITY_ID) },
+      {
+        $push: {
+          'community.departments': {
+            _id: deptId,
+            name: opts.name ?? 'Dispatch',
+            description: 'E2E dispatch department',
+            image: '',
+            approvalRequired: false,
+            members: [{ id: TEST_USER_ID, status: 'active' }],
+            ranks: [],
+            template: {
+              _id: new ObjectId(),
+              name: 'Dispatch',
+              description: 'Default template for dispatch departments',
+              components: [
+                { _id: new ObjectId(), name: 'dispatchUnits', enabled: true },
+                { _id: new ObjectId(), name: 'createAndManageCalls', enabled: true },
+                { _id: new ObjectId(), name: 'createBolos', enabled: true },
+                { _id: new ObjectId(), name: 'manage911Calls', enabled: true },
+                { _id: new ObjectId(), name: 'nameSearch', enabled: opts.nameSearchEnabled ?? true },
+                { _id: new ObjectId(), name: 'vehicleSearch', enabled: true },
+                { _id: new ObjectId(), name: 'firearmSearch', enabled: true },
+              ],
+            },
+            createdAt: now,
+            updatedAt: now,
+            onlineMemberCount: 0,
+          },
+        },
+      }
+    );
+  });
+  return deptId.toHexString();
+}
+
+export async function removeDepartmentById(deptId: string): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('communities').updateOne(
+      { _id: new ObjectId(TEST_COMMUNITY_ID) },
+      { $pull: { 'community.departments': { _id: new ObjectId(deptId) } } }
+    );
+  });
+}
+
+/**
+ * Base64url-encode a hex id the way command-dashboard expects in the `d` / `c`
+ * query params (see routes.js command-dashboard handler).
+ */
+export function encodeIdForUrl(hexId: string): string {
+  return Buffer.from(hexId, 'utf8')
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}

@@ -2165,6 +2165,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   app.get("/dispatch-dashboard", authCheck, async function (req, res) {
     try {
+      // Check if user opted into the beta command dashboard
+      try {
+        const prefsRes = await axios.get(
+          `${policeCadApiUrl}/api/v1/user-preferences/${req.user._id}`, config
+        );
+        if (prefsRes.data && prefsRes.data.betaCommandDashboard === true) {
+          const queryString = req.originalUrl.split('?')[1] || '';
+          return res.redirect(`/command-dashboard${queryString ? '?' + queryString : ''}`);
+        }
+      } catch (prefErr) {
+        // If preferences fetch fails, fall through to classic dashboard
+      }
+
       var context = req.app.locals.specialContext;
       req.app.locals.specialContext = null;
       
