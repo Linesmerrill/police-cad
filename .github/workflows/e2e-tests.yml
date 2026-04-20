@@ -88,6 +88,10 @@ jobs:
           path: police-cad/e2e/playwright-report/
           retention-days: 7
 
+      - name: Dump server log
+        if: always()
+        run: tail -n 400 /tmp/server.log || true
+
       - name: Stop test services
         if: always()
         working-directory: police-cad
