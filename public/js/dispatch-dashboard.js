@@ -21,24 +21,48 @@ $(document).ready(function () {
   let currentCallFilter = "open"; // Filter: "all", "open", or "closed"
   let currentCallDepartmentFilter = "all"; // Department filter for calls
   let callDepartmentsCache = []; // Cache departments for call filtering
-  let callMembersCache = []; // Cache members for resolving assignedTo
+  const callMembersCache = new Map(); // Session-lifetime lookup: memberId -> user object
   let callCachesReady = false; // Track if caches are loaded
 
   fetchAndRenderDepartments(); // Fetch and render departments on page load
-  initializeCallCaches(); // Load departments and members before displaying calls
+  initializeCallCaches(); // Load departments before displaying calls
 
-  // Initialize caches before loading calls
+  // Resolve the given member IDs via POST /api/v1/users, populating callMembersCache.
+  // Only fetches IDs not already cached; returns a Promise that resolves when done.
+  function resolveCallMembers(memberIds) {
+    const missing = [...new Set(memberIds)].filter(
+      (id) => id && !callMembersCache.has(id)
+    );
+    if (missing.length === 0) return Promise.resolve();
+    return $.ajax({
+      url: `${API_URL}/api/v1/users`,
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify({ userIds: missing }),
+    })
+      .then(function (users) {
+        (users || []).forEach(function (u) {
+          if (u && u._id) callMembersCache.set(u._id, u);
+        });
+      })
+      .catch(function (err) {
+        console.error("Error resolving call members:", err);
+      });
+  }
+
+  // Initialize caches before loading calls. Only departments are preloaded now;
+  // member names are resolved lazily per visible call via POST /api/v1/users.
+  // This replaces the old /members?limit=500 fetch which could return the entire
+  // community roster into memory.
   function initializeCallCaches() {
     const communityId = dbUser.user.lastAccessedCommunity.communityID;
     if (!communityId) return;
 
-    // Fetch both departments and members in parallel, then mark ready
-    Promise.all([
-      // Fetch departments
-      $.ajax({
-        url: `${API_URL}/api/v1/community/${communityId}/departments`,
-        method: "GET",
-      }).then(function (data) {
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${communityId}/departments`,
+      method: "GET",
+    })
+      .then(function (data) {
         const departments = (data.departments || []).filter(
           (d) => d.template?.name !== "Civilian"
         );
@@ -52,21 +76,9 @@ $(document).ready(function () {
             `<option value="${dept._id}">${dept.name}</option>`
           );
         });
-      }),
-      // Fetch members
-      $.ajax({
-        url: `${API_URL}/api/v1/community/${communityId}/members?limit=500`,
-        method: "GET",
-      }).then(function (data) {
-        callMembersCache = data.members || [];
-      }),
-    ])
-      .then(function () {
-        callCachesReady = true;
       })
-      .catch(function (err) {
-        console.error("Error loading call caches:", err);
-        callCachesReady = true; // Still allow calls to load
+      .always(function () {
+        callCachesReady = true;
       });
   }
 
@@ -452,17 +464,25 @@ $(document).ready(function () {
       url: `${API_URL}/api/v2/calls/community/${communityId}${queryParams}`,
       method: "GET",
       success: function (response) {
-        const $tbody = $("#callTable tbody");
-        $tbody.empty(); // Clear existing rows
         const calls = response.data || response; // Fallback if response is array
         const totalCount = response.totalCount || calls.length; // Fallback if totalCount missing
 
-        if (calls.length === 0) {
-          $tbody.append(
-            '<tr><td colspan="5" class="text-center">No calls found.</td></tr>'
-          );
-        } else {
-          calls.forEach((call) => {
+        // Batch-resolve all assignedTo member IDs across visible calls before rendering
+        // so the row-level callMembersCache.get(id) lookups below hit.
+        const allMemberIds = calls.flatMap(
+          (c) => c.call?.assignedTo || []
+        );
+
+        resolveCallMembers(allMemberIds).then(function () {
+          const $tbody = $("#callTable tbody");
+          $tbody.empty(); // Clear existing rows
+
+          if (calls.length === 0) {
+            $tbody.append(
+              '<tr><td colspan="5" class="text-center">No calls found.</td></tr>'
+            );
+          } else {
+            calls.forEach((call) => {
             const callId = call._id;
             const createdAt = call.call?.createdAt
               ? new Date(call.call.createdAt).toLocaleString()
@@ -495,11 +515,12 @@ $(document).ready(function () {
                 call.call?.details ? " | " + call.call.details : ""
               }` || "N/A";
 
-            // Get assigned units from assignedTo (array of member IDs)
+            // Get assigned units from assignedTo (array of member IDs).
+            // Names come from callMembersCache (Map), populated via resolveCallMembers above.
             const assignedToIds = call.call?.assignedTo || [];
             const assignedNames = assignedToIds
               .map((memberId) => {
-                const member = callMembersCache.find((m) => m._id === memberId);
+                const member = callMembersCache.get(memberId);
                 return member?.user?.username || null;
               })
               .filter((name) => name !== null);
@@ -523,32 +544,33 @@ $(document).ready(function () {
                 <td>${unitsAssigned}</td>
               </tr>
             `);
-          });
-        }
+            });
+          }
 
-        // Add pagination controls
-        const $pagination = $("#callTable").next(".call-pagination");
-        if ($pagination.length === 0) {
-          $("#callTable").after(
-            '<div class="call-pagination d-flex justify-content-between mt-2"></div>'
-          );
-        }
-        const $paginationContainer = $(".call-pagination");
-        $paginationContainer.empty();
-        const totalPages = Math.ceil(totalCount / callLimit);
-        if (totalCount > callLimit) {
-          $paginationContainer.append(`
-            <button class="btn btn-primary" onclick="changeCallPage(${
-              currentCallPage - 1
-            })" ${currentCallPage === 1 ? "disabled" : ""}>Previous</button>
-            <span class="mx-3 align-self-center">Page ${currentCallPage} of ${totalPages}</span>
-            <button class="btn btn-primary" onclick="changeCallPage(${
-              currentCallPage + 1
-            })" ${
-            currentCallPage >= totalPages ? "disabled" : ""
-          }>Next</button>
-          `);
-        }
+          // Add pagination controls
+          const $pagination = $("#callTable").next(".call-pagination");
+          if ($pagination.length === 0) {
+            $("#callTable").after(
+              '<div class="call-pagination d-flex justify-content-between mt-2"></div>'
+            );
+          }
+          const $paginationContainer = $(".call-pagination");
+          $paginationContainer.empty();
+          const totalPages = Math.ceil(totalCount / callLimit);
+          if (totalCount > callLimit) {
+            $paginationContainer.append(`
+              <button class="btn btn-primary" onclick="changeCallPage(${
+                currentCallPage - 1
+              })" ${currentCallPage === 1 ? "disabled" : ""}>Previous</button>
+              <span class="mx-3 align-self-center">Page ${currentCallPage} of ${totalPages}</span>
+              <button class="btn btn-primary" onclick="changeCallPage(${
+                currentCallPage + 1
+              })" ${
+              currentCallPage >= totalPages ? "disabled" : ""
+            }>Next</button>
+            `);
+          }
+        });
       },
       error: function (xhr) {
         console.error("Error loading calls:", xhr.responseText);
