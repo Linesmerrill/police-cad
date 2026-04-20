@@ -29,25 +29,34 @@ $(document).ready(function () {
 
   // Resolve the given member IDs via POST /api/v1/users, populating callMembersCache.
   // Only fetches IDs not already cached; returns a Promise that resolves when done.
+  // Uses jQuery Deferred .then(done, fail) rather than native Promise .catch() because
+  // this page's jQuery predates 3.0 and its jqXHR lacks .catch.
+  // The endpoint returns {users: [...]}, not a bare array.
   function resolveCallMembers(memberIds) {
     const missing = [...new Set(memberIds)].filter(
       (id) => id && !callMembersCache.has(id)
     );
     if (missing.length === 0) return Promise.resolve();
-    return $.ajax({
-      url: `${API_URL}/api/v1/users`,
-      method: "POST",
-      contentType: "application/json",
-      data: JSON.stringify({ userIds: missing }),
-    })
-      .then(function (users) {
-        (users || []).forEach(function (u) {
-          if (u && u._id) callMembersCache.set(u._id, u);
-        });
-      })
-      .catch(function (err) {
-        console.error("Error resolving call members:", err);
-      });
+    return new Promise(function (resolve) {
+      $.ajax({
+        url: `${API_URL}/api/v1/users`,
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({ userIds: missing }),
+      }).then(
+        function (response) {
+          const users = (response && response.users) || [];
+          users.forEach(function (u) {
+            if (u && u._id) callMembersCache.set(u._id, u);
+          });
+          resolve();
+        },
+        function (err) {
+          console.error("Error resolving call members:", err);
+          resolve(); // Never reject — render should still proceed without names.
+        }
+      );
+    });
   }
 
   // Initialize caches before loading calls. Only departments are preloaded now;
