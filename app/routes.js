@@ -2170,18 +2170,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
         const prefsRes = await axios.get(
           `${policeCadApiUrl}/api/v1/user-preferences/${req.user._id}`, config
         );
-        console.error('[dispatch-dashboard] prefs fetched', {
-          userId: String(req.user._id),
-          status: prefsRes.status,
-          betaCommandDashboard: prefsRes.data?.betaCommandDashboard,
-          dataKeys: prefsRes.data ? Object.keys(prefsRes.data) : null,
-        });
         if (prefsRes.data && prefsRes.data.betaCommandDashboard === true) {
           const queryString = req.originalUrl.split('?')[1] || '';
           return res.redirect(`/command-dashboard${queryString ? '?' + queryString : ''}`);
         }
       } catch (prefErr) {
-        console.error('[dispatch-dashboard] prefs fetch failed', prefErr.message);
         // If preferences fetch fails, fall through to classic dashboard
       }
 
