@@ -2302,7 +2302,7 @@
   <!-- Global variables -->
   <script type="text/javascript">
     var dbUser = <%- JSON.stringify(user || {}) %>;
-    var API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+    var API_URL = "<%= typeof apiUrl !== 'undefined' && apiUrl ? apiUrl : 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com' %>";
 
     // Fetch and display community name
     document.addEventListener('DOMContentLoaded', function() {

@@ -19,6 +19,7 @@ export const TEST_COMMUNITY_ID = new ObjectId('bbbbbbbbbbbbbbbbbbbbbbbb');
 export const TEST_CIVILIAN_ID = new ObjectId('cccccccccccccccccccccccc');
 export const TEST_VEHICLE_ID = new ObjectId('dddddddddddddddddddddddd');
 export const TEST_FIREARM_ID = new ObjectId('eeeeeeeeeeeeeeeeeeeeeeee');
+export const TEST_DEPARTMENT_ID = new ObjectId('ffffffffffffffffffffffffffff'.slice(0, 24));
 
 export const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || 'testuser@test.com';
 export const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || 'TestPass123!';
@@ -90,6 +91,17 @@ export async function seedTestData(): Promise<void> {
             code: 'TESTCD1',
             activeSignal100: false,
             activeHoldTraffic: false,
+            departments: [
+              {
+                _id: TEST_DEPARTMENT_ID,
+                name: 'Test PD',
+                description: 'Test police department',
+                image: '',
+                approvalRequired: false,
+                members: [{ id: userId, status: 'active' }],
+                ranks: [],
+              },
+            ],
             createdAt: now,
             updatedAt: now,
           },
