@@ -295,6 +295,7 @@
           '</div>' +
           '<div class="cd-unit-chip-sub">' +
             '<span class="cd-unit-chip-name">' + esc(u.username) + '</span>' +
+            (u.deptName ? '<span class="cd-unit-chip-dept">' + esc(u.deptName) + '</span>' : '') +
             (deptBadges ? '<span class="cd-unit-chip-badges">' + deptBadges + '</span>' : '') +
           '</div>' +
         '</div>' +

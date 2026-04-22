@@ -39,6 +39,7 @@
     // others collapsed so dispatchers see what matters most first.
     laneCollapsed: { p1: false, p2: true, p3: true, other: true },
     priorityFilter: 'all', // all | p1 | p2 | p3 | other
+    search: '', // filters call title + details + classifier label
   };
   window.__cdDispatchBoardState = state; // debug handle
 
@@ -219,6 +220,10 @@
         '<button type="button" class="cd-board-new" id="cd-dispatch-new-call">' +
           '<i class="fa fa-plus"></i> New Call' +
         '</button>' +
+        '<label class="cd-board-search">' +
+          '<i class="fa fa-magnifying-glass"></i>' +
+          '<input type="search" id="cd-board-search-input" placeholder="Search calls by title or details" autocomplete="off">' +
+        '</label>' +
         '<div class="cd-board-priority-pills" role="tablist" aria-label="Filter calls by priority">' +
           '<button type="button" class="cd-board-pill is-active" data-priority="all" role="tab">All</button>' +
           '<button type="button" class="cd-board-pill cd-board-pill-p1" data-priority="p1" role="tab"><span class="cd-board-pill-pip"></span>P1</button>' +
@@ -240,9 +245,14 @@
       return;
     }
 
+    var q = String(state.search || '').toLowerCase();
     var grouped = { p1: [], p2: [], p3: [], other: [] };
     Object.keys(state.calls).forEach(function (id) {
       var c = state.calls[id];
+      if (q) {
+        var hay = ((c.title || '') + ' ' + (c.details || '') + ' ' + (c.classifierLabel || '')).toLowerCase();
+        if (hay.indexOf(q) === -1) return;
+      }
       grouped[c.lane].push(c);
     });
 
@@ -252,7 +262,8 @@
     });
 
     var total = Object.keys(state.calls).length;
-    $('#cd-dispatch-board-count').text(total);
+    var filteredTotal = grouped.p1.length + grouped.p2.length + grouped.p3.length + grouped.other.length;
+    $('#cd-dispatch-board-count').text(q ? filteredTotal + ' / ' + total : total);
 
     if (total === 0) {
       $lanes.html(
@@ -260,6 +271,17 @@
           '<div class="cd-board-empty-ring"><i class="fa fa-radio"></i></div>' +
           '<div class="cd-board-empty-title">Channel quiet</div>' +
           '<div class="cd-board-empty-hint">No open calls. Click <strong>+ New Call</strong> — or drag a unit to stage one — to dispatch.</div>' +
+        '</div>'
+      );
+      return;
+    }
+
+    if (q && filteredTotal === 0) {
+      $lanes.html(
+        '<div class="cd-board-empty">' +
+          '<div class="cd-board-empty-ring"><i class="fa fa-magnifying-glass"></i></div>' +
+          '<div class="cd-board-empty-title">No matches</div>' +
+          '<div class="cd-board-empty-hint">No open calls match <strong>&ldquo;' + esc(state.search) + '&rdquo;</strong>. Clear the search to see everything.</div>' +
         '</div>'
       );
       return;
@@ -439,6 +461,15 @@
         // staring at a collapsed lane they just selected.
         if (state.priorityFilter !== 'all') state.laneCollapsed[state.priorityFilter] = false;
         renderLanes();
+      })
+      .on('input.cdDispatchBoard', '#cd-board-search-input', function () {
+        state.search = String(this.value || '').trim();
+        // When searching, expand every lane so matches aren't hidden behind
+        // a collapsed header. Restore when the search is cleared.
+        if (state.search) {
+          state.laneCollapsed = { p1: false, p2: false, p3: false, other: false };
+        }
+        renderLanes();
       });
 
     // Subscribe to existing call-lifecycle socket events on the shared socket.
@@ -500,7 +531,12 @@
       '.cd-board-new:hover{background:rgba(56,189,248,0.2);color:#fff;border-color:rgba(56,189,248,0.5);}',
       '.cd-board-toolbar-sep{width:1px;height:18px;background:var(--cd-glass-border);}',
       '.cd-board-hint{font-size:0.6875rem;color:var(--cd-text-dim);}',
-      '.cd-board-priority-pills{display:flex;gap:0.25rem;flex:1;min-width:0;flex-wrap:wrap;}',
+      '.cd-board-search{flex:1;min-width:140px;display:flex;align-items:center;gap:0.4375rem;padding:0.375rem 0.625rem;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid var(--cd-glass-border);}',
+      '.cd-board-search i{color:var(--cd-text-dim);font-size:0.75rem;}',
+      '.cd-board-search input{flex:1;background:transparent;border:0;outline:0;color:var(--cd-text);font-family:inherit;font-size:0.8125rem;min-width:0;}',
+      '.cd-board-search input::placeholder{color:var(--cd-text-dim);}',
+      '.cd-board-search:focus-within{border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.04);}',
+      '.cd-board-priority-pills{display:flex;gap:0.25rem;min-width:0;flex-wrap:wrap;}',
       '.cd-board-pill{display:inline-flex;align-items:center;gap:0.3125rem;padding:0.3125rem 0.5rem;border-radius:6px;border:1px solid var(--cd-glass-border);background:rgba(255,255,255,0.02);color:var(--cd-text-dim);font:600 0.6875rem/1 inherit;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;transition:all .15s;white-space:nowrap;}',
       '.cd-board-pill:hover{color:var(--cd-text-muted);background:rgba(255,255,255,0.04);}',
       '.cd-board-pill.is-active{color:var(--cd-text);background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.18);}',
