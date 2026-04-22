@@ -2099,6 +2099,59 @@
             </div>
           </div>
 
+          <!-- Section: Command Dispatch Bridge Adoption -->
+          <div class="ac-metrics-section" id="metrics-section-cmd-dispatch">
+            <div class="ac-metrics-section-header" onclick="toggleMetricsSection('cmd-dispatch')">
+              <div class="ac-metrics-section-title">
+                <i class="fas fa-headset"></i>
+                <span>Command Dispatch Adoption</span>
+              </div>
+              <i class="fas fa-chevron-down ac-metrics-section-chevron"></i>
+            </div>
+            <div class="ac-metrics-section-body">
+              <p style="font-size:0.75rem;color:var(--ac-text-muted);margin:0 0 1rem;">Track how many users have opted into the new Command Bridge layout on dispatch departments. Measured independently from the police command dashboard.</p>
+
+              <div id="metrics-cmd-dispatch-loading" style="text-align:center;padding:2rem;color:var(--ac-text-muted);">
+                <i class="fas fa-spinner fa-spin"></i> Loading metrics...
+              </div>
+
+              <div id="metrics-cmd-dispatch-content" style="display:none;">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:1rem;margin-bottom:1.5rem;">
+                  <div class="ac-stat" style="--stat-accent:#8b5cf6;animation-delay:0s;">
+                    <i class="fas fa-headset ac-stat-icon"></i>
+                    <div class="ac-stat-value" id="metrics-cmd-dispatch-opted">&mdash;</div>
+                    <div class="ac-stat-label">Command Bridge</div>
+                  </div>
+                  <div class="ac-stat" style="--stat-accent:var(--ac-blue);animation-delay:0.04s;">
+                    <i class="fas fa-desktop ac-stat-icon"></i>
+                    <div class="ac-stat-value" id="metrics-cmd-dispatch-classic">&mdash;</div>
+                    <div class="ac-stat-label">Classic Dispatch</div>
+                  </div>
+                  <div class="ac-stat" style="--stat-accent:var(--ac-green);animation-delay:0.08s;">
+                    <i class="fas fa-users ac-stat-icon"></i>
+                    <div class="ac-stat-value" id="metrics-cmd-dispatch-total">&mdash;</div>
+                    <div class="ac-stat-label">Total Users</div>
+                  </div>
+                </div>
+
+                <!-- Adoption bar -->
+                <div style="background:var(--ac-glass);border:1px solid var(--ac-glass-border);border-radius:var(--ac-radius);padding:1rem;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.625rem;">
+                    <span style="font-size:0.75rem;font-weight:600;color:var(--ac-text);">Adoption Rate</span>
+                    <span style="font-size:0.8125rem;font-weight:700;color:#a78bfa;" id="metrics-cmd-dispatch-pct">&mdash;</span>
+                  </div>
+                  <div style="height:10px;border-radius:5px;background:#64748b;overflow:hidden;">
+                    <div id="metrics-cmd-dispatch-bar" style="height:100%;border-radius:5px 0 0 5px;background:linear-gradient(90deg,#8b5cf6,#c4b5fd);width:0%;transition:width 0.8s ease;min-width:0;"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;margin-top:0.5rem;">
+                    <span style="font-size:0.625rem;color:var(--ac-text-dim);"><i class="fas fa-circle" style="color:#8b5cf6;font-size:0.375rem;vertical-align:middle;margin-right:0.25rem;"></i>Command Bridge</span>
+                    <span style="font-size:0.625rem;color:var(--ac-text-dim);"><i class="fas fa-circle" style="color:#64748b;font-size:0.375rem;vertical-align:middle;margin-right:0.25rem;"></i>Classic</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Trend Charts -->
           <div class="ac-charts-row" id="metrics-charts-row" style="display:none;">
             <div class="ac-chart-card" style="--chart-accent:var(--ac-green);animation-delay:0.2s;">
@@ -7644,7 +7697,7 @@
         $('#metrics-beta-loading').hide();
         $('#metrics-beta-content').show();
 
-        // Command dashboard metrics
+        // Command dashboard (police) metrics
         var cmdOptedIn = data.cmdOptedIn || 0;
         var cmdClassic = data.cmdClassic || 0;
         var cmdPct = total > 0 ? Math.round((cmdOptedIn / total) * 100) : 0;
@@ -7656,6 +7709,19 @@
         $('#metrics-cmd-bar').css('width', cmdPct + '%');
         $('#metrics-cmd-loading').hide();
         $('#metrics-cmd-content').show();
+
+        // Command Bridge (dispatch) metrics — tracked independently.
+        var cmdDispatchOptedIn = data.cmdDispatchOptedIn || 0;
+        var cmdDispatchClassic = data.cmdDispatchClassic || 0;
+        var cmdDispatchPct = total > 0 ? Math.round((cmdDispatchOptedIn / total) * 100) : 0;
+
+        $('#metrics-cmd-dispatch-opted').text(cmdDispatchOptedIn.toLocaleString());
+        $('#metrics-cmd-dispatch-classic').text(cmdDispatchClassic.toLocaleString());
+        $('#metrics-cmd-dispatch-total').text(total.toLocaleString());
+        $('#metrics-cmd-dispatch-pct').text(cmdDispatchPct + '%');
+        $('#metrics-cmd-dispatch-bar').css('width', cmdDispatchPct + '%');
+        $('#metrics-cmd-dispatch-loading').hide();
+        $('#metrics-cmd-dispatch-content').show();
       }
 
       // -- Daily Trend Charts --

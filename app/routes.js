@@ -2165,12 +2165,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   app.get("/dispatch-dashboard", authCheck, async function (req, res) {
     try {
-      // Check if user opted into the beta command dashboard
+      // Dispatch has its own beta flag (betaCommandDispatch) — tracked
+      // separately from the police command dashboard (betaCommandDashboard)
+      // so admin adoption metrics can distinguish the two audiences.
       try {
         const prefsRes = await axios.get(
           `${policeCadApiUrl}/api/v1/user-preferences/${req.user._id}`, config
         );
-        if (prefsRes.data && prefsRes.data.betaCommandDashboard === true) {
+        if (prefsRes.data && prefsRes.data.betaCommandDispatch === true) {
           const queryString = req.originalUrl.split('?')[1] || '';
           return res.redirect(`/command-dashboard${queryString ? '?' + queryString : ''}`);
         }

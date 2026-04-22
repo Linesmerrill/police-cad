@@ -1646,10 +1646,17 @@
       // /dispatch-dashboard, not /police-dashboard.
       var route = (deptTypeConfig[currentTemplateName] && deptTypeConfig[currentTemplateName].route) || 'police';
       var targetPath = '/' + route + '-dashboard';
+      // Opt-out the correct flag: dispatch uses betaCommandDispatch, everything
+      // else uses betaCommandDashboard (police/fire/ems all share the latter
+      // today). Flagging both to false here is harmless — each gate only reads
+      // its own key and the user can re-opt-in from either banner.
+      var payload = { userId: userId };
+      if (currentTemplateName === 'dispatch') payload.betaCommandDispatch = false;
+      else payload.betaCommandDashboard = false;
       $.ajax({
         url: API_URL + '/api/v1/user-preferences/' + encodeURIComponent(userId),
         method: 'PUT', contentType: 'application/json',
-        data: JSON.stringify({ betaCommandDashboard: false, userId: userId }),
+        data: JSON.stringify(payload),
         complete: function() { window.location.href = targetPath + window.location.search; }
       });
     }
