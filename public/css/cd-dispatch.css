@@ -5,13 +5,14 @@
    =================================================== */
 
 #cd-dispatch-bridge {
+  /* Natural block flow — top bar, 3-zone grid, bottom strip stack below one
+     another. Each zone body is viewport-height-capped individually so the
+     grid row never exceeds its budget and the bottom strip stays near fold.
+     Don't use height:100% / flex here: #dd-panels has no bounded height, so
+     those rules collapse and the bottom strip ends up overlapping the grid. */
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  /* Fit within the command-dashboard content viewport so the bottom strip
-     (BOLOs + tones) stays visible without scrolling past the main zones. */
-  height: 100%;
-  min-height: 0;
   padding: 0.75rem;
   color: var(--cd-text);
 }
@@ -116,12 +117,14 @@
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr) 380px;
   gap: 0.75rem;
-  /* Hard-cap main-zone row so the bottom strip is always in view.
-     Use 60vh as a floor so short viewports still get a usable board. */
-  min-height: 360px;
-  max-height: min(62vh, 640px);
-  flex-shrink: 0;
 }
+/* Each zone body is individually capped by viewport height so:
+   - tall rosters don't push the bottom strip off-screen
+   - all three zones line up at the same height
+   - bottom strip always has room at the fold
+   The 260px offset approximates: topbar (40) + padding (24) + zone header
+   (40) + bottom-strip min-height (220) + gaps (~40). */
+.cd-dispatch-grid .cd-dispatch-zone-body { max-height: calc(100vh - 280px); }
 @media (max-width: 1440px) {
   .cd-dispatch-grid { grid-template-columns: 260px minmax(0, 1fr) 360px; }
 }
@@ -224,10 +227,8 @@
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 0.75rem;
-  flex: 1;
-  min-height: 220px;
 }
-.cd-dispatch-bottom .cd-dispatch-zone { min-height: 0; }
+.cd-dispatch-bottom .cd-dispatch-zone-body { max-height: 320px; }
 @media (max-width: 1024px) {
   .cd-dispatch-bottom { grid-template-columns: 1fr; }
 }
