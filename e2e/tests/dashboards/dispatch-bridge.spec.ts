@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { DispatchBridgePage } from '../../pages/dispatch-bridge.page';
 import { TEST_COMMUNITY_ID, TEST_DISPATCH_DEPT_ID } from '../../helpers/seed';
+import {
+  setBetaCommandDispatch,
+  deleteUserPreferences,
+} from '../../helpers/db';
 
 /**
  * Smoke coverage for the Dispatch Command Bridge.
@@ -8,8 +12,19 @@ import { TEST_COMMUNITY_ID, TEST_DISPATCH_DEPT_ID } from '../../helpers/seed';
  * Activates when the active department's template.name === 'dispatch'.
  * The seed helper installs a 'Test Dispatch' department alongside 'Test PD'
  * in the shared test community; we land on it by passing its id in the URL.
+ *
+ * /command-dashboard is beta-gated server-side — non-opted-in users are
+ * redirected to /dispatch-dashboard. Flip betaCommandDispatch on for the
+ * seeded user before each test and clean up after.
  */
 test.describe('Dispatch Command Bridge', () => {
+  test.beforeEach(async () => {
+    await setBetaCommandDispatch(true);
+  });
+  test.afterEach(async () => {
+    await deleteUserPreferences();
+  });
+
   const dispatchUrl =
     `/command-dashboard?dept=dispatch&d=${encodeURIComponent(TEST_DISPATCH_DEPT_ID.toHexString())}` +
     `&c=${encodeURIComponent(TEST_COMMUNITY_ID.toHexString())}`;

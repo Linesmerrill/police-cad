@@ -3,17 +3,23 @@ import {
   addDispatchDepartment,
   removeDepartmentById,
   encodeIdForUrl,
+  setBetaCommandDispatch,
+  deleteUserPreferences,
 } from '../../helpers/db';
 
 test.describe('Dispatch command-dashboard — Person Search', { tag: '@auth' }, () => {
   let deptId: string;
 
   test.beforeEach(async () => {
+    // /command-dashboard is beta-gated — opt the seeded user into the
+    // dispatch bridge flag so the gate lets us through.
+    await setBetaCommandDispatch(true);
     deptId = await addDispatchDepartment({ nameSearchEnabled: true });
   });
 
   test.afterEach(async () => {
     await removeDepartmentById(deptId);
+    await deleteUserPreferences();
   });
 
   test('exposes Person Search when template has nameSearch enabled', async ({ page }) => {
