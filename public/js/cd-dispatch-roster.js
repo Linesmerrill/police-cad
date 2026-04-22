@@ -135,6 +135,19 @@
       if (isDispatcher) continue;        // hide other dispatchers from the assignable pool
       if (u.id === me) continue;         // hide self — you can't assign yourself from this roster
       var tmpl = active ? (active.template || '') : '';
+      // Summarise every department the user is in, not just the active one,
+      // so dispatchers can see at a glance that (e.g.) "1D-44" is in both
+      // Patrol and EMS. Deduped by template key to avoid showing two Police
+      // badges for a user in two police agencies.
+      var allDepts = Array.isArray(u.departments) ? u.departments : [];
+      var deptTemplatesSeen = {};
+      var deptTemplates = [];
+      for (var j = 0; j < allDepts.length; j++) {
+        var dk = deptKey(allDepts[j].template || '');
+        if (deptTemplatesSeen[dk]) continue;
+        deptTemplatesSeen[dk] = true;
+        deptTemplates.push({ template: allDepts[j].template || '', key: dk });
+      }
       out.push({
         id: u.id,
         username: u.username || '',
@@ -144,6 +157,8 @@
         deptName: u.activeDepartmentName || (active ? active.name : ''),
         deptTemplate: tmpl,
         deptKey: deptKey(tmpl),
+        deptTemplates: deptTemplates, // [{template, key}] for badge row
+        departments: allDepts,        // raw list for future use
         profilePicture: u.profilePicture || '',
       });
     }
@@ -253,6 +268,20 @@
   function chipHtml(u) {
     var code = (u.tenCode && u.tenCode.code) || '';
     var dv = deptVisual(u.deptTemplate);
+    // Badges for every department template the user is a member of.
+    // Active template gets a highlighted ring.
+    var deptBadges = '';
+    var tmpls = u.deptTemplates || [];
+    for (var i = 0; i < tmpls.length; i++) {
+      var tb = tmpls[i];
+      var tv = deptVisual(tb.template);
+      var isActive = tb.key === u.deptKey;
+      deptBadges += (
+        '<span class="cd-unit-chip-badge' + (isActive ? ' is-active' : '') + '" style="--cd-dept-color:' + esc(tv.color) + ';" title="' + esc(tv.label) + (isActive ? ' (active)' : '') + '" aria-label="' + esc(tv.label) + '">' +
+          '<i class="fa ' + esc(tv.icon) + '"></i>' +
+        '</span>'
+      );
+    }
     return (
       '<div class="cd-unit-chip" data-user-id="' + esc(u.id) + '" data-tone="' + esc(u.tone) + '" data-dept="' + esc(u.deptKey) + '" tabindex="0" role="listitem" aria-label="' + esc((u.callSign || u.username) + ' ' + dv.label + (code ? ' ' + code : '')) + '" style="--cd-dept-color:' + esc(dv.color) + ';">' +
         '<div class="cd-unit-chip-avatar" aria-hidden="true">' +
@@ -266,10 +295,10 @@
           '</div>' +
           '<div class="cd-unit-chip-sub">' +
             '<span class="cd-unit-chip-name">' + esc(u.username) + '</span>' +
-            (u.deptName ? '<span class="cd-unit-chip-dept">' + esc(u.deptName) + '</span>' : '') +
+            (deptBadges ? '<span class="cd-unit-chip-badges">' + deptBadges + '</span>' : '') +
           '</div>' +
         '</div>' +
-        '<button type="button" class="cd-unit-chip-menu" data-user-id="' + esc(u.id) + '" aria-label="Assign ' + esc(u.callSign || u.username) + ' to a call" title="Assign to…">' +
+        '<button type="button" class="cd-unit-chip-menu" data-user-id="' + esc(u.id) + '" aria-label="Unit actions for ' + esc(u.callSign || u.username) + '" title="Unit actions…">' +
           '<i class="fa fa-ellipsis-vertical"></i>' +
         '</button>' +
       '</div>'
@@ -310,25 +339,37 @@
         else state.statusFilter = value;
         render();
       })
+      // Kebab opens the Unit Console directly on the Assign tab — quick
+      // dispatch action without needing to find a 10-code first.
       .on('click.cdDispatchRoster', '.cd-unit-chip-menu', function (e) {
         e.preventDefault();
         e.stopPropagation();
         var userId = $(this).data('user-id');
-        if (typeof window.cdDispatchAssignMenuForUnit === 'function') {
-          window.cdDispatchAssignMenuForUnit(userId);
-        } else {
-          toast('Assignment menu lands with the board (step 4).', 'info');
-        }
+        openUnitConsole(userId, 'assign');
+      })
+      // Clicking the chip body opens the Unit Console on the Set Status
+      // tab (the most common dispatcher action). Drag-and-drop still works —
+      // Sortable.js delays the drag-start enough to distinguish click vs drag.
+      .on('click.cdDispatchRoster', '.cd-unit-chip', function (e) {
+        if ($(e.target).closest('.cd-unit-chip-menu').length) return;
+        var userId = $(this).data('user-id');
+        openUnitConsole(userId, 'status');
       })
       .on('keydown.cdDispatchRoster', '.cd-unit-chip', function (e) {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           var userId = $(this).data('user-id');
-          if (typeof window.cdDispatchAssignMenuForUnit === 'function') {
-            window.cdDispatchAssignMenuForUnit(userId);
-          }
+          openUnitConsole(userId, 'status');
         }
       });
+  }
+
+  function openUnitConsole(userId, tab) {
+    if (typeof window.cdDispatchUnitConsoleOpen === 'function') {
+      window.cdDispatchUnitConsoleOpen(userId, tab);
+    } else {
+      toast('Unit console unavailable.', 'error');
+    }
   }
 
   // ── Styles (scoped to the roster) ─────────────────
@@ -336,7 +377,9 @@
   function injectStyles() {
     if (document.getElementById('cd-dispatch-roster-styles')) return;
     var css = [
-      '.cd-roster-controls{display:flex;flex-direction:column;gap:0.5rem;padding:0 0 0.625rem;border-bottom:1px solid var(--cd-glass-border);margin-bottom:0.625rem;position:sticky;top:-0.75rem;background:var(--cd-glass);padding-top:0.5rem;z-index:2;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}',
+      // Sticky controls: use the bridge body background (SOLID) not --cd-glass,
+      // so scrolled unit chips don't bleed through the search + filter pills.
+      '.cd-roster-controls{display:flex;flex-direction:column;gap:0.5rem;padding:0.75rem 0 0.625rem;border-bottom:1px solid var(--cd-glass-border);margin:-0.75rem -0.75rem 0.625rem;padding-left:0.75rem;padding-right:0.75rem;position:sticky;top:-0.75rem;background:var(--cd-bg);z-index:3;box-shadow:0 4px 12px -6px rgba(0,0,0,0.5);}',
       '.cd-roster-search{display:flex;align-items:center;gap:0.5rem;padding:0.375rem 0.625rem;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid var(--cd-glass-border);}',
       '.cd-roster-search i{color:var(--cd-text-dim);font-size:0.75rem;}',
       '.cd-roster-search input{flex:1;background:transparent;border:0;outline:0;color:var(--cd-text);font-family:inherit;font-size:0.8125rem;min-width:0;}',
@@ -370,6 +413,9 @@
       '.cd-unit-chip-sub{display:flex;align-items:center;gap:0.375rem;font-size:0.6875rem;color:var(--cd-text-dim);min-width:0;}',
       '.cd-unit-chip-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}',
       '.cd-unit-chip-dept{padding:0.0625rem 0.375rem;border-radius:4px;background:rgba(255,255,255,0.02);color:var(--cd-text-muted);white-space:nowrap;}',
+      '.cd-unit-chip-badges{display:inline-flex;gap:0.1875rem;align-items:center;}',
+      '.cd-unit-chip-badge{width:16px;height:16px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--cd-dept-color) 10%,transparent);border:1px solid color-mix(in srgb,var(--cd-dept-color) 24%,transparent);color:var(--cd-dept-color);font-size:0.5625rem;opacity:0.75;}',
+      '.cd-unit-chip-badge.is-active{opacity:1;border-color:color-mix(in srgb,var(--cd-dept-color) 48%,transparent);background:color-mix(in srgb,var(--cd-dept-color) 18%,transparent);}',
       '.cd-unit-chip-menu{flex-shrink:0;width:24px;height:24px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--cd-text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}',
       '.cd-unit-chip-menu:hover,.cd-unit-chip-menu:focus-visible{border-color:var(--cd-glass-border);background:rgba(255,255,255,0.04);color:var(--cd-text);outline:none;}',
       '.cd-unit-unassign-drop{margin-top:0.625rem;padding:0.625rem;border:1px dashed var(--cd-glass-border);border-radius:10px;color:var(--cd-text-dim);font-size:0.75rem;display:flex;align-items:center;justify-content:center;gap:0.5rem;transition:all .15s;}',

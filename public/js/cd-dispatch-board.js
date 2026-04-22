@@ -35,6 +35,10 @@
     selectedCallId: null,
     loading: false,
     tickTimer: null,
+    // Lane collapse state persisted across re-renders. Default: P1 expanded,
+    // others collapsed so dispatchers see what matters most first.
+    laneCollapsed: { p1: false, p2: true, p3: true, other: true },
+    priorityFilter: 'all', // all | p1 | p2 | p3 | other
   };
   window.__cdDispatchBoardState = state; // debug handle
 
@@ -146,6 +150,10 @@
     if (!id) return null;
     var classifier = c.classifier || [];
     var priority = derivePriority(classifier);
+    var is911 = /^911\s*:/i.test(c.title || '');
+    // 911 calls default to P1 — dispatch can downgrade by editing the call.
+    // Only override when no explicit priority was set by intake.
+    if (priority == null && is911) priority = '1';
     return {
       id: id,
       title: c.title || 'Untitled Call',
@@ -160,7 +168,7 @@
       createdAtMs: toMs(c.createdAt),
       createdByUsername: c.createdByUsername || '',
       departments: c.departments || [],
-      is911: /^911\s*:/i.test(c.title || ''),
+      is911: is911,
       notesCount: (c.callNotes || []).length,
     };
   }
@@ -211,8 +219,13 @@
         '<button type="button" class="cd-board-new" id="cd-dispatch-new-call">' +
           '<i class="fa fa-plus"></i> New Call' +
         '</button>' +
-        '<div class="cd-board-toolbar-sep"></div>' +
-        '<span class="cd-board-hint">Drag a unit onto a call to assign</span>' +
+        '<div class="cd-board-priority-pills" role="tablist" aria-label="Filter calls by priority">' +
+          '<button type="button" class="cd-board-pill is-active" data-priority="all" role="tab">All</button>' +
+          '<button type="button" class="cd-board-pill cd-board-pill-p1" data-priority="p1" role="tab"><span class="cd-board-pill-pip"></span>P1</button>' +
+          '<button type="button" class="cd-board-pill cd-board-pill-p2" data-priority="p2" role="tab"><span class="cd-board-pill-pip"></span>P2</button>' +
+          '<button type="button" class="cd-board-pill cd-board-pill-p3" data-priority="p3" role="tab"><span class="cd-board-pill-pip"></span>P3</button>' +
+          '<button type="button" class="cd-board-pill cd-board-pill-other" data-priority="other" role="tab"><span class="cd-board-pill-pip"></span>Other</button>' +
+        '</div>' +
       '</div>' +
       '<div class="cd-board-lanes" id="cd-board-lanes"></div>'
     );
@@ -252,14 +265,19 @@
       return;
     }
 
+    // Render all lanes (even empty ones so dispatchers see the priority
+    // hierarchy) in priority order. Respect the priority filter pill.
     var html = '';
     for (var i = 0; i < LANES.length; i++) {
       var lane = LANES[i];
-      var items = grouped[lane.key] || [];
-      if (!items.length) continue; // hide empty lanes for now; we re-show on drop via wiring
-      html += laneHtml(lane, items);
+      if (state.priorityFilter !== 'all' && state.priorityFilter !== lane.key) continue;
+      html += laneHtml(lane, grouped[lane.key] || []);
     }
     $lanes.html(html);
+
+    // Apply active priority filter pill
+    $('.cd-board-pill').removeClass('is-active');
+    $('.cd-board-pill[data-priority="' + state.priorityFilter + '"]').addClass('is-active');
 
     // Restore selection highlight
     if (state.selectedCallId) {
@@ -268,16 +286,22 @@
   }
 
   function laneHtml(lane, items) {
+    var collapsed = state.laneCollapsed[lane.key];
     return (
-      '<section class="cd-board-lane" data-lane="' + esc(lane.key) + '" style="--cd-lane-accent:' + esc(lane.accent) + ';">' +
-        '<header class="cd-board-lane-header">' +
+      '<section class="cd-board-lane' + (collapsed ? ' is-collapsed' : '') + (items.length ? '' : ' is-empty') + '" data-lane="' + esc(lane.key) + '" style="--cd-lane-accent:' + esc(lane.accent) + ';">' +
+        '<button type="button" class="cd-board-lane-header" data-lane-toggle="' + esc(lane.key) + '" aria-expanded="' + (!collapsed) + '">' +
+          '<i class="fa fa-chevron-down cd-board-lane-chevron"></i>' +
           '<span class="cd-board-lane-pip"></span>' +
           '<span class="cd-board-lane-label">' + esc(lane.label) + '</span>' +
           '<span class="cd-board-lane-count">' + items.length + '</span>' +
-        '</header>' +
-        '<div class="cd-board-lane-body">' +
-          items.map(callCardHtml).join('') +
-        '</div>' +
+        '</button>' +
+        (collapsed
+          ? ''
+          : '<div class="cd-board-lane-body">' +
+              (items.length
+                ? items.map(callCardHtml).join('')
+                : '<div class="cd-board-lane-empty">No open ' + esc(lane.label.toLowerCase()) + ' calls.</div>') +
+            '</div>') +
       '</section>'
     );
   }
@@ -402,6 +426,19 @@
         } else {
           toast('Assignment menu lands with drag-and-drop (step 7).', 'info');
         }
+      })
+      .on('click.cdDispatchBoard', '[data-lane-toggle]', function (e) {
+        e.preventDefault();
+        var k = $(this).data('lane-toggle');
+        state.laneCollapsed[k] = !state.laneCollapsed[k];
+        renderLanes();
+      })
+      .on('click.cdDispatchBoard', '.cd-board-pill', function () {
+        state.priorityFilter = $(this).data('priority');
+        // Auto-expand a lane when its pill is filtered to so the user isn't
+        // staring at a collapsed lane they just selected.
+        if (state.priorityFilter !== 'all') state.laneCollapsed[state.priorityFilter] = false;
+        renderLanes();
       });
 
     // Subscribe to existing call-lifecycle socket events on the shared socket.
@@ -456,11 +493,32 @@
       // container-type lets inner cards use container queries to drop to
       // full-width layout when the board column itself is narrow.
       '#cd-dispatch-board{container-type:inline-size;}',
-      '.cd-board-toolbar{display:flex;align-items:center;gap:0.625rem;padding:0 0 0.75rem;border-bottom:1px solid var(--cd-glass-border);margin-bottom:0.75rem;position:sticky;top:-0.75rem;background:var(--cd-glass);padding-top:0.5rem;z-index:2;flex-wrap:wrap;}',
+      // Sticky toolbar: solid --cd-bg so call cards don't bleed through the
+      // "+ New Call" button and priority filter when the list scrolls.
+      '.cd-board-toolbar{display:flex;align-items:center;gap:0.625rem;padding:0.75rem 0 0.75rem;border-bottom:1px solid var(--cd-glass-border);margin:-0.75rem -0.75rem 0.75rem;padding-left:0.75rem;padding-right:0.75rem;position:sticky;top:-0.75rem;background:var(--cd-bg);z-index:3;box-shadow:0 4px 12px -6px rgba(0,0,0,0.5);flex-wrap:wrap;}',
       '.cd-board-new{display:inline-flex;align-items:center;gap:0.4375rem;padding:0.4375rem 0.8125rem;border-radius:8px;border:1px solid rgba(56,189,248,0.35);background:rgba(56,189,248,0.12);color:var(--cd-accent);font:600 0.75rem/1 inherit;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;transition:all .15s;}',
       '.cd-board-new:hover{background:rgba(56,189,248,0.2);color:#fff;border-color:rgba(56,189,248,0.5);}',
       '.cd-board-toolbar-sep{width:1px;height:18px;background:var(--cd-glass-border);}',
       '.cd-board-hint{font-size:0.6875rem;color:var(--cd-text-dim);}',
+      '.cd-board-priority-pills{display:flex;gap:0.25rem;flex:1;min-width:0;flex-wrap:wrap;}',
+      '.cd-board-pill{display:inline-flex;align-items:center;gap:0.3125rem;padding:0.3125rem 0.5rem;border-radius:6px;border:1px solid var(--cd-glass-border);background:rgba(255,255,255,0.02);color:var(--cd-text-dim);font:600 0.6875rem/1 inherit;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;transition:all .15s;white-space:nowrap;}',
+      '.cd-board-pill:hover{color:var(--cd-text-muted);background:rgba(255,255,255,0.04);}',
+      '.cd-board-pill.is-active{color:var(--cd-text);background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.18);}',
+      '.cd-board-pill-pip{width:7px;height:7px;border-radius:999px;}',
+      '.cd-board-pill-p1 .cd-board-pill-pip{background:var(--cd-red);box-shadow:0 0 0 2px rgba(239,68,68,0.18);}',
+      '.cd-board-pill-p2 .cd-board-pill-pip{background:var(--cd-amber);box-shadow:0 0 0 2px rgba(245,158,11,0.18);}',
+      '.cd-board-pill-p3 .cd-board-pill-pip{background:var(--cd-accent);box-shadow:0 0 0 2px rgba(56,189,248,0.18);}',
+      '.cd-board-pill-other .cd-board-pill-pip{background:var(--cd-text-dim);}',
+      '.cd-board-pill-p1.is-active{color:#fca5a5;border-color:rgba(239,68,68,0.35);background:rgba(239,68,68,0.08);}',
+      '.cd-board-pill-p2.is-active{color:#fcd34d;border-color:rgba(245,158,11,0.35);background:rgba(245,158,11,0.08);}',
+      '.cd-board-pill-p3.is-active{color:#7dd3fc;border-color:rgba(56,189,248,0.35);background:rgba(56,189,248,0.08);}',
+      '.cd-board-lane.is-collapsed .cd-board-lane-body{display:none;}',
+      '.cd-board-lane.is-collapsed .cd-board-lane-chevron{transform:rotate(-90deg);}',
+      '.cd-board-lane.is-empty .cd-board-lane-header{opacity:0.55;}',
+      '.cd-board-lane-header{width:100%;display:flex;align-items:center;gap:0.5rem;padding:0.4375rem 0.5rem;border:0;background:transparent;color:var(--cd-text-muted);font:700 0.6875rem/1 inherit;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:6px;transition:background .15s;}',
+      '.cd-board-lane-header:hover{background:rgba(255,255,255,0.03);color:var(--cd-text);}',
+      '.cd-board-lane-chevron{font-size:0.625rem;color:var(--cd-text-dim);transition:transform .15s;}',
+      '.cd-board-lane-empty{font-size:0.75rem;color:var(--cd-text-dim);font-style:italic;padding:0.5rem 0.25rem;grid-column:1 / -1;flex-basis:100%;}',
       '.cd-board-lanes{display:flex;flex-direction:column;gap:0.875rem;min-width:0;}',
       '.cd-board-lane{display:flex;flex-direction:column;gap:0.5rem;min-width:0;}',
       '.cd-board-lane-header{display:flex;align-items:center;gap:0.5rem;padding:0 0.25rem;font:700 0.6875rem/1 inherit;letter-spacing:0.1em;text-transform:uppercase;color:var(--cd-text-muted);}',

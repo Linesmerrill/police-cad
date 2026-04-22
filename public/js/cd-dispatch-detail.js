@@ -139,6 +139,9 @@
         if (first.priority != null) priority = String(first.priority);
       }
     }
+    // 911 calls default to P1 if no priority was set. Matches the board's
+    // normalize() logic so the detail pane lane matches the card's lane.
+    if (priority == null && is911) priority = '1';
     var priorityMap = {
       '1': { label: 'P1 · High',   accent: 'var(--cd-red)' },
       '2': { label: 'P2 · Medium', accent: 'var(--cd-amber)' },
