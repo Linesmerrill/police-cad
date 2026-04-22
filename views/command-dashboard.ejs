@@ -11,6 +11,7 @@
   <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/dd-components.css">
+  <link rel="stylesheet" href="/static/css/cd-dispatch.css">
   <script src="/static/js/jquery.min.js"></script>
   <style>
     /* ===================================================
@@ -1081,20 +1082,30 @@
         $focusedCards.append($card);
       });
 
-      $panels.append(mdtHtml);
-      $panels.append($focusedCards);
+      // Dispatch-template departments get a purpose-built 3-zone "Command Bridge"
+      // instead of the MDT grid. The sidebar focused-card nav still works — it
+      // just overlays on top of the bridge.
+      var useDispatchBridge = (currentTemplateName === 'dispatch') && (typeof window.cdDispatchLayoutRender === 'function');
+      if (useDispatchBridge) {
+        $panels.append(window.cdDispatchLayoutRender(window.ddConfig.departmentData || {}));
+        $panels.append($focusedCards);
+        if (typeof window.cdDispatchLayoutInit === 'function') window.cdDispatchLayoutInit();
+      } else {
+        $panels.append(mdtHtml);
+        $panels.append($focusedCards);
 
-      // ── Populate MDT columns with component content ──
-      populateMDTColumns();
+        // ── Populate MDT columns with component content ──
+        populateMDTColumns();
 
-      // ── Wire MDT search tabs ──
-      $(document).off('click.mdtSearchTab').on('click.mdtSearchTab', '.cd-mdt-search-tab', function() {
-        var tab = $(this).data('search');
-        $('.cd-mdt-search-tab').removeClass('active');
-        $(this).addClass('active');
-        $('.cd-mdt-search-pane').removeClass('active');
-        $('.cd-mdt-search-pane[data-pane="' + tab + '"]').addClass('active');
-      });
+        // ── Wire MDT search tabs ──
+        $(document).off('click.mdtSearchTab').on('click.mdtSearchTab', '.cd-mdt-search-tab', function() {
+          var tab = $(this).data('search');
+          $('.cd-mdt-search-tab').removeClass('active');
+          $(this).addClass('active');
+          $('.cd-mdt-search-pane').removeClass('active');
+          $('.cd-mdt-search-pane[data-pane="' + tab + '"]').addClass('active');
+        });
+      }
     }
 
     function populateMDTColumns() {
@@ -1332,6 +1343,28 @@
       }
     };
 
+    // Maps a 10-code + description to a semantic status tone used across command-dashboard
+    // widgets (MDT badge, dispatch roster chip, assigned pills). Returns one of
+    // 'emergency' | 'available' | 'busy' | 'other'. Text matching is intentionally
+    // permissive (English substrings) to accommodate community-defined codes; future
+    // work can let communities map codes to tones explicitly.
+    window.cdStatusColor = window.cdStatusColor || function(code, desc) {
+      var c = (code || '').toLowerCase();
+      var d = (desc || '').toLowerCase();
+      if (c.indexOf('signal 100') !== -1 || d.indexOf('emergency') !== -1) return 'emergency';
+      if (c.indexOf('10-8') !== -1 || c.indexOf('code 4') !== -1 || d.indexOf('available') !== -1 || d.indexOf('in service') !== -1 || d.indexOf('under control') !== -1) return 'available';
+      if (c.indexOf('10-7') !== -1 || c.indexOf('10-6') !== -1 || d.indexOf('out of service') !== -1 || d.indexOf('busy') !== -1) return 'busy';
+      return 'other';
+    };
+    window.cdStatusToneStyle = window.cdStatusToneStyle || function(tone) {
+      switch (tone) {
+        case 'emergency': return { color: 'var(--cd-red)',    borderColor: 'rgba(239,68,68,0.4)' };
+        case 'available': return { color: 'var(--cd-green)',  borderColor: 'rgba(34,197,94,0.4)' };
+        case 'busy':      return { color: 'var(--cd-amber)',  borderColor: 'rgba(245,158,11,0.4)' };
+        default:          return { color: 'var(--cd-accent)', borderColor: 'rgba(56,189,248,0.3)' };
+      }
+    };
+
     window.applyMDTStatus = applyMDTStatus;
     function applyMDTStatus() {
       var communityData = (window.ddConfig || {}).communityData;
@@ -1346,17 +1379,8 @@
       var active = codes.find(function(c) { return c._id === myMember.tenCodeID; });
       if (active) {
         $('#cd-mdt-status-text').text(active.code);
-        var code = (active.code || '').toLowerCase();
-        var desc = (active.description || '').toLowerCase();
-        if (code.indexOf('signal 100') !== -1 || desc.indexOf('emergency') !== -1) {
-          $('#cd-mdt-status-badge').css({ color: 'var(--cd-red)', borderColor: 'rgba(239,68,68,0.4)' });
-        } else if (code.indexOf('10-8') !== -1 || code.indexOf('code 4') !== -1 || desc.indexOf('available') !== -1 || desc.indexOf('in service') !== -1 || desc.indexOf('under control') !== -1) {
-          $('#cd-mdt-status-badge').css({ color: 'var(--cd-green)', borderColor: 'rgba(34,197,94,0.4)' });
-        } else if (code.indexOf('10-7') !== -1 || code.indexOf('10-6') !== -1 || desc.indexOf('out of service') !== -1 || desc.indexOf('busy') !== -1) {
-          $('#cd-mdt-status-badge').css({ color: 'var(--cd-amber)', borderColor: 'rgba(245,158,11,0.4)' });
-        } else {
-          $('#cd-mdt-status-badge').css({ color: 'var(--cd-accent)', borderColor: 'rgba(56,189,248,0.3)' });
-        }
+        var tone = window.cdStatusColor(active.code, active.description);
+        $('#cd-mdt-status-badge').css(window.cdStatusToneStyle(tone));
       } else {
         $('#cd-mdt-status-text').text('No Status');
       }
@@ -1462,23 +1486,27 @@
       }
 
       var $mdt = $('#cd-mdt-overview');
+      var $bridge = $('#cd-dispatch-bridge');
       var $focusedCards = $('#dd-focused-cards');
       var $rankWrap = $('#dd-rank-wrap');
 
       if (panel === 'overview') {
-        // Show MDT grid, hide focused cards
+        // Show overview (MDT grid or dispatch bridge — only one exists per render),
+        // hide focused cards
         $mdt.show();
+        $bridge.show();
         $focusedCards.hide().children('.dd-card').hide();
         $rankWrap.hide();
         $('#dd-content').css('overflow', 'hidden');
-        // Repopulate MDT columns (they were cleared when entering focused mode)
-        populateMDTColumns();
+        // Repopulate MDT columns if we're in the MDT layout (no-op for bridge)
+        if ($mdt.length) populateMDTColumns();
       } else {
         // Clear MDT column content to avoid duplicate DOM IDs
         $('#cd-mdt-pane-person, #cd-mdt-pane-vehicle, #cd-mdt-pane-firearm').empty();
         $('#cd-mdt-calls-content, #cd-mdt-intel-content').empty();
-        // Hide MDT grid, show focused card
+        // Hide overview, show focused card
         $mdt.hide();
+        $bridge.hide();
         $rankWrap.hide();
         $focusedCards.show();
         $focusedCards.children('.dd-card').hide();
@@ -1757,6 +1785,15 @@
   <script src="/static/js/cd-warrant-database.js"></script>
   <script src="/static/js/cd-status-panel.js"></script>
   <script src="/static/js/cd-calls.js"></script>
+  <!-- Dispatch control layout (activates when template.name === 'dispatch') -->
+  <script src="/static/js/cd-dispatch-roster.js"></script>
+  <script src="/static/js/cd-dispatch-board.js"></script>
+  <script src="/static/js/cd-dispatch-detail.js"></script>
+  <script src="/static/js/cd-dispatch-intake.js"></script>
+  <script src="/static/js/cd-dispatch-dnd.js"></script>
+  <script src="/static/js/cd-dispatch-tones.js"></script>
+  <script src="/static/js/cd-dispatch-realtime.js"></script>
+  <script src="/static/js/cd-dispatch-layout.js"></script>
   <script src="/static/js/rank-progress.js"></script>
   <script>if (typeof loadMyRankProgress === 'function') loadMyRankProgress();</script>
 </body>

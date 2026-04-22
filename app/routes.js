@@ -7136,6 +7136,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
       };
       if (data.toneSoundUrl) toneData.toneSoundUrl = data.toneSoundUrl;
       io.to(roomName).emit("tone_activated", toneData);
+    } else if (event === "dispatch_unit_status_changed") {
+      // Dispatch bridge listens for this and patches the roster chip in place.
+      io.to(roomName).emit("dispatch:unit_status_changed", {
+        communityId: communityId,
+        userId: data.userId,
+        tenCodeId: data.tenCodeId,
+        tenCode: data.tenCode,
+        tenCodeDescription: data.tenCodeDescription,
+        activeDepartmentId: data.activeDepartmentId,
+      });
     }
 
     res.json({ success: true, event: event, communityId: communityId });
