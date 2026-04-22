@@ -1,3 +1,7 @@
+<!-- Shared beta-feedback modal module — used by the Settings toggles below
+     AND by the Command Dashboard's Classic button, so both paths capture
+     opt-out feedback with the same UX and POST to the same endpoint. -->
+<script src="/static/js/cd-beta-feedback.js"></script>
 <style>
   /* Sound Settings Modal — all sizes in px to avoid Bootstrap/root font-size issues */
   .ss-backdrop {
@@ -220,15 +224,25 @@
           <i class="fa fa-flask" style="color:#38bdf8;font-size:14px;"></i>
           <span style="color:#e8ecf4;font-size:16px;font-weight:600;">Beta Features</span>
         </div>
+        <div class="ss-toggle-row" style="margin-bottom:12px;">
+          <div style="min-width:0;flex:1;">
+            <div class="ss-toggle-label" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              Command Dashboard (Police)
+              <span style="font-size:11px;background:rgba(56,189,248,0.15);color:#38bdf8;padding:2px 6px;border-radius:4px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Beta</span>
+            </div>
+            <div class="ss-toggle-desc">Modern tactical command center for police departments</div>
+          </div>
+          <button id="ss-cmd-dashboard-btn" type="button" data-flag="betaCommandDashboard" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#050a12;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:opacity 0.15s;">Enable</button>
+        </div>
         <div class="ss-toggle-row" style="margin-bottom:0;">
           <div style="min-width:0;flex:1;">
             <div class="ss-toggle-label" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              Command Dashboard
-              <span style="font-size:11px;background:rgba(56,189,248,0.15);color:#38bdf8;padding:2px 6px;border-radius:4px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Beta</span>
+              Command Bridge (Dispatch)
+              <span style="font-size:11px;background:rgba(139,92,246,0.18);color:#a78bfa;padding:2px 6px;border-radius:4px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Beta</span>
             </div>
-            <div class="ss-toggle-desc">A modern tactical command center for your department</div>
+            <div class="ss-toggle-desc">Purpose-built dispatcher UX — unit roster, drag-and-drop assignment, priority lanes</div>
           </div>
-          <button id="ss-cmd-dashboard-btn" type="button" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#050a12;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:opacity 0.15s;">Enable</button>
+          <button id="ss-cmd-dispatch-btn" type="button" data-flag="betaCommandDispatch" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#0b051a;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:opacity 0.15s;">Enable</button>
         </div>
       </div>
     </div>
@@ -293,31 +307,138 @@ window.initSoundSettings = function() {
   }
 };
 
-// Command Dashboard beta toggle
+// Beta feature toggles — generic two-button handler so each toggle tracks
+// its own flag, reflects the current opt-in state (Enable vs Disable), and
+// only redirects when opting IN. Opting out stays on the current page so
+// users don't get bounced unexpectedly.
 (function() {
-  var btn = document.getElementById('ss-cmd-dashboard-btn');
-  if (!btn) return;
-  btn.addEventListener('click', function() {
-    btn.disabled = true;
-    btn.textContent = 'Switching...';
-    btn.style.opacity = '0.6';
-    if (typeof window.cdOptIn === 'function') {
-      window.cdOptIn();
+  var userId = '<%= user._id %>';
+  var apiUrl = '<%= apiUrl %>';
+  // Redirect on enable ONLY when the user is on the matching classic page.
+  // Opening Settings from a random page (EMS, fire, civilian, etc.) and
+  // flipping a flag just saves the preference — no surprise navigation
+  // with mismatched query params (which previously sent users from
+  // /ems-dashboard to /command-dashboard?dept=Fire&... and rendered a
+  // fire bridge instead of dispatch).
+  var toggles = [
+    {
+      btn: document.getElementById('ss-cmd-dashboard-btn'),
+      flag: 'betaCommandDashboard',
+      redirectTo: '/command-dashboard',
+      redirectWhenAt: '/police-dashboard',
+    },
+    {
+      btn: document.getElementById('ss-cmd-dispatch-btn'),
+      flag: 'betaCommandDispatch',
+      redirectTo: '/command-dashboard',
+      redirectWhenAt: '/dispatch-dashboard',
+    },
+  ];
+
+  function applyState(btn, enabled) {
+    if (!btn) return;
+    btn.dataset.state = enabled ? 'on' : 'off';
+    btn.textContent = enabled ? 'Disable' : 'Enable';
+    if (enabled) {
+      btn.style.background = 'transparent';
+      btn.style.border = '1px solid rgba(255,255,255,0.15)';
+      btn.style.color = '#94a3b8';
     } else {
-      // Fallback: call the API directly
-      var userId = '<%= user._id %>';
-      var apiUrl = '<%= apiUrl %>';
-      $.ajax({
-        url: apiUrl + '/api/v1/user-preferences/' + encodeURIComponent(userId),
-        method: 'PUT',
-        contentType: 'application/json',
-        data: JSON.stringify({ betaCommandDashboard: true, userId: userId }),
-        complete: function() {
-          window.location.href = '/command-dashboard' + window.location.search;
-        }
-      });
+      btn.style.border = 'none';
+      // Keep the original gradient via the HTML style attr — re-set here in
+      // case we flipped to disabled then back.
+      if (btn.id === 'ss-cmd-dispatch-btn') {
+        btn.style.background = 'linear-gradient(135deg,#7c3aed,#a78bfa)';
+        btn.style.color = '#0b051a';
+      } else {
+        btn.style.background = 'linear-gradient(135deg,#0ea5e9,#38bdf8)';
+        btn.style.color = '#050a12';
+      }
     }
+  }
+
+  function fetchState() {
+    if (!userId) return;
+    $.ajax({
+      url: apiUrl + '/api/v1/user-preferences/' + encodeURIComponent(userId),
+      method: 'GET',
+    }).done(function(prefs) {
+      prefs = prefs || {};
+      toggles.forEach(function(t) { applyState(t.btn, prefs[t.flag] === true); });
+    }).fail(function() {
+      // On load error assume both off — matches the previous default behavior.
+      toggles.forEach(function(t) { applyState(t.btn, false); });
+    });
+  }
+
+  // Feature labels surfaced in the shared feedback modal header.
+  var FLAG_LABELS = {
+    betaCommandDashboard: 'the Command Dashboard',
+    betaCommandDispatch: 'the Command Bridge',
+  };
+
+  function applyBetaToggle(t, nextValue) {
+    t.btn.disabled = true;
+    t.btn.textContent = nextValue ? 'Switching…' : 'Disabling…';
+    t.btn.style.opacity = '0.6';
+    var body = { userId: userId };
+    body[t.flag] = nextValue;
+    $.ajax({
+      url: apiUrl + '/api/v1/user-preferences/' + encodeURIComponent(userId),
+      method: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify(body),
+    }).done(function(resp) {
+      var serverValue = resp && resp[t.flag];
+      applyState(t.btn, !!serverValue);
+      t.btn.disabled = false;
+      t.btn.style.opacity = '1';
+      // Only redirect if we enabled AND we're on the matching classic
+      // page. Saves the flag from any page; navigation only happens when
+      // it actually makes sense contextually.
+      if (nextValue && serverValue && t.redirectTo && window.location.pathname === t.redirectWhenAt) {
+        window.location.href = t.redirectTo + window.location.search;
+      }
+    }).fail(function(xhr) {
+      console.error('[beta-toggle] PUT failed', xhr && xhr.status, xhr && xhr.responseText);
+      applyState(t.btn, !nextValue); // roll back visual state
+      t.btn.disabled = false;
+      t.btn.style.opacity = '1';
+      alert('Couldn\'t save that preference — please try again.');
+    });
+  }
+
+  toggles.forEach(function(t) {
+    if (!t.btn) return;
+    t.btn.addEventListener('click', function() {
+      if (!userId) { console.warn('[beta-toggle] no user id available'); return; }
+      var currentlyOn = t.btn.dataset.state === 'on';
+      if (currentlyOn) {
+        // Disabling — prompt for feedback via the shared module, then
+        // flip the flag off on confirm/skip. Cancel bails entirely.
+        if (typeof window.cdPromptBetaFeedback === 'function') {
+          window.cdPromptBetaFeedback({
+            flag: t.flag,
+            label: FLAG_LABELS[t.flag] || 'this beta',
+            context: window.location.pathname,
+            userId: userId,
+            apiUrl: apiUrl,
+            onConfirm: function() { applyBetaToggle(t, false); },
+            // onCancel: no-op, state stays as Enabled
+          });
+        } else {
+          // Module missing — fall back to plain disable
+          applyBetaToggle(t, false);
+        }
+      } else {
+        // Enabling — straight-line, no modal.
+        applyBetaToggle(t, true);
+      }
+    });
   });
+
+  // Initial paint
+  fetchState();
 })();
 
 // Close modal on close button click or backdrop click
