@@ -1613,11 +1613,16 @@
     function cdSwitchToClassic() {
       var btn = document.getElementById('cd-switch-classic');
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:0.625rem;"></i> Switching...'; }
+      // Pick the classic dashboard that matches the current department template, not
+      // a hardcoded /police-dashboard. E.g. a Dispatch department should go back to
+      // /dispatch-dashboard, not /police-dashboard.
+      var route = (deptTypeConfig[currentTemplateName] && deptTypeConfig[currentTemplateName].route) || 'police';
+      var targetPath = '/' + route + '-dashboard';
       $.ajax({
         url: API_URL + '/api/v1/user-preferences/' + encodeURIComponent(userId),
         method: 'PUT', contentType: 'application/json',
         data: JSON.stringify({ betaCommandDashboard: false, userId: userId }),
-        complete: function() { window.location.href = '/police-dashboard' + window.location.search; }
+        complete: function() { window.location.href = targetPath + window.location.search; }
       });
     }
     window.cdSwitchToClassic = cdSwitchToClassic;
