@@ -28,6 +28,7 @@
     call: null,       // existing call details for edit mode
     priority: '2',    // default P2
     assignedIds: [],
+    pickerSearch: '', // filter query for the roster picker
   };
 
   var PRIORITIES = [
@@ -139,14 +140,6 @@
       );
     }).join('');
 
-    // Seed classifier label from existing data
-    var existingLabel = '';
-    if (c.classifier && c.classifier.length) {
-      var first = c.classifier[0];
-      if (typeof first === 'string') existingLabel = first;
-      else if (first && typeof first === 'object') existingLabel = first.label || first.name || first.description || first.code || '';
-    }
-
     $('.cd-intake-body').html(
       '<form id="cd-intake-form" class="cd-intake-form" autocomplete="off">' +
         '<label class="cd-intake-field">' +
@@ -158,11 +151,6 @@
           '<span>Priority</span>' +
           '<div class="cd-intake-priority-grid">' + priorityPills + '</div>' +
         '</div>' +
-
-        '<label class="cd-intake-field">' +
-          '<span>Classifier</span>' +
-          '<input type="text" id="cd-intake-classifier" maxlength="120" placeholder="e.g. MVA, Burglary, EMS" value="' + esc(existingLabel) + '">' +
-        '</label>' +
 
         '<label class="cd-intake-field">' +
           '<span>Details</span>' +
@@ -210,28 +198,52 @@
       }).join(''));
     }
 
-    // Picker: small list of unassigned roster units
+    // Picker: searchable list of roster units
     var rosterUnits = (window.__cdDispatchRosterState && window.__cdDispatchRosterState.units) || [];
     var available = rosterUnits.filter(function (u) { return state.assignedIds.indexOf(u.id) === -1; });
     if (!available.length) {
       $picker.html('<span class="cd-detail-empty-inline">All roster units already selected.</span>');
       return;
     }
+
+    // Apply search filter
+    var q = String(state.pickerSearch || '').toLowerCase();
+    var filtered = !q ? available : available.filter(function (u) {
+      var hay = ((u.callSign || '') + ' ' + (u.username || '') + ' ' + (u.deptName || '')).toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+
+    var VISIBLE = 40;
+    var head = filtered.slice(0, VISIBLE);
     $picker.html(
-      '<div class="cd-intake-picker-label">Add from roster</div>' +
-      '<div class="cd-intake-picker-list">' +
-        available.slice(0, 24).map(function (u) {
-          var dv = (typeof window.cdDispatchDeptVisual === 'function') ? window.cdDispatchDeptVisual(u.deptTemplate) : { icon: 'fa-user', color: 'var(--cd-accent)' };
-          return (
-            '<button type="button" class="cd-intake-picker-item" data-intake-add="' + esc(u.id) + '" style="--cd-dept-color:' + esc(dv.color) + ';">' +
-              '<i class="fa ' + esc(dv.icon) + '"></i>' +
-              '<span>' + esc(u.callSign || u.username) + '</span>' +
-            '</button>'
-          );
-        }).join('') +
-      (available.length > 24 ? '<span class="cd-detail-empty-inline">+' + (available.length - 24) + ' more — use drag-and-drop after creating.</span>' : '') +
-      '</div>'
+      '<div class="cd-intake-picker-head">' +
+        '<label class="cd-intake-picker-search">' +
+          '<i class="fa fa-magnifying-glass"></i>' +
+          '<input type="search" id="cd-intake-picker-search-input" placeholder="Filter units by callsign, name, or department" autocomplete="off" value="' + esc(state.pickerSearch) + '">' +
+        '</label>' +
+        '<span class="cd-intake-picker-count">' + filtered.length + (filtered.length !== available.length ? ' / ' + available.length : '') + '</span>' +
+      '</div>' +
+      (head.length
+        ? '<div class="cd-intake-picker-list">' +
+            head.map(function (u) {
+              var dv = (typeof window.cdDispatchDeptVisual === 'function') ? window.cdDispatchDeptVisual(u.deptTemplate) : { icon: 'fa-user', color: 'var(--cd-accent)' };
+              return (
+                '<button type="button" class="cd-intake-picker-item" data-intake-add="' + esc(u.id) + '" style="--cd-dept-color:' + esc(dv.color) + ';" title="' + esc((u.callSign || u.username) + (u.deptName ? ' · ' + u.deptName : '')) + '">' +
+                  '<i class="fa ' + esc(dv.icon) + '"></i>' +
+                  '<span>' + esc(u.callSign || u.username) + '</span>' +
+                '</button>'
+              );
+            }).join('') +
+          '</div>'
+        : '<div class="cd-detail-empty-inline">No units match your filter.</div>') +
+      (filtered.length > VISIBLE ? '<span class="cd-detail-empty-inline">+' + (filtered.length - VISIBLE) + ' more — refine the filter to narrow results.</span>' : '')
     );
+
+    // Re-focus the search input if it was focused before re-render
+    if (state.pickerSearch) {
+      var el = document.getElementById('cd-intake-picker-search-input');
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+    }
   }
 
   function wireForm() {
@@ -255,17 +267,26 @@
       if (state.assignedIds.indexOf(uid) === -1) state.assignedIds.push(uid);
       renderAssignedPicker();
     });
+
+    $('#cd-intake-unit-picker').on('input', '#cd-intake-picker-search-input', function () {
+      state.pickerSearch = String(this.value || '').trim();
+      renderAssignedPicker();
+    });
   }
 
   function submit() {
     var title = String($('#cd-intake-title-input').val() || '').trim();
     if (!title) { toast('Title is required', 'error'); return; }
     var details = String($('#cd-intake-details').val() || '').trim();
-    var classifierLabel = String($('#cd-intake-classifier').val() || '').trim();
 
+    // Classifier is a []interface{} on the backend; we stash the priority
+    // here so the board can derive lane placement. No separate classifier
+    // label is surfaced in the UI anymore — priority is the single meaningful
+    // signal from intake. Legacy string classifiers are still rendered
+    // read-only on the call card if present.
     var classifier = [{
       priority: state.priority,
-      label: classifierLabel || ('P' + state.priority),
+      label: 'P' + state.priority,
     }];
 
     var body = {
@@ -348,9 +369,14 @@
       '.cd-intake-assigned{display:flex;flex-wrap:wrap;gap:0.375rem;min-height:32px;padding:0.375rem;border-radius:8px;border:1px dashed var(--cd-glass-border);}',
       '.cd-intake-assigned-pill{cursor:pointer;}',
       '.cd-intake-assigned-pill:hover{box-shadow:inset 0 0 0 9999px rgba(239,68,68,0.08);}',
-      '.cd-intake-unit-picker{display:flex;flex-direction:column;gap:0.375rem;}',
-      '.cd-intake-picker-label{font-size:0.625rem;color:var(--cd-text-dim);letter-spacing:0.08em;text-transform:uppercase;}',
-      '.cd-intake-picker-list{display:flex;flex-wrap:wrap;gap:0.3125rem;}',
+      '.cd-intake-unit-picker{display:flex;flex-direction:column;gap:0.5rem;}',
+      '.cd-intake-picker-head{display:flex;align-items:center;gap:0.5rem;}',
+      '.cd-intake-picker-search{flex:1;display:flex;align-items:center;gap:0.4375rem;padding:0.375rem 0.625rem;border-radius:8px;border:1px solid var(--cd-glass-border);background:rgba(255,255,255,0.03);}',
+      '.cd-intake-picker-search i{color:var(--cd-text-dim);font-size:0.75rem;}',
+      '.cd-intake-picker-search input{flex:1;background:transparent;border:0;outline:0;color:var(--cd-text);font-family:inherit;font-size:0.8125rem;min-width:0;}',
+      '.cd-intake-picker-search input::placeholder{color:var(--cd-text-dim);}',
+      '.cd-intake-picker-count{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:0.6875rem;color:var(--cd-text-dim);}',
+      '.cd-intake-picker-list{display:flex;flex-wrap:wrap;gap:0.3125rem;max-height:180px;overflow-y:auto;padding:0.125rem;}',
       '.cd-intake-picker-item{display:inline-flex;align-items:center;gap:0.3125rem;padding:0.25rem 0.5625rem;border-radius:999px;border:1px solid color-mix(in srgb,var(--cd-dept-color) 30%,transparent);background:color-mix(in srgb,var(--cd-dept-color) 8%,transparent);color:var(--cd-dept-color);font:600 0.6875rem/1 "JetBrains Mono",ui-monospace,monospace;cursor:pointer;transition:all .15s;}',
       '.cd-intake-picker-item:hover{background:color-mix(in srgb,var(--cd-dept-color) 16%,transparent);}',
       '.cd-intake-picker-item i{font-size:0.625rem;}',

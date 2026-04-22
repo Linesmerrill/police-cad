@@ -26,13 +26,17 @@
   // Build the static shell HTML. Child modules mount into the zone bodies in
   // their own Init() functions (cdDispatchRosterInit, etc.).
   window.cdDispatchLayoutRender = function cdDispatchLayoutRender(dept) {
-    var deptName = (dept && dept.name) || (window.ddConfig && window.ddConfig.departmentName) || 'Dispatch';
+    // Department name already appears in the page topbar next to the dept-type
+    // badge, so don't repeat it here — just stamp the layout identity.
     return (
       '<div id="cd-dispatch-bridge">' +
 
         '<div class="cd-dispatch-topbar">' +
           '<span class="cd-dispatch-topbar-title">Command Bridge</span>' +
-          '<span class="cd-dispatch-topbar-dept">' + esc(deptName) + '</span>' +
+          '<span id="cd-dispatch-rank-pill" class="cd-dispatch-rank-pill" style="display:none;" title="View rank">' +
+            '<i class="fa fa-shield"></i>' +
+            '<span id="cd-dispatch-rank-text">—</span>' +
+          '</span>' +
           '<span id="cd-dispatch-reconnect" class="cd-dispatch-reconnect-pill" title="Live sync paused — reconnecting">' +
             '<i class="fa fa-plug" style="margin-right:0.375rem;"></i> Reconnecting' +
           '</span>' +
@@ -160,5 +164,34 @@
     $('#cd-dispatch-btn-panic').off('click').on('click', function () {
       if (typeof window.cdMdtPanic === 'function') window.cdMdtPanic();
     });
+    $('#cd-dispatch-rank-pill').off('click').on('click', function () {
+      if (typeof window.cdShowRankPanel === 'function') window.cdShowRankPanel();
+    });
+
+    // Poll the existing #myRankName element (populated async by rank-progress.js)
+    // and surface the rank in the bridge top bar + sidebar user area when the
+    // active department has ranks enabled. Mirrors the MDT behavior.
+    pollRankPill();
+  }
+
+  function pollRankPill() {
+    var attempts = 0;
+    function tick() {
+      var el = document.getElementById('myRankName');
+      if (el && el.textContent && el.textContent.trim()) {
+        var name = el.textContent.trim();
+        $('#cd-dispatch-rank-text').text(name);
+        $('#cd-dispatch-rank-pill').show();
+        // Also mirror into the sidebar "under username" slot if present
+        $('#cd-sidebar-rank').text(name).show();
+      } else if (attempts++ < 10) {
+        setTimeout(tick, 1000);
+      } else {
+        // No rank data configured — keep the pill hidden
+        $('#cd-dispatch-rank-pill').hide();
+        $('#cd-sidebar-rank').hide();
+      }
+    }
+    tick();
   }
 })();

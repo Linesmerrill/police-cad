@@ -58,7 +58,7 @@
     wireEvents();
   };
 
-  window.cdDispatchRosterRefresh = function () { load(); };
+  window.cdDispatchRosterRefresh = function (opts) { load(opts || { silent: true }); };
 
   window.cdDispatchRosterGetUnit = function (userId) {
     for (var i = 0; i < state.units.length; i++) if (state.units[i].id === userId) return state.units[i];
@@ -83,24 +83,46 @@
 
   // ── Data loading ──────────────────────────────────
 
-  function load() {
+  function load(opts) {
+    var silent = !!(opts && opts.silent);
     var communityId = cfg().communityId;
     if (!communityId) return;
-    state.loading = true;
-    render();
+    if (!silent) {
+      state.loading = true;
+      render();
+    }
     $.ajax({
       url: api() + '/api/v2/community/' + encodeURIComponent(communityId) + '/units?limit=100&page=1',
       method: 'GET',
     }).done(function (resp) {
-      state.units = normalize(resp && resp.units ? resp.units : []);
+      var next = normalize(resp && resp.units ? resp.units : []);
+      if (silent && listsEqual(state.units, next)) {
+        // No change — don't re-render at all; avoids all flicker.
+        state.loading = false;
+        return;
+      }
+      state.units = next;
       state.loading = false;
       render();
     }).fail(function (xhr) {
       state.loading = false;
-      render();
-      toast('Failed to load units', 'error');
+      if (!silent) render();
+      if (!silent) toast('Failed to load units', 'error');
       console.error('[cd-dispatch-roster] load failed', xhr && xhr.responseText);
     });
+  }
+
+  // Shallow equality for the roster list so silent polls can skip re-render.
+  function listsEqual(a, b) {
+    if (!a || !b || a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      var u = a[i], v = b[i];
+      if (u.id !== v.id) return false;
+      if (u.callSign !== v.callSign) return false;
+      if ((u.tenCode && u.tenCode.code) !== (v.tenCode && v.tenCode.code)) return false;
+      if (u.deptKey !== v.deptKey) return false;
+    }
+    return true;
   }
 
   function normalize(raw) {
@@ -319,9 +341,10 @@
       '.cd-roster-search i{color:var(--cd-text-dim);font-size:0.75rem;}',
       '.cd-roster-search input{flex:1;background:transparent;border:0;outline:0;color:var(--cd-text);font-family:inherit;font-size:0.8125rem;min-width:0;}',
       '.cd-roster-search input::placeholder{color:var(--cd-text-dim);}',
-      '.cd-roster-pills{display:flex;gap:0.25rem;}',
-      '.cd-roster-pill{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:0.3125rem;padding:0.3125rem 0.5rem;border-radius:6px;border:1px solid var(--cd-glass-border);background:rgba(255,255,255,0.02);color:var(--cd-text-dim);font:600 0.6875rem/1 inherit;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;transition:all .15s;}',
-      '.cd-roster-pill i{font-size:0.75rem;}',
+      '.cd-roster-pills{display:flex;gap:0.25rem;flex-wrap:wrap;min-width:0;}',
+      '.cd-roster-pill{flex:1 1 auto;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:0.25rem;padding:0.3125rem 0.4375rem;border-radius:6px;border:1px solid var(--cd-glass-border);background:rgba(255,255,255,0.02);color:var(--cd-text-dim);font:600 0.625rem/1 inherit;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.cd-roster-pill i{font-size:0.6875rem;flex-shrink:0;}',
+      '.cd-roster-pill span{min-width:0;overflow:hidden;text-overflow:ellipsis;}',
       '.cd-roster-pill:hover{color:var(--cd-text-muted);background:rgba(255,255,255,0.04);}',
       '.cd-roster-pill.is-active{color:var(--cd-accent);border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.08);}',
       '.cd-roster-pill-dept i{color:var(--cd-dept-color);}',

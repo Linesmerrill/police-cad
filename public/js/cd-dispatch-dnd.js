@@ -79,89 +79,93 @@
   };
 
   function applyOptimistic(callId, assignedTo) {
-    // Patch board state
+    // Patch board state + re-render the affected card
     var c = (typeof window.cdDispatchBoardGetCall === 'function') ? window.cdDispatchBoardGetCall(callId) : null;
     if (c) {
       c.assignedTo = assignedTo.slice();
-      // Re-render just this card by upserting; the board's upsert also re-selects/highlights
       if (typeof window.cdDispatchBoardUpsertCall === 'function') {
-        // Wrap in the raw-shape expected by upsert: {_id, call:{...}}
         window.cdDispatchBoardUpsertCall({ _id: callId, call: Object.assign({}, c, { assignedTo: assignedTo.slice() }) });
       }
     }
-    // Patch detail state if it's the selected call
+    // If the detail pane is open on this call, re-fetch so the Assigned Units
+    // section renders the new pill (or loses one, for unassign). This is the
+    // same request the socket broadcast would trigger — doing it locally just
+    // removes the wait for the round-trip.
     var detail = window.__cdDispatchDetailState;
-    if (detail && detail.callId === callId && detail.call) {
-      detail.call.assignedTo = assignedTo.slice();
-      if (typeof window.cdDispatchDetailSelect === 'function') {
-        // Re-render without re-fetching — cheapest path: call select which refetches.
-        // We skip refetch to avoid a flash; the socket broadcast will reconcile.
-      }
+    if (detail && detail.callId === callId && typeof window.cdDispatchDetailSelect === 'function') {
+      window.cdDispatchDetailSelect(callId);
     }
   }
 
   // ── Sortable wiring ───────────────────────────────
 
   function wireSortables() {
-    // Roster: drag sources (pull:clone, put:false — so chips stay in the roster)
-    var roster = document.getElementById('cd-dispatch-roster-list');
-    if (roster && !roster.__cdSortable) {
-      roster.__cdSortable = Sortable.create(roster, {
-        group: { name: 'dispatch-units', pull: 'clone', put: false },
-        animation: 150,
-        sort: false,
-        delay: 100,
-        touchStartThreshold: 5,
-        forceFallback: true,
-        fallbackOnBody: true,
-        dragClass: 'sortable-drag',
-        ghostClass: 'sortable-ghost',
-        onStart: function () { document.body.classList.add('cd-dnd-active'); },
-        onEnd:   function () { document.body.classList.remove('cd-dnd-active'); },
-      });
-    }
-
-    // Unassign drop strip in the roster
-    var unassignZone = document.getElementById('cd-dispatch-roster-unassign');
-    if (unassignZone && !unassignZone.__cdSortable) {
-      unassignZone.__cdSortable = Sortable.create(unassignZone, {
-        group: { name: 'dispatch-units', pull: false, put: ['dispatch-units'] },
-        animation: 150,
-        onAdd: function (evt) {
-          // Strip the clone out of the UI
-          var userId = evt.item && evt.item.getAttribute('data-user-id');
-          if (evt.item && evt.item.parentNode) evt.item.parentNode.removeChild(evt.item);
-          if (!userId) return;
-          // Find which call this unit was previously assigned to from the source (pulled from a call card)
-          // We read a data-source-call attribute we set on drop source (for the pill clone variant).
-          var sourceCall = evt.clone && evt.clone.getAttribute('data-source-call');
-          if (sourceCall) {
-            window.cdDispatchUnassign(userId, sourceCall);
-          } else {
-            toast('Drag a pill from a call card here to unassign', 'info');
-          }
-        },
-      });
-    }
-
-    // Call cards — wire each .cd-call-card-assigned footer as a drop zone
+    wireRoster();
+    wireUnassignZone();
     wireCallCardZones();
-
-    // Detail pill zone (right pane / drawer)
     wireDetailPillZone();
   }
 
+  function wireRoster() {
+    var roster = document.getElementById('cd-dispatch-roster-list');
+    if (!roster || roster.__cdSortable) return;
+    roster.__cdSortable = Sortable.create(roster, {
+      group: { name: 'dispatch-units', pull: 'clone', put: false },
+      animation: 150,
+      sort: false,
+      delay: 80,
+      delayOnTouchOnly: true,
+      touchStartThreshold: 4,
+      dragClass: 'cd-sortable-drag',
+      ghostClass: 'cd-sortable-ghost',
+      chosenClass: 'cd-sortable-chosen',
+      // Draggable: only chip tiles. Excludes the search input + filter pills above.
+      draggable: '.cd-unit-chip',
+      filter: '.cd-unit-chip-menu',
+      preventOnFilter: true,
+      onStart: function () { document.body.classList.add('cd-dnd-active'); },
+      onEnd:   function () { document.body.classList.remove('cd-dnd-active'); },
+    });
+  }
+
+  function wireUnassignZone() {
+    var unassignZone = document.getElementById('cd-dispatch-roster-unassign');
+    if (!unassignZone || unassignZone.__cdSortable) return;
+    unassignZone.__cdSortable = Sortable.create(unassignZone, {
+      group: { name: 'dispatch-units', pull: false, put: ['dispatch-units'] },
+      animation: 150,
+      onAdd: function (evt) {
+        var userId = evt.item && evt.item.getAttribute('data-user-id');
+        if (evt.item && evt.item.parentNode) evt.item.parentNode.removeChild(evt.item);
+        if (!userId) return;
+        var sourceCall = evt.clone && evt.clone.getAttribute('data-source-call');
+        if (sourceCall) {
+          window.cdDispatchUnassign(userId, sourceCall);
+        } else {
+          toast('Drag an assigned pill from a call onto here to unassign.', 'info');
+        }
+      },
+    });
+  }
+
+  // Treat the ENTIRE .cd-call-card as the drop zone (not just the footer).
+  // A tiny footer is hard to target; making the whole card accept drops is
+  // the single biggest usability fix for DnD assignment.
   function wireCallCardZones() {
-    $('.cd-call-card-assigned').each(function () {
+    $('.cd-call-card').each(function () {
       if (this.__cdSortable) return;
       var callId = this.getAttribute('data-call-id');
+      if (!callId) return;
       this.__cdSortable = Sortable.create(this, {
         group: { name: 'dispatch-units', pull: false, put: ['dispatch-units'] },
         animation: 150,
+        // No children are actually sortable in a card — this just makes the
+        // element a drop target. Sortable won't reorder the card's layout.
+        draggable: '.cd-sortable-no-match',
         onAdd: function (evt) {
           var userId = evt.item && evt.item.getAttribute('data-user-id');
           if (evt.item && evt.item.parentNode) evt.item.parentNode.removeChild(evt.item);
-          if (!userId || !callId) return;
+          if (!userId) return;
           window.cdDispatchAssign(userId, callId);
         },
       });
@@ -175,6 +179,7 @@
       this.__cdSortable = Sortable.create(this, {
         group: { name: 'dispatch-units', pull: false, put: ['dispatch-units'] },
         animation: 150,
+        draggable: '.cd-sortable-no-match',
         onAdd: function (evt) {
           var userId = evt.item && evt.item.getAttribute('data-user-id');
           if (evt.item && evt.item.parentNode) evt.item.parentNode.removeChild(evt.item);
@@ -185,14 +190,16 @@
     });
   }
 
-  // React to board/detail re-renders by re-wiring any new drop zones.
+  // React to board/detail/roster re-renders by re-wiring any new drop zones.
   function wireMutationObserver() {
-    var targets = ['cd-board-lanes', 'cd-dispatch-detail'];
+    var targets = ['cd-board-lanes', 'cd-dispatch-detail', 'cd-dispatch-roster'];
     targets.forEach(function (id) {
       var el = document.getElementById(id);
       if (!el || el.__cdObserved) return;
       el.__cdObserved = true;
       var obs = new MutationObserver(function () {
+        wireRoster();
+        wireUnassignZone();
         wireCallCardZones();
         wireDetailPillZone();
       });

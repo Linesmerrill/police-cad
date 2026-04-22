@@ -48,7 +48,7 @@
     startElapsedTicker();
   };
 
-  window.cdDispatchBoardRefresh = function () { load(); };
+  window.cdDispatchBoardRefresh = function (opts) { load(opts || { silent: true }); };
 
   window.cdDispatchBoardUpsertCall = function (raw) {
     var c = normalize(raw);
@@ -86,30 +86,57 @@
 
   // ── Data loading ──────────────────────────────────
 
-  function load() {
+  function load(opts) {
+    var silent = !!(opts && opts.silent);
     var communityId = cfg().communityId;
     if (!communityId) return;
-    state.loading = true;
-    renderLanes();
+    if (!silent) {
+      state.loading = true;
+      renderLanes();
+    }
 
     $.ajax({
       url: api() + '/api/v2/calls/community/' + encodeURIComponent(communityId) + '?status=true&limit=100&page=1',
       method: 'GET',
     }).done(function (resp) {
-      state.calls = {};
+      var next = {};
       var items = (resp && resp.data) || [];
       for (var i = 0; i < items.length; i++) {
         var c = normalize(items[i]);
-        if (c && c.id) state.calls[c.id] = c;
+        if (c && c.id) next[c.id] = c;
       }
+      if (silent && callsEqual(state.calls, next)) {
+        state.loading = false;
+        return;
+      }
+      state.calls = next;
       state.loading = false;
       renderLanes();
     }).fail(function (xhr) {
       state.loading = false;
-      renderLanes();
-      toast('Failed to load calls', 'error');
+      if (!silent) renderLanes();
+      if (!silent) toast('Failed to load calls', 'error');
       console.error('[cd-dispatch-board] load failed', xhr && xhr.responseText);
     });
+  }
+
+  // Signature check — only compares fields the UI renders so we can skip
+  // no-op re-renders. Misses deep note updates (those land via detail reload).
+  function callsEqual(a, b) {
+    var ka = Object.keys(a || {}), kb = Object.keys(b || {});
+    if (ka.length !== kb.length) return false;
+    for (var i = 0; i < ka.length; i++) {
+      var id = ka[i];
+      if (!b[id]) return false;
+      var x = a[id], y = b[id];
+      if (x.title !== y.title) return false;
+      if (x.details !== y.details) return false;
+      if (x.lane !== y.lane) return false;
+      if (x.status !== y.status) return false;
+      if (x.notesCount !== y.notesCount) return false;
+      if ((x.assignedTo || []).join(',') !== (y.assignedTo || []).join(',')) return false;
+    }
+    return true;
   }
 
   function normalize(raw) {
@@ -426,17 +453,25 @@
   function injectStyles() {
     if (document.getElementById('cd-dispatch-board-styles')) return;
     var css = [
-      '.cd-board-toolbar{display:flex;align-items:center;gap:0.625rem;padding:0 0 0.75rem;border-bottom:1px solid var(--cd-glass-border);margin-bottom:0.75rem;position:sticky;top:-0.75rem;background:var(--cd-glass);padding-top:0.5rem;z-index:2;}',
+      // container-type lets inner cards use container queries to drop to
+      // full-width layout when the board column itself is narrow.
+      '#cd-dispatch-board{container-type:inline-size;}',
+      '.cd-board-toolbar{display:flex;align-items:center;gap:0.625rem;padding:0 0 0.75rem;border-bottom:1px solid var(--cd-glass-border);margin-bottom:0.75rem;position:sticky;top:-0.75rem;background:var(--cd-glass);padding-top:0.5rem;z-index:2;flex-wrap:wrap;}',
       '.cd-board-new{display:inline-flex;align-items:center;gap:0.4375rem;padding:0.4375rem 0.8125rem;border-radius:8px;border:1px solid rgba(56,189,248,0.35);background:rgba(56,189,248,0.12);color:var(--cd-accent);font:600 0.75rem/1 inherit;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;transition:all .15s;}',
       '.cd-board-new:hover{background:rgba(56,189,248,0.2);color:#fff;border-color:rgba(56,189,248,0.5);}',
       '.cd-board-toolbar-sep{width:1px;height:18px;background:var(--cd-glass-border);}',
       '.cd-board-hint{font-size:0.6875rem;color:var(--cd-text-dim);}',
-      '.cd-board-lanes{display:flex;flex-direction:column;gap:0.875rem;}',
-      '.cd-board-lane{display:flex;flex-direction:column;gap:0.5rem;}',
+      '.cd-board-lanes{display:flex;flex-direction:column;gap:0.875rem;min-width:0;}',
+      '.cd-board-lane{display:flex;flex-direction:column;gap:0.5rem;min-width:0;}',
       '.cd-board-lane-header{display:flex;align-items:center;gap:0.5rem;padding:0 0.25rem;font:700 0.6875rem/1 inherit;letter-spacing:0.1em;text-transform:uppercase;color:var(--cd-text-muted);}',
       '.cd-board-lane-pip{width:8px;height:8px;border-radius:999px;background:var(--cd-lane-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--cd-lane-accent) 18%,transparent);}',
       '.cd-board-lane-count{margin-left:auto;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:0.75rem;color:var(--cd-text-dim);letter-spacing:0;}',
-      '.cd-board-lane-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0.5rem;}',
+      // Flex-wrap with min-width cards: cards stay readable at small widths and
+      // wrap to multiple rows as the column gets wider. Prevents squish.
+      '.cd-board-lane-body{display:flex;flex-wrap:wrap;gap:0.5rem;min-width:0;}',
+      '.cd-board-lane-body > .cd-call-card{flex:1 1 240px;min-width:240px;max-width:100%;}',
+      // Under ~640 px inner width, cards go full width to avoid awkward single-column squish
+      '@container (max-width: 640px){.cd-board-lane-body > .cd-call-card{flex-basis:100%;}}',
       '.cd-call-card{position:relative;display:flex;flex-direction:column;gap:0.375rem;padding:0.625rem 0.75rem;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid var(--cd-glass-border);cursor:pointer;transition:all .15s;border-left:3px solid var(--cd-lane-accent);}',
       '.cd-call-card::before{content:"";position:absolute;inset:0;border-radius:10px;pointer-events:none;background:linear-gradient(90deg,color-mix(in srgb,var(--cd-lane-accent) 6%,transparent) 0%,transparent 50%);opacity:0.7;}',
       '.cd-call-card > *{position:relative;}',

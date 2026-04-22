@@ -127,12 +127,29 @@
       : '<span class="cd-detail-empty-inline">No units assigned yet. Drag a unit from the roster onto this card.</span>';
 
     var classifierLabel = '';
+    var priority = null;
     var classifier = c.classifier || [];
     if (classifier.length) {
       var first = classifier[0];
-      if (typeof first === 'string') classifierLabel = first;
-      else if (first && typeof first === 'object') classifierLabel = first.label || first.name || first.description || first.code || '';
+      if (typeof first === 'string') {
+        classifierLabel = first;
+        var m = first.match(/p\s*(\d)/i); if (m) priority = m[1];
+      } else if (first && typeof first === 'object') {
+        classifierLabel = first.label || first.name || first.description || first.code || '';
+        if (first.priority != null) priority = String(first.priority);
+      }
     }
+    var priorityMap = {
+      '1': { label: 'P1 · High',   accent: 'var(--cd-red)' },
+      '2': { label: 'P2 · Medium', accent: 'var(--cd-amber)' },
+      '3': { label: 'P3 · Low',    accent: 'var(--cd-accent)' },
+    };
+    var priorityPill = priority && priorityMap[priority]
+      ? '<span class="cd-detail-priority" style="--cd-pri-accent:' + esc(priorityMap[priority].accent) + ';">' +
+          '<span class="cd-detail-priority-pip"></span>' +
+          esc(priorityMap[priority].label) +
+        '</span>'
+      : '';
 
     var notes = (c.callNotes || []).slice().sort(function (a, b) {
       var ta = new Date(a.createdAt || 0).getTime() || 0;
@@ -154,7 +171,8 @@
 
         // Meta line
         '<div class="cd-detail-meta">' +
-          (classifierLabel ? '<span class="cd-call-classifier">' + esc(classifierLabel) + '</span>' : '') +
+          priorityPill +
+          (classifierLabel && !priority ? '<span class="cd-call-classifier">' + esc(classifierLabel) + '</span>' : '') +
           '<span class="cd-detail-created">Created by <strong>' + esc(c.createdByUsername || 'unknown') + '</strong> · ' + esc(formatDate(c.createdAt)) + '</span>' +
           (isClosed ? '<span class="cd-detail-closed-tag">Closed</span>' : '<span class="cd-detail-open-tag">Open</span>') +
         '</div>' +
@@ -333,16 +351,28 @@
   }
 
   function deleteNote(noteId) {
-    if (!confirm('Delete this note? This cannot be undone.')) return;
-    $.ajax({
-      url: api() + '/api/v1/call/' + encodeURIComponent(state.callId) + '/note/' + encodeURIComponent(noteId),
-      method: 'DELETE',
-    }).done(function () {
-      toast('Note deleted', 'success');
-      reload();
-    }).fail(function (xhr) {
-      toast('Failed to delete note', 'error');
-      console.error('[cd-dispatch-detail] delete-note failed', xhr && xhr.responseText);
+    // Use the site-wide ddModal for destructive confirms (never browser confirm()).
+    if (!window.ddModal) return;
+    window.ddModal({
+      type: 'danger',
+      icon: 'fa-trash',
+      title: 'Delete note?',
+      message: 'This note will be permanently removed from the call.',
+      detail: 'This action cannot be undone.',
+      confirmText: 'Delete note',
+      confirmIcon: 'fa-trash',
+      onConfirm: function () {
+        $.ajax({
+          url: api() + '/api/v1/call/' + encodeURIComponent(state.callId) + '/note/' + encodeURIComponent(noteId),
+          method: 'DELETE',
+        }).done(function () {
+          toast('Note deleted', 'success');
+          reload();
+        }).fail(function (xhr) {
+          toast('Failed to delete note', 'error');
+          console.error('[cd-dispatch-detail] delete-note failed', xhr && xhr.responseText);
+        });
+      },
     });
   }
 
@@ -389,19 +419,31 @@
 
   function deleteCall() {
     if (!state.callId) return;
-    if (!confirm('Permanently delete this call? This cannot be undone.')) return;
-    $.ajax({
-      url: api() + '/api/v1/call/' + encodeURIComponent(state.callId),
-      method: 'DELETE',
-    }).done(function () {
-      toast('Call deleted', 'success');
-      if (typeof window.cdDispatchBoardRemoveCall === 'function') {
-        window.cdDispatchBoardRemoveCall(state.callId);
-      }
-      window.cdDispatchDetailClear();
-    }).fail(function (xhr) {
-      toast('Failed to delete call', 'error');
-      console.error('[cd-dispatch-detail] delete-call failed', xhr && xhr.responseText);
+    if (!window.ddModal) return;
+    var callId = state.callId;
+    window.ddModal({
+      type: 'danger',
+      icon: 'fa-trash',
+      title: 'Delete call?',
+      message: 'This permanently removes the call, its notes, and its assignment history.',
+      detail: 'This action cannot be undone.',
+      confirmText: 'Delete call',
+      confirmIcon: 'fa-trash',
+      onConfirm: function () {
+        $.ajax({
+          url: api() + '/api/v1/call/' + encodeURIComponent(callId),
+          method: 'DELETE',
+        }).done(function () {
+          toast('Call deleted', 'success');
+          if (typeof window.cdDispatchBoardRemoveCall === 'function') {
+            window.cdDispatchBoardRemoveCall(callId);
+          }
+          window.cdDispatchDetailClear();
+        }).fail(function (xhr) {
+          toast('Failed to delete call', 'error');
+          console.error('[cd-dispatch-detail] delete-call failed', xhr && xhr.responseText);
+        });
+      },
     });
   }
 
@@ -445,6 +487,8 @@
       '.cd-detail-close:hover,.cd-detail-close:focus-visible{border-color:var(--cd-glass-border);background:rgba(255,255,255,0.04);color:var(--cd-text);outline:none;}',
       '.cd-detail-meta{display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;font-size:0.6875rem;color:var(--cd-text-dim);}',
       '.cd-detail-meta strong{color:var(--cd-text-muted);font-weight:600;}',
+      '.cd-detail-priority{display:inline-flex;align-items:center;gap:0.3125rem;padding:0.125rem 0.5rem;border-radius:999px;border:1px solid color-mix(in srgb,var(--cd-pri-accent) 40%,transparent);background:color-mix(in srgb,var(--cd-pri-accent) 12%,transparent);color:color-mix(in srgb,var(--cd-pri-accent) 80%,white);font:700 0.6875rem/1 inherit;letter-spacing:0.04em;text-transform:uppercase;}',
+      '.cd-detail-priority-pip{width:6px;height:6px;border-radius:999px;background:var(--cd-pri-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--cd-pri-accent) 18%,transparent);}',
       '.cd-detail-open-tag,.cd-detail-closed-tag{padding:0.0625rem 0.4375rem;border-radius:999px;font:700 0.625rem/1.3 inherit;letter-spacing:0.06em;text-transform:uppercase;}',
       '.cd-detail-open-tag{background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#86efac;}',
       '.cd-detail-closed-tag{background:rgba(100,116,139,0.18);border:1px solid rgba(100,116,139,0.35);color:#94a3b8;}',

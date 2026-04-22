@@ -8,7 +8,10 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  min-height: 100%;
+  /* Fit within the command-dashboard content viewport so the bottom strip
+     (BOLOs + tones) stays visible without scrolling past the main zones. */
+  height: 100%;
+  min-height: 0;
   padding: 0.75rem;
   color: var(--cd-text);
 }
@@ -37,6 +40,25 @@
   font-weight: 600;
   color: var(--cd-text);
 }
+.cd-dispatch-rank-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(56, 189, 248, 0.08);
+  color: var(--cd-accent);
+  font: 600 0.75rem/1 inherit;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.cd-dispatch-rank-pill:hover {
+  background: rgba(56, 189, 248, 0.16);
+  color: #fff;
+}
+.cd-dispatch-rank-pill i { font-size: 0.6875rem; opacity: 0.8; }
 .cd-dispatch-topbar-clock {
   margin-left: auto;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
@@ -92,19 +114,22 @@
 /* ── 3-zone grid ───────────────────────────────────── */
 .cd-dispatch-grid {
   display: grid;
-  grid-template-columns: 280px 1fr 380px;
+  grid-template-columns: 280px minmax(0, 1fr) 380px;
   gap: 0.75rem;
-  flex: 1;
-  min-height: 0;
+  /* Hard-cap main-zone row so the bottom strip is always in view.
+     Use 60vh as a floor so short viewports still get a usable board. */
+  min-height: 360px;
+  max-height: min(62vh, 640px);
+  flex-shrink: 0;
 }
 @media (max-width: 1440px) {
-  .cd-dispatch-grid { grid-template-columns: 260px 1fr 360px; }
+  .cd-dispatch-grid { grid-template-columns: 260px minmax(0, 1fr) 360px; }
 }
 @media (max-width: 1280px) {
-  .cd-dispatch-grid { grid-template-columns: 240px 1fr 340px; }
+  .cd-dispatch-grid { grid-template-columns: 240px minmax(0, 1fr) 340px; }
 }
 @media (max-width: 1024px) {
-  .cd-dispatch-grid { grid-template-columns: 260px 1fr; }
+  .cd-dispatch-grid { grid-template-columns: 260px minmax(0, 1fr); }
   .cd-dispatch-zone[data-zone="detail"] {
     position: fixed;
     top: 0; right: 0; bottom: 0;
@@ -128,8 +153,13 @@
 }
 @keyframes cd-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @media (max-width: 768px) {
-  .cd-dispatch-grid { grid-template-columns: 1fr; }
-  .cd-dispatch-zone[data-zone="roster"] { max-height: 40vh; }
+  .cd-dispatch-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(320px, 1fr);
+    max-height: none;
+    min-height: 0;
+  }
+  .cd-dispatch-zone[data-zone="roster"] { max-height: 260px; }
 }
 
 .cd-dispatch-zone {
@@ -192,9 +222,12 @@
 /* ── Bottom strip (BOLOs + tones) ─────────────────── */
 .cd-dispatch-bottom {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
   gap: 0.75rem;
+  flex: 1;
+  min-height: 220px;
 }
+.cd-dispatch-bottom .cd-dispatch-zone { min-height: 0; }
 @media (max-width: 1024px) {
   .cd-dispatch-bottom { grid-template-columns: 1fr; }
 }
