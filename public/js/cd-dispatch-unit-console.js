@@ -22,11 +22,42 @@
   function esc(s) { return window.esc ? window.esc(s) : String(s == null ? '' : s).replace(/[&<>"']/g, function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function toast(m, t) { if (window.ddToast) window.ddToast(m, t); }
 
+  // Community admin check — mirrors the backend's userHasCommunityPermission.
+  // The backend accepts the edit if you're the owner OR are in a role that
+  // has `administrator` or `manage members` enabled. The `role.admin` bool
+  // on lastAccessedCommunity is a denormalized shortcut that isn't set for
+  // every admin, so we also walk communityData.roles the way the backend
+  // does — otherwise admins-via-role-permissions get incorrectly gated.
+  function isCommunityAdmin() {
+    var me = (cfg().dbUser && cfg().dbUser._id) || cfg().userId || '';
+    if (!me) return false;
+    var dbUser = (cfg().dbUser && cfg().dbUser.user) || {};
+    var lac = dbUser.lastAccessedCommunity || {};
+    if (lac.ownerID && lac.ownerID === me) return true;
+    if (lac.role && lac.role.admin === true) return true;
+    var community = cfg().communityData || {};
+    if (community.ownerID === me) return true;
+    var roles = Array.isArray(community.roles) ? community.roles : [];
+    for (var i = 0; i < roles.length; i++) {
+      var role = roles[i];
+      var members = Array.isArray(role.members) ? role.members : [];
+      if (members.indexOf(me) === -1) continue;
+      var perms = Array.isArray(role.permissions) ? role.permissions : [];
+      for (var j = 0; j < perms.length; j++) {
+        var p = perms[j] || {};
+        if (!p.enabled) continue;
+        if (p.name === 'administrator' || p.name === 'manage members') return true;
+      }
+    }
+    return false;
+  }
+
   var state = {
     userId: null,
     unit: null,
     tab: 'status',
     codeSearch: '',
+    callSearch: '',
     // If dispatch switches the unit to a different department from the Set
     // Status tab, we stash the target id here until a 10-code commit bundles
     // both changes into a single PUT. Null means "use the unit's current
@@ -39,6 +70,7 @@
     state.userId = userId;
     state.tab = tab || 'status';
     state.codeSearch = '';
+    state.callSearch = '';
     state.activeDeptOverride = null;
     state.unit = (typeof window.cdDispatchRosterGetUnit === 'function') ? window.cdDispatchRosterGetUnit(userId) : null;
     injectStyles();
@@ -73,6 +105,11 @@
       state.tab = $(this).data('tab');
       render();
     });
+    // Delegated because the identity block is re-rendered on each tab switch.
+    $ov.on('click', '.cd-unit-console-callsign-edit', function () {
+      if ($(this).attr('data-admin') === '1') openCallsignEditor();
+      else showCallsignPermissionModal();
+    });
     $(document).on('keydown.cdUnitConsole', function (e) { if (e.key === 'Escape') closeOverlay(); });
     $('body').append($ov);
     requestAnimationFrame(function () { $ov.addClass('is-open'); });
@@ -84,6 +121,267 @@
     $ov.removeClass('is-open');
     $(document).off('keydown.cdUnitConsole');
     setTimeout(function () { $ov.remove(); }, 200);
+  }
+
+  // ── Callsign editor (admin-only) ──────────────────
+
+  function showCallsignPermissionModal() {
+    if (!window.ddModal) { toast('Admin permission required to edit callsigns', 'info'); return; }
+    window.ddModal({
+      type: 'info',
+      icon: 'fa-lock',
+      title: 'Admin permission required',
+      message: 'Only community owners and administrators can edit another member\'s callsign. Ask an admin in your community to change this unit\'s callsign for you.',
+      buttons: [{ label: 'OK', class: 'dd-modal-btn-primary' }],
+    });
+  }
+
+  function isEligibleTemplate(tpl) {
+    var t = String(tpl || '').toLowerCase();
+    return t !== 'civilian' && t !== 'judicial' && t !== 'dispatch';
+  }
+
+  // Eligible memberships — field depts (not civilian/judicial/dispatch) the
+  // unit is actually in.
+  function eligibleMemberships(u) {
+    var all = (u && Array.isArray(u.departments)) ? u.departments : [];
+    return all.filter(function (d) { return isEligibleTemplate(d && d.template); });
+  }
+
+  // Public eligible depts the unit is NOT a member of. Used as a fallback
+  // tier when the unit has no eligible memberships — admins may still want
+  // to stage a dept-scoped callsign ahead of them joining.
+  function publicNonMemberDepartments(u) {
+    var memberIds = {};
+    var memberships = (u && Array.isArray(u.departments)) ? u.departments : [];
+    memberships.forEach(function (d) { if (d && d.id) memberIds[d.id] = true; });
+    var all = (typeof window.cdDispatchGetCommunityDepts === 'function') ? window.cdDispatchGetCommunityDepts() : [];
+    return all.filter(function (d) {
+      if (!d || memberIds[d._id]) return false;
+      if (d.approvalRequired) return false;
+      var tpl = (d.template && d.template.name) || '';
+      return isEligibleTemplate(tpl);
+    });
+  }
+
+  function openCallsignEditor() {
+    var u = state.unit;
+    if (!u) return;
+
+    // Fast path: active dept is an eligible membership → edit that directly.
+    var memberships = eligibleMemberships(u);
+    for (var i = 0; i < memberships.length; i++) {
+      if (memberships[i].id === u.activeDepartmentId) {
+        renderCallsignEditor(memberships[i].id, 'dept');
+        return;
+      }
+    }
+
+    // Otherwise figure out what tiers are available.
+    var publics = publicNonMemberDepartments(u);
+    var totalOptions = memberships.length + publics.length + 1; // +1 = global
+
+    // No depts anywhere that this user can be scoped to → skip the picker
+    // and jump straight to global callsign edit.
+    if (memberships.length === 0 && publics.length === 0) {
+      renderCallsignEditor(null, 'global');
+      return;
+    }
+    // Exactly one eligible membership + no publics → straight to that dept.
+    if (memberships.length === 1 && publics.length === 0) {
+      renderCallsignEditor(memberships[0].id, 'dept');
+      return;
+    }
+    // Multiple options — show the picker so the admin picks explicitly.
+    openCallsignScopePicker(memberships, publics);
+  }
+
+  function openCallsignScopePicker(memberships, publics) {
+    if (!window.ddModal) { toast('Modal helper missing', 'error'); return; }
+    var u = state.unit;
+    function renderOptionRow(d, tier) {
+      var tpl = String((d.template && d.template.name) || d.template || '').toLowerCase();
+      var dv = (typeof window.cdDispatchDeptVisual === 'function') ? window.cdDispatchDeptVisual(tpl) : { icon: 'fa-building', color: 'var(--cd-accent)' };
+      var id = d._id || d.id;
+      var existing = (u && u.departmentCallSigns && u.departmentCallSigns[id]) || '';
+      var tagHtml = existing
+        ? '<span class="cd-dnd-picker-tag cd-dnd-picker-tag-on">' + esc(existing) + '</span>'
+        : '<span class="cd-dnd-picker-tag">No override</span>';
+      return (
+        '<button type="button" class="cd-dnd-picker-item cd-callsign-scope-pick" data-scope="' + esc(tier) + '" data-dept-id="' + esc(id) + '" style="--cd-dept-color:' + esc(dv.color) + ';">' +
+          '<i class="fa ' + esc(dv.icon) + '" style="color:var(--cd-dept-color);"></i>' +
+          '<span class="cd-dnd-picker-title">' + esc(d.name || tpl) + '</span>' +
+          tagHtml +
+        '</button>'
+      );
+    }
+    var sections = '';
+    if (memberships.length) {
+      sections += (
+        '<div class="cd-callsign-scope-section">' +
+          '<div class="cd-callsign-scope-label">Their departments</div>' +
+          memberships.map(function (d) { return renderOptionRow(d, 'dept'); }).join('') +
+        '</div>'
+      );
+    }
+    if (publics.length) {
+      sections += (
+        '<div class="cd-callsign-scope-section">' +
+          '<div class="cd-callsign-scope-label">Public departments <span class="cd-callsign-scope-sublabel">(they aren\'t a member yet)</span></div>' +
+          publics.map(function (d) { return renderOptionRow(d, 'dept'); }).join('') +
+        '</div>'
+      );
+    }
+    // Global fallback always at the bottom.
+    var globalCurrent = (u && u.globalCallSign) || '';
+    sections += (
+      '<div class="cd-callsign-scope-section">' +
+        '<div class="cd-callsign-scope-label">Profile</div>' +
+        '<button type="button" class="cd-dnd-picker-item cd-callsign-scope-pick" data-scope="global">' +
+          '<i class="fa fa-id-badge" style="color:var(--cd-accent);"></i>' +
+          '<span class="cd-dnd-picker-title">Global callsign</span>' +
+          (globalCurrent
+            ? '<span class="cd-dnd-picker-tag cd-dnd-picker-tag-on">' + esc(globalCurrent) + '</span>'
+            : '<span class="cd-dnd-picker-tag">Unset</span>') +
+        '</button>' +
+      '</div>'
+    );
+
+    window.ddModal({
+      type: 'confirm',
+      icon: 'fa-id-card',
+      title: 'Pick a callsign scope',
+      message: 'Callsigns can be set per-department (takes precedence on that dept\'s dashboard) or on their global profile (fallback everywhere else).',
+      detail: '<div class="cd-callsign-scope-picker">' + sections + '</div>',
+      buttons: [{ label: 'Cancel', class: 'dd-modal-btn-secondary' }],
+    });
+    setTimeout(function () {
+      $('#dd-modal-detail').off('click.cdCallsign').on('click.cdCallsign', '.cd-callsign-scope-pick', function () {
+        var scope = $(this).data('scope');
+        var deptId = $(this).data('dept-id') || null;
+        if (typeof window.ddCloseModal === 'function') window.ddCloseModal();
+        setTimeout(function () { renderCallsignEditor(deptId, scope); }, 50);
+      });
+    }, 10);
+  }
+
+  // scope: 'dept' (deptId required) or 'global' (deptId ignored).
+  function renderCallsignEditor(deptId, scope) {
+    var u = state.unit;
+    var $row = $('#cd-unit-console-identity').find('.cd-unit-console-title-row');
+    if (!$row.length) return;
+    var original = $row.html();
+    var isGlobal = scope === 'global';
+    var current = '';
+    var scopeLabel = '';
+    if (isGlobal) {
+      current = (u && u.globalCallSign) || (u && u.callSign) || '';
+      scopeLabel = 'global callsign';
+    } else {
+      var perDept = (u && u.departmentCallSigns && u.departmentCallSigns[deptId]) || '';
+      current = perDept || u.callSign || '';
+      var depts = (u && u.departments) || [];
+      for (var i = 0; i < depts.length; i++) {
+        if (depts[i].id === deptId) { scopeLabel = depts[i].name || ''; break; }
+      }
+      if (!scopeLabel) {
+        var all = (typeof window.cdDispatchGetCommunityDepts === 'function') ? window.cdDispatchGetCommunityDepts() : [];
+        for (var j = 0; j < all.length; j++) {
+          if (all[j]._id === deptId) { scopeLabel = all[j].name || ''; break; }
+        }
+      }
+    }
+    $row.html(
+      '<form class="cd-unit-console-callsign-form" id="cd-unit-console-callsign-form">' +
+        '<input type="text" id="cd-unit-console-callsign-input" maxlength="10" autocomplete="off" placeholder="Callsign" value="' + esc(current) + '">' +
+        '<button type="submit" class="cd-unit-console-callsign-save" title="Save callsign"><i class="fa fa-check"></i></button>' +
+        '<button type="button" class="cd-unit-console-callsign-cancel" title="Cancel"><i class="fa fa-xmark"></i></button>' +
+        '<span class="cd-unit-console-callsign-hint">' +
+          'Max 10 chars · blank ' + (isGlobal ? 'clears global callsign' : 'clears override') +
+          (scopeLabel ? ' · editing <strong>' + esc(scopeLabel) + '</strong>' : '') +
+        '</span>' +
+      '</form>'
+    );
+    var $input = $('#cd-unit-console-callsign-input').focus().select();
+    function restore() { $row.html(original); }
+    $('#cd-unit-console-callsign-form').on('submit', function (e) {
+      e.preventDefault();
+      var value = String($input.val() || '').trim();
+      if (value.length > 10) { toast('Callsign must be 10 characters or fewer', 'error'); return; }
+      if (isGlobal) saveGlobalCallsign(value, restore);
+      else saveCallsign(deptId, value, restore);
+    });
+    $('.cd-unit-console-callsign-cancel').on('click', restore);
+    $input.on('keydown', function (e) { if (e.key === 'Escape') restore(); });
+  }
+
+  function saveCallsign(departmentId, callSign, restore) {
+    var communityId = cfg().communityId;
+    var me = (cfg().dbUser && cfg().dbUser._id) || cfg().userId || '';
+    if (!communityId || !state.userId) return;
+    $('.cd-unit-console-callsign-save,.cd-unit-console-callsign-cancel').prop('disabled', true);
+    $.ajax({
+      url: api() + '/api/v1/community/' + encodeURIComponent(communityId) + '/members/' + encodeURIComponent(state.userId) + '/department-callsigns',
+      method: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        departmentId: departmentId,
+        callSign: callSign,
+        requestingUserId: me,
+      }),
+    }).done(function () {
+      toast(callSign ? 'Callsign updated' : 'Callsign override cleared', 'success');
+      if (typeof window.cdDispatchRosterPatchUnit === 'function') {
+        window.cdDispatchRosterPatchUnit({
+          id: state.userId,
+          departmentCallSign: { departmentId: departmentId, callSign: callSign },
+        });
+      }
+      if (typeof window.cdDispatchRosterRefresh === 'function') {
+        window.cdDispatchRosterRefresh({ silent: true });
+      }
+      state.unit = (typeof window.cdDispatchRosterGetUnit === 'function') ? window.cdDispatchRosterGetUnit(state.userId) : state.unit;
+      render();
+    }).fail(function (xhr) {
+      var msg = 'Failed to update callsign';
+      if (xhr && xhr.status === 403) msg = 'Permission denied';
+      toast(msg, 'error');
+      console.error('[cd-dispatch-unit-console] callsign update failed', xhr && xhr.responseText);
+      if (restore) restore();
+    });
+  }
+
+  function saveGlobalCallsign(callSign, restore) {
+    if (!state.userId) return;
+    $('.cd-unit-console-callsign-save,.cd-unit-console-callsign-cancel').prop('disabled', true);
+    $.ajax({
+      url: api() + '/api/v1/user/' + encodeURIComponent(state.userId),
+      method: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify({ callSign: callSign }),
+    }).done(function () {
+      toast(callSign ? 'Global callsign updated' : 'Global callsign cleared', 'success');
+      // Patch roster: update globalCallSign and (if no per-dept override
+      // applies to active dept) the visible chip callsign. The
+      // globalCallSign branch below handles that when we refresh.
+      if (typeof window.cdDispatchRosterPatchUnit === 'function') {
+        window.cdDispatchRosterPatchUnit({
+          id: state.userId,
+          globalCallSign: callSign,
+        });
+      }
+      if (typeof window.cdDispatchRosterRefresh === 'function') {
+        window.cdDispatchRosterRefresh({ silent: true });
+      }
+      state.unit = (typeof window.cdDispatchRosterGetUnit === 'function') ? window.cdDispatchRosterGetUnit(state.userId) : state.unit;
+      render();
+    }).fail(function (xhr) {
+      var msg = 'Failed to update global callsign';
+      if (xhr && xhr.status === 403) msg = 'Permission denied';
+      toast(msg, 'error');
+      console.error('[cd-dispatch-unit-console] global callsign update failed', xhr && xhr.responseText);
+      if (restore) restore();
+    });
   }
 
   // ── Render ────────────────────────────────────────
@@ -98,12 +396,27 @@
       $identity.html('<h2 id="cd-unit-console-title" class="cd-unit-console-title">Unit</h2>');
     } else {
       var code = (u.tenCode && u.tenCode.code) || '';
+      var admin = isCommunityAdmin();
+      // Always show the pencil — the click handler either opens an inline
+      // editor (admin) or explains why it's disabled (non-admin). Keeps
+      // everyone aware the feature exists.
+      var editBtn = (
+        '<button type="button" class="cd-unit-console-callsign-edit' + (admin ? '' : ' is-gated') + '" ' +
+          'data-admin="' + (admin ? '1' : '0') + '" ' +
+          'title="' + (admin ? 'Edit callsign' : 'Admin permission required') + '" ' +
+          'aria-label="Edit callsign">' +
+          '<i class="fa fa-pencil"></i>' +
+        '</button>'
+      );
       $identity.html(
         '<div class="cd-unit-console-avatar" style="--cd-dept-color:' + esc(dv.color) + ';">' +
           '<i class="fa ' + esc(dv.icon) + '"></i>' +
         '</div>' +
-        '<div>' +
-          '<h2 id="cd-unit-console-title" class="cd-unit-console-title">' + esc(u.callSign || u.username || 'Unit') + '</h2>' +
+        '<div class="cd-unit-console-identity-main">' +
+          '<div class="cd-unit-console-title-row">' +
+            '<h2 id="cd-unit-console-title" class="cd-unit-console-title">' + esc(u.callSign || u.username || 'Unit') + '</h2>' +
+            editBtn +
+          '</div>' +
           '<div class="cd-unit-console-sub">' +
             '<span>' + esc(u.username) + '</span>' +
             (u.deptName ? '<span>·</span><span>' + esc(u.deptName) + '</span>' : '') +
@@ -175,13 +488,16 @@
   // moved to the new dept AND set to the chosen status in one operation.
   function deptSwitcherHtml(u) {
     if (!u) return '';
-    var depts = Array.isArray(u.departments) ? u.departments : [];
-    if (depts.length <= 1) {
-      // Nothing to switch to — skip the selector entirely.
-      var hint = depts.length === 1
-        ? 'Click a code to set this unit\'s status. The change broadcasts to every open dashboard in your community.'
-        : 'Click a code to set this unit\'s status.';
-      return '<p class="cd-unit-console-tab-hint">' + esc(hint) + '</p>';
+    var allDepts = Array.isArray(u.departments) ? u.departments : [];
+    // Civilian / judicial / dispatch don't participate in field dispatch —
+    // never surface them as assignable active departments even if the unit
+    // is a member.
+    var depts = allDepts.filter(function (d) {
+      var t = String((d && d.template) || '').toLowerCase();
+      return t !== 'civilian' && t !== 'judicial' && t !== 'dispatch';
+    });
+    if (depts.length === 0) {
+      return '<p class="cd-unit-console-tab-hint">' + esc('Click a code to set this unit\'s status.') + '</p>';
     }
 
     var currentId = state.activeDeptOverride || u.activeDepartmentId || (depts[0] && depts[0].id) || '';
@@ -199,9 +515,14 @@
       );
     }).join('');
 
-    var banner = state.activeDeptOverride
-      ? '<div class="cd-unit-console-dept-banner"><i class="fa fa-circle-info"></i> Click a 10-code below to move this unit to the selected department AND set their status in one step.</div>'
-      : '<p class="cd-unit-console-tab-hint">Set the unit\'s active department (optional), then pick a 10-code. A dept change is only committed when you choose a status.</p>';
+    var banner;
+    if (state.activeDeptOverride) {
+      banner = '<div class="cd-unit-console-dept-banner"><i class="fa fa-circle-info"></i> Click a 10-code below to move this unit to the selected department AND set their status in one step.</div>';
+    } else if (depts.length === 1) {
+      banner = '<p class="cd-unit-console-tab-hint">This unit is only in one eligible department. Click a 10-code to set their status.</p>';
+    } else {
+      banner = '<p class="cd-unit-console-tab-hint">Set the unit\'s active department (optional), then pick a 10-code. A dept change is only committed when you choose a status.</p>';
+    }
 
     return (
       '<section class="cd-unit-console-dept-section">' +
@@ -275,20 +596,19 @@
         var cid = codes[i]._id || codes[i].id;
         if (cid === tenCodeId) { matched = codes[i]; break; }
       }
-      if (matched && typeof window.cdDispatchRosterPatchUnit === 'function') {
-        window.cdDispatchRosterPatchUnit({
-          id: state.userId,
-          tenCode: { id: tenCodeId, code: matched.code, description: matched.description },
-        });
+      var patch = { id: state.userId };
+      if (matched) {
+        patch.tenCode = { id: tenCodeId, code: matched.code, description: matched.description };
       }
-      // If active department changed, refetch the whole roster so the chip
-      // picks up the new activeDepartmentId + all its derived visuals
-      // (icon, dept name, badge ring). Chip patch alone can't express that.
-      if (state.activeDeptOverride && typeof window.cdDispatchRosterRefresh === 'function') {
-        window.cdDispatchRosterRefresh({ silent: false });
+      if (state.activeDeptOverride) {
+        patch.activeDepartmentId = state.activeDeptOverride;
+        patch.activeDepartmentName = body.activeDepartmentName || '';
+      }
+      if (typeof window.cdDispatchRosterPatchUnit === 'function') {
+        window.cdDispatchRosterPatchUnit(patch);
       }
       state.activeDeptOverride = null;
-      // Refresh the console with the new active code highlighted
+      // Refresh the console with the freshly patched unit
       state.unit = (typeof window.cdDispatchRosterGetUnit === 'function') ? window.cdDispatchRosterGetUnit(state.userId) : state.unit;
       render();
     }).fail(function (xhr) {
@@ -314,6 +634,29 @@
       if (la !== lb) return la - lb;
       return (b.createdAtMs || 0) - (a.createdAtMs || 0);
     });
+    var total = calls.length;
+    var q = String(state.callSearch || '').toLowerCase();
+    if (q) {
+      calls = calls.filter(function (c) {
+        return ((c.title || '') + ' ' + (c.details || '') + ' ' + (c.location || '')).toLowerCase().indexOf(q) !== -1;
+      });
+    }
+    var searchBar = (
+      '<div class="cd-unit-console-code-search">' +
+        '<label class="cd-unit-console-search">' +
+          '<i class="fa fa-magnifying-glass"></i>' +
+          '<input type="search" id="cd-unit-console-call-search-input" placeholder="Search calls (title, details, location)" autocomplete="off" value="' + esc(state.callSearch) + '">' +
+        '</label>' +
+        '<span class="cd-unit-console-code-count">' + calls.length + (calls.length !== total ? ' / ' + total : '') + '</span>' +
+      '</div>'
+    );
+    if (!calls.length) {
+      return (
+        '<p class="cd-unit-console-tab-hint">Click a call to toggle assignment. Already-assigned calls unassign on click.</p>' +
+        searchBar +
+        '<div class="cd-unit-console-empty">No calls match "' + esc(state.callSearch) + '".</div>'
+      );
+    }
     var list = '<div class="cd-unit-console-call-list">' + calls.map(function (c) {
       var assigned = (c.assignedTo || []).indexOf(state.userId) !== -1;
       var laneColor = c.lane === 'p1' ? 'var(--cd-red)'
@@ -333,12 +676,14 @@
     }).join('') + '</div>';
     return (
       '<p class="cd-unit-console-tab-hint">Click a call to toggle assignment. Already-assigned calls unassign on click.</p>' +
+      searchBar +
       list
     );
   }
 
   function wireAssignTab() {
-    $('#cd-unit-console-body').off('click.cdUnitConsoleAssign').on('click.cdUnitConsoleAssign', '.cd-unit-console-call', function () {
+    var $body = $('#cd-unit-console-body').off('.cdUnitConsoleAssign');
+    $body.on('click.cdUnitConsoleAssign', '.cd-unit-console-call', function () {
       var callId = $(this).data('call-id');
       var assigned = $(this).attr('data-assigned') === '1';
       if (!callId || !state.userId) return;
@@ -349,6 +694,12 @@
       }
       // Re-render to reflect new state
       setTimeout(render, 100);
+    });
+    $body.on('input.cdUnitConsoleAssign', '#cd-unit-console-call-search-input', function () {
+      state.callSearch = String(this.value || '').trim();
+      render();
+      var el = document.getElementById('cd-unit-console-call-search-input');
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
     });
   }
 
@@ -364,6 +715,25 @@
       '#cd-unit-console-overlay.is-open .cd-unit-console-panel{opacity:1;transform:none;}',
       '.cd-unit-console-head{display:flex;align-items:center;justify-content:space-between;padding:0.875rem 1rem;border-bottom:1px solid var(--cd-glass-border);}',
       '.cd-unit-console-identity{display:flex;align-items:center;gap:0.75rem;min-width:0;flex:1;}',
+      '.cd-unit-console-identity-main{min-width:0;flex:1;}',
+      '.cd-unit-console-title-row{display:flex;align-items:center;gap:0.5rem;min-width:0;}',
+      '.cd-unit-console-callsign-edit{width:24px;height:24px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--cd-text-dim);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:0.6875rem;transition:all .15s;flex-shrink:0;}',
+      '.cd-unit-console-callsign-edit:hover{border-color:var(--cd-glass-border);background:rgba(255,255,255,0.04);color:var(--cd-accent);}',
+      '.cd-unit-console-callsign-edit.is-gated{color:var(--cd-text-dim);opacity:0.6;}',
+      '.cd-unit-console-callsign-edit.is-gated:hover{color:var(--cd-amber);border-color:color-mix(in srgb,var(--cd-amber) 35%,transparent);background:color-mix(in srgb,var(--cd-amber) 8%,transparent);}',
+      '.cd-unit-console-callsign-form{display:flex;align-items:center;gap:0.375rem;flex-wrap:wrap;}',
+      '.cd-unit-console-callsign-form input{padding:0.3125rem 0.5625rem;border-radius:6px;border:1px solid color-mix(in srgb,var(--cd-accent) 45%,transparent);background:rgba(56,189,248,0.06);color:var(--cd-text);font:700 0.9375rem/1.2 "JetBrains Mono",ui-monospace,monospace;letter-spacing:0.03em;width:120px;text-transform:uppercase;outline:none;}',
+      '.cd-unit-console-callsign-form input:focus{border-color:var(--cd-accent);background:rgba(56,189,248,0.1);}',
+      '.cd-unit-console-callsign-save,.cd-unit-console-callsign-cancel{width:26px;height:26px;border-radius:6px;border:1px solid var(--cd-glass-border);background:rgba(255,255,255,0.03);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:0.75rem;transition:all .15s;}',
+      '.cd-unit-console-callsign-save{color:#86efac;}',
+      '.cd-unit-console-callsign-save:hover{background:rgba(34,197,94,0.14);border-color:rgba(34,197,94,0.4);}',
+      '.cd-unit-console-callsign-cancel{color:var(--cd-text-dim);}',
+      '.cd-unit-console-callsign-cancel:hover{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.4);color:#fca5a5;}',
+      '.cd-unit-console-callsign-hint{font-size:0.625rem;color:var(--cd-text-dim);width:100%;letter-spacing:0.02em;}',
+      '.cd-callsign-scope-picker{display:flex;flex-direction:column;gap:0.75rem;max-height:54vh;overflow-y:auto;padding:0.25rem 0;}',
+      '.cd-callsign-scope-section{display:flex;flex-direction:column;gap:0.3125rem;}',
+      '.cd-callsign-scope-label{font:700 0.625rem/1 inherit;letter-spacing:0.12em;text-transform:uppercase;color:var(--cd-text-muted);padding:0 0.25rem;}',
+      '.cd-callsign-scope-sublabel{font-weight:500;text-transform:none;letter-spacing:0;color:var(--cd-text-dim);margin-left:0.375rem;}',
       '.cd-unit-console-avatar{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--cd-dept-color) 14%,transparent);border:1px solid color-mix(in srgb,var(--cd-dept-color) 30%,transparent);color:var(--cd-dept-color);font-size:1rem;flex-shrink:0;}',
       '.cd-unit-console-title{margin:0;font:700 1rem/1.2 inherit;letter-spacing:0.01em;color:var(--cd-text);}',
       '.cd-unit-console-sub{display:flex;flex-wrap:wrap;align-items:center;gap:0.375rem;font-size:0.75rem;color:var(--cd-text-dim);}',

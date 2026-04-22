@@ -69,12 +69,52 @@
     if (!patch || !patch.id) return;
     for (var i = 0; i < state.units.length; i++) {
       if (state.units[i].id === patch.id) {
+        var unit = state.units[i];
         // Merge allowed fields
         if (patch.tenCode !== undefined) {
-          state.units[i].tenCode = patch.tenCode;
-          state.units[i].tone = toneFor(patch.tenCode);
+          unit.tenCode = patch.tenCode;
+          unit.tone = toneFor(patch.tenCode);
         }
-        if (patch.resolvedCallSign) state.units[i].callSign = patch.resolvedCallSign;
+        if (patch.resolvedCallSign !== undefined) unit.callSign = patch.resolvedCallSign || unit.globalCallSign || '';
+        if (patch.globalCallSign !== undefined) {
+          unit.globalCallSign = patch.globalCallSign || '';
+          // Chip shows the active dept's override if set, else global. Only
+          // flip the visible callsign when no active-dept override exists.
+          var activeOverride = unit.departmentCallSigns && unit.activeDepartmentId
+            ? unit.departmentCallSigns[unit.activeDepartmentId]
+            : '';
+          if (!activeOverride) unit.callSign = unit.globalCallSign || '';
+        }
+        if (patch.departmentCallSign) {
+          unit.departmentCallSigns = unit.departmentCallSigns || {};
+          if (patch.departmentCallSign.callSign) {
+            unit.departmentCallSigns[patch.departmentCallSign.departmentId] = patch.departmentCallSign.callSign;
+          } else {
+            delete unit.departmentCallSigns[patch.departmentCallSign.departmentId];
+          }
+          // If the patched dept is the unit's active dept, its chip-visible
+          // callsign should follow the override (or fall back to global).
+          if (unit.activeDepartmentId === patch.departmentCallSign.departmentId) {
+            unit.callSign = patch.departmentCallSign.callSign || unit.globalCallSign || '';
+          }
+        }
+        // Active-department change — recompute every derived field so the
+        // chip, the console header, and the badge-row active ring all flip
+        // without waiting for the async roster refresh.
+        if (patch.activeDepartmentId !== undefined) {
+          unit.activeDepartmentId = patch.activeDepartmentId || '';
+          var matched = null;
+          var depts = Array.isArray(unit.departments) ? unit.departments : [];
+          for (var d = 0; d < depts.length; d++) {
+            if (depts[d].id === unit.activeDepartmentId) { matched = depts[d]; break; }
+          }
+          var newName = patch.activeDepartmentName || (matched ? matched.name : '');
+          var newTmpl = matched ? (matched.template || '') : '';
+          unit.activeDepartmentName = newName;
+          unit.deptName = newName;
+          unit.deptTemplate = newTmpl;
+          unit.deptKey = deptKey(newTmpl);
+        }
         render();
         return;
       }
@@ -152,13 +192,17 @@
         id: u.id,
         username: u.username || '',
         callSign: u.resolvedCallSign || u.globalCallSign || '',
+        globalCallSign: u.globalCallSign || '',
         tenCode: u.tenCode || null,
         tone: toneFor(u.tenCode),
         deptName: u.activeDepartmentName || (active ? active.name : ''),
         deptTemplate: tmpl,
         deptKey: deptKey(tmpl),
-        deptTemplates: deptTemplates, // [{template, key}] for badge row
-        departments: allDepts,        // raw list for future use
+        deptTemplates: deptTemplates,              // [{template, key}] for badge row
+        departments: allDepts,                     // raw list for future use
+        departmentCallSigns: u.departmentCallSigns || {},
+        activeDepartmentId: u.activeDepartmentId || (active ? active.id : ''),
+        activeDepartmentName: u.activeDepartmentName || (active ? active.name : ''),
         profilePicture: u.profilePicture || '',
       });
     }
@@ -269,16 +313,43 @@
     var code = (u.tenCode && u.tenCode.code) || '';
     var dv = deptVisual(u.deptTemplate);
     // Badges for every department template the user is a member of.
-    // Active template gets a highlighted ring.
+    // Active template always shown (highlighted); rest capped so many-dept
+    // users don't overflow the chip — overflow collapses to a +N pill with
+    // the hidden dept names in its tooltip.
+    // Only surface field templates (police / fire / ems). Civilian, judicial,
+    // and dispatch aren't meaningful on the chip since dispatch doesn't route
+    // calls to them.
+    var tmpls = (u.deptTemplates || []).filter(function (t) {
+      var k = String(t.key || '').toLowerCase();
+      return k === 'police' || k === 'fire' || k === 'ems';
+    });
+    // On a dedicated third line the chip can fit ~8 badges before the +N
+    // would push past the kebab. Cap at 6 to leave breathing room.
+    var BADGE_CAP = 6;
+    // Pin the active template first so it's always visible when we cap.
+    tmpls.sort(function (a, b) {
+      var aActive = a.key === u.deptKey ? 0 : 1;
+      var bActive = b.key === u.deptKey ? 0 : 1;
+      return aActive - bActive;
+    });
+    var visible = tmpls.slice(0, BADGE_CAP);
+    var hidden = tmpls.slice(BADGE_CAP);
     var deptBadges = '';
-    var tmpls = u.deptTemplates || [];
-    for (var i = 0; i < tmpls.length; i++) {
-      var tb = tmpls[i];
+    for (var i = 0; i < visible.length; i++) {
+      var tb = visible[i];
       var tv = deptVisual(tb.template);
       var isActive = tb.key === u.deptKey;
       deptBadges += (
         '<span class="cd-unit-chip-badge' + (isActive ? ' is-active' : '') + '" style="--cd-dept-color:' + esc(tv.color) + ';" title="' + esc(tv.label) + (isActive ? ' (active)' : '') + '" aria-label="' + esc(tv.label) + '">' +
           '<i class="fa ' + esc(tv.icon) + '"></i>' +
+        '</span>'
+      );
+    }
+    if (hidden.length) {
+      var hiddenLabels = hidden.map(function (h) { return deptVisual(h.template).label; }).join(', ');
+      deptBadges += (
+        '<span class="cd-unit-chip-badge cd-unit-chip-badge-more" title="Also in: ' + esc(hiddenLabels) + '" aria-label="Also in ' + esc(hiddenLabels) + '">' +
+          '+' + hidden.length +
         '</span>'
       );
     }
@@ -296,8 +367,8 @@
           '<div class="cd-unit-chip-sub">' +
             '<span class="cd-unit-chip-name">' + esc(u.username) + '</span>' +
             (u.deptName ? '<span class="cd-unit-chip-dept">' + esc(u.deptName) + '</span>' : '') +
-            (deptBadges ? '<span class="cd-unit-chip-badges">' + deptBadges + '</span>' : '') +
           '</div>' +
+          (deptBadges ? '<div class="cd-unit-chip-badges">' + deptBadges + '</div>' : '') +
         '</div>' +
         '<button type="button" class="cd-unit-chip-menu" data-user-id="' + esc(u.id) + '" aria-label="Unit actions for ' + esc(u.callSign || u.username) + '" title="Unit actions…">' +
           '<i class="fa fa-ellipsis-vertical"></i>' +
@@ -411,12 +482,14 @@
       '.cd-unit-chip-dot[data-tone="other"]{background:var(--cd-accent);box-shadow:0 0 0 3px rgba(56,189,248,0.1);}',
       '.cd-unit-chip-callsign{font:600 0.8125rem/1.1 inherit;color:var(--cd-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
       '.cd-unit-chip-code{margin-left:auto;padding:0.0625rem 0.375rem;border-radius:4px;background:rgba(255,255,255,0.04);border:1px solid var(--cd-glass-border);font:600 0.625rem/1.3 "JetBrains Mono",ui-monospace,monospace;color:var(--cd-text-muted);letter-spacing:0.04em;}',
-      '.cd-unit-chip-sub{display:flex;align-items:center;gap:0.375rem;font-size:0.6875rem;color:var(--cd-text-dim);min-width:0;}',
-      '.cd-unit-chip-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}',
-      '.cd-unit-chip-dept{padding:0.0625rem 0.375rem;border-radius:4px;background:rgba(255,255,255,0.02);color:var(--cd-text-muted);white-space:nowrap;}',
-      '.cd-unit-chip-badges{display:inline-flex;gap:0.1875rem;align-items:center;}',
+      '.cd-unit-chip-sub{display:flex;align-items:center;gap:0.375rem;font-size:0.6875rem;color:var(--cd-text-dim);min-width:0;overflow:hidden;}',
+      '.cd-unit-chip-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto;}',
+      '.cd-unit-chip-dept{padding:0.0625rem 0.375rem;border-radius:4px;background:rgba(255,255,255,0.02);color:var(--cd-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto;max-width:10rem;}',
+      '.cd-unit-chip-badges{margin-top:0.25rem;display:flex;gap:0.1875rem;align-items:center;flex-wrap:nowrap;overflow:hidden;min-width:0;}',
       '.cd-unit-chip-badge{width:16px;height:16px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--cd-dept-color) 10%,transparent);border:1px solid color-mix(in srgb,var(--cd-dept-color) 24%,transparent);color:var(--cd-dept-color);font-size:0.5625rem;opacity:0.75;}',
       '.cd-unit-chip-badge.is-active{opacity:1;border-color:color-mix(in srgb,var(--cd-dept-color) 48%,transparent);background:color-mix(in srgb,var(--cd-dept-color) 18%,transparent);}',
+      '.cd-unit-chip-badge.cd-unit-chip-badge-more{width:auto;min-width:18px;padding:0 0.3125rem;font:700 0.5625rem/1.15 "JetBrains Mono",ui-monospace,monospace;background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.12);color:var(--cd-text-muted);opacity:1;letter-spacing:0.02em;}',
+      '.cd-unit-chip-badge.cd-unit-chip-badge-more:hover{background:rgba(255,255,255,0.09);color:var(--cd-text);}',
       '.cd-unit-chip-menu{flex-shrink:0;width:24px;height:24px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--cd-text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}',
       '.cd-unit-chip-menu:hover,.cd-unit-chip-menu:focus-visible{border-color:var(--cd-glass-border);background:rgba(255,255,255,0.04);color:var(--cd-text);outline:none;}',
       '.cd-unit-unassign-drop{margin-top:0.625rem;padding:0.625rem;border:1px dashed var(--cd-glass-border);border-radius:10px;color:var(--cd-text-dim);font-size:0.75rem;display:flex;align-items:center;justify-content:center;gap:0.5rem;transition:all .15s;}',

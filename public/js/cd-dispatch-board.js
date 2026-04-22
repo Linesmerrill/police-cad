@@ -60,8 +60,11 @@
     if (!c || !c.id) return;
     state.calls[c.id] = c;
     renderLanes();
-    if (state.selectedCallId === c.id && typeof window.cdDispatchDetailSelect === 'function') {
-      window.cdDispatchDetailSelect(c.id);
+    // If the detail pane is open on this call, patch its state from the
+    // payload we already have — avoid a refetch that can race the PUT
+    // that triggered this upsert in the first place.
+    if (state.selectedCallId === c.id && typeof window.cdDispatchDetailPatchAssigned === 'function') {
+      window.cdDispatchDetailPatchAssigned(c.id, c.assignedTo || []);
     }
   };
 
@@ -174,28 +177,44 @@
     };
   }
 
+  // Go's BSON driver decodes []interface{} into primitive.D (ordered
+  // pairs) which JSON-serializes as `[{"Key":"priority","Value":"2"},...]`
+  // instead of `{priority:"2"}`. Normalize both shapes into a plain map
+  // so priority detection survives the roundtrip.
+  function toPlainObject(v) {
+    if (v == null) return null;
+    if (typeof v === 'string') return { label: v };
+    if (Array.isArray(v)) {
+      var out = {};
+      for (var i = 0; i < v.length; i++) {
+        var kv = v[i];
+        if (kv && typeof kv === 'object' && 'Key' in kv) out[kv.Key] = kv.Value;
+      }
+      return Object.keys(out).length ? out : null;
+    }
+    if (typeof v === 'object') return v;
+    return null;
+  }
+
   function derivePriority(classifier) {
     if (!classifier || !classifier.length) return null;
-    var first = classifier[0];
+    var first = toPlainObject(classifier[0]);
     if (first == null) return null;
-    if (typeof first === 'object') {
-      if (first.priority != null) return first.priority;
-      if (first.level != null) return first.level;
-      // fall through to string
-      if (first.code) return first.code;
-      if (first.name) return first.name;
-    }
-    return first;
+    if (first.priority != null) return first.priority;
+    if (first.level != null) return first.level;
+    if (first.code) return first.code;
+    if (first.name) return first.name;
+    if (first.label) return first.label;
+    return null;
   }
 
   function classifierLabel(classifier) {
     if (!classifier || !classifier.length) return '';
-    var first = classifier[0];
-    if (typeof first === 'string') return first;
-    if (typeof first === 'object' && first) {
-      return first.label || first.name || first.description || first.code || '';
-    }
-    return '';
+    var entry = classifier[0];
+    if (typeof entry === 'string') return entry;
+    var first = toPlainObject(entry);
+    if (!first) return '';
+    return first.label || first.name || first.description || first.code || '';
   }
 
   function laneKey(priority) {

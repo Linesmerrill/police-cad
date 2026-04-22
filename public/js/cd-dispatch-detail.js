@@ -40,6 +40,9 @@
     state.callId = callId;
     state.loading = true;
     render();
+    // Desktop: expand the detail column by flipping a class on the grid.
+    // Mobile/tablet: keep the existing slide-over behaviour.
+    $('.cd-dispatch-grid').addClass('has-selection');
     openDrawerIfMobile();
 
     $.ajax({
@@ -65,23 +68,49 @@
     state.callId = null;
     state.call = null;
     renderEmpty();
+    // Collapse the detail column so the board reclaims the width.
+    $('.cd-dispatch-grid').removeClass('has-selection');
     closeDrawer();
   };
 
+  // Optimistic local patch — used by DnD so the drawer reflects an
+  // assign/unassign without racing the refetch against the PUT write.
+  window.cdDispatchDetailPatchAssigned = function (callId, assignedTo) {
+    if (!callId || state.callId !== callId || !state.call) return;
+    state.call.assignedTo = Array.isArray(assignedTo) ? assignedTo.slice() : [];
+    render();
+  };
+
+  window.cdDispatchDetailPatchDepartments = function (callId, departments) {
+    if (!callId || state.callId !== callId || !state.call) return;
+    state.call.departments = Array.isArray(departments) ? departments.slice() : [];
+    render();
+  };
+
   // Shared pill renderer — also exposed on window for other modules.
+  // When the user id doesn't resolve to a roster unit (dispatcher assigned
+  // to their own call, former member, etc.) we show a dim "Unknown unit"
+  // pill with a user-slash icon so dispatch can see something needs
+  // cleanup, instead of a vague question-mark blob.
   window.cdRenderAssignedPill = function (userId, opts) {
     opts = opts || {};
     var unit = (typeof window.cdDispatchRosterGetUnit === 'function') ? window.cdDispatchRosterGetUnit(userId) : null;
-    var dv = (typeof window.cdDispatchDeptVisual === 'function')
-      ? window.cdDispatchDeptVisual(unit ? unit.deptTemplate : '')
-      : { icon: 'fa-user', color: 'var(--cd-accent)' };
-    var label = unit ? (unit.callSign || unit.username || '—') : '…';
+    var isMissing = !unit;
+    var dv = isMissing
+      ? { icon: 'fa-user-slash', color: '#64748b' }
+      : (typeof window.cdDispatchDeptVisual === 'function'
+          ? window.cdDispatchDeptVisual(unit.deptTemplate)
+          : { icon: 'fa-user', color: 'var(--cd-accent)' });
+    var label = unit ? (unit.callSign || unit.username || '—') : 'Unknown unit';
     var tone  = unit ? (unit.tone || 'other') : 'other';
+    var titleAttr = isMissing
+      ? 'This user isn\'t in the current roster (former member or dispatcher)'
+      : label;
     var removeBtn = opts.removable
       ? '<button type="button" class="cd-detail-pill-remove" data-user-id="' + esc(userId) + '" aria-label="Unassign ' + esc(label) + '" title="Unassign"><i class="fa fa-xmark"></i></button>'
       : '';
     return (
-      '<span class="cd-assigned-pill cd-assigned-pill-lg" data-uid="' + esc(userId) + '" data-tone="' + esc(tone) + '" style="--cd-dept-color:' + esc(dv.color) + ';" title="' + esc(label) + '">' +
+      '<span class="cd-assigned-pill cd-assigned-pill-lg' + (isMissing ? ' is-missing' : '') + '" data-uid="' + esc(userId) + '" data-tone="' + esc(tone) + '" style="--cd-dept-color:' + esc(dv.color) + ';" title="' + esc(titleAttr) + '">' +
         '<i class="fa ' + esc(dv.icon) + '" aria-hidden="true"></i>' +
         '<span class="cd-assigned-pill-label">' + esc(label) + '</span>' +
         removeBtn +
@@ -130,13 +159,25 @@
     var priority = null;
     var classifier = c.classifier || [];
     if (classifier.length) {
-      var first = classifier[0];
-      if (typeof first === 'string') {
-        classifierLabel = first;
-        var m = first.match(/p\s*(\d)/i); if (m) priority = m[1];
-      } else if (first && typeof first === 'object') {
-        classifierLabel = first.label || first.name || first.description || first.code || '';
-        if (first.priority != null) priority = String(first.priority);
+      var entry = classifier[0];
+      if (typeof entry === 'string') {
+        classifierLabel = entry;
+        var m = entry.match(/p\s*(\d)/i); if (m) priority = m[1];
+      } else {
+        // Normalize — server BSON roundtrip can return primitive.D shape
+        // `[{Key:"priority",Value:"2"}]` instead of `{priority:"2"}`.
+        var first = entry;
+        if (Array.isArray(entry)) {
+          first = {};
+          for (var k = 0; k < entry.length; k++) {
+            var kv = entry[k];
+            if (kv && typeof kv === 'object' && 'Key' in kv) first[kv.Key] = kv.Value;
+          }
+        }
+        if (first && typeof first === 'object') {
+          classifierLabel = first.label || first.name || first.description || first.code || '';
+          if (first.priority != null) priority = String(first.priority);
+        }
       }
     }
     // 911 calls default to P1 if no priority was set. Matches the board's
@@ -183,6 +224,9 @@
         // Body
         (c.details ? '<section class="cd-detail-section"><h3>Details</h3><p class="cd-detail-body-text">' + esc(c.details) + '</p></section>' : '') +
 
+        // Routed Departments
+        renderDepartmentsSection(c) +
+
         // Assigned
         '<section class="cd-detail-section">' +
           '<h3>Assigned Units <span class="cd-detail-counter">' + assignedTo.length + '</span></h3>' +
@@ -210,6 +254,45 @@
         '</section>' +
 
       '</div>'
+    );
+  }
+
+  // Renders the "Routed Departments" section. Reads from the shared
+  // community-departments cache so each id on the call can be shown as a
+  // labelled pill rather than an opaque ObjectId. If the cache hasn't
+  // loaded yet, shows ids as placeholders; we also subscribe to the
+  // cdDispatch:communityDeptsLoaded event below so the drawer re-renders
+  // once the fetch returns.
+  function renderDepartmentsSection(c) {
+    var ids = Array.isArray(c && c.departments) ? c.departments : [];
+    if (!ids.length) {
+      return (
+        '<section class="cd-detail-section">' +
+          '<h3>Departments <span class="cd-detail-counter">0</span></h3>' +
+          '<div class="cd-detail-empty-inline">Not routed — call is community-wide.</div>' +
+        '</section>'
+      );
+    }
+    var all = (typeof window.cdDispatchGetCommunityDepts === 'function') ? window.cdDispatchGetCommunityDepts() : [];
+    var byId = {};
+    all.forEach(function (d) { byId[d._id] = d; });
+    var pillsHtml = ids.map(function (did) {
+      var d = byId[did];
+      var tpl = d && d.template && d.template.name ? String(d.template.name).toLowerCase() : '';
+      var dv = (typeof window.cdDispatchDeptVisual === 'function') ? window.cdDispatchDeptVisual(tpl) : { icon: 'fa-building', color: 'var(--cd-accent)' };
+      var label = d ? (d.name || '—') : '…';
+      return (
+        '<span class="cd-assigned-pill cd-detail-dept-pill" style="--cd-dept-color:' + esc(dv.color) + ';" title="' + esc(label) + '">' +
+          '<i class="fa ' + esc(dv.icon) + '" aria-hidden="true"></i>' +
+          '<span class="cd-assigned-pill-label">' + esc(label) + '</span>' +
+        '</span>'
+      );
+    }).join('');
+    return (
+      '<section class="cd-detail-section">' +
+        '<h3>Departments <span class="cd-detail-counter">' + ids.length + '</span></h3>' +
+        '<div class="cd-detail-dept-row">' + pillsHtml + '</div>' +
+      '</section>'
     );
   }
 
@@ -248,6 +331,11 @@
   function wireEvents() {
     $(document)
       .off('.cdDispatchDetail')
+      .on('cdDispatch:communityDeptsLoaded.cdDispatchDetail', function () {
+        // Re-render so dept pills pick up their labels now that the cache
+        // is populated. No-op when the drawer is closed.
+        if (state.callId) render();
+      })
       .on('click.cdDispatchDetail', '#cd-detail-close', function () {
         window.cdDispatchDetailClear();
         if (typeof window.cdDispatchBoardSelectCall === 'function') window.cdDispatchBoardSelectCall(null);
@@ -380,38 +468,27 @@
   }
 
   function unassignUnit(userId) {
-    if (!state.call) return;
-    var current = (state.call.assignedTo || []).slice();
-    var next = current.filter(function (u) { return u !== userId; });
-    if (next.length === current.length) return;
-    // Optimistic
-    state.call.assignedTo = next;
-    render();
-    $.ajax({
-      url: api() + '/api/v1/call/' + encodeURIComponent(state.callId),
-      method: 'PUT',
-      contentType: 'application/json',
-      data: JSON.stringify({ assignedTo: next }),
-    }).fail(function (xhr) {
-      toast('Failed to unassign', 'error');
-      console.error('[cd-dispatch-detail] unassign failed', xhr && xhr.responseText);
-      // Roll back
-      state.call.assignedTo = current;
-      render();
-    });
+    if (!state.call || !state.callId) return;
+    // Delegate to the shared unassign flow so the board card, the detail
+    // drawer, and the server all go through a single code path — prevents
+    // the detail/board from drifting out of sync.
+    if (typeof window.cdDispatchUnassign === 'function') {
+      window.cdDispatchUnassign(userId, state.callId);
+    }
   }
 
   function closeCall(reopen) {
     if (!state.callId) return;
+    var callId = state.callId;
     $.ajax({
-      url: api() + '/api/v1/call/' + encodeURIComponent(state.callId),
+      url: api() + '/api/v1/call/' + encodeURIComponent(callId),
       method: 'PUT',
       contentType: 'application/json',
       data: JSON.stringify({ status: !!reopen }),
     }).done(function () {
       toast(reopen ? 'Call reopened' : 'Call closed', 'success');
       if (!reopen && typeof window.cdDispatchBoardRemoveCall === 'function') {
-        window.cdDispatchBoardRemoveCall(state.callId);
+        window.cdDispatchBoardRemoveCall(callId);
       }
       reload();
     }).fail(function (xhr) {
@@ -501,8 +578,10 @@
       '.cd-detail-body-text{margin:0;font-size:0.8125rem;line-height:1.5;color:var(--cd-text);white-space:pre-wrap;}',
       '.cd-detail-pill-zone{display:flex;flex-wrap:wrap;gap:0.375rem;min-height:32px;padding:0.375rem;border-radius:8px;border:1px dashed var(--cd-glass-border);transition:all .15s;}',
       '.cd-detail-pill-zone.drop-target{border-color:rgba(56,189,248,0.5);background:rgba(56,189,248,0.06);}',
+      '.cd-detail-dept-row{display:flex;flex-wrap:wrap;gap:0.375rem;}',
       '.cd-detail-empty-inline{font-size:0.75rem;color:var(--cd-text-dim);font-style:italic;padding:0.25rem;}',
       '.cd-assigned-pill-lg{padding:0.25rem 0.5625rem;font-size:0.75rem;}',
+      '.cd-assigned-pill.is-missing{opacity:0.55;border-style:dashed;font-style:italic;}',
       '.cd-detail-pill-remove{margin-left:0.25rem;width:16px;height:16px;border-radius:4px;border:0;background:transparent;color:currentColor;opacity:0.5;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;}',
       '.cd-detail-pill-remove:hover{opacity:1;background:rgba(239,68,68,0.2);color:#fca5a5;}',
       '.cd-detail-note-form{display:flex;gap:0.375rem;align-items:flex-start;}',

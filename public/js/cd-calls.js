@@ -22,6 +22,10 @@
   function esc(s) { return window.esc ? window.esc(s) : String(s || '').replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function toast(m, t) { if (window.ddToast) window.ddToast(m, t); }
   function apiUrl() { return cfg().API_URL || ''; }
+  // Dispatchers don't take calls themselves — they assign units to them.
+  // This flag drops the "My Calls" tab + self-assign buttons and surfaces
+  // the dispatch assign/edit menu instead.
+  function isDispatch() { return (cfg().currentTemplateName || '').toLowerCase() === 'dispatch'; }
 
   /* ───────────────────────────────────────────
      Relative Time Helper
@@ -56,7 +60,8 @@
     page: 1,
     tab: 'department', // 'mine' | 'department' | 'all'
     loading: false,
-    expanded: {}       // call id -> boolean
+    expanded: {},      // call id -> boolean
+    search: ''         // client-side filter on the current page
   };
 
   var refreshTimer = null;
@@ -118,6 +123,10 @@
       '.cd-call-title{font-size:0.9375rem;font-weight:600;color:#f1f5f9 !important;line-height:1.3;display:block !important;visibility:visible !important;opacity:1 !important;}' +
       '.cd-call-911-badge{padding:0.125rem 0.5rem;border-radius:999px;font-size:0.5625rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);flex-shrink:0;}' +
       '.cd-call-assigned-badge{padding:0.125rem 0.5rem;border-radius:999px;font-size:0.5625rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;background:rgba(56,189,248,0.12);color:var(--cd-accent);border:1px solid rgba(56,189,248,0.2);flex-shrink:0;}' +
+      '.cd-call-closed-badge{padding:0.125rem 0.5rem;border-radius:999px;font-size:0.5625rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;background:rgba(148,163,184,0.12);color:var(--cd-text-muted);border:1px solid rgba(148,163,184,0.2);flex-shrink:0;}' +
+      '.cd-call-item.cd-call-closed::before{background:var(--cd-text-dim);}' +
+      '.cd-call-item.cd-call-closed .cd-call-status-dot{background:var(--cd-text-dim);box-shadow:none;}' +
+      '.cd-call-item.cd-call-closed .cd-call-title{color:var(--cd-text-muted)!important;}' +
       '.cd-call-desc{font-size:0.8125rem;color:#94a3b8 !important;margin-top:0.125rem;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}' +
       '.cd-call-meta{display:flex;align-items:center;gap:0.875rem;margin-top:0.5rem;font-size:0.6875rem;color:#64748b !important;flex-wrap:wrap;}' +
       '.cd-call-meta span{display:inline-flex;align-items:center;gap:0.25rem;}' +
@@ -133,9 +142,32 @@
       '.cd-call-detail-section:first-child{margin-top:0;}' +
       '.cd-call-detail-label{font-size:0.625rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.375rem;}' +
       '.cd-call-detail-text{font-size:0.8125rem;color:#e2e8f0;line-height:1.6;white-space:pre-wrap;word-break:break-word;}' +
+      '.cd-call-priority-pill{display:inline-flex;align-items:center;gap:0.3125rem;padding:0.125rem 0.4375rem;border-radius:4px;font:700 0.625rem/1.3 "JetBrains Mono",ui-monospace,monospace;letter-spacing:0.06em;color:var(--cd-pri);background:color-mix(in srgb,var(--cd-pri) 14%,transparent);border:1px solid color-mix(in srgb,var(--cd-pri) 32%,transparent);}' +
+      '.cd-call-priority-pip{width:6px;height:6px;border-radius:999px;background:var(--cd-pri);box-shadow:0 0 0 2px color-mix(in srgb,var(--cd-pri) 20%,transparent);}' +
+      '.cd-call-search{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;margin-bottom:0.625rem;border-radius:8px;background:rgba(15,23,42,0.5);border:1px solid var(--cd-glass-border);transition:border-color .15s;}' +
+      '.cd-call-search:focus-within{border-color:rgba(56,189,248,0.4);}' +
+      '.cd-call-search i{color:#64748b;font-size:0.75rem;}' +
+      '.cd-call-search input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:#e2e8f0;font-family:inherit;font-size:0.8125rem;}' +
+      '.cd-call-search input::placeholder{color:#64748b;}' +
+      '.cd-call-search-count{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:0.6875rem;color:#64748b;letter-spacing:0.04em;}' +
       '.cd-call-notes-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0.375rem;}' +
       '.cd-call-note-item{padding:0.5rem 0.75rem;background:rgba(0,0,0,0.2);border:1px solid var(--cd-glass-border);border-radius:6px;font-size:0.75rem;color:#cbd5e1;line-height:1.5;}' +
-      '.cd-call-note-meta{font-size:0.625rem;color:#475569;margin-top:0.25rem;}' +
+      '.cd-call-note-body{white-space:pre-wrap;word-wrap:break-word;}' +
+      '.cd-call-note-meta-row{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-top:0.25rem;}' +
+      '.cd-call-note-meta{font-size:0.625rem;color:#475569;}' +
+      '.cd-call-note-actions{display:inline-flex;gap:0.25rem;opacity:0.6;transition:opacity .15s;}' +
+      '.cd-call-note-item:hover .cd-call-note-actions{opacity:1;}' +
+      '.cd-call-note-action{width:22px;height:22px;border-radius:5px;border:1px solid transparent;background:transparent;color:#64748b;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:0.625rem;transition:all .12s;padding:0;}' +
+      '.cd-call-note-action:hover{border-color:var(--cd-glass-border);background:rgba(255,255,255,0.04);color:var(--cd-accent);}' +
+      '.cd-call-note-action-danger:hover{color:#fca5a5;border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);}' +
+      '.cd-call-note-edit{display:flex;flex-direction:column;gap:0.375rem;}' +
+      '.cd-call-note-edit textarea{background:rgba(0,0,0,0.3);border:1px solid rgba(56,189,248,0.35);border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.75rem;line-height:1.5;padding:0.4375rem 0.5625rem;resize:vertical;min-height:60px;outline:none;}' +
+      '.cd-call-note-edit textarea:focus{border-color:var(--cd-accent);}' +
+      '.cd-call-note-edit-actions{display:flex;gap:0.25rem;justify-content:flex-end;}' +
+      '.cd-call-note-edit-btn{padding:0.25rem 0.625rem;border-radius:5px;border:1px solid var(--cd-glass-border);background:rgba(255,255,255,0.03);color:#94a3b8;cursor:pointer;font-family:inherit;font-size:0.6875rem;font-weight:600;display:inline-flex;align-items:center;gap:0.25rem;}' +
+      '.cd-call-note-edit-btn-save{color:#86efac;border-color:rgba(34,197,94,0.35);background:rgba(34,197,94,0.08);}' +
+      '.cd-call-note-edit-btn-save:hover{background:rgba(34,197,94,0.16);}' +
+      '.cd-call-note-edit-btn-cancel:hover{border-color:var(--cd-glass-border);color:#e2e8f0;}' +
       '.cd-call-officers{display:flex;flex-wrap:wrap;gap:0.375rem;}' +
       '.cd-call-officer-chip{padding:0.1875rem 0.5rem;border-radius:999px;background:rgba(255,255,255,0.04);border:1px solid var(--cd-glass-border);font-size:0.6875rem;color:#94a3b8;}' +
 
@@ -181,10 +213,13 @@
 
   function buildUrl(tab, page) {
     var base = apiUrl() + '/api/v2/calls/community/' + encodeURIComponent(cfg().communityId);
-    var params = ['status=true', 'limit=' + PAGE_SIZE, 'page=' + page];
+    // Completed tab lists closed calls community-wide so dispatch can
+    // reopen or delete them; all other tabs show open calls only.
+    var statusParam = tab === 'completed' ? 'status=false' : 'status=true';
+    var params = [statusParam, 'limit=' + PAGE_SIZE, 'page=' + page];
 
-    // Department tab filters by departmentId; "all" omits it; "mine" also uses departmentId
-    // but we filter client-side for assigned calls
+    // Department tab filters by departmentId; "all" / "completed" omit it;
+    // "mine" also uses departmentId but we filter client-side for assigned calls.
     if (tab === 'department' || tab === 'mine') {
       var deptId = cfg().departmentId;
       if (deptId) params.push('departmentId=' + encodeURIComponent(deptId));
@@ -264,12 +299,18 @@
     var allUrl = apiUrl() + '/api/v2/calls/community/' + encodeURIComponent(communityId) +
       '?status=true&limit=1&page=1';
 
-    // "My Calls" count — need to fetch a larger set to filter client-side
-    var myUrl = apiUrl() + '/api/v2/calls/community/' + encodeURIComponent(communityId) +
+    // Completed count — community-wide closed calls.
+    var completedUrl = apiUrl() + '/api/v2/calls/community/' + encodeURIComponent(communityId) +
+      '?status=false&limit=1&page=1';
+
+    // "My Calls" count — dispatchers don't see this tab, so skip the
+    // extra 100-item fetch we'd otherwise use to filter by assigneeId.
+    var dispatchMode = isDispatch();
+    var myUrl = dispatchMode ? null : apiUrl() + '/api/v2/calls/community/' + encodeURIComponent(communityId) +
       '?status=true&limit=100&page=1' + (deptId ? '&departmentId=' + encodeURIComponent(deptId) : '');
 
     var finished = 0;
-    var total = 3;
+    var total = dispatchMode ? 3 : 4;
 
     function done() {
       finished++;
@@ -289,19 +330,27 @@
     });
 
     $.ajax({
-      url: myUrl, method: 'GET',
-      success: function (r) {
-        var items = r.data || [];
-        var count = 0;
-        for (var i = 0; i < items.length; i++) {
-          var call = items[i].call || items[i];
-          if ((call.assignedTo || []).indexOf(userId) !== -1) count++;
-        }
-        updateTabCount('mine', count);
-        done();
-      },
+      url: completedUrl, method: 'GET',
+      success: function (r) { updateTabCount('completed', r.totalCount || 0); done(); },
       error: done
     });
+
+    if (!dispatchMode) {
+      $.ajax({
+        url: myUrl, method: 'GET',
+        success: function (r) {
+          var items = r.data || [];
+          var count = 0;
+          for (var i = 0; i < items.length; i++) {
+            var call = items[i].call || items[i];
+            if ((call.assignedTo || []).indexOf(userId) !== -1) count++;
+          }
+          updateTabCount('mine', count);
+          done();
+        },
+        error: done
+      });
+    }
   }
 
   function updateTabCount(tab, count) {
@@ -312,6 +361,38 @@
   /* ───────────────────────────────────────────
      Rendering — Call Item
      ─────────────────────────────────────────── */
+
+  // Server BSON roundtrip can return the `classifier[0]` entry as an
+  // ordered primitive.D shape `[{Key:"priority",Value:"2"}]` instead of
+  // `{priority:"2"}`. Flatten both shapes to a plain object so we read
+  // the priority consistently.
+  function flattenClassifierEntry(entry) {
+    if (entry == null) return null;
+    if (typeof entry === 'string') return { label: entry };
+    if (Array.isArray(entry)) {
+      var out = {};
+      for (var i = 0; i < entry.length; i++) {
+        var kv = entry[i];
+        if (kv && typeof kv === 'object' && 'Key' in kv) out[kv.Key] = kv.Value;
+      }
+      return Object.keys(out).length ? out : null;
+    }
+    if (typeof entry === 'object') return entry;
+    return null;
+  }
+
+  function derivePriority(c) {
+    var classifier = c && c.classifier;
+    if (classifier && classifier.length) {
+      var first = flattenClassifierEntry(classifier[0]);
+      if (first && first.priority != null) return String(first.priority);
+      if (first && first.label) {
+        var m = String(first.label).match(/p\s*(\d)/i);
+        if (m) return m[1];
+      }
+    }
+    return null;
+  }
 
   function renderCallItem(item) {
     var c = item.call || item;
@@ -326,9 +407,21 @@
     var userId = cfg().userId;
     var isAssigned = assigned.indexOf(userId) !== -1;
     var isExpanded = state.expanded[id] || false;
+    // Priority — mirrors the board's derivation so the focused Calls
+    // view and the dispatch bridge stay consistent. 911 calls default
+    // to P1 when no explicit priority was set.
+    var priority = derivePriority(c);
+    if (priority == null && is911) priority = '1';
+    var priorityMeta = {
+      '1': { label: 'P1',  accent: '#ef4444' },
+      '2': { label: 'P2',  accent: '#f59e0b' },
+      '3': { label: 'P3',  accent: '#38bdf8' },
+    }[priority];
+
+    var isClosed = c.status === false;
 
     var html = '' +
-      '<div class="cd-call-item' + (is911 ? ' cd-call-911' : '') + (isExpanded ? ' cd-call-expanded' : '') + '" data-call-id="' + esc(id) + '">' +
+      '<div class="cd-call-item' + (is911 ? ' cd-call-911' : '') + (isExpanded ? ' cd-call-expanded' : '') + (isClosed ? ' cd-call-closed' : '') + '" data-call-id="' + esc(id) + '">' +
 
         /* Clickable header */
         '<div class="cd-call-item-header" data-toggle-call="' + esc(id) + '" style="padding:12px 16px!important;min-height:48px!important;">' +
@@ -336,8 +429,10 @@
           '<div class="cd-call-item-main">' +
             '<div class="cd-call-title-row">' +
               '<span class="cd-call-title" style="font-size:15px!important;color:#f1f5f9!important;font-weight:600!important;display:inline!important;">' + esc(title) + '</span>' +
+              (priorityMeta ? '<span class="cd-call-priority-pill" style="--cd-pri:' + priorityMeta.accent + ';"><span class="cd-call-priority-pip"></span>' + priorityMeta.label + '</span>' : '') +
               (is911 ? '<span class="cd-call-911-badge">911</span>' : '') +
               (isAssigned ? '<span class="cd-call-assigned-badge">Assigned to you</span>' : '') +
+              (isClosed ? '<span class="cd-call-closed-badge">Completed</span>' : '') +
             '</div>' +
             (details ? '<div class="cd-call-desc" style="font-size:13px!important;color:#94a3b8!important;margin-top:4px!important;">' + esc(details) + '</div>' : '') +
             '<div class="cd-call-meta" style="font-size:11px!important;color:#64748b!important;margin-top:6px!important;">' +
@@ -376,20 +471,32 @@
               '<div class="cd-call-detail-section">' +
                 '<div class="cd-call-detail-label">Notes (' + notes.length + ')</div>' +
                 '<ul class="cd-call-notes-list">' +
-                  renderNotes(notes) +
+                  renderNotes(notes, id) +
                 '</ul>' +
               '</div>'
             ) : '') +
 
-            /* Action Buttons */
+            /* Action Buttons — dispatch sees routing actions (assign a
+               unit, edit the call) instead of self-assign, since they
+               don't take calls themselves. Closed calls collapse to a
+               reopen / delete pair since assignment + note edits on a
+               closed call would just add noise to the audit trail. */
             '<div class="cd-call-actions" style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--cd-glass-border);display:flex;flex-wrap:wrap;gap:0.375rem;">' +
-              (isAssigned
-                ? '<button class="cd-call-action-btn cd-call-action-muted" onclick="cdCallUnassignMe(\'' + esc(id) + '\')"><i class="fa fa-user-minus"></i> Unassign Me</button>'
-                : '<button class="cd-call-action-btn cd-call-action-accent" onclick="cdCallAssignMe(\'' + esc(id) + '\')"><i class="fa fa-user-plus"></i> Assign to Me</button>'
+              (isClosed
+                ? '<button class="cd-call-action-btn cd-call-action-accent" onclick="cdCallReopen(\'' + esc(id) + '\')"><i class="fa fa-rotate-left"></i> Reopen</button>' +
+                  '<button class="cd-call-action-btn cd-call-action-red" onclick="cdCallDelete(\'' + esc(id) + '\')"><i class="fa fa-trash"></i> Delete</button>'
+                : (isDispatch()
+                    ? '<button class="cd-call-action-btn cd-call-action-accent" onclick="cdCallDispatchAssign(\'' + esc(id) + '\')"><i class="fa fa-user-plus"></i> Assign Unit&hellip;</button>' +
+                      '<button class="cd-call-action-btn cd-call-action-accent" onclick="cdCallDispatchEdit(\'' + esc(id) + '\')"><i class="fa fa-pen"></i> Edit</button>'
+                    : (isAssigned
+                        ? '<button class="cd-call-action-btn cd-call-action-muted" onclick="cdCallUnassignMe(\'' + esc(id) + '\')"><i class="fa fa-user-minus"></i> Unassign Me</button>'
+                        : '<button class="cd-call-action-btn cd-call-action-accent" onclick="cdCallAssignMe(\'' + esc(id) + '\')"><i class="fa fa-user-plus"></i> Assign to Me</button>'
+                      )
+                  )
+                + '<button class="cd-call-action-btn cd-call-action-accent" onclick="cdCallAddNote(\'' + esc(id) + '\')"><i class="fa fa-comment-plus"></i> Add Note</button>' +
+                  '<button class="cd-call-action-btn cd-call-action-green" onclick="cdCallComplete(\'' + esc(id) + '\')"><i class="fa fa-check"></i> Complete</button>' +
+                  '<button class="cd-call-action-btn cd-call-action-red" onclick="cdCallDelete(\'' + esc(id) + '\')"><i class="fa fa-trash"></i> Delete</button>'
               ) +
-              '<button class="cd-call-action-btn cd-call-action-accent" onclick="cdCallAddNote(\'' + esc(id) + '\')"><i class="fa fa-comment-plus"></i> Add Note</button>' +
-              '<button class="cd-call-action-btn cd-call-action-green" onclick="cdCallComplete(\'' + esc(id) + '\')"><i class="fa fa-check"></i> Complete</button>' +
-              '<button class="cd-call-action-btn cd-call-action-red" onclick="cdCallDelete(\'' + esc(id) + '\')"><i class="fa fa-trash"></i> Delete</button>' +
             '</div>' +
 
           '</div>' +
@@ -439,19 +546,36 @@
     });
   }
 
-  function renderNotes(notes) {
+  function renderNotes(notes, callId) {
     // Sort newest first
     var sorted = notes.slice().sort(function (a, b) {
       return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     });
+    var me = cfg().userName || '';
     var html = '';
     for (var i = 0; i < sorted.length; i++) {
       var n = sorted[i];
-      html += '<li class="cd-call-note-item">' +
-        esc(n.note || '') +
-        '<div class="cd-call-note-meta">' +
-          esc(n.createdBy || '') +
-          (n.createdAt ? ' &middot; ' + relativeTime(n.createdAt) : '') +
+      var noteId = n._id || '';
+      // Owner check is by username — that's how notes are written on POST
+      // (see cdCallAddNote below). Admins could still delete via a
+      // server-side check; the UI here only exposes the action to owners.
+      var canEdit = !!(me && n.createdBy && n.createdBy === me && noteId);
+      var actions = '';
+      if (canEdit) {
+        actions =
+          '<div class="cd-call-note-actions">' +
+            '<button class="cd-call-note-action" type="button" onclick="cdCallNoteEdit(\'' + esc(callId) + '\', \'' + esc(noteId) + '\')" title="Edit note"><i class="fa fa-pen"></i></button>' +
+            '<button class="cd-call-note-action cd-call-note-action-danger" type="button" onclick="cdCallNoteDelete(\'' + esc(callId) + '\', \'' + esc(noteId) + '\')" title="Delete note"><i class="fa fa-trash"></i></button>' +
+          '</div>';
+      }
+      html += '<li class="cd-call-note-item" data-note-id="' + esc(noteId) + '">' +
+        '<div class="cd-call-note-body">' + esc(n.note || '') + '</div>' +
+        '<div class="cd-call-note-meta-row">' +
+          '<div class="cd-call-note-meta">' +
+            esc(n.createdBy || '') +
+            (n.createdAt ? ' &middot; ' + relativeTime(n.createdAt) : '') +
+          '</div>' +
+          actions +
         '</div>' +
       '</li>';
     }
@@ -483,14 +607,58 @@
           msg +
         '</div>'
       );
+      updateSearchCount(0, 0);
+      return;
+    }
+
+    var visible = applySearchFilter(state.calls);
+    updateSearchCount(visible.length, state.calls.length);
+
+    if (!visible.length) {
+      $list.html(
+        '<div class="cd-call-empty">' +
+          '<i class="fas fa-magnifying-glass"></i>' +
+          'No calls match &ldquo;' + esc(state.search) + '&rdquo;' +
+        '</div>'
+      );
       return;
     }
 
     var html = '';
-    for (var i = 0; i < state.calls.length; i++) {
-      html += renderCallItem(state.calls[i]);
+    for (var i = 0; i < visible.length; i++) {
+      html += renderCallItem(visible[i]);
     }
     $list.html(html);
+  }
+
+  function applySearchFilter(list) {
+    var q = String(state.search || '').trim().toLowerCase();
+    if (!q) return list;
+    return list.filter(function (item) {
+      var call = item.call || item;
+      var hay = [
+        call.title || '',
+        call.details || '',
+        call.shortDescription || '',
+        call.createdByUsername || '',
+      ];
+      // Classifier can hold priority labels / free-form strings; flatten.
+      if (Array.isArray(call.classifier)) {
+        for (var i = 0; i < call.classifier.length; i++) {
+          var c = call.classifier[i];
+          if (typeof c === 'string') hay.push(c);
+          else if (c && typeof c === 'object') hay.push(c.label || c.name || '');
+        }
+      }
+      return hay.join(' ').toLowerCase().indexOf(q) !== -1;
+    });
+  }
+
+  function updateSearchCount(visible, total) {
+    var $c = $('#cd-call-search-count');
+    if (!$c.length) return;
+    if (!state.search) { $c.text(''); return; }
+    $c.text(visible + ' / ' + total);
   }
 
   /* ───────────────────────────────────────────
@@ -588,18 +756,47 @@
           '<span class="cd-call-count-badge" id="cd-call-count">0</span>' +
         '</div>' +
 
-        /* Tabs */
-        '<div class="cd-call-tabs">' +
-          '<button class="cd-call-tab" data-tab="mine">' +
-            'My Calls <span class="cd-call-tab-count">0</span>' +
-          '</button>' +
-          '<button class="cd-call-tab cd-call-tab-active" data-tab="department">' +
-            'Department <span class="cd-call-tab-count">0</span>' +
-          '</button>' +
-          '<button class="cd-call-tab" data-tab="all">' +
-            'All Open <span class="cd-call-tab-count">0</span>' +
-          '</button>' +
+        /* Search — client-side filter against the currently-loaded page.
+           Server-side search would require an endpoint change; for now
+           this is good enough since the visible set is already
+           paginated to ~20 calls. */
+        '<div class="cd-call-search">' +
+          '<i class="fa fa-magnifying-glass"></i>' +
+          '<input type="search" id="cd-call-search-input" placeholder="Search calls by title, details, or caller…" autocomplete="off">' +
+          '<span class="cd-call-search-count" id="cd-call-search-count"></span>' +
         '</div>' +
+
+        /* Tabs — dispatch flow skips "My Calls" and defaults to the
+           community-wide "All Open" view since dispatchers route calls
+           across departments, they don't take them. "Completed" is the
+           escape hatch for reopening or deleting a closed call. */
+        (isDispatch()
+          ? '<div class="cd-call-tabs">' +
+              '<button class="cd-call-tab cd-call-tab-active" data-tab="all">' +
+                'All Open <span class="cd-call-tab-count">0</span>' +
+              '</button>' +
+              '<button class="cd-call-tab" data-tab="department">' +
+                'Department <span class="cd-call-tab-count">0</span>' +
+              '</button>' +
+              '<button class="cd-call-tab" data-tab="completed">' +
+                'Completed <span class="cd-call-tab-count">0</span>' +
+              '</button>' +
+            '</div>'
+          : '<div class="cd-call-tabs">' +
+              '<button class="cd-call-tab" data-tab="mine">' +
+                'My Calls <span class="cd-call-tab-count">0</span>' +
+              '</button>' +
+              '<button class="cd-call-tab cd-call-tab-active" data-tab="department">' +
+                'Department <span class="cd-call-tab-count">0</span>' +
+              '</button>' +
+              '<button class="cd-call-tab" data-tab="all">' +
+                'All Open <span class="cd-call-tab-count">0</span>' +
+              '</button>' +
+              '<button class="cd-call-tab" data-tab="completed">' +
+                'Completed <span class="cd-call-tab-count">0</span>' +
+              '</button>' +
+            '</div>'
+        ) +
 
         /* List */
         '<div class="cd-call-list" id="cd-call-list">' +
@@ -617,8 +814,9 @@
      ─────────────────────────────────────────── */
 
   function cdCallsInit() {
-    /* Load department calls by default */
-    state.tab = 'department';
+    /* Dispatch defaults to the community-wide "All Open" tab; everyone
+       else starts on "Department" (the classic behaviour). */
+    state.tab = isDispatch() ? 'all' : 'department';
     state.page = 1;
     state.expanded = {};
     loadCalls();
@@ -632,9 +830,17 @@
       state.tab = tab;
       state.page = 1;
       state.expanded = {};
+      state.search = '';
+      $('#cd-call-search-input').val('');
       $('.cd-call-tab').removeClass('cd-call-tab-active');
       $btn.addClass('cd-call-tab-active');
       loadCalls();
+    });
+
+    /* Client-side search — filters the currently loaded page */
+    $(document).off('input.cdCallSearch').on('input.cdCallSearch', '#cd-call-search-input', function () {
+      state.search = String(this.value || '');
+      renderList();
     });
 
     /* Expand / collapse call detail */
@@ -675,6 +881,47 @@
      Action Handlers
      ─────────────────────────────────────────── */
 
+  // Optimistic patch helper — the dispatch DnD flow calls this after a
+  // successful assign/unassign so the focused Calls view reflects the
+  // change without waiting for a refetch or socket reconciliation.
+  window.cdCallsPatchAssigned = function (callId, assignedTo) {
+    if (!callId || !Array.isArray(state.calls) || !state.calls.length) return;
+    for (var i = 0; i < state.calls.length; i++) {
+      var item = state.calls[i];
+      var id = item._id || (item.call && item.call._id);
+      if (id !== callId) continue;
+      if (item.call) item.call.assignedTo = assignedTo.slice();
+      else item.assignedTo = assignedTo.slice();
+      // Re-render the one row we changed; cheaper than a full list paint
+      // and preserves expand/collapse state on other rows.
+      var $row = $('.cd-call-item[data-call-id="' + callId + '"]');
+      if ($row.length) {
+        var wasExpanded = state.expanded && state.expanded[callId];
+        $row.replaceWith(renderCallItem(item));
+        if (wasExpanded) state.expanded[callId] = true;
+      } else {
+        renderList();
+      }
+      return;
+    }
+  };
+
+  // Same idea for department-routing changes, for callers that also
+  // update the call's departments list.
+  window.cdCallsPatchDepartments = function (callId, departments) {
+    if (!callId || !Array.isArray(state.calls) || !state.calls.length) return;
+    for (var i = 0; i < state.calls.length; i++) {
+      var item = state.calls[i];
+      var id = item._id || (item.call && item.call._id);
+      if (id !== callId) continue;
+      if (item.call) item.call.departments = departments.slice();
+      else item.departments = departments.slice();
+      var $row = $('.cd-call-item[data-call-id="' + callId + '"]');
+      if ($row.length) $row.replaceWith(renderCallItem(item));
+      return;
+    }
+  };
+
   function findCallById(callId) {
     for (var i = 0; i < state.calls.length; i++) {
       var item = state.calls[i];
@@ -682,6 +929,136 @@
     }
     return null;
   }
+
+  // ── Note edit / delete (owner-only) ──
+
+  function patchNoteInCache(callId, noteId, updater) {
+    if (!Array.isArray(state.calls) || !state.calls.length) return null;
+    for (var i = 0; i < state.calls.length; i++) {
+      var item = state.calls[i];
+      var id = item._id || (item.call && item.call._id);
+      if (id !== callId) continue;
+      var call = item.call || item;
+      var notes = call.callNotes || call.notes || [];
+      for (var j = 0; j < notes.length; j++) {
+        if ((notes[j]._id || '') === noteId) {
+          updater(notes, j, call);
+          return item;
+        }
+      }
+      return null;
+    }
+    return null;
+  }
+
+  function redrawCallRow(callId) {
+    for (var i = 0; i < state.calls.length; i++) {
+      var item = state.calls[i];
+      var id = item._id || (item.call && item.call._id);
+      if (id !== callId) continue;
+      var $row = $('.cd-call-item[data-call-id="' + callId + '"]');
+      if (!$row.length) return;
+      var wasExpanded = state.expanded && state.expanded[callId];
+      $row.replaceWith(renderCallItem(item));
+      if (wasExpanded) state.expanded[callId] = true;
+      return;
+    }
+  }
+
+  window.cdCallNoteEdit = function (callId, noteId) {
+    if (!callId || !noteId) return;
+    var $note = $('.cd-call-item[data-call-id="' + callId + '"] .cd-call-note-item[data-note-id="' + noteId + '"]');
+    if (!$note.length) return;
+    if ($note.find('.cd-call-note-edit').length) return;  // already editing
+    var current = $note.find('.cd-call-note-body').text();
+    $note.find('.cd-call-note-body, .cd-call-note-meta-row').hide();
+    $note.append(
+      '<div class="cd-call-note-edit">' +
+        '<textarea class="cd-call-note-edit-input" maxlength="2000">' + esc(current) + '</textarea>' +
+        '<div class="cd-call-note-edit-actions">' +
+          '<button type="button" class="cd-call-note-edit-btn cd-call-note-edit-btn-cancel"><i class="fa fa-xmark"></i> Cancel</button>' +
+          '<button type="button" class="cd-call-note-edit-btn cd-call-note-edit-btn-save"><i class="fa fa-check"></i> Save</button>' +
+        '</div>' +
+      '</div>'
+    );
+    var $ta = $note.find('.cd-call-note-edit-input').focus();
+    $ta[0].setSelectionRange($ta.val().length, $ta.val().length);
+
+    function cancelEdit() {
+      $note.find('.cd-call-note-edit').remove();
+      $note.find('.cd-call-note-body, .cd-call-note-meta-row').show();
+    }
+    $note.find('.cd-call-note-edit-btn-cancel').on('click', cancelEdit);
+    $ta.on('keydown', function (e) { if (e.key === 'Escape') cancelEdit(); });
+    $note.find('.cd-call-note-edit-btn-save').on('click', function () {
+      var next = ($ta.val() || '').trim();
+      if (!next) { $ta.css('border-color', '#ef4444').focus(); return; }
+      if (next === current) { cancelEdit(); return; }
+      var $saveBtn = $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+      $.ajax({
+        url: apiUrl() + '/api/v1/call/' + encodeURIComponent(callId) + '/note/' + encodeURIComponent(noteId),
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ note: next, updatedBy: cfg().userName || '', updatedAt: new Date().toISOString() }),
+      }).done(function () {
+        toast('Note updated', 'success');
+        // Patch cache + redraw the row so the change shows without a refetch.
+        patchNoteInCache(callId, noteId, function (notes, j) {
+          notes[j].note = next;
+          notes[j].updatedAt = new Date().toISOString();
+        });
+        redrawCallRow(callId);
+      }).fail(function (xhr) {
+        toast('Failed to update note', 'error');
+        console.error('[cd-calls] note update failed', xhr && xhr.responseText);
+        $saveBtn.prop('disabled', false).html('<i class="fa fa-check"></i> Save');
+      });
+    });
+  };
+
+  window.cdCallNoteDelete = function (callId, noteId) {
+    if (!callId || !noteId) return;
+    if (!window.ddModal) return;
+    window.ddModal({
+      type: 'danger',
+      icon: 'fa-trash',
+      title: 'Delete note?',
+      message: 'This note will be permanently removed from the call.',
+      detail: 'This action cannot be undone.',
+      confirmText: 'Delete note',
+      confirmIcon: 'fa-trash',
+      onConfirm: function () {
+        $.ajax({
+          url: apiUrl() + '/api/v1/call/' + encodeURIComponent(callId) + '/note/' + encodeURIComponent(noteId),
+          method: 'DELETE',
+        }).done(function () {
+          toast('Note deleted', 'success');
+          patchNoteInCache(callId, noteId, function (notes, j) { notes.splice(j, 1); });
+          redrawCallRow(callId);
+        }).fail(function (xhr) {
+          toast('Failed to delete note', 'error');
+          console.error('[cd-calls] note delete failed', xhr && xhr.responseText);
+        });
+      },
+    });
+  };
+
+  // Dispatch-only actions — delegate to the shared dispatch flows so the
+  // bridge's picker/intake UX is reused instead of re-implemented here.
+  window.cdCallDispatchAssign = function (callId) {
+    if (typeof window.cdDispatchAssignMenuForCall === 'function') {
+      window.cdDispatchAssignMenuForCall(callId);
+    } else {
+      toast('Dispatch assignment module not loaded', 'error');
+    }
+  };
+  window.cdCallDispatchEdit = function (callId) {
+    if (typeof window.cdDispatchIntakeOpen === 'function') {
+      window.cdDispatchIntakeOpen('edit', callId);
+    } else {
+      toast('Intake module not loaded', 'error');
+    }
+  };
 
   window.cdCallAssignMe = function (callId) {
     var item = findCallById(callId);
@@ -814,6 +1191,49 @@
       },
       error: function () {
         toast('Failed to complete call', 'error');
+      }
+    });
+  }
+
+  window.cdCallReopen = function (callId) {
+    if (window.ddModal) {
+      window.ddModal({
+        title: 'Reopen Call',
+        message: 'Bring this call back to the active board?',
+        confirmText: 'Reopen',
+        onConfirm: function () { doReopenCall(callId); }
+      });
+    } else {
+      doReopenCall(callId);
+    }
+  };
+
+  function doReopenCall(callId) {
+    var userName = cfg().userName || 'Officer';
+    $.ajax({
+      url: apiUrl() + '/api/v1/call/' + encodeURIComponent(callId),
+      method: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify({ status: true }),
+      success: function () {
+        // System note for the audit trail — mirrors doCompleteCall.
+        $.ajax({
+          url: apiUrl() + '/api/v1/call/' + encodeURIComponent(callId) + '/note',
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            note: 'Call reopened by ' + userName,
+            createdBy: 'System',
+            createdAt: new Date().toISOString()
+          }),
+          complete: function () {
+            toast('Call reopened', 'success');
+            loadCalls(null, true);
+          }
+        });
+      },
+      error: function () {
+        toast('Failed to reopen call', 'error');
       }
     });
   }

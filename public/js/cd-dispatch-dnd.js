@@ -37,23 +37,46 @@
 
   // ── Assign / Unassign core ────────────────────────
 
-  function getAssignedTo(callId) {
+  function getCall(callId) {
     var c = (typeof window.cdDispatchBoardGetCall === 'function') ? window.cdDispatchBoardGetCall(callId) : null;
-    if (c && c.assignedTo) return c.assignedTo.slice();
-    // Fallback: read from detail state if it's the selected call
+    if (c) return c;
     var detail = window.__cdDispatchDetailState;
-    if (detail && detail.callId === callId && detail.call) return (detail.call.assignedTo || []).slice();
-    return [];
+    if (detail && detail.callId === callId && detail.call) return detail.call;
+    return null;
+  }
+  function getAssignedTo(callId) {
+    var c = getCall(callId);
+    return c && c.assignedTo ? c.assignedTo.slice() : [];
+  }
+  function getDepartments(callId) {
+    var c = getCall(callId);
+    return c && Array.isArray(c.departments) ? c.departments.slice() : [];
   }
 
-  function putAssignedTo(callId, assignedTo, label) {
+  // Smart routing: when a unit is assigned, auto-add the unit's active
+  // department to the call's `departments` list so the call surfaces on
+  // that dept's dashboard. Never adds civilian/judicial/dispatch. Returns
+  // a new departments array (never mutates).
+  function withUnitDept(userId, departments) {
+    var unit = (typeof window.cdDispatchRosterGetUnit === 'function') ? window.cdDispatchRosterGetUnit(userId) : null;
+    var did = unit && unit.activeDepartmentId;
+    if (!did) return departments.slice();
+    var tmpl = unit && unit.deptTemplate ? String(unit.deptTemplate).toLowerCase() : '';
+    if (tmpl === 'civilian' || tmpl === 'judicial' || tmpl === 'dispatch') return departments.slice();
+    if (departments.indexOf(did) !== -1) return departments.slice();
+    return departments.concat([did]);
+  }
+
+  function putCall(callId, body, label) {
     return $.ajax({
       url: api() + '/api/v1/call/' + encodeURIComponent(callId),
       method: 'PUT',
       contentType: 'application/json',
-      data: JSON.stringify({ assignedTo: assignedTo }),
+      data: JSON.stringify(body),
     }).done(function () {
       toast(label || 'Updated', 'success');
+      // The Go API fires the updated_call broadcast itself via its
+      // webhook to Node, so no frontend nudge needed.
     }).fail(function (xhr) {
       toast((label || 'Update') + ' failed', 'error');
       console.error('[cd-dispatch-dnd] PUT failed', xhr && xhr.responseText);
@@ -62,11 +85,19 @@
 
   window.cdDispatchAssign = function (userId, callId) {
     if (!userId || !callId) return;
-    var current = getAssignedTo(callId);
-    if (current.indexOf(userId) !== -1) { toast('Already assigned', 'info'); return; }
-    var next = current.concat([userId]);
-    applyOptimistic(callId, next);
-    putAssignedTo(callId, next, 'Unit assigned').fail(function () { applyOptimistic(callId, current); });
+    var currentAssigned = getAssignedTo(callId);
+    if (currentAssigned.indexOf(userId) !== -1) { toast('Already assigned', 'info'); return; }
+    var nextAssigned = currentAssigned.concat([userId]);
+    var currentDepts = getDepartments(callId);
+    var nextDepts = withUnitDept(userId, currentDepts);
+    var deptsChanged = nextDepts.length !== currentDepts.length;
+
+    applyOptimistic(callId, nextAssigned, deptsChanged ? nextDepts : null);
+    var body = { assignedTo: nextAssigned };
+    if (deptsChanged) body.departments = nextDepts;
+    putCall(callId, body, 'Unit assigned').fail(function () {
+      applyOptimistic(callId, currentAssigned, deptsChanged ? currentDepts : null);
+    });
   };
 
   window.cdDispatchUnassign = function (userId, callId) {
@@ -74,26 +105,43 @@
     var current = getAssignedTo(callId);
     if (current.indexOf(userId) === -1) return;
     var next = current.filter(function (u) { return u !== userId; });
+    // Intentionally DON'T remove the department on unassign. Dispatch may
+    // rotate a unit off a call while still wanting the dept to see it.
     applyOptimistic(callId, next);
-    putAssignedTo(callId, next, 'Unit unassigned').fail(function () { applyOptimistic(callId, current); });
+    putCall(callId, { assignedTo: next }, 'Unit unassigned').fail(function () { applyOptimistic(callId, current); });
   };
 
-  function applyOptimistic(callId, assignedTo) {
+  function applyOptimistic(callId, assignedTo, departments) {
     // Patch board state + re-render the affected card
     var c = (typeof window.cdDispatchBoardGetCall === 'function') ? window.cdDispatchBoardGetCall(callId) : null;
     if (c) {
       c.assignedTo = assignedTo.slice();
+      if (departments) c.departments = departments.slice();
       if (typeof window.cdDispatchBoardUpsertCall === 'function') {
-        window.cdDispatchBoardUpsertCall({ _id: callId, call: Object.assign({}, c, { assignedTo: assignedTo.slice() }) });
+        var patch = Object.assign({}, c, { assignedTo: assignedTo.slice() });
+        if (departments) patch.departments = departments.slice();
+        window.cdDispatchBoardUpsertCall({ _id: callId, call: patch });
       }
     }
-    // If the detail pane is open on this call, re-fetch so the Assigned Units
-    // section renders the new pill (or loses one, for unassign). This is the
-    // same request the socket broadcast would trigger — doing it locally just
-    // removes the wait for the round-trip.
+    // If the detail pane is open on this call, patch its local state so the
+    // Assigned Units section re-renders immediately. A refetch would race the
+    // PUT write and often return stale data; the socket broadcast reconciles
+    // later across other tabs.
     var detail = window.__cdDispatchDetailState;
-    if (detail && detail.callId === callId && typeof window.cdDispatchDetailSelect === 'function') {
-      window.cdDispatchDetailSelect(callId);
+    if (detail && detail.callId === callId && typeof window.cdDispatchDetailPatchAssigned === 'function') {
+      window.cdDispatchDetailPatchAssigned(callId, assignedTo);
+      if (departments && typeof window.cdDispatchDetailPatchDepartments === 'function') {
+        window.cdDispatchDetailPatchDepartments(callId, departments);
+      }
+    }
+    // Focused "Calls" sidebar view keeps its own list cache — patch it
+    // too so dispatchers assigning from that page see the new pill
+    // immediately (same principle as the detail drawer).
+    if (typeof window.cdCallsPatchAssigned === 'function') {
+      window.cdCallsPatchAssigned(callId, assignedTo);
+    }
+    if (departments && typeof window.cdCallsPatchDepartments === 'function') {
+      window.cdCallsPatchDepartments(callId, departments);
     }
   }
 
@@ -254,29 +302,43 @@
 
     if (!window.ddModal) { toast('Modal helper missing', 'error'); return; }
     var assigned = (call && call.assignedTo) || [];
-    var listHtml = '<div class="cd-dnd-picker">' + units.map(function (u) {
+    var itemsHtml = units.map(function (u) {
       var isAssigned = assigned.indexOf(u.id) !== -1;
       var dv = (typeof window.cdDispatchDeptVisual === 'function') ? window.cdDispatchDeptVisual(u.deptTemplate) : { icon: 'fa-user', color: 'var(--cd-accent)' };
+      var haystack = ((u.callSign || '') + ' ' + (u.username || '') + ' ' + (u.deptName || '')).toLowerCase();
       return (
-        '<button type="button" class="cd-dnd-picker-item" data-user-id="' + esc(u.id) + '" data-assigned="' + (isAssigned ? '1' : '0') + '" style="--cd-dept-color:' + esc(dv.color) + ';">' +
+        '<button type="button" class="cd-dnd-picker-item" data-user-id="' + esc(u.id) + '" data-assigned="' + (isAssigned ? '1' : '0') + '" data-search="' + esc(haystack) + '" style="--cd-dept-color:' + esc(dv.color) + ';">' +
           '<i class="fa ' + esc(dv.icon) + '" style="color:var(--cd-dept-color);"></i>' +
           '<span class="cd-dnd-picker-title">' + esc(u.callSign || u.username) + '</span>' +
+          (u.deptName ? '<span class="cd-dnd-picker-sub">' + esc(u.deptName) + '</span>' : '') +
           (isAssigned ? '<span class="cd-dnd-picker-tag cd-dnd-picker-tag-on">Assigned · click to unassign</span>' : '') +
         '</button>'
       );
-    }).join('') + '</div>';
+    }).join('');
+    var detailHtml = (
+      '<div class="cd-dnd-picker-wrap">' +
+        '<label class="cd-dnd-picker-search">' +
+          '<i class="fa fa-magnifying-glass"></i>' +
+          '<input type="search" id="cd-dnd-picker-search-input" placeholder="Search units (callsign, name, dept)" autocomplete="off">' +
+          '<span class="cd-dnd-picker-count" id="cd-dnd-picker-count">' + units.length + '</span>' +
+        '</label>' +
+        '<div class="cd-dnd-picker" id="cd-dnd-picker-list">' + itemsHtml + '</div>' +
+        '<div class="cd-dnd-picker-empty" id="cd-dnd-picker-empty" hidden>No units match your search.</div>' +
+      '</div>'
+    );
 
     window.ddModal({
       type: 'confirm',
       icon: 'fa-radio',
       title: 'Assign unit to call',
       message: 'Pick a unit to toggle on this call.',
-      detail: listHtml,
+      detail: detailHtml,
       buttons: [{ label: 'Close', class: 'dd-modal-btn-secondary' }],
     });
 
     setTimeout(function () {
-      $('#dd-modal-detail').off('click.cdDnd').on('click.cdDnd', '.cd-dnd-picker-item', function () {
+      var $modal = $('#dd-modal-detail');
+      $modal.off('click.cdDnd').on('click.cdDnd', '.cd-dnd-picker-item', function () {
         var uid = $(this).data('user-id');
         if ($(this).data('assigned') === 1 || $(this).attr('data-assigned') === '1') {
           window.cdDispatchUnassign(uid, callId);
@@ -285,6 +347,21 @@
         }
         if (typeof window.ddCloseModal === 'function') window.ddCloseModal();
       });
+      $modal.off('input.cdDnd').on('input.cdDnd', '#cd-dnd-picker-search-input', function () {
+        var q = String(this.value || '').trim().toLowerCase();
+        var visible = 0, total = 0;
+        $modal.find('.cd-dnd-picker-item').each(function () {
+          total++;
+          var hay = this.getAttribute('data-search') || '';
+          var show = !q || hay.indexOf(q) !== -1;
+          this.style.display = show ? '' : 'none';
+          if (show) visible++;
+        });
+        $modal.find('#cd-dnd-picker-count').text(q ? (visible + ' / ' + total) : String(total));
+        $modal.find('#cd-dnd-picker-empty').prop('hidden', visible !== 0);
+      });
+      var input = document.getElementById('cd-dnd-picker-search-input');
+      if (input) input.focus();
     }, 10);
   };
 
@@ -292,14 +369,22 @@
   (function injectPickerStyles() {
     if (document.getElementById('cd-dnd-picker-styles')) return;
     var css = [
+      '.cd-dnd-picker-wrap{display:flex;flex-direction:column;gap:0.5rem;}',
+      '.cd-dnd-picker-search{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.6875rem;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid var(--cd-glass-border);}',
+      '.cd-dnd-picker-search i{color:var(--cd-text-dim);font-size:0.75rem;}',
+      '.cd-dnd-picker-search input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--cd-text);font-family:inherit;font-size:0.8125rem;}',
+      '.cd-dnd-picker-search input::placeholder{color:var(--cd-text-dim);}',
+      '.cd-dnd-picker-count{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:0.6875rem;color:var(--cd-text-dim);letter-spacing:0.04em;}',
       '.cd-dnd-picker{display:flex;flex-direction:column;gap:0.25rem;max-height:48vh;overflow-y:auto;padding:0.25rem 0;}',
       '.cd-dnd-picker-item{display:flex;align-items:center;gap:0.5rem;padding:0.5625rem 0.75rem;border-radius:8px;border:1px solid var(--cd-glass-border);background:rgba(255,255,255,0.02);color:var(--cd-text);font:500 0.8125rem/1.2 inherit;cursor:pointer;text-align:left;transition:all .15s;}',
       '.cd-dnd-picker-item:hover:not([disabled]){background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.14);}',
       '.cd-dnd-picker-item[disabled]{opacity:0.5;cursor:not-allowed;}',
       '.cd-dnd-picker-pip{width:8px;height:8px;border-radius:999px;flex-shrink:0;}',
-      '.cd-dnd-picker-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
-      '.cd-dnd-picker-tag{padding:0.0625rem 0.4375rem;border-radius:999px;background:rgba(100,116,139,0.18);color:var(--cd-text-dim);font-size:0.625rem;letter-spacing:0.04em;}',
+      '.cd-dnd-picker-title{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.cd-dnd-picker-sub{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:0.6875rem;color:var(--cd-text-dim);}',
+      '.cd-dnd-picker-tag{padding:0.0625rem 0.4375rem;border-radius:999px;background:rgba(100,116,139,0.18);color:var(--cd-text-dim);font-size:0.625rem;letter-spacing:0.04em;flex-shrink:0;}',
       '.cd-dnd-picker-tag-on{background:rgba(34,197,94,0.14);color:#86efac;}',
+      '.cd-dnd-picker-empty{padding:1rem;text-align:center;color:var(--cd-text-dim);font-size:0.8125rem;}',
       'body.cd-dnd-active .cd-call-card{transition:border-color .15s,background .15s;}',
       'body.cd-dnd-active .cd-call-card-assigned{outline:1px dashed rgba(56,189,248,0.25);}',
       '@media (max-width: 1024px){.cd-unit-chip{cursor:pointer;}.cd-unit-unassign-drop{display:none;}}',

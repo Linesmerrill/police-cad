@@ -28,7 +28,9 @@
     call: null,       // existing call details for edit mode
     priority: '2',    // default P2
     assignedIds: [],
+    departmentIds: [],// routed departments (shows call on those dept dashboards)
     pickerSearch: '', // filter query for the roster picker
+    deptSearch: '',   // filter query for the department picker
   };
 
   var PRIORITIES = [
@@ -43,9 +45,20 @@
     state.call = null;
     state.priority = '2';
     state.assignedIds = [];
+    state.departmentIds = [];
+    state.deptSearch = '';
 
     injectStyles();
     openOverlay();
+    // Make sure the community departments cache is populated so the dept
+    // picker has data to render — no-op if already loaded.
+    if (typeof window.cdDispatchEnsureCommunityDepts === 'function') {
+      window.cdDispatchEnsureCommunityDepts(function () {
+        // If the modal is already open rendering a form, re-render the dept
+        // picker section to show the freshly-loaded options.
+        if ($('#cd-intake-dept-picker').length) renderDepartmentsField();
+      });
+    }
     if (state.mode === 'edit' && callId) {
       // Try to read from the detail state first (already fetched), else GET
       var fromDetail = window.__cdDispatchDetailState && window.__cdDispatchDetailState.callId === callId
@@ -55,6 +68,7 @@
         state.call = fromDetail;
         state.priority = readPriority(fromDetail);
         state.assignedIds = (fromDetail.assignedTo || []).slice();
+        state.departmentIds = (fromDetail.departments || []).slice();
         renderForm();
       } else {
         renderLoading();
@@ -67,6 +81,7 @@
           state.call = c;
           state.priority = readPriority(c);
           state.assignedIds = (c.assignedTo || []).slice();
+          state.departmentIds = ((c && c.departments) || []).slice();
           renderForm();
         }).fail(function () {
           toast('Failed to load call', 'error');
@@ -74,6 +89,11 @@
         });
       }
     } else {
+      // Default create-mode to the dispatcher's own department so the call
+      // shows up on their dashboard immediately. They can add/remove from
+      // the picker before dispatching.
+      var defaultDept = cfg().departmentId;
+      if (defaultDept) state.departmentIds = [defaultDept];
       renderForm();
     }
   };
@@ -82,9 +102,18 @@
 
   function readPriority(c) {
     if (!c || !c.classifier || !c.classifier.length) return '2';
-    var first = c.classifier[0];
-    if (typeof first === 'object' && first && first.priority != null) return String(first.priority);
-    var s = String(typeof first === 'string' ? first : (first && (first.label || first.name)) || '');
+    var entry = c.classifier[0];
+    // Server can return primitive.D `[{Key:"priority",Value:"2"},...]` — flatten.
+    if (Array.isArray(entry)) {
+      var flat = {};
+      for (var k = 0; k < entry.length; k++) {
+        var kv = entry[k];
+        if (kv && typeof kv === 'object' && 'Key' in kv) flat[kv.Key] = kv.Value;
+      }
+      entry = flat;
+    }
+    if (typeof entry === 'object' && entry && entry.priority != null) return String(entry.priority);
+    var s = String(typeof entry === 'string' ? entry : (entry && (entry.label || entry.name)) || '');
     var m = s.match(/p\s*(\d)/i);
     return m ? m[1] : '2';
   }
@@ -158,6 +187,12 @@
         '</label>' +
 
         '<div class="cd-intake-field">' +
+          '<span>Departments <em class="cd-intake-field-hint">Calls show on each selected dept\'s dashboard</em></span>' +
+          '<div id="cd-intake-dept-chosen" class="cd-intake-assigned"></div>' +
+          '<div id="cd-intake-dept-picker" class="cd-intake-unit-picker"></div>' +
+        '</div>' +
+
+        '<div class="cd-intake-field">' +
           '<span>Assigned Units</span>' +
           '<div id="cd-intake-assigned" class="cd-intake-assigned"></div>' +
           '<div id="cd-intake-unit-picker" class="cd-intake-unit-picker"></div>' +
@@ -173,10 +208,88 @@
     );
 
     renderAssignedPicker();
+    renderDepartmentsField();
     wireForm();
 
     // Focus title on create
     if (!editing) setTimeout(function () { $('#cd-intake-title-input').focus(); }, 50);
+  }
+
+  function renderDepartmentsField() {
+    var $chosen = $('#cd-intake-dept-chosen');
+    var $picker = $('#cd-intake-dept-picker');
+    if (!$chosen.length) return;
+
+    var all = (typeof window.cdDispatchGetCommunityDepts === 'function') ? window.cdDispatchGetCommunityDepts() : [];
+    var byId = {};
+    all.forEach(function (d) { byId[d._id] = d; });
+
+    // Chosen pills — render even if dept isn't yet in cache (edit-mode may
+    // open before fetch completes; we show the id as a fallback).
+    if (!state.departmentIds.length) {
+      $chosen.html('<span class="cd-detail-empty-inline">No departments — call routes to all dashboards.</span>');
+    } else {
+      $chosen.html(state.departmentIds.map(function (did) {
+        var d = byId[did];
+        var tpl = d && d.template && d.template.name ? String(d.template.name).toLowerCase() : '';
+        var dv = (typeof window.cdDispatchDeptVisual === 'function') ? window.cdDispatchDeptVisual(tpl) : { icon: 'fa-building', color: 'var(--cd-accent)' };
+        var label = d ? (d.name || '—') : 'Loading…';
+        return (
+          '<span class="cd-assigned-pill cd-intake-dept-pill" data-intake-dept-remove="' + esc(did) + '" style="--cd-dept-color:' + esc(dv.color) + ';" title="Remove ' + esc(label) + '">' +
+            '<i class="fa ' + esc(dv.icon) + '" aria-hidden="true"></i>' +
+            '<span class="cd-assigned-pill-label">' + esc(label) + '</span>' +
+            '<i class="fa fa-xmark cd-assigned-pill-remove-icon" aria-hidden="true"></i>' +
+          '</span>'
+        );
+      }).join(''));
+    }
+
+    // Loading placeholder while the cache fetch is in flight
+    if (!all.length) {
+      $picker.html('<span class="cd-detail-empty-inline"><i class="fa fa-circle-notch fa-spin"></i> Loading community departments…</span>');
+      return;
+    }
+
+    // Available = everything not already selected
+    var available = all.filter(function (d) { return state.departmentIds.indexOf(d._id) === -1; });
+    if (!available.length) {
+      $picker.html('<span class="cd-detail-empty-inline">All eligible departments already selected.</span>');
+      return;
+    }
+
+    var q = String(state.deptSearch || '').toLowerCase();
+    var filtered = !q ? available : available.filter(function (d) {
+      return String(d.name || '').toLowerCase().indexOf(q) !== -1;
+    });
+
+    $picker.html(
+      '<div class="cd-intake-picker-head">' +
+        '<label class="cd-intake-picker-search">' +
+          '<i class="fa fa-magnifying-glass"></i>' +
+          '<input type="search" id="cd-intake-dept-search-input" placeholder="Filter departments" autocomplete="off" value="' + esc(state.deptSearch) + '">' +
+        '</label>' +
+        '<span class="cd-intake-picker-count">' + filtered.length + (filtered.length !== available.length ? ' / ' + available.length : '') + '</span>' +
+      '</div>' +
+      (filtered.length
+        ? '<div class="cd-intake-picker-list">' +
+            filtered.map(function (d) {
+              var tpl = d.template && d.template.name ? String(d.template.name).toLowerCase() : '';
+              var dv = (typeof window.cdDispatchDeptVisual === 'function') ? window.cdDispatchDeptVisual(tpl) : { icon: 'fa-building', color: 'var(--cd-accent)' };
+              return (
+                '<button type="button" class="cd-intake-picker-item" data-intake-dept-add="' + esc(d._id) + '" style="--cd-dept-color:' + esc(dv.color) + ';" title="' + esc(d.name || '') + '">' +
+                  '<i class="fa ' + esc(dv.icon) + '"></i>' +
+                  '<span>' + esc(d.name || '—') + '</span>' +
+                '</button>'
+              );
+            }).join('') +
+          '</div>'
+        : '<div class="cd-detail-empty-inline">No departments match your filter.</div>')
+    );
+
+    if (state.deptSearch) {
+      var el = document.getElementById('cd-intake-dept-search-input');
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+    }
   }
 
   function renderAssignedPicker() {
@@ -272,6 +385,24 @@
       state.pickerSearch = String(this.value || '').trim();
       renderAssignedPicker();
     });
+
+    $('#cd-intake-dept-chosen').on('click', '[data-intake-dept-remove]', function () {
+      var did = $(this).data('intake-dept-remove');
+      state.departmentIds = state.departmentIds.filter(function (id) { return id !== did; });
+      renderDepartmentsField();
+    });
+
+    $('#cd-intake-dept-picker').on('click', '[data-intake-dept-add]', function () {
+      var did = $(this).data('intake-dept-add');
+      if (state.departmentIds.indexOf(did) === -1) state.departmentIds.push(did);
+      state.deptSearch = '';
+      renderDepartmentsField();
+    });
+
+    $('#cd-intake-dept-picker').on('input', '#cd-intake-dept-search-input', function () {
+      state.deptSearch = String(this.value || '').trim();
+      renderDepartmentsField();
+    });
   }
 
   function submit() {
@@ -289,11 +420,26 @@
       label: 'P' + state.priority,
     }];
 
+    // Smart routing: assigned units automatically contribute their active
+    // department to the call's departments list. The dispatcher's explicit
+    // picks stay authoritative — we only ADD from units, never remove.
+    var mergedDepts = state.departmentIds.slice();
+    if (typeof window.cdDispatchRosterGetUnit === 'function') {
+      state.assignedIds.forEach(function (uid) {
+        var u = window.cdDispatchRosterGetUnit(uid);
+        if (!u || !u.activeDepartmentId) return;
+        var tmpl = String(u.deptTemplate || '').toLowerCase();
+        if (tmpl === 'civilian' || tmpl === 'judicial' || tmpl === 'dispatch') return;
+        if (mergedDepts.indexOf(u.activeDepartmentId) === -1) mergedDepts.push(u.activeDepartmentId);
+      });
+    }
+
     var body = {
       title: title,
       details: details,
       classifier: classifier,
       assignedTo: state.assignedIds.slice(),
+      departments: mergedDepts,
     };
 
     if (state.mode === 'create') {
@@ -303,7 +449,6 @@
       body.communityId = cfg().communityId;
       body.createdByID = me._id || cfg().userId;
       body.createdByUsername = me.username || cfg().userName || '';
-      body.departments = cfg().departmentId ? [cfg().departmentId] : [];
       body.callNotes = [];
       $.ajax({
         url: api() + '/api/v1/calls',
@@ -359,6 +504,11 @@
       '.cd-intake-field{display:flex;flex-direction:column;gap:0.375rem;}',
       '.cd-intake-field > span{font:700 0.6875rem/1 inherit;letter-spacing:0.1em;text-transform:uppercase;color:var(--cd-text-muted);}',
       '.cd-intake-field > span em{color:var(--cd-red);font-style:normal;}',
+      '.cd-intake-field > span em.cd-intake-field-hint{color:var(--cd-text-dim);font-weight:500;font-size:0.625rem;text-transform:none;letter-spacing:0;margin-left:0.5rem;}',
+      '.cd-intake-dept-pill{cursor:pointer;}',
+      '.cd-intake-dept-pill .cd-assigned-pill-remove-icon{font-size:0.625rem;opacity:0.5;margin-left:0.25rem;}',
+      '.cd-intake-dept-pill:hover{box-shadow:inset 0 0 0 9999px rgba(239,68,68,0.08);}',
+      '.cd-intake-dept-pill:hover .cd-assigned-pill-remove-icon{opacity:1;}',
       '.cd-intake-field input[type="text"],.cd-intake-field textarea{padding:0.5625rem 0.75rem;border-radius:8px;border:1px solid var(--cd-glass-border);background:rgba(255,255,255,0.03);color:var(--cd-text);font-family:inherit;font-size:0.875rem;line-height:1.4;resize:vertical;}',
       '.cd-intake-field input:focus,.cd-intake-field textarea:focus{outline:none;border-color:rgba(56,189,248,0.5);background:rgba(56,189,248,0.04);}',
       '.cd-intake-priority-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.375rem;}',
