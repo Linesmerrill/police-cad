@@ -335,7 +335,12 @@
      ─────────────────────────────────────────── */
 
   function renderList() {
-    var $list = $('#cd-bolo-list');
+    // Target the class, not the id: the dispatch bridge mounts one BOLO
+    // card into the bottom strip AND the focused-card registry mounts
+    // another hidden copy for sidebar navigation, so two `#cd-bolo-list`
+    // nodes coexist. jQuery's id selector only returns the first match,
+    // which leaves the focused card stuck on the initial placeholder.
+    var $list = $('.cd-bolo-list');
     if (!$list.length) return;
 
     if (state.loading) {
@@ -457,7 +462,7 @@
         '</div>' +
 
         /* List */
-        '<div class="cd-bolo-list" id="cd-bolo-list">' +
+        '<div class="cd-bolo-list">' +
           '<div class="cd-bolo-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading BOLOs&hellip;</div>' +
         '</div>' +
 
