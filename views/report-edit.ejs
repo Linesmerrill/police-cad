@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= typeof submissionId !== 'undefined' && submissionId ? 'View Report' : 'New Report' %> - Lines Police CAD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --rp-bg: #08090c;
+      --rp-surface: rgba(255,255,255,0.03);
+      --rp-glass: rgba(255,255,255,0.04);
+      --rp-glass-border: rgba(255,255,255,0.06);
+      --rp-glass-hover: rgba(255,255,255,0.07);
+      --rp-text: #e2e8f0;
+      --rp-text-muted: #64748b;
+      --rp-text-dim: #475569;
+      --rp-accent: #38bdf8;
+      --rp-accent-glow: rgba(56,189,248,0.15);
+      --rp-green: #22c55e;
+      --rp-amber: #f59e0b;
+      --rp-red: #ef4444;
+      --rp-radius: 12px;
+      --rp-radius-sm: 8px;
+    }
+    html { font-size: 16px; }
+    body {
+      background: var(--rp-bg); color: var(--rp-text);
+      font-family: 'Outfit', -apple-system, sans-serif;
+      min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased;
+      padding-bottom: 88px;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 700px 500px at 10% 15%, rgba(56,189,248,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 90% 85%, rgba(245,158,11,0.04) 0%, transparent 70%);
+    }
+    .rp-shell { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem 2rem; display: grid; grid-template-columns: 220px 1fr; gap: 1.25rem; }
+    @media (max-width: 880px) { .rp-shell { grid-template-columns: 1fr; } .rp-side { display: none; } }
+
+    .rp-header {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 0 1rem;
+      border-bottom: 1px solid var(--rp-glass-border);
+    }
+    .rp-header-left { display: flex; align-items: center; gap: 1rem; }
+    .rp-header-icon {
+      width: 44px; height: 44px;
+      background: var(--rp-accent-glow);
+      border: 1px solid rgba(56,189,248,0.2);
+      border-radius: var(--rp-radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; color: var(--rp-accent);
+    }
+    .rp-title { font-weight: 700; font-size: 1.4rem; color: #fff; }
+    .rp-subtitle { font-size: 0.85rem; color: var(--rp-text-muted); margin-top: 0.1rem; }
+    .rp-back-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      color: var(--rp-text-muted); font-size: 0.85rem; text-decoration: none;
+      padding: 0.4rem 0.75rem; border-radius: var(--rp-radius-sm);
+      transition: all 0.2s ease; border: 1px solid transparent;
+    }
+    .rp-back-btn:hover { color: #fff; background: var(--rp-surface); border-color: var(--rp-glass-border); }
+
+    .rp-side {
+      position: sticky; top: 1rem; align-self: start;
+      max-height: calc(100vh - 2rem); overflow-y: auto;
+      padding: 0.5rem;
+    }
+    .rp-side-title {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      color: var(--rp-text-dim); letter-spacing: 0.05em;
+      padding: 0.5rem 0.75rem;
+    }
+    .rp-side-link {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.75rem; border-radius: var(--rp-radius-sm);
+      color: var(--rp-text-muted); font-size: 0.85rem; text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .rp-side-link:hover { background: var(--rp-surface); color: #fff; }
+    .rp-side-link.active { background: var(--rp-accent-glow); color: var(--rp-accent); }
+    .rp-side-link .rp-pill {
+      margin-left: auto; padding: 0.05rem 0.4rem; font-size: 0.65rem;
+      background: var(--rp-glass); color: var(--rp-text-dim);
+      border: 1px solid var(--rp-glass-border); border-radius: 999px;
+    }
+    .rp-side-link.has-required .rp-pill { color: var(--rp-amber); border-color: rgba(245,158,11,0.3); }
+
+    .rp-main { min-width: 0; }
+
+    .rp-callout {
+      background: var(--rp-glass); border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius); padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .rp-callout-title { font-weight: 600; color: #fff; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+    .rp-callout-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .rp-callout select, .rp-callout button { font-family: inherit; font-size: 0.85rem; }
+
+    .rp-section {
+      background: var(--rp-surface); border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius); margin-bottom: 0.875rem; overflow: hidden;
+    }
+    .rp-section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.85rem 1rem; cursor: pointer; user-select: none;
+      border-bottom: 1px solid transparent;
+    }
+    .rp-section.open .rp-section-header { border-bottom-color: var(--rp-glass-border); }
+    .rp-section-title { font-weight: 600; color: #fff; display: flex; align-items: center; gap: 0.5rem; }
+    .rp-section-chev { color: var(--rp-text-dim); transition: transform 0.2s ease; }
+    .rp-section.open .rp-section-chev { transform: rotate(90deg); }
+    .rp-section-body { padding: 1rem; display: none; }
+    .rp-section.open .rp-section-body { display: block; }
+
+    .rp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; }
+    .rp-field { display: flex; flex-direction: column; gap: 0.35rem; }
+    .rp-field-full { grid-column: 1 / -1; }
+    .rp-label { font-size: 0.78rem; color: var(--rp-text-muted); font-weight: 500; display: flex; align-items: center; gap: 0.3rem; }
+    .rp-label .req { color: var(--rp-red); }
+    .rp-help { font-size: 0.72rem; color: var(--rp-text-dim); margin-top: 0.15rem; }
+    .rp-input, .rp-textarea, .rp-select {
+      background: var(--rp-glass); color: var(--rp-text);
+      border: 1px solid var(--rp-glass-border); border-radius: var(--rp-radius-sm);
+      padding: 0.5rem 0.65rem; font-size: 0.88rem; font-family: inherit; width: 100%;
+    }
+    .rp-textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
+    .rp-input:focus, .rp-textarea:focus, .rp-select:focus { outline: none; border-color: var(--rp-accent); }
+    .rp-checkbox { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--rp-text); font-size: 0.88rem; cursor: pointer; }
+    .rp-checkbox input { width: 16px; height: 16px; accent-color: var(--rp-accent); }
+
+    .rp-imported-pill {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      padding: 0.1rem 0.45rem; border-radius: 999px;
+      font-size: 0.65rem; font-weight: 600;
+      background: rgba(56,189,248,0.1); color: var(--rp-accent);
+      border: 1px solid rgba(56,189,248,0.2);
+    }
+    .rp-imported-pill button {
+      background: none; border: none; padding: 0; margin: 0; cursor: pointer;
+      color: inherit; font-size: 0.7rem;
+    }
+
+    .rp-rep-row {
+      background: var(--rp-glass); border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius-sm); padding: 0.75rem; margin-bottom: 0.6rem;
+      position: relative;
+    }
+    .rp-rep-rm {
+      position: absolute; top: 0.5rem; right: 0.5rem;
+      background: transparent; border: none; cursor: pointer;
+      color: var(--rp-text-dim); font-size: 0.85rem; padding: 0.25rem 0.5rem;
+      border-radius: var(--rp-radius-sm);
+    }
+    .rp-rep-rm:hover { color: var(--rp-red); background: rgba(239,68,68,0.08); }
+    .rp-rep-add {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 0.75rem; border-radius: var(--rp-radius-sm);
+      background: var(--rp-glass); border: 1px dashed var(--rp-glass-border);
+      color: var(--rp-text-muted); font-family: inherit; font-size: 0.8rem;
+      cursor: pointer; transition: all 0.15s ease;
+    }
+    .rp-rep-add:hover { color: var(--rp-accent); border-color: rgba(56,189,248,0.3); background: rgba(56,189,248,0.05); }
+
+    .rp-savebar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
+      background: var(--rp-bg);
+      border-top: 1px solid var(--rp-glass-border);
+      padding: 0.75rem 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .rp-savebar-spacer { flex: 1; }
+    .rp-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.55rem 1rem; border-radius: var(--rp-radius-sm);
+      font-family: inherit; font-weight: 600; font-size: 0.85rem;
+      border: none; cursor: pointer; transition: all 0.2s ease;
+      text-decoration: none; white-space: nowrap;
+    }
+    .rp-btn-primary { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: #fff; }
+    .rp-btn-primary:hover:not(:disabled) { box-shadow: 0 4px 12px rgba(14,165,233,0.3); transform: translateY(-1px); }
+    .rp-btn-outline { background: transparent; color: var(--rp-text); border: 1px solid var(--rp-glass-border); }
+    .rp-btn-outline:hover:not(:disabled) { background: var(--rp-surface); }
+    .rp-btn-ghost { background: transparent; color: var(--rp-text-muted); border: 1px solid transparent; }
+    .rp-btn-ghost:hover { color: #fff; background: var(--rp-surface); }
+    .rp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .rp-toast {
+      position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%);
+      background: var(--rp-glass); border: 1px solid var(--rp-glass-border);
+      padding: 0.6rem 1rem; border-radius: var(--rp-radius);
+      color: var(--rp-text); font-size: 0.85rem; z-index: 20;
+      backdrop-filter: blur(8px);
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .rp-toast.show { opacity: 1; }
+    .rp-toast.error { border-color: rgba(239,68,68,0.3); color: var(--rp-red); }
+    .rp-toast.success { border-color: rgba(34,197,94,0.3); color: var(--rp-green); }
+
+    .rp-loading {
+      grid-column: 1 / -1; padding: 4rem 1rem; text-align: center; color: var(--rp-text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="rp-shell">
+    <div class="rp-header">
+      <div class="rp-header-left">
+        <div class="rp-header-icon"><i class="fa-solid fa-file-pen"></i></div>
+        <div>
+          <div class="rp-title" id="rp-title-text">Loading…</div>
+          <div class="rp-subtitle" id="rp-sub-text"></div>
+        </div>
+      </div>
+      <div style="display:flex; gap:0.5rem;">
+        <a href="/reports<% if (typeof communityIdEncoded !== 'undefined' && communityIdEncoded) { %>?c=<%= communityIdEncoded %><% } %>" class="rp-back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Reports</a>
+        <label class="rp-back-btn" style="cursor:pointer;">
+          <input type="checkbox" id="rp-required-only" style="margin-right: 0.3rem;" /> Required only
+        </label>
+      </div>
+    </div>
+
+    <aside class="rp-side" id="rp-side"></aside>
+    <main class="rp-main">
+      <div id="rp-callout"></div>
+      <div id="rp-form" class="rp-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading template…</div>
+    </main>
+  </div>
+
+  <div class="rp-savebar" id="rp-savebar" style="display:none;">
+    <button id="rp-print" class="rp-btn rp-btn-ghost"><i class="fa-solid fa-print"></i> Print / PDF</button>
+    <div class="rp-savebar-spacer"></div>
+    <button id="rp-save-draft" class="rp-btn rp-btn-outline"><i class="fa-regular fa-floppy-disk"></i> Save Draft</button>
+    <button id="rp-submit" class="rp-btn rp-btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit</button>
+  </div>
+
+  <div id="rp-toast" class="rp-toast"></div>
+
+  <script>
+    (function () {
+      var apiUrl = <%- JSON.stringify(typeof apiUrl !== 'undefined' ? apiUrl : '') %>;
+      var token = <%- JSON.stringify(typeof apiToken !== 'undefined' ? apiToken : '') %>;
+      var communityId = <%- JSON.stringify(typeof communityId !== 'undefined' ? communityId : '') %>;
+      var communityIdEncoded = <%- JSON.stringify(typeof communityIdEncoded !== 'undefined' ? communityIdEncoded : '') %>;
+      var departmentId = <%- JSON.stringify(typeof departmentId !== 'undefined' ? departmentId : '') %>;
+      var slug = <%- JSON.stringify(typeof slug !== 'undefined' ? slug : 'incident-report') %>;
+      var submissionId = <%- JSON.stringify(typeof submissionId !== 'undefined' ? submissionId : '') %>;
+      var readOnly = <%- JSON.stringify(typeof readOnly !== 'undefined' ? !!readOnly : false) %>;
+      var currentUser = <%- JSON.stringify(typeof currentUser !== 'undefined' ? currentUser : null) %>;
+
+      function authHeaders(extra) {
+        var h = Object.assign({}, extra || {});
+        if (token) h['Authorization'] = 'Bearer ' + token;
+        return h;
+      }
+
+      // --- state ---
+      var state = {
+        template: null,
+        data: {},
+        importedFrom: {},   // fieldId -> { type, id, label }
+        links: [],
+        sources: [],        // [{type, id, childId?}]
+        sectionState: {},   // sectionId -> open boolean
+        existing: null      // existing submission record (when viewing/editing)
+      };
+
+      function toast(msg, kind) {
+        var t = document.getElementById('rp-toast');
+        t.textContent = msg; t.className = 'rp-toast show ' + (kind || '');
+        setTimeout(function () { t.className = 'rp-toast'; }, 2400);
+      }
+
+      function escapeHTML(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      // --- load template + (optionally) existing submission ---
+      function loadInitial() {
+        return fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId), { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+          .then(function (j) {
+            var list = (j && j.data) || [];
+            var tpl = list.filter(function (t) { return t.slug === slug; })[0];
+            if (!tpl) throw new Error('Template "' + slug + '" not found for this community');
+            state.template = tpl;
+            initSectionState(tpl);
+
+            if (submissionId) {
+              return fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(submissionId), { headers: authHeaders() })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (sub) {
+                  if (sub && sub.formSubmission) {
+                    state.existing = sub;
+                    state.data = sub.formSubmission.data || {};
+                    state.links = sub.formSubmission.links || [];
+                  }
+                });
+            }
+            return null;
+          })
+          .then(function () { render(); });
+      }
+
+      function initSectionState(tpl) {
+        (tpl.sections || []).forEach(function (s, idx) {
+          // First two sections open by default; everything else collapsed.
+          state.sectionState[s.id] = idx < 2;
+        });
+      }
+
+      // --- "Start from" sources ---
+      function fetchSourceCandidates() {
+        // Recent calls (open or recent) and recent arrest reports for this community
+        var calls = fetch(apiUrl + '/api/v2/calls/community/' + encodeURIComponent(communityId) + '?page=1&limit=10', { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+          .then(function (j) { return (j && j.data) || []; })
+          .catch(function () { return []; });
+        return Promise.all([calls]);
+      }
+
+      function renderCallout() {
+        var el = document.getElementById('rp-callout');
+        if (state.existing && readOnly) {
+          el.innerHTML = '<div class="rp-callout"><div class="rp-callout-title"><i class="fa-solid fa-eye" style="color: var(--rp-accent);"></i> Read-only view</div><div style="font-size: 0.85rem; color: var(--rp-text-muted);">Switch to edit mode to make changes.</div></div>';
+          return;
+        }
+        if (state.existing) {
+          el.innerHTML = '';
+          return;
+        }
+
+        var html = '<div class="rp-callout">' +
+          '<div class="rp-callout-title"><i class="fa-solid fa-bolt" style="color: var(--rp-amber);"></i> Start from existing data</div>' +
+          '<div style="font-size: 0.85rem; color: var(--rp-text-muted); margin-bottom: 0.75rem;">Pull info from a recent call to auto-fill what you can. You can always edit afterwards.</div>' +
+          '<div class="rp-callout-row">' +
+            '<select id="rp-src-call" class="rp-select"><option value="">Pick a recent call…</option></select>' +
+            '<button id="rp-src-apply" class="rp-btn rp-btn-outline"><i class="fa-solid fa-wand-magic-sparkles"></i> Apply</button>' +
+            '<button id="rp-src-clear" class="rp-btn rp-btn-ghost">Clear all imports</button>' +
+          '</div>' +
+          '</div>';
+        el.innerHTML = html;
+
+        fetchSourceCandidates().then(function (results) {
+          var calls = results[0] || [];
+          var sel = document.getElementById('rp-src-call');
+          calls.forEach(function (c) {
+            var d = c.call || {};
+            var opt = document.createElement('option');
+            opt.value = c._id;
+            opt.textContent = (d.title || '(untitled)') + ' — ' + (d.createdAtReadable || '');
+            sel.appendChild(opt);
+          });
+        });
+
+        document.getElementById('rp-src-apply').addEventListener('click', function () {
+          var callId = document.getElementById('rp-src-call').value;
+          if (!callId) return toast('Pick a call first', 'error');
+          applySource({ type: 'call', id: callId });
+        });
+        document.getElementById('rp-src-clear').addEventListener('click', function () {
+          state.importedFrom = {};
+          state.sources = [];
+          render();
+        });
+      }
+
+      function applySource(src) {
+        // Avoid duplicate entries.
+        var dup = state.sources.filter(function (s) { return s.type === src.type && s.id === src.id; }).length > 0;
+        if (!dup) state.sources.push(src);
+
+        // Ask the API to compute prefill against template + sources.
+        fetch(apiUrl + '/api/v1/form-submission/draft', {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            communityID: communityId,
+            formTemplateSlug: slug,
+            sources: state.sources
+          })
+        })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (j) {
+            if (!j || !j.data) return toast('Could not fetch prefill', 'error');
+            var prefill = j.data;
+            Object.keys(prefill).forEach(function (k) {
+              if (state.data[k] == null || state.data[k] === '') {
+                state.data[k] = prefill[k];
+                state.importedFrom[k] = { type: src.type, id: src.id, label: srcLabel(src) };
+              }
+            });
+            // Add the source as a link too (so it shows up on entity profile pages).
+            var alreadyLinked = state.links.filter(function (l) { return l.type === src.type && l.id === src.id; }).length > 0;
+            if (!alreadyLinked) state.links.push({ type: src.type, id: src.id, label: srcLabel(src) });
+            render();
+            toast('Prefilled from ' + src.type, 'success');
+          })
+          .catch(function () { toast('Failed to fetch prefill', 'error'); });
+      }
+
+      function srcLabel(src) { return src.type + ':' + (src.id || '').slice(-6); }
+
+      // --- field renderers ---
+      function renderField(f, sectionId, rowIdx) {
+        var fieldKey = sectionId + '.' + f.id + (rowIdx != null ? '[' + rowIdx + ']' : '');
+        var pathParts = sectionId === f.id ? [f.id] : [sectionId, f.id];
+        var value = readValue(state.data, sectionId, f.id, rowIdx);
+
+        var disabled = readOnly ? ' disabled' : '';
+        var labelHTML = '<span class="rp-label">' +
+          escapeHTML(f.label || f.id) +
+          (f.required ? ' <span class="req">*</span>' : '') +
+          (state.importedFrom[f.id] ? ' <span class="rp-imported-pill"><i class="fa-solid fa-import"></i> from ' + escapeHTML(state.importedFrom[f.id].type) + (readOnly ? '' : ' <button type="button" data-clear-import="' + escapeHTML(f.id) + '" title="Clear">×</button>') + '</span>' : '') +
+          '</span>';
+
+        var inputHTML = '';
+        var fullWidth = ['textarea', 'multiSelect'].indexOf(f.type) !== -1;
+        switch (f.type) {
+          case 'textarea':
+            inputHTML = '<textarea class="rp-textarea" data-field-key="' + fieldKey + '"' + disabled + ' placeholder="' + escapeHTML(f.placeholder || '') + '">' + escapeHTML(value || '') + '</textarea>';
+            break;
+          case 'select':
+          case 'radio':
+            inputHTML = '<select class="rp-select" data-field-key="' + fieldKey + '"' + disabled + '>' +
+              '<option value="">—</option>' +
+              (f.options || []).map(function (o) {
+                return '<option value="' + escapeHTML(o) + '"' + (String(value || '') === o ? ' selected' : '') + '>' + escapeHTML(o) + '</option>';
+              }).join('') +
+              '</select>';
+            break;
+          case 'multiSelect':
+            var arr = Array.isArray(value) ? value : (value ? [value] : []);
+            inputHTML = '<input class="rp-input" data-field-key="' + fieldKey + '" data-multi="1" type="text"' + disabled + ' value="' + escapeHTML(arr.join(', ')) + '" placeholder="Comma-separated values" />';
+            break;
+          case 'checkbox':
+            inputHTML = '<label class="rp-checkbox"><input type="checkbox" data-field-key="' + fieldKey + '"' + disabled + (value ? ' checked' : '') + ' /> Yes</label>';
+            break;
+          case 'date':
+            inputHTML = '<input class="rp-input" type="date" data-field-key="' + fieldKey + '"' + disabled + ' value="' + escapeHTML(value || '') + '" />';
+            break;
+          case 'time':
+            inputHTML = '<input class="rp-input" type="time" data-field-key="' + fieldKey + '"' + disabled + ' value="' + escapeHTML(value || '') + '" />';
+            break;
+          case 'datetime':
+            inputHTML = '<input class="rp-input" type="datetime-local" data-field-key="' + fieldKey + '"' + disabled + ' value="' + escapeHTML(value || '') + '" />';
+            break;
+          case 'number':
+            inputHTML = '<input class="rp-input" type="number" data-field-key="' + fieldKey + '"' + disabled + ' value="' + escapeHTML(value || '') + '" placeholder="' + escapeHTML(f.placeholder || '') + '" />';
+            break;
+          case 'penalCodePicker':
+            // For now penal code picker is just a plain text input; full picker UI is a follow-up.
+            inputHTML = '<input class="rp-input" type="text" data-field-key="' + fieldKey + '"' + disabled + ' value="' + escapeHTML(value || '') + '" placeholder="Charge name" />';
+            break;
+          case 'userPicker':
+          case 'departmentPicker':
+            inputHTML = '<input class="rp-input" type="text" data-field-key="' + fieldKey + '"' + disabled + ' value="' + escapeHTML(value || '') + '" placeholder="' + escapeHTML(f.placeholder || '') + '" />';
+            break;
+          case 'text':
+          default:
+            inputHTML = '<input class="rp-input" type="text" data-field-key="' + fieldKey + '"' + disabled + ' value="' + escapeHTML(value || '') + '" placeholder="' + escapeHTML(f.placeholder || '') + '" />';
+        }
+
+        var wrap = '<div class="rp-field' + (fullWidth ? ' rp-field-full' : '') + (f.required ? ' is-required' : '') + '" data-required="' + (f.required ? '1' : '0') + '">' +
+          labelHTML + inputHTML +
+          (f.helpText ? '<div class="rp-help">' + escapeHTML(f.helpText) + '</div>' : '') +
+          '</div>';
+        return wrap;
+      }
+
+      function readValue(data, sectionId, fieldId, rowIdx) {
+        if (rowIdx != null) {
+          var rows = data[sectionId];
+          if (!Array.isArray(rows) || !rows[rowIdx]) return '';
+          return rows[rowIdx][fieldId];
+        }
+        // Top-level field — could be either keyed by section or directly.
+        if (data[fieldId] != null) return data[fieldId];
+        return '';
+      }
+
+      function renderSection(section) {
+        var open = state.sectionState[section.id] !== false;
+        var requiredHere = (section.fields || []).filter(function (f) { return f.required; }).length;
+        var hdr = '<div class="rp-section-header" data-toggle-section="' + escapeHTML(section.id) + '">' +
+          '<div class="rp-section-title"><i class="fa-solid fa-chevron-right rp-section-chev"></i> ' + escapeHTML(section.title) + (section.repeatable ? ' <span class="rp-pill">repeatable</span>' : '') + '</div>' +
+          (requiredHere > 0 ? '<span class="rp-pill" style="color: var(--rp-amber);"><i class="fa-solid fa-asterisk"></i> ' + requiredHere + '</span>' : '') +
+          '</div>';
+
+        var body = '';
+        if (section.repeatable) {
+          var rows = state.data[section.id];
+          if (!Array.isArray(rows)) rows = [];
+          if (rows.length === 0 && !readOnly) rows = [{}];
+          rows.forEach(function (_, idx) {
+            body += '<div class="rp-rep-row">' +
+              (readOnly ? '' : '<button type="button" class="rp-rep-rm" data-remove-row="' + escapeHTML(section.id) + '|' + idx + '"><i class="fa-solid fa-trash"></i></button>') +
+              '<div class="rp-grid">' +
+                (section.fields || []).map(function (f) { return renderField(f, section.id, idx); }).join('') +
+              '</div>' +
+              '</div>';
+          });
+          if (!readOnly) {
+            body += '<button type="button" class="rp-rep-add" data-add-row="' + escapeHTML(section.id) + '"><i class="fa-solid fa-plus"></i> Add ' + escapeHTML(singularize(section.title)) + '</button>';
+          }
+        } else {
+          body = '<div class="rp-grid">' + (section.fields || []).map(function (f) { return renderField(f, section.id, null); }).join('') + '</div>';
+        }
+
+        return '<section class="rp-section ' + (open ? 'open' : '') + '" data-section-id="' + escapeHTML(section.id) + '">' +
+          hdr + '<div class="rp-section-body">' + body + '</div></section>';
+      }
+
+      function singularize(t) { return (t || '').replace(/s$/, '') || t; }
+
+      function renderSide() {
+        var side = document.getElementById('rp-side');
+        var html = '<div class="rp-side-title">Sections</div>';
+        (state.template.sections || []).forEach(function (s) {
+          var requiredHere = (s.fields || []).filter(function (f) { return f.required; }).length;
+          html += '<a class="rp-side-link' + (requiredHere ? ' has-required' : '') + '" href="#sec-' + escapeHTML(s.id) + '" data-jump="' + escapeHTML(s.id) + '"><i class="fa-regular fa-circle-dot"></i> ' + escapeHTML(s.title) + (requiredHere ? '<span class="rp-pill">' + requiredHere + '</span>' : '') + '</a>';
+        });
+        side.innerHTML = html;
+        Array.from(side.querySelectorAll('[data-jump]')).forEach(function (a) {
+          a.addEventListener('click', function (e) {
+            var id = a.getAttribute('data-jump');
+            state.sectionState[id] = true; render();
+            setTimeout(function () {
+              var sec = document.querySelector('[data-section-id="' + id + '"]');
+              if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 50);
+            e.preventDefault();
+          });
+        });
+      }
+
+      function render() {
+        if (!state.template) return;
+        document.getElementById('rp-title-text').textContent = state.template.name + (state.existing ? ' · ' + (state.existing.formSubmission.reportNumber || '') : '');
+        document.getElementById('rp-sub-text').textContent = state.existing ? 'Created ' + new Date(state.existing.formSubmission.createdAt).toLocaleString() : 'Fill out what you need — auto-saving as draft.';
+
+        renderCallout();
+        renderSide();
+
+        var formEl = document.getElementById('rp-form');
+        formEl.classList.remove('rp-loading');
+        formEl.innerHTML = (state.template.sections || []).map(renderSection).join('');
+
+        document.getElementById('rp-savebar').style.display = readOnly ? 'none' : 'flex';
+
+        bindFieldHandlers();
+        bindSectionHandlers();
+        applyRequiredOnlyFilter();
+      }
+
+      function bindFieldHandlers() {
+        Array.from(document.querySelectorAll('[data-field-key]')).forEach(function (el) {
+          el.addEventListener('input', onFieldChange);
+          el.addEventListener('change', onFieldChange);
+        });
+        Array.from(document.querySelectorAll('[data-clear-import]')).forEach(function (btn) {
+          btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            var fieldId = btn.getAttribute('data-clear-import');
+            delete state.importedFrom[fieldId];
+            render();
+          });
+        });
+        Array.from(document.querySelectorAll('[data-add-row]')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var sec = btn.getAttribute('data-add-row');
+            if (!Array.isArray(state.data[sec])) state.data[sec] = [];
+            state.data[sec].push({});
+            render();
+          });
+        });
+        Array.from(document.querySelectorAll('[data-remove-row]')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var parts = btn.getAttribute('data-remove-row').split('|');
+            var sec = parts[0]; var idx = parseInt(parts[1], 10);
+            if (Array.isArray(state.data[sec])) {
+              state.data[sec].splice(idx, 1);
+              render();
+            }
+          });
+        });
+      }
+
+      function bindSectionHandlers() {
+        Array.from(document.querySelectorAll('[data-toggle-section]')).forEach(function (hdr) {
+          hdr.addEventListener('click', function () {
+            var id = hdr.getAttribute('data-toggle-section');
+            state.sectionState[id] = !state.sectionState[id];
+            var sec = hdr.closest('.rp-section');
+            sec.classList.toggle('open');
+          });
+        });
+      }
+
+      function onFieldChange(e) {
+        var key = e.target.getAttribute('data-field-key');
+        var parts = key.split('.');
+        var sectionId = parts[0];
+        var rest = parts.slice(1).join('.');
+        var match = rest.match(/^(.+?)(?:\[(\d+)\])?$/);
+        var fieldId = match[1];
+        var rowIdx = match[2] != null ? parseInt(match[2], 10) : null;
+
+        var v;
+        if (e.target.type === 'checkbox') v = e.target.checked;
+        else if (e.target.getAttribute('data-multi') === '1') v = e.target.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        else v = e.target.value;
+
+        if (rowIdx != null) {
+          if (!Array.isArray(state.data[sectionId])) state.data[sectionId] = [];
+          if (!state.data[sectionId][rowIdx]) state.data[sectionId][rowIdx] = {};
+          state.data[sectionId][rowIdx][fieldId] = v;
+        } else {
+          state.data[fieldId] = v;
+        }
+        // User edited a field — drop the imported badge for this field.
+        if (state.importedFrom[fieldId]) delete state.importedFrom[fieldId];
+      }
+
+      function applyRequiredOnlyFilter() {
+        var only = document.getElementById('rp-required-only').checked;
+        Array.from(document.querySelectorAll('.rp-field')).forEach(function (el) {
+          if (only && el.getAttribute('data-required') !== '1') el.style.display = 'none';
+          else el.style.display = '';
+        });
+      }
+
+      // --- save / submit ---
+      function saveAs(status) {
+        var btn = status === 'submitted' ? document.getElementById('rp-submit') : document.getElementById('rp-save-draft');
+        btn.disabled = true;
+
+        var payload = {
+          communityID: communityId,
+          departmentId: departmentId,
+          formTemplateSlug: slug,
+          data: state.data,
+          links: state.links,
+          status: status,
+          signedBy: currentUser ? { userID: currentUser.id, username: currentUser.username } : undefined
+        };
+
+        var url, method;
+        if (state.existing) {
+          url = apiUrl + '/api/v1/form-submission/' + encodeURIComponent(state.existing._id);
+          method = 'PUT';
+          payload = { data: state.data, links: state.links, status: status };
+        } else {
+          url = apiUrl + '/api/v1/form-submission';
+          method = 'POST';
+        }
+
+        fetch(url, {
+          method: method,
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(payload)
+        })
+          .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function (j) {
+            toast(status === 'submitted' ? 'Submitted' : 'Draft saved', 'success');
+            if (!state.existing && j && j.id) {
+              // Redirect to the saved record so future edits go to PUT.
+              window.location.href = '/reports/' + j.id + (communityIdEncoded ? '?c=' + communityIdEncoded : '');
+              return;
+            }
+            btn.disabled = false;
+          })
+          .catch(function (e) {
+            toast('Save failed: ' + (e && e.message), 'error');
+            btn.disabled = false;
+          });
+      }
+
+      document.getElementById('rp-required-only').addEventListener('change', applyRequiredOnlyFilter);
+      document.getElementById('rp-save-draft').addEventListener('click', function () { saveAs('draft'); });
+      document.getElementById('rp-submit').addEventListener('click', function () {
+        // Minimal client-side required-fields gate.
+        var missing = [];
+        (state.template.sections || []).forEach(function (s) {
+          if (s.repeatable) return;
+          (s.fields || []).forEach(function (f) {
+            if (f.required && (state.data[f.id] == null || state.data[f.id] === '')) missing.push(f.label || f.id);
+          });
+        });
+        if (missing.length) {
+          if (!confirm('These required fields are empty:\n - ' + missing.join('\n - ') + '\n\nSubmit anyway?')) return;
+        }
+        saveAs('submitted');
+      });
+      document.getElementById('rp-print').addEventListener('click', function () {
+        if (state.existing && state.existing._id) {
+          window.open('/reports/' + state.existing._id + '/print' + (communityIdEncoded ? '?c=' + communityIdEncoded : ''), '_blank');
+        } else {
+          toast('Save the report first to print', 'error');
+        }
+      });
+
+      loadInitial().catch(function (e) {
+        document.getElementById('rp-form').innerHTML = '<div class="rp-loading" style="color: var(--rp-red);">' + escapeHTML(e && e.message ? e.message : 'Failed to load') + '</div>';
+      });
+    })();
+  </script>
+</body>
+</html>

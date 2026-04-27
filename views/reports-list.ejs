@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports - Lines Police CAD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --rp-bg: #08090c;
+      --rp-surface: rgba(255,255,255,0.03);
+      --rp-glass: rgba(255,255,255,0.04);
+      --rp-glass-border: rgba(255,255,255,0.06);
+      --rp-glass-hover: rgba(255,255,255,0.07);
+      --rp-text: #e2e8f0;
+      --rp-text-muted: #64748b;
+      --rp-text-dim: #475569;
+      --rp-accent: #38bdf8;
+      --rp-accent-glow: rgba(56,189,248,0.15);
+      --rp-green: #22c55e;
+      --rp-amber: #f59e0b;
+      --rp-red: #ef4444;
+      --rp-radius: 12px;
+      --rp-radius-sm: 8px;
+    }
+    html { font-size: 16px; }
+    body {
+      background: var(--rp-bg); color: var(--rp-text);
+      font-family: 'Outfit', -apple-system, sans-serif;
+      min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 700px 500px at 10% 15%, rgba(56,189,248,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 90% 85%, rgba(245,158,11,0.04) 0%, transparent 70%);
+    }
+    .rp-shell { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .rp-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.5rem; padding-bottom: 1rem;
+      border-bottom: 1px solid var(--rp-glass-border);
+    }
+    .rp-header-left { display: flex; align-items: center; gap: 1rem; }
+    .rp-header-icon {
+      width: 44px; height: 44px;
+      background: var(--rp-accent-glow);
+      border: 1px solid rgba(56,189,248,0.2);
+      border-radius: var(--rp-radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; color: var(--rp-accent);
+    }
+    .rp-title { font-weight: 700; font-size: 1.5rem; color: #fff; }
+    .rp-subtitle { font-size: 0.85rem; color: var(--rp-text-muted); margin-top: 0.1rem; }
+    .rp-back-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      color: var(--rp-text-muted); font-size: 0.85rem; text-decoration: none;
+      padding: 0.4rem 0.75rem; border-radius: var(--rp-radius-sm);
+      transition: all 0.2s ease; border: 1px solid transparent;
+    }
+    .rp-back-btn:hover { color: #fff; background: var(--rp-surface); border-color: var(--rp-glass-border); }
+    .rp-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.5rem 0.9rem; border-radius: var(--rp-radius-sm);
+      font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 0.85rem;
+      border: none; cursor: pointer; transition: all 0.2s ease;
+      text-decoration: none; white-space: nowrap;
+    }
+    .rp-btn-primary { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: #fff; }
+    .rp-btn-primary:hover { box-shadow: 0 4px 12px rgba(14,165,233,0.3); transform: translateY(-1px); }
+    .rp-btn-outline { background: transparent; color: var(--rp-text-muted); border: 1px solid var(--rp-glass-border); }
+    .rp-btn-outline:hover { background: var(--rp-surface); color: #fff; }
+
+    .rp-toolbar {
+      position: sticky; top: 0; z-index: 5;
+      background: var(--rp-bg);
+      padding: 0.75rem 0; margin-bottom: 1rem;
+      display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center;
+      border-bottom: 1px solid var(--rp-glass-border);
+    }
+    .rp-input, .rp-select {
+      background: var(--rp-glass); color: var(--rp-text);
+      border: 1px solid var(--rp-glass-border); border-radius: var(--rp-radius-sm);
+      padding: 0.5rem 0.75rem; font-size: 0.85rem; font-family: inherit;
+      min-width: 180px;
+    }
+    .rp-input:focus, .rp-select:focus { outline: none; border-color: var(--rp-accent); }
+    .rp-toolbar-spacer { flex: 1; }
+
+    .rp-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .rp-card {
+      background: var(--rp-surface);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius-sm);
+      padding: 0.875rem 1rem;
+      display: flex; align-items: center; gap: 0.875rem;
+      transition: all 0.2s ease; cursor: pointer; text-decoration: none; color: inherit;
+    }
+    .rp-card:hover { border-color: rgba(255,255,255,0.12); background: var(--rp-glass-hover); }
+    .rp-avatar {
+      width: 38px; height: 38px;
+      border-radius: var(--rp-radius-sm);
+      background: var(--rp-accent-glow);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--rp-accent); font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+      border: 1px solid rgba(56,189,248,0.15);
+    }
+    .rp-card-info { flex: 1; min-width: 0; }
+    .rp-card-title { font-weight: 600; font-size: 0.9rem; color: #fff; }
+    .rp-card-meta {
+      font-size: 0.78rem; color: var(--rp-text-muted); margin-top: 0.2rem;
+      display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+    }
+    .rp-meta-item { display: inline-flex; align-items: center; gap: 0.25rem; }
+    .rp-pill {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      padding: 0.18rem 0.55rem; border-radius: 999px;
+      font-size: 0.7rem; font-weight: 600;
+      background: var(--rp-glass); color: var(--rp-text-muted);
+      border: 1px solid var(--rp-glass-border);
+    }
+    .rp-pill-submitted { background: rgba(34,197,94,0.1); color: var(--rp-green); border-color: rgba(34,197,94,0.2); }
+    .rp-pill-draft { background: rgba(245,158,11,0.1); color: var(--rp-amber); border-color: rgba(245,158,11,0.2); }
+
+    .rp-empty {
+      text-align: center; padding: 3rem 1rem;
+      color: var(--rp-text-muted);
+      border: 1px dashed var(--rp-glass-border);
+      border-radius: var(--rp-radius);
+    }
+    .rp-empty-icon { font-size: 2rem; color: var(--rp-text-dim); margin-bottom: 0.75rem; }
+    .rp-empty-title { font-weight: 600; color: var(--rp-text); margin-bottom: 0.25rem; }
+    .rp-empty-sub { font-size: 0.85rem; }
+
+    .rp-pagination {
+      display: flex; justify-content: center; gap: 0.4rem;
+      margin-top: 1.5rem;
+    }
+    .rp-page-btn {
+      padding: 0.4rem 0.7rem; border-radius: var(--rp-radius-sm);
+      background: transparent; color: var(--rp-text-muted);
+      border: 1px solid var(--rp-glass-border); cursor: pointer;
+      font-family: inherit; font-size: 0.85rem;
+    }
+    .rp-page-btn:hover:not(:disabled) { background: var(--rp-surface); color: #fff; }
+    .rp-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .rp-page-info { padding: 0.4rem 0.7rem; color: var(--rp-text-muted); font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="rp-shell">
+    <div class="rp-header">
+      <div class="rp-header-left">
+        <div class="rp-header-icon"><i class="fa-solid fa-file-lines"></i></div>
+        <div>
+          <div class="rp-title">Reports</div>
+          <div class="rp-subtitle">
+            <% if (typeof communityName !== 'undefined' && communityName) { %><%= communityName %><% } else { %>All reports in your community<% } %>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:0.5rem;">
+        <a href="/" class="rp-back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a href="/reports/new?slug=incident-report<% if (typeof communityIdEncoded !== 'undefined' && communityIdEncoded) { %>&c=<%= communityIdEncoded %><% } %>" class="rp-btn rp-btn-primary"><i class="fa-solid fa-plus"></i> New Report</a>
+      </div>
+    </div>
+
+    <div class="rp-toolbar">
+      <select id="rp-filter-template" class="rp-select">
+        <option value="">All template types</option>
+      </select>
+      <select id="rp-filter-status" class="rp-select">
+        <option value="">All statuses</option>
+        <option value="submitted">Submitted</option>
+        <option value="draft">Drafts</option>
+      </select>
+      <input id="rp-filter-q" class="rp-input" type="search" placeholder="Search by report # or officer…" />
+      <div class="rp-toolbar-spacer"></div>
+      <button id="rp-refresh" class="rp-btn rp-btn-outline"><i class="fa-solid fa-rotate"></i> Refresh</button>
+    </div>
+
+    <div id="rp-list" class="rp-list"></div>
+
+    <div id="rp-pagination" class="rp-pagination"></div>
+  </div>
+
+  <script>
+    (function () {
+      var apiUrl = <%- JSON.stringify(typeof apiUrl !== 'undefined' ? apiUrl : '') %>;
+      var communityId = <%- JSON.stringify(typeof communityId !== 'undefined' ? communityId : '') %>;
+      var communityIdEncoded = <%- JSON.stringify(typeof communityIdEncoded !== 'undefined' ? communityIdEncoded : '') %>;
+      var token = <%- JSON.stringify(typeof apiToken !== 'undefined' ? apiToken : '') %>;
+
+      var state = { page: 0, limit: 20, templateSlug: '', status: '', q: '', total: 0 };
+      var templates = [];
+
+      function authHeaders() {
+        return token ? { 'Authorization': 'Bearer ' + token } : {};
+      }
+
+      function fmtDate(iso) {
+        if (!iso) return '';
+        try {
+          var d = new Date(iso);
+          if (isNaN(d.getTime())) return '';
+          return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } catch (e) { return ''; }
+      }
+
+      function loadTemplates() {
+        if (!communityId) return Promise.resolve([]);
+        return fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId), { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+          .then(function (j) {
+            templates = (j && j.data) || [];
+            var sel = document.getElementById('rp-filter-template');
+            templates.forEach(function (t) {
+              var opt = document.createElement('option');
+              opt.value = t.slug; opt.textContent = t.name;
+              sel.appendChild(opt);
+            });
+            return templates;
+          })
+          .catch(function () { return []; });
+      }
+
+      function templateName(slug) {
+        var hit = templates.filter(function (t) { return t.slug === slug; })[0];
+        return hit ? hit.name : slug;
+      }
+
+      function loadList() {
+        if (!communityId) return;
+        var qs = 'page=' + state.page + '&limit=' + state.limit;
+        if (state.templateSlug) qs += '&templateSlug=' + encodeURIComponent(state.templateSlug);
+        if (state.status) qs += '&status=' + encodeURIComponent(state.status);
+
+        var listEl = document.getElementById('rp-list');
+        listEl.innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="rp-empty-title">Loading…</div></div>';
+
+        fetch(apiUrl + '/api/v2/form-submissions/community/' + encodeURIComponent(communityId) + '?' + qs, { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [], totalCount: 0 }; })
+          .then(renderList)
+          .catch(function (e) {
+            listEl.innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="rp-empty-title">Failed to load reports</div><div class="rp-empty-sub">' + (e && e.message ? e.message : 'Network error') + '</div></div>';
+          });
+      }
+
+      function renderList(payload) {
+        var listEl = document.getElementById('rp-list');
+        var data = (payload && payload.data) || [];
+        state.total = (payload && payload.totalCount) || 0;
+
+        if (state.q) {
+          var q = state.q.toLowerCase();
+          data = data.filter(function (s) {
+            var d = s.formSubmission || {};
+            return (d.reportNumber || '').toLowerCase().indexOf(q) !== -1
+                || (d.signedBy && d.signedBy.username || '').toLowerCase().indexOf(q) !== -1;
+          });
+        }
+
+        if (data.length === 0) {
+          listEl.innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-regular fa-file"></i></div><div class="rp-empty-title">No reports yet</div><div class="rp-empty-sub">Create one with the New Report button above.</div></div>';
+          renderPagination();
+          return;
+        }
+
+        listEl.innerHTML = '';
+        data.forEach(function (sub) {
+          var d = sub.formSubmission || {};
+          var initials = ((d.signedBy && d.signedBy.username) || '?').slice(0, 2).toUpperCase();
+          var statusPill = d.status === 'draft'
+            ? '<span class="rp-pill rp-pill-draft"><i class="fa-regular fa-circle-dot"></i> Draft</span>'
+            : '<span class="rp-pill rp-pill-submitted"><i class="fa-solid fa-check"></i> Submitted</span>';
+
+          var a = document.createElement('a');
+          a.className = 'rp-card';
+          a.href = '/reports/' + encodeURIComponent(sub._id) + (communityIdEncoded ? '?c=' + communityIdEncoded : '');
+          a.innerHTML =
+            '<div class="rp-avatar">' + escapeHTML(initials) + '</div>' +
+            '<div class="rp-card-info">' +
+              '<div class="rp-card-title">' + escapeHTML(d.reportNumber || '(no number)') + ' · ' + escapeHTML(templateName(d.formTemplateSlug || '')) + '</div>' +
+              '<div class="rp-card-meta">' +
+                '<span class="rp-meta-item"><i class="fa-regular fa-user"></i> ' + escapeHTML((d.signedBy && d.signedBy.username) || 'Unsigned') + '</span>' +
+                '<span class="rp-meta-item"><i class="fa-regular fa-clock"></i> ' + escapeHTML(fmtDate(d.createdAt)) + '</span>' +
+                statusPill +
+              '</div>' +
+            '</div>' +
+            '<i class="fa-solid fa-chevron-right" style="color: var(--rp-text-dim);"></i>';
+          listEl.appendChild(a);
+        });
+
+        renderPagination();
+      }
+
+      function renderPagination() {
+        var pager = document.getElementById('rp-pagination');
+        var pages = Math.max(1, Math.ceil(state.total / state.limit));
+        if (pages <= 1) { pager.innerHTML = ''; return; }
+        pager.innerHTML = '';
+
+        var prev = document.createElement('button');
+        prev.className = 'rp-page-btn'; prev.innerHTML = '<i class="fa-solid fa-chevron-left"></i> Prev';
+        prev.disabled = state.page === 0;
+        prev.onclick = function () { state.page = Math.max(0, state.page - 1); loadList(); };
+        pager.appendChild(prev);
+
+        var info = document.createElement('span');
+        info.className = 'rp-page-info';
+        info.textContent = 'Page ' + (state.page + 1) + ' of ' + pages;
+        pager.appendChild(info);
+
+        var next = document.createElement('button');
+        next.className = 'rp-page-btn'; next.innerHTML = 'Next <i class="fa-solid fa-chevron-right"></i>';
+        next.disabled = state.page >= pages - 1;
+        next.onclick = function () { state.page += 1; loadList(); };
+        pager.appendChild(next);
+      }
+
+      function escapeHTML(s) {
+        return String(s || '').replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      document.getElementById('rp-filter-template').addEventListener('change', function (e) { state.templateSlug = e.target.value; state.page = 0; loadList(); });
+      document.getElementById('rp-filter-status').addEventListener('change', function (e) { state.status = e.target.value; state.page = 0; loadList(); });
+      document.getElementById('rp-filter-q').addEventListener('input', function (e) { state.q = e.target.value || ''; renderListFromCache(); });
+      document.getElementById('rp-refresh').addEventListener('click', loadList);
+
+      // Lightweight client-side q filter — re-renders the last loaded page.
+      var lastPayload = null;
+      function renderListFromCache() { if (lastPayload) renderList(lastPayload); }
+      var origRender = renderList;
+      renderList = function (p) { lastPayload = p; origRender(p); };
+
+      loadTemplates().then(loadList);
+    })();
+  </script>
+</body>
+</html>

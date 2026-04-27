@@ -1543,6 +1543,144 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // ----- Configurable Forms / Reports -----
+  // Resolve the current community from the optional ?c= encoded id, falling
+  // back to the user's lastAccessedCommunity. Returns nulls when none.
+  function resolveCommunityFromReq(req) {
+    const encoded = req.query.c || null;
+    let communityId = null;
+    if (encoded) {
+      try {
+        const decoded = decodeId(encoded);
+        if (isValidObjectId(decoded)) communityId = decoded;
+      } catch (e) {
+        console.error('Failed to decode community ID:', e);
+      }
+    }
+    if (!communityId) {
+      communityId = req.user?.user?.lastAccessedCommunity?.communityID
+                 || req.user?.user?.activeCommunity
+                 || null;
+    }
+    const communityIdEncoded = communityId ? encodeId(communityId) : null;
+    return { communityId, communityIdEncoded };
+  }
+
+  function buildCurrentUserContext(req) {
+    if (!req.user) return null;
+    return {
+      id: req.user._id ? String(req.user._id) : null,
+      username: req.user.user?.username || null,
+    };
+  }
+
+  // Reports list page
+  app.get("/reports", authCheck, async function (req, res) {
+    const { communityId, communityIdEncoded } = resolveCommunityFromReq(req);
+    if (!communityId) return res.redirect('/communities');
+
+    let communityName = null;
+    try {
+      const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
+      communityName = r.data?.community?.name || null;
+    } catch (err) {
+      console.error('Error fetching community for /reports:', err.message);
+    }
+
+    res.render("reports-list", {
+      user: req.user,
+      apiUrl: policeCadApiUrl,
+      communityId,
+      communityIdEncoded,
+      communityName,
+    });
+  });
+
+  // New report page (no submission yet)
+  app.get("/reports/new", authCheck, function (req, res) {
+    const { communityId, communityIdEncoded } = resolveCommunityFromReq(req);
+    if (!communityId) return res.redirect('/communities');
+    const slug = (req.query.slug || 'incident-report').replace(/[^a-z0-9-_]/gi, '');
+    const departmentId = req.user?.user?.lastAccessedCommunity?.activeDepartmentID || '';
+
+    res.render("report-edit", {
+      user: req.user,
+      apiUrl: policeCadApiUrl,
+      communityId,
+      communityIdEncoded,
+      departmentId,
+      slug,
+      submissionId: '',
+      readOnly: false,
+      currentUser: buildCurrentUserContext(req),
+    });
+  });
+
+  // View / edit existing report
+  app.get("/reports/:id", authCheck, function (req, res) {
+    const submissionId = req.params.id;
+    if (!isValidObjectId(submissionId)) return res.redirect('/reports');
+
+    const { communityId, communityIdEncoded } = resolveCommunityFromReq(req);
+    if (!communityId) return res.redirect('/communities');
+
+    const departmentId = req.user?.user?.lastAccessedCommunity?.activeDepartmentID || '';
+    const readOnly = req.query.view === '1';
+
+    res.render("report-edit", {
+      user: req.user,
+      apiUrl: policeCadApiUrl,
+      communityId,
+      communityIdEncoded,
+      departmentId,
+      slug: 'incident-report', // overridden client-side once submission loads
+      submissionId,
+      readOnly,
+      currentUser: buildCurrentUserContext(req),
+    });
+  });
+
+  // Print / PDF view
+  app.get("/reports/:id/print", authCheck, async function (req, res) {
+    const submissionId = req.params.id;
+    if (!isValidObjectId(submissionId)) return res.redirect('/reports');
+
+    const { communityId, communityIdEncoded } = resolveCommunityFromReq(req);
+    if (!communityId) return res.redirect('/communities');
+
+    // Best-effort department logo lookup. Errors here just leave the
+    // placeholder shield icon in place — printing still works.
+    let departmentName = null;
+    let departmentImage = null;
+    const deptId = req.user?.user?.lastAccessedCommunity?.activeDepartmentID || '';
+    if (deptId) {
+      try {
+        const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
+        const community = r.data?.community;
+        const departments = community?.communityDetails?.departments || community?.departments || [];
+        const match = departments.find(d => String(d._id) === deptId || String(d.id) === deptId);
+        if (match) {
+          departmentName = match.name || match.departmentName || null;
+          departmentImage = match.image || match.imageLink || null;
+        }
+      } catch (err) {
+        console.error('Error fetching department for print view:', err.message);
+      }
+    }
+
+    res.render("report-print", {
+      user: req.user,
+      apiUrl: policeCadApiUrl,
+      communityId,
+      communityIdEncoded,
+      submissionId,
+      departmentId: deptId,
+      departmentName,
+      departmentImage,
+    });
+  });
+  // ----- end Configurable Forms / Reports -----
+
   // Help & Tutorial page
   app.get("/help", authCheck, function (req, res) {
     res.render("help-tutorial", {
