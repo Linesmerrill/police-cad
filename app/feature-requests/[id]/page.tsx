@@ -721,10 +721,17 @@ export default function FeatureRequestDetail() {
       .finally(() => setAuthReady(true));
   }, []);
 
-  // Fetch feature request — only after auth resolves
+  // Fetch feature request — only after auth resolves.
+  // Stale-while-revalidate: only show the skeleton on the first fetch. Subsequent
+  // refetches (auth resolving with a userId, focus refetch, socket-driven refresh)
+  // keep the existing content visible so we don't get a content -> skeleton -> content
+  // flash on Next.js' client-side route transitions.
+  const requestRef = useRef<FeatureRequest | null>(null);
+  requestRef.current = request;
+
   const fetchRequest = useCallback(async () => {
     if (!id || !authReady) return;
-    setLoading(true);
+    if (!requestRef.current) setLoading(true);
     try {
       const userParam = currentUser ? `?userId=${currentUser._id}` : '';
       const res = await fetch(`/api/v1/feature-requests/${id}${userParam}`, { credentials: 'include' });
@@ -740,6 +747,13 @@ export default function FeatureRequestDetail() {
       setLoading(false);
     }
   }, [id, authReady, currentUser]);
+
+  // When the route id changes (navigating between detail pages), drop stale
+  // data so the new id shows a skeleton instead of the previous request.
+  useEffect(() => {
+    setRequest(null);
+    setNotFound(false);
+  }, [id]);
 
   useEffect(() => { fetchRequest(); }, [fetchRequest]);
   useRefetchOnFocus(fetchRequest, authReady && !!id);
