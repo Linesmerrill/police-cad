@@ -1106,11 +1106,15 @@
       var statusClass = 'cc-badge-' + (d.status || 'submitted');
       var statusLabel = (d.status || 'submitted').replace('_', ' ');
       var caseId = c._id || '';
+      var caseNumber = d.caseNumber || '';
 
       return '<div class="cc-case-card" onclick="viewCase(\'' + caseId + '\')">' +
         '<div class="cc-avatar">' + initials + '</div>' +
         '<div class="cc-case-info">' +
-          '<div class="cc-case-name">' + esc(d.civilianName || 'Unknown Civilian') + '</div>' +
+          '<div class="cc-case-name">' +
+            (caseNumber ? '<span class="cc-case-number-pill">' + esc(caseNumber) + '</span> ' : '') +
+            esc(d.civilianName || 'Unknown Civilian') +
+          '</div>' +
           '<div class="cc-case-meta">' +
             '<span class="cc-badge ' + statusClass + '">' + statusLabel + '</span>' +
             '<span class="cc-case-meta-item"><i class="fa fa-file-lines"></i> ' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + '</span>' +
@@ -1144,11 +1148,15 @@
       var itemCount = (d.contestedItems || []).length;
       var schedDate = isValidDate(d.scheduledDate) ? new Date(d.scheduledDate).toLocaleString() : 'Not scheduled';
       var caseId = c._id || '';
+      var caseNumber = d.caseNumber || '';
 
       return '<div class="cc-case-card" onclick="viewCase(\'' + caseId + '\')">' +
         '<div class="cc-avatar">' + initials + '</div>' +
         '<div class="cc-case-info">' +
-          '<div class="cc-case-name">' + esc(d.civilianName || 'Unknown Civilian') + '</div>' +
+          '<div class="cc-case-name">' +
+            (caseNumber ? '<span class="cc-case-number-pill">' + esc(caseNumber) + '</span> ' : '') +
+            esc(d.civilianName || 'Unknown Civilian') +
+          '</div>' +
           '<div class="cc-case-meta">' +
             '<span class="cc-badge cc-badge-scheduled">scheduled</span>' +
             '<span class="cc-case-meta-item"><i class="fa fa-calendar"></i> ' + schedDate + '</span>' +
@@ -1297,8 +1305,12 @@
           docket.map(function(entry) {
             var cid = entry.courtCaseID || entry.caseID || '';
             var civName = (entry.civilianName || '').trim() || 'Unknown';
+            var cNum = (entry.caseNumber || '').trim();
             return '<div class="cc-docket-entry" data-case-id="' + cid + '">' +
-              '<div class="cc-docket-civ-name"><i class="fa fa-user"></i><span class="cc-docket-civ-text">' + esc(civName) + '</span></div>' +
+              '<div class="cc-docket-civ-name">' +
+                (cNum ? '<span class="cc-case-number-pill" style="margin-right:0.4rem;">' + esc(cNum) + '</span>' : '') +
+                '<i class="fa fa-user"></i><span class="cc-docket-civ-text">' + esc(civName) + '</span>' +
+              '</div>' +
               '<div class="cc-docket-resolutions">' +
                 '<span style="font-size:0.78rem;color:var(--cc-text-dim);">Expand to load verdicts...</span>' +
               '</div>' +
@@ -1368,6 +1380,11 @@
           var cd = c.courtCase || c.details || c;
           historyCaseCache[caseId] = cd;
           renderDocketResolutions($resArea, cd);
+          // Backfill case number pill for legacy docket rows
+          var $civWrap = $entry.find('.cc-docket-civ-name');
+          if ($civWrap.length && cd.caseNumber && !$civWrap.find('.cc-case-number-pill').length) {
+            $civWrap.prepend('<span class="cc-case-number-pill" style="margin-right:0.4rem;">' + esc(cd.caseNumber) + '</span>');
+          }
           // Backfill civilian name if showing "Unknown"
           var $nameEl = $entry.find('.cc-docket-civ-text');
           if ($nameEl.length && (!$nameEl.text().trim() || $nameEl.text() === 'Unknown')) {
@@ -1492,6 +1509,7 @@
         var detailHtml = '' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">' +
             '<div>' +
+              (d.caseNumber ? '<div style="margin-bottom:0.4rem;"><span class="cc-case-number-pill">' + esc(d.caseNumber) + '</span></div>' : '') +
               '<div style="font-weight:700;font-size:1.05rem;color:#fff;">' + esc(d.civilianName || 'Unknown') + '</div>' +
               '<div style="font-size:0.8rem;color:var(--cc-text-muted);margin-top:0.15rem;">Submitted ' + (d.createdAt ? new Date(d.createdAt).toLocaleDateString() : '') + '</div>' +
             '</div>' +
