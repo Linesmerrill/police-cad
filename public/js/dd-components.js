@@ -2473,7 +2473,7 @@ window.ccDeleteCase = function(caseId, civilianName) {
     confirmClass: 'dd-btn-danger',
     onConfirm: function() {
       $.ajax({
-        url: API_URL + '/api/v2/court-cases/' + caseId,
+        url: API_URL + '/api/v2/court-cases/' + caseId + '?userId=' + encodeURIComponent(userId || ''),
         method: 'DELETE',
         success: function() {
           $('#dd-cc-case-detail-modal').removeClass('open');

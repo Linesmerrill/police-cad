@@ -1545,7 +1545,7 @@
   window.deleteCivilianCase = function(caseId) {
     if (!confirm('Delete this court case? If it is not completed, contested charges will be reverted. This cannot be undone.')) return;
     $.ajax({
-      url: API_URL + '/api/v2/court-cases/' + caseId,
+      url: API_URL + '/api/v2/court-cases/' + caseId + '?userId=' + encodeURIComponent(currentUserId || ''),
       method: 'DELETE',
       success: function() {
         $('#caseDetailModal').removeClass('open');
