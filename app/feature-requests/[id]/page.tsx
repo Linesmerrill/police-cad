@@ -68,13 +68,12 @@ interface FeatureRequest {
 const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  open:         { label: 'Open',        color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
-  under_review: { label: 'Under Review',color: '#06b6d4', bg: 'rgba(6,182,212,0.15)' },
-  planned:      { label: 'Planned',     color: '#a855f7', bg: 'rgba(168,85,247,0.15)' },
-  in_progress:  { label: 'In Progress', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
-  released:     { label: 'Released',    color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
-  declined:     { label: 'Declined',    color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
-  merged:       { label: 'Merged',      color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
+  open:         { label: 'Open',            color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
+  planned:      { label: 'Planned',         color: '#a855f7', bg: 'rgba(168,85,247,0.15)' },
+  beta_testing: { label: 'In Beta Testing', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+  released:     { label: 'Released',        color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
+  declined:     { label: 'Declined',        color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
+  merged:       { label: 'Merged',          color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
 };
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -722,10 +721,17 @@ export default function FeatureRequestDetail() {
       .finally(() => setAuthReady(true));
   }, []);
 
-  // Fetch feature request — only after auth resolves
+  // Fetch feature request — only after auth resolves.
+  // Stale-while-revalidate: only show the skeleton on the first fetch. Subsequent
+  // refetches (auth resolving with a userId, focus refetch, socket-driven refresh)
+  // keep the existing content visible so we don't get a content -> skeleton -> content
+  // flash on Next.js' client-side route transitions.
+  const requestRef = useRef<FeatureRequest | null>(null);
+  requestRef.current = request;
+
   const fetchRequest = useCallback(async () => {
     if (!id || !authReady) return;
-    setLoading(true);
+    if (!requestRef.current) setLoading(true);
     try {
       const userParam = currentUser ? `?userId=${currentUser._id}` : '';
       const res = await fetch(`/api/v1/feature-requests/${id}${userParam}`, { credentials: 'include' });
@@ -741,6 +747,13 @@ export default function FeatureRequestDetail() {
       setLoading(false);
     }
   }, [id, authReady, currentUser]);
+
+  // When the route id changes (navigating between detail pages), drop stale
+  // data so the new id shows a skeleton instead of the previous request.
+  useEffect(() => {
+    setRequest(null);
+    setNotFound(false);
+  }, [id]);
 
   useEffect(() => { fetchRequest(); }, [fetchRequest]);
   useRefetchOnFocus(fetchRequest, authReady && !!id);
@@ -1025,7 +1038,7 @@ export default function FeatureRequestDetail() {
             width: '100%',
             boxSizing: 'border-box',
           }}>
-            {/* Back link + Beta badge */}
+            {/* Back link */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', paddingTop: '2rem' }}>
               <Link
                 href="/feature-requests"
@@ -1045,23 +1058,6 @@ export default function FeatureRequestDetail() {
                 <ArrowLeftIcon style={{ width: '14px', height: '14px' }} />
                 Back to Feature Requests
               </Link>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '0.15rem 0.45rem',
-                fontSize: '0.6rem',
-                fontWeight: 700,
-                fontFamily: FONT,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase' as const,
-                color: '#fbbf24',
-                background: 'rgba(251,191,36,0.1)',
-                border: '1px solid rgba(251,191,36,0.3)',
-                borderRadius: '999px',
-                animation: 'betaPulse 3s ease-in-out infinite',
-              }}>
-                Beta
-              </span>
             </div>
 
             {loading ? (
@@ -1272,7 +1268,10 @@ export default function FeatureRequestDetail() {
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '0.15rem',
-                            minWidth: '140px',
+                            minWidth: '160px',
+                            maxHeight: 'min(60vh, 320px)',
+                            overflowY: 'auto',
+                            overscrollBehavior: 'contain',
                             boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
                           }}>
                             {Object.entries(STATUS_CONFIG).filter(([key]) => key !== 'merged').map(([key, cfg]) => (
@@ -2208,10 +2207,6 @@ export default function FeatureRequestDetail() {
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.4; }
-        }
-        @keyframes betaPulse {
-          0%, 100% { box-shadow: 0 0 4px rgba(251,191,36,0.15); }
-          50% { box-shadow: 0 0 12px rgba(251,191,36,0.3); }
         }
         @keyframes sparkle {
           0%, 100% { opacity: 0; transform: scale(0.5); }

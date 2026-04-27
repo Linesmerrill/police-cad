@@ -57,13 +57,12 @@ const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica 
 const LIMIT = 15;
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  open:         { label: 'Open',        color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
-  under_review: { label: 'Under Review',color: '#06b6d4', bg: 'rgba(6,182,212,0.15)' },
-  planned:      { label: 'Planned',     color: '#a855f7', bg: 'rgba(168,85,247,0.15)' },
-  in_progress:  { label: 'In Progress', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
-  released:     { label: 'Released',    color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
-  declined:     { label: 'Declined',    color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
-  merged:       { label: 'Merged',      color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
+  open:         { label: 'Open',            color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
+  planned:      { label: 'Planned',         color: '#a855f7', bg: 'rgba(168,85,247,0.15)' },
+  beta_testing: { label: 'In Beta Testing', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+  released:     { label: 'Released',        color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
+  declined:     { label: 'Declined',        color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
+  merged:       { label: 'Merged',          color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
 };
 
 const SORT_OPTIONS = [
@@ -75,9 +74,8 @@ const SORT_OPTIONS = [
 const STATUS_FILTERS = [
   { key: '',             label: 'All Statuses' },
   { key: 'open',         label: 'Open' },
-  { key: 'under_review', label: 'Under Review' },
   { key: 'planned',      label: 'Planned' },
-  { key: 'in_progress',  label: 'In Progress' },
+  { key: 'beta_testing', label: 'In Beta Testing' },
   { key: 'released',     label: 'Released' },
   { key: 'declined',     label: 'Declined' },
 ];
@@ -97,6 +95,30 @@ function timeAgo(dateStr: string): string {
   const months = Math.floor(days / 30);
   if (months < 12) return `${months}mo ago`;
   return `${Math.floor(months / 12)}y ago`;
+}
+
+// ── Client-side sort (mirrors backend so optimistic re-order matches) ─
+function sortRequestsClient(items: FeatureRequest[], sortKey: string): FeatureRequest[] {
+  const arr = [...items];
+  const now = Date.now();
+  if (sortKey === 'top') {
+    arr.sort((a, b) => {
+      if (b.upvoteCount !== a.upvoteCount) return b.upvoteCount - a.upvoteCount;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+    return arr;
+  }
+  if (sortKey === 'newest') {
+    arr.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return arr;
+  }
+  // trending — HN-style: (votes + comments*0.5) / (ageHours + 2)^1.5
+  const score = (r: FeatureRequest) => {
+    const ageH = Math.max(0, (now - new Date(r.createdAt).getTime()) / 3_600_000);
+    return (r.upvoteCount + r.commentCount * 0.5) / Math.pow(ageH + 2, 1.5);
+  };
+  arr.sort((a, b) => score(b) - score(a));
+  return arr;
 }
 
 // ── Status Badge ───────────────────────────────────────────────────
@@ -423,6 +445,531 @@ function FeatureCard({ item, onVote, animate }: {
   );
 }
 
+// ── Released: Card / Skeleton / Carousel ──────────────────────────
+function formatReleaseDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function ReleasedCard({ item, delayMs }: { item: FeatureRequest; delayMs: number }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <motion.div
+      data-released-card
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.32, delay: delayMs / 1000, ease: 'easeOut' }}
+      style={{
+        flex: '0 0 auto',
+        width: '300px',
+        scrollSnapAlign: 'start',
+      }}
+    >
+      <Link
+        href={`/feature-requests/${item._id}`}
+        style={{ textDecoration: 'none', display: 'block' }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <div style={{
+          position: 'relative',
+          height: '178px',
+          padding: '0.95rem 1rem 0.85rem',
+          backgroundColor: hovered ? 'rgba(16,185,129,0.07)' : 'rgba(15,18,16,0.55)',
+          border: `1px solid rgba(16,185,129,${hovered ? '0.42' : '0.22'})`,
+          borderRadius: '0.7rem',
+          transition: 'background-color 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s',
+          transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
+          boxShadow: hovered
+            ? '0 8px 28px rgba(16,185,129,0.18), inset 0 1px 0 rgba(16,185,129,0.12)'
+            : 'inset 0 1px 0 rgba(16,185,129,0.06)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          cursor: 'pointer',
+        }}>
+          {/* Top emerald rule */}
+          <span aria-hidden style={{
+            position: 'absolute', top: 0, left: 0, right: 0,
+            height: '2px',
+            background: hovered
+              ? 'linear-gradient(90deg, transparent 0%, #10b981 50%, transparent 100%)'
+              : 'linear-gradient(90deg, transparent 0%, rgba(16,185,129,0.5) 50%, transparent 100%)',
+            transition: 'background 0.25s',
+            pointerEvents: 'none',
+          }} />
+
+          {/* Released pill + date */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '0.55rem',
+          }}>
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              padding: '0.18rem 0.55rem',
+              fontSize: '0.62rem',
+              fontWeight: 800,
+              fontFamily: FONT,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: '#10b981',
+              background: 'rgba(16,185,129,0.13)',
+              border: '1px solid rgba(16,185,129,0.32)',
+              borderRadius: '999px',
+            }}>
+              <span style={{
+                width: '5px', height: '5px',
+                borderRadius: '50%',
+                background: '#10b981',
+                boxShadow: '0 0 6px rgba(16,185,129,0.7)',
+              }} />
+              Released
+            </span>
+            <span style={{
+              fontSize: '0.7rem',
+              fontFamily: FONT,
+              color: 'rgba(255,255,255,0.4)',
+              fontVariantNumeric: 'tabular-nums',
+            }}>
+              {formatReleaseDate(item.updatedAt)}
+            </span>
+          </div>
+
+          {/* Title */}
+          <h3 style={{
+            margin: 0,
+            fontSize: '0.95rem',
+            fontWeight: 600,
+            fontFamily: FONT,
+            color: hovered ? '#ffffff' : 'rgba(255,255,255,0.92)',
+            lineHeight: 1.32,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            transition: 'color 0.2s',
+          }}>
+            {item.title}
+          </h3>
+
+          <div style={{ flex: 1 }} />
+
+          {/* Suggested by */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '0.55rem',
+            minWidth: 0,
+          }}>
+            {item.author.profilePicture ? (
+              <img
+                src={item.author.profilePicture}
+                alt=""
+                style={{
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '1px solid rgba(16,185,129,0.4)',
+                  flexShrink: 0,
+                }}
+              />
+            ) : (
+              <div style={{
+                width: '22px',
+                height: '22px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(16,185,129,0.18)',
+                border: '1px solid rgba(16,185,129,0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                color: '#10b981',
+                fontFamily: FONT,
+                flexShrink: 0,
+              }}>
+                {item.author.username?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+            )}
+            <span style={{
+              fontSize: '0.74rem',
+              fontFamily: FONT,
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+              <span style={{ color: 'rgba(255,255,255,0.4)' }}>Suggested by </span>
+              <span style={{ color: 'rgba(255,255,255,0.88)', fontWeight: 600 }}>
+                {item.author.username || 'Unknown'}
+              </span>
+            </span>
+          </div>
+
+          {/* Footer meta */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.85rem',
+            paddingTop: '0.5rem',
+            borderTop: '1px solid rgba(16,185,129,0.14)',
+          }}>
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+              fontSize: '0.72rem',
+              fontFamily: FONT,
+              color: 'rgba(255,255,255,0.55)',
+            }}>
+              <ChevronUpIcon style={{ width: '12px', height: '12px', color: 'rgba(16,185,129,0.75)' }} />
+              <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.82)' }}>{item.upvoteCount}</span>
+              <span style={{ color: 'rgba(255,255,255,0.35)' }}>votes</span>
+            </span>
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+              fontSize: '0.72rem',
+              fontFamily: FONT,
+              color: 'rgba(255,255,255,0.55)',
+            }}>
+              <ChatBubbleLeftIcon style={{ width: '12px', height: '12px', color: 'rgba(255,255,255,0.4)' }} />
+              <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.82)' }}>{item.commentCount}</span>
+            </span>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
+
+function ReleasedSkeleton({ delayMs = 0 }: { delayMs?: number }) {
+  const bar = (w: string, h = '10px') => ({
+    width: w,
+    height: h,
+    borderRadius: '4px',
+    background: 'rgba(255,255,255,0.06)',
+    animation: `pulse 2.4s ease-in-out ${delayMs}ms infinite`,
+  } as const);
+
+  return (
+    <div
+      aria-hidden
+      style={{
+        flex: '0 0 auto',
+        width: '300px',
+        height: '178px',
+        padding: '0.95rem 1rem 0.85rem',
+        backgroundColor: 'rgba(15,18,16,0.55)',
+        border: '1px solid rgba(16,185,129,0.18)',
+        borderRadius: '0.7rem',
+        scrollSnapAlign: 'start',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Top emerald rule (no pulse — matches real card) */}
+      <span aria-hidden style={{
+        position: 'absolute', top: 0, left: 0, right: 0,
+        height: '2px',
+        background: 'linear-gradient(90deg, transparent 0%, rgba(16,185,129,0.35) 50%, transparent 100%)',
+      }} />
+
+      {/* Pill + date row */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: '0.85rem',
+      }}>
+        <div style={{
+          width: '74px',
+          height: '18px',
+          borderRadius: '999px',
+          background: 'rgba(16,185,129,0.12)',
+          border: '1px solid rgba(16,185,129,0.22)',
+          animation: `pulse 2.4s ease-in-out ${delayMs}ms infinite`,
+        }} />
+        <div style={bar('38px', '10px')} />
+      </div>
+
+      {/* Title — 2 lines */}
+      <div style={{ ...bar('92%', '12px'), marginBottom: '0.4rem' }} />
+      <div style={bar('60%', '12px')} />
+
+      <div style={{ flex: 1 }} />
+
+      {/* Suggested by row */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        marginBottom: '0.55rem',
+      }}>
+        <div style={{
+          width: '22px',
+          height: '22px',
+          borderRadius: '50%',
+          background: 'rgba(16,185,129,0.14)',
+          border: '1px solid rgba(16,185,129,0.3)',
+          animation: `pulse 2.4s ease-in-out ${delayMs}ms infinite`,
+          flexShrink: 0,
+        }} />
+        <div style={bar('140px', '10px')} />
+      </div>
+
+      {/* Footer */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.85rem',
+        paddingTop: '0.5rem',
+        borderTop: '1px solid rgba(16,185,129,0.14)',
+      }}>
+        <div style={bar('48px', '10px')} />
+        <div style={bar('28px', '10px')} />
+      </div>
+    </div>
+  );
+}
+
+function ReleasedCarousel({ items, totalCount, loading }: {
+  items: FeatureRequest[];
+  totalCount: number;
+  loading: boolean;
+}) {
+  const railRef = useRef<HTMLDivElement>(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
+
+  const updateAffordances = useCallback(() => {
+    const el = railRef.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 4);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    updateAffordances();
+    const el = railRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', updateAffordances, { passive: true });
+    window.addEventListener('resize', updateAffordances);
+    return () => {
+      el.removeEventListener('scroll', updateAffordances);
+      window.removeEventListener('resize', updateAffordances);
+    };
+  }, [updateAffordances, items.length, loading]);
+
+  // Hide entire section when there's nothing to celebrate
+  if (!loading && items.length === 0) return null;
+
+  const scrollByCard = (dir: 1 | -1) => {
+    const el = railRef.current;
+    if (!el) return;
+    const card = el.querySelector('[data-released-card]') as HTMLElement | null;
+    const step = (card?.offsetWidth || 300) + 14; // card width + gap
+    el.scrollBy({ left: dir * step, behavior: 'smooth' });
+  };
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      aria-label="Recently shipped feature requests"
+      style={{ marginBottom: '1.75rem' }}
+    >
+      {/* Header */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.85rem',
+        marginBottom: '0.85rem',
+        flexWrap: 'wrap',
+      }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.55rem', flexShrink: 0 }}>
+          <span aria-hidden style={{
+            position: 'relative',
+            display: 'inline-block',
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: '#10b981',
+            animation: 'livePulse 2.1s ease-out infinite',
+          }} />
+          <span style={{
+            fontSize: '0.7rem',
+            fontWeight: 700,
+            fontFamily: FONT,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            color: '#10b981',
+            whiteSpace: 'nowrap',
+          }}>
+            Recently Shipped
+          </span>
+        </div>
+
+        <h2 style={{
+          margin: 0,
+          fontSize: '0.95rem',
+          fontWeight: 600,
+          fontFamily: FONT,
+          color: 'rgba(255,255,255,0.9)',
+          lineHeight: 1.35,
+          flex: '1 1 auto',
+          minWidth: '180px',
+        }}>
+          From your ideas
+          <span style={{ color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>
+            {' '}— thanks for making the CAD better.
+          </span>
+        </h2>
+
+        {totalCount > 0 && (
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'baseline',
+            gap: '0.3rem',
+            padding: '0.28rem 0.65rem',
+            fontSize: '0.72rem',
+            fontFamily: FONT,
+            color: 'rgba(255,255,255,0.7)',
+            background: 'rgba(16,185,129,0.08)',
+            border: '1px solid rgba(16,185,129,0.22)',
+            borderRadius: '999px',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+          }}>
+            <span style={{
+              fontWeight: 700,
+              color: '#10b981',
+              fontVariantNumeric: 'tabular-nums',
+            }}>
+              {totalCount}
+            </span>
+            shipped
+          </span>
+        )}
+      </div>
+
+      {/* Rail */}
+      <div style={{ position: 'relative' }}>
+        <div
+          ref={railRef}
+          className="released-rail"
+          style={{
+            display: 'flex',
+            gap: '0.85rem',
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            scrollSnapType: 'x mandatory',
+            scrollBehavior: 'smooth',
+            paddingBottom: '0.4rem',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {loading && items.length === 0
+            ? [0, 1, 2, 3].map(i => <ReleasedSkeleton key={i} delayMs={i * 150} />)
+            : items.map((it, idx) => (
+                <ReleasedCard key={it._id} item={it} delayMs={idx * 45} />
+              ))
+          }
+        </div>
+
+        {/* Edge fades */}
+        <div aria-hidden style={{
+          position: 'absolute',
+          top: 0, bottom: '0.4rem', left: 0,
+          width: '36px',
+          pointerEvents: 'none',
+          background: 'linear-gradient(90deg, rgba(10,10,15,0.9) 0%, rgba(10,10,15,0) 100%)',
+          opacity: canLeft ? 1 : 0,
+          transition: 'opacity 0.2s',
+        }} />
+        <div aria-hidden style={{
+          position: 'absolute',
+          top: 0, bottom: '0.4rem', right: 0,
+          width: '36px',
+          pointerEvents: 'none',
+          background: 'linear-gradient(270deg, rgba(10,10,15,0.9) 0%, rgba(10,10,15,0) 100%)',
+          opacity: canRight ? 1 : 0,
+          transition: 'opacity 0.2s',
+        }} />
+
+        {/* Arrow buttons */}
+        {canLeft && (
+          <button
+            type="button"
+            onClick={() => scrollByCard(-1)}
+            aria-label="Scroll released features left"
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '6px',
+              transform: 'translateY(-50%)',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              border: '1px solid rgba(16,185,129,0.32)',
+              background: 'rgba(8,12,10,0.88)',
+              backdropFilter: 'blur(8px)',
+              color: '#10b981',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 2,
+              boxShadow: '0 4px 14px rgba(0,0,0,0.45)',
+            }}
+          >
+            <ChevronLeftIcon style={{ width: '16px', height: '16px' }} />
+          </button>
+        )}
+        {canRight && (
+          <button
+            type="button"
+            onClick={() => scrollByCard(1)}
+            aria-label="Scroll released features right"
+            style={{
+              position: 'absolute',
+              top: '50%',
+              right: '6px',
+              transform: 'translateY(-50%)',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              border: '1px solid rgba(16,185,129,0.32)',
+              background: 'rgba(8,12,10,0.88)',
+              backdropFilter: 'blur(8px)',
+              color: '#10b981',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 2,
+              boxShadow: '0 4px 14px rgba(0,0,0,0.45)',
+            }}
+          >
+            <ChevronRightIcon style={{ width: '16px', height: '16px' }} />
+          </button>
+        )}
+      </div>
+    </motion.section>
+  );
+}
+
 // ── Main Page ──────────────────────────────────────────────────────
 export default function FeatureRequestsPage() {
   return (
@@ -457,6 +1004,11 @@ function FeatureRequests() {
   const [votingIds, setVotingIds] = useState<Set<string>>(new Set());
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Recently-released celebration carousel
+  const [recentlyReleased, setRecentlyReleased] = useState<FeatureRequest[]>([]);
+  const [recentlyReleasedTotal, setRecentlyReleasedTotal] = useState(0);
+  const [recentlyReleasedLoading, setRecentlyReleasedLoading] = useState(true);
 
   // Sync sort & status filter to URL query params
   useEffect(() => {
@@ -499,6 +1051,10 @@ function FeatureRequests() {
         setRequests(prev => prev.map(r =>
           r._id === data.featureRequestId ? { ...r, status: data.status } : r
         ));
+        // Any flip into or out of "released" changes the celebration rail
+        if (data.status === 'released' || recentlyReleased.some(r => r._id === data.featureRequestId)) {
+          fetchRecentlyReleased();
+        }
       },
       feature_request_updated: (data: { featureRequestId: string; title?: string; description?: string }) => {
         setRequests(prev => prev.map(r =>
@@ -555,10 +1111,17 @@ function FeatureRequests() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  // Stale-while-revalidate: only show the skeleton on the very first fetch.
+  // Background refetches (auth resolving with a userId, focus refetch, socket
+  // events) keep the existing list visible so we don't get a content -> skeleton
+  // -> content flash on Next.js client-side route transitions or auth resolution.
+  const requestsRef = useRef<FeatureRequest[]>([]);
+  requestsRef.current = requests;
+
   // Fetch feature requests — only after auth check completes
   const fetchRequests = useCallback(async () => {
     if (!authReady) return;
-    setLoading(true);
+    if (requestsRef.current.length === 0) setLoading(true);
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -567,6 +1130,10 @@ function FeatureRequests() {
       });
       if (statusFilter) params.set('status', statusFilter);
       if (debouncedQuery) params.set('q', debouncedQuery);
+      // Hide Released items from the default list — they live in the
+      // celebration carousel above. Surface them only when the user explicitly
+      // filters to Released, picks any status, or runs a search.
+      if (!statusFilter && !debouncedQuery) params.set('excludeStatus', 'released');
       if (currentUser) params.set('userId', currentUser._id);
 
       const res = await fetch(`/api/v2/feature-requests?${params}`, { credentials: 'include' });
@@ -586,6 +1153,32 @@ function FeatureRequests() {
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
   useRefetchOnFocus(fetchRequests, authReady);
 
+  // Fetch the latest released items for the celebration carousel
+  const fetchRecentlyReleased = useCallback(async () => {
+    if (!authReady) return;
+    try {
+      const params = new URLSearchParams({
+        status: 'released',
+        sort: 'newest',
+        limit: '8',
+        page: '1',
+      });
+      if (currentUser) params.set('userId', currentUser._id);
+      const res = await fetch(`/api/v2/feature-requests?${params}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch released');
+      const data: ListResponse = await res.json();
+      setRecentlyReleased(data.data || []);
+      setRecentlyReleasedTotal(data.totalCount || 0);
+    } catch {
+      setRecentlyReleased([]);
+      setRecentlyReleasedTotal(0);
+    } finally {
+      setRecentlyReleasedLoading(false);
+    }
+  }, [authReady, currentUser]);
+
+  useEffect(() => { fetchRecentlyReleased(); }, [fetchRecentlyReleased]);
+
   // Vote handler
   const handleVote = async (id: string) => {
     if (!currentUser) {
@@ -596,15 +1189,17 @@ function FeatureRequests() {
 
     setVotingIds(prev => new Set(prev).add(id));
 
-    // Optimistic update
-    setRequests(prev => prev.map(r => {
-      if (r._id !== id) return r;
-      return {
+    // Optimistic update — bump the count AND re-sort so the user sees their
+    // own vote move the item into its new position. Layout animation on the
+    // wrapper smooths the visual swap.
+    setRequests(prev => sortRequestsClient(
+      prev.map(r => r._id !== id ? r : {
         ...r,
         hasVoted: !r.hasVoted,
         upvoteCount: r.hasVoted ? r.upvoteCount - 1 : r.upvoteCount + 1,
-      };
-    }));
+      }),
+      sort,
+    ));
 
     try {
       const res = await fetch(`/api/v1/feature-requests/${id}/vote`, {
@@ -613,26 +1208,35 @@ function FeatureRequests() {
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setRequests(prev => prev.map(r => {
-        if (r._id !== id) return r;
-        return { ...r, hasVoted: data.hasVoted, upvoteCount: data.upvoteCount };
-      }));
+      setRequests(prev => sortRequestsClient(
+        prev.map(r => r._id !== id ? r : { ...r, hasVoted: data.hasVoted, upvoteCount: data.upvoteCount }),
+        sort,
+      ));
     } catch {
       // Revert optimistic update
-      setRequests(prev => prev.map(r => {
-        if (r._id !== id) return r;
-        return {
+      setRequests(prev => sortRequestsClient(
+        prev.map(r => r._id !== id ? r : {
           ...r,
           hasVoted: !r.hasVoted,
           upvoteCount: r.hasVoted ? r.upvoteCount - 1 : r.upvoteCount + 1,
-        };
-      }));
+        }),
+        sort,
+      ));
     } finally {
       setVotingIds(prev => { const s = new Set(prev); s.delete(id); return s; });
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / LIMIT));
+  // Defensive client-side filter: even if the API server is on an older build
+  // that doesn't honor excludeStatus yet, never surface Released items in the
+  // default browse view. They live in the celebration carousel above.
+  const hideReleasedHere = !statusFilter && !debouncedQuery;
+  const visibleRequests = hideReleasedHere
+    ? requests.filter(r => r.status !== 'released')
+    : requests;
+  const droppedCount = requests.length - visibleRequests.length;
+  const visibleTotalCount = Math.max(0, totalCount - droppedCount);
+  const totalPages = Math.max(1, Math.ceil(visibleTotalCount / LIMIT));
   const selectedStatusLabel = STATUS_FILTERS.find(f => f.key === statusFilter)?.label || 'All Statuses';
 
   return (
@@ -682,44 +1286,24 @@ function FeatureRequests() {
               marginBottom: '2rem',
               paddingTop: '2rem',
             }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                <h1 style={{
-                  fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
-                  fontWeight: 700,
-                  margin: 0,
-                  fontFamily: FONT,
-                  lineHeight: 1.1,
-                  display: 'inline-block',
-                }}>
-                  <span style={{
-                    background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fbbf24 100%)',
-                    backgroundSize: '200% 100%',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}>
-                    Feature Requests
-                  </span>
-                </h1>
+              <h1 style={{
+                fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
+                fontWeight: 700,
+                margin: 0,
+                fontFamily: FONT,
+                lineHeight: 1.1,
+                display: 'inline-block',
+              }}>
                 <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '0.2rem 0.55rem',
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  fontFamily: FONT,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase' as const,
-                  color: '#fbbf24',
-                  background: 'rgba(251,191,36,0.1)',
-                  border: '1px solid rgba(251,191,36,0.3)',
-                  borderRadius: '999px',
-                  animation: 'betaPulse 3s ease-in-out infinite',
-                  whiteSpace: 'nowrap',
+                  background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fbbf24 100%)',
+                  backgroundSize: '200% 100%',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
                 }}>
-                  Beta
+                  Feature Requests
                 </span>
-              </div>
+              </h1>
               <p style={{
                 margin: '0.6rem auto 0',
                 fontSize: '0.95rem',
@@ -765,6 +1349,13 @@ function FeatureRequests() {
                 Submit Request
               </Link>
             </div>
+
+            {/* ── Recently Shipped Carousel ──────────────── */}
+            <ReleasedCarousel
+              items={recentlyReleased}
+              totalCount={recentlyReleasedTotal}
+              loading={recentlyReleasedLoading}
+            />
 
             {/* ── Search ─────────────────────────────────── */}
             <div style={{ marginBottom: '1.25rem' }}>
@@ -893,6 +1484,9 @@ function FeatureRequests() {
                         borderRadius: '0.6rem',
                         padding: '0.3rem',
                         minWidth: '160px',
+                        maxHeight: 'min(60vh, 320px)',
+                        overflowY: 'auto',
+                        overscrollBehavior: 'contain',
                         zIndex: 50,
                         backdropFilter: 'blur(16px)',
                         boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
@@ -939,7 +1533,7 @@ function FeatureRequests() {
                 fontFamily: FONT,
                 color: 'rgba(255,255,255,0.35)',
               }}>
-                {totalCount} request{totalCount !== 1 ? 's' : ''}
+                {visibleTotalCount} request{visibleTotalCount !== 1 ? 's' : ''}
                 {debouncedQuery ? ` matching "${debouncedQuery}"` : ''}
               </p>
             )}
@@ -987,7 +1581,7 @@ function FeatureRequests() {
                     </div>
                   </div>
                 ))
-              ) : requests.length === 0 ? (
+              ) : visibleRequests.length === 0 ? (
                 // Empty state
                 <div style={{
                   textAlign: 'center',
@@ -1050,12 +1644,18 @@ function FeatureRequests() {
                   )}
                 </div>
               ) : (
-                requests.map((item) => (
-                  <FeatureCard
+                visibleRequests.map((item) => (
+                  <motion.div
                     key={item._id}
-                    item={item}
-                    onVote={handleVote}
-                  />
+                    layout="position"
+                    transition={{ type: 'spring', stiffness: 380, damping: 32, mass: 0.9 }}
+                    style={{ width: '100%' }}
+                  >
+                    <FeatureCard
+                      item={item}
+                      onVote={handleVote}
+                    />
+                  </motion.div>
                 ))
               )}
             </div>
@@ -1156,10 +1756,6 @@ function FeatureRequests() {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.4; }
         }
-        @keyframes betaPulse {
-          0%, 100% { box-shadow: 0 0 4px rgba(251,191,36,0.15); }
-          50% { box-shadow: 0 0 12px rgba(251,191,36,0.3); }
-        }
         @keyframes sparkle {
           0%, 100% { opacity: 0; transform: scale(0.5); }
           50% { opacity: 1; transform: scale(1); }
@@ -1168,6 +1764,18 @@ function FeatureRequests() {
           0% { transform: translateY(0px); }
           50% { transform: translateY(-3px); }
           100% { transform: translateY(0px); }
+        }
+        @keyframes livePulse {
+          0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.55); }
+          70%  { box-shadow: 0 0 0 7px rgba(16,185,129,0); }
+          100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+        }
+        .released-rail {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .released-rail::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
     </main>
