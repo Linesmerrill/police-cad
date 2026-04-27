@@ -4,6 +4,7 @@ import { TEST_COMMUNITY_ID, TEST_DISPATCH_DEPT_ID } from '../../helpers/seed';
 import {
   setBetaCommandDispatch,
   deleteUserPreferences,
+  encodeIdForUrl,
 } from '../../helpers/db';
 
 /**
@@ -25,9 +26,14 @@ test.describe('Dispatch Command Bridge', () => {
     await deleteUserPreferences();
   });
 
+  // The /command-dashboard route base64url-decodes the ?d and ?c params and
+  // rejects them if the result isn't a 24-char hex ObjectId. Pass raw hex and
+  // departmentId resolves to null, the page falls back to default ('police'
+  // template), and the bridge never mounts. Encode like the real app links do.
   const dispatchUrl =
-    `/command-dashboard?dept=dispatch&d=${encodeURIComponent(TEST_DISPATCH_DEPT_ID.toHexString())}` +
-    `&c=${encodeURIComponent(TEST_COMMUNITY_ID.toHexString())}`;
+    `/command-dashboard?dept=dispatch` +
+    `&d=${encodeIdForUrl(TEST_DISPATCH_DEPT_ID.toHexString())}` +
+    `&c=${encodeIdForUrl(TEST_COMMUNITY_ID.toHexString())}`;
 
   test('renders the 3-zone bridge instead of the MDT', { tag: '@auth' }, async ({ page }) => {
     const bridge = new DispatchBridgePage(page);

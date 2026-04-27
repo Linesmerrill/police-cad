@@ -29,14 +29,10 @@ test.describe('Dispatch command-dashboard — Person Search', { tag: '@auth' }, 
     // Wait for the dashboard to finish building (loading → panels swap).
     await expect(page.locator('#dd-panels')).toBeVisible({ timeout: 15_000 });
 
-    // Search column visible + Person tab visible + Person pane has content.
-    await expect(page.locator('#cd-mdt-col-search')).toBeVisible();
-    await expect(
-      page.locator('.cd-mdt-search-tab[data-search="person"]')
-    ).toBeVisible();
-    await expect(page.locator('#cd-mdt-pane-person')).not.toBeEmpty();
-
-    // Sidebar nav entry should also be present.
+    // The dispatch template now renders the Command Bridge — there is no MDT
+    // search column for dispatch depts. The component is reachable from the
+    // sidebar focused-card nav, which is what we assert here.
+    await expect(page.locator('#cd-dispatch-bridge')).toBeVisible({ timeout: 15_000 });
     await expect(
       page.locator('#dd-nav-components .dd-nav-item[data-panel="personSearch"]')
     ).toHaveCount(1);
