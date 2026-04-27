@@ -2099,6 +2099,96 @@
             </div>
           </div>
 
+          <!-- Section: Command Dispatch Bridge Adoption -->
+          <div class="ac-metrics-section" id="metrics-section-cmd-dispatch">
+            <div class="ac-metrics-section-header" onclick="toggleMetricsSection('cmd-dispatch')">
+              <div class="ac-metrics-section-title">
+                <i class="fas fa-headset"></i>
+                <span>Command Dispatch Adoption</span>
+              </div>
+              <i class="fas fa-chevron-down ac-metrics-section-chevron"></i>
+            </div>
+            <div class="ac-metrics-section-body">
+              <p style="font-size:0.75rem;color:var(--ac-text-muted);margin:0 0 1rem;">Track how many users have opted into the new Command Bridge layout on dispatch departments. Measured independently from the police command dashboard.</p>
+
+              <div id="metrics-cmd-dispatch-loading" style="text-align:center;padding:2rem;color:var(--ac-text-muted);">
+                <i class="fas fa-spinner fa-spin"></i> Loading metrics...
+              </div>
+
+              <div id="metrics-cmd-dispatch-content" style="display:none;">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:1rem;margin-bottom:1.5rem;">
+                  <div class="ac-stat" style="--stat-accent:#8b5cf6;animation-delay:0s;">
+                    <i class="fas fa-headset ac-stat-icon"></i>
+                    <div class="ac-stat-value" id="metrics-cmd-dispatch-opted">&mdash;</div>
+                    <div class="ac-stat-label">Command Bridge</div>
+                  </div>
+                  <div class="ac-stat" style="--stat-accent:var(--ac-blue);animation-delay:0.04s;">
+                    <i class="fas fa-desktop ac-stat-icon"></i>
+                    <div class="ac-stat-value" id="metrics-cmd-dispatch-classic">&mdash;</div>
+                    <div class="ac-stat-label">Classic Dispatch</div>
+                  </div>
+                  <div class="ac-stat" style="--stat-accent:var(--ac-green);animation-delay:0.08s;">
+                    <i class="fas fa-users ac-stat-icon"></i>
+                    <div class="ac-stat-value" id="metrics-cmd-dispatch-total">&mdash;</div>
+                    <div class="ac-stat-label">Total Users</div>
+                  </div>
+                </div>
+
+                <!-- Adoption bar -->
+                <div style="background:var(--ac-glass);border:1px solid var(--ac-glass-border);border-radius:var(--ac-radius);padding:1rem;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.625rem;">
+                    <span style="font-size:0.75rem;font-weight:600;color:var(--ac-text);">Adoption Rate</span>
+                    <span style="font-size:0.8125rem;font-weight:700;color:#a78bfa;" id="metrics-cmd-dispatch-pct">&mdash;</span>
+                  </div>
+                  <div style="height:10px;border-radius:5px;background:#64748b;overflow:hidden;">
+                    <div id="metrics-cmd-dispatch-bar" style="height:100%;border-radius:5px 0 0 5px;background:linear-gradient(90deg,#8b5cf6,#c4b5fd);width:0%;transition:width 0.8s ease;min-width:0;"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;margin-top:0.5rem;">
+                    <span style="font-size:0.625rem;color:var(--ac-text-dim);"><i class="fas fa-circle" style="color:#8b5cf6;font-size:0.375rem;vertical-align:middle;margin-right:0.25rem;"></i>Command Bridge</span>
+                    <span style="font-size:0.625rem;color:var(--ac-text-dim);"><i class="fas fa-circle" style="color:#64748b;font-size:0.375rem;vertical-align:middle;margin-right:0.25rem;"></i>Classic</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Beta Opt-Out Feedback -->
+          <div class="ac-metrics-section" id="metrics-section-feedback">
+            <div class="ac-metrics-section-header" onclick="toggleMetricsSection('feedback')">
+              <div class="ac-metrics-section-title">
+                <i class="fas fa-comment-dots"></i>
+                <span>Beta Opt-Out Feedback</span>
+              </div>
+              <i class="fas fa-chevron-down ac-metrics-section-chevron"></i>
+            </div>
+            <div class="ac-metrics-section-body">
+              <p style="font-size:0.75rem;color:var(--ac-text-muted);margin:0 0 1rem;">Reasons users gave when opting out of a beta feature. Shown anonymously in this view — user IDs are stored in the database for direct follow-up.</p>
+
+              <!-- Tabs to switch between flags -->
+              <div id="bfb-tabs" style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+                <button type="button" class="bfb-tab is-active" data-flag="betaCommandDashboard" style="padding:0.4375rem 0.875rem;border-radius:8px;border:1px solid rgba(56,189,248,0.35);background:rgba(56,189,248,0.12);color:#7dd3fc;font:600 0.75rem/1 inherit;cursor:pointer;">Command Dashboard</button>
+                <button type="button" class="bfb-tab" data-flag="betaCommandDispatch" style="padding:0.4375rem 0.875rem;border-radius:8px;border:1px solid var(--ac-glass-border);background:transparent;color:var(--ac-text-muted);font:600 0.75rem/1 inherit;cursor:pointer;">Command Bridge (Dispatch)</button>
+              </div>
+
+              <div id="bfb-loading" style="text-align:center;padding:1.5rem;color:var(--ac-text-muted);font-size:0.75rem;">
+                <i class="fas fa-spinner fa-spin"></i> Loading feedback…
+              </div>
+
+              <div id="bfb-content" style="display:none;">
+                <!-- Reason distribution -->
+                <div id="bfb-distribution" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.5rem;margin-bottom:1.25rem;"></div>
+
+                <!-- Free-form feedback entries -->
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5rem;">
+                  <span style="font-size:0.6875rem;font-weight:700;color:var(--ac-text);letter-spacing:0.08em;text-transform:uppercase;">Recent comments</span>
+                  <span id="bfb-count" style="font-size:0.6875rem;color:var(--ac-text-dim);font-family:'JetBrains Mono',ui-monospace,monospace;"></span>
+                </div>
+                <div id="bfb-entries" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+                <div id="bfb-empty" style="display:none;padding:1.5rem;text-align:center;color:var(--ac-text-dim);font-size:0.8125rem;font-style:italic;">No feedback yet for this feature.</div>
+              </div>
+            </div>
+          </div>
+
           <!-- Trend Charts -->
           <div class="ac-charts-row" id="metrics-charts-row" style="display:none;">
             <div class="ac-chart-card" style="--chart-accent:var(--ac-green);animation-delay:0.2s;">
@@ -7606,12 +7696,15 @@
         if (metricsInitialized) {
           // Already initialized, just re-fetch
           fetchBetaAdoptionMetrics();
+          fetchBetaFeedback(currentFeedbackFlag);
           return;
         }
         metricsInitialized = true;
         fetchBetaAdoptionMetrics();
         fetchDailyMetrics();
         initMetricsSocket();
+        initFeedbackTabs();
+        fetchBetaFeedback(currentFeedbackFlag);
         initMetricsVisibility();
       }
 
@@ -7644,7 +7737,7 @@
         $('#metrics-beta-loading').hide();
         $('#metrics-beta-content').show();
 
-        // Command dashboard metrics
+        // Command dashboard (police) metrics
         var cmdOptedIn = data.cmdOptedIn || 0;
         var cmdClassic = data.cmdClassic || 0;
         var cmdPct = total > 0 ? Math.round((cmdOptedIn / total) * 100) : 0;
@@ -7656,6 +7749,19 @@
         $('#metrics-cmd-bar').css('width', cmdPct + '%');
         $('#metrics-cmd-loading').hide();
         $('#metrics-cmd-content').show();
+
+        // Command Bridge (dispatch) metrics — tracked independently.
+        var cmdDispatchOptedIn = data.cmdDispatchOptedIn || 0;
+        var cmdDispatchClassic = data.cmdDispatchClassic || 0;
+        var cmdDispatchPct = total > 0 ? Math.round((cmdDispatchOptedIn / total) * 100) : 0;
+
+        $('#metrics-cmd-dispatch-opted').text(cmdDispatchOptedIn.toLocaleString());
+        $('#metrics-cmd-dispatch-classic').text(cmdDispatchClassic.toLocaleString());
+        $('#metrics-cmd-dispatch-total').text(total.toLocaleString());
+        $('#metrics-cmd-dispatch-pct').text(cmdDispatchPct + '%');
+        $('#metrics-cmd-dispatch-bar').css('width', cmdDispatchPct + '%');
+        $('#metrics-cmd-dispatch-loading').hide();
+        $('#metrics-cmd-dispatch-content').show();
       }
 
       // -- Daily Trend Charts --
@@ -7895,6 +8001,108 @@
       function toggleMetricsSection(id) {
         var $section = $('#metrics-section-' + id);
         $section.toggleClass('collapsed');
+      }
+
+      // -- Beta Opt-Out Feedback --
+
+      var currentFeedbackFlag = 'betaCommandDashboard';
+      // Canonical reason order + labels. Keeps the distribution columns
+      // aligned across flags even when a reason has zero responses.
+      var BFB_REASONS = [
+        { key: 'too_buggy',        label: 'Too buggy',         color: '#ef4444' },
+        { key: 'look_and_feel',    label: 'Look & feel',        color: '#f97316' },
+        { key: 'preferred_old',    label: 'Preferred classic',  color: '#f59e0b' },
+        { key: 'missing_features', label: 'Missing features',   color: '#a78bfa' },
+        { key: 'performance',      label: 'Slow / laggy',       color: '#38bdf8' },
+        { key: 'other',            label: 'Other',              color: '#94a3b8' },
+      ];
+
+      function initFeedbackTabs() {
+        $('#bfb-tabs').on('click', '.bfb-tab', function() {
+          var flag = $(this).data('flag');
+          if (flag === currentFeedbackFlag) return;
+          currentFeedbackFlag = flag;
+          // Paint the active tab
+          $('#bfb-tabs .bfb-tab').each(function() {
+            var active = $(this).data('flag') === flag;
+            $(this)
+              .toggleClass('is-active', active)
+              .css({
+                'border-color': active ? 'rgba(56,189,248,0.35)' : 'rgba(148,163,184,0.15)',
+                'background':   active ? 'rgba(56,189,248,0.12)' : 'transparent',
+                'color':        active ? '#7dd3fc' : '#94a3b8',
+              });
+          });
+          fetchBetaFeedback(flag);
+        });
+      }
+
+      function fetchBetaFeedback(flag) {
+        var apiUrl = '<%= POLICE_CAD_API_URL %>' + '/api/v1/admin/beta-feedback?flag=' + encodeURIComponent(flag) + '&limit=100';
+        $('#bfb-loading').show();
+        $('#bfb-content').hide();
+        $.ajax({ url: apiUrl, method: 'GET' })
+          .done(function(resp) { renderBetaFeedback(resp || {}); })
+          .fail(function() {
+            $('#bfb-loading').html('<i class="fas fa-triangle-exclamation"></i> Failed to load feedback.');
+          });
+      }
+
+      function renderBetaFeedback(resp) {
+        var total = resp.totalCount || 0;
+        var counts = resp.reasonCounts || {};
+        var entries = Array.isArray(resp.data) ? resp.data : [];
+
+        // Reason distribution chips
+        var distHtml = BFB_REASONS.map(function(r) {
+          var count = counts[r.key] || 0;
+          var pct = total > 0 ? Math.round((count / total) * 100) : 0;
+          return (
+            '<div style="padding:0.625rem 0.75rem;border-radius:8px;background:var(--ac-glass);border:1px solid var(--ac-glass-border);">' +
+              '<div style="display:flex;align-items:center;gap:0.4375rem;margin-bottom:0.375rem;">' +
+                '<span style="width:8px;height:8px;border-radius:999px;background:' + r.color + ';"></span>' +
+                '<span style="font-size:0.6875rem;color:var(--ac-text-muted);font-weight:600;">' + r.label + '</span>' +
+              '</div>' +
+              '<div style="font:700 1.25rem/1 \'JetBrains Mono\',ui-monospace,monospace;color:var(--ac-text);">' + count + '</div>' +
+              '<div style="font-size:0.625rem;color:var(--ac-text-dim);margin-top:0.25rem;">' + pct + '%</div>' +
+            '</div>'
+          );
+        }).join('');
+        $('#bfb-distribution').html(distHtml);
+
+        $('#bfb-count').text(total + (total === 1 ? ' entry' : ' entries'));
+
+        // Only show entries that have free-form feedback attached —
+        // the counts above already summarise the reason enum, so we
+        // don't need to list every row.
+        var withText = entries.filter(function(e) { return e.feedback && e.feedback.trim(); });
+        if (!withText.length) {
+          $('#bfb-entries').empty();
+          $('#bfb-empty').show();
+        } else {
+          $('#bfb-empty').hide();
+          var entriesHtml = withText.map(function(e) {
+            var reasonMeta = BFB_REASONS.find(function(r) { return r.key === e.reason; }) || { label: e.reason, color: '#94a3b8' };
+            var date = '';
+            try {
+              date = new Date(e.createdAt).toLocaleString();
+            } catch (_) { date = ''; }
+            var context = e.context ? ' · <span style="color:var(--ac-text-dim);">' + $('<div>').text(e.context).html() + '</span>' : '';
+            return (
+              '<div style="padding:0.75rem 0.875rem;border-radius:8px;background:var(--ac-glass);border:1px solid var(--ac-glass-border);border-left:3px solid ' + reasonMeta.color + ';">' +
+                '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;margin-bottom:0.375rem;flex-wrap:wrap;">' +
+                  '<span style="font-size:0.6875rem;font-weight:700;color:' + reasonMeta.color + ';text-transform:uppercase;letter-spacing:0.06em;">' + reasonMeta.label + '</span>' +
+                  '<span style="font-size:0.625rem;color:var(--ac-text-dim);">' + $('<div>').text(date).html() + context + '</span>' +
+                '</div>' +
+                '<div style="font-size:0.8125rem;color:var(--ac-text);line-height:1.5;white-space:pre-wrap;">' + $('<div>').text(e.feedback).html() + '</div>' +
+              '</div>'
+            );
+          }).join('');
+          $('#bfb-entries').html(entriesHtml);
+        }
+
+        $('#bfb-loading').hide();
+        $('#bfb-content').show();
       }
 
       // -- Socket.IO Live Updates --

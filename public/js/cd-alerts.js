@@ -357,6 +357,11 @@
 
     alertSocket = io({ transports: ['websocket'] });
 
+    // Share this single socket connection with other command-dashboard modules
+    // (e.g. cd-dispatch-realtime.js) so they don't open a second io() session.
+    // Consumers read window._cdSharedSocket directly and attach their own listeners.
+    window._cdSharedSocket = alertSocket;
+
     alertSocket.on('connect', function () {
       alertSocket.emit('join_community_room', { communityId: communityId });
     });

@@ -20,6 +20,9 @@ export const TEST_CIVILIAN_ID = new ObjectId('cccccccccccccccccccccccc');
 export const TEST_VEHICLE_ID = new ObjectId('dddddddddddddddddddddddd');
 export const TEST_FIREARM_ID = new ObjectId('eeeeeeeeeeeeeeeeeeeeeeee');
 export const TEST_DEPARTMENT_ID = new ObjectId('ffffffffffffffffffffffffffff'.slice(0, 24));
+// Dedicated dispatch department — template.name === 'dispatch' activates the Command Bridge
+// UI on /command-dashboard. Tests that verify the dispatch experience navigate here.
+export const TEST_DISPATCH_DEPT_ID = new ObjectId('1111111111111111111111111111'.slice(0, 24));
 
 export const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || 'testuser@test.com';
 export const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || 'TestPass123!';
@@ -100,6 +103,17 @@ export async function seedTestData(): Promise<void> {
                 approvalRequired: false,
                 members: [{ id: userId, status: 'active' }],
                 ranks: [],
+                template: { name: 'police', category: 'law-enforcement' },
+              },
+              {
+                _id: TEST_DISPATCH_DEPT_ID,
+                name: 'Test Dispatch',
+                description: 'Test dispatch (command bridge)',
+                image: '',
+                approvalRequired: false,
+                members: [{ id: userId, status: 'active' }],
+                ranks: [],
+                template: { name: 'dispatch', category: 'dispatch' },
               },
             ],
             createdAt: now,

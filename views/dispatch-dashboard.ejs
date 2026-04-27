@@ -816,7 +816,94 @@
 
       <% include partials/rank-modals %>
 
-      <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
+      <!-- Command Bridge (dispatch) opt-in banner ─ rendered as a DIRECT
+           child of header#second (sibling of .header-content), not nested
+           inside .header-content. That matters because .header-content uses
+           `position: absolute; top: 50%; translateY(-50%)` on ≥768px —
+           anything inside it gets vertically centered in the hero area,
+           which caused the banner to float under the fixed #topNav. As a
+           sibling it stays in normal flow, sitting on the skyline bg with
+           the nav cleanly above it. -->
+      <style>
+        #cd-dispatch-optin-banner .cd-optin-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+        @media (max-width: 480px) {
+          #cd-dispatch-optin-banner .cd-optin-actions { width:100%; justify-content:center; }
+        }
+        /* header#second is relative by default (it's the positioning
+           context for .header-content). We pad its top so the banner
+           slots between the fixed nav (70px) and the centered hero content
+           without overlapping either. */
+        header#second.cd-has-optin { padding-top: 90px; }
+        #cd-dispatch-optin-wrap {
+          padding: 0 15px 16px;
+          position: relative;
+          z-index: 5;
+        }
+      </style>
+
+      <header id="second" class="cd-has-optin" style='background-image: url("/static/images/city-skyline.jpg");'>
+
+        <div id="cd-dispatch-optin-wrap">
+          <div id="cd-dispatch-optin-banner" style="display:none; margin:0 auto; max-width:680px; padding:12px 16px !important; background:linear-gradient(135deg, rgba(22,14,46,0.82), rgba(11,19,38,0.78)) !important; backdrop-filter:blur(14px) saturate(1.1) !important; -webkit-backdrop-filter:blur(14px) saturate(1.1) !important; border:1px solid rgba(139,92,246,0.35) !important; border-radius:10px !important; box-shadow:0 12px 32px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.04) !important;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+              <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                <div style="width:32px;height:32px;border-radius:6px;background:rgba(139,92,246,0.22);display:flex;align-items:center;justify-content:center;color:#a78bfa;font-size:14px !important;flex-shrink:0;">
+                  <i class="fa fa-headset"></i>
+                </div>
+                <div style="min-width:0;">
+                  <div style="font-size:14px !important;font-weight:600 !important;color:#e2e8f0 !important;line-height:1.3 !important;">Try the new Command Bridge</div>
+                  <div style="font-size:12px !important;color:#94a3b8 !important;line-height:1.3 !important;">A purpose-built dispatcher UX with a unit roster, drag-and-drop assignment, and a priority call board.</div>
+                </div>
+              </div>
+              <div class="cd-optin-actions">
+                <button id="cd-dispatch-optin-btn" onclick="cdDispatchOptIn()" style="padding:6px 14px !important;border-radius:6px !important;border:none !important;background:#8b5cf6 !important;color:#0b051a !important;font-size:13px !important;font-weight:600 !important;cursor:pointer !important;line-height:1.4 !important;">Try it</button>
+                <button onclick="cdDispatchDismissOptIn()" style="padding:6px 10px !important;border-radius:6px !important;border:1px solid rgba(255,255,255,0.15) !important;background:transparent !important;color:#94a3b8 !important;font-size:13px !important;cursor:pointer !important;line-height:1.4 !important;">Dismiss</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <script>
+          (function() {
+            var hero = document.querySelector('header#second.cd-has-optin');
+            var wrap = document.getElementById('cd-dispatch-optin-wrap');
+            if (localStorage.getItem('cd-dispatch-optin-dismissed') !== 'true') {
+              var banner = document.getElementById('cd-dispatch-optin-banner');
+              if (banner) banner.style.display = '';
+            } else {
+              // Dismissed — collapse wrapper + strip the padding on the
+              // hero so no empty gap remains above the main content.
+              if (wrap) wrap.style.display = 'none';
+              if (hero) hero.classList.remove('cd-has-optin');
+            }
+          })();
+          function cdDispatchDismissOptIn() {
+            localStorage.setItem('cd-dispatch-optin-dismissed', 'true');
+            var wrap = document.getElementById('cd-dispatch-optin-wrap');
+            if (wrap) wrap.style.display = 'none';
+            var hero = document.querySelector('header#second.cd-has-optin');
+            if (hero) hero.classList.remove('cd-has-optin');
+            var toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;background:#181b2a;border:1px solid rgba(139,92,246,0.3);border-radius:10px;padding:12px 20px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,0.3);max-width:480px;width:90%;';
+            toast.innerHTML = '<i class="fas fa-info-circle" style="color:#a78bfa;font-size:16px;flex-shrink:0;"></i><span style="font-size:14px;color:#e2e8f0;line-height:1.4;">You can enable the Command Bridge anytime from <strong style="color:#a78bfa;">Settings &rarr; Beta Features</strong></span>';
+            document.body.appendChild(toast);
+            setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(function() { toast.remove(); }, 300); }, 5000);
+          }
+          function cdDispatchOptIn() {
+            var btn = document.getElementById('cd-dispatch-optin-btn');
+            if (btn) { btn.disabled = true; btn.textContent = 'Switching...'; }
+            var userId = '<%= user._id %>';
+            var apiUrl = '<%= apiUrl %>';
+            $.ajax({
+              url: apiUrl + '/api/v1/user-preferences/' + encodeURIComponent(userId),
+              method: 'PUT',
+              contentType: 'application/json',
+              data: JSON.stringify({ betaCommandDispatch: true, userId: userId }),
+              complete: function() {
+                window.location.href = '/command-dashboard' + window.location.search;
+              }
+            });
+          }
+        </script>
 
         <div class="header-content margin-top-2">
           <div class="inner">

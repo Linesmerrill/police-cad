@@ -414,6 +414,28 @@ export async function setBetaCommandDashboard(enabled: boolean): Promise<void> {
   });
 }
 
+/**
+ * Upsert the test user's Command Bridge (dispatch) opt-in.
+ * Gated separately from betaCommandDashboard so admin adoption metrics can
+ * distinguish police vs. dispatch bridge adoption.
+ */
+export async function setBetaCommandDispatch(enabled: boolean): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('userpreferences').updateOne(
+      { userId: TEST_USER_ID },
+      {
+        $set: {
+          userId: TEST_USER_ID,
+          betaCommandDispatch: enabled,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { _id: new ObjectId(), createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+  });
+}
+
 export async function deleteUserPreferences(): Promise<void> {
   await withDb(async (db) => {
     await db.collection('userpreferences').deleteOne({ userId: TEST_USER_ID });

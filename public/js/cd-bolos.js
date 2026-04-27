@@ -55,7 +55,6 @@
     bolos: [],
     filter: 'active', // 'active' | 'cleared' | 'all'
     loading: false,
-    formVisible: false,
     submitting: false
   };
 
@@ -120,23 +119,33 @@
       '.cd-bolo-btn-delete{background:rgba(239,68,68,0.1);color:var(--cd-red);border:1px solid rgba(239,68,68,0.15);}' +
       '.cd-bolo-btn-delete:hover{background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.3);}' +
 
+      /* ── Modal ── */
+      '#cd-bolo-modal{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;padding:1rem;}' +
+      '#cd-bolo-modal .cd-bolo-modal-backdrop{position:absolute;inset:0;background:rgba(3,7,18,0.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);opacity:0;transition:opacity .2s;}' +
+      '#cd-bolo-modal.is-open .cd-bolo-modal-backdrop{opacity:1;}' +
+      '.cd-bolo-modal-panel{position:relative;width:min(560px,100%);max-height:90vh;display:flex;flex-direction:column;background:var(--cd-glass);border:1px solid var(--cd-glass-border);border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.05);color:var(--cd-text);opacity:0;transform:translateY(12px);transition:opacity .2s,transform .2s;overflow:hidden;}' +
+      '#cd-bolo-modal.is-open .cd-bolo-modal-panel{opacity:1;transform:none;}' +
+      '.cd-bolo-modal-head{display:flex;align-items:center;padding:0.875rem 1rem;border-bottom:1px solid var(--cd-glass-border);}' +
+      '.cd-bolo-modal-title{margin:0;flex:1;font:600 0.9375rem/1.2 inherit;letter-spacing:0.02em;}' +
+      '.cd-bolo-modal-close{width:28px;height:28px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--cd-text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}' +
+      '.cd-bolo-modal-close:hover{border-color:var(--cd-glass-border);background:rgba(255,255,255,0.04);color:var(--cd-text);}' +
+      '.cd-bolo-modal-body{flex:1;overflow-y:auto;padding:1rem;}' +
+
       /* ── Form ── */
-      '.cd-bolo-form{display:none;padding:1rem 1.25rem;border-bottom:1px solid var(--cd-glass-border);background:rgba(255,255,255,0.02);}' +
-      '.cd-bolo-form.cd-bolo-form-visible{display:block;}' +
-      '.cd-bolo-form-grid{display:flex;flex-direction:column;gap:0.75rem;}' +
+      '.cd-bolo-form-grid{display:flex;flex-direction:column;gap:0.875rem;}' +
       '.cd-bolo-form-row{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;}' +
-      '.cd-bolo-field{display:flex;flex-direction:column;gap:0.25rem;}' +
-      '.cd-bolo-field label{font-size:0.6875rem;font-weight:500;color:var(--cd-text-muted);text-transform:uppercase;letter-spacing:0.03em;}' +
-      '.cd-bolo-field input,.cd-bolo-field textarea,.cd-bolo-field select{background:rgba(255,255,255,0.04);border:1px solid var(--cd-glass-border);border-radius:var(--cd-radius-sm);color:var(--cd-text);padding:0.5rem 0.75rem;font-size:0.8125rem;font-family:inherit;outline:none;transition:border-color 0.2s,box-shadow 0.2s;resize:vertical;}' +
-      '.cd-bolo-field input:focus,.cd-bolo-field textarea:focus,.cd-bolo-field select:focus{border-color:var(--cd-accent);box-shadow:0 0 0 2px rgba(56,189,248,0.12);}' +
+      '.cd-bolo-field{display:flex;flex-direction:column;gap:0.375rem;}' +
+      '.cd-bolo-field label{font:700 0.6875rem/1 inherit;letter-spacing:0.1em;text-transform:uppercase;color:var(--cd-text-muted);}' +
+      '.cd-bolo-field input,.cd-bolo-field textarea,.cd-bolo-field select{background:rgba(255,255,255,0.03);border:1px solid var(--cd-glass-border);border-radius:8px;color:var(--cd-text);padding:0.5625rem 0.75rem;font-size:0.875rem;line-height:1.4;font-family:inherit;outline:none;transition:border-color 0.15s,background 0.15s;resize:vertical;}' +
+      '.cd-bolo-field input:focus,.cd-bolo-field textarea:focus,.cd-bolo-field select:focus{border-color:rgba(56,189,248,0.5);background:rgba(56,189,248,0.04);}' +
       '.cd-bolo-field input::placeholder,.cd-bolo-field textarea::placeholder{color:var(--cd-text-dim);opacity:0.7;}' +
       '.cd-bolo-field select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' fill=\'%2364748b\' viewBox=\'0 0 16 16\'%3E%3Cpath d=\'M8 11L3 6h10z\'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;padding-right:2rem;}' +
       '.cd-bolo-field select option{background:#0c0d12;color:var(--cd-text);}' +
-      '.cd-bolo-form-actions{display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.25rem;}' +
-      '.cd-bolo-form-btn{padding:0.4375rem 1rem;border-radius:var(--cd-radius-sm);border:none;font-family:inherit;font-size:0.8125rem;font-weight:600;cursor:pointer;transition:all 0.2s;}' +
+      '.cd-bolo-form-actions{display:flex;justify-content:flex-end;gap:0.4375rem;padding-top:0.875rem;border-top:1px solid var(--cd-glass-border);margin-top:0.25rem;}' +
+      '.cd-bolo-form-btn{padding:0.5rem 1rem;border-radius:8px;border:none;font-family:inherit;font-size:0.8125rem;font-weight:600;cursor:pointer;transition:all 0.15s;}' +
       '.cd-bolo-form-cancel{background:rgba(255,255,255,0.04);color:var(--cd-text);border:1px solid var(--cd-glass-border);}' +
       '.cd-bolo-form-cancel:hover{background:rgba(255,255,255,0.08);}' +
-      '.cd-bolo-form-submit{background:rgba(56,189,248,0.15);color:var(--cd-accent);}' +
+      '.cd-bolo-form-submit{background:rgba(56,189,248,0.15);color:var(--cd-accent);border:1px solid rgba(56,189,248,0.25);}' +
       '.cd-bolo-form-submit:hover{background:rgba(56,189,248,0.25);}' +
       '.cd-bolo-form-submit:disabled{opacity:0.5;cursor:default;}' +
 
@@ -223,7 +232,7 @@
         state.submitting = false;
         $('#cd-bolo-submit').prop('disabled', false);
         toast('BOLO created', 'success');
-        hideForm();
+        closeModal();
         loadBolos();
         if (callback) callback();
       },
@@ -237,11 +246,15 @@
   }
 
   function clearBolo(id) {
+    // Note: UpdateBoloHandler prepends `bolo.` to every top-level key it
+    // receives and uses that as the Mongo $set path. Send the flat shape
+    // `{status:false}` so the write lands on `bolo.status`, not
+    // `bolo.bolo.status`. Wrapping with {bolo:{...}} here silently no-ops.
     $.ajax({
       url: apiUrl() + '/api/v1/bolo/' + encodeURIComponent(id),
       method: 'PUT',
       contentType: 'application/json',
-      data: JSON.stringify({ bolo: { status: false } }),
+      data: JSON.stringify({ status: false }),
       success: function () {
         toast('BOLO cleared', 'success');
         loadBolos();
@@ -322,7 +335,12 @@
      ─────────────────────────────────────────── */
 
   function renderList() {
-    var $list = $('#cd-bolo-list');
+    // Target the class, not the id: the dispatch bridge mounts one BOLO
+    // card into the bottom strip AND the focused-card registry mounts
+    // another hidden copy for sidebar navigation, so two `#cd-bolo-list`
+    // nodes coexist. jQuery's id selector only returns the first match,
+    // which leaves the focused card stuck on the initial placeholder.
+    var $list = $('.cd-bolo-list');
     if (!$list.length) return;
 
     if (state.loading) {
@@ -349,22 +367,67 @@
   }
 
   /* ───────────────────────────────────────────
-     Form Visibility
+     New-BOLO Modal
      ─────────────────────────────────────────── */
 
-  function showForm() {
-    state.formVisible = true;
-    $('#cd-bolo-form').addClass('cd-bolo-form-visible');
-    $('#cd-bolo-title-input').focus();
+  function modalFormMarkup() {
+    return '' +
+      '<form id="cd-bolo-form" class="cd-bolo-form-grid" autocomplete="off">' +
+        '<div class="cd-bolo-field">' +
+          '<label for="cd-bolo-title-input">Title</label>' +
+          '<input type="text" id="cd-bolo-title-input" placeholder="e.g. Red sedan fleeing I-90 westbound" maxlength="120" required>' +
+        '</div>' +
+        '<div class="cd-bolo-field">' +
+          '<label for="cd-bolo-location-input">Location</label>' +
+          '<input type="text" id="cd-bolo-location-input" placeholder="Last known location" maxlength="200">' +
+        '</div>' +
+        '<div class="cd-bolo-field">' +
+          '<label for="cd-bolo-desc-input">Description</label>' +
+          '<textarea id="cd-bolo-desc-input" rows="4" placeholder="Describe the suspect, vehicle, or situation" maxlength="2000"></textarea>' +
+        '</div>' +
+        '<div class="cd-bolo-field">' +
+          '<label for="cd-bolo-scope-input">Scope</label>' +
+          '<select id="cd-bolo-scope-input">' +
+            '<option value="Community">Community &mdash; visible to all departments</option>' +
+            '<option value="Department">Department &mdash; this department only</option>' +
+          '</select>' +
+        '</div>' +
+        '<div class="cd-bolo-form-actions">' +
+          '<button class="cd-bolo-form-btn cd-bolo-form-cancel" id="cd-bolo-cancel" type="button">Cancel</button>' +
+          '<button class="cd-bolo-form-btn cd-bolo-form-submit" id="cd-bolo-submit" type="submit">' +
+            '<i class="fas fa-plus"></i> Create BOLO' +
+          '</button>' +
+        '</div>' +
+      '</form>';
   }
 
-  function hideForm() {
-    state.formVisible = false;
-    $('#cd-bolo-form').removeClass('cd-bolo-form-visible');
-    $('#cd-bolo-title-input').val('');
-    $('#cd-bolo-location-input').val('');
-    $('#cd-bolo-desc-input').val('');
-    $('#cd-bolo-scope-input').val('Community');
+  function openModal() {
+    if ($('#cd-bolo-modal').length) return;
+    var $ov = $(
+      '<div id="cd-bolo-modal" role="dialog" aria-modal="true" aria-labelledby="cd-bolo-modal-title">' +
+        '<div class="cd-bolo-modal-backdrop"></div>' +
+        '<div class="cd-bolo-modal-panel">' +
+          '<header class="cd-bolo-modal-head">' +
+            '<h2 id="cd-bolo-modal-title" class="cd-bolo-modal-title">New BOLO</h2>' +
+            '<button type="button" class="cd-bolo-modal-close" aria-label="Close"><i class="fas fa-xmark"></i></button>' +
+          '</header>' +
+          '<div class="cd-bolo-modal-body">' + modalFormMarkup() + '</div>' +
+        '</div>' +
+      '</div>'
+    );
+    $ov.find('.cd-bolo-modal-close,.cd-bolo-modal-backdrop').on('click', closeModal);
+    $(document).on('keydown.cdBoloModal', function (e) { if (e.key === 'Escape') closeModal(); });
+    $('body').append($ov);
+    requestAnimationFrame(function () { $ov.addClass('is-open'); });
+    setTimeout(function () { $('#cd-bolo-title-input').focus(); }, 50);
+  }
+
+  function closeModal() {
+    var $ov = $('#cd-bolo-modal');
+    if (!$ov.length) return;
+    $ov.removeClass('is-open');
+    $(document).off('keydown.cdBoloModal');
+    setTimeout(function () { $ov.remove(); }, 200);
   }
 
   /* ───────────────────────────────────────────
@@ -391,39 +454,6 @@
           '</button>' +
         '</div>' +
 
-        /* Create form (hidden) */
-        '<div class="cd-bolo-form" id="cd-bolo-form">' +
-          '<div class="cd-bolo-form-grid">' +
-            '<div class="cd-bolo-form-row">' +
-              '<div class="cd-bolo-field">' +
-                '<label for="cd-bolo-title-input">Title</label>' +
-                '<input type="text" id="cd-bolo-title-input" placeholder="BOLO title" maxlength="120">' +
-              '</div>' +
-              '<div class="cd-bolo-field">' +
-                '<label for="cd-bolo-location-input">Location</label>' +
-                '<input type="text" id="cd-bolo-location-input" placeholder="Last known location" maxlength="200">' +
-              '</div>' +
-            '</div>' +
-            '<div class="cd-bolo-field">' +
-              '<label for="cd-bolo-desc-input">Description</label>' +
-              '<textarea id="cd-bolo-desc-input" rows="3" placeholder="Describe the suspect, vehicle, or situation" maxlength="2000"></textarea>' +
-            '</div>' +
-            '<div class="cd-bolo-form-row">' +
-              '<div class="cd-bolo-field">' +
-                '<label for="cd-bolo-scope-input">Scope</label>' +
-                '<select id="cd-bolo-scope-input">' +
-                  '<option value="Community">Community &mdash; visible to all departments</option>' +
-                  '<option value="Department">Department &mdash; this department only</option>' +
-                '</select>' +
-              '</div>' +
-              '<div class="cd-bolo-form-actions" style="align-self:flex-end;">' +
-                '<button class="cd-bolo-form-btn cd-bolo-form-cancel" id="cd-bolo-cancel" type="button">Cancel</button>' +
-                '<button class="cd-bolo-form-btn cd-bolo-form-submit" id="cd-bolo-submit" type="button">Create BOLO</button>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-
         /* Tabs */
         '<div class="cd-bolo-tabs">' +
           '<button class="cd-bolo-tab cd-bolo-tab-active" data-filter="active">Active</button>' +
@@ -432,7 +462,7 @@
         '</div>' +
 
         /* List */
-        '<div class="cd-bolo-list" id="cd-bolo-list">' +
+        '<div class="cd-bolo-list">' +
           '<div class="cd-bolo-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading BOLOs&hellip;</div>' +
         '</div>' +
 
@@ -450,20 +480,21 @@
 
     /* New BOLO button */
     $(document).off('click.cdBoloNew').on('click.cdBoloNew', '#cd-bolo-new-btn', function () {
-      if (state.formVisible) {
-        hideForm();
-      } else {
-        showForm();
-      }
+      openModal();
     });
 
-    /* Cancel form */
+    /* Cancel modal */
     $(document).off('click.cdBoloCancel').on('click.cdBoloCancel', '#cd-bolo-cancel', function () {
-      hideForm();
+      closeModal();
     });
 
-    /* Submit form */
-    $(document).off('click.cdBoloSubmit').on('click.cdBoloSubmit', '#cd-bolo-submit', function () {
+    /* Submit form — handle via form submit (covers Enter key) and click */
+    $(document).off('submit.cdBoloSubmit').on('submit.cdBoloSubmit', '#cd-bolo-form', function (e) {
+      e.preventDefault();
+      submitNewBolo();
+    });
+
+    function submitNewBolo() {
       var title = $('#cd-bolo-title-input').val().trim();
       var location = $('#cd-bolo-location-input').val().trim();
       var description = $('#cd-bolo-desc-input').val().trim();
@@ -481,7 +512,7 @@
         description: description,
         scope: scope
       });
-    });
+    }
 
     /* Tab switching */
     $(document).off('click.cdBoloTab').on('click.cdBoloTab', '.cd-bolo-tab', function () {

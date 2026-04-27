@@ -1,0 +1,330 @@
+/* ===================================================
+   COMMAND DASHBOARD — Dispatch Control Layout
+   Activates when template.name === 'dispatch'.
+   Uses the same --cd-* design tokens as command-dashboard.
+   =================================================== */
+
+#cd-dispatch-bridge {
+  /* Natural block flow — top bar, 3-zone grid, bottom strip stack below one
+     another. Each zone body is viewport-height-capped individually so the
+     grid row never exceeds its budget and the bottom strip stays near fold.
+     Don't use height:100% / flex here: #dd-panels has no bounded height, so
+     those rules collapse and the bottom strip ends up overlapping the grid. */
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  color: var(--cd-text);
+}
+
+/* ── Top bar ───────────────────────────────────────── */
+.cd-dispatch-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  background: var(--cd-glass);
+  border: 1px solid var(--cd-glass-border);
+  border-radius: var(--cd-radius, 12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.cd-dispatch-topbar-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cd-text-muted);
+}
+.cd-dispatch-topbar-dept {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--cd-text);
+}
+.cd-dispatch-rank-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(56, 189, 248, 0.08);
+  color: var(--cd-accent);
+  font: 600 0.75rem/1 inherit;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.cd-dispatch-rank-pill:hover {
+  background: rgba(56, 189, 248, 0.16);
+  color: #fff;
+}
+.cd-dispatch-rank-pill i { font-size: 0.6875rem; opacity: 0.8; }
+.cd-dispatch-topbar-clock {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.8125rem;
+  color: var(--cd-text-muted);
+  letter-spacing: 0.04em;
+}
+.cd-dispatch-topbar-tz {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cd-text-dim);
+  padding: 0.1875rem 0.4375rem;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--cd-glass-border);
+}
+.cd-dispatch-topbar-tz:empty { display: none; }
+.cd-dispatch-topbar-btn {
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--cd-glass-border);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--cd-text-muted);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.cd-dispatch-topbar-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--cd-text);
+}
+.cd-dispatch-topbar-btn.is-signal {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+.cd-dispatch-topbar-btn.is-signal:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fff;
+}
+.cd-dispatch-topbar-btn.is-panic {
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fcd34d;
+}
+.cd-dispatch-topbar-btn.is-panic:hover {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fff;
+}
+.cd-dispatch-reconnect-pill {
+  display: none;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fcd34d;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+.cd-dispatch-reconnect-pill.is-visible { display: inline-flex; }
+
+/* ── 3-zone grid ───────────────────────────────────── */
+/*
+ * Two column layouts:
+ *   - Default (no call selected): roster + board only, detail column
+ *     collapses to 0 so the board can breathe. Roster ≈ 30%, board ≈ 70%.
+ *   - `.has-selection`: detail column expands back to its fixed width so
+ *     the board shrinks to make room.
+ * Smooth width transition ties the two states together visually.
+ */
+.cd-dispatch-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 28%) minmax(0, 1fr) 0fr;
+  gap: 0.75rem;
+  transition: grid-template-columns 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cd-dispatch-grid.has-selection {
+  grid-template-columns: 280px minmax(0, 1fr) 380px;
+}
+/* Detail zone animates its own opacity + scale so it doesn't flash in at
+   full opacity mid-transition while the grid is still resizing. */
+.cd-dispatch-grid .cd-dispatch-zone[data-zone="detail"] {
+  overflow: hidden;
+  opacity: 0;
+  transform: translateX(12px);
+  transition: opacity 0.22s ease 0.04s, transform 0.22s ease 0.04s;
+  pointer-events: none;
+}
+.cd-dispatch-grid.has-selection .cd-dispatch-zone[data-zone="detail"] {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+/* Each zone body is individually capped by viewport height so:
+   - tall rosters don't push the bottom strip off-screen
+   - all three zones line up at the same height
+   - bottom strip always has room at the fold
+   The 260px offset approximates: topbar (40) + padding (24) + zone header
+   (40) + bottom-strip min-height (220) + gaps (~40). */
+.cd-dispatch-grid .cd-dispatch-zone-body { max-height: calc(100vh - 280px); }
+@media (max-width: 1440px) {
+  .cd-dispatch-grid.has-selection { grid-template-columns: 260px minmax(0, 1fr) 360px; }
+}
+@media (max-width: 1280px) {
+  .cd-dispatch-grid.has-selection { grid-template-columns: 240px minmax(0, 1fr) 340px; }
+}
+@media (max-width: 1024px) {
+  .cd-dispatch-grid,
+  .cd-dispatch-grid.has-selection { grid-template-columns: 260px minmax(0, 1fr); }
+  .cd-dispatch-zone[data-zone="detail"] {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: min(420px, 92vw);
+    z-index: 300;
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    box-shadow: -12px 0 40px rgba(0, 0, 0, 0.4);
+    /* On mobile the slide-over is always visually present — opacity/scale
+       rules from the desktop grid version don't apply. */
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .cd-dispatch-grid .cd-dispatch-zone[data-zone="detail"] { overflow: hidden; }
+  .cd-dispatch-zone[data-zone="detail"].is-open { transform: translateX(0); }
+  .cd-dispatch-zone[data-zone="detail"].is-open::before {
+    content: '';
+    position: fixed;
+    inset: 0 min(420px, 92vw) 0 0;
+    background: rgba(3, 7, 18, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: -1;
+    animation: cd-fade-in 0.2s ease;
+  }
+}
+@keyframes cd-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (max-width: 768px) {
+  .cd-dispatch-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(320px, 1fr);
+    max-height: none;
+    min-height: 0;
+  }
+  /* Filters (search + dept pills + status pills) eat ~200px of the
+     roster zone — cap at a taller value so ≥3 units stay visible
+     without having to scroll the outer page to reach them. The inner
+     list scrolls within this box once units overflow. */
+  .cd-dispatch-zone[data-zone="roster"] { max-height: 440px; }
+  .cd-dispatch-zone[data-zone="roster"] .cd-dispatch-zone-body { max-height: none; min-height: 0; flex: 1; }
+}
+
+.cd-dispatch-zone {
+  display: flex;
+  flex-direction: column;
+  background: var(--cd-glass);
+  border: 1px solid var(--cd-glass-border);
+  border-radius: var(--cd-radius, 12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overflow: hidden;
+  min-height: 0;
+}
+.cd-dispatch-zone-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0.875rem;
+  border-bottom: 1px solid var(--cd-glass-border);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cd-text-muted);
+  flex-shrink: 0;
+}
+.cd-dispatch-zone-header i { color: var(--cd-accent); }
+.cd-dispatch-zone-header .cd-dispatch-zone-count {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: var(--cd-text-dim);
+}
+.cd-dispatch-zone-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.75rem;
+}
+.cd-dispatch-zone-body::-webkit-scrollbar { width: 6px; }
+.cd-dispatch-zone-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+
+/* Placeholder while inner modules aren't rendered yet */
+.cd-dispatch-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--cd-text-dim);
+  font-size: 0.75rem;
+}
+.cd-dispatch-placeholder i { font-size: 1.25rem; opacity: 0.5; }
+
+/* ── Realtime flash ──────────────────────────────────
+   Peripheral-vision cue when a call or unit updates behind the
+   dispatcher's back. Two passes: a tight ring glow that reaches full
+   intensity almost instantly (so the eye catches motion) plus a slower
+   inner tint that lingers long enough for the dispatcher to locate the
+   item. Scale stays <1.015 on purpose — we want attention, not
+   playfulness. One animation per variant so dispatchers learn color-
+   to-event mapping over time:
+     accent (cyan) = call updated / assignment changed / unit status
+     green         = new call
+     amber         = call closed/completed
+     red           = call deleted
+   =================================================== */
+@keyframes cd-flash-accent {
+  0%   { box-shadow: 0 0 0 0 rgba(56,189,248,0.00), inset 0 0 0 0 rgba(56,189,248,0.00); transform: scale(1); }
+  8%   { box-shadow: 0 0 0 3px rgba(56,189,248,0.60), 0 0 24px -2px rgba(56,189,248,0.55), inset 0 0 24px -4px rgba(56,189,248,0.28); transform: scale(1.012); }
+  100% { box-shadow: 0 0 0 0 rgba(56,189,248,0.00), 0 0 0 rgba(56,189,248,0.00), inset 0 0 0 rgba(56,189,248,0.00); transform: scale(1); }
+}
+@keyframes cd-flash-green {
+  0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.00),  inset 0 0 0 0 rgba(34,197,94,0.00); transform: scale(1); }
+  8%   { box-shadow: 0 0 0 3px rgba(34,197,94,0.60),  0 0 26px -2px rgba(34,197,94,0.55),  inset 0 0 26px -4px rgba(34,197,94,0.30); transform: scale(1.014); }
+  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.00),  0 0 0 rgba(34,197,94,0.00),  inset 0 0 0 rgba(34,197,94,0.00); transform: scale(1); }
+}
+@keyframes cd-flash-amber {
+  0%   { box-shadow: 0 0 0 0 rgba(245,158,11,0.00), inset 0 0 0 0 rgba(245,158,11,0.00); transform: scale(1); }
+  8%   { box-shadow: 0 0 0 3px rgba(245,158,11,0.60), 0 0 24px -2px rgba(245,158,11,0.55), inset 0 0 24px -4px rgba(245,158,11,0.28); transform: scale(1.012); }
+  100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.00), 0 0 0 rgba(245,158,11,0.00), inset 0 0 0 rgba(245,158,11,0.00); transform: scale(1); }
+}
+@keyframes cd-flash-red {
+  0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.00),  inset 0 0 0 0 rgba(239,68,68,0.00); transform: scale(1); }
+  8%   { box-shadow: 0 0 0 3px rgba(239,68,68,0.65),  0 0 28px -2px rgba(239,68,68,0.55),  inset 0 0 28px -4px rgba(239,68,68,0.30); transform: scale(1.014); }
+  100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.00),  0 0 0 rgba(239,68,68,0.00),  inset 0 0 0 rgba(239,68,68,0.00); transform: scale(1); }
+}
+.is-cd-flash-accent { animation: cd-flash-accent 1.2s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.is-cd-flash-green  { animation: cd-flash-green  1.3s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.is-cd-flash-amber  { animation: cd-flash-amber  1.2s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.is-cd-flash-red    { animation: cd-flash-red    1.3s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  /* Keep the color cue, drop the scale so motion-sensitive users still
+     get the signal without the zoom. Shorter run — just a pulse. */
+  .is-cd-flash-accent,
+  .is-cd-flash-green,
+  .is-cd-flash-amber,
+  .is-cd-flash-red { animation-duration: 0.6s; transform: none; }
+}
+
+/* ── Bottom strip (BOLOs + tones) ─────────────────── */
+.cd-dispatch-bottom {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 0.75rem;
+}
+.cd-dispatch-bottom .cd-dispatch-zone-body { max-height: 520px; min-height: 360px; }
+@media (max-width: 1024px) {
+  .cd-dispatch-bottom { grid-template-columns: 1fr; }
+}

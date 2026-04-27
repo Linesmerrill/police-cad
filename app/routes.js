@@ -2045,6 +2045,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       const departmentName = req.query.dept || null;
       const encodedDeptId = req.query.d || null;
 
+      // ObjectId pattern for validation (prevents SSRF when interpolated into API URLs)
+      const objectIdPattern = /^[a-fA-F0-9]{24}$/;
+
       let departmentId = null;
       if (encodedDeptId) {
         try {
@@ -2054,7 +2057,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
           while (base64.length % 4) {
             base64 += '=';
           }
-          departmentId = Buffer.from(base64, 'base64').toString('utf8');
+          const decodedDept = Buffer.from(base64, 'base64').toString('utf8');
+          if (objectIdPattern.test(decodedDept)) {
+            departmentId = decodedDept;
+          } else {
+            console.warn('Rejected invalid department ID from URL:', decodedDept);
+          }
         } catch (e) {
           console.error('Failed to decode department ID:', e);
           departmentId = null;
@@ -2063,7 +2071,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
       const encodedCommunityId = req.query.c || null;
       let urlCommunityId = null;
-      const communityIdPattern = /^[a-fA-F0-9]{24}$/;
+      const communityIdPattern = objectIdPattern;
       if (encodedCommunityId) {
         try {
           let base64 = encodedCommunityId
@@ -2144,6 +2152,57 @@ module.exports = function (app, passport, server, nextApp, handle) {
         }
       }
 
+      // Beta gate — the new dashboard is opt-in. If the target dept's
+      // template is dispatch we require `betaCommandDispatch`; for every
+      // other template we require `betaCommandDashboard`. Not opted in
+      // means we bounce back to the appropriate classic dashboard so the
+      // experience stays tightly scoped to users who've asked to try it.
+      try {
+        let targetTemplate = null;
+        if (communityId && departmentId) {
+          try {
+            const deptResp = await axios.get(
+              `${policeCadApiUrl}/api/v1/community/${encodeURIComponent(communityId)}/departments/${encodeURIComponent(departmentId)}`,
+              config
+            );
+            // Newer depts use `templateRef`, older ones embed the template.
+            // Read both so neither shape is missed.
+            const d = deptResp.data?.department || deptResp.data || {};
+            targetTemplate = String(
+              d.template?.name
+              || d.templateRef?.name
+              || ''
+            ).toLowerCase() || null;
+          } catch (deptErr) {
+            console.warn('[command-dashboard gate] dept fetch failed:', deptErr.message);
+          }
+        }
+        const prefsRes = await axios.get(
+          `${policeCadApiUrl}/api/v1/user-preferences/${req.user._id}`, config
+        );
+        const prefs = prefsRes.data || {};
+        const queryString = req.originalUrl.split('?')[1] || '';
+        // Truthy comparison so non-strict-boolean representations still pass.
+        const dispatchOn = !!prefs.betaCommandDispatch;
+        const policeOn = !!prefs.betaCommandDashboard;
+        // Single-flag grace: if the user has opted into EITHER beta they
+        // can access the new dashboard across templates. Keeps users from
+        // getting stuck on a template they haven't specifically opted into
+        // (e.g. a dispatch-opted user visiting a police dept URL).
+        if (dispatchOn || policeOn) {
+          // Allowed — fall through to render.
+        } else if (targetTemplate === 'dispatch') {
+          return res.redirect(`/dispatch-dashboard${queryString ? '?' + queryString : ''}`);
+        } else if (targetTemplate) {
+          return res.redirect(`/police-dashboard${queryString ? '?' + queryString : ''}`);
+        }
+        // If we couldn't resolve a template AND no beta flag is set, fail
+        // open — the client-side layout still guards against unsupported
+        // flows and the user can navigate to a classic dashboard.
+      } catch (gateErr) {
+        console.warn('[command-dashboard gate] unexpected error:', gateErr.message);
+      }
+
       res.render("command-dashboard", {
         user: req.user,
         referer: encodeURIComponent("/command-dashboard"),
@@ -2165,12 +2224,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   app.get("/dispatch-dashboard", authCheck, async function (req, res) {
     try {
-      // Check if user opted into the beta command dashboard
+      // Dispatch has its own beta flag (betaCommandDispatch) — tracked
+      // separately from the police command dashboard (betaCommandDashboard)
+      // so admin adoption metrics can distinguish the two audiences.
       try {
         const prefsRes = await axios.get(
           `${policeCadApiUrl}/api/v1/user-preferences/${req.user._id}`, config
         );
-        if (prefsRes.data && prefsRes.data.betaCommandDashboard === true) {
+        if (prefsRes.data && prefsRes.data.betaCommandDispatch === true) {
           const queryString = req.originalUrl.split('?')[1] || '';
           return res.redirect(`/command-dashboard${queryString ? '?' + queryString : ''}`);
         }
@@ -7136,6 +7197,39 @@ module.exports = function (app, passport, server, nextApp, handle) {
       };
       if (data.toneSoundUrl) toneData.toneSoundUrl = data.toneSoundUrl;
       io.to(roomName).emit("tone_activated", toneData);
+    } else if (event === "dispatch_unit_status_changed") {
+      // Dispatch bridge listens for this and patches the roster chip in place.
+      io.to(roomName).emit("dispatch:unit_status_changed", {
+        communityId: communityId,
+        userId: data.userId,
+        tenCodeId: data.tenCodeId,
+        tenCode: data.tenCode,
+        tenCodeDescription: data.tenCodeDescription,
+        activeDepartmentId: data.activeDepartmentId,
+      });
+    } else if (event === "call_created") {
+      // Go API fired this after a successful POST /api/v1/calls — the write
+      // path any REST client uses (Command Bridge, classic dashboards, mobile
+      // app). Re-emit on the same `created_call` channel the frontend already
+      // consumes, tagged with actorId so the originating tab can suppress
+      // its own echo.
+      const callDoc = (data && data.call) || {};
+      io.to(roomName).emit("created_call", Object.assign({}, callDoc, {
+        actorId: (data && data.actorId) || null,
+      }));
+    } else if (event === "call_updated") {
+      const callDoc = (data && data.call) || {};
+      io.to(roomName).emit("updated_call", Object.assign({}, callDoc, {
+        actorId: (data && data.actorId) || null,
+      }));
+    } else if (event === "call_deleted") {
+      // Delete only carries the id — consumers just need enough to drop the
+      // card from the board.
+      io.to(roomName).emit("cleared_call", {
+        callId: (data && data.callId) || null,
+        communityId: communityId,
+        actorId: (data && data.actorId) || null,
+      });
     }
 
     res.json({ success: true, event: event, communityId: communityId });

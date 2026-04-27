@@ -11,6 +11,7 @@
   <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/dd-components.css">
+  <link rel="stylesheet" href="/static/css/cd-dispatch.css">
   <script src="/static/js/jquery.min.js"></script>
   <style>
     /* ===================================================
@@ -571,8 +572,10 @@
         <div class="cd-topbar-title" id="dd-topbar-title">Overview</div>
         <span class="cd-topbar-dept-badge" id="dd-topbar-dept-badge" style="display:none;"></span>
         <span id="cd-beta-tag" style="display:none;font-size:0.5625rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:rgba(56,189,248,0.12);color:#38bdf8;padding:0.15rem 0.5rem;border-radius:4px;border:1px solid rgba(56,189,248,0.2);animation:cd-beta-pulse 3s ease-in-out infinite;">Beta</span>
+        <span id="cd-beta-tag-dispatch" style="display:none;font-size:0.5625rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:rgba(56,189,248,0.12);color:#38bdf8;padding:0.15rem 0.5rem;border-radius:4px;border:1px solid rgba(56,189,248,0.2);animation:cd-beta-pulse 3s ease-in-out infinite;">Beta</span>
         <script>
           (function(){var exp=new Date('2026-04-10T00:00:00Z');if(new Date()<exp){document.getElementById('cd-beta-tag').style.display='';}})();
+          window.CD_DISPATCH_BETA_EXPIRES = '2026-05-06T00:00:00Z';
         </script>
       </div>
       <div class="cd-topbar-actions">
@@ -861,6 +864,9 @@
             });
           }
           currentTemplateName = (template && template.name || '').toLowerCase() || 'police';
+          // Keep the exposed config in sync so other components (cd-calls,
+          // focused views) can branch on template without passing it through.
+          if (window.ddConfig) window.ddConfig.currentTemplateName = currentTemplateName;
           enabledComponents['departmentSettings'] = true;
           // Default new components to enabled if not yet in stored template
           if (!enabledComponents.hasOwnProperty('activeCalls')) enabledComponents['activeCalls'] = true;
@@ -1081,20 +1087,30 @@
         $focusedCards.append($card);
       });
 
-      $panels.append(mdtHtml);
-      $panels.append($focusedCards);
+      // Dispatch-template departments get a purpose-built 3-zone "Command Bridge"
+      // instead of the MDT grid. The sidebar focused-card nav still works — it
+      // just overlays on top of the bridge.
+      var useDispatchBridge = (currentTemplateName === 'dispatch') && (typeof window.cdDispatchLayoutRender === 'function');
+      if (useDispatchBridge) {
+        $panels.append(window.cdDispatchLayoutRender(window.ddConfig.departmentData || {}));
+        $panels.append($focusedCards);
+        if (typeof window.cdDispatchLayoutInit === 'function') window.cdDispatchLayoutInit();
+      } else {
+        $panels.append(mdtHtml);
+        $panels.append($focusedCards);
 
-      // ── Populate MDT columns with component content ──
-      populateMDTColumns();
+        // ── Populate MDT columns with component content ──
+        populateMDTColumns();
 
-      // ── Wire MDT search tabs ──
-      $(document).off('click.mdtSearchTab').on('click.mdtSearchTab', '.cd-mdt-search-tab', function() {
-        var tab = $(this).data('search');
-        $('.cd-mdt-search-tab').removeClass('active');
-        $(this).addClass('active');
-        $('.cd-mdt-search-pane').removeClass('active');
-        $('.cd-mdt-search-pane[data-pane="' + tab + '"]').addClass('active');
-      });
+        // ── Wire MDT search tabs ──
+        $(document).off('click.mdtSearchTab').on('click.mdtSearchTab', '.cd-mdt-search-tab', function() {
+          var tab = $(this).data('search');
+          $('.cd-mdt-search-tab').removeClass('active');
+          $(this).addClass('active');
+          $('.cd-mdt-search-pane').removeClass('active');
+          $('.cd-mdt-search-pane[data-pane="' + tab + '"]').addClass('active');
+        });
+      }
     }
 
     function populateMDTColumns() {
@@ -1332,6 +1348,28 @@
       }
     };
 
+    // Maps a 10-code + description to a semantic status tone used across command-dashboard
+    // widgets (MDT badge, dispatch roster chip, assigned pills). Returns one of
+    // 'emergency' | 'available' | 'busy' | 'other'. Text matching is intentionally
+    // permissive (English substrings) to accommodate community-defined codes; future
+    // work can let communities map codes to tones explicitly.
+    window.cdStatusColor = window.cdStatusColor || function(code, desc) {
+      var c = (code || '').toLowerCase();
+      var d = (desc || '').toLowerCase();
+      if (c.indexOf('signal 100') !== -1 || d.indexOf('emergency') !== -1) return 'emergency';
+      if (c.indexOf('10-8') !== -1 || c.indexOf('code 4') !== -1 || d.indexOf('available') !== -1 || d.indexOf('in service') !== -1 || d.indexOf('under control') !== -1) return 'available';
+      if (c.indexOf('10-7') !== -1 || c.indexOf('10-6') !== -1 || d.indexOf('out of service') !== -1 || d.indexOf('busy') !== -1) return 'busy';
+      return 'other';
+    };
+    window.cdStatusToneStyle = window.cdStatusToneStyle || function(tone) {
+      switch (tone) {
+        case 'emergency': return { color: 'var(--cd-red)',    borderColor: 'rgba(239,68,68,0.4)' };
+        case 'available': return { color: 'var(--cd-green)',  borderColor: 'rgba(34,197,94,0.4)' };
+        case 'busy':      return { color: 'var(--cd-amber)',  borderColor: 'rgba(245,158,11,0.4)' };
+        default:          return { color: 'var(--cd-accent)', borderColor: 'rgba(56,189,248,0.3)' };
+      }
+    };
+
     window.applyMDTStatus = applyMDTStatus;
     function applyMDTStatus() {
       var communityData = (window.ddConfig || {}).communityData;
@@ -1346,17 +1384,8 @@
       var active = codes.find(function(c) { return c._id === myMember.tenCodeID; });
       if (active) {
         $('#cd-mdt-status-text').text(active.code);
-        var code = (active.code || '').toLowerCase();
-        var desc = (active.description || '').toLowerCase();
-        if (code.indexOf('signal 100') !== -1 || desc.indexOf('emergency') !== -1) {
-          $('#cd-mdt-status-badge').css({ color: 'var(--cd-red)', borderColor: 'rgba(239,68,68,0.4)' });
-        } else if (code.indexOf('10-8') !== -1 || code.indexOf('code 4') !== -1 || desc.indexOf('available') !== -1 || desc.indexOf('in service') !== -1 || desc.indexOf('under control') !== -1) {
-          $('#cd-mdt-status-badge').css({ color: 'var(--cd-green)', borderColor: 'rgba(34,197,94,0.4)' });
-        } else if (code.indexOf('10-7') !== -1 || code.indexOf('10-6') !== -1 || desc.indexOf('out of service') !== -1 || desc.indexOf('busy') !== -1) {
-          $('#cd-mdt-status-badge').css({ color: 'var(--cd-amber)', borderColor: 'rgba(245,158,11,0.4)' });
-        } else {
-          $('#cd-mdt-status-badge').css({ color: 'var(--cd-accent)', borderColor: 'rgba(56,189,248,0.3)' });
-        }
+        var tone = window.cdStatusColor(active.code, active.description);
+        $('#cd-mdt-status-badge').css(window.cdStatusToneStyle(tone));
       } else {
         $('#cd-mdt-status-text').text('No Status');
       }
@@ -1462,23 +1491,27 @@
       }
 
       var $mdt = $('#cd-mdt-overview');
+      var $bridge = $('#cd-dispatch-bridge');
       var $focusedCards = $('#dd-focused-cards');
       var $rankWrap = $('#dd-rank-wrap');
 
       if (panel === 'overview') {
-        // Show MDT grid, hide focused cards
+        // Show overview (MDT grid or dispatch bridge — only one exists per render),
+        // hide focused cards
         $mdt.show();
+        $bridge.show();
         $focusedCards.hide().children('.dd-card').hide();
         $rankWrap.hide();
         $('#dd-content').css('overflow', 'hidden');
-        // Repopulate MDT columns (they were cleared when entering focused mode)
-        populateMDTColumns();
+        // Repopulate MDT columns if we're in the MDT layout (no-op for bridge)
+        if ($mdt.length) populateMDTColumns();
       } else {
         // Clear MDT column content to avoid duplicate DOM IDs
         $('#cd-mdt-pane-person, #cd-mdt-pane-vehicle, #cd-mdt-pane-firearm').empty();
         $('#cd-mdt-calls-content, #cd-mdt-intel-content').empty();
-        // Hide MDT grid, show focused card
+        // Hide overview, show focused card
         $mdt.hide();
+        $bridge.hide();
         $rankWrap.hide();
         $focusedCards.show();
         $focusedCards.children('.dd-card').hide();
@@ -1523,6 +1556,12 @@
       $badge.html('<i class="fa ' + dtc.icon + '"></i> ' + label)
         .css({ background: hexToRgba(color, 0.12), border: '1px solid ' + hexToRgba(color, 0.25), color: lightenHex(color, 0.3) })
         .show();
+      var $dispatchBeta = $('#cd-beta-tag-dispatch');
+      if ($dispatchBeta.length) {
+        var exp = new Date(window.CD_DISPATCH_BETA_EXPIRES || '2026-05-06T00:00:00Z');
+        if (currentTemplateName === 'dispatch' && new Date() < exp) $dispatchBeta.show();
+        else $dispatchBeta.hide();
+      }
     }
 
     // ══════════════════════════════════════════
@@ -1611,19 +1650,45 @@
     //  SWITCH TO CLASSIC / REFRESH
     // ══════════════════════════════════════════
     function cdSwitchToClassic() {
-      var btn = document.getElementById('cd-switch-classic');
-      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:0.625rem;"></i> Switching...'; }
       // Pick the classic dashboard that matches the current department template, not
       // a hardcoded /police-dashboard. E.g. a Dispatch department should go back to
       // /dispatch-dashboard, not /police-dashboard.
       var route = (deptTypeConfig[currentTemplateName] && deptTypeConfig[currentTemplateName].route) || 'police';
       var targetPath = '/' + route + '-dashboard';
-      $.ajax({
-        url: API_URL + '/api/v1/user-preferences/' + encodeURIComponent(userId),
-        method: 'PUT', contentType: 'application/json',
-        data: JSON.stringify({ betaCommandDashboard: false, userId: userId }),
-        complete: function() { window.location.href = targetPath + window.location.search; }
-      });
+      // Which flag is the user opting OUT of? Dispatch template flips
+      // betaCommandDispatch; every other template flips betaCommandDashboard.
+      var flag = currentTemplateName === 'dispatch' ? 'betaCommandDispatch' : 'betaCommandDashboard';
+      var label = currentTemplateName === 'dispatch' ? 'the Command Bridge' : 'the Command Dashboard';
+
+      function doSwitch() {
+        var btn = document.getElementById('cd-switch-classic');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:0.625rem;"></i> Switching...'; }
+        var payload = { userId: userId };
+        payload[flag] = false;
+        $.ajax({
+          url: API_URL + '/api/v1/user-preferences/' + encodeURIComponent(userId),
+          method: 'PUT', contentType: 'application/json',
+          data: JSON.stringify(payload),
+          complete: function() { window.location.href = targetPath + window.location.search; }
+        });
+      }
+
+      // Prompt for feedback before flipping the flag. The modal also
+      // offers Skip and Cancel; Skip still switches, Cancel bails out.
+      if (typeof window.cdPromptBetaFeedback === 'function') {
+        window.cdPromptBetaFeedback({
+          flag: flag,
+          label: label,
+          context: window.location.pathname,
+          userId: userId,
+          apiUrl: API_URL,
+          onConfirm: doSwitch,
+          // onCancel: user stays on the new dashboard, no-op
+        });
+      } else {
+        // Fallback: older page load missing the module — switch without prompt
+        doSwitch();
+      }
     }
     window.cdSwitchToClassic = cdSwitchToClassic;
 
@@ -1746,6 +1811,7 @@
   <script src="/static/js/dd-notifications.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
   <script src="/static/js/dd-settings.js"></script>
+  <script src="/static/js/cd-beta-feedback.js"></script>
   <!-- Police command components -->
   <script src="/static/js/cd-person-search.js"></script>
   <script src="/static/js/cd-vehicle-search.js"></script>
@@ -1757,6 +1823,16 @@
   <script src="/static/js/cd-warrant-database.js"></script>
   <script src="/static/js/cd-status-panel.js"></script>
   <script src="/static/js/cd-calls.js"></script>
+  <!-- Dispatch control layout (activates when template.name === 'dispatch') -->
+  <script src="/static/js/cd-dispatch-roster.js"></script>
+  <script src="/static/js/cd-dispatch-board.js"></script>
+  <script src="/static/js/cd-dispatch-detail.js"></script>
+  <script src="/static/js/cd-dispatch-intake.js"></script>
+  <script src="/static/js/cd-dispatch-dnd.js"></script>
+  <script src="/static/js/cd-dispatch-tones.js"></script>
+  <script src="/static/js/cd-dispatch-unit-console.js"></script>
+  <script src="/static/js/cd-dispatch-realtime.js"></script>
+  <script src="/static/js/cd-dispatch-layout.js"></script>
   <script src="/static/js/rank-progress.js"></script>
   <script>if (typeof loadMyRankProgress === 'function') loadMyRankProgress();</script>
 </body>
