@@ -2045,6 +2045,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       const departmentName = req.query.dept || null;
       const encodedDeptId = req.query.d || null;
 
+      // ObjectId pattern for validation (prevents SSRF when interpolated into API URLs)
+      const objectIdPattern = /^[a-fA-F0-9]{24}$/;
+
       let departmentId = null;
       if (encodedDeptId) {
         try {
@@ -2054,7 +2057,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
           while (base64.length % 4) {
             base64 += '=';
           }
-          departmentId = Buffer.from(base64, 'base64').toString('utf8');
+          const decodedDept = Buffer.from(base64, 'base64').toString('utf8');
+          if (objectIdPattern.test(decodedDept)) {
+            departmentId = decodedDept;
+          } else {
+            console.warn('Rejected invalid department ID from URL:', decodedDept);
+          }
         } catch (e) {
           console.error('Failed to decode department ID:', e);
           departmentId = null;
@@ -2063,7 +2071,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
       const encodedCommunityId = req.query.c || null;
       let urlCommunityId = null;
-      const communityIdPattern = /^[a-fA-F0-9]{24}$/;
+      const communityIdPattern = objectIdPattern;
       if (encodedCommunityId) {
         try {
           let base64 = encodedCommunityId
@@ -2154,7 +2162,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (communityId && departmentId) {
           try {
             const deptResp = await axios.get(
-              `${policeCadApiUrl}/api/v1/community/${communityId}/departments/${departmentId}`,
+              `${policeCadApiUrl}/api/v1/community/${encodeURIComponent(communityId)}/departments/${encodeURIComponent(departmentId)}`,
               config
             );
             // Newer depts use `templateRef`, older ones embed the template.
