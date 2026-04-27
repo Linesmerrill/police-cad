@@ -5713,7 +5713,9 @@ $('#dd-loading').hide();
             footerHtml = (d.courtSessionID ? '' : '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="ccReturnToQueue(\'' + (c._id || '') + '\',\'' + esc(d.civilianName || 'this case') + '\')"><i class="fa fa-arrow-rotate-left"></i> Unschedule</button>') +
               '<button class="dd-btn dd-btn-sm dd-btn-primary" onclick="ccRescheduleCase(\'' + (c._id || '') + '\',\'' + esc(d.scheduledDate || '') + '\')"><i class="fa fa-clock-rotate-left"></i> Reschedule</button>';
           }
-          if (ccIsJudicial) {
+          // Delete button: judges (any case in their community) OR the case owner (their own case).
+          var isOwner = !!(userId && d.userID && d.userID === userId);
+          if (ccIsJudicial || isOwner) {
             footerHtml += '<button class="dd-btn dd-btn-sm dd-btn-deny" style="margin-left:auto;" onclick="ccDeleteCase(\'' + (c._id || '') + '\',\'' + esc(d.civilianName || '') + '\')"><i class="fa fa-trash"></i> Delete Case</button>';
           }
           $('#dd-cc-case-detail-footer').html(footerHtml);
@@ -6365,7 +6367,7 @@ $('#dd-loading').hide();
     }
 
     window.ccDeleteCase = function(caseId, civilianName) {
-      if (!ccIsJudicial) return;
+      // Backend enforces auth (owner or judicial). Frontend just renders the confirm dialog.
       ccShowConfirm({
         icon: 'fa-trash',
         iconClass: 'danger',
