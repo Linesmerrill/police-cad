@@ -36,6 +36,14 @@ var ddSelectedNoteId = null;
 // Court cases state
 var ccIsJudicial = false;
 
+// Renders a small monospace pill with the case number (CC-YYYY-NNNNNN). Returns '' when blank.
+function ccCaseNumberPill(caseNumber, opts) {
+  if (!caseNumber) return '';
+  var trail = (opts && opts.trailingSpace) ? ' ' : '';
+  var marginRight = (opts && opts.marginRight) ? 'margin-right:' + opts.marginRight + ';' : '';
+  return '<span style="display:inline-flex;align-items:center;font-family:JetBrains Mono,ui-monospace,monospace;font-size:0.72rem;font-weight:600;color:var(--dd-accent);background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.2);padding:0.1rem 0.4rem;border-radius:4px;' + marginRight + '">' + esc(caseNumber) + '</span>' + trail;
+}
+
 // Penal codes state
 var pcCurrencyList = [];
 var pcDefaultCurrencies = [
@@ -1018,7 +1026,8 @@ function renderCourtCasesPanel() {
         '<div class="dd-card-icon" style="background:rgba(139,92,246,0.15);color:var(--dd-accent);"><i class="fa fa-briefcase"></i></div>' +
         '<div><h3 class="dd-card-title">Court Cases</h3><p class="dd-card-subtitle dd-cc-subtitle">View court cases & sessions</p></div>' +
       '</div>' +
-      '<div class="dd-card-header-right">' +
+      '<div class="dd-card-header-right" style="display:flex;gap:0.5rem;align-items:center;">' +
+        '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="ddCcOpenCaseSearch()" title="Case Search"><i class="fa fa-magnifying-glass"></i> Search</button>' +
         '<button class="dd-btn dd-btn-sm dd-btn-primary dd-cc-create-session-btn" onclick="ccOpenCreateSession()" style="display:none;"><i class="fa fa-plus"></i> Create Session</button>' +
       '</div>' +
     '</div>' +
@@ -1264,7 +1273,10 @@ function ccRenderQueue() {
     return '<div class="dd-cc-case-card" style="cursor:pointer;" onclick="ccViewCase(\'' + caseId + '\')">' +
       '<div class="dd-cc-avatar">' + initials + '</div>' +
       '<div class="dd-cc-case-info">' +
-        '<div class="dd-cc-case-name">' + esc(d.civilianName || 'Unknown Civilian') + '</div>' +
+        '<div class="dd-cc-case-name">' +
+          ccCaseNumberPill(d.caseNumber, { marginRight: '0.4rem' }) +
+          esc(d.civilianName || 'Unknown Civilian') +
+        '</div>' +
         '<div class="dd-cc-case-meta">' +
           '<span class="dd-cc-badge ' + statusClass + '">' + statusLabel + '</span>' +
           '<span class="dd-cc-case-meta-item"><i class="fa fa-file-lines"></i> ' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + '</span>' +
@@ -1298,7 +1310,10 @@ function ccRenderScheduled() {
     return '<div class="dd-cc-case-card" style="cursor:pointer;" onclick="ccViewCase(\'' + caseId + '\')">' +
       '<div class="dd-cc-avatar">' + initials + '</div>' +
       '<div class="dd-cc-case-info">' +
-        '<div class="dd-cc-case-name">' + esc(d.civilianName || 'Unknown Civilian') + '</div>' +
+        '<div class="dd-cc-case-name">' +
+          ccCaseNumberPill(d.caseNumber, { marginRight: '0.4rem' }) +
+          esc(d.civilianName || 'Unknown Civilian') +
+        '</div>' +
         '<div class="dd-cc-case-meta">' +
           '<span class="dd-cc-badge dd-cc-badge-scheduled">scheduled</span>' +
           '<span class="dd-cc-case-meta-item"><i class="fa fa-calendar"></i> ' + schedDate + '</span>' +
@@ -1466,7 +1481,10 @@ function ccRenderHistory() {
           var cid = entry.courtCaseID || entry.caseID || '';
           var civName = (entry.civilianName || '').trim() || 'Unknown';
           return '<div class="dd-cc-docket-entry" data-case-id="' + cid + '">' +
-            '<div class="dd-cc-docket-civ-name"><i class="fa fa-user"></i><span class="dd-cc-docket-civ-text">' + esc(civName) + '</span></div>' +
+            '<div class="dd-cc-docket-civ-name">' +
+              ccCaseNumberPill(entry.caseNumber, { marginRight: '0.4rem' }) +
+              '<i class="fa fa-user"></i><span class="dd-cc-docket-civ-text">' + esc(civName) + '</span>' +
+            '</div>' +
             '<div class="dd-cc-docket-resolutions">' +
               '<span style="font-size:0.78rem;color:var(--dd-text-dim);">Expand to load verdicts...</span>' +
             '</div>' +
@@ -1538,6 +1556,11 @@ window.ccToggleHistorySession = function(sessionId) {
         var cd = c.courtCase || c.details || c;
         ccHistoryCaseCache[caseId] = cd;
         ccRenderDocketResolutions($resArea, cd);
+        // Backfill case number pill if entry didn't carry it (legacy docket rows)
+        var $civWrap = $entry.find('.dd-cc-docket-civ-name');
+        if ($civWrap.length && cd.caseNumber && !$civWrap.find('span[style*="JetBrains Mono"]').length) {
+          $civWrap.prepend(ccCaseNumberPill(cd.caseNumber, { marginRight: '0.4rem' }));
+        }
         // Backfill civilian name
         var $nameEl = $entry.find('.dd-cc-docket-civ-text');
         if ($nameEl.length && (!$nameEl.text().trim() || $nameEl.text() === 'Unknown')) {
@@ -1761,6 +1784,7 @@ window.ccViewCase = function(caseId) {
       var detailHtml = '' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">' +
           '<div>' +
+            (d.caseNumber ? '<div style="margin-bottom:0.4rem;">' + ccCaseNumberPill(d.caseNumber) + '</div>' : '') +
             '<div style="font-weight:700;font-size:1.05rem;color:#fff;">' + esc(d.civilianName || 'Unknown') + '</div>' +
             '<div style="font-size:0.8rem;color:var(--dd-text-muted);margin-top:0.15rem;">Submitted ' + (d.createdAt ? new Date(d.createdAt).toLocaleDateString() : '') + '</div>' +
           '</div>' +
@@ -1786,7 +1810,9 @@ window.ccViewCase = function(caseId) {
         footerHtml = (d.courtSessionID ? '' : '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="ccReturnToQueue(\'' + (c._id || '') + '\',\'' + esc(d.civilianName || 'this case') + '\')"><i class="fa fa-arrow-rotate-left"></i> Unschedule</button>') +
           '<button class="dd-btn dd-btn-sm dd-btn-primary" onclick="ccRescheduleCase(\'' + (c._id || '') + '\',\'' + esc(d.scheduledDate || '') + '\')"><i class="fa fa-clock-rotate-left"></i> Reschedule</button>';
       }
-      if (ccIsJudicial) {
+      // Delete button: judges (any case in their community) OR the case owner (their own case).
+      var isOwner = !!(userId && d.userID && d.userID === userId);
+      if (ccIsJudicial || isOwner) {
         footerHtml += '<button class="dd-btn dd-btn-sm dd-btn-deny" style="margin-left:auto;" onclick="ccDeleteCase(\'' + (c._id || '') + '\',\'' + esc(d.civilianName || '') + '\')"><i class="fa fa-trash"></i> Delete Case</button>';
       }
       $('#dd-cc-case-detail-footer').html(footerHtml);
@@ -1981,6 +2007,131 @@ window.ccReturnToQueue = function(caseId, civilianName) {
   });
 };
 
+// ── Case Search modal (embedded court-cases panel) ──
+window.ddCcOpenCaseSearch = function() {
+  $('#dd-cc-search-modal').remove();
+
+  var modalHtml = '<div class="dd-cc-modal-overlay" id="dd-cc-search-modal">' +
+    '<div class="dd-cc-modal" style="max-width:640px;width:100%;">' +
+      '<div class="dd-cc-modal-head">' +
+        '<div class="dd-cc-modal-title"><i class="fa fa-magnifying-glass" style="color:var(--dd-accent);margin-right:0.4rem;"></i> Case Search</div>' +
+        '<button class="dd-cc-modal-close" onclick="$(\'#dd-cc-search-modal\').removeClass(\'open\')">&times;</button>' +
+      '</div>' +
+      '<div class="dd-cc-modal-body" style="padding:1rem 1.25rem;">' +
+        '<div style="position:relative;margin-bottom:0.875rem;">' +
+          '<i class="fa fa-magnifying-glass" style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:var(--dd-text-dim);font-size:0.85rem;pointer-events:none;"></i>' +
+          '<input id="dd-cc-search-input" type="text" autocomplete="off" placeholder="Search by case number (CC-YYYY-NNNNNN) or civilian name…"' +
+            ' style="width:100%;background:var(--dd-glass);border:1px solid var(--dd-glass-border);border-radius:8px;color:#fff;font-family:inherit;font-size:0.9rem;padding:0.7rem 0.9rem 0.7rem 2.4rem;outline:none;">' +
+        '</div>' +
+        '<div id="dd-cc-search-results" style="max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;">' +
+          '<div style="padding:1.5rem;text-align:center;color:var(--dd-text-dim);font-size:0.85rem;"><i class="fa fa-magnifying-glass" style="display:block;font-size:1.5rem;margin-bottom:0.5rem;opacity:0.4;"></i>Type to search court cases.</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+  $('body').append(modalHtml);
+
+  setTimeout(function() {
+    $('#dd-cc-search-modal').addClass('open');
+    $('#dd-cc-search-input').trigger('focus');
+  }, 10);
+
+  $('#dd-cc-search-modal').on('click', function(e) {
+    if (e.target === this) $(this).removeClass('open');
+  });
+  var escHandler = function(e) {
+    if (e.key === 'Escape' && $('#dd-cc-search-modal').hasClass('open')) {
+      $('#dd-cc-search-modal').removeClass('open');
+      $(document).off('keydown.ddCcSearch');
+    }
+  };
+  $(document).off('keydown.ddCcSearch').on('keydown.ddCcSearch', escHandler);
+
+  var timer = null;
+  $('#dd-cc-search-input').on('input', function() {
+    var q = $(this).val();
+    clearTimeout(timer);
+    timer = setTimeout(function() { ddCcRunSearch(q); }, 250);
+  });
+};
+
+function ddCcRunSearch(rawQuery) {
+  var query = (rawQuery || '').trim();
+  var $results = $('#dd-cc-search-results');
+  if (!query) {
+    $results.html('<div style="padding:1.5rem;text-align:center;color:var(--dd-text-dim);font-size:0.85rem;"><i class="fa fa-magnifying-glass" style="display:block;font-size:1.5rem;margin-bottom:0.5rem;opacity:0.4;"></i>Type to search court cases.</div>');
+    return;
+  }
+  if (!communityId || !userId) {
+    $results.html('<div style="padding:1rem;text-align:center;color:var(--dd-red);font-size:0.85rem;">Missing community or user context.</div>');
+    return;
+  }
+  $results.html('<div class="dd-spinner" style="margin:2rem auto;"></div>');
+
+  var payload = { query: query, communityId: communityId, userId: userId, page: 0, limit: 25 };
+
+  $.ajax({
+    url: API_URL + '/api/v2/court-cases/search',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(payload),
+    success: function(resp) { ddCcRenderSearchResults(resp.data || []); },
+    error: function(xhr) {
+      if (xhr.status === 403) {
+        $results.html('<div style="padding:1rem;text-align:center;color:var(--dd-text-muted);font-size:0.85rem;"><i class="fa fa-ban" style="margin-right:0.4rem;"></i>You don\'t have access to search cases in this community.</div>');
+      } else {
+        $results.html('<div style="padding:1rem;text-align:center;color:var(--dd-red);font-size:0.85rem;">Search failed.</div>');
+      }
+    }
+  });
+}
+
+function ddCcRenderSearchResults(results) {
+  var $results = $('#dd-cc-search-results');
+  if (!results.length) {
+    $results.html('<div style="padding:1.5rem;text-align:center;color:var(--dd-text-dim);font-size:0.85rem;">No cases match.</div>');
+    return;
+  }
+  var html = results.map(function(c) {
+    var d = c.courtCase || c.details || c;
+    var caseId = c._id || '';
+    var caseNumber = d.caseNumber || '';
+    var civilianName = d.civilianName || 'Unknown Civilian';
+    var status = (d.status || 'submitted').replace('_', ' ');
+    var dateStr = d.createdAt ? new Date(d.createdAt).toLocaleDateString() : '';
+    var itemCount = (d.contestedItems || []).length;
+    return '<div onclick="ddCcViewCaseFromSearch(\'' + caseId + '\')"' +
+           ' style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.875rem;background:var(--dd-glass);border:1px solid var(--dd-glass-border);border-radius:8px;cursor:pointer;transition:border-color 0.15s,background 0.15s;"' +
+           ' onmouseover="this.style.borderColor=\'rgba(139,92,246,0.3)\';this.style.background=\'var(--dd-glass-hover,var(--dd-glass))\';"' +
+           ' onmouseout="this.style.borderColor=\'var(--dd-glass-border)\';this.style.background=\'var(--dd-glass)\';">' +
+             '<div style="flex:1;min-width:0;">' +
+               '<div style="font-weight:600;font-size:0.875rem;margin-bottom:0.2rem;color:#fff;">' +
+                 (caseNumber ? '<span style="font-family:JetBrains Mono,ui-monospace,monospace;font-size:0.72rem;font-weight:600;color:var(--dd-accent);background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.2);padding:0.1rem 0.4rem;border-radius:4px;margin-right:0.4rem;">' + window.esc(caseNumber) + '</span>' : '') +
+                 window.esc(civilianName) +
+               '</div>' +
+               '<div style="font-size:0.75rem;color:var(--dd-text-muted);display:flex;gap:0.6rem;flex-wrap:wrap;">' +
+                 '<span><i class="fa fa-circle-info" style="margin-right:0.2rem;"></i>' + window.esc(status) + '</span>' +
+                 '<span><i class="fa fa-file-lines" style="margin-right:0.2rem;"></i>' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + '</span>' +
+                 (dateStr ? '<span><i class="fa fa-clock" style="margin-right:0.2rem;"></i>' + window.esc(dateStr) + '</span>' : '') +
+               '</div>' +
+             '</div>' +
+             '<i class="fa fa-arrow-right" style="color:var(--dd-text-dim);font-size:0.75rem;"></i>' +
+           '</div>';
+  }).join('');
+  $results.html(html);
+}
+
+window.ddCcViewCaseFromSearch = function(caseId) {
+  $('#dd-cc-search-modal').removeClass('open');
+  if (typeof window.ccViewCase === 'function') {
+    window.ccViewCase(caseId);
+  } else if (typeof ccViewCase === 'function') {
+    ccViewCase(caseId);
+  } else {
+    window.location.href = '/court-cases?c=' + encodeURIComponent(communityId) + '&caseId=' + encodeURIComponent(caseId);
+  }
+};
+
 window.ccOpenCreateSession = function() {
   if (!ccIsJudicial) return;
   $('#dd-cc-create-session-modal').remove();
@@ -2052,7 +2203,10 @@ window.ccOpenCreateSession = function() {
         return '<label class="dd-cc-docket-item">' +
           '<input type="checkbox" class="dd-cc-docket-checkbox" value="' + caseId + '">' +
           '<div>' +
-            '<div class="dd-cc-docket-item-name">' + esc(d.civilianName || 'Unknown') + '</div>' +
+            '<div class="dd-cc-docket-item-name">' +
+              ccCaseNumberPill(d.caseNumber, { marginRight: '0.4rem' }) +
+              esc(d.civilianName || 'Unknown') +
+            '</div>' +
             '<div class="dd-cc-docket-item-detail">' + itemCount + ' contested item' + (itemCount !== 1 ? 's' : '') + ' &middot; ' + (ccIsValidDate(d.scheduledDate) ? new Date(d.scheduledDate).toLocaleDateString() : 'No date') + '</div>' +
           '</div>' +
         '</label>';
@@ -2182,7 +2336,7 @@ window.ccEditSession = function(sessionId) {
       var fetchedIDs = cases.map(function(c) { return c._id; });
       (d.docket || []).forEach(function(entry) {
         if (fetchedIDs.indexOf(entry.courtCaseID) === -1) {
-          cases.push({ _id: entry.courtCaseID, courtCase: { civilianName: entry.civilianName } });
+          cases.push({ _id: entry.courtCaseID, courtCase: { civilianName: entry.civilianName, caseNumber: entry.caseNumber } });
         }
       });
       var $list = $('#dd-cc-edit-docket-list');
@@ -2198,7 +2352,10 @@ window.ccEditSession = function(sessionId) {
         return '<label class="dd-cc-docket-item">' +
           '<input type="checkbox" class="dd-cc-edit-docket-checkbox" value="' + caseId + '"' + checked + '>' +
           '<div>' +
-            '<div class="dd-cc-docket-item-name">' + esc(cd.civilianName || 'Unknown') + '</div>' +
+            '<div class="dd-cc-docket-item-name">' +
+              ccCaseNumberPill(cd.caseNumber, { marginRight: '0.4rem' }) +
+              esc(cd.civilianName || 'Unknown') +
+            '</div>' +
             '<div class="dd-cc-docket-item-detail">' + itemCount + ' contested item' + (itemCount !== 1 ? 's' : '') + '</div>' +
           '</div>' +
         '</label>';
@@ -2307,7 +2464,7 @@ function ccAlert(title, message, iconClass) {
 }
 
 window.ccDeleteCase = function(caseId, civilianName) {
-  if (!ccIsJudicial) return;
+  // Backend enforces auth (owner or judicial). Frontend just renders the confirm dialog.
   ccShowConfirm({
     icon: 'fa-trash',
     iconClass: 'danger',
@@ -2318,7 +2475,7 @@ window.ccDeleteCase = function(caseId, civilianName) {
     confirmClass: 'dd-btn-danger',
     onConfirm: function() {
       $.ajax({
-        url: API_URL + '/api/v2/court-cases/' + caseId,
+        url: API_URL + '/api/v2/court-cases/' + caseId + '?userId=' + encodeURIComponent(userId || ''),
         method: 'DELETE',
         success: function() {
           $('#dd-cc-case-detail-modal').removeClass('open');

@@ -420,6 +420,11 @@
 
     var html = '';
 
+    // Case number pill (if present)
+    if (d.caseNumber) {
+      html += '<div style="margin-bottom:0.5rem;"><span style="display:inline-flex;align-items:center;font-family:JetBrains Mono,ui-monospace,monospace;font-size:0.72rem;font-weight:600;color:#a78bfa;background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.25);padding:0.1rem 0.4rem;border-radius:4px;">' + escHtml(d.caseNumber) + '</span></div>';
+    }
+
     // Defendant info
     html += '<div style="margin-bottom:0.5rem;"><span style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;">Defendant</span></div>';
     html += '<div class="jd-active-case-civ"><i class="fa fa-user" style="color:var(--accent-gold);margin-right:0.4rem;font-size:0.9em;"></i>' + escHtml(civName) + '</div>';
@@ -695,6 +700,7 @@
       // Cached case data for subtitle
       var cached = docketCaseCache[caseId];
       var civName = (entry.civilianName && String(entry.civilianName).trim()) || (cached && cached.civilianName && String(cached.civilianName).trim()) || 'Unknown Civilian';
+      var caseNumber = (entry.caseNumber && String(entry.caseNumber).trim()) || (cached && cached.caseNumber && String(cached.caseNumber).trim()) || '';
       var itemCount = cached ? (cached.contestedItems || []).length : 0;
       var subText = cached
         ? itemCount + ' contested item' + (itemCount !== 1 ? 's' : '')
@@ -718,7 +724,11 @@
       row += '<div class="jd-docket-summary" onclick="toggleDocketEntry(\'' + caseId + '\')">';
       row += '<div class="jd-docket-order">' + (entry.order || (idx + 1)) + '</div>';
       row += '<div class="jd-docket-entry-info">';
-      row += '<div class="jd-docket-entry-name"><i class="fa fa-user" style="font-size:0.7rem;color:var(--text-tertiary);margin-right:0.3rem;"></i><span class="jd-docket-civ-name">' + escHtml(civName) + '</span>';
+      row += '<div class="jd-docket-entry-name">';
+      if (caseNumber) {
+        row += '<span style="display:inline-flex;align-items:center;font-family:JetBrains Mono,ui-monospace,monospace;font-size:0.68rem;font-weight:600;color:#a78bfa;background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.25);padding:0.05rem 0.35rem;border-radius:4px;margin-right:0.4rem;">' + escHtml(caseNumber) + '</span>';
+      }
+      row += '<i class="fa fa-user" style="font-size:0.7rem;color:var(--text-tertiary);margin-right:0.3rem;"></i><span class="jd-docket-civ-name">' + escHtml(civName) + '</span>';
       if (ownerName) {
         row += ' <span class="jd-docket-owner-badge"><i class="fa fa-id-badge" style="margin-right:0.2rem;"></i>' + escHtml(ownerName) + '</span>';
       }
@@ -783,6 +793,11 @@
               $sub.html('<i class="fa fa-file-lines"></i>' + subText);
             } else {
               $entry.find('.jd-docket-entry-info').append('<div class="jd-docket-entry-sub"><i class="fa fa-file-lines"></i>' + subText + '</div>');
+            }
+            // Backfill case number pill if entry didn't carry it
+            var $nameWrap = $entry.find('.jd-docket-entry-name');
+            if ($nameWrap.length && d.caseNumber && !$nameWrap.find('span[style*="JetBrains Mono"]').length) {
+              $nameWrap.prepend('<span style="display:inline-flex;align-items:center;font-family:JetBrains Mono,ui-monospace,monospace;font-size:0.68rem;font-weight:600;color:#a78bfa;background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.25);padding:0.05rem 0.35rem;border-radius:4px;margin-right:0.4rem;">' + escHtml(d.caseNumber) + '</span>');
             }
             // Backfill civilian name
             backfillDocketCivName($entry, d);
