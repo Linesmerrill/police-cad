@@ -580,10 +580,6 @@
                  placeholder="Search by case number (CC-YYYY-NNNNNN) or civilian name…"
                  style="width:100%;background:var(--cd-glass);border:1px solid var(--cd-glass-border);border-radius:var(--cd-radius-sm);color:#fff;font-family:'Outfit',sans-serif;font-size:0.9rem;padding:0.7rem 0.9rem 0.7rem 2.4rem;outline:none;">
         </div>
-        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.8125rem;color:var(--cd-text-muted);margin-bottom:0.875rem;cursor:pointer;">
-          <input id="cd-case-search-dept-filter" type="checkbox" style="accent-color:var(--cd-accent);">
-          Limit to my department
-        </label>
         <div id="cd-case-search-results" style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;">
           <div style="padding:1.5rem;text-align:center;color:var(--cd-text-dim);font-size:0.85rem;">
             <i class="fa fa-magnifying-glass" style="display:block;font-size:1.5rem;margin-bottom:0.5rem;opacity:0.4;"></i>
@@ -1679,10 +1675,6 @@
       clearTimeout(caseSearchTimer);
       caseSearchTimer = setTimeout(function() { runCaseSearch(q); }, 250);
     });
-    $(document).on('change', '#cd-case-search-dept-filter', function() {
-      var q = $('#cd-case-search-input').val();
-      if (q && q.trim()) runCaseSearch(q);
-    });
 
     function runCaseSearch(rawQuery) {
       var query = (rawQuery || '').trim();
@@ -1702,9 +1694,6 @@
       $results.html('<div class="cd-spinner" style="padding:2rem 0;"></div>');
 
       var payload = { query: query, communityId: communityId, userId: userId, page: 0, limit: 25 };
-      if ($('#cd-case-search-dept-filter').is(':checked') && departmentId) {
-        payload.departmentId = departmentId;
-      }
 
       $.ajax({
         url: API_URL + '/api/v2/court-cases/search',
