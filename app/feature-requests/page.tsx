@@ -1111,10 +1111,17 @@ function FeatureRequests() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  // Stale-while-revalidate: only show the skeleton on the very first fetch.
+  // Background refetches (auth resolving with a userId, focus refetch, socket
+  // events) keep the existing list visible so we don't get a content -> skeleton
+  // -> content flash on Next.js client-side route transitions or auth resolution.
+  const requestsRef = useRef<FeatureRequest[]>([]);
+  requestsRef.current = requests;
+
   // Fetch feature requests — only after auth check completes
   const fetchRequests = useCallback(async () => {
     if (!authReady) return;
-    setLoading(true);
+    if (requestsRef.current.length === 0) setLoading(true);
     try {
       const params = new URLSearchParams({
         page: String(page),
