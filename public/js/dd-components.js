@@ -1018,7 +1018,8 @@ function renderCourtCasesPanel() {
         '<div class="dd-card-icon" style="background:rgba(139,92,246,0.15);color:var(--dd-accent);"><i class="fa fa-briefcase"></i></div>' +
         '<div><h3 class="dd-card-title">Court Cases</h3><p class="dd-card-subtitle dd-cc-subtitle">View court cases & sessions</p></div>' +
       '</div>' +
-      '<div class="dd-card-header-right">' +
+      '<div class="dd-card-header-right" style="display:flex;gap:0.5rem;align-items:center;">' +
+        '<button class="dd-btn dd-btn-sm dd-btn-outline" onclick="ddCcOpenCaseSearch()" title="Case Search"><i class="fa fa-magnifying-glass"></i> Search</button>' +
         '<button class="dd-btn dd-btn-sm dd-btn-primary dd-cc-create-session-btn" onclick="ccOpenCreateSession()" style="display:none;"><i class="fa fa-plus"></i> Create Session</button>' +
       '</div>' +
     '</div>' +
@@ -1979,6 +1980,149 @@ window.ccReturnToQueue = function(caseId, civilianName) {
       });
     }
   });
+};
+
+// ── Case Search modal (embedded court-cases panel) ──
+window.ddCcOpenCaseSearch = function() {
+  $('#dd-cc-search-modal').remove();
+
+  var deptId = (window.ddConfig && window.ddConfig.departmentId) || '';
+  var tplName = (typeof currentTemplateName === 'string' ? currentTemplateName : '');
+  var showDeptFilter = !!deptId && tplName !== 'civilian';
+
+  var modalHtml = '<div class="dd-cc-modal-overlay" id="dd-cc-search-modal">' +
+    '<div class="dd-cc-modal" style="max-width:640px;width:100%;">' +
+      '<div class="dd-cc-modal-head">' +
+        '<div class="dd-cc-modal-title"><i class="fa fa-magnifying-glass" style="color:var(--dd-accent);margin-right:0.4rem;"></i> Case Search</div>' +
+        '<button class="dd-cc-modal-close" onclick="$(\'#dd-cc-search-modal\').removeClass(\'open\')">&times;</button>' +
+      '</div>' +
+      '<div class="dd-cc-modal-body" style="padding:1rem 1.25rem;">' +
+        '<div style="position:relative;margin-bottom:0.875rem;">' +
+          '<i class="fa fa-magnifying-glass" style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:var(--dd-text-dim);font-size:0.85rem;pointer-events:none;"></i>' +
+          '<input id="dd-cc-search-input" type="text" autocomplete="off" placeholder="Search by case number (CC-YYYY-NNNNNN) or civilian name…"' +
+            ' style="width:100%;background:var(--dd-glass);border:1px solid var(--dd-glass-border);border-radius:8px;color:#fff;font-family:inherit;font-size:0.9rem;padding:0.7rem 0.9rem 0.7rem 2.4rem;outline:none;">' +
+        '</div>' +
+        (showDeptFilter
+          ? '<label style="display:flex;align-items:center;gap:0.5rem;font-size:0.8125rem;color:var(--dd-text-muted);margin-bottom:0.875rem;cursor:pointer;">' +
+              '<input id="dd-cc-search-dept-filter" type="checkbox" style="accent-color:var(--dd-accent);">' +
+              ' Limit to my department' +
+            '</label>'
+          : '') +
+        '<div id="dd-cc-search-results" style="max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;">' +
+          '<div style="padding:1.5rem;text-align:center;color:var(--dd-text-dim);font-size:0.85rem;"><i class="fa fa-magnifying-glass" style="display:block;font-size:1.5rem;margin-bottom:0.5rem;opacity:0.4;"></i>Type to search court cases.</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+  $('body').append(modalHtml);
+
+  setTimeout(function() {
+    $('#dd-cc-search-modal').addClass('open');
+    $('#dd-cc-search-input').trigger('focus');
+  }, 10);
+
+  $('#dd-cc-search-modal').on('click', function(e) {
+    if (e.target === this) $(this).removeClass('open');
+  });
+  var escHandler = function(e) {
+    if (e.key === 'Escape' && $('#dd-cc-search-modal').hasClass('open')) {
+      $('#dd-cc-search-modal').removeClass('open');
+      $(document).off('keydown.ddCcSearch');
+    }
+  };
+  $(document).off('keydown.ddCcSearch').on('keydown.ddCcSearch', escHandler);
+
+  var timer = null;
+  $('#dd-cc-search-input').on('input', function() {
+    var q = $(this).val();
+    clearTimeout(timer);
+    timer = setTimeout(function() { ddCcRunSearch(q); }, 250);
+  });
+  $('#dd-cc-search-dept-filter').on('change', function() {
+    var q = $('#dd-cc-search-input').val();
+    if (q && q.trim()) ddCcRunSearch(q);
+  });
+};
+
+function ddCcRunSearch(rawQuery) {
+  var query = (rawQuery || '').trim();
+  var $results = $('#dd-cc-search-results');
+  if (!query) {
+    $results.html('<div style="padding:1.5rem;text-align:center;color:var(--dd-text-dim);font-size:0.85rem;"><i class="fa fa-magnifying-glass" style="display:block;font-size:1.5rem;margin-bottom:0.5rem;opacity:0.4;"></i>Type to search court cases.</div>');
+    return;
+  }
+  if (!communityId || !userId) {
+    $results.html('<div style="padding:1rem;text-align:center;color:var(--dd-red);font-size:0.85rem;">Missing community or user context.</div>');
+    return;
+  }
+  $results.html('<div class="dd-spinner" style="margin:2rem auto;"></div>');
+
+  var payload = { query: query, communityId: communityId, userId: userId, page: 0, limit: 25 };
+  var deptId = (window.ddConfig && window.ddConfig.departmentId) || '';
+  if ($('#dd-cc-search-dept-filter').is(':checked') && deptId) {
+    payload.departmentId = deptId;
+  }
+
+  $.ajax({
+    url: API_URL + '/api/v2/court-cases/search',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(payload),
+    success: function(resp) { ddCcRenderSearchResults(resp.data || []); },
+    error: function(xhr) {
+      if (xhr.status === 403) {
+        $results.html('<div style="padding:1rem;text-align:center;color:var(--dd-text-muted);font-size:0.85rem;"><i class="fa fa-ban" style="margin-right:0.4rem;"></i>You don\'t have access to search cases in this community.</div>');
+      } else {
+        $results.html('<div style="padding:1rem;text-align:center;color:var(--dd-red);font-size:0.85rem;">Search failed.</div>');
+      }
+    }
+  });
+}
+
+function ddCcRenderSearchResults(results) {
+  var $results = $('#dd-cc-search-results');
+  if (!results.length) {
+    $results.html('<div style="padding:1.5rem;text-align:center;color:var(--dd-text-dim);font-size:0.85rem;">No cases match.</div>');
+    return;
+  }
+  var html = results.map(function(c) {
+    var d = c.courtCase || c.details || c;
+    var caseId = c._id || '';
+    var caseNumber = d.caseNumber || '';
+    var civilianName = d.civilianName || 'Unknown Civilian';
+    var status = (d.status || 'submitted').replace('_', ' ');
+    var dateStr = d.createdAt ? new Date(d.createdAt).toLocaleDateString() : '';
+    var itemCount = (d.contestedItems || []).length;
+    return '<div onclick="ddCcViewCaseFromSearch(\'' + caseId + '\')"' +
+           ' style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.875rem;background:var(--dd-glass);border:1px solid var(--dd-glass-border);border-radius:8px;cursor:pointer;transition:border-color 0.15s,background 0.15s;"' +
+           ' onmouseover="this.style.borderColor=\'rgba(139,92,246,0.3)\';this.style.background=\'var(--dd-glass-hover,var(--dd-glass))\';"' +
+           ' onmouseout="this.style.borderColor=\'var(--dd-glass-border)\';this.style.background=\'var(--dd-glass)\';">' +
+             '<div style="flex:1;min-width:0;">' +
+               '<div style="font-weight:600;font-size:0.875rem;margin-bottom:0.2rem;color:#fff;">' +
+                 (caseNumber ? '<span style="font-family:JetBrains Mono,ui-monospace,monospace;font-size:0.72rem;font-weight:600;color:var(--dd-accent);background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.2);padding:0.1rem 0.4rem;border-radius:4px;margin-right:0.4rem;">' + window.esc(caseNumber) + '</span>' : '') +
+                 window.esc(civilianName) +
+               '</div>' +
+               '<div style="font-size:0.75rem;color:var(--dd-text-muted);display:flex;gap:0.6rem;flex-wrap:wrap;">' +
+                 '<span><i class="fa fa-circle-info" style="margin-right:0.2rem;"></i>' + window.esc(status) + '</span>' +
+                 '<span><i class="fa fa-file-lines" style="margin-right:0.2rem;"></i>' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + '</span>' +
+                 (dateStr ? '<span><i class="fa fa-clock" style="margin-right:0.2rem;"></i>' + window.esc(dateStr) + '</span>' : '') +
+               '</div>' +
+             '</div>' +
+             '<i class="fa fa-arrow-right" style="color:var(--dd-text-dim);font-size:0.75rem;"></i>' +
+           '</div>';
+  }).join('');
+  $results.html(html);
+}
+
+window.ddCcViewCaseFromSearch = function(caseId) {
+  $('#dd-cc-search-modal').removeClass('open');
+  if (typeof window.ccViewCase === 'function') {
+    window.ccViewCase(caseId);
+  } else if (typeof ccViewCase === 'function') {
+    ccViewCase(caseId);
+  } else {
+    window.location.href = '/court-cases?c=' + encodeURIComponent(communityId) + '&caseId=' + encodeURIComponent(caseId);
+  }
 };
 
 window.ccOpenCreateSession = function() {
