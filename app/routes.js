@@ -1574,6 +1574,37 @@ module.exports = function (app, passport, server, nextApp, handle) {
     };
   }
 
+  // Returns true when the user is the community owner OR has the
+  // 'administrator' permission via community roles. Mirrors the gating
+  // used elsewhere in routes.js. Failures are non-fatal: a network blip
+  // returns false (no UI shown) rather than 500-ing the page.
+  async function userCanManageCommunity(req, communityId) {
+    if (!req.user || !communityId) return false;
+    const userId = req.user._id ? String(req.user._id) : null;
+    if (!userId) return false;
+    try {
+      const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
+      const community = r.data?.community;
+      if (community?.ownerID && String(community.ownerID) === userId) return true;
+    } catch (e) {
+      console.error('userCanManageCommunity: community lookup failed:', e.message);
+    }
+    try {
+      const rolesResp = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}/roles`, config);
+      const roles = rolesResp.data || [];
+      for (const role of roles) {
+        if (!Array.isArray(role.members) || !role.members.includes(userId)) continue;
+        if (!Array.isArray(role.permissions)) continue;
+        for (const perm of role.permissions) {
+          if (perm?.name === 'administrator' && perm.enabled === true) return true;
+        }
+      }
+    } catch (e) {
+      console.error('userCanManageCommunity: roles lookup failed:', e.message);
+    }
+    return false;
+  }
+
   // Reports list page
   app.get("/reports", authCheck, async function (req, res) {
     const { communityId, communityIdEncoded } = resolveCommunityFromReq(req);
@@ -1587,12 +1618,15 @@ module.exports = function (app, passport, server, nextApp, handle) {
       console.error('Error fetching community for /reports:', err.message);
     }
 
+    const canManageForms = await userCanManageCommunity(req, communityId);
+
     res.render("reports-list", {
       user: req.user,
       apiUrl: policeCadApiUrl,
       communityId,
       communityIdEncoded,
       communityName,
+      canManageForms,
     });
   });
 
@@ -1690,6 +1724,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
     if (!communityId) return res.redirect('/communities');
     const communityIdEncoded = req.params.hash;
+
+    const canManageForms = await userCanManageCommunity(req, communityId);
+    if (!canManageForms) {
+      return res.status(403).render("error", {
+        message: "You need community administrator permissions to manage forms.",
+        redirect: "/reports?c=" + communityIdEncoded,
+      });
+    }
 
     let communityName = null;
     try {
