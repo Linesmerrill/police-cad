@@ -1176,8 +1176,13 @@
         var ref = document.referrer || '';
         if (!ref) return;
         if (ref.indexOf(window.location.origin) !== 0) return;
-        var path = ref.slice(window.location.origin.length);
-        if (path.indexOf('/reports') === 0) return; // came from inside the reports flow — keep the older entry
+        var path = ref.slice(window.location.origin.length).split('?')[0].split('#')[0];
+        // Skip any internal reports/forms surface — coming from /reports/123,
+        // /reports/new, /community/X/forms, etc., should not overwrite the
+        // earlier dashboard entry. Otherwise the back button loops between
+        // sibling pages.
+        if (path.indexOf('/reports') === 0) return;
+        if (/\/forms\/?$/.test(path)) return;
         try { sessionStorage.setItem(RETURN_KEY, ref); } catch (e) { /* private mode */ }
       })();
 
