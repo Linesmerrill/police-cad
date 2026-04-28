@@ -109,6 +109,9 @@
     .cd-nav-item:hover { background: var(--cd-glass-hover); color: var(--cd-text); }
     .cd-nav-item.active { background: var(--cd-accent-glow); color: var(--cd-accent); font-weight: 500; border-color: rgba(56, 189, 248, 0.2); }
     .cd-nav-item i { width: 1.125rem; text-align: center; font-size: 0.8125rem; }
+    .cd-nav-item.is-locked { opacity: 0.7; }
+    .cd-nav-item.is-locked:hover { opacity: 1; }
+    .cd-nav-lock { margin-left: auto; font-size: 0.625rem !important; width: auto !important; color: var(--cd-text-dim); }
 
     /* Also style dd-nav-item for component nav built by buildSidebarNav */
     .dd-nav-item { display: flex; align-items: center; gap: 0.625rem; padding: 0.5rem 0.625rem; border-radius: var(--cd-radius-sm); color: var(--cd-text-muted); text-decoration: none; font-size: 0.8125rem; font-weight: 400; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; position: relative; }
@@ -521,9 +524,12 @@
           <i class="fa fa-file-lines"></i>
           Reports
         </a>
-        <a class="cd-nav-item" href="/community/<%= encodedCommunityId %>/forms">
+        <a class="cd-nav-item<% if (typeof canManageForms !== 'undefined' && !canManageForms) { %> is-locked<% } %>"
+           href="/community/<%= encodedCommunityId %>/forms"
+           <% if (typeof canManageForms !== 'undefined' && !canManageForms) { %>title="Restricted — community admins or members with manage-community permission only"<% } %>>
           <i class="fa fa-list-check"></i>
           Forms
+          <% if (typeof canManageForms !== 'undefined' && !canManageForms) { %><i class="fa fa-lock cd-nav-lock" aria-label="Restricted access"></i><% } %>
         </a>
         <a class="cd-nav-item" href="<%= encodedCommunityId ? '/community/' + encodedCommunityId + '/map' : '/map-interactive' %>">
           <i class="fa fa-map"></i>

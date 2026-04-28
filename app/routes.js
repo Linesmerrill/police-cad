@@ -1735,12 +1735,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
     const communityIdEncoded = req.params.hash;
 
     const canManageForms = await userCanManageCommunity(req, communityId);
-    if (!canManageForms) {
-      return res.status(403).render("error", {
-        message: "You need community administrator permissions to manage forms.",
-        redirect: "/reports?c=" + communityIdEncoded,
-      });
-    }
 
     let communityName = null;
     try {
@@ -1750,6 +1744,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       console.error('Error fetching community for /forms:', err.message);
     }
 
+    // Blocked users still get the page rendered (read-only) with a
+    // permission overlay — feels less broken than an error page, and
+    // keeps the URL shareable so an admin can land on the same view.
     res.render("community-forms", {
       user: req.user,
       apiUrl: policeCadApiUrl,
@@ -1757,6 +1754,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       communityIdEncoded,
       communityName,
       currentUser: buildCurrentUserContext(req),
+      blocked: !canManageForms,
     });
   });
   // ----- end Configurable Forms / Reports -----
@@ -2421,6 +2419,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         console.warn('[command-dashboard gate] unexpected error:', gateErr.message);
       }
 
+      // Whether the current user can manage this community's forms —
+      // drives the lock-icon affordance on the Forms nav link.
+      const canManageForms = communityId ? await userCanManageCommunity(req, communityId) : false;
+
       res.render("command-dashboard", {
         user: req.user,
         referer: encodeURIComponent("/command-dashboard"),
@@ -2430,6 +2432,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         departmentName: departmentName,
         communityName: communityName,
         apiUrl: policeCadApiUrl,
+        canManageForms,
       });
     } catch (error) {
       console.error('Error in command-dashboard route:', error);

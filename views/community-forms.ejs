@@ -287,9 +287,78 @@
     .rp-toast.success { border-color: rgba(34,197,94,0.3); color: var(--rp-green); }
 
     .rp-loading { padding: 4rem 1rem; text-align: center; color: var(--rp-text-muted); }
+
+    /* ============================================================
+       Permission overlay — shown when blocked=true. The page itself
+       still renders (read-only) so context isn't lost; the modal sits
+       over a heavy blur so interaction is gated but not jarring.
+       ============================================================ */
+    body.is-blocked { overflow: hidden; }
+    .rp-perm-backdrop {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(2, 4, 8, 0.4);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem;
+      animation: rp-perm-fade-in 280ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes rp-perm-fade-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes rp-perm-pop-in {
+      from { opacity: 0; transform: translateY(12px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)    scale(1); }
+    }
+    .rp-perm-panel {
+      position: relative;
+      width: min(440px, 100%);
+      background: linear-gradient(180deg, rgba(24, 22, 36, 0.96) 0%, rgba(14, 12, 22, 0.96) 100%);
+      border: 1px solid rgba(168, 85, 247, 0.28);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(168, 85, 247, 0.05);
+      padding: 1.5rem 1.5rem 1.25rem;
+      animation: rp-perm-pop-in 360ms cubic-bezier(0.16, 1, 0.3, 1) 60ms backwards;
+    }
+    .rp-perm-icon {
+      width: 56px; height: 56px;
+      margin: 0 auto 0.85rem;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 16px;
+      background: radial-gradient(circle at 30% 30%, rgba(168, 85, 247, 0.22), rgba(168, 85, 247, 0.08));
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      color: #c4b5fd;
+      font-size: 1.4rem;
+      box-shadow: 0 0 24px -4px rgba(168, 85, 247, 0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .rp-perm-title {
+      font-size: 1.05rem; font-weight: 700; color: #fff;
+      text-align: center; letter-spacing: -0.01em;
+      margin-bottom: 0.4rem;
+    }
+    .rp-perm-body {
+      text-align: center;
+      color: var(--rp-text-muted);
+      font-size: 0.86rem;
+      line-height: 1.55;
+      margin-bottom: 1.1rem;
+    }
+    .rp-perm-body strong { color: var(--rp-text); font-weight: 500; }
+    .rp-perm-actions {
+      display: flex; gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .rp-perm-actions .rp-btn { flex: 1 1 auto; justify-content: center; min-width: 140px; }
+    .rp-perm-foot {
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.7rem; color: var(--rp-text-dim);
+      text-align: center;
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .rp-perm-foot i { margin-right: 0.3rem; color: #c4b5fd; }
   </style>
 </head>
-<body>
+<body<% if (typeof blocked !== 'undefined' && blocked) { %> class="is-blocked"<% } %>>
   <div class="rp-shell">
     <div class="rp-header">
       <div class="rp-header-left">
@@ -309,6 +378,23 @@
     <div id="rp-builder-view" style="display:none;"></div>
   </div>
 
+  <% if (typeof blocked !== 'undefined' && blocked) { %>
+  <div class="rp-perm-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="rp-perm-title">
+    <div class="rp-perm-panel">
+      <div class="rp-perm-icon"><i class="fa-solid fa-lock"></i></div>
+      <div class="rp-perm-title" id="rp-perm-title">Forms management is restricted</div>
+      <div class="rp-perm-body">
+        Creating and editing forms is reserved for <strong>community admins</strong> or members with the <strong>manage-community</strong> permission. Reach out to your community owner to request access.
+      </div>
+      <div class="rp-perm-actions">
+        <a href="/reports<% if (typeof communityIdEncoded !== 'undefined' && communityIdEncoded) { %>?c=<%= communityIdEncoded %><% } %>" class="rp-btn rp-btn-primary"><i class="fa-solid fa-arrow-left"></i> Back to Reports</a>
+        <a href="/communities" class="rp-btn rp-btn-outline"><i class="fa-solid fa-users"></i> My Communities</a>
+      </div>
+      <div class="rp-perm-foot"><i class="fa-solid fa-eye"></i> You can still see what forms exist below</div>
+    </div>
+  </div>
+  <% } %>
+
   <div id="rp-toast" class="rp-toast"></div>
 
   <script>
@@ -317,6 +403,7 @@
       var communityId = <%- JSON.stringify(typeof communityId !== 'undefined' ? communityId : '') %>;
       var communityIdEncoded = <%- JSON.stringify(typeof communityIdEncoded !== 'undefined' ? communityIdEncoded : '') %>;
       var currentUser = <%- JSON.stringify(typeof currentUser !== 'undefined' ? currentUser : null) %>;
+      var blocked = <%- JSON.stringify(typeof blocked !== 'undefined' ? !!blocked : false) %>;
 
       var state = {
         templates: [],
@@ -354,10 +441,14 @@
         var view = document.getElementById('rp-list-view');
         document.getElementById('rp-builder-view').style.display = 'none';
         view.style.display = 'block';
-        document.getElementById('rp-new-btn').style.display = '';
+        // Hide the global New form button when the user lacks permission;
+        // they can still see the list of templates that exist.
+        document.getElementById('rp-new-btn').style.display = blocked ? 'none' : '';
 
         if (!state.templates.length) {
-          view.innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-regular fa-folder-open"></i></div>No forms yet. Click <strong>New form</strong> above to create one.</div>';
+          view.innerHTML = blocked
+            ? '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-regular fa-folder-open"></i></div>This community has no forms yet.</div>'
+            : '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-regular fa-folder-open"></i></div>No forms yet. Click <strong>New form</strong> above to create one.</div>';
           return;
         }
 
@@ -369,20 +460,23 @@
           if (t.isArchived) pills += '<span class="rp-pill rp-pill-archived"><i class="fa-regular fa-folder"></i> Archived</span> ';
 
           var actions = '';
-          if (t.isDefault) {
-            // Default templates can be hidden/restored, and "cloned" (open in builder pre-filled, save as new).
-            actions += '<button class="rp-btn rp-btn-outline" data-action="clone" data-id="' + escapeHTML(t._id) + '"><i class="fa-regular fa-copy"></i> Clone</button>';
-            if (t.isHidden) {
-              actions += '<button class="rp-btn rp-btn-outline" data-action="restore" data-slug="' + escapeHTML(t.slug) + '"><i class="fa-solid fa-eye"></i> Restore</button>';
+          // No write actions surface when the page is in blocked mode.
+          if (!blocked) {
+            if (t.isDefault) {
+              // Default templates can be hidden/restored, and "cloned" (open in builder pre-filled, save as new).
+              actions += '<button class="rp-btn rp-btn-outline" data-action="clone" data-id="' + escapeHTML(t._id) + '"><i class="fa-regular fa-copy"></i> Clone</button>';
+              if (t.isHidden) {
+                actions += '<button class="rp-btn rp-btn-outline" data-action="restore" data-slug="' + escapeHTML(t.slug) + '"><i class="fa-solid fa-eye"></i> Restore</button>';
+              } else {
+                actions += '<button class="rp-btn rp-btn-ghost" data-action="hide" data-slug="' + escapeHTML(t.slug) + '"><i class="fa-solid fa-eye-slash"></i> Hide</button>';
+              }
             } else {
-              actions += '<button class="rp-btn rp-btn-ghost" data-action="hide" data-slug="' + escapeHTML(t.slug) + '"><i class="fa-solid fa-eye-slash"></i> Hide</button>';
-            }
-          } else {
-            actions += '<button class="rp-btn rp-btn-outline" data-action="edit" data-id="' + escapeHTML(t._id) + '"><i class="fa-solid fa-pen"></i> Edit</button>';
-            if (t.isArchived) {
-              actions += '<button class="rp-btn rp-btn-outline" data-action="unarchive" data-id="' + escapeHTML(t._id) + '"><i class="fa-solid fa-folder-open"></i> Unarchive</button>';
-            } else {
-              actions += '<button class="rp-btn rp-btn-ghost" data-action="archive" data-id="' + escapeHTML(t._id) + '"><i class="fa-regular fa-folder"></i> Archive</button>';
+              actions += '<button class="rp-btn rp-btn-outline" data-action="edit" data-id="' + escapeHTML(t._id) + '"><i class="fa-solid fa-pen"></i> Edit</button>';
+              if (t.isArchived) {
+                actions += '<button class="rp-btn rp-btn-outline" data-action="unarchive" data-id="' + escapeHTML(t._id) + '"><i class="fa-solid fa-folder-open"></i> Unarchive</button>';
+              } else {
+                actions += '<button class="rp-btn rp-btn-ghost" data-action="archive" data-id="' + escapeHTML(t._id) + '"><i class="fa-regular fa-folder"></i> Archive</button>';
+              }
             }
           }
 
