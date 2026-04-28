@@ -382,6 +382,151 @@
     @media (prefers-reduced-motion: reduce) {
       .rp-cmd-backdrop, .rp-cmd-panel, .rp-cmd-meta-enter, .rp-cmd-row::before { transition: none; }
     }
+
+    /* ============================================================
+       Quick-start rails (Recent for you + Most used in community)
+       ============================================================ */
+    .rp-rails { display: none; flex-direction: column; gap: 0.85rem; margin: 0.25rem 0 1.25rem; }
+    .rp-rails.has-content { display: flex; }
+
+    .rp-rail { display: flex; align-items: stretch; gap: 0.85rem; min-width: 0; }
+    .rp-rail-label {
+      flex-shrink: 0;
+      width: 132px;
+      display: flex; flex-direction: column; justify-content: center; gap: 0.2rem;
+      padding: 0.5rem 0.85rem 0.5rem 0;
+      border-right: 1px solid var(--rp-glass-border);
+    }
+    .rp-rail-label-row {
+      display: flex; align-items: center; gap: 0.45rem;
+      color: var(--rp-text);
+      font-size: 0.85rem; font-weight: 600;
+      letter-spacing: -0.005em;
+    }
+    .rp-rail-label-icon {
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--rp-accent);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      font-size: 0.7rem;
+    }
+    .rp-rail-sub {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 0.65rem;
+      color: var(--rp-text-dim);
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+
+    .rp-rail-track-wrap {
+      flex: 1; min-width: 0;
+      position: relative;
+    }
+    /* Right-edge fade hinting at horizontal scroll overflow. */
+    .rp-rail-track-wrap::after {
+      content: "";
+      position: absolute; top: 0; right: 0; width: 32px; height: 100%;
+      background: linear-gradient(to right, rgba(8, 9, 12, 0), var(--rp-bg) 90%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 200ms ease;
+    }
+    .rp-rail-track-wrap.has-overflow::after { opacity: 1; }
+
+    .rp-rail-track {
+      display: flex; gap: 0.6rem;
+      overflow-x: auto; overflow-y: hidden;
+      scroll-snap-type: x proximity;
+      scroll-padding: 0.25rem;
+      padding: 0.25rem 0.25rem 0.5rem;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent;
+    }
+    .rp-rail-track::-webkit-scrollbar { height: 6px; }
+    .rp-rail-track::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    .rp-rail-track::-webkit-scrollbar-track { background: transparent; }
+
+    .rp-rail-card {
+      flex-shrink: 0; scroll-snap-align: start;
+      width: 220px;
+      background: var(--rp-surface);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: 12px;
+      padding: 0.75rem 0.85rem;
+      cursor: pointer; text-decoration: none;
+      color: var(--rp-text);
+      display: flex; flex-direction: column; gap: 0.6rem;
+      transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), border-color 180ms ease, background-color 180ms ease;
+      opacity: 0;
+      animation: rp-rail-card-in 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      position: relative; overflow: hidden;
+    }
+    @keyframes rp-rail-card-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .rp-rail-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(56, 189, 248, 0.32);
+      background: rgba(56, 189, 248, 0.04);
+    }
+    .rp-rail-card:active { transform: translateY(0); }
+
+    .rp-rail-card-head {
+      display: flex; align-items: center; gap: 0.55rem;
+    }
+    .rp-rail-card-icon {
+      width: 30px; height: 30px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--rp-text-secondary);
+      font-size: 0.8rem;
+      transition: all 180ms ease;
+    }
+    .rp-rail-card:hover .rp-rail-card-icon {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: var(--rp-accent);
+    }
+    .rp-rail-card-title {
+      flex: 1; min-width: 0;
+      font-size: 0.85rem; font-weight: 600;
+      color: var(--rp-text);
+      letter-spacing: -0.005em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .rp-rail-card-default {
+      flex-shrink: 0;
+      padding: 0.04rem 0.35rem;
+      border-radius: 999px;
+      font-size: 0.55rem; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--rp-accent);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+    }
+
+    .rp-rail-card-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.5rem;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 0.66rem;
+      color: var(--rp-text-dim);
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .rp-rail-card-stat { color: var(--rp-text-secondary); font-weight: 600; }
+
+    @media (max-width: 720px) {
+      .rp-rail { flex-direction: column; gap: 0.5rem; }
+      .rp-rail-label { width: auto; border-right: 0; padding: 0; }
+      .rp-rail-label-row { font-size: 0.8rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .rp-rail-card { animation: none; opacity: 1; transition: none; }
+      .rp-rail-card:hover { transform: none; }
+    }
   </style>
 </head>
 <body>
@@ -399,6 +544,33 @@
       <div style="display:flex; gap:0.5rem;">
         <a href="#" id="rp-back" class="rp-back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
         <button id="rp-new" class="rp-btn rp-btn-primary" type="button"><i class="fa-solid fa-plus"></i> New Report <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; margin-left: 0.25rem;"></i></button>
+      </div>
+    </div>
+
+    <div id="rp-rails" class="rp-rails">
+      <div class="rp-rail" id="rp-rail-recent" style="display:none;">
+        <div class="rp-rail-label">
+          <div class="rp-rail-label-row">
+            <span class="rp-rail-label-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+            Recent
+          </div>
+          <div class="rp-rail-sub">For you</div>
+        </div>
+        <div class="rp-rail-track-wrap" id="rp-rail-recent-wrap">
+          <div class="rp-rail-track" id="rp-rail-recent-track"></div>
+        </div>
+      </div>
+      <div class="rp-rail" id="rp-rail-popular" style="display:none;">
+        <div class="rp-rail-label">
+          <div class="rp-rail-label-row">
+            <span class="rp-rail-label-icon"><i class="fa-solid fa-fire"></i></span>
+            Most used
+          </div>
+          <div class="rp-rail-sub">In community</div>
+        </div>
+        <div class="rp-rail-track-wrap" id="rp-rail-popular-wrap">
+          <div class="rp-rail-track" id="rp-rail-popular-track"></div>
+        </div>
       </div>
     </div>
 
@@ -705,6 +877,144 @@
         return hit ? hit.name : slug;
       }
 
+      // ============================================================
+      // Quick-start rails — Recent (for current user) + Most used
+      // (for the whole community). Computed client-side from the most
+      // recent slice of submissions; a dedicated stats endpoint can
+      // replace this when volume justifies it.
+      // ============================================================
+      function loadRailStats() {
+        if (!communityId) return;
+        var base = apiUrl + '/api/v2/form-submissions/community/' + encodeURIComponent(communityId);
+        var userId = currentUser && currentUser.id;
+
+        var pCommunity = fetch(base + '?limit=100', { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+          .then(function (j) { return (j && j.data) || []; })
+          .catch(function () { return []; });
+
+        var pUser = userId
+          ? fetch(base + '?officerID=' + encodeURIComponent(userId) + '&limit=100', { headers: authHeaders() })
+              .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+              .then(function (j) { return (j && j.data) || []; })
+              .catch(function () { return []; })
+          : Promise.resolve([]);
+
+        Promise.all([pUser, pCommunity]).then(function (results) {
+          renderRails({ user: results[0], community: results[1] });
+        });
+      }
+
+      function bucketBySlug(submissions) {
+        var map = {};
+        submissions.forEach(function (s) {
+          var d = s.formSubmission || {};
+          var slug = d.formTemplateSlug;
+          if (!slug) return;
+          var entry = map[slug] || (map[slug] = { slug: slug, count: 0, lastUsedAt: 0 });
+          entry.count++;
+          var ts = d.createdAt ? new Date(d.createdAt).getTime() : 0;
+          if (ts > entry.lastUsedAt) entry.lastUsedAt = ts;
+        });
+        return Object.keys(map).map(function (k) { return map[k]; });
+      }
+
+      function templateBySlug(slug) {
+        return templates.filter(function (t) { return t.slug === slug; })[0];
+      }
+
+      function fmtRelative(ts) {
+        if (!ts) return '';
+        var diff = Date.now() - ts;
+        if (diff < 60 * 1000) return 'just now';
+        if (diff < 60 * 60 * 1000) return Math.round(diff / 60000) + 'm ago';
+        if (diff < 24 * 60 * 60 * 1000) return Math.round(diff / 3600000) + 'h ago';
+        if (diff < 7 * 24 * 60 * 60 * 1000) return Math.round(diff / 86400000) + 'd ago';
+        return Math.round(diff / 86400000) + 'd ago';
+      }
+
+      function railCardHTML(t, meta, animDelayMs) {
+        if (!t) return '';
+        var qs = communityIdEncoded ? '&c=' + communityIdEncoded : '';
+        var iconName = t.isDefault ? 'fa-shield-halved' : 'fa-file-lines';
+        return '<a class="rp-rail-card" href="/reports/new?slug=' + encodeURIComponent(t.slug) + qs + '"' +
+                ' style="animation-delay: ' + animDelayMs + 'ms;">' +
+          '<div class="rp-rail-card-head">' +
+            '<div class="rp-rail-card-icon"><i class="fa-solid ' + iconName + '"></i></div>' +
+            '<div class="rp-rail-card-title">' + escapeHTML(t.name) + '</div>' +
+            (t.isDefault ? '<span class="rp-rail-card-default">Default</span>' : '') +
+          '</div>' +
+          '<div class="rp-rail-card-meta">' +
+            '<span>' + escapeHTML(meta.left) + '</span>' +
+            '<span class="rp-rail-card-stat">' + escapeHTML(meta.right) + '</span>' +
+          '</div>' +
+        '</a>';
+      }
+
+      function renderRails(payload) {
+        var rails = document.getElementById('rp-rails');
+        var recentRail = document.getElementById('rp-rail-recent');
+        var popularRail = document.getElementById('rp-rail-popular');
+
+        var userBuckets = bucketBySlug(payload.user || [])
+          .sort(function (a, b) { return b.lastUsedAt - a.lastUsedAt; })
+          .slice(0, 6);
+        var commBuckets = bucketBySlug(payload.community || [])
+          .sort(function (a, b) { return b.count - a.count; })
+          .slice(0, 6);
+
+        // Render Recent
+        var rTrack = document.getElementById('rp-rail-recent-track');
+        if (userBuckets.length) {
+          rTrack.innerHTML = userBuckets.map(function (b, i) {
+            return railCardHTML(templateBySlug(b.slug), {
+              left: 'Last used',
+              right: fmtRelative(b.lastUsedAt),
+            }, i * 60);
+          }).join('');
+          recentRail.style.display = '';
+        } else {
+          recentRail.style.display = 'none';
+        }
+
+        // Render Most used
+        var pTrack = document.getElementById('rp-rail-popular-track');
+        if (commBuckets.length) {
+          pTrack.innerHTML = commBuckets.map(function (b, i) {
+            var label = b.count === 1 ? 'report' : 'reports';
+            return railCardHTML(templateBySlug(b.slug), {
+              left: 'Filed',
+              right: b.count + ' ' + label,
+            }, i * 60);
+          }).join('');
+          popularRail.style.display = '';
+        } else {
+          popularRail.style.display = 'none';
+        }
+
+        // Hide the whole container if nothing to show.
+        if (userBuckets.length || commBuckets.length) {
+          rails.classList.add('has-content');
+        } else {
+          rails.classList.remove('has-content');
+        }
+
+        // Toggle the right-edge fade hint based on overflow.
+        ['rp-rail-recent', 'rp-rail-popular'].forEach(function (id) {
+          var rail = document.getElementById(id);
+          if (rail.style.display === 'none') return;
+          var wrap = rail.querySelector('.rp-rail-track-wrap');
+          var track = rail.querySelector('.rp-rail-track');
+          var overflow = track.scrollWidth > track.clientWidth + 4;
+          wrap.classList.toggle('has-overflow', overflow);
+          track.addEventListener('scroll', function () {
+            // Hide the fade when the user has scrolled to the end.
+            var atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4;
+            wrap.classList.toggle('has-overflow', !atEnd && overflow);
+          });
+        });
+      }
+
       function loadList() {
         if (!communityId) return;
         var qs = 'page=' + state.page + '&limit=' + state.limit;
@@ -890,7 +1200,10 @@
       var origRender = renderList;
       renderList = function (p) { lastPayload = p; origRender(p); };
 
-      loadTemplates().then(loadList);
+      loadTemplates().then(function () {
+        loadList();
+        loadRailStats();
+      });
     })();
   </script>
 </body>
