@@ -206,6 +206,187 @@
     .rp-loading {
       grid-column: 1 / -1; padding: 4rem 1rem; text-align: center; color: var(--rp-text-muted);
     }
+
+    /* ============================================================
+       Source picker — searchable command palette for calls
+       ============================================================ */
+    .rp-cmd-mono {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-feature-settings: "tnum" 1;
+    }
+    .rp-cmd-backdrop {
+      position: fixed; inset: 0; z-index: 50;
+      background: rgba(2, 4, 8, 0.55);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: flex; align-items: flex-start; justify-content: center;
+      padding-top: 12vh;
+      opacity: 0; pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .rp-cmd-backdrop.open { opacity: 1; pointer-events: auto; }
+    .rp-cmd-panel {
+      position: relative;
+      width: min(620px, calc(100vw - 2rem));
+      max-height: min(620px, 70vh);
+      display: flex; flex-direction: column;
+      background: linear-gradient(180deg, rgba(20, 22, 28, 0.96) 0%, rgba(10, 12, 18, 0.96) 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      box-shadow: 0 24px 60px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(56,189,248,0.04);
+      overflow: hidden;
+      transform: translateY(8px) scale(0.97);
+      opacity: 0;
+      transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), opacity 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rp-cmd-backdrop.open .rp-cmd-panel { transform: translateY(0) scale(1); opacity: 1; }
+    .rp-cmd-search-wrap {
+      position: relative;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .rp-cmd-search-icon {
+      position: absolute; left: 1.05rem; top: 50%; transform: translateY(-50%);
+      color: var(--rp-text-dim); font-size: 0.95rem; pointer-events: none;
+      transition: color 160ms ease;
+    }
+    .rp-cmd-search-wrap.focused .rp-cmd-search-icon { color: var(--rp-accent); }
+    .rp-cmd-search {
+      width: 100%; background: transparent; border: 0; outline: 0;
+      color: var(--rp-text); font-family: inherit; font-size: 1rem;
+      padding: 1.05rem 1rem 1.05rem 2.85rem; letter-spacing: -0.005em;
+    }
+    .rp-cmd-search::placeholder { color: var(--rp-text-dim); }
+    .rp-cmd-search-clear {
+      position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%);
+      width: 24px; height: 24px; border-radius: 6px;
+      background: transparent; border: 0; cursor: pointer;
+      color: var(--rp-text-dim); font-size: 0.75rem;
+      display: none; align-items: center; justify-content: center;
+    }
+    .rp-cmd-search-clear:hover { background: rgba(255,255,255,0.06); color: var(--rp-text); }
+    .rp-cmd-search-wrap.has-value .rp-cmd-search-clear { display: flex; }
+
+    .rp-cmd-results {
+      flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+      padding: 0.4rem 0.4rem 0.5rem;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+    }
+    .rp-cmd-results::-webkit-scrollbar { width: 8px; }
+    .rp-cmd-results::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    .rp-cmd-results::-webkit-scrollbar-track { background: transparent; }
+
+    .rp-cmd-row {
+      position: relative;
+      display: grid; grid-template-columns: 36px 1fr auto;
+      gap: 0.75rem; align-items: center;
+      padding: 0.65rem 0.85rem;
+      border-radius: 10px; cursor: pointer;
+      color: var(--rp-text); text-decoration: none;
+      transition: background-color 120ms ease;
+    }
+    .rp-cmd-row::before {
+      content: ""; position: absolute; left: 0; top: 50%;
+      width: 2px; height: 0;
+      background: var(--rp-accent); border-radius: 0 2px 2px 0;
+      transform: translateY(-50%);
+      transition: height 160ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rp-cmd-row:hover { background: rgba(255,255,255,0.035); }
+    .rp-cmd-row.active { background: rgba(56, 189, 248, 0.08); }
+    .rp-cmd-row.active::before { height: 70%; }
+
+    .rp-cmd-icon {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--rp-text-secondary); font-size: 0.95rem;
+    }
+    .rp-cmd-row.active .rp-cmd-icon {
+      background: rgba(56,189,248,0.12);
+      border-color: rgba(56,189,248,0.3); color: var(--rp-accent);
+    }
+    .rp-cmd-body { min-width: 0; }
+    .rp-cmd-name-row {
+      display: flex; align-items: center; gap: 0.45rem;
+      font-size: 0.92rem; font-weight: 500; color: var(--rp-text);
+      letter-spacing: -0.005em; line-height: 1.2;
+    }
+    .rp-cmd-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .rp-cmd-name mark {
+      background: rgba(56,189,248,0.18); color: var(--rp-text);
+      padding: 0 1px; border-radius: 2px; font-weight: 600;
+    }
+    .rp-cmd-status-dot {
+      width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0;
+      box-shadow: 0 0 0 2px rgba(34,197,94,0.18);
+    }
+    .rp-cmd-status-dot.active { background: var(--rp-green); }
+    .rp-cmd-status-dot.cleared { background: var(--rp-text-dim); box-shadow: 0 0 0 2px rgba(100,116,139,0.18); }
+
+    .rp-cmd-desc {
+      margin-top: 0.18rem; font-size: 0.78rem; color: var(--rp-text-muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;
+    }
+    .rp-cmd-meta {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.7rem; color: var(--rp-text-dim); flex-shrink: 0;
+    }
+    .rp-cmd-meta-time {
+      padding: 0.1rem 0.45rem; border-radius: 4px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      letter-spacing: 0.04em; text-transform: uppercase;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .rp-cmd-meta-enter {
+      width: 22px; height: 22px; border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(56,189,248,0.12); color: var(--rp-accent);
+      border: 1px solid rgba(56,189,248,0.22);
+      font-size: 0.7rem; font-weight: 600;
+      opacity: 0; transform: scale(0.85);
+      transition: opacity 140ms ease, transform 140ms ease;
+    }
+    .rp-cmd-row.active .rp-cmd-meta-enter { opacity: 1; transform: scale(1); }
+
+    .rp-cmd-empty {
+      padding: 2.5rem 1.25rem 2rem; text-align: center; color: var(--rp-text-muted);
+    }
+    .rp-cmd-empty-icon {
+      width: 44px; height: 44px; margin: 0 auto 0.85rem;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--rp-text-dim); font-size: 1.05rem;
+    }
+    .rp-cmd-empty-title { color: var(--rp-text); font-weight: 600; font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .rp-cmd-empty-sub { font-size: 0.82rem; line-height: 1.5; }
+
+    .rp-cmd-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.55rem 0.85rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.18);
+      font-size: 0.7rem; color: var(--rp-text-dim);
+    }
+    .rp-cmd-footer-count strong { color: var(--rp-text-secondary); font-weight: 500; }
+    .rp-cmd-hints { display: flex; gap: 0.85rem; }
+    .rp-cmd-hint { display: inline-flex; align-items: center; gap: 0.3rem; }
+    .rp-cmd-kbd {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 18px; padding: 0 4px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-bottom-color: rgba(255,255,255,0.14);
+      color: var(--rp-text-secondary); font-size: 0.65rem; font-weight: 600;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .rp-cmd-backdrop, .rp-cmd-panel, .rp-cmd-meta-enter, .rp-cmd-row::before { transition: none; }
+    }
   </style>
 </head>
 <body>
@@ -241,6 +422,29 @@
   </div>
 
   <div id="rp-toast" class="rp-toast"></div>
+
+  <!-- Source picker — recent calls modal -->
+  <div id="rp-call-cmd" class="rp-cmd-backdrop" role="dialog" aria-modal="true" aria-label="Pick a recent call">
+    <div class="rp-cmd-panel" role="document">
+      <div class="rp-cmd-search-wrap" id="rp-call-search-wrap">
+        <i class="fa-solid fa-magnifying-glass rp-cmd-search-icon"></i>
+        <input id="rp-call-input" class="rp-cmd-search" type="text" autocomplete="off" spellcheck="false"
+               placeholder="Search calls by title or description…" aria-label="Search calls" />
+        <button id="rp-call-clear" class="rp-cmd-search-clear" type="button" aria-label="Clear search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="rp-call-results" class="rp-cmd-results" role="listbox" aria-label="Calls"></div>
+      <div class="rp-cmd-footer">
+        <div class="rp-cmd-footer-count" id="rp-call-count"></div>
+        <div class="rp-cmd-hints">
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">↑</span><span class="rp-cmd-kbd">↓</span> navigate</span>
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">↵</span> apply</span>
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">esc</span> close</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     (function () {
@@ -318,13 +522,199 @@
       }
 
       // --- "Start from" sources ---
-      function fetchSourceCandidates() {
-        // Recent calls (open or recent) and recent arrest reports for this community
-        var calls = fetch(apiUrl + '/api/v2/calls/community/' + encodeURIComponent(communityId) + '?page=1&limit=10', { headers: authHeaders() })
+      // Source picker modal (command palette) — searches across recent
+      // calls. Picking a row applies the prefill and closes the modal.
+      var callPicker = {
+        backdrop: null, input: null, results: null, count: null, searchWrap: null, clearBtn: null,
+        all: [], filtered: [], activeIdx: 0, query: '', loaded: false, loading: false,
+      };
+
+      function buildCallPickerEls() {
+        callPicker.backdrop = document.getElementById('rp-call-cmd');
+        callPicker.input = document.getElementById('rp-call-input');
+        callPicker.results = document.getElementById('rp-call-results');
+        callPicker.count = document.getElementById('rp-call-count');
+        callPicker.searchWrap = document.getElementById('rp-call-search-wrap');
+        callPicker.clearBtn = document.getElementById('rp-call-clear');
+      }
+
+      function fetchCallsOnce() {
+        if (callPicker.loaded || callPicker.loading) return Promise.resolve(callPicker.all);
+        callPicker.loading = true;
+        return fetch(apiUrl + '/api/v2/calls/community/' + encodeURIComponent(communityId) + '?page=1&limit=100', { headers: authHeaders() })
           .then(function (r) { return r.ok ? r.json() : { data: [] }; })
-          .then(function (j) { return (j && j.data) || []; })
-          .catch(function () { return []; });
-        return Promise.all([calls]);
+          .then(function (j) {
+            callPicker.all = (j && j.data) || [];
+            callPicker.loaded = true;
+            return callPicker.all;
+          })
+          .catch(function () { return []; })
+          .finally(function () { callPicker.loading = false; });
+      }
+
+      function fmtRelative(ts) {
+        if (!ts) return '';
+        var t = new Date(ts).getTime();
+        if (!t) return '';
+        var diff = Date.now() - t;
+        if (diff < 60 * 1000) return 'just now';
+        if (diff < 3600 * 1000) return Math.round(diff / 60000) + 'm ago';
+        if (diff < 86400 * 1000) return Math.round(diff / 3600000) + 'h ago';
+        return Math.round(diff / 86400000) + 'd ago';
+      }
+
+      function callDescription(d) {
+        if (!d) return '';
+        var parts = [];
+        if (d.details) parts.push(d.details);
+        else if (d.shortDescription) parts.push(d.shortDescription);
+        if (d.createdAtReadable) parts.push(d.createdAtReadable);
+        return parts.join(' · ');
+      }
+
+      function highlightMatch(text, q) {
+        var src = String(text == null ? '' : text);
+        if (!q) return escapeHTML(src);
+        var lower = src.toLowerCase();
+        var qLower = q.toLowerCase();
+        var out = '', i = 0;
+        while (i < src.length) {
+          var idx = lower.indexOf(qLower, i);
+          if (idx === -1) { out += escapeHTML(src.slice(i)); break; }
+          out += escapeHTML(src.slice(i, idx)) + '<mark>' + escapeHTML(src.slice(idx, idx + q.length)) + '</mark>';
+          i = idx + q.length;
+        }
+        return out;
+      }
+
+      function scoreCall(c, q) {
+        var d = c.call || {};
+        var name = String(d.title || '').toLowerCase();
+        var desc = String((d.details || d.shortDescription || '')).toLowerCase();
+        var ni = name.indexOf(q);
+        if (ni !== -1) return 1000 - ni;
+        var di = desc.indexOf(q);
+        if (di !== -1) return 500 - di;
+        return -1;
+      }
+
+      function filterCalls() {
+        var q = callPicker.query.trim().toLowerCase();
+        if (!q) {
+          callPicker.filtered = callPicker.all.slice();
+          return;
+        }
+        var scored = [];
+        callPicker.all.forEach(function (c) {
+          var s = scoreCall(c, q);
+          if (s >= 0) scored.push({ c: c, s: s });
+        });
+        scored.sort(function (a, b) { return b.s - a.s; });
+        callPicker.filtered = scored.map(function (x) { return x.c; });
+      }
+
+      function renderCallPicker() {
+        var q = callPicker.query.trim();
+        filterCalls();
+
+        if (callPicker.loading && callPicker.all.length === 0) {
+          callPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="rp-cmd-empty-title">Loading calls…</div></div>';
+          callPicker.count.innerHTML = '';
+          return;
+        }
+        if (callPicker.all.length === 0) {
+          callPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-folder-open"></i></div><div class="rp-cmd-empty-title">No recent calls</div><div class="rp-cmd-empty-sub">Calls in this community will show up here once any are created.</div></div>';
+          callPicker.count.innerHTML = '';
+          return;
+        }
+        if (callPicker.filtered.length === 0) {
+          callPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-circle-question"></i></div><div class="rp-cmd-empty-title">No calls match "' + escapeHTML(q) + '"</div><div class="rp-cmd-empty-sub">Try a shorter query or different keywords.</div></div>';
+          callPicker.count.innerHTML = '<strong>0</strong> of ' + callPicker.all.length + ' calls';
+          return;
+        }
+
+        if (callPicker.activeIdx >= callPicker.filtered.length) callPicker.activeIdx = 0;
+
+        callPicker.results.innerHTML = callPicker.filtered.map(function (c, i) {
+          var d = c.call || {};
+          var isActive = !!d.status;
+          var statusCls = isActive ? 'active' : 'cleared';
+          var rel = fmtRelative(d.createdAt) || (d.createdAtReadable || '');
+          return '<a class="rp-cmd-row' + (i === callPicker.activeIdx ? ' active' : '') + '"' +
+                 ' role="option" data-idx="' + i + '" data-id="' + escapeHTML(c._id) + '" href="#">' +
+            '<div class="rp-cmd-icon"><i class="fa-solid fa-phone-volume"></i></div>' +
+            '<div class="rp-cmd-body">' +
+              '<div class="rp-cmd-name-row">' +
+                '<span class="rp-cmd-status-dot ' + statusCls + '" title="' + (isActive ? 'Active' : 'Cleared') + '"></span>' +
+                '<span class="rp-cmd-name">' + highlightMatch(d.title || '(untitled)', q) + '</span>' +
+              '</div>' +
+              '<div class="rp-cmd-desc">' + highlightMatch(callDescription(d) || '—', q) + '</div>' +
+            '</div>' +
+            '<div class="rp-cmd-meta">' +
+              (rel ? '<span class="rp-cmd-meta-time">' + escapeHTML(rel) + '</span>' : '') +
+              '<span class="rp-cmd-meta-enter">↵</span>' +
+            '</div>' +
+          '</a>';
+        }).join('');
+        callPicker.count.innerHTML = '<strong>' + callPicker.filtered.length + '</strong> of ' + callPicker.all.length + ' calls';
+        bindCallRowHandlers();
+        scrollCallActiveIntoView();
+      }
+
+      function bindCallRowHandlers() {
+        Array.from(callPicker.results.querySelectorAll('.rp-cmd-row')).forEach(function (row) {
+          row.addEventListener('click', function (e) {
+            e.preventDefault();
+            var id = row.getAttribute('data-id');
+            applyCallById(id);
+          });
+          row.addEventListener('mousemove', function () {
+            var idx = parseInt(row.getAttribute('data-idx'), 10);
+            if (idx === callPicker.activeIdx) return;
+            callPicker.activeIdx = idx;
+            updateCallActive();
+          });
+        });
+      }
+
+      function updateCallActive() {
+        Array.from(callPicker.results.querySelectorAll('.rp-cmd-row')).forEach(function (row) {
+          var idx = parseInt(row.getAttribute('data-idx'), 10);
+          row.classList.toggle('active', idx === callPicker.activeIdx);
+        });
+        scrollCallActiveIntoView();
+      }
+      function scrollCallActiveIntoView() {
+        var active = callPicker.results.querySelector('.rp-cmd-row.active');
+        if (!active) return;
+        var rTop = active.offsetTop, rBottom = rTop + active.offsetHeight;
+        var sTop = callPicker.results.scrollTop, sBottom = sTop + callPicker.results.clientHeight;
+        if (rTop < sTop) callPicker.results.scrollTop = rTop - 8;
+        else if (rBottom > sBottom) callPicker.results.scrollTop = rBottom - callPicker.results.clientHeight + 8;
+      }
+
+      function applyCallById(callId) {
+        if (!callId) return;
+        closeCallPicker();
+        applySource({ type: 'call', id: callId });
+      }
+
+      function openCallPicker() {
+        if (!callPicker.backdrop) buildCallPickerEls();
+        callPicker.query = '';
+        callPicker.input.value = '';
+        callPicker.activeIdx = 0;
+        callPicker.searchWrap.classList.remove('has-value');
+        renderCallPicker();
+        callPicker.backdrop.classList.add('open');
+        setTimeout(function () { callPicker.input.focus(); }, 30);
+        if (!callPicker.loaded) {
+          fetchCallsOnce().then(function () { renderCallPicker(); });
+        }
+      }
+      function closeCallPicker() {
+        if (!callPicker.backdrop) return;
+        callPicker.backdrop.classList.remove('open');
       }
 
       function renderCallout() {
@@ -342,30 +732,13 @@
           '<div class="rp-callout-title"><i class="fa-solid fa-bolt" style="color: var(--rp-amber);"></i> Start from existing data</div>' +
           '<div style="font-size: 0.85rem; color: var(--rp-text-muted); margin-bottom: 0.75rem;">Pull info from a recent call to auto-fill what you can. You can always edit afterwards.</div>' +
           '<div class="rp-callout-row">' +
-            '<select id="rp-src-call" class="rp-select"><option value="">Pick a recent call…</option></select>' +
-            '<button id="rp-src-apply" class="rp-btn rp-btn-outline"><i class="fa-solid fa-wand-magic-sparkles"></i> Apply</button>' +
+            '<button id="rp-src-pick" class="rp-btn rp-btn-outline"><i class="fa-solid fa-magnifying-glass"></i> Pick a recent call…</button>' +
             '<button id="rp-src-clear" class="rp-btn rp-btn-ghost">Clear all imports</button>' +
           '</div>' +
           '</div>';
         el.innerHTML = html;
 
-        fetchSourceCandidates().then(function (results) {
-          var calls = results[0] || [];
-          var sel = document.getElementById('rp-src-call');
-          calls.forEach(function (c) {
-            var d = c.call || {};
-            var opt = document.createElement('option');
-            opt.value = c._id;
-            opt.textContent = (d.title || '(untitled)') + ' — ' + (d.createdAtReadable || '');
-            sel.appendChild(opt);
-          });
-        });
-
-        document.getElementById('rp-src-apply').addEventListener('click', function () {
-          var callId = document.getElementById('rp-src-call').value;
-          if (!callId) return toast('Pick a call first', 'error');
-          applySource({ type: 'call', id: callId });
-        });
+        document.getElementById('rp-src-pick').addEventListener('click', openCallPicker);
         document.getElementById('rp-src-clear').addEventListener('click', function () {
           state.importedFrom = {};
           state.sources = [];
@@ -708,6 +1081,42 @@
           window.open('/reports/' + state.existing._id + '/print' + (communityIdEncoded ? '?c=' + communityIdEncoded : ''), '_blank');
         } else {
           toast('Save the report first to print', 'error');
+        }
+      });
+
+      // Wire call-picker modal once the DOM is ready.
+      buildCallPickerEls();
+      callPicker.backdrop.addEventListener('mousedown', function (e) {
+        if (e.target === callPicker.backdrop) closeCallPicker();
+      });
+      callPicker.input.addEventListener('input', function (e) {
+        callPicker.query = e.target.value;
+        callPicker.activeIdx = 0;
+        callPicker.searchWrap.classList.toggle('has-value', callPicker.query.length > 0);
+        renderCallPicker();
+      });
+      callPicker.input.addEventListener('focus', function () { callPicker.searchWrap.classList.add('focused'); });
+      callPicker.input.addEventListener('blur', function () { callPicker.searchWrap.classList.remove('focused'); });
+      callPicker.clearBtn.addEventListener('click', function () {
+        callPicker.input.value = '';
+        callPicker.query = '';
+        callPicker.activeIdx = 0;
+        callPicker.searchWrap.classList.remove('has-value');
+        renderCallPicker();
+        callPicker.input.focus();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (!callPicker.backdrop.classList.contains('open')) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeCallPicker(); return; }
+        if (e.key === 'ArrowDown') { e.preventDefault(); if (callPicker.filtered.length) { callPicker.activeIdx = (callPicker.activeIdx + 1) % callPicker.filtered.length; updateCallActive(); } return; }
+        if (e.key === 'ArrowUp') { e.preventDefault(); if (callPicker.filtered.length) { callPicker.activeIdx = (callPicker.activeIdx - 1 + callPicker.filtered.length) % callPicker.filtered.length; updateCallActive(); } return; }
+        if (e.key === 'Home') { e.preventDefault(); callPicker.activeIdx = 0; updateCallActive(); return; }
+        if (e.key === 'End') { e.preventDefault(); callPicker.activeIdx = Math.max(0, callPicker.filtered.length - 1); updateCallActive(); return; }
+        if (e.key === 'Enter') {
+          if (!callPicker.filtered.length) return;
+          e.preventDefault();
+          var pick = callPicker.filtered[callPicker.activeIdx];
+          if (pick && pick._id) applyCallById(pick._id);
         }
       });
 
