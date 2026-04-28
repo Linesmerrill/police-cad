@@ -272,7 +272,7 @@
       // --- Load templates ---
       function loadTemplates() {
         document.getElementById('rp-list-view').innerHTML = '<div class="rp-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>';
-        fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId) + '?includeArchived=true')
+        fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId) + '?includeArchived=true&includeHidden=true')
           .then(function (r) { return r.ok ? r.json() : { data: [] }; })
           .then(function (j) { state.templates = (j && j.data) || []; renderList(); })
           .catch(function (e) {
