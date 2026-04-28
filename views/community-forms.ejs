@@ -289,6 +289,62 @@
     .rp-loading { padding: 4rem 1rem; text-align: center; color: var(--rp-text-muted); }
 
     /* ============================================================
+       Custom confirm modal — replaces native window.confirm.
+       Two intents: 'danger' (destructive, red accent) and 'neutral'.
+       ============================================================ */
+    @keyframes rp-modal-fade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes rp-modal-pop  { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .rp-modal-backdrop {
+      position: fixed; inset: 0; z-index: 80;
+      background: rgba(2, 4, 8, 0.55);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: none; align-items: flex-start; justify-content: center;
+      padding-top: 16vh;
+    }
+    .rp-modal-backdrop.open { display: flex; animation: rp-modal-fade 180ms ease; }
+    .rp-modal-panel {
+      width: min(420px, calc(100vw - 2rem));
+      background: linear-gradient(180deg, rgba(20, 22, 28, 0.96) 0%, rgba(10, 12, 18, 0.96) 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      box-shadow: 0 24px 60px -12px rgba(0,0,0,0.7);
+      overflow: hidden;
+      animation: rp-modal-pop 280ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rp-modal-panel.is-danger { border-color: rgba(239, 68, 68, 0.22); box-shadow: 0 24px 60px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(239, 68, 68, 0.05); }
+    .rp-modal-head { display: flex; align-items: center; gap: 0.7rem; padding: 1rem 1.1rem 0.4rem; }
+    .rp-modal-icon {
+      width: 36px; height: 36px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: var(--rp-accent); font-size: 0.95rem;
+    }
+    .is-danger .rp-modal-icon { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25); color: var(--rp-red); }
+    .rp-modal-title { color: var(--rp-text); font-weight: 600; font-size: 0.98rem; letter-spacing: -0.005em; }
+    .rp-modal-body { padding: 0.4rem 1.1rem 1rem; color: var(--rp-text-muted); font-size: 0.85rem; line-height: 1.55; }
+    .rp-modal-body strong { color: var(--rp-text); font-weight: 500; }
+    .rp-modal-foot {
+      display: flex; gap: 0.5rem; justify-content: flex-end;
+      padding: 0.7rem 1.1rem 0.95rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.18);
+    }
+    .rp-modal-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.55rem 1rem; border-radius: 9px;
+      font-family: inherit; font-weight: 600; font-size: 0.85rem;
+      border: none; cursor: pointer; transition: all 180ms ease;
+    }
+    .rp-modal-btn-ghost { background: transparent; color: var(--rp-text-muted); border: 1px solid rgba(255,255,255,0.08); }
+    .rp-modal-btn-ghost:hover { background: rgba(255,255,255,0.04); color: var(--rp-text); }
+    .rp-modal-btn-primary { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: #fff; }
+    .rp-modal-btn-primary:hover { box-shadow: 0 4px 12px rgba(14,165,233,0.3); transform: translateY(-1px); }
+    .rp-modal-btn-danger { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #fff; }
+    .rp-modal-btn-danger:hover { box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); transform: translateY(-1px); }
+
+    /* ============================================================
        Permission banner — shown when blocked=true. Inline at the top
        of the list (not a modal) so the templates below stay legible
        and the user can actually see what forms exist.
@@ -366,6 +422,21 @@
 
   <div id="rp-toast" class="rp-toast"></div>
 
+  <!-- Custom confirm modal — replaces native window.confirm() -->
+  <div id="rp-modal" class="rp-modal-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="rp-modal-title">
+    <div class="rp-modal-panel" id="rp-modal-panel">
+      <div class="rp-modal-head">
+        <div class="rp-modal-icon"><i class="fa-solid fa-question" id="rp-modal-icon-i"></i></div>
+        <div class="rp-modal-title" id="rp-modal-title">Are you sure?</div>
+      </div>
+      <div class="rp-modal-body" id="rp-modal-body"></div>
+      <div class="rp-modal-foot">
+        <button class="rp-modal-btn rp-modal-btn-ghost" id="rp-modal-cancel" type="button">Cancel</button>
+        <button class="rp-modal-btn rp-modal-btn-primary" id="rp-modal-confirm" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function () {
       var apiUrl = <%- JSON.stringify(typeof apiUrl !== 'undefined' ? apiUrl : '') %>;
@@ -410,6 +481,53 @@
       function slugify(s) {
         return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'form-' + Date.now();
       }
+
+      // Custom confirm modal — drop-in replacement for native window.confirm.
+      // Pass { title, body, confirmText, danger, onConfirm }. Body accepts
+      // safe HTML (callers control the string). Esc + backdrop click cancel.
+      var rpConfirm = (function () {
+        var backdrop, panel, titleEl, bodyEl, iconEl, cancelBtn, okBtn;
+        var pendingConfirm = null;
+        function init() {
+          backdrop = document.getElementById('rp-modal');
+          panel = document.getElementById('rp-modal-panel');
+          titleEl = document.getElementById('rp-modal-title');
+          bodyEl = document.getElementById('rp-modal-body');
+          iconEl = document.getElementById('rp-modal-icon-i');
+          cancelBtn = document.getElementById('rp-modal-cancel');
+          okBtn = document.getElementById('rp-modal-confirm');
+          backdrop.addEventListener('mousedown', function (e) { if (e.target === backdrop) close(); });
+          cancelBtn.addEventListener('click', close);
+          okBtn.addEventListener('click', function () {
+            var cb = pendingConfirm;
+            close();
+            if (typeof cb === 'function') cb();
+          });
+          document.addEventListener('keydown', function (e) {
+            if (!backdrop.classList.contains('open')) return;
+            if (e.key === 'Escape') { e.preventDefault(); close(); }
+            else if (e.key === 'Enter') { e.preventDefault(); okBtn.click(); }
+          });
+        }
+        function close() {
+          backdrop.classList.remove('open');
+          pendingConfirm = null;
+        }
+        function open(opts) {
+          if (!backdrop) init();
+          opts = opts || {};
+          titleEl.textContent = opts.title || 'Are you sure?';
+          bodyEl.innerHTML = opts.body || '';
+          iconEl.className = 'fa-solid ' + (opts.icon || (opts.danger ? 'fa-triangle-exclamation' : 'fa-circle-question'));
+          panel.classList.toggle('is-danger', !!opts.danger);
+          okBtn.textContent = opts.confirmText || (opts.danger ? 'Delete' : 'Confirm');
+          okBtn.className = 'rp-modal-btn ' + (opts.danger ? 'rp-modal-btn-danger' : 'rp-modal-btn-primary');
+          pendingConfirm = opts.onConfirm || null;
+          backdrop.classList.add('open');
+          setTimeout(function () { (opts.danger ? cancelBtn : okBtn).focus(); }, 30);
+        }
+        return open;
+      })();
 
       // --- Load templates ---
       function loadTemplates() {
@@ -783,7 +901,18 @@
           }
           secEl.querySelector('[data-section-up]').addEventListener('click', function () { if (sidx === 0) return; var arr = t.sections; var tmp = arr[sidx - 1]; arr[sidx - 1] = arr[sidx]; arr[sidx] = tmp; renderSections(); });
           secEl.querySelector('[data-section-down]').addEventListener('click', function () { var arr = t.sections; if (sidx >= arr.length - 1) return; var tmp = arr[sidx + 1]; arr[sidx + 1] = arr[sidx]; arr[sidx] = tmp; renderSections(); });
-          secEl.querySelector('[data-section-remove]').addEventListener('click', function () { if (!confirm('Remove this section and all its fields?')) return; t.sections.splice(sidx, 1); renderSections(); });
+          secEl.querySelector('[data-section-remove]').addEventListener('click', function () {
+            var secTitle = (t.sections[sidx] && t.sections[sidx].title) || 'this section';
+            var fieldCount = ((t.sections[sidx] && t.sections[sidx].fields) || []).length;
+            rpConfirm({
+              danger: true,
+              icon: 'fa-trash',
+              title: 'Remove section?',
+              body: 'This will delete <strong>' + escapeHTML(secTitle) + '</strong>' + (fieldCount ? ' and its <strong>' + fieldCount + '</strong> field' + (fieldCount === 1 ? '' : 's') : '') + '. You can undo by canceling without saving.',
+              confirmText: 'Remove section',
+              onConfirm: function () { t.sections.splice(sidx, 1); renderSections(); },
+            });
+          });
           secEl.querySelector('[data-add-field]').addEventListener('click', function () {
             t.sections[sidx].fields = t.sections[sidx].fields || [];
             t.sections[sidx].fields.push({ id: 'f' + Date.now(), label: '', type: 'text', required: false });
@@ -977,7 +1106,25 @@
 
       // Show/hide savebar based on state.editing
       var origRenderBuilder = renderBuilder;
-      renderBuilder = function () { origRenderBuilder.apply(this, arguments); savebar.style.display = 'flex'; document.getElementById('rp-cancel-btn').onclick = function () { if (confirm('Discard changes?')) { state.editing = null; savebar.style.display = 'none'; renderList(); } }; document.getElementById('rp-save-btn').onclick = saveTemplate; };
+      renderBuilder = function () {
+        origRenderBuilder.apply(this, arguments);
+        savebar.style.display = 'flex';
+        document.getElementById('rp-cancel-btn').onclick = function () {
+          rpConfirm({
+            danger: true,
+            icon: 'fa-circle-xmark',
+            title: 'Discard changes?',
+            body: 'Any unsaved edits to this form will be lost. This can\'t be undone.',
+            confirmText: 'Discard',
+            onConfirm: function () {
+              state.editing = null;
+              savebar.style.display = 'none';
+              renderList();
+            },
+          });
+        };
+        document.getElementById('rp-save-btn').onclick = saveTemplate;
+      };
       var origRenderList = renderList;
       renderList = function () { origRenderList.apply(this, arguments); savebar.style.display = 'none'; };
 
