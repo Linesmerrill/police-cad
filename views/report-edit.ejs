@@ -1846,10 +1846,8 @@
           el.innerHTML = '<div class="rp-callout"><div class="rp-callout-title"><i class="fa-solid fa-eye" style="color: var(--rp-accent);"></i> Read-only view</div><div style="font-size: 0.85rem; color: var(--rp-text-muted);">Switch to edit mode to make changes.</div></div>';
           return;
         }
-        if (state.existing) {
-          el.innerHTML = '';
-          return;
-        }
+        // Drafts and submitted edits both keep the Start-from panel —
+        // users may want to pull in a new source to fill remaining fields.
 
         // Only top-level sources (calls/citations/arrest reports) — row-level
         // entity links live on rows themselves, not in the Start-from chip rail.
