@@ -405,6 +405,23 @@
       var currentUser = <%- JSON.stringify(typeof currentUser !== 'undefined' ? currentUser : null) %>;
       var blocked = <%- JSON.stringify(typeof blocked !== 'undefined' ? !!blocked : false) %>;
 
+      // Propagate the dashboard entry-point through to /reports. The
+      // forms page sits between a dashboard and the reports list, and
+      // /reports captures returnUrl from its document.referrer — but
+      // when the user goes dashboard → forms → reports, the referrer
+      // there is /forms (which /reports skips), so the dashboard URL
+      // is lost. Stash it here under the same key so back-to-reports
+      // → back lands the user on the dashboard they came from.
+      (function propagateReturnUrl() {
+        var ref = document.referrer || '';
+        if (!ref) return;
+        if (ref.indexOf(window.location.origin) !== 0) return;
+        var path = ref.slice(window.location.origin.length).split('?')[0].split('#')[0];
+        if (path.indexOf('/reports') === 0) return;
+        if (/\/forms\/?$/.test(path)) return;
+        try { sessionStorage.setItem('reports.returnUrl', ref); } catch (e) {}
+      })();
+
       var state = {
         templates: [],
         editing: null, // template being edited (or null in list view)
