@@ -163,7 +163,7 @@
         </div>
       </div>
       <div style="display:flex; gap:0.5rem;">
-        <a href="/" class="rp-back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a href="#" id="rp-back" class="rp-back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
         <a href="/reports/new?slug=incident-report<% if (typeof communityIdEncoded !== 'undefined' && communityIdEncoded) { %>&c=<%= communityIdEncoded %><% } %>" class="rp-btn rp-btn-primary"><i class="fa-solid fa-plus"></i> New Report</a>
       </div>
     </div>
@@ -326,6 +326,19 @@
           return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
         });
       }
+
+      // Back button: prefer browser history (whichever dashboard the user came
+      // from), fall back to /communities when this page was opened directly.
+      document.getElementById('rp-back').addEventListener('click', function (e) {
+        e.preventDefault();
+        var ref = document.referrer || '';
+        var sameOrigin = ref && ref.indexOf(window.location.origin) === 0;
+        if (sameOrigin && window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.href = '/communities';
+        }
+      });
 
       document.getElementById('rp-filter-template').addEventListener('change', function (e) { state.templateSlug = e.target.value; state.page = 0; loadList(); });
       document.getElementById('rp-filter-status').addEventListener('change', function (e) { state.status = e.target.value; state.page = 0; loadList(); });
