@@ -535,6 +535,64 @@
     @media (prefers-reduced-motion: reduce) {
       .rp-conf-backdrop, .rp-conf-panel, .rp-field.is-missing { animation: none; transition: none; }
     }
+
+    /* ============================================================
+       Source chip — picked-call confirmation in Start-from panel
+       ============================================================ */
+    .rp-source-chip {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.3rem 0.35rem 0.3rem 0.5rem;
+      background: var(--rp-glass);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: 999px;
+      font-size: 0.82rem;
+      max-width: 100%;
+      transition: border-color 160ms ease, background-color 160ms ease;
+    }
+    .rp-source-chip:hover { border-color: rgba(56,189,248,0.22); }
+    .rp-source-chip-icon {
+      width: 22px; height: 22px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: rgba(56,189,248,0.12);
+      color: var(--rp-accent);
+      border: 1px solid rgba(56,189,248,0.25);
+      font-size: 0.62rem;
+    }
+    .rp-source-chip-status {
+      width: 6px; height: 6px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .rp-source-chip-status.active { background: var(--rp-green); box-shadow: 0 0 0 2px rgba(34,197,94,0.18); }
+    .rp-source-chip-status.cleared { background: var(--rp-text-dim); box-shadow: 0 0 0 2px rgba(100,116,139,0.18); }
+    .rp-source-chip-title {
+      color: var(--rp-text); font-weight: 500;
+      max-width: 240px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .rp-source-chip-time {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 0.62rem;
+      color: var(--rp-text-dim);
+      letter-spacing: 0.06em; text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .rp-source-chip-x {
+      width: 22px; height: 22px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--rp-text-muted);
+      cursor: pointer; font-size: 0.6rem;
+      transition: all 160ms ease;
+      padding: 0;
+    }
+    .rp-source-chip-x:hover {
+      background: rgba(239,68,68,0.1);
+      color: var(--rp-red);
+      border-color: rgba(239,68,68,0.25);
+    }
   </style>
 </head>
 <body>
@@ -866,10 +924,44 @@
         else if (rBottom > sBottom) callPicker.results.scrollTop = rBottom - callPicker.results.clientHeight + 8;
       }
 
+      function callMeta(c) {
+        var d = (c && c.call) || {};
+        return {
+          title: d.title || '(untitled)',
+          createdAt: d.createdAt || null,
+          isActive: !!d.status,
+        };
+      }
+
       function applyCallById(callId) {
         if (!callId) return;
         closeCallPicker();
-        applySource({ type: 'call', id: callId });
+        // Replace any existing call source so its old prefill is wiped
+        // before the new prefill is applied — keeps the data clean.
+        var existing = state.sources.filter(function (s) { return s.type === 'call'; })[0];
+        if (existing) removeSource('call', existing.id, { silent: true });
+        var call = (callPicker.all || []).filter(function (c) { return c._id === callId; })[0];
+        applySource({ type: 'call', id: callId, meta: callMeta(call) });
+      }
+
+      // Removes a source: drops it from state.sources / state.links and
+      // wipes any field whose importedFrom still points at it. Fields the
+      // user has hand-edited had their importedFrom dropped already, so
+      // those edits are preserved. silent=true suppresses the toast for
+      // the replace-on-pick flow.
+      function removeSource(type, id, opts) {
+        opts = opts || {};
+        state.sources = state.sources.filter(function (s) { return !(s.type === type && s.id === id); });
+        state.links = state.links.filter(function (l) { return !(l.type === type && l.id === id); });
+        Object.keys(state.importedFrom).forEach(function (fid) {
+          var info = state.importedFrom[fid];
+          if (info && info.type === type && info.id === id) {
+            delete state.importedFrom[fid];
+            delete state.data[fid];
+          }
+        });
+        render();
+        if (!opts.silent) toast('Removed ' + type + ' import', 'success');
       }
 
       function openCallPicker() {
@@ -890,6 +982,41 @@
         callPicker.backdrop.classList.remove('open');
       }
 
+      function fmtRelShort(ts) {
+        if (!ts) return '';
+        var t = new Date(ts).getTime();
+        if (!t) return '';
+        var diff = Date.now() - t;
+        if (diff < 60 * 1000) return 'just now';
+        if (diff < 3600 * 1000) return Math.round(diff / 60000) + 'm ago';
+        if (diff < 86400 * 1000) return Math.round(diff / 3600000) + 'h ago';
+        return Math.round(diff / 86400000) + 'd ago';
+      }
+
+      function renderSourceChip(src) {
+        var m = src.meta || {};
+        var statusCls = m.isActive ? 'active' : 'cleared';
+        var rel = fmtRelShort(m.createdAt);
+        return '<div class="rp-source-chip" data-source-type="' + escapeHTML(src.type) + '" data-source-id="' + escapeHTML(src.id) + '">' +
+          '<span class="rp-source-chip-icon"><i class="fa-solid fa-phone-volume"></i></span>' +
+          '<span class="rp-source-chip-status ' + statusCls + '" title="' + (m.isActive ? 'Active call' : 'Cleared call') + '"></span>' +
+          '<span class="rp-source-chip-title" title="' + escapeHTML(m.title || '') + '">' + escapeHTML(m.title || '(call)') + '</span>' +
+          (rel ? '<span class="rp-source-chip-time">' + escapeHTML(rel) + '</span>' : '') +
+          '<button class="rp-source-chip-x" type="button" aria-label="Remove this source" data-remove-source="' + escapeHTML(src.type) + '|' + escapeHTML(src.id) + '"><i class="fa-solid fa-xmark"></i></button>' +
+        '</div>';
+      }
+
+      function clearAllImports() {
+        // Wipe imports AND the field values they filled — fields the user
+        // hand-edited had their importedFrom dropped already, so those
+        // edits survive.
+        Object.keys(state.importedFrom).forEach(function (fid) { delete state.data[fid]; });
+        state.importedFrom = {};
+        state.sources = [];
+        state.links = [];
+        render();
+      }
+
       function renderCallout() {
         var el = document.getElementById('rp-callout');
         if (state.existing && readOnly) {
@@ -901,21 +1028,39 @@
           return;
         }
 
+        var callSources = state.sources.filter(function (s) { return s.type === 'call'; });
+        var hasSources = callSources.length > 0;
+
+        var subtitle = hasSources
+          ? 'Importing from ' + callSources.length + ' call' + (callSources.length === 1 ? '' : 's') + '. Pick another to replace, or × to remove.'
+          : 'Pull info from a recent call to auto-fill what you can. You can always edit afterwards.';
+
+        var pickBtnLabel = hasSources ? 'Pick another call…' : 'Pick a recent call…';
+
+        var chipsHTML = callSources.map(renderSourceChip).join('');
+
         var html = '<div class="rp-callout">' +
           '<div class="rp-callout-title"><i class="fa-solid fa-bolt" style="color: var(--rp-amber);"></i> Start from existing data</div>' +
-          '<div style="font-size: 0.85rem; color: var(--rp-text-muted); margin-bottom: 0.75rem;">Pull info from a recent call to auto-fill what you can. You can always edit afterwards.</div>' +
+          '<div style="font-size: 0.85rem; color: var(--rp-text-muted); margin-bottom: 0.75rem;">' + escapeHTML(subtitle) + '</div>' +
+          (chipsHTML ? '<div class="rp-callout-row" style="margin-bottom: 0.6rem;">' + chipsHTML + '</div>' : '') +
           '<div class="rp-callout-row">' +
-            '<button id="rp-src-pick" class="rp-btn rp-btn-outline"><i class="fa-solid fa-magnifying-glass"></i> Pick a recent call…</button>' +
-            '<button id="rp-src-clear" class="rp-btn rp-btn-ghost">Clear all imports</button>' +
+            '<button id="rp-src-pick" class="rp-btn ' + (hasSources ? 'rp-btn-ghost' : 'rp-btn-outline') + '"><i class="fa-solid fa-magnifying-glass"></i> ' + escapeHTML(pickBtnLabel) + '</button>' +
+            (hasSources ? '<button id="rp-src-clear" class="rp-btn rp-btn-ghost">Clear all imports</button>' : '') +
           '</div>' +
           '</div>';
         el.innerHTML = html;
 
         document.getElementById('rp-src-pick').addEventListener('click', openCallPicker);
-        document.getElementById('rp-src-clear').addEventListener('click', function () {
-          state.importedFrom = {};
-          state.sources = [];
-          render();
+        var clearBtn = document.getElementById('rp-src-clear');
+        if (clearBtn) clearBtn.addEventListener('click', clearAllImports);
+
+        // Wire chip × buttons
+        Array.from(el.querySelectorAll('[data-remove-source]')).forEach(function (btn) {
+          btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            var parts = btn.getAttribute('data-remove-source').split('|');
+            removeSource(parts[0], parts[1]);
+          });
         });
       }
 
@@ -946,9 +1091,10 @@
             });
             // Add the source as a link too (so it shows up on entity profile pages).
             var alreadyLinked = state.links.filter(function (l) { return l.type === src.type && l.id === src.id; }).length > 0;
-            if (!alreadyLinked) state.links.push({ type: src.type, id: src.id, label: srcLabel(src) });
+            var label = (src.meta && src.meta.title) || srcLabel(src);
+            if (!alreadyLinked) state.links.push({ type: src.type, id: src.id, label: label });
             render();
-            toast('Prefilled from ' + src.type, 'success');
+            toast('Prefilled from ' + (src.meta && src.meta.title ? '"' + src.meta.title + '"' : src.type), 'success');
           })
           .catch(function () { toast('Failed to fetch prefill', 'error'); });
       }
