@@ -387,6 +387,154 @@
     @media (prefers-reduced-motion: reduce) {
       .rp-cmd-backdrop, .rp-cmd-panel, .rp-cmd-meta-enter, .rp-cmd-row::before { transition: none; }
     }
+
+    /* ============================================================
+       Validation — missing-required highlights + confirm modal
+       ============================================================ */
+    @keyframes rp-shake-soft {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-3px); }
+      40% { transform: translateX(3px); }
+      60% { transform: translateX(-2px); }
+      80% { transform: translateX(1px); }
+    }
+    @keyframes rp-glow-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45); }
+      100% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    }
+    .rp-field.is-missing { animation: rp-shake-soft 600ms cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+    .rp-field.is-missing .rp-input,
+    .rp-field.is-missing .rp-textarea,
+    .rp-field.is-missing .rp-select,
+    .rp-field.is-missing .rp-inputContainer {
+      border-color: rgba(239, 68, 68, 0.55) !important;
+      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.18) !important;
+    }
+    .rp-field.is-missing .rp-input:focus,
+    .rp-field.is-missing .rp-textarea:focus,
+    .rp-field.is-missing .rp-select:focus {
+      border-color: rgba(239, 68, 68, 0.8) !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
+      animation: rp-glow-pulse 900ms ease-out;
+    }
+    .rp-required-tag {
+      display: inline-flex; align-items: center; gap: 0.2rem;
+      padding: 0.05rem 0.4rem;
+      margin-left: 0.4rem;
+      border-radius: 999px;
+      font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--rp-red);
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .rp-side-link.is-missing { color: var(--rp-red); }
+    .rp-side-link.is-missing .rp-pill {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--rp-red);
+      border-color: rgba(239, 68, 68, 0.3);
+      font-weight: 700;
+    }
+    .rp-side-link.is-missing i { color: var(--rp-red); }
+
+    /* Confirmation modal — submit-with-empties */
+    .rp-conf-backdrop {
+      position: fixed; inset: 0; z-index: 60;
+      background: rgba(2, 4, 8, 0.55);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: flex; align-items: flex-start; justify-content: center;
+      padding-top: 16vh;
+      opacity: 0; pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .rp-conf-backdrop.open { opacity: 1; pointer-events: auto; }
+    .rp-conf-panel {
+      position: relative;
+      width: min(440px, calc(100vw - 2rem));
+      background: linear-gradient(180deg, rgba(20, 22, 28, 0.96) 0%, rgba(10, 12, 18, 0.96) 100%);
+      border: 1px solid rgba(239, 68, 68, 0.18);
+      border-radius: 14px;
+      box-shadow: 0 24px 60px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(239, 68, 68, 0.05);
+      overflow: hidden;
+      transform: translateY(8px) scale(0.97); opacity: 0;
+      transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), opacity 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rp-conf-backdrop.open .rp-conf-panel { transform: translateY(0) scale(1); opacity: 1; }
+    .rp-conf-head {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 1rem 1.1rem 0.4rem;
+    }
+    .rp-conf-icon {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 10px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: var(--rp-red); font-size: 0.95rem;
+    }
+    .rp-conf-title { color: var(--rp-text); font-weight: 600; font-size: 0.98rem; letter-spacing: -0.005em; }
+    .rp-conf-sub { font-size: 0.78rem; color: var(--rp-text-muted); margin-top: 0.1rem; }
+    .rp-conf-close {
+      margin-left: auto;
+      width: 28px; height: 28px; border-radius: 6px;
+      background: transparent; border: 0; cursor: pointer;
+      color: var(--rp-text-dim); font-size: 0.85rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rp-conf-close:hover { background: rgba(255,255,255,0.05); color: var(--rp-text); }
+
+    .rp-conf-body {
+      padding: 0.5rem 1.1rem 0.85rem;
+      max-height: 280px; overflow-y: auto;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+    }
+    .rp-conf-list { list-style: none; padding: 0; margin: 0.4rem 0 0; }
+    .rp-conf-item {
+      display: flex; align-items: baseline; gap: 0.55rem;
+      padding: 0.45rem 0;
+      border-bottom: 1px dashed rgba(255,255,255,0.06);
+      font-size: 0.85rem; color: var(--rp-text);
+    }
+    .rp-conf-item:last-child { border-bottom: 0; }
+    .rp-conf-item-num {
+      flex-shrink: 0;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 0.7rem; color: var(--rp-text-dim);
+      min-width: 16px;
+    }
+    .rp-conf-item-label { font-weight: 500; }
+    .rp-conf-item-section {
+      margin-left: auto;
+      font-size: 0.7rem; color: var(--rp-text-dim);
+      letter-spacing: 0.04em; text-transform: uppercase;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .rp-conf-foot {
+      display: flex; gap: 0.5rem; align-items: center;
+      padding: 0.7rem 1.1rem 0.95rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.18);
+    }
+    .rp-conf-foot-spacer { flex: 1; }
+    .rp-conf-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.55rem 1rem; border-radius: 9px;
+      font-family: inherit; font-weight: 600; font-size: 0.85rem;
+      border: none; cursor: pointer; transition: all 180ms ease;
+    }
+    .rp-conf-btn-primary {
+      background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: #fff;
+    }
+    .rp-conf-btn-primary:hover { box-shadow: 0 4px 12px rgba(14,165,233,0.3); transform: translateY(-1px); }
+    .rp-conf-btn-ghost {
+      background: transparent; color: var(--rp-text-muted);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .rp-conf-btn-ghost:hover { background: rgba(255,255,255,0.04); color: var(--rp-text); }
+    @media (prefers-reduced-motion: reduce) {
+      .rp-conf-backdrop, .rp-conf-panel, .rp-field.is-missing { animation: none; transition: none; }
+    }
   </style>
 </head>
 <body>
@@ -422,6 +570,30 @@
   </div>
 
   <div id="rp-toast" class="rp-toast"></div>
+
+  <!-- Validation confirmation modal — empty required fields -->
+  <div id="rp-conf" class="rp-conf-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="rp-conf-title-text">
+    <div class="rp-conf-panel" role="document">
+      <div class="rp-conf-head">
+        <div class="rp-conf-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div>
+          <div class="rp-conf-title" id="rp-conf-title-text">Some required fields are empty</div>
+          <div class="rp-conf-sub">Review them before submitting, or submit anyway if you really mean to.</div>
+        </div>
+        <button id="rp-conf-x" class="rp-conf-close" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="rp-conf-body">
+        <ol id="rp-conf-list" class="rp-conf-list"></ol>
+      </div>
+      <div class="rp-conf-foot">
+        <button id="rp-conf-anyway" class="rp-conf-btn rp-conf-btn-ghost" type="button">Submit anyway</button>
+        <div class="rp-conf-foot-spacer"></div>
+        <button id="rp-conf-fix" class="rp-conf-btn rp-conf-btn-primary" type="button">
+          <i class="fa-solid fa-pen-to-square"></i> Review and fix
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Source picker — recent calls modal -->
   <div id="rp-call-cmd" class="rp-cmd-backdrop" role="dialog" aria-modal="true" aria-label="Pick a recent call">
@@ -472,7 +644,8 @@
         links: [],
         sources: [],        // [{type, id, childId?}]
         sectionState: {},   // sectionId -> open boolean
-        existing: null      // existing submission record (when viewing/editing)
+        existing: null,     // existing submission record (when viewing/editing)
+        missingFields: {}   // fieldId -> { sectionId, label } (top-level only)
       };
 
       function toast(msg, kind) {
@@ -932,6 +1105,7 @@
         bindFieldHandlers();
         bindSectionHandlers();
         applyRequiredOnlyFilter();
+        applyMissingHighlights();
       }
 
       function bindFieldHandlers() {
@@ -1001,6 +1175,157 @@
         }
         // User edited a field — drop the imported badge for this field.
         if (state.importedFrom[fieldId]) delete state.importedFrom[fieldId];
+
+        // Clear the missing-required highlight if the field now has a value.
+        if (rowIdx == null && state.missingFields[fieldId] && !isEmpty(v)) {
+          var fieldEl = e.target.closest('.rp-field');
+          if (fieldEl) {
+            fieldEl.classList.remove('is-missing');
+            var tag = fieldEl.querySelector('.rp-required-tag');
+            if (tag) tag.remove();
+          }
+          var sectionId2 = state.missingFields[fieldId].sectionId;
+          delete state.missingFields[fieldId];
+          updateSidebarMissing(sectionId2);
+        }
+      }
+
+      function isEmpty(v) {
+        if (v == null) return true;
+        if (typeof v === 'string') return v.trim() === '';
+        if (Array.isArray(v)) return v.length === 0;
+        return false;
+      }
+
+      // ============================================================
+      // Missing-required validation: highlights + persistent tracking
+      // ============================================================
+      function computeMissing() {
+        var out = {};
+        if (!state.template) return out;
+        (state.template.sections || []).forEach(function (s) {
+          if (s.repeatable) return;
+          (s.fields || []).forEach(function (f) {
+            if (f.required && isEmpty(state.data[f.id])) {
+              out[f.id] = { sectionId: s.id, label: f.label || f.id };
+            }
+          });
+        });
+        return out;
+      }
+
+      function applyMissingHighlights() {
+        // Add red treatment to every field currently in state.missingFields,
+        // and update sidebar entries with red badges. Called after the
+        // user dismisses the validation modal, and re-applied after every
+        // full render so highlights survive structural redraws.
+        Object.keys(state.missingFields).forEach(function (fid) {
+          var info = state.missingFields[fid];
+          var input = document.querySelector('[data-field-key="' + cssEscape(info.sectionId) + '.' + cssEscape(fid) + '"]');
+          if (!input) return;
+          var fieldEl = input.closest('.rp-field');
+          if (!fieldEl) return;
+          fieldEl.classList.add('is-missing');
+          // Inject a small REQUIRED tag once.
+          var labelRow = fieldEl.querySelector('.rp-label');
+          if (labelRow && !labelRow.querySelector('.rp-required-tag')) {
+            var tag = document.createElement('span');
+            tag.className = 'rp-required-tag';
+            tag.innerHTML = '<i class="fa-solid fa-asterisk" style="font-size:0.55rem;"></i> Required';
+            labelRow.appendChild(tag);
+          }
+        });
+        // Re-paint sidebar for every section.
+        if (state.template) {
+          (state.template.sections || []).forEach(function (s) { updateSidebarMissing(s.id); });
+        }
+      }
+
+      function updateSidebarMissing(sectionId) {
+        var link = document.querySelector('.rp-side-link[data-jump="' + cssEscape(sectionId) + '"]');
+        if (!link) return;
+        var count = 0;
+        Object.keys(state.missingFields).forEach(function (fid) {
+          if (state.missingFields[fid].sectionId === sectionId) count++;
+        });
+        if (count > 0) {
+          link.classList.add('is-missing');
+          var pill = link.querySelector('.rp-pill');
+          if (pill) pill.textContent = String(count);
+          else {
+            var p = document.createElement('span');
+            p.className = 'rp-pill';
+            p.textContent = String(count);
+            link.appendChild(p);
+          }
+        } else {
+          link.classList.remove('is-missing');
+          // Restore the original required-count pill (from the template definition).
+          var sec = (state.template.sections || []).filter(function (s) { return s.id === sectionId; })[0];
+          var requiredHere = sec ? (sec.fields || []).filter(function (f) { return f.required; }).length : 0;
+          var pill2 = link.querySelector('.rp-pill');
+          if (requiredHere > 0) {
+            if (pill2) pill2.textContent = String(requiredHere);
+            else {
+              var p2 = document.createElement('span');
+              p2.className = 'rp-pill';
+              p2.textContent = String(requiredHere);
+              link.appendChild(p2);
+            }
+          } else if (pill2) {
+            pill2.remove();
+          }
+        }
+      }
+
+      // CSS.escape polyfill — safe selector substring escaping.
+      function cssEscape(s) {
+        if (window.CSS && window.CSS.escape) return window.CSS.escape(s);
+        return String(s).replace(/([\0-\x1f\x7f]|^-?\d|[\.\#\[\]\,\(\)\:\>\+\~\*\/\=\?\!\&\|\^\$\@\%\;\'\"])/g, '\\$1');
+      }
+
+      function openValidationModal(missing) {
+        var listEl = document.getElementById('rp-conf-list');
+        listEl.innerHTML = missing.map(function (m, i) {
+          var sectionTitle = '';
+          if (state.template) {
+            var sec = (state.template.sections || []).filter(function (s) { return s.id === m.sectionId; })[0];
+            sectionTitle = sec ? sec.title : m.sectionId;
+          }
+          return '<li class="rp-conf-item">' +
+            '<span class="rp-conf-item-num">' + (i + 1) + '.</span>' +
+            '<span class="rp-conf-item-label">' + escapeHTML(m.label) + '</span>' +
+            '<span class="rp-conf-item-section">' + escapeHTML(sectionTitle) + '</span>' +
+          '</li>';
+        }).join('');
+        document.getElementById('rp-conf').classList.add('open');
+      }
+
+      function closeValidationModal() {
+        document.getElementById('rp-conf').classList.remove('open');
+      }
+
+      function reviewAndFix() {
+        // Persist the missing list, close modal, paint highlights, scroll
+        // to + open the first one's section.
+        var missing = computeMissing();
+        state.missingFields = missing;
+        closeValidationModal();
+        applyMissingHighlights();
+        var keys = Object.keys(missing);
+        if (!keys.length) return;
+        var first = missing[keys[0]];
+        // Open its section if collapsed, then scroll into view + focus.
+        state.sectionState[first.sectionId] = true;
+        var secEl = document.querySelector('[data-section-id="' + cssEscape(first.sectionId) + '"]');
+        if (secEl) {
+          secEl.classList.add('open');
+          secEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        setTimeout(function () {
+          var input = document.querySelector('[data-field-key="' + cssEscape(first.sectionId) + '.' + cssEscape(keys[0]) + '"]');
+          if (input && typeof input.focus === 'function') input.focus({ preventScroll: true });
+        }, 350);
       }
 
       function applyRequiredOnlyFilter() {
@@ -1063,18 +1388,33 @@
       document.getElementById('rp-required-only').addEventListener('change', applyRequiredOnlyFilter);
       document.getElementById('rp-save-draft').addEventListener('click', function () { saveAs('draft'); });
       document.getElementById('rp-submit').addEventListener('click', function () {
-        // Minimal client-side required-fields gate.
-        var missing = [];
-        (state.template.sections || []).forEach(function (s) {
-          if (s.repeatable) return;
-          (s.fields || []).forEach(function (f) {
-            if (f.required && (state.data[f.id] == null || state.data[f.id] === '')) missing.push(f.label || f.id);
-          });
-        });
-        if (missing.length) {
-          if (!confirm('These required fields are empty:\n - ' + missing.join('\n - ') + '\n\nSubmit anyway?')) return;
+        var missingMap = computeMissing();
+        var keys = Object.keys(missingMap);
+        if (!keys.length) {
+          // All required fields filled — also clear any lingering highlights.
+          state.missingFields = {};
+          applyMissingHighlights();
+          saveAs('submitted');
+          return;
         }
+        var list = keys.map(function (k) { return { fieldId: k, sectionId: missingMap[k].sectionId, label: missingMap[k].label }; });
+        openValidationModal(list);
+      });
+
+      // Validation modal wiring
+      document.getElementById('rp-conf-x').addEventListener('click', reviewAndFix);
+      document.getElementById('rp-conf-fix').addEventListener('click', reviewAndFix);
+      document.getElementById('rp-conf-anyway').addEventListener('click', function () {
+        closeValidationModal();
         saveAs('submitted');
+      });
+      document.getElementById('rp-conf').addEventListener('mousedown', function (e) {
+        if (e.target === this) reviewAndFix();
+      });
+      document.addEventListener('keydown', function (e) {
+        var conf = document.getElementById('rp-conf');
+        if (!conf.classList.contains('open')) return;
+        if (e.key === 'Escape') { e.preventDefault(); reviewAndFix(); }
       });
       document.getElementById('rp-print').addEventListener('click', function () {
         if (state.existing && state.existing._id) {
