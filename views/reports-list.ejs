@@ -149,29 +149,238 @@
     .rp-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .rp-page-info { padding: 0.4rem 0.7rem; color: var(--rp-text-muted); font-size: 0.85rem; }
 
-    .rp-menu {
-      position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
-      background: var(--rp-bg);
-      border: 1px solid var(--rp-glass-border);
-      border-radius: var(--rp-radius);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-      min-width: 240px; max-height: 320px; overflow-y: auto;
-      padding: 0.35rem;
+    /* ============================================================
+       Template picker — command palette modal
+       ============================================================ */
+    .rp-cmd-mono {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-feature-settings: "tnum" 1;
     }
-    .rp-menu-empty { padding: 0.75rem 0.85rem; color: var(--rp-text-muted); font-size: 0.85rem; }
-    .rp-menu-link {
-      display: block; padding: 0.55rem 0.7rem; border-radius: var(--rp-radius-sm);
-      color: var(--rp-text); font-size: 0.85rem; text-decoration: none;
+    .rp-cmd-backdrop {
+      position: fixed; inset: 0; z-index: 40;
+      background: rgba(2, 4, 8, 0.55);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: flex; align-items: flex-start; justify-content: center;
+      padding-top: 12vh;
+      opacity: 0; pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .rp-cmd-backdrop.open { opacity: 1; pointer-events: auto; }
+    .rp-cmd-panel {
+      position: relative;
+      width: min(620px, calc(100vw - 2rem));
+      max-height: min(620px, 70vh);
+      display: flex; flex-direction: column;
+      background: linear-gradient(180deg, rgba(20, 22, 28, 0.96) 0%, rgba(10, 12, 18, 0.96) 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      box-shadow: 0 24px 60px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(56,189,248,0.04);
+      overflow: hidden;
+      transform: translateY(8px) scale(0.97);
+      opacity: 0;
+      transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), opacity 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rp-cmd-backdrop.open .rp-cmd-panel { transform: translateY(0) scale(1); opacity: 1; }
+
+    .rp-cmd-search-wrap {
+      position: relative;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .rp-cmd-search-icon {
+      position: absolute; left: 1.05rem; top: 50%; transform: translateY(-50%);
+      color: var(--rp-text-dim); font-size: 0.95rem;
+      pointer-events: none;
+      transition: color 160ms ease;
+    }
+    .rp-cmd-search-wrap.focused .rp-cmd-search-icon { color: var(--rp-accent); }
+    .rp-cmd-search {
+      width: 100%;
+      background: transparent; border: 0; outline: 0;
+      color: var(--rp-text);
+      font-family: inherit; font-size: 1rem; font-weight: 400;
+      padding: 1.05rem 1rem 1.05rem 2.85rem;
+      letter-spacing: -0.005em;
+    }
+    .rp-cmd-search::placeholder { color: var(--rp-text-dim); }
+    .rp-cmd-search-clear {
+      position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%);
+      width: 24px; height: 24px; border-radius: 6px;
+      background: transparent; border: 0; cursor: pointer;
+      color: var(--rp-text-dim); font-size: 0.75rem;
+      display: none; align-items: center; justify-content: center;
+    }
+    .rp-cmd-search-clear:hover { background: rgba(255,255,255,0.06); color: var(--rp-text); }
+    .rp-cmd-search-wrap.has-value .rp-cmd-search-clear { display: flex; }
+
+    .rp-cmd-results {
+      flex: 1; min-height: 0;
+      overflow-y: auto; overscroll-behavior: contain;
+      padding: 0.4rem 0.4rem 0.5rem;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+    }
+    .rp-cmd-results::-webkit-scrollbar { width: 8px; }
+    .rp-cmd-results::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    .rp-cmd-results::-webkit-scrollbar-track { background: transparent; }
+
+    .rp-cmd-group-label {
+      font-size: 0.65rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--rp-text-dim);
+      padding: 0.85rem 0.85rem 0.4rem;
+    }
+
+    .rp-cmd-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: 36px 1fr auto;
+      gap: 0.75rem;
+      align-items: center;
+      padding: 0.65rem 0.85rem;
+      border-radius: 10px;
       cursor: pointer;
+      color: var(--rp-text);
+      text-decoration: none;
+      transition: background-color 120ms ease;
     }
-    .rp-menu-link:hover { background: var(--rp-glass-hover); }
-    .rp-menu-link .rp-menu-sub { display: block; font-size: 0.72rem; color: var(--rp-text-muted); margin-top: 0.15rem; }
-    .rp-menu-link .rp-pill {
-      margin-left: 0.4rem; vertical-align: middle;
-      padding: 0.05rem 0.4rem;
-      background: rgba(56,189,248,0.1); color: var(--rp-accent);
-      border: 1px solid rgba(56,189,248,0.25); border-radius: 999px;
-      font-size: 0.6rem; font-weight: 700;
+    .rp-cmd-row::before {
+      content: "";
+      position: absolute; left: 0; top: 50%;
+      width: 2px; height: 0;
+      background: var(--rp-accent);
+      border-radius: 0 2px 2px 0;
+      transform: translateY(-50%);
+      transition: height 160ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rp-cmd-row:hover { background: rgba(255,255,255,0.035); }
+    .rp-cmd-row.active {
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .rp-cmd-row.active::before { height: 70%; }
+
+    .rp-cmd-icon {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--rp-text-secondary);
+      font-size: 0.95rem;
+    }
+    .rp-cmd-row.active .rp-cmd-icon {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: var(--rp-accent);
+    }
+
+    .rp-cmd-body { min-width: 0; }
+    .rp-cmd-name-row {
+      display: flex; align-items: center; gap: 0.45rem;
+      font-size: 0.92rem; font-weight: 500;
+      color: var(--rp-text);
+      letter-spacing: -0.005em;
+      line-height: 1.2;
+    }
+    .rp-cmd-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .rp-cmd-name mark {
+      background: rgba(56, 189, 248, 0.18);
+      color: var(--rp-text);
+      padding: 0 1px; border-radius: 2px;
+      font-weight: 600;
+    }
+    .rp-cmd-default-pill {
+      flex-shrink: 0;
+      padding: 0.06rem 0.4rem;
+      border-radius: 999px;
+      font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--rp-accent);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+    .rp-cmd-desc {
+      margin-top: 0.18rem;
+      font-size: 0.78rem;
+      color: var(--rp-text-muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      line-height: 1.3;
+    }
+
+    .rp-cmd-meta {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.7rem;
+      color: var(--rp-text-dim);
+      flex-shrink: 0;
+    }
+    .rp-cmd-meta-count {
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      letter-spacing: 0.02em;
+    }
+    .rp-cmd-meta-enter {
+      width: 22px; height: 22px;
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--rp-accent);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      font-size: 0.7rem; font-weight: 600;
+      opacity: 0; transform: scale(0.85);
+      transition: opacity 140ms ease, transform 140ms ease;
+    }
+    .rp-cmd-row.active .rp-cmd-meta-enter { opacity: 1; transform: scale(1); }
+
+    .rp-cmd-empty {
+      padding: 2.5rem 1.25rem 2rem;
+      text-align: center;
+      color: var(--rp-text-muted);
+    }
+    .rp-cmd-empty-icon {
+      width: 44px; height: 44px;
+      margin: 0 auto 0.85rem;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--rp-text-dim); font-size: 1.05rem;
+    }
+    .rp-cmd-empty-title {
+      color: var(--rp-text);
+      font-weight: 600; font-size: 0.95rem;
+      margin-bottom: 0.3rem;
+    }
+    .rp-cmd-empty-sub { font-size: 0.82rem; line-height: 1.5; }
+    .rp-cmd-empty-sub a { color: var(--rp-accent); text-decoration: none; font-weight: 500; }
+    .rp-cmd-empty-sub a:hover { text-decoration: underline; }
+
+    .rp-cmd-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.55rem 0.85rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.18);
+      font-size: 0.7rem;
+      color: var(--rp-text-dim);
+    }
+    .rp-cmd-footer-count { letter-spacing: 0.01em; }
+    .rp-cmd-footer-count strong { color: var(--rp-text-secondary); font-weight: 500; }
+    .rp-cmd-hints { display: flex; gap: 0.85rem; }
+    .rp-cmd-hint { display: inline-flex; align-items: center; gap: 0.3rem; }
+    .rp-cmd-kbd {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 18px;
+      padding: 0 4px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-bottom-color: rgba(255,255,255,0.14);
+      color: var(--rp-text-secondary);
+      font-size: 0.65rem; font-weight: 600;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .rp-cmd-backdrop, .rp-cmd-panel, .rp-cmd-meta-enter, .rp-cmd-row::before { transition: none; }
     }
   </style>
 </head>
@@ -187,10 +396,9 @@
           </div>
         </div>
       </div>
-      <div style="display:flex; gap:0.5rem; position: relative;">
+      <div style="display:flex; gap:0.5rem;">
         <a href="#" id="rp-back" class="rp-back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
         <button id="rp-new" class="rp-btn rp-btn-primary" type="button"><i class="fa-solid fa-plus"></i> New Report <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; margin-left: 0.25rem;"></i></button>
-        <div id="rp-new-menu" class="rp-menu" style="display:none;"></div>
       </div>
     </div>
 
@@ -211,6 +419,29 @@
     <div id="rp-list" class="rp-list"></div>
 
     <div id="rp-pagination" class="rp-pagination"></div>
+  </div>
+
+  <!-- Template picker — command palette modal -->
+  <div id="rp-cmd" class="rp-cmd-backdrop" role="dialog" aria-modal="true" aria-label="Pick a report template">
+    <div class="rp-cmd-panel" role="document">
+      <div class="rp-cmd-search-wrap" id="rp-cmd-search-wrap">
+        <i class="fa-solid fa-magnifying-glass rp-cmd-search-icon"></i>
+        <input id="rp-cmd-input" class="rp-cmd-search" type="text" autocomplete="off" spellcheck="false"
+               placeholder="Search forms by name or description…" aria-label="Search templates" />
+        <button id="rp-cmd-clear" class="rp-cmd-search-clear" type="button" aria-label="Clear search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="rp-cmd-results" class="rp-cmd-results" role="listbox" aria-label="Templates"></div>
+      <div class="rp-cmd-footer">
+        <div class="rp-cmd-footer-count" id="rp-cmd-count"></div>
+        <div class="rp-cmd-hints">
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">↑</span><span class="rp-cmd-kbd">↓</span> navigate</span>
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">↵</span> open</span>
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">esc</span> close</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -248,27 +479,225 @@
               opt.value = t.slug; opt.textContent = t.name;
               sel.appendChild(opt);
             });
-            renderNewMenu();
             return templates;
           })
           .catch(function () { return []; });
       }
 
-      function renderNewMenu() {
-        var menu = document.getElementById('rp-new-menu');
-        if (!templates.length) {
-          menu.innerHTML = '<div class="rp-menu-empty">No forms available. Ask an admin to enable one in <a href="/community/' + encodeURIComponent(communityIdEncoded) + '/forms" style="color: var(--rp-accent);">Community → Forms</a>.</div>';
+      // ============================================================
+      // Template picker — command palette
+      // ============================================================
+      var cmd = {
+        backdrop: null, input: null, results: null, count: null, searchWrap: null, clearBtn: null,
+        query: '', activeIdx: 0, flat: [], renderCache: null,
+      };
+
+      function buildCmdElements() {
+        cmd.backdrop = document.getElementById('rp-cmd');
+        cmd.input = document.getElementById('rp-cmd-input');
+        cmd.results = document.getElementById('rp-cmd-results');
+        cmd.count = document.getElementById('rp-cmd-count');
+        cmd.searchWrap = document.getElementById('rp-cmd-search-wrap');
+        cmd.clearBtn = document.getElementById('rp-cmd-clear');
+      }
+
+      function openCmd() {
+        if (!cmd.backdrop) buildCmdElements();
+        cmd.query = '';
+        cmd.input.value = '';
+        cmd.searchWrap.classList.remove('has-value');
+        cmd.activeIdx = 0;
+        renderCmd();
+        cmd.backdrop.classList.add('open');
+        // Focus input after the entrance transition has begun.
+        setTimeout(function () { cmd.input.focus(); }, 30);
+      }
+
+      function closeCmd() {
+        if (!cmd.backdrop) return;
+        cmd.backdrop.classList.remove('open');
+      }
+
+      function navigateToTemplate(slug) {
+        var qs = communityIdEncoded ? '&c=' + communityIdEncoded : '';
+        window.location.href = '/reports/new?slug=' + encodeURIComponent(slug) + qs;
+      }
+
+      // Case-insensitive substring scoring. Name match outranks description match;
+      // earlier match position outranks later. Falls back to alphabetical name order.
+      function scoreTemplate(t, q) {
+        if (!q) return 0;
+        var name = String(t.name || '').toLowerCase();
+        var desc = String(t.description || '').toLowerCase();
+        var ni = name.indexOf(q);
+        if (ni !== -1) return 1000 - ni;
+        var di = desc.indexOf(q);
+        if (di !== -1) return 500 - di;
+        return -1;
+      }
+
+      function filteredTemplates() {
+        var q = cmd.query.trim().toLowerCase();
+        if (!q) {
+          var copy = templates.slice();
+          copy.sort(function (a, b) {
+            // Defaults first, then alphabetical.
+            if (!!a.isDefault !== !!b.isDefault) return a.isDefault ? -1 : 1;
+            return (a.name || '').localeCompare(b.name || '');
+          });
+          return copy;
+        }
+        var scored = [];
+        templates.forEach(function (t) {
+          var s = scoreTemplate(t, q);
+          if (s >= 0) scored.push({ t: t, s: s });
+        });
+        scored.sort(function (a, b) {
+          if (b.s !== a.s) return b.s - a.s;
+          return (a.t.name || '').localeCompare(b.t.name || '');
+        });
+        return scored.map(function (x) { return x.t; });
+      }
+
+      // Wraps every case-insensitive occurrence of `q` in <mark>. Escapes safely.
+      function highlightMatch(text, q) {
+        var src = String(text == null ? '' : text);
+        if (!q) return escapeHTML(src);
+        var lower = src.toLowerCase();
+        var qLower = q.toLowerCase();
+        var out = '';
+        var i = 0;
+        while (i < src.length) {
+          var idx = lower.indexOf(qLower, i);
+          if (idx === -1) { out += escapeHTML(src.slice(i)); break; }
+          out += escapeHTML(src.slice(i, idx));
+          out += '<mark>' + escapeHTML(src.slice(idx, idx + q.length)) + '</mark>';
+          i = idx + q.length;
+        }
+        return out;
+      }
+
+      function renderCmd() {
+        var q = cmd.query.trim();
+        var list = filteredTemplates();
+        cmd.flat = list;
+
+        // Empty state when the community has zero templates available at all.
+        if (templates.length === 0) {
+          cmd.results.innerHTML =
+            '<div class="rp-cmd-empty">' +
+              '<div class="rp-cmd-empty-icon"><i class="fa-regular fa-folder-open"></i></div>' +
+              '<div class="rp-cmd-empty-title">No forms enabled yet</div>' +
+              '<div class="rp-cmd-empty-sub">' +
+                'This community has no defaults visible and no custom forms created. ' +
+                'Open <a href="/community/' + encodeURIComponent(communityIdEncoded) + '/forms">Forms admin</a> to create or restore one.' +
+              '</div>' +
+            '</div>';
+          cmd.count.innerHTML = '';
           return;
         }
-        var qs = communityIdEncoded ? '&c=' + communityIdEncoded : '';
-        menu.innerHTML = templates.map(function (t) {
-          var sectionsCount = (t.sections || []).length;
-          var defaultPill = t.isDefault ? '<span class="rp-pill">Default</span>' : '';
-          return '<a class="rp-menu-link" href="/reports/new?slug=' + encodeURIComponent(t.slug) + qs + '">' +
-            escapeHTML(t.name) + defaultPill +
-            (t.description ? '<span class="rp-menu-sub">' + escapeHTML(t.description) + '</span>' : '<span class="rp-menu-sub">' + sectionsCount + ' section' + (sectionsCount === 1 ? '' : 's') + '</span>') +
-          '</a>';
-        }).join('');
+
+        // Empty state when search filtered everything out.
+        if (list.length === 0) {
+          cmd.results.innerHTML =
+            '<div class="rp-cmd-empty">' +
+              '<div class="rp-cmd-empty-icon"><i class="fa-regular fa-circle-question"></i></div>' +
+              '<div class="rp-cmd-empty-title">No forms match "' + escapeHTML(q) + '"</div>' +
+              '<div class="rp-cmd-empty-sub">' +
+                'Try a different search, or <a href="/community/' + encodeURIComponent(communityIdEncoded) + '/forms">create a new form</a>.' +
+              '</div>' +
+            '</div>';
+          cmd.count.innerHTML = '<strong>0</strong> of ' + templates.length + ' forms';
+          return;
+        }
+
+        if (cmd.activeIdx >= list.length) cmd.activeIdx = 0;
+
+        // When there's no search query, group defaults vs custom for scannability.
+        var html = '';
+        var startIdx = 0;
+        if (!q) {
+          var defaults = list.filter(function (t) { return t.isDefault; });
+          var customs = list.filter(function (t) { return !t.isDefault; });
+          if (defaults.length && customs.length) {
+            html += '<div class="rp-cmd-group-label">Built-in</div>';
+            html += defaults.map(function (t, i) { return rowHTML(t, startIdx + i, q); }).join('');
+            startIdx += defaults.length;
+            html += '<div class="rp-cmd-group-label">Custom</div>';
+            html += customs.map(function (t, i) { return rowHTML(t, startIdx + i, q); }).join('');
+          } else {
+            html += list.map(function (t, i) { return rowHTML(t, i, q); }).join('');
+          }
+        } else {
+          html += list.map(function (t, i) { return rowHTML(t, i, q); }).join('');
+        }
+
+        cmd.results.innerHTML = html;
+        cmd.count.innerHTML = '<strong>' + list.length + '</strong> of ' + templates.length + ' forms';
+
+        bindRowHandlers();
+        scrollActiveIntoView();
+      }
+
+      function rowHTML(t, idx, q) {
+        var sectionsCount = (t.sections || []).length;
+        var sectionsLabel = sectionsCount + ' section' + (sectionsCount === 1 ? '' : 's');
+        var iconName = t.isDefault ? 'fa-shield-halved' : 'fa-file-lines';
+        return '<a class="rp-cmd-row' + (idx === cmd.activeIdx ? ' active' : '') + '"' +
+                ' role="option"' +
+                ' data-idx="' + idx + '"' +
+                ' data-slug="' + escapeHTML(t.slug) + '"' +
+                ' href="#">' +
+          '<div class="rp-cmd-icon"><i class="fa-solid ' + iconName + '"></i></div>' +
+          '<div class="rp-cmd-body">' +
+            '<div class="rp-cmd-name-row">' +
+              '<span class="rp-cmd-name">' + highlightMatch(t.name, q) + '</span>' +
+              (t.isDefault ? '<span class="rp-cmd-default-pill">Default</span>' : '') +
+            '</div>' +
+            (t.description
+              ? '<div class="rp-cmd-desc">' + highlightMatch(t.description, q) + '</div>'
+              : '<div class="rp-cmd-desc">' + sectionsLabel + '</div>'
+            ) +
+          '</div>' +
+          '<div class="rp-cmd-meta">' +
+            (t.description ? '<span class="rp-cmd-meta-count rp-cmd-mono">' + sectionsCount + '</span>' : '') +
+            '<span class="rp-cmd-meta-enter rp-cmd-mono">↵</span>' +
+          '</div>' +
+        '</a>';
+      }
+
+      function bindRowHandlers() {
+        Array.from(cmd.results.querySelectorAll('.rp-cmd-row')).forEach(function (row) {
+          row.addEventListener('click', function (e) {
+            e.preventDefault();
+            navigateToTemplate(row.getAttribute('data-slug'));
+          });
+          row.addEventListener('mousemove', function () {
+            var idx = parseInt(row.getAttribute('data-idx'), 10);
+            if (idx === cmd.activeIdx) return;
+            cmd.activeIdx = idx;
+            updateActiveRow();
+          });
+        });
+      }
+
+      function updateActiveRow() {
+        Array.from(cmd.results.querySelectorAll('.rp-cmd-row')).forEach(function (row) {
+          var idx = parseInt(row.getAttribute('data-idx'), 10);
+          row.classList.toggle('active', idx === cmd.activeIdx);
+        });
+        scrollActiveIntoView();
+      }
+
+      function scrollActiveIntoView() {
+        var active = cmd.results.querySelector('.rp-cmd-row.active');
+        if (!active) return;
+        var rTop = active.offsetTop;
+        var rBottom = rTop + active.offsetHeight;
+        var sTop = cmd.results.scrollTop;
+        var sBottom = sTop + cmd.results.clientHeight;
+        if (rTop < sTop) cmd.results.scrollTop = rTop - 8;
+        else if (rBottom > sBottom) cmd.results.scrollTop = rBottom - cmd.results.clientHeight + 8;
       }
 
       function templateName(slug) {
@@ -399,18 +828,56 @@
         }
       });
 
-      // New Report dropdown: toggle the template menu. Click outside closes it.
+      // New Report → command palette
+      buildCmdElements();
       var newBtn = document.getElementById('rp-new');
-      var newMenu = document.getElementById('rp-new-menu');
       newBtn.addEventListener('click', function (e) {
         e.stopPropagation();
-        newMenu.style.display = newMenu.style.display === 'none' ? 'block' : 'none';
+        openCmd();
       });
-      document.addEventListener('click', function (e) {
-        if (newMenu.style.display !== 'none' && !newMenu.contains(e.target) && e.target !== newBtn) {
-          newMenu.style.display = 'none';
+
+      // Click outside the panel (i.e. on the backdrop) closes the modal.
+      cmd.backdrop.addEventListener('mousedown', function (e) {
+        if (e.target === cmd.backdrop) closeCmd();
+      });
+
+      cmd.input.addEventListener('input', function (e) {
+        cmd.query = e.target.value;
+        cmd.activeIdx = 0;
+        cmd.searchWrap.classList.toggle('has-value', cmd.query.length > 0);
+        renderCmd();
+      });
+      cmd.input.addEventListener('focus', function () { cmd.searchWrap.classList.add('focused'); });
+      cmd.input.addEventListener('blur', function () { cmd.searchWrap.classList.remove('focused'); });
+
+      cmd.clearBtn.addEventListener('click', function () {
+        cmd.input.value = '';
+        cmd.query = '';
+        cmd.activeIdx = 0;
+        cmd.searchWrap.classList.remove('has-value');
+        renderCmd();
+        cmd.input.focus();
+      });
+
+      // Keyboard nav while the modal is open. Listening on the input is enough
+      // because we focus it when opening; capture-phase document listener
+      // catches Esc when something else inside the modal has focus.
+      function onCmdKey(e) {
+        if (!cmd.backdrop.classList.contains('open')) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeCmd(); return; }
+        if (e.key === 'ArrowDown') { e.preventDefault(); if (cmd.flat.length) { cmd.activeIdx = (cmd.activeIdx + 1) % cmd.flat.length; updateActiveRow(); } return; }
+        if (e.key === 'ArrowUp') { e.preventDefault(); if (cmd.flat.length) { cmd.activeIdx = (cmd.activeIdx - 1 + cmd.flat.length) % cmd.flat.length; updateActiveRow(); } return; }
+        if (e.key === 'Home') { e.preventDefault(); cmd.activeIdx = 0; updateActiveRow(); return; }
+        if (e.key === 'End') { e.preventDefault(); cmd.activeIdx = Math.max(0, cmd.flat.length - 1); updateActiveRow(); return; }
+        if (e.key === 'Enter') {
+          if (!cmd.flat.length) return;
+          e.preventDefault();
+          var t = cmd.flat[cmd.activeIdx];
+          if (t) navigateToTemplate(t.slug);
+          return;
         }
-      });
+      }
+      document.addEventListener('keydown', onCmdKey);
 
       document.getElementById('rp-filter-template').addEventListener('change', function (e) { state.templateSlug = e.target.value; state.page = 0; loadList(); });
       document.getElementById('rp-filter-status').addEventListener('change', function (e) { state.status = e.target.value; state.page = 0; loadList(); });
