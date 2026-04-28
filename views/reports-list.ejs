@@ -148,6 +148,31 @@
     .rp-page-btn:hover:not(:disabled) { background: var(--rp-surface); color: #fff; }
     .rp-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .rp-page-info { padding: 0.4rem 0.7rem; color: var(--rp-text-muted); font-size: 0.85rem; }
+
+    .rp-menu {
+      position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
+      background: var(--rp-bg);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      min-width: 240px; max-height: 320px; overflow-y: auto;
+      padding: 0.35rem;
+    }
+    .rp-menu-empty { padding: 0.75rem 0.85rem; color: var(--rp-text-muted); font-size: 0.85rem; }
+    .rp-menu-link {
+      display: block; padding: 0.55rem 0.7rem; border-radius: var(--rp-radius-sm);
+      color: var(--rp-text); font-size: 0.85rem; text-decoration: none;
+      cursor: pointer;
+    }
+    .rp-menu-link:hover { background: var(--rp-glass-hover); }
+    .rp-menu-link .rp-menu-sub { display: block; font-size: 0.72rem; color: var(--rp-text-muted); margin-top: 0.15rem; }
+    .rp-menu-link .rp-pill {
+      margin-left: 0.4rem; vertical-align: middle;
+      padding: 0.05rem 0.4rem;
+      background: rgba(56,189,248,0.1); color: var(--rp-accent);
+      border: 1px solid rgba(56,189,248,0.25); border-radius: 999px;
+      font-size: 0.6rem; font-weight: 700;
+    }
   </style>
 </head>
 <body>
@@ -162,9 +187,10 @@
           </div>
         </div>
       </div>
-      <div style="display:flex; gap:0.5rem;">
+      <div style="display:flex; gap:0.5rem; position: relative;">
         <a href="#" id="rp-back" class="rp-back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
-        <a href="/reports/new?slug=incident-report<% if (typeof communityIdEncoded !== 'undefined' && communityIdEncoded) { %>&c=<%= communityIdEncoded %><% } %>" class="rp-btn rp-btn-primary"><i class="fa-solid fa-plus"></i> New Report</a>
+        <button id="rp-new" class="rp-btn rp-btn-primary" type="button"><i class="fa-solid fa-plus"></i> New Report <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; margin-left: 0.25rem;"></i></button>
+        <div id="rp-new-menu" class="rp-menu" style="display:none;"></div>
       </div>
     </div>
 
@@ -215,16 +241,34 @@
         return fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId), { headers: authHeaders() })
           .then(function (r) { return r.ok ? r.json() : { data: [] }; })
           .then(function (j) {
-            templates = (j && j.data) || [];
+            templates = ((j && j.data) || []).filter(function (t) { return !t.isArchived && !t.isHidden; });
             var sel = document.getElementById('rp-filter-template');
             templates.forEach(function (t) {
               var opt = document.createElement('option');
               opt.value = t.slug; opt.textContent = t.name;
               sel.appendChild(opt);
             });
+            renderNewMenu();
             return templates;
           })
           .catch(function () { return []; });
+      }
+
+      function renderNewMenu() {
+        var menu = document.getElementById('rp-new-menu');
+        if (!templates.length) {
+          menu.innerHTML = '<div class="rp-menu-empty">No forms available. Ask an admin to enable one in <a href="/community/' + encodeURIComponent(communityIdEncoded) + '/forms" style="color: var(--rp-accent);">Community → Forms</a>.</div>';
+          return;
+        }
+        var qs = communityIdEncoded ? '&c=' + communityIdEncoded : '';
+        menu.innerHTML = templates.map(function (t) {
+          var sectionsCount = (t.sections || []).length;
+          var defaultPill = t.isDefault ? '<span class="rp-pill">Default</span>' : '';
+          return '<a class="rp-menu-link" href="/reports/new?slug=' + encodeURIComponent(t.slug) + qs + '">' +
+            escapeHTML(t.name) + defaultPill +
+            (t.description ? '<span class="rp-menu-sub">' + escapeHTML(t.description) + '</span>' : '<span class="rp-menu-sub">' + sectionsCount + ' section' + (sectionsCount === 1 ? '' : 's') + '</span>') +
+          '</a>';
+        }).join('');
       }
 
       function templateName(slug) {
@@ -337,6 +381,19 @@
           window.history.back();
         } else {
           window.location.href = '/communities';
+        }
+      });
+
+      // New Report dropdown: toggle the template menu. Click outside closes it.
+      var newBtn = document.getElementById('rp-new');
+      var newMenu = document.getElementById('rp-new-menu');
+      newBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        newMenu.style.display = newMenu.style.display === 'none' ? 'block' : 'none';
+      });
+      document.addEventListener('click', function (e) {
+        if (newMenu.style.display !== 'none' && !newMenu.contains(e.target) && e.target !== newBtn) {
+          newMenu.style.display = 'none';
         }
       });
 
