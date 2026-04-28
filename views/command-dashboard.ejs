@@ -492,6 +492,10 @@
           Notifications
           <span class="cd-nav-badge" id="dd-notif-count" style="display:none;">0</span>
         </a>
+        <a class="cd-nav-item" id="cd-nav-case-search" onclick="window.cdOpenCaseSearch && window.cdOpenCaseSearch()" style="cursor:pointer;">
+          <i class="fa fa-magnifying-glass"></i>
+          Case Search
+        </a>
         <a class="cd-nav-item" id="dd-nav-settings" data-panel="departmentSettings" onclick="window.ddNavTo && window.ddNavTo('departmentSettings')" style="cursor:pointer;">
           <i class="fa fa-gear"></i>
           Settings
@@ -559,6 +563,30 @@
         <p class="dd-modal-detail" id="dd-modal-detail"></p>
       </div>
       <div class="dd-modal-footer" id="dd-modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- ======== Case Search Modal ======== -->
+  <div class="dd-modal-overlay" id="cd-case-search-overlay">
+    <div class="dd-modal" id="cd-case-search-modal" style="max-width:640px;width:100%;">
+      <div class="dd-modal-header">
+        <h3><i class="fa fa-magnifying-glass" style="color:var(--cd-accent);"></i> Case Search</h3>
+        <button class="dd-modal-close" id="cd-case-search-close"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="dd-modal-body" style="padding:1rem 1.25rem;">
+        <div style="position:relative;margin-bottom:0.75rem;">
+          <i class="fa fa-magnifying-glass" style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:var(--cd-text-dim);font-size:0.85rem;pointer-events:none;"></i>
+          <input id="cd-case-search-input" type="text" autocomplete="off"
+                 placeholder="Search by case number (CC-YYYY-NNNNNN) or civilian name…"
+                 style="width:100%;background:var(--cd-glass);border:1px solid var(--cd-glass-border);border-radius:var(--cd-radius-sm);color:#fff;font-family:'Outfit',sans-serif;font-size:0.9rem;padding:0.7rem 0.9rem 0.7rem 2.4rem;outline:none;">
+        </div>
+        <div id="cd-case-search-results" style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;">
+          <div style="padding:1.5rem;text-align:center;color:var(--cd-text-dim);font-size:0.85rem;">
+            <i class="fa fa-magnifying-glass" style="display:block;font-size:1.5rem;margin-bottom:0.5rem;opacity:0.4;"></i>
+            Type to search court cases.
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1619,6 +1647,104 @@
     $(document).on('click', '#dd-modal-close', function() { var cb = ddModalCallback; ddCloseModal(); if (cb) cb(); });
     $(document).on('click', '#dd-modal-overlay', function(e) { if (e.target === this) { var cb = ddModalCallback; ddCloseModal(); if (cb) cb(); } });
     $(document).on('keydown', function(e) { if (e.key === 'Escape' && $('#dd-modal-overlay').hasClass('visible')) { var cb = ddModalCallback; ddCloseModal(); if (cb) cb(); } });
+
+    // ══════════════════════════════════════════
+    //  CASE SEARCH MODAL
+    // ══════════════════════════════════════════
+    var caseSearchTimer = null;
+
+    window.cdOpenCaseSearch = function() {
+      $('#cd-case-search-overlay').addClass('visible');
+      setTimeout(function() { $('#cd-case-search-input').trigger('focus'); }, 50);
+    };
+
+    function cdCloseCaseSearch() {
+      $('#cd-case-search-overlay').removeClass('visible');
+    }
+
+    $(document).on('click', '#cd-case-search-close', cdCloseCaseSearch);
+    $(document).on('click', '#cd-case-search-overlay', function(e) {
+      if (e.target === this) cdCloseCaseSearch();
+    });
+    $(document).on('keydown', function(e) {
+      if (e.key === 'Escape' && $('#cd-case-search-overlay').hasClass('visible')) cdCloseCaseSearch();
+    });
+
+    $(document).on('input', '#cd-case-search-input', function() {
+      var q = $(this).val();
+      clearTimeout(caseSearchTimer);
+      caseSearchTimer = setTimeout(function() { runCaseSearch(q); }, 250);
+    });
+
+    function runCaseSearch(rawQuery) {
+      var query = (rawQuery || '').trim();
+      var $results = $('#cd-case-search-results');
+      if (!query) {
+        $results.html(
+          '<div style="padding:1.5rem;text-align:center;color:var(--cd-text-dim);font-size:0.85rem;">' +
+            '<i class="fa fa-magnifying-glass" style="display:block;font-size:1.5rem;margin-bottom:0.5rem;opacity:0.4;"></i>' +
+            'Type to search court cases.' +
+          '</div>');
+        return;
+      }
+      if (!communityId || !userId) {
+        $results.html('<div style="padding:1rem;text-align:center;color:var(--cd-red);font-size:0.85rem;">Missing community or user context.</div>');
+        return;
+      }
+      $results.html('<div class="cd-spinner" style="padding:2rem 0;"></div>');
+
+      var payload = { query: query, communityId: communityId, userId: userId, page: 0, limit: 25 };
+
+      $.ajax({
+        url: API_URL + '/api/v2/court-cases/search',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function(resp) { renderCaseSearchResults(resp.data || []); },
+        error: function(xhr) {
+          if (xhr.status === 403) {
+            $results.html('<div style="padding:1rem;text-align:center;color:var(--cd-text-muted);font-size:0.85rem;"><i class="fa fa-ban" style="margin-right:0.4rem;"></i>You don\'t have access to search cases in this community.</div>');
+          } else {
+            $results.html('<div style="padding:1rem;text-align:center;color:var(--cd-red);font-size:0.85rem;">Search failed.</div>');
+          }
+        }
+      });
+    }
+
+    function renderCaseSearchResults(results) {
+      var $results = $('#cd-case-search-results');
+      if (!results.length) {
+        $results.html('<div style="padding:1.5rem;text-align:center;color:var(--cd-text-dim);font-size:0.85rem;">No cases match.</div>');
+        return;
+      }
+      var html = results.map(function(c) {
+        var d = c.courtCase || c.details || c;
+        var caseId = c._id || '';
+        var caseNumber = d.caseNumber || '';
+        var civilianName = d.civilianName || 'Unknown Civilian';
+        var status = (d.status || 'submitted').replace('_', ' ');
+        var dateStr = d.createdAt ? new Date(d.createdAt).toLocaleDateString() : '';
+        var itemCount = (d.contestedItems || []).length;
+        return '<a href="/court-cases?c=' + encodeURIComponent(communityId) + '&caseId=' + encodeURIComponent(caseId) + '"' +
+               ' style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.875rem;background:var(--cd-glass);border:1px solid var(--cd-glass-border);border-radius:var(--cd-radius-sm);text-decoration:none;color:var(--cd-text);transition:border-color 0.15s,background 0.15s;"' +
+               ' onmouseover="this.style.borderColor=\'rgba(56,189,248,0.3)\';this.style.background=\'var(--cd-glass-hover)\';"' +
+               ' onmouseout="this.style.borderColor=\'var(--cd-glass-border)\';this.style.background=\'var(--cd-glass)\';">' +
+                 '<div style="flex:1;min-width:0;">' +
+                   '<div style="font-weight:600;font-size:0.875rem;margin-bottom:0.2rem;">' +
+                     (caseNumber ? '<span style="font-family:JetBrains Mono,ui-monospace,monospace;font-size:0.72rem;font-weight:600;color:var(--cd-accent);background:var(--cd-accent-glow);border:1px solid rgba(56,189,248,0.18);padding:0.1rem 0.4rem;border-radius:4px;margin-right:0.4rem;">' + esc(caseNumber) + '</span>' : '') +
+                     esc(civilianName) +
+                   '</div>' +
+                   '<div style="font-size:0.75rem;color:var(--cd-text-muted);display:flex;gap:0.6rem;flex-wrap:wrap;">' +
+                     '<span><i class="fa fa-circle-info" style="margin-right:0.2rem;"></i>' + esc(status) + '</span>' +
+                     '<span><i class="fa fa-file-lines" style="margin-right:0.2rem;"></i>' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + '</span>' +
+                     (dateStr ? '<span><i class="fa fa-clock" style="margin-right:0.2rem;"></i>' + esc(dateStr) + '</span>' : '') +
+                   '</div>' +
+                 '</div>' +
+                 '<i class="fa fa-arrow-right" style="color:var(--cd-text-dim);font-size:0.75rem;"></i>' +
+               '</a>';
+      }).join('');
+      $results.html(html);
+    }
 
     // ══════════════════════════════════════════
     //  DEPARTMENT ACCESS MODAL

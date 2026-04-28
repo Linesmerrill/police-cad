@@ -18,11 +18,26 @@ jobs:
         with:
           path: police-cad
 
+      - name: Resolve police-cad-api branch
+        id: api-branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          if [ -n "$HEAD_REF" ] && gh api "repos/Linesmerrill/police-cad-api/branches/$HEAD_REF" >/dev/null 2>&1; then
+            echo "ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
+            echo "Using matching police-cad-api branch: $HEAD_REF"
+          else
+            echo "ref=main" >> "$GITHUB_OUTPUT"
+            echo "No matching police-cad-api branch for '$HEAD_REF', using main"
+          fi
+
       - name: Checkout police-cad-api
         uses: actions/checkout@v4
         with:
           repository: Linesmerrill/police-cad-api
           path: police-cad-api
+          ref: ${{ steps.api-branch.outputs.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start test services (MongoDB + API)
