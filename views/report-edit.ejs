@@ -854,30 +854,40 @@
       }
 
       // --- load template + (optionally) existing submission ---
+      //
+      // When viewing an existing submission, the submission record is
+      // authoritative on which template to render — the URL-provided slug
+      // is only a fallback for the new-report path. Fetch templates with
+      // includeHidden so we can still render a submission whose default
+      // template was later hidden by an admin.
       function loadInitial() {
-        return fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId), { headers: authHeaders() })
-          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
-          .then(function (j) {
-            var list = (j && j.data) || [];
-            var tpl = list.filter(function (t) { return t.slug === slug; })[0];
-            if (!tpl) throw new Error('Template "' + slug + '" not found for this community');
-            state.template = tpl;
-            initSectionState(tpl);
+        var subPromise = submissionId
+          ? fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(submissionId), { headers: authHeaders() })
+              .then(function (r) { return r.ok ? r.json() : null; })
+          : Promise.resolve(null);
 
-            if (submissionId) {
-              return fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(submissionId), { headers: authHeaders() })
-                .then(function (r) { return r.ok ? r.json() : null; })
-                .then(function (sub) {
-                  if (sub && sub.formSubmission) {
-                    state.existing = sub;
-                    state.data = sub.formSubmission.data || {};
-                    state.links = sub.formSubmission.links || [];
-                  }
-                });
-            }
-            return null;
-          })
-          .then(function () { render(); });
+        return Promise.all([
+          fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId) + '?includeHidden=true&includeArchived=true', { headers: authHeaders() })
+            .then(function (r) { return r.ok ? r.json() : { data: [] }; }),
+          subPromise
+        ]).then(function (results) {
+          var j = results[0];
+          var sub = results[1];
+          var list = (j && j.data) || [];
+
+          var resolveSlug = (sub && sub.formSubmission && sub.formSubmission.formTemplateSlug) || slug;
+          var tpl = list.filter(function (t) { return t.slug === resolveSlug; })[0];
+          if (!tpl) throw new Error('Template "' + resolveSlug + '" not found for this community');
+
+          state.template = tpl;
+          initSectionState(tpl);
+          if (sub && sub.formSubmission) {
+            state.existing = sub;
+            state.data = sub.formSubmission.data || {};
+            state.links = sub.formSubmission.links || [];
+          }
+          render();
+        });
       }
 
       function initSectionState(tpl) {
