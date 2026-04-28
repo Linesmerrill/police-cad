@@ -371,14 +371,29 @@
         });
       }
 
-      // Back button: prefer browser history (whichever dashboard the user came
-      // from), fall back to /communities when this page was opened directly.
+      // Back button: route back to the dashboard the user came from.
+      //
+      // history.back() on /reports walks straight into a loop because
+      // /reports/new and /reports/:id all sit between /reports and the
+      // dashboard. So instead we sticky-store the entry URL in
+      // sessionStorage when the user first arrives from somewhere that
+      // isn't a /reports* page.
+      var RETURN_KEY = 'reports.returnUrl';
+      (function captureReturnUrl() {
+        var ref = document.referrer || '';
+        if (!ref) return;
+        if (ref.indexOf(window.location.origin) !== 0) return;
+        var path = ref.slice(window.location.origin.length);
+        if (path.indexOf('/reports') === 0) return; // came from inside the reports flow — keep the older entry
+        try { sessionStorage.setItem(RETURN_KEY, ref); } catch (e) { /* private mode */ }
+      })();
+
       document.getElementById('rp-back').addEventListener('click', function (e) {
         e.preventDefault();
-        var ref = document.referrer || '';
-        var sameOrigin = ref && ref.indexOf(window.location.origin) === 0;
-        if (sameOrigin && window.history.length > 1) {
-          window.history.back();
+        var stored = '';
+        try { stored = sessionStorage.getItem(RETURN_KEY) || ''; } catch (e2) {}
+        if (stored) {
+          window.location.href = stored;
         } else {
           window.location.href = '/communities';
         }
