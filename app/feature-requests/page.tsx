@@ -1244,14 +1244,23 @@ function FeatureRequests() {
   };
 
   // Defensive client-side filter: even if the API server is on an older build
-  // that doesn't honor excludeStatus yet, never surface Released items in the
-  // default browse view. They live in the celebration carousel above.
+  // that doesn't honor excludeStatus / authorId yet, never surface Released
+  // items in the default browse view, and always honor the Mine toggle.
   const hideReleasedHere = !statusFilter && !debouncedQuery;
-  const visibleRequests = hideReleasedHere
+  const releasedFiltered = hideReleasedHere
     ? requests.filter(r => r.status !== 'released')
     : requests;
+  const visibleRequests = mineOnly && currentUser
+    ? releasedFiltered.filter(r => r.author?._id === currentUser._id)
+    : releasedFiltered;
+  // If we had to drop items the API gave us, the totalCount it returned is
+  // also untrustworthy (older API ignored our filters) — fall back to the
+  // visible count on the current page rather than reporting an inflated total.
+  const apiHonoredFilters = visibleRequests.length === requests.length;
   const droppedCount = requests.length - visibleRequests.length;
-  const visibleTotalCount = Math.max(0, totalCount - droppedCount);
+  const visibleTotalCount = apiHonoredFilters
+    ? Math.max(0, totalCount - droppedCount)
+    : visibleRequests.length;
   const totalPages = Math.max(1, Math.ceil(visibleTotalCount / LIMIT));
   const selectedStatusLabel = STATUS_FILTERS.find(f => f.key === statusFilter)?.label || 'All Statuses';
 
@@ -1789,7 +1798,7 @@ function FeatureRequests() {
             </div>
 
             {/* ── Pagination ─────────────────────────────── */}
-            {!loading && totalPages > 1 && (
+            {!loading && totalPages > 1 && apiHonoredFilters && (
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
