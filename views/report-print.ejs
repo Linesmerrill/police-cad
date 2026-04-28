@@ -135,6 +135,9 @@
       var departmentId = <%- JSON.stringify(typeof departmentId !== 'undefined' ? departmentId : '') %>;
       var departmentName = <%- JSON.stringify(typeof departmentName !== 'undefined' ? departmentName : '') %>;
       var departmentImage = <%- JSON.stringify(typeof departmentImage !== 'undefined' ? departmentImage : '') %>;
+      var communityName = <%- JSON.stringify(typeof communityName !== 'undefined' ? communityName : '') %>;
+      var communityImage = <%- JSON.stringify(typeof communityImage !== 'undefined' ? communityImage : '') %>;
+      var LPC_FALLBACK_LOGO = '/static/images/favicon.ico';
 
       function authHeaders() { return token ? { 'Authorization': 'Bearer ' + token } : {}; }
       function escapeHTML(s) {
@@ -144,15 +147,15 @@
       }
 
       function renderHeader(sub, tpl) {
-        document.getElementById('pp-agency').textContent = departmentName || (tpl && tpl.name) || 'Department';
+        document.getElementById('pp-agency').textContent = communityName || departmentName || (tpl && tpl.name) || 'Department';
         document.getElementById('pp-doc-title').textContent = (tpl && tpl.name) || 'Report';
         document.getElementById('pp-report-num').textContent = sub.reportNumber || '—';
         document.getElementById('pp-date').textContent = sub.createdAt ? new Date(sub.createdAt).toLocaleString() : '—';
         document.getElementById('pp-status').textContent = sub.status || '—';
-        if (departmentImage) {
-          var logo = document.getElementById('pp-logo');
-          logo.innerHTML = '<img src="' + escapeHTML(departmentImage) + '" style="width:100%; height:100%; object-fit: cover; border-radius: 4px;" alt="logo" />';
-        }
+        // Logo precedence: community image → LPC fallback (favicon).
+        var logoSrc = communityImage || LPC_FALLBACK_LOGO;
+        var logo = document.getElementById('pp-logo');
+        logo.innerHTML = '<img src="' + escapeHTML(logoSrc) + '" style="width:100%; height:100%; object-fit: contain; border-radius: 4px; padding: 4px;" alt="logo" onerror="this.onerror=null;this.src=\'' + LPC_FALLBACK_LOGO + '\';" />';
         if (sub.signedBy) {
           document.getElementById('pp-sig-officer').textContent = sub.signedBy.username || '';
           document.getElementById('pp-sig-date').textContent = sub.signedBy.signedAt ? new Date(sub.signedBy.signedAt).toLocaleDateString() : '';

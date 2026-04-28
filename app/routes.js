@@ -1682,24 +1682,31 @@ module.exports = function (app, passport, server, nextApp, handle) {
     const { communityId, communityIdEncoded } = resolveCommunityFromReq(req);
     if (!communityId) return res.redirect('/communities');
 
-    // Best-effort department logo lookup. Errors here just leave the
-    // placeholder shield icon in place — printing still works.
+    // Look up community letterhead. Logo precedence: community image →
+    // LPC fallback (handled client-side). Department info is still
+    // pulled when available so the printed agency line can fall back
+    // to a department name when the community has none.
     let departmentName = null;
     let departmentImage = null;
+    let communityName = null;
+    let communityImage = null;
     const deptId = req.user?.user?.lastAccessedCommunity?.activeDepartmentID || '';
-    if (deptId) {
-      try {
-        const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
-        const community = r.data?.community;
-        const departments = community?.communityDetails?.departments || community?.departments || [];
+    try {
+      const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
+      const community = r.data?.community;
+      const details = community?.communityDetails || community?.community || community || {};
+      communityName = details.name || details.communityName || null;
+      communityImage = details.imageLink || details.image || null;
+      if (deptId) {
+        const departments = details.departments || community?.departments || [];
         const match = departments.find(d => String(d._id) === deptId || String(d.id) === deptId);
         if (match) {
           departmentName = match.name || match.departmentName || null;
           departmentImage = match.image || match.imageLink || null;
         }
-      } catch (err) {
-        console.error('Error fetching department for print view:', err.message);
       }
+    } catch (err) {
+      console.error('Error fetching community/department for print view:', err.message);
     }
 
     res.render("report-print", {
@@ -1711,6 +1718,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
       departmentId: deptId,
       departmentName,
       departmentImage,
+      communityName,
+      communityImage,
     });
   });
   // Community-scoped forms builder (admin)
