@@ -207,9 +207,11 @@
         bodyEl.innerHTML = html;
       }
 
+      var REPORT_NUMBER_FIELD_IDS = ['incidentNumber', 'reportNumber', 'caseNumber'];
+
       Promise.all([
         fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(submissionId), { headers: authHeaders() }).then(function (r) { return r.ok ? r.json() : null; }),
-        fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId), { headers: authHeaders() }).then(function (r) { return r.ok ? r.json() : { data: [] }; })
+        fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId) + '?includeHidden=true&includeArchived=true', { headers: authHeaders() }).then(function (r) { return r.ok ? r.json() : { data: [] }; })
       ]).then(function (results) {
         var subRaw = results[0];
         if (!subRaw || !subRaw.formSubmission) {
@@ -219,6 +221,18 @@
         var sub = Object.assign({ _id: subRaw._id }, subRaw.formSubmission);
         var templates = (results[1] && results[1].data) || [];
         var tpl = templates.filter(function (t) { return t.slug === sub.formTemplateSlug; })[0];
+        // Mirror the server-stamped report number into the conventional
+        // form field if the template has one and it's empty.
+        if (sub.reportNumber && tpl && tpl.sections) {
+          if (!sub.data) sub.data = {};
+          tpl.sections.forEach(function (s) {
+            if (s.repeatable) return;
+            (s.fields || []).forEach(function (f) {
+              if (REPORT_NUMBER_FIELD_IDS.indexOf(f.id) === -1) return;
+              if (sub.data[f.id] == null || sub.data[f.id] === '') sub.data[f.id] = sub.reportNumber;
+            });
+          });
+        }
         renderHeader(sub, tpl);
         renderBody(sub, tpl);
       });

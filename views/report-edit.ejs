@@ -885,9 +885,31 @@
             state.existing = sub;
             state.data = sub.formSubmission.data || {};
             state.links = sub.formSubmission.links || [];
+            // The submission has a server-generated reportNumber stored
+            // separately from form data. Mirror it into the canonical
+            // "incident number" field if the template has one and it's
+            // currently empty, so the user sees their assigned number.
+            hydrateReportNumberField(tpl, state.data, sub.formSubmission.reportNumber);
           }
           render();
         });
+      }
+
+      // Field IDs that are conventionally treated as "the report number"
+      // — any of them, when present in the template and empty in data,
+      // will be auto-populated with the submission's reportNumber.
+      var REPORT_NUMBER_FIELD_IDS = ['incidentNumber', 'reportNumber', 'caseNumber'];
+      function hydrateReportNumberField(tpl, data, reportNumber) {
+        if (!reportNumber || !tpl || !tpl.sections) return;
+        for (var s = 0; s < tpl.sections.length; s++) {
+          var sec = tpl.sections[s];
+          if (sec.repeatable) continue;
+          for (var f = 0; f < (sec.fields || []).length; f++) {
+            var fld = sec.fields[f];
+            if (REPORT_NUMBER_FIELD_IDS.indexOf(fld.id) === -1) continue;
+            if (data[fld.id] == null || data[fld.id] === '') data[fld.id] = reportNumber;
+          }
+        }
       }
 
       function initSectionState(tpl) {
