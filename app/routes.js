@@ -1679,6 +1679,35 @@ module.exports = function (app, passport, server, nextApp, handle) {
       departmentImage,
     });
   });
+  // Community-scoped forms builder (admin)
+  app.get("/community/:hash/forms", authCheck, async function (req, res) {
+    let communityId = null;
+    try {
+      const decoded = decodeId(req.params.hash);
+      if (isValidObjectId(decoded)) communityId = decoded;
+    } catch (e) {
+      console.error('Failed to decode community id for /forms:', e);
+    }
+    if (!communityId) return res.redirect('/communities');
+    const communityIdEncoded = req.params.hash;
+
+    let communityName = null;
+    try {
+      const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
+      communityName = r.data?.community?.name || null;
+    } catch (err) {
+      console.error('Error fetching community for /forms:', err.message);
+    }
+
+    res.render("community-forms", {
+      user: req.user,
+      apiUrl: policeCadApiUrl,
+      communityId,
+      communityIdEncoded,
+      communityName,
+      currentUser: buildCurrentUserContext(req),
+    });
+  });
   // ----- end Configurable Forms / Reports -----
 
   // Help & Tutorial page

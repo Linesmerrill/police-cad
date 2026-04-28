@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forms - Lines Police CAD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --rp-bg: #08090c;
+      --rp-surface: rgba(255,255,255,0.03);
+      --rp-glass: rgba(255,255,255,0.04);
+      --rp-glass-border: rgba(255,255,255,0.06);
+      --rp-glass-hover: rgba(255,255,255,0.07);
+      --rp-text: #e2e8f0;
+      --rp-text-muted: #64748b;
+      --rp-text-dim: #475569;
+      --rp-accent: #38bdf8;
+      --rp-accent-glow: rgba(56,189,248,0.15);
+      --rp-green: #22c55e;
+      --rp-amber: #f59e0b;
+      --rp-red: #ef4444;
+      --rp-radius: 12px;
+      --rp-radius-sm: 8px;
+    }
+    html { font-size: 16px; }
+    body {
+      background: var(--rp-bg); color: var(--rp-text);
+      font-family: 'Outfit', -apple-system, sans-serif;
+      min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased;
+      padding-bottom: 88px;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 700px 500px at 10% 15%, rgba(56,189,248,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 90% 85%, rgba(245,158,11,0.04) 0%, transparent 70%);
+    }
+    .rp-shell { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 1.5rem 1.25rem 2rem; }
+
+    .rp-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 1rem; margin-bottom: 1rem;
+      border-bottom: 1px solid var(--rp-glass-border);
+    }
+    .rp-header-left { display: flex; align-items: center; gap: 1rem; }
+    .rp-header-icon {
+      width: 44px; height: 44px;
+      background: var(--rp-accent-glow);
+      border: 1px solid rgba(56,189,248,0.2);
+      border-radius: var(--rp-radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; color: var(--rp-accent);
+    }
+    .rp-title { font-weight: 700; font-size: 1.4rem; color: #fff; }
+    .rp-subtitle { font-size: 0.85rem; color: var(--rp-text-muted); margin-top: 0.1rem; }
+    .rp-back-btn, .rp-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.5rem 0.85rem; border-radius: var(--rp-radius-sm);
+      font-family: inherit; font-weight: 600; font-size: 0.85rem;
+      border: 1px solid transparent; cursor: pointer; transition: all 0.2s ease;
+      text-decoration: none; white-space: nowrap;
+    }
+    .rp-back-btn { color: var(--rp-text-muted); }
+    .rp-back-btn:hover { color: #fff; background: var(--rp-surface); border-color: var(--rp-glass-border); }
+    .rp-btn-primary { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: #fff; border: none; }
+    .rp-btn-primary:hover:not(:disabled) { box-shadow: 0 4px 12px rgba(14,165,233,0.3); transform: translateY(-1px); }
+    .rp-btn-outline { background: transparent; color: var(--rp-text); border: 1px solid var(--rp-glass-border); }
+    .rp-btn-outline:hover { background: var(--rp-surface); }
+    .rp-btn-ghost { background: transparent; color: var(--rp-text-muted); }
+    .rp-btn-ghost:hover { color: #fff; background: var(--rp-surface); }
+    .rp-btn-danger { background: transparent; color: var(--rp-red); border: 1px solid rgba(239,68,68,0.3); }
+    .rp-btn-danger:hover { background: rgba(239,68,68,0.08); }
+    .rp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .rp-pill {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      padding: 0.18rem 0.55rem; border-radius: 999px;
+      font-size: 0.7rem; font-weight: 600;
+      background: var(--rp-glass); color: var(--rp-text-muted);
+      border: 1px solid var(--rp-glass-border);
+    }
+    .rp-pill-default { background: rgba(56,189,248,0.1); color: var(--rp-accent); border-color: rgba(56,189,248,0.25); }
+    .rp-pill-hidden { background: rgba(245,158,11,0.1); color: var(--rp-amber); border-color: rgba(245,158,11,0.25); }
+    .rp-pill-archived { background: rgba(239,68,68,0.1); color: var(--rp-red); border-color: rgba(239,68,68,0.25); }
+
+    /* List view */
+    .rp-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .rp-card {
+      background: var(--rp-surface);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius);
+      padding: 1rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .rp-card-info { flex: 1; min-width: 0; }
+    .rp-card-title { font-weight: 600; font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .rp-card-meta { font-size: 0.78rem; color: var(--rp-text-muted); margin-top: 0.25rem; }
+    .rp-card-actions { display: flex; gap: 0.5rem; }
+
+    /* Builder view */
+    .rp-builder { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    .rp-fieldset {
+      background: var(--rp-surface);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius); padding: 1rem;
+    }
+    .rp-fieldset-title { font-weight: 600; color: #fff; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
+    .rp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; }
+    .rp-input, .rp-textarea, .rp-select {
+      background: var(--rp-glass); color: var(--rp-text);
+      border: 1px solid var(--rp-glass-border); border-radius: var(--rp-radius-sm);
+      padding: 0.5rem 0.65rem; font-size: 0.88rem; font-family: inherit; width: 100%;
+    }
+    .rp-input:focus, .rp-textarea:focus, .rp-select:focus { outline: none; border-color: var(--rp-accent); }
+    .rp-textarea { min-height: 64px; resize: vertical; }
+    .rp-label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--rp-text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+    .rp-section {
+      background: var(--rp-glass);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius); margin-bottom: 0.75rem;
+      overflow: hidden;
+    }
+    .rp-section-head {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--rp-glass-border);
+      background: rgba(255,255,255,0.02);
+    }
+    .rp-section-head input { flex: 1; background: transparent; border: none; color: #fff; font-weight: 600; font-size: 0.95rem; padding: 0; outline: none; }
+    .rp-section-body { padding: 0.85rem 1rem; }
+
+    .rp-field-row {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 0.8fr auto;
+      gap: 0.5rem;
+      align-items: center;
+      background: var(--rp-surface);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius-sm);
+      padding: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .rp-field-row .rp-input,
+    .rp-field-row .rp-select { padding: 0.4rem 0.55rem; font-size: 0.8rem; }
+    .rp-field-options {
+      grid-column: 1 / -1;
+      padding: 0.5rem 0.25rem 0.25rem;
+      border-top: 1px dashed var(--rp-glass-border);
+      margin-top: 0.4rem;
+    }
+    .rp-field-options textarea { min-height: 50px; font-size: 0.78rem; }
+    .rp-add-row {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 0.75rem; border-radius: var(--rp-radius-sm);
+      background: transparent; border: 1px dashed var(--rp-glass-border);
+      color: var(--rp-text-muted); font-family: inherit; font-size: 0.8rem;
+      cursor: pointer; transition: all 0.15s ease;
+      width: 100%; justify-content: center;
+    }
+    .rp-add-row:hover { color: var(--rp-accent); border-color: rgba(56,189,248,0.3); background: rgba(56,189,248,0.05); }
+    .rp-tiny-btn {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: transparent; border: 1px solid var(--rp-glass-border);
+      color: var(--rp-text-muted); cursor: pointer; font-size: 0.75rem;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .rp-tiny-btn:hover { color: #fff; background: var(--rp-surface); }
+    .rp-tiny-btn.danger:hover { color: var(--rp-red); border-color: rgba(239,68,68,0.3); }
+
+    .rp-checkbox-row { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--rp-text); cursor: pointer; }
+    .rp-checkbox-row input { accent-color: var(--rp-accent); }
+
+    .rp-empty {
+      text-align: center; padding: 3rem 1rem;
+      color: var(--rp-text-muted);
+      border: 1px dashed var(--rp-glass-border);
+      border-radius: var(--rp-radius);
+    }
+    .rp-empty-icon { font-size: 2rem; color: var(--rp-text-dim); margin-bottom: 0.75rem; }
+
+    .rp-savebar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
+      background: var(--rp-bg);
+      border-top: 1px solid var(--rp-glass-border);
+      padding: 0.75rem 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .rp-savebar-spacer { flex: 1; }
+
+    .rp-toast {
+      position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%);
+      background: var(--rp-glass); border: 1px solid var(--rp-glass-border);
+      padding: 0.6rem 1rem; border-radius: var(--rp-radius);
+      color: var(--rp-text); font-size: 0.85rem; z-index: 20;
+      backdrop-filter: blur(8px);
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .rp-toast.show { opacity: 1; }
+    .rp-toast.error { border-color: rgba(239,68,68,0.3); color: var(--rp-red); }
+    .rp-toast.success { border-color: rgba(34,197,94,0.3); color: var(--rp-green); }
+
+    .rp-loading { padding: 4rem 1rem; text-align: center; color: var(--rp-text-muted); }
+  </style>
+</head>
+<body>
+  <div class="rp-shell">
+    <div class="rp-header">
+      <div class="rp-header-left">
+        <div class="rp-header-icon"><i class="fa-solid fa-list-check"></i></div>
+        <div>
+          <div class="rp-title">Forms</div>
+          <div class="rp-subtitle" id="rp-sub"><%= typeof communityName !== 'undefined' && communityName ? communityName : 'Community forms' %></div>
+        </div>
+      </div>
+      <div style="display:flex; gap:0.5rem;">
+        <a href="/reports<% if (typeof communityIdEncoded !== 'undefined' && communityIdEncoded) { %>?c=<%= communityIdEncoded %><% } %>" class="rp-back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Reports</a>
+        <button id="rp-new-btn" class="rp-btn rp-btn-primary"><i class="fa-solid fa-plus"></i> New form</button>
+      </div>
+    </div>
+
+    <div id="rp-list-view"></div>
+    <div id="rp-builder-view" style="display:none;"></div>
+  </div>
+
+  <div id="rp-toast" class="rp-toast"></div>
+
+  <script>
+    (function () {
+      var apiUrl = <%- JSON.stringify(typeof apiUrl !== 'undefined' ? apiUrl : '') %>;
+      var communityId = <%- JSON.stringify(typeof communityId !== 'undefined' ? communityId : '') %>;
+      var communityIdEncoded = <%- JSON.stringify(typeof communityIdEncoded !== 'undefined' ? communityIdEncoded : '') %>;
+      var currentUser = <%- JSON.stringify(typeof currentUser !== 'undefined' ? currentUser : null) %>;
+
+      var state = {
+        templates: [],
+        editing: null, // template being edited (or null in list view)
+        isNew: false,
+      };
+
+      function toast(msg, kind) {
+        var t = document.getElementById('rp-toast');
+        t.textContent = msg; t.className = 'rp-toast show ' + (kind || '');
+        setTimeout(function () { t.className = 'rp-toast'; }, 2500);
+      }
+      function escapeHTML(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+      function slugify(s) {
+        return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'form-' + Date.now();
+      }
+
+      // --- Load templates ---
+      function loadTemplates() {
+        document.getElementById('rp-list-view').innerHTML = '<div class="rp-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>';
+        fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId) + '?includeArchived=true')
+          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+          .then(function (j) { state.templates = (j && j.data) || []; renderList(); })
+          .catch(function (e) {
+            document.getElementById('rp-list-view').innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>Failed to load forms — ' + escapeHTML(e && e.message || 'network error') + '</div>';
+          });
+      }
+
+      // --- List view ---
+      function renderList() {
+        var view = document.getElementById('rp-list-view');
+        document.getElementById('rp-builder-view').style.display = 'none';
+        view.style.display = 'block';
+        document.getElementById('rp-new-btn').style.display = '';
+
+        if (!state.templates.length) {
+          view.innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-regular fa-folder-open"></i></div>No forms yet. Click <strong>New form</strong> above to create one.</div>';
+          return;
+        }
+
+        var html = '<div class="rp-list">';
+        state.templates.forEach(function (t) {
+          var pills = '';
+          if (t.isDefault) pills += '<span class="rp-pill rp-pill-default"><i class="fa-solid fa-star"></i> Default</span> ';
+          if (t.isHidden) pills += '<span class="rp-pill rp-pill-hidden"><i class="fa-solid fa-eye-slash"></i> Hidden</span> ';
+          if (t.isArchived) pills += '<span class="rp-pill rp-pill-archived"><i class="fa-regular fa-folder"></i> Archived</span> ';
+
+          var actions = '';
+          if (t.isDefault) {
+            // Default templates can be hidden/restored, and "cloned" (open in builder pre-filled, save as new).
+            actions += '<button class="rp-btn rp-btn-outline" data-action="clone" data-id="' + escapeHTML(t._id) + '"><i class="fa-regular fa-copy"></i> Clone</button>';
+            if (t.isHidden) {
+              actions += '<button class="rp-btn rp-btn-outline" data-action="restore" data-slug="' + escapeHTML(t.slug) + '"><i class="fa-solid fa-eye"></i> Restore</button>';
+            } else {
+              actions += '<button class="rp-btn rp-btn-ghost" data-action="hide" data-slug="' + escapeHTML(t.slug) + '"><i class="fa-solid fa-eye-slash"></i> Hide</button>';
+            }
+          } else {
+            actions += '<button class="rp-btn rp-btn-outline" data-action="edit" data-id="' + escapeHTML(t._id) + '"><i class="fa-solid fa-pen"></i> Edit</button>';
+            if (t.isArchived) {
+              actions += '<button class="rp-btn rp-btn-outline" data-action="unarchive" data-id="' + escapeHTML(t._id) + '"><i class="fa-solid fa-folder-open"></i> Unarchive</button>';
+            } else {
+              actions += '<button class="rp-btn rp-btn-ghost" data-action="archive" data-id="' + escapeHTML(t._id) + '"><i class="fa-regular fa-folder"></i> Archive</button>';
+            }
+          }
+
+          var sectionsCount = (t.sections || []).length;
+          var fieldsCount = (t.sections || []).reduce(function (a, s) { return a + (s.fields || []).length; }, 0);
+
+          html += '<div class="rp-card">' +
+            '<div class="rp-card-info">' +
+              '<div class="rp-card-title">' + escapeHTML(t.name) + ' ' + pills + '</div>' +
+              '<div class="rp-card-meta"><code>' + escapeHTML(t.slug) + '</code> · ' + sectionsCount + ' sections · ' + fieldsCount + ' fields · v' + (t.currentVersion || 1) + '</div>' +
+            '</div>' +
+            '<div class="rp-card-actions">' + actions + '</div>' +
+          '</div>';
+        });
+        html += '</div>';
+        view.innerHTML = html;
+
+        Array.from(view.querySelectorAll('[data-action]')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var action = btn.getAttribute('data-action');
+            if (action === 'edit') openEditor(state.templates.find(function (t) { return t._id === btn.getAttribute('data-id'); }), false);
+            else if (action === 'clone') openEditor(state.templates.find(function (t) { return t._id === btn.getAttribute('data-id'); }), true);
+            else if (action === 'hide') toggleHide(btn.getAttribute('data-slug'), true);
+            else if (action === 'restore') toggleHide(btn.getAttribute('data-slug'), false);
+            else if (action === 'archive') archiveTemplate(btn.getAttribute('data-id'), true);
+            else if (action === 'unarchive') archiveTemplate(btn.getAttribute('data-id'), false);
+          });
+        });
+      }
+
+      function toggleHide(slug, hidden) {
+        fetch(apiUrl + '/api/v1/form-template/community/' + encodeURIComponent(communityId) + '/default/' + encodeURIComponent(slug) + '/hide?hidden=' + (hidden ? 'true' : 'false'), { method: 'PUT' })
+          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function () { toast(hidden ? 'Default hidden for this community' : 'Default restored', 'success'); loadTemplates(); })
+          .catch(function (e) { toast('Failed: ' + (e && e.message), 'error'); });
+      }
+
+      function archiveTemplate(id, archived) {
+        fetch(apiUrl + '/api/v1/form-template/' + encodeURIComponent(id), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isArchived: archived })
+        })
+          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function () { toast(archived ? 'Archived' : 'Unarchived', 'success'); loadTemplates(); })
+          .catch(function (e) { toast('Failed: ' + (e && e.message), 'error'); });
+      }
+
+      // --- Builder ---
+      function blankTemplate() {
+        return {
+          name: '',
+          slug: '',
+          description: '',
+          icon: 'file-text',
+          numberFormat: 'RR-{YYYY}-{NNNNNN}',
+          visibleToRoles: ['police', 'dispatch', 'fire', 'ems', 'judicial'],
+          editableByRoles: ['police', 'dispatch', 'fire', 'ems'],
+          linkableEntities: ['civilian', 'vehicle', 'firearm', 'call', 'arrestReport'],
+          sections: [{ id: 'section1', title: 'Section 1', repeatable: false, fields: [] }],
+        };
+      }
+
+      function openEditor(template, isClone) {
+        if (!template) {
+          state.editing = blankTemplate();
+          state.isNew = true;
+        } else if (isClone) {
+          // Deep clone, drop ids/version, force new slug
+          var src = JSON.parse(JSON.stringify(template));
+          state.editing = {
+            name: (src.name || '') + ' (Copy)',
+            slug: slugify((src.name || 'form') + '-copy'),
+            description: src.description || '',
+            icon: src.icon || 'file-text',
+            numberFormat: src.numberFormat || 'RR-{YYYY}-{NNNNNN}',
+            visibleToRoles: src.visibleToRoles || [],
+            editableByRoles: src.editableByRoles || [],
+            linkableEntities: src.linkableEntities || [],
+            sections: (src.sections || []).map(function (s, i) {
+              return {
+                id: s.id || ('section' + (i + 1)),
+                title: s.title || '',
+                repeatable: !!s.repeatable,
+                fields: (s.fields || []).map(function (f) { return Object.assign({}, f); }),
+              };
+            }),
+          };
+          state.isNew = true;
+        } else {
+          var src2 = JSON.parse(JSON.stringify(template));
+          state.editing = {
+            _id: template._id,
+            name: src2.name || '',
+            slug: src2.slug || '',
+            description: src2.description || '',
+            icon: src2.icon || 'file-text',
+            numberFormat: src2.numberFormat || 'RR-{YYYY}-{NNNNNN}',
+            visibleToRoles: src2.visibleToRoles || [],
+            editableByRoles: src2.editableByRoles || [],
+            linkableEntities: src2.linkableEntities || [],
+            sections: (src2.sections || []).map(function (s, i) {
+              return {
+                id: s.id || ('section' + (i + 1)),
+                title: s.title || '',
+                repeatable: !!s.repeatable,
+                fields: (s.fields || []).map(function (f) { return Object.assign({}, f); }),
+              };
+            }),
+          };
+          state.isNew = false;
+        }
+        renderBuilder();
+      }
+
+      var ROLES = ['police', 'dispatch', 'fire', 'ems', 'judicial', 'civilian'];
+      var ENTITIES = ['civilian', 'vehicle', 'firearm', 'call', 'citation', 'arrestReport', 'warrant', 'bolo'];
+      var FIELD_TYPES = [
+        { value: 'text', label: 'Text' },
+        { value: 'textarea', label: 'Long text' },
+        { value: 'number', label: 'Number' },
+        { value: 'date', label: 'Date' },
+        { value: 'time', label: 'Time' },
+        { value: 'datetime', label: 'Date + time' },
+        { value: 'select', label: 'Dropdown' },
+        { value: 'radio', label: 'Radio' },
+        { value: 'multiSelect', label: 'Multi-select' },
+        { value: 'checkbox', label: 'Checkbox' },
+        { value: 'penalCodePicker', label: 'Penal code picker' },
+        { value: 'userPicker', label: 'User picker' },
+        { value: 'departmentPicker', label: 'Department picker' },
+      ];
+
+      function renderBuilder() {
+        var view = document.getElementById('rp-builder-view');
+        var listView = document.getElementById('rp-list-view');
+        listView.style.display = 'none';
+        view.style.display = 'block';
+        document.getElementById('rp-new-btn').style.display = 'none';
+
+        var t = state.editing;
+
+        var html = '<div class="rp-builder">';
+
+        // Metadata fieldset
+        html += '<div class="rp-fieldset">' +
+          '<div class="rp-fieldset-title">Form info</div>' +
+          '<div class="rp-grid">' +
+            '<div><label class="rp-label">Name</label><input class="rp-input" id="bf-name" value="' + escapeHTML(t.name) + '" placeholder="e.g. Use of Force Report" /></div>' +
+            '<div><label class="rp-label">Slug</label><input class="rp-input" id="bf-slug" value="' + escapeHTML(t.slug) + '" placeholder="auto from name" ' + (state.isNew ? '' : 'disabled') + ' /></div>' +
+            '<div><label class="rp-label">Report number format</label><input class="rp-input" id="bf-numfmt" value="' + escapeHTML(t.numberFormat) + '" placeholder="RR-{YYYY}-{NNNNNN}" /></div>' +
+          '</div>' +
+          '<div style="margin-top:0.75rem;"><label class="rp-label">Description</label><textarea class="rp-textarea" id="bf-desc" placeholder="Short description of when to use this form">' + escapeHTML(t.description) + '</textarea></div>' +
+          '<div style="margin-top:0.75rem; display:flex; gap:1.5rem; flex-wrap:wrap;">' +
+            '<div><div class="rp-label">Visible to</div>' + ROLES.map(function (r) {
+              var checked = (t.visibleToRoles || []).indexOf(r) !== -1;
+              return '<label class="rp-checkbox-row" style="margin-right:0.6rem;"><input type="checkbox" data-vis="' + r + '"' + (checked ? ' checked' : '') + '/> ' + r + '</label>';
+            }).join('') + '</div>' +
+            '<div><div class="rp-label">Editable by</div>' + ROLES.map(function (r) {
+              var checked = (t.editableByRoles || []).indexOf(r) !== -1;
+              return '<label class="rp-checkbox-row" style="margin-right:0.6rem;"><input type="checkbox" data-edit="' + r + '"' + (checked ? ' checked' : '') + '/> ' + r + '</label>';
+            }).join('') + '</div>' +
+          '</div>' +
+          '<div style="margin-top:0.75rem;"><div class="rp-label">Linkable entities</div>' + ENTITIES.map(function (en) {
+            var checked = (t.linkableEntities || []).indexOf(en) !== -1;
+            return '<label class="rp-checkbox-row" style="margin-right:0.6rem;"><input type="checkbox" data-link="' + en + '"' + (checked ? ' checked' : '') + '/> ' + en + '</label>';
+          }).join('') + '</div>' +
+        '</div>';
+
+        // Sections fieldset
+        html += '<div class="rp-fieldset">' +
+          '<div class="rp-fieldset-title">Sections <button class="rp-btn rp-btn-outline" id="bf-add-section"><i class="fa-solid fa-plus"></i> Add section</button></div>' +
+          '<div id="bf-sections"></div>' +
+        '</div>';
+
+        html += '</div>';
+
+        view.innerHTML = html;
+
+        renderSections();
+        bindBuilderEvents();
+      }
+
+      function renderSections() {
+        var wrap = document.getElementById('bf-sections');
+        var t = state.editing;
+        var html = '';
+        (t.sections || []).forEach(function (sec, sidx) {
+          html += '<div class="rp-section" data-section-index="' + sidx + '">' +
+            '<div class="rp-section-head">' +
+              '<i class="fa-solid fa-grip-vertical" style="color: var(--rp-text-dim);"></i>' +
+              '<input type="text" placeholder="Section title" value="' + escapeHTML(sec.title) + '" data-section-title />' +
+              '<label class="rp-checkbox-row" style="margin-left:auto;"><input type="checkbox" data-section-repeatable ' + (sec.repeatable ? 'checked' : '') + '/> repeatable</label>' +
+              '<button class="rp-tiny-btn" data-section-up title="Move up"><i class="fa-solid fa-arrow-up"></i></button>' +
+              '<button class="rp-tiny-btn" data-section-down title="Move down"><i class="fa-solid fa-arrow-down"></i></button>' +
+              '<button class="rp-tiny-btn danger" data-section-remove title="Remove section"><i class="fa-solid fa-trash"></i></button>' +
+            '</div>' +
+            '<div class="rp-section-body">' +
+              '<div class="bf-fields"></div>' +
+              '<button class="rp-add-row" data-add-field><i class="fa-solid fa-plus"></i> Add field</button>' +
+            '</div>' +
+          '</div>';
+        });
+        wrap.innerHTML = html;
+
+        // Render fields per section
+        Array.from(wrap.querySelectorAll('.rp-section')).forEach(function (secEl) {
+          var sidx = parseInt(secEl.getAttribute('data-section-index'), 10);
+          renderFieldsForSection(secEl.querySelector('.bf-fields'), sidx);
+        });
+
+        bindSectionEvents();
+      }
+
+      function renderFieldsForSection(container, sidx) {
+        var t = state.editing;
+        var sec = t.sections[sidx];
+        if (!sec.fields) sec.fields = [];
+        var html = '';
+        sec.fields.forEach(function (f, fidx) {
+          var typeOpts = FIELD_TYPES.map(function (ft) {
+            return '<option value="' + ft.value + '"' + (f.type === ft.value ? ' selected' : '') + '>' + ft.label + '</option>';
+          }).join('');
+          var hasOptions = ['select', 'radio', 'multiSelect'].indexOf(f.type) !== -1;
+          html += '<div class="rp-field-row" data-field-index="' + fidx + '">' +
+            '<input class="rp-input" data-field-label placeholder="Field label" value="' + escapeHTML(f.label || '') + '" />' +
+            '<select class="rp-select" data-field-type>' + typeOpts + '</select>' +
+            '<label class="rp-checkbox-row"><input type="checkbox" data-field-required ' + (f.required ? 'checked' : '') + '/> required</label>' +
+            '<div style="display:flex; gap:0.25rem;">' +
+              '<button class="rp-tiny-btn" data-field-up title="Move up"><i class="fa-solid fa-arrow-up"></i></button>' +
+              '<button class="rp-tiny-btn" data-field-down title="Move down"><i class="fa-solid fa-arrow-down"></i></button>' +
+              '<button class="rp-tiny-btn danger" data-field-remove title="Remove"><i class="fa-solid fa-trash"></i></button>' +
+            '</div>' +
+            (hasOptions ? '<div class="rp-field-options"><label class="rp-label">Options (one per line)</label><textarea class="rp-textarea" data-field-options>' + escapeHTML((f.options || []).join('\n')) + '</textarea></div>' : '') +
+          '</div>';
+        });
+        container.innerHTML = html;
+      }
+
+      function bindSectionEvents() {
+        var t = state.editing;
+        Array.from(document.querySelectorAll('.rp-section')).forEach(function (secEl) {
+          var sidx = parseInt(secEl.getAttribute('data-section-index'), 10);
+          secEl.querySelector('[data-section-title]').addEventListener('input', function (e) { t.sections[sidx].title = e.target.value; });
+          secEl.querySelector('[data-section-repeatable]').addEventListener('change', function (e) { t.sections[sidx].repeatable = e.target.checked; });
+          secEl.querySelector('[data-section-up]').addEventListener('click', function () { if (sidx === 0) return; var arr = t.sections; var tmp = arr[sidx - 1]; arr[sidx - 1] = arr[sidx]; arr[sidx] = tmp; renderSections(); });
+          secEl.querySelector('[data-section-down]').addEventListener('click', function () { var arr = t.sections; if (sidx >= arr.length - 1) return; var tmp = arr[sidx + 1]; arr[sidx + 1] = arr[sidx]; arr[sidx] = tmp; renderSections(); });
+          secEl.querySelector('[data-section-remove]').addEventListener('click', function () { if (!confirm('Remove this section and all its fields?')) return; t.sections.splice(sidx, 1); renderSections(); });
+          secEl.querySelector('[data-add-field]').addEventListener('click', function () {
+            t.sections[sidx].fields = t.sections[sidx].fields || [];
+            t.sections[sidx].fields.push({ id: 'f' + Date.now(), label: '', type: 'text', required: false });
+            renderSections();
+          });
+          // Field-row events
+          Array.from(secEl.querySelectorAll('.rp-field-row')).forEach(function (rowEl) {
+            var fidx = parseInt(rowEl.getAttribute('data-field-index'), 10);
+            var f = t.sections[sidx].fields[fidx];
+            rowEl.querySelector('[data-field-label]').addEventListener('input', function (e) {
+              f.label = e.target.value;
+              if (!f.id || f.id.indexOf('f') === 0) f.id = slugify(f.label) || f.id; // keep existing id if user-set
+            });
+            rowEl.querySelector('[data-field-type]').addEventListener('change', function (e) {
+              f.type = e.target.value;
+              renderSections();
+            });
+            rowEl.querySelector('[data-field-required]').addEventListener('change', function (e) { f.required = e.target.checked; });
+            rowEl.querySelector('[data-field-up]').addEventListener('click', function () { if (fidx === 0) return; var arr = t.sections[sidx].fields; var tmp = arr[fidx - 1]; arr[fidx - 1] = arr[fidx]; arr[fidx] = tmp; renderSections(); });
+            rowEl.querySelector('[data-field-down]').addEventListener('click', function () { var arr = t.sections[sidx].fields; if (fidx >= arr.length - 1) return; var tmp = arr[fidx + 1]; arr[fidx + 1] = arr[fidx]; arr[fidx] = tmp; renderSections(); });
+            rowEl.querySelector('[data-field-remove]').addEventListener('click', function () { t.sections[sidx].fields.splice(fidx, 1); renderSections(); });
+            var optsEl = rowEl.querySelector('[data-field-options]');
+            if (optsEl) optsEl.addEventListener('input', function (e) {
+              f.options = e.target.value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+            });
+          });
+        });
+      }
+
+      function bindBuilderEvents() {
+        document.getElementById('bf-name').addEventListener('input', function (e) {
+          state.editing.name = e.target.value;
+          if (state.isNew && (!state.editing.slug || state.editing.slug.indexOf('form-') === 0)) {
+            state.editing.slug = slugify(e.target.value);
+            document.getElementById('bf-slug').value = state.editing.slug;
+          }
+        });
+        document.getElementById('bf-slug').addEventListener('input', function (e) { state.editing.slug = slugify(e.target.value); e.target.value = state.editing.slug; });
+        document.getElementById('bf-numfmt').addEventListener('input', function (e) { state.editing.numberFormat = e.target.value; });
+        document.getElementById('bf-desc').addEventListener('input', function (e) { state.editing.description = e.target.value; });
+
+        Array.from(document.querySelectorAll('[data-vis]')).forEach(function (cb) {
+          cb.addEventListener('change', function () {
+            var role = cb.getAttribute('data-vis');
+            var arr = state.editing.visibleToRoles || (state.editing.visibleToRoles = []);
+            var i = arr.indexOf(role);
+            if (cb.checked && i === -1) arr.push(role);
+            if (!cb.checked && i !== -1) arr.splice(i, 1);
+          });
+        });
+        Array.from(document.querySelectorAll('[data-edit]')).forEach(function (cb) {
+          cb.addEventListener('change', function () {
+            var role = cb.getAttribute('data-edit');
+            var arr = state.editing.editableByRoles || (state.editing.editableByRoles = []);
+            var i = arr.indexOf(role);
+            if (cb.checked && i === -1) arr.push(role);
+            if (!cb.checked && i !== -1) arr.splice(i, 1);
+          });
+        });
+        Array.from(document.querySelectorAll('[data-link]')).forEach(function (cb) {
+          cb.addEventListener('change', function () {
+            var ent = cb.getAttribute('data-link');
+            var arr = state.editing.linkableEntities || (state.editing.linkableEntities = []);
+            var i = arr.indexOf(ent);
+            if (cb.checked && i === -1) arr.push(ent);
+            if (!cb.checked && i !== -1) arr.splice(i, 1);
+          });
+        });
+
+        document.getElementById('bf-add-section').addEventListener('click', function () {
+          var idx = state.editing.sections.length + 1;
+          state.editing.sections.push({ id: 'section' + idx + '_' + Date.now(), title: 'Section ' + idx, repeatable: false, fields: [] });
+          renderSections();
+        });
+      }
+
+      // --- Save ---
+      function saveTemplate() {
+        var t = state.editing;
+        if (!t.name || !t.slug) return toast('Name and slug are required', 'error');
+        if (!(t.sections || []).length) return toast('Add at least one section', 'error');
+
+        // Sanitize: ensure every section + field has an id
+        t.sections.forEach(function (s, i) {
+          if (!s.id) s.id = 'section' + (i + 1) + '_' + Date.now();
+          (s.fields || []).forEach(function (f, j) {
+            if (!f.id) f.id = slugify(f.label) || ('field' + (j + 1) + '_' + Date.now());
+          });
+        });
+
+        var saveBtn = document.getElementById('rp-save-btn');
+        if (saveBtn) saveBtn.disabled = true;
+
+        var url, method;
+        var body;
+        if (state.isNew) {
+          url = apiUrl + '/api/v1/form-template';
+          method = 'POST';
+          body = {
+            communityID: communityId,
+            name: t.name,
+            slug: t.slug,
+            description: t.description,
+            icon: t.icon,
+            numberFormat: t.numberFormat,
+            visibleToRoles: t.visibleToRoles,
+            editableByRoles: t.editableByRoles,
+            linkableEntities: t.linkableEntities,
+            sections: t.sections,
+          };
+        } else {
+          url = apiUrl + '/api/v1/form-template/' + encodeURIComponent(t._id);
+          method = 'PUT';
+          body = {
+            name: t.name,
+            description: t.description,
+            icon: t.icon,
+            numberFormat: t.numberFormat,
+            visibleToRoles: t.visibleToRoles,
+            editableByRoles: t.editableByRoles,
+            linkableEntities: t.linkableEntities,
+            sections: t.sections,
+          };
+        }
+
+        fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+          .then(function (r) {
+            if (!r.ok) return r.text().then(function (txt) { throw new Error('HTTP ' + r.status + ' ' + txt); });
+            return r.json();
+          })
+          .then(function () {
+            toast('Saved', 'success');
+            state.editing = null;
+            loadTemplates();
+          })
+          .catch(function (e) {
+            toast('Save failed: ' + (e && e.message), 'error');
+            if (saveBtn) saveBtn.disabled = false;
+          });
+      }
+
+      // --- Wire global controls ---
+      document.getElementById('rp-new-btn').addEventListener('click', function () { openEditor(null, false); });
+
+      // Floating savebar — only visible when editing
+      var savebar = document.createElement('div');
+      savebar.className = 'rp-savebar';
+      savebar.style.display = 'none';
+      savebar.innerHTML =
+        '<button id="rp-cancel-btn" class="rp-btn rp-btn-ghost"><i class="fa-solid fa-xmark"></i> Cancel</button>' +
+        '<div class="rp-savebar-spacer"></div>' +
+        '<button id="rp-save-btn" class="rp-btn rp-btn-primary"><i class="fa-regular fa-floppy-disk"></i> Save</button>';
+      document.body.appendChild(savebar);
+
+      // Show/hide savebar based on state.editing
+      var origRenderBuilder = renderBuilder;
+      renderBuilder = function () { origRenderBuilder.apply(this, arguments); savebar.style.display = 'flex'; document.getElementById('rp-cancel-btn').onclick = function () { if (confirm('Discard changes?')) { state.editing = null; savebar.style.display = 'none'; renderList(); } }; document.getElementById('rp-save-btn').onclick = saveTemplate; };
+      var origRenderList = renderList;
+      renderList = function () { origRenderList.apply(this, arguments); savebar.style.display = 'none'; };
+
+      loadTemplates();
+    })();
+  </script>
+</body>
+</html>
