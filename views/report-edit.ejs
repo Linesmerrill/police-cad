@@ -971,10 +971,11 @@
             headers: authHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ query: query, communityId: communityId, limit: 25, page: 0 })
           })
-            .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+            .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (j) {
               if (s.query !== query) return; // a newer query has superseded this
-              s.results = (j && j.data) || [];
+              // V2 response shape: { civilians: [...], pagination: {...} }
+              s.results = (j && (j.civilians || j.data)) || [];
               s.loading = false;
               renderCallPicker();
             })
