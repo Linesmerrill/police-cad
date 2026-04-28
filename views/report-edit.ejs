@@ -889,25 +889,38 @@
 
       // --- "Start from" sources ---
       // Source picker modal (command palette) — tabbed across calls,
-      // citations, arrest reports. Each tab caches its own fetched list.
-      // The shared input filters the active tab.
+      // citations, arrest reports.
       //
-      // Citations are derived client-side from the civilians list since
-      // they're embedded in civilian.criminalHistory[]. Calls and arrest
-      // reports come from dedicated v2 endpoints.
+      //   Calls         → eager fetch of community calls (cap 100)
+      //   Citations     → 2-step: civilian search → that civilian's citations
+      //   Arrest Reports→ 2-step: civilian search → that civilian's arrests
+      //
+      // The 2-step flows avoid loading all civilians + all embedded records
+      // in one giant payload. The shared search input dispatches based on
+      // active tab + drill state: civilian-search query in step 1, local
+      // filter over fetched items in step 2.
       var SOURCE_TABS = ['call', 'citation', 'arrestReport'];
       var SOURCE_META = {
         call:         { icon: 'fa-phone-volume', accent: 'var(--rp-accent)', noun: 'call' },
         citation:     { icon: 'fa-file-lines',  accent: 'var(--rp-amber)',   noun: 'citation' },
         arrestReport: { icon: 'fa-handcuffs',   accent: 'var(--rp-red)',     noun: 'arrest report' },
       };
+      var DRILL_TABS = ['citation', 'arrestReport']; // tabs that use the 2-step civilian → records flow
       var callPicker = {
         backdrop: null, input: null, results: null, count: null, searchWrap: null, clearBtn: null,
         tab: 'call',
-        // per-tab data: { all, loaded, loading }
-        cache: { call: { all: [], loaded: false, loading: false },
-                 citation: { all: [], loaded: false, loading: false },
-                 arrestReport: { all: [], loaded: false, loading: false } },
+        // Calls cache only — eagerly loaded.
+        cache: { call: { all: [], loaded: false, loading: false } },
+        // Civilian-search step state, scoped per drill tab.
+        civSearch: {
+          citation:     { query: '', results: [], loading: false, debounce: null },
+          arrestReport: { query: '', results: [], loading: false, debounce: null },
+        },
+        // After picking a civilian, items for that civilian (citations or arrest reports).
+        drill: {
+          citation:     { civilian: null, items: [], loading: false },
+          arrestReport: { civilian: null, items: [], loading: false },
+        },
         filtered: [], activeIdx: 0, query: '',
       };
 
@@ -920,58 +933,114 @@
         callPicker.clearBtn = document.getElementById('rp-call-clear');
       }
 
-      function tabCache() { return callPicker.cache[callPicker.tab]; }
+      function isDrillTab(tab) { return DRILL_TABS.indexOf(tab) !== -1; }
+      function drillState() { return callPicker.drill[callPicker.tab]; }
 
-      function fetchSourceTabOnce(tab) {
-        var c = callPicker.cache[tab];
+      // Drill mode: 'civilian' (step 1) when no civilian is picked, else 'detail'.
+      function drillMode() {
+        if (!isDrillTab(callPicker.tab)) return 'list';
+        return drillState().civilian ? 'detail' : 'civilian';
+      }
+
+      function fetchCallsOnce() {
+        var c = callPicker.cache.call;
         if (c.loaded || c.loading) return Promise.resolve(c.all);
         c.loading = true;
-        var p;
-        if (tab === 'call') {
-          p = fetch(apiUrl + '/api/v2/calls/community/' + encodeURIComponent(communityId) + '?page=1&limit=100', { headers: authHeaders() })
-            .then(function (r) { return r.ok ? r.json() : { data: [] }; })
-            .then(function (j) { return (j && j.data) || []; });
-        } else if (tab === 'arrestReport') {
-          p = fetch(apiUrl + '/api/v2/arrest-reports/community/' + encodeURIComponent(communityId) + '?page=0&limit=100', { headers: authHeaders() })
-            .then(function (r) { return r.ok ? r.json() : { data: [] }; })
-            .then(function (j) { return (j && j.data) || []; });
-        } else if (tab === 'citation') {
-          // Citations live inside civilian.criminalHistory[]. Pull the
-          // civilian list and flatten any criminalHistory items whose
-          // type matches a citation. Limit=100 keeps payload reasonable.
-          p = fetch(apiUrl + '/api/v2/community/' + encodeURIComponent(communityId) + '/civilians?page=0&limit=100', { headers: authHeaders() })
-            .then(function (r) { return r.ok ? r.json() : { data: [] }; })
-            .then(function (j) {
-              var civilians = (j && j.data) || [];
-              var rows = [];
-              civilians.forEach(function (civ) {
-                var d = civ.civilian || {};
-                (d.criminalHistory || []).forEach(function (ch) {
-                  var t = String(ch.type || '').toLowerCase();
-                  if (t !== 'citation' && t !== 'warning') return;
-                  rows.push({ _id: civ._id, _childId: ch._id, civilian: d, citation: ch });
-                });
-              });
-              rows.sort(function (a, b) {
-                var aT = (a.citation && a.citation.createdAt) ? new Date(a.citation.createdAt).getTime() : 0;
-                var bT = (b.citation && b.citation.createdAt) ? new Date(b.citation.createdAt).getTime() : 0;
-                return bT - aT;
-              });
-              return rows;
-            });
-        } else {
-          p = Promise.resolve([]);
-        }
-        return p.then(function (rows) {
-          c.all = rows; c.loaded = true; updateTabCounts(); return rows;
-        }).catch(function () { return []; })
+        return fetch(apiUrl + '/api/v2/calls/community/' + encodeURIComponent(communityId) + '?page=1&limit=100', { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+          .then(function (j) { c.all = (j && j.data) || []; c.loaded = true; updateTabCounts(); return c.all; })
+          .catch(function () { return []; })
           .finally(function () { c.loading = false; });
       }
 
+      // Civilian search for step 1 of a drill tab. Debounced so it
+      // doesn't spam the API on each keystroke.
+      function searchCiviliansForDrill(tab, query) {
+        var s = callPicker.civSearch[tab];
+        s.query = query;
+        if (s.debounce) clearTimeout(s.debounce);
+        if (!query || !query.trim()) {
+          s.results = []; s.loading = false;
+          renderCallPicker();
+          return;
+        }
+        s.loading = true; renderCallPicker();
+        s.debounce = setTimeout(function () {
+          fetch(apiUrl + '/api/v2/civilians/search', {
+            method: 'POST',
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ query: query, communityId: communityId, limit: 25, page: 0 })
+          })
+            .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+            .then(function (j) {
+              if (s.query !== query) return; // a newer query has superseded this
+              s.results = (j && j.data) || [];
+              s.loading = false;
+              renderCallPicker();
+            })
+            .catch(function () { s.loading = false; renderCallPicker(); });
+        }, 200);
+      }
+
+      // Step-2 fetch: load citations or arrest reports for a picked civilian.
+      function loadDrillItems(tab, civilian) {
+        var d = callPicker.drill[tab];
+        d.civilian = civilian;
+        d.items = [];
+        d.loading = true;
+        renderCallPicker();
+        if (tab === 'citation') {
+          // Citations are embedded in civilian.criminalHistory[].
+          fetch(apiUrl + '/api/v1/civilian/' + encodeURIComponent(civilian._id), { headers: authHeaders() })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (full) {
+              var civDetails = (full && full.civilian) || civilian.civilian || {};
+              var rows = [];
+              (civDetails.criminalHistory || []).forEach(function (ch) {
+                var t = String(ch.type || '').toLowerCase();
+                if (t !== 'citation' && t !== 'warning') return;
+                rows.push({ _id: civilian._id, _childId: ch._id, civilian: civDetails, citation: ch });
+              });
+              rows.sort(function (a, b) {
+                var aT = a.citation && a.citation.createdAt ? new Date(a.citation.createdAt).getTime() : 0;
+                var bT = b.citation && b.citation.createdAt ? new Date(b.citation.createdAt).getTime() : 0;
+                return bT - aT;
+              });
+              d.items = rows; d.loading = false; renderCallPicker();
+            })
+            .catch(function () { d.loading = false; renderCallPicker(); });
+        } else if (tab === 'arrestReport') {
+          fetch(apiUrl + '/api/v1/arrest-report/arrestee/' + encodeURIComponent(civilian._id) + '?limit=50&page=0', { headers: authHeaders() })
+            .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+            .then(function (j) {
+              var rows = (j && j.data) || [];
+              rows.sort(function (a, b) {
+                var aT = (a.arrestReport && a.arrestReport.createdAt) ? new Date(a.arrestReport.createdAt).getTime() : 0;
+                var bT = (b.arrestReport && b.arrestReport.createdAt) ? new Date(b.arrestReport.createdAt).getTime() : 0;
+                return bT - aT;
+              });
+              d.items = rows; d.loading = false; renderCallPicker();
+            })
+            .catch(function () { d.loading = false; renderCallPicker(); });
+        }
+      }
+
+      function clearDrillCivilian(tab) {
+        callPicker.drill[tab] = { civilian: null, items: [], loading: false };
+        callPicker.query = '';
+        if (callPicker.input) callPicker.input.value = '';
+        callPicker.activeIdx = 0;
+        renderCallPicker();
+        setTimeout(function () { callPicker.input && callPicker.input.focus(); }, 30);
+      }
+
       function updateTabCounts() {
-        SOURCE_TABS.forEach(function (tab) {
-          var el = document.getElementById('rp-tab-count-' + tab);
-          if (el) el.textContent = String((callPicker.cache[tab].all || []).length);
+        var cEl = document.getElementById('rp-tab-count-call');
+        if (cEl) cEl.textContent = String((callPicker.cache.call.all || []).length);
+        // Drill tabs don't have a meaningful pre-count; hide their badges.
+        ['citation', 'arrestReport'].forEach(function (t) {
+          var el = document.getElementById('rp-tab-count-' + t);
+          if (el) el.style.display = 'none';
         });
       }
 
@@ -1073,9 +1142,18 @@
         return -1;
       }
 
+      function currentRows() {
+        if (callPicker.tab === 'call') return callPicker.cache.call.all || [];
+        if (drillMode() === 'civilian') return callPicker.civSearch[callPicker.tab].results || [];
+        return callPicker.drill[callPicker.tab].items || [];
+      }
+
       function filterCalls() {
         var q = callPicker.query.trim().toLowerCase();
-        var rows = (tabCache().all || []).slice();
+        var rows = currentRows().slice();
+        // In civilian-search step the rows come pre-filtered from the API;
+        // skip local rescoring so they stay in API order.
+        if (drillMode() === 'civilian') { callPicker.filtered = rows; return; }
         if (!q) { callPicker.filtered = rows; return; }
         var scored = [];
         rows.forEach(function (c) {
@@ -1086,32 +1164,95 @@
         callPicker.filtered = scored.map(function (x) { return x.c; });
       }
 
+      function renderBreadcrumb() {
+        if (!isDrillTab(callPicker.tab) || drillMode() !== 'detail') return '';
+        var civ = drillState().civilian;
+        var civDetails = civ && civ.civilian ? civ.civilian : (civ || {});
+        var name = ((civDetails.firstName || '') + ' ' + (civDetails.lastName || '')).trim() || civDetails.name || 'civilian';
+        return '<div style="padding: 0.5rem 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.78rem; color: var(--rp-text-muted); display: flex; align-items: center; gap: 0.5rem;">' +
+          '<button type="button" data-drill-back style="background: transparent; border: 0; color: var(--rp-accent); cursor: pointer; font-family: inherit; font-size: inherit; padding: 0; display: inline-flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-arrow-left"></i> All civilians</button>' +
+          '<span style="color: var(--rp-text-dim);">/</span>' +
+          '<span style="color: var(--rp-text); font-weight: 500;"><i class="fa-solid fa-user" style="color:#c4b5fd; font-size:0.7rem; margin-right:0.3rem;"></i>' + escapeHTML(name) + '</span>' +
+        '</div>';
+      }
+
+      function renderCivRow(row, q, idx) {
+        var d = row.civilian || {};
+        var name = ((d.firstName || '') + ' ' + (d.lastName || '')).trim() || d.name || '(unknown)';
+        var bits = [];
+        if (d.birthday) bits.push('DOB ' + d.birthday);
+        if (d.address) bits.push(d.address);
+        return '<a class="rp-cmd-row' + (idx === callPicker.activeIdx ? ' active' : '') + '"' +
+               ' role="option" data-idx="' + idx + '" data-civ-id="' + escapeHTML(row._id) + '" href="#">' +
+          '<div class="rp-cmd-icon" style="color:#c4b5fd;"><i class="fa-solid fa-user"></i></div>' +
+          '<div class="rp-cmd-body">' +
+            '<div class="rp-cmd-name-row"><span class="rp-cmd-name">' + highlightMatch(name, q) + '</span></div>' +
+            '<div class="rp-cmd-desc">' + highlightMatch(bits.join(' · ') || '—', q) + '</div>' +
+          '</div>' +
+          '<div class="rp-cmd-meta"><span class="rp-cmd-meta-enter">↵</span></div>' +
+        '</a>';
+      }
+
       function renderCallPicker() {
         var q = callPicker.query.trim();
-        filterCalls();
-        var c = tabCache();
         var meta = SOURCE_META[callPicker.tab];
         var nounPlural = meta.noun + 's';
+        var crumb = renderBreadcrumb();
 
-        if (c.loading && c.all.length === 0) {
-          callPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="rp-cmd-empty-title">Loading ' + escapeHTML(nounPlural) + '…</div></div>';
+        // ---- Drill step 1: civilian search ----
+        if (drillMode() === 'civilian') {
+          var s = callPicker.civSearch[callPicker.tab];
+          callPicker.filtered = s.results || [];
+          var html = crumb;
+          if (!q) {
+            html += '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-solid fa-user-magnifying-glass"></i></div><div class="rp-cmd-empty-title">Find a civilian</div><div class="rp-cmd-empty-sub">Search by name. Pick one to see their ' + escapeHTML(nounPlural) + '.</div></div>';
+            callPicker.count.innerHTML = '';
+          } else if (s.loading && (s.results || []).length === 0) {
+            html += '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="rp-cmd-empty-title">Searching…</div></div>';
+            callPicker.count.innerHTML = '';
+          } else if ((s.results || []).length === 0) {
+            html += '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-circle-question"></i></div><div class="rp-cmd-empty-title">No civilians match "' + escapeHTML(q) + '"</div></div>';
+            callPicker.count.innerHTML = '<strong>0</strong> civilians';
+          } else {
+            if (callPicker.activeIdx >= s.results.length) callPicker.activeIdx = 0;
+            html += s.results.map(function (row, i) { return renderCivRow(row, q, i); }).join('');
+            callPicker.count.innerHTML = '<strong>' + s.results.length + '</strong> civilian' + (s.results.length === 1 ? '' : 's');
+          }
+          callPicker.results.innerHTML = html;
+          bindCallRowHandlers();
+          scrollCallActiveIntoView();
+          return;
+        }
+
+        // ---- Calls or drill step 2: items list ----
+        filterCalls();
+        var rowsAll = currentRows();
+        var loading = (callPicker.tab === 'call')
+          ? (callPicker.cache.call.loading && rowsAll.length === 0)
+          : (drillState().loading && rowsAll.length === 0);
+
+        if (loading) {
+          callPicker.results.innerHTML = crumb + '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="rp-cmd-empty-title">Loading ' + escapeHTML(nounPlural) + '…</div></div>';
           callPicker.count.innerHTML = '';
           return;
         }
-        if (c.all.length === 0) {
-          callPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-folder-open"></i></div><div class="rp-cmd-empty-title">No recent ' + escapeHTML(nounPlural) + '</div><div class="rp-cmd-empty-sub">Records in this community will show up here once any exist.</div></div>';
+        if (rowsAll.length === 0) {
+          var emptyMsg = (callPicker.tab === 'call')
+            ? 'Calls in this community will show up here once any are created.'
+            : 'This civilian has no ' + nounPlural + '.';
+          callPicker.results.innerHTML = crumb + '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-folder-open"></i></div><div class="rp-cmd-empty-title">No ' + escapeHTML(nounPlural) + '</div><div class="rp-cmd-empty-sub">' + escapeHTML(emptyMsg) + '</div></div>';
           callPicker.count.innerHTML = '';
           return;
         }
         if (callPicker.filtered.length === 0) {
-          callPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-circle-question"></i></div><div class="rp-cmd-empty-title">No ' + escapeHTML(nounPlural) + ' match "' + escapeHTML(q) + '"</div><div class="rp-cmd-empty-sub">Try a shorter query or different keywords.</div></div>';
-          callPicker.count.innerHTML = '<strong>0</strong> of ' + c.all.length + ' ' + escapeHTML(nounPlural);
+          callPicker.results.innerHTML = crumb + '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-circle-question"></i></div><div class="rp-cmd-empty-title">No ' + escapeHTML(nounPlural) + ' match "' + escapeHTML(q) + '"</div></div>';
+          callPicker.count.innerHTML = '<strong>0</strong> of ' + rowsAll.length + ' ' + escapeHTML(nounPlural);
           return;
         }
 
         if (callPicker.activeIdx >= callPicker.filtered.length) callPicker.activeIdx = 0;
 
-        callPicker.results.innerHTML = callPicker.filtered.map(function (row, i) {
+        callPicker.results.innerHTML = crumb + callPicker.filtered.map(function (row, i) {
           var isActive = rowIsActive(row, callPicker.tab);
           var statusCls = isActive ? 'active' : 'cleared';
           var rel = fmtRelative(rowCreatedAt(row, callPicker.tab));
@@ -1133,7 +1274,7 @@
             '</div>' +
           '</a>';
         }).join('');
-        callPicker.count.innerHTML = '<strong>' + callPicker.filtered.length + '</strong> of ' + c.all.length + ' ' + escapeHTML(nounPlural);
+        callPicker.count.innerHTML = '<strong>' + callPicker.filtered.length + '</strong> of ' + rowsAll.length + ' ' + escapeHTML(nounPlural);
         bindCallRowHandlers();
         scrollCallActiveIntoView();
       }
@@ -1142,21 +1283,50 @@
         if (SOURCE_TABS.indexOf(tab) === -1) return;
         callPicker.tab = tab;
         callPicker.activeIdx = 0;
+        callPicker.query = '';
+        if (callPicker.input) {
+          callPicker.input.value = '';
+          callPicker.searchWrap.classList.remove('has-value');
+        }
         Array.from(document.querySelectorAll('#rp-cmd-tabs .rp-cmd-tab')).forEach(function (b) {
           b.classList.toggle('active', b.getAttribute('data-tab') === tab);
         });
         var meta = SOURCE_META[tab];
-        callPicker.input.placeholder = 'Search ' + meta.noun + 's…';
-        renderCallPicker();
-        if (!callPicker.cache[tab].loaded) {
-          fetchSourceTabOnce(tab).then(function () { renderCallPicker(); });
+        if (tab === 'call') {
+          callPicker.input.placeholder = 'Search calls…';
+          if (!callPicker.cache.call.loaded) {
+            fetchCallsOnce().then(function () { renderCallPicker(); });
+          }
+        } else {
+          // Drill tabs always start at step 1 unless a civilian is already
+          // picked from a prior visit. Update placeholder accordingly.
+          callPicker.input.placeholder = drillMode() === 'civilian'
+            ? 'Search civilians by name…'
+            : ('Filter ' + meta.noun + 's…');
         }
+        renderCallPicker();
       }
 
       function bindCallRowHandlers() {
+        var backBtn = callPicker.results.querySelector('[data-drill-back]');
+        if (backBtn) backBtn.addEventListener('click', function (e) { e.preventDefault(); clearDrillCivilian(callPicker.tab); });
         Array.from(callPicker.results.querySelectorAll('.rp-cmd-row')).forEach(function (row) {
           row.addEventListener('click', function (e) {
             e.preventDefault();
+            var civId = row.getAttribute('data-civ-id');
+            if (civId) {
+              // Step 1 → step 2: drill into picked civilian.
+              var civ = (callPicker.civSearch[callPicker.tab].results || []).filter(function (c) { return c._id === civId; })[0];
+              if (civ) {
+                callPicker.query = '';
+                callPicker.input.value = '';
+                callPicker.searchWrap.classList.remove('has-value');
+                callPicker.activeIdx = 0;
+                loadDrillItems(callPicker.tab, civ);
+                setTimeout(function () { callPicker.input.focus(); }, 30);
+              }
+              return;
+            }
             var id = row.getAttribute('data-id');
             var childId = row.getAttribute('data-child-id') || '';
             applyPickedRow(callPicker.tab, id, childId);
@@ -1230,12 +1400,22 @@
 
       function openCallPicker(initialTab) {
         if (!callPicker.backdrop) buildCallPickerEls();
+        // Reset drill state for both drill tabs so each open starts clean.
+        callPicker.drill = {
+          citation:     { civilian: null, items: [], loading: false },
+          arrestReport: { civilian: null, items: [], loading: false },
+        };
+        callPicker.civSearch = {
+          citation:     { query: '', results: [], loading: false, debounce: null },
+          arrestReport: { query: '', results: [], loading: false, debounce: null },
+        };
         callPicker.query = '';
         callPicker.input.value = '';
         callPicker.activeIdx = 0;
         callPicker.searchWrap.classList.remove('has-value');
         var tab = SOURCE_TABS.indexOf(initialTab) !== -1 ? initialTab : 'call';
         setPickerTab(tab);
+        updateTabCounts();
         callPicker.backdrop.classList.add('open');
         setTimeout(function () { callPicker.input.focus(); }, 30);
       }
@@ -2200,7 +2380,12 @@
         callPicker.query = e.target.value;
         callPicker.activeIdx = 0;
         callPicker.searchWrap.classList.toggle('has-value', callPicker.query.length > 0);
-        renderCallPicker();
+        if (drillMode() === 'civilian') {
+          // Step 1: hit the civilian search API (debounced inside searchCiviliansForDrill).
+          searchCiviliansForDrill(callPicker.tab, callPicker.query);
+        } else {
+          renderCallPicker();
+        }
       });
       callPicker.input.addEventListener('focus', function () { callPicker.searchWrap.classList.add('focused'); });
       callPicker.input.addEventListener('blur', function () { callPicker.searchWrap.classList.remove('focused'); });
@@ -2231,7 +2416,22 @@
           if (!callPicker.filtered.length) return;
           e.preventDefault();
           var pick = callPicker.filtered[callPicker.activeIdx];
-          if (pick && pick._id) applyPickedRow(callPicker.tab, pick._id, pick._childId || '');
+          if (!pick) return;
+          if (drillMode() === 'civilian') {
+            // Drill into civilian → step 2.
+            callPicker.query = '';
+            callPicker.input.value = '';
+            callPicker.searchWrap.classList.remove('has-value');
+            callPicker.activeIdx = 0;
+            loadDrillItems(callPicker.tab, pick);
+            return;
+          }
+          if (pick._id) applyPickedRow(callPicker.tab, pick._id, pick._childId || '');
+        }
+        if (e.key === 'Backspace' && drillMode() === 'detail' && !callPicker.query) {
+          // Empty input + backspace pops back to civilian search.
+          e.preventDefault();
+          clearDrillCivilian(callPicker.tab);
         }
       });
 
