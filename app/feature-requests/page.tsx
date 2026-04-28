@@ -14,6 +14,7 @@ import {
   FunnelIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  UserCircleIcon,
 } from '@heroicons/react/24/solid';
 import {
   FireIcon,
@@ -988,15 +989,17 @@ function FeatureRequests() {
   const validStatuses = STATUS_FILTERS.map(f => f.key);
   const initialSort = validSorts.includes(searchParams.get('sort') || '') ? searchParams.get('sort')! : 'trending';
   const initialStatus = validStatuses.includes(searchParams.get('status') || '') ? searchParams.get('status')! : '';
+  const initialMine = searchParams.get('mine') === '1';
 
   // State
-  const [currentUser, setCurrentUser] = useState<{ _id: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ _id: string; username?: string; profilePicture?: string } | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [requests, setRequests] = useState<FeatureRequest[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState(initialSort);
   const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [mineOnly, setMineOnly] = useState(initialMine);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -1015,16 +1018,20 @@ function FeatureRequests() {
     const params = new URLSearchParams();
     if (sort !== 'trending') params.set('sort', sort);
     if (statusFilter) params.set('status', statusFilter);
+    if (mineOnly) params.set('mine', '1');
     const qs = params.toString();
     const newPath = '/feature-requests' + (qs ? '?' + qs : '');
     router.replace(newPath, { scroll: false });
-  }, [sort, statusFilter, router]);
+  }, [sort, statusFilter, mineOnly, router]);
 
   // Real-time updates via Socket.IO
   useFeatureRequestSocket({
     room: 'listing',
     events: {
       feature_request_created: (data: { featureRequest: FeatureRequest }) => {
+        if (mineOnly && (!currentUser || data.featureRequest.author?._id !== currentUser._id)) {
+          return;
+        }
         if (!statusFilter && !debouncedQuery) {
           setTotalCount(prev => prev + 1);
           if (page === 1) {
@@ -1084,11 +1091,19 @@ function FeatureRequests() {
       .then(data => {
         const user = data?.user || data;
         if (user && (user._id || user.id)) {
-          setCurrentUser({ _id: user._id || user.id });
+          setCurrentUser({
+            _id: user._id || user.id,
+            username: user.username,
+            profilePicture: user.profilePicture || undefined,
+          });
+        } else if (mineOnly) {
+          // Drop the filter if the user isn't signed in.
+          setMineOnly(false);
         }
       })
       .catch(() => {})
       .finally(() => setAuthReady(true));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Debounce search
@@ -1135,6 +1150,7 @@ function FeatureRequests() {
       // filters to Released, picks any status, or runs a search.
       if (!statusFilter && !debouncedQuery) params.set('excludeStatus', 'released');
       if (currentUser) params.set('userId', currentUser._id);
+      if (mineOnly && currentUser) params.set('authorId', currentUser._id);
 
       const res = await fetch(`/api/v2/feature-requests?${params}`, { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch');
@@ -1148,7 +1164,7 @@ function FeatureRequests() {
       setLoading(false);
       setInitialLoad(false);
     }
-  }, [authReady, page, sort, statusFilter, debouncedQuery, currentUser]);
+  }, [authReady, page, sort, statusFilter, debouncedQuery, mineOnly, currentUser]);
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
   useRefetchOnFocus(fetchRequests, authReady);
@@ -1444,6 +1460,111 @@ function FeatureRequests() {
                 })}
               </div>
 
+              {/* Right side: Mine pill + Status filter */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                marginLeft: 'auto',
+              }}>
+                {currentUser && (
+                  <button
+                    onClick={() => { setMineOnly(prev => !prev); setPage(1); }}
+                    aria-pressed={mineOnly}
+                    title={mineOnly ? 'Showing only your requests' : 'Show only your requests'}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.45rem',
+                      padding: '0.4rem 0.75rem 0.4rem 0.4rem',
+                      fontSize: '0.8rem',
+                      fontWeight: mineOnly ? 600 : 500,
+                      fontFamily: FONT,
+                      color: mineOnly ? '#3b82f6' : 'rgba(255,255,255,0.55)',
+                      backgroundColor: mineOnly ? 'rgba(59,130,246,0.12)' : 'rgba(15,15,20,0.5)',
+                      border: mineOnly
+                        ? '1px solid rgba(59,130,246,0.5)'
+                        : '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '999px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      boxShadow: mineOnly ? '0 0 14px rgba(59,130,246,0.18)' : 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!mineOnly) {
+                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.22)';
+                        e.currentTarget.style.color = 'rgba(255,255,255,0.78)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!mineOnly) {
+                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                        e.currentTarget.style.color = 'rgba(255,255,255,0.55)';
+                      }
+                    }}
+                  >
+                    {currentUser.profilePicture ? (
+                      <img
+                        src={currentUser.profilePicture}
+                        alt=""
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: mineOnly
+                            ? '1px solid rgba(59,130,246,0.6)'
+                            : '1px solid rgba(255,255,255,0.15)',
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : currentUser.username ? (
+                      <span style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        backgroundColor: mineOnly ? 'rgba(59,130,246,0.25)' : 'rgba(255,255,255,0.08)',
+                        border: mineOnly
+                          ? '1px solid rgba(59,130,246,0.55)'
+                          : '1px solid rgba(255,255,255,0.15)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.6rem',
+                        fontWeight: 700,
+                        fontFamily: FONT,
+                        color: mineOnly ? '#3b82f6' : 'rgba(255,255,255,0.6)',
+                        flexShrink: 0,
+                      }}>
+                        {currentUser.username.charAt(0).toUpperCase()}
+                      </span>
+                    ) : (
+                      <UserCircleIcon style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+                    )}
+                    <span>Mine</span>
+                    {mineOnly && (
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: '18px',
+                        height: '18px',
+                        padding: '0 0.35rem',
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        fontFamily: FONT,
+                        fontVariantNumeric: 'tabular-nums',
+                        color: '#0a0a0f',
+                        backgroundColor: '#3b82f6',
+                        borderRadius: '999px',
+                        lineHeight: 1,
+                      }}>
+                        {visibleTotalCount}
+                      </span>
+                    )}
+                  </button>
+                )}
+
               {/* Status filter dropdown */}
               <div ref={dropdownRef} style={{ position: 'relative' }}>
                 <button
@@ -1523,6 +1644,7 @@ function FeatureRequests() {
                   )}
                 </AnimatePresence>
               </div>
+              </div>
             </div>
 
             {/* ── Results count ───────────────────────────── */}
@@ -1533,7 +1655,7 @@ function FeatureRequests() {
                 fontFamily: FONT,
                 color: 'rgba(255,255,255,0.35)',
               }}>
-                {visibleTotalCount} request{visibleTotalCount !== 1 ? 's' : ''}
+                {visibleTotalCount}{mineOnly ? ' of your' : ''} request{visibleTotalCount !== 1 ? 's' : ''}
                 {debouncedQuery ? ` matching "${debouncedQuery}"` : ''}
               </p>
             )}
@@ -1608,7 +1730,11 @@ function FeatureRequests() {
                     color: 'rgba(255,255,255,0.8)',
                     margin: '0 0 0.5rem 0',
                   }}>
-                    {debouncedQuery || statusFilter ? 'No matching requests' : 'No feature requests yet'}
+                    {mineOnly
+                      ? "You haven't submitted any requests yet"
+                      : debouncedQuery || statusFilter
+                        ? 'No matching requests'
+                        : 'No feature requests yet'}
                   </h3>
                   <p style={{
                     fontSize: '0.9rem',
@@ -1616,11 +1742,13 @@ function FeatureRequests() {
                     color: 'rgba(255,255,255,0.45)',
                     margin: '0 0 1.5rem 0',
                   }}>
-                    {debouncedQuery || statusFilter
-                      ? 'Try adjusting your search or filters'
-                      : 'Be the first to submit a feature request!'}
+                    {mineOnly
+                      ? 'Got an idea to make the CAD better? We’d love to hear it.'
+                      : debouncedQuery || statusFilter
+                        ? 'Try adjusting your search or filters'
+                        : 'Be the first to submit a feature request!'}
                   </p>
-                  {!(debouncedQuery || statusFilter) && (
+                  {(mineOnly || !(debouncedQuery || statusFilter)) && (
                     <Link
                       href={currentUser ? '/feature-requests/new' : '/login?redirect=/feature-requests/new'}
                       style={{
