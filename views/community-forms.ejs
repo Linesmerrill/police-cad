@@ -188,6 +188,75 @@
     .rp-checkbox-row { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--rp-text); cursor: pointer; }
     .rp-checkbox-row input { accent-color: var(--rp-accent); }
 
+    /* Bind-entity badge inside section header (only shown when repeatable) */
+    .rp-bind-entity {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.18rem 0.5rem;
+      font-size: 0.75rem;
+      color: var(--rp-text-muted);
+      background: rgba(168, 85, 247, 0.06);
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      border-radius: 999px;
+    }
+    .rp-bind-entity i { color: #a855f7; font-size: 0.7rem; }
+    .rp-bind-entity select {
+      background: transparent; border: 0; outline: 0;
+      color: var(--rp-text); font-family: inherit; font-size: 0.78rem;
+      padding: 0; margin: 0;
+      cursor: pointer;
+    }
+    .rp-bind-entity select option { background: #14161c; color: var(--rp-text); }
+
+    /* Per-field auto-fill panel */
+    .rp-autofill {
+      grid-column: 1 / -1;
+      padding: 0.5rem 0.25rem 0.25rem;
+      border-top: 1px dashed var(--rp-glass-border);
+      margin-top: 0.4rem;
+      display: none;
+    }
+    .rp-field-row.has-autofill .rp-autofill { display: block; }
+    .rp-autofill-toggle {
+      grid-column: 1 / -1;
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.2rem 0;
+      font-size: 0.72rem;
+      color: var(--rp-text-dim);
+      background: transparent; border: 0; cursor: pointer;
+      font-family: inherit;
+    }
+    .rp-autofill-toggle:hover { color: var(--rp-accent); }
+    .rp-autofill-toggle .chev { transition: transform 0.15s ease; }
+    .rp-field-row.has-autofill .rp-autofill-toggle .chev { transform: rotate(90deg); }
+    .rp-autofill-row {
+      display: grid;
+      grid-template-columns: 130px 1fr 28px;
+      gap: 0.4rem;
+      align-items: center;
+      margin-bottom: 0.35rem;
+    }
+    .rp-autofill-row select,
+    .rp-autofill-row input { font-size: 0.78rem; padding: 0.35rem 0.5rem; }
+    .rp-autofill-add {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.3rem 0.55rem; border-radius: 6px;
+      background: transparent; border: 1px dashed var(--rp-glass-border);
+      color: var(--rp-text-muted); font-family: inherit; font-size: 0.72rem;
+      cursor: pointer;
+    }
+    .rp-autofill-add:hover { color: var(--rp-accent); border-color: rgba(56,189,248,0.3); }
+    .rp-autofill-hint {
+      font-size: 0.7rem; color: var(--rp-text-dim);
+      margin-bottom: 0.4rem;
+    }
+    .rp-autofill-hint code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: rgba(255,255,255,0.04);
+      padding: 0.05rem 0.3rem; border-radius: 3px;
+      color: var(--rp-text);
+    }
+    .rp-autofill-row .rp-tiny-btn { width: 24px; height: 24px; }
+
     .rp-empty {
       text-align: center; padding: 3rem 1rem;
       color: var(--rp-text-muted);
@@ -377,6 +446,18 @@
         };
       }
 
+      function cloneSection(s, i) {
+        return {
+          id: s.id || ('section' + (i + 1)),
+          title: s.title || '',
+          repeatable: !!s.repeatable,
+          bindEntity: s.bindEntity || '',
+          minRows: s.minRows || 0,
+          maxRows: s.maxRows || 0,
+          fields: (s.fields || []).map(function (f) { return Object.assign({}, f); }),
+        };
+      }
+
       function openEditor(template, isClone) {
         if (!template) {
           state.editing = blankTemplate();
@@ -393,14 +474,7 @@
             visibleToRoles: src.visibleToRoles || [],
             editableByRoles: src.editableByRoles || [],
             linkableEntities: src.linkableEntities || [],
-            sections: (src.sections || []).map(function (s, i) {
-              return {
-                id: s.id || ('section' + (i + 1)),
-                title: s.title || '',
-                repeatable: !!s.repeatable,
-                fields: (s.fields || []).map(function (f) { return Object.assign({}, f); }),
-              };
-            }),
+            sections: (src.sections || []).map(cloneSection),
           };
           state.isNew = true;
         } else {
@@ -415,14 +489,7 @@
             visibleToRoles: src2.visibleToRoles || [],
             editableByRoles: src2.editableByRoles || [],
             linkableEntities: src2.linkableEntities || [],
-            sections: (src2.sections || []).map(function (s, i) {
-              return {
-                id: s.id || ('section' + (i + 1)),
-                title: s.title || '',
-                repeatable: !!s.repeatable,
-                fields: (s.fields || []).map(function (f) { return Object.assign({}, f); }),
-              };
-            }),
+            sections: (src2.sections || []).map(cloneSection),
           };
           state.isNew = false;
         }
@@ -431,6 +498,21 @@
 
       var ROLES = ['police', 'dispatch', 'fire', 'ems', 'judicial', 'civilian'];
       var ENTITIES = ['civilian', 'vehicle', 'firearm', 'call', 'citation', 'arrestReport', 'warrant', 'bolo'];
+      var BIND_ENTITY_OPTS = [
+        { value: '', label: '— none —' },
+        { value: 'civilian', label: 'Civilian' },
+        { value: 'vehicle', label: 'Vehicle' },
+        { value: 'firearm', label: 'Firearm' },
+      ];
+      var POPULATE_SOURCES = [
+        { value: 'call', label: 'Call' },
+        { value: 'citation', label: 'Citation' },
+        { value: 'arrestReport', label: 'Arrest Report' },
+        { value: 'civilian', label: 'Civilian' },
+        { value: 'vehicle', label: 'Vehicle' },
+        { value: 'firearm', label: 'Firearm' },
+        { value: 'bound', label: 'Bound (this row)' },
+      ];
       var FIELD_TYPES = [
         { value: 'text', label: 'Text' },
         { value: 'textarea', label: 'Long text' },
@@ -502,11 +584,19 @@
         var t = state.editing;
         var html = '';
         (t.sections || []).forEach(function (sec, sidx) {
+          var bindHTML = '';
+          if (sec.repeatable) {
+            var bindOpts = BIND_ENTITY_OPTS.map(function (o) {
+              return '<option value="' + o.value + '"' + ((sec.bindEntity || '') === o.value ? ' selected' : '') + '>' + escapeHTML(o.label) + '</option>';
+            }).join('');
+            bindHTML = '<span class="rp-bind-entity" title="Each row can be linked to a real entity. Bound fields auto-fill from the linked record."><i class="fa-solid fa-link"></i> Bind to <select data-section-bind>' + bindOpts + '</select></span>';
+          }
           html += '<div class="rp-section" data-section-index="' + sidx + '">' +
             '<div class="rp-section-head">' +
               '<i class="fa-solid fa-grip-vertical" style="color: var(--rp-text-dim);"></i>' +
               '<input type="text" placeholder="Section title" value="' + escapeHTML(sec.title) + '" data-section-title />' +
               '<label class="rp-checkbox-row" style="margin-left:auto;"><input type="checkbox" data-section-repeatable ' + (sec.repeatable ? 'checked' : '') + '/> repeatable</label>' +
+              bindHTML +
               '<button class="rp-tiny-btn" data-section-up title="Move up"><i class="fa-solid fa-arrow-up"></i></button>' +
               '<button class="rp-tiny-btn" data-section-down title="Move down"><i class="fa-solid fa-arrow-down"></i></button>' +
               '<button class="rp-tiny-btn danger" data-section-remove title="Remove section"><i class="fa-solid fa-trash"></i></button>' +
@@ -538,7 +628,12 @@
             return '<option value="' + ft.value + '"' + (f.type === ft.value ? ' selected' : '') + '>' + ft.label + '</option>';
           }).join('');
           var hasOptions = ['select', 'radio', 'multiSelect'].indexOf(f.type) !== -1;
-          html += '<div class="rp-field-row" data-field-index="' + fidx + '">' +
+          var pf = (f.populateFrom && f.populateFrom.length) ? f.populateFrom : [];
+          var hasAutofill = pf.length > 0;
+          var sourceOpts = POPULATE_SOURCES
+            .filter(function (s) { return s.value !== 'bound' || sec.bindEntity; })
+            .map(function (s) { return s; });
+          html += '<div class="rp-field-row' + (hasAutofill ? ' has-autofill' : '') + '" data-field-index="' + fidx + '">' +
             '<input class="rp-input" data-field-label placeholder="Field label" value="' + escapeHTML(f.label || '') + '" />' +
             '<select class="rp-select" data-field-type>' + typeOpts + '</select>' +
             '<label class="rp-checkbox-row"><input type="checkbox" data-field-required ' + (f.required ? 'checked' : '') + '/> required</label>' +
@@ -548,9 +643,28 @@
               '<button class="rp-tiny-btn danger" data-field-remove title="Remove"><i class="fa-solid fa-trash"></i></button>' +
             '</div>' +
             (hasOptions ? '<div class="rp-field-options"><label class="rp-label">Options (one per line)</label><textarea class="rp-textarea" data-field-options>' + escapeHTML((f.options || []).join('\n')) + '</textarea></div>' : '') +
+            '<button class="rp-autofill-toggle" type="button" data-autofill-toggle><i class="fa-solid fa-chevron-right chev"></i> Auto-fill (' + pf.length + ')</button>' +
+            '<div class="rp-autofill">' +
+              '<div class="rp-autofill-hint">First mapping with a non-empty value wins. Path is dotted (e.g. <code>title</code> or <code>arrestee.name</code>). Use <code>@const:Some Value</code> for a literal.</div>' +
+              renderAutofillRows(pf, sourceOpts) +
+              '<button class="rp-autofill-add" type="button" data-autofill-add><i class="fa-solid fa-plus"></i> Add mapping</button>' +
+            '</div>' +
           '</div>';
         });
         container.innerHTML = html;
+      }
+
+      function renderAutofillRows(populateFrom, sourceOpts) {
+        return (populateFrom || []).map(function (m, midx) {
+          var opts = sourceOpts.map(function (s) {
+            return '<option value="' + s.value + '"' + (m.source === s.value ? ' selected' : '') + '>' + escapeHTML(s.label) + '</option>';
+          }).join('');
+          return '<div class="rp-autofill-row" data-autofill-index="' + midx + '">' +
+            '<select class="rp-select" data-autofill-source>' + opts + '</select>' +
+            '<input class="rp-input" data-autofill-path placeholder="dotted path or @const:Value" value="' + escapeHTML(m.path || '') + '" />' +
+            '<button class="rp-tiny-btn danger" type="button" data-autofill-remove title="Remove"><i class="fa-solid fa-xmark"></i></button>' +
+          '</div>';
+        }).join('');
       }
 
       function bindSectionEvents() {
@@ -558,7 +672,19 @@
         Array.from(document.querySelectorAll('.rp-section')).forEach(function (secEl) {
           var sidx = parseInt(secEl.getAttribute('data-section-index'), 10);
           secEl.querySelector('[data-section-title]').addEventListener('input', function (e) { t.sections[sidx].title = e.target.value; });
-          secEl.querySelector('[data-section-repeatable]').addEventListener('change', function (e) { t.sections[sidx].repeatable = e.target.checked; });
+          secEl.querySelector('[data-section-repeatable]').addEventListener('change', function (e) {
+            t.sections[sidx].repeatable = e.target.checked;
+            // Clearing repeatable also clears bindEntity, since bindings only apply to repeatable rows.
+            if (!e.target.checked) t.sections[sidx].bindEntity = '';
+            renderSections();
+          });
+          var bindEl = secEl.querySelector('[data-section-bind]');
+          if (bindEl) {
+            bindEl.addEventListener('change', function (e) {
+              t.sections[sidx].bindEntity = e.target.value;
+              renderSections(); // re-render so 'bound' becomes available in field auto-fill source dropdowns
+            });
+          }
           secEl.querySelector('[data-section-up]').addEventListener('click', function () { if (sidx === 0) return; var arr = t.sections; var tmp = arr[sidx - 1]; arr[sidx - 1] = arr[sidx]; arr[sidx] = tmp; renderSections(); });
           secEl.querySelector('[data-section-down]').addEventListener('click', function () { var arr = t.sections; if (sidx >= arr.length - 1) return; var tmp = arr[sidx + 1]; arr[sidx + 1] = arr[sidx]; arr[sidx] = tmp; renderSections(); });
           secEl.querySelector('[data-section-remove]').addEventListener('click', function () { if (!confirm('Remove this section and all its fields?')) return; t.sections.splice(sidx, 1); renderSections(); });
@@ -586,6 +712,39 @@
             var optsEl = rowEl.querySelector('[data-field-options]');
             if (optsEl) optsEl.addEventListener('input', function (e) {
               f.options = e.target.value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+            });
+            var toggleBtn = rowEl.querySelector('[data-autofill-toggle]');
+            if (toggleBtn) {
+              toggleBtn.addEventListener('click', function () { rowEl.classList.toggle('has-autofill'); });
+            }
+            var addBtn = rowEl.querySelector('[data-autofill-add]');
+            if (addBtn) {
+              addBtn.addEventListener('click', function () {
+                f.populateFrom = f.populateFrom || [];
+                var defaultSource = t.sections[sidx].bindEntity ? 'bound' : 'call';
+                f.populateFrom.push({ source: defaultSource, path: '' });
+                renderSections();
+                // Re-open the panel after re-render
+                setTimeout(function () {
+                  var sec2 = document.querySelector('[data-section-index="' + sidx + '"]');
+                  var row2 = sec2 && sec2.querySelector('[data-field-index="' + fidx + '"]');
+                  if (row2) row2.classList.add('has-autofill');
+                }, 0);
+              });
+            }
+            Array.from(rowEl.querySelectorAll('.rp-autofill-row')).forEach(function (afRow) {
+              var midx = parseInt(afRow.getAttribute('data-autofill-index'), 10);
+              afRow.querySelector('[data-autofill-source]').addEventListener('change', function (e) {
+                f.populateFrom[midx].source = e.target.value;
+              });
+              afRow.querySelector('[data-autofill-path]').addEventListener('input', function (e) {
+                f.populateFrom[midx].path = e.target.value;
+              });
+              afRow.querySelector('[data-autofill-remove]').addEventListener('click', function () {
+                f.populateFrom.splice(midx, 1);
+                if (!f.populateFrom.length) delete f.populateFrom;
+                renderSections();
+              });
             });
           });
         });

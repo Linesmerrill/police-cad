@@ -208,8 +208,43 @@
     }
 
     /* ============================================================
-       Source picker — searchable command palette for calls
+       Source picker — searchable command palette (tabbed: calls,
+       citations, arrest reports), entity picker (civilians, vehicles,
+       firearms) for per-row bindings.
        ============================================================ */
+    .rp-cmd-tabs {
+      display: flex; align-items: center; gap: 0.25rem;
+      padding: 0.5rem 0.6rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .rp-cmd-tab {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.45rem 0.7rem;
+      font-family: inherit; font-size: 0.78rem; font-weight: 500;
+      background: transparent; border: 0; border-radius: 8px 8px 0 0;
+      color: var(--rp-text-muted); cursor: pointer;
+      position: relative;
+      transition: color 140ms ease;
+    }
+    .rp-cmd-tab:hover { color: var(--rp-text); }
+    .rp-cmd-tab.active { color: var(--rp-text); }
+    .rp-cmd-tab.active::after {
+      content: ""; position: absolute; left: 0.5rem; right: 0.5rem; bottom: -1px;
+      height: 2px; background: var(--rp-accent); border-radius: 2px 2px 0 0;
+    }
+    .rp-cmd-tab-count {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 16px; padding: 0 5px;
+      font-size: 0.65rem; font-weight: 600;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 999px; color: var(--rp-text-dim);
+    }
+    .rp-cmd-tab.active .rp-cmd-tab-count {
+      background: rgba(56,189,248,0.12);
+      border-color: rgba(56,189,248,0.25);
+      color: var(--rp-accent);
+    }
     .rp-cmd-mono {
       font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
       font-feature-settings: "tnum" 1;
@@ -537,7 +572,9 @@
     }
 
     /* ============================================================
-       Source chip — picked-call confirmation in Start-from panel
+       Source chip — picked-source confirmation in Start-from panel.
+       Tone (icon color, status ring) is set per source type via
+       data-source-type — call=cyan, citation=amber, arrestReport=red.
        ============================================================ */
     .rp-source-chip {
       display: inline-flex; align-items: center; gap: 0.5rem;
@@ -558,6 +595,16 @@
       color: var(--rp-accent);
       border: 1px solid rgba(56,189,248,0.25);
       font-size: 0.62rem;
+    }
+    .rp-source-chip[data-source-type="citation"] .rp-source-chip-icon {
+      background: rgba(245,158,11,0.12);
+      color: var(--rp-amber);
+      border-color: rgba(245,158,11,0.25);
+    }
+    .rp-source-chip[data-source-type="arrestReport"] .rp-source-chip-icon {
+      background: rgba(239,68,68,0.12);
+      color: var(--rp-red);
+      border-color: rgba(239,68,68,0.25);
     }
     .rp-source-chip-status {
       width: 6px; height: 6px; border-radius: 50%;
@@ -593,6 +640,65 @@
       color: var(--rp-red);
       border-color: rgba(239,68,68,0.25);
     }
+
+    /* ============================================================
+       Row-level entity link (bound rows in repeatable sections).
+       Different visual language from source chips: violet accent
+       (entity link is structural, not a one-shot import).
+       ============================================================ */
+    .rp-rep-row { padding-top: 2.4rem; }
+    .rp-row-link-bar {
+      position: absolute; top: 0.5rem; left: 0.75rem; right: 2.4rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .rp-row-link-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.18rem 0.55rem; border-radius: 999px;
+      font-family: inherit; font-size: 0.7rem; font-weight: 500;
+      background: rgba(168, 85, 247, 0.06);
+      border: 1px dashed rgba(168, 85, 247, 0.3);
+      color: #c4b5fd; cursor: pointer;
+      transition: all 160ms ease;
+    }
+    .rp-row-link-btn:hover {
+      background: rgba(168, 85, 247, 0.12);
+      border-color: rgba(168, 85, 247, 0.5);
+      border-style: solid;
+      color: #ddd6fe;
+    }
+    .rp-row-link-btn i { font-size: 0.62rem; }
+    .rp-row-linked-chip {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.2rem 0.45rem 0.2rem 0.55rem;
+      background: rgba(168, 85, 247, 0.08);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 999px;
+      font-size: 0.74rem;
+      color: #ddd6fe;
+      max-width: 100%;
+    }
+    .rp-row-linked-chip i.fa-link { color: #c4b5fd; font-size: 0.62rem; }
+    .rp-row-linked-chip a {
+      color: inherit; text-decoration: none; font-weight: 500;
+      max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .rp-row-linked-chip a:hover { text-decoration: underline; }
+    .rp-row-linked-chip-x {
+      width: 18px; height: 18px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; background: transparent; border: 0;
+      color: #c4b5fd; cursor: pointer; font-size: 0.6rem; padding: 0;
+    }
+    .rp-row-linked-chip-x:hover { background: rgba(168, 85, 247, 0.18); color: #fff; }
+
+    /* Bound-field auto-fill animation: brief value flash on apply */
+    @keyframes rp-bound-flash {
+      0%, 100% { background-color: rgba(168, 85, 247, 0); }
+      30% { background-color: rgba(168, 85, 247, 0.12); }
+    }
+    .rp-input.rp-just-bound,
+    .rp-textarea.rp-just-bound,
+    .rp-select.rp-just-bound { animation: rp-bound-flash 700ms ease-out; }
   </style>
 </head>
 <body>
@@ -653,23 +759,52 @@
     </div>
   </div>
 
-  <!-- Source picker — recent calls modal -->
-  <div id="rp-call-cmd" class="rp-cmd-backdrop" role="dialog" aria-modal="true" aria-label="Pick a recent call">
+  <!-- Source picker — tabbed: calls, citations, arrest reports -->
+  <div id="rp-call-cmd" class="rp-cmd-backdrop" role="dialog" aria-modal="true" aria-label="Pick a record to import">
     <div class="rp-cmd-panel" role="document">
+      <div class="rp-cmd-tabs" id="rp-cmd-tabs" role="tablist">
+        <button class="rp-cmd-tab active" type="button" data-tab="call" role="tab"><i class="fa-solid fa-phone-volume" style="color: var(--rp-accent);"></i> Calls <span class="rp-cmd-tab-count" id="rp-tab-count-call">0</span></button>
+        <button class="rp-cmd-tab" type="button" data-tab="citation" role="tab"><i class="fa-solid fa-file-lines" style="color: var(--rp-amber);"></i> Citations <span class="rp-cmd-tab-count" id="rp-tab-count-citation">0</span></button>
+        <button class="rp-cmd-tab" type="button" data-tab="arrestReport" role="tab"><i class="fa-solid fa-handcuffs" style="color: var(--rp-red);"></i> Arrest Reports <span class="rp-cmd-tab-count" id="rp-tab-count-arrestReport">0</span></button>
+      </div>
       <div class="rp-cmd-search-wrap" id="rp-call-search-wrap">
         <i class="fa-solid fa-magnifying-glass rp-cmd-search-icon"></i>
         <input id="rp-call-input" class="rp-cmd-search" type="text" autocomplete="off" spellcheck="false"
-               placeholder="Search calls by title or description…" aria-label="Search calls" />
+               placeholder="Search…" aria-label="Search records" />
         <button id="rp-call-clear" class="rp-cmd-search-clear" type="button" aria-label="Clear search">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-      <div id="rp-call-results" class="rp-cmd-results" role="listbox" aria-label="Calls"></div>
+      <div id="rp-call-results" class="rp-cmd-results" role="listbox" aria-label="Records"></div>
       <div class="rp-cmd-footer">
         <div class="rp-cmd-footer-count" id="rp-call-count"></div>
         <div class="rp-cmd-hints">
           <span class="rp-cmd-hint"><span class="rp-cmd-kbd">↑</span><span class="rp-cmd-kbd">↓</span> navigate</span>
           <span class="rp-cmd-hint"><span class="rp-cmd-kbd">↵</span> apply</span>
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">tab</span> switch</span>
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">esc</span> close</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entity picker — civilian / vehicle / firearm for row-level binding -->
+  <div id="rp-entity-cmd" class="rp-cmd-backdrop" role="dialog" aria-modal="true" aria-label="Link an entity to this row">
+    <div class="rp-cmd-panel" role="document">
+      <div class="rp-cmd-search-wrap" id="rp-entity-search-wrap">
+        <i class="fa-solid fa-link rp-cmd-search-icon"></i>
+        <input id="rp-entity-input" class="rp-cmd-search" type="text" autocomplete="off" spellcheck="false"
+               placeholder="Search…" aria-label="Search entities" />
+        <button id="rp-entity-clear" class="rp-cmd-search-clear" type="button" aria-label="Clear search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="rp-entity-results" class="rp-cmd-results" role="listbox" aria-label="Entities"></div>
+      <div class="rp-cmd-footer">
+        <div class="rp-cmd-footer-count" id="rp-entity-count"></div>
+        <div class="rp-cmd-hints">
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">↑</span><span class="rp-cmd-kbd">↓</span> navigate</span>
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">↵</span> link</span>
           <span class="rp-cmd-hint"><span class="rp-cmd-kbd">esc</span> close</span>
         </div>
       </div>
@@ -753,11 +888,27 @@
       }
 
       // --- "Start from" sources ---
-      // Source picker modal (command palette) — searches across recent
-      // calls. Picking a row applies the prefill and closes the modal.
+      // Source picker modal (command palette) — tabbed across calls,
+      // citations, arrest reports. Each tab caches its own fetched list.
+      // The shared input filters the active tab.
+      //
+      // Citations are derived client-side from the civilians list since
+      // they're embedded in civilian.criminalHistory[]. Calls and arrest
+      // reports come from dedicated v2 endpoints.
+      var SOURCE_TABS = ['call', 'citation', 'arrestReport'];
+      var SOURCE_META = {
+        call:         { icon: 'fa-phone-volume', accent: 'var(--rp-accent)', noun: 'call' },
+        citation:     { icon: 'fa-file-lines',  accent: 'var(--rp-amber)',   noun: 'citation' },
+        arrestReport: { icon: 'fa-handcuffs',   accent: 'var(--rp-red)',     noun: 'arrest report' },
+      };
       var callPicker = {
         backdrop: null, input: null, results: null, count: null, searchWrap: null, clearBtn: null,
-        all: [], filtered: [], activeIdx: 0, query: '', loaded: false, loading: false,
+        tab: 'call',
+        // per-tab data: { all, loaded, loading }
+        cache: { call: { all: [], loaded: false, loading: false },
+                 citation: { all: [], loaded: false, loading: false },
+                 arrestReport: { all: [], loaded: false, loading: false } },
+        filtered: [], activeIdx: 0, query: '',
       };
 
       function buildCallPickerEls() {
@@ -769,18 +920,59 @@
         callPicker.clearBtn = document.getElementById('rp-call-clear');
       }
 
-      function fetchCallsOnce() {
-        if (callPicker.loaded || callPicker.loading) return Promise.resolve(callPicker.all);
-        callPicker.loading = true;
-        return fetch(apiUrl + '/api/v2/calls/community/' + encodeURIComponent(communityId) + '?page=1&limit=100', { headers: authHeaders() })
-          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
-          .then(function (j) {
-            callPicker.all = (j && j.data) || [];
-            callPicker.loaded = true;
-            return callPicker.all;
-          })
-          .catch(function () { return []; })
-          .finally(function () { callPicker.loading = false; });
+      function tabCache() { return callPicker.cache[callPicker.tab]; }
+
+      function fetchSourceTabOnce(tab) {
+        var c = callPicker.cache[tab];
+        if (c.loaded || c.loading) return Promise.resolve(c.all);
+        c.loading = true;
+        var p;
+        if (tab === 'call') {
+          p = fetch(apiUrl + '/api/v2/calls/community/' + encodeURIComponent(communityId) + '?page=1&limit=100', { headers: authHeaders() })
+            .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+            .then(function (j) { return (j && j.data) || []; });
+        } else if (tab === 'arrestReport') {
+          p = fetch(apiUrl + '/api/v2/arrest-reports/community/' + encodeURIComponent(communityId) + '?page=0&limit=100', { headers: authHeaders() })
+            .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+            .then(function (j) { return (j && j.data) || []; });
+        } else if (tab === 'citation') {
+          // Citations live inside civilian.criminalHistory[]. Pull the
+          // civilian list and flatten any criminalHistory items whose
+          // type matches a citation. Limit=100 keeps payload reasonable.
+          p = fetch(apiUrl + '/api/v2/community/' + encodeURIComponent(communityId) + '/civilians?page=0&limit=100', { headers: authHeaders() })
+            .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+            .then(function (j) {
+              var civilians = (j && j.data) || [];
+              var rows = [];
+              civilians.forEach(function (civ) {
+                var d = civ.civilian || {};
+                (d.criminalHistory || []).forEach(function (ch) {
+                  var t = String(ch.type || '').toLowerCase();
+                  if (t !== 'citation' && t !== 'warning') return;
+                  rows.push({ _id: civ._id, _childId: ch._id, civilian: d, citation: ch });
+                });
+              });
+              rows.sort(function (a, b) {
+                var aT = (a.citation && a.citation.createdAt) ? new Date(a.citation.createdAt).getTime() : 0;
+                var bT = (b.citation && b.citation.createdAt) ? new Date(b.citation.createdAt).getTime() : 0;
+                return bT - aT;
+              });
+              return rows;
+            });
+        } else {
+          p = Promise.resolve([]);
+        }
+        return p.then(function (rows) {
+          c.all = rows; c.loaded = true; updateTabCounts(); return rows;
+        }).catch(function () { return []; })
+          .finally(function () { c.loading = false; });
+      }
+
+      function updateTabCounts() {
+        SOURCE_TABS.forEach(function (tab) {
+          var el = document.getElementById('rp-tab-count-' + tab);
+          if (el) el.textContent = String((callPicker.cache[tab].all || []).length);
+        });
       }
 
       function fmtRelative(ts) {
@@ -818,10 +1010,62 @@
         return out;
       }
 
-      function scoreCall(c, q) {
-        var d = c.call || {};
-        var name = String(d.title || '').toLowerCase();
-        var desc = String((d.details || d.shortDescription || '')).toLowerCase();
+      // Per-tab name/desc extractors so search + display can stay generic.
+      function rowName(row, tab) {
+        if (tab === 'call') return (row.call && row.call.title) || '(untitled)';
+        if (tab === 'citation') {
+          var civ = row.civilian || {};
+          var cit = row.citation || {};
+          var person = (civ.firstName || '') + ' ' + (civ.lastName || '');
+          var fines = (cit.fines || []).map(function (f) { return f.fineType; }).filter(Boolean).join(', ');
+          return (person.trim() || '(unknown)') + (fines ? ' — ' + fines : '');
+        }
+        if (tab === 'arrestReport') {
+          var d = row.arrestReport || {};
+          var arr = d.arrestee || {};
+          return arr.name || ('Arrest ' + (d.reportNumber || ''));
+        }
+        return '';
+      }
+      function rowDesc(row, tab) {
+        if (tab === 'call') {
+          var d = row.call || {};
+          var parts = [];
+          if (d.details) parts.push(d.details);
+          else if (d.shortDescription) parts.push(d.shortDescription);
+          if (d.createdAtReadable) parts.push(d.createdAtReadable);
+          return parts.join(' · ');
+        }
+        if (tab === 'citation') {
+          var cit = row.citation || {};
+          var bits = [];
+          bits.push(cit.type || 'Citation');
+          if (cit.notes) bits.push(cit.notes);
+          return bits.join(' · ');
+        }
+        if (tab === 'arrestReport') {
+          var ar = row.arrestReport || {};
+          var bits2 = [];
+          if (ar.charges) bits2.push(ar.charges);
+          if (ar.incidentLocation) bits2.push(ar.incidentLocation);
+          return bits2.join(' · ');
+        }
+        return '';
+      }
+      function rowCreatedAt(row, tab) {
+        if (tab === 'call') return row.call && row.call.createdAt;
+        if (tab === 'citation') return row.citation && row.citation.createdAt;
+        if (tab === 'arrestReport') return row.arrestReport && row.arrestReport.createdAt;
+        return null;
+      }
+      function rowIsActive(row, tab) {
+        if (tab === 'call') return !!(row.call && row.call.status);
+        return false; // citations and arrest reports don't have an "active" toggle
+      }
+
+      function scoreRow(row, q, tab) {
+        var name = rowName(row, tab).toLowerCase();
+        var desc = rowDesc(row, tab).toLowerCase();
         var ni = name.indexOf(q);
         if (ni !== -1) return 1000 - ni;
         var di = desc.indexOf(q);
@@ -831,13 +1075,11 @@
 
       function filterCalls() {
         var q = callPicker.query.trim().toLowerCase();
-        if (!q) {
-          callPicker.filtered = callPicker.all.slice();
-          return;
-        }
+        var rows = (tabCache().all || []).slice();
+        if (!q) { callPicker.filtered = rows; return; }
         var scored = [];
-        callPicker.all.forEach(function (c) {
-          var s = scoreCall(c, q);
+        rows.forEach(function (c) {
+          var s = scoreRow(c, q, callPicker.tab);
           if (s >= 0) scored.push({ c: c, s: s });
         });
         scored.sort(function (a, b) { return b.s - a.s; });
@@ -847,39 +1089,43 @@
       function renderCallPicker() {
         var q = callPicker.query.trim();
         filterCalls();
+        var c = tabCache();
+        var meta = SOURCE_META[callPicker.tab];
+        var nounPlural = meta.noun + 's';
 
-        if (callPicker.loading && callPicker.all.length === 0) {
-          callPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="rp-cmd-empty-title">Loading calls…</div></div>';
+        if (c.loading && c.all.length === 0) {
+          callPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="rp-cmd-empty-title">Loading ' + escapeHTML(nounPlural) + '…</div></div>';
           callPicker.count.innerHTML = '';
           return;
         }
-        if (callPicker.all.length === 0) {
-          callPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-folder-open"></i></div><div class="rp-cmd-empty-title">No recent calls</div><div class="rp-cmd-empty-sub">Calls in this community will show up here once any are created.</div></div>';
+        if (c.all.length === 0) {
+          callPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-folder-open"></i></div><div class="rp-cmd-empty-title">No recent ' + escapeHTML(nounPlural) + '</div><div class="rp-cmd-empty-sub">Records in this community will show up here once any exist.</div></div>';
           callPicker.count.innerHTML = '';
           return;
         }
         if (callPicker.filtered.length === 0) {
-          callPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-circle-question"></i></div><div class="rp-cmd-empty-title">No calls match "' + escapeHTML(q) + '"</div><div class="rp-cmd-empty-sub">Try a shorter query or different keywords.</div></div>';
-          callPicker.count.innerHTML = '<strong>0</strong> of ' + callPicker.all.length + ' calls';
+          callPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-circle-question"></i></div><div class="rp-cmd-empty-title">No ' + escapeHTML(nounPlural) + ' match "' + escapeHTML(q) + '"</div><div class="rp-cmd-empty-sub">Try a shorter query or different keywords.</div></div>';
+          callPicker.count.innerHTML = '<strong>0</strong> of ' + c.all.length + ' ' + escapeHTML(nounPlural);
           return;
         }
 
         if (callPicker.activeIdx >= callPicker.filtered.length) callPicker.activeIdx = 0;
 
-        callPicker.results.innerHTML = callPicker.filtered.map(function (c, i) {
-          var d = c.call || {};
-          var isActive = !!d.status;
+        callPicker.results.innerHTML = callPicker.filtered.map(function (row, i) {
+          var isActive = rowIsActive(row, callPicker.tab);
           var statusCls = isActive ? 'active' : 'cleared';
-          var rel = fmtRelative(d.createdAt) || (d.createdAtReadable || '');
+          var rel = fmtRelative(rowCreatedAt(row, callPicker.tab));
           return '<a class="rp-cmd-row' + (i === callPicker.activeIdx ? ' active' : '') + '"' +
-                 ' role="option" data-idx="' + i + '" data-id="' + escapeHTML(c._id) + '" href="#">' +
-            '<div class="rp-cmd-icon"><i class="fa-solid fa-phone-volume"></i></div>' +
+                 ' role="option" data-idx="' + i + '" data-id="' + escapeHTML(row._id) + '"' +
+                 (row._childId ? ' data-child-id="' + escapeHTML(row._childId) + '"' : '') +
+                 ' href="#">' +
+            '<div class="rp-cmd-icon" style="color:' + meta.accent + ';"><i class="fa-solid ' + meta.icon + '"></i></div>' +
             '<div class="rp-cmd-body">' +
               '<div class="rp-cmd-name-row">' +
-                '<span class="rp-cmd-status-dot ' + statusCls + '" title="' + (isActive ? 'Active' : 'Cleared') + '"></span>' +
-                '<span class="rp-cmd-name">' + highlightMatch(d.title || '(untitled)', q) + '</span>' +
+                (callPicker.tab === 'call' ? '<span class="rp-cmd-status-dot ' + statusCls + '" title="' + (isActive ? 'Active' : 'Cleared') + '"></span>' : '') +
+                '<span class="rp-cmd-name">' + highlightMatch(rowName(row, callPicker.tab), q) + '</span>' +
               '</div>' +
-              '<div class="rp-cmd-desc">' + highlightMatch(callDescription(d) || '—', q) + '</div>' +
+              '<div class="rp-cmd-desc">' + highlightMatch(rowDesc(row, callPicker.tab) || '—', q) + '</div>' +
             '</div>' +
             '<div class="rp-cmd-meta">' +
               (rel ? '<span class="rp-cmd-meta-time">' + escapeHTML(rel) + '</span>' : '') +
@@ -887,9 +1133,24 @@
             '</div>' +
           '</a>';
         }).join('');
-        callPicker.count.innerHTML = '<strong>' + callPicker.filtered.length + '</strong> of ' + callPicker.all.length + ' calls';
+        callPicker.count.innerHTML = '<strong>' + callPicker.filtered.length + '</strong> of ' + c.all.length + ' ' + escapeHTML(nounPlural);
         bindCallRowHandlers();
         scrollCallActiveIntoView();
+      }
+
+      function setPickerTab(tab) {
+        if (SOURCE_TABS.indexOf(tab) === -1) return;
+        callPicker.tab = tab;
+        callPicker.activeIdx = 0;
+        Array.from(document.querySelectorAll('#rp-cmd-tabs .rp-cmd-tab')).forEach(function (b) {
+          b.classList.toggle('active', b.getAttribute('data-tab') === tab);
+        });
+        var meta = SOURCE_META[tab];
+        callPicker.input.placeholder = 'Search ' + meta.noun + 's…';
+        renderCallPicker();
+        if (!callPicker.cache[tab].loaded) {
+          fetchSourceTabOnce(tab).then(function () { renderCallPicker(); });
+        }
       }
 
       function bindCallRowHandlers() {
@@ -897,7 +1158,8 @@
           row.addEventListener('click', function (e) {
             e.preventDefault();
             var id = row.getAttribute('data-id');
-            applyCallById(id);
+            var childId = row.getAttribute('data-child-id') || '';
+            applyPickedRow(callPicker.tab, id, childId);
           });
           row.addEventListener('mousemove', function () {
             var idx = parseInt(row.getAttribute('data-idx'), 10);
@@ -924,24 +1186,26 @@
         else if (rBottom > sBottom) callPicker.results.scrollTop = rBottom - callPicker.results.clientHeight + 8;
       }
 
-      function callMeta(c) {
-        var d = (c && c.call) || {};
+      function rowMeta(row, tab) {
         return {
-          title: d.title || '(untitled)',
-          createdAt: d.createdAt || null,
-          isActive: !!d.status,
+          title: rowName(row, tab),
+          createdAt: rowCreatedAt(row, tab),
+          isActive: rowIsActive(row, tab),
         };
       }
 
-      function applyCallById(callId) {
-        if (!callId) return;
+      function applyPickedRow(tab, id, childId) {
+        if (!id) return;
         closeCallPicker();
-        // Replace any existing call source so its old prefill is wiped
-        // before the new prefill is applied — keeps the data clean.
-        var existing = state.sources.filter(function (s) { return s.type === 'call'; })[0];
-        if (existing) removeSource('call', existing.id, { silent: true });
-        var call = (callPicker.all || []).filter(function (c) { return c._id === callId; })[0];
-        applySource({ type: 'call', id: callId, meta: callMeta(call) });
+        // Replace any existing source of the same type so old prefill is
+        // wiped before the new prefill applies — one source per type.
+        var existing = state.sources.filter(function (s) { return s.type === tab; })[0];
+        if (existing) removeSource(tab, existing.id, { silent: true });
+        var rows = (callPicker.cache[tab] && callPicker.cache[tab].all) || [];
+        var pick = rows.filter(function (c) { return c._id === id && (childId ? c._childId === childId : true); })[0];
+        var src = { type: tab, id: id, meta: rowMeta(pick || {}, tab) };
+        if (childId) src.childId = childId;
+        applySource(src);
       }
 
       // Removes a source: drops it from state.sources / state.links and
@@ -964,22 +1228,292 @@
         if (!opts.silent) toast('Removed ' + type + ' import', 'success');
       }
 
-      function openCallPicker() {
+      function openCallPicker(initialTab) {
         if (!callPicker.backdrop) buildCallPickerEls();
         callPicker.query = '';
         callPicker.input.value = '';
         callPicker.activeIdx = 0;
         callPicker.searchWrap.classList.remove('has-value');
-        renderCallPicker();
+        var tab = SOURCE_TABS.indexOf(initialTab) !== -1 ? initialTab : 'call';
+        setPickerTab(tab);
         callPicker.backdrop.classList.add('open');
         setTimeout(function () { callPicker.input.focus(); }, 30);
-        if (!callPicker.loaded) {
-          fetchCallsOnce().then(function () { renderCallPicker(); });
-        }
       }
       function closeCallPicker() {
         if (!callPicker.backdrop) return;
         callPicker.backdrop.classList.remove('open');
+      }
+
+      // ============================================================
+      // Entity picker — civilian / vehicle / firearm picker for
+      // row-level binding. Independent modal from the source picker.
+      // ============================================================
+      var ENTITY_META = {
+        civilian: { icon: 'fa-user',          noun: 'civilian', endpoint: function (cid) { return '/api/v2/community/' + encodeURIComponent(cid) + '/civilians?page=0&limit=200'; } },
+        vehicle:  { icon: 'fa-car',           noun: 'vehicle',  endpoint: function (cid) { return '/api/v2/community/' + encodeURIComponent(cid) + '/vehicles?page=0&limit=200'; } },
+        firearm:  { icon: 'fa-gun',           noun: 'firearm',  endpoint: function (cid) { return '/api/v2/community/' + encodeURIComponent(cid) + '/firearms?page=0&limit=200'; } },
+      };
+      var entityPicker = {
+        backdrop: null, input: null, results: null, count: null, searchWrap: null, clearBtn: null,
+        type: 'civilian',
+        cache: { civilian: { all: [], loaded: false, loading: false },
+                 vehicle:  { all: [], loaded: false, loading: false },
+                 firearm:  { all: [], loaded: false, loading: false } },
+        filtered: [], activeIdx: 0, query: '',
+        // Where to apply the picked entity
+        target: null, // { sectionId, rowIdx, type }
+      };
+
+      function buildEntityPickerEls() {
+        entityPicker.backdrop = document.getElementById('rp-entity-cmd');
+        entityPicker.input = document.getElementById('rp-entity-input');
+        entityPicker.results = document.getElementById('rp-entity-results');
+        entityPicker.count = document.getElementById('rp-entity-count');
+        entityPicker.searchWrap = document.getElementById('rp-entity-search-wrap');
+        entityPicker.clearBtn = document.getElementById('rp-entity-clear');
+      }
+
+      function fetchEntityListOnce(type) {
+        var c = entityPicker.cache[type];
+        if (c.loaded || c.loading) return Promise.resolve(c.all);
+        c.loading = true;
+        return fetch(apiUrl + ENTITY_META[type].endpoint(communityId), { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+          .then(function (j) { c.all = (j && j.data) || []; c.loaded = true; return c.all; })
+          .catch(function () { return []; })
+          .finally(function () { c.loading = false; });
+      }
+
+      function entityName(row, type) {
+        if (type === 'civilian') {
+          var d = row.civilian || {};
+          var full = (d.firstName || '') + ' ' + (d.lastName || '');
+          return full.trim() || d.name || '(unknown)';
+        }
+        if (type === 'vehicle') {
+          var v = row.vehicle || {};
+          return [v.year, v.make, v.model].filter(Boolean).join(' ') || v.plate || '(vehicle)';
+        }
+        if (type === 'firearm') {
+          var f = row.firearm || {};
+          return f.name || f.weaponType || f.serialNumber || '(firearm)';
+        }
+        return '(unknown)';
+      }
+      function entityDesc(row, type) {
+        if (type === 'civilian') {
+          var d = row.civilian || {};
+          var bits = [];
+          if (d.birthday) bits.push('DOB ' + d.birthday);
+          if (d.address) bits.push(d.address);
+          return bits.join(' · ');
+        }
+        if (type === 'vehicle') {
+          var v = row.vehicle || {};
+          var bits2 = [];
+          if (v.plate) bits2.push(v.plate);
+          if (v.color) bits2.push(v.color);
+          if (v.vin) bits2.push('VIN ' + v.vin);
+          return bits2.join(' · ');
+        }
+        if (type === 'firearm') {
+          var f = row.firearm || {};
+          var bits3 = [];
+          if (f.serialNumber) bits3.push('SN ' + f.serialNumber);
+          if (f.caliber) bits3.push(f.caliber);
+          if (f.weaponType) bits3.push(f.weaponType);
+          return bits3.join(' · ');
+        }
+        return '';
+      }
+
+      function scoreEntity(row, q, type) {
+        var name = entityName(row, type).toLowerCase();
+        var desc = entityDesc(row, type).toLowerCase();
+        var ni = name.indexOf(q);
+        if (ni !== -1) return 1000 - ni;
+        var di = desc.indexOf(q);
+        if (di !== -1) return 500 - di;
+        return -1;
+      }
+
+      function filterEntities() {
+        var q = entityPicker.query.trim().toLowerCase();
+        var rows = (entityPicker.cache[entityPicker.type].all || []).slice();
+        if (!q) { entityPicker.filtered = rows; return; }
+        var scored = [];
+        rows.forEach(function (c) {
+          var s = scoreEntity(c, q, entityPicker.type);
+          if (s >= 0) scored.push({ c: c, s: s });
+        });
+        scored.sort(function (a, b) { return b.s - a.s; });
+        entityPicker.filtered = scored.map(function (x) { return x.c; });
+      }
+
+      function renderEntityPicker() {
+        var q = entityPicker.query.trim();
+        filterEntities();
+        var c = entityPicker.cache[entityPicker.type];
+        var noun = ENTITY_META[entityPicker.type].noun;
+        var nounPlural = noun + 's';
+
+        if (c.loading && c.all.length === 0) {
+          entityPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="rp-cmd-empty-title">Loading ' + escapeHTML(nounPlural) + '…</div></div>';
+          entityPicker.count.innerHTML = '';
+          return;
+        }
+        if (c.all.length === 0) {
+          entityPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-folder-open"></i></div><div class="rp-cmd-empty-title">No ' + escapeHTML(nounPlural) + '</div><div class="rp-cmd-empty-sub">Records in this community will show up here once any are created.</div></div>';
+          entityPicker.count.innerHTML = '';
+          return;
+        }
+        if (entityPicker.filtered.length === 0) {
+          entityPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-circle-question"></i></div><div class="rp-cmd-empty-title">No ' + escapeHTML(nounPlural) + ' match "' + escapeHTML(q) + '"</div></div>';
+          entityPicker.count.innerHTML = '<strong>0</strong> of ' + c.all.length + ' ' + escapeHTML(nounPlural);
+          return;
+        }
+        if (entityPicker.activeIdx >= entityPicker.filtered.length) entityPicker.activeIdx = 0;
+        entityPicker.results.innerHTML = entityPicker.filtered.map(function (row, i) {
+          return '<a class="rp-cmd-row' + (i === entityPicker.activeIdx ? ' active' : '') + '"' +
+                 ' role="option" data-idx="' + i + '" data-id="' + escapeHTML(row._id) + '" href="#">' +
+            '<div class="rp-cmd-icon" style="color:#c4b5fd;"><i class="fa-solid ' + ENTITY_META[entityPicker.type].icon + '"></i></div>' +
+            '<div class="rp-cmd-body">' +
+              '<div class="rp-cmd-name-row"><span class="rp-cmd-name">' + highlightMatch(entityName(row, entityPicker.type), q) + '</span></div>' +
+              '<div class="rp-cmd-desc">' + highlightMatch(entityDesc(row, entityPicker.type) || '—', q) + '</div>' +
+            '</div>' +
+            '<div class="rp-cmd-meta"><span class="rp-cmd-meta-enter">↵</span></div>' +
+          '</a>';
+        }).join('');
+        entityPicker.count.innerHTML = '<strong>' + entityPicker.filtered.length + '</strong> of ' + c.all.length + ' ' + escapeHTML(nounPlural);
+        Array.from(entityPicker.results.querySelectorAll('.rp-cmd-row')).forEach(function (row) {
+          row.addEventListener('click', function (e) {
+            e.preventDefault();
+            var id = row.getAttribute('data-id');
+            applyEntityToRow(id);
+          });
+          row.addEventListener('mousemove', function () {
+            var idx = parseInt(row.getAttribute('data-idx'), 10);
+            if (idx === entityPicker.activeIdx) return;
+            entityPicker.activeIdx = idx;
+            Array.from(entityPicker.results.querySelectorAll('.rp-cmd-row')).forEach(function (r) {
+              r.classList.toggle('active', parseInt(r.getAttribute('data-idx'), 10) === entityPicker.activeIdx);
+            });
+          });
+        });
+      }
+
+      function openEntityPicker(target) {
+        if (!entityPicker.backdrop) buildEntityPickerEls();
+        entityPicker.target = target;
+        entityPicker.type = target.type;
+        entityPicker.query = '';
+        entityPicker.input.value = '';
+        entityPicker.input.placeholder = 'Search ' + ENTITY_META[target.type].noun + 's…';
+        entityPicker.activeIdx = 0;
+        entityPicker.searchWrap.classList.remove('has-value');
+        renderEntityPicker();
+        entityPicker.backdrop.classList.add('open');
+        setTimeout(function () { entityPicker.input.focus(); }, 30);
+        if (!entityPicker.cache[target.type].loaded) {
+          fetchEntityListOnce(target.type).then(function () { renderEntityPicker(); });
+        }
+      }
+      function closeEntityPicker() {
+        if (!entityPicker.backdrop) return;
+        entityPicker.backdrop.classList.remove('open');
+        entityPicker.target = null;
+      }
+
+      function applyEntityToRow(id) {
+        var target = entityPicker.target;
+        if (!target || !id) return;
+        var rows = (entityPicker.cache[target.type].all || []);
+        var pick = rows.filter(function (r) { return r._id === id; })[0];
+        if (!pick) { closeEntityPicker(); return; }
+        // The detail object is keyed by entity type — civilian / vehicle / firearm.
+        var details = pick[target.type] || {};
+        var label = entityName(pick, target.type);
+
+        // Ensure the row exists.
+        if (!Array.isArray(state.data[target.sectionId])) state.data[target.sectionId] = [];
+        while (state.data[target.sectionId].length <= target.rowIdx) state.data[target.sectionId].push({});
+        var row = state.data[target.sectionId][target.rowIdx];
+
+        // Mark the row link for chip rendering + later submission.links[] aggregation.
+        row._link = { type: target.type, id: id, label: label };
+
+        // Walk the section's fields and apply any populateFrom rule whose
+        // source === "bound". Skip fields the user has already filled in.
+        var section = (state.template.sections || []).filter(function (s) { return s.id === target.sectionId; })[0];
+        var bound = {};
+        bound[target.type] = details;
+        // Synthetic helpers: "name" merges firstName/lastName for civilians.
+        if (target.type === 'civilian' && !details.name) {
+          var fullName = ((details.firstName || '') + ' ' + (details.lastName || '')).trim();
+          if (fullName) details.name = fullName;
+        }
+        var justFilled = [];
+        (section && section.fields ? section.fields : []).forEach(function (f) {
+          if (!Array.isArray(f.populateFrom)) return;
+          for (var i = 0; i < f.populateFrom.length; i++) {
+            var m = f.populateFrom[i];
+            if (m.source !== 'bound') continue;
+            // Only fill if empty so we don't trample user edits.
+            if (!isEmpty(row[f.id])) break;
+            var v = resolveBoundPath(details, target.type, m.path);
+            if (v == null || v === '') continue;
+            row[f.id] = v;
+            justFilled.push(f.id);
+            break;
+          }
+        });
+
+        closeEntityPicker();
+        render();
+
+        // Brief value flash on bound fields after re-render.
+        setTimeout(function () {
+          justFilled.forEach(function (fid) {
+            var sel = '[data-field-key="' + cssEscape(target.sectionId) + '.' + cssEscape(fid) + '[' + target.rowIdx + ']"]';
+            var el = document.querySelector(sel);
+            if (!el) return;
+            el.classList.add('rp-just-bound');
+            setTimeout(function () { el.classList.remove('rp-just-bound'); }, 800);
+          });
+        }, 30);
+
+        toast('Linked ' + target.type + ': ' + label, 'success');
+      }
+
+      // resolveBoundPath walks dotted JSON paths against a bound entity's
+      // detail object. Supports the @const:Value and @desc:civilian helpers.
+      function resolveBoundPath(details, type, path) {
+        if (!path) return null;
+        if (path.indexOf('@const:') === 0) return path.slice(7);
+        if (path === '@desc:civilian') {
+          var bits = [];
+          if (details.gender)    bits.push(details.gender);
+          if (details.race)      bits.push(details.race);
+          if (details.height)    bits.push(details.height);
+          if (details.weight)    bits.push(details.weight);
+          if (details.hairColor) bits.push(details.hairColor + ' hair');
+          if (details.eyeColor)  bits.push(details.eyeColor + ' eyes');
+          return bits.filter(Boolean).join(', ');
+        }
+        var parts = path.split('.');
+        var cur = details;
+        for (var i = 0; i < parts.length; i++) {
+          if (cur == null || typeof cur !== 'object') return null;
+          cur = cur[parts[i]];
+        }
+        return cur == null ? null : cur;
+      }
+
+      function unlinkRow(sectionId, rowIdx) {
+        var rows = state.data[sectionId];
+        if (!Array.isArray(rows) || !rows[rowIdx]) return;
+        delete rows[rowIdx]._link;
+        render();
       }
 
       function fmtRelShort(ts) {
@@ -995,12 +1529,15 @@
 
       function renderSourceChip(src) {
         var m = src.meta || {};
-        var statusCls = m.isActive ? 'active' : 'cleared';
+        var meta = SOURCE_META[src.type] || SOURCE_META.call;
         var rel = fmtRelShort(m.createdAt);
+        var showStatus = src.type === 'call';
+        var statusCls = m.isActive ? 'active' : 'cleared';
+        var fallback = '(' + meta.noun + ')';
         return '<div class="rp-source-chip" data-source-type="' + escapeHTML(src.type) + '" data-source-id="' + escapeHTML(src.id) + '">' +
-          '<span class="rp-source-chip-icon"><i class="fa-solid fa-phone-volume"></i></span>' +
-          '<span class="rp-source-chip-status ' + statusCls + '" title="' + (m.isActive ? 'Active call' : 'Cleared call') + '"></span>' +
-          '<span class="rp-source-chip-title" title="' + escapeHTML(m.title || '') + '">' + escapeHTML(m.title || '(call)') + '</span>' +
+          '<span class="rp-source-chip-icon"><i class="fa-solid ' + meta.icon + '"></i></span>' +
+          (showStatus ? '<span class="rp-source-chip-status ' + statusCls + '" title="' + (m.isActive ? 'Active call' : 'Cleared call') + '"></span>' : '') +
+          '<span class="rp-source-chip-title" title="' + escapeHTML(m.title || '') + '">' + escapeHTML(m.title || fallback) + '</span>' +
           (rel ? '<span class="rp-source-chip-time">' + escapeHTML(rel) + '</span>' : '') +
           '<button class="rp-source-chip-x" type="button" aria-label="Remove this source" data-remove-source="' + escapeHTML(src.type) + '|' + escapeHTML(src.id) + '"><i class="fa-solid fa-xmark"></i></button>' +
         '</div>';
@@ -1028,16 +1565,18 @@
           return;
         }
 
-        var callSources = state.sources.filter(function (s) { return s.type === 'call'; });
-        var hasSources = callSources.length > 0;
+        // Only top-level sources (calls/citations/arrest reports) — row-level
+        // entity links live on rows themselves, not in the Start-from chip rail.
+        var topSources = state.sources.filter(function (s) { return SOURCE_TABS.indexOf(s.type) !== -1; });
+        var hasSources = topSources.length > 0;
 
         var subtitle = hasSources
-          ? 'Importing from ' + callSources.length + ' call' + (callSources.length === 1 ? '' : 's') + '. Pick another to replace, or × to remove.'
-          : 'Pull info from a recent call to auto-fill what you can. You can always edit afterwards.';
+          ? 'Importing from ' + topSources.length + ' record' + (topSources.length === 1 ? '' : 's') + '. Pick another to replace by type, or × to remove.'
+          : 'Pull info from a recent call, citation, or arrest report to auto-fill what you can. You can always edit afterwards.';
 
-        var pickBtnLabel = hasSources ? 'Pick another call…' : 'Pick a recent call…';
+        var pickBtnLabel = hasSources ? 'Add another source…' : 'Pick a record to import…';
 
-        var chipsHTML = callSources.map(renderSourceChip).join('');
+        var chipsHTML = topSources.map(renderSourceChip).join('');
 
         var html = '<div class="rp-callout">' +
           '<div class="rp-callout-title"><i class="fa-solid fa-bolt" style="color: var(--rp-amber);"></i> Start from existing data</div>' +
@@ -1065,18 +1604,26 @@
       }
 
       function applySource(src) {
-        // Avoid duplicate entries.
-        var dup = state.sources.filter(function (s) { return s.type === src.type && s.id === src.id; }).length > 0;
+        // Avoid duplicate entries (match on type + id + childId).
+        var dup = state.sources.filter(function (s) {
+          return s.type === src.type && s.id === src.id && (s.childId || '') === (src.childId || '');
+        }).length > 0;
         if (!dup) state.sources.push(src);
 
         // Ask the API to compute prefill against template + sources.
+        // Strip client-only `meta` before sending; server only needs type/id/childId.
+        var sourcesPayload = state.sources.map(function (s) {
+          var out = { type: s.type, id: s.id };
+          if (s.childId) out.childId = s.childId;
+          return out;
+        });
         fetch(apiUrl + '/api/v1/form-submission/draft', {
           method: 'POST',
           headers: authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({
             communityID: communityId,
             formTemplateSlug: slug,
-            sources: state.sources
+            sources: sourcesPayload
           })
         })
           .then(function (r) { return r.ok ? r.json() : null; })
@@ -1183,7 +1730,7 @@
         var open = state.sectionState[section.id] !== false;
         var requiredHere = (section.fields || []).filter(function (f) { return f.required; }).length;
         var hdr = '<div class="rp-section-header" data-toggle-section="' + escapeHTML(section.id) + '">' +
-          '<div class="rp-section-title"><i class="fa-solid fa-chevron-right rp-section-chev"></i> ' + escapeHTML(section.title) + (section.repeatable ? ' <span class="rp-pill">repeatable</span>' : '') + '</div>' +
+          '<div class="rp-section-title"><i class="fa-solid fa-chevron-right rp-section-chev"></i> ' + escapeHTML(section.title) + (section.repeatable ? ' <span class="rp-pill">repeatable</span>' : '') + (section.bindEntity ? ' <span class="rp-pill" title="Each row can be linked to a ' + escapeHTML(section.bindEntity) + '" style="color:#c4b5fd; border-color:rgba(168,85,247,0.3); background:rgba(168,85,247,0.08);"><i class="fa-solid fa-link"></i> ' + escapeHTML(section.bindEntity) + '</span>' : '') + '</div>' +
           (requiredHere > 0 ? '<span class="rp-pill" style="color: var(--rp-amber);"><i class="fa-solid fa-asterisk"></i> ' + requiredHere + '</span>' : '') +
           '</div>';
 
@@ -1193,7 +1740,8 @@
           if (!Array.isArray(rows)) rows = [];
           if (rows.length === 0 && !readOnly) rows = [{}];
           rows.forEach(function (_, idx) {
-            body += '<div class="rp-rep-row">' +
+            body += '<div class="rp-rep-row" data-section-id="' + escapeHTML(section.id) + '" data-row-idx="' + idx + '">' +
+              renderRowLinkBar(section, idx) +
               (readOnly ? '' : '<button type="button" class="rp-rep-rm" data-remove-row="' + escapeHTML(section.id) + '|' + idx + '"><i class="fa-solid fa-trash"></i></button>') +
               '<div class="rp-grid">' +
                 (section.fields || []).map(function (f) { return renderField(f, section.id, idx); }).join('') +
@@ -1209,6 +1757,38 @@
 
         return '<section class="rp-section ' + (open ? 'open' : '') + '" data-section-id="' + escapeHTML(section.id) + '">' +
           hdr + '<div class="rp-section-body">' + body + '</div></section>';
+      }
+
+      function getRowLink(sectionId, rowIdx) {
+        var rows = state.data[sectionId];
+        if (!Array.isArray(rows) || !rows[rowIdx]) return null;
+        return rows[rowIdx]._link || null;
+      }
+
+      function entityProfilePath(type, id) {
+        if (type === 'civilian') return '/civilian/' + encodeURIComponent(id);
+        if (type === 'vehicle')  return '/vehicle/'  + encodeURIComponent(id);
+        if (type === 'firearm')  return '/firearm/'  + encodeURIComponent(id);
+        return '#';
+      }
+
+      function renderRowLinkBar(section, rowIdx) {
+        if (!section.bindEntity) return '';
+        var link = getRowLink(section.id, rowIdx);
+        var bar = '<div class="rp-row-link-bar">';
+        if (link) {
+          bar += '<span class="rp-row-linked-chip">' +
+            '<i class="fa-solid fa-link"></i>' +
+            '<a href="' + entityProfilePath(link.type, link.id) + '" target="_blank" rel="noopener" title="Open profile">' + escapeHTML(link.label || link.id) + '</a>' +
+            (readOnly ? '' : '<button class="rp-row-linked-chip-x" type="button" data-row-unlink="' + escapeHTML(section.id) + '|' + rowIdx + '" aria-label="Unlink"><i class="fa-solid fa-xmark"></i></button>') +
+          '</span>';
+        } else if (!readOnly) {
+          bar += '<button class="rp-row-link-btn" type="button" data-row-link="' + escapeHTML(section.id) + '|' + rowIdx + '|' + escapeHTML(section.bindEntity) + '">' +
+            '<i class="fa-solid fa-link"></i> Link ' + escapeHTML(section.bindEntity) +
+          '</button>';
+        }
+        bar += '</div>';
+        return bar;
       }
 
       function singularize(t) { return (t || '').replace(/s$/, '') || t; }
@@ -1283,6 +1863,18 @@
               state.data[sec].splice(idx, 1);
               render();
             }
+          });
+        });
+        Array.from(document.querySelectorAll('[data-row-link]')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var parts = btn.getAttribute('data-row-link').split('|');
+            openEntityPicker({ sectionId: parts[0], rowIdx: parseInt(parts[1], 10), type: parts[2] });
+          });
+        });
+        Array.from(document.querySelectorAll('[data-row-unlink]')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var parts = btn.getAttribute('data-row-unlink').split('|');
+            unlinkRow(parts[0], parseInt(parts[1], 10));
           });
         });
       }
@@ -1482,17 +2074,43 @@
         });
       }
 
+      // collectLinks merges top-level source links with per-row entity
+      // bindings, deduplicating on (type,id,childId). This is what gets
+      // persisted to submission.links[] so future "all reports involving
+      // entity X" queries can use a single index lookup.
+      function collectLinks() {
+        var seen = {};
+        var out = [];
+        function add(link) {
+          if (!link || !link.type || !link.id) return;
+          var key = link.type + '|' + link.id + '|' + (link.childId || '');
+          if (seen[key]) return;
+          seen[key] = true;
+          out.push(link);
+        }
+        (state.links || []).forEach(add);
+        Object.keys(state.data || {}).forEach(function (sectionKey) {
+          var rows = state.data[sectionKey];
+          if (!Array.isArray(rows)) return;
+          rows.forEach(function (row) {
+            if (row && row._link) add({ type: row._link.type, id: row._link.id, label: row._link.label });
+          });
+        });
+        return out;
+      }
+
       // --- save / submit ---
       function saveAs(status) {
         var btn = status === 'submitted' ? document.getElementById('rp-submit') : document.getElementById('rp-save-draft');
         btn.disabled = true;
 
+        var allLinks = collectLinks();
         var payload = {
           communityID: communityId,
           departmentId: departmentId,
           formTemplateSlug: slug,
           data: state.data,
-          links: state.links,
+          links: allLinks,
           status: status,
           signedBy: currentUser ? { userID: currentUser.id, username: currentUser.username } : undefined
         };
@@ -1501,7 +2119,7 @@
         if (state.existing) {
           url = apiUrl + '/api/v1/form-submission/' + encodeURIComponent(state.existing._id);
           method = 'PUT';
-          payload = { data: state.data, links: state.links, status: status };
+          payload = { data: state.data, links: allLinks, status: status };
         } else {
           url = apiUrl + '/api/v1/form-submission';
           method = 'POST';
@@ -1575,6 +2193,9 @@
       callPicker.backdrop.addEventListener('mousedown', function (e) {
         if (e.target === callPicker.backdrop) closeCallPicker();
       });
+      Array.from(document.querySelectorAll('#rp-cmd-tabs .rp-cmd-tab')).forEach(function (b) {
+        b.addEventListener('click', function () { setPickerTab(b.getAttribute('data-tab')); callPicker.input.focus(); });
+      });
       callPicker.input.addEventListener('input', function (e) {
         callPicker.query = e.target.value;
         callPicker.activeIdx = 0;
@@ -1594,6 +2215,14 @@
       document.addEventListener('keydown', function (e) {
         if (!callPicker.backdrop.classList.contains('open')) return;
         if (e.key === 'Escape') { e.preventDefault(); closeCallPicker(); return; }
+        if (e.key === 'Tab') {
+          // Cycle through tabs without leaving the modal.
+          e.preventDefault();
+          var idx = SOURCE_TABS.indexOf(callPicker.tab);
+          var next = e.shiftKey ? (idx - 1 + SOURCE_TABS.length) % SOURCE_TABS.length : (idx + 1) % SOURCE_TABS.length;
+          setPickerTab(SOURCE_TABS[next]);
+          return;
+        }
         if (e.key === 'ArrowDown') { e.preventDefault(); if (callPicker.filtered.length) { callPicker.activeIdx = (callPicker.activeIdx + 1) % callPicker.filtered.length; updateCallActive(); } return; }
         if (e.key === 'ArrowUp') { e.preventDefault(); if (callPicker.filtered.length) { callPicker.activeIdx = (callPicker.activeIdx - 1 + callPicker.filtered.length) % callPicker.filtered.length; updateCallActive(); } return; }
         if (e.key === 'Home') { e.preventDefault(); callPicker.activeIdx = 0; updateCallActive(); return; }
@@ -1602,7 +2231,41 @@
           if (!callPicker.filtered.length) return;
           e.preventDefault();
           var pick = callPicker.filtered[callPicker.activeIdx];
-          if (pick && pick._id) applyCallById(pick._id);
+          if (pick && pick._id) applyPickedRow(callPicker.tab, pick._id, pick._childId || '');
+        }
+      });
+
+      // Wire entity picker
+      buildEntityPickerEls();
+      entityPicker.backdrop.addEventListener('mousedown', function (e) {
+        if (e.target === entityPicker.backdrop) closeEntityPicker();
+      });
+      entityPicker.input.addEventListener('input', function (e) {
+        entityPicker.query = e.target.value;
+        entityPicker.activeIdx = 0;
+        entityPicker.searchWrap.classList.toggle('has-value', entityPicker.query.length > 0);
+        renderEntityPicker();
+      });
+      entityPicker.input.addEventListener('focus', function () { entityPicker.searchWrap.classList.add('focused'); });
+      entityPicker.input.addEventListener('blur', function () { entityPicker.searchWrap.classList.remove('focused'); });
+      entityPicker.clearBtn.addEventListener('click', function () {
+        entityPicker.input.value = '';
+        entityPicker.query = '';
+        entityPicker.activeIdx = 0;
+        entityPicker.searchWrap.classList.remove('has-value');
+        renderEntityPicker();
+        entityPicker.input.focus();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (!entityPicker.backdrop || !entityPicker.backdrop.classList.contains('open')) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeEntityPicker(); return; }
+        if (e.key === 'ArrowDown') { e.preventDefault(); if (entityPicker.filtered.length) { entityPicker.activeIdx = (entityPicker.activeIdx + 1) % entityPicker.filtered.length; renderEntityPicker(); } return; }
+        if (e.key === 'ArrowUp') { e.preventDefault(); if (entityPicker.filtered.length) { entityPicker.activeIdx = (entityPicker.activeIdx - 1 + entityPicker.filtered.length) % entityPicker.filtered.length; renderEntityPicker(); } return; }
+        if (e.key === 'Enter') {
+          if (!entityPicker.filtered.length) return;
+          e.preventDefault();
+          var pick = entityPicker.filtered[entityPicker.activeIdx];
+          if (pick && pick._id) applyEntityToRow(pick._id);
         }
       });
 
