@@ -18,11 +18,50 @@ import {
 
 // ── Constants ──────────────────────────────────────────────────────
 const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-const SIMILAR_MIN_CHARS = 8;
+const SIMILAR_TITLE_MIN_CHARS = 5;
+const SIMILAR_DESC_MIN_CHARS = 20;
 const SIMILAR_DEBOUNCE_MS = 300;
 const SIMILAR_LIMIT = 4;
 const SIMILAR_DISMISS_KEY = 'fr-new-similar-dismissed';
 const SIMILAR_DRAFT_KEY = 'fr-new-title-draft';
+
+// Minimal stopword set for keyword extraction. Only used to keep us from
+// querying useless filler ("would", "feature", "really"). Not a linguistic
+// claim — just words that produce noisy regex matches.
+const SIMILAR_STOPWORDS = new Set([
+  'about','after','again','against','because','before','being','between',
+  'could','doing','during','every','from','have','having','here','into',
+  'just','like','more','most','need','only','other','please','really',
+  'request','should','some','such','than','that','their','them','then',
+  'there','these','they','this','those','through','want','were','what',
+  'when','where','which','while','will','with','would','your','yours',
+  'feature','allow','able','make','thing','things','also','very','much',
+]);
+
+function buildSimilarQueries(title: string, description: string): string[] {
+  const queries: string[] = [];
+  const t = title.trim();
+  const d = description.trim();
+
+  if (t.length >= SIMILAR_TITLE_MIN_CHARS) queries.push(t);
+
+  if (d.length >= SIMILAR_DESC_MIN_CHARS) {
+    const titleLower = t.toLowerCase();
+    const seen = new Set<string>();
+    const words = d
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length >= 5 && !SIMILAR_STOPWORDS.has(w))
+      .filter(w => !titleLower.includes(w))
+      .filter(w => { if (seen.has(w)) return false; seen.add(w); return true; })
+      .sort((a, b) => b.length - a.length);
+    // Cap at the 1 most distinctive word — one extra fetch per debounce, not three.
+    if (words.length > 0) queries.push(words[0]);
+  }
+
+  return queries;
+}
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   open:         { label: 'Open',          color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
@@ -183,12 +222,11 @@ function SimilarRow({ item }: { item: SimilarRequest }) {
   );
 }
 
-function SimilarRequestsPanel({ items, total, loading, visible, faded, onDismiss }: {
+function SimilarRequestsPanel({ items, total, loading, visible, onDismiss }: {
   items: SimilarRequest[];
   total: number;
   loading: boolean;
   visible: boolean;
-  faded: boolean;
   onDismiss: () => void;
 }) {
   const hasItems = items.length > 0;
@@ -202,18 +240,10 @@ function SimilarRequestsPanel({ items, total, loading, visible, faded, onDismiss
       {show && (
         <motion.div
           initial={{ opacity: 0, y: -4, height: 0, marginTop: 0 }}
-          animate={{
-            opacity: faded ? 0.5 : 1,
-            y: 0,
-            height: 'auto',
-            marginTop: 12,
-          }}
+          animate={{ opacity: 1, y: 0, height: 'auto', marginTop: 12 }}
           exit={{ opacity: 0, y: -4, height: 0, marginTop: 0 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          style={{
-            overflow: 'hidden',
-            transition: 'opacity 0.25s',
-          }}
+          style={{ overflow: 'hidden' }}
         >
           <div style={{
             padding: '0.7rem 0.85rem 0.55rem',
@@ -249,7 +279,7 @@ function SimilarRequestsPanel({ items, total, loading, visible, faded, onDismiss
                   : hasItems
                     ? <>
                         <span style={{ color: hasReleased ? '#10b981' : '#fbbf24' }}>
-                          {total > items.length ? `${total}+` : items.length}
+                          {total > items.length ? `${items.length}+` : items.length}
                         </span>
                         {' '}similar request{items.length === 1 ? '' : 's'}
                         {hasReleased && (
@@ -397,56 +427,71 @@ export default function NewFeatureRequest() {
       });
   }, [router]);
 
-  // Debounced similar-request lookup. Hits the existing search endpoint
-  // (no new backend); cache last few queries so backspace-then-retype is
+  // Debounced similar-request lookup. Searches by title (when long enough)
+  // and optionally by the most distinctive word from the description.
+  // Cache per-query so backspace-then-retype and keyword overlap are
   // instant. Uses a request id to ignore out-of-order responses.
   useEffect(() => {
-    const trimmed = title.trim();
-    if (similarDismissed || trimmed.length < SIMILAR_MIN_CHARS) {
+    const queries = (similarDismissed ? [] : buildSimilarQueries(title, description));
+    if (queries.length === 0) {
       setSimilar([]);
       setSimilarTotal(0);
       setSimilarLoading(false);
       return;
     }
 
-    const cached = similarCacheRef.current.get(trimmed.toLowerCase());
-    if (cached) {
-      setSimilar(cached.items);
-      setSimilarTotal(cached.total);
-      setSimilarLoading(false);
-      return;
-    }
-
-    const reqId = ++similarReqIdRef.current;
     setSimilarLoading(true);
+    const reqId = ++similarReqIdRef.current;
+
     const handle = setTimeout(async () => {
       try {
-        const params = new URLSearchParams({
-          q: trimmed,
-          sort: 'top',
-          limit: String(SIMILAR_LIMIT),
-          page: '1',
-        });
-        const res = await fetch(`/api/v2/feature-requests?${params}`, { credentials: 'include' });
-        if (!res.ok) throw new Error('lookup failed');
-        const data = await res.json();
-        if (reqId !== similarReqIdRef.current) return; // stale response
-        const items: SimilarRequest[] = (data.data || []).map((r: any) => ({
-          _id: r._id,
-          title: r.title,
-          status: r.status,
-          upvoteCount: r.upvoteCount,
-          commentCount: r.commentCount,
+        const results = await Promise.all(queries.map(async (q) => {
+          const cached = similarCacheRef.current.get(q.toLowerCase());
+          if (cached) return cached;
+          const params = new URLSearchParams({
+            q,
+            sort: 'top',
+            limit: String(SIMILAR_LIMIT),
+            page: '1',
+          });
+          const res = await fetch(`/api/v2/feature-requests?${params}`, { credentials: 'include' });
+          if (!res.ok) return { items: [] as SimilarRequest[], total: 0 };
+          const data = await res.json();
+          const items: SimilarRequest[] = (data.data || []).map((r: any) => ({
+            _id: r._id,
+            title: r.title,
+            status: r.status,
+            upvoteCount: r.upvoteCount,
+            commentCount: r.commentCount,
+          }));
+          const cacheEntry = { items, total: data.totalCount || 0 };
+          similarCacheRef.current.set(q.toLowerCase(), cacheEntry);
+          if (similarCacheRef.current.size > 16) {
+            const firstKey = similarCacheRef.current.keys().next().value;
+            if (firstKey !== undefined) similarCacheRef.current.delete(firstKey);
+          }
+          return cacheEntry;
         }));
-        const total = data.totalCount || 0;
-        similarCacheRef.current.set(trimmed.toLowerCase(), { items, total });
-        // Cap cache so it doesn't grow without bound.
-        if (similarCacheRef.current.size > 12) {
-          const firstKey = similarCacheRef.current.keys().next().value;
-          if (firstKey !== undefined) similarCacheRef.current.delete(firstKey);
+
+        if (reqId !== similarReqIdRef.current) return; // stale
+
+        // Merge and dedupe by _id, keep the highest-upvoted ordering.
+        const seen = new Set<string>();
+        const merged: SimilarRequest[] = [];
+        for (const { items } of results) {
+          for (const item of items) {
+            if (seen.has(item._id)) continue;
+            seen.add(item._id);
+            merged.push(item);
+          }
         }
-        setSimilar(items);
-        setSimilarTotal(total);
+        merged.sort((a, b) => b.upvoteCount - a.upvoteCount);
+        const sliced = merged.slice(0, SIMILAR_LIMIT);
+        // Total is a best-effort union upper bound — when the same request
+        // matches multiple queries we may double-count, so clamp to merged.
+        const totalUpper = results.reduce((s, r) => s + r.total, 0);
+        setSimilar(sliced);
+        setSimilarTotal(Math.max(merged.length, Math.min(totalUpper, merged.length + 50)));
       } catch {
         if (reqId === similarReqIdRef.current) {
           setSimilar([]);
@@ -458,7 +503,7 @@ export default function NewFeatureRequest() {
     }, SIMILAR_DEBOUNCE_MS);
 
     return () => clearTimeout(handle);
-  }, [title, similarDismissed]);
+  }, [title, description, similarDismissed]);
 
   const handleDismissSimilar = useCallback(() => {
     setSimilarDismissed(true);
@@ -588,7 +633,7 @@ export default function NewFeatureRequest() {
             width: '100%',
             boxSizing: 'border-box',
           }}>
-            {/* Back link + Beta badge */}
+            {/* Back link */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', paddingTop: '2rem' }}>
               <Link
                 href="/feature-requests"
@@ -608,23 +653,6 @@ export default function NewFeatureRequest() {
                 <ArrowLeftIcon style={{ width: '14px', height: '14px' }} />
                 Back to Feature Requests
               </Link>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '0.15rem 0.45rem',
-                fontSize: '0.6rem',
-                fontWeight: 700,
-                fontFamily: FONT,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase' as const,
-                color: '#fbbf24',
-                background: 'rgba(251,191,36,0.1)',
-                border: '1px solid rgba(251,191,36,0.3)',
-                borderRadius: '999px',
-                animation: 'betaPulse 3s ease-in-out infinite',
-              }}>
-                Beta
-              </span>
             </div>
 
             <motion.div
@@ -734,8 +762,10 @@ export default function NewFeatureRequest() {
                     items={similar}
                     total={similarTotal}
                     loading={similarLoading}
-                    visible={!similarDismissed && title.trim().length >= SIMILAR_MIN_CHARS}
-                    faded={description.trim().length > 0}
+                    visible={!similarDismissed && (
+                      title.trim().length >= SIMILAR_TITLE_MIN_CHARS ||
+                      description.trim().length >= SIMILAR_DESC_MIN_CHARS
+                    )}
                     onDismiss={handleDismissSimilar}
                   />
                 </div>
@@ -952,12 +982,6 @@ export default function NewFeatureRequest() {
         <Footer />
       </div>
 
-      <style>{`
-        @keyframes betaPulse {
-          0%, 100% { box-shadow: 0 0 4px rgba(251,191,36,0.15); }
-          50% { box-shadow: 0 0 12px rgba(251,191,36,0.3); }
-        }
-      `}</style>
     </main>
   );
 }
