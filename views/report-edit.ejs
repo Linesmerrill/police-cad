@@ -691,6 +691,120 @@
     }
     .rp-row-linked-chip-x:hover { background: rgba(168, 85, 247, 0.18); color: #fff; }
 
+    /* ============================================================
+       Submission success modal — green check + two next-action cards.
+       Shown once after the user submits a report so the page doesn't
+       silently hang.
+       ============================================================ */
+    @keyframes rp-suc-fade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes rp-suc-pop { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes rp-suc-check {
+      0% { transform: scale(0.4); opacity: 0; }
+      55% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes rp-suc-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.35); }
+      50% { box-shadow: 0 0 0 14px rgba(34, 197, 94, 0); }
+    }
+    .rp-suc-backdrop {
+      position: fixed; inset: 0; z-index: 70;
+      background: rgba(2, 4, 8, 0.55);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      display: none; align-items: flex-start; justify-content: center;
+      padding-top: 14vh;
+    }
+    .rp-suc-backdrop.open { display: flex; animation: rp-suc-fade 220ms ease; }
+    .rp-suc-panel {
+      width: min(520px, calc(100vw - 2rem));
+      background: linear-gradient(180deg, rgba(20, 26, 22, 0.96) 0%, rgba(10, 14, 12, 0.96) 100%);
+      border: 1px solid rgba(34, 197, 94, 0.22);
+      border-radius: 16px;
+      box-shadow: 0 30px 80px -16px rgba(0,0,0,0.7), 0 0 0 1px rgba(34, 197, 94, 0.06);
+      overflow: hidden;
+      animation: rp-suc-pop 360ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rp-suc-head { padding: 1.6rem 1.5rem 0.4rem; text-align: center; }
+    .rp-suc-check {
+      width: 64px; height: 64px;
+      margin: 0 auto 0.85rem;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(34, 197, 94, 0.28), rgba(34, 197, 94, 0.08));
+      border: 1px solid rgba(34, 197, 94, 0.45);
+      color: #22c55e;
+      font-size: 1.6rem;
+      animation: rp-suc-check 480ms cubic-bezier(0.16, 1, 0.3, 1) both, rp-suc-pulse 1.6s ease-out 480ms 1;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .rp-suc-title { font-size: 1.15rem; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+    .rp-suc-sub {
+      font-size: 0.85rem; color: var(--rp-text-muted);
+      margin-top: 0.3rem;
+    }
+    .rp-suc-sub code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 0.82rem;
+      background: rgba(34, 197, 94, 0.08);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      padding: 0.05rem 0.45rem;
+      border-radius: 999px;
+      color: #86efac;
+    }
+    .rp-suc-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+      padding: 1rem 1.25rem 0.6rem;
+    }
+    @media (max-width: 480px) { .rp-suc-cards { grid-template-columns: 1fr; } }
+    .rp-suc-card {
+      display: flex; flex-direction: column; gap: 0.35rem;
+      padding: 1rem;
+      background: var(--rp-glass);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius);
+      cursor: pointer; text-decoration: none;
+      transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      text-align: left; font-family: inherit;
+      position: relative;
+    }
+    .rp-suc-card:hover {
+      transform: translateY(-2px);
+      background: var(--rp-glass-hover);
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 12px 28px -10px rgba(56, 189, 248, 0.25);
+    }
+    .rp-suc-card-icon {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--rp-accent);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      font-size: 0.85rem;
+      margin-bottom: 0.15rem;
+    }
+    .rp-suc-card-title { font-size: 0.92rem; font-weight: 600; color: #fff; }
+    .rp-suc-card-desc { font-size: 0.74rem; color: var(--rp-text-muted); line-height: 1.45; }
+    .rp-suc-card-arrow {
+      position: absolute; top: 0.85rem; right: 0.85rem;
+      color: var(--rp-text-dim);
+      font-size: 0.7rem;
+      transition: transform 200ms ease, color 200ms ease;
+    }
+    .rp-suc-card:hover .rp-suc-card-arrow { transform: translateX(2px); color: var(--rp-accent); }
+    .rp-suc-foot {
+      padding: 0.7rem 1.25rem 1rem;
+      text-align: center;
+    }
+    .rp-suc-stay {
+      background: transparent; border: 0; cursor: pointer;
+      color: var(--rp-text-muted); font-size: 0.75rem; font-family: inherit;
+      letter-spacing: 0.02em;
+    }
+    .rp-suc-stay:hover { color: var(--rp-text); }
+
     /* Bound-field auto-fill animation: brief value flash on apply */
     @keyframes rp-bound-flash {
       0%, 100% { background-color: rgba(168, 85, 247, 0); }
@@ -755,6 +869,34 @@
         <button id="rp-conf-fix" class="rp-conf-btn rp-conf-btn-primary" type="button">
           <i class="fa-solid fa-pen-to-square"></i> Review and fix
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submission success modal — shown after a submitted save -->
+  <div id="rp-suc" class="rp-suc-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="rp-suc-title">
+    <div class="rp-suc-panel" role="document">
+      <div class="rp-suc-head">
+        <div class="rp-suc-check"><i class="fa-solid fa-check"></i></div>
+        <div class="rp-suc-title" id="rp-suc-title">Report submitted</div>
+        <div class="rp-suc-sub">Saved as <code id="rp-suc-num">—</code></div>
+      </div>
+      <div class="rp-suc-cards">
+        <button id="rp-suc-back" class="rp-suc-card" type="button">
+          <div class="rp-suc-card-icon"><i class="fa-solid fa-arrow-left"></i></div>
+          <div class="rp-suc-card-title">Back to Reports</div>
+          <div class="rp-suc-card-desc">Return to the list of reports for this community.</div>
+          <i class="fa-solid fa-chevron-right rp-suc-card-arrow"></i>
+        </button>
+        <button id="rp-suc-print" class="rp-suc-card" type="button">
+          <div class="rp-suc-card-icon"><i class="fa-solid fa-print"></i></div>
+          <div class="rp-suc-card-title">Print / Save as PDF</div>
+          <div class="rp-suc-card-desc">Open the printable letterhead view in a new tab.</div>
+          <i class="fa-solid fa-chevron-right rp-suc-card-arrow"></i>
+        </button>
+      </div>
+      <div class="rp-suc-foot">
+        <button id="rp-suc-stay" class="rp-suc-stay" type="button">Stay on this report</button>
       </div>
     </div>
   </div>
@@ -1961,6 +2103,53 @@
 
       function srcLabel(src) { return src.type + ':' + (src.id || '').slice(-6); }
 
+      // ============================================================
+      // Submission success modal — animated check + two action cards.
+      // ============================================================
+      function showSubmitSuccess(subId, reportNumber) {
+        var backdrop = document.getElementById('rp-suc');
+        var numEl = document.getElementById('rp-suc-num');
+        numEl.textContent = reportNumber || '—';
+
+        var reportsHref = '/reports' + (communityIdEncoded ? '?c=' + encodeURIComponent(communityIdEncoded) : '');
+        var printHref = subId ? ('/reports/' + encodeURIComponent(subId) + '/print' + (communityIdEncoded ? '?c=' + encodeURIComponent(communityIdEncoded) : '')) : '';
+
+        document.getElementById('rp-suc-back').onclick = function () {
+          window.location.href = reportsHref;
+        };
+        document.getElementById('rp-suc-print').onclick = function () {
+          if (!printHref) { toast('Save the report first to print', 'error'); return; }
+          window.open(printHref, '_blank', 'noopener');
+        };
+        document.getElementById('rp-suc-stay').onclick = function () {
+          backdrop.classList.remove('open');
+          // Reload so the page rehydrates as an existing-submission view
+          // (useful when this was a fresh POST — future saves go to PUT).
+          if (subId && !state.existing) {
+            window.location.href = '/reports/' + subId + (communityIdEncoded ? '?c=' + communityIdEncoded : '');
+          } else {
+            // Already in edit mode for an existing record — re-enable the
+            // submit button so the user can keep working.
+            var sBtn = document.getElementById('rp-submit'); if (sBtn) sBtn.disabled = false;
+          }
+        };
+
+        backdrop.classList.add('open');
+        // Make the back-to-reports card the default focus target so Enter
+        // takes the user out — most submissions don't need follow-up edits.
+        setTimeout(function () { document.getElementById('rp-suc-back').focus(); }, 30);
+      }
+      // Esc on the success modal == "stay on this report" (least surprising
+      // — keeps the user on the page they were on, doesn't fire the primary).
+      document.addEventListener('keydown', function (e) {
+        var b = document.getElementById('rp-suc');
+        if (!b || !b.classList.contains('open')) return;
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          document.getElementById('rp-suc-stay').click();
+        }
+      });
+
       // --- field renderers ---
       function renderField(f, sectionId, rowIdx) {
         var fieldKey = sectionId + '.' + f.id + (rowIdx != null ? '[' + rowIdx + ']' : '');
@@ -2448,7 +2637,21 @@
             return r.json();
           })
           .then(function (j) {
-            toast(status === 'submitted' ? 'Submitted' : 'Draft saved', 'success');
+            // Submitted: show a success modal with next-action cards. The
+            // user just signed an official record; silently flipping a
+            // toast and leaving them on the same edit screen feels broken.
+            // Drafts still toast inline so the user can keep editing.
+            if (status === 'submitted') {
+              var submissionRef = state.existing || (j && j.id ? j : null);
+              var subId = submissionRef && (submissionRef._id || submissionRef.id);
+              var reportNumber = (submissionRef && submissionRef.formSubmission && submissionRef.formSubmission.reportNumber)
+                || (j && j.reportNumber)
+                || (state.existing && state.existing.formSubmission && state.existing.formSubmission.reportNumber)
+                || '';
+              showSubmitSuccess(subId, reportNumber);
+              return;
+            }
+            toast('Draft saved', 'success');
             if (!state.existing && j && j.id) {
               // Redirect to the saved record so future edits go to PUT.
               window.location.href = '/reports/' + j.id + (communityIdEncoded ? '?c=' + communityIdEncoded : '');
