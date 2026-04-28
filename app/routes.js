@@ -4569,12 +4569,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // List feature requests (public - no auth required)
   app.get("/api/v2/feature-requests", async function (req, res) {
     try {
-      const { page = 1, limit = 20, sort, status, q, userId } = req.query;
+      const { page = 1, limit = 20, sort, status, excludeStatus, q, userId, authorId } = req.query;
       let url = `${policeCadApiUrl}/api/v2/feature-requests?page=${page}&limit=${limit}`;
       if (sort) url += `&sort=${encodeURIComponent(sort)}`;
       if (status) url += `&status=${encodeURIComponent(status)}`;
+      if (excludeStatus) url += `&excludeStatus=${encodeURIComponent(excludeStatus)}`;
       if (q) url += `&q=${encodeURIComponent(q)}`;
       if (userId) url += `&userId=${encodeURIComponent(userId)}`;
+      if (authorId) url += `&authorId=${encodeURIComponent(authorId)}`;
 
       const response = await axios.get(url, { headers: config.headers });
       res.json(response.data);
