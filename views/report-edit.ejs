@@ -1367,13 +1367,20 @@
 
       function applyPickedRow(tab, id, childId) {
         if (!id) return;
+        // Find the picked row before we close the modal (which resets drill state).
+        var rows;
+        if (tab === 'call') {
+          rows = (callPicker.cache.call && callPicker.cache.call.all) || [];
+        } else {
+          // Drill tabs: the rows we rendered came from the drill items list.
+          rows = (callPicker.drill[tab] && callPicker.drill[tab].items) || [];
+        }
+        var pick = rows.filter(function (c) { return c._id === id && (childId ? c._childId === childId : true); })[0];
         closeCallPicker();
         // Replace any existing source of the same type so old prefill is
         // wiped before the new prefill applies — one source per type.
         var existing = state.sources.filter(function (s) { return s.type === tab; })[0];
         if (existing) removeSource(tab, existing.id, { silent: true });
-        var rows = (callPicker.cache[tab] && callPicker.cache[tab].all) || [];
-        var pick = rows.filter(function (c) { return c._id === id && (childId ? c._childId === childId : true); })[0];
         var src = { type: tab, id: id, meta: rowMeta(pick || {}, tab) };
         if (childId) src.childId = childId;
         applySource(src);
@@ -1690,6 +1697,94 @@
         return cur == null ? null : cur;
       }
 
+      // When the user picks a citation or arrest report as a top-level
+      // source, infer the civilian involved and link them to row 0 of
+      // every unbound `bindEntity: "civilian"` section. This is what
+      // makes "pick a citation → suspect fills in" feel natural.
+      function autoLinkImpliedCivilian(src) {
+        if (!state.template || !state.template.sections) return;
+        if (src.type !== 'citation' && src.type !== 'arrestReport') return;
+
+        var civilianId = null, civDetails = null, civLabel = null;
+
+        if (src.type === 'citation') {
+          // Citation source.id IS the civilian id (childId is the criminalHistory item).
+          var cRow = (callPicker.drill.citation && callPicker.drill.citation.items || [])
+            .filter(function (r) { return r._id === src.id && r._childId === src.childId; })[0];
+          if (cRow) { civilianId = cRow._id; civDetails = cRow.civilian || {}; }
+        } else if (src.type === 'arrestReport') {
+          // Arrest report's arrestee.id is the civilian id; civilian comes from drill state.
+          var aRow = (callPicker.drill.arrestReport && callPicker.drill.arrestReport.items || [])
+            .filter(function (r) { return r._id === src.id; })[0];
+          if (aRow) {
+            var arr = (aRow.arrestReport && aRow.arrestReport.arrestee) || {};
+            civilianId = arr.id || null;
+            // We don't have the full civilian record here, but the drill
+            // state was reached via picking a civilian — use that one.
+            var pickedCiv = callPicker.drill.arrestReport.civilian || {};
+            civDetails = pickedCiv.civilian || {};
+            // Fall back to arrestee fields if civilian record is sparse.
+            if (!civDetails.firstName && arr.name) {
+              var parts = String(arr.name).trim().split(/\s+/);
+              civDetails = Object.assign({}, civDetails, {
+                firstName: parts[0] || '',
+                lastName: parts.slice(1).join(' ') || '',
+                name: arr.name,
+                birthday: arr.dob || civDetails.birthday,
+                address: arr.address || civDetails.address,
+              });
+            }
+            if (!civilianId) civilianId = pickedCiv._id || null;
+          }
+        }
+
+        if (!civilianId || !civDetails) return;
+        civLabel = ((civDetails.firstName || '') + ' ' + (civDetails.lastName || '')).trim() || civDetails.name || civilianId;
+
+        // Synthetic merged "name" so paths like "name" resolve cleanly.
+        if (!civDetails.name) {
+          var fn = ((civDetails.firstName || '') + ' ' + (civDetails.lastName || '')).trim();
+          if (fn) civDetails = Object.assign({}, civDetails, { name: fn });
+        }
+
+        var justFilled = []; // [{ sectionId, rowIdx, fieldId }]
+        (state.template.sections || []).forEach(function (section) {
+          if (!section.repeatable || section.bindEntity !== 'civilian') return;
+          if (!Array.isArray(state.data[section.id])) state.data[section.id] = [];
+          if (state.data[section.id].length === 0) state.data[section.id].push({});
+          var row = state.data[section.id][0];
+          // Don't trample an existing link on row 0.
+          if (row._link) return;
+          row._link = { type: 'civilian', id: civilianId, label: civLabel };
+          (section.fields || []).forEach(function (f) {
+            if (!Array.isArray(f.populateFrom)) return;
+            for (var i = 0; i < f.populateFrom.length; i++) {
+              var m = f.populateFrom[i];
+              if (m.source !== 'bound') continue;
+              if (!isEmpty(row[f.id])) break;
+              var v = resolveBoundPath(civDetails, 'civilian', m.path);
+              if (v == null || v === '') continue;
+              row[f.id] = v;
+              justFilled.push({ sectionId: section.id, rowIdx: 0, fieldId: f.id });
+              break;
+            }
+          });
+        });
+
+        if (justFilled.length) {
+          // Brief value flash on bound fields after the impending render.
+          setTimeout(function () {
+            justFilled.forEach(function (h) {
+              var sel = '[data-field-key="' + cssEscape(h.sectionId) + '.' + cssEscape(h.fieldId) + '[' + h.rowIdx + ']"]';
+              var el = document.querySelector(sel);
+              if (!el) return;
+              el.classList.add('rp-just-bound');
+              setTimeout(function () { el.classList.remove('rp-just-bound'); }, 800);
+            });
+          }, 50);
+        }
+      }
+
       function unlinkRow(sectionId, rowIdx) {
         var rows = state.data[sectionId];
         if (!Array.isArray(rows) || !rows[rowIdx]) return;
@@ -1790,6 +1885,13 @@
           return s.type === src.type && s.id === src.id && (s.childId || '') === (src.childId || '');
         }).length > 0;
         if (!dup) state.sources.push(src);
+
+        // For citation / arrestReport sources we know which civilian is
+        // involved — auto-link them to row 0 of any unbound civilian
+        // section so the suspect/victim block auto-fills, not just the
+        // narrative-style top-level fields. The user's mental model is
+        // "I picked Marty's citation, the suspect should be Marty."
+        autoLinkImpliedCivilian(src);
 
         // Ask the API to compute prefill against template + sources.
         // Strip client-only `meta` before sending; server only needs type/id/childId.
