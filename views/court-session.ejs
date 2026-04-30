@@ -56,6 +56,7 @@
 
     html { font-size: 15px; }
     body {
+      padding-top: 36px; /* clears the fixed standalone-utility strip */
       background: var(--bg-void);
       color: var(--text-primary);
       font-family: var(--font-body);
@@ -703,6 +704,14 @@
 </head>
 <body>
 
+<%- include('partials/standalone-utility', {
+  user: user,
+  communityName: null,
+  pageLabel: 'Court Session',
+  backHref: '/communities',
+  backLabel: 'Back to dashboard'
+}) %>
+
 <div class="jd-shell">
   <!-- Header -->
   <div class="jd-header">
@@ -714,7 +723,6 @@
       </div>
     </div>
     <div class="jd-header-actions">
-      <a id="backToDashboardBtn" href="javascript:history.back()" class="jd-back-btn"><i class="fa fa-arrow-left"></i> Back to Dashboard</a>
       <button class="jd-btn jd-btn-gold" id="startSessionBtn" style="display:none;"><i class="fa fa-play"></i> Start Session</button>
       <button class="jd-btn jd-btn-danger" id="endSessionBtn" style="display:none;"><i class="fa fa-stop"></i> End Session</button>
     </div>
@@ -888,6 +896,32 @@ function jdConfirm(opts) {
 }
 </script>
 <script src="/static/js/court-session.js"></script>
+
+<script>
+  // Smart back: store the page the user arrived from so the strip's
+  // back link returns there instead of the static /communities default.
+  // Same pattern as /reports, /most-wanted, and /community/:hash/map.
+  (function () {
+    var RETURN_KEY = 'courtSession.returnUrl';
+    (function captureReturnUrl() {
+      var ref = document.referrer || '';
+      if (!ref) return;
+      if (ref.indexOf(window.location.origin) !== 0) return;
+      var path = ref.slice(window.location.origin.length).split('?')[0].split('#')[0];
+      // Don't overwrite when bouncing within /court-session (e.g. session
+      // start/stop refreshes) — that would loop the back link on itself.
+      if (path.indexOf('/court-session') === 0) return;
+      try { sessionStorage.setItem(RETURN_KEY, ref); } catch (e) { /* private mode */ }
+    })();
+    Array.from(document.querySelectorAll('.lpc-utility-back')).forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        var stored = '';
+        try { stored = sessionStorage.getItem(RETURN_KEY) || ''; } catch (e2) {}
+        if (stored) { e.preventDefault(); window.location.href = stored; }
+      });
+    });
+  })();
+</script>
 
 </body>
 </html>

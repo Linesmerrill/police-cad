@@ -109,6 +109,35 @@
     .cd-nav-item:hover { background: var(--cd-glass-hover); color: var(--cd-text); }
     .cd-nav-item.active { background: var(--cd-accent-glow); color: var(--cd-accent); font-weight: 500; border-color: rgba(56, 189, 248, 0.2); }
     .cd-nav-item i { width: 1.125rem; text-align: center; font-size: 0.8125rem; }
+    .cd-nav-item.is-locked { opacity: 0.7; }
+    .cd-nav-item.is-locked:hover { opacity: 1; }
+    .cd-nav-lock { margin-left: auto; font-size: 0.625rem !important; width: auto !important; color: var(--cd-text-dim); }
+    /* Small NEW badge — appears next to recently-shipped nav items.
+       Auto-hides after the cutoff date so we don't have to remember
+       to remove it.
+       inline-flex + align-items: center handles vertical alignment
+       against the sibling icon; the asymmetric horizontal padding
+       compensates for the trailing letter-spacing on "W" so the
+       glyphs sit optically centered inside the pill. */
+    .cd-nav-new {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 16px;
+      padding: 0 0.45rem 0 calc(0.45rem + 0.06em);
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.12);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      line-height: 1;
+    }
+    .cd-nav-item.is-locked + .cd-nav-new,
+    .cd-nav-item .cd-nav-lock + .cd-nav-new { margin-left: 0.35rem; }
 
     /* Also style dd-nav-item for component nav built by buildSidebarNav */
     .dd-nav-item { display: flex; align-items: center; gap: 0.625rem; padding: 0.5rem 0.625rem; border-radius: var(--cd-radius-sm); color: var(--cd-text-muted); text-decoration: none; font-size: 0.8125rem; font-weight: 400; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; position: relative; }
@@ -516,6 +545,24 @@
         <a class="cd-nav-item" href="/most-wanted?c=<%= encodedCommunityId %>">
           <i class="fa fa-star"></i>
           Most Wanted
+        </a>
+        <%
+          // NEW-badge cutoff: shipped 2026-04-28; remove after 2 weeks.
+          var newBadgeUntil = new Date('2026-05-12T00:00:00Z');
+          var showNewBadge = Date.now() < newBadgeUntil.getTime();
+        %>
+        <a class="cd-nav-item" href="/reports?c=<%= encodedCommunityId %>">
+          <i class="fa fa-file-lines"></i>
+          Reports
+          <% if (showNewBadge) { %><span class="cd-nav-new">New</span><% } %>
+        </a>
+        <a class="cd-nav-item<% if (typeof canManageForms !== 'undefined' && !canManageForms) { %> is-locked<% } %>"
+           href="/community/<%= encodedCommunityId %>/forms"
+           <% if (typeof canManageForms !== 'undefined' && !canManageForms) { %>title="Restricted — community admins or members with manage-community permission only"<% } %>>
+          <i class="fa fa-list-check"></i>
+          Forms
+          <% if (typeof canManageForms !== 'undefined' && !canManageForms) { %><i class="fa fa-lock cd-nav-lock" aria-label="Restricted access"></i><% } %>
+          <% if (showNewBadge) { %><span class="cd-nav-new">New</span><% } %>
         </a>
         <a class="cd-nav-item" href="<%= encodedCommunityId ? '/community/' + encodedCommunityId + '/map' : '/map-interactive' %>">
           <i class="fa fa-map"></i>

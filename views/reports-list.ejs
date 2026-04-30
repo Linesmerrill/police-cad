@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports - Lines Police CAD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --rp-bg: #08090c;
+      --rp-surface: rgba(255,255,255,0.03);
+      --rp-glass: rgba(255,255,255,0.04);
+      --rp-glass-border: rgba(255,255,255,0.06);
+      --rp-glass-hover: rgba(255,255,255,0.07);
+      --rp-text: #e2e8f0;
+      --rp-text-muted: #64748b;
+      --rp-text-dim: #475569;
+      --rp-accent: #38bdf8;
+      --rp-accent-glow: rgba(56,189,248,0.15);
+      --rp-green: #22c55e;
+      --rp-amber: #f59e0b;
+      --rp-red: #ef4444;
+      --rp-radius: 12px;
+      --rp-radius-sm: 8px;
+    }
+    html { font-size: 16px; }
+    body {
+      background: var(--rp-bg); color: var(--rp-text);
+      font-family: 'Outfit', -apple-system, sans-serif;
+      min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased;
+      padding-top: 36px; /* clears the fixed standalone-utility strip */
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 700px 500px at 10% 15%, rgba(56,189,248,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 90% 85%, rgba(245,158,11,0.04) 0%, transparent 70%);
+    }
+    .rp-shell { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .rp-beta-tag {
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 0.5rem;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      background: rgba(245, 158, 11, 0.12);
+      color: var(--rp-amber);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      cursor: help;
+    }
+    .rp-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.5rem; padding-bottom: 1rem;
+      border-bottom: 1px solid var(--rp-glass-border);
+    }
+    .rp-header-left { display: flex; align-items: center; gap: 1rem; }
+    .rp-header-icon {
+      width: 44px; height: 44px;
+      background: var(--rp-accent-glow);
+      border: 1px solid rgba(56,189,248,0.2);
+      border-radius: var(--rp-radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; color: var(--rp-accent);
+    }
+    .rp-title { font-weight: 700; font-size: 1.5rem; color: #fff; }
+    .rp-subtitle { font-size: 0.85rem; color: var(--rp-text-muted); margin-top: 0.1rem; }
+    .rp-back-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      color: var(--rp-text-muted); font-size: 0.85rem; text-decoration: none;
+      padding: 0.4rem 0.75rem; border-radius: var(--rp-radius-sm);
+      transition: all 0.2s ease; border: 1px solid transparent;
+    }
+    .rp-back-btn:hover { color: #fff; background: var(--rp-surface); border-color: var(--rp-glass-border); }
+    .rp-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.5rem 0.9rem; border-radius: var(--rp-radius-sm);
+      font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 0.85rem;
+      border: none; cursor: pointer; transition: all 0.2s ease;
+      text-decoration: none; white-space: nowrap;
+    }
+    .rp-btn-primary { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: #fff; }
+    .rp-btn-primary:hover { box-shadow: 0 4px 12px rgba(14,165,233,0.3); transform: translateY(-1px); }
+    .rp-btn-outline { background: transparent; color: var(--rp-text-muted); border: 1px solid var(--rp-glass-border); }
+    .rp-btn-outline:hover { background: var(--rp-surface); color: #fff; }
+
+    .rp-toolbar {
+      position: sticky; top: 0; z-index: 5;
+      background: var(--rp-bg);
+      padding: 0.75rem 0; margin-bottom: 1rem;
+      display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center;
+      border-bottom: 1px solid var(--rp-glass-border);
+    }
+    .rp-input, .rp-select {
+      background: var(--rp-glass); color: var(--rp-text);
+      border: 1px solid var(--rp-glass-border); border-radius: var(--rp-radius-sm);
+      padding: 0.5rem 0.75rem; font-size: 0.85rem; font-family: inherit;
+      min-width: 180px;
+    }
+    .rp-input:focus, .rp-select:focus { outline: none; border-color: var(--rp-accent); }
+    .rp-toolbar-spacer { flex: 1; }
+
+    .rp-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .rp-card {
+      background: var(--rp-surface);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius-sm);
+      padding: 0.875rem 1rem;
+      display: flex; align-items: center; gap: 0.875rem;
+      transition: all 0.2s ease; cursor: pointer; text-decoration: none; color: inherit;
+    }
+    .rp-card:hover { border-color: rgba(255,255,255,0.12); background: var(--rp-glass-hover); }
+    .rp-avatar {
+      width: 38px; height: 38px;
+      border-radius: var(--rp-radius-sm);
+      background: var(--rp-accent-glow);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--rp-accent); font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+      border: 1px solid rgba(56,189,248,0.15);
+    }
+    .rp-card-info { flex: 1; min-width: 0; }
+    .rp-card-title { font-weight: 600; font-size: 0.9rem; color: #fff; }
+    .rp-card-meta {
+      font-size: 0.78rem; color: var(--rp-text-muted); margin-top: 0.2rem;
+      display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+    }
+    .rp-meta-item { display: inline-flex; align-items: center; gap: 0.25rem; }
+    .rp-pill {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      padding: 0.18rem 0.55rem; border-radius: 999px;
+      font-size: 0.7rem; font-weight: 600;
+      background: var(--rp-glass); color: var(--rp-text-muted);
+      border: 1px solid var(--rp-glass-border);
+    }
+    .rp-pill-submitted { background: rgba(34,197,94,0.1); color: var(--rp-green); border-color: rgba(34,197,94,0.2); }
+    .rp-pill-draft { background: rgba(245,158,11,0.1); color: var(--rp-amber); border-color: rgba(245,158,11,0.2); }
+    .rp-pill-archived { background: rgba(148,163,184,0.1); color: #94a3b8; border-color: rgba(148,163,184,0.2); }
+    .rp-card.is-archived { opacity: 0.65; }
+    .rp-card.is-archived:hover { opacity: 0.85; }
+
+    .rp-empty {
+      text-align: center; padding: 3rem 1rem;
+      color: var(--rp-text-muted);
+      border: 1px dashed var(--rp-glass-border);
+      border-radius: var(--rp-radius);
+    }
+    .rp-empty-icon { font-size: 2rem; color: var(--rp-text-dim); margin-bottom: 0.75rem; }
+    .rp-empty-title { font-weight: 600; color: var(--rp-text); margin-bottom: 0.25rem; }
+    .rp-empty-sub { font-size: 0.85rem; }
+
+    .rp-pagination {
+      display: flex; justify-content: center; gap: 0.4rem;
+      margin-top: 1.5rem;
+    }
+    .rp-page-btn {
+      padding: 0.4rem 0.7rem; border-radius: var(--rp-radius-sm);
+      background: transparent; color: var(--rp-text-muted);
+      border: 1px solid var(--rp-glass-border); cursor: pointer;
+      font-family: inherit; font-size: 0.85rem;
+    }
+    .rp-page-btn:hover:not(:disabled) { background: var(--rp-surface); color: #fff; }
+    .rp-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .rp-page-info { padding: 0.4rem 0.7rem; color: var(--rp-text-muted); font-size: 0.85rem; }
+
+    /* ============================================================
+       Template picker — command palette modal
+       ============================================================ */
+    .rp-cmd-mono {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-feature-settings: "tnum" 1;
+    }
+    .rp-cmd-backdrop {
+      position: fixed; inset: 0; z-index: 40;
+      background: rgba(2, 4, 8, 0.55);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: flex; align-items: flex-start; justify-content: center;
+      padding-top: 12vh;
+      opacity: 0; pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .rp-cmd-backdrop.open { opacity: 1; pointer-events: auto; }
+    .rp-cmd-panel {
+      position: relative;
+      width: min(620px, calc(100vw - 2rem));
+      max-height: min(620px, 70vh);
+      display: flex; flex-direction: column;
+      background: linear-gradient(180deg, rgba(20, 22, 28, 0.96) 0%, rgba(10, 12, 18, 0.96) 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      box-shadow: 0 24px 60px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(56,189,248,0.04);
+      overflow: hidden;
+      transform: translateY(8px) scale(0.97);
+      opacity: 0;
+      transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), opacity 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rp-cmd-backdrop.open .rp-cmd-panel { transform: translateY(0) scale(1); opacity: 1; }
+
+    .rp-cmd-search-wrap {
+      position: relative;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .rp-cmd-search-icon {
+      position: absolute; left: 1.05rem; top: 50%; transform: translateY(-50%);
+      color: var(--rp-text-dim); font-size: 0.95rem;
+      pointer-events: none;
+      transition: color 160ms ease;
+    }
+    .rp-cmd-search-wrap.focused .rp-cmd-search-icon { color: var(--rp-accent); }
+    .rp-cmd-search {
+      width: 100%;
+      background: transparent; border: 0; outline: 0;
+      color: var(--rp-text);
+      font-family: inherit; font-size: 1rem; font-weight: 400;
+      padding: 1.05rem 1rem 1.05rem 2.85rem;
+      letter-spacing: -0.005em;
+    }
+    .rp-cmd-search::placeholder { color: var(--rp-text-dim); }
+    .rp-cmd-search-clear {
+      position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%);
+      width: 24px; height: 24px; border-radius: 6px;
+      background: transparent; border: 0; cursor: pointer;
+      color: var(--rp-text-dim); font-size: 0.75rem;
+      display: none; align-items: center; justify-content: center;
+    }
+    .rp-cmd-search-clear:hover { background: rgba(255,255,255,0.06); color: var(--rp-text); }
+    .rp-cmd-search-wrap.has-value .rp-cmd-search-clear { display: flex; }
+
+    .rp-cmd-results {
+      flex: 1; min-height: 0;
+      overflow-y: auto; overscroll-behavior: contain;
+      padding: 0.4rem 0.4rem 0.5rem;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+    }
+    .rp-cmd-results::-webkit-scrollbar { width: 8px; }
+    .rp-cmd-results::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    .rp-cmd-results::-webkit-scrollbar-track { background: transparent; }
+
+    .rp-cmd-group-label {
+      font-size: 0.65rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--rp-text-dim);
+      padding: 0.85rem 0.85rem 0.4rem;
+    }
+
+    .rp-cmd-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: 36px 1fr auto;
+      gap: 0.75rem;
+      align-items: center;
+      padding: 0.65rem 0.85rem;
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--rp-text);
+      text-decoration: none;
+      transition: background-color 120ms ease;
+    }
+    .rp-cmd-row::before {
+      content: "";
+      position: absolute; left: 0; top: 50%;
+      width: 2px; height: 0;
+      background: var(--rp-accent);
+      border-radius: 0 2px 2px 0;
+      transform: translateY(-50%);
+      transition: height 160ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rp-cmd-row:hover { background: rgba(255,255,255,0.035); }
+    .rp-cmd-row.active {
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .rp-cmd-row.active::before { height: 70%; }
+
+    .rp-cmd-icon {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--rp-text-secondary);
+      font-size: 0.95rem;
+    }
+    .rp-cmd-row.active .rp-cmd-icon {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: var(--rp-accent);
+    }
+
+    .rp-cmd-body { min-width: 0; }
+    .rp-cmd-name-row {
+      display: flex; align-items: center; gap: 0.45rem;
+      font-size: 0.92rem; font-weight: 500;
+      color: var(--rp-text);
+      letter-spacing: -0.005em;
+      line-height: 1.2;
+    }
+    .rp-cmd-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .rp-cmd-name mark {
+      background: rgba(56, 189, 248, 0.18);
+      color: var(--rp-text);
+      padding: 0 1px; border-radius: 2px;
+      font-weight: 600;
+    }
+    .rp-cmd-default-pill {
+      flex-shrink: 0;
+      padding: 0.06rem 0.4rem;
+      border-radius: 999px;
+      font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--rp-accent);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+    .rp-cmd-desc {
+      margin-top: 0.18rem;
+      font-size: 0.78rem;
+      color: var(--rp-text-muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      line-height: 1.3;
+    }
+
+    .rp-cmd-meta {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.7rem;
+      color: var(--rp-text-dim);
+      flex-shrink: 0;
+    }
+    .rp-cmd-meta-count {
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      letter-spacing: 0.02em;
+    }
+    .rp-cmd-meta-enter {
+      width: 22px; height: 22px;
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--rp-accent);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      font-size: 0.7rem; font-weight: 600;
+      opacity: 0; transform: scale(0.85);
+      transition: opacity 140ms ease, transform 140ms ease;
+    }
+    .rp-cmd-row.active .rp-cmd-meta-enter { opacity: 1; transform: scale(1); }
+
+    .rp-cmd-empty {
+      padding: 2.5rem 1.25rem 2rem;
+      text-align: center;
+      color: var(--rp-text-muted);
+    }
+    .rp-cmd-empty-icon {
+      width: 44px; height: 44px;
+      margin: 0 auto 0.85rem;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--rp-text-dim); font-size: 1.05rem;
+    }
+    .rp-cmd-empty-title {
+      color: var(--rp-text);
+      font-weight: 600; font-size: 0.95rem;
+      margin-bottom: 0.3rem;
+    }
+    .rp-cmd-empty-sub { font-size: 0.82rem; line-height: 1.5; }
+    .rp-cmd-empty-sub a { color: var(--rp-accent); text-decoration: none; font-weight: 500; }
+    .rp-cmd-empty-sub a:hover { text-decoration: underline; }
+
+    .rp-cmd-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.55rem 0.85rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.18);
+      font-size: 0.7rem;
+      color: var(--rp-text-dim);
+    }
+    .rp-cmd-footer-count { letter-spacing: 0.01em; }
+    .rp-cmd-footer-count strong { color: var(--rp-text-secondary); font-weight: 500; }
+    .rp-cmd-hints { display: flex; gap: 0.85rem; }
+    .rp-cmd-hint { display: inline-flex; align-items: center; gap: 0.3rem; }
+    .rp-cmd-kbd {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 18px;
+      padding: 0 4px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-bottom-color: rgba(255,255,255,0.14);
+      color: var(--rp-text-secondary);
+      font-size: 0.65rem; font-weight: 600;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .rp-cmd-backdrop, .rp-cmd-panel, .rp-cmd-meta-enter, .rp-cmd-row::before { transition: none; }
+    }
+
+    .rp-cmd-create {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.7rem 0.85rem;
+      margin: 0.25rem 0.4rem 0.5rem;
+      border-radius: 10px;
+      border: 1px dashed rgba(255,255,255,0.1);
+      color: var(--rp-text-muted);
+      background: transparent;
+      font-size: 0.82rem;
+      cursor: pointer; text-decoration: none;
+      transition: all 160ms ease;
+    }
+    .rp-cmd-create:hover {
+      border-color: rgba(56, 189, 248, 0.35);
+      background: rgba(56, 189, 248, 0.05);
+      color: var(--rp-text);
+    }
+    .rp-cmd-create-icon {
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--rp-accent);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      font-size: 0.7rem;
+    }
+    .rp-cmd-create-sub {
+      margin-left: auto;
+      font-size: 0.68rem;
+      color: var(--rp-text-dim);
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+
+    /* ============================================================
+       Quick-start rails (Recent for you + Most used in community)
+       ============================================================ */
+    .rp-rails { display: none; flex-direction: column; gap: 0.85rem; margin: 0.25rem 0 1.25rem; }
+    .rp-rails.has-content { display: flex; }
+
+    .rp-rail { display: flex; align-items: stretch; gap: 0.85rem; min-width: 0; }
+    .rp-rail-label {
+      flex-shrink: 0;
+      width: 132px;
+      display: flex; flex-direction: column; justify-content: center; gap: 0.2rem;
+      padding: 0.5rem 0.85rem 0.5rem 0;
+      border-right: 1px solid var(--rp-glass-border);
+    }
+    .rp-rail-label-row {
+      display: flex; align-items: center; gap: 0.45rem;
+      color: var(--rp-text);
+      font-size: 0.85rem; font-weight: 600;
+      letter-spacing: -0.005em;
+    }
+    .rp-rail-label-icon {
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--rp-accent);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      font-size: 0.7rem;
+    }
+    .rp-rail-sub {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 0.65rem;
+      color: var(--rp-text-dim);
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+
+    .rp-rail-track-wrap {
+      flex: 1; min-width: 0;
+      position: relative;
+    }
+    /* Right-edge fade hinting at horizontal scroll overflow. */
+    .rp-rail-track-wrap::after {
+      content: "";
+      position: absolute; top: 0; right: 0; width: 32px; height: 100%;
+      background: linear-gradient(to right, rgba(8, 9, 12, 0), var(--rp-bg) 90%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 200ms ease;
+    }
+    .rp-rail-track-wrap.has-overflow::after { opacity: 1; }
+
+    .rp-rail-track {
+      display: flex; gap: 0.6rem;
+      overflow-x: auto; overflow-y: hidden;
+      scroll-snap-type: x proximity;
+      scroll-padding: 0.25rem;
+      padding: 0.25rem 0.25rem 0.5rem;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent;
+    }
+    .rp-rail-track::-webkit-scrollbar { height: 6px; }
+    .rp-rail-track::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    .rp-rail-track::-webkit-scrollbar-track { background: transparent; }
+
+    .rp-rail-card {
+      flex-shrink: 0; scroll-snap-align: start;
+      width: 220px;
+      background: var(--rp-surface);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: 12px;
+      padding: 0.75rem 0.85rem;
+      cursor: pointer; text-decoration: none;
+      color: var(--rp-text);
+      display: flex; flex-direction: column; gap: 0.6rem;
+      transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), border-color 180ms ease, background-color 180ms ease;
+      opacity: 0;
+      animation: rp-rail-card-in 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      position: relative; overflow: hidden;
+    }
+    @keyframes rp-rail-card-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .rp-rail-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(56, 189, 248, 0.32);
+      background: rgba(56, 189, 248, 0.04);
+    }
+    .rp-rail-card:active { transform: translateY(0); }
+
+    .rp-rail-card-head {
+      display: flex; align-items: center; gap: 0.55rem;
+    }
+    .rp-rail-card-icon {
+      width: 30px; height: 30px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--rp-text-secondary);
+      font-size: 0.8rem;
+      transition: all 180ms ease;
+    }
+    .rp-rail-card:hover .rp-rail-card-icon {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: var(--rp-accent);
+    }
+    .rp-rail-card-title {
+      flex: 1; min-width: 0;
+      font-size: 0.85rem; font-weight: 600;
+      color: var(--rp-text);
+      letter-spacing: -0.005em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .rp-rail-card-default {
+      flex-shrink: 0;
+      padding: 0.04rem 0.35rem;
+      border-radius: 999px;
+      font-size: 0.55rem; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--rp-accent);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+    }
+
+    .rp-rail-card-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.5rem;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 0.66rem;
+      color: var(--rp-text-dim);
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .rp-rail-card-stat { color: var(--rp-text-secondary); font-weight: 600; }
+
+    @media (max-width: 720px) {
+      .rp-rail { flex-direction: column; gap: 0.5rem; }
+      .rp-rail-label { width: auto; border-right: 0; padding: 0; }
+      .rp-rail-label-row { font-size: 0.8rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .rp-rail-card { animation: none; opacity: 1; transition: none; }
+      .rp-rail-card:hover { transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/standalone-utility', {
+    user: user,
+    communityName: typeof communityName !== 'undefined' ? communityName : null,
+    pageLabel: 'Reports',
+    backHref: '/communities',
+    backLabel: 'Back to dashboard'
+  }) %>
+  <div class="rp-shell">
+    <div class="rp-header">
+      <div class="rp-header-left">
+        <div class="rp-header-icon"><i class="fa-solid fa-file-lines"></i></div>
+        <div>
+          <div class="rp-title">Reports <span class="rp-beta-tag" title="This feature is in beta — please report any issues">Beta</span></div>
+          <div class="rp-subtitle">
+            <% if (typeof communityName !== 'undefined' && communityName) { %><%= communityName %><% } else { %>All reports in your community<% } %>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:0.5rem;">
+        <button id="rp-new" class="rp-btn rp-btn-primary" type="button"><i class="fa-solid fa-plus"></i> New Report <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; margin-left: 0.25rem;"></i></button>
+      </div>
+    </div>
+
+    <div id="rp-rails" class="rp-rails">
+      <div class="rp-rail" id="rp-rail-recent" style="display:none;">
+        <div class="rp-rail-label">
+          <div class="rp-rail-label-row">
+            <span class="rp-rail-label-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+            Recent
+          </div>
+          <div class="rp-rail-sub">For you</div>
+        </div>
+        <div class="rp-rail-track-wrap" id="rp-rail-recent-wrap">
+          <div class="rp-rail-track" id="rp-rail-recent-track"></div>
+        </div>
+      </div>
+      <div class="rp-rail" id="rp-rail-popular" style="display:none;">
+        <div class="rp-rail-label">
+          <div class="rp-rail-label-row">
+            <span class="rp-rail-label-icon"><i class="fa-solid fa-fire"></i></span>
+            Most used
+          </div>
+          <div class="rp-rail-sub">In community</div>
+        </div>
+        <div class="rp-rail-track-wrap" id="rp-rail-popular-wrap">
+          <div class="rp-rail-track" id="rp-rail-popular-track"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rp-toolbar">
+      <select id="rp-filter-template" class="rp-select">
+        <option value="">All template types</option>
+      </select>
+      <select id="rp-filter-status" class="rp-select">
+        <option value="">All statuses</option>
+        <option value="submitted">Submitted</option>
+        <option value="draft">Drafts</option>
+      </select>
+      <input id="rp-filter-q" class="rp-input" type="search" placeholder="Search by report # or officer…" />
+      <div class="rp-toolbar-spacer"></div>
+      <button id="rp-refresh" class="rp-btn rp-btn-outline"><i class="fa-solid fa-rotate"></i> Refresh</button>
+    </div>
+
+    <div id="rp-list" class="rp-list"></div>
+
+    <div id="rp-pagination" class="rp-pagination"></div>
+  </div>
+
+  <!-- Template picker — command palette modal -->
+  <div id="rp-cmd" class="rp-cmd-backdrop" role="dialog" aria-modal="true" aria-label="Pick a report template">
+    <div class="rp-cmd-panel" role="document">
+      <div class="rp-cmd-search-wrap" id="rp-cmd-search-wrap">
+        <i class="fa-solid fa-magnifying-glass rp-cmd-search-icon"></i>
+        <input id="rp-cmd-input" class="rp-cmd-search" type="text" autocomplete="off" spellcheck="false"
+               placeholder="Search forms by name or description…" aria-label="Search templates" />
+        <button id="rp-cmd-clear" class="rp-cmd-search-clear" type="button" aria-label="Clear search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="rp-cmd-results" class="rp-cmd-results" role="listbox" aria-label="Templates"></div>
+      <% if (typeof canManageForms !== 'undefined' && canManageForms) { %>
+      <a id="rp-cmd-create" class="rp-cmd-create" href="/community/<%= communityIdEncoded %>/forms">
+        <span class="rp-cmd-create-icon"><i class="fa-solid fa-plus"></i></span>
+        <span>Create a new form</span>
+        <span class="rp-cmd-create-sub">Forms admin →</span>
+      </a>
+      <% } %>
+      <div class="rp-cmd-footer">
+        <div class="rp-cmd-footer-count" id="rp-cmd-count"></div>
+        <div class="rp-cmd-hints">
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">↑</span><span class="rp-cmd-kbd">↓</span> navigate</span>
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">↵</span> open</span>
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">esc</span> close</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var apiUrl = <%- JSON.stringify(typeof apiUrl !== 'undefined' ? apiUrl : '') %>;
+      var communityId = <%- JSON.stringify(typeof communityId !== 'undefined' ? communityId : '') %>;
+      var communityIdEncoded = <%- JSON.stringify(typeof communityIdEncoded !== 'undefined' ? communityIdEncoded : '') %>;
+      var token = <%- JSON.stringify(typeof apiToken !== 'undefined' ? apiToken : '') %>;
+
+      var state = { page: 0, limit: 20, templateSlug: '', status: '', q: '', total: 0 };
+      var templates = [];
+
+      function authHeaders() {
+        return token ? { 'Authorization': 'Bearer ' + token } : {};
+      }
+
+      function fmtDate(iso) {
+        if (!iso) return '';
+        try {
+          var d = new Date(iso);
+          if (isNaN(d.getTime())) return '';
+          return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } catch (e) { return ''; }
+      }
+
+      function loadTemplates() {
+        if (!communityId) return Promise.resolve([]);
+        return fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId), { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+          .then(function (j) {
+            templates = ((j && j.data) || []).filter(function (t) { return !t.isArchived && !t.isHidden; });
+            var sel = document.getElementById('rp-filter-template');
+            templates.forEach(function (t) {
+              var opt = document.createElement('option');
+              opt.value = t.slug; opt.textContent = t.name;
+              sel.appendChild(opt);
+            });
+            return templates;
+          })
+          .catch(function () { return []; });
+      }
+
+      // ============================================================
+      // Template picker — command palette
+      // ============================================================
+      var cmd = {
+        backdrop: null, input: null, results: null, count: null, searchWrap: null, clearBtn: null,
+        query: '', activeIdx: 0, flat: [], renderCache: null,
+      };
+
+      function buildCmdElements() {
+        cmd.backdrop = document.getElementById('rp-cmd');
+        cmd.input = document.getElementById('rp-cmd-input');
+        cmd.results = document.getElementById('rp-cmd-results');
+        cmd.count = document.getElementById('rp-cmd-count');
+        cmd.searchWrap = document.getElementById('rp-cmd-search-wrap');
+        cmd.clearBtn = document.getElementById('rp-cmd-clear');
+      }
+
+      function openCmd() {
+        if (!cmd.backdrop) buildCmdElements();
+        cmd.query = '';
+        cmd.input.value = '';
+        cmd.searchWrap.classList.remove('has-value');
+        cmd.activeIdx = 0;
+        renderCmd();
+        cmd.backdrop.classList.add('open');
+        // Focus input after the entrance transition has begun.
+        setTimeout(function () { cmd.input.focus(); }, 30);
+      }
+
+      function closeCmd() {
+        if (!cmd.backdrop) return;
+        cmd.backdrop.classList.remove('open');
+      }
+
+      function navigateToTemplate(slug) {
+        var qs = communityIdEncoded ? '&c=' + communityIdEncoded : '';
+        window.location.href = '/reports/new?slug=' + encodeURIComponent(slug) + qs;
+      }
+
+      // Case-insensitive substring scoring. Name match outranks description match;
+      // earlier match position outranks later. Falls back to alphabetical name order.
+      function scoreTemplate(t, q) {
+        if (!q) return 0;
+        var name = String(t.name || '').toLowerCase();
+        var desc = String(t.description || '').toLowerCase();
+        var ni = name.indexOf(q);
+        if (ni !== -1) return 1000 - ni;
+        var di = desc.indexOf(q);
+        if (di !== -1) return 500 - di;
+        return -1;
+      }
+
+      function filteredTemplates() {
+        var q = cmd.query.trim().toLowerCase();
+        if (!q) {
+          var copy = templates.slice();
+          copy.sort(function (a, b) {
+            // Defaults first, then alphabetical.
+            if (!!a.isDefault !== !!b.isDefault) return a.isDefault ? -1 : 1;
+            return (a.name || '').localeCompare(b.name || '');
+          });
+          return copy;
+        }
+        var scored = [];
+        templates.forEach(function (t) {
+          var s = scoreTemplate(t, q);
+          if (s >= 0) scored.push({ t: t, s: s });
+        });
+        scored.sort(function (a, b) {
+          if (b.s !== a.s) return b.s - a.s;
+          return (a.t.name || '').localeCompare(b.t.name || '');
+        });
+        return scored.map(function (x) { return x.t; });
+      }
+
+      // Wraps every case-insensitive occurrence of `q` in <mark>. Escapes safely.
+      function highlightMatch(text, q) {
+        var src = String(text == null ? '' : text);
+        if (!q) return escapeHTML(src);
+        var lower = src.toLowerCase();
+        var qLower = q.toLowerCase();
+        var out = '';
+        var i = 0;
+        while (i < src.length) {
+          var idx = lower.indexOf(qLower, i);
+          if (idx === -1) { out += escapeHTML(src.slice(i)); break; }
+          out += escapeHTML(src.slice(i, idx));
+          out += '<mark>' + escapeHTML(src.slice(idx, idx + q.length)) + '</mark>';
+          i = idx + q.length;
+        }
+        return out;
+      }
+
+      function renderCmd() {
+        var q = cmd.query.trim();
+        var list = filteredTemplates();
+        cmd.flat = list;
+
+        // Empty state when the community has zero templates available at all.
+        if (templates.length === 0) {
+          cmd.results.innerHTML =
+            '<div class="rp-cmd-empty">' +
+              '<div class="rp-cmd-empty-icon"><i class="fa-regular fa-folder-open"></i></div>' +
+              '<div class="rp-cmd-empty-title">No forms enabled yet</div>' +
+              '<div class="rp-cmd-empty-sub">' +
+                'This community has no defaults visible and no custom forms created. ' +
+                'Open <a href="/community/' + encodeURIComponent(communityIdEncoded) + '/forms">Forms admin</a> to create or restore one.' +
+              '</div>' +
+            '</div>';
+          cmd.count.innerHTML = '';
+          return;
+        }
+
+        // Empty state when search filtered everything out.
+        if (list.length === 0) {
+          cmd.results.innerHTML =
+            '<div class="rp-cmd-empty">' +
+              '<div class="rp-cmd-empty-icon"><i class="fa-regular fa-circle-question"></i></div>' +
+              '<div class="rp-cmd-empty-title">No forms match "' + escapeHTML(q) + '"</div>' +
+              '<div class="rp-cmd-empty-sub">' +
+                'Try a different search, or <a href="/community/' + encodeURIComponent(communityIdEncoded) + '/forms">create a new form</a>.' +
+              '</div>' +
+            '</div>';
+          cmd.count.innerHTML = '<strong>0</strong> of ' + templates.length + ' forms';
+          return;
+        }
+
+        if (cmd.activeIdx >= list.length) cmd.activeIdx = 0;
+
+        // When there's no search query, group defaults vs custom for scannability.
+        var html = '';
+        var startIdx = 0;
+        if (!q) {
+          var defaults = list.filter(function (t) { return t.isDefault; });
+          var customs = list.filter(function (t) { return !t.isDefault; });
+          if (defaults.length && customs.length) {
+            html += '<div class="rp-cmd-group-label">Built-in</div>';
+            html += defaults.map(function (t, i) { return rowHTML(t, startIdx + i, q); }).join('');
+            startIdx += defaults.length;
+            html += '<div class="rp-cmd-group-label">Custom</div>';
+            html += customs.map(function (t, i) { return rowHTML(t, startIdx + i, q); }).join('');
+          } else {
+            html += list.map(function (t, i) { return rowHTML(t, i, q); }).join('');
+          }
+        } else {
+          html += list.map(function (t, i) { return rowHTML(t, i, q); }).join('');
+        }
+
+        cmd.results.innerHTML = html;
+        cmd.count.innerHTML = '<strong>' + list.length + '</strong> of ' + templates.length + ' forms';
+
+        bindRowHandlers();
+        scrollActiveIntoView();
+      }
+
+      function rowHTML(t, idx, q) {
+        var sectionsCount = (t.sections || []).length;
+        var sectionsLabel = sectionsCount + ' section' + (sectionsCount === 1 ? '' : 's');
+        var iconName = t.isDefault ? 'fa-shield-halved' : 'fa-file-lines';
+        return '<a class="rp-cmd-row' + (idx === cmd.activeIdx ? ' active' : '') + '"' +
+                ' role="option"' +
+                ' data-idx="' + idx + '"' +
+                ' data-slug="' + escapeHTML(t.slug) + '"' +
+                ' href="#">' +
+          '<div class="rp-cmd-icon"><i class="fa-solid ' + iconName + '"></i></div>' +
+          '<div class="rp-cmd-body">' +
+            '<div class="rp-cmd-name-row">' +
+              '<span class="rp-cmd-name">' + highlightMatch(t.name, q) + '</span>' +
+              (t.isDefault ? '<span class="rp-cmd-default-pill">Default</span>' : '') +
+            '</div>' +
+            (t.description
+              ? '<div class="rp-cmd-desc">' + highlightMatch(t.description, q) + '</div>'
+              : '<div class="rp-cmd-desc">' + sectionsLabel + '</div>'
+            ) +
+          '</div>' +
+          '<div class="rp-cmd-meta">' +
+            (t.description ? '<span class="rp-cmd-meta-count rp-cmd-mono">' + sectionsCount + '</span>' : '') +
+            '<span class="rp-cmd-meta-enter rp-cmd-mono">↵</span>' +
+          '</div>' +
+        '</a>';
+      }
+
+      function bindRowHandlers() {
+        Array.from(cmd.results.querySelectorAll('.rp-cmd-row')).forEach(function (row) {
+          row.addEventListener('click', function (e) {
+            e.preventDefault();
+            navigateToTemplate(row.getAttribute('data-slug'));
+          });
+          row.addEventListener('mousemove', function () {
+            var idx = parseInt(row.getAttribute('data-idx'), 10);
+            if (idx === cmd.activeIdx) return;
+            cmd.activeIdx = idx;
+            updateActiveRow();
+          });
+        });
+      }
+
+      function updateActiveRow() {
+        Array.from(cmd.results.querySelectorAll('.rp-cmd-row')).forEach(function (row) {
+          var idx = parseInt(row.getAttribute('data-idx'), 10);
+          row.classList.toggle('active', idx === cmd.activeIdx);
+        });
+        scrollActiveIntoView();
+      }
+
+      function scrollActiveIntoView() {
+        var active = cmd.results.querySelector('.rp-cmd-row.active');
+        if (!active) return;
+        var rTop = active.offsetTop;
+        var rBottom = rTop + active.offsetHeight;
+        var sTop = cmd.results.scrollTop;
+        var sBottom = sTop + cmd.results.clientHeight;
+        if (rTop < sTop) cmd.results.scrollTop = rTop - 8;
+        else if (rBottom > sBottom) cmd.results.scrollTop = rBottom - cmd.results.clientHeight + 8;
+      }
+
+      function templateName(slug) {
+        var hit = templates.filter(function (t) { return t.slug === slug; })[0];
+        return hit ? hit.name : slug;
+      }
+
+      // ============================================================
+      // Quick-start rails — Recent (for current user) + Most used
+      // (for the whole community). Computed client-side from the most
+      // recent slice of submissions; a dedicated stats endpoint can
+      // replace this when volume justifies it.
+      // ============================================================
+      function loadRailStats() {
+        if (!communityId) return;
+        var base = apiUrl + '/api/v2/form-submissions/community/' + encodeURIComponent(communityId);
+        var userId = currentUser && currentUser.id;
+
+        var pCommunity = fetch(base + '?limit=100', { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+          .then(function (j) { return (j && j.data) || []; })
+          .catch(function () { return []; });
+
+        var pUser = userId
+          ? fetch(base + '?officerID=' + encodeURIComponent(userId) + '&limit=100', { headers: authHeaders() })
+              .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+              .then(function (j) { return (j && j.data) || []; })
+              .catch(function () { return []; })
+          : Promise.resolve([]);
+
+        Promise.all([pUser, pCommunity]).then(function (results) {
+          renderRails({ user: results[0], community: results[1] });
+        });
+      }
+
+      function bucketBySlug(submissions) {
+        var map = {};
+        submissions.forEach(function (s) {
+          var d = s.formSubmission || {};
+          var slug = d.formTemplateSlug;
+          if (!slug) return;
+          var entry = map[slug] || (map[slug] = { slug: slug, count: 0, lastUsedAt: 0 });
+          entry.count++;
+          var ts = d.createdAt ? new Date(d.createdAt).getTime() : 0;
+          if (ts > entry.lastUsedAt) entry.lastUsedAt = ts;
+        });
+        return Object.keys(map).map(function (k) { return map[k]; });
+      }
+
+      function templateBySlug(slug) {
+        return templates.filter(function (t) { return t.slug === slug; })[0];
+      }
+
+      function fmtRelative(ts) {
+        if (!ts) return '';
+        var diff = Date.now() - ts;
+        if (diff < 60 * 1000) return 'just now';
+        if (diff < 60 * 60 * 1000) return Math.round(diff / 60000) + 'm ago';
+        if (diff < 24 * 60 * 60 * 1000) return Math.round(diff / 3600000) + 'h ago';
+        if (diff < 7 * 24 * 60 * 60 * 1000) return Math.round(diff / 86400000) + 'd ago';
+        return Math.round(diff / 86400000) + 'd ago';
+      }
+
+      function railCardHTML(t, meta, animDelayMs) {
+        if (!t) return '';
+        var qs = communityIdEncoded ? '&c=' + communityIdEncoded : '';
+        var iconName = t.isDefault ? 'fa-shield-halved' : 'fa-file-lines';
+        return '<a class="rp-rail-card" href="/reports/new?slug=' + encodeURIComponent(t.slug) + qs + '"' +
+                ' style="animation-delay: ' + animDelayMs + 'ms;">' +
+          '<div class="rp-rail-card-head">' +
+            '<div class="rp-rail-card-icon"><i class="fa-solid ' + iconName + '"></i></div>' +
+            '<div class="rp-rail-card-title">' + escapeHTML(t.name) + '</div>' +
+            (t.isDefault ? '<span class="rp-rail-card-default">Default</span>' : '') +
+          '</div>' +
+          '<div class="rp-rail-card-meta">' +
+            '<span>' + escapeHTML(meta.left) + '</span>' +
+            '<span class="rp-rail-card-stat">' + escapeHTML(meta.right) + '</span>' +
+          '</div>' +
+        '</a>';
+      }
+
+      function renderRails(payload) {
+        var rails = document.getElementById('rp-rails');
+        var recentRail = document.getElementById('rp-rail-recent');
+        var popularRail = document.getElementById('rp-rail-popular');
+
+        var userBuckets = bucketBySlug(payload.user || [])
+          .sort(function (a, b) { return b.lastUsedAt - a.lastUsedAt; })
+          .slice(0, 6);
+        var commBuckets = bucketBySlug(payload.community || [])
+          .sort(function (a, b) { return b.count - a.count; })
+          .slice(0, 6);
+
+        // Render Recent
+        var rTrack = document.getElementById('rp-rail-recent-track');
+        if (userBuckets.length) {
+          rTrack.innerHTML = userBuckets.map(function (b, i) {
+            return railCardHTML(templateBySlug(b.slug), {
+              left: 'Last used',
+              right: fmtRelative(b.lastUsedAt),
+            }, i * 60);
+          }).join('');
+          recentRail.style.display = '';
+        } else {
+          recentRail.style.display = 'none';
+        }
+
+        // Render Most used
+        var pTrack = document.getElementById('rp-rail-popular-track');
+        if (commBuckets.length) {
+          pTrack.innerHTML = commBuckets.map(function (b, i) {
+            var label = b.count === 1 ? 'report' : 'reports';
+            return railCardHTML(templateBySlug(b.slug), {
+              left: 'Filed',
+              right: b.count + ' ' + label,
+            }, i * 60);
+          }).join('');
+          popularRail.style.display = '';
+        } else {
+          popularRail.style.display = 'none';
+        }
+
+        // Hide the whole container if nothing to show.
+        if (userBuckets.length || commBuckets.length) {
+          rails.classList.add('has-content');
+        } else {
+          rails.classList.remove('has-content');
+        }
+
+        // Toggle the right-edge fade hint based on overflow.
+        ['rp-rail-recent', 'rp-rail-popular'].forEach(function (id) {
+          var rail = document.getElementById(id);
+          if (rail.style.display === 'none') return;
+          var wrap = rail.querySelector('.rp-rail-track-wrap');
+          var track = rail.querySelector('.rp-rail-track');
+          var overflow = track.scrollWidth > track.clientWidth + 4;
+          wrap.classList.toggle('has-overflow', overflow);
+          track.addEventListener('scroll', function () {
+            // Hide the fade when the user has scrolled to the end.
+            var atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4;
+            wrap.classList.toggle('has-overflow', !atEnd && overflow);
+          });
+        });
+      }
+
+      function loadList() {
+        if (!communityId) return;
+        var qs = 'page=' + state.page + '&limit=' + state.limit;
+        if (state.templateSlug) qs += '&templateSlug=' + encodeURIComponent(state.templateSlug);
+        if (state.status) qs += '&status=' + encodeURIComponent(state.status);
+
+        var listEl = document.getElementById('rp-list');
+        listEl.innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="rp-empty-title">Loading…</div></div>';
+
+        fetch(apiUrl + '/api/v2/form-submissions/community/' + encodeURIComponent(communityId) + '?' + qs, { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [], totalCount: 0 }; })
+          .then(renderList)
+          .catch(function (e) {
+            listEl.innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="rp-empty-title">Failed to load reports</div><div class="rp-empty-sub">' + (e && e.message ? e.message : 'Network error') + '</div></div>';
+          });
+      }
+
+      function renderList(payload) {
+        var listEl = document.getElementById('rp-list');
+        var data = (payload && payload.data) || [];
+        state.total = (payload && payload.totalCount) || 0;
+
+        if (state.q) {
+          var q = state.q.toLowerCase();
+          data = data.filter(function (s) {
+            var d = s.formSubmission || {};
+            return (d.reportNumber || '').toLowerCase().indexOf(q) !== -1
+                || (d.signedBy && d.signedBy.username || '').toLowerCase().indexOf(q) !== -1;
+          });
+        }
+
+        if (data.length === 0) {
+          listEl.innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-regular fa-file"></i></div><div class="rp-empty-title">No reports yet</div><div class="rp-empty-sub">Create one with the New Report button above.</div></div>';
+          renderPagination();
+          return;
+        }
+
+        listEl.innerHTML = '';
+        data.forEach(function (sub) {
+          var d = sub.formSubmission || {};
+          var initials = ((d.signedBy && d.signedBy.username) || '?').slice(0, 2).toUpperCase();
+          var statusPill = d.status === 'draft'
+            ? '<span class="rp-pill rp-pill-draft"><i class="fa-regular fa-circle-dot"></i> Draft</span>'
+            : '<span class="rp-pill rp-pill-submitted"><i class="fa-solid fa-check"></i> Submitted</span>';
+          var archivedPill = d.archived
+            ? '<span class="rp-pill rp-pill-archived"><i class="fa-solid fa-box-archive"></i> Archived</span>'
+            : '';
+
+          var a = document.createElement('a');
+          a.className = 'rp-card' + (d.archived ? ' is-archived' : '');
+          a.href = '/reports/' + encodeURIComponent(sub._id) + (communityIdEncoded ? '?c=' + communityIdEncoded : '');
+          a.innerHTML =
+            '<div class="rp-avatar">' + escapeHTML(initials) + '</div>' +
+            '<div class="rp-card-info">' +
+              '<div class="rp-card-title">' + escapeHTML(d.reportNumber || '(no number)') + ' · ' + escapeHTML(templateName(d.formTemplateSlug || '')) + '</div>' +
+              '<div class="rp-card-meta">' +
+                '<span class="rp-meta-item"><i class="fa-regular fa-user"></i> ' + escapeHTML((d.signedBy && d.signedBy.username) || 'Unsigned') + '</span>' +
+                '<span class="rp-meta-item"><i class="fa-regular fa-clock"></i> ' + escapeHTML(fmtDate(d.createdAt)) + '</span>' +
+                statusPill +
+                archivedPill +
+              '</div>' +
+            '</div>' +
+            '<i class="fa-solid fa-chevron-right" style="color: var(--rp-text-dim);"></i>';
+          listEl.appendChild(a);
+        });
+
+        renderPagination();
+      }
+
+      function renderPagination() {
+        var pager = document.getElementById('rp-pagination');
+        var pages = Math.max(1, Math.ceil(state.total / state.limit));
+        if (pages <= 1) { pager.innerHTML = ''; return; }
+        pager.innerHTML = '';
+
+        var prev = document.createElement('button');
+        prev.className = 'rp-page-btn'; prev.innerHTML = '<i class="fa-solid fa-chevron-left"></i> Prev';
+        prev.disabled = state.page === 0;
+        prev.onclick = function () { state.page = Math.max(0, state.page - 1); loadList(); };
+        pager.appendChild(prev);
+
+        var info = document.createElement('span');
+        info.className = 'rp-page-info';
+        info.textContent = 'Page ' + (state.page + 1) + ' of ' + pages;
+        pager.appendChild(info);
+
+        var next = document.createElement('button');
+        next.className = 'rp-page-btn'; next.innerHTML = 'Next <i class="fa-solid fa-chevron-right"></i>';
+        next.disabled = state.page >= pages - 1;
+        next.onclick = function () { state.page += 1; loadList(); };
+        pager.appendChild(next);
+      }
+
+      function escapeHTML(s) {
+        return String(s || '').replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      // Back button: route back to the dashboard the user came from.
+      //
+      // history.back() on /reports walks straight into a loop because
+      // /reports/new and /reports/:id all sit between /reports and the
+      // dashboard. So instead we sticky-store the entry URL in
+      // sessionStorage when the user first arrives from somewhere that
+      // isn't a /reports* page.
+      var RETURN_KEY = 'reports.returnUrl';
+      (function captureReturnUrl() {
+        var ref = document.referrer || '';
+        if (!ref) return;
+        if (ref.indexOf(window.location.origin) !== 0) return;
+        var path = ref.slice(window.location.origin.length).split('?')[0].split('#')[0];
+        // Skip any internal reports/forms surface — coming from /reports/123,
+        // /reports/new, /community/X/forms, etc., should not overwrite the
+        // earlier dashboard entry. Otherwise the back button loops between
+        // sibling pages.
+        if (path.indexOf('/reports') === 0) return;
+        if (/\/forms\/?$/.test(path)) return;
+        try { sessionStorage.setItem(RETURN_KEY, ref); } catch (e) { /* private mode */ }
+      })();
+
+      // Hook the standalone-utility strip's back link to the smarter
+      // return-to-source URL when one was captured. Falls back to the
+      // strip's static href (/communities) when nothing's stored.
+      Array.from(document.querySelectorAll('.lpc-utility-back')).forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          var stored = '';
+          try { stored = sessionStorage.getItem(RETURN_KEY) || ''; } catch (e2) {}
+          if (stored) { e.preventDefault(); window.location.href = stored; }
+        });
+      });
+
+      // New Report → command palette
+      buildCmdElements();
+      var newBtn = document.getElementById('rp-new');
+      newBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        openCmd();
+      });
+
+      // Click outside the panel (i.e. on the backdrop) closes the modal.
+      cmd.backdrop.addEventListener('mousedown', function (e) {
+        if (e.target === cmd.backdrop) closeCmd();
+      });
+
+      cmd.input.addEventListener('input', function (e) {
+        cmd.query = e.target.value;
+        cmd.activeIdx = 0;
+        cmd.searchWrap.classList.toggle('has-value', cmd.query.length > 0);
+        renderCmd();
+      });
+      cmd.input.addEventListener('focus', function () { cmd.searchWrap.classList.add('focused'); });
+      cmd.input.addEventListener('blur', function () { cmd.searchWrap.classList.remove('focused'); });
+
+      cmd.clearBtn.addEventListener('click', function () {
+        cmd.input.value = '';
+        cmd.query = '';
+        cmd.activeIdx = 0;
+        cmd.searchWrap.classList.remove('has-value');
+        renderCmd();
+        cmd.input.focus();
+      });
+
+      // Keyboard nav while the modal is open. Listening on the input is enough
+      // because we focus it when opening; capture-phase document listener
+      // catches Esc when something else inside the modal has focus.
+      function onCmdKey(e) {
+        if (!cmd.backdrop.classList.contains('open')) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeCmd(); return; }
+        if (e.key === 'ArrowDown') { e.preventDefault(); if (cmd.flat.length) { cmd.activeIdx = (cmd.activeIdx + 1) % cmd.flat.length; updateActiveRow(); } return; }
+        if (e.key === 'ArrowUp') { e.preventDefault(); if (cmd.flat.length) { cmd.activeIdx = (cmd.activeIdx - 1 + cmd.flat.length) % cmd.flat.length; updateActiveRow(); } return; }
+        if (e.key === 'Home') { e.preventDefault(); cmd.activeIdx = 0; updateActiveRow(); return; }
+        if (e.key === 'End') { e.preventDefault(); cmd.activeIdx = Math.max(0, cmd.flat.length - 1); updateActiveRow(); return; }
+        if (e.key === 'Enter') {
+          if (!cmd.flat.length) return;
+          e.preventDefault();
+          var t = cmd.flat[cmd.activeIdx];
+          if (t) navigateToTemplate(t.slug);
+          return;
+        }
+      }
+      document.addEventListener('keydown', onCmdKey);
+
+      document.getElementById('rp-filter-template').addEventListener('change', function (e) { state.templateSlug = e.target.value; state.page = 0; loadList(); });
+      document.getElementById('rp-filter-status').addEventListener('change', function (e) { state.status = e.target.value; state.page = 0; loadList(); });
+      document.getElementById('rp-filter-q').addEventListener('input', function (e) { state.q = e.target.value || ''; renderListFromCache(); });
+      document.getElementById('rp-refresh').addEventListener('click', loadList);
+
+      // Lightweight client-side q filter — re-renders the last loaded page.
+      var lastPayload = null;
+      function renderListFromCache() { if (lastPayload) renderList(lastPayload); }
+      var origRender = renderList;
+      renderList = function (p) { lastPayload = p; origRender(p); };
+
+      loadTemplates().then(function () {
+        loadList();
+        loadRailStats();
+      });
+    })();
+  </script>
+</body>
+</html>

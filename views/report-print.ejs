@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Report - Lines Police CAD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: #f4f5f7; color: #1a202c; font-family: 'Outfit', -apple-system, sans-serif; }
+    body { padding: 1.5rem; }
+
+    .pp-shell {
+      max-width: 8.5in; margin: 0 auto;
+      background: #ffffff; color: #111;
+      border: 1px solid #d8dde3; border-radius: 4px;
+      padding: 0.75in;
+    }
+
+    .pp-toolbar {
+      max-width: 8.5in; margin: 0 auto 1rem; display: flex; gap: 0.5rem; justify-content: flex-end;
+    }
+    .pp-toolbar button, .pp-toolbar a {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.45rem 0.85rem; border-radius: 6px;
+      font-family: inherit; font-weight: 600; font-size: 0.85rem;
+      text-decoration: none; cursor: pointer;
+      background: #1f2937; color: #fff; border: none;
+    }
+    .pp-toolbar a { background: #fff; color: #1f2937; border: 1px solid #d8dde3; }
+    .pp-toolbar a:hover { background: #f4f5f7; }
+
+    .pp-header {
+      display: flex; align-items: center; gap: 1rem;
+      padding-bottom: 0.75rem; border-bottom: 2px solid #1a202c;
+      margin-bottom: 1rem;
+    }
+    .pp-logo {
+      width: 78px; height: 78px; flex-shrink: 0;
+      border: 1px solid #d8dde3; border-radius: 4px;
+      object-fit: cover; background: #f4f5f7;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; color: #94a3b8;
+    }
+    .pp-header-titles { flex: 1; min-width: 0; }
+    .pp-agency { font-size: 1.05rem; font-weight: 700; color: #111; line-height: 1.2; }
+    .pp-doc-title { font-size: 1.4rem; font-weight: 700; color: #111; margin-top: 0.15rem; line-height: 1.1; letter-spacing: 0.02em; text-transform: uppercase; }
+    .pp-meta { text-align: right; font-size: 0.78rem; color: #475569; line-height: 1.5; }
+    .pp-meta strong { color: #111; }
+
+    .pp-section { margin-bottom: 1rem; page-break-inside: avoid; }
+    .pp-section-title {
+      font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+      color: #475569; letter-spacing: 0.06em;
+      padding-bottom: 0.25rem; margin-bottom: 0.5rem;
+      border-bottom: 1px solid #d8dde3;
+    }
+    .pp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 1.25rem; }
+    .pp-grid-full { grid-template-columns: 1fr; }
+    .pp-kv { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.25rem 0; }
+    .pp-key { font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+    .pp-val { font-size: 0.88rem; color: #111; line-height: 1.4; min-height: 1.2em; word-wrap: break-word; }
+    .pp-val.empty { color: #cbd5e1; font-style: italic; }
+    .pp-narrative .pp-val { white-space: pre-wrap; padding: 0.5rem 0; line-height: 1.6; }
+
+    .pp-rep-row {
+      border: 1px solid #e2e8f0; border-radius: 4px;
+      padding: 0.5rem 0.75rem; margin-bottom: 0.4rem;
+      page-break-inside: avoid;
+    }
+    .pp-rep-idx {
+      display: inline-block; padding: 0.05rem 0.4rem;
+      background: #1a202c; color: #fff;
+      font-size: 0.65rem; font-weight: 700; border-radius: 2px;
+      margin-bottom: 0.3rem;
+    }
+
+    .pp-signature {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+      margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #d8dde3;
+    }
+    .pp-sig-block { font-size: 0.85rem; color: #111; }
+    .pp-sig-block .pp-key { margin-bottom: 0.5rem; }
+    .pp-sig-line { border-bottom: 1px solid #1a202c; padding: 0.4rem 0; min-height: 1.4em; }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .pp-toolbar { display: none; }
+      .pp-shell { border: none; padding: 0.5in; box-shadow: none; max-width: 100%; }
+      .pp-section { page-break-inside: avoid; }
+      .pp-header { page-break-after: avoid; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="pp-toolbar">
+    <a href="/reports/<%= submissionId %><% if (typeof communityIdEncoded !== 'undefined' && communityIdEncoded) { %>?c=<%= communityIdEncoded %><% } %>"><i class="fa-solid fa-arrow-left"></i> Back</a>
+    <button onclick="window.print()"><i class="fa-solid fa-print"></i> Print / Save as PDF</button>
+  </div>
+  <div class="pp-shell" id="pp-shell">
+    <div class="pp-header">
+      <div class="pp-logo" id="pp-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="pp-header-titles">
+        <div class="pp-agency" id="pp-agency">Loading…</div>
+        <div class="pp-doc-title" id="pp-doc-title">Report</div>
+      </div>
+      <div class="pp-meta">
+        <div><strong>Report #</strong> <span id="pp-report-num">—</span></div>
+        <div><strong>Date</strong> <span id="pp-date">—</span></div>
+        <div><strong>Status</strong> <span id="pp-status">—</span></div>
+      </div>
+    </div>
+    <div id="pp-body">Loading report…</div>
+    <div class="pp-signature">
+      <div class="pp-sig-block">
+        <div class="pp-key">Reporting Officer</div>
+        <div class="pp-sig-line" id="pp-sig-officer">&nbsp;</div>
+      </div>
+      <div class="pp-sig-block">
+        <div class="pp-key">Date Submitted</div>
+        <div class="pp-sig-line" id="pp-sig-date">&nbsp;</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var apiUrl = <%- JSON.stringify(typeof apiUrl !== 'undefined' ? apiUrl : '') %>;
+      var token = <%- JSON.stringify(typeof apiToken !== 'undefined' ? apiToken : '') %>;
+      var communityId = <%- JSON.stringify(typeof communityId !== 'undefined' ? communityId : '') %>;
+      var submissionId = <%- JSON.stringify(typeof submissionId !== 'undefined' ? submissionId : '') %>;
+      var departmentId = <%- JSON.stringify(typeof departmentId !== 'undefined' ? departmentId : '') %>;
+      var departmentName = <%- JSON.stringify(typeof departmentName !== 'undefined' ? departmentName : '') %>;
+      var departmentImage = <%- JSON.stringify(typeof departmentImage !== 'undefined' ? departmentImage : '') %>;
+      var communityName = <%- JSON.stringify(typeof communityName !== 'undefined' ? communityName : '') %>;
+      var communityImage = <%- JSON.stringify(typeof communityImage !== 'undefined' ? communityImage : '') %>;
+      var LPC_FALLBACK_LOGO = '/static/images/favicon.ico';
+
+      function authHeaders() { return token ? { 'Authorization': 'Bearer ' + token } : {}; }
+      function escapeHTML(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      function renderHeader(sub, tpl) {
+        document.getElementById('pp-agency').textContent = communityName || departmentName || (tpl && tpl.name) || 'Department';
+        document.getElementById('pp-doc-title').textContent = (tpl && tpl.name) || 'Report';
+        document.getElementById('pp-report-num').textContent = sub.reportNumber || '—';
+        document.getElementById('pp-date').textContent = sub.createdAt ? new Date(sub.createdAt).toLocaleString() : '—';
+        document.getElementById('pp-status').textContent = sub.status || '—';
+        // Logo precedence: community image → LPC fallback (favicon).
+        var logoSrc = communityImage || LPC_FALLBACK_LOGO;
+        var logo = document.getElementById('pp-logo');
+        logo.innerHTML = '<img src="' + escapeHTML(logoSrc) + '" style="width:100%; height:100%; object-fit: contain; border-radius: 4px; padding: 4px;" alt="logo" onerror="this.onerror=null;this.src=\'' + LPC_FALLBACK_LOGO + '\';" />';
+        if (sub.signedBy) {
+          document.getElementById('pp-sig-officer').textContent = sub.signedBy.username || '';
+          document.getElementById('pp-sig-date').textContent = sub.signedBy.signedAt ? new Date(sub.signedBy.signedAt).toLocaleDateString() : '';
+        }
+      }
+
+      function fmtVal(v) {
+        if (v == null || v === '') return '<span class="pp-val empty">—</span>';
+        if (typeof v === 'boolean') return '<span class="pp-val">' + (v ? 'Yes' : 'No') + '</span>';
+        if (Array.isArray(v)) return '<span class="pp-val">' + v.map(escapeHTML).join(', ') + '</span>';
+        return '<span class="pp-val">' + escapeHTML(v) + '</span>';
+      }
+
+      function renderBody(sub, tpl) {
+        var bodyEl = document.getElementById('pp-body');
+        if (!tpl || !tpl.sections) { bodyEl.textContent = 'Template not available.'; return; }
+
+        var html = '';
+        tpl.sections.forEach(function (section) {
+          var inner = '';
+          if (section.repeatable) {
+            var rows = sub.data && sub.data[section.id];
+            if (!Array.isArray(rows) || rows.length === 0) {
+              inner = '<div class="pp-val empty">No entries.</div>';
+            } else {
+              rows.forEach(function (row, idx) {
+                var rowGrid = '<div class="pp-grid">';
+                section.fields.forEach(function (f) {
+                  rowGrid += '<div class="pp-kv"><div class="pp-key">' + escapeHTML(f.label) + '</div>' + fmtVal(row[f.id]) + '</div>';
+                });
+                rowGrid += '</div>';
+                inner += '<div class="pp-rep-row"><span class="pp-rep-idx">' + (idx + 1) + '</span>' + rowGrid + '</div>';
+              });
+            }
+          } else if (section.id === 'narrative') {
+            inner = '<div class="pp-narrative">' + (section.fields || []).map(function (f) {
+              return fmtVal(sub.data && sub.data[f.id]);
+            }).join('') + '</div>';
+          } else {
+            var grid = '<div class="pp-grid">';
+            (section.fields || []).forEach(function (f) {
+              grid += '<div class="pp-kv"><div class="pp-key">' + escapeHTML(f.label) + '</div>' + fmtVal(sub.data && sub.data[f.id]) + '</div>';
+            });
+            grid += '</div>';
+            inner = grid;
+          }
+          html += '<section class="pp-section"><div class="pp-section-title">' + escapeHTML(section.title) + '</div>' + inner + '</section>';
+        });
+        bodyEl.innerHTML = html;
+      }
+
+      var REPORT_NUMBER_FIELD_IDS = ['incidentNumber', 'reportNumber', 'caseNumber'];
+
+      Promise.all([
+        fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(submissionId), { headers: authHeaders() }).then(function (r) { return r.ok ? r.json() : null; }),
+        fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId) + '?includeHidden=true&includeArchived=true', { headers: authHeaders() }).then(function (r) { return r.ok ? r.json() : { data: [] }; })
+      ]).then(function (results) {
+        var subRaw = results[0];
+        if (!subRaw || !subRaw.formSubmission) {
+          document.getElementById('pp-body').textContent = 'Report not found.';
+          return;
+        }
+        var sub = Object.assign({ _id: subRaw._id }, subRaw.formSubmission);
+        var templates = (results[1] && results[1].data) || [];
+        var tpl = templates.filter(function (t) { return t.slug === sub.formTemplateSlug; })[0];
+        // Mirror the server-stamped report number into the conventional
+        // form field if the template has one and it's empty.
+        if (sub.reportNumber && tpl && tpl.sections) {
+          if (!sub.data) sub.data = {};
+          tpl.sections.forEach(function (s) {
+            if (s.repeatable) return;
+            (s.fields || []).forEach(function (f) {
+              if (REPORT_NUMBER_FIELD_IDS.indexOf(f.id) === -1) return;
+              if (sub.data[f.id] == null || sub.data[f.id] === '') sub.data[f.id] = sub.reportNumber;
+            });
+          });
+        }
+        renderHeader(sub, tpl);
+        renderBody(sub, tpl);
+      });
+    })();
+  </script>
+</body>
+</html>

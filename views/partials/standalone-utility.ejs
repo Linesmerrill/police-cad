@@ -1,0 +1,181 @@
+<%#
+  standalone-utility.ejs — Slim 36px utility strip for standalone pages
+  that don't include the global app header/footer (Reports, Files, etc.).
+
+  Provides a consistent micro-shell:
+    [← Back] · [LPC] / [Community] / [Page label]                 [user avatar]
+
+  The back link sits in the top-LEFT to match Web/OS muscle memory.
+  Right side stays clean for identity (avatar) only.
+
+  Locals:
+    user             — req.user (passport user)  (REQUIRED)
+    backHref         — string URL for the breadcrumb (default '/communities')
+    backLabel        — short label, e.g. 'Back to Reports' (default 'Back')
+    pageLabel        — short label for the current page (e.g. 'Reports')
+    communityName    — community display name (optional, falls back to user's community)
+
+  Markup convention: include this partial as the FIRST element inside
+  <body>. Pages must add `body { padding-top: 36px; }` (or wrap content
+  in a shell whose first child clears 36px) so the fixed strip doesn't
+  cover the page content.
+%>
+<style>
+  .lpc-utility-strip {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    height: 36px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 0.85rem;
+    background: rgba(8, 9, 12, 0.85);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-family: 'Outfit', -apple-system, sans-serif;
+    font-size: 0.78rem;
+    color: rgba(226, 232, 240, 0.78);
+  }
+  .lpc-utility-strip a { color: inherit; text-decoration: none; }
+  .lpc-utility-left,
+  .lpc-utility-right { display: flex; align-items: center; gap: 0.55rem; min-width: 0; }
+  .lpc-utility-left { flex: 1; min-width: 0; }
+  .lpc-utility-back {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    color: rgba(56, 189, 248, 0.92);
+    transition: background 120ms ease, color 120ms ease;
+    flex-shrink: 0;
+  }
+  .lpc-utility-back:hover {
+    background: rgba(56, 189, 248, 0.08);
+    color: #38bdf8;
+  }
+  .lpc-utility-back i { font-size: 0.72rem; }
+  .lpc-utility-divider { color: rgba(148, 163, 184, 0.4); margin: 0 0.15rem; flex-shrink: 0; }
+  .lpc-utility-brand {
+    display: inline-flex; align-items: center;
+    flex-shrink: 0;
+  }
+  .lpc-utility-brand img {
+    width: 22px; height: 22px;
+    display: block;
+    border-radius: 5px;
+  }
+  .lpc-utility-community {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 200px;
+    color: rgba(148, 163, 184, 0.85);
+  }
+  .lpc-utility-page {
+    color: rgba(226, 232, 240, 0.95);
+    font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .lpc-utility-avatar {
+    width: 26px; height: 26px;
+    display: grid; place-items: center;
+    background: rgba(56, 189, 248, 0.12);
+    color: #38bdf8;
+    border-radius: 50%; font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.02em;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1.5px solid rgba(156, 163, 175, 0.45);
+    transition: filter 180ms ease;
+  }
+  .lpc-utility-avatar:hover { filter: brightness(1.15); }
+  .lpc-utility-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* Subscription-tier ring — mirrors the .navbar-profile-pic treatment
+     on the /communities page so the avatar's affordance reads the same
+     everywhere. Borders are slimmed to 1.5px so the photo still reads
+     as a face at this size. */
+  .lpc-utility-avatar.tier-premium-plus {
+    border-color: rgba(251, 191, 36, 0.7);
+    animation: lpcUtilGlowPremiumPlus 3s ease-in-out infinite;
+  }
+  .lpc-utility-avatar.tier-premium {
+    border-color: rgba(168, 85, 247, 0.7);
+    animation: lpcUtilGlowPremium 3s ease-in-out infinite;
+  }
+  .lpc-utility-avatar.tier-basic {
+    border-color: rgba(59, 130, 246, 0.7);
+    animation: lpcUtilGlowBasic 3s ease-in-out infinite;
+  }
+  .lpc-utility-avatar.tier-free {
+    border-color: rgba(156, 163, 175, 0.5);
+    animation: lpcUtilGlowFree 3s ease-in-out infinite;
+  }
+  @keyframes lpcUtilGlowPremiumPlus {
+    0%, 100% { box-shadow: 0 0 2px rgba(251, 191, 36, 0.45), 0 0 4px rgba(251, 191, 36, 0.22); }
+    50%      { box-shadow: 0 0 4px rgba(251, 191, 36, 0.75), 0 0 8px rgba(251, 191, 36, 0.38); }
+  }
+  @keyframes lpcUtilGlowPremium {
+    0%, 100% { box-shadow: 0 0 2px rgba(168, 85, 247, 0.45), 0 0 4px rgba(168, 85, 247, 0.22); }
+    50%      { box-shadow: 0 0 4px rgba(168, 85, 247, 0.75), 0 0 8px rgba(168, 85, 247, 0.38); }
+  }
+  @keyframes lpcUtilGlowBasic {
+    0%, 100% { box-shadow: 0 0 2px rgba(59, 130, 246, 0.45), 0 0 4px rgba(59, 130, 246, 0.22); }
+    50%      { box-shadow: 0 0 4px rgba(59, 130, 246, 0.75), 0 0 8px rgba(59, 130, 246, 0.38); }
+  }
+  @keyframes lpcUtilGlowFree {
+    0%, 100% { box-shadow: 0 0 2px rgba(156, 163, 175, 0.32), 0 0 4px rgba(156, 163, 175, 0.16); }
+    50%      { box-shadow: 0 0 3px rgba(156, 163, 175, 0.55), 0 0 6px rgba(156, 163, 175, 0.28); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lpc-utility-avatar { animation: none !important; }
+  }
+  @media (max-width: 640px) {
+    .lpc-utility-community,
+    .lpc-utility-divider,
+    .lpc-utility-page { display: none; }
+  }
+</style>
+<%
+  var _utilUser = (typeof user !== 'undefined' && user) ? user : null;
+  var _utilInner = (_utilUser && _utilUser.user) ? _utilUser.user : null;
+  var _utilUsername = (_utilInner && _utilInner.username) ? _utilInner.username : '';
+  var _utilInitials = _utilUsername ? _utilUsername.slice(0, 2).toUpperCase() : '?';
+  // Match the field used on /communities (profilePicture). Fall back to
+  // older field names defensively in case some user docs lag.
+  var _utilAvatarUrl = (_utilInner && (_utilInner.profilePicture || _utilInner.profileImage || _utilInner.imageLink)) || '';
+  // Subscription tier — same lookup pattern as /communities
+  // (user._doc.user.subscription, with user.user.subscription as a fallback).
+  var _utilSub = (_utilUser && _utilUser._doc && _utilUser._doc.user && _utilUser._doc.user.subscription)
+    || (_utilInner && _utilInner.subscription)
+    || null;
+  var _utilSubPlan = (_utilSub && _utilSub.active && _utilSub.plan) ? _utilSub.plan : 'free';
+  var _utilTierClass = _utilSubPlan === 'premium_plus' ? 'tier-premium-plus'
+                     : _utilSubPlan === 'premium'      ? 'tier-premium'
+                     : _utilSubPlan === 'basic'        ? 'tier-basic'
+                     : 'tier-free';
+  var _utilCommunity = (typeof communityName !== 'undefined' && communityName)
+    ? communityName
+    : ((_utilInner && _utilInner.lastAccessedCommunity && _utilInner.lastAccessedCommunity.name) || '');
+  var _utilBackHref = (typeof backHref !== 'undefined' && backHref) ? backHref : '/communities';
+  var _utilBackLabel = (typeof backLabel !== 'undefined' && backLabel) ? backLabel : 'Back';
+  var _utilPageLabel = (typeof pageLabel !== 'undefined' && pageLabel) ? pageLabel : '';
+%>
+<header class="lpc-utility-strip" role="banner">
+  <div class="lpc-utility-left">
+    <a href="<%= _utilBackHref %>" class="lpc-utility-back">
+      <i class="fa-solid fa-arrow-left"></i><span><%= _utilBackLabel %></span>
+    </a>
+    <span class="lpc-utility-divider">/</span>
+    <a href="/communities" class="lpc-utility-brand" aria-label="Lines Police CAD home">
+      <img src="/static/images/lines-police-cad-discord-logo-2024-github-profile.png" alt="Lines Police CAD" />
+    </a>
+    <% if (_utilCommunity) { %>
+      <span class="lpc-utility-divider">/</span>
+      <span class="lpc-utility-community" title="<%= _utilCommunity %>"><%= _utilCommunity %></span>
+    <% } %>
+    <% if (_utilPageLabel) { %>
+      <span class="lpc-utility-divider">/</span>
+      <span class="lpc-utility-page"><%= _utilPageLabel %></span>
+    <% } %>
+  </div>
+  <div class="lpc-utility-right">
+    <a href="/profile" class="lpc-utility-avatar <%= _utilTierClass %>" title="<%= _utilUsername || 'Account' %>">
+      <% if (_utilAvatarUrl) { %><img src="<%= _utilAvatarUrl %>" alt="" /><% } else { %><%= _utilInitials %><% } %>
+    </a>
+  </div>
+</header>

@@ -1,0 +1,3346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= typeof submissionId !== 'undefined' && submissionId ? 'View Report' : 'New Report' %> - Lines Police CAD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --rp-bg: #08090c;
+      --rp-surface: rgba(255,255,255,0.03);
+      --rp-glass: rgba(255,255,255,0.04);
+      --rp-glass-border: rgba(255,255,255,0.06);
+      --rp-glass-hover: rgba(255,255,255,0.07);
+      --rp-text: #e2e8f0;
+      --rp-text-muted: #64748b;
+      --rp-text-dim: #475569;
+      --rp-accent: #38bdf8;
+      --rp-accent-glow: rgba(56,189,248,0.15);
+      --rp-green: #22c55e;
+      --rp-amber: #f59e0b;
+      --rp-red: #ef4444;
+      --rp-radius: 12px;
+      --rp-radius-sm: 8px;
+    }
+    html { font-size: 16px; }
+    body {
+      background: var(--rp-bg); color: var(--rp-text);
+      font-family: 'Outfit', -apple-system, sans-serif;
+      min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased;
+      padding-top: 36px;     /* clears the fixed standalone-utility strip */
+      padding-bottom: 88px;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 700px 500px at 10% 15%, rgba(56,189,248,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 90% 85%, rgba(245,158,11,0.04) 0%, transparent 70%);
+    }
+    .rp-shell { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem 2rem; display: grid; grid-template-columns: 220px 1fr; gap: 1.25rem; }
+    @media (max-width: 880px) { .rp-shell { grid-template-columns: 1fr; } .rp-side { display: none; } }
+
+    .rp-header {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 0 1rem;
+      border-bottom: 1px solid var(--rp-glass-border);
+    }
+    .rp-header-left { display: flex; align-items: center; gap: 1rem; }
+    .rp-header-icon {
+      width: 44px; height: 44px;
+      background: var(--rp-accent-glow);
+      border: 1px solid rgba(56,189,248,0.2);
+      border-radius: var(--rp-radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; color: var(--rp-accent);
+    }
+    .rp-title { font-weight: 700; font-size: 1.4rem; color: #fff; }
+    .rp-subtitle { font-size: 0.85rem; color: var(--rp-text-muted); margin-top: 0.1rem; }
+    .rp-back-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      color: var(--rp-text-muted); font-size: 0.85rem; text-decoration: none;
+      padding: 0.4rem 0.75rem; border-radius: var(--rp-radius-sm);
+      transition: all 0.2s ease; border: 1px solid transparent;
+    }
+    .rp-back-btn:hover { color: #fff; background: var(--rp-surface); border-color: var(--rp-glass-border); }
+
+    .rp-side {
+      position: sticky; top: 1rem; align-self: start;
+      max-height: calc(100vh - 2rem); overflow-y: auto;
+      padding: 0.5rem;
+    }
+    .rp-side-title {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      color: var(--rp-text-dim); letter-spacing: 0.05em;
+      padding: 0.5rem 0.75rem;
+    }
+    .rp-side-link {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.75rem; border-radius: var(--rp-radius-sm);
+      color: var(--rp-text-muted); font-size: 0.85rem; text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .rp-side-link:hover { background: var(--rp-surface); color: #fff; }
+    .rp-side-link.active { background: var(--rp-accent-glow); color: var(--rp-accent); }
+    .rp-side-link .rp-pill {
+      margin-left: auto; padding: 0.05rem 0.4rem; font-size: 0.65rem;
+      background: var(--rp-glass); color: var(--rp-text-dim);
+      border: 1px solid var(--rp-glass-border); border-radius: 999px;
+    }
+    .rp-side-link.has-required .rp-pill { color: var(--rp-amber); border-color: rgba(245,158,11,0.3); }
+
+    .rp-main { min-width: 0; }
+
+    .rp-callout {
+      background: var(--rp-glass); border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius); padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .rp-callout-title { font-weight: 600; color: #fff; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+    .rp-callout-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .rp-callout select, .rp-callout button { font-family: inherit; font-size: 0.85rem; }
+
+    .rp-section {
+      background: var(--rp-surface); border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius); margin-bottom: 0.875rem; overflow: hidden;
+    }
+    .rp-section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.85rem 1rem; cursor: pointer; user-select: none;
+      border-bottom: 1px solid transparent;
+    }
+    .rp-section.open .rp-section-header { border-bottom-color: var(--rp-glass-border); }
+    .rp-section-title { font-weight: 600; color: #fff; display: flex; align-items: center; gap: 0.5rem; }
+    .rp-section-chev { color: var(--rp-text-dim); transition: transform 0.2s ease; }
+    .rp-section.open .rp-section-chev { transform: rotate(90deg); }
+    .rp-section-body { padding: 1rem; display: none; }
+    .rp-section.open .rp-section-body { display: block; }
+
+    .rp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; }
+    .rp-field { display: flex; flex-direction: column; gap: 0.35rem; }
+    .rp-field-full { grid-column: 1 / -1; }
+    .rp-label { font-size: 0.78rem; color: var(--rp-text-muted); font-weight: 500; display: flex; align-items: center; gap: 0.3rem; }
+    .rp-label .req { color: var(--rp-red); }
+    .rp-help { font-size: 0.72rem; color: var(--rp-text-dim); margin-top: 0.15rem; }
+    .rp-input, .rp-textarea, .rp-select {
+      background: var(--rp-glass); color: var(--rp-text);
+      border: 1px solid var(--rp-glass-border); border-radius: var(--rp-radius-sm);
+      padding: 0.5rem 0.65rem; font-size: 0.88rem; font-family: inherit; width: 100%;
+    }
+    .rp-textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
+    .rp-input:focus, .rp-textarea:focus, .rp-select:focus { outline: none; border-color: var(--rp-accent); }
+    .rp-checkbox { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--rp-text); font-size: 0.88rem; cursor: pointer; }
+    .rp-checkbox input { width: 16px; height: 16px; accent-color: var(--rp-accent); }
+
+    .rp-imported-pill {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      padding: 0.1rem 0.45rem; border-radius: 999px;
+      font-size: 0.65rem; font-weight: 600;
+      background: rgba(56,189,248,0.1); color: var(--rp-accent);
+      border: 1px solid rgba(56,189,248,0.2);
+    }
+    .rp-imported-pill button {
+      background: none; border: none; padding: 0; margin: 0; cursor: pointer;
+      color: inherit; font-size: 0.7rem;
+    }
+
+    .rp-rep-row {
+      background: var(--rp-glass); border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius-sm); padding: 0.75rem; margin-bottom: 0.6rem;
+      position: relative;
+    }
+    .rp-rep-rm {
+      position: absolute; top: 0.5rem; right: 0.5rem;
+      background: transparent; border: none; cursor: pointer;
+      color: var(--rp-text-dim); font-size: 0.85rem; padding: 0.25rem 0.5rem;
+      border-radius: var(--rp-radius-sm);
+    }
+    .rp-rep-rm:hover { color: var(--rp-red); background: rgba(239,68,68,0.08); }
+    .rp-rep-add {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 0.75rem; border-radius: var(--rp-radius-sm);
+      background: var(--rp-glass); border: 1px dashed var(--rp-glass-border);
+      color: var(--rp-text-muted); font-family: inherit; font-size: 0.8rem;
+      cursor: pointer; transition: all 0.15s ease;
+    }
+    .rp-rep-add:hover { color: var(--rp-accent); border-color: rgba(56,189,248,0.3); background: rgba(56,189,248,0.05); }
+
+    .rp-savebar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
+      background: var(--rp-bg);
+      border-top: 1px solid var(--rp-glass-border);
+      padding: 0.75rem 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .rp-savebar-spacer { flex: 1; }
+    .rp-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.55rem 1rem; border-radius: var(--rp-radius-sm);
+      font-family: inherit; font-weight: 600; font-size: 0.85rem;
+      border: none; cursor: pointer; transition: all 0.2s ease;
+      text-decoration: none; white-space: nowrap;
+    }
+    .rp-btn-primary { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: #fff; }
+    .rp-btn-primary:hover:not(:disabled) { box-shadow: 0 4px 12px rgba(14,165,233,0.3); transform: translateY(-1px); }
+    .rp-btn-outline { background: transparent; color: var(--rp-text); border: 1px solid var(--rp-glass-border); }
+    .rp-btn-outline:hover:not(:disabled) { background: var(--rp-surface); }
+    .rp-btn-ghost { background: transparent; color: var(--rp-text-muted); border: 1px solid transparent; }
+    .rp-btn-ghost:hover { color: #fff; background: var(--rp-surface); }
+    .rp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .rp-toast {
+      position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%);
+      background: var(--rp-glass); border: 1px solid var(--rp-glass-border);
+      padding: 0.6rem 1rem; border-radius: var(--rp-radius);
+      color: var(--rp-text); font-size: 0.85rem; z-index: 20;
+      backdrop-filter: blur(8px);
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .rp-toast.show { opacity: 1; }
+    .rp-toast.error { border-color: rgba(239,68,68,0.3); color: var(--rp-red); }
+    .rp-toast.success { border-color: rgba(34,197,94,0.3); color: var(--rp-green); }
+
+    .rp-loading {
+      grid-column: 1 / -1; padding: 4rem 1rem; text-align: center; color: var(--rp-text-muted);
+    }
+
+    /* ============================================================
+       Source picker — searchable command palette (tabbed: calls,
+       citations, arrest reports), entity picker (civilians, vehicles,
+       firearms) for per-row bindings.
+       ============================================================ */
+    .rp-cmd-tabs {
+      display: flex; align-items: center; gap: 0.25rem;
+      padding: 0.5rem 0.6rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .rp-cmd-tab {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.45rem 0.7rem;
+      font-family: inherit; font-size: 0.78rem; font-weight: 500;
+      background: transparent; border: 0; border-radius: 8px 8px 0 0;
+      color: var(--rp-text-muted); cursor: pointer;
+      position: relative;
+      transition: color 140ms ease;
+    }
+    .rp-cmd-tab:hover { color: var(--rp-text); }
+    .rp-cmd-tab.active { color: var(--rp-text); }
+    .rp-cmd-tab.active::after {
+      content: ""; position: absolute; left: 0.5rem; right: 0.5rem; bottom: -1px;
+      height: 2px; background: var(--rp-accent); border-radius: 2px 2px 0 0;
+    }
+    .rp-cmd-tab-count {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 16px; padding: 0 5px;
+      font-size: 0.65rem; font-weight: 600;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 999px; color: var(--rp-text-dim);
+    }
+    .rp-cmd-tab.active .rp-cmd-tab-count {
+      background: rgba(56,189,248,0.12);
+      border-color: rgba(56,189,248,0.25);
+      color: var(--rp-accent);
+    }
+    .rp-cmd-mono {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-feature-settings: "tnum" 1;
+    }
+    .rp-cmd-backdrop {
+      position: fixed; inset: 0; z-index: 50;
+      background: rgba(2, 4, 8, 0.55);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: flex; align-items: flex-start; justify-content: center;
+      padding-top: 12vh;
+      opacity: 0; pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .rp-cmd-backdrop.open { opacity: 1; pointer-events: auto; }
+    .rp-cmd-panel {
+      position: relative;
+      width: min(620px, calc(100vw - 2rem));
+      max-height: min(620px, 70vh);
+      display: flex; flex-direction: column;
+      background: linear-gradient(180deg, rgba(20, 22, 28, 0.96) 0%, rgba(10, 12, 18, 0.96) 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      box-shadow: 0 24px 60px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(56,189,248,0.04);
+      overflow: hidden;
+      transform: translateY(8px) scale(0.97);
+      opacity: 0;
+      transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), opacity 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rp-cmd-backdrop.open .rp-cmd-panel { transform: translateY(0) scale(1); opacity: 1; }
+    .rp-cmd-search-wrap {
+      position: relative;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .rp-cmd-search-icon {
+      position: absolute; left: 1.05rem; top: 50%; transform: translateY(-50%);
+      color: var(--rp-text-dim); font-size: 0.95rem; pointer-events: none;
+      transition: color 160ms ease;
+    }
+    .rp-cmd-search-wrap.focused .rp-cmd-search-icon { color: var(--rp-accent); }
+    .rp-cmd-search {
+      width: 100%; background: transparent; border: 0; outline: 0;
+      color: var(--rp-text); font-family: inherit; font-size: 1rem;
+      padding: 1.05rem 1rem 1.05rem 2.85rem; letter-spacing: -0.005em;
+    }
+    .rp-cmd-search::placeholder { color: var(--rp-text-dim); }
+    .rp-cmd-search-clear {
+      position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%);
+      width: 24px; height: 24px; border-radius: 6px;
+      background: transparent; border: 0; cursor: pointer;
+      color: var(--rp-text-dim); font-size: 0.75rem;
+      display: none; align-items: center; justify-content: center;
+    }
+    .rp-cmd-search-clear:hover { background: rgba(255,255,255,0.06); color: var(--rp-text); }
+    .rp-cmd-search-wrap.has-value .rp-cmd-search-clear { display: flex; }
+
+    .rp-cmd-results {
+      flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+      padding: 0.4rem 0.4rem 0.5rem;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+    }
+    .rp-cmd-results::-webkit-scrollbar { width: 8px; }
+    .rp-cmd-results::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    .rp-cmd-results::-webkit-scrollbar-track { background: transparent; }
+
+    .rp-cmd-row {
+      position: relative;
+      display: grid; grid-template-columns: 36px 1fr auto;
+      gap: 0.75rem; align-items: center;
+      padding: 0.65rem 0.85rem;
+      border-radius: 10px; cursor: pointer;
+      color: var(--rp-text); text-decoration: none;
+      transition: background-color 120ms ease;
+    }
+    .rp-cmd-row::before {
+      content: ""; position: absolute; left: 0; top: 50%;
+      width: 2px; height: 0;
+      background: var(--rp-accent); border-radius: 0 2px 2px 0;
+      transform: translateY(-50%);
+      transition: height 160ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rp-cmd-row:hover { background: rgba(255,255,255,0.035); }
+    .rp-cmd-row.active { background: rgba(56, 189, 248, 0.08); }
+    .rp-cmd-row.active::before { height: 70%; }
+
+    .rp-cmd-icon {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--rp-text-secondary); font-size: 0.95rem;
+    }
+    .rp-cmd-row.active .rp-cmd-icon {
+      background: rgba(56,189,248,0.12);
+      border-color: rgba(56,189,248,0.3); color: var(--rp-accent);
+    }
+    .rp-cmd-body { min-width: 0; }
+    .rp-cmd-name-row {
+      display: flex; align-items: center; gap: 0.45rem;
+      font-size: 0.92rem; font-weight: 500; color: var(--rp-text);
+      letter-spacing: -0.005em; line-height: 1.2;
+    }
+    .rp-cmd-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .rp-cmd-name mark {
+      background: rgba(56,189,248,0.18); color: var(--rp-text);
+      padding: 0 1px; border-radius: 2px; font-weight: 600;
+    }
+    .rp-cmd-status-dot {
+      width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0;
+      box-shadow: 0 0 0 2px rgba(34,197,94,0.18);
+    }
+    .rp-cmd-status-dot.active { background: var(--rp-green); }
+    .rp-cmd-status-dot.cleared { background: var(--rp-text-dim); box-shadow: 0 0 0 2px rgba(100,116,139,0.18); }
+
+    .rp-cmd-desc {
+      margin-top: 0.18rem; font-size: 0.78rem; color: var(--rp-text-muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;
+    }
+    .rp-cmd-meta {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.7rem; color: var(--rp-text-dim); flex-shrink: 0;
+    }
+    .rp-cmd-meta-time {
+      padding: 0.1rem 0.45rem; border-radius: 4px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      letter-spacing: 0.04em; text-transform: uppercase;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .rp-cmd-meta-enter {
+      width: 22px; height: 22px; border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(56,189,248,0.12); color: var(--rp-accent);
+      border: 1px solid rgba(56,189,248,0.22);
+      font-size: 0.7rem; font-weight: 600;
+      opacity: 0; transform: scale(0.85);
+      transition: opacity 140ms ease, transform 140ms ease;
+    }
+    .rp-cmd-row.active .rp-cmd-meta-enter { opacity: 1; transform: scale(1); }
+
+    .rp-cmd-empty {
+      padding: 2.5rem 1.25rem 2rem; text-align: center; color: var(--rp-text-muted);
+    }
+    .rp-cmd-empty-icon {
+      width: 44px; height: 44px; margin: 0 auto 0.85rem;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--rp-text-dim); font-size: 1.05rem;
+    }
+    .rp-cmd-empty-title { color: var(--rp-text); font-weight: 600; font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .rp-cmd-empty-sub { font-size: 0.82rem; line-height: 1.5; }
+
+    .rp-cmd-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.55rem 0.85rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.18);
+      font-size: 0.7rem; color: var(--rp-text-dim);
+    }
+    .rp-cmd-footer-count strong { color: var(--rp-text-secondary); font-weight: 500; }
+    .rp-cmd-hints { display: flex; gap: 0.85rem; }
+    .rp-cmd-hint { display: inline-flex; align-items: center; gap: 0.3rem; }
+    .rp-cmd-kbd {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 18px; padding: 0 4px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-bottom-color: rgba(255,255,255,0.14);
+      color: var(--rp-text-secondary); font-size: 0.65rem; font-weight: 600;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .rp-cmd-backdrop, .rp-cmd-panel, .rp-cmd-meta-enter, .rp-cmd-row::before { transition: none; }
+    }
+
+    /* ============================================================
+       Validation — missing-required highlights + confirm modal
+       ============================================================ */
+    @keyframes rp-shake-soft {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-3px); }
+      40% { transform: translateX(3px); }
+      60% { transform: translateX(-2px); }
+      80% { transform: translateX(1px); }
+    }
+    @keyframes rp-glow-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45); }
+      100% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    }
+    .rp-field.is-missing { animation: rp-shake-soft 600ms cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+    .rp-field.is-missing .rp-input,
+    .rp-field.is-missing .rp-textarea,
+    .rp-field.is-missing .rp-select,
+    .rp-field.is-missing .rp-inputContainer {
+      border-color: rgba(239, 68, 68, 0.55) !important;
+      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.18) !important;
+    }
+    .rp-field.is-missing .rp-input:focus,
+    .rp-field.is-missing .rp-textarea:focus,
+    .rp-field.is-missing .rp-select:focus {
+      border-color: rgba(239, 68, 68, 0.8) !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
+      animation: rp-glow-pulse 900ms ease-out;
+    }
+    .rp-required-tag {
+      display: inline-flex; align-items: center; gap: 0.2rem;
+      padding: 0.05rem 0.4rem;
+      margin-left: 0.4rem;
+      border-radius: 999px;
+      font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--rp-red);
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .rp-side-link.is-missing { color: var(--rp-red); }
+    .rp-side-link.is-missing .rp-pill {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--rp-red);
+      border-color: rgba(239, 68, 68, 0.3);
+      font-weight: 700;
+    }
+    .rp-side-link.is-missing i { color: var(--rp-red); }
+
+    /* Confirmation modal — submit-with-empties */
+    .rp-conf-backdrop {
+      position: fixed; inset: 0; z-index: 60;
+      background: rgba(2, 4, 8, 0.55);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: flex; align-items: flex-start; justify-content: center;
+      padding-top: 16vh;
+      opacity: 0; pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    .rp-conf-backdrop.open { opacity: 1; pointer-events: auto; }
+    .rp-conf-panel {
+      position: relative;
+      width: min(440px, calc(100vw - 2rem));
+      background: linear-gradient(180deg, rgba(20, 22, 28, 0.96) 0%, rgba(10, 12, 18, 0.96) 100%);
+      border: 1px solid rgba(239, 68, 68, 0.18);
+      border-radius: 14px;
+      box-shadow: 0 24px 60px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(239, 68, 68, 0.05);
+      overflow: hidden;
+      transform: translateY(8px) scale(0.97); opacity: 0;
+      transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), opacity 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rp-conf-backdrop.open .rp-conf-panel { transform: translateY(0) scale(1); opacity: 1; }
+    .rp-conf-head {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 1rem 1.1rem 0.4rem;
+    }
+    .rp-conf-icon {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 10px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: var(--rp-red); font-size: 0.95rem;
+    }
+    .rp-conf-title { color: var(--rp-text); font-weight: 600; font-size: 0.98rem; letter-spacing: -0.005em; }
+    .rp-conf-sub { font-size: 0.78rem; color: var(--rp-text-muted); margin-top: 0.1rem; }
+    .rp-conf-close {
+      margin-left: auto;
+      width: 28px; height: 28px; border-radius: 6px;
+      background: transparent; border: 0; cursor: pointer;
+      color: var(--rp-text-dim); font-size: 0.85rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rp-conf-close:hover { background: rgba(255,255,255,0.05); color: var(--rp-text); }
+
+    .rp-conf-body {
+      padding: 0.5rem 1.1rem 0.85rem;
+      max-height: 280px; overflow-y: auto;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+    }
+    .rp-conf-list { list-style: none; padding: 0; margin: 0.4rem 0 0; }
+    .rp-conf-item {
+      display: flex; align-items: baseline; gap: 0.55rem;
+      padding: 0.45rem 0;
+      border-bottom: 1px dashed rgba(255,255,255,0.06);
+      font-size: 0.85rem; color: var(--rp-text);
+    }
+    .rp-conf-item:last-child { border-bottom: 0; }
+    .rp-conf-item-num {
+      flex-shrink: 0;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 0.7rem; color: var(--rp-text-dim);
+      min-width: 16px;
+    }
+    .rp-conf-item-label { font-weight: 500; }
+    .rp-conf-item-section {
+      margin-left: auto;
+      font-size: 0.7rem; color: var(--rp-text-dim);
+      letter-spacing: 0.04em; text-transform: uppercase;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .rp-conf-foot {
+      display: flex; gap: 0.5rem; align-items: center;
+      padding: 0.7rem 1.1rem 0.95rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.18);
+    }
+    .rp-conf-foot-spacer { flex: 1; }
+    .rp-conf-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.55rem 1rem; border-radius: 9px;
+      font-family: inherit; font-weight: 600; font-size: 0.85rem;
+      border: none; cursor: pointer; transition: all 180ms ease;
+    }
+    .rp-conf-btn-primary {
+      background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: #fff;
+    }
+    .rp-conf-btn-primary:hover { box-shadow: 0 4px 12px rgba(14,165,233,0.3); transform: translateY(-1px); }
+    .rp-conf-btn-ghost {
+      background: transparent; color: var(--rp-text-muted);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .rp-conf-btn-ghost:hover { background: rgba(255,255,255,0.04); color: var(--rp-text); }
+    @media (prefers-reduced-motion: reduce) {
+      .rp-conf-backdrop, .rp-conf-panel, .rp-field.is-missing { animation: none; transition: none; }
+    }
+
+    /* ============================================================
+       Source chip — picked-source confirmation in Start-from panel.
+       Tone (icon color, status ring) is set per source type via
+       data-source-type — call=cyan, citation=amber, arrestReport=red.
+       ============================================================ */
+    .rp-source-chip {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.3rem 0.35rem 0.3rem 0.5rem;
+      background: var(--rp-glass);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: 999px;
+      font-size: 0.82rem;
+      max-width: 100%;
+      transition: border-color 160ms ease, background-color 160ms ease;
+    }
+    .rp-source-chip:hover { border-color: rgba(56,189,248,0.22); }
+    .rp-source-chip-icon {
+      width: 22px; height: 22px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: rgba(56,189,248,0.12);
+      color: var(--rp-accent);
+      border: 1px solid rgba(56,189,248,0.25);
+      font-size: 0.62rem;
+    }
+    .rp-source-chip[data-source-type="citation"] .rp-source-chip-icon {
+      background: rgba(245,158,11,0.12);
+      color: var(--rp-amber);
+      border-color: rgba(245,158,11,0.25);
+    }
+    .rp-source-chip[data-source-type="arrestReport"] .rp-source-chip-icon {
+      background: rgba(239,68,68,0.12);
+      color: var(--rp-red);
+      border-color: rgba(239,68,68,0.25);
+    }
+    .rp-source-chip-status {
+      width: 6px; height: 6px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .rp-source-chip-status.active { background: var(--rp-green); box-shadow: 0 0 0 2px rgba(34,197,94,0.18); }
+    .rp-source-chip-status.cleared { background: var(--rp-text-dim); box-shadow: 0 0 0 2px rgba(100,116,139,0.18); }
+    .rp-source-chip-title {
+      color: var(--rp-text); font-weight: 500;
+      max-width: 240px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .rp-source-chip-time {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 0.62rem;
+      color: var(--rp-text-dim);
+      letter-spacing: 0.06em; text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .rp-source-chip-x {
+      width: 22px; height: 22px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--rp-text-muted);
+      cursor: pointer; font-size: 0.6rem;
+      transition: all 160ms ease;
+      padding: 0;
+    }
+    .rp-source-chip-x:hover {
+      background: rgba(239,68,68,0.1);
+      color: var(--rp-red);
+      border-color: rgba(239,68,68,0.25);
+    }
+
+    /* ============================================================
+       Row-level entity link (bound rows in repeatable sections).
+       Different visual language from source chips: violet accent
+       (entity link is structural, not a one-shot import).
+       ============================================================ */
+    .rp-rep-row { padding-top: 2.4rem; }
+    .rp-row-link-bar {
+      position: absolute; top: 0.5rem; left: 0.75rem; right: 2.4rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .rp-row-link-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.18rem 0.55rem; border-radius: 999px;
+      font-family: inherit; font-size: 0.7rem; font-weight: 500;
+      background: rgba(168, 85, 247, 0.06);
+      border: 1px dashed rgba(168, 85, 247, 0.3);
+      color: #c4b5fd; cursor: pointer;
+      transition: all 160ms ease;
+    }
+    .rp-row-link-btn:hover {
+      background: rgba(168, 85, 247, 0.12);
+      border-color: rgba(168, 85, 247, 0.5);
+      border-style: solid;
+      color: #ddd6fe;
+    }
+    .rp-row-link-btn i { font-size: 0.62rem; }
+    .rp-row-linked-chip {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.2rem 0.45rem 0.2rem 0.55rem;
+      background: rgba(168, 85, 247, 0.08);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 999px;
+      font-size: 0.74rem;
+      color: #ddd6fe;
+      max-width: 100%;
+    }
+    .rp-row-linked-chip i.fa-link { color: #c4b5fd; font-size: 0.62rem; }
+    .rp-row-linked-chip a {
+      color: inherit; text-decoration: none; font-weight: 500;
+      max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .rp-row-linked-chip a:hover { text-decoration: underline; }
+    .rp-row-linked-chip-x {
+      width: 18px; height: 18px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; background: transparent; border: 0;
+      color: #c4b5fd; cursor: pointer; font-size: 0.6rem; padding: 0;
+    }
+    .rp-row-linked-chip-x:hover { background: rgba(168, 85, 247, 0.18); color: #fff; }
+
+    /* ============================================================
+       Submission success modal — green check + two next-action cards.
+       Shown once after the user submits a report so the page doesn't
+       silently hang.
+       ============================================================ */
+    @keyframes rp-suc-fade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes rp-suc-pop { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes rp-suc-check {
+      0% { transform: scale(0.4); opacity: 0; }
+      55% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes rp-suc-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.35); }
+      50% { box-shadow: 0 0 0 14px rgba(34, 197, 94, 0); }
+    }
+    .rp-suc-backdrop {
+      position: fixed; inset: 0; z-index: 70;
+      background: rgba(2, 4, 8, 0.55);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      display: none; align-items: flex-start; justify-content: center;
+      padding-top: 14vh;
+    }
+    .rp-suc-backdrop.open { display: flex; animation: rp-suc-fade 220ms ease; }
+    .rp-suc-panel {
+      width: min(520px, calc(100vw - 2rem));
+      background: linear-gradient(180deg, rgba(20, 26, 22, 0.96) 0%, rgba(10, 14, 12, 0.96) 100%);
+      border: 1px solid rgba(34, 197, 94, 0.22);
+      border-radius: 16px;
+      box-shadow: 0 30px 80px -16px rgba(0,0,0,0.7), 0 0 0 1px rgba(34, 197, 94, 0.06);
+      overflow: hidden;
+      animation: rp-suc-pop 360ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rp-suc-head { padding: 1.6rem 1.5rem 0.4rem; text-align: center; }
+    .rp-suc-check {
+      width: 64px; height: 64px;
+      margin: 0 auto 0.85rem;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(34, 197, 94, 0.28), rgba(34, 197, 94, 0.08));
+      border: 1px solid rgba(34, 197, 94, 0.45);
+      color: #22c55e;
+      font-size: 1.6rem;
+      animation: rp-suc-check 480ms cubic-bezier(0.16, 1, 0.3, 1) both, rp-suc-pulse 1.6s ease-out 480ms 1;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .rp-suc-title { font-size: 1.15rem; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+    .rp-suc-sub {
+      font-size: 0.85rem; color: var(--rp-text-muted);
+      margin-top: 0.3rem;
+    }
+    .rp-suc-sub code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 0.82rem;
+      background: rgba(34, 197, 94, 0.08);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      padding: 0.05rem 0.45rem;
+      border-radius: 999px;
+      color: #86efac;
+    }
+    .rp-suc-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+      padding: 1rem 1.25rem 0.6rem;
+    }
+    @media (max-width: 480px) { .rp-suc-cards { grid-template-columns: 1fr; } }
+    .rp-suc-card {
+      display: flex; flex-direction: column; gap: 0.35rem;
+      padding: 1rem;
+      background: var(--rp-glass);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius);
+      cursor: pointer; text-decoration: none;
+      transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      text-align: left; font-family: inherit;
+      position: relative;
+    }
+    .rp-suc-card:hover {
+      transform: translateY(-2px);
+      background: var(--rp-glass-hover);
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 12px 28px -10px rgba(56, 189, 248, 0.25);
+    }
+    .rp-suc-card-icon {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--rp-accent);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      font-size: 0.85rem;
+      margin-bottom: 0.15rem;
+    }
+    .rp-suc-card-title { font-size: 0.92rem; font-weight: 600; color: #fff; }
+    .rp-suc-card-desc { font-size: 0.74rem; color: var(--rp-text-muted); line-height: 1.45; }
+    .rp-suc-card-arrow {
+      position: absolute; top: 0.85rem; right: 0.85rem;
+      color: var(--rp-text-dim);
+      font-size: 0.7rem;
+      transition: transform 200ms ease, color 200ms ease;
+    }
+    .rp-suc-card:hover .rp-suc-card-arrow { transform: translateX(2px); color: var(--rp-accent); }
+    .rp-suc-foot {
+      padding: 0.7rem 1.25rem 1rem;
+      text-align: center;
+    }
+    .rp-suc-stay {
+      background: transparent; border: 0; cursor: pointer;
+      color: var(--rp-text-muted); font-size: 0.75rem; font-family: inherit;
+      letter-spacing: 0.02em;
+    }
+    .rp-suc-stay:hover { color: var(--rp-text); }
+
+    /* Bound-field auto-fill animation: brief value flash on apply */
+    @keyframes rp-bound-flash {
+      0%, 100% { background-color: rgba(168, 85, 247, 0); }
+      30% { background-color: rgba(168, 85, 247, 0.12); }
+    }
+    .rp-input.rp-just-bound,
+    .rp-textarea.rp-just-bound,
+    .rp-select.rp-just-bound { animation: rp-bound-flash 700ms ease-out; }
+
+    /* Locked-document banner — shown when status=submitted */
+    .rp-lock-banner {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; gap: 0.7rem;
+      margin: 0.75rem 0 0.25rem;
+      padding: 0.7rem 0.9rem;
+      background: linear-gradient(180deg, rgba(34,197,94,0.06), rgba(34,197,94,0.03));
+      border: 1px solid rgba(34,197,94,0.18);
+      border-radius: var(--rp-radius);
+    }
+    .rp-lock-icon {
+      width: 32px; height: 32px; flex: 0 0 32px;
+      display: grid; place-items: center;
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.28);
+      color: var(--rp-green); border-radius: 8px; font-size: 0.85rem;
+    }
+    .rp-lock-text { font-size: 0.82rem; line-height: 1.35; color: var(--rp-text); }
+    .rp-lock-text strong { color: var(--rp-green); font-weight: 600; }
+    .rp-lock-text .rp-lock-meta { color: var(--rp-text-muted); }
+
+    /* Kebab menu */
+    .rp-kebab { position: relative; }
+    .rp-kebab-btn {
+      width: 36px; height: 36px;
+      display: grid; place-items: center;
+      background: var(--rp-glass); border: 1px solid var(--rp-glass-border);
+      color: var(--rp-text); border-radius: var(--rp-radius-sm);
+      cursor: pointer; transition: background 120ms ease;
+    }
+    .rp-kebab-btn:hover { background: var(--rp-glass-hover); }
+    .rp-kebab-menu {
+      position: absolute; top: calc(100% + 0.35rem); right: 0;
+      min-width: 220px;
+      background: #0d1117; border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius-sm);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.5);
+      padding: 0.3rem; z-index: 20;
+      opacity: 0; transform: translateY(-4px); pointer-events: none;
+      transition: opacity 140ms ease, transform 140ms ease;
+    }
+    .rp-kebab-menu.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .rp-kebab-item {
+      display: flex; align-items: center; gap: 0.6rem;
+      width: 100%; padding: 0.55rem 0.65rem;
+      background: transparent; border: 0; color: var(--rp-text);
+      font: inherit; font-size: 0.85rem; text-align: left;
+      cursor: pointer; border-radius: 6px;
+    }
+    .rp-kebab-item:hover { background: var(--rp-glass-hover); }
+    .rp-kebab-item i { width: 14px; color: var(--rp-text-muted); }
+    .rp-kebab-item.danger:hover { background: rgba(239,68,68,0.10); color: var(--rp-red); }
+    .rp-kebab-item.danger:hover i { color: var(--rp-red); }
+    .rp-kebab-sep { height: 1px; background: var(--rp-glass-border); margin: 0.25rem 0.4rem; }
+
+    /* Document mode: subtle de-emphasis on disabled inputs to feel less form-y */
+    body.rp-locked .rp-input[disabled],
+    body.rp-locked .rp-textarea[disabled],
+    body.rp-locked .rp-select[disabled] {
+      background: transparent; border-color: rgba(255,255,255,0.05);
+      color: var(--rp-text); opacity: 1; cursor: default;
+    }
+    body.rp-locked .rp-input[disabled]:focus,
+    body.rp-locked .rp-textarea[disabled]:focus,
+    body.rp-locked .rp-select[disabled]:focus { outline: none; box-shadow: none; }
+
+    /* Revision history footer */
+    .rp-history {
+      grid-column: 1 / -1;
+      margin: 1.5rem 0 0;
+      padding: 1rem 1.1rem;
+      background: var(--rp-glass);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius);
+    }
+    .rp-history-title {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--rp-text-muted); margin-bottom: 0.7rem;
+    }
+    .rp-history-list { list-style: none; padding: 0; margin: 0; }
+    .rp-history-item {
+      display: flex; align-items: flex-start; gap: 0.7rem;
+      padding: 0.45rem 0;
+      font-size: 0.84rem; color: var(--rp-text);
+      border-top: 1px dashed rgba(255,255,255,0.05);
+    }
+    .rp-history-item:first-child { border-top: 0; }
+    .rp-history-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      margin-top: 0.45rem; flex: 0 0 8px;
+    }
+    .rp-history-dot.submitted { background: var(--rp-green); box-shadow: 0 0 0 3px rgba(34,197,94,0.12); }
+    .rp-history-dot.reopened  { background: var(--rp-amber); box-shadow: 0 0 0 3px rgba(245,158,11,0.12); }
+    .rp-history-dot.resubmitted { background: var(--rp-accent); box-shadow: 0 0 0 3px rgba(56,189,248,0.12); }
+    .rp-history-dot.archived { background: #94a3b8; box-shadow: 0 0 0 3px rgba(148,163,184,0.12); }
+    .rp-history-dot.unarchived { background: var(--rp-accent); box-shadow: 0 0 0 3px rgba(56,189,248,0.12); }
+    .rp-history-action { font-weight: 600; text-transform: capitalize; }
+    .rp-history-meta { color: var(--rp-text-muted); font-size: 0.78rem; }
+
+    /* Reopen confirmation modal — re-uses rp-conf-* visual language.
+       flex-shrink:0 prevents the badge from squishing when the
+       sibling text wraps to multiple lines. */
+    .rp-reopen-icon {
+      flex: 0 0 44px;
+      width: 44px; height: 44px;
+      padding: 0.55rem;
+      display: grid; place-items: center;
+      background: rgba(245,158,11,0.12);
+      border: 1px solid rgba(245,158,11,0.28);
+      color: var(--rp-amber); border-radius: 10px; font-size: 1.05rem;
+    }
+    .rp-reopen-icon i { line-height: 1; }
+    .rp-archive-icon {
+      flex: 0 0 44px;
+      width: 44px; height: 44px;
+      padding: 0.55rem;
+      display: grid; place-items: center;
+      background: rgba(148,163,184,0.12);
+      border: 1px solid rgba(148,163,184,0.28);
+      color: #94a3b8; border-radius: 10px; font-size: 1.05rem;
+    }
+    .rp-archive-icon i { line-height: 1; }
+
+    /* Archived banner — styled separately from the green submitted lock */
+    .rp-lock-banner.is-archived {
+      background: linear-gradient(180deg, rgba(148,163,184,0.08), rgba(148,163,184,0.03));
+      border-color: rgba(148,163,184,0.22);
+    }
+    .rp-lock-banner.is-archived .rp-lock-icon {
+      background: rgba(148,163,184,0.14);
+      border-color: rgba(148,163,184,0.32);
+      color: #94a3b8;
+    }
+    .rp-lock-banner.is-archived .rp-lock-text strong { color: #cbd5e1; }
+  </style>
+</head>
+<body>
+  <%- include('partials/standalone-utility', {
+    user: user,
+    communityName: null,
+    pageLabel: (typeof submissionId !== 'undefined' && submissionId) ? 'Reports / Edit' : 'Reports / New',
+    backHref: '/reports' + ((typeof communityIdEncoded !== 'undefined' && communityIdEncoded) ? ('?c=' + communityIdEncoded) : ''),
+    backLabel: 'Back to Reports'
+  }) %>
+  <div class="rp-shell">
+    <div class="rp-header">
+      <div class="rp-header-left">
+        <div class="rp-header-icon"><i class="fa-solid fa-file-pen"></i></div>
+        <div>
+          <div class="rp-title" id="rp-title-text">Loading…</div>
+          <div class="rp-subtitle" id="rp-sub-text"></div>
+        </div>
+      </div>
+      <div style="display:flex; gap:0.5rem; align-items:center;">
+        <label class="rp-back-btn" id="rp-required-only-wrap" style="cursor:pointer;">
+          <input type="checkbox" id="rp-required-only" style="margin-right: 0.3rem;" /> Required only
+        </label>
+        <div class="rp-kebab" id="rp-kebab" style="display:none;">
+          <button class="rp-kebab-btn" id="rp-kebab-btn" type="button" aria-label="More actions" aria-haspopup="menu" aria-expanded="false">
+            <i class="fa-solid fa-ellipsis"></i>
+          </button>
+          <div class="rp-kebab-menu" id="rp-kebab-menu" role="menu"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Locked-document banner — only shown when report is submitted -->
+    <div class="rp-lock-banner" id="rp-lock-banner" style="display:none;">
+      <div class="rp-lock-icon"><i class="fa-solid fa-lock"></i></div>
+      <div class="rp-lock-text" id="rp-lock-text">Locked</div>
+    </div>
+
+    <aside class="rp-side" id="rp-side"></aside>
+    <main class="rp-main">
+      <div id="rp-callout"></div>
+      <div id="rp-form" class="rp-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading template…</div>
+    </main>
+
+    <!-- Revision history footer — populated when an existing submission has audit entries -->
+    <section class="rp-history" id="rp-history" style="display:none;">
+      <div class="rp-history-title"><i class="fa-solid fa-clock-rotate-left"></i> History</div>
+      <ul class="rp-history-list" id="rp-history-list"></ul>
+    </section>
+  </div>
+
+  <div class="rp-savebar" id="rp-savebar" style="display:none;">
+    <button id="rp-print" class="rp-btn rp-btn-ghost"><i class="fa-solid fa-print"></i> Print / PDF</button>
+    <div class="rp-savebar-spacer"></div>
+    <button id="rp-save-draft" class="rp-btn rp-btn-outline"><i class="fa-regular fa-floppy-disk"></i> Save Draft</button>
+    <button id="rp-submit" class="rp-btn rp-btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit</button>
+  </div>
+
+  <div id="rp-toast" class="rp-toast"></div>
+
+  <!-- Archive / Unarchive confirmation -->
+  <div id="rp-archive" class="rp-conf-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="rp-archive-title">
+    <div class="rp-conf-panel" role="document">
+      <div class="rp-conf-head">
+        <div class="rp-archive-icon"><i class="fa-solid fa-box-archive" id="rp-archive-icon-inner"></i></div>
+        <div>
+          <div class="rp-conf-title" id="rp-archive-title">Archive this report?</div>
+          <div class="rp-conf-sub" id="rp-archive-sub">Archived reports stay visible but cannot be edited until they're unarchived.</div>
+        </div>
+        <button id="rp-archive-x" class="rp-conf-close" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="rp-conf-foot">
+        <button id="rp-archive-cancel" class="rp-conf-btn rp-conf-btn-ghost" type="button">Cancel</button>
+        <div class="rp-conf-foot-spacer"></div>
+        <button id="rp-archive-confirm" class="rp-conf-btn rp-conf-btn-primary" type="button">
+          <i class="fa-solid fa-box-archive" id="rp-archive-confirm-icon"></i> <span id="rp-archive-confirm-text">Archive</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reopen-for-edits confirmation — flips a submitted report back to draft -->
+  <div id="rp-reopen" class="rp-conf-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="rp-reopen-title">
+    <div class="rp-conf-panel" role="document">
+      <div class="rp-conf-head">
+        <div class="rp-reopen-icon"><i class="fa-solid fa-lock-open"></i></div>
+        <div>
+          <div class="rp-conf-title" id="rp-reopen-title">Reopen this report?</div>
+          <div class="rp-conf-sub" id="rp-reopen-sub">The report number stays the same. A revision will be logged in the history.</div>
+        </div>
+        <button id="rp-reopen-x" class="rp-conf-close" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="rp-conf-foot">
+        <button id="rp-reopen-cancel" class="rp-conf-btn rp-conf-btn-ghost" type="button">Cancel</button>
+        <div class="rp-conf-foot-spacer"></div>
+        <button id="rp-reopen-confirm" class="rp-conf-btn rp-conf-btn-primary" type="button">
+          <i class="fa-solid fa-lock-open"></i> Reopen for edits
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Validation confirmation modal — empty required fields -->
+  <div id="rp-conf" class="rp-conf-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="rp-conf-title-text">
+    <div class="rp-conf-panel" role="document">
+      <div class="rp-conf-head">
+        <div class="rp-conf-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div>
+          <div class="rp-conf-title" id="rp-conf-title-text">Some required fields are empty</div>
+          <div class="rp-conf-sub">Review them before submitting, or submit anyway if you really mean to.</div>
+        </div>
+        <button id="rp-conf-x" class="rp-conf-close" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="rp-conf-body">
+        <ol id="rp-conf-list" class="rp-conf-list"></ol>
+      </div>
+      <div class="rp-conf-foot">
+        <button id="rp-conf-anyway" class="rp-conf-btn rp-conf-btn-ghost" type="button">Submit anyway</button>
+        <div class="rp-conf-foot-spacer"></div>
+        <button id="rp-conf-fix" class="rp-conf-btn rp-conf-btn-primary" type="button">
+          <i class="fa-solid fa-pen-to-square"></i> Review and fix
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submission success modal — shown after a submitted save -->
+  <div id="rp-suc" class="rp-suc-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="rp-suc-title">
+    <div class="rp-suc-panel" role="document">
+      <div class="rp-suc-head">
+        <div class="rp-suc-check"><i class="fa-solid fa-check"></i></div>
+        <div class="rp-suc-title" id="rp-suc-title">Report submitted</div>
+        <div class="rp-suc-sub">Saved as <code id="rp-suc-num">—</code></div>
+      </div>
+      <div class="rp-suc-cards">
+        <button id="rp-suc-back" class="rp-suc-card" type="button">
+          <div class="rp-suc-card-icon"><i class="fa-solid fa-arrow-left"></i></div>
+          <div class="rp-suc-card-title">Back to Reports</div>
+          <div class="rp-suc-card-desc">Return to the list of reports for this community.</div>
+          <i class="fa-solid fa-chevron-right rp-suc-card-arrow"></i>
+        </button>
+        <button id="rp-suc-print" class="rp-suc-card" type="button">
+          <div class="rp-suc-card-icon"><i class="fa-solid fa-print"></i></div>
+          <div class="rp-suc-card-title">Print / Save as PDF</div>
+          <div class="rp-suc-card-desc">Open the printable letterhead view in a new tab.</div>
+          <i class="fa-solid fa-chevron-right rp-suc-card-arrow"></i>
+        </button>
+      </div>
+      <div class="rp-suc-foot">
+        <button id="rp-suc-stay" class="rp-suc-stay" type="button">Stay on this report</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Source picker — tabbed: calls, citations, arrest reports -->
+  <div id="rp-call-cmd" class="rp-cmd-backdrop" role="dialog" aria-modal="true" aria-label="Pick a record to import">
+    <div class="rp-cmd-panel" role="document">
+      <div class="rp-cmd-tabs" id="rp-cmd-tabs" role="tablist">
+        <button class="rp-cmd-tab active" type="button" data-tab="call" role="tab"><i class="fa-solid fa-phone-volume" style="color: var(--rp-accent);"></i> Calls <span class="rp-cmd-tab-count" id="rp-tab-count-call">0</span></button>
+        <button class="rp-cmd-tab" type="button" data-tab="citation" role="tab"><i class="fa-solid fa-file-lines" style="color: var(--rp-amber);"></i> Citations <span class="rp-cmd-tab-count" id="rp-tab-count-citation">0</span></button>
+        <button class="rp-cmd-tab" type="button" data-tab="arrestReport" role="tab"><i class="fa-solid fa-handcuffs" style="color: var(--rp-red);"></i> Arrest Reports <span class="rp-cmd-tab-count" id="rp-tab-count-arrestReport">0</span></button>
+      </div>
+      <div class="rp-cmd-search-wrap" id="rp-call-search-wrap">
+        <i class="fa-solid fa-magnifying-glass rp-cmd-search-icon"></i>
+        <input id="rp-call-input" class="rp-cmd-search" type="text" autocomplete="off" spellcheck="false"
+               placeholder="Search…" aria-label="Search records" />
+        <button id="rp-call-clear" class="rp-cmd-search-clear" type="button" aria-label="Clear search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="rp-call-results" class="rp-cmd-results" role="listbox" aria-label="Records"></div>
+      <div class="rp-cmd-footer">
+        <div class="rp-cmd-footer-count" id="rp-call-count"></div>
+        <div class="rp-cmd-hints">
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">↑</span><span class="rp-cmd-kbd">↓</span> navigate</span>
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">↵</span> apply</span>
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">tab</span> switch</span>
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">esc</span> close</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entity picker — civilian / vehicle / firearm for row-level binding -->
+  <div id="rp-entity-cmd" class="rp-cmd-backdrop" role="dialog" aria-modal="true" aria-label="Link an entity to this row">
+    <div class="rp-cmd-panel" role="document">
+      <div class="rp-cmd-search-wrap" id="rp-entity-search-wrap">
+        <i class="fa-solid fa-link rp-cmd-search-icon"></i>
+        <input id="rp-entity-input" class="rp-cmd-search" type="text" autocomplete="off" spellcheck="false"
+               placeholder="Search…" aria-label="Search entities" />
+        <button id="rp-entity-clear" class="rp-cmd-search-clear" type="button" aria-label="Clear search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="rp-entity-results" class="rp-cmd-results" role="listbox" aria-label="Entities"></div>
+      <div class="rp-cmd-footer">
+        <div class="rp-cmd-footer-count" id="rp-entity-count"></div>
+        <div class="rp-cmd-hints">
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">↑</span><span class="rp-cmd-kbd">↓</span> navigate</span>
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">↵</span> link</span>
+          <span class="rp-cmd-hint"><span class="rp-cmd-kbd">esc</span> close</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var apiUrl = <%- JSON.stringify(typeof apiUrl !== 'undefined' ? apiUrl : '') %>;
+      var token = <%- JSON.stringify(typeof apiToken !== 'undefined' ? apiToken : '') %>;
+      var communityId = <%- JSON.stringify(typeof communityId !== 'undefined' ? communityId : '') %>;
+      var communityIdEncoded = <%- JSON.stringify(typeof communityIdEncoded !== 'undefined' ? communityIdEncoded : '') %>;
+      var departmentId = <%- JSON.stringify(typeof departmentId !== 'undefined' ? departmentId : '') %>;
+      var slug = <%- JSON.stringify(typeof slug !== 'undefined' ? slug : 'incident-report') %>;
+      var submissionId = <%- JSON.stringify(typeof submissionId !== 'undefined' ? submissionId : '') %>;
+      var readOnly = <%- JSON.stringify(typeof readOnly !== 'undefined' ? !!readOnly : false) %>;
+      var currentUser = <%- JSON.stringify(typeof currentUser !== 'undefined' ? currentUser : null) %>;
+      var canManageForms = <%- JSON.stringify(typeof canManageForms !== 'undefined' ? !!canManageForms : false) %>;
+
+      function authHeaders(extra) {
+        var h = Object.assign({}, extra || {});
+        if (token) h['Authorization'] = 'Bearer ' + token;
+        return h;
+      }
+
+      // --- state ---
+      var state = {
+        template: null,
+        data: {},
+        importedFrom: {},   // fieldId -> { type, id, label }
+        links: [],
+        sources: [],        // [{type, id, childId?}]
+        sectionState: {},   // sectionId -> open boolean
+        existing: null,     // existing submission record (when viewing/editing)
+        missingFields: {}   // fieldId -> { sectionId, label } (top-level only)
+      };
+
+      function toast(msg, kind) {
+        var t = document.getElementById('rp-toast');
+        t.textContent = msg; t.className = 'rp-toast show ' + (kind || '');
+        setTimeout(function () { t.className = 'rp-toast'; }, 2400);
+      }
+
+      function escapeHTML(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      // --- load template + (optionally) existing submission ---
+      //
+      // When viewing an existing submission, the submission record is
+      // authoritative on which template to render — the URL-provided slug
+      // is only a fallback for the new-report path. Fetch templates with
+      // includeHidden so we can still render a submission whose default
+      // template was later hidden by an admin.
+      function loadInitial() {
+        var subPromise = submissionId
+          ? fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(submissionId), { headers: authHeaders() })
+              .then(function (r) { return r.ok ? r.json() : null; })
+          : Promise.resolve(null);
+
+        return Promise.all([
+          fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId) + '?includeHidden=true&includeArchived=true', { headers: authHeaders() })
+            .then(function (r) { return r.ok ? r.json() : { data: [] }; }),
+          subPromise
+        ]).then(function (results) {
+          var j = results[0];
+          var sub = results[1];
+          var list = (j && j.data) || [];
+
+          var resolveSlug = (sub && sub.formSubmission && sub.formSubmission.formTemplateSlug) || slug;
+          var tpl = list.filter(function (t) { return t.slug === resolveSlug; })[0];
+          if (!tpl) throw new Error('Template "' + resolveSlug + '" not found for this community');
+
+          state.template = tpl;
+          initSectionState(tpl);
+          if (sub && sub.formSubmission) {
+            state.existing = sub;
+            state.data = sub.formSubmission.data || {};
+            state.links = sub.formSubmission.links || [];
+            // The submission has a server-generated reportNumber stored
+            // separately from form data. Mirror it into the canonical
+            // "incident number" field if the template has one and it's
+            // currently empty, so the user sees their assigned number.
+            hydrateReportNumberField(tpl, state.data, sub.formSubmission.reportNumber);
+            // Auto-lock submitted OR archived reports. Anyone in the
+            // community can view, but only the original submitter or a
+            // community admin can reopen / unarchive via the kebab menu.
+            if (sub.formSubmission.status === 'submitted' || sub.formSubmission.archived) {
+              readOnly = true;
+            }
+          }
+          render();
+        });
+      }
+
+      // True when the current viewer is allowed to reopen / archive a
+      // report. Covers community admins (canManageForms) and the
+      // original submitter — matched by user ID.
+      function canManageCurrent() {
+        if (!state.existing) return false;
+        if (canManageForms) return true;
+        var sub = state.existing.formSubmission || {};
+        var signer = sub.signedBy || {};
+        return !!(currentUser && currentUser.id && signer.userID && currentUser.id === signer.userID);
+      }
+
+      // Field IDs that are conventionally treated as "the report number"
+      // — any of them, when present in the template and empty in data,
+      // will be auto-populated with the submission's reportNumber.
+      var REPORT_NUMBER_FIELD_IDS = ['incidentNumber', 'reportNumber', 'caseNumber'];
+      function hydrateReportNumberField(tpl, data, reportNumber) {
+        if (!reportNumber || !tpl || !tpl.sections) return;
+        for (var s = 0; s < tpl.sections.length; s++) {
+          var sec = tpl.sections[s];
+          if (sec.repeatable) continue;
+          for (var f = 0; f < (sec.fields || []).length; f++) {
+            var fld = sec.fields[f];
+            if (REPORT_NUMBER_FIELD_IDS.indexOf(fld.id) === -1) continue;
+            if (data[fld.id] == null || data[fld.id] === '') data[fld.id] = reportNumber;
+          }
+        }
+      }
+
+      function initSectionState(tpl) {
+        (tpl.sections || []).forEach(function (s, idx) {
+          // First two sections open by default; everything else collapsed.
+          state.sectionState[s.id] = idx < 2;
+        });
+      }
+
+      // --- "Start from" sources ---
+      // Source picker modal (command palette) — tabbed across calls,
+      // citations, arrest reports.
+      //
+      //   Calls         → eager fetch of community calls (cap 100)
+      //   Citations     → 2-step: civilian search → that civilian's citations
+      //   Arrest Reports→ 2-step: civilian search → that civilian's arrests
+      //
+      // The 2-step flows avoid loading all civilians + all embedded records
+      // in one giant payload. The shared search input dispatches based on
+      // active tab + drill state: civilian-search query in step 1, local
+      // filter over fetched items in step 2.
+      var SOURCE_TABS = ['call', 'citation', 'arrestReport'];
+      var SOURCE_META = {
+        call:         { icon: 'fa-phone-volume', accent: 'var(--rp-accent)', noun: 'call' },
+        citation:     { icon: 'fa-file-lines',  accent: 'var(--rp-amber)',   noun: 'citation' },
+        arrestReport: { icon: 'fa-handcuffs',   accent: 'var(--rp-red)',     noun: 'arrest report' },
+      };
+      var DRILL_TABS = ['citation', 'arrestReport']; // tabs that use the 2-step civilian → records flow
+      var callPicker = {
+        backdrop: null, input: null, results: null, count: null, searchWrap: null, clearBtn: null,
+        tab: 'call',
+        // Calls cache only — eagerly loaded.
+        cache: { call: { all: [], loaded: false, loading: false } },
+        // Civilian-search step state, scoped per drill tab.
+        civSearch: {
+          citation:     { query: '', results: [], loading: false, debounce: null },
+          arrestReport: { query: '', results: [], loading: false, debounce: null },
+        },
+        // After picking a civilian, items for that civilian (citations or arrest reports).
+        drill: {
+          citation:     { civilian: null, items: [], loading: false },
+          arrestReport: { civilian: null, items: [], loading: false },
+        },
+        filtered: [], activeIdx: 0, query: '',
+      };
+
+      function buildCallPickerEls() {
+        callPicker.backdrop = document.getElementById('rp-call-cmd');
+        callPicker.input = document.getElementById('rp-call-input');
+        callPicker.results = document.getElementById('rp-call-results');
+        callPicker.count = document.getElementById('rp-call-count');
+        callPicker.searchWrap = document.getElementById('rp-call-search-wrap');
+        callPicker.clearBtn = document.getElementById('rp-call-clear');
+      }
+
+      function isDrillTab(tab) { return DRILL_TABS.indexOf(tab) !== -1; }
+      function drillState() { return callPicker.drill[callPicker.tab]; }
+
+      // Drill mode: 'civilian' (step 1) when no civilian is picked, else 'detail'.
+      function drillMode() {
+        if (!isDrillTab(callPicker.tab)) return 'list';
+        return drillState().civilian ? 'detail' : 'civilian';
+      }
+
+      function fetchCallsOnce() {
+        var c = callPicker.cache.call;
+        if (c.loaded || c.loading) return Promise.resolve(c.all);
+        c.loading = true;
+        return fetch(apiUrl + '/api/v2/calls/community/' + encodeURIComponent(communityId) + '?page=1&limit=100', { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+          .then(function (j) { c.all = (j && j.data) || []; c.loaded = true; updateTabCounts(); return c.all; })
+          .catch(function () { return []; })
+          .finally(function () { c.loading = false; });
+      }
+
+      // Civilian search for step 1 of a drill tab. Debounced so it
+      // doesn't spam the API on each keystroke.
+      function searchCiviliansForDrill(tab, query) {
+        var s = callPicker.civSearch[tab];
+        s.query = query;
+        if (s.debounce) clearTimeout(s.debounce);
+        if (!query || !query.trim()) {
+          s.results = []; s.loading = false;
+          renderCallPicker();
+          return;
+        }
+        s.loading = true; renderCallPicker();
+        s.debounce = setTimeout(function () {
+          fetch(apiUrl + '/api/v2/civilians/search', {
+            method: 'POST',
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ query: query, communityId: communityId, limit: 25, page: 0 })
+          })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (j) {
+              if (s.query !== query) return; // a newer query has superseded this
+              // V2 response shape: { civilians: [...], pagination: {...} }
+              s.results = (j && (j.civilians || j.data)) || [];
+              s.loading = false;
+              renderCallPicker();
+            })
+            .catch(function () { s.loading = false; renderCallPicker(); });
+        }, 200);
+      }
+
+      // Step-2 fetch: load citations or arrest reports for a picked civilian.
+      function loadDrillItems(tab, civilian) {
+        var d = callPicker.drill[tab];
+        d.civilian = civilian;
+        d.items = [];
+        d.loading = true;
+        renderCallPicker();
+        if (tab === 'citation') {
+          // Citations are embedded in civilian.criminalHistory[].
+          fetch(apiUrl + '/api/v1/civilian/' + encodeURIComponent(civilian._id), { headers: authHeaders() })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (full) {
+              var civDetails = (full && full.civilian) || civilian.civilian || {};
+              var rows = [];
+              (civDetails.criminalHistory || []).forEach(function (ch) {
+                var t = String(ch.type || '').toLowerCase();
+                if (t !== 'citation' && t !== 'warning') return;
+                rows.push({ _id: civilian._id, _childId: ch._id, civilian: civDetails, citation: ch });
+              });
+              rows.sort(function (a, b) {
+                var aT = a.citation && a.citation.createdAt ? new Date(a.citation.createdAt).getTime() : 0;
+                var bT = b.citation && b.citation.createdAt ? new Date(b.citation.createdAt).getTime() : 0;
+                return bT - aT;
+              });
+              d.items = rows; d.loading = false; renderCallPicker();
+            })
+            .catch(function () { d.loading = false; renderCallPicker(); });
+        } else if (tab === 'arrestReport') {
+          fetch(apiUrl + '/api/v1/arrest-report/arrestee/' + encodeURIComponent(civilian._id) + '?limit=50&page=0', { headers: authHeaders() })
+            .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+            .then(function (j) {
+              var rows = (j && j.data) || [];
+              rows.sort(function (a, b) {
+                var aT = (a.arrestReport && a.arrestReport.createdAt) ? new Date(a.arrestReport.createdAt).getTime() : 0;
+                var bT = (b.arrestReport && b.arrestReport.createdAt) ? new Date(b.arrestReport.createdAt).getTime() : 0;
+                return bT - aT;
+              });
+              d.items = rows; d.loading = false; renderCallPicker();
+            })
+            .catch(function () { d.loading = false; renderCallPicker(); });
+        }
+      }
+
+      function clearDrillCivilian(tab) {
+        callPicker.drill[tab] = { civilian: null, items: [], loading: false };
+        callPicker.query = '';
+        if (callPicker.input) callPicker.input.value = '';
+        callPicker.activeIdx = 0;
+        renderCallPicker();
+        setTimeout(function () { callPicker.input && callPicker.input.focus(); }, 30);
+      }
+
+      function updateTabCounts() {
+        var cEl = document.getElementById('rp-tab-count-call');
+        if (cEl) cEl.textContent = String((callPicker.cache.call.all || []).length);
+        // Drill tabs don't have a meaningful pre-count; hide their badges.
+        ['citation', 'arrestReport'].forEach(function (t) {
+          var el = document.getElementById('rp-tab-count-' + t);
+          if (el) el.style.display = 'none';
+        });
+      }
+
+      function fmtRelative(ts) {
+        if (!ts) return '';
+        var t = new Date(ts).getTime();
+        if (!t) return '';
+        var diff = Date.now() - t;
+        if (diff < 60 * 1000) return 'just now';
+        if (diff < 3600 * 1000) return Math.round(diff / 60000) + 'm ago';
+        if (diff < 86400 * 1000) return Math.round(diff / 3600000) + 'h ago';
+        return Math.round(diff / 86400000) + 'd ago';
+      }
+
+      function callDescription(d) {
+        if (!d) return '';
+        var parts = [];
+        if (d.details) parts.push(d.details);
+        else if (d.shortDescription) parts.push(d.shortDescription);
+        if (d.createdAtReadable) parts.push(d.createdAtReadable);
+        return parts.join(' · ');
+      }
+
+      function highlightMatch(text, q) {
+        var src = String(text == null ? '' : text);
+        if (!q) return escapeHTML(src);
+        var lower = src.toLowerCase();
+        var qLower = q.toLowerCase();
+        var out = '', i = 0;
+        while (i < src.length) {
+          var idx = lower.indexOf(qLower, i);
+          if (idx === -1) { out += escapeHTML(src.slice(i)); break; }
+          out += escapeHTML(src.slice(i, idx)) + '<mark>' + escapeHTML(src.slice(idx, idx + q.length)) + '</mark>';
+          i = idx + q.length;
+        }
+        return out;
+      }
+
+      // Per-tab name/desc extractors so search + display can stay generic.
+      function rowName(row, tab) {
+        if (tab === 'call') return (row.call && row.call.title) || '(untitled)';
+        if (tab === 'citation') {
+          var civ = row.civilian || {};
+          var cit = row.citation || {};
+          var person = (civ.firstName || '') + ' ' + (civ.lastName || '');
+          var fines = (cit.fines || []).map(function (f) { return f.fineType; }).filter(Boolean).join(', ');
+          return (person.trim() || '(unknown)') + (fines ? ' — ' + fines : '');
+        }
+        if (tab === 'arrestReport') {
+          var d = row.arrestReport || {};
+          var arr = d.arrestee || {};
+          return arr.name || ('Arrest ' + (d.reportNumber || ''));
+        }
+        return '';
+      }
+      function rowDesc(row, tab) {
+        if (tab === 'call') {
+          var d = row.call || {};
+          var parts = [];
+          if (d.details) parts.push(d.details);
+          else if (d.shortDescription) parts.push(d.shortDescription);
+          if (d.createdAtReadable) parts.push(d.createdAtReadable);
+          return parts.join(' · ');
+        }
+        if (tab === 'citation') {
+          var cit = row.citation || {};
+          var bits = [];
+          bits.push(cit.type || 'Citation');
+          if (cit.notes) bits.push(cit.notes);
+          return bits.join(' · ');
+        }
+        if (tab === 'arrestReport') {
+          var ar = row.arrestReport || {};
+          var bits2 = [];
+          if (ar.charges) bits2.push(ar.charges);
+          if (ar.incidentLocation) bits2.push(ar.incidentLocation);
+          return bits2.join(' · ');
+        }
+        return '';
+      }
+      function rowCreatedAt(row, tab) {
+        if (tab === 'call') return row.call && row.call.createdAt;
+        if (tab === 'citation') return row.citation && row.citation.createdAt;
+        if (tab === 'arrestReport') return row.arrestReport && row.arrestReport.createdAt;
+        return null;
+      }
+      function rowIsActive(row, tab) {
+        if (tab === 'call') return !!(row.call && row.call.status);
+        return false; // citations and arrest reports don't have an "active" toggle
+      }
+
+      function scoreRow(row, q, tab) {
+        var name = rowName(row, tab).toLowerCase();
+        var desc = rowDesc(row, tab).toLowerCase();
+        var ni = name.indexOf(q);
+        if (ni !== -1) return 1000 - ni;
+        var di = desc.indexOf(q);
+        if (di !== -1) return 500 - di;
+        return -1;
+      }
+
+      function currentRows() {
+        if (callPicker.tab === 'call') return callPicker.cache.call.all || [];
+        if (drillMode() === 'civilian') return callPicker.civSearch[callPicker.tab].results || [];
+        return callPicker.drill[callPicker.tab].items || [];
+      }
+
+      function filterCalls() {
+        var q = callPicker.query.trim().toLowerCase();
+        var rows = currentRows().slice();
+        // In civilian-search step the rows come pre-filtered from the API;
+        // skip local rescoring so they stay in API order.
+        if (drillMode() === 'civilian') { callPicker.filtered = rows; return; }
+        if (!q) { callPicker.filtered = rows; return; }
+        var scored = [];
+        rows.forEach(function (c) {
+          var s = scoreRow(c, q, callPicker.tab);
+          if (s >= 0) scored.push({ c: c, s: s });
+        });
+        scored.sort(function (a, b) { return b.s - a.s; });
+        callPicker.filtered = scored.map(function (x) { return x.c; });
+      }
+
+      function renderBreadcrumb() {
+        if (!isDrillTab(callPicker.tab) || drillMode() !== 'detail') return '';
+        var civ = drillState().civilian;
+        var civDetails = civ && civ.civilian ? civ.civilian : (civ || {});
+        var name = ((civDetails.firstName || '') + ' ' + (civDetails.lastName || '')).trim() || civDetails.name || 'civilian';
+        return '<div style="padding: 0.5rem 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.78rem; color: var(--rp-text-muted); display: flex; align-items: center; gap: 0.5rem;">' +
+          '<button type="button" data-drill-back style="background: transparent; border: 0; color: var(--rp-accent); cursor: pointer; font-family: inherit; font-size: inherit; padding: 0; display: inline-flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-arrow-left"></i> All civilians</button>' +
+          '<span style="color: var(--rp-text-dim);">/</span>' +
+          '<span style="color: var(--rp-text); font-weight: 500;"><i class="fa-solid fa-user" style="color:#c4b5fd; font-size:0.7rem; margin-right:0.3rem;"></i>' + escapeHTML(name) + '</span>' +
+        '</div>';
+      }
+
+      function renderCivRow(row, q, idx) {
+        var d = row.civilian || {};
+        var name = ((d.firstName || '') + ' ' + (d.lastName || '')).trim() || d.name || '(unknown)';
+        var bits = [];
+        if (d.birthday) bits.push('DOB ' + d.birthday);
+        if (d.address) bits.push(d.address);
+        return '<a class="rp-cmd-row' + (idx === callPicker.activeIdx ? ' active' : '') + '"' +
+               ' role="option" data-idx="' + idx + '" data-civ-id="' + escapeHTML(row._id) + '" href="#">' +
+          '<div class="rp-cmd-icon" style="color:#c4b5fd;"><i class="fa-solid fa-user"></i></div>' +
+          '<div class="rp-cmd-body">' +
+            '<div class="rp-cmd-name-row"><span class="rp-cmd-name">' + highlightMatch(name, q) + '</span></div>' +
+            '<div class="rp-cmd-desc">' + highlightMatch(bits.join(' · ') || '—', q) + '</div>' +
+          '</div>' +
+          '<div class="rp-cmd-meta"><span class="rp-cmd-meta-enter">↵</span></div>' +
+        '</a>';
+      }
+
+      function renderCallPicker() {
+        var q = callPicker.query.trim();
+        var meta = SOURCE_META[callPicker.tab];
+        var nounPlural = meta.noun + 's';
+        var crumb = renderBreadcrumb();
+
+        // ---- Drill step 1: civilian search ----
+        if (drillMode() === 'civilian') {
+          var s = callPicker.civSearch[callPicker.tab];
+          callPicker.filtered = s.results || [];
+          var html = crumb;
+          if (!q) {
+            html += '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-solid fa-user-magnifying-glass"></i></div><div class="rp-cmd-empty-title">Find a civilian</div><div class="rp-cmd-empty-sub">Search by name. Pick one to see their ' + escapeHTML(nounPlural) + '.</div></div>';
+            callPicker.count.innerHTML = '';
+          } else if (s.loading && (s.results || []).length === 0) {
+            html += '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="rp-cmd-empty-title">Searching…</div></div>';
+            callPicker.count.innerHTML = '';
+          } else if ((s.results || []).length === 0) {
+            html += '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-circle-question"></i></div><div class="rp-cmd-empty-title">No civilians match "' + escapeHTML(q) + '"</div></div>';
+            callPicker.count.innerHTML = '<strong>0</strong> civilians';
+          } else {
+            if (callPicker.activeIdx >= s.results.length) callPicker.activeIdx = 0;
+            html += s.results.map(function (row, i) { return renderCivRow(row, q, i); }).join('');
+            callPicker.count.innerHTML = '<strong>' + s.results.length + '</strong> civilian' + (s.results.length === 1 ? '' : 's');
+          }
+          callPicker.results.innerHTML = html;
+          bindCallRowHandlers();
+          scrollCallActiveIntoView();
+          return;
+        }
+
+        // ---- Calls or drill step 2: items list ----
+        filterCalls();
+        var rowsAll = currentRows();
+        var loading = (callPicker.tab === 'call')
+          ? (callPicker.cache.call.loading && rowsAll.length === 0)
+          : (drillState().loading && rowsAll.length === 0);
+
+        if (loading) {
+          callPicker.results.innerHTML = crumb + '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="rp-cmd-empty-title">Loading ' + escapeHTML(nounPlural) + '…</div></div>';
+          callPicker.count.innerHTML = '';
+          return;
+        }
+        if (rowsAll.length === 0) {
+          var emptyMsg = (callPicker.tab === 'call')
+            ? 'Calls in this community will show up here once any are created.'
+            : 'This civilian has no ' + nounPlural + '.';
+          callPicker.results.innerHTML = crumb + '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-folder-open"></i></div><div class="rp-cmd-empty-title">No ' + escapeHTML(nounPlural) + '</div><div class="rp-cmd-empty-sub">' + escapeHTML(emptyMsg) + '</div></div>';
+          callPicker.count.innerHTML = '';
+          return;
+        }
+        if (callPicker.filtered.length === 0) {
+          callPicker.results.innerHTML = crumb + '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-circle-question"></i></div><div class="rp-cmd-empty-title">No ' + escapeHTML(nounPlural) + ' match "' + escapeHTML(q) + '"</div></div>';
+          callPicker.count.innerHTML = '<strong>0</strong> of ' + rowsAll.length + ' ' + escapeHTML(nounPlural);
+          return;
+        }
+
+        if (callPicker.activeIdx >= callPicker.filtered.length) callPicker.activeIdx = 0;
+
+        callPicker.results.innerHTML = crumb + callPicker.filtered.map(function (row, i) {
+          var isActive = rowIsActive(row, callPicker.tab);
+          var statusCls = isActive ? 'active' : 'cleared';
+          var rel = fmtRelative(rowCreatedAt(row, callPicker.tab));
+          return '<a class="rp-cmd-row' + (i === callPicker.activeIdx ? ' active' : '') + '"' +
+                 ' role="option" data-idx="' + i + '" data-id="' + escapeHTML(row._id) + '"' +
+                 (row._childId ? ' data-child-id="' + escapeHTML(row._childId) + '"' : '') +
+                 ' href="#">' +
+            '<div class="rp-cmd-icon" style="color:' + meta.accent + ';"><i class="fa-solid ' + meta.icon + '"></i></div>' +
+            '<div class="rp-cmd-body">' +
+              '<div class="rp-cmd-name-row">' +
+                (callPicker.tab === 'call' ? '<span class="rp-cmd-status-dot ' + statusCls + '" title="' + (isActive ? 'Active' : 'Cleared') + '"></span>' : '') +
+                '<span class="rp-cmd-name">' + highlightMatch(rowName(row, callPicker.tab), q) + '</span>' +
+              '</div>' +
+              '<div class="rp-cmd-desc">' + highlightMatch(rowDesc(row, callPicker.tab) || '—', q) + '</div>' +
+            '</div>' +
+            '<div class="rp-cmd-meta">' +
+              (rel ? '<span class="rp-cmd-meta-time">' + escapeHTML(rel) + '</span>' : '') +
+              '<span class="rp-cmd-meta-enter">↵</span>' +
+            '</div>' +
+          '</a>';
+        }).join('');
+        callPicker.count.innerHTML = '<strong>' + callPicker.filtered.length + '</strong> of ' + rowsAll.length + ' ' + escapeHTML(nounPlural);
+        bindCallRowHandlers();
+        scrollCallActiveIntoView();
+      }
+
+      function setPickerTab(tab) {
+        if (SOURCE_TABS.indexOf(tab) === -1) return;
+        callPicker.tab = tab;
+        callPicker.activeIdx = 0;
+        callPicker.query = '';
+        if (callPicker.input) {
+          callPicker.input.value = '';
+          callPicker.searchWrap.classList.remove('has-value');
+        }
+        Array.from(document.querySelectorAll('#rp-cmd-tabs .rp-cmd-tab')).forEach(function (b) {
+          b.classList.toggle('active', b.getAttribute('data-tab') === tab);
+        });
+        var meta = SOURCE_META[tab];
+        if (tab === 'call') {
+          callPicker.input.placeholder = 'Search calls…';
+          if (!callPicker.cache.call.loaded) {
+            fetchCallsOnce().then(function () { renderCallPicker(); });
+          }
+        } else {
+          // Drill tabs always start at step 1 unless a civilian is already
+          // picked from a prior visit. Update placeholder accordingly.
+          callPicker.input.placeholder = drillMode() === 'civilian'
+            ? 'Search civilians by name…'
+            : ('Filter ' + meta.noun + 's…');
+        }
+        renderCallPicker();
+      }
+
+      function bindCallRowHandlers() {
+        var backBtn = callPicker.results.querySelector('[data-drill-back]');
+        if (backBtn) backBtn.addEventListener('click', function (e) { e.preventDefault(); clearDrillCivilian(callPicker.tab); });
+        Array.from(callPicker.results.querySelectorAll('.rp-cmd-row')).forEach(function (row) {
+          row.addEventListener('click', function (e) {
+            e.preventDefault();
+            var civId = row.getAttribute('data-civ-id');
+            if (civId) {
+              // Step 1 → step 2: drill into picked civilian.
+              var civ = (callPicker.civSearch[callPicker.tab].results || []).filter(function (c) { return c._id === civId; })[0];
+              if (civ) {
+                callPicker.query = '';
+                callPicker.input.value = '';
+                callPicker.searchWrap.classList.remove('has-value');
+                callPicker.activeIdx = 0;
+                loadDrillItems(callPicker.tab, civ);
+                setTimeout(function () { callPicker.input.focus(); }, 30);
+              }
+              return;
+            }
+            var id = row.getAttribute('data-id');
+            var childId = row.getAttribute('data-child-id') || '';
+            applyPickedRow(callPicker.tab, id, childId);
+          });
+          row.addEventListener('mousemove', function () {
+            var idx = parseInt(row.getAttribute('data-idx'), 10);
+            if (idx === callPicker.activeIdx) return;
+            callPicker.activeIdx = idx;
+            updateCallActive();
+          });
+        });
+      }
+
+      function updateCallActive() {
+        Array.from(callPicker.results.querySelectorAll('.rp-cmd-row')).forEach(function (row) {
+          var idx = parseInt(row.getAttribute('data-idx'), 10);
+          row.classList.toggle('active', idx === callPicker.activeIdx);
+        });
+        scrollCallActiveIntoView();
+      }
+      function scrollCallActiveIntoView() {
+        var active = callPicker.results.querySelector('.rp-cmd-row.active');
+        if (!active) return;
+        var rTop = active.offsetTop, rBottom = rTop + active.offsetHeight;
+        var sTop = callPicker.results.scrollTop, sBottom = sTop + callPicker.results.clientHeight;
+        if (rTop < sTop) callPicker.results.scrollTop = rTop - 8;
+        else if (rBottom > sBottom) callPicker.results.scrollTop = rBottom - callPicker.results.clientHeight + 8;
+      }
+
+      function rowMeta(row, tab) {
+        return {
+          title: rowName(row, tab),
+          createdAt: rowCreatedAt(row, tab),
+          isActive: rowIsActive(row, tab),
+        };
+      }
+
+      function applyPickedRow(tab, id, childId) {
+        if (!id) return;
+        // Find the picked row before we close the modal (which resets drill state).
+        var rows;
+        if (tab === 'call') {
+          rows = (callPicker.cache.call && callPicker.cache.call.all) || [];
+        } else {
+          // Drill tabs: the rows we rendered came from the drill items list.
+          rows = (callPicker.drill[tab] && callPicker.drill[tab].items) || [];
+        }
+        var pick = rows.filter(function (c) { return c._id === id && (childId ? c._childId === childId : true); })[0];
+        closeCallPicker();
+        // Replace any existing source of the same type so old prefill is
+        // wiped before the new prefill applies — one source per type.
+        var existing = state.sources.filter(function (s) { return s.type === tab; })[0];
+        if (existing) removeSource(tab, existing.id, { silent: true });
+        var src = { type: tab, id: id, meta: rowMeta(pick || {}, tab) };
+        if (childId) src.childId = childId;
+        applySource(src);
+      }
+
+      // Removes a source: drops it from state.sources / state.links and
+      // wipes any field whose importedFrom still points at it. Fields the
+      // user has hand-edited had their importedFrom dropped already, so
+      // those edits are preserved. silent=true suppresses the toast for
+      // the replace-on-pick flow.
+      function removeSource(type, id, opts) {
+        opts = opts || {};
+        state.sources = state.sources.filter(function (s) { return !(s.type === type && s.id === id); });
+        state.links = state.links.filter(function (l) { return !(l.type === type && l.id === id); });
+        Object.keys(state.importedFrom).forEach(function (fid) {
+          var info = state.importedFrom[fid];
+          if (info && info.type === type && info.id === id) {
+            delete state.importedFrom[fid];
+            delete state.data[fid];
+          }
+        });
+        render();
+        if (!opts.silent) toast('Removed ' + type + ' import', 'success');
+      }
+
+      function openCallPicker(initialTab) {
+        if (!callPicker.backdrop) buildCallPickerEls();
+        // Reset drill state for both drill tabs so each open starts clean.
+        callPicker.drill = {
+          citation:     { civilian: null, items: [], loading: false },
+          arrestReport: { civilian: null, items: [], loading: false },
+        };
+        callPicker.civSearch = {
+          citation:     { query: '', results: [], loading: false, debounce: null },
+          arrestReport: { query: '', results: [], loading: false, debounce: null },
+        };
+        callPicker.query = '';
+        callPicker.input.value = '';
+        callPicker.activeIdx = 0;
+        callPicker.searchWrap.classList.remove('has-value');
+        var tab = SOURCE_TABS.indexOf(initialTab) !== -1 ? initialTab : 'call';
+        setPickerTab(tab);
+        updateTabCounts();
+        callPicker.backdrop.classList.add('open');
+        setTimeout(function () { callPicker.input.focus(); }, 30);
+      }
+      function closeCallPicker() {
+        if (!callPicker.backdrop) return;
+        callPicker.backdrop.classList.remove('open');
+      }
+
+      // ============================================================
+      // Entity picker — civilian / vehicle / firearm picker for
+      // row-level binding. Independent modal from the source picker.
+      // ============================================================
+      var ENTITY_META = {
+        civilian: { icon: 'fa-user',          noun: 'civilian', endpoint: function (cid) { return '/api/v2/community/' + encodeURIComponent(cid) + '/civilians?page=0&limit=200'; } },
+        vehicle:  { icon: 'fa-car',           noun: 'vehicle',  endpoint: function (cid) { return '/api/v2/community/' + encodeURIComponent(cid) + '/vehicles?page=0&limit=200'; } },
+        firearm:  { icon: 'fa-gun',           noun: 'firearm',  endpoint: function (cid) { return '/api/v2/community/' + encodeURIComponent(cid) + '/firearms?page=0&limit=200'; } },
+      };
+      var entityPicker = {
+        backdrop: null, input: null, results: null, count: null, searchWrap: null, clearBtn: null,
+        type: 'civilian',
+        cache: { civilian: { all: [], loaded: false, loading: false },
+                 vehicle:  { all: [], loaded: false, loading: false },
+                 firearm:  { all: [], loaded: false, loading: false } },
+        filtered: [], activeIdx: 0, query: '',
+        // Where to apply the picked entity
+        target: null, // { sectionId, rowIdx, type }
+      };
+
+      function buildEntityPickerEls() {
+        entityPicker.backdrop = document.getElementById('rp-entity-cmd');
+        entityPicker.input = document.getElementById('rp-entity-input');
+        entityPicker.results = document.getElementById('rp-entity-results');
+        entityPicker.count = document.getElementById('rp-entity-count');
+        entityPicker.searchWrap = document.getElementById('rp-entity-search-wrap');
+        entityPicker.clearBtn = document.getElementById('rp-entity-clear');
+      }
+
+      function fetchEntityListOnce(type) {
+        var c = entityPicker.cache[type];
+        if (c.loaded || c.loading) return Promise.resolve(c.all);
+        c.loading = true;
+        return fetch(apiUrl + ENTITY_META[type].endpoint(communityId), { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+          .then(function (j) { c.all = (j && j.data) || []; c.loaded = true; return c.all; })
+          .catch(function () { return []; })
+          .finally(function () { c.loading = false; });
+      }
+
+      function entityName(row, type) {
+        if (type === 'civilian') {
+          var d = row.civilian || {};
+          var full = (d.firstName || '') + ' ' + (d.lastName || '');
+          return full.trim() || d.name || '(unknown)';
+        }
+        if (type === 'vehicle') {
+          var v = row.vehicle || {};
+          return [v.year, v.make, v.model].filter(Boolean).join(' ') || v.plate || '(vehicle)';
+        }
+        if (type === 'firearm') {
+          var f = row.firearm || {};
+          return f.name || f.weaponType || f.serialNumber || '(firearm)';
+        }
+        return '(unknown)';
+      }
+      function entityDesc(row, type) {
+        if (type === 'civilian') {
+          var d = row.civilian || {};
+          var bits = [];
+          if (d.birthday) bits.push('DOB ' + d.birthday);
+          if (d.address) bits.push(d.address);
+          return bits.join(' · ');
+        }
+        if (type === 'vehicle') {
+          var v = row.vehicle || {};
+          var bits2 = [];
+          if (v.plate) bits2.push(v.plate);
+          if (v.color) bits2.push(v.color);
+          if (v.vin) bits2.push('VIN ' + v.vin);
+          return bits2.join(' · ');
+        }
+        if (type === 'firearm') {
+          var f = row.firearm || {};
+          var bits3 = [];
+          if (f.serialNumber) bits3.push('SN ' + f.serialNumber);
+          if (f.caliber) bits3.push(f.caliber);
+          if (f.weaponType) bits3.push(f.weaponType);
+          return bits3.join(' · ');
+        }
+        return '';
+      }
+
+      function scoreEntity(row, q, type) {
+        var name = entityName(row, type).toLowerCase();
+        var desc = entityDesc(row, type).toLowerCase();
+        var ni = name.indexOf(q);
+        if (ni !== -1) return 1000 - ni;
+        var di = desc.indexOf(q);
+        if (di !== -1) return 500 - di;
+        return -1;
+      }
+
+      function filterEntities() {
+        var q = entityPicker.query.trim().toLowerCase();
+        var rows = (entityPicker.cache[entityPicker.type].all || []).slice();
+        if (!q) { entityPicker.filtered = rows; return; }
+        var scored = [];
+        rows.forEach(function (c) {
+          var s = scoreEntity(c, q, entityPicker.type);
+          if (s >= 0) scored.push({ c: c, s: s });
+        });
+        scored.sort(function (a, b) { return b.s - a.s; });
+        entityPicker.filtered = scored.map(function (x) { return x.c; });
+      }
+
+      function renderEntityPicker() {
+        var q = entityPicker.query.trim();
+        filterEntities();
+        var c = entityPicker.cache[entityPicker.type];
+        var noun = ENTITY_META[entityPicker.type].noun;
+        var nounPlural = noun + 's';
+
+        if (c.loading && c.all.length === 0) {
+          entityPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="rp-cmd-empty-title">Loading ' + escapeHTML(nounPlural) + '…</div></div>';
+          entityPicker.count.innerHTML = '';
+          return;
+        }
+        if (c.all.length === 0) {
+          entityPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-folder-open"></i></div><div class="rp-cmd-empty-title">No ' + escapeHTML(nounPlural) + '</div><div class="rp-cmd-empty-sub">Records in this community will show up here once any are created.</div></div>';
+          entityPicker.count.innerHTML = '';
+          return;
+        }
+        if (entityPicker.filtered.length === 0) {
+          entityPicker.results.innerHTML = '<div class="rp-cmd-empty"><div class="rp-cmd-empty-icon"><i class="fa-regular fa-circle-question"></i></div><div class="rp-cmd-empty-title">No ' + escapeHTML(nounPlural) + ' match "' + escapeHTML(q) + '"</div></div>';
+          entityPicker.count.innerHTML = '<strong>0</strong> of ' + c.all.length + ' ' + escapeHTML(nounPlural);
+          return;
+        }
+        if (entityPicker.activeIdx >= entityPicker.filtered.length) entityPicker.activeIdx = 0;
+        entityPicker.results.innerHTML = entityPicker.filtered.map(function (row, i) {
+          return '<a class="rp-cmd-row' + (i === entityPicker.activeIdx ? ' active' : '') + '"' +
+                 ' role="option" data-idx="' + i + '" data-id="' + escapeHTML(row._id) + '" href="#">' +
+            '<div class="rp-cmd-icon" style="color:#c4b5fd;"><i class="fa-solid ' + ENTITY_META[entityPicker.type].icon + '"></i></div>' +
+            '<div class="rp-cmd-body">' +
+              '<div class="rp-cmd-name-row"><span class="rp-cmd-name">' + highlightMatch(entityName(row, entityPicker.type), q) + '</span></div>' +
+              '<div class="rp-cmd-desc">' + highlightMatch(entityDesc(row, entityPicker.type) || '—', q) + '</div>' +
+            '</div>' +
+            '<div class="rp-cmd-meta"><span class="rp-cmd-meta-enter">↵</span></div>' +
+          '</a>';
+        }).join('');
+        entityPicker.count.innerHTML = '<strong>' + entityPicker.filtered.length + '</strong> of ' + c.all.length + ' ' + escapeHTML(nounPlural);
+        Array.from(entityPicker.results.querySelectorAll('.rp-cmd-row')).forEach(function (row) {
+          row.addEventListener('click', function (e) {
+            e.preventDefault();
+            var id = row.getAttribute('data-id');
+            applyEntityToRow(id);
+          });
+          row.addEventListener('mousemove', function () {
+            var idx = parseInt(row.getAttribute('data-idx'), 10);
+            if (idx === entityPicker.activeIdx) return;
+            entityPicker.activeIdx = idx;
+            Array.from(entityPicker.results.querySelectorAll('.rp-cmd-row')).forEach(function (r) {
+              r.classList.toggle('active', parseInt(r.getAttribute('data-idx'), 10) === entityPicker.activeIdx);
+            });
+          });
+        });
+      }
+
+      function openEntityPicker(target) {
+        if (!entityPicker.backdrop) buildEntityPickerEls();
+        entityPicker.target = target;
+        entityPicker.type = target.type;
+        entityPicker.query = '';
+        entityPicker.input.value = '';
+        entityPicker.input.placeholder = 'Search ' + ENTITY_META[target.type].noun + 's…';
+        entityPicker.activeIdx = 0;
+        entityPicker.searchWrap.classList.remove('has-value');
+        renderEntityPicker();
+        entityPicker.backdrop.classList.add('open');
+        setTimeout(function () { entityPicker.input.focus(); }, 30);
+        if (!entityPicker.cache[target.type].loaded) {
+          fetchEntityListOnce(target.type).then(function () { renderEntityPicker(); });
+        }
+      }
+      function closeEntityPicker() {
+        if (!entityPicker.backdrop) return;
+        entityPicker.backdrop.classList.remove('open');
+        entityPicker.target = null;
+      }
+
+      function applyEntityToRow(id) {
+        var target = entityPicker.target;
+        if (!target || !id) return;
+        var rows = (entityPicker.cache[target.type].all || []);
+        var pick = rows.filter(function (r) { return r._id === id; })[0];
+        if (!pick) { closeEntityPicker(); return; }
+        // The detail object is keyed by entity type — civilian / vehicle / firearm.
+        var details = pick[target.type] || {};
+        var label = entityName(pick, target.type);
+
+        // Ensure the row exists.
+        if (!Array.isArray(state.data[target.sectionId])) state.data[target.sectionId] = [];
+        while (state.data[target.sectionId].length <= target.rowIdx) state.data[target.sectionId].push({});
+        var row = state.data[target.sectionId][target.rowIdx];
+
+        // Mark the row link for chip rendering + later submission.links[] aggregation.
+        row._link = { type: target.type, id: id, label: label };
+
+        // Walk the section's fields and apply any populateFrom rule whose
+        // source === "bound". Skip fields the user has already filled in.
+        var section = (state.template.sections || []).filter(function (s) { return s.id === target.sectionId; })[0];
+        var bound = {};
+        bound[target.type] = details;
+        // Synthetic helpers: "name" merges firstName/lastName for civilians.
+        if (target.type === 'civilian' && !details.name) {
+          var fullName = ((details.firstName || '') + ' ' + (details.lastName || '')).trim();
+          if (fullName) details.name = fullName;
+        }
+        var justFilled = [];
+        (section && section.fields ? section.fields : []).forEach(function (f) {
+          if (!Array.isArray(f.populateFrom)) return;
+          for (var i = 0; i < f.populateFrom.length; i++) {
+            var m = f.populateFrom[i];
+            if (m.source !== 'bound') continue;
+            // Only fill if empty so we don't trample user edits.
+            if (!isEmpty(row[f.id])) break;
+            var v = resolveBoundPath(details, target.type, m.path);
+            if (v == null || v === '') continue;
+            row[f.id] = v;
+            justFilled.push(f.id);
+            break;
+          }
+        });
+
+        closeEntityPicker();
+        render();
+
+        // Brief value flash on bound fields after re-render.
+        setTimeout(function () {
+          justFilled.forEach(function (fid) {
+            var sel = '[data-field-key="' + cssEscape(target.sectionId) + '.' + cssEscape(fid) + '[' + target.rowIdx + ']"]';
+            var el = document.querySelector(sel);
+            if (!el) return;
+            el.classList.add('rp-just-bound');
+            setTimeout(function () { el.classList.remove('rp-just-bound'); }, 800);
+          });
+        }, 30);
+
+        toast('Linked ' + target.type + ': ' + label, 'success');
+      }
+
+      // resolveBoundPath walks dotted JSON paths against a bound entity's
+      // detail object. Supports the @const:Value and @desc:civilian helpers.
+      function resolveBoundPath(details, type, path) {
+        if (!path) return null;
+        if (path.indexOf('@const:') === 0) return path.slice(7);
+        if (path === '@desc:civilian') {
+          var bits = [];
+          if (details.gender)    bits.push(details.gender);
+          if (details.race)      bits.push(details.race);
+          if (details.height)    bits.push(details.height);
+          if (details.weight)    bits.push(details.weight);
+          if (details.hairColor) bits.push(details.hairColor + ' hair');
+          if (details.eyeColor)  bits.push(details.eyeColor + ' eyes');
+          return bits.filter(Boolean).join(', ');
+        }
+        var parts = path.split('.');
+        var cur = details;
+        for (var i = 0; i < parts.length; i++) {
+          if (cur == null || typeof cur !== 'object') return null;
+          cur = cur[parts[i]];
+        }
+        return cur == null ? null : cur;
+      }
+
+      // When the user picks a citation or arrest report as a top-level
+      // source, infer the civilian involved and link them to row 0 of
+      // every unbound `bindEntity: "civilian"` section. This is what
+      // makes "pick a citation → suspect fills in" feel natural.
+      function autoLinkImpliedCivilian(src) {
+        if (!state.template || !state.template.sections) return;
+        if (src.type !== 'citation' && src.type !== 'arrestReport') return;
+
+        var civilianId = null, civDetails = null, civLabel = null;
+
+        if (src.type === 'citation') {
+          // Citation source.id IS the civilian id (childId is the criminalHistory item).
+          var cRow = (callPicker.drill.citation && callPicker.drill.citation.items || [])
+            .filter(function (r) { return r._id === src.id && r._childId === src.childId; })[0];
+          if (cRow) { civilianId = cRow._id; civDetails = cRow.civilian || {}; }
+        } else if (src.type === 'arrestReport') {
+          // Arrest report's arrestee.id is the civilian id; civilian comes from drill state.
+          var aRow = (callPicker.drill.arrestReport && callPicker.drill.arrestReport.items || [])
+            .filter(function (r) { return r._id === src.id; })[0];
+          if (aRow) {
+            var arr = (aRow.arrestReport && aRow.arrestReport.arrestee) || {};
+            civilianId = arr.id || null;
+            // We don't have the full civilian record here, but the drill
+            // state was reached via picking a civilian — use that one.
+            var pickedCiv = callPicker.drill.arrestReport.civilian || {};
+            civDetails = pickedCiv.civilian || {};
+            // Fall back to arrestee fields if civilian record is sparse.
+            if (!civDetails.firstName && arr.name) {
+              var parts = String(arr.name).trim().split(/\s+/);
+              civDetails = Object.assign({}, civDetails, {
+                firstName: parts[0] || '',
+                lastName: parts.slice(1).join(' ') || '',
+                name: arr.name,
+                birthday: arr.dob || civDetails.birthday,
+                address: arr.address || civDetails.address,
+              });
+            }
+            if (!civilianId) civilianId = pickedCiv._id || null;
+          }
+        }
+
+        if (!civilianId || !civDetails) return;
+        civLabel = ((civDetails.firstName || '') + ' ' + (civDetails.lastName || '')).trim() || civDetails.name || civilianId;
+
+        // Synthetic merged "name" so paths like "name" resolve cleanly.
+        if (!civDetails.name) {
+          var fn = ((civDetails.firstName || '') + ' ' + (civDetails.lastName || '')).trim();
+          if (fn) civDetails = Object.assign({}, civDetails, { name: fn });
+        }
+
+        var justFilled = []; // [{ sectionId, rowIdx, fieldId }]
+        (state.template.sections || []).forEach(function (section) {
+          if (!section.repeatable || section.bindEntity !== 'civilian') return;
+          if (!Array.isArray(state.data[section.id])) state.data[section.id] = [];
+          if (state.data[section.id].length === 0) state.data[section.id].push({});
+          var row = state.data[section.id][0];
+          // Don't trample an existing link on row 0.
+          if (row._link) return;
+          row._link = { type: 'civilian', id: civilianId, label: civLabel };
+          (section.fields || []).forEach(function (f) {
+            if (!Array.isArray(f.populateFrom)) return;
+            for (var i = 0; i < f.populateFrom.length; i++) {
+              var m = f.populateFrom[i];
+              if (m.source !== 'bound') continue;
+              if (!isEmpty(row[f.id])) break;
+              var v = resolveBoundPath(civDetails, 'civilian', m.path);
+              if (v == null || v === '') continue;
+              row[f.id] = v;
+              justFilled.push({ sectionId: section.id, rowIdx: 0, fieldId: f.id });
+              break;
+            }
+          });
+        });
+
+        if (justFilled.length) {
+          // Brief value flash on bound fields after the impending render.
+          setTimeout(function () {
+            justFilled.forEach(function (h) {
+              var sel = '[data-field-key="' + cssEscape(h.sectionId) + '.' + cssEscape(h.fieldId) + '[' + h.rowIdx + ']"]';
+              var el = document.querySelector(sel);
+              if (!el) return;
+              el.classList.add('rp-just-bound');
+              setTimeout(function () { el.classList.remove('rp-just-bound'); }, 800);
+            });
+          }, 50);
+        }
+      }
+
+      function unlinkRow(sectionId, rowIdx) {
+        var rows = state.data[sectionId];
+        if (!Array.isArray(rows) || !rows[rowIdx]) return;
+        delete rows[rowIdx]._link;
+        render();
+      }
+
+      function fmtRelShort(ts) {
+        if (!ts) return '';
+        var t = new Date(ts).getTime();
+        if (!t) return '';
+        var diff = Date.now() - t;
+        if (diff < 60 * 1000) return 'just now';
+        if (diff < 3600 * 1000) return Math.round(diff / 60000) + 'm ago';
+        if (diff < 86400 * 1000) return Math.round(diff / 3600000) + 'h ago';
+        return Math.round(diff / 86400000) + 'd ago';
+      }
+
+      function renderSourceChip(src) {
+        var m = src.meta || {};
+        var meta = SOURCE_META[src.type] || SOURCE_META.call;
+        var rel = fmtRelShort(m.createdAt);
+        var showStatus = src.type === 'call';
+        var statusCls = m.isActive ? 'active' : 'cleared';
+        var fallback = '(' + meta.noun + ')';
+        return '<div class="rp-source-chip" data-source-type="' + escapeHTML(src.type) + '" data-source-id="' + escapeHTML(src.id) + '">' +
+          '<span class="rp-source-chip-icon"><i class="fa-solid ' + meta.icon + '"></i></span>' +
+          (showStatus ? '<span class="rp-source-chip-status ' + statusCls + '" title="' + (m.isActive ? 'Active call' : 'Cleared call') + '"></span>' : '') +
+          '<span class="rp-source-chip-title" title="' + escapeHTML(m.title || '') + '">' + escapeHTML(m.title || fallback) + '</span>' +
+          (rel ? '<span class="rp-source-chip-time">' + escapeHTML(rel) + '</span>' : '') +
+          '<button class="rp-source-chip-x" type="button" aria-label="Remove this source" data-remove-source="' + escapeHTML(src.type) + '|' + escapeHTML(src.id) + '"><i class="fa-solid fa-xmark"></i></button>' +
+        '</div>';
+      }
+
+      function clearAllImports() {
+        // Wipe imports AND the field values they filled — fields the user
+        // hand-edited had their importedFrom dropped already, so those
+        // edits survive.
+        Object.keys(state.importedFrom).forEach(function (fid) { delete state.data[fid]; });
+        state.importedFrom = {};
+        state.sources = [];
+        state.links = [];
+        render();
+      }
+
+      function renderCallout() {
+        var el = document.getElementById('rp-callout');
+        if (state.existing && readOnly) {
+          el.innerHTML = '<div class="rp-callout"><div class="rp-callout-title"><i class="fa-solid fa-eye" style="color: var(--rp-accent);"></i> Read-only view</div><div style="font-size: 0.85rem; color: var(--rp-text-muted);">Switch to edit mode to make changes.</div></div>';
+          return;
+        }
+        // Drafts and submitted edits both keep the Start-from panel —
+        // users may want to pull in a new source to fill remaining fields.
+
+        // Only top-level sources (calls/citations/arrest reports) — row-level
+        // entity links live on rows themselves, not in the Start-from chip rail.
+        var topSources = state.sources.filter(function (s) { return SOURCE_TABS.indexOf(s.type) !== -1; });
+        var hasSources = topSources.length > 0;
+
+        var subtitle = hasSources
+          ? 'Importing from ' + topSources.length + ' record' + (topSources.length === 1 ? '' : 's') + '. Pick another to replace by type, or × to remove.'
+          : 'Pull info from a recent call, citation, or arrest report to auto-fill what you can. You can always edit afterwards.';
+
+        var pickBtnLabel = hasSources ? 'Add another source…' : 'Pick a record to import…';
+
+        var chipsHTML = topSources.map(renderSourceChip).join('');
+
+        var html = '<div class="rp-callout">' +
+          '<div class="rp-callout-title"><i class="fa-solid fa-bolt" style="color: var(--rp-amber);"></i> Start from existing data</div>' +
+          '<div style="font-size: 0.85rem; color: var(--rp-text-muted); margin-bottom: 0.75rem;">' + escapeHTML(subtitle) + '</div>' +
+          (chipsHTML ? '<div class="rp-callout-row" style="margin-bottom: 0.6rem;">' + chipsHTML + '</div>' : '') +
+          '<div class="rp-callout-row">' +
+            '<button id="rp-src-pick" class="rp-btn ' + (hasSources ? 'rp-btn-ghost' : 'rp-btn-outline') + '"><i class="fa-solid fa-magnifying-glass"></i> ' + escapeHTML(pickBtnLabel) + '</button>' +
+            (hasSources ? '<button id="rp-src-clear" class="rp-btn rp-btn-ghost">Clear all imports</button>' : '') +
+          '</div>' +
+          '</div>';
+        el.innerHTML = html;
+
+        document.getElementById('rp-src-pick').addEventListener('click', openCallPicker);
+        var clearBtn = document.getElementById('rp-src-clear');
+        if (clearBtn) clearBtn.addEventListener('click', clearAllImports);
+
+        // Wire chip × buttons
+        Array.from(el.querySelectorAll('[data-remove-source]')).forEach(function (btn) {
+          btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            var parts = btn.getAttribute('data-remove-source').split('|');
+            removeSource(parts[0], parts[1]);
+          });
+        });
+      }
+
+      function applySource(src) {
+        // Avoid duplicate entries (match on type + id + childId).
+        var dup = state.sources.filter(function (s) {
+          return s.type === src.type && s.id === src.id && (s.childId || '') === (src.childId || '');
+        }).length > 0;
+        if (!dup) state.sources.push(src);
+
+        // For citation / arrestReport sources we know which civilian is
+        // involved — auto-link them to row 0 of any unbound civilian
+        // section so the suspect/victim block auto-fills, not just the
+        // narrative-style top-level fields. The user's mental model is
+        // "I picked Marty's citation, the suspect should be Marty."
+        autoLinkImpliedCivilian(src);
+
+        // Ask the API to compute prefill against template + sources.
+        // Strip client-only `meta` before sending; server only needs type/id/childId.
+        var sourcesPayload = state.sources.map(function (s) {
+          var out = { type: s.type, id: s.id };
+          if (s.childId) out.childId = s.childId;
+          return out;
+        });
+        fetch(apiUrl + '/api/v1/form-submission/draft', {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            communityID: communityId,
+            formTemplateSlug: slug,
+            sources: sourcesPayload
+          })
+        })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (j) {
+            if (!j || !j.data) return toast('Could not fetch prefill', 'error');
+            var prefill = j.data;
+            Object.keys(prefill).forEach(function (k) {
+              if (state.data[k] == null || state.data[k] === '') {
+                state.data[k] = prefill[k];
+                state.importedFrom[k] = { type: src.type, id: src.id, label: srcLabel(src) };
+              }
+            });
+            // Add the source as a link too (so it shows up on entity profile pages).
+            var alreadyLinked = state.links.filter(function (l) { return l.type === src.type && l.id === src.id; }).length > 0;
+            var label = (src.meta && src.meta.title) || srcLabel(src);
+            if (!alreadyLinked) state.links.push({ type: src.type, id: src.id, label: label });
+            render();
+            toast('Prefilled from ' + (src.meta && src.meta.title ? '"' + src.meta.title + '"' : src.type), 'success');
+          })
+          .catch(function () { toast('Failed to fetch prefill', 'error'); });
+      }
+
+      function srcLabel(src) { return src.type + ':' + (src.id || '').slice(-6); }
+
+      // ============================================================
+      // Submission success modal — animated check + two action cards.
+      // ============================================================
+      function showSubmitSuccess(subId, reportNumber) {
+        var backdrop = document.getElementById('rp-suc');
+        var numEl = document.getElementById('rp-suc-num');
+        numEl.textContent = reportNumber || '—';
+
+        var reportsHref = '/reports' + (communityIdEncoded ? '?c=' + encodeURIComponent(communityIdEncoded) : '');
+        var printHref = subId ? ('/reports/' + encodeURIComponent(subId) + '/print' + (communityIdEncoded ? '?c=' + encodeURIComponent(communityIdEncoded) : '')) : '';
+
+        document.getElementById('rp-suc-back').onclick = function () {
+          window.location.href = reportsHref;
+        };
+        document.getElementById('rp-suc-print').onclick = function () {
+          if (!printHref) { toast('Save the report first to print', 'error'); return; }
+          window.open(printHref, '_blank', 'noopener');
+        };
+        document.getElementById('rp-suc-stay').onclick = function () {
+          backdrop.classList.remove('open');
+          // Reload so the page rehydrates as an existing-submission view
+          // (useful when this was a fresh POST — future saves go to PUT).
+          if (subId && !state.existing) {
+            window.location.href = '/reports/' + subId + (communityIdEncoded ? '?c=' + communityIdEncoded : '');
+          } else {
+            // Already in edit mode for an existing record — re-enable the
+            // submit button so the user can keep working.
+            var sBtn = document.getElementById('rp-submit'); if (sBtn) sBtn.disabled = false;
+          }
+        };
+
+        backdrop.classList.add('open');
+        // Make the back-to-reports card the default focus target so Enter
+        // takes the user out — most submissions don't need follow-up edits.
+        setTimeout(function () { document.getElementById('rp-suc-back').focus(); }, 30);
+      }
+      // Esc on the success modal == "stay on this report" (least surprising
+      // — keeps the user on the page they were on, doesn't fire the primary).
+      document.addEventListener('keydown', function (e) {
+        var b = document.getElementById('rp-suc');
+        if (!b || !b.classList.contains('open')) return;
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          document.getElementById('rp-suc-stay').click();
+        }
+      });
+
+      // --- field renderers ---
+      function renderField(f, sectionId, rowIdx) {
+        var fieldKey = sectionId + '.' + f.id + (rowIdx != null ? '[' + rowIdx + ']' : '');
+        var pathParts = sectionId === f.id ? [f.id] : [sectionId, f.id];
+        var value = readValue(state.data, sectionId, f.id, rowIdx);
+
+        var disabled = readOnly ? ' disabled' : '';
+        var labelHTML = '<span class="rp-label">' +
+          escapeHTML(f.label || f.id) +
+          (f.required ? ' <span class="req">*</span>' : '') +
+          (state.importedFrom[f.id] ? ' <span class="rp-imported-pill"><i class="fa-solid fa-import"></i> from ' + escapeHTML(state.importedFrom[f.id].type) + (readOnly ? '' : ' <button type="button" data-clear-import="' + escapeHTML(f.id) + '" title="Clear">×</button>') + '</span>' : '') +
+          '</span>';
+
+        var inputHTML = '';
+        var fullWidth = ['textarea', 'multiSelect'].indexOf(f.type) !== -1;
+        switch (f.type) {
+          case 'textarea':
+            inputHTML = '<textarea class="rp-textarea" data-field-key="' + fieldKey + '"' + disabled + ' placeholder="' + escapeHTML(f.placeholder || '') + '">' + escapeHTML(value || '') + '</textarea>';
+            break;
+          case 'select':
+          case 'radio':
+            inputHTML = '<select class="rp-select" data-field-key="' + fieldKey + '"' + disabled + '>' +
+              '<option value="">—</option>' +
+              (f.options || []).map(function (o) {
+                return '<option value="' + escapeHTML(o) + '"' + (String(value || '') === o ? ' selected' : '') + '>' + escapeHTML(o) + '</option>';
+              }).join('') +
+              '</select>';
+            break;
+          case 'multiSelect':
+            var arr = Array.isArray(value) ? value : (value ? [value] : []);
+            inputHTML = '<input class="rp-input" data-field-key="' + fieldKey + '" data-multi="1" type="text"' + disabled + ' value="' + escapeHTML(arr.join(', ')) + '" placeholder="Comma-separated values" />';
+            break;
+          case 'checkbox':
+            inputHTML = '<label class="rp-checkbox"><input type="checkbox" data-field-key="' + fieldKey + '"' + disabled + (value ? ' checked' : '') + ' /> Yes</label>';
+            break;
+          case 'date':
+            inputHTML = '<input class="rp-input" type="date" data-field-key="' + fieldKey + '"' + disabled + ' value="' + escapeHTML(value || '') + '" />';
+            break;
+          case 'time':
+            inputHTML = '<input class="rp-input" type="time" data-field-key="' + fieldKey + '"' + disabled + ' value="' + escapeHTML(value || '') + '" />';
+            break;
+          case 'datetime':
+            inputHTML = '<input class="rp-input" type="datetime-local" data-field-key="' + fieldKey + '"' + disabled + ' value="' + escapeHTML(value || '') + '" />';
+            break;
+          case 'number':
+            inputHTML = '<input class="rp-input" type="number" data-field-key="' + fieldKey + '"' + disabled + ' value="' + escapeHTML(value || '') + '" placeholder="' + escapeHTML(f.placeholder || '') + '" />';
+            break;
+          case 'penalCodePicker':
+            // For now penal code picker is just a plain text input; full picker UI is a follow-up.
+            inputHTML = '<input class="rp-input" type="text" data-field-key="' + fieldKey + '"' + disabled + ' value="' + escapeHTML(value || '') + '" placeholder="Charge name" />';
+            break;
+          case 'userPicker':
+          case 'departmentPicker':
+            inputHTML = '<input class="rp-input" type="text" data-field-key="' + fieldKey + '"' + disabled + ' value="' + escapeHTML(value || '') + '" placeholder="' + escapeHTML(f.placeholder || '') + '" />';
+            break;
+          case 'text':
+          default:
+            inputHTML = '<input class="rp-input" type="text" data-field-key="' + fieldKey + '"' + disabled + ' value="' + escapeHTML(value || '') + '" placeholder="' + escapeHTML(f.placeholder || '') + '" />';
+        }
+
+        var wrap = '<div class="rp-field' + (fullWidth ? ' rp-field-full' : '') + (f.required ? ' is-required' : '') + '" data-required="' + (f.required ? '1' : '0') + '">' +
+          labelHTML + inputHTML +
+          (f.helpText ? '<div class="rp-help">' + escapeHTML(f.helpText) + '</div>' : '') +
+          '</div>';
+        return wrap;
+      }
+
+      function readValue(data, sectionId, fieldId, rowIdx) {
+        if (rowIdx != null) {
+          var rows = data[sectionId];
+          if (!Array.isArray(rows) || !rows[rowIdx]) return '';
+          return rows[rowIdx][fieldId];
+        }
+        // Top-level field — could be either keyed by section or directly.
+        if (data[fieldId] != null) return data[fieldId];
+        return '';
+      }
+
+      function renderSection(section) {
+        var open = state.sectionState[section.id] !== false;
+        var requiredHere = (section.fields || []).filter(function (f) { return f.required; }).length;
+        var hdr = '<div class="rp-section-header" data-toggle-section="' + escapeHTML(section.id) + '">' +
+          '<div class="rp-section-title"><i class="fa-solid fa-chevron-right rp-section-chev"></i> ' + escapeHTML(section.title) + (section.repeatable ? ' <span class="rp-pill">repeatable</span>' : '') + (section.bindEntity ? ' <span class="rp-pill" title="Each row can be linked to a ' + escapeHTML(section.bindEntity) + '" style="color:#c4b5fd; border-color:rgba(168,85,247,0.3); background:rgba(168,85,247,0.08);"><i class="fa-solid fa-link"></i> ' + escapeHTML(section.bindEntity) + '</span>' : '') + '</div>' +
+          (requiredHere > 0 ? '<span class="rp-pill" style="color: var(--rp-amber);"><i class="fa-solid fa-asterisk"></i> ' + requiredHere + '</span>' : '') +
+          '</div>';
+
+        var body = '';
+        if (section.repeatable) {
+          var rows = state.data[section.id];
+          if (!Array.isArray(rows)) rows = [];
+          if (rows.length === 0 && !readOnly) rows = [{}];
+          rows.forEach(function (_, idx) {
+            body += '<div class="rp-rep-row" data-section-id="' + escapeHTML(section.id) + '" data-row-idx="' + idx + '">' +
+              renderRowLinkBar(section, idx) +
+              (readOnly ? '' : '<button type="button" class="rp-rep-rm" data-remove-row="' + escapeHTML(section.id) + '|' + idx + '"><i class="fa-solid fa-trash"></i></button>') +
+              '<div class="rp-grid">' +
+                (section.fields || []).map(function (f) { return renderField(f, section.id, idx); }).join('') +
+              '</div>' +
+              '</div>';
+          });
+          if (!readOnly) {
+            body += '<button type="button" class="rp-rep-add" data-add-row="' + escapeHTML(section.id) + '"><i class="fa-solid fa-plus"></i> Add ' + escapeHTML(singularize(section.title)) + '</button>';
+          }
+        } else {
+          body = '<div class="rp-grid">' + (section.fields || []).map(function (f) { return renderField(f, section.id, null); }).join('') + '</div>';
+        }
+
+        return '<section class="rp-section ' + (open ? 'open' : '') + '" data-section-id="' + escapeHTML(section.id) + '">' +
+          hdr + '<div class="rp-section-body">' + body + '</div></section>';
+      }
+
+      function getRowLink(sectionId, rowIdx) {
+        var rows = state.data[sectionId];
+        if (!Array.isArray(rows) || !rows[rowIdx]) return null;
+        return rows[rowIdx]._link || null;
+      }
+
+      function entityProfilePath(type, id) {
+        if (type === 'civilian') return '/civilian/' + encodeURIComponent(id);
+        if (type === 'vehicle')  return '/vehicle/'  + encodeURIComponent(id);
+        if (type === 'firearm')  return '/firearm/'  + encodeURIComponent(id);
+        return '#';
+      }
+
+      function renderRowLinkBar(section, rowIdx) {
+        if (!section.bindEntity) return '';
+        var link = getRowLink(section.id, rowIdx);
+        var bar = '<div class="rp-row-link-bar">';
+        if (link) {
+          bar += '<span class="rp-row-linked-chip">' +
+            '<i class="fa-solid fa-link"></i>' +
+            '<a href="' + entityProfilePath(link.type, link.id) + '" target="_blank" rel="noopener" title="Open profile">' + escapeHTML(link.label || link.id) + '</a>' +
+            (readOnly ? '' : '<button class="rp-row-linked-chip-x" type="button" data-row-unlink="' + escapeHTML(section.id) + '|' + rowIdx + '" aria-label="Unlink"><i class="fa-solid fa-xmark"></i></button>') +
+          '</span>';
+        } else if (!readOnly) {
+          bar += '<button class="rp-row-link-btn" type="button" data-row-link="' + escapeHTML(section.id) + '|' + rowIdx + '|' + escapeHTML(section.bindEntity) + '">' +
+            '<i class="fa-solid fa-link"></i> Link ' + escapeHTML(section.bindEntity) +
+          '</button>';
+        }
+        bar += '</div>';
+        return bar;
+      }
+
+      function singularize(t) { return (t || '').replace(/s$/, '') || t; }
+
+      function renderSide() {
+        var side = document.getElementById('rp-side');
+        var html = '<div class="rp-side-title">Sections</div>';
+        (state.template.sections || []).forEach(function (s) {
+          var requiredHere = (s.fields || []).filter(function (f) { return f.required; }).length;
+          html += '<a class="rp-side-link' + (requiredHere ? ' has-required' : '') + '" href="#sec-' + escapeHTML(s.id) + '" data-jump="' + escapeHTML(s.id) + '"><i class="fa-regular fa-circle-dot"></i> ' + escapeHTML(s.title) + (requiredHere ? '<span class="rp-pill">' + requiredHere + '</span>' : '') + '</a>';
+        });
+        side.innerHTML = html;
+        Array.from(side.querySelectorAll('[data-jump]')).forEach(function (a) {
+          a.addEventListener('click', function (e) {
+            var id = a.getAttribute('data-jump');
+            state.sectionState[id] = true; render();
+            setTimeout(function () {
+              var sec = document.querySelector('[data-section-id="' + id + '"]');
+              if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 50);
+            e.preventDefault();
+          });
+        });
+      }
+
+      function render() {
+        if (!state.template) return;
+        document.getElementById('rp-title-text').textContent = state.template.name + (state.existing ? ' · ' + (state.existing.formSubmission.reportNumber || '') : '');
+        document.getElementById('rp-sub-text').textContent = state.existing ? 'Created ' + new Date(state.existing.formSubmission.createdAt).toLocaleString() : 'Fill out what you need — auto-saving as draft.';
+
+        renderCallout();
+        renderSide();
+
+        var formEl = document.getElementById('rp-form');
+        formEl.classList.remove('rp-loading');
+        formEl.innerHTML = (state.template.sections || []).map(renderSection).join('');
+
+        document.getElementById('rp-savebar').style.display = readOnly ? 'none' : 'flex';
+
+        renderLockBanner();
+        renderKebab();
+        renderHistory();
+        document.body.classList.toggle('rp-locked', !!readOnly);
+        // The "Required only" filter is irrelevant on a locked, read-only document.
+        var reqWrap = document.getElementById('rp-required-only-wrap');
+        if (reqWrap) reqWrap.style.display = readOnly ? 'none' : '';
+
+        bindFieldHandlers();
+        bindSectionHandlers();
+        applyRequiredOnlyFilter();
+        applyMissingHighlights();
+      }
+
+      function formatHistoryDate(d) {
+        try { return new Date(d).toLocaleString(); } catch (e) { return ''; }
+      }
+
+      function renderLockBanner() {
+        var banner = document.getElementById('rp-lock-banner');
+        var text = document.getElementById('rp-lock-text');
+        var icon = banner.querySelector('.rp-lock-icon i');
+        var sub = state.existing && state.existing.formSubmission;
+        if (!sub) { banner.style.display = 'none'; return; }
+        // Archived takes precedence — both visually and semantically.
+        if (sub.archived) {
+          var ab = sub.archivedBy || {};
+          var aWho = ab.username ? escapeHTML(ab.username) : 'a user';
+          var aWhen = ab.signedAt ? formatHistoryDate(ab.signedAt) : '';
+          text.innerHTML = '<strong>Archived</strong> <span class="rp-lock-meta">by ' + aWho + (aWhen ? ' &middot; ' + escapeHTML(aWhen) : '') + '</span>';
+          if (icon) icon.className = 'fa-solid fa-box-archive';
+          banner.classList.add('is-archived');
+          banner.style.display = 'flex';
+          return;
+        }
+        if (sub.status !== 'submitted') { banner.style.display = 'none'; banner.classList.remove('is-archived'); return; }
+        var signer = sub.signedBy || {};
+        var who = signer.username ? escapeHTML(signer.username) : 'an officer';
+        var when = signer.signedAt ? formatHistoryDate(signer.signedAt) : (sub.createdAt ? formatHistoryDate(sub.createdAt) : '');
+        text.innerHTML = '<strong>Locked &middot; Submitted</strong> <span class="rp-lock-meta">by ' + who + (when ? ' &middot; ' + escapeHTML(when) : '') + '</span>';
+        if (icon) icon.className = 'fa-solid fa-lock';
+        banner.classList.remove('is-archived');
+        banner.style.display = 'flex';
+      }
+
+      function renderKebab() {
+        var wrap = document.getElementById('rp-kebab');
+        var menu = document.getElementById('rp-kebab-menu');
+        if (!state.existing) { wrap.style.display = 'none'; return; }
+        var sub = state.existing.formSubmission || {};
+        var items = [];
+        items.push({ id: 'print', icon: 'fa-print', label: 'Print / Save as PDF' });
+        // Reopen is hidden while archived — user must unarchive first.
+        if (readOnly && !sub.archived && sub.status === 'submitted' && canManageCurrent()) {
+          items.push({ sep: true });
+          items.push({ id: 'reopen', icon: 'fa-lock-open', label: 'Reopen for edits' });
+        }
+        if (canManageCurrent()) {
+          items.push({ sep: true });
+          if (sub.archived) {
+            items.push({ id: 'unarchive', icon: 'fa-box-open', label: 'Unarchive' });
+          } else {
+            items.push({ id: 'archive', icon: 'fa-box-archive', label: 'Archive' });
+          }
+        }
+        menu.innerHTML = items.map(function (it) {
+          if (it.sep) return '<div class="rp-kebab-sep"></div>';
+          return '<button type="button" class="rp-kebab-item' + (it.danger ? ' danger' : '') + '" data-action="' + it.id + '" role="menuitem"><i class="fa-solid ' + it.icon + '"></i>' + escapeHTML(it.label) + '</button>';
+        }).join('');
+        wrap.style.display = '';
+        Array.from(menu.querySelectorAll('[data-action]')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            closeKebab();
+            handleKebabAction(btn.getAttribute('data-action'));
+          });
+        });
+      }
+
+      function renderHistory() {
+        var section = document.getElementById('rp-history');
+        var list = document.getElementById('rp-history-list');
+        var entries = (state.existing && state.existing.formSubmission && state.existing.formSubmission.history) || [];
+        if (!entries.length) { section.style.display = 'none'; return; }
+        list.innerHTML = entries.map(function (e) {
+          var action = e.action || 'submitted';
+          var who = e.username ? escapeHTML(e.username) : 'Unknown user';
+          var when = e.at ? escapeHTML(formatHistoryDate(e.at)) : '';
+          return '<li class="rp-history-item">' +
+            '<span class="rp-history-dot ' + escapeHTML(action) + '"></span>' +
+            '<div>' +
+              '<span class="rp-history-action">' + escapeHTML(action) + '</span> ' +
+              '<span class="rp-history-meta">by ' + who + (when ? ' &middot; ' + when : '') + '</span>' +
+            '</div>' +
+          '</li>';
+        }).join('');
+        section.style.display = '';
+      }
+
+      function openKebab() {
+        document.getElementById('rp-kebab-menu').classList.add('open');
+        document.getElementById('rp-kebab-btn').setAttribute('aria-expanded', 'true');
+      }
+      function closeKebab() {
+        document.getElementById('rp-kebab-menu').classList.remove('open');
+        document.getElementById('rp-kebab-btn').setAttribute('aria-expanded', 'false');
+      }
+
+      function handleKebabAction(action) {
+        if (action === 'print') {
+          if (state.existing && state.existing._id) {
+            window.open('/reports/' + state.existing._id + '/print' + (communityIdEncoded ? '?c=' + communityIdEncoded : ''), '_blank');
+          } else {
+            toast('Save the report first to print', 'error');
+          }
+        } else if (action === 'reopen') {
+          openReopenModal();
+        } else if (action === 'archive') {
+          openArchiveModal(true);
+        } else if (action === 'unarchive') {
+          openArchiveModal(false);
+        }
+      }
+
+      function openReopenModal() {
+        var sub = state.existing && state.existing.formSubmission;
+        var num = (sub && sub.reportNumber) || '';
+        var subtext = num
+          ? 'Report ' + num + ' will move back to Draft. The report number stays the same and a revision will be logged in the history.'
+          : 'This report will move back to Draft. A revision will be logged in the history.';
+        document.getElementById('rp-reopen-sub').textContent = subtext;
+        document.getElementById('rp-reopen').classList.add('open');
+      }
+      function closeReopenModal() {
+        document.getElementById('rp-reopen').classList.remove('open');
+      }
+
+      function openArchiveModal(toArchive) {
+        var sub = state.existing && state.existing.formSubmission;
+        var num = (sub && sub.reportNumber) || '';
+        var titleEl = document.getElementById('rp-archive-title');
+        var subEl = document.getElementById('rp-archive-sub');
+        var btnText = document.getElementById('rp-archive-confirm-text');
+        var btnIcon = document.getElementById('rp-archive-confirm-icon');
+        var iconInner = document.getElementById('rp-archive-icon-inner');
+        if (toArchive) {
+          titleEl.textContent = 'Archive this report?';
+          subEl.textContent = num
+            ? 'Report ' + num + ' will be archived and locked from edits. The original status is preserved — unarchive to restore editing.'
+            : 'This report will be archived and locked from edits. Unarchive to restore editing.';
+          btnText.textContent = 'Archive';
+          btnIcon.className = 'fa-solid fa-box-archive';
+          iconInner.className = 'fa-solid fa-box-archive';
+        } else {
+          titleEl.textContent = 'Unarchive this report?';
+          subEl.textContent = num
+            ? 'Report ' + num + ' will be unarchived and returned to its prior status (' + escapeHTML((sub && sub.status) || 'draft') + ').'
+            : 'This report will be unarchived and returned to its prior status.';
+          btnText.textContent = 'Unarchive';
+          btnIcon.className = 'fa-solid fa-box-open';
+          iconInner.className = 'fa-solid fa-box-open';
+        }
+        document.getElementById('rp-archive-confirm').setAttribute('data-target', toArchive ? '1' : '0');
+        document.getElementById('rp-archive').classList.add('open');
+      }
+      function closeArchiveModal() {
+        document.getElementById('rp-archive').classList.remove('open');
+      }
+
+      function toggleArchive() {
+        if (!state.existing || !state.existing._id) return;
+        var btn = document.getElementById('rp-archive-confirm');
+        var toArchive = btn.getAttribute('data-target') === '1';
+        btn.disabled = true;
+        var payload = {
+          archived: toArchive,
+          actor: currentUser ? { userID: currentUser.id, username: currentUser.username } : undefined
+        };
+        fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(state.existing._id), {
+          method: 'PUT',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(payload)
+        })
+          .then(function (r) {
+            if (r.status === 403) throw new Error('You do not have permission to ' + (toArchive ? 'archive' : 'unarchive') + ' this report.');
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function () {
+            return fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(state.existing._id), { headers: authHeaders() })
+              .then(function (r) { return r.ok ? r.json() : null; });
+          })
+          .then(function (fresh) {
+            if (fresh && fresh.formSubmission) {
+              state.existing = fresh;
+              state.data = fresh.formSubmission.data || {};
+              state.links = fresh.formSubmission.links || [];
+              readOnly = fresh.formSubmission.archived || fresh.formSubmission.status === 'submitted';
+            }
+            closeArchiveModal();
+            render();
+            toast(toArchive ? 'Report archived' : 'Report unarchived', 'success');
+            btn.disabled = false;
+          })
+          .catch(function (e) {
+            toast(e && e.message ? e.message : 'Action failed', 'error');
+            btn.disabled = false;
+          });
+      }
+
+      function reopenForEdits() {
+        if (!state.existing || !state.existing._id) return;
+        var btn = document.getElementById('rp-reopen-confirm');
+        btn.disabled = true;
+        var payload = {
+          status: 'draft',
+          actor: currentUser ? { userID: currentUser.id, username: currentUser.username } : undefined
+        };
+        fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(state.existing._id), {
+          method: 'PUT',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(payload)
+        })
+          .then(function (r) {
+            if (r.status === 403) throw new Error('You do not have permission to reopen this report.');
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function () {
+            // Refetch the submission so we get the updated status + history,
+            // then re-render the page in editable mode.
+            return fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(state.existing._id), { headers: authHeaders() })
+              .then(function (r) { return r.ok ? r.json() : null; });
+          })
+          .then(function (fresh) {
+            if (fresh && fresh.formSubmission) {
+              state.existing = fresh;
+              state.data = fresh.formSubmission.data || {};
+              state.links = fresh.formSubmission.links || [];
+            }
+            readOnly = false;
+            closeReopenModal();
+            render();
+            toast('Reopened for edits — make your changes and resubmit', 'success');
+            btn.disabled = false;
+          })
+          .catch(function (e) {
+            toast(e && e.message ? e.message : 'Reopen failed', 'error');
+            btn.disabled = false;
+          });
+      }
+
+      function bindFieldHandlers() {
+        Array.from(document.querySelectorAll('[data-field-key]')).forEach(function (el) {
+          el.addEventListener('input', onFieldChange);
+          el.addEventListener('change', onFieldChange);
+        });
+        Array.from(document.querySelectorAll('[data-clear-import]')).forEach(function (btn) {
+          btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            var fieldId = btn.getAttribute('data-clear-import');
+            delete state.importedFrom[fieldId];
+            render();
+          });
+        });
+        Array.from(document.querySelectorAll('[data-add-row]')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var sec = btn.getAttribute('data-add-row');
+            if (!Array.isArray(state.data[sec])) state.data[sec] = [];
+            state.data[sec].push({});
+            render();
+          });
+        });
+        Array.from(document.querySelectorAll('[data-remove-row]')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var parts = btn.getAttribute('data-remove-row').split('|');
+            var sec = parts[0]; var idx = parseInt(parts[1], 10);
+            if (Array.isArray(state.data[sec])) {
+              state.data[sec].splice(idx, 1);
+              render();
+            }
+          });
+        });
+        Array.from(document.querySelectorAll('[data-row-link]')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var parts = btn.getAttribute('data-row-link').split('|');
+            openEntityPicker({ sectionId: parts[0], rowIdx: parseInt(parts[1], 10), type: parts[2] });
+          });
+        });
+        Array.from(document.querySelectorAll('[data-row-unlink]')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var parts = btn.getAttribute('data-row-unlink').split('|');
+            unlinkRow(parts[0], parseInt(parts[1], 10));
+          });
+        });
+      }
+
+      function bindSectionHandlers() {
+        Array.from(document.querySelectorAll('[data-toggle-section]')).forEach(function (hdr) {
+          hdr.addEventListener('click', function () {
+            var id = hdr.getAttribute('data-toggle-section');
+            state.sectionState[id] = !state.sectionState[id];
+            var sec = hdr.closest('.rp-section');
+            sec.classList.toggle('open');
+          });
+        });
+      }
+
+      function onFieldChange(e) {
+        var key = e.target.getAttribute('data-field-key');
+        var parts = key.split('.');
+        var sectionId = parts[0];
+        var rest = parts.slice(1).join('.');
+        var match = rest.match(/^(.+?)(?:\[(\d+)\])?$/);
+        var fieldId = match[1];
+        var rowIdx = match[2] != null ? parseInt(match[2], 10) : null;
+
+        var v;
+        if (e.target.type === 'checkbox') v = e.target.checked;
+        else if (e.target.getAttribute('data-multi') === '1') v = e.target.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        else v = e.target.value;
+
+        if (rowIdx != null) {
+          if (!Array.isArray(state.data[sectionId])) state.data[sectionId] = [];
+          if (!state.data[sectionId][rowIdx]) state.data[sectionId][rowIdx] = {};
+          state.data[sectionId][rowIdx][fieldId] = v;
+        } else {
+          state.data[fieldId] = v;
+        }
+        // User edited a field — drop the imported badge for this field.
+        if (state.importedFrom[fieldId]) delete state.importedFrom[fieldId];
+
+        // Clear the missing-required highlight if the field now has a value.
+        if (rowIdx == null && state.missingFields[fieldId] && !isEmpty(v)) {
+          var fieldEl = e.target.closest('.rp-field');
+          if (fieldEl) {
+            fieldEl.classList.remove('is-missing');
+            var tag = fieldEl.querySelector('.rp-required-tag');
+            if (tag) tag.remove();
+          }
+          var sectionId2 = state.missingFields[fieldId].sectionId;
+          delete state.missingFields[fieldId];
+          updateSidebarMissing(sectionId2);
+        }
+      }
+
+      function isEmpty(v) {
+        if (v == null) return true;
+        if (typeof v === 'string') return v.trim() === '';
+        if (Array.isArray(v)) return v.length === 0;
+        return false;
+      }
+
+      // ============================================================
+      // Missing-required validation: highlights + persistent tracking
+      // ============================================================
+      function computeMissing() {
+        var out = {};
+        if (!state.template) return out;
+        (state.template.sections || []).forEach(function (s) {
+          if (s.repeatable) return;
+          (s.fields || []).forEach(function (f) {
+            if (f.required && isEmpty(state.data[f.id])) {
+              out[f.id] = { sectionId: s.id, label: f.label || f.id };
+            }
+          });
+        });
+        return out;
+      }
+
+      function applyMissingHighlights() {
+        // Add red treatment to every field currently in state.missingFields,
+        // and update sidebar entries with red badges. Called after the
+        // user dismisses the validation modal, and re-applied after every
+        // full render so highlights survive structural redraws.
+        Object.keys(state.missingFields).forEach(function (fid) {
+          var info = state.missingFields[fid];
+          var input = document.querySelector('[data-field-key="' + cssEscape(info.sectionId) + '.' + cssEscape(fid) + '"]');
+          if (!input) return;
+          var fieldEl = input.closest('.rp-field');
+          if (!fieldEl) return;
+          fieldEl.classList.add('is-missing');
+          // Inject a small REQUIRED tag once.
+          var labelRow = fieldEl.querySelector('.rp-label');
+          if (labelRow && !labelRow.querySelector('.rp-required-tag')) {
+            var tag = document.createElement('span');
+            tag.className = 'rp-required-tag';
+            tag.innerHTML = '<i class="fa-solid fa-asterisk" style="font-size:0.55rem;"></i> Required';
+            labelRow.appendChild(tag);
+          }
+        });
+        // Re-paint sidebar for every section.
+        if (state.template) {
+          (state.template.sections || []).forEach(function (s) { updateSidebarMissing(s.id); });
+        }
+      }
+
+      function updateSidebarMissing(sectionId) {
+        var link = document.querySelector('.rp-side-link[data-jump="' + cssEscape(sectionId) + '"]');
+        if (!link) return;
+        var count = 0;
+        Object.keys(state.missingFields).forEach(function (fid) {
+          if (state.missingFields[fid].sectionId === sectionId) count++;
+        });
+        if (count > 0) {
+          link.classList.add('is-missing');
+          var pill = link.querySelector('.rp-pill');
+          if (pill) pill.textContent = String(count);
+          else {
+            var p = document.createElement('span');
+            p.className = 'rp-pill';
+            p.textContent = String(count);
+            link.appendChild(p);
+          }
+        } else {
+          link.classList.remove('is-missing');
+          // Restore the original required-count pill (from the template definition).
+          var sec = (state.template.sections || []).filter(function (s) { return s.id === sectionId; })[0];
+          var requiredHere = sec ? (sec.fields || []).filter(function (f) { return f.required; }).length : 0;
+          var pill2 = link.querySelector('.rp-pill');
+          if (requiredHere > 0) {
+            if (pill2) pill2.textContent = String(requiredHere);
+            else {
+              var p2 = document.createElement('span');
+              p2.className = 'rp-pill';
+              p2.textContent = String(requiredHere);
+              link.appendChild(p2);
+            }
+          } else if (pill2) {
+            pill2.remove();
+          }
+        }
+      }
+
+      // CSS.escape polyfill — safe selector substring escaping.
+      function cssEscape(s) {
+        if (window.CSS && window.CSS.escape) return window.CSS.escape(s);
+        return String(s).replace(/([\0-\x1f\x7f]|^-?\d|[\.\#\[\]\,\(\)\:\>\+\~\*\/\=\?\!\&\|\^\$\@\%\;\'\"])/g, '\\$1');
+      }
+
+      function openValidationModal(missing) {
+        var listEl = document.getElementById('rp-conf-list');
+        listEl.innerHTML = missing.map(function (m, i) {
+          var sectionTitle = '';
+          if (state.template) {
+            var sec = (state.template.sections || []).filter(function (s) { return s.id === m.sectionId; })[0];
+            sectionTitle = sec ? sec.title : m.sectionId;
+          }
+          return '<li class="rp-conf-item">' +
+            '<span class="rp-conf-item-num">' + (i + 1) + '.</span>' +
+            '<span class="rp-conf-item-label">' + escapeHTML(m.label) + '</span>' +
+            '<span class="rp-conf-item-section">' + escapeHTML(sectionTitle) + '</span>' +
+          '</li>';
+        }).join('');
+        document.getElementById('rp-conf').classList.add('open');
+      }
+
+      function closeValidationModal() {
+        document.getElementById('rp-conf').classList.remove('open');
+      }
+
+      function reviewAndFix() {
+        // Persist the missing list, close modal, paint highlights, scroll
+        // to + open the first one's section.
+        var missing = computeMissing();
+        state.missingFields = missing;
+        closeValidationModal();
+        applyMissingHighlights();
+        var keys = Object.keys(missing);
+        if (!keys.length) return;
+        var first = missing[keys[0]];
+        // Open its section if collapsed, then scroll into view + focus.
+        state.sectionState[first.sectionId] = true;
+        var secEl = document.querySelector('[data-section-id="' + cssEscape(first.sectionId) + '"]');
+        if (secEl) {
+          secEl.classList.add('open');
+          secEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        setTimeout(function () {
+          var input = document.querySelector('[data-field-key="' + cssEscape(first.sectionId) + '.' + cssEscape(keys[0]) + '"]');
+          if (input && typeof input.focus === 'function') input.focus({ preventScroll: true });
+        }, 350);
+      }
+
+      function applyRequiredOnlyFilter() {
+        var only = document.getElementById('rp-required-only').checked;
+        Array.from(document.querySelectorAll('.rp-field')).forEach(function (el) {
+          if (only && el.getAttribute('data-required') !== '1') el.style.display = 'none';
+          else el.style.display = '';
+        });
+      }
+
+      // collectLinks merges top-level source links with per-row entity
+      // bindings, deduplicating on (type,id,childId). This is what gets
+      // persisted to submission.links[] so future "all reports involving
+      // entity X" queries can use a single index lookup.
+      function collectLinks() {
+        var seen = {};
+        var out = [];
+        function add(link) {
+          if (!link || !link.type || !link.id) return;
+          var key = link.type + '|' + link.id + '|' + (link.childId || '');
+          if (seen[key]) return;
+          seen[key] = true;
+          out.push(link);
+        }
+        (state.links || []).forEach(add);
+        Object.keys(state.data || {}).forEach(function (sectionKey) {
+          var rows = state.data[sectionKey];
+          if (!Array.isArray(rows)) return;
+          rows.forEach(function (row) {
+            if (row && row._link) add({ type: row._link.type, id: row._link.id, label: row._link.label });
+          });
+        });
+        return out;
+      }
+
+      // --- save / submit ---
+      function saveAs(status) {
+        var btn = status === 'submitted' ? document.getElementById('rp-submit') : document.getElementById('rp-save-draft');
+        btn.disabled = true;
+
+        var allLinks = collectLinks();
+        var payload = {
+          communityID: communityId,
+          departmentId: departmentId,
+          formTemplateSlug: slug,
+          data: state.data,
+          links: allLinks,
+          status: status,
+          signedBy: currentUser ? { userID: currentUser.id, username: currentUser.username } : undefined
+        };
+
+        var url, method;
+        if (state.existing) {
+          url = apiUrl + '/api/v1/form-submission/' + encodeURIComponent(state.existing._id);
+          method = 'PUT';
+          payload = {
+            data: state.data,
+            links: allLinks,
+            status: status,
+            // The website proxies the API with a server token, so the API
+            // can't read the user's auth context. Pass the actor so the
+            // backend can authorize edits and stamp the history entry.
+            actor: currentUser ? { userID: currentUser.id, username: currentUser.username } : undefined
+          };
+        } else {
+          url = apiUrl + '/api/v1/form-submission';
+          method = 'POST';
+        }
+
+        fetch(url, {
+          method: method,
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(payload)
+        })
+          .then(function (r) {
+            if (r.status === 403) throw new Error('Only the report\'s author or a community admin can edit a submitted report.');
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function (j) {
+            // Submitted: show a success modal with next-action cards. The
+            // user just signed an official record; silently flipping a
+            // toast and leaving them on the same edit screen feels broken.
+            // Drafts still toast inline so the user can keep editing.
+            if (status === 'submitted') {
+              var submissionRef = state.existing || (j && j.id ? j : null);
+              var subId = submissionRef && (submissionRef._id || submissionRef.id);
+              var reportNumber = (submissionRef && submissionRef.formSubmission && submissionRef.formSubmission.reportNumber)
+                || (j && j.reportNumber)
+                || (state.existing && state.existing.formSubmission && state.existing.formSubmission.reportNumber)
+                || '';
+              showSubmitSuccess(subId, reportNumber);
+              // Refetch so the lock banner + history footer reflect the
+              // new "submitted/resubmitted" entry the moment the user
+              // dismisses the success modal.
+              if (subId) {
+                fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(subId), { headers: authHeaders() })
+                  .then(function (r) { return r.ok ? r.json() : null; })
+                  .then(function (fresh) {
+                    if (fresh && fresh.formSubmission) {
+                      state.existing = fresh;
+                      state.data = fresh.formSubmission.data || {};
+                      state.links = fresh.formSubmission.links || [];
+                      readOnly = fresh.formSubmission.status === 'submitted';
+                      render();
+                    }
+                  });
+              }
+              return;
+            }
+            toast('Draft saved', 'success');
+            if (!state.existing && j && j.id) {
+              // Redirect to the saved record so future edits go to PUT.
+              window.location.href = '/reports/' + j.id + (communityIdEncoded ? '?c=' + communityIdEncoded : '');
+              return;
+            }
+            btn.disabled = false;
+          })
+          .catch(function (e) {
+            toast('Save failed: ' + (e && e.message), 'error');
+            btn.disabled = false;
+          });
+      }
+
+      document.getElementById('rp-required-only').addEventListener('change', applyRequiredOnlyFilter);
+      document.getElementById('rp-save-draft').addEventListener('click', function () { saveAs('draft'); });
+      document.getElementById('rp-submit').addEventListener('click', function () {
+        var missingMap = computeMissing();
+        var keys = Object.keys(missingMap);
+        if (!keys.length) {
+          // All required fields filled — also clear any lingering highlights.
+          state.missingFields = {};
+          applyMissingHighlights();
+          saveAs('submitted');
+          return;
+        }
+        var list = keys.map(function (k) { return { fieldId: k, sectionId: missingMap[k].sectionId, label: missingMap[k].label }; });
+        openValidationModal(list);
+      });
+
+      // Validation modal wiring
+      document.getElementById('rp-conf-x').addEventListener('click', reviewAndFix);
+      document.getElementById('rp-conf-fix').addEventListener('click', reviewAndFix);
+      document.getElementById('rp-conf-anyway').addEventListener('click', function () {
+        closeValidationModal();
+        saveAs('submitted');
+      });
+      document.getElementById('rp-conf').addEventListener('mousedown', function (e) {
+        if (e.target === this) reviewAndFix();
+      });
+      document.addEventListener('keydown', function (e) {
+        var conf = document.getElementById('rp-conf');
+        if (!conf.classList.contains('open')) return;
+        if (e.key === 'Escape') { e.preventDefault(); reviewAndFix(); }
+      });
+      document.getElementById('rp-print').addEventListener('click', function () {
+        if (state.existing && state.existing._id) {
+          window.open('/reports/' + state.existing._id + '/print' + (communityIdEncoded ? '?c=' + communityIdEncoded : ''), '_blank');
+        } else {
+          toast('Save the report first to print', 'error');
+        }
+      });
+
+      // Kebab menu wiring: toggle, outside-click + escape close.
+      document.getElementById('rp-kebab-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        var menu = document.getElementById('rp-kebab-menu');
+        if (menu.classList.contains('open')) closeKebab();
+        else openKebab();
+      });
+      document.addEventListener('click', function (e) {
+        var wrap = document.getElementById('rp-kebab');
+        if (wrap && !wrap.contains(e.target)) closeKebab();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeKebab();
+      });
+
+      // Reopen-for-edits modal wiring.
+      document.getElementById('rp-reopen-x').addEventListener('click', closeReopenModal);
+      document.getElementById('rp-reopen-cancel').addEventListener('click', closeReopenModal);
+      document.getElementById('rp-reopen-confirm').addEventListener('click', reopenForEdits);
+      document.getElementById('rp-reopen').addEventListener('mousedown', function (e) {
+        if (e.target === this) closeReopenModal();
+      });
+      document.addEventListener('keydown', function (e) {
+        var modal = document.getElementById('rp-reopen');
+        if (!modal.classList.contains('open')) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeReopenModal(); }
+      });
+
+      // Archive / Unarchive modal wiring.
+      document.getElementById('rp-archive-x').addEventListener('click', closeArchiveModal);
+      document.getElementById('rp-archive-cancel').addEventListener('click', closeArchiveModal);
+      document.getElementById('rp-archive-confirm').addEventListener('click', toggleArchive);
+      document.getElementById('rp-archive').addEventListener('mousedown', function (e) {
+        if (e.target === this) closeArchiveModal();
+      });
+      document.addEventListener('keydown', function (e) {
+        var modal = document.getElementById('rp-archive');
+        if (!modal.classList.contains('open')) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeArchiveModal(); }
+      });
+
+      // Wire call-picker modal once the DOM is ready.
+      buildCallPickerEls();
+      callPicker.backdrop.addEventListener('mousedown', function (e) {
+        if (e.target === callPicker.backdrop) closeCallPicker();
+      });
+      Array.from(document.querySelectorAll('#rp-cmd-tabs .rp-cmd-tab')).forEach(function (b) {
+        b.addEventListener('click', function () { setPickerTab(b.getAttribute('data-tab')); callPicker.input.focus(); });
+      });
+      callPicker.input.addEventListener('input', function (e) {
+        callPicker.query = e.target.value;
+        callPicker.activeIdx = 0;
+        callPicker.searchWrap.classList.toggle('has-value', callPicker.query.length > 0);
+        if (drillMode() === 'civilian') {
+          // Step 1: hit the civilian search API (debounced inside searchCiviliansForDrill).
+          searchCiviliansForDrill(callPicker.tab, callPicker.query);
+        } else {
+          renderCallPicker();
+        }
+      });
+      callPicker.input.addEventListener('focus', function () { callPicker.searchWrap.classList.add('focused'); });
+      callPicker.input.addEventListener('blur', function () { callPicker.searchWrap.classList.remove('focused'); });
+      callPicker.clearBtn.addEventListener('click', function () {
+        callPicker.input.value = '';
+        callPicker.query = '';
+        callPicker.activeIdx = 0;
+        callPicker.searchWrap.classList.remove('has-value');
+        renderCallPicker();
+        callPicker.input.focus();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (!callPicker.backdrop.classList.contains('open')) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeCallPicker(); return; }
+        if (e.key === 'Tab') {
+          // Cycle through tabs without leaving the modal.
+          e.preventDefault();
+          var idx = SOURCE_TABS.indexOf(callPicker.tab);
+          var next = e.shiftKey ? (idx - 1 + SOURCE_TABS.length) % SOURCE_TABS.length : (idx + 1) % SOURCE_TABS.length;
+          setPickerTab(SOURCE_TABS[next]);
+          return;
+        }
+        if (e.key === 'ArrowDown') { e.preventDefault(); if (callPicker.filtered.length) { callPicker.activeIdx = (callPicker.activeIdx + 1) % callPicker.filtered.length; updateCallActive(); } return; }
+        if (e.key === 'ArrowUp') { e.preventDefault(); if (callPicker.filtered.length) { callPicker.activeIdx = (callPicker.activeIdx - 1 + callPicker.filtered.length) % callPicker.filtered.length; updateCallActive(); } return; }
+        if (e.key === 'Home') { e.preventDefault(); callPicker.activeIdx = 0; updateCallActive(); return; }
+        if (e.key === 'End') { e.preventDefault(); callPicker.activeIdx = Math.max(0, callPicker.filtered.length - 1); updateCallActive(); return; }
+        if (e.key === 'Enter') {
+          if (!callPicker.filtered.length) return;
+          e.preventDefault();
+          var pick = callPicker.filtered[callPicker.activeIdx];
+          if (!pick) return;
+          if (drillMode() === 'civilian') {
+            // Drill into civilian → step 2.
+            callPicker.query = '';
+            callPicker.input.value = '';
+            callPicker.searchWrap.classList.remove('has-value');
+            callPicker.activeIdx = 0;
+            loadDrillItems(callPicker.tab, pick);
+            return;
+          }
+          if (pick._id) applyPickedRow(callPicker.tab, pick._id, pick._childId || '');
+        }
+        if (e.key === 'Backspace' && drillMode() === 'detail' && !callPicker.query) {
+          // Empty input + backspace pops back to civilian search.
+          e.preventDefault();
+          clearDrillCivilian(callPicker.tab);
+        }
+      });
+
+      // Wire entity picker
+      buildEntityPickerEls();
+      entityPicker.backdrop.addEventListener('mousedown', function (e) {
+        if (e.target === entityPicker.backdrop) closeEntityPicker();
+      });
+      entityPicker.input.addEventListener('input', function (e) {
+        entityPicker.query = e.target.value;
+        entityPicker.activeIdx = 0;
+        entityPicker.searchWrap.classList.toggle('has-value', entityPicker.query.length > 0);
+        renderEntityPicker();
+      });
+      entityPicker.input.addEventListener('focus', function () { entityPicker.searchWrap.classList.add('focused'); });
+      entityPicker.input.addEventListener('blur', function () { entityPicker.searchWrap.classList.remove('focused'); });
+      entityPicker.clearBtn.addEventListener('click', function () {
+        entityPicker.input.value = '';
+        entityPicker.query = '';
+        entityPicker.activeIdx = 0;
+        entityPicker.searchWrap.classList.remove('has-value');
+        renderEntityPicker();
+        entityPicker.input.focus();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (!entityPicker.backdrop || !entityPicker.backdrop.classList.contains('open')) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeEntityPicker(); return; }
+        if (e.key === 'ArrowDown') { e.preventDefault(); if (entityPicker.filtered.length) { entityPicker.activeIdx = (entityPicker.activeIdx + 1) % entityPicker.filtered.length; renderEntityPicker(); } return; }
+        if (e.key === 'ArrowUp') { e.preventDefault(); if (entityPicker.filtered.length) { entityPicker.activeIdx = (entityPicker.activeIdx - 1 + entityPicker.filtered.length) % entityPicker.filtered.length; renderEntityPicker(); } return; }
+        if (e.key === 'Enter') {
+          if (!entityPicker.filtered.length) return;
+          e.preventDefault();
+          var pick = entityPicker.filtered[entityPicker.activeIdx];
+          if (pick && pick._id) applyEntityToRow(pick._id);
+        }
+      });
+
+      loadInitial().catch(function (e) {
+        document.getElementById('rp-form').innerHTML = '<div class="rp-loading" style="color: var(--rp-red);">' + escapeHTML(e && e.message ? e.message : 'Failed to load') + '</div>';
+      });
+    })();
+  </script>
+</body>
+</html>

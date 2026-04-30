@@ -1543,6 +1543,228 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // ----- Configurable Forms / Reports -----
+  // Resolve the current community from the optional ?c= encoded id, falling
+  // back to the user's lastAccessedCommunity. Returns nulls when none.
+  function resolveCommunityFromReq(req) {
+    const encoded = req.query.c || null;
+    let communityId = null;
+    if (encoded) {
+      try {
+        const decoded = decodeId(encoded);
+        if (isValidObjectId(decoded)) communityId = decoded;
+      } catch (e) {
+        console.error('Failed to decode community ID:', e);
+      }
+    }
+    if (!communityId) {
+      communityId = req.user?.user?.lastAccessedCommunity?.communityID
+                 || req.user?.user?.activeCommunity
+                 || null;
+    }
+    const communityIdEncoded = communityId ? encodeId(communityId) : null;
+    return { communityId, communityIdEncoded };
+  }
+
+  function buildCurrentUserContext(req) {
+    if (!req.user) return null;
+    return {
+      id: req.user._id ? String(req.user._id) : null,
+      username: req.user.user?.username || null,
+    };
+  }
+
+  // Returns true when the user is the community owner OR has the
+  // 'administrator' permission via community roles. Mirrors the gating
+  // used elsewhere in routes.js. Failures are non-fatal: a network blip
+  // returns false (no UI shown) rather than 500-ing the page.
+  async function userCanManageCommunity(req, communityId) {
+    if (!req.user || !communityId) return false;
+    const userId = req.user._id ? String(req.user._id) : null;
+    if (!userId) return false;
+    try {
+      const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
+      const community = r.data?.community;
+      if (community?.ownerID && String(community.ownerID) === userId) return true;
+    } catch (e) {
+      console.error('userCanManageCommunity: community lookup failed:', e.message);
+    }
+    try {
+      const rolesResp = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}/roles`, config);
+      const roles = rolesResp.data || [];
+      for (const role of roles) {
+        if (!Array.isArray(role.members) || !role.members.includes(userId)) continue;
+        if (!Array.isArray(role.permissions)) continue;
+        for (const perm of role.permissions) {
+          if (perm?.name === 'administrator' && perm.enabled === true) return true;
+        }
+      }
+    } catch (e) {
+      console.error('userCanManageCommunity: roles lookup failed:', e.message);
+    }
+    return false;
+  }
+
+  // Reports list page
+  app.get("/reports", authCheck, async function (req, res) {
+    const { communityId, communityIdEncoded } = resolveCommunityFromReq(req);
+    if (!communityId) return res.redirect('/communities');
+
+    let communityName = null;
+    try {
+      const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
+      communityName = r.data?.community?.name || null;
+    } catch (err) {
+      console.error('Error fetching community for /reports:', err.message);
+    }
+
+    const canManageForms = await userCanManageCommunity(req, communityId);
+
+    res.render("reports-list", {
+      user: req.user,
+      apiUrl: policeCadApiUrl,
+      communityId,
+      communityIdEncoded,
+      communityName,
+      canManageForms,
+    });
+  });
+
+  // New report page (no submission yet)
+  app.get("/reports/new", authCheck, async function (req, res) {
+    const { communityId, communityIdEncoded } = resolveCommunityFromReq(req);
+    if (!communityId) return res.redirect('/communities');
+    const slug = (req.query.slug || 'incident-report').replace(/[^a-z0-9-_]/gi, '');
+    const departmentId = req.user?.user?.lastAccessedCommunity?.activeDepartmentID || '';
+
+    const canManageForms = await userCanManageCommunity(req, communityId);
+
+    res.render("report-edit", {
+      user: req.user,
+      apiUrl: policeCadApiUrl,
+      communityId,
+      communityIdEncoded,
+      departmentId,
+      slug,
+      submissionId: '',
+      readOnly: false,
+      currentUser: buildCurrentUserContext(req),
+      canManageForms,
+    });
+  });
+
+  // View / edit existing report
+  app.get("/reports/:id", authCheck, async function (req, res) {
+    const submissionId = req.params.id;
+    if (!isValidObjectId(submissionId)) return res.redirect('/reports');
+
+    const { communityId, communityIdEncoded } = resolveCommunityFromReq(req);
+    if (!communityId) return res.redirect('/communities');
+
+    const departmentId = req.user?.user?.lastAccessedCommunity?.activeDepartmentID || '';
+    const readOnly = req.query.view === '1';
+
+    const canManageForms = await userCanManageCommunity(req, communityId);
+
+    res.render("report-edit", {
+      user: req.user,
+      apiUrl: policeCadApiUrl,
+      communityId,
+      communityIdEncoded,
+      departmentId,
+      slug: 'incident-report', // overridden client-side once submission loads
+      submissionId,
+      readOnly,
+      currentUser: buildCurrentUserContext(req),
+      canManageForms,
+    });
+  });
+
+  // Print / PDF view
+  app.get("/reports/:id/print", authCheck, async function (req, res) {
+    const submissionId = req.params.id;
+    if (!isValidObjectId(submissionId)) return res.redirect('/reports');
+
+    const { communityId, communityIdEncoded } = resolveCommunityFromReq(req);
+    if (!communityId) return res.redirect('/communities');
+
+    // Look up community letterhead. Logo precedence: community image →
+    // LPC fallback (handled client-side). Department info is still
+    // pulled when available so the printed agency line can fall back
+    // to a department name when the community has none.
+    let departmentName = null;
+    let departmentImage = null;
+    let communityName = null;
+    let communityImage = null;
+    const deptId = req.user?.user?.lastAccessedCommunity?.activeDepartmentID || '';
+    try {
+      const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
+      const community = r.data?.community;
+      const details = community?.communityDetails || community?.community || community || {};
+      communityName = details.name || details.communityName || null;
+      communityImage = details.imageLink || details.image || null;
+      if (deptId) {
+        const departments = details.departments || community?.departments || [];
+        const match = departments.find(d => String(d._id) === deptId || String(d.id) === deptId);
+        if (match) {
+          departmentName = match.name || match.departmentName || null;
+          departmentImage = match.image || match.imageLink || null;
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching community/department for print view:', err.message);
+    }
+
+    res.render("report-print", {
+      user: req.user,
+      apiUrl: policeCadApiUrl,
+      communityId,
+      communityIdEncoded,
+      submissionId,
+      departmentId: deptId,
+      departmentName,
+      departmentImage,
+      communityName,
+      communityImage,
+    });
+  });
+  // Community-scoped forms builder (admin)
+  app.get("/community/:hash/forms", authCheck, async function (req, res) {
+    let communityId = null;
+    try {
+      const decoded = decodeId(req.params.hash);
+      if (isValidObjectId(decoded)) communityId = decoded;
+    } catch (e) {
+      console.error('Failed to decode community id for /forms:', e);
+    }
+    if (!communityId) return res.redirect('/communities');
+    const communityIdEncoded = req.params.hash;
+
+    const canManageForms = await userCanManageCommunity(req, communityId);
+
+    let communityName = null;
+    try {
+      const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
+      communityName = r.data?.community?.name || null;
+    } catch (err) {
+      console.error('Error fetching community for /forms:', err.message);
+    }
+
+    // Blocked users still get the page rendered (read-only) with a
+    // permission overlay — feels less broken than an error page, and
+    // keeps the URL shareable so an admin can land on the same view.
+    res.render("community-forms", {
+      user: req.user,
+      apiUrl: policeCadApiUrl,
+      communityId,
+      communityIdEncoded,
+      communityName,
+      currentUser: buildCurrentUserContext(req),
+      blocked: !canManageForms,
+    });
+  });
+  // ----- end Configurable Forms / Reports -----
+
   // Help & Tutorial page
   app.get("/help", authCheck, function (req, res) {
     res.render("help-tutorial", {
@@ -2203,6 +2425,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         console.warn('[command-dashboard gate] unexpected error:', gateErr.message);
       }
 
+      // Whether the current user can manage this community's forms —
+      // drives the lock-icon affordance on the Forms nav link.
+      const canManageForms = communityId ? await userCanManageCommunity(req, communityId) : false;
+
       res.render("command-dashboard", {
         user: req.user,
         referer: encodeURIComponent("/command-dashboard"),
@@ -2212,6 +2438,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         departmentName: departmentName,
         communityName: communityName,
         apiUrl: policeCadApiUrl,
+        canManageForms,
       });
     } catch (error) {
       console.error('Error in command-dashboard route:', error);
@@ -4348,12 +4575,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // List feature requests (public - no auth required)
   app.get("/api/v2/feature-requests", async function (req, res) {
     try {
-      const { page = 1, limit = 20, sort, status, q, userId } = req.query;
+      const { page = 1, limit = 20, sort, status, excludeStatus, q, userId, authorId } = req.query;
       let url = `${policeCadApiUrl}/api/v2/feature-requests?page=${page}&limit=${limit}`;
       if (sort) url += `&sort=${encodeURIComponent(sort)}`;
       if (status) url += `&status=${encodeURIComponent(status)}`;
+      if (excludeStatus) url += `&excludeStatus=${encodeURIComponent(excludeStatus)}`;
       if (q) url += `&q=${encodeURIComponent(q)}`;
       if (userId) url += `&userId=${encodeURIComponent(userId)}`;
+      if (authorId) url += `&authorId=${encodeURIComponent(authorId)}`;
 
       const response = await axios.get(url, { headers: config.headers });
       res.json(response.data);

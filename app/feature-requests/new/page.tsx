@@ -1,20 +1,84 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeftIcon,
   PhotoIcon,
   XMarkIcon,
   PaperAirplaneIcon,
+  SparklesIcon,
+  ChevronUpIcon,
+  ChatBubbleLeftIcon,
 } from '@heroicons/react/24/solid';
 
 // ── Constants ──────────────────────────────────────────────────────
 const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+const SIMILAR_TITLE_MIN_CHARS = 5;
+const SIMILAR_DESC_MIN_CHARS = 20;
+const SIMILAR_DEBOUNCE_MS = 300;
+const SIMILAR_LIMIT = 4;
+const SIMILAR_DISMISS_KEY = 'fr-new-similar-dismissed';
+const SIMILAR_DRAFT_KEY = 'fr-new-title-draft';
+
+// Minimal stopword set for keyword extraction. Only used to keep us from
+// querying useless filler ("would", "feature", "really"). Not a linguistic
+// claim — just words that produce noisy regex matches.
+const SIMILAR_STOPWORDS = new Set([
+  'about','after','again','against','because','before','being','between',
+  'could','doing','during','every','from','have','having','here','into',
+  'just','like','more','most','need','only','other','please','really',
+  'request','should','some','such','than','that','their','them','then',
+  'there','these','they','this','those','through','want','were','what',
+  'when','where','which','while','will','with','would','your','yours',
+  'feature','allow','able','make','thing','things','also','very','much',
+]);
+
+function buildSimilarQueries(title: string, description: string): string[] {
+  const queries: string[] = [];
+  const t = title.trim();
+  const d = description.trim();
+
+  if (t.length >= SIMILAR_TITLE_MIN_CHARS) queries.push(t);
+
+  if (d.length >= SIMILAR_DESC_MIN_CHARS) {
+    const titleLower = t.toLowerCase();
+    const seen = new Set<string>();
+    const words = d
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length >= 5 && !SIMILAR_STOPWORDS.has(w))
+      .filter(w => !titleLower.includes(w))
+      .filter(w => { if (seen.has(w)) return false; seen.add(w); return true; })
+      .sort((a, b) => b.length - a.length);
+    // Cap at the 1 most distinctive word — one extra fetch per debounce, not three.
+    if (words.length > 0) queries.push(words[0]);
+  }
+
+  return queries;
+}
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  open:         { label: 'Open',          color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
+  planned:      { label: 'Planned',       color: '#a855f7', bg: 'rgba(168,85,247,0.15)' },
+  beta_testing: { label: 'In Beta',       color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+  released:     { label: 'Released',      color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
+  declined:     { label: 'Declined',      color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
+  merged:       { label: 'Merged',        color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
+};
+
+interface SimilarRequest {
+  _id: string;
+  title: string;
+  status: string;
+  upvoteCount: number;
+  commentCount: number;
+}
 
 // ── Image Upload Helper ───────────────────────────────────────────
 async function uploadImageToCloudinary(file: File): Promise<string> {
@@ -47,6 +111,263 @@ async function uploadImageToCloudinary(file: File): Promise<string> {
   return result.secure_url;
 }
 
+// ── Similar Requests Panel ────────────────────────────────────────
+function SimilarRow({ item }: { item: SimilarRequest }) {
+  const [hovered, setHovered] = useState(false);
+  const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.open;
+  const released = item.status === 'released';
+
+  return (
+    <Link
+      href={`/feature-requests/${item._id}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.7rem',
+        padding: '0.55rem 0.65rem',
+        borderRadius: '0.4rem',
+        textDecoration: 'none',
+        backgroundColor: hovered
+          ? (released ? 'rgba(16,185,129,0.08)' : 'rgba(251,191,36,0.06)')
+          : 'transparent',
+        transition: 'background-color 0.15s, transform 0.15s',
+        transform: hovered ? 'translateX(2px)' : 'translateX(0)',
+      }}
+    >
+      {/* Vote count */}
+      <span style={{
+        display: 'inline-flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: '32px',
+        padding: '0.25rem 0',
+        borderRadius: '0.35rem',
+        backgroundColor: released ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.04)',
+        border: released
+          ? '1px solid rgba(16,185,129,0.25)'
+          : '1px solid rgba(255,255,255,0.08)',
+        flexShrink: 0,
+      }}>
+        <ChevronUpIcon style={{
+          width: '11px',
+          height: '11px',
+          color: released ? '#10b981' : 'rgba(255,255,255,0.55)',
+        }} />
+        <span style={{
+          fontSize: '0.7rem',
+          fontWeight: 700,
+          fontFamily: FONT,
+          color: released ? '#10b981' : 'rgba(255,255,255,0.75)',
+          fontVariantNumeric: 'tabular-nums',
+          lineHeight: 1.1,
+        }}>
+          {item.upvoteCount}
+        </span>
+      </span>
+
+      {/* Title */}
+      <span style={{
+        flex: 1,
+        minWidth: 0,
+        fontSize: '0.85rem',
+        fontFamily: FONT,
+        color: hovered ? '#ffffff' : 'rgba(255,255,255,0.85)',
+        fontWeight: 500,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        transition: 'color 0.15s',
+      }}>
+        {item.title}
+      </span>
+
+      {/* Comments */}
+      {item.commentCount > 0 && (
+        <span style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.2rem',
+          fontSize: '0.7rem',
+          fontFamily: FONT,
+          color: 'rgba(255,255,255,0.4)',
+          flexShrink: 0,
+        }}>
+          <ChatBubbleLeftIcon style={{ width: '11px', height: '11px' }} />
+          {item.commentCount}
+        </span>
+      )}
+
+      {/* Status pill */}
+      <span style={{
+        display: 'inline-block',
+        padding: '0.12rem 0.5rem',
+        fontSize: '0.6rem',
+        fontWeight: 700,
+        fontFamily: FONT,
+        letterSpacing: '0.05em',
+        textTransform: 'uppercase',
+        color: cfg.color,
+        backgroundColor: cfg.bg,
+        border: `1px solid ${cfg.color}33`,
+        borderRadius: '999px',
+        whiteSpace: 'nowrap',
+        flexShrink: 0,
+      }}>
+        {cfg.label}
+      </span>
+    </Link>
+  );
+}
+
+function SimilarRequestsPanel({ items, total, loading, visible, onDismiss }: {
+  items: SimilarRequest[];
+  total: number;
+  loading: boolean;
+  visible: boolean;
+  onDismiss: () => void;
+}) {
+  const hasItems = items.length > 0;
+  const hasReleased = items.some(i => i.status === 'released');
+  // Hide entirely when not visible OR when search returned nothing — silent
+  // when there are no matches keeps the empty state quiet.
+  const show = visible && (loading || hasItems);
+
+  return (
+    <AnimatePresence initial={false}>
+      {show && (
+        <motion.div
+          initial={{ opacity: 0, y: -4, height: 0, marginTop: 0 }}
+          animate={{ opacity: 1, y: 0, height: 'auto', marginTop: 12 }}
+          exit={{ opacity: 0, y: -4, height: 0, marginTop: 0 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          style={{ overflow: 'hidden' }}
+        >
+          <div style={{
+            padding: '0.7rem 0.85rem 0.55rem',
+            backgroundColor: hasReleased ? 'rgba(16,185,129,0.04)' : 'rgba(251,191,36,0.04)',
+            border: hasReleased
+              ? '1px solid rgba(16,185,129,0.22)'
+              : '1px solid rgba(251,191,36,0.22)',
+            borderRadius: '0.55rem',
+          }}>
+            {/* Header */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginBottom: hasItems ? '0.5rem' : 0,
+            }}>
+              <SparklesIcon style={{
+                width: '14px',
+                height: '14px',
+                color: hasReleased ? '#10b981' : '#fbbf24',
+                flexShrink: 0,
+              }} />
+              <span style={{
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                fontFamily: FONT,
+                color: 'rgba(255,255,255,0.82)',
+                flex: 1,
+                minWidth: 0,
+              }}>
+                {loading && !hasItems
+                  ? 'Looking for similar requests…'
+                  : hasItems
+                    ? <>
+                        <span style={{ color: hasReleased ? '#10b981' : '#fbbf24' }}>
+                          {total > items.length ? `${items.length}+` : items.length}
+                        </span>
+                        {' '}similar request{items.length === 1 ? '' : 's'}
+                        {hasReleased && (
+                          <span style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>
+                            {' '}— one already shipped
+                          </span>
+                        )}
+                      </>
+                    : null}
+              </span>
+              <button
+                type="button"
+                onClick={onDismiss}
+                aria-label="Dismiss similar requests"
+                title="Don't show again this session"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '20px',
+                  height: '20px',
+                  padding: 0,
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'rgba(255,255,255,0.4)',
+                  cursor: 'pointer',
+                  borderRadius: '0.25rem',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'rgba(255,255,255,0.4)';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <XMarkIcon style={{ width: '12px', height: '12px' }} />
+              </button>
+            </div>
+
+            {/* Rows */}
+            {hasItems && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                {items.map(item => <SimilarRow key={item._id} item={item} />)}
+              </div>
+            )}
+
+            {/* Footer microcopy */}
+            {hasItems && (
+              <div style={{
+                marginTop: '0.5rem',
+                paddingTop: '0.45rem',
+                borderTop: hasReleased
+                  ? '1px solid rgba(16,185,129,0.12)'
+                  : '1px solid rgba(251,191,36,0.12)',
+                fontSize: '0.7rem',
+                fontFamily: FONT,
+                color: 'rgba(255,255,255,0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.5rem',
+                flexWrap: 'wrap',
+              }}>
+                <span>Don&apos;t see yours? Keep typing.</span>
+                {total > items.length && (
+                  <Link
+                    href={`/feature-requests?sort=top`}
+                    style={{
+                      color: hasReleased ? '#10b981' : '#fbbf24',
+                      textDecoration: 'none',
+                      fontWeight: 600,
+                    }}
+                  >
+                    View all {total} matches →
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 // ── Main Page ──────────────────────────────────────────────────────
 export default function NewFeatureRequest() {
   const router = useRouter();
@@ -60,6 +381,32 @@ export default function NewFeatureRequest() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Similar-requests state
+  const [similar, setSimilar] = useState<SimilarRequest[]>([]);
+  const [similarTotal, setSimilarTotal] = useState(0);
+  const [similarLoading, setSimilarLoading] = useState(false);
+  const [similarDismissed, setSimilarDismissed] = useState(false);
+  const similarCacheRef = useRef<Map<string, { items: SimilarRequest[]; total: number }>>(new Map());
+  const similarReqIdRef = useRef(0);
+
+  // Restore in-progress title from sessionStorage (e.g. user clicked a
+  // similar request, then back-buttoned) and remember dismissal preference.
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(SIMILAR_DRAFT_KEY);
+      if (saved) setTitle(saved);
+      if (sessionStorage.getItem(SIMILAR_DISMISS_KEY) === '1') setSimilarDismissed(true);
+    } catch {}
+  }, []);
+
+  // Persist title draft so back-button preserves work.
+  useEffect(() => {
+    try {
+      if (title) sessionStorage.setItem(SIMILAR_DRAFT_KEY, title);
+      else sessionStorage.removeItem(SIMILAR_DRAFT_KEY);
+    } catch {}
+  }, [title]);
 
   // Check auth
   useEffect(() => {
@@ -79,6 +426,89 @@ export default function NewFeatureRequest() {
         setAuthChecked(true);
       });
   }, [router]);
+
+  // Debounced similar-request lookup. Searches by title (when long enough)
+  // and optionally by the most distinctive word from the description.
+  // Cache per-query so backspace-then-retype and keyword overlap are
+  // instant. Uses a request id to ignore out-of-order responses.
+  useEffect(() => {
+    const queries = (similarDismissed ? [] : buildSimilarQueries(title, description));
+    if (queries.length === 0) {
+      setSimilar([]);
+      setSimilarTotal(0);
+      setSimilarLoading(false);
+      return;
+    }
+
+    setSimilarLoading(true);
+    const reqId = ++similarReqIdRef.current;
+
+    const handle = setTimeout(async () => {
+      try {
+        const results = await Promise.all(queries.map(async (q) => {
+          const cached = similarCacheRef.current.get(q.toLowerCase());
+          if (cached) return cached;
+          const params = new URLSearchParams({
+            q,
+            sort: 'top',
+            limit: String(SIMILAR_LIMIT),
+            page: '1',
+          });
+          const res = await fetch(`/api/v2/feature-requests?${params}`, { credentials: 'include' });
+          if (!res.ok) return { items: [] as SimilarRequest[], total: 0 };
+          const data = await res.json();
+          const items: SimilarRequest[] = (data.data || []).map((r: any) => ({
+            _id: r._id,
+            title: r.title,
+            status: r.status,
+            upvoteCount: r.upvoteCount,
+            commentCount: r.commentCount,
+          }));
+          const cacheEntry = { items, total: data.totalCount || 0 };
+          similarCacheRef.current.set(q.toLowerCase(), cacheEntry);
+          if (similarCacheRef.current.size > 16) {
+            const firstKey = similarCacheRef.current.keys().next().value;
+            if (firstKey !== undefined) similarCacheRef.current.delete(firstKey);
+          }
+          return cacheEntry;
+        }));
+
+        if (reqId !== similarReqIdRef.current) return; // stale
+
+        // Merge and dedupe by _id, keep the highest-upvoted ordering.
+        const seen = new Set<string>();
+        const merged: SimilarRequest[] = [];
+        for (const { items } of results) {
+          for (const item of items) {
+            if (seen.has(item._id)) continue;
+            seen.add(item._id);
+            merged.push(item);
+          }
+        }
+        merged.sort((a, b) => b.upvoteCount - a.upvoteCount);
+        const sliced = merged.slice(0, SIMILAR_LIMIT);
+        // Total is a best-effort union upper bound — when the same request
+        // matches multiple queries we may double-count, so clamp to merged.
+        const totalUpper = results.reduce((s, r) => s + r.total, 0);
+        setSimilar(sliced);
+        setSimilarTotal(Math.max(merged.length, Math.min(totalUpper, merged.length + 50)));
+      } catch {
+        if (reqId === similarReqIdRef.current) {
+          setSimilar([]);
+          setSimilarTotal(0);
+        }
+      } finally {
+        if (reqId === similarReqIdRef.current) setSimilarLoading(false);
+      }
+    }, SIMILAR_DEBOUNCE_MS);
+
+    return () => clearTimeout(handle);
+  }, [title, description, similarDismissed]);
+
+  const handleDismissSimilar = useCallback(() => {
+    setSimilarDismissed(true);
+    try { sessionStorage.setItem(SIMILAR_DISMISS_KEY, '1'); } catch {}
+  }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -124,6 +554,10 @@ export default function NewFeatureRequest() {
       }
 
       const data = await res.json();
+      try {
+        sessionStorage.removeItem(SIMILAR_DRAFT_KEY);
+        sessionStorage.removeItem(SIMILAR_DISMISS_KEY);
+      } catch {}
       router.push(`/feature-requests/${data._id}`);
     } catch (err: any) {
       setError(err.message || 'Something went wrong. Please try again.');
@@ -199,7 +633,7 @@ export default function NewFeatureRequest() {
             width: '100%',
             boxSizing: 'border-box',
           }}>
-            {/* Back link + Beta badge */}
+            {/* Back link */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', paddingTop: '2rem' }}>
               <Link
                 href="/feature-requests"
@@ -219,23 +653,6 @@ export default function NewFeatureRequest() {
                 <ArrowLeftIcon style={{ width: '14px', height: '14px' }} />
                 Back to Feature Requests
               </Link>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '0.15rem 0.45rem',
-                fontSize: '0.6rem',
-                fontWeight: 700,
-                fontFamily: FONT,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase' as const,
-                color: '#fbbf24',
-                background: 'rgba(251,191,36,0.1)',
-                border: '1px solid rgba(251,191,36,0.3)',
-                borderRadius: '999px',
-                animation: 'betaPulse 3s ease-in-out infinite',
-              }}>
-                Beta
-              </span>
             </div>
 
             <motion.div
@@ -339,6 +756,18 @@ export default function NewFeatureRequest() {
                   }}>
                     {title.length}/200
                   </div>
+
+                  {/* Similar Requests Panel */}
+                  <SimilarRequestsPanel
+                    items={similar}
+                    total={similarTotal}
+                    loading={similarLoading}
+                    visible={!similarDismissed && (
+                      title.trim().length >= SIMILAR_TITLE_MIN_CHARS ||
+                      description.trim().length >= SIMILAR_DESC_MIN_CHARS
+                    )}
+                    onDismiss={handleDismissSimilar}
+                  />
                 </div>
 
                 {/* Description */}
@@ -553,12 +982,6 @@ export default function NewFeatureRequest() {
         <Footer />
       </div>
 
-      <style>{`
-        @keyframes betaPulse {
-          0%, 100% { box-shadow: 0 0 4px rgba(251,191,36,0.15); }
-          50% { box-shadow: 0 0 12px rgba(251,191,36,0.3); }
-        }
-      `}</style>
     </main>
   );
 }
