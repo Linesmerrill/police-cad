@@ -71,17 +71,59 @@
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .lpc-utility-avatar {
-    width: 24px; height: 24px;
+    width: 26px; height: 26px;
     display: grid; place-items: center;
     background: rgba(56, 189, 248, 0.12);
-    border: 1px solid rgba(56, 189, 248, 0.22);
     color: #38bdf8;
     border-radius: 50%; font-size: 0.62rem; font-weight: 700;
     letter-spacing: 0.02em;
     overflow: hidden;
     flex-shrink: 0;
+    border: 1.5px solid rgba(156, 163, 175, 0.45);
+    transition: filter 180ms ease;
   }
+  .lpc-utility-avatar:hover { filter: brightness(1.15); }
   .lpc-utility-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* Subscription-tier ring — mirrors the .navbar-profile-pic treatment
+     on the /communities page so the avatar's affordance reads the same
+     everywhere. Borders are slimmed to 1.5px so the photo still reads
+     as a face at this size. */
+  .lpc-utility-avatar.tier-premium-plus {
+    border-color: rgba(251, 191, 36, 0.7);
+    animation: lpcUtilGlowPremiumPlus 3s ease-in-out infinite;
+  }
+  .lpc-utility-avatar.tier-premium {
+    border-color: rgba(168, 85, 247, 0.7);
+    animation: lpcUtilGlowPremium 3s ease-in-out infinite;
+  }
+  .lpc-utility-avatar.tier-basic {
+    border-color: rgba(59, 130, 246, 0.7);
+    animation: lpcUtilGlowBasic 3s ease-in-out infinite;
+  }
+  .lpc-utility-avatar.tier-free {
+    border-color: rgba(156, 163, 175, 0.5);
+    animation: lpcUtilGlowFree 3s ease-in-out infinite;
+  }
+  @keyframes lpcUtilGlowPremiumPlus {
+    0%, 100% { box-shadow: 0 0 2px rgba(251, 191, 36, 0.45), 0 0 4px rgba(251, 191, 36, 0.22); }
+    50%      { box-shadow: 0 0 4px rgba(251, 191, 36, 0.75), 0 0 8px rgba(251, 191, 36, 0.38); }
+  }
+  @keyframes lpcUtilGlowPremium {
+    0%, 100% { box-shadow: 0 0 2px rgba(168, 85, 247, 0.45), 0 0 4px rgba(168, 85, 247, 0.22); }
+    50%      { box-shadow: 0 0 4px rgba(168, 85, 247, 0.75), 0 0 8px rgba(168, 85, 247, 0.38); }
+  }
+  @keyframes lpcUtilGlowBasic {
+    0%, 100% { box-shadow: 0 0 2px rgba(59, 130, 246, 0.45), 0 0 4px rgba(59, 130, 246, 0.22); }
+    50%      { box-shadow: 0 0 4px rgba(59, 130, 246, 0.75), 0 0 8px rgba(59, 130, 246, 0.38); }
+  }
+  @keyframes lpcUtilGlowFree {
+    0%, 100% { box-shadow: 0 0 2px rgba(156, 163, 175, 0.32), 0 0 4px rgba(156, 163, 175, 0.16); }
+    50%      { box-shadow: 0 0 3px rgba(156, 163, 175, 0.55), 0 0 6px rgba(156, 163, 175, 0.28); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lpc-utility-avatar { animation: none !important; }
+  }
   @media (max-width: 640px) {
     .lpc-utility-community,
     .lpc-utility-divider,
@@ -90,12 +132,25 @@
 </style>
 <%
   var _utilUser = (typeof user !== 'undefined' && user) ? user : null;
-  var _utilUsername = (_utilUser && _utilUser.user && _utilUser.user.username) ? _utilUser.user.username : '';
+  var _utilInner = (_utilUser && _utilUser.user) ? _utilUser.user : null;
+  var _utilUsername = (_utilInner && _utilInner.username) ? _utilInner.username : '';
   var _utilInitials = _utilUsername ? _utilUsername.slice(0, 2).toUpperCase() : '?';
-  var _utilAvatarUrl = (_utilUser && _utilUser.user && (_utilUser.user.profileImage || _utilUser.user.imageLink)) || '';
+  // Match the field used on /communities (profilePicture). Fall back to
+  // older field names defensively in case some user docs lag.
+  var _utilAvatarUrl = (_utilInner && (_utilInner.profilePicture || _utilInner.profileImage || _utilInner.imageLink)) || '';
+  // Subscription tier — same lookup pattern as /communities
+  // (user._doc.user.subscription, with user.user.subscription as a fallback).
+  var _utilSub = (_utilUser && _utilUser._doc && _utilUser._doc.user && _utilUser._doc.user.subscription)
+    || (_utilInner && _utilInner.subscription)
+    || null;
+  var _utilSubPlan = (_utilSub && _utilSub.active && _utilSub.plan) ? _utilSub.plan : 'free';
+  var _utilTierClass = _utilSubPlan === 'premium_plus' ? 'tier-premium-plus'
+                     : _utilSubPlan === 'premium'      ? 'tier-premium'
+                     : _utilSubPlan === 'basic'        ? 'tier-basic'
+                     : 'tier-free';
   var _utilCommunity = (typeof communityName !== 'undefined' && communityName)
     ? communityName
-    : ((_utilUser && _utilUser.user && _utilUser.user.lastAccessedCommunity && _utilUser.user.lastAccessedCommunity.name) || '');
+    : ((_utilInner && _utilInner.lastAccessedCommunity && _utilInner.lastAccessedCommunity.name) || '');
   var _utilBackHref = (typeof backHref !== 'undefined' && backHref) ? backHref : '/communities';
   var _utilBackLabel = (typeof backLabel !== 'undefined' && backLabel) ? backLabel : 'Back';
   var _utilPageLabel = (typeof pageLabel !== 'undefined' && pageLabel) ? pageLabel : '';
@@ -119,7 +174,7 @@
     <% } %>
   </div>
   <div class="lpc-utility-right">
-    <a href="/profile" class="lpc-utility-avatar" title="<%= _utilUsername || 'Account' %>">
+    <a href="/profile" class="lpc-utility-avatar <%= _utilTierClass %>" title="<%= _utilUsername || 'Account' %>">
       <% if (_utilAvatarUrl) { %><img src="<%= _utilAvatarUrl %>" alt="" /><% } else { %><%= _utilInitials %><% } %>
     </a>
   </div>
