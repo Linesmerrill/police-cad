@@ -1631,11 +1631,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
 
   // New report page (no submission yet)
-  app.get("/reports/new", authCheck, function (req, res) {
+  app.get("/reports/new", authCheck, async function (req, res) {
     const { communityId, communityIdEncoded } = resolveCommunityFromReq(req);
     if (!communityId) return res.redirect('/communities');
     const slug = (req.query.slug || 'incident-report').replace(/[^a-z0-9-_]/gi, '');
     const departmentId = req.user?.user?.lastAccessedCommunity?.activeDepartmentID || '';
+
+    const canManageForms = await userCanManageCommunity(req, communityId);
 
     res.render("report-edit", {
       user: req.user,
@@ -1647,11 +1649,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
       submissionId: '',
       readOnly: false,
       currentUser: buildCurrentUserContext(req),
+      canManageForms,
     });
   });
 
   // View / edit existing report
-  app.get("/reports/:id", authCheck, function (req, res) {
+  app.get("/reports/:id", authCheck, async function (req, res) {
     const submissionId = req.params.id;
     if (!isValidObjectId(submissionId)) return res.redirect('/reports');
 
@@ -1660,6 +1663,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
     const departmentId = req.user?.user?.lastAccessedCommunity?.activeDepartmentID || '';
     const readOnly = req.query.view === '1';
+
+    const canManageForms = await userCanManageCommunity(req, communityId);
 
     res.render("report-edit", {
       user: req.user,
@@ -1671,6 +1676,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       submissionId,
       readOnly,
       currentUser: buildCurrentUserContext(req),
+      canManageForms,
     });
   });
 

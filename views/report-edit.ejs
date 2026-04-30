@@ -813,6 +813,113 @@
     .rp-input.rp-just-bound,
     .rp-textarea.rp-just-bound,
     .rp-select.rp-just-bound { animation: rp-bound-flash 700ms ease-out; }
+
+    /* Locked-document banner — shown when status=submitted */
+    .rp-lock-banner {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; gap: 0.7rem;
+      margin: 0.75rem 0 0.25rem;
+      padding: 0.7rem 0.9rem;
+      background: linear-gradient(180deg, rgba(34,197,94,0.06), rgba(34,197,94,0.03));
+      border: 1px solid rgba(34,197,94,0.18);
+      border-radius: var(--rp-radius);
+    }
+    .rp-lock-icon {
+      width: 32px; height: 32px; flex: 0 0 32px;
+      display: grid; place-items: center;
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.28);
+      color: var(--rp-green); border-radius: 8px; font-size: 0.85rem;
+    }
+    .rp-lock-text { font-size: 0.82rem; line-height: 1.35; color: var(--rp-text); }
+    .rp-lock-text strong { color: var(--rp-green); font-weight: 600; }
+    .rp-lock-text .rp-lock-meta { color: var(--rp-text-muted); }
+
+    /* Kebab menu */
+    .rp-kebab { position: relative; }
+    .rp-kebab-btn {
+      width: 36px; height: 36px;
+      display: grid; place-items: center;
+      background: var(--rp-glass); border: 1px solid var(--rp-glass-border);
+      color: var(--rp-text); border-radius: var(--rp-radius-sm);
+      cursor: pointer; transition: background 120ms ease;
+    }
+    .rp-kebab-btn:hover { background: var(--rp-glass-hover); }
+    .rp-kebab-menu {
+      position: absolute; top: calc(100% + 0.35rem); right: 0;
+      min-width: 220px;
+      background: #0d1117; border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius-sm);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.5);
+      padding: 0.3rem; z-index: 20;
+      opacity: 0; transform: translateY(-4px); pointer-events: none;
+      transition: opacity 140ms ease, transform 140ms ease;
+    }
+    .rp-kebab-menu.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .rp-kebab-item {
+      display: flex; align-items: center; gap: 0.6rem;
+      width: 100%; padding: 0.55rem 0.65rem;
+      background: transparent; border: 0; color: var(--rp-text);
+      font: inherit; font-size: 0.85rem; text-align: left;
+      cursor: pointer; border-radius: 6px;
+    }
+    .rp-kebab-item:hover { background: var(--rp-glass-hover); }
+    .rp-kebab-item i { width: 14px; color: var(--rp-text-muted); }
+    .rp-kebab-item.danger:hover { background: rgba(239,68,68,0.10); color: var(--rp-red); }
+    .rp-kebab-item.danger:hover i { color: var(--rp-red); }
+    .rp-kebab-sep { height: 1px; background: var(--rp-glass-border); margin: 0.25rem 0.4rem; }
+
+    /* Document mode: subtle de-emphasis on disabled inputs to feel less form-y */
+    body.rp-locked .rp-input[disabled],
+    body.rp-locked .rp-textarea[disabled],
+    body.rp-locked .rp-select[disabled] {
+      background: transparent; border-color: rgba(255,255,255,0.05);
+      color: var(--rp-text); opacity: 1; cursor: default;
+    }
+    body.rp-locked .rp-input[disabled]:focus,
+    body.rp-locked .rp-textarea[disabled]:focus,
+    body.rp-locked .rp-select[disabled]:focus { outline: none; box-shadow: none; }
+
+    /* Revision history footer */
+    .rp-history {
+      grid-column: 1 / -1;
+      margin: 1.5rem 0 0;
+      padding: 1rem 1.1rem;
+      background: var(--rp-glass);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius);
+    }
+    .rp-history-title {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--rp-text-muted); margin-bottom: 0.7rem;
+    }
+    .rp-history-list { list-style: none; padding: 0; margin: 0; }
+    .rp-history-item {
+      display: flex; align-items: flex-start; gap: 0.7rem;
+      padding: 0.45rem 0;
+      font-size: 0.84rem; color: var(--rp-text);
+      border-top: 1px dashed rgba(255,255,255,0.05);
+    }
+    .rp-history-item:first-child { border-top: 0; }
+    .rp-history-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      margin-top: 0.45rem; flex: 0 0 8px;
+    }
+    .rp-history-dot.submitted { background: var(--rp-green); box-shadow: 0 0 0 3px rgba(34,197,94,0.12); }
+    .rp-history-dot.reopened  { background: var(--rp-amber); box-shadow: 0 0 0 3px rgba(245,158,11,0.12); }
+    .rp-history-dot.resubmitted { background: var(--rp-accent); box-shadow: 0 0 0 3px rgba(56,189,248,0.12); }
+    .rp-history-action { font-weight: 600; text-transform: capitalize; }
+    .rp-history-meta { color: var(--rp-text-muted); font-size: 0.78rem; }
+
+    /* Reopen confirmation modal — re-uses rp-conf-* visual language */
+    .rp-reopen-icon {
+      width: 44px; height: 44px;
+      display: grid; place-items: center;
+      background: rgba(245,158,11,0.12);
+      border: 1px solid rgba(245,158,11,0.28);
+      color: var(--rp-amber); border-radius: 10px; font-size: 1.1rem;
+    }
   </style>
 </head>
 <body>
@@ -825,12 +932,24 @@
           <div class="rp-subtitle" id="rp-sub-text"></div>
         </div>
       </div>
-      <div style="display:flex; gap:0.5rem;">
+      <div style="display:flex; gap:0.5rem; align-items:center;">
         <a href="/reports<% if (typeof communityIdEncoded !== 'undefined' && communityIdEncoded) { %>?c=<%= communityIdEncoded %><% } %>" class="rp-back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Reports</a>
-        <label class="rp-back-btn" style="cursor:pointer;">
+        <label class="rp-back-btn" id="rp-required-only-wrap" style="cursor:pointer;">
           <input type="checkbox" id="rp-required-only" style="margin-right: 0.3rem;" /> Required only
         </label>
+        <div class="rp-kebab" id="rp-kebab" style="display:none;">
+          <button class="rp-kebab-btn" id="rp-kebab-btn" type="button" aria-label="More actions" aria-haspopup="menu" aria-expanded="false">
+            <i class="fa-solid fa-ellipsis"></i>
+          </button>
+          <div class="rp-kebab-menu" id="rp-kebab-menu" role="menu"></div>
+        </div>
       </div>
+    </div>
+
+    <!-- Locked-document banner — only shown when report is submitted -->
+    <div class="rp-lock-banner" id="rp-lock-banner" style="display:none;">
+      <div class="rp-lock-icon"><i class="fa-solid fa-lock"></i></div>
+      <div class="rp-lock-text" id="rp-lock-text">Locked</div>
     </div>
 
     <aside class="rp-side" id="rp-side"></aside>
@@ -838,6 +957,12 @@
       <div id="rp-callout"></div>
       <div id="rp-form" class="rp-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading template…</div>
     </main>
+
+    <!-- Revision history footer — populated when an existing submission has audit entries -->
+    <section class="rp-history" id="rp-history" style="display:none;">
+      <div class="rp-history-title"><i class="fa-solid fa-clock-rotate-left"></i> History</div>
+      <ul class="rp-history-list" id="rp-history-list"></ul>
+    </section>
   </div>
 
   <div class="rp-savebar" id="rp-savebar" style="display:none;">
@@ -848,6 +973,27 @@
   </div>
 
   <div id="rp-toast" class="rp-toast"></div>
+
+  <!-- Reopen-for-edits confirmation — flips a submitted report back to draft -->
+  <div id="rp-reopen" class="rp-conf-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="rp-reopen-title">
+    <div class="rp-conf-panel" role="document">
+      <div class="rp-conf-head">
+        <div class="rp-reopen-icon"><i class="fa-solid fa-lock-open"></i></div>
+        <div>
+          <div class="rp-conf-title" id="rp-reopen-title">Reopen this report?</div>
+          <div class="rp-conf-sub" id="rp-reopen-sub">The report number stays the same. A revision will be logged in the history.</div>
+        </div>
+        <button id="rp-reopen-x" class="rp-conf-close" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="rp-conf-foot">
+        <button id="rp-reopen-cancel" class="rp-conf-btn rp-conf-btn-ghost" type="button">Cancel</button>
+        <div class="rp-conf-foot-spacer"></div>
+        <button id="rp-reopen-confirm" class="rp-conf-btn rp-conf-btn-primary" type="button">
+          <i class="fa-solid fa-lock-open"></i> Reopen for edits
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Validation confirmation modal — empty required fields -->
   <div id="rp-conf" class="rp-conf-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="rp-conf-title-text">
@@ -964,6 +1110,7 @@
       var submissionId = <%- JSON.stringify(typeof submissionId !== 'undefined' ? submissionId : '') %>;
       var readOnly = <%- JSON.stringify(typeof readOnly !== 'undefined' ? !!readOnly : false) %>;
       var currentUser = <%- JSON.stringify(typeof currentUser !== 'undefined' ? currentUser : null) %>;
+      var canManageForms = <%- JSON.stringify(typeof canManageForms !== 'undefined' ? !!canManageForms : false) %>;
 
       function authHeaders(extra) {
         var h = Object.assign({}, extra || {});
@@ -1032,9 +1179,26 @@
             // "incident number" field if the template has one and it's
             // currently empty, so the user sees their assigned number.
             hydrateReportNumberField(tpl, state.data, sub.formSubmission.reportNumber);
+            // Auto-lock submitted reports. Anyone in the community can
+            // view, but only the original submitter or a community admin
+            // can reopen for edits via the kebab menu.
+            if (sub.formSubmission.status === 'submitted') {
+              readOnly = true;
+            }
           }
           render();
         });
+      }
+
+      // True when the current viewer is allowed to reopen a submitted
+      // report. Covers community admins (canManageForms) and the
+      // original submitter — matched by user ID.
+      function canReopenCurrent() {
+        if (!state.existing) return false;
+        if (canManageForms) return true;
+        var sub = state.existing.formSubmission || {};
+        var signer = sub.signedBy || {};
+        return !!(currentUser && currentUser.id && signer.userID && currentUser.id === signer.userID);
       }
 
       // Field IDs that are conventionally treated as "the report number"
@@ -2330,10 +2494,154 @@
 
         document.getElementById('rp-savebar').style.display = readOnly ? 'none' : 'flex';
 
+        renderLockBanner();
+        renderKebab();
+        renderHistory();
+        document.body.classList.toggle('rp-locked', !!readOnly);
+        // The "Required only" filter is irrelevant on a locked, read-only document.
+        var reqWrap = document.getElementById('rp-required-only-wrap');
+        if (reqWrap) reqWrap.style.display = readOnly ? 'none' : '';
+
         bindFieldHandlers();
         bindSectionHandlers();
         applyRequiredOnlyFilter();
         applyMissingHighlights();
+      }
+
+      function formatHistoryDate(d) {
+        try { return new Date(d).toLocaleString(); } catch (e) { return ''; }
+      }
+
+      function renderLockBanner() {
+        var banner = document.getElementById('rp-lock-banner');
+        var text = document.getElementById('rp-lock-text');
+        var sub = state.existing && state.existing.formSubmission;
+        var locked = sub && sub.status === 'submitted';
+        if (!locked) { banner.style.display = 'none'; return; }
+        var signer = sub.signedBy || {};
+        var who = signer.username ? escapeHTML(signer.username) : 'an officer';
+        var when = signer.signedAt ? formatHistoryDate(signer.signedAt) : (sub.createdAt ? formatHistoryDate(sub.createdAt) : '');
+        text.innerHTML = '<strong>Locked &middot; Submitted</strong> <span class="rp-lock-meta">by ' + who + (when ? ' &middot; ' + escapeHTML(when) : '') + '</span>';
+        banner.style.display = 'flex';
+      }
+
+      function renderKebab() {
+        var wrap = document.getElementById('rp-kebab');
+        var menu = document.getElementById('rp-kebab-menu');
+        if (!state.existing) { wrap.style.display = 'none'; return; }
+        var items = [];
+        items.push({ id: 'print', icon: 'fa-print', label: 'Print / Save as PDF' });
+        if (readOnly && canReopenCurrent()) {
+          items.push({ sep: true });
+          items.push({ id: 'reopen', icon: 'fa-lock-open', label: 'Reopen for edits' });
+        }
+        menu.innerHTML = items.map(function (it) {
+          if (it.sep) return '<div class="rp-kebab-sep"></div>';
+          return '<button type="button" class="rp-kebab-item' + (it.danger ? ' danger' : '') + '" data-action="' + it.id + '" role="menuitem"><i class="fa-solid ' + it.icon + '"></i>' + escapeHTML(it.label) + '</button>';
+        }).join('');
+        wrap.style.display = '';
+        Array.from(menu.querySelectorAll('[data-action]')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            closeKebab();
+            handleKebabAction(btn.getAttribute('data-action'));
+          });
+        });
+      }
+
+      function renderHistory() {
+        var section = document.getElementById('rp-history');
+        var list = document.getElementById('rp-history-list');
+        var entries = (state.existing && state.existing.formSubmission && state.existing.formSubmission.history) || [];
+        if (!entries.length) { section.style.display = 'none'; return; }
+        list.innerHTML = entries.map(function (e) {
+          var action = e.action || 'submitted';
+          var who = e.username ? escapeHTML(e.username) : 'Unknown user';
+          var when = e.at ? escapeHTML(formatHistoryDate(e.at)) : '';
+          return '<li class="rp-history-item">' +
+            '<span class="rp-history-dot ' + escapeHTML(action) + '"></span>' +
+            '<div>' +
+              '<span class="rp-history-action">' + escapeHTML(action) + '</span> ' +
+              '<span class="rp-history-meta">by ' + who + (when ? ' &middot; ' + when : '') + '</span>' +
+            '</div>' +
+          '</li>';
+        }).join('');
+        section.style.display = '';
+      }
+
+      function openKebab() {
+        document.getElementById('rp-kebab-menu').classList.add('open');
+        document.getElementById('rp-kebab-btn').setAttribute('aria-expanded', 'true');
+      }
+      function closeKebab() {
+        document.getElementById('rp-kebab-menu').classList.remove('open');
+        document.getElementById('rp-kebab-btn').setAttribute('aria-expanded', 'false');
+      }
+
+      function handleKebabAction(action) {
+        if (action === 'print') {
+          if (state.existing && state.existing._id) {
+            window.open('/reports/' + state.existing._id + '/print' + (communityIdEncoded ? '?c=' + communityIdEncoded : ''), '_blank');
+          } else {
+            toast('Save the report first to print', 'error');
+          }
+        } else if (action === 'reopen') {
+          openReopenModal();
+        }
+      }
+
+      function openReopenModal() {
+        var sub = state.existing && state.existing.formSubmission;
+        var num = (sub && sub.reportNumber) || '';
+        var subtext = num
+          ? 'Report ' + num + ' will move back to Draft. The report number stays the same and a revision will be logged in the history.'
+          : 'This report will move back to Draft. A revision will be logged in the history.';
+        document.getElementById('rp-reopen-sub').textContent = subtext;
+        document.getElementById('rp-reopen').classList.add('open');
+      }
+      function closeReopenModal() {
+        document.getElementById('rp-reopen').classList.remove('open');
+      }
+
+      function reopenForEdits() {
+        if (!state.existing || !state.existing._id) return;
+        var btn = document.getElementById('rp-reopen-confirm');
+        btn.disabled = true;
+        var payload = {
+          status: 'draft',
+          actor: currentUser ? { userID: currentUser.id, username: currentUser.username } : undefined
+        };
+        fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(state.existing._id), {
+          method: 'PUT',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(payload)
+        })
+          .then(function (r) {
+            if (r.status === 403) throw new Error('You do not have permission to reopen this report.');
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function () {
+            // Refetch the submission so we get the updated status + history,
+            // then re-render the page in editable mode.
+            return fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(state.existing._id), { headers: authHeaders() })
+              .then(function (r) { return r.ok ? r.json() : null; });
+          })
+          .then(function (fresh) {
+            if (fresh && fresh.formSubmission) {
+              state.existing = fresh;
+              state.data = fresh.formSubmission.data || {};
+              state.links = fresh.formSubmission.links || [];
+            }
+            readOnly = false;
+            closeReopenModal();
+            render();
+            toast('Reopened for edits — make your changes and resubmit', 'success');
+            btn.disabled = false;
+          })
+          .catch(function (e) {
+            toast(e && e.message ? e.message : 'Reopen failed', 'error');
+            btn.disabled = false;
+          });
       }
 
       function bindFieldHandlers() {
@@ -2621,7 +2929,15 @@
         if (state.existing) {
           url = apiUrl + '/api/v1/form-submission/' + encodeURIComponent(state.existing._id);
           method = 'PUT';
-          payload = { data: state.data, links: allLinks, status: status };
+          payload = {
+            data: state.data,
+            links: allLinks,
+            status: status,
+            // The website proxies the API with a server token, so the API
+            // can't read the user's auth context. Pass the actor so the
+            // backend can authorize edits and stamp the history entry.
+            actor: currentUser ? { userID: currentUser.id, username: currentUser.username } : undefined
+          };
         } else {
           url = apiUrl + '/api/v1/form-submission';
           method = 'POST';
@@ -2633,6 +2949,7 @@
           body: JSON.stringify(payload)
         })
           .then(function (r) {
+            if (r.status === 403) throw new Error('Only the report\'s author or a community admin can edit a submitted report.');
             if (!r.ok) throw new Error('HTTP ' + r.status);
             return r.json();
           })
@@ -2649,6 +2966,22 @@
                 || (state.existing && state.existing.formSubmission && state.existing.formSubmission.reportNumber)
                 || '';
               showSubmitSuccess(subId, reportNumber);
+              // Refetch so the lock banner + history footer reflect the
+              // new "submitted/resubmitted" entry the moment the user
+              // dismisses the success modal.
+              if (subId) {
+                fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(subId), { headers: authHeaders() })
+                  .then(function (r) { return r.ok ? r.json() : null; })
+                  .then(function (fresh) {
+                    if (fresh && fresh.formSubmission) {
+                      state.existing = fresh;
+                      state.data = fresh.formSubmission.data || {};
+                      state.links = fresh.formSubmission.links || [];
+                      readOnly = fresh.formSubmission.status === 'submitted';
+                      render();
+                    }
+                  });
+              }
               return;
             }
             toast('Draft saved', 'success');
@@ -2702,6 +3035,34 @@
         } else {
           toast('Save the report first to print', 'error');
         }
+      });
+
+      // Kebab menu wiring: toggle, outside-click + escape close.
+      document.getElementById('rp-kebab-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        var menu = document.getElementById('rp-kebab-menu');
+        if (menu.classList.contains('open')) closeKebab();
+        else openKebab();
+      });
+      document.addEventListener('click', function (e) {
+        var wrap = document.getElementById('rp-kebab');
+        if (wrap && !wrap.contains(e.target)) closeKebab();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeKebab();
+      });
+
+      // Reopen-for-edits modal wiring.
+      document.getElementById('rp-reopen-x').addEventListener('click', closeReopenModal);
+      document.getElementById('rp-reopen-cancel').addEventListener('click', closeReopenModal);
+      document.getElementById('rp-reopen-confirm').addEventListener('click', reopenForEdits);
+      document.getElementById('rp-reopen').addEventListener('mousedown', function (e) {
+        if (e.target === this) closeReopenModal();
+      });
+      document.addEventListener('keydown', function (e) {
+        var modal = document.getElementById('rp-reopen');
+        if (!modal.classList.contains('open')) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeReopenModal(); }
       });
 
       // Wire call-picker modal once the DOM is ready.
