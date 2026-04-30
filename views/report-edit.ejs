@@ -927,7 +927,11 @@
       display: grid; place-items: center;
       background: rgba(148,163,184,0.12);
       border: 1px solid rgba(148,163,184,0.28);
-      color: #94a3b8; border-radius: 10px; font-size: 1.1rem;
+      color: #94a3b8; border-radius: 10px;
+      /* fa-box-archive / fa-box-open glyphs are wider-than-tall, so a
+         slightly larger size is needed to optically match fa-lock-open
+         in the reopen modal. */
+      font-size: 1.35rem;
     }
 
     /* Archived banner — styled separately from the green submitted lock */
