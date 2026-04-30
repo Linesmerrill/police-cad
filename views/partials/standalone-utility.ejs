@@ -52,16 +52,13 @@
   .lpc-utility-back i { font-size: 0.72rem; }
   .lpc-utility-divider { color: rgba(148, 163, 184, 0.4); margin: 0 0.15rem; flex-shrink: 0; }
   .lpc-utility-brand {
-    display: inline-flex; align-items: center; gap: 0.45rem;
-    color: rgba(226, 232, 240, 0.92);
+    display: inline-flex; align-items: center;
     flex-shrink: 0;
   }
-  .lpc-utility-brand-mark {
-    width: 18px; height: 18px;
-    display: grid; place-items: center;
-    background: linear-gradient(135deg, #38bdf8, #6366f1);
-    border-radius: 4px; color: #fff; font-size: 0.62rem; font-weight: 700;
-    letter-spacing: -0.02em;
+  .lpc-utility-brand img {
+    width: 22px; height: 22px;
+    display: block;
+    border-radius: 5px;
   }
   .lpc-utility-community {
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -110,7 +107,7 @@
     </a>
     <span class="lpc-utility-divider">/</span>
     <a href="/communities" class="lpc-utility-brand" aria-label="Lines Police CAD home">
-      <span class="lpc-utility-brand-mark">LPC</span>
+      <img src="/static/images/lpc-logo.svg?v=2" alt="LPC" />
     </a>
     <% if (_utilCommunity) { %>
       <span class="lpc-utility-divider">/</span>
