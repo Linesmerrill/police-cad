@@ -11,6 +11,8 @@
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
+      /* cm- variables aligned to the shared rp- token system
+         (see memory/project_website_theme_rp.md) */
       --cm-bg: #08090c;
       --cm-surface: rgba(255, 255, 255, 0.03);
       --cm-glass: rgba(255, 255, 255, 0.04);
@@ -19,30 +21,33 @@
       --cm-text: #e2e8f0;
       --cm-text-muted: #64748b;
       --cm-text-dim: #475569;
-      --cm-accent: #8b5cf6;
-      --cm-accent-glow: rgba(139, 92, 246, 0.15);
+      --cm-accent: #38bdf8;
+      --cm-accent-glow: rgba(56, 189, 248, 0.15);
       --cm-green: #22c55e;
       --cm-red: #ef4444;
       --cm-radius: 12px;
       --cm-radius-sm: 8px;
     }
 
+    html { font-size: 16px; }
+
     body {
       background: var(--cm-bg);
       color: var(--cm-text);
       font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-      font-size: 0.8125rem;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
       min-height: 100vh;
       overflow-x: hidden;
+      padding-top: 36px; /* clears the fixed standalone-utility strip */
     }
 
-    /* Background effects */
+    /* Background effects — match the cyan/amber rp- backdrop */
     .cm-bg-mesh {
       position: fixed; inset: 0; z-index: 0;
       background:
-        radial-gradient(ellipse at 20% 50%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(245, 158, 11, 0.04) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 50%);
+        radial-gradient(ellipse 700px 500px at 10% 15%, rgba(56, 189, 248, 0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 90% 85%, rgba(245, 158, 11, 0.04) 0%, transparent 70%);
       animation: cm-mesh-drift 20s ease-in-out infinite alternate;
     }
     @keyframes cm-mesh-drift { 0% { opacity: 1; } 100% { opacity: 0.6; } }
@@ -54,23 +59,6 @@
 
     /* Layout */
     .cm-wrapper { position: relative; z-index: 2; min-height: 100vh; }
-
-    .cm-header {
-      padding: 1rem 2rem;
-      border-bottom: 1px solid var(--cm-glass-border);
-      background: rgba(12, 13, 18, 0.8);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-    }
-
-    .cm-back-link {
-      display: inline-flex; align-items: center; gap: 0.625rem;
-      color: var(--cm-text-muted); text-decoration: none;
-      font-weight: 500; font-size: 0.875rem;
-      transition: color 0.15s;
-    }
-    .cm-back-link:hover { color: var(--cm-text); }
-    .cm-back-link i { font-size: 0.75rem; }
 
     .cm-content { padding: 1.5rem 2rem; max-width: 1400px; margin: 0 auto; }
 
@@ -117,11 +105,11 @@
     }
     .cm-btn-accent {
       background: var(--cm-accent-glow); color: var(--cm-accent);
-      border: 1px solid rgba(139, 92, 246, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.2);
     }
     .cm-btn-accent:hover {
-      background: rgba(139, 92, 246, 0.25);
-      box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+      background: rgba(56, 189, 248, 0.25);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
     }
     .cm-btn-danger {
       background: rgba(239, 68, 68, 0.15); color: var(--cm-red);
@@ -142,9 +130,9 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      background: var(--cm-accent-glow);
-      color: var(--cm-accent);
-      border: 1px solid rgba(139, 92, 246, 0.2);
+      background: rgba(245, 158, 11, 0.12);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
     }
 
     /* Default label */
@@ -152,7 +140,7 @@
       padding: 0.5rem 1.25rem;
       color: var(--cm-text-dim); font-size: 0.75rem;
       display: flex; align-items: center; gap: 0.5rem;
-      background: rgba(139, 92, 246, 0.05);
+      background: rgba(56, 189, 248, 0.05);
       border-bottom: 1px solid var(--cm-glass-border);
     }
 
@@ -232,10 +220,12 @@
     /* Responsive */
     @media (max-width: 768px) {
       .cm-content { padding: 1rem; }
-      .cm-header { padding: 0.75rem 1rem; }
       .cm-card-header { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
       .cm-map-container { min-height: 300px; max-height: calc(100vh - 280px); }
       .cm-btn .cm-btn-label { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .cm-bg-mesh { animation: none; }
     }
     @media (min-width: 769px) {
       .cm-btn .cm-btn-label { display: inline; }
@@ -243,6 +233,14 @@
   </style>
 </head>
 <body>
+  <%- include('partials/standalone-utility', {
+    user: user,
+    communityName: (community && community.community && community.community.name) || null,
+    pageLabel: 'Map',
+    backHref: '/community/' + encodedCommunityId,
+    backLabel: 'Back to dashboard'
+  }) %>
+
   <!-- Background effects -->
   <div class="cm-bg-mesh"></div>
   <div class="cm-grain">
@@ -251,14 +249,6 @@
 
   <!-- Main content -->
   <div class="cm-wrapper">
-    <!-- Header -->
-    <header class="cm-header">
-      <a href="#" onclick="event.preventDefault(); if (document.referrer && document.referrer.includes(window.location.host)) { history.back(); } else { window.location.href = '/community/<%= encodedCommunityId %>'; }" class="cm-back-link">
-        <i class="fa fa-arrow-left"></i>
-        <span><%= community.community.name %></span>
-      </a>
-    </header>
-
     <!-- Content -->
     <div class="cm-content">
       <!-- Error banner -->
@@ -578,6 +568,28 @@
       mapImg.src = '/static/images/GTA-V-Custom-Postal-Code-Map.jpg';
       updateDefaultLabel(true);
     });
+
+    // Smart back: store the page the user arrived from so the strip's
+    // back link returns there instead of the static dashboard default.
+    // Same pattern as /reports and /most-wanted.
+    (function () {
+      var RETURN_KEY = 'communityMap.returnUrl';
+      (function captureReturnUrl() {
+        var ref = document.referrer || '';
+        if (!ref) return;
+        if (ref.indexOf(window.location.origin) !== 0) return;
+        var path = ref.slice(window.location.origin.length).split('?')[0].split('#')[0];
+        if (/\/community\/[^/]+\/map\/?$/.test(path)) return;
+        try { sessionStorage.setItem(RETURN_KEY, ref); } catch (e) { /* private mode */ }
+      })();
+      Array.from(document.querySelectorAll('.lpc-utility-back')).forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          var stored = '';
+          try { stored = sessionStorage.getItem(RETURN_KEY) || ''; } catch (e2) {}
+          if (stored) { e.preventDefault(); window.location.href = stored; }
+        });
+      });
+    })();
   </script>
 </body>
 </html>
