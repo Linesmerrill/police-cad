@@ -279,10 +279,13 @@
     $('#sessionSubtitle').html('Presided by Judge ' + escHtml(judgeName));
     $('#sessionJudge').html('<i class="fa fa-gavel"></i> Judge ' + escHtml(judgeName));
 
-    // Update back button to link directly to court-cases page (forces reload instead of stale cache)
+    // Retarget the standalone-utility strip's static back href to the
+    // session's court-cases page when no referrer was captured. The
+    // smart-back JS in the EJS already prefers the captured referrer
+    // when one exists, so this only applies on cold loads / refreshes.
     if (session.communityID) {
       var encoded = btoa(session.communityID).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-      $('#backToDashboardBtn').attr('href', '/court-cases?c=' + encoded);
+      $('.lpc-utility-back').attr('href', '/court-cases?c=' + encoded);
     }
 
     // Status badge
