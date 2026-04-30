@@ -31,6 +31,7 @@
       background: var(--rp-bg); color: var(--rp-text);
       font-family: 'Outfit', -apple-system, sans-serif;
       min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased;
+      padding-top: 36px; /* clears the fixed standalone-utility strip */
     }
     body::before {
       content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
@@ -580,6 +581,13 @@
   </style>
 </head>
 <body>
+  <%- include('partials/standalone-utility', {
+    user: user,
+    communityName: typeof communityName !== 'undefined' ? communityName : null,
+    pageLabel: 'Reports',
+    backHref: '/communities',
+    backLabel: 'Back to dashboard'
+  }) %>
   <div class="rp-shell">
     <div class="rp-header">
       <div class="rp-header-left">
@@ -592,7 +600,6 @@
         </div>
       </div>
       <div style="display:flex; gap:0.5rem;">
-        <a href="#" id="rp-back" class="rp-back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
         <button id="rp-new" class="rp-btn rp-btn-primary" type="button"><i class="fa-solid fa-plus"></i> New Report <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; margin-left: 0.25rem;"></i></button>
       </div>
     </div>
@@ -1193,15 +1200,15 @@
         try { sessionStorage.setItem(RETURN_KEY, ref); } catch (e) { /* private mode */ }
       })();
 
-      document.getElementById('rp-back').addEventListener('click', function (e) {
-        e.preventDefault();
-        var stored = '';
-        try { stored = sessionStorage.getItem(RETURN_KEY) || ''; } catch (e2) {}
-        if (stored) {
-          window.location.href = stored;
-        } else {
-          window.location.href = '/communities';
-        }
+      // Hook the standalone-utility strip's back link to the smarter
+      // return-to-source URL when one was captured. Falls back to the
+      // strip's static href (/communities) when nothing's stored.
+      Array.from(document.querySelectorAll('.lpc-utility-back')).forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          var stored = '';
+          try { stored = sessionStorage.getItem(RETURN_KEY) || ''; } catch (e2) {}
+          if (stored) { e.preventDefault(); window.location.href = stored; }
+        });
       });
 
       // New Report → command palette

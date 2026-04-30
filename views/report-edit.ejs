@@ -31,6 +31,7 @@
       background: var(--rp-bg); color: var(--rp-text);
       font-family: 'Outfit', -apple-system, sans-serif;
       min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased;
+      padding-top: 36px;     /* clears the fixed standalone-utility strip */
       padding-bottom: 88px;
     }
     body::before {
@@ -952,6 +953,13 @@
   </style>
 </head>
 <body>
+  <%- include('partials/standalone-utility', {
+    user: user,
+    communityName: null,
+    pageLabel: (typeof submissionId !== 'undefined' && submissionId) ? 'Reports / Edit' : 'Reports / New',
+    backHref: '/reports' + ((typeof communityIdEncoded !== 'undefined' && communityIdEncoded) ? ('?c=' + communityIdEncoded) : ''),
+    backLabel: 'Back to Reports'
+  }) %>
   <div class="rp-shell">
     <div class="rp-header">
       <div class="rp-header-left">
@@ -962,7 +970,6 @@
         </div>
       </div>
       <div style="display:flex; gap:0.5rem; align-items:center;">
-        <a href="/reports<% if (typeof communityIdEncoded !== 'undefined' && communityIdEncoded) { %>?c=<%= communityIdEncoded %><% } %>" class="rp-back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Reports</a>
         <label class="rp-back-btn" id="rp-required-only-wrap" style="cursor:pointer;">
           <input type="checkbox" id="rp-required-only" style="margin-right: 0.3rem;" /> Required only
         </label>

@@ -1,0 +1,129 @@
+<%#
+  standalone-utility.ejs — Slim 36px utility strip for standalone pages
+  that don't include the global app header/footer (Reports, Files, etc.).
+
+  Provides a consistent micro-shell:
+    [← Back] · [LPC] / [Community] / [Page label]                 [user avatar]
+
+  The back link sits in the top-LEFT to match Web/OS muscle memory.
+  Right side stays clean for identity (avatar) only.
+
+  Locals:
+    user             — req.user (passport user)  (REQUIRED)
+    backHref         — string URL for the breadcrumb (default '/communities')
+    backLabel        — short label, e.g. 'Back to Reports' (default 'Back')
+    pageLabel        — short label for the current page (e.g. 'Reports')
+    communityName    — community display name (optional, falls back to user's community)
+
+  Markup convention: include this partial as the FIRST element inside
+  <body>. Pages must add `body { padding-top: 36px; }` (or wrap content
+  in a shell whose first child clears 36px) so the fixed strip doesn't
+  cover the page content.
+%>
+<style>
+  .lpc-utility-strip {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    height: 36px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 0.85rem;
+    background: rgba(8, 9, 12, 0.85);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-family: 'Outfit', -apple-system, sans-serif;
+    font-size: 0.78rem;
+    color: rgba(226, 232, 240, 0.78);
+  }
+  .lpc-utility-strip a { color: inherit; text-decoration: none; }
+  .lpc-utility-left,
+  .lpc-utility-right { display: flex; align-items: center; gap: 0.55rem; min-width: 0; }
+  .lpc-utility-left { flex: 1; min-width: 0; }
+  .lpc-utility-back {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    color: rgba(56, 189, 248, 0.92);
+    transition: background 120ms ease, color 120ms ease;
+    flex-shrink: 0;
+  }
+  .lpc-utility-back:hover {
+    background: rgba(56, 189, 248, 0.08);
+    color: #38bdf8;
+  }
+  .lpc-utility-back i { font-size: 0.72rem; }
+  .lpc-utility-divider { color: rgba(148, 163, 184, 0.4); margin: 0 0.15rem; flex-shrink: 0; }
+  .lpc-utility-brand {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    color: rgba(226, 232, 240, 0.92);
+    flex-shrink: 0;
+  }
+  .lpc-utility-brand-mark {
+    width: 18px; height: 18px;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, #38bdf8, #6366f1);
+    border-radius: 4px; color: #fff; font-size: 0.62rem; font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .lpc-utility-community {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 200px;
+    color: rgba(148, 163, 184, 0.85);
+  }
+  .lpc-utility-page {
+    color: rgba(226, 232, 240, 0.95);
+    font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .lpc-utility-avatar {
+    width: 24px; height: 24px;
+    display: grid; place-items: center;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    color: #38bdf8;
+    border-radius: 50%; font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.02em;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .lpc-utility-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  @media (max-width: 640px) {
+    .lpc-utility-community,
+    .lpc-utility-divider,
+    .lpc-utility-page { display: none; }
+  }
+</style>
+<%
+  var _utilUser = (typeof user !== 'undefined' && user) ? user : null;
+  var _utilUsername = (_utilUser && _utilUser.user && _utilUser.user.username) ? _utilUser.user.username : '';
+  var _utilInitials = _utilUsername ? _utilUsername.slice(0, 2).toUpperCase() : '?';
+  var _utilAvatarUrl = (_utilUser && _utilUser.user && (_utilUser.user.profileImage || _utilUser.user.imageLink)) || '';
+  var _utilCommunity = (typeof communityName !== 'undefined' && communityName)
+    ? communityName
+    : ((_utilUser && _utilUser.user && _utilUser.user.lastAccessedCommunity && _utilUser.user.lastAccessedCommunity.name) || '');
+  var _utilBackHref = (typeof backHref !== 'undefined' && backHref) ? backHref : '/communities';
+  var _utilBackLabel = (typeof backLabel !== 'undefined' && backLabel) ? backLabel : 'Back';
+  var _utilPageLabel = (typeof pageLabel !== 'undefined' && pageLabel) ? pageLabel : '';
+%>
+<header class="lpc-utility-strip" role="banner">
+  <div class="lpc-utility-left">
+    <a href="<%= _utilBackHref %>" class="lpc-utility-back">
+      <i class="fa-solid fa-arrow-left"></i><span><%= _utilBackLabel %></span>
+    </a>
+    <span class="lpc-utility-divider">/</span>
+    <a href="/communities" class="lpc-utility-brand" aria-label="Lines Police CAD home">
+      <span class="lpc-utility-brand-mark">LPC</span>
+    </a>
+    <% if (_utilCommunity) { %>
+      <span class="lpc-utility-divider">/</span>
+      <span class="lpc-utility-community" title="<%= _utilCommunity %>"><%= _utilCommunity %></span>
+    <% } %>
+    <% if (_utilPageLabel) { %>
+      <span class="lpc-utility-divider">/</span>
+      <span class="lpc-utility-page"><%= _utilPageLabel %></span>
+    <% } %>
+  </div>
+  <div class="lpc-utility-right">
+    <a href="/profile" class="lpc-utility-avatar" title="<%= _utilUsername || 'Account' %>">
+      <% if (_utilAvatarUrl) { %><img src="<%= _utilAvatarUrl %>" alt="" /><% } else { %><%= _utilInitials %><% } %>
+    </a>
+  </div>
+</header>
