@@ -37,6 +37,7 @@
       min-height: 100vh;
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
+      padding-top: 36px; /* clears the fixed standalone-utility strip */
     }
 
     body::before {
@@ -590,6 +591,14 @@
 </head>
 <body>
 
+<%- include('partials/standalone-utility', {
+  user: user,
+  communityName: communityName,
+  pageLabel: 'Court Cases',
+  backHref: '/communities',
+  backLabel: 'Back to dashboard'
+}) %>
+
 <div class="cc-shell">
   <!-- Header -->
   <div class="cc-header">
@@ -604,7 +613,6 @@
       <button class="cc-refresh-btn" id="ccCaseSearchBtn" onclick="ccOpenCaseSearch()" title="Case Search"><i class="fa fa-magnifying-glass"></i></button>
       <a href="/help#court-cases" class="cc-refresh-btn" title="Help & Tutorials"><i class="fa fa-circle-question"></i></a>
       <button class="cc-refresh-btn" id="ccRefreshBtn" onclick="ccRefreshAll()" title="Refresh"><i class="fa fa-arrows-rotate"></i></button>
-      <a href="javascript:void(0)" onclick="ccGoBack()" class="cc-back-btn"><i class="fa fa-arrow-left"></i> Back</a>
     </div>
   </div>
 
@@ -747,19 +755,33 @@
   }
 
   // --- Back navigation ---
-  window.ccGoBack = function() {
-    var ref = document.referrer;
-    // If referrer is from this site and is a dashboard page, use history.back()
-    if (ref && ref.indexOf(window.location.origin) === 0
-        && ref.indexOf('/court-session') === -1
-        && ref.indexOf('/court-cases') === -1
-        && ref.indexOf('/help') === -1) {
-      history.back();
-      return;
-    }
-    // Fallback: go to communities page
-    window.location.href = '/communities';
-  };
+  // Smart back attached to the standalone-utility strip's back link.
+  // Capture the referrer on first arrival into sessionStorage so the
+  // back button returns to the page the user actually came from, even
+  // after refreshes or sibling-page navigation. Same pattern as
+  // /reports, /most-wanted, /community/:hash/map, /court-session.
+  (function () {
+    var RETURN_KEY = 'courtCases.returnUrl';
+    (function captureReturnUrl() {
+      var ref = document.referrer || '';
+      if (!ref) return;
+      if (ref.indexOf(window.location.origin) !== 0) return;
+      var path = ref.slice(window.location.origin.length).split('?')[0].split('#')[0];
+      // Don't overwrite when bouncing between sibling court pages or
+      // arriving from /help — we want the original entry point.
+      if (path.indexOf('/court-cases') === 0) return;
+      if (path.indexOf('/court-session') === 0) return;
+      if (path.indexOf('/help') === 0) return;
+      try { sessionStorage.setItem(RETURN_KEY, ref); } catch (e) { /* private mode */ }
+    })();
+    Array.from(document.querySelectorAll('.lpc-utility-back')).forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        var stored = '';
+        try { stored = sessionStorage.getItem(RETURN_KEY) || ''; } catch (e2) {}
+        if (stored) { e.preventDefault(); window.location.href = stored; }
+      });
+    });
+  })();
 
   // --- Init ---
   $(document).ready(function() {
