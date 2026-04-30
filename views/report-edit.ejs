@@ -914,25 +914,29 @@
     .rp-history-action { font-weight: 600; text-transform: capitalize; }
     .rp-history-meta { color: var(--rp-text-muted); font-size: 0.78rem; }
 
-    /* Reopen confirmation modal — re-uses rp-conf-* visual language */
+    /* Reopen confirmation modal — re-uses rp-conf-* visual language.
+       flex-shrink:0 prevents the badge from squishing when the
+       sibling text wraps to multiple lines. */
     .rp-reopen-icon {
+      flex: 0 0 44px;
       width: 44px; height: 44px;
+      padding: 0.55rem;
       display: grid; place-items: center;
       background: rgba(245,158,11,0.12);
       border: 1px solid rgba(245,158,11,0.28);
-      color: var(--rp-amber); border-radius: 10px; font-size: 1.1rem;
+      color: var(--rp-amber); border-radius: 10px; font-size: 1.05rem;
     }
+    .rp-reopen-icon i { line-height: 1; }
     .rp-archive-icon {
+      flex: 0 0 44px;
       width: 44px; height: 44px;
+      padding: 0.55rem;
       display: grid; place-items: center;
       background: rgba(148,163,184,0.12);
       border: 1px solid rgba(148,163,184,0.28);
-      color: #94a3b8; border-radius: 10px;
-      /* fa-box-archive / fa-box-open glyphs are wider-than-tall, so a
-         slightly larger size is needed to optically match fa-lock-open
-         in the reopen modal. */
-      font-size: 1.35rem;
+      color: #94a3b8; border-radius: 10px; font-size: 1.05rem;
     }
+    .rp-archive-icon i { line-height: 1; }
 
     /* Archived banner — styled separately from the green submitted lock */
     .rp-lock-banner.is-archived {
