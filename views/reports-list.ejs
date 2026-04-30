@@ -137,6 +137,9 @@
     }
     .rp-pill-submitted { background: rgba(34,197,94,0.1); color: var(--rp-green); border-color: rgba(34,197,94,0.2); }
     .rp-pill-draft { background: rgba(245,158,11,0.1); color: var(--rp-amber); border-color: rgba(245,158,11,0.2); }
+    .rp-pill-archived { background: rgba(148,163,184,0.1); color: #94a3b8; border-color: rgba(148,163,184,0.2); }
+    .rp-card.is-archived { opacity: 0.65; }
+    .rp-card.is-archived:hover { opacity: 0.85; }
 
     .rp-empty {
       text-align: center; padding: 3rem 1rem;
@@ -1113,9 +1116,12 @@
           var statusPill = d.status === 'draft'
             ? '<span class="rp-pill rp-pill-draft"><i class="fa-regular fa-circle-dot"></i> Draft</span>'
             : '<span class="rp-pill rp-pill-submitted"><i class="fa-solid fa-check"></i> Submitted</span>';
+          var archivedPill = d.archived
+            ? '<span class="rp-pill rp-pill-archived"><i class="fa-solid fa-box-archive"></i> Archived</span>'
+            : '';
 
           var a = document.createElement('a');
-          a.className = 'rp-card';
+          a.className = 'rp-card' + (d.archived ? ' is-archived' : '');
           a.href = '/reports/' + encodeURIComponent(sub._id) + (communityIdEncoded ? '?c=' + communityIdEncoded : '');
           a.innerHTML =
             '<div class="rp-avatar">' + escapeHTML(initials) + '</div>' +
@@ -1125,6 +1131,7 @@
                 '<span class="rp-meta-item"><i class="fa-regular fa-user"></i> ' + escapeHTML((d.signedBy && d.signedBy.username) || 'Unsigned') + '</span>' +
                 '<span class="rp-meta-item"><i class="fa-regular fa-clock"></i> ' + escapeHTML(fmtDate(d.createdAt)) + '</span>' +
                 statusPill +
+                archivedPill +
               '</div>' +
             '</div>' +
             '<i class="fa-solid fa-chevron-right" style="color: var(--rp-text-dim);"></i>';

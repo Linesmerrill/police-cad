@@ -909,6 +909,8 @@
     .rp-history-dot.submitted { background: var(--rp-green); box-shadow: 0 0 0 3px rgba(34,197,94,0.12); }
     .rp-history-dot.reopened  { background: var(--rp-amber); box-shadow: 0 0 0 3px rgba(245,158,11,0.12); }
     .rp-history-dot.resubmitted { background: var(--rp-accent); box-shadow: 0 0 0 3px rgba(56,189,248,0.12); }
+    .rp-history-dot.archived { background: #94a3b8; box-shadow: 0 0 0 3px rgba(148,163,184,0.12); }
+    .rp-history-dot.unarchived { background: var(--rp-accent); box-shadow: 0 0 0 3px rgba(56,189,248,0.12); }
     .rp-history-action { font-weight: 600; text-transform: capitalize; }
     .rp-history-meta { color: var(--rp-text-muted); font-size: 0.78rem; }
 
@@ -920,6 +922,25 @@
       border: 1px solid rgba(245,158,11,0.28);
       color: var(--rp-amber); border-radius: 10px; font-size: 1.1rem;
     }
+    .rp-archive-icon {
+      width: 44px; height: 44px;
+      display: grid; place-items: center;
+      background: rgba(148,163,184,0.12);
+      border: 1px solid rgba(148,163,184,0.28);
+      color: #94a3b8; border-radius: 10px; font-size: 1.1rem;
+    }
+
+    /* Archived banner — styled separately from the green submitted lock */
+    .rp-lock-banner.is-archived {
+      background: linear-gradient(180deg, rgba(148,163,184,0.08), rgba(148,163,184,0.03));
+      border-color: rgba(148,163,184,0.22);
+    }
+    .rp-lock-banner.is-archived .rp-lock-icon {
+      background: rgba(148,163,184,0.14);
+      border-color: rgba(148,163,184,0.32);
+      color: #94a3b8;
+    }
+    .rp-lock-banner.is-archived .rp-lock-text strong { color: #cbd5e1; }
   </style>
 </head>
 <body>
@@ -973,6 +994,27 @@
   </div>
 
   <div id="rp-toast" class="rp-toast"></div>
+
+  <!-- Archive / Unarchive confirmation -->
+  <div id="rp-archive" class="rp-conf-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="rp-archive-title">
+    <div class="rp-conf-panel" role="document">
+      <div class="rp-conf-head">
+        <div class="rp-archive-icon"><i class="fa-solid fa-box-archive" id="rp-archive-icon-inner"></i></div>
+        <div>
+          <div class="rp-conf-title" id="rp-archive-title">Archive this report?</div>
+          <div class="rp-conf-sub" id="rp-archive-sub">Archived reports stay visible but cannot be edited until they're unarchived.</div>
+        </div>
+        <button id="rp-archive-x" class="rp-conf-close" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="rp-conf-foot">
+        <button id="rp-archive-cancel" class="rp-conf-btn rp-conf-btn-ghost" type="button">Cancel</button>
+        <div class="rp-conf-foot-spacer"></div>
+        <button id="rp-archive-confirm" class="rp-conf-btn rp-conf-btn-primary" type="button">
+          <i class="fa-solid fa-box-archive" id="rp-archive-confirm-icon"></i> <span id="rp-archive-confirm-text">Archive</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Reopen-for-edits confirmation — flips a submitted report back to draft -->
   <div id="rp-reopen" class="rp-conf-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="rp-reopen-title">
@@ -1179,10 +1221,10 @@
             // "incident number" field if the template has one and it's
             // currently empty, so the user sees their assigned number.
             hydrateReportNumberField(tpl, state.data, sub.formSubmission.reportNumber);
-            // Auto-lock submitted reports. Anyone in the community can
-            // view, but only the original submitter or a community admin
-            // can reopen for edits via the kebab menu.
-            if (sub.formSubmission.status === 'submitted') {
+            // Auto-lock submitted OR archived reports. Anyone in the
+            // community can view, but only the original submitter or a
+            // community admin can reopen / unarchive via the kebab menu.
+            if (sub.formSubmission.status === 'submitted' || sub.formSubmission.archived) {
               readOnly = true;
             }
           }
@@ -1190,10 +1232,10 @@
         });
       }
 
-      // True when the current viewer is allowed to reopen a submitted
+      // True when the current viewer is allowed to reopen / archive a
       // report. Covers community admins (canManageForms) and the
       // original submitter — matched by user ID.
-      function canReopenCurrent() {
+      function canManageCurrent() {
         if (!state.existing) return false;
         if (canManageForms) return true;
         var sub = state.existing.formSubmission || {};
@@ -2515,13 +2557,27 @@
       function renderLockBanner() {
         var banner = document.getElementById('rp-lock-banner');
         var text = document.getElementById('rp-lock-text');
+        var icon = banner.querySelector('.rp-lock-icon i');
         var sub = state.existing && state.existing.formSubmission;
-        var locked = sub && sub.status === 'submitted';
-        if (!locked) { banner.style.display = 'none'; return; }
+        if (!sub) { banner.style.display = 'none'; return; }
+        // Archived takes precedence — both visually and semantically.
+        if (sub.archived) {
+          var ab = sub.archivedBy || {};
+          var aWho = ab.username ? escapeHTML(ab.username) : 'a user';
+          var aWhen = ab.signedAt ? formatHistoryDate(ab.signedAt) : '';
+          text.innerHTML = '<strong>Archived</strong> <span class="rp-lock-meta">by ' + aWho + (aWhen ? ' &middot; ' + escapeHTML(aWhen) : '') + '</span>';
+          if (icon) icon.className = 'fa-solid fa-box-archive';
+          banner.classList.add('is-archived');
+          banner.style.display = 'flex';
+          return;
+        }
+        if (sub.status !== 'submitted') { banner.style.display = 'none'; banner.classList.remove('is-archived'); return; }
         var signer = sub.signedBy || {};
         var who = signer.username ? escapeHTML(signer.username) : 'an officer';
         var when = signer.signedAt ? formatHistoryDate(signer.signedAt) : (sub.createdAt ? formatHistoryDate(sub.createdAt) : '');
         text.innerHTML = '<strong>Locked &middot; Submitted</strong> <span class="rp-lock-meta">by ' + who + (when ? ' &middot; ' + escapeHTML(when) : '') + '</span>';
+        if (icon) icon.className = 'fa-solid fa-lock';
+        banner.classList.remove('is-archived');
         banner.style.display = 'flex';
       }
 
@@ -2529,11 +2585,21 @@
         var wrap = document.getElementById('rp-kebab');
         var menu = document.getElementById('rp-kebab-menu');
         if (!state.existing) { wrap.style.display = 'none'; return; }
+        var sub = state.existing.formSubmission || {};
         var items = [];
         items.push({ id: 'print', icon: 'fa-print', label: 'Print / Save as PDF' });
-        if (readOnly && canReopenCurrent()) {
+        // Reopen is hidden while archived — user must unarchive first.
+        if (readOnly && !sub.archived && sub.status === 'submitted' && canManageCurrent()) {
           items.push({ sep: true });
           items.push({ id: 'reopen', icon: 'fa-lock-open', label: 'Reopen for edits' });
+        }
+        if (canManageCurrent()) {
+          items.push({ sep: true });
+          if (sub.archived) {
+            items.push({ id: 'unarchive', icon: 'fa-box-open', label: 'Unarchive' });
+          } else {
+            items.push({ id: 'archive', icon: 'fa-box-archive', label: 'Archive' });
+          }
         }
         menu.innerHTML = items.map(function (it) {
           if (it.sep) return '<div class="rp-kebab-sep"></div>';
@@ -2586,6 +2652,10 @@
           }
         } else if (action === 'reopen') {
           openReopenModal();
+        } else if (action === 'archive') {
+          openArchiveModal(true);
+        } else if (action === 'unarchive') {
+          openArchiveModal(false);
         }
       }
 
@@ -2600,6 +2670,79 @@
       }
       function closeReopenModal() {
         document.getElementById('rp-reopen').classList.remove('open');
+      }
+
+      function openArchiveModal(toArchive) {
+        var sub = state.existing && state.existing.formSubmission;
+        var num = (sub && sub.reportNumber) || '';
+        var titleEl = document.getElementById('rp-archive-title');
+        var subEl = document.getElementById('rp-archive-sub');
+        var btnText = document.getElementById('rp-archive-confirm-text');
+        var btnIcon = document.getElementById('rp-archive-confirm-icon');
+        var iconInner = document.getElementById('rp-archive-icon-inner');
+        if (toArchive) {
+          titleEl.textContent = 'Archive this report?';
+          subEl.textContent = num
+            ? 'Report ' + num + ' will be archived and locked from edits. The original status is preserved — unarchive to restore editing.'
+            : 'This report will be archived and locked from edits. Unarchive to restore editing.';
+          btnText.textContent = 'Archive';
+          btnIcon.className = 'fa-solid fa-box-archive';
+          iconInner.className = 'fa-solid fa-box-archive';
+        } else {
+          titleEl.textContent = 'Unarchive this report?';
+          subEl.textContent = num
+            ? 'Report ' + num + ' will be unarchived and returned to its prior status (' + escapeHTML((sub && sub.status) || 'draft') + ').'
+            : 'This report will be unarchived and returned to its prior status.';
+          btnText.textContent = 'Unarchive';
+          btnIcon.className = 'fa-solid fa-box-open';
+          iconInner.className = 'fa-solid fa-box-open';
+        }
+        document.getElementById('rp-archive-confirm').setAttribute('data-target', toArchive ? '1' : '0');
+        document.getElementById('rp-archive').classList.add('open');
+      }
+      function closeArchiveModal() {
+        document.getElementById('rp-archive').classList.remove('open');
+      }
+
+      function toggleArchive() {
+        if (!state.existing || !state.existing._id) return;
+        var btn = document.getElementById('rp-archive-confirm');
+        var toArchive = btn.getAttribute('data-target') === '1';
+        btn.disabled = true;
+        var payload = {
+          archived: toArchive,
+          actor: currentUser ? { userID: currentUser.id, username: currentUser.username } : undefined
+        };
+        fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(state.existing._id), {
+          method: 'PUT',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(payload)
+        })
+          .then(function (r) {
+            if (r.status === 403) throw new Error('You do not have permission to ' + (toArchive ? 'archive' : 'unarchive') + ' this report.');
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function () {
+            return fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(state.existing._id), { headers: authHeaders() })
+              .then(function (r) { return r.ok ? r.json() : null; });
+          })
+          .then(function (fresh) {
+            if (fresh && fresh.formSubmission) {
+              state.existing = fresh;
+              state.data = fresh.formSubmission.data || {};
+              state.links = fresh.formSubmission.links || [];
+              readOnly = fresh.formSubmission.archived || fresh.formSubmission.status === 'submitted';
+            }
+            closeArchiveModal();
+            render();
+            toast(toArchive ? 'Report archived' : 'Report unarchived', 'success');
+            btn.disabled = false;
+          })
+          .catch(function (e) {
+            toast(e && e.message ? e.message : 'Action failed', 'error');
+            btn.disabled = false;
+          });
       }
 
       function reopenForEdits() {
@@ -3063,6 +3206,19 @@
         var modal = document.getElementById('rp-reopen');
         if (!modal.classList.contains('open')) return;
         if (e.key === 'Escape') { e.preventDefault(); closeReopenModal(); }
+      });
+
+      // Archive / Unarchive modal wiring.
+      document.getElementById('rp-archive-x').addEventListener('click', closeArchiveModal);
+      document.getElementById('rp-archive-cancel').addEventListener('click', closeArchiveModal);
+      document.getElementById('rp-archive-confirm').addEventListener('click', toggleArchive);
+      document.getElementById('rp-archive').addEventListener('mousedown', function (e) {
+        if (e.target === this) closeArchiveModal();
+      });
+      document.addEventListener('keydown', function (e) {
+        var modal = document.getElementById('rp-archive');
+        if (!modal.classList.contains('open')) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeArchiveModal(); }
       });
 
       // Wire call-picker modal once the DOM is ready.
