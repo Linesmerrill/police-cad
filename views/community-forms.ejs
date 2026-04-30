@@ -31,6 +31,7 @@
       background: var(--rp-bg); color: var(--rp-text);
       font-family: 'Outfit', -apple-system, sans-serif;
       min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased;
+      padding-top: 36px;     /* clears the fixed standalone-utility strip */
       padding-bottom: 88px;
     }
     body::before {
@@ -401,6 +402,13 @@
   </style>
 </head>
 <body>
+  <%- include('partials/standalone-utility', {
+    user: user,
+    communityName: typeof communityName !== 'undefined' ? communityName : null,
+    pageLabel: 'Forms',
+    backHref: '/reports' + ((typeof communityIdEncoded !== 'undefined' && communityIdEncoded) ? ('?c=' + communityIdEncoded) : ''),
+    backLabel: 'Back to Reports'
+  }) %>
   <div class="rp-shell">
     <div class="rp-header">
       <div class="rp-header-left">
@@ -411,7 +419,6 @@
         </div>
       </div>
       <div style="display:flex; gap:0.5rem;">
-        <a href="/reports<% if (typeof communityIdEncoded !== 'undefined' && communityIdEncoded) { %>?c=<%= communityIdEncoded %><% } %>" class="rp-back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Reports</a>
         <button id="rp-new-btn" class="rp-btn rp-btn-primary"><i class="fa-solid fa-plus"></i> New form</button>
       </div>
     </div>
