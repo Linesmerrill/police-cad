@@ -39,11 +39,43 @@
   }
   window.cdDispatchDeptVisual = deptVisual; // for reuse by call cards, detail pills
 
-  // In-memory state
+  // Templates that are NOT dispatchable. Mirrors cd-dispatch-unit-console's
+  // isEligibleTemplate() — civilians are not field units, judges aren't
+  // assignable, and dispatchers shouldn't dispatch themselves.
+  var NON_DISPATCHABLE = { civilian: 1, judicial: 1, dispatch: 1 };
+
+  // On/off-duty ten-codes used to classify a unit as dispatchable (online)
+  // vs. ghost (offline) in the roster. A unit is "off-duty" when their
+  // current code matches OFF_DUTY_CODE, OR when they have no code set yet
+  // (haven't started a shift). Anything else — including ON_DUTY_CODE,
+  // 10-7, 10-8, on-call codes — counts as on-duty.
+  //
+  // TODO(community-config): let community admins designate which 10-codes
+  // mean on-duty / off-duty per community when they configure ten-codes.
+  // For now these are hard-coded to the LPC defaults.
+  var ON_DUTY_CODE = '10-41';
+  var OFF_DUTY_CODE = '10-42';
+  function unitCode(u) { return (u && u.tenCode && u.tenCode.code) || ''; }
+  function isOffDuty(u) {
+    var code = unitCode(u);
+    if (!code) return true;            // no code yet = hasn't gone on duty
+    return code === OFF_DUTY_CODE;     // explicit off-duty code
+  }
+  function hasEligibleDept(u) {
+    var depts = (u && u.departments) || [];
+    for (var i = 0; i < depts.length; i++) {
+      var t = String(depts[i].template || '').toLowerCase();
+      if (t && !NON_DISPATCHABLE[t]) return true;
+    }
+    return false;
+  }
+
+  // In-memory state. deptFilter is a Set of selected template keys
+  // (police/fire/ems). Empty Set = show all eligible templates.
   var state = {
     units: [],          // normalized {id, callSign, username, tenCode, tone, deptKey, deptName, ...}
     statusFilter: 'all', // all|available|busy|other
-    deptFilter: 'all',   // all|police|fire|ems|other
+    deptFilter: new Set(),
     search: '',
     loading: false,
   };
@@ -181,6 +213,11 @@
       var isDispatcher = active && String(active.template || '').toLowerCase() === 'dispatch';
       if (isDispatcher) continue;        // hide other dispatchers from the assignable pool
       if (u.id === me) continue;         // hide self — you can't assign yourself from this roster
+      // Skip pure civilians / judges. Dispatchers cannot assign them to calls,
+      // so showing them in the roster is clutter at best and a realism break
+      // at worst (community feedback: "civilians appearing in the All view
+      // makes the dashboard feel like a contact list, not a unit board").
+      if (!hasEligibleDept(u)) continue;
       var tmpl = active ? (active.template || '') : '';
       // Summarise every department the user is in, not just the active one,
       // so dispatchers can see at a glance that (e.g.) "1D-44" is in both
@@ -250,29 +287,87 @@
       $host.html(controlsHtml());
     }
 
-    // List body
+    // List body. The roster is the on-duty (online) bucket; the off-duty
+    // bucket only surfaces during text search so it doesn't crowd the
+    // default view.
     var $body = $host.find('.cd-roster-body');
-    var filtered = applyFilters(state.units);
+    var split = applyFilters(state.units);
+    var filtered = split.online;
+    var ghosts = split.offline;
+    var GHOST_CAP = state.ghostExpanded ? ghosts.length : 5;
+    var ghostsVisible = ghosts.slice(0, GHOST_CAP);
+    var ghostsExtra = Math.max(0, ghosts.length - GHOST_CAP);
 
     if (state.loading) {
       $body.html('<div class="cd-dispatch-placeholder"><i class="fa fa-circle-notch fa-spin"></i><div>Loading units…</div></div>');
-    } else if (!filtered.length) {
-      var msg = state.search ? 'No units match your search.' : (state.units.length ? 'No units in this status bucket.' : 'No assignable units in this community yet.');
-      $body.html('<div class="cd-dispatch-placeholder"><i class="fa fa-users"></i><div>' + esc(msg) + '</div></div>');
     } else {
       var html = '';
-      for (var i = 0; i < filtered.length; i++) html += chipHtml(filtered[i]);
+
+      if (filtered.length) {
+        for (var i = 0; i < filtered.length; i++) html += chipHtml(filtered[i]);
+      } else {
+        // Empty on-duty list. Tailor the message based on whether the
+        // search produced ghost matches we'll show below.
+        var primaryMsg, hint;
+        if (state.search) {
+          primaryMsg = ghostsVisible.length
+            ? 'No on-duty units match — but ' + ghosts.length + ' off-duty.'
+            : 'No units match your search.';
+          hint = 'Off-duty units appear below. Tap to view or update their status.';
+        } else {
+          primaryMsg = state.units.length ? 'No units in this status bucket.' : 'No assignable units in this community yet.';
+          hint = 'Don’t see a unit? Have them mark themselves as on-duty (10-41) — only on-duty units appear here.';
+        }
+        html += (
+          '<div class="cd-dispatch-placeholder">' +
+            (ghostsVisible.length ? '' : '<i class="fa fa-users"></i>') +
+            '<div>' + esc(primaryMsg) + '</div>' +
+            '<div class="cd-dispatch-placeholder-hint">' + esc(hint) + '</div>' +
+          '</div>'
+        );
+      }
+
+      // Ghost section — only when actively searching and there are matches.
+      if (state.search && ghostsVisible.length) {
+        html += (
+          '<div class="cd-roster-section-divider" role="separator">' +
+            '<span class="cd-roster-section-divider-label">OFF-DUTY · ' + ghosts.length + '</span>' +
+          '</div>'
+        );
+        for (var g = 0; g < ghostsVisible.length; g++) html += chipHtml(ghostsVisible[g], { ghost: true });
+        if (ghostsExtra > 0) {
+          html += (
+            '<div class="cd-roster-ghost-more" data-action="ghost-show-all">' +
+              '+ ' + ghostsExtra + ' more off-duty' +
+            '</div>'
+          );
+        }
+        html += '<div class="cd-roster-ghost-foot">Off-duty units are not dispatchable. Tap to view or nudge.</div>';
+      }
+
       $body.html(html);
     }
 
-    // Update count in the zone header
-    $('#cd-dispatch-roster-count').text(filtered.length + (filtered.length !== state.units.length ? ' / ' + state.units.length : ''));
+    // Update count in the zone header. Only on-duty units count toward
+    // dispatchable capacity — off-duty/ghost units are not in the
+    // denominator, so the "X / Y" reads as "showing X of Y dispatchable."
+    var totalOnDuty = 0;
+    for (var t = 0; t < state.units.length; t++) {
+      if (!isOffDuty(state.units[t])) totalOnDuty++;
+    }
+    $('#cd-dispatch-roster-count').text(filtered.length + (filtered.length !== totalOnDuty ? ' / ' + totalOnDuty : ''));
 
     // Re-apply active filter pills
     $host.find('.cd-roster-pill[data-group="status"]').removeClass('is-active');
     $host.find('.cd-roster-pill[data-group="status"][data-filter="' + state.statusFilter + '"]').addClass('is-active');
     $host.find('.cd-roster-pill[data-group="dept"]').removeClass('is-active');
-    $host.find('.cd-roster-pill[data-group="dept"][data-filter="' + state.deptFilter + '"]').addClass('is-active');
+    if (state.deptFilter.size === 0) {
+      $host.find('.cd-roster-pill[data-group="dept"][data-filter="all"]').addClass('is-active');
+    } else {
+      state.deptFilter.forEach(function (k) {
+        $host.find('.cd-roster-pill[data-group="dept"][data-filter="' + k + '"]').addClass('is-active');
+      });
+    }
   }
 
   function controlsHtml() {
@@ -316,7 +411,8 @@
     );
   }
 
-  function chipHtml(u) {
+  function chipHtml(u, opts) {
+    var ghost = !!(opts && opts.ghost);
     var code = (u.tenCode && u.tenCode.code) || '';
     var dv = deptVisual(u.deptTemplate);
     // Badges for every department template the user is a member of.
@@ -360,16 +456,28 @@
         '</span>'
       );
     }
+    // Ghosts: show an explicit OFF-DUTY pill in place of the ten-code
+    // badge — dispatchers don't care about the live code (it's stale by
+    // definition), they care that the unit is unavailable.
+    var statusBadge = ghost
+      ? '<span class="cd-unit-chip-code cd-unit-chip-code-ghost">' + esc(code || 'OFF-DUTY') + '</span>'
+      : (code ? '<span class="cd-unit-chip-code">' + esc(code) + '</span>' : '');
+
+    var rootClass = 'cd-unit-chip' + (ghost ? ' is-ghost' : '');
+    // draggable=false on the root + Sortable.js's filter selector (.is-ghost)
+    // wired in cd-dispatch-dnd will keep ghosts out of drag operations.
+    var dragAttr = ghost ? ' draggable="false"' : '';
+    var ariaSuffix = ghost ? ' off-duty' : '';
     return (
-      '<div class="cd-unit-chip" data-user-id="' + esc(u.id) + '" data-tone="' + esc(u.tone) + '" data-dept="' + esc(u.deptKey) + '" tabindex="0" role="listitem" aria-label="' + esc((u.callSign || u.username) + ' ' + dv.label + (code ? ' ' + code : '')) + '" style="--cd-dept-color:' + esc(dv.color) + ';">' +
+      '<div class="' + rootClass + '" data-user-id="' + esc(u.id) + '" data-tone="' + esc(u.tone) + '" data-dept="' + esc(u.deptKey) + '"' + (ghost ? ' data-ghost="1"' : '') + dragAttr + ' tabindex="0" role="listitem" aria-label="' + esc((u.callSign || u.username) + ' ' + dv.label + (code ? ' ' + code : '') + ariaSuffix) + '" style="--cd-dept-color:' + esc(dv.color) + ';">' +
         '<div class="cd-unit-chip-avatar" aria-hidden="true">' +
           '<i class="fa ' + esc(dv.icon) + '" title="' + esc(dv.label) + '"></i>' +
         '</div>' +
         '<div class="cd-unit-chip-main">' +
           '<div class="cd-unit-chip-top">' +
-            '<span class="cd-unit-chip-dot" data-tone="' + esc(u.tone) + '" aria-hidden="true"></span>' +
+            '<span class="cd-unit-chip-dot" data-tone="' + (ghost ? 'ghost' : esc(u.tone)) + '" aria-hidden="true"></span>' +
             '<span class="cd-unit-chip-callsign">' + esc(u.callSign || '—') + '</span>' +
-            (code ? '<span class="cd-unit-chip-code">' + esc(code) + '</span>' : '') +
+            statusBadge +
           '</div>' +
           '<div class="cd-unit-chip-sub">' +
             '<span class="cd-unit-chip-name">' + esc(u.username) + '</span>' +
@@ -377,27 +485,56 @@
           '</div>' +
           (deptBadges ? '<div class="cd-unit-chip-badges">' + deptBadges + '</div>' : '') +
         '</div>' +
-        '<button type="button" class="cd-unit-chip-menu" data-user-id="' + esc(u.id) + '" aria-label="Unit actions for ' + esc(u.callSign || u.username) + '" title="Unit actions…">' +
-          '<i class="fa fa-ellipsis-vertical"></i>' +
-        '</button>' +
+        // Ghosts hide the kebab — there's no assign action when the unit
+        // isn't on duty. Click-through opens the unit console instead.
+        (ghost ? '' :
+          '<button type="button" class="cd-unit-chip-menu" data-user-id="' + esc(u.id) + '" aria-label="Unit actions for ' + esc(u.callSign || u.username) + '" title="Unit actions…">' +
+            '<i class="fa fa-ellipsis-vertical"></i>' +
+          '</button>') +
       '</div>'
     );
   }
 
   function applyFilters(units) {
-    var out = [];
+    var online = [];
+    var offline = [];
     var q = state.search.toLowerCase();
     for (var i = 0; i < units.length; i++) {
       var u = units[i];
-      if (state.statusFilter !== 'all' && u.tone !== state.statusFilter) continue;
-      if (state.deptFilter !== 'all' && u.deptKey !== state.deptFilter) continue;
+      var off = isOffDuty(u);
+
+      // Dept + status filter pills always apply, to both buckets — a
+      // dispatcher who's filtered to Police shouldn't see Fire ghosts.
+      if (state.deptFilter.size > 0) {
+        var matchesDept = false;
+        var dts = u.deptTemplates || [];
+        for (var j = 0; j < dts.length; j++) {
+          if (state.deptFilter.has(dts[j].key)) { matchesDept = true; break; }
+        }
+        if (!matchesDept) continue;
+      }
+
+      // Status filter (Avail/Busy/Other) applies only to the on-duty
+      // bucket — off-duty units have no meaningful tone to match against.
+      if (!off && state.statusFilter !== 'all' && u.tone !== state.statusFilter) continue;
+
+      // Search filter applies to both buckets.
       if (q) {
         var hay = (u.callSign + ' ' + u.username + ' ' + (u.deptName || '')).toLowerCase();
         if (hay.indexOf(q) === -1) continue;
       }
-      out.push(u);
+
+      if (off) offline.push(u);
+      else online.push(u);
     }
-    return out;
+    // Off-duty bucket: same-dept first (matches the active dept filter
+    // when one is set), then alphabetical by callsign/username.
+    offline.sort(function (a, b) {
+      var an = (a.callSign || a.username || '').toLowerCase();
+      var bn = (b.callSign || b.username || '').toLowerCase();
+      return an < bn ? -1 : an > bn ? 1 : 0;
+    });
+    return { online: online, offline: offline };
   }
 
   // ── Events ────────────────────────────────────────
@@ -408,14 +545,29 @@
       .off('.cdDispatchRoster')
       .on('input.cdDispatchRoster', '#cd-roster-search-input', function () {
         state.search = String(this.value || '').trim();
+        // Re-cap ghost results when the query changes — old "Show all"
+        // shouldn't carry over to a different search term.
+        state.ghostExpanded = false;
         render();
       })
       .on('click.cdDispatchRoster', '.cd-roster-pill', function () {
         var $pill = $(this);
         var group = $pill.data('group');
         var value = $pill.data('filter');
-        if (group === 'dept') state.deptFilter = value;
-        else state.statusFilter = value;
+        if (group === 'dept') {
+          // "All" clears every selected template (empty Set means show all).
+          // Other pills toggle their template key in the Set, so dispatchers
+          // can show, e.g., Police + Fire together while hiding EMS.
+          if (value === 'all') {
+            state.deptFilter.clear();
+          } else if (state.deptFilter.has(value)) {
+            state.deptFilter.delete(value);
+          } else {
+            state.deptFilter.add(value);
+          }
+        } else {
+          state.statusFilter = value;
+        }
         render();
       })
       // Kebab opens the Unit Console directly on the Assign tab — quick
@@ -440,6 +592,12 @@
           var userId = $(this).data('user-id');
           openUnitConsole(userId, 'status');
         }
+      })
+      // "+ N more off-duty" expands the ghost cap so dispatchers can see
+      // every match without opening a separate view.
+      .on('click.cdDispatchRoster', '[data-action="ghost-show-all"]', function () {
+        state.ghostExpanded = true;
+        render();
       });
   }
 
@@ -501,6 +659,20 @@
       '.cd-unit-chip-menu:hover,.cd-unit-chip-menu:focus-visible{border-color:var(--cd-glass-border);background:rgba(255,255,255,0.04);color:var(--cd-text);outline:none;}',
       '.cd-unit-unassign-drop{margin-top:0.625rem;padding:0.625rem;border:1px dashed var(--cd-glass-border);border-radius:10px;color:var(--cd-text-dim);font-size:0.75rem;display:flex;align-items:center;justify-content:center;gap:0.5rem;transition:all .15s;}',
       '.cd-unit-unassign-drop.drop-target{border-color:rgba(239,68,68,0.4);color:#fca5a5;background:rgba(239,68,68,0.06);}',
+      // Off-duty ghost section: muted divider, dimmed/dashed cards, no
+      // drag affordance. Dispatchers can still tap to open the unit
+      // console (status tab) and nudge them to come on duty.
+      '.cd-roster-section-divider{display:flex;align-items:center;gap:0.5rem;margin:0.625rem 0 0.375rem;}',
+      '.cd-roster-section-divider::before,.cd-roster-section-divider::after{content:"";flex:1 1 auto;height:1px;background:var(--cd-glass-border);}',
+      '.cd-roster-section-divider-label{font:700 0.625rem/1 inherit;letter-spacing:0.08em;text-transform:uppercase;color:var(--cd-text-dim);}',
+      '.cd-unit-chip.is-ghost{opacity:0.55;border-style:dashed;cursor:pointer;background:rgba(255,255,255,0.015);}',
+      '.cd-unit-chip.is-ghost:hover{opacity:0.85;border-color:rgba(255,255,255,0.18);background:rgba(255,255,255,0.03);}',
+      '.cd-unit-chip.is-ghost .cd-unit-chip-avatar{filter:grayscale(1);background:rgba(255,255,255,0.04);border-color:var(--cd-glass-border);color:var(--cd-text-dim);}',
+      '.cd-unit-chip.is-ghost .cd-unit-chip-dot[data-tone="ghost"]{background:var(--cd-text-dim);box-shadow:none;}',
+      '.cd-unit-chip-code-ghost{background:rgba(255,255,255,0.03);color:var(--cd-text-dim);border-color:var(--cd-glass-border);}',
+      '.cd-roster-ghost-more{margin-top:0.25rem;padding:0.4375rem 0.625rem;border-radius:8px;border:1px dashed var(--cd-glass-border);color:var(--cd-text-dim);font-size:0.6875rem;text-align:center;cursor:pointer;transition:all .15s;}',
+      '.cd-roster-ghost-more:hover{color:var(--cd-text);background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.14);}',
+      '.cd-roster-ghost-foot{margin-top:0.375rem;font-size:0.625rem;color:var(--cd-text-dim);text-align:center;line-height:1.3;}',
       '@keyframes cd-dispatch-pulse{0%,100%{box-shadow:0 0 0 3px rgba(239,68,68,0.2);}50%{box-shadow:0 0 0 6px rgba(239,68,68,0.08);}}',
     ].join('');
     var el = document.createElement('style');

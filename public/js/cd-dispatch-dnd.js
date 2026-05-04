@@ -169,7 +169,9 @@
       chosenClass: 'cd-sortable-chosen',
       // Draggable: only chip tiles. Excludes the search input + filter pills above.
       draggable: '.cd-unit-chip',
-      filter: '.cd-unit-chip-menu',
+      // Skip the kebab and any off-duty ghost surfaced during search —
+      // ghosts are click-to-open, not drag-to-assign.
+      filter: '.cd-unit-chip-menu, .cd-unit-chip.is-ghost',
       preventOnFilter: true,
       onStart: function () { document.body.classList.add('cd-dnd-active'); },
       onEnd:   function () { document.body.classList.remove('cd-dnd-active'); },
