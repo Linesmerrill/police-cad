@@ -889,19 +889,27 @@
     .rp-dept-required.is-hidden { display: none; }
     .rp-dept-select { min-width: 220px; max-width: 320px; }
     .rp-dept-select.is-empty { border-color: rgba(245,158,11,0.4); }
-    /* Brief amber pulse when "Review and fix" jumps the user back to
-       the dept picker — draws the eye without being permanent. */
-    .rp-dept-row.is-flash {
-      animation: rp-dept-flash 1.2s ease-out;
+    /* Persistent red treatment when "Review and fix" surfaces dept as
+       missing — visually matches the field-level .is-missing styling
+       on rp-input/rp-select so the user sees a single error system.
+       Cleared automatically once the user picks a dept. */
+    .rp-dept-row.is-missing {
+      border-color: rgba(239,68,68,0.55);
+      background: rgba(239,68,68,0.06);
+      animation: rp-shake-soft 600ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
     }
-    @keyframes rp-dept-flash {
-      0% { box-shadow: 0 0 0 0 rgba(245,158,11,0); border-color: var(--rp-glass-border); }
-      30% { box-shadow: 0 0 0 4px rgba(245,158,11,0.25); border-color: rgba(245,158,11,0.55); }
-      100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); border-color: var(--rp-glass-border); }
+    .rp-dept-row.is-missing .rp-dept-select {
+      border-color: rgba(239,68,68,0.55) !important;
+      box-shadow: 0 0 0 1px rgba(239,68,68,0.18) !important;
     }
-    @media (prefers-reduced-motion: reduce) {
-      .rp-dept-row.is-flash { animation: none; border-color: rgba(245,158,11,0.55); }
+    .rp-dept-row.is-missing .rp-dept-select:focus {
+      border-color: rgba(239,68,68,0.8) !important;
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.18) !important;
+      animation: rp-glow-pulse 900ms ease-out;
     }
+    .rp-dept-row.is-missing .rp-dept-label { color: var(--rp-red); }
+    .rp-dept-row.is-missing .rp-dept-label i { color: var(--rp-red); }
+    .rp-dept-row.is-missing .rp-dept-required { color: var(--rp-red); }
     .rp-dept-static {
       font-size: 0.9rem; font-weight: 600; color: var(--rp-text);
       padding: 0.35rem 0.6rem; border-radius: var(--rp-radius-sm);
@@ -2729,6 +2737,11 @@
           sel.addEventListener('change', function () {
             departmentId = sel.value || '';
             sel.classList.toggle('is-empty', !sel.value);
+            // Clear the red error treatment as soon as a dept is picked.
+            if (sel.value) {
+              var rowEl = document.getElementById('rp-dept-row');
+              if (rowEl) rowEl.classList.remove('is-missing');
+            }
           });
           sel.__deptBound = true;
         }
@@ -3194,14 +3207,16 @@
         closeValidationModal();
         applyMissingHighlights();
         // If the department is missing, that's the highest-priority fix —
-        // scroll to the picker and focus it before the regular field walk.
+        // mark the picker with the same red treatment fields use, scroll
+        // it into view, and focus the select. The .is-missing class is
+        // persistent (cleared by the dept-select change handler) so the
+        // user keeps seeing the error state until they actually pick.
         if (!departmentId) {
           var deptSel = document.getElementById('rp-dept-select');
           var deptRow = document.getElementById('rp-dept-row');
           if (deptRow) {
+            deptRow.classList.add('is-missing');
             deptRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            deptRow.classList.add('is-flash');
-            setTimeout(function () { deptRow.classList.remove('is-flash'); }, 1200);
           }
           if (deptSel && typeof deptSel.focus === 'function') {
             setTimeout(function () { try { deptSel.focus({ preventScroll: true }); } catch (e) {} }, 350);
