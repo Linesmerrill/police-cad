@@ -960,11 +960,18 @@
   function cdCallsInit() {
     /* Dispatch defaults to the community-wide "All Open" tab; everyone
        else starts on "Department" (the classic behaviour). */
-    state.tab = isDispatch() ? 'all' : 'department';
+    var defaultTab = isDispatch() ? 'all' : 'department';
+    var allowed = isDispatch()
+      ? ['all', 'department', 'completed']
+      : ['mine', 'department', 'all', 'completed'];
+    var requested = (new URLSearchParams(window.location.search)).get('calls');
+    state.tab = allowed.indexOf(requested) !== -1 ? requested : defaultTab;
     state.page = 1;
     state.expanded = {};
     state.newAssignmentIds = {};
     state.pulseOnceIds = {};
+    $('.cd-call-tab').removeClass('cd-call-tab-active');
+    $('.cd-call-tab[data-tab="' + state.tab + '"]').addClass('cd-call-tab-active');
     loadCalls();
 
     // Bind once to the shared community socket — picks up dispatcher
@@ -987,6 +994,12 @@
       $('#cd-call-search-input').val('');
       $('.cd-call-tab').removeClass('cd-call-tab-active');
       $btn.addClass('cd-call-tab-active');
+      try {
+        var params = new URLSearchParams(window.location.search);
+        params.set('calls', tab);
+        var qs = params.toString();
+        window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+      } catch (e) { /* no-op */ }
       loadCalls();
     });
 

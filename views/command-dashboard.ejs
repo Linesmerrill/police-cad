@@ -1571,6 +1571,12 @@
           $(this).addClass('active');
           $('.cd-mdt-search-pane').removeClass('active');
           $('.cd-mdt-search-pane[data-pane="' + tab + '"]').addClass('active');
+          try {
+            var params = new URLSearchParams(window.location.search);
+            params.set('search', tab);
+            var qs = params.toString();
+            window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+          } catch (e) { /* no-op */ }
         });
       }
     }
@@ -1605,11 +1611,17 @@
       var anySearch = enabledComponents['personSearch'] || enabledComponents['vehicleSearch'] || enabledComponents['firearmSearch'];
       $('#cd-mdt-col-search').toggle(!!anySearch);
 
-      // Auto-select first visible search tab
+      // Auto-select search tab — prefer ?search= query param when its component is enabled.
       if (anySearch) {
         var $visibleTabs = $('.cd-mdt-search-tab:visible');
-        if ($visibleTabs.length && !$visibleTabs.filter('.active').length) {
-          $visibleTabs.first().trigger('click');
+        if ($visibleTabs.length) {
+          var requestedSearch = (new URLSearchParams(window.location.search)).get('search');
+          var $requested = requestedSearch ? $visibleTabs.filter('[data-search="' + requestedSearch + '"]') : $();
+          if ($requested.length) {
+            $requested.trigger('click');
+          } else if (!$visibleTabs.filter('.active').length) {
+            $visibleTabs.first().trigger('click');
+          }
         }
       }
 

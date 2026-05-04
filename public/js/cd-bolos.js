@@ -474,8 +474,12 @@
      ─────────────────────────────────────────── */
 
   function cdBolosInit() {
-    /* Load active BOLOs by default */
-    state.filter = 'active';
+    /* Load active BOLOs by default; honor ?bolos= query param when present. */
+    var allowed = ['active', 'cleared', 'all'];
+    var requested = (new URLSearchParams(window.location.search)).get('bolos');
+    state.filter = allowed.indexOf(requested) !== -1 ? requested : 'active';
+    $('.cd-bolo-tab').removeClass('cd-bolo-tab-active');
+    $('.cd-bolo-tab[data-filter="' + state.filter + '"]').addClass('cd-bolo-tab-active');
     loadBolos();
 
     /* New BOLO button */
@@ -523,6 +527,12 @@
       state.filter = filter;
       $('.cd-bolo-tab').removeClass('cd-bolo-tab-active');
       $btn.addClass('cd-bolo-tab-active');
+      try {
+        var params = new URLSearchParams(window.location.search);
+        params.set('bolos', filter);
+        var qs = params.toString();
+        window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+      } catch (e) { /* no-op */ }
       loadBolos();
     });
 
