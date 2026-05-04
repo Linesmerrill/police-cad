@@ -1087,10 +1087,15 @@
         var recentRail = document.getElementById('rp-rail-recent');
         var popularRail = document.getElementById('rp-rail-popular');
 
+        // Filter to buckets whose slug still resolves to a visible template.
+        // Submissions can outlive templates (archive/hide/delete), and we
+        // shouldn't render an empty rail when every entry maps to nothing.
         var userBuckets = bucketBySlug(payload.user || [])
+          .filter(function (b) { return !!templateBySlug(b.slug); })
           .sort(function (a, b) { return b.lastUsedAt - a.lastUsedAt; })
           .slice(0, 6);
         var commBuckets = bucketBySlug(payload.community || [])
+          .filter(function (b) { return !!templateBySlug(b.slug); })
           .sort(function (a, b) { return b.count - a.count; })
           .slice(0, 6);
 
@@ -1105,6 +1110,7 @@
           }).join('');
           recentRail.style.display = '';
         } else {
+          rTrack.innerHTML = '';
           recentRail.style.display = 'none';
         }
 
@@ -1120,6 +1126,7 @@
           }).join('');
           popularRail.style.display = '';
         } else {
+          pTrack.innerHTML = '';
           popularRail.style.display = 'none';
         }
 
@@ -1180,20 +1187,53 @@
 
       function loadDepartments() {
         if (!communityId) return Promise.resolve([]);
-        return fetch(apiUrl + '/api/v2/form-submissions/community/' + encodeURIComponent(communityId) + '/departments', { headers: authHeaders() })
-          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
-          .then(function (j) {
-            departments = (j && j.data) || [];
-            var sel = document.getElementById('rp-filter-department');
-            departments.forEach(function (d) {
-              var opt = document.createElement('option');
-              opt.value = d.departmentId;
-              opt.textContent = (d.departmentName || '(unnamed dept)') + ' (' + d.count + ')';
-              sel.appendChild(opt);
-            });
-            return departments;
-          })
+
+        // The previous version sourced the dropdown from the form-submissions
+        // distinct-departments endpoint, which only surfaces departments that
+        // already have a submission. New communities and unused departments
+        // therefore never showed up — making the filter useless until somebody
+        // had filed a report under that dept. Instead, list every department
+        // in the community and overlay submission counts when available.
+        var pAll = fetch(apiUrl + '/api/v1/community/' + encodeURIComponent(communityId) + '/departments', { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { departments: [] }; })
+          .then(function (j) { return (j && j.departments) || []; })
           .catch(function () { return []; });
+
+        var pCounts = fetch(apiUrl + '/api/v2/form-submissions/community/' + encodeURIComponent(communityId) + '/departments', { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+          .then(function (j) { return (j && j.data) || []; })
+          .catch(function () { return []; });
+
+        return Promise.all([pAll, pCounts]).then(function (results) {
+          var allDepts = results[0];
+          var counts = {};
+          results[1].forEach(function (d) {
+            if (d && d.departmentId) counts[d.departmentId] = d.count || 0;
+          });
+
+          departments = allDepts.map(function (d) {
+            var id = d._id || d.id || '';
+            return {
+              departmentId: id,
+              departmentName: d.name || '(unnamed dept)',
+              count: counts[id] || 0,
+            };
+          });
+
+          var sel = document.getElementById('rp-filter-department');
+          departments.forEach(function (d) {
+            var opt = document.createElement('option');
+            opt.value = d.departmentId;
+            // Keep the count visible when present so dispatch can spot which
+            // departments have actual report volume; omit the (0) suffix to
+            // avoid implying inactivity for newly-created departments.
+            opt.textContent = d.count > 0
+              ? d.departmentName + ' (' + d.count + ')'
+              : d.departmentName;
+            sel.appendChild(opt);
+          });
+          return departments;
+        });
       }
 
       function renderList(payload) {
