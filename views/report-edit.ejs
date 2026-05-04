@@ -547,12 +547,33 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
     .rp-conf-foot {
-      display: flex; gap: 0.5rem; align-items: center;
+      display: flex; flex-direction: column; gap: 0.55rem;
       padding: 0.7rem 1.1rem 0.95rem;
       border-top: 1px solid rgba(255,255,255,0.06);
       background: rgba(0,0,0,0.18);
     }
+    .rp-conf-foot-row {
+      display: flex; gap: 0.5rem; align-items: center;
+    }
     .rp-conf-foot-spacer { flex: 1; }
+    /* Hard-block banner — shown above the action row when something
+       in the missing list (currently: department) would be rejected
+       outright by the server. Inline-amber style is intentional: it
+       picks up the same accent we use for required-field marks
+       elsewhere on the page so the messaging reads as one system. */
+    .rp-conf-foot-banner {
+      display: none;
+      align-items: center; gap: 0.45rem;
+      padding: 0.45rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.74rem; font-weight: 600;
+      letter-spacing: 0.01em; line-height: 1.3;
+      color: var(--rp-amber);
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.22);
+    }
+    .rp-conf-foot-banner i { font-size: 0.72rem; opacity: 0.9; }
+    .rp-conf-backdrop.is-dept-missing .rp-conf-foot-banner { display: inline-flex; }
     .rp-conf-btn {
       display: inline-flex; align-items: center; gap: 0.4rem;
       padding: 0.55rem 1rem; border-radius: 9px;
@@ -568,30 +589,16 @@
       border: 1px solid rgba(255,255,255,0.08);
     }
     .rp-conf-btn-ghost:hover { background: rgba(255,255,255,0.04); color: var(--rp-text); }
-    /* Submit anyway is a hard-disabled when a department is missing —
+    /* Submit anyway is hard-disabled when a department is missing —
        the API rejects dept-less reports outright, so giving the user
        the escape hatch would just produce a 400. Visually demote the
-       button + add a tooltip explaining why. */
+       button; the explainer for "why" lives in the foot banner above. */
     .rp-conf-btn[disabled],
     .rp-conf-btn[disabled]:hover {
       cursor: not-allowed; opacity: 0.45;
       transform: none; box-shadow: none;
       background: transparent; color: var(--rp-text-dim);
       border: 1px solid rgba(255,255,255,0.06);
-    }
-    .rp-conf-backdrop.is-dept-missing .rp-conf-btn-ghost {
-      position: relative;
-    }
-    /* Render the hint ABOVE the button so it stays inside the modal
-       footer instead of being clipped by the panel's bottom edge. */
-    .rp-conf-backdrop.is-dept-missing .rp-conf-btn-ghost::after {
-      content: 'Department required';
-      position: absolute; left: 0; right: 0; bottom: 100%;
-      margin-bottom: 6px;
-      font-size: 0.7rem; font-weight: 500;
-      color: var(--rp-amber); text-align: center;
-      letter-spacing: 0.02em;
-      pointer-events: none;
     }
     @media (prefers-reduced-motion: reduce) {
       .rp-conf-backdrop, .rp-conf-panel, .rp-field.is-missing { animation: none; transition: none; }
@@ -1147,11 +1154,17 @@
         <ol id="rp-conf-list" class="rp-conf-list"></ol>
       </div>
       <div class="rp-conf-foot">
-        <button id="rp-conf-anyway" class="rp-conf-btn rp-conf-btn-ghost" type="button">Submit anyway</button>
-        <div class="rp-conf-foot-spacer"></div>
-        <button id="rp-conf-fix" class="rp-conf-btn rp-conf-btn-primary" type="button">
-          <i class="fa-solid fa-pen-to-square"></i> Review and fix
-        </button>
+        <div class="rp-conf-foot-banner" role="status">
+          <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+          <span>Department is required — pick one before submitting.</span>
+        </div>
+        <div class="rp-conf-foot-row">
+          <button id="rp-conf-anyway" class="rp-conf-btn rp-conf-btn-ghost" type="button">Submit anyway</button>
+          <div class="rp-conf-foot-spacer"></div>
+          <button id="rp-conf-fix" class="rp-conf-btn rp-conf-btn-primary" type="button">
+            <i class="fa-solid fa-pen-to-square"></i> Review and fix
+          </button>
+        </div>
       </div>
     </div>
   </div>
