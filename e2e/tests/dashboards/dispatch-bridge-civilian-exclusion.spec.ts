@@ -47,12 +47,17 @@ test.describe('Dispatch Command Bridge — civilian exclusion + multi-select dep
                 activeDepartmentId: 'dept-pd',
                 activeDepartmentName: 'Test PD',
                 departmentCallSigns: { 'dept-pd': 'P-1' },
+                // On-duty code (10-8 suffix isn't in the OFF_DUTY set), so the
+                // chip lands in the on-duty pool instead of being filed away
+                // as a ghost only visible during search.
+                tenCode: { id: 'tc-on', code: '10-8' },
                 departments: [{ id: 'dept-pd', name: 'Test PD', template: 'police' }],
               },
               {
                 id: 'unit-civ-1',
                 username: 'civ.only',
                 globalCallSign: '',
+                tenCode: { id: 'tc-on', code: '10-8' },
                 departments: [{ id: 'dept-civ', name: 'Civilians', template: 'civilian' }],
               },
               {
@@ -63,11 +68,13 @@ test.describe('Dispatch Command Bridge — civilian exclusion + multi-select dep
                 activeDepartmentId: 'dept-fd',
                 activeDepartmentName: 'Test FD',
                 departmentCallSigns: { 'dept-fd': 'F-7' },
+                tenCode: { id: 'tc-on', code: '10-8' },
                 departments: [{ id: 'dept-fd', name: 'Test FD', template: 'fire' }],
               },
               {
                 id: 'unit-judge-1',
                 username: 'the.judge',
+                tenCode: { id: 'tc-on', code: '10-8' },
                 departments: [{ id: 'dept-jud', name: 'Court', template: 'judicial' }],
               },
               {
@@ -78,6 +85,7 @@ test.describe('Dispatch Command Bridge — civilian exclusion + multi-select dep
                 activeDepartmentId: 'dept-pd',
                 activeDepartmentName: 'Test PD',
                 departmentCallSigns: { 'dept-pd': 'P-9' },
+                tenCode: { id: 'tc-on', code: '10-8' },
                 departments: [
                   { id: 'dept-civ', name: 'Civilians', template: 'civilian' },
                   { id: 'dept-pd', name: 'Test PD', template: 'police' },
@@ -124,6 +132,9 @@ test.describe('Dispatch Command Bridge — civilian exclusion + multi-select dep
                 activeDepartmentId: 'dept-pd',
                 activeDepartmentName: 'Test PD',
                 departmentCallSigns: { 'dept-pd': 'P-1' },
+                // Mark on-duty so the unit lands in the dispatchable pool
+                // rather than the search-only ghost pool.
+                tenCode: { id: 'tc-on', code: '10-8' },
                 departments: [{ id: 'dept-pd', name: 'Test PD', template: 'police' }],
               },
               {
@@ -134,6 +145,7 @@ test.describe('Dispatch Command Bridge — civilian exclusion + multi-select dep
                 activeDepartmentId: 'dept-fd',
                 activeDepartmentName: 'Test FD',
                 departmentCallSigns: { 'dept-fd': 'F-1' },
+                tenCode: { id: 'tc-on', code: '10-8' },
                 departments: [{ id: 'dept-fd', name: 'Test FD', template: 'fire' }],
               },
               {
@@ -144,6 +156,7 @@ test.describe('Dispatch Command Bridge — civilian exclusion + multi-select dep
                 activeDepartmentId: 'dept-ems',
                 activeDepartmentName: 'Test EMS',
                 departmentCallSigns: { 'dept-ems': 'M-1' },
+                tenCode: { id: 'tc-on', code: '10-8' },
                 departments: [{ id: 'dept-ems', name: 'Test EMS', template: 'ems' }],
               },
             ],
