@@ -8177,7 +8177,8 @@
         $('[data-status-count="open"]').text(openCount);
         $('[data-status-count="resolved"]').text(resolvedCount);
 
-        $('#bfb-count').text(total + (total === 1 ? ' entry' : ' entries'));
+        var commentCount = typeof resp.commentCount === 'number' ? resp.commentCount : 0;
+        $('#bfb-count').text(commentCount + (commentCount === 1 ? ' comment' : ' comments'));
 
         // Only show entries that have free-form feedback attached —
         // the counts above already summarise the reason enum, so we
