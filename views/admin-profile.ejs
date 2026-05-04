@@ -248,6 +248,11 @@
         color: #667eea;
       }
 
+      /* Bootstrap 3 (loaded above) resets html to font-size: 10px,
+         which makes every rem on this page render at 62.5% of intended
+         size. Restore the conventional 16px baseline. */
+      html { font-size: 16px; }
+
       /* =====================================================
          LINKED LPC ACCOUNT — section + modals
          ===================================================== */
@@ -1323,9 +1328,10 @@
             const isSel = selectedUser && selectedUser.id === u.id;
             const username = u.username || '(no username)';
             const email = u.email || '';
+            const avatar = safeAvatar(u.profilePicture);
             html +=
               '<div class="lpc-result' + (isSel ? ' is-selected' : '') + '" role="option" data-user-id="' + escapeHtml(u.id) + '" tabindex="0" aria-selected="' + (isSel ? 'true' : 'false') + '">' +
-                '<img class="lpc-result-avatar" src="' + FALLBACK_AVATAR + '" alt="" />' +
+                '<img class="lpc-result-avatar" src="' + escapeHtml(avatar) + '" alt="" />' +
                 '<div class="lpc-result-meta">' +
                   '<div class="lpc-result-username">' + escapeHtml(username) + '</div>' +
                   '<div class="lpc-result-email">' + escapeHtml(email) + '</div>' +
@@ -1334,6 +1340,7 @@
               '</div>';
           });
           $searchResults.html(html);
+          $searchResults.find('.lpc-result-avatar').on('error', function () { this.src = FALLBACK_AVATAR; });
 
           $searchResults.find('.lpc-result')
             .on('click', function () {
