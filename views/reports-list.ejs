@@ -118,6 +118,8 @@
     }
     .rp-bulk-bar[hidden] { display: none; }
     .rp-bulk-count { font-size: 0.85rem; color: var(--rp-text); font-weight: 600; }
+    .rp-bulk-hint { font-size: 0.78rem; color: var(--rp-amber, #f59e0b); }
+    .rp-bulk-hint[hidden] { display: none; }
     .rp-bulk-bar-spacer { flex: 1; }
     /* Mobile: drop the spacer (it eats horizontal room and forces the
        danger button off-screen), let buttons share full width via wrap,
@@ -734,9 +736,11 @@
     <% if (typeof canManageForms !== 'undefined' && canManageForms) { %>
     <div id="rp-bulk-bar" class="rp-bulk-bar" hidden>
       <span class="rp-bulk-count"><span id="rp-bulk-count">0</span> selected</span>
+      <span id="rp-bulk-mixed-hint" class="rp-bulk-hint" hidden>Mixed archived &amp; active — clear and reselect</span>
       <div class="rp-bulk-bar-spacer"></div>
       <button id="rp-bulk-clear" class="rp-btn rp-btn-outline" type="button">Clear</button>
-      <button id="rp-bulk-archive-selected" class="rp-btn rp-btn-outline" type="button"><i class="fa-solid fa-box-archive"></i> <span class="rp-bulk-label-full">Archive selected</span><span class="rp-bulk-label-short">Archive</span></button>
+      <button id="rp-bulk-archive-selected" class="rp-btn rp-btn-outline" type="button" hidden><i class="fa-solid fa-box-archive"></i> <span class="rp-bulk-label-full">Archive selected</span><span class="rp-bulk-label-short">Archive</span></button>
+      <button id="rp-bulk-unarchive-selected" class="rp-btn rp-btn-outline" type="button" hidden><i class="fa-solid fa-box-open"></i> <span class="rp-bulk-label-full">Unarchive selected</span><span class="rp-bulk-label-short">Unarchive</span></button>
       <button id="rp-bulk-purge" class="rp-btn rp-btn-danger" type="button" hidden><i class="fa-solid fa-trash"></i> <span class="rp-bulk-label-full">Delete permanently</span><span class="rp-bulk-label-short">Delete</span></button>
     </div>
     <% } %>
@@ -1427,9 +1431,35 @@
         if (countEl) countEl.textContent = String(ids.length);
         if (ids.length === 0) { bar.hidden = true; return; }
         bar.hidden = false;
-        // Show "Delete permanently" only when filter is set to archived view.
+
+        // The action set hinges on whether the selected reports are
+        // archived: archived reports can be unarchived or permanently
+        // deleted, active reports can be archived. Mixed selections
+        // can't be acted on bulk — surface a hint so users know to
+        // narrow the selection.
+        var byId = Object.create(null);
+        var rows = (lastPayload && lastPayload.data) || [];
+        for (var i = 0; i < rows.length; i++) {
+          var sub = rows[i];
+          if (sub && sub._id) byId[String(sub._id)] = sub;
+        }
+        var archivedCount = 0, activeCount = 0;
+        ids.forEach(function (id) {
+          var rec = byId[id];
+          var d = (rec && rec.formSubmission) || {};
+          if (d.archived) archivedCount++; else activeCount++;
+        });
+        var allArchived = archivedCount > 0 && activeCount === 0;
+        var allActive = activeCount > 0 && archivedCount === 0;
+
+        var archBtn = document.getElementById('rp-bulk-archive-selected');
+        var unarchBtn = document.getElementById('rp-bulk-unarchive-selected');
         var purgeBtn = document.getElementById('rp-bulk-purge');
-        if (purgeBtn) purgeBtn.hidden = state.archived !== 'true';
+        var hint = document.getElementById('rp-bulk-mixed-hint');
+        if (archBtn) archBtn.hidden = !allActive;
+        if (unarchBtn) unarchBtn.hidden = !allArchived;
+        if (purgeBtn) purgeBtn.hidden = !allArchived;
+        if (hint) hint.hidden = allArchived || allActive;
       }
 
       function renderPagination() {
@@ -1596,6 +1626,33 @@
                 method: 'PUT',
                 headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
                 body: JSON.stringify({ archived: true, actor: actor }),
+              });
+            })).then(function () {
+              clearSelection();
+              loadList();
+            });
+          });
+        });
+      }
+
+      var bulkUnarchSelBtn = document.getElementById('rp-bulk-unarchive-selected');
+      if (bulkUnarchSelBtn) {
+        bulkUnarchSelBtn.addEventListener('click', function () {
+          var ids = Object.keys(selectedIds);
+          if (ids.length === 0) return;
+          var msg = 'Unarchive ' + ids.length + ' selected report' + (ids.length === 1 ? '' : 's') + '? They will return to the active list and become editable again per the usual lock rules.';
+          showConfirm({
+            title: 'Unarchive ' + ids.length + ' report' + (ids.length === 1 ? '' : 's'),
+            body: msg,
+            confirm: 'Unarchive',
+            danger: false,
+          }, function () {
+            var actor = actorBlock();
+            Promise.all(ids.map(function (id) {
+              return fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(id), {
+                method: 'PUT',
+                headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+                body: JSON.stringify({ archived: false, actor: actor }),
               });
             })).then(function () {
               clearSelection();
