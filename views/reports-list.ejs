@@ -87,6 +87,10 @@
     .rp-btn-primary:hover { box-shadow: 0 4px 12px rgba(14,165,233,0.3); transform: translateY(-1px); }
     .rp-btn-outline { background: transparent; color: var(--rp-text-muted); border: 1px solid var(--rp-glass-border); }
     .rp-btn-outline:hover { background: var(--rp-surface); color: #fff; }
+    /* .rp-btn's display: inline-flex outranks the UA [hidden] rule, so
+       setting el.hidden = true adds the attribute but the button stays
+       visible. Force the override. */
+    .rp-btn[hidden] { display: none !important; }
 
     .rp-toolbar {
       position: sticky; top: 0; z-index: 5;
