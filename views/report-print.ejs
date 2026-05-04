@@ -33,6 +33,21 @@
     .pp-toolbar a { background: #fff; color: #1f2937; border: 1px solid #d8dde3; }
     .pp-toolbar a:hover { background: #f4f5f7; }
 
+    /* In-app browser fallback hint. Hidden by default; revealed by JS
+       if window.print() didn't take (common in SFSafariViewController
+       / Chrome Custom Tabs where print may be a no-op). */
+    .pp-print-hint {
+      max-width: 8.5in; margin: -0.25rem auto 1rem;
+      padding: 0.7rem 0.9rem;
+      background: #fffbeb; border: 1px solid #fde68a;
+      border-left: 3px solid #f59e0b;
+      border-radius: 6px;
+      font-size: 0.82rem; color: #92400e; line-height: 1.5;
+    }
+    .pp-print-hint strong { color: #78350f; }
+    .pp-print-hint em { font-style: normal; font-weight: 700; }
+    .pp-print-hint[hidden] { display: none; }
+
     .pp-header {
       display: flex; align-items: center; gap: 1rem;
       padding-bottom: 0.75rem; border-bottom: 2px solid #1a202c;
@@ -169,6 +184,7 @@
     }
 
     @media print {
+      .pp-print-hint { display: none !important; }
       body { background: #fff; padding: 0; }
       .pp-toolbar { display: none; }
       .pp-shell { border: none; padding: 0.5in; box-shadow: none; max-width: 100%; border-radius: 0; }
@@ -200,7 +216,15 @@
 <body>
   <div class="pp-toolbar">
     <a href="/reports/<%= submissionId %><% if (typeof communityIdEncoded !== 'undefined' && communityIdEncoded) { %>?c=<%= communityIdEncoded %><% } %>"><i class="fa-solid fa-arrow-left"></i> Back</a>
-    <button onclick="window.print()"><i class="fa-solid fa-print"></i> Print / Save as PDF</button>
+    <button id="pp-print-btn" type="button"><i class="fa-solid fa-print"></i> Print / Save as PDF</button>
+  </div>
+  <!-- Hint shown if window.print() doesn't open a dialog (common in
+       in-app browsers like SFSafariViewController / Custom Tabs).
+       JS reveals it after a print attempt that didn't take. -->
+  <div id="pp-print-hint" class="pp-print-hint" hidden>
+    <strong>Print didn't open?</strong>
+    On mobile, tap the <em>Share</em> icon in your browser toolbar (bottom or top of the screen) and choose <em>Print</em> or <em>Save to Files</em>.
+    Or open this page in your system browser for a full Print menu.
   </div>
   <div class="pp-shell" id="pp-shell">
     <div class="pp-header">
@@ -340,6 +364,41 @@
         renderHeader(sub, tpl);
         renderBody(sub, tpl);
       });
+
+      // Print button — bind via addEventListener so the click hits a
+      // user-gesture-tied handler. Inline onclick="window.print()" was
+      // a no-op in some in-app browsers (SFSafariViewController on iOS,
+      // Chrome Custom Tabs on Android) when those browsers strip /
+      // ignore programmatic print calls. We:
+      //   1) try window.print()
+      //   2) if it threw, or appears to have done nothing (no
+      //      beforeprint event fired within ~600ms), reveal a hint
+      //      banner with the system-share fallback path.
+      var btn = document.getElementById('pp-print-btn');
+      var hint = document.getElementById('pp-print-hint');
+      var beforeprintFired = false;
+      window.addEventListener('beforeprint', function () { beforeprintFired = true; });
+      if (btn) {
+        btn.addEventListener('click', function () {
+          beforeprintFired = false;
+          try {
+            if (typeof window.print === 'function') {
+              window.print();
+            } else {
+              throw new Error('print unavailable');
+            }
+          } catch (e) {
+            if (hint) hint.hidden = false;
+            return;
+          }
+          // If beforeprint never fires, the call was a no-op — surface
+          // the share-menu instructions instead of leaving the user
+          // wondering why nothing happened.
+          setTimeout(function () {
+            if (!beforeprintFired && hint) hint.hidden = false;
+          }, 600);
+        });
+      }
     })();
   </script>
 </body>
