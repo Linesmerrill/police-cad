@@ -113,12 +113,23 @@
       border: 1px solid var(--rp-glass-border);
       border-radius: var(--rp-radius-sm);
       padding: 0.55rem 0.85rem;
-      display: flex; align-items: center; gap: 0.55rem;
+      display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap;
       margin-bottom: 0.85rem;
     }
     .rp-bulk-bar[hidden] { display: none; }
     .rp-bulk-count { font-size: 0.85rem; color: var(--rp-text); font-weight: 600; }
     .rp-bulk-bar-spacer { flex: 1; }
+    /* Mobile: drop the spacer (it eats horizontal room and forces the
+       danger button off-screen), let buttons share full width via wrap,
+       and shrink the verbose action labels so each pair fits on one row. */
+    @media (max-width: 720px) {
+      .rp-bulk-bar { padding: 0.5rem 0.6rem; gap: 0.4rem; }
+      .rp-bulk-bar .rp-bulk-bar-spacer { display: none; }
+      .rp-bulk-bar .rp-btn { padding: 0.45rem 0.6rem; font-size: 0.78rem; }
+      .rp-bulk-bar .rp-bulk-label-full { display: none; }
+      .rp-bulk-bar .rp-bulk-label-short { display: inline; }
+    }
+    .rp-bulk-bar .rp-bulk-label-short { display: none; }
 
     .rp-row-check {
       flex-shrink: 0;
@@ -725,8 +736,8 @@
       <span class="rp-bulk-count"><span id="rp-bulk-count">0</span> selected</span>
       <div class="rp-bulk-bar-spacer"></div>
       <button id="rp-bulk-clear" class="rp-btn rp-btn-outline" type="button">Clear</button>
-      <button id="rp-bulk-archive-selected" class="rp-btn rp-btn-outline" type="button"><i class="fa-solid fa-box-archive"></i> Archive selected</button>
-      <button id="rp-bulk-purge" class="rp-btn rp-btn-danger" type="button" hidden><i class="fa-solid fa-trash"></i> Delete permanently</button>
+      <button id="rp-bulk-archive-selected" class="rp-btn rp-btn-outline" type="button"><i class="fa-solid fa-box-archive"></i> <span class="rp-bulk-label-full">Archive selected</span><span class="rp-bulk-label-short">Archive</span></button>
+      <button id="rp-bulk-purge" class="rp-btn rp-btn-danger" type="button" hidden><i class="fa-solid fa-trash"></i> <span class="rp-bulk-label-full">Delete permanently</span><span class="rp-bulk-label-short">Delete</span></button>
     </div>
     <% } %>
 
@@ -1202,14 +1213,27 @@
       function railStorageKey(key) {
         return 'rp:rail:' + (communityId || 'global') + ':' + key + ':collapsed';
       }
+      // On mobile the rails dominate the fold and push the actual list of
+      // reports off-screen, so default to collapsed when the user hasn't
+      // expressed a preference yet. Desktops keep the expanded default.
+      function isMobileViewport() {
+        try { return window.matchMedia('(max-width: 720px)').matches; }
+        catch (e) { return false; }
+      }
       function isRailCollapsed(key) {
-        try { return localStorage.getItem(railStorageKey(key)) === '1'; }
+        try {
+          var v = localStorage.getItem(railStorageKey(key));
+          if (v === '1') return true;
+          if (v === '0') return false;
+          return isMobileViewport();
+        }
         catch (e) { return false; }
       }
       function setRailCollapsed(key, val) {
         try {
-          if (val) localStorage.setItem(railStorageKey(key), '1');
-          else localStorage.removeItem(railStorageKey(key));
+          // Persist the explicit choice so an expanded mobile user doesn't
+          // get re-collapsed on next paint by the mobile default above.
+          localStorage.setItem(railStorageKey(key), val ? '1' : '0');
         } catch (e) { /* private mode / quota — fall back to in-page only */ }
       }
       function applyRailCollapsed(key) {
