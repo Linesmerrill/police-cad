@@ -59,6 +59,14 @@
         if ($('#cd-intake-dept-picker').length) renderDepartmentsField();
       });
     }
+    // Re-render dept pills when the community-depts cache (re)loads — without
+    // this, departments that finish fetching after the modal opens stay stuck
+    // on their placeholder label.
+    $(document)
+      .off('.cdDispatchIntake')
+      .on('cdDispatch:communityDeptsLoaded.cdDispatchIntake', function () {
+        if ($('#cd-intake-dept-picker').length) renderDepartmentsField();
+      });
     if (state.mode === 'edit' && callId) {
       // Try to read from the detail state first (already fetched), else GET
       var fromDetail = window.__cdDispatchDetailState && window.__cdDispatchDetailState.callId === callId
@@ -146,6 +154,7 @@
     if (!$ov.length) return;
     $ov.removeClass('is-open');
     $(document).off('keydown.cdIntake');
+    $(document).off('.cdDispatchIntake');
     setTimeout(function () { $ov.remove(); }, 200);
   }
 
@@ -223,6 +232,10 @@
     var all = (typeof window.cdDispatchGetCommunityDepts === 'function') ? window.cdDispatchGetCommunityDepts() : [];
     var byId = {};
     all.forEach(function (d) { byId[d._id] = d; });
+    // If the cache hasn't been populated yet, an ID we can't resolve might
+    // still arrive in a later fetch — show "Loading…". Once the cache is
+    // populated, an unresolved ID means the department was deleted.
+    var cacheReady = all.length > 0;
 
     // Chosen pills — render even if dept isn't yet in cache (edit-mode may
     // open before fetch completes; we show the id as a fallback).
@@ -233,10 +246,11 @@
         var d = byId[did];
         var tpl = d && d.template && d.template.name ? String(d.template.name).toLowerCase() : '';
         var dv = (typeof window.cdDispatchDeptVisual === 'function') ? window.cdDispatchDeptVisual(tpl) : { icon: 'fa-building', color: 'var(--cd-accent)' };
-        var label = d ? (d.name || '—') : 'Loading…';
+        var label = d ? (d.name || '—') : (cacheReady ? 'Unknown department' : 'Loading…');
+        var missing = !d && cacheReady;
         return (
-          '<span class="cd-assigned-pill cd-intake-dept-pill" data-intake-dept-remove="' + esc(did) + '" style="--cd-dept-color:' + esc(dv.color) + ';" title="Remove ' + esc(label) + '">' +
-            '<i class="fa ' + esc(dv.icon) + '" aria-hidden="true"></i>' +
+          '<span class="cd-assigned-pill cd-intake-dept-pill' + (missing ? ' is-missing' : '') + '" data-intake-dept-remove="' + esc(did) + '" style="--cd-dept-color:' + esc(dv.color) + ';" title="Remove ' + esc(label) + '">' +
+            '<i class="fa ' + esc(missing ? 'fa-triangle-exclamation' : dv.icon) + '" aria-hidden="true"></i>' +
             '<span class="cd-assigned-pill-label">' + esc(label) + '</span>' +
             '<i class="fa fa-xmark cd-assigned-pill-remove-icon" aria-hidden="true"></i>' +
           '</span>'
@@ -509,6 +523,7 @@
       '.cd-intake-dept-pill .cd-assigned-pill-remove-icon{font-size:0.625rem;opacity:0.5;margin-left:0.25rem;}',
       '.cd-intake-dept-pill:hover{box-shadow:inset 0 0 0 9999px rgba(239,68,68,0.08);}',
       '.cd-intake-dept-pill:hover .cd-assigned-pill-remove-icon{opacity:1;}',
+      '.cd-intake-dept-pill.is-missing{--cd-dept-color:var(--cd-amber);color:var(--cd-amber);opacity:0.85;}',
       '.cd-intake-field input[type="text"],.cd-intake-field textarea{padding:0.5625rem 0.75rem;border-radius:8px;border:1px solid var(--cd-glass-border);background:rgba(255,255,255,0.03);color:var(--cd-text);font-family:inherit;font-size:0.875rem;line-height:1.4;resize:vertical;}',
       '.cd-intake-field input:focus,.cd-intake-field textarea:focus{outline:none;border-color:rgba(56,189,248,0.5);background:rgba(56,189,248,0.04);}',
       '.cd-intake-priority-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.375rem;}',
