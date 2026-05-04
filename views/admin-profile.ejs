@@ -352,6 +352,28 @@
         max-width: 56ch;
       }
 
+      .link-lpc-note {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        margin: 0 0 1.125rem;
+        background: rgba(102,126,234,0.06);
+        border: 1px solid rgba(102,126,234,0.2);
+        border-left: 3px solid rgba(102,126,234,0.6);
+        border-radius: 10px;
+        color: #c7cbe2;
+        font-size: 0.83rem;
+        line-height: 1.55;
+      }
+      .link-lpc-note i {
+        color: #8a9cf2;
+        font-size: 14px;
+        margin-top: 2px;
+        flex: 0 0 auto;
+      }
+      .link-lpc-note strong { color: #e5e7eb; font-weight: 600; }
+      .link-lpc-note em { color: #fbbf24; font-style: normal; font-weight: 600; }
+
       .link-lpc-empty {
         display: flex;
         align-items: center;
@@ -1162,6 +1184,10 @@
         }
 
         function renderNotLinked() {
+          const adminEmail = (adminData && adminData.email) ? adminData.email : '';
+          const matchNoteEmail = adminEmail
+            ? 'an LPC account with the email <strong>' + escapeHtml(adminEmail) + '</strong>'
+            : 'an LPC account using the same email as your admin account';
           $section.html(
             '<div class="link-lpc-head">' +
               '<div class="link-lpc-title">' +
@@ -1173,6 +1199,10 @@
               '</span>' +
             '</div>' +
             '<p class="link-lpc-explainer">Link an LPC account to use admin-elevated features (like feature requests) inside LPC. Your admin account will continue to be used only for logging in to this console.</p>' +
+            '<div class="link-lpc-note">' +
+              '<i class="fas fa-info-circle"></i>' +
+              '<span>While unlinked, your admin email already grants elevated access on ' + matchNoteEmail + ' by default. Only link if you want elevated access on a <em>different</em> LPC account &mdash; you can always disconnect later to return to this default behavior.</span>' +
+            '</div>' +
             '<div class="link-lpc-empty">' +
               '<button type="button" class="btn-gradient" id="lpcLinkBtn">' +
                 '<i class="fas fa-link" style="margin-right:8px;"></i>Link LPC Account' +
