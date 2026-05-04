@@ -1670,6 +1670,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       communityIdEncoded,
       communityName,
       canManageForms,
+      currentUser: buildCurrentUserContext(req),
     });
   });
 

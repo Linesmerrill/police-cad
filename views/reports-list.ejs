@@ -102,9 +102,38 @@
       min-width: 180px;
     }
     .rp-input:focus, .rp-select:focus { outline: none; border-color: var(--rp-accent); }
+    .rp-input-date { min-width: 150px; }
     .rp-toolbar-spacer { flex: 1; }
+    .rp-btn-danger { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #fff; border: none; }
+    .rp-btn-danger:hover { box-shadow: 0 4px 12px rgba(239,68,68,0.3); transform: translateY(-1px); }
+
+    .rp-bulk-bar {
+      position: sticky; top: 56px; z-index: 4;
+      background: var(--rp-bg);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius-sm);
+      padding: 0.55rem 0.85rem;
+      display: flex; align-items: center; gap: 0.55rem;
+      margin-bottom: 0.85rem;
+    }
+    .rp-bulk-bar[hidden] { display: none; }
+    .rp-bulk-count { font-size: 0.85rem; color: var(--rp-text); font-weight: 600; }
+    .rp-bulk-bar-spacer { flex: 1; }
+
+    .rp-row-check {
+      flex-shrink: 0;
+      width: 18px; height: 18px;
+      accent-color: var(--rp-accent);
+      cursor: pointer;
+    }
 
     .rp-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .rp-row { display: flex; align-items: stretch; gap: 0.55rem; }
+    .rp-row > .rp-card { flex: 1; }
+    .rp-row-check-wrap {
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 0.25rem;
+    }
     .rp-card {
       background: var(--rp-surface);
       border: 1px solid var(--rp-glass-border);
@@ -635,15 +664,38 @@
       <select id="rp-filter-template" class="rp-select">
         <option value="">All template types</option>
       </select>
+      <select id="rp-filter-department" class="rp-select">
+        <option value="">All departments</option>
+      </select>
       <select id="rp-filter-status" class="rp-select">
         <option value="">All statuses</option>
         <option value="submitted">Submitted</option>
         <option value="draft">Drafts</option>
       </select>
+      <select id="rp-filter-archived" class="rp-select" title="Archived state">
+        <option value="false">Active</option>
+        <option value="true">Archived</option>
+        <option value="all">All</option>
+      </select>
+      <input id="rp-filter-from" class="rp-input rp-input-date" type="datetime-local" title="From" />
+      <input id="rp-filter-to" class="rp-input rp-input-date" type="datetime-local" title="To" />
       <input id="rp-filter-q" class="rp-input" type="search" placeholder="Search by report # or officer…" />
       <div class="rp-toolbar-spacer"></div>
+      <% if (typeof canManageForms !== 'undefined' && canManageForms) { %>
+      <button id="rp-bulk-archive-btn" class="rp-btn rp-btn-outline" title="Bulk archive by date range"><i class="fa-solid fa-box-archive"></i> Bulk archive</button>
+      <% } %>
       <button id="rp-refresh" class="rp-btn rp-btn-outline"><i class="fa-solid fa-rotate"></i> Refresh</button>
     </div>
+
+    <% if (typeof canManageForms !== 'undefined' && canManageForms) { %>
+    <div id="rp-bulk-bar" class="rp-bulk-bar" hidden>
+      <span class="rp-bulk-count"><span id="rp-bulk-count">0</span> selected</span>
+      <div class="rp-bulk-bar-spacer"></div>
+      <button id="rp-bulk-clear" class="rp-btn rp-btn-outline" type="button">Clear</button>
+      <button id="rp-bulk-archive-selected" class="rp-btn rp-btn-outline" type="button"><i class="fa-solid fa-box-archive"></i> Archive selected</button>
+      <button id="rp-bulk-purge" class="rp-btn rp-btn-danger" type="button" hidden><i class="fa-solid fa-trash"></i> Delete permanently</button>
+    </div>
+    <% } %>
 
     <div id="rp-list" class="rp-list"></div>
 
@@ -687,8 +739,23 @@
       var communityIdEncoded = <%- JSON.stringify(typeof communityIdEncoded !== 'undefined' ? communityIdEncoded : '') %>;
       var token = <%- JSON.stringify(typeof apiToken !== 'undefined' ? apiToken : '') %>;
 
-      var state = { page: 0, limit: 20, templateSlug: '', status: '', q: '', total: 0 };
+      var canManageForms = <%- JSON.stringify(typeof canManageForms !== 'undefined' && canManageForms) %>;
+      var currentUser = <%- JSON.stringify(typeof currentUser !== 'undefined' ? currentUser : null) %>;
+
+      var state = {
+        page: 0, limit: 20,
+        templateSlug: '', departmentId: '', status: '', archived: 'false',
+        createdFrom: '', createdTo: '',
+        q: '', total: 0,
+      };
       var templates = [];
+      var departments = []; // [{ departmentId, departmentName, count }]
+      var selectedIds = Object.create(null);
+
+      function actorBlock() {
+        if (!currentUser || !currentUser.id) return null;
+        return { userID: currentUser.id, username: currentUser.username || '' };
+      }
 
       function authHeaders() {
         return token ? { 'Authorization': 'Bearer ' + token } : {};
@@ -1083,17 +1150,50 @@
         if (!communityId) return;
         var qs = 'page=' + state.page + '&limit=' + state.limit;
         if (state.templateSlug) qs += '&templateSlug=' + encodeURIComponent(state.templateSlug);
+        if (state.departmentId) qs += '&departmentID=' + encodeURIComponent(state.departmentId);
         if (state.status) qs += '&status=' + encodeURIComponent(state.status);
+        if (state.archived) qs += '&archived=' + encodeURIComponent(state.archived);
+        if (state.createdFrom) qs += '&createdFrom=' + encodeURIComponent(state.createdFrom);
+        if (state.createdTo) qs += '&createdTo=' + encodeURIComponent(state.createdTo);
 
         var listEl = document.getElementById('rp-list');
         listEl.innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="rp-empty-title">Loading…</div></div>';
 
         fetch(apiUrl + '/api/v2/form-submissions/community/' + encodeURIComponent(communityId) + '?' + qs, { headers: authHeaders() })
-          .then(function (r) { return r.ok ? r.json() : { data: [], totalCount: 0 }; })
-          .then(renderList)
+          .then(function (r) {
+            if (r.status === 403) { return { __forbidden: true }; }
+            return r.ok ? r.json() : { data: [], totalCount: 0 };
+          })
+          .then(function (payload) {
+            if (payload && payload.__forbidden) {
+              listEl.innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-solid fa-lock"></i></div><div class="rp-empty-title">You do not have access to view this department\'s reports</div><div class="rp-empty-sub">Pick a different department from the filter above.</div></div>';
+              renderPagination();
+              renderBulkBar();
+              return;
+            }
+            renderList(payload);
+          })
           .catch(function (e) {
             listEl.innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="rp-empty-title">Failed to load reports</div><div class="rp-empty-sub">' + (e && e.message ? e.message : 'Network error') + '</div></div>';
           });
+      }
+
+      function loadDepartments() {
+        if (!communityId) return Promise.resolve([]);
+        return fetch(apiUrl + '/api/v2/form-submissions/community/' + encodeURIComponent(communityId) + '/departments', { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+          .then(function (j) {
+            departments = (j && j.data) || [];
+            var sel = document.getElementById('rp-filter-department');
+            departments.forEach(function (d) {
+              var opt = document.createElement('option');
+              opt.value = d.departmentId;
+              opt.textContent = (d.departmentName || '(unnamed dept)') + ' (' + d.count + ')';
+              sel.appendChild(opt);
+            });
+            return departments;
+          })
+          .catch(function () { return []; });
       }
 
       function renderList(payload) {
@@ -1119,6 +1219,7 @@
         listEl.innerHTML = '';
         data.forEach(function (sub) {
           var d = sub.formSubmission || {};
+          var id = String(sub._id || '');
           var initials = ((d.signedBy && d.signedBy.username) || '?').slice(0, 2).toUpperCase();
           var statusPill = d.status === 'draft'
             ? '<span class="rp-pill rp-pill-draft"><i class="fa-regular fa-circle-dot"></i> Draft</span>'
@@ -1126,6 +1227,26 @@
           var archivedPill = d.archived
             ? '<span class="rp-pill rp-pill-archived"><i class="fa-solid fa-box-archive"></i> Archived</span>'
             : '';
+
+          var row = document.createElement('div');
+          row.className = 'rp-row';
+
+          if (canManageForms) {
+            var cwrap = document.createElement('label');
+            cwrap.className = 'rp-row-check-wrap';
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'rp-row-check';
+            cb.dataset.id = id;
+            cb.checked = !!selectedIds[id];
+            cb.addEventListener('change', function () {
+              if (cb.checked) selectedIds[id] = true;
+              else delete selectedIds[id];
+              renderBulkBar();
+            });
+            cwrap.appendChild(cb);
+            row.appendChild(cwrap);
+          }
 
           var a = document.createElement('a');
           a.className = 'rp-card' + (d.archived ? ' is-archived' : '');
@@ -1142,10 +1263,25 @@
               '</div>' +
             '</div>' +
             '<i class="fa-solid fa-chevron-right" style="color: var(--rp-text-dim);"></i>';
-          listEl.appendChild(a);
+          row.appendChild(a);
+          listEl.appendChild(row);
         });
 
         renderPagination();
+        renderBulkBar();
+      }
+
+      function renderBulkBar() {
+        var bar = document.getElementById('rp-bulk-bar');
+        if (!bar) return;
+        var ids = Object.keys(selectedIds);
+        var countEl = document.getElementById('rp-bulk-count');
+        if (countEl) countEl.textContent = String(ids.length);
+        if (ids.length === 0) { bar.hidden = true; return; }
+        bar.hidden = false;
+        // Show "Delete permanently" only when filter is set to archived view.
+        var purgeBtn = document.getElementById('rp-bulk-purge');
+        if (purgeBtn) purgeBtn.hidden = state.archived !== 'true';
       }
 
       function renderPagination() {
@@ -1262,10 +1398,179 @@
       }
       document.addEventListener('keydown', onCmdKey);
 
-      document.getElementById('rp-filter-template').addEventListener('change', function (e) { state.templateSlug = e.target.value; state.page = 0; loadList(); });
-      document.getElementById('rp-filter-status').addEventListener('change', function (e) { state.status = e.target.value; state.page = 0; loadList(); });
+      function clearSelection() { selectedIds = Object.create(null); renderBulkBar(); }
+
+      document.getElementById('rp-filter-template').addEventListener('change', function (e) { state.templateSlug = e.target.value; state.page = 0; clearSelection(); loadList(); });
+      document.getElementById('rp-filter-department').addEventListener('change', function (e) { state.departmentId = e.target.value; state.page = 0; clearSelection(); loadList(); });
+      document.getElementById('rp-filter-status').addEventListener('change', function (e) { state.status = e.target.value; state.page = 0; clearSelection(); loadList(); });
+      document.getElementById('rp-filter-archived').addEventListener('change', function (e) { state.archived = e.target.value; state.page = 0; clearSelection(); loadList(); });
+
+      function toIsoOrEmpty(localValue) {
+        if (!localValue) return '';
+        var d = new Date(localValue);
+        if (isNaN(d.getTime())) return '';
+        return d.toISOString();
+      }
+      document.getElementById('rp-filter-from').addEventListener('change', function (e) { state.createdFrom = toIsoOrEmpty(e.target.value); state.page = 0; clearSelection(); loadList(); });
+      document.getElementById('rp-filter-to').addEventListener('change', function (e) { state.createdTo = toIsoOrEmpty(e.target.value); state.page = 0; clearSelection(); loadList(); });
+
       document.getElementById('rp-filter-q').addEventListener('input', function (e) { state.q = e.target.value || ''; renderListFromCache(); });
       document.getElementById('rp-refresh').addEventListener('click', loadList);
+
+      // --- bulk actions (admin only) ---
+      var bulkClearBtn = document.getElementById('rp-bulk-clear');
+      if (bulkClearBtn) {
+        bulkClearBtn.addEventListener('click', function () {
+          clearSelection();
+          // uncheck visible boxes
+          document.querySelectorAll('.rp-row-check').forEach(function (b) { b.checked = false; });
+        });
+      }
+
+      var bulkArchSelBtn = document.getElementById('rp-bulk-archive-selected');
+      if (bulkArchSelBtn) {
+        bulkArchSelBtn.addEventListener('click', function () {
+          var ids = Object.keys(selectedIds);
+          if (ids.length === 0) return;
+          var msg = 'Archive ' + ids.length + ' selected report' + (ids.length === 1 ? '' : 's') + '? They will move to the Archived tab and be locked from edits. This is reversible.';
+          showConfirm({
+            title: 'Archive ' + ids.length + ' report' + (ids.length === 1 ? '' : 's'),
+            body: msg,
+            confirm: 'Archive',
+            danger: false,
+          }, function () {
+            // Hit the bulk-archive endpoint via a tight createdAt window per id is overkill;
+            // instead reuse the per-row PUT (existing UpdateFormSubmissionHandler). Sequential
+            // is fine for small selections.
+            var actor = actorBlock();
+            Promise.all(ids.map(function (id) {
+              return fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(id), {
+                method: 'PUT',
+                headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+                body: JSON.stringify({ archived: true, actor: actor }),
+              });
+            })).then(function () {
+              clearSelection();
+              loadList();
+            });
+          });
+        });
+      }
+
+      var bulkPurgeBtn = document.getElementById('rp-bulk-purge');
+      if (bulkPurgeBtn) {
+        bulkPurgeBtn.addEventListener('click', function () {
+          var ids = Object.keys(selectedIds);
+          if (ids.length === 0) return;
+          showConfirm({
+            title: 'Delete ' + ids.length + ' report' + (ids.length === 1 ? '' : 's') + ' permanently',
+            body: 'This will permanently delete ' + ids.length + ' archived report' + (ids.length === 1 ? '' : 's') + '. This cannot be undone.',
+            confirm: 'Delete permanently',
+            danger: true,
+          }, function () {
+            fetch(apiUrl + '/api/v2/form-submissions/community/' + encodeURIComponent(communityId) + '/purge', {
+              method: 'DELETE',
+              headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+              body: JSON.stringify({ ids: ids, actor: actorBlock() }),
+            }).then(function (r) {
+              if (!r.ok) {
+                return r.text().then(function (t) { throw new Error(t || 'Failed to delete'); });
+              }
+              clearSelection();
+              loadList();
+            }).catch(function (err) {
+              showConfirm({ title: 'Delete failed', body: (err && err.message) || 'Unknown error', confirm: 'OK', danger: false, hideCancel: true }, function () {});
+            });
+          });
+        });
+      }
+
+      var bulkArchBtn = document.getElementById('rp-bulk-archive-btn');
+      if (bulkArchBtn) {
+        bulkArchBtn.addEventListener('click', function () {
+          openBulkArchiveModal();
+        });
+      }
+
+      function openBulkArchiveModal() {
+        var deptOptions = '<option value="">All departments</option>' +
+          departments.map(function (d) {
+            return '<option value="' + escapeHTML(d.departmentId) + '">' + escapeHTML(d.departmentName || '(unnamed dept)') + '</option>';
+          }).join('');
+        var bodyHtml =
+          '<div style="display:flex;flex-direction:column;gap:0.6rem;">' +
+            '<label style="font-size:0.8rem;color:var(--rp-text-muted);">From <input id="rp-ba-from" type="datetime-local" class="rp-input" style="width:100%;margin-top:0.2rem;" /></label>' +
+            '<label style="font-size:0.8rem;color:var(--rp-text-muted);">To <input id="rp-ba-to" type="datetime-local" class="rp-input" style="width:100%;margin-top:0.2rem;" /></label>' +
+            '<label style="font-size:0.8rem;color:var(--rp-text-muted);">Department <select id="rp-ba-dept" class="rp-select" style="width:100%;margin-top:0.2rem;">' + deptOptions + '</select></label>' +
+            '<div style="font-size:0.78rem;color:var(--rp-text-muted);line-height:1.4;">All matching reports will be archived (soft delete). Archived reports are locked from edits but can be restored individually. Cap: 1000 per call.</div>' +
+          '</div>';
+        showConfirm({
+          title: 'Bulk archive reports',
+          body: bodyHtml,
+          confirm: 'Archive',
+          danger: false,
+        }, function () {
+          var fromVal = document.getElementById('rp-ba-from').value;
+          var toVal   = document.getElementById('rp-ba-to').value;
+          var dept    = document.getElementById('rp-ba-dept').value;
+          var fromIso = toIsoOrEmpty(fromVal);
+          var toIso   = toIsoOrEmpty(toVal);
+          if (!fromIso || !toIso) {
+            showConfirm({ title: 'Missing dates', body: 'Both From and To are required.', confirm: 'OK', danger: false, hideCancel: true }, function () {});
+            return;
+          }
+          fetch(apiUrl + '/api/v2/form-submissions/community/' + encodeURIComponent(communityId) + '/bulk-archive', {
+            method: 'POST',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+            body: JSON.stringify({ createdFrom: fromIso, createdTo: toIso, departmentId: dept || undefined, actor: actorBlock() }),
+          }).then(function (r) {
+            if (!r.ok) return r.text().then(function (t) { throw new Error(t || 'Failed to archive'); });
+            return r.json();
+          }).then(function (j) {
+            showConfirm({ title: 'Done', body: 'Archived ' + (j && j.archived || 0) + ' report(s).', confirm: 'OK', danger: false, hideCancel: true }, function () {});
+            loadList();
+          }).catch(function (err) {
+            showConfirm({ title: 'Archive failed', body: (err && err.message) || 'Unknown error', confirm: 'OK', danger: false, hideCancel: true }, function () {});
+          });
+        });
+      }
+
+      // Minimal in-page confirm modal that works regardless of whether
+      // window.ddModal is available on this page (kept simple to avoid
+      // pulling in legacy partials). Matches rp- visual language.
+      function showConfirm(opts, onConfirm) {
+        // Prefer window.ddModal when available (per project convention).
+        if (typeof window.ddModal === 'function') {
+          window.ddModal({
+            type: opts.danger ? 'danger' : 'info',
+            icon: opts.danger ? 'fa-trash' : 'fa-check',
+            title: opts.title,
+            message: opts.body,
+            confirmText: opts.confirm || 'Confirm',
+            onConfirm: onConfirm,
+          });
+          return;
+        }
+        // Fallback inline modal — same affordances.
+        var backdrop = document.createElement('div');
+        backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem;';
+        var panel = document.createElement('div');
+        panel.style.cssText = 'background:var(--rp-bg);border:1px solid var(--rp-glass-border);border-radius:var(--rp-radius);max-width:480px;width:100%;padding:1.25rem;';
+        panel.innerHTML =
+          '<div style="font-size:1.05rem;font-weight:600;color:#fff;margin-bottom:0.6rem;">' + escapeHTML(opts.title || '') + '</div>' +
+          '<div style="font-size:0.9rem;color:var(--rp-text);margin-bottom:1rem;">' + (opts.body || '') + '</div>' +
+          '<div style="display:flex;justify-content:flex-end;gap:0.5rem;">' +
+            (opts.hideCancel ? '' : '<button class="rp-btn rp-btn-outline" data-act="cancel" type="button">' + escapeHTML(opts.cancel || 'Cancel') + '</button>') +
+            '<button class="rp-btn ' + (opts.danger ? 'rp-btn-danger' : 'rp-btn-primary') + '" data-act="ok" type="button">' + escapeHTML(opts.confirm || 'Confirm') + '</button>' +
+          '</div>';
+        backdrop.appendChild(panel);
+        document.body.appendChild(backdrop);
+        function close() { document.body.removeChild(backdrop); }
+        panel.querySelector('[data-act="ok"]').addEventListener('click', function () { close(); onConfirm(); });
+        var cancelBtn = panel.querySelector('[data-act="cancel"]');
+        if (cancelBtn) cancelBtn.addEventListener('click', close);
+        backdrop.addEventListener('click', function (e) { if (e.target === backdrop) close(); });
+      }
 
       // Lightweight client-side q filter — re-renders the last loaded page.
       var lastPayload = null;
@@ -1273,7 +1578,7 @@
       var origRender = renderList;
       renderList = function (p) { lastPayload = p; origRender(p); };
 
-      loadTemplates().then(function () {
+      Promise.all([loadTemplates(), loadDepartments()]).then(function () {
         loadList();
         loadRailStats();
       });
