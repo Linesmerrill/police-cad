@@ -174,6 +174,26 @@
     .cd-user-name { font-size: 0.8125rem; font-weight: 500; color: var(--cd-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .cd-user-role, .cd-user-role-default { font-size: 0.6875rem; color: var(--cd-text-muted); }
 
+    /* Call-sign pill — inline editable, lives below the user card. The
+       pill reads as a credential (separate from the username) and morphs
+       in place into a focused input on click. */
+    .cd-callsign-row { display: none; padding: 0.5rem 0.5rem 0; }
+    .cd-callsign-row.is-visible { display: block; }
+    .cd-callsign-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.22rem 0.6rem; border-radius: 999px; background: var(--cd-glass); border: 1px solid var(--cd-glass-border); color: var(--cd-text); font-family: inherit; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; }
+    .cd-callsign-pill:hover { background: var(--cd-glass-hover); border-color: rgba(56,189,248,0.25); color: var(--cd-accent); }
+    .cd-callsign-pill:hover .cd-callsign-pencil { color: var(--cd-text-muted); }
+    .cd-callsign-label { font-size: 0.55rem; font-weight: 700; color: var(--cd-text-dim); letter-spacing: 0.08em; text-transform: uppercase; }
+    .cd-callsign-value { color: inherit; }
+    .cd-callsign-value.is-empty { color: var(--cd-text-dim); font-style: italic; font-weight: 500; letter-spacing: 0; text-transform: none; }
+    .cd-callsign-pencil { font-size: 0.6rem; color: var(--cd-text-dim); transition: color 0.15s; }
+    .cd-callsign-edit { display: none; align-items: center; gap: 0.4rem; }
+    .cd-callsign-edit.is-active { display: inline-flex; }
+    .cd-callsign-input { width: 7rem; padding: 0.22rem 0.55rem; border-radius: 999px; background: var(--cd-glass); border: 1px solid var(--cd-accent); box-shadow: 0 0 0 3px var(--cd-accent-glow); color: var(--cd-text); font-family: inherit; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; outline: none; }
+    .cd-callsign-input::placeholder { color: var(--cd-text-dim); font-weight: 500; letter-spacing: 0; }
+    .cd-callsign-spinner { color: var(--cd-accent); font-size: 0.7rem; display: none; }
+    .cd-callsign-spinner.is-active { display: inline-flex; }
+    .cd-callsign-pill.is-saved { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.32); color: var(--cd-green); transition: background 0.4s, border-color 0.4s, color 0.4s; }
+
     /* ---- Main area ---- */
     .cd-main { margin-left: var(--cd-sidebar-w); min-height: 100vh; position: relative; z-index: 1; }
 
@@ -594,6 +614,22 @@
           </div>
         </div>
       </a>
+      <%
+        // Call-sign pill: only meaningful when there's a department context.
+        // We render the row but keep it hidden until the JS confirms a
+        // department-callsign is loadable (department membership exists).
+      %>
+      <div class="cd-callsign-row" id="cd-callsign-row" aria-label="Department call sign">
+        <button type="button" class="cd-callsign-pill" id="cd-callsign-pill" title="Edit department call sign">
+          <span class="cd-callsign-label">CS</span>
+          <span class="cd-callsign-value" id="cd-callsign-value"></span>
+          <i class="fa fa-pencil cd-callsign-pencil"></i>
+        </button>
+        <span class="cd-callsign-edit" id="cd-callsign-edit">
+          <input type="text" class="cd-callsign-input" id="cd-callsign-input" maxlength="10" autocomplete="off" placeholder="Set call sign" />
+          <span class="cd-callsign-spinner" id="cd-callsign-spinner"><i class="fa fa-circle-notch fa-spin"></i></span>
+        </span>
+      </div>
     </div>
   </aside>
 
@@ -744,6 +780,134 @@
       }
     };
     window.cdToast = window.ddToast;
+  </script>
+
+  <!-- ════════════════════════════════════════════════════════
+       Sidebar — Department Call Sign (inline editable pill)
+
+       Mirrors the classic dashboards' sidebar call-sign edit but styled
+       in cd- tokens. Hits the same API endpoint
+       PUT /api/v1/community/{cid}/members/{uid}/department-callsigns
+       so the server-side contract stays identical. Hidden entirely if
+       there's no department context for this user.
+       ════════════════════════════════════════════════════════ -->
+  <script>
+  (function () {
+    'use strict';
+    var cfg = window.ddConfig || {};
+    var apiBase = cfg.API_URL || '';
+    var communityId = cfg.communityId || '';
+    var userId = cfg.userId || '';
+    var deptId = cfg.departmentId || '';
+    if (!apiBase || !communityId || !userId || !deptId) return;
+
+    var row = document.getElementById('cd-callsign-row');
+    var pill = document.getElementById('cd-callsign-pill');
+    var valueEl = document.getElementById('cd-callsign-value');
+    var editEl = document.getElementById('cd-callsign-edit');
+    var input = document.getElementById('cd-callsign-input');
+    var spinner = document.getElementById('cd-callsign-spinner');
+    if (!row || !pill || !valueEl || !editEl || !input || !spinner) return;
+
+    var current = '';
+    var saving = false;
+    var endpoint = apiBase + '/api/v1/community/' + encodeURIComponent(communityId) +
+                   '/members/' + encodeURIComponent(userId) + '/department-callsigns';
+
+    function paintValue(val) {
+      current = val || '';
+      if (current) {
+        valueEl.textContent = current;
+        valueEl.classList.remove('is-empty');
+      } else {
+        valueEl.textContent = 'Set call sign';
+        valueEl.classList.add('is-empty');
+      }
+    }
+
+    function openEdit() {
+      if (saving) return;
+      input.value = current;
+      pill.style.display = 'none';
+      editEl.classList.add('is-active');
+      input.focus();
+      input.select();
+    }
+
+    function closeEdit() {
+      editEl.classList.remove('is-active');
+      pill.style.display = 'inline-flex';
+    }
+
+    function flashSaved() {
+      pill.classList.add('is-saved');
+      setTimeout(function () { pill.classList.remove('is-saved'); }, 700);
+    }
+
+    function save() {
+      var next = (input.value || '').trim();
+      if (next === current) { closeEdit(); return; }
+      saving = true;
+      spinner.classList.add('is-active');
+      fetch(endpoint, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ departmentId: deptId, callSign: next })
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json().catch(function () { return {}; });
+        })
+        .then(function () {
+          paintValue(next);
+          // Keep the global resolved call sign in sync — panic / signal100
+          // handlers on shared modules (cd-alerts.js et al.) read this.
+          window._resolvedDeptCallSign = next || null;
+          flashSaved();
+          closeEdit();
+        })
+        .catch(function (err) {
+          console.error('[cd-callsign] save failed:', err);
+          if (window.ddToast) window.ddToast('Failed to update call sign', 'error');
+        })
+        .then(function () {
+          saving = false;
+          spinner.classList.remove('is-active');
+        });
+    }
+
+    // Initial fetch — also gates whether the row appears at all. If the
+    // user has no membership / dept context the API will 404 and we stay
+    // hidden, matching the classic dashboard's behaviour.
+    fetch(endpoint)
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        var map = data.departmentCallSigns || {};
+        var resolved = map[deptId] || '';
+        paintValue(resolved);
+        window._resolvedDeptCallSign = resolved || null;
+        row.classList.add('is-visible');
+      })
+      .catch(function () { /* silent — keep row hidden */ });
+
+    pill.addEventListener('click', openEdit);
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); save(); }
+      else if (e.key === 'Escape') { e.preventDefault(); closeEdit(); }
+    });
+    input.addEventListener('blur', function () {
+      // Slight delay so an Enter-keyup that triggered save doesn't race
+      // with blur firing closeEdit before the spinner kicks in.
+      setTimeout(function () {
+        if (!editEl.classList.contains('is-active')) return;
+        if (saving) return;
+        // Treat blur without Enter as cancel — feels right for a tiny
+        // chip; users who want to commit press Enter.
+        closeEdit();
+      }, 120);
+    });
+  })();
   </script>
 
   <!-- Shared component implementations (warrants, notepad, 10-codes, penal codes, court cases) -->
