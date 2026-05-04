@@ -44,22 +44,47 @@
   // assignable, and dispatchers shouldn't dispatch themselves.
   var NON_DISPATCHABLE = { civilian: 1, judicial: 1, dispatch: 1 };
 
-  // On/off-duty ten-codes used to classify a unit as dispatchable (online)
-  // vs. ghost (offline) in the roster. A unit is "off-duty" when their
-  // current code matches OFF_DUTY_CODE, OR when they have no code set yet
-  // (haven't started a shift). Anything else — including ON_DUTY_CODE,
-  // 10-7, 10-8, on-call codes — counts as on-duty.
+  // On/off-duty classification used to decide whether a unit is in the
+  // dispatchable roster vs. surfaced as a ghost during search. Mirrors
+  // the off-duty semantics already used elsewhere (see ems-dashboard.js
+  // statusToTone): code in {10-42, 10-7} OR description containing
+  // "off duty"/"end of"/"out of service"/"off shift". A unit with no
+  // code at all is also treated as off-duty (hasn't started a shift).
   //
   // TODO(community-config): let community admins designate which 10-codes
   // mean on-duty / off-duty per community when they configure ten-codes.
-  // For now these are hard-coded to the LPC defaults.
+  // For now this matches the LPC defaults plus any custom codes whose
+  // descriptions clearly read as off-duty.
   var ON_DUTY_CODE = '10-41';
   var OFF_DUTY_CODE = '10-42';
+  var OFF_DUTY_CODES = { '10-42': 1, '10-7': 1 };
+  var OFF_DUTY_DESC_FRAGMENTS = ['off duty', 'end of', 'out of service', 'off shift'];
+
   function unitCode(u) { return (u && u.tenCode && u.tenCode.code) || ''; }
+
+  // Resolve the description for a tenCode by looking it up in the
+  // community's cached ten-code list (the /units endpoint only returns
+  // {id, code} on the tenCode object).
+  function unitCodeDesc(tenCode) {
+    if (!tenCode) return '';
+    var cache = (cfg().communityData || {}).tenCodes || [];
+    for (var i = 0; i < cache.length; i++) {
+      if (cache[i]._id === tenCode.id || cache[i]._id === tenCode._id) {
+        return (cache[i].description || '').toLowerCase();
+      }
+    }
+    return '';
+  }
+
   function isOffDuty(u) {
     var code = unitCode(u);
-    if (!code) return true;            // no code yet = hasn't gone on duty
-    return code === OFF_DUTY_CODE;     // explicit off-duty code
+    if (!code) return true; // no code yet = hasn't started a shift
+    if (OFF_DUTY_CODES[code]) return true;
+    var desc = unitCodeDesc(u && u.tenCode);
+    for (var i = 0; i < OFF_DUTY_DESC_FRAGMENTS.length; i++) {
+      if (desc.indexOf(OFF_DUTY_DESC_FRAGMENTS[i]) !== -1) return true;
+    }
+    return false;
   }
   function hasEligibleDept(u) {
     var depts = (u && u.departments) || [];
