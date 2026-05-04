@@ -256,7 +256,11 @@
       var active = findActiveDept(u);
       var isDispatcher = active && String(active.template || '').toLowerCase() === 'dispatch';
       if (isDispatcher) continue;        // hide other dispatchers from the assignable pool
-      if (u.id === me) continue;         // hide self — you can't assign yourself from this roster
+      // Self stays in the dataset but is hidden from the on-duty list by
+      // applyFilters() — dispatchers shouldn't drag-assign themselves, but
+      // they should still be able to find their own unit as a ghost when
+      // searching off-duty (e.g. to confirm their own status code).
+      var isSelf = u.id === me;
       // Skip pure civilians / judges. Dispatchers cannot assign them to calls,
       // so showing them in the roster is clutter at best and a realism break
       // at worst (community feedback: "civilians appearing in the All view
@@ -278,6 +282,7 @@
       }
       out.push({
         id: u.id,
+        isSelf: isSelf,
         username: u.username || '',
         callSign: u.resolvedCallSign || u.globalCallSign || '',
         globalCallSign: u.globalCallSign || '',
@@ -397,7 +402,9 @@
     // denominator, so the "X / Y" reads as "showing X of Y dispatchable."
     var totalOnDuty = 0;
     for (var t = 0; t < state.units.length; t++) {
-      if (!isOffDuty(state.units[t])) totalOnDuty++;
+      var su = state.units[t];
+      if (su.isSelf) continue; // self never appears in the on-duty pool
+      if (!isOffDuty(su)) totalOnDuty++;
     }
     $('#cd-dispatch-roster-count').text(filtered.length + (filtered.length !== totalOnDuty ? ' / ' + totalOnDuty : ''));
 
@@ -546,6 +553,12 @@
     for (var i = 0; i < units.length; i++) {
       var u = units[i];
       var off = isOffDuty(u);
+
+      // Hide self from the on-duty list — dispatchers can't assign
+      // themselves. When self is off-duty, fall through so they appear
+      // as a (non-draggable) ghost during search; useful for confirming
+      // your own current status code without leaving the dashboard.
+      if (u.isSelf && !off) continue;
 
       // Dept + status filter pills always apply, to both buckets — a
       // dispatcher who's filtered to Police shouldn't see Fire ghosts.
