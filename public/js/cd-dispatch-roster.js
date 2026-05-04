@@ -45,22 +45,41 @@
   var NON_DISPATCHABLE = { civilian: 1, judicial: 1, dispatch: 1 };
 
   // On/off-duty classification used to decide whether a unit is in the
-  // dispatchable roster vs. surfaced as a ghost during search. Mirrors
-  // the off-duty semantics already used elsewhere (see ems-dashboard.js
-  // statusToTone): code in {10-42, 10-7} OR description containing
-  // "off duty"/"end of"/"out of service"/"off shift". A unit with no
-  // code at all is also treated as off-duty (hasn't started a shift).
+  // dispatchable roster vs. surfaced as a ghost during search.
   //
-  // TODO(community-config): let community admins designate which 10-codes
+  // Matched on the unit's CURRENT TEN-CODE — the existing radio convention
+  // is "X-42" = off-duty / "X-41" = on-duty across both 10-codes (10-41 /
+  // 10-42) and signal-codes (signal 41 / signal 42). 10-7 (out of service)
+  // also reads as off-duty. Any community custom code whose description
+  // clearly says off-duty/end of/out of service/off shift also counts.
+  // A unit with no code yet is treated as off-duty (hasn't started a
+  // shift).
+  //
+  // Comparison is case-insensitive and tolerant of whitespace + the
+  // common "10-" / "10 " / "signal-" / "signal " prefix variants so a
+  // dispatcher who set "Signal-42" still classifies correctly.
+  //
+  // TODO(community-config): let community admins designate which codes
   // mean on-duty / off-duty per community when they configure ten-codes.
-  // For now this matches the LPC defaults plus any custom codes whose
-  // descriptions clearly read as off-duty.
-  var ON_DUTY_CODE = '10-41';
-  var OFF_DUTY_CODE = '10-42';
-  var OFF_DUTY_CODES = { '10-42': 1, '10-7': 1 };
-  var OFF_DUTY_DESC_FRAGMENTS = ['off duty', 'end of', 'out of service', 'off shift'];
+  var OFF_DUTY_CODE_SUFFIXES = { '42': 1, '7': 1 };
+  var OFF_DUTY_DESC_FRAGMENTS = [
+    'off duty', 'off-duty', 'end of', 'end-of', 'out of service',
+    'off shift', 'off-shift', 'eos', 'going home',
+  ];
 
   function unitCode(u) { return (u && u.tenCode && u.tenCode.code) || ''; }
+
+  // Pull the numeric / mnemonic suffix from a code like "10-42" or
+  // "signal 42" or "S42". Returns lowercase trimmed suffix, or '' when
+  // the code doesn't fit the family pattern.
+  function codeSuffix(code) {
+    var c = String(code || '').toLowerCase().trim();
+    if (!c) return '';
+    // Strip common prefixes + the separator.
+    c = c.replace(/^signal[\s\-_]*/, '').replace(/^s[\s\-_]+/, '');
+    c = c.replace(/^10[\s\-_]+/, '');
+    return c.trim();
+  }
 
   // Resolve the description for a tenCode by looking it up in the
   // community's cached ten-code list (the /units endpoint only returns
@@ -79,7 +98,7 @@
   function isOffDuty(u) {
     var code = unitCode(u);
     if (!code) return true; // no code yet = hasn't started a shift
-    if (OFF_DUTY_CODES[code]) return true;
+    if (OFF_DUTY_CODE_SUFFIXES[codeSuffix(code)]) return true;
     var desc = unitCodeDesc(u && u.tenCode);
     for (var i = 0; i < OFF_DUTY_DESC_FRAGMENTS.length; i++) {
       if (desc.indexOf(OFF_DUTY_DESC_FRAGMENTS[i]) !== -1) return true;
@@ -341,7 +360,7 @@
           hint = 'Off-duty units appear below. Tap to view or update their status.';
         } else {
           primaryMsg = state.units.length ? 'No units in this status bucket.' : 'No assignable units in this community yet.';
-          hint = 'Don’t see a unit? Have them mark themselves as on-duty (10-41) — only on-duty units appear here.';
+          hint = 'Don’t see a unit? Have them mark themselves on-duty (10-41 / signal 41) — only on-duty units appear here.';
         }
         html += (
           '<div class="cd-dispatch-placeholder">' +
