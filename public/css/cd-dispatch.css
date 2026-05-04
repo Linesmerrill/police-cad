@@ -271,6 +271,14 @@
   font-size: 0.75rem;
 }
 .cd-dispatch-placeholder i { font-size: 1.25rem; opacity: 0.5; }
+.cd-dispatch-placeholder-hint {
+  margin-top: 0.25rem;
+  max-width: 22rem;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: var(--cd-text-muted, #64748b);
+  opacity: 0.85;
+}
 
 /* ── Realtime flash ──────────────────────────────────
    Peripheral-vision cue when a call or unit updates behind the
