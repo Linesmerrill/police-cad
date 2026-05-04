@@ -206,6 +206,52 @@ export default function TermsAndConditions() {
           <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>Lines Police CAD reserves the right to modify, suspend, or terminate the Program or these terms at any time. Continued participation in the Program after changes have been made constitutes acceptance of the modified terms.</p>
         </>
       )
+    },
+    {
+      id: 'admin-console-and-linked-accounts',
+      title: 'Admin Console & Linked LPC Accounts',
+      content: (
+        <>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>This section applies to users who hold an account in the Lines Police CAD Admin Console (an &quot;Admin&quot;) and elect to link that admin account to a regular Lines Police CAD user account (a &quot;Linked LPC Account&quot;). These terms supplement, and do not replace, the rest of these Terms and Conditions; you remain bound by every other section as a regular user of the platform.</p>
+
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>Eligibility &amp; Access</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>Admin Console access is granted only to individuals invited by Lines Police CAD and is intended for moderation, support, and platform administration. Admin credentials are personal, non-transferable, and must not be shared, sold, or otherwise disclosed.</p>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>Your admin account exists separately from any regular Lines Police CAD user account you may also hold. Possession of an admin account does not, on its own, grant elevated privileges anywhere on the consumer-facing platform.</p>
+
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>Linking an LPC Account</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>Linking is a voluntary action you initiate from the Admin Console. By completing the link flow and accepting these terms in the linking dialog, you acknowledge that:</p>
+          <ul style={{ margin: '1.25rem 0', paddingLeft: '2rem', listStyleType: 'disc', listStylePosition: 'outside' }}>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>The Linked LPC Account you select must be one you own and operate. You must not link to an account belonging to another person.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>Each Linked LPC Account may be associated with at most one admin account at a time. The platform will reject attempts to link a user account that is already linked to another admin.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>While a link is in place, your Admin Console account will be used <strong style={{ fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)' }}>solely</strong> for signing in to the Admin Console; it will not receive elevated access on Lines Police CAD itself.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>Elevated access on admin-gated, user-facing features (for example, moderation actions on Feature Requests) will be granted exclusively to the Linked LPC Account. Creating, registering, or signing in with any other Lines Police CAD account &mdash; including one whose email matches your admin email &mdash; will not confer admin privileges on that other account.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>You may relink to a different Linked LPC Account or disconnect the link at any time from the Admin Profile page.</li>
+          </ul>
+
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>Conduct &amp; Acceptable Use</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>When acting through your Linked LPC Account in any admin-gated capacity, you agree to:</p>
+          <ul style={{ margin: '1.25rem 0', paddingLeft: '2rem', listStyleType: 'disc', listStylePosition: 'outside' }}>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>Use elevated capabilities only for legitimate platform administration, moderation, or support &mdash; never for personal advantage, harassment, or to circumvent normal user limits.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>Treat any user data you encounter (emails, usernames, communities, content) as confidential. Do not disclose, export, or use such data outside of an administrative purpose.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>Take administrative actions in good faith, with reasonable care, and consistent with applicable law and platform policies.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>Refrain from impersonating users, retaliating against users, or favoring accounts you have a personal or financial relationship with.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>Maintain reasonable security on the devices and credentials used to access the Admin Console and the Linked LPC Account, and report any suspected compromise to Lines Police CAD without delay.</li>
+          </ul>
+
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>Data We Record on Linking</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>When you link a Linked LPC Account, Lines Police CAD records the user account identifier and email being linked, the date and time of the link, the version of these terms in effect at acceptance, and the timestamp at which you accepted them. This record is kept for as long as the link is active and may be retained afterward, in accordance with our Privacy Policy, for security audit, dispute resolution, and legal compliance.</p>
+
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>Disconnection, Suspension &amp; Revocation</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>You may disconnect a Linked LPC Account at any time. Disconnection is immediate: elevated access on linked features ceases as soon as the change is recorded, although your audit trail of past administrative actions is preserved.</p>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>Lines Police CAD may suspend, modify, or permanently revoke admin privileges and/or any account link at any time, with or without notice, for any reason &mdash; including suspected misuse, breach of these terms, account compromise, or operational need. Such revocation does not, on its own, terminate the underlying user account or admin account, except where those are also subject to suspension under other provisions of these terms.</p>
+
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>No Employment Relationship</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>Holding an admin account or linking an LPC Account does not create an employment, partnership, or agency relationship with Lines Police CAD. Administrative duties, where any are performed, are voluntary unless a separate written agreement specifies otherwise.</p>
+
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>Changes to These Terms</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>Lines Police CAD may revise this section from time to time. When the substance of these admin-linking terms changes, the version identifier recorded against your acceptance will be incremented and you may be asked to re-accept the updated terms before continuing to use elevated features. Continued use of the Admin Console or a Linked LPC Account after acceptance constitutes agreement to the revised terms.</p>
+        </>
+      )
     }
   ];
 
@@ -331,14 +377,15 @@ export default function TermsAndConditions() {
 
             {/* Sections */}
             {sections.map((section, index) => (
-              <div key={index}>
+              <div key={index} id={(section as { id?: string }).id}>
                 <div
                   style={{
                     backgroundColor: 'rgba(15, 15, 20, 0.6)',
                     border: '1px solid rgba(59, 130, 246, 0.2)',
                     borderRadius: '1rem',
                     padding: '2rem',
-                    marginBottom: index < sections.length - 1 ? '0' : '2rem'
+                    marginBottom: index < sections.length - 1 ? '0' : '2rem',
+                    scrollMarginTop: '6rem'
                   }}
                 >
                   <h2 style={{

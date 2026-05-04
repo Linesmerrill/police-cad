@@ -788,6 +788,16 @@
       .lpc-disclaimer-list li { margin-bottom: 0.35rem; }
       .lpc-disclaimer-list li:last-child { margin-bottom: 0; }
       .lpc-disclaimer-list strong { color: #fbbf24; font-weight: 600; }
+      .lpc-terms-link {
+        color: #fbbf24;
+        font-weight: 600;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        transition: color 0.15s;
+      }
+      .lpc-terms-link:hover,
+      .lpc-terms-link:focus { color: #fde68a; text-decoration: underline; }
+      .lpc-terms-link:focus { outline: none; }
 
       .lpc-checkbox {
         display: flex;
@@ -1626,7 +1636,7 @@
                 <div class="lpc-disclaimer-body">
                   <p class="lpc-disclaimer-lede">By linking this LPC account you agree to:</p>
                   <ol class="lpc-disclaimer-list">
-                    <li>Abide by the <strong>LPC Admin Terms of Service</strong> when using elevated features.</li>
+                    <li>Abide by the <a href="/terms-and-conditions#admin-console-and-linked-accounts" target="_blank" rel="noopener" class="lpc-terms-link">LPC Admin Terms of Service</a> when using elevated features.</li>
                     <li>Only your linked LPC account will receive elevated access on LPC &mdash; your admin account will be used solely for admin console login.</li>
                     <li>Linkspolice CAD may revoke elevated access at any time for misuse.</li>
                   </ol>
