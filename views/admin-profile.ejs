@@ -1298,14 +1298,6 @@
           if (mode === 'relink') {
             $modalTitleText.text('Relink LPC Account');
             $linkSubmitLabel.text('Update Link');
-            if (currentLinked) {
-              selectUser({
-                id: currentLinked.userId,
-                email: currentLinked.email,
-                username: currentLinked.username,
-                profilePicture: currentLinked.profilePicture
-              });
-            }
           } else {
             $modalTitleText.text('Link LPC Account');
             $linkSubmitLabel.text('Link Account');
