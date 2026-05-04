@@ -65,6 +65,10 @@
     return null;
   };
 
+  // True once the roster has been hydrated at least once. Consumers (like the
+  // call board) use this to tell "still loading" apart from "user not found".
+  window.cdDispatchRosterIsReady = function () { return state.units.length > 0; };
+
   window.cdDispatchRosterPatchUnit = function (patch) {
     if (!patch || !patch.id) return;
     for (var i = 0; i < state.units.length; i++) {
@@ -144,6 +148,9 @@
       state.units = next;
       state.loading = false;
       render();
+      // Let consumers (call board, call detail) re-resolve assigned-unit IDs
+      // that couldn't be looked up before this load completed.
+      $(document).trigger('cdDispatch:rosterLoaded');
     }).fail(function (xhr) {
       state.loading = false;
       if (!silent) render();

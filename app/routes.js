@@ -536,6 +536,49 @@ module.exports = function (app, passport, server, nextApp, handle) {
     });
   });
 
+  // Beta opt-out feedback admin actions. Proxied through Express so the
+  // mutation requires an admin session — the underlying API endpoints
+  // are unauthenticated to match the existing list/create pattern, and
+  // we don't want admin-only writes exposed to the public network.
+  app.patch("/admin/beta-feedback/:id", requireAdminSession, async function (req, res) {
+    const apiUrl = process.env.POLICE_CAD_API_URL;
+    const id = String(req.params.id || "");
+    if (!/^[a-f0-9]{24}$/i.test(id)) {
+      return res.status(400).json({ success: false, error: "invalid id" });
+    }
+    const resolvedBy = (req.session.admin && (req.session.admin.email || req.session.admin.id)) || "";
+    try {
+      const response = await axios.patch(
+        `${apiUrl}/api/v1/admin/beta-feedback/${id}`,
+        { resolved: req.body && req.body.resolved === true, resolvedBy: resolvedBy },
+        { headers: { "Content-Type": "application/json" }, timeout: 8000 }
+      );
+      return res.json(response.data || { success: true });
+    } catch (err) {
+      const status = (err.response && err.response.status) || 500;
+      return res.status(status).json({ success: false, error: (err.response && err.response.data) || err.message });
+    }
+  });
+
+  app.delete("/admin/beta-feedback/:id", requireAdminSession, async function (req, res) {
+    const apiUrl = process.env.POLICE_CAD_API_URL;
+    const id = String(req.params.id || "");
+    if (!/^[a-f0-9]{24}$/i.test(id)) {
+      return res.status(400).json({ success: false, error: "invalid id" });
+    }
+    const undo = req.query.undo === "true" ? "?undo=true" : "";
+    try {
+      const response = await axios.delete(
+        `${apiUrl}/api/v1/admin/beta-feedback/${id}${undo}`,
+        { timeout: 8000 }
+      );
+      return res.json(response.data || { success: true });
+    } catch (err) {
+      const status = (err.response && err.response.status) || 500;
+      return res.status(status).json({ success: false, error: (err.response && err.response.data) || err.message });
+    }
+  });
+
   // Admin Profile page
   app.get("/admin/profile", requireAdminSession, async function (req, res) {
     const setup = req.query.setup === 'true';

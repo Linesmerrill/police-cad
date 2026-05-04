@@ -164,15 +164,133 @@
     .cd-dept-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
     .cd-dept-badge { font-size: 0.5625rem; font-weight: 700; padding: 0.0625rem 0.375rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.03em; flex-shrink: 0; color: #fff; }
 
-    /* Sidebar footer */
-    .cd-sidebar-footer { padding: 0.75rem 1rem; border-top: 1px solid var(--cd-glass-border); }
-    .cd-sidebar-user { display: flex; align-items: center; gap: 0.625rem; padding: 0.5rem; border-radius: var(--cd-radius-sm); transition: background 0.15s; }
-    .cd-sidebar-user:hover { background: var(--cd-glass-hover); }
+    /* ── Sidebar footer — Identity card ──
+       Two-zone layout. Top row is the identity head (avatar + name +
+       role). Below it, a stack of credential rows that share one shape
+       language: same rounded rect, same icon-square, same label/value
+       pair. Different functions (rank → modal, call sign → inline edit)
+       but visually a family. */
+    .cd-sidebar-footer { padding: 0.875rem 0.875rem 1rem; border-top: 1px solid var(--cd-glass-border); }
+    .cd-id-card { display: flex; flex-direction: column; gap: 0.625rem; }
+
+    /* ─ Identity head ─ */
+    .cd-id-head { display: flex; align-items: center; gap: 0.625rem; padding: 0.125rem; }
+    .cd-id-avatar { flex-shrink: 0; text-decoration: none; color: inherit; border-radius: 50%; transition: transform 0.18s cubic-bezier(0.16,1,0.3,1); display: block; }
+    .cd-id-avatar:hover { transform: translateY(-1px); }
+    .cd-id-avatar:focus-visible { outline: 2px solid var(--cd-accent); outline-offset: 3px; }
+    .cd-id-avatar .cd-user-avatar { width: 2.25rem; height: 2.25rem; }
+    .cd-id-name-link { flex: 1; min-width: 0; text-decoration: none; color: inherit; padding: 0.18rem 0.375rem; border-radius: 6px; transition: background 0.15s; }
+    .cd-id-name-link:hover { background: var(--cd-glass-hover); }
+    .cd-id-name-link:hover .cd-id-name { color: var(--cd-accent); }
+    .cd-id-name { font-size: 0.875rem; font-weight: 600; color: var(--cd-text); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.15s; }
+    .cd-id-role { font-size: 0.6875rem; color: var(--cd-text-muted); line-height: 1.3; margin-top: 0.0625rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* legacy aliases — some shared modules write the role into these
+       classes; keep them consistent with the new typography */
     .cd-user-avatar { width: 2rem; height: 2rem; border-radius: 50%; background: var(--cd-accent-glow); color: var(--cd-accent); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.75rem; overflow: hidden; flex-shrink: 0; }
     .cd-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .cd-user-info { min-width: 0; }
-    .cd-user-name { font-size: 0.8125rem; font-weight: 500; color: var(--cd-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cd-user-info { min-width: 0; flex: 1; }
+    .cd-user-name { font-size: 0.875rem; font-weight: 600; color: var(--cd-text); }
     .cd-user-role, .cd-user-role-default { font-size: 0.6875rem; color: var(--cd-text-muted); }
+
+    /* ─ Credentials zone ─ */
+    .cd-id-creds { display: flex; flex-direction: column; gap: 0.4rem; }
+
+    .cd-cred-row {
+      display: flex; align-items: center; gap: 0.55rem;
+      width: 100%; padding: 0.45rem 0.55rem;
+      background: var(--cd-glass); border: 1px solid var(--cd-glass-border);
+      border-radius: 10px;
+      font-family: inherit; color: var(--cd-text); text-align: left;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.18s cubic-bezier(0.16,1,0.3,1);
+    }
+    button.cd-cred-row { appearance: none; }
+    .cd-cred-row:hover { background: var(--cd-glass-hover); border-color: rgba(56,189,248,0.28); transform: translateY(-1px); }
+    .cd-cred-row:focus-visible { outline: 2px solid var(--cd-accent); outline-offset: 2px; }
+    .cd-cred-row[hidden] { display: none; }
+
+    .cd-cred-icon {
+      flex-shrink: 0;
+      width: 1.625rem; height: 1.625rem;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 7px;
+      background: var(--cd-accent-glow); color: var(--cd-accent);
+      font-size: 0.75rem;
+    }
+
+    .cd-cred-display, .cd-cred-editor {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column; gap: 0;
+      background: transparent; border: 0; padding: 0;
+      text-align: left; cursor: pointer; color: inherit; font-family: inherit;
+    }
+    .cd-cred-editor { gap: 0.0625rem; }
+    .cd-cred-label {
+      font-size: 0.5625rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--cd-text-dim);
+      line-height: 1.25;
+    }
+    /* Tiny parenthetical after a credential label — e.g. "CALL SIGN (LSPD)"
+       or "CALL SIGN (Profile)" — to disclose the source/scope without
+       competing with the uppercase tracked label itself. */
+    .cd-cred-label-context {
+      font-size: 0.5625rem; font-weight: 500;
+      letter-spacing: 0.04em; text-transform: none;
+      color: var(--cd-text-muted);
+      margin-left: 0.2rem;
+      max-width: 7.5rem;
+      display: inline-block; vertical-align: bottom;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .cd-cred-label-context:empty { display: none; }
+    .cd-cred-value {
+      font-size: 0.8125rem; font-weight: 600; color: var(--cd-text);
+      line-height: 1.25;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .cd-cred-value.is-empty { font-style: italic; font-weight: 500; color: var(--cd-text-dim); }
+
+    .cd-cred-trail {
+      flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 1rem; height: 1rem;
+      color: var(--cd-text-dim); font-size: 0.6875rem;
+      transition: color 0.15s, transform 0.15s;
+    }
+    .cd-cred-row:hover .cd-cred-trail { color: var(--cd-accent); }
+    .cd-cred-row:hover .cd-cred-chevron { transform: translateX(2px); }
+
+    /* Call-sign editor swap (display → input → spinner) */
+    .cd-cred-callsign .cd-cred-editor { display: none; }
+    .cd-cred-callsign.is-editing .cd-cred-display { display: none; }
+    .cd-cred-callsign.is-editing .cd-cred-editor { display: flex; }
+    .cd-cred-callsign.is-editing { cursor: text; border-color: rgba(56,189,248,0.5); box-shadow: 0 0 0 3px var(--cd-accent-glow); transform: none; }
+    .cd-cred-callsign.is-editing:hover { transform: none; background: var(--cd-glass); }
+    .cd-cred-callsign.is-editing .cd-cred-pencil { display: none; }
+    .cd-cred-spinner { display: none; color: var(--cd-accent); }
+    .cd-cred-callsign.is-saving .cd-cred-pencil { display: none; }
+    .cd-cred-callsign.is-saving .cd-cred-spinner { display: inline-flex; }
+    .cd-cred-input {
+      width: 100%;
+      background: transparent; border: 0; outline: 0; padding: 0;
+      color: var(--cd-text);
+      font-family: inherit; font-size: 0.8125rem; font-weight: 600;
+      line-height: 1.25;
+    }
+    .cd-cred-input::placeholder { color: var(--cd-text-dim); font-weight: 500; font-style: italic; }
+    .cd-cred-callsign.is-saved {
+      background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.32);
+      transition: background 0.5s, border-color 0.5s;
+    }
+    .cd-cred-callsign.is-saved .cd-cred-icon { background: rgba(34,197,94,0.16); color: var(--cd-green); }
+    .cd-cred-callsign.is-saved .cd-cred-value { color: var(--cd-green); }
+
+    /* The shared rank-sidebar-badge partial stays in the DOM (so
+       rank-progress.js still populates #sidebar-rank-text) but is
+       visually replaced by .cd-cred-rank above. */
+    .cd-rank-mirror, .cd-rank-mirror #sidebar-rank-badge { display: none !important; }
 
     /* ---- Main area ---- */
     .cd-main { margin-left: var(--cd-sidebar-w); min-height: 100vh; position: relative; z-index: 1; }
@@ -584,16 +702,65 @@
     </div>
 
     <div class="cd-sidebar-footer">
-      <a href="/profile" style="text-decoration:none;">
-        <div class="cd-sidebar-user">
-          <div class="cd-user-avatar"><% if (user.user && user.user.profilePicture) { %><img src="<%= user.user.profilePicture %>" alt=""><% } else { %><%= userInitial %><% } %></div>
-          <div class="cd-user-info">
-            <div class="cd-user-name"><%= username %></div>
-            <div id="dd-user-role"><span class="cd-user-role-default">Department Member</span></div>
-            <% include partials/rank-sidebar-badge %>
-          </div>
+      <%
+        // Identity card. Per-element click targets so intent is unambiguous:
+        //   avatar / name  → /profile
+        //   .cd-cred-rank  → cdShowRankPanel() (rank modal)
+        //   .cd-cred-callsign → inline edit
+        // The rank-sidebar-badge partial is still rendered below so
+        // public/js/rank-progress.js can populate #sidebar-rank-text — we
+        // mirror that text into our own credential row in JS (see script
+        // block below). The partial itself is hidden via CSS.
+      %>
+      <div class="cd-id-card">
+
+        <!-- Identity head -->
+        <div class="cd-id-head">
+          <a href="/profile" class="cd-id-avatar" aria-label="Open profile">
+            <div class="cd-user-avatar"><% if (user.user && user.user.profilePicture) { %><img src="<%= user.user.profilePicture %>" alt=""><% } else { %><%= userInitial %><% } %></div>
+          </a>
+          <a href="/profile" class="cd-id-name-link" aria-label="Open profile">
+            <div class="cd-id-name"><%= username %></div>
+            <div class="cd-id-role" id="dd-user-role"><span class="cd-user-role-default">Department Member</span></div>
+          </a>
         </div>
-      </a>
+
+        <!-- Credentials -->
+        <div class="cd-id-creds">
+
+          <button type="button" class="cd-cred-row cd-cred-rank" id="cd-cred-rank" hidden title="View rank progress">
+            <span class="cd-cred-icon"><i class="fa fa-shield-halved"></i></span>
+            <span class="cd-cred-display">
+              <span class="cd-cred-label">Rank</span>
+              <span class="cd-cred-value" id="cd-rank-value">—</span>
+            </span>
+            <span class="cd-cred-trail"><i class="fa fa-chevron-right cd-cred-chevron"></i></span>
+          </button>
+
+          <div class="cd-cred-row cd-cred-callsign" id="cd-callsign-row" hidden>
+            <span class="cd-cred-icon"><i class="fa fa-hashtag"></i></span>
+            <button type="button" class="cd-cred-display" id="cd-callsign-pill" title="Edit call sign">
+              <span class="cd-cred-label">Call Sign<span class="cd-cred-label-context cd-callsign-context"></span></span>
+              <span class="cd-cred-value" id="cd-callsign-value">—</span>
+            </button>
+            <span class="cd-cred-editor" id="cd-callsign-edit">
+              <span class="cd-cred-label">Call Sign<span class="cd-cred-label-context cd-callsign-context"></span></span>
+              <input type="text" class="cd-cred-input" id="cd-callsign-input" maxlength="10" autocomplete="off" placeholder="Set call sign" />
+            </span>
+            <span class="cd-cred-trail">
+              <i class="fa fa-pencil cd-cred-pencil"></i>
+              <i class="fa fa-circle-notch fa-spin cd-cred-spinner" id="cd-callsign-spinner"></i>
+            </span>
+          </div>
+
+        </div>
+
+        <!-- Shared rank partial — hidden, kept in DOM so rank-progress.js
+             keeps populating #sidebar-rank-text. The script block below
+             mirrors that text into #cd-rank-value. -->
+        <div class="cd-rank-mirror" aria-hidden="true"><% include partials/rank-sidebar-badge %></div>
+
+      </div>
     </div>
   </aside>
 
@@ -744,6 +911,226 @@
       }
     };
     window.cdToast = window.ddToast;
+  </script>
+
+  <!-- ════════════════════════════════════════════════════════
+       Sidebar — Identity card wiring
+
+       Two credential rows share one shape language but live different
+       lives. Both stay hidden until their data is confirmed:
+
+       • Rank row     — populated by mirroring #sidebar-rank-text (filled
+                        by public/js/rank-progress.js) into #cd-rank-value.
+                        Click → window.cdShowRankPanel() (defined below).
+       • Call-sign row — fetched directly from
+                         /api/v1/community/{cid}/members/{uid}/department-callsigns.
+                         Click pill → inline edit (Enter saves, Esc/blur
+                         cancels). Hidden if no dept context.
+       ════════════════════════════════════════════════════════ -->
+  <script>
+  (function () {
+    'use strict';
+
+    // ── Rank credential — mirror partial text + bind modal ──
+    (function bindRank() {
+      var src = document.getElementById('sidebar-rank-text');
+      var dst = document.getElementById('cd-rank-value');
+      var row = document.getElementById('cd-cred-rank');
+      if (!src || !dst || !row) {
+        // Rank partial / row not in DOM yet — try again until it is.
+        if (bindRank._attempts === undefined) bindRank._attempts = 0;
+        if (++bindRank._attempts > 30) return;
+        setTimeout(bindRank, 500);
+        return;
+      }
+
+      function sync() {
+        var t = (src.textContent || '').trim();
+        if (t) {
+          dst.textContent = t;
+          row.hidden = false;
+        } else {
+          row.hidden = true;
+        }
+      }
+      sync();
+      // rank-progress.js writes to src after an async fetch — observe
+      // so we update the moment the data lands.
+      try {
+        new MutationObserver(sync).observe(src, { childList: true, characterData: true, subtree: true });
+      } catch (e) { /* MutationObserver unavailable — first sync is enough */ }
+
+      row.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (typeof window.cdShowRankPanel === 'function') {
+          window.cdShowRankPanel();
+        }
+      });
+    })();
+
+    // ── Call-sign credential — fetch + inline edit ──
+    var cfg = window.ddConfig || {};
+    var apiBase = cfg.API_URL || '';
+    var communityId = cfg.communityId || '';
+    var userId = cfg.userId || '';
+    var deptId = cfg.departmentId || '';
+    if (!apiBase || !communityId || !userId || !deptId) return;
+
+    var row = document.getElementById('cd-callsign-row');
+    var pill = document.getElementById('cd-callsign-pill');
+    var valueEl = document.getElementById('cd-callsign-value');
+    var input = document.getElementById('cd-callsign-input');
+    var contextEls = document.querySelectorAll('.cd-callsign-context');
+    if (!row || !pill || !valueEl || !input) return;
+
+    // Server-rendered department name + the user's profile-level call
+    // sign. Used as a fallback display when no department-specific call
+    // sign is set, and to disclose which scope the visible value comes
+    // from in the credential's label parenthetical.
+    var deptName = <%- JSON.stringify(typeof departmentName !== 'undefined' && departmentName ? departmentName : '') %>;
+    var profileCallSign = (cfg.dbUser && cfg.dbUser.user && cfg.dbUser.user.callSign) ? String(cfg.dbUser.user.callSign) : '';
+
+    var current = '';        // value currently displayed
+    var currentSource = '';  // 'dept' | 'profile' | 'empty'
+    var saving = false;
+    var endpoint = apiBase + '/api/v1/community/' + encodeURIComponent(communityId) +
+                   '/members/' + encodeURIComponent(userId) + '/department-callsigns';
+
+    function setContext(source) {
+      var label = '';
+      if (source === 'dept') label = deptName ? '(' + deptName + ')' : '';
+      else if (source === 'profile') label = '(Profile)';
+      for (var i = 0; i < contextEls.length; i++) contextEls[i].textContent = label;
+    }
+
+    /* Decide what to show in the row given the latest dept-callsign
+       fetch result:
+         • dept value present  → show it, label "(DeptName)"
+         • dept value empty,
+           profile value present → show profile, label "(Profile)"
+         • neither → "Set call sign" placeholder, no label suffix
+       Returns the displayed string so callers can sync globals. */
+    function paintFromMap(deptValue) {
+      if (deptValue) {
+        current = deptValue;
+        currentSource = 'dept';
+        valueEl.textContent = deptValue;
+        valueEl.classList.remove('is-empty');
+      } else if (profileCallSign) {
+        current = profileCallSign;
+        currentSource = 'profile';
+        valueEl.textContent = profileCallSign;
+        valueEl.classList.remove('is-empty');
+      } else {
+        current = '';
+        currentSource = 'empty';
+        valueEl.textContent = 'Set call sign';
+        valueEl.classList.add('is-empty');
+      }
+      setContext(currentSource);
+      return current;
+    }
+
+    function openEdit() {
+      if (saving) return;
+      // Pre-fill with the dept-level value only — never seed with the
+      // profile fallback, otherwise users would unintentionally save it
+      // as a department override on Enter.
+      input.value = currentSource === 'dept' ? current : '';
+      row.classList.add('is-editing');
+      // Defer focus so the row's :focus-visible doesn't fight with the
+      // input's outline before the layout settles.
+      requestAnimationFrame(function () { input.focus(); input.select(); });
+    }
+
+    function closeEdit() {
+      row.classList.remove('is-editing');
+    }
+
+    function flashSaved() {
+      row.classList.add('is-saved');
+      setTimeout(function () { row.classList.remove('is-saved'); }, 800);
+    }
+
+    function save() {
+      var next = (input.value || '').trim();
+      // No-op when the user typed back the dept value they already had.
+      // Don't short-circuit when the visible source is 'profile', since
+      // saving the same string then deliberately creates a dept override.
+      if (next === current && currentSource === 'dept') { closeEdit(); return; }
+      saving = true;
+      row.classList.add('is-saving');
+      fetch(endpoint, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ departmentId: deptId, callSign: next })
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json().catch(function () { return {}; });
+        })
+        .then(function () {
+          // Repaint with the new dept value — falls back to profile call
+          // sign automatically when `next` is an empty string.
+          var shown = paintFromMap(next);
+          // Shared modules (cd-alerts.js panic / signal100) want the
+          // resolved value regardless of source.
+          window._resolvedDeptCallSign = shown || null;
+          closeEdit();
+          flashSaved();
+        })
+        .catch(function (err) {
+          console.error('[cd-callsign] save failed:', err);
+          if (window.ddToast) window.ddToast('Failed to update call sign', 'error');
+        })
+        .then(function () {
+          saving = false;
+          row.classList.remove('is-saving');
+        });
+    }
+
+    // Initial fetch — gates row visibility. If the user has no membership
+    // the API 404s and the row stays hidden (same as classic dashboards).
+    fetch(endpoint)
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        var map = data.departmentCallSigns || {};
+        var shown = paintFromMap(map[deptId] || '');
+        window._resolvedDeptCallSign = shown || null;
+        row.hidden = false;
+      })
+      .catch(function () { /* silent — keep row hidden */ });
+
+    pill.addEventListener('click', openEdit);
+    // Make the icon-square clickable too — feels natural since the whole
+    // row reads as a single unit. The pencil sits inside the trail and
+    // already cascades because the row delegates to openEdit when a
+    // non-input target is clicked while not editing.
+    row.addEventListener('click', function (e) {
+      if (row.classList.contains('is-editing')) return;
+      // The pill button already handles its own clicks — bail to avoid
+      // openEdit firing twice.
+      if (e.target.closest('#cd-callsign-pill')) return;
+      // Don't intercept clicks on the input or its container.
+      if (e.target.closest('.cd-cred-input')) return;
+      openEdit();
+    });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); save(); }
+      else if (e.key === 'Escape') { e.preventDefault(); closeEdit(); }
+    });
+    input.addEventListener('blur', function () {
+      // Slight delay so an Enter that triggered save doesn't race with
+      // blur firing closeEdit before the saving state kicks in.
+      setTimeout(function () {
+        if (!row.classList.contains('is-editing')) return;
+        if (saving) return;
+        // Blur without Enter cancels — Enter is the explicit commit.
+        closeEdit();
+      }, 120);
+    });
+  })();
   </script>
 
   <!-- Shared component implementations (warrants, notepad, 10-codes, penal codes, court cases) -->
@@ -1184,6 +1571,12 @@
           $(this).addClass('active');
           $('.cd-mdt-search-pane').removeClass('active');
           $('.cd-mdt-search-pane[data-pane="' + tab + '"]').addClass('active');
+          try {
+            var params = new URLSearchParams(window.location.search);
+            params.set('search', tab);
+            var qs = params.toString();
+            window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+          } catch (e) { /* no-op */ }
         });
       }
     }
@@ -1218,11 +1611,17 @@
       var anySearch = enabledComponents['personSearch'] || enabledComponents['vehicleSearch'] || enabledComponents['firearmSearch'];
       $('#cd-mdt-col-search').toggle(!!anySearch);
 
-      // Auto-select first visible search tab
+      // Auto-select search tab — prefer ?search= query param when its component is enabled.
       if (anySearch) {
         var $visibleTabs = $('.cd-mdt-search-tab:visible');
-        if ($visibleTabs.length && !$visibleTabs.filter('.active').length) {
-          $visibleTabs.first().trigger('click');
+        if ($visibleTabs.length) {
+          var requestedSearch = (new URLSearchParams(window.location.search)).get('search');
+          var $requested = requestedSearch ? $visibleTabs.filter('[data-search="' + requestedSearch + '"]') : $();
+          if ($requested.length) {
+            $requested.trigger('click');
+          } else if (!$visibleTabs.filter('.active').length) {
+            $visibleTabs.first().trigger('click');
+          }
         }
       }
 

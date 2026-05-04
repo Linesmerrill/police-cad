@@ -61,11 +61,19 @@
     tab: 'department', // 'mine' | 'department' | 'all'
     loading: false,
     expanded: {},      // call id -> boolean
-    search: ''         // client-side filter on the current page
+    search: '',        // client-side filter on the current page
+    // Calls newly assigned to the current user that surface in the "N new"
+    // panel-header chip until the user acknowledges (clicks chip / switches tab).
+    newAssignmentIds: {},
+    // One-shot subset: IDs whose pulse animation should play on the next
+    // render. Cleared shortly after so re-renders (search, expand) don't
+    // replay it. Independent of the chip count above.
+    pulseOnceIds: {}
   };
 
   var refreshTimer = null;
   var userNameCache = {}; // userId -> display name
+  var socketBindRetry = 0;
 
   /* ───────────────────────────────────────────
      Inline Styles (<style> injected once)
@@ -194,6 +202,27 @@
       '.cd-call-action-red:hover{background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.4);}' +
       '.cd-call-action-muted{background:var(--cd-glass);border-color:var(--cd-glass-border);color:var(--cd-text-muted);}' +
       '.cd-call-action-muted:hover{background:var(--cd-glass-hover);color:var(--cd-text);}' +
+
+      /* ── Just-assigned pulse (cyan ring + slide-in) ──
+         Played on rows the dispatcher just routed to the current user, so
+         the new card announces itself instead of silently appearing. */
+      '@keyframes cd-call-just-assigned-ring{' +
+        '0%{box-shadow:0 0 0 0 rgba(56,189,248,0.45);transform:translateY(-6px);}' +
+        '20%{transform:translateY(0);}' +
+        '100%{box-shadow:0 0 0 12px rgba(56,189,248,0);transform:translateY(0);}' +
+      '}' +
+      '.cd-call-just-assigned{animation:cd-call-just-assigned-ring 900ms cubic-bezier(0.16,1,0.3,1);border-color:rgba(56,189,248,0.35)!important;background:rgba(56,189,248,0.06)!important;}' +
+      '@media (prefers-reduced-motion: reduce){' +
+        '.cd-call-just-assigned{animation:none;}' +
+      '}' +
+
+      /* ── "N new" panel-header chip ──
+         Sits next to the green count badge while there are unacknowledged
+         new assignments. Clears on tab switch / panel click / scroll-to-top. */
+      '.cd-call-new-chip{display:none;align-items:center;gap:0.3rem;padding:0.25rem 0.55rem;border-radius:999px;background:var(--cd-accent-glow);color:var(--cd-accent);border:1px solid rgba(56,189,248,0.32);font-size:0.6875rem;font-weight:700;letter-spacing:0.02em;cursor:pointer;margin-left:0.4rem;animation:cd-call-new-chip-in 220ms cubic-bezier(0.16,1,0.3,1);}' +
+      '.cd-call-new-chip.is-visible{display:inline-flex;}' +
+      '.cd-call-new-chip i{font-size:0.625rem;}' +
+      '@keyframes cd-call-new-chip-in{from{opacity:0;transform:translateY(-2px) scale(0.9);}to{opacity:1;transform:none;}}' +
 
       /* ── Responsive ── */
       '@media(max-width:600px){' +
@@ -420,8 +449,10 @@
 
     var isClosed = c.status === false;
 
+    var isJustAssigned = !!state.pulseOnceIds[id];
+
     var html = '' +
-      '<div class="cd-call-item' + (is911 ? ' cd-call-911' : '') + (isExpanded ? ' cd-call-expanded' : '') + (isClosed ? ' cd-call-closed' : '') + '" data-call-id="' + esc(id) + '">' +
+      '<div class="cd-call-item' + (is911 ? ' cd-call-911' : '') + (isExpanded ? ' cd-call-expanded' : '') + (isClosed ? ' cd-call-closed' : '') + (isJustAssigned ? ' cd-call-just-assigned' : '') + '" data-call-id="' + esc(id) + '">' +
 
         /* Clickable header */
         '<div class="cd-call-item-header" data-toggle-call="' + esc(id) + '" style="padding:12px 16px!important;min-height:48px!important;">' +
@@ -712,6 +743,114 @@
     if ($badge.length) {
       $badge.text(state.tab === 'mine' ? state.calls.length : state.totalCount);
     }
+    renderNewChip();
+  }
+
+  /* Snapshot the set of calls currently assigned to the user — used to diff
+     after a socket-driven reload so we only pulse cards that just appeared. */
+  function snapshotAssignedToMe() {
+    var me = cfg().userId;
+    var seen = {};
+    if (!me || !Array.isArray(state.calls)) return seen;
+    for (var i = 0; i < state.calls.length; i++) {
+      var item = state.calls[i];
+      var call = item.call || item;
+      var id = item._id || (call && call._id);
+      if (!id) continue;
+      var assigned = call.assignedTo || [];
+      if (assigned.indexOf(me) !== -1) seen[id] = true;
+    }
+    return seen;
+  }
+
+  /* After a reload, mark any newly-assigned-to-me calls so they pulse on
+     the next render, and accumulate them in the "N new" header chip. */
+  function markNewlyAssigned(beforeSnapshot) {
+    if (!beforeSnapshot) return;
+    var after = snapshotAssignedToMe();
+    var added = 0;
+    for (var id in after) {
+      if (!Object.prototype.hasOwnProperty.call(after, id)) continue;
+      if (beforeSnapshot[id]) continue;
+      state.newAssignmentIds[id] = true;
+      state.pulseOnceIds[id] = true;
+      added++;
+    }
+    if (added > 0) {
+      renderNewChip();
+      // Clear pulse flags after the animation finishes so subsequent
+      // re-renders (search filter, expand toggle) don't replay the ring.
+      // The chip itself sticks around until the user acknowledges.
+      setTimeout(function () { state.pulseOnceIds = {}; }, 1100);
+    }
+  }
+
+  function renderNewChip() {
+    var $chip = $('#cd-call-new-chip');
+    if (!$chip.length) return;
+    var ids = Object.keys(state.newAssignmentIds || {});
+    var count = ids.length;
+    if (count > 0 && state.tab !== 'mine') {
+      $('#cd-call-new-chip-count').text(count);
+      $chip.addClass('is-visible');
+    } else {
+      $chip.removeClass('is-visible');
+    }
+  }
+
+  /* User has acknowledged the new assignments — clear the chip and stop
+     pulsing. Called on tab switch, chip click, or panel scroll-to-top. */
+  function clearNewAssignments() {
+    if (!Object.keys(state.newAssignmentIds).length && !Object.keys(state.pulseOnceIds).length) return;
+    state.newAssignmentIds = {};
+    state.pulseOnceIds = {};
+    $('.cd-call-just-assigned').removeClass('cd-call-just-assigned');
+    renderNewChip();
+  }
+
+  /* ───────────────────────────────────────────
+     Realtime — auto-update on dispatcher writes
+     ─────────────────────────────────────────── */
+
+  /* Listens to the shared community socket from cd-alerts.js and reacts to
+     call lifecycle events the same way the dispatcher's bridge does — but
+     scoped to "did this affect the calls list I'm viewing right now?". A
+     newly-assigned call to the current user pulses + bumps the "N new"
+     chip; other relevant changes silently reload the list. */
+  function attachCallsSocket() {
+    var s = window._cdSharedSocket;
+    if (!s) {
+      if (socketBindRetry++ > 20) return; // alerts module not present — give up
+      setTimeout(attachCallsSocket, 500);
+      return;
+    }
+    if (s.__cdCallsBound) return;
+    s.__cdCallsBound = true;
+
+    function communityMatches(data) {
+      var inner = data && (data.call || data);
+      if (!inner) return false;
+      var cid = inner.communityID;
+      return !cid || cid === cfg().communityId;
+    }
+
+    function handleCallEvent(data) {
+      if (!communityMatches(data)) return;
+      // Only refresh while the calls panel is actually mounted; otherwise
+      // the next mount will pick up fresh data from cdCallsInit's loadCalls.
+      if (!document.getElementById('cd-call-list')) return;
+      var before = snapshotAssignedToMe();
+      loadCalls(function () { markNewlyAssigned(before); }, true);
+    }
+
+    s.on('created_call', handleCallEvent);
+    s.on('updated_call', handleCallEvent);
+    s.on('cleared_call', function (data) {
+      // cleared_call is a flat payload (no call doc), so just silent-reload
+      // if the panel is mounted — diff is meaningless without an assignedTo.
+      if (!document.getElementById('cd-call-list')) return;
+      loadCalls(null, true);
+    });
   }
 
   /* ───────────────────────────────────────────
@@ -753,7 +892,12 @@
               '<span>Dispatch &amp; assignments</span>' +
             '</div>' +
           '</div>' +
-          '<span class="cd-call-count-badge" id="cd-call-count">0</span>' +
+          '<div style="display:inline-flex;align-items:center;">' +
+            '<span class="cd-call-count-badge" id="cd-call-count">0</span>' +
+            '<span class="cd-call-new-chip" id="cd-call-new-chip" title="New calls assigned to you">' +
+              '<i class="fas fa-bolt"></i><span id="cd-call-new-chip-count">0</span> new' +
+            '</span>' +
+          '</div>' +
         '</div>' +
 
         /* Search — client-side filter against the currently-loaded page.
@@ -816,10 +960,23 @@
   function cdCallsInit() {
     /* Dispatch defaults to the community-wide "All Open" tab; everyone
        else starts on "Department" (the classic behaviour). */
-    state.tab = isDispatch() ? 'all' : 'department';
+    var defaultTab = isDispatch() ? 'all' : 'department';
+    var allowed = isDispatch()
+      ? ['all', 'department', 'completed']
+      : ['mine', 'department', 'all', 'completed'];
+    var requested = (new URLSearchParams(window.location.search)).get('calls');
+    state.tab = allowed.indexOf(requested) !== -1 ? requested : defaultTab;
     state.page = 1;
     state.expanded = {};
+    state.newAssignmentIds = {};
+    state.pulseOnceIds = {};
+    $('.cd-call-tab').removeClass('cd-call-tab-active');
+    $('.cd-call-tab[data-tab="' + state.tab + '"]').addClass('cd-call-tab-active');
     loadCalls();
+
+    // Bind once to the shared community socket — picks up dispatcher
+    // assignments (and any other call writes) without requiring a refresh.
+    attachCallsSocket();
 
     /* Tab switching */
     $(document).off('click.cdCallTab').on('click.cdCallTab', '.cd-call-tab', function () {
@@ -831,10 +988,28 @@
       state.page = 1;
       state.expanded = {};
       state.search = '';
+      // Switching tabs implicitly acknowledges any pending new assignments —
+      // either they're now visible on "Mine", or the user is moving on.
+      clearNewAssignments();
       $('#cd-call-search-input').val('');
       $('.cd-call-tab').removeClass('cd-call-tab-active');
       $btn.addClass('cd-call-tab-active');
+      try {
+        var params = new URLSearchParams(window.location.search);
+        params.set('calls', tab);
+        var qs = params.toString();
+        window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+      } catch (e) { /* no-op */ }
       loadCalls();
+    });
+
+    /* New-assignment chip — clicking jumps to "My Calls" so the user
+       sees the calls that just landed. */
+    $(document).off('click.cdCallNewChip').on('click.cdCallNewChip', '#cd-call-new-chip', function () {
+      var $mine = $('.cd-call-tab[data-tab="mine"]');
+      if ($mine.length) { $mine.trigger('click'); return; }
+      // Dispatcher: no Mine tab — just clear the chip.
+      clearNewAssignments();
     });
 
     /* Client-side search — filters the currently loaded page */

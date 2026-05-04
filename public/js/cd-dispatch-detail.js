@@ -276,14 +276,16 @@
     var all = (typeof window.cdDispatchGetCommunityDepts === 'function') ? window.cdDispatchGetCommunityDepts() : [];
     var byId = {};
     all.forEach(function (d) { byId[d._id] = d; });
+    var cacheReady = all.length > 0;
     var pillsHtml = ids.map(function (did) {
       var d = byId[did];
       var tpl = d && d.template && d.template.name ? String(d.template.name).toLowerCase() : '';
       var dv = (typeof window.cdDispatchDeptVisual === 'function') ? window.cdDispatchDeptVisual(tpl) : { icon: 'fa-building', color: 'var(--cd-accent)' };
-      var label = d ? (d.name || '—') : '…';
+      var label = d ? (d.name || '—') : (cacheReady ? 'Unknown department' : '…');
+      var missing = !d && cacheReady;
       return (
-        '<span class="cd-assigned-pill cd-detail-dept-pill" style="--cd-dept-color:' + esc(dv.color) + ';" title="' + esc(label) + '">' +
-          '<i class="fa ' + esc(dv.icon) + '" aria-hidden="true"></i>' +
+        '<span class="cd-assigned-pill cd-detail-dept-pill' + (missing ? ' is-missing' : '') + '" style="--cd-dept-color:' + esc(dv.color) + ';" title="' + esc(label) + '">' +
+          '<i class="fa ' + esc(missing ? 'fa-triangle-exclamation' : dv.icon) + '" aria-hidden="true"></i>' +
           '<span class="cd-assigned-pill-label">' + esc(label) + '</span>' +
         '</span>'
       );
@@ -334,6 +336,11 @@
       .on('cdDispatch:communityDeptsLoaded.cdDispatchDetail', function () {
         // Re-render so dept pills pick up their labels now that the cache
         // is populated. No-op when the drawer is closed.
+        if (state.callId) render();
+      })
+      .on('cdDispatch:rosterLoaded.cdDispatchDetail', function () {
+        // Same idea for assigned-unit pills — resolve "Unknown unit" placeholders
+        // once the roster is hydrated.
         if (state.callId) render();
       })
       .on('click.cdDispatchDetail', '#cd-detail-close', function () {

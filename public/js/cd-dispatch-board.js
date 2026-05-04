@@ -391,9 +391,15 @@
 
   function assignedPillHtml(unit, fallbackId) {
     if (!unit) {
-      return '<span class="cd-assigned-pill" data-uid="' + esc(fallbackId) + '" data-dept="other">' +
-        '<i class="fa fa-user" aria-hidden="true"></i>' +
-        '<span class="cd-assigned-pill-label">…</span>' +
+      // Cache not yet hydrated → "…" (still loading). Hydrated but the uid
+      // isn't there → that user has left the community/roster.
+      var rosterReady = typeof window.cdDispatchRosterIsReady === 'function' && window.cdDispatchRosterIsReady();
+      var label = rosterReady ? 'Unknown unit' : '…';
+      var icon = rosterReady ? 'fa-triangle-exclamation' : 'fa-user';
+      var cls = rosterReady ? 'cd-assigned-pill is-missing' : 'cd-assigned-pill';
+      return '<span class="' + cls + '" data-uid="' + esc(fallbackId) + '" data-dept="other" title="' + esc(label) + '">' +
+        '<i class="fa ' + icon + '" aria-hidden="true"></i>' +
+        '<span class="cd-assigned-pill-label">' + esc(label) + '</span>' +
       '</span>';
     }
     var dv = (typeof window.cdDispatchDeptVisual === 'function') ? window.cdDispatchDeptVisual(unit.deptTemplate) : null;
@@ -488,6 +494,12 @@
         if (state.search) {
           state.laneCollapsed = { p1: false, p2: false, p3: false, other: false };
         }
+        renderLanes();
+      })
+      // The roster hydrates asynchronously; if a card rendered before the
+      // lookup was available, its assigned pill stayed stuck on the "…"
+      // placeholder. Re-render lanes on roster load so those pills resolve.
+      .on('cdDispatch:rosterLoaded.cdDispatchBoard', function () {
         renderLanes();
       });
 
@@ -609,9 +621,11 @@
       '.cd-call-notes-count i{font-size:0.6875rem;}',
       '.cd-call-card-menu{width:22px;height:22px;border-radius:5px;border:1px solid transparent;background:transparent;color:var(--cd-text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}',
       '.cd-call-card-menu:hover,.cd-call-card-menu:focus-visible{border-color:var(--cd-glass-border);background:rgba(255,255,255,0.04);color:var(--cd-text);outline:none;}',
-      '.cd-assigned-pill{display:inline-flex;align-items:center;gap:0.3125rem;padding:0.125rem 0.4375rem;border-radius:999px;background:color-mix(in srgb,var(--cd-dept-color,var(--cd-accent)) 10%,transparent);border:1px solid color-mix(in srgb,var(--cd-dept-color,var(--cd-accent)) 30%,transparent);color:var(--cd-dept-color,var(--cd-accent));font:600 0.6875rem/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:0.04em;}',
-      '.cd-assigned-pill i{font-size:0.625rem;}',
-      '.cd-assigned-pill-label{color:var(--cd-text);font-family:inherit;font-weight:600;letter-spacing:0;}',
+      '.cd-assigned-pill{display:inline-flex;align-items:center;gap:0.3125rem;height:20px;padding:0 0.4375rem;border-radius:999px;background:color-mix(in srgb,var(--cd-dept-color,var(--cd-accent)) 10%,transparent);border:1px solid color-mix(in srgb,var(--cd-dept-color,var(--cd-accent)) 30%,transparent);color:var(--cd-dept-color,var(--cd-accent));font:600 0.6875rem/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:0.04em;max-width:140px;}',
+      '.cd-assigned-pill i{font-size:0.625rem;line-height:1;width:0.75rem;text-align:center;flex-shrink:0;}',
+      '.cd-assigned-pill-label{color:var(--cd-text);font-family:inherit;font-weight:600;letter-spacing:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}',
+      '.cd-assigned-pill.is-missing{--cd-dept-color:var(--cd-amber);color:var(--cd-amber);border-style:dashed;}',
+      '.cd-assigned-pill.is-missing .cd-assigned-pill-label{color:var(--cd-amber);font-style:italic;}',
       '.cd-assigned-more{display:inline-flex;align-items:center;padding:0.125rem 0.4375rem;border-radius:999px;background:rgba(255,255,255,0.04);border:1px solid var(--cd-glass-border);color:var(--cd-text-muted);font:600 0.6875rem/1 "JetBrains Mono",ui-monospace,monospace;}',
       '.cd-board-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1.5rem;text-align:center;color:var(--cd-text-muted);}',
       '.cd-board-empty-ring{width:64px;height:64px;border-radius:999px;display:flex;align-items:center;justify-content:center;margin-bottom:1rem;background:radial-gradient(circle,rgba(56,189,248,0.12) 0%,transparent 70%);border:1px solid rgba(56,189,248,0.2);color:var(--cd-accent);font-size:1.25rem;box-shadow:0 0 0 0 rgba(56,189,248,0.4);animation:cd-board-empty-pulse 3s ease-in-out infinite;}',
