@@ -476,6 +476,7 @@
       display: flex; flex-direction: column; justify-content: center; gap: 0.2rem;
       padding: 0.5rem 0.85rem 0.5rem 0;
       border-right: 1px solid var(--rp-glass-border);
+      position: relative;
     }
     .rp-rail-label-row {
       display: flex; align-items: center; gap: 0.45rem;
@@ -483,6 +484,32 @@
       font-size: 0.85rem; font-weight: 600;
       letter-spacing: -0.005em;
     }
+    /* Collapse toggle — chevron sits at the row's far right and rotates
+       180deg when the rail is collapsed. Hover/focus tints match the
+       existing rp-btn-outline tokens for consistency. */
+    .rp-rail-collapse {
+      margin-left: auto;
+      width: 22px; height: 22px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--rp-text-dim);
+      cursor: pointer;
+      font-size: 0.65rem;
+      transition: transform 180ms ease, color 180ms ease, background-color 180ms ease, border-color 180ms ease;
+    }
+    .rp-rail-collapse:hover,
+    .rp-rail-collapse:focus-visible {
+      color: var(--rp-text);
+      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--rp-glass-border);
+      outline: none;
+    }
+    .rp-rail.is-collapsed .rp-rail-collapse { transform: rotate(-90deg); }
+    .rp-rail.is-collapsed { align-items: center; }
+    .rp-rail.is-collapsed .rp-rail-label { padding: 0.25rem 0.85rem 0.25rem 0; }
+    .rp-rail.is-collapsed .rp-rail-track-wrap { display: none; }
     .rp-rail-label-icon {
       width: 22px; height: 22px;
       display: flex; align-items: center; justify-content: center;
@@ -639,6 +666,9 @@
           <div class="rp-rail-label-row">
             <span class="rp-rail-label-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
             Recent
+            <button type="button" class="rp-rail-collapse" data-rail="recent" aria-expanded="true" aria-controls="rp-rail-recent-wrap" aria-label="Toggle Recent" title="Collapse">
+              <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
           </div>
           <div class="rp-rail-sub">For you</div>
         </div>
@@ -651,6 +681,9 @@
           <div class="rp-rail-label-row">
             <span class="rp-rail-label-icon"><i class="fa-solid fa-fire"></i></span>
             Most used
+            <button type="button" class="rp-rail-collapse" data-rail="popular" aria-expanded="true" aria-controls="rp-rail-popular-wrap" aria-label="Toggle Most used" title="Collapse">
+              <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
           </div>
           <div class="rp-rail-sub">In community</div>
         </div>
@@ -1137,10 +1170,18 @@
           rails.classList.remove('has-content');
         }
 
-        // Toggle the right-edge fade hint based on overflow.
+        // Re-apply the user's persisted collapse state every render — render
+        // can run multiple times (initial load + refresh), and the rail
+        // visibility flip above doesn't preserve our is-collapsed class.
+        ['recent', 'popular'].forEach(function (key) { applyRailCollapsed(key); });
+
+        // Toggle the right-edge fade hint based on overflow. Skip when the
+        // rail is collapsed — the track has zero width then and would
+        // incorrectly read as non-overflowing.
         ['rp-rail-recent', 'rp-rail-popular'].forEach(function (id) {
           var rail = document.getElementById(id);
           if (rail.style.display === 'none') return;
+          if (rail.classList.contains('is-collapsed')) return;
           var wrap = rail.querySelector('.rp-rail-track-wrap');
           var track = rail.querySelector('.rp-rail-track');
           var overflow = track.scrollWidth > track.clientWidth + 4;
@@ -1152,6 +1193,49 @@
           });
         });
       }
+
+      // ── Rail collapse persistence ────────────────────
+      // Saved in localStorage so the preference survives reloads and is
+      // scoped per-browser (no URL pollution; no server round-trip). Keys
+      // are namespaced by communityId so different communities can have
+      // different collapsed defaults if the user's workflow varies.
+      function railStorageKey(key) {
+        return 'rp:rail:' + (communityId || 'global') + ':' + key + ':collapsed';
+      }
+      function isRailCollapsed(key) {
+        try { return localStorage.getItem(railStorageKey(key)) === '1'; }
+        catch (e) { return false; }
+      }
+      function setRailCollapsed(key, val) {
+        try {
+          if (val) localStorage.setItem(railStorageKey(key), '1');
+          else localStorage.removeItem(railStorageKey(key));
+        } catch (e) { /* private mode / quota — fall back to in-page only */ }
+      }
+      function applyRailCollapsed(key) {
+        var rail = document.getElementById('rp-rail-' + key);
+        if (!rail) return;
+        var collapsed = isRailCollapsed(key);
+        rail.classList.toggle('is-collapsed', collapsed);
+        var btn = rail.querySelector('.rp-rail-collapse');
+        if (btn) {
+          btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+          btn.setAttribute('title', collapsed ? 'Expand' : 'Collapse');
+        }
+      }
+      // Single delegated handler — survives renderRails() rewrites since the
+      // buttons are static markup, not regenerated.
+      document.addEventListener('click', function (e) {
+        var btn = e.target.closest && e.target.closest('.rp-rail-collapse');
+        if (!btn) return;
+        var key = btn.getAttribute('data-rail');
+        if (!key) return;
+        setRailCollapsed(key, !isRailCollapsed(key));
+        applyRailCollapsed(key);
+      });
+      // Apply the persisted state once on initial paint so collapsed rails
+      // never flash open before renderRails() runs.
+      ['recent', 'popular'].forEach(function (k) { applyRailCollapsed(k); });
 
       function loadList() {
         if (!communityId) return;
