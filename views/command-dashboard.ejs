@@ -166,18 +166,34 @@
 
     /* Sidebar footer */
     .cd-sidebar-footer { padding: 0.75rem 1rem; border-top: 1px solid var(--cd-glass-border); }
-    .cd-sidebar-user { display: flex; align-items: center; gap: 0.625rem; padding: 0.5rem; border-radius: var(--cd-radius-sm); transition: background 0.15s; }
-    .cd-sidebar-user:hover { background: var(--cd-glass-hover); }
+    /* Container is no longer a single link target — individual children
+       (.cd-user-avatar-link, .cd-user-name-link, the rank badge, the CS
+       pill) own their own click intent. Container hover removed so only
+       the part the user is pointing at lights up. */
+    .cd-sidebar-user { display: flex; align-items: center; gap: 0.625rem; padding: 0.5rem; border-radius: var(--cd-radius-sm); }
+    .cd-user-avatar-link, .cd-user-name-link { text-decoration: none; color: inherit; display: block; border-radius: var(--cd-radius-sm); }
+    .cd-user-avatar-link { flex-shrink: 0; transition: transform 0.15s; }
+    .cd-user-avatar-link:hover { transform: translateY(-1px); }
+    .cd-user-name-link { transition: color 0.15s; }
+    .cd-user-name-link:hover .cd-user-name { color: var(--cd-accent); }
     .cd-user-avatar { width: 2rem; height: 2rem; border-radius: 50%; background: var(--cd-accent-glow); color: var(--cd-accent); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.75rem; overflow: hidden; flex-shrink: 0; }
     .cd-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .cd-user-info { min-width: 0; }
-    .cd-user-name { font-size: 0.8125rem; font-weight: 500; color: var(--cd-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cd-user-info { min-width: 0; flex: 1; }
+    .cd-user-name { font-size: 0.8125rem; font-weight: 500; color: var(--cd-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.15s; }
     .cd-user-role, .cd-user-role-default { font-size: 0.6875rem; color: var(--cd-text-muted); }
 
-    /* Call-sign pill — inline editable, lives below the user card. The
-       pill reads as a credential (separate from the username) and morphs
-       in place into a focused input on click. */
-    .cd-callsign-row { display: none; padding: 0.5rem 0.5rem 0; }
+    /* Rank badge — defined in views/partials/rank-sidebar-badge.ejs with
+       inline styles. We layer interactive affordances on top: cursor,
+       hover lift, and a focus ring so it reads as a button. The click
+       handler is attached in JS once cdShowRankPanel is available. */
+    #sidebar-rank-badge { cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.15s; }
+    #sidebar-rank-badge:hover { background: rgba(124,58,237,0.35) !important; border-color: rgba(167,139,250,0.6) !important; transform: translateY(-1px); }
+    #sidebar-rank-badge:focus-visible { outline: 2px solid var(--cd-accent); outline-offset: 2px; }
+
+    /* Call-sign pill — sits inside cd-user-info, below the rank badge,
+       centered on the same horizontal axis so the user-info column reads
+       as a tidy stack: name → role → rank → call sign. */
+    .cd-callsign-row { display: none; margin: 0.4rem auto 0; max-width: fit-content; }
     .cd-callsign-row.is-visible { display: block; }
     .cd-callsign-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.22rem 0.6rem; border-radius: 999px; background: var(--cd-glass); border: 1px solid var(--cd-glass-border); color: var(--cd-text); font-family: inherit; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; }
     .cd-callsign-pill:hover { background: var(--cd-glass-hover); border-color: rgba(56,189,248,0.25); color: var(--cd-accent); }
@@ -604,31 +620,37 @@
     </div>
 
     <div class="cd-sidebar-footer">
-      <a href="/profile" style="text-decoration:none;">
-        <div class="cd-sidebar-user">
+      <%
+        // Each interactive element in the user card has its own target so
+        // the click intent is clear:
+        //   avatar / username  → /profile (the user's profile page)
+        //   rank badge         → cdShowRankPanel() (rank info modal)
+        //   call-sign pill     → inline edit (handled below)
+        // The rank badge and CS pill MUST NOT be wrapped in the /profile
+        // anchor — otherwise their clicks bubble up and navigate away.
+      %>
+      <div class="cd-sidebar-user">
+        <a href="/profile" class="cd-user-avatar-link" aria-label="Open profile">
           <div class="cd-user-avatar"><% if (user.user && user.user.profilePicture) { %><img src="<%= user.user.profilePicture %>" alt=""><% } else { %><%= userInitial %><% } %></div>
-          <div class="cd-user-info">
+        </a>
+        <div class="cd-user-info">
+          <a href="/profile" class="cd-user-name-link" aria-label="Open profile">
             <div class="cd-user-name"><%= username %></div>
-            <div id="dd-user-role"><span class="cd-user-role-default">Department Member</span></div>
-            <% include partials/rank-sidebar-badge %>
+          </a>
+          <div id="dd-user-role"><span class="cd-user-role-default">Department Member</span></div>
+          <% include partials/rank-sidebar-badge %>
+          <div class="cd-callsign-row" id="cd-callsign-row" aria-label="Department call sign">
+            <button type="button" class="cd-callsign-pill" id="cd-callsign-pill" title="Edit department call sign">
+              <span class="cd-callsign-label">CS</span>
+              <span class="cd-callsign-value" id="cd-callsign-value"></span>
+              <i class="fa fa-pencil cd-callsign-pencil"></i>
+            </button>
+            <span class="cd-callsign-edit" id="cd-callsign-edit">
+              <input type="text" class="cd-callsign-input" id="cd-callsign-input" maxlength="10" autocomplete="off" placeholder="Set call sign" />
+              <span class="cd-callsign-spinner" id="cd-callsign-spinner"><i class="fa fa-circle-notch fa-spin"></i></span>
+            </span>
           </div>
         </div>
-      </a>
-      <%
-        // Call-sign pill: only meaningful when there's a department context.
-        // We render the row but keep it hidden until the JS confirms a
-        // department-callsign is loadable (department membership exists).
-      %>
-      <div class="cd-callsign-row" id="cd-callsign-row" aria-label="Department call sign">
-        <button type="button" class="cd-callsign-pill" id="cd-callsign-pill" title="Edit department call sign">
-          <span class="cd-callsign-label">CS</span>
-          <span class="cd-callsign-value" id="cd-callsign-value"></span>
-          <i class="fa fa-pencil cd-callsign-pencil"></i>
-        </button>
-        <span class="cd-callsign-edit" id="cd-callsign-edit">
-          <input type="text" class="cd-callsign-input" id="cd-callsign-input" maxlength="10" autocomplete="off" placeholder="Set call sign" />
-          <span class="cd-callsign-spinner" id="cd-callsign-spinner"><i class="fa fa-circle-notch fa-spin"></i></span>
-        </span>
       </div>
     </div>
   </aside>
@@ -907,6 +929,52 @@
         closeEdit();
       }, 120);
     });
+  })();
+  </script>
+
+  <!-- ════════════════════════════════════════════════════════
+       Sidebar — Rank Badge → Rank Modal
+
+       The rank badge is rendered by views/partials/rank-sidebar-badge.ejs
+       and populated by public/js/rank-progress.js. It's a shared partial
+       so we don't modify it directly — instead we attach a click handler
+       to the existing #sidebar-rank-badge element. Clicking opens the
+       full rank panel via the already-defined cdShowRankPanel(), which
+       moves the rank-progress-card into a modal overlay.
+       ════════════════════════════════════════════════════════ -->
+  <script>
+  (function () {
+    'use strict';
+    var bound = false;
+    function bindRankBadge() {
+      var el = document.getElementById('sidebar-rank-badge');
+      if (!el || bound) return;
+      bound = true;
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('title', 'View rank progress');
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof window.cdShowRankPanel === 'function') {
+          window.cdShowRankPanel();
+        }
+      });
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          el.click();
+        }
+      });
+    }
+    // The badge is hidden until rank-progress.js fetches data and reveals
+    // it. Poll briefly so we bind whether or not the badge already exists.
+    bindRankBadge();
+    var attempts = 0;
+    var t = setInterval(function () {
+      bindRankBadge();
+      if (bound || ++attempts > 20) clearInterval(t);
+    }, 500);
   })();
   </script>
 
