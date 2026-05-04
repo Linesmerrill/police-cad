@@ -568,6 +568,28 @@
       border: 1px solid rgba(255,255,255,0.08);
     }
     .rp-conf-btn-ghost:hover { background: rgba(255,255,255,0.04); color: var(--rp-text); }
+    /* Submit anyway is a hard-disabled when a department is missing —
+       the API rejects dept-less reports outright, so giving the user
+       the escape hatch would just produce a 400. Visually demote the
+       button + add a tooltip explaining why. */
+    .rp-conf-btn[disabled],
+    .rp-conf-btn[disabled]:hover {
+      cursor: not-allowed; opacity: 0.45;
+      transform: none; box-shadow: none;
+      background: transparent; color: var(--rp-text-dim);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .rp-conf-backdrop.is-dept-missing .rp-conf-btn-ghost {
+      position: relative;
+    }
+    .rp-conf-backdrop.is-dept-missing .rp-conf-btn-ghost::after {
+      content: 'Department required';
+      position: absolute; left: 0; right: 0; top: 100%;
+      margin-top: 6px;
+      font-size: 0.7rem; font-weight: 500;
+      color: var(--rp-amber); text-align: center;
+      letter-spacing: 0.02em;
+    }
     @media (prefers-reduced-motion: reduce) {
       .rp-conf-backdrop, .rp-conf-panel, .rp-field.is-missing { animation: none; transition: none; }
     }
@@ -857,6 +879,19 @@
     .rp-dept-required.is-hidden { display: none; }
     .rp-dept-select { min-width: 220px; max-width: 320px; }
     .rp-dept-select.is-empty { border-color: rgba(245,158,11,0.4); }
+    /* Brief amber pulse when "Review and fix" jumps the user back to
+       the dept picker — draws the eye without being permanent. */
+    .rp-dept-row.is-flash {
+      animation: rp-dept-flash 1.2s ease-out;
+    }
+    @keyframes rp-dept-flash {
+      0% { box-shadow: 0 0 0 0 rgba(245,158,11,0); border-color: var(--rp-glass-border); }
+      30% { box-shadow: 0 0 0 4px rgba(245,158,11,0.25); border-color: rgba(245,158,11,0.55); }
+      100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); border-color: var(--rp-glass-border); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .rp-dept-row.is-flash { animation: none; border-color: rgba(245,158,11,0.55); }
+    }
     .rp-dept-static {
       font-size: 0.9rem; font-weight: 600; color: var(--rp-text);
       padding: 0.35rem 0.6rem; border-radius: var(--rp-radius-sm);
@@ -3106,9 +3141,13 @@
 
       function openValidationModal(missing) {
         var listEl = document.getElementById('rp-conf-list');
+        var deptMissing = false;
         listEl.innerHTML = missing.map(function (m, i) {
+          if (m.isDept) deptMissing = true;
           var sectionTitle = '';
-          if (state.template) {
+          if (m.isDept) {
+            sectionTitle = 'REPORT METADATA';
+          } else if (state.template) {
             var sec = (state.template.sections || []).filter(function (s) { return s.id === m.sectionId; })[0];
             sectionTitle = sec ? sec.title : m.sectionId;
           }
@@ -3118,7 +3157,13 @@
             '<span class="rp-conf-item-section">' + escapeHTML(sectionTitle) + '</span>' +
           '</li>';
         }).join('');
-        document.getElementById('rp-conf').classList.add('open');
+        // Department is API-required (saving without one yields a 400),
+        // so disable the "Submit anyway" escape hatch when it's missing.
+        var conf = document.getElementById('rp-conf');
+        var anyway = document.getElementById('rp-conf-anyway');
+        conf.classList.toggle('is-dept-missing', deptMissing);
+        if (anyway) anyway.disabled = deptMissing;
+        conf.classList.add('open');
       }
 
       function closeValidationModal() {
@@ -3132,6 +3177,21 @@
         state.missingFields = missing;
         closeValidationModal();
         applyMissingHighlights();
+        // If the department is missing, that's the highest-priority fix —
+        // scroll to the picker and focus it before the regular field walk.
+        if (!departmentId) {
+          var deptSel = document.getElementById('rp-dept-select');
+          var deptRow = document.getElementById('rp-dept-row');
+          if (deptRow) {
+            deptRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            deptRow.classList.add('is-flash');
+            setTimeout(function () { deptRow.classList.remove('is-flash'); }, 1200);
+          }
+          if (deptSel && typeof deptSel.focus === 'function') {
+            setTimeout(function () { try { deptSel.focus({ preventScroll: true }); } catch (e) {} }, 350);
+          }
+          return;
+        }
         var keys = Object.keys(missing);
         if (!keys.length) return;
         var first = missing[keys[0]];
@@ -3295,14 +3355,21 @@
       document.getElementById('rp-submit').addEventListener('click', function () {
         var missingMap = computeMissing();
         var keys = Object.keys(missingMap);
-        if (!keys.length) {
+        var deptMissing = !departmentId;
+        if (!keys.length && !deptMissing) {
           // All required fields filled — also clear any lingering highlights.
           state.missingFields = {};
           applyMissingHighlights();
           saveAs('submitted');
           return;
         }
-        var list = keys.map(function (k) { return { fieldId: k, sectionId: missingMap[k].sectionId, label: missingMap[k].label }; });
+        var list = [];
+        // Surface dept first since it's API-required and would block
+        // even a "Submit anyway" attempt.
+        if (deptMissing) list.push({ isDept: true, label: 'Department' });
+        keys.forEach(function (k) {
+          list.push({ fieldId: k, sectionId: missingMap[k].sectionId, label: missingMap[k].label });
+        });
         openValidationModal(list);
       });
 
