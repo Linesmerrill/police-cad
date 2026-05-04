@@ -3209,8 +3209,10 @@
         if (state.existing) {
           url = apiUrl + '/api/v1/form-submission/' + encodeURIComponent(state.existing._id);
           method = 'PUT';
-          var existingDept = (state.existing.formSubmission && state.existing.formSubmission.departmentId) || '';
-          var existingStatus = (state.existing.formSubmission && state.existing.formSubmission.status) || '';
+          var existingSub = state.existing.formSubmission || {};
+          var existingDept = existingSub.departmentId || '';
+          var existingStatus = existingSub.status || '';
+          var existingArchived = !!existingSub.archived;
           payload = {
             data: state.data,
             links: allLinks,
@@ -3220,10 +3222,12 @@
             // backend can authorize edits and stamp the history entry.
             actor: currentUser ? { userID: currentUser.id, username: currentUser.username } : undefined
           };
-          // Only send departmentId when it actually changed — and only
-          // while the report is editable as a draft. The API rejects the
-          // change otherwise; suppressing the field avoids a 400.
-          if (departmentId !== existingDept && existingStatus !== 'submitted') {
+          // Send departmentId when it actually changed AND the report is
+          // currently editable (draft + unarchived). A draft → submitted
+          // write with a new dept is fine — the API stamps the dept
+          // before sealing the audit trail. Locked reports drop the field.
+          var canRetarget = (existingStatus === 'draft' && !existingArchived);
+          if (departmentId !== existingDept && canRetarget) {
             payload.departmentId = departmentId;
           }
         } else {
