@@ -10244,29 +10244,34 @@ async function saveEditEvent() {
           var vioCount = violations.length;
           var countLabel = vioCount === 1 ? '1 violation' : vioCount + ' violations';
 
+          // When rendering filtered results, fall back to the original index recorded
+          // on each filtered item so edit/delete handlers mutate the correct slot in pcSettingsData.
+          var realCatIdx = (typeof cat.__origCatIdx === 'number') ? cat.__origCatIdx : catIdx;
+
           // Table body
           var tbody = '';
           if (violations.length === 0) {
             tbody = '<tr><td colspan="5" class="pcm-empty-cat">No violations — click "Add" to create one.</td></tr>';
           } else {
             violations.forEach(function(v, vIdx) {
+              var realVioIdx = (typeof v.__origVioIdx === 'number') ? v.__origVioIdx : vIdx;
               var fineDisplay = v.fine ? escHtml(sym) + Number(v.fine).toLocaleString() : '—';
               tbody +=
-                '<tr data-cat="' + catIdx + '" data-vio="' + vIdx + '">' +
+                '<tr data-cat="' + realCatIdx + '" data-vio="' + realVioIdx + '">' +
                   '<td class="pcm-v-name">' + escHtml(v.name) + '</td>' +
                   '<td class="pcm-v-jail">' + escHtml(v.jailTime || '—') + '</td>' +
                   '<td class="pcm-v-fine">' + fineDisplay + '</td>' +
                   '<td class="pcm-v-expl">' + escHtml(v.explanation || '') + '</td>' +
                   '<td class="pcm-v-actions">' +
-                    '<button class="pcm-icon-btn" onclick="editPcViolation(' + catIdx + ',' + vIdx + ')" title="Edit"><i class="fa fa-pen"></i></button>' +
-                    '<button class="pcm-icon-btn danger" onclick="removePcViolation(' + catIdx + ',' + vIdx + ')" title="Delete"><i class="fa fa-trash"></i></button>' +
+                    '<button class="pcm-icon-btn" onclick="editPcViolation(' + realCatIdx + ',' + realVioIdx + ')" title="Edit"><i class="fa fa-pen"></i></button>' +
+                    '<button class="pcm-icon-btn danger" onclick="removePcViolation(' + realCatIdx + ',' + realVioIdx + ')" title="Delete"><i class="fa fa-trash"></i></button>' +
                   '</td>' +
                 '</tr>';
             });
           }
 
           var catHtml =
-            '<div class="pcm-cat" data-cat-idx="' + catIdx + '" style="--pcm-accent:' + accent.accent + ';--pcm-icon-bg:' + accent.bg + ';">' +
+            '<div class="pcm-cat" data-cat-idx="' + realCatIdx + '" style="--pcm-accent:' + accent.accent + ';--pcm-icon-bg:' + accent.bg + ';">' +
               '<div class="pcm-cat-header" onclick="togglePcCategory(this)">' +
                 '<div class="pcm-cat-left">' +
                   '<i class="fa fa-chevron-down pcm-cat-chevron open"></i>' +
@@ -10275,8 +10280,8 @@ async function saveEditEvent() {
                   '<span class="pcm-cat-count">' + countLabel + '</span>' +
                 '</div>' +
                 '<div class="pcm-cat-actions" onclick="event.stopPropagation()">' +
-                  '<button class="pcm-add-vio" onclick="addPcViolation(' + catIdx + ')"><i class="fa fa-plus"></i> Add</button>' +
-                  '<button class="pcm-icon-btn danger" onclick="removePcCategory(' + catIdx + ')" title="Delete category"><i class="fa fa-trash"></i></button>' +
+                  '<button class="pcm-add-vio" onclick="addPcViolation(' + realCatIdx + ')"><i class="fa fa-plus"></i> Add</button>' +
+                  '<button class="pcm-icon-btn danger" onclick="removePcCategory(' + realCatIdx + ')" title="Delete category"><i class="fa fa-trash"></i></button>' +
                 '</div>' +
               '</div>' +
               '<div class="pcm-cat-body open">' +
@@ -10447,9 +10452,16 @@ async function saveEditEvent() {
           renderPcCategories(pcSettingsData);
           return;
         }
-        var filtered = pcSettingsData.map(function(cat) {
+        // Tag each surviving violation/category with its index in pcSettingsData so the
+        // renderer can emit the original positions to edit/delete handlers — otherwise
+        // filtered indices drift and the wrong rows get mutated.
+        var filtered = pcSettingsData.map(function(cat, origCatIdx) {
           var catMatch = (cat.name || '').toLowerCase().indexOf(q) !== -1;
-          var matchedViolations = (cat.violations || []).filter(function(v) {
+          var origViolations = cat.violations || [];
+          var taggedViolations = origViolations.map(function(v, origVioIdx) {
+            return Object.assign({}, v, { __origVioIdx: origVioIdx });
+          });
+          var matchedViolations = taggedViolations.filter(function(v) {
             return (v.name || '').toLowerCase().indexOf(q) !== -1 ||
                    (v.jailTime || '').toLowerCase().indexOf(q) !== -1 ||
                    (v.explanation || '').toLowerCase().indexOf(q) !== -1 ||
@@ -10459,7 +10471,8 @@ async function saveEditEvent() {
             return {
               name: cat.name, subtitle: cat.subtitle, icon: cat.icon,
               color: cat.color, columns: cat.columns,
-              violations: catMatch ? (cat.violations || []) : matchedViolations
+              __origCatIdx: origCatIdx,
+              violations: catMatch ? taggedViolations : matchedViolations
             };
           }
           return null;
