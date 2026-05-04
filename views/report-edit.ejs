@@ -582,13 +582,16 @@
     .rp-conf-backdrop.is-dept-missing .rp-conf-btn-ghost {
       position: relative;
     }
+    /* Render the hint ABOVE the button so it stays inside the modal
+       footer instead of being clipped by the panel's bottom edge. */
     .rp-conf-backdrop.is-dept-missing .rp-conf-btn-ghost::after {
       content: 'Department required';
-      position: absolute; left: 0; right: 0; top: 100%;
-      margin-top: 6px;
+      position: absolute; left: 0; right: 0; bottom: 100%;
+      margin-bottom: 6px;
       font-size: 0.7rem; font-weight: 500;
       color: var(--rp-amber); text-align: center;
       letter-spacing: 0.02em;
+      pointer-events: none;
     }
     @media (prefers-reduced-motion: reduce) {
       .rp-conf-backdrop, .rp-conf-panel, .rp-field.is-missing { animation: none; transition: none; }
