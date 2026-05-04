@@ -232,6 +232,19 @@
       color: var(--cd-text-dim);
       line-height: 1.25;
     }
+    /* Tiny parenthetical after a credential label — e.g. "CALL SIGN (LSPD)"
+       or "CALL SIGN (Profile)" — to disclose the source/scope without
+       competing with the uppercase tracked label itself. */
+    .cd-cred-label-context {
+      font-size: 0.5625rem; font-weight: 500;
+      letter-spacing: 0.04em; text-transform: none;
+      color: var(--cd-text-muted);
+      margin-left: 0.2rem;
+      max-width: 7.5rem;
+      display: inline-block; vertical-align: bottom;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .cd-cred-label-context:empty { display: none; }
     .cd-cred-value {
       font-size: 0.8125rem; font-weight: 600; color: var(--cd-text);
       line-height: 1.25;
@@ -727,11 +740,11 @@
           <div class="cd-cred-row cd-cred-callsign" id="cd-callsign-row" hidden>
             <span class="cd-cred-icon"><i class="fa fa-hashtag"></i></span>
             <button type="button" class="cd-cred-display" id="cd-callsign-pill" title="Edit call sign">
-              <span class="cd-cred-label">Call Sign</span>
+              <span class="cd-cred-label">Call Sign<span class="cd-cred-label-context cd-callsign-context"></span></span>
               <span class="cd-cred-value" id="cd-callsign-value">—</span>
             </button>
             <span class="cd-cred-editor" id="cd-callsign-edit">
-              <span class="cd-cred-label">Call Sign</span>
+              <span class="cd-cred-label">Call Sign<span class="cd-cred-label-context cd-callsign-context"></span></span>
               <input type="text" class="cd-cred-input" id="cd-callsign-input" maxlength="10" autocomplete="off" placeholder="Set call sign" />
             </span>
             <span class="cd-cred-trail">
@@ -967,27 +980,63 @@
     var pill = document.getElementById('cd-callsign-pill');
     var valueEl = document.getElementById('cd-callsign-value');
     var input = document.getElementById('cd-callsign-input');
+    var contextEls = document.querySelectorAll('.cd-callsign-context');
     if (!row || !pill || !valueEl || !input) return;
 
-    var current = '';
+    // Server-rendered department name + the user's profile-level call
+    // sign. Used as a fallback display when no department-specific call
+    // sign is set, and to disclose which scope the visible value comes
+    // from in the credential's label parenthetical.
+    var deptName = <%- JSON.stringify(typeof departmentName !== 'undefined' && departmentName ? departmentName : '') %>;
+    var profileCallSign = (cfg.dbUser && cfg.dbUser.user && cfg.dbUser.user.callSign) ? String(cfg.dbUser.user.callSign) : '';
+
+    var current = '';        // value currently displayed
+    var currentSource = '';  // 'dept' | 'profile' | 'empty'
     var saving = false;
     var endpoint = apiBase + '/api/v1/community/' + encodeURIComponent(communityId) +
                    '/members/' + encodeURIComponent(userId) + '/department-callsigns';
 
-    function paintValue(val) {
-      current = val || '';
-      if (current) {
-        valueEl.textContent = current;
+    function setContext(source) {
+      var label = '';
+      if (source === 'dept') label = deptName ? '(' + deptName + ')' : '';
+      else if (source === 'profile') label = '(Profile)';
+      for (var i = 0; i < contextEls.length; i++) contextEls[i].textContent = label;
+    }
+
+    /* Decide what to show in the row given the latest dept-callsign
+       fetch result:
+         • dept value present  → show it, label "(DeptName)"
+         • dept value empty,
+           profile value present → show profile, label "(Profile)"
+         • neither → "Set call sign" placeholder, no label suffix
+       Returns the displayed string so callers can sync globals. */
+    function paintFromMap(deptValue) {
+      if (deptValue) {
+        current = deptValue;
+        currentSource = 'dept';
+        valueEl.textContent = deptValue;
+        valueEl.classList.remove('is-empty');
+      } else if (profileCallSign) {
+        current = profileCallSign;
+        currentSource = 'profile';
+        valueEl.textContent = profileCallSign;
         valueEl.classList.remove('is-empty');
       } else {
+        current = '';
+        currentSource = 'empty';
         valueEl.textContent = 'Set call sign';
         valueEl.classList.add('is-empty');
       }
+      setContext(currentSource);
+      return current;
     }
 
     function openEdit() {
       if (saving) return;
-      input.value = current;
+      // Pre-fill with the dept-level value only — never seed with the
+      // profile fallback, otherwise users would unintentionally save it
+      // as a department override on Enter.
+      input.value = currentSource === 'dept' ? current : '';
       row.classList.add('is-editing');
       // Defer focus so the row's :focus-visible doesn't fight with the
       // input's outline before the layout settles.
@@ -1005,7 +1054,10 @@
 
     function save() {
       var next = (input.value || '').trim();
-      if (next === current) { closeEdit(); return; }
+      // No-op when the user typed back the dept value they already had.
+      // Don't short-circuit when the visible source is 'profile', since
+      // saving the same string then deliberately creates a dept override.
+      if (next === current && currentSource === 'dept') { closeEdit(); return; }
       saving = true;
       row.classList.add('is-saving');
       fetch(endpoint, {
@@ -1018,9 +1070,12 @@
           return r.json().catch(function () { return {}; });
         })
         .then(function () {
-          paintValue(next);
-          // Shared modules (cd-alerts.js panic / signal100) read this.
-          window._resolvedDeptCallSign = next || null;
+          // Repaint with the new dept value — falls back to profile call
+          // sign automatically when `next` is an empty string.
+          var shown = paintFromMap(next);
+          // Shared modules (cd-alerts.js panic / signal100) want the
+          // resolved value regardless of source.
+          window._resolvedDeptCallSign = shown || null;
           closeEdit();
           flashSaved();
         })
@@ -1041,9 +1096,8 @@
       .then(function (data) {
         if (!data) return;
         var map = data.departmentCallSigns || {};
-        var resolved = map[deptId] || '';
-        paintValue(resolved);
-        window._resolvedDeptCallSign = resolved || null;
+        var shown = paintFromMap(map[deptId] || '');
+        window._resolvedDeptCallSign = shown || null;
         row.hidden = false;
       })
       .catch(function () { /* silent — keep row hidden */ });
