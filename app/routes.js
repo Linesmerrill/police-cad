@@ -1674,6 +1674,33 @@ module.exports = function (app, passport, server, nextApp, handle) {
     });
   });
 
+  // Returns the list of departments the user can file a report against.
+  // Admins (canManage === true) get the full community list; everyone
+  // else gets the depts they're a member of. Always returns an array;
+  // never throws — caller falls back to empty so the picker renders an
+  // "All depts unavailable" message instead of breaking the whole page.
+  async function listAccessibleDepartments(req, communityId, canManage) {
+    const userId = req.user?._id ? String(req.user._id) : '';
+    try {
+      if (canManage) {
+        const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}/departments`, config);
+        const arr = r.data?.departments || r.data?.data || r.data || [];
+        return arr.map((d) => ({ id: String(d._id || d.id || ''), name: d?.department?.name || d.name || '(unnamed)' }))
+          .filter((d) => !!d.id);
+      }
+      if (!userId) return [];
+      const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}/user/${userId}/departments`, config);
+      const arr = r.data?.departments || [];
+      return arr
+        .filter((d) => (d.accessStatus || '').toLowerCase() === 'approved' || d.accessStatus === undefined)
+        .map((d) => ({ id: String(d._id || d.id || ''), name: d?.department?.name || d.name || '(unnamed)' }))
+        .filter((d) => !!d.id);
+    } catch (e) {
+      console.error('listAccessibleDepartments failed:', e.message);
+      return [];
+    }
+  }
+
   // New report page (no submission yet)
   app.get("/reports/new", authCheck, async function (req, res) {
     const { communityId, communityIdEncoded } = resolveCommunityFromReq(req);
@@ -1682,6 +1709,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     const departmentId = req.user?.user?.lastAccessedCommunity?.activeDepartmentID || '';
 
     const canManageForms = await userCanManageCommunity(req, communityId);
+    const accessibleDepartments = await listAccessibleDepartments(req, communityId, canManageForms);
 
     res.render("report-edit", {
       user: req.user,
@@ -1689,6 +1717,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       communityId,
       communityIdEncoded,
       departmentId,
+      accessibleDepartments,
       slug,
       submissionId: '',
       readOnly: false,
@@ -1709,6 +1738,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     const readOnly = req.query.view === '1';
 
     const canManageForms = await userCanManageCommunity(req, communityId);
+    const accessibleDepartments = await listAccessibleDepartments(req, communityId, canManageForms);
 
     res.render("report-edit", {
       user: req.user,
@@ -1716,6 +1746,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       communityId,
       communityIdEncoded,
       departmentId,
+      accessibleDepartments,
       slug: 'incident-report', // overridden client-side once submission loads
       submissionId,
       readOnly,

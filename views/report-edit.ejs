@@ -836,6 +836,34 @@
     .rp-lock-text strong { color: var(--rp-green); font-weight: 600; }
     .rp-lock-text .rp-lock-meta { color: var(--rp-text-muted); }
 
+    /* Department picker row — sits above the form body. Same surface
+       language as the lock banner so they read as a coherent header. */
+    .rp-dept-row {
+      grid-column: 1 / -1;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem;
+      margin: 0.75rem 0 0.25rem;
+      padding: 0.55rem 0.9rem;
+      background: rgba(56, 189, 248, 0.04);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius);
+    }
+    .rp-dept-label {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 0.78rem; font-weight: 600; color: var(--rp-text-muted);
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .rp-dept-label i { color: var(--rp-accent); font-size: 0.78rem; }
+    .rp-dept-required { color: var(--rp-amber); font-weight: 700; }
+    .rp-dept-required.is-hidden { display: none; }
+    .rp-dept-select { min-width: 220px; max-width: 320px; }
+    .rp-dept-select.is-empty { border-color: rgba(245,158,11,0.4); }
+    .rp-dept-static {
+      font-size: 0.9rem; font-weight: 600; color: var(--rp-text);
+      padding: 0.35rem 0.6rem; border-radius: var(--rp-radius-sm);
+      background: var(--rp-glass); border: 1px solid var(--rp-glass-border);
+    }
+    .rp-dept-static .rp-dept-static-empty { color: var(--rp-text-muted); font-style: italic; font-weight: 500; }
+
     /* Kebab menu */
     .rp-kebab { position: relative; }
     .rp-kebab-btn {
@@ -986,6 +1014,20 @@
     <div class="rp-lock-banner" id="rp-lock-banner" style="display:none;">
       <div class="rp-lock-icon"><i class="fa-solid fa-lock"></i></div>
       <div class="rp-lock-text" id="rp-lock-text">Locked</div>
+    </div>
+
+    <!-- Department picker — sticky at the top of the form. The dept the
+         report is filed against is part of the report's identity, so we
+         lock it once submitted and only allow re-targeting from drafts.
+         Hidden until renderDeptRow() runs so we don't flash an empty
+         picker during the initial template load. -->
+    <div class="rp-dept-row" id="rp-dept-row" style="display:none;">
+      <label class="rp-dept-label" for="rp-dept-select">
+        <i class="fa-solid fa-building-shield" aria-hidden="true"></i> Department
+        <span class="rp-dept-required" id="rp-dept-required">*</span>
+      </label>
+      <select id="rp-dept-select" class="rp-select rp-dept-select"></select>
+      <span class="rp-dept-static" id="rp-dept-static" style="display:none;"></span>
     </div>
 
     <aside class="rp-side" id="rp-side"></aside>
@@ -1163,6 +1205,9 @@
       var communityId = <%- JSON.stringify(typeof communityId !== 'undefined' ? communityId : '') %>;
       var communityIdEncoded = <%- JSON.stringify(typeof communityIdEncoded !== 'undefined' ? communityIdEncoded : '') %>;
       var departmentId = <%- JSON.stringify(typeof departmentId !== 'undefined' ? departmentId : '') %>;
+      // Depts the user can file against — admins get the full community
+      // list; everyone else gets their member depts.
+      var accessibleDepartments = <%- JSON.stringify(typeof accessibleDepartments !== 'undefined' ? accessibleDepartments : []) %>;
       var slug = <%- JSON.stringify(typeof slug !== 'undefined' ? slug : 'incident-report') %>;
       var submissionId = <%- JSON.stringify(typeof submissionId !== 'undefined' ? submissionId : '') %>;
       var readOnly = <%- JSON.stringify(typeof readOnly !== 'undefined' ? !!readOnly : false) %>;
@@ -2552,6 +2597,7 @@
         document.getElementById('rp-savebar').style.display = readOnly ? 'none' : 'flex';
 
         renderLockBanner();
+        renderDeptRow();
         renderKebab();
         renderHistory();
         document.body.classList.toggle('rp-locked', !!readOnly);
@@ -2567,6 +2613,74 @@
 
       function formatHistoryDate(d) {
         try { return new Date(d).toLocaleString(); } catch (e) { return ''; }
+      }
+
+      // Hydrate + render the department picker. While the report is a
+      // draft (or unsubmitted), the user picks from `accessibleDepartments`;
+      // once submitted/archived, we render a static label since the API
+      // rejects dept changes outside of draft status.
+      function renderDeptRow() {
+        var row = document.getElementById('rp-dept-row');
+        if (!row) return;
+        row.style.display = '';
+        var sel = document.getElementById('rp-dept-select');
+        var staticEl = document.getElementById('rp-dept-static');
+        var requiredMark = document.getElementById('rp-dept-required');
+        var sub = state.existing && state.existing.formSubmission;
+        // Existing submissions are authoritative on departmentId; fall
+        // back to the page-level `departmentId` when creating new.
+        var currentDeptId = (sub && sub.departmentId) || departmentId || '';
+        var currentDeptName = '';
+        var hit = (accessibleDepartments || []).filter(function (d) { return String(d.id) === String(currentDeptId); })[0];
+        if (hit) currentDeptName = hit.name;
+        // Existing report's dept may be one the user can no longer
+        // access (e.g. they were removed). Show its name from the
+        // submission record if we have it.
+        if (!currentDeptName && sub && sub.departmentName) currentDeptName = sub.departmentName;
+
+        var lockedDept = !!(sub && (sub.status === 'submitted' || sub.archived));
+        if (lockedDept) {
+          sel.style.display = 'none';
+          if (requiredMark) requiredMark.classList.add('is-hidden');
+          staticEl.style.display = '';
+          if (currentDeptName) {
+            staticEl.innerHTML = escapeHTML(currentDeptName);
+          } else {
+            staticEl.innerHTML = '<span class="rp-dept-static-empty">No department</span>';
+          }
+          return;
+        }
+
+        // Build/refresh the option list.
+        sel.style.display = '';
+        if (requiredMark) requiredMark.classList.remove('is-hidden');
+        staticEl.style.display = 'none';
+        var opts = '<option value="">— Select a department —</option>' +
+          (accessibleDepartments || []).map(function (d) {
+            return '<option value="' + escapeHTML(d.id) + '"' +
+              (String(d.id) === String(currentDeptId) ? ' selected' : '') + '>' +
+              escapeHTML(d.name) + '</option>';
+          }).join('');
+        // If the current dept isn't in the user's accessible list (e.g.
+        // an admin viewing a draft created in another dept they don't
+        // belong to), include it as an extra option so they don't
+        // silently re-target it on save.
+        if (currentDeptId && !hit && currentDeptName) {
+          opts += '<option value="' + escapeHTML(currentDeptId) + '" selected>' +
+            escapeHTML(currentDeptName) + ' (current)</option>';
+        }
+        sel.innerHTML = opts;
+        sel.value = currentDeptId || '';
+        sel.classList.toggle('is-empty', !sel.value);
+        // Single delegated handler — bound once. We hang it off the
+        // element via a flag so re-renders don't multiply listeners.
+        if (!sel.__deptBound) {
+          sel.addEventListener('change', function () {
+            departmentId = sel.value || '';
+            sel.classList.toggle('is-empty', !sel.value);
+          });
+          sel.__deptBound = true;
+        }
       }
 
       function renderLockBanner() {
@@ -3070,6 +3184,14 @@
       // --- save / submit ---
       function saveAs(status) {
         var btn = status === 'submitted' ? document.getElementById('rp-submit') : document.getElementById('rp-save-draft');
+        // Department is required for new reports — submitting without one
+        // creates an orphan that won't surface in any dept-filtered view.
+        if (!departmentId) {
+          toast('Pick a department before saving', 'error');
+          var sel = document.getElementById('rp-dept-select');
+          if (sel) { sel.classList.add('is-empty'); try { sel.focus(); } catch (e) {} }
+          return;
+        }
         btn.disabled = true;
 
         var allLinks = collectLinks();
@@ -3087,6 +3209,8 @@
         if (state.existing) {
           url = apiUrl + '/api/v1/form-submission/' + encodeURIComponent(state.existing._id);
           method = 'PUT';
+          var existingDept = (state.existing.formSubmission && state.existing.formSubmission.departmentId) || '';
+          var existingStatus = (state.existing.formSubmission && state.existing.formSubmission.status) || '';
           payload = {
             data: state.data,
             links: allLinks,
@@ -3096,6 +3220,12 @@
             // backend can authorize edits and stamp the history entry.
             actor: currentUser ? { userID: currentUser.id, username: currentUser.username } : undefined
           };
+          // Only send departmentId when it actually changed — and only
+          // while the report is editable as a draft. The API rejects the
+          // change otherwise; suppressing the field avoids a 400.
+          if (departmentId !== existingDept && existingStatus !== 'submitted') {
+            payload.departmentId = departmentId;
+          }
         } else {
           url = apiUrl + '/api/v1/form-submission';
           method = 'POST';
