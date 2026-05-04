@@ -20,7 +20,8 @@
     }
 
     .pp-toolbar {
-      max-width: 8.5in; margin: 0 auto 1rem; display: flex; gap: 0.5rem; justify-content: flex-end;
+      max-width: 8.5in; margin: 0 auto 1rem;
+      display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap;
     }
     .pp-toolbar button, .pp-toolbar a {
       display: inline-flex; align-items: center; gap: 0.4rem;
@@ -37,6 +38,13 @@
       padding-bottom: 0.75rem; border-bottom: 2px solid #1a202c;
       margin-bottom: 1rem;
     }
+    /* Desktop/print: the row-1 wrapper is transparent and just
+       contains the logo + titles flowing inline with the meta
+       column to preserve the original layout. Mobile flips this
+       (see media query below). */
+    .pp-header-row-1 {
+      display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0;
+    }
     .pp-logo {
       width: 78px; height: 78px; flex-shrink: 0;
       border: 1px solid #d8dde3; border-radius: 4px;
@@ -47,8 +55,9 @@
     .pp-header-titles { flex: 1; min-width: 0; }
     .pp-agency { font-size: 1.05rem; font-weight: 700; color: #111; line-height: 1.2; }
     .pp-doc-title { font-size: 1.4rem; font-weight: 700; color: #111; margin-top: 0.15rem; line-height: 1.1; letter-spacing: 0.02em; text-transform: uppercase; }
-    .pp-meta { text-align: right; font-size: 0.78rem; color: #475569; line-height: 1.5; }
+    .pp-meta { text-align: right; font-size: 0.78rem; color: #475569; line-height: 1.5; flex-shrink: 0; }
     .pp-meta strong { color: #111; }
+    .pp-meta div { white-space: nowrap; }
 
     .pp-section { margin-bottom: 1rem; page-break-inside: avoid; }
     .pp-section-title {
@@ -59,9 +68,9 @@
     }
     .pp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 1.25rem; }
     .pp-grid-full { grid-template-columns: 1fr; }
-    .pp-kv { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.25rem 0; }
+    .pp-kv { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.25rem 0; min-width: 0; }
     .pp-key { font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
-    .pp-val { font-size: 0.88rem; color: #111; line-height: 1.4; min-height: 1.2em; word-wrap: break-word; }
+    .pp-val { font-size: 0.88rem; color: #111; line-height: 1.4; min-height: 1.2em; word-wrap: break-word; overflow-wrap: anywhere; }
     .pp-val.empty { color: #cbd5e1; font-style: italic; }
     .pp-narrative .pp-val { white-space: pre-wrap; padding: 0.5rem 0; line-height: 1.6; }
 
@@ -85,13 +94,106 @@
     .pp-sig-block .pp-key { margin-bottom: 0.5rem; }
     .pp-sig-line { border-bottom: 1px solid #1a202c; padding: 0.4rem 0; min-height: 1.4em; }
 
+    /* ── Mobile / narrow viewport ──
+       The print layout assumes ~8.5in across. Below ~720px the
+       two-column grids squeeze to ~140px each and labels overlap
+       values. Stack everything vertically and tighten paddings.
+       Print-time @media print rules below are unchanged so the
+       formal A4/letter layout still emits cleanly when the user
+       hits Save as PDF on either desktop or mobile. */
+    @media (max-width: 720px) {
+      body { padding: 0.75rem; }
+      .pp-toolbar { margin-bottom: 0.6rem; gap: 0.4rem; justify-content: stretch; }
+      .pp-toolbar button, .pp-toolbar a {
+        flex: 1 1 0; justify-content: center;
+        padding: 0.55rem 0.7rem; font-size: 0.8rem;
+      }
+
+      .pp-shell {
+        padding: 1rem;
+        border-radius: 8px;
+      }
+
+      /* Header collapses to a stacked card: logo + titles row, then
+         meta as a separated info strip below. Right-aligned meta
+         doesn't fit on a 390px screen — left-align and break the
+         labels into "key: value" rows that read naturally. */
+      .pp-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.65rem;
+        padding-bottom: 0.6rem;
+        margin-bottom: 0.85rem;
+      }
+      .pp-header-row-1 {
+        display: flex; align-items: center; gap: 0.75rem;
+        width: 100%;
+      }
+      .pp-logo {
+        width: 56px; height: 56px;
+        font-size: 1.2rem;
+      }
+      .pp-agency { font-size: 0.9rem; }
+      .pp-doc-title { font-size: 1.1rem; margin-top: 0.1rem; }
+      .pp-meta {
+        text-align: left;
+        font-size: 0.72rem;
+        line-height: 1.55;
+        width: 100%;
+        padding: 0.5rem 0.6rem;
+        background: #f8fafc;
+        border-left: 3px solid #1a202c;
+        border-radius: 2px;
+        display: flex; flex-direction: column; gap: 0.15rem;
+      }
+      .pp-meta div { white-space: normal; }
+
+      .pp-section { margin-bottom: 0.75rem; }
+      .pp-section-title { font-size: 0.72rem; }
+
+      /* Single-column data grid on mobile. The 0.4rem row gap is
+         enough breathing room since each row is now full-width. */
+      .pp-grid { grid-template-columns: 1fr; gap: 0.35rem 0; }
+      .pp-kv { padding: 0.2rem 0; border-bottom: 1px dashed #f1f5f9; }
+      .pp-kv:last-child { border-bottom: 0; }
+
+      .pp-rep-row { padding: 0.45rem 0.6rem; }
+
+      /* Signature lines stack so each gets a clean full-width
+         underline rather than two cramped half-lines. */
+      .pp-signature {
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+        margin-top: 1rem;
+      }
+    }
+
     @media print {
       body { background: #fff; padding: 0; }
       .pp-toolbar { display: none; }
-      .pp-shell { border: none; padding: 0.5in; box-shadow: none; max-width: 100%; }
+      .pp-shell { border: none; padding: 0.5in; box-shadow: none; max-width: 100%; border-radius: 0; }
       .pp-section { page-break-inside: avoid; }
       .pp-header { page-break-after: avoid; }
       a { color: inherit; text-decoration: none; }
+
+      /* Force the formal letter layout when emitting PDF — even
+         from a phone, the saved document should render as a
+         proper report, not a stacked mobile screen. */
+      .pp-header { flex-direction: row; align-items: center; gap: 1rem; padding-bottom: 0.75rem; margin-bottom: 1rem; }
+      .pp-logo { width: 78px; height: 78px; font-size: 1.6rem; }
+      .pp-agency { font-size: 1.05rem; }
+      .pp-doc-title { font-size: 1.4rem; margin-top: 0.15rem; }
+      .pp-meta {
+        text-align: right; font-size: 0.78rem; line-height: 1.5;
+        background: transparent; padding: 0; border-left: 0; border-radius: 0;
+        display: block; width: auto;
+      }
+      .pp-meta div { white-space: nowrap; }
+
+      .pp-grid { grid-template-columns: 1fr 1fr; gap: 0.4rem 1.25rem; }
+      .pp-kv { padding: 0.25rem 0; border-bottom: 0; }
+
+      .pp-signature { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
     }
   </style>
 </head>
@@ -102,10 +204,12 @@
   </div>
   <div class="pp-shell" id="pp-shell">
     <div class="pp-header">
-      <div class="pp-logo" id="pp-logo"><i class="fa-solid fa-shield-halved"></i></div>
-      <div class="pp-header-titles">
-        <div class="pp-agency" id="pp-agency">Loading…</div>
-        <div class="pp-doc-title" id="pp-doc-title">Report</div>
+      <div class="pp-header-row-1">
+        <div class="pp-logo" id="pp-logo"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="pp-header-titles">
+          <div class="pp-agency" id="pp-agency">Loading…</div>
+          <div class="pp-doc-title" id="pp-doc-title">Report</div>
+        </div>
       </div>
       <div class="pp-meta">
         <div><strong>Report #</strong> <span id="pp-report-num">—</span></div>
