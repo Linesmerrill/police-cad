@@ -247,6 +247,637 @@
       .back-link:hover {
         color: #667eea;
       }
+
+      /* =====================================================
+         LINKED LPC ACCOUNT — section + modals
+         ===================================================== */
+
+      /* ---------- Section ---------- */
+      .link-lpc-section {
+        margin-top: 0.25rem;
+        padding: 1.5rem;
+        background: #14161e;
+        border: 1px solid #2a2d45;
+        border-radius: 14px;
+        position: relative;
+        overflow: hidden;
+      }
+      .link-lpc-section::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at top right, rgba(102,126,234,0.07), transparent 60%);
+        pointer-events: none;
+      }
+      .link-lpc-section > * { position: relative; }
+
+      .link-lpc-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.875rem;
+      }
+      .link-lpc-title {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #e5e7eb;
+        letter-spacing: 0.01em;
+      }
+      .link-lpc-title-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(102,126,234,0.22), rgba(118,75,162,0.18));
+        border: 1px solid rgba(102,126,234,0.32);
+        color: #b1bdf5;
+        font-size: 12px;
+      }
+
+      .link-lpc-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 4px 10px 4px 9px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        white-space: nowrap;
+      }
+      .link-lpc-chip-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+      }
+      .link-lpc-chip.is-not-linked {
+        background: rgba(154,160,180,0.1);
+        color: #9aa0b4;
+        border: 1px solid rgba(154,160,180,0.2);
+      }
+      .link-lpc-chip.is-not-linked .link-lpc-chip-dot { background: #9aa0b4; }
+      .link-lpc-chip.is-linked {
+        background: rgba(16,185,129,0.1);
+        color: #34d399;
+        border: 1px solid rgba(16,185,129,0.28);
+      }
+      .link-lpc-chip.is-linked .link-lpc-chip-dot {
+        background: #10b981;
+        box-shadow: 0 0 0 0 rgba(16,185,129,0.6);
+        animation: lpcPulse 2.4s ease-out infinite;
+      }
+      @keyframes lpcPulse {
+        0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.55); }
+        70%  { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+        100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+      }
+
+      .link-lpc-explainer {
+        color: #9aa0b4;
+        font-size: 0.875rem;
+        line-height: 1.55;
+        margin: 0 0 1.125rem;
+        max-width: 56ch;
+      }
+
+      .link-lpc-empty {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 1rem;
+      }
+      .link-lpc-empty .btn-gradient {
+        white-space: nowrap;
+        padding: 0.625rem 1.125rem;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .link-lpc-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.875rem 1rem;
+        background: linear-gradient(135deg, rgba(102,126,234,0.08), rgba(118,75,162,0.04));
+        border: 1px solid rgba(102,126,234,0.24);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+      }
+      .link-lpc-avatar {
+        position: relative;
+        width: 44px;
+        height: 44px;
+        flex: 0 0 auto;
+      }
+      .link-lpc-avatar img {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        object-fit: cover;
+        background: #11131a;
+        border: 2px solid rgba(102,126,234,0.55);
+        display: block;
+      }
+      .link-lpc-avatar::after {
+        content: '';
+        position: absolute;
+        right: -2px;
+        bottom: -2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #10b981;
+        border: 2px solid #14161e;
+      }
+      .link-lpc-card-meta { flex: 1; min-width: 0; }
+      .link-lpc-card-username {
+        display: block;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .link-lpc-card-email {
+        display: block;
+        color: #9aa0b4;
+        font-size: 0.83rem;
+        margin-top: 1px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .link-lpc-card-since {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+        color: #6b7290;
+        font-size: 0.72rem;
+        letter-spacing: 0.02em;
+      }
+      .link-lpc-card-since i { font-size: 9px; }
+
+      .link-lpc-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+      .link-lpc-actions .btn-secondary,
+      .link-lpc-actions .btn-danger-outline {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .btn-danger-outline {
+        background: transparent;
+        border: 1px solid rgba(239,68,68,0.45);
+        border-radius: 12px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        color: #ef4444;
+        transition: all 0.15s ease;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+      }
+      .btn-danger-outline:hover {
+        background: rgba(239,68,68,0.1);
+        border-color: #ef4444;
+        color: #fca5a5;
+      }
+      .btn-danger-outline:focus { outline: none; box-shadow: 0 0 0 3px rgba(239,68,68,0.22); }
+      .btn-danger-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+
+      .link-lpc-skeleton {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .skel {
+        background: linear-gradient(90deg, #1e2028 0%, #2a2d45 50%, #1e2028 100%);
+        background-size: 200% 100%;
+        animation: lpcShimmer 1.4s ease-in-out infinite;
+        border-radius: 8px;
+      }
+      .skel-header { height: 28px; width: 50%; }
+      .skel-row { height: 64px; width: 100%; border-radius: 12px; }
+      @keyframes lpcShimmer {
+        0%   { background-position: 100% 0; }
+        100% { background-position: -100% 0; }
+      }
+
+      /* ---------- LPC modals ---------- */
+      .lpc-modal { color: #e5e7eb; }
+      .lpc-modal .modal-dialog { max-width: 560px; }
+      .lpc-modal-sm .modal-dialog { max-width: 460px; }
+
+      .lpc-modal .modal-content {
+        background: #1e2028;
+        border: 1px solid #35385a;
+        border-radius: 16px;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.55);
+        overflow: hidden;
+      }
+      .lpc-modal .modal-header {
+        border-bottom: 1px solid #2a2d45;
+        padding: 1.25rem 1.5rem;
+        background: linear-gradient(180deg, rgba(102,126,234,0.06), transparent);
+      }
+      .lpc-modal .modal-title {
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+      }
+      .lpc-modal .modal-title-icon { color: #8a9cf2; font-size: 0.95rem; }
+      .lpc-modal .modal-subtitle {
+        margin: 6px 0 0;
+        color: #9aa0b4;
+        font-size: 0.85rem;
+        line-height: 1.45;
+      }
+      .lpc-modal .close {
+        color: #9aa0b4;
+        text-shadow: none;
+        opacity: 0.7;
+        font-size: 1.5rem;
+        font-weight: 400;
+        margin-top: -2px;
+      }
+      .lpc-modal .close:hover { color: #e5e7eb; opacity: 1; }
+      .lpc-modal .modal-body {
+        padding: 1.5rem;
+        max-height: calc(100vh - 240px);
+        overflow-y: auto;
+      }
+      .lpc-modal .modal-footer {
+        border-top: 1px solid #2a2d45;
+        padding: 1rem 1.5rem;
+        background: #181a22;
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+      }
+      .lpc-modal .modal-footer .btn-gradient,
+      .lpc-modal .modal-footer .btn-secondary,
+      .lpc-modal .modal-footer .btn-danger-outline {
+        padding: 0.6rem 1.25rem;
+        font-size: 0.9rem;
+      }
+      .lpc-modal .btn-gradient:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      .lpc-step + .lpc-step { margin-top: 1.5rem; }
+      .lpc-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #c7cbe2;
+        margin-bottom: 0.625rem;
+      }
+      .lpc-step-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+
+      .lpc-search-wrap { position: relative; }
+      .lpc-search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7290;
+        font-size: 13px;
+        pointer-events: none;
+      }
+      .lpc-search-input {
+        padding-left: 38px !important;
+        padding-right: 38px !important;
+      }
+      .lpc-search-spinner {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #8a9cf2;
+        font-size: 13px;
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+      .lpc-search-spinner.is-active { opacity: 1; }
+
+      .lpc-results {
+        margin-top: 0.625rem;
+        max-height: 280px;
+        overflow-y: auto;
+        border-radius: 10px;
+        background: #11131a;
+        border: 1px solid #2a2d45;
+        display: none;
+        padding: 4px;
+      }
+      .lpc-results.is-active { display: block; }
+      .lpc-results::-webkit-scrollbar { width: 8px; }
+      .lpc-results::-webkit-scrollbar-thumb { background: #35385a; border-radius: 4px; }
+      .lpc-results::-webkit-scrollbar-track { background: transparent; }
+
+      .lpc-result {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 0.625rem 0.75rem;
+        cursor: pointer;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        transition: background 0.12s, border-color 0.12s;
+        outline: none;
+      }
+      .lpc-result + .lpc-result { margin-top: 2px; }
+      .lpc-result:hover { background: rgba(102,126,234,0.07); }
+      .lpc-result:focus-visible { box-shadow: 0 0 0 2px rgba(102,126,234,0.4); }
+      .lpc-result.is-selected {
+        background: rgba(102,126,234,0.13);
+        border-color: rgba(102,126,234,0.55);
+        box-shadow: 0 0 0 1px rgba(102,126,234,0.25), 0 4px 14px rgba(102,126,234,0.18);
+      }
+      .lpc-result-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #11131a;
+        border: 1px solid #2a2d45;
+        flex: 0 0 auto;
+        object-fit: cover;
+      }
+      .lpc-result-meta { flex: 1; min-width: 0; }
+      .lpc-result-username {
+        color: #e5e7eb;
+        font-size: 0.9rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .lpc-result-email {
+        color: #9aa0b4;
+        font-size: 0.78rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 1px;
+      }
+      .lpc-result-radio {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid #35385a;
+        flex: 0 0 auto;
+        position: relative;
+        transition: border-color 0.12s;
+      }
+      .lpc-result.is-selected .lpc-result-radio { border-color: #8a9cf2; }
+      .lpc-result.is-selected .lpc-result-radio::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+      }
+
+      .lpc-results-empty,
+      .lpc-results-error {
+        padding: 1.5rem 1rem;
+        text-align: center;
+        color: #9aa0b4;
+        font-size: 0.85rem;
+      }
+      .lpc-results-empty i,
+      .lpc-results-error i {
+        display: block;
+        font-size: 1.4rem;
+        margin-bottom: 0.5rem;
+        color: #6b7290;
+      }
+      .lpc-results-error i { color: #f87171; }
+
+      .lpc-selected-card {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 0.875rem 1rem;
+        background: linear-gradient(135deg, rgba(102,126,234,0.09), rgba(118,75,162,0.05));
+        border: 1px solid rgba(102,126,234,0.32);
+        border-radius: 12px;
+      }
+      .lpc-selected-card img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(102,126,234,0.5);
+        flex: 0 0 auto;
+        background: #11131a;
+      }
+      .lpc-selected-card .meta { flex: 1; min-width: 0; }
+      .lpc-selected-card .username {
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .lpc-selected-card .email {
+        color: #9aa0b4;
+        font-size: 0.8rem;
+        display: block;
+        margin-top: 1px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .lpc-selected-card .change-btn {
+        background: transparent;
+        border: 1px solid #35385a;
+        color: #c7cbe2;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.15s;
+        flex: 0 0 auto;
+      }
+      .lpc-selected-card .change-btn:hover {
+        background: #2a2d45;
+        border-color: #4a4d6a;
+        color: #fff;
+      }
+
+      .lpc-disclaimer {
+        display: flex;
+        gap: 0.875rem;
+        padding: 1rem 1.125rem;
+        background: rgba(245,158,11,0.06);
+        border: 1px solid rgba(245,158,11,0.22);
+        border-left: 3px solid #f59e0b;
+        border-radius: 12px;
+      }
+      .lpc-disclaimer-icon {
+        color: #f59e0b;
+        font-size: 18px;
+        line-height: 1;
+        margin-top: 2px;
+        flex: 0 0 auto;
+      }
+      .lpc-disclaimer-body { flex: 1; min-width: 0; }
+      .lpc-disclaimer-lede {
+        margin: 0 0 0.5rem;
+        color: #e5e7eb;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+      .lpc-disclaimer-list {
+        margin: 0 0 0.875rem;
+        padding-left: 1.125rem;
+        color: #c7cbe2;
+        font-size: 0.83rem;
+        line-height: 1.55;
+      }
+      .lpc-disclaimer-list li { margin-bottom: 0.35rem; }
+      .lpc-disclaimer-list li:last-child { margin-bottom: 0; }
+      .lpc-disclaimer-list strong { color: #fbbf24; font-weight: 600; }
+
+      .lpc-checkbox {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        cursor: pointer;
+        padding: 0.625rem 0.75rem;
+        background: rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 8px;
+        transition: border-color 0.15s, background 0.15s;
+        user-select: none;
+        margin: 0;
+      }
+      .lpc-checkbox:hover {
+        border-color: rgba(102,126,234,0.32);
+        background: rgba(102,126,234,0.05);
+      }
+      .lpc-checkbox input { position: absolute; opacity: 0; pointer-events: none; }
+      .lpc-checkbox-box {
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+        border: 1.5px solid #4a4d6a;
+        background: #11131a;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        margin-top: 1px;
+        transition: all 0.15s;
+      }
+      .lpc-checkbox-box i {
+        color: #fff;
+        font-size: 10px;
+        opacity: 0;
+        transform: scale(0.6);
+        transition: all 0.15s;
+      }
+      .lpc-checkbox input:checked + .lpc-checkbox-box {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-color: #667eea;
+      }
+      .lpc-checkbox input:checked + .lpc-checkbox-box i {
+        opacity: 1;
+        transform: scale(1);
+      }
+      .lpc-checkbox-text {
+        color: #e5e7eb;
+        font-size: 0.85rem;
+        line-height: 1.45;
+        font-weight: 400;
+      }
+
+      .lpc-modal-error {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        padding: 0.75rem 1rem;
+        background: rgba(239,68,68,0.08);
+        border: 1px solid rgba(239,68,68,0.28);
+        border-radius: 10px;
+        color: #fca5a5;
+        font-size: 0.85rem;
+        margin-bottom: 1.25rem;
+        line-height: 1.4;
+      }
+      .lpc-modal-error.is-visible { display: flex; }
+      .lpc-modal-error i { font-size: 14px; flex: 0 0 auto; }
+
+      .lpc-unlink-prompt {
+        margin: 0;
+        color: #c7cbe2;
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+      .lpc-unlink-prompt strong { color: #fff; font-weight: 600; }
+
+      .lpc-modal.in { z-index: 1060; }
+
+      @media (max-width: 540px) {
+        .link-lpc-empty { flex-direction: column; align-items: stretch; }
+        .link-lpc-empty .btn-gradient { width: 100%; justify-content: center; }
+        .link-lpc-card { flex-wrap: wrap; }
+        .link-lpc-actions { width: 100%; }
+        .link-lpc-actions .btn-secondary,
+        .link-lpc-actions .btn-danger-outline {
+          flex: 1;
+          justify-content: center;
+        }
+        .lpc-modal .modal-footer { flex-wrap: wrap; }
+        .lpc-modal .modal-footer .btn-gradient,
+        .lpc-modal .modal-footer .btn-secondary,
+        .lpc-modal .modal-footer .btn-danger-outline { flex: 1; justify-content: center; }
+      }
     </style>
   </head>
   <body>
@@ -350,6 +981,15 @@
             </div>
           </div>
 
+          <div class="form-group">
+            <div class="link-lpc-section" id="linkLpcSection" aria-live="polite">
+              <div class="link-lpc-skeleton" aria-busy="true">
+                <div class="skel skel-header"></div>
+                <div class="skel skel-row"></div>
+              </div>
+            </div>
+          </div>
+
           <input type="hidden" id="profilePicture" name="profilePicture"
                  value="<%= admin && admin.profilePicture ? admin.profilePicture : '' %>" />
 
@@ -438,6 +1078,412 @@
       });
 
       // Form submission
+      // =====================================================
+      // Linked LPC Account
+      // =====================================================
+      (function initLinkedLpcAccount() {
+        if (!API_BASE || !adminId) return;
+
+        const TERMS_VERSION = 'v1';
+        const FALLBACK_AVATAR = '/static/images/civ-unknown-user.png';
+
+        let currentLinked = null;
+        let modalMode = 'link';
+        let selectedUser = null;
+        let searchDebounceTimer = null;
+        let activeSearchToken = 0;
+        let lastResults = [];
+
+        const $section          = $('#linkLpcSection');
+        const $linkModal        = $('#linkLpcModal');
+        const $unlinkModal      = $('#unlinkLpcModal');
+        const $searchInput      = $('#lpcUserSearch');
+        const $searchResults    = $('#lpcSearchResults');
+        const $searchSpinner    = $linkModal.find('.lpc-search-spinner');
+        const $selectedSummary  = $('#lpcSelectedSummary');
+        const $selectedCard     = $('#lpcSelectedCard');
+        const $termsCheckbox    = $('#lpcTermsCheckbox');
+        const $linkSubmitBtn    = $('#lpcLinkSubmitBtn');
+        const $linkSubmitLabel  = $linkSubmitBtn.find('.lpc-submit-label');
+        const $modalTitleText   = $('.lpc-modal-title-text');
+        const $modalError       = $('#lpcLinkError');
+        const $unlinkPrompt     = $('#lpcUnlinkPrompt');
+        const $unlinkConfirmBtn = $('#lpcUnlinkConfirmBtn');
+
+        function escapeHtml(str) {
+          if (str == null) return '';
+          return String(str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+        function safeAvatar(url) {
+          if (typeof url === 'string' && /^https?:\/\//i.test(url)) return url;
+          return FALLBACK_AVATAR;
+        }
+        function formatLinkedDate(value) {
+          if (!value) return '';
+          const d = new Date(value);
+          if (isNaN(d.getTime())) return '';
+          return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+        function setSubmitEnabled() {
+          $linkSubmitBtn.prop('disabled', !(selectedUser && $termsCheckbox.is(':checked')));
+        }
+        function showModalError(msg) {
+          $modalError.find('span').text(msg || 'Something went wrong.');
+          $modalError.addClass('is-visible');
+        }
+        function clearModalError() {
+          $modalError.removeClass('is-visible').find('span').text('');
+        }
+
+        function renderSkeleton() {
+          $section.html(
+            '<div class="link-lpc-skeleton" aria-busy="true">' +
+              '<div class="skel skel-header"></div>' +
+              '<div class="skel skel-row"></div>' +
+            '</div>'
+          );
+        }
+
+        function renderNotLinked() {
+          $section.html(
+            '<div class="link-lpc-head">' +
+              '<div class="link-lpc-title">' +
+                '<span class="link-lpc-title-icon"><i class="fas fa-link"></i></span>' +
+                'Linked LPC Account' +
+              '</div>' +
+              '<span class="link-lpc-chip is-not-linked">' +
+                '<span class="link-lpc-chip-dot"></span>Not linked' +
+              '</span>' +
+            '</div>' +
+            '<p class="link-lpc-explainer">Link an LPC account to use admin-elevated features (like feature requests) inside LPC. Your admin account will continue to be used only for logging in to this console.</p>' +
+            '<div class="link-lpc-empty">' +
+              '<button type="button" class="btn-gradient" id="lpcLinkBtn">' +
+                '<i class="fas fa-link" style="margin-right:8px;"></i>Link LPC Account' +
+              '</button>' +
+            '</div>'
+          );
+          $('#lpcLinkBtn').on('click', function () { openLinkModal('link'); });
+        }
+
+        function renderLinked(linked) {
+          const username = linked.username || '(no username)';
+          const linkedSince = formatLinkedDate(linked.linkedAt);
+          $section.html(
+            '<div class="link-lpc-head">' +
+              '<div class="link-lpc-title">' +
+                '<span class="link-lpc-title-icon"><i class="fas fa-link"></i></span>' +
+                'Linked LPC Account' +
+              '</div>' +
+              '<span class="link-lpc-chip is-linked">' +
+                '<span class="link-lpc-chip-dot"></span>Linked' +
+              '</span>' +
+            '</div>' +
+            '<div class="link-lpc-card">' +
+              '<div class="link-lpc-avatar">' +
+                '<img src="' + escapeHtml(safeAvatar(linked.profilePicture)) + '" alt="" />' +
+              '</div>' +
+              '<div class="link-lpc-card-meta">' +
+                '<span class="link-lpc-card-username">' + escapeHtml(username) + '</span>' +
+                '<span class="link-lpc-card-email">' + escapeHtml(linked.email || '') + '</span>' +
+                (linkedSince ? '<span class="link-lpc-card-since"><i class="fas fa-clock"></i>Linked on ' + escapeHtml(linkedSince) + '</span>' : '') +
+              '</div>' +
+            '</div>' +
+            '<div class="link-lpc-actions">' +
+              '<button type="button" class="btn-secondary" id="lpcRelinkBtn">' +
+                '<i class="fas fa-exchange-alt"></i>Relink' +
+              '</button>' +
+              '<button type="button" class="btn-danger-outline" id="lpcUnlinkBtn">' +
+                '<i class="fas fa-unlink"></i>Disconnect' +
+              '</button>' +
+            '</div>'
+          );
+          $section.find('.link-lpc-avatar img').on('error', function () { this.src = FALLBACK_AVATAR; });
+          $('#lpcRelinkBtn').on('click', function () { openLinkModal('relink'); });
+          $('#lpcUnlinkBtn').on('click', openUnlinkModal);
+        }
+
+        function renderLoadError() {
+          $section.html(
+            '<div class="link-lpc-head">' +
+              '<div class="link-lpc-title">' +
+                '<span class="link-lpc-title-icon"><i class="fas fa-link"></i></span>' +
+                'Linked LPC Account' +
+              '</div>' +
+            '</div>' +
+            '<p class="link-lpc-explainer" style="color:#fca5a5;">' +
+              '<i class="fas fa-exclamation-circle" style="margin-right:6px;"></i>' +
+              'Could not load linked account status. ' +
+              '<a href="#" id="lpcRetryLoad" style="color:#8a9cf2;text-decoration:underline;">Retry</a>' +
+            '</p>'
+          );
+          $('#lpcRetryLoad').on('click', function (e) { e.preventDefault(); loadLinkedState(); });
+        }
+
+        async function loadLinkedState() {
+          renderSkeleton();
+          try {
+            const res = await fetch(API_BASE + '/api/v1/admin/admins/' + adminId + '/linked-lpc', {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) { renderLoadError(); return; }
+            currentLinked = data.linked || null;
+            if (currentLinked) renderLinked(currentLinked); else renderNotLinked();
+          } catch (err) {
+            console.error('linked-lpc load failed', err);
+            renderLoadError();
+          }
+        }
+
+        function openLinkModal(mode) {
+          modalMode = mode;
+          selectedUser = null;
+          lastResults = [];
+          clearModalError();
+          $searchInput.val('');
+          $searchResults.removeClass('is-active').empty();
+          $searchSpinner.removeClass('is-active');
+          $termsCheckbox.prop('checked', false);
+          $selectedSummary.attr('hidden', true);
+          $selectedCard.empty();
+
+          if (mode === 'relink') {
+            $modalTitleText.text('Relink LPC Account');
+            $linkSubmitLabel.text('Update Link');
+            if (currentLinked) {
+              selectUser({
+                id: currentLinked.userId,
+                email: currentLinked.email,
+                username: currentLinked.username,
+                profilePicture: currentLinked.profilePicture
+              });
+            }
+          } else {
+            $modalTitleText.text('Link LPC Account');
+            $linkSubmitLabel.text('Link Account');
+          }
+
+          setSubmitEnabled();
+          $linkModal.modal('show');
+          setTimeout(function () { $searchInput.focus(); }, 250);
+        }
+
+        function handleSearchInput() {
+          clearModalError();
+          const q = $searchInput.val().trim();
+          if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+          if (!q) {
+            activeSearchToken++;
+            $searchSpinner.removeClass('is-active');
+            $searchResults.removeClass('is-active').empty();
+            return;
+          }
+          $searchSpinner.addClass('is-active');
+          searchDebounceTimer = setTimeout(function () { runSearch(q); }, 250);
+        }
+
+        async function runSearch(query) {
+          const token = ++activeSearchToken;
+          try {
+            const res = await fetch(API_BASE + '/api/v1/admin/search/users', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query: query, page: 0, limit: 10 })
+            });
+            const data = await res.json();
+            if (token !== activeSearchToken) return;
+            $searchSpinner.removeClass('is-active');
+            if (!res.ok) { renderResultsError('Search failed. Try again.'); return; }
+            const users = (data && data.users) || [];
+            lastResults = users;
+            renderResults(users);
+          } catch (err) {
+            if (token !== activeSearchToken) return;
+            $searchSpinner.removeClass('is-active');
+            renderResultsError('Network error.');
+          }
+        }
+
+        function renderResults(users) {
+          $searchResults.addClass('is-active');
+          if (!users.length) {
+            $searchResults.html(
+              '<div class="lpc-results-empty">' +
+                '<i class="fas fa-user-slash"></i>' +
+                'No users matched that search.' +
+              '</div>'
+            );
+            return;
+          }
+          let html = '';
+          users.forEach(function (u) {
+            const isSel = selectedUser && selectedUser.id === u.id;
+            const username = u.username || '(no username)';
+            const email = u.email || '';
+            html +=
+              '<div class="lpc-result' + (isSel ? ' is-selected' : '') + '" role="option" data-user-id="' + escapeHtml(u.id) + '" tabindex="0" aria-selected="' + (isSel ? 'true' : 'false') + '">' +
+                '<img class="lpc-result-avatar" src="' + FALLBACK_AVATAR + '" alt="" />' +
+                '<div class="lpc-result-meta">' +
+                  '<div class="lpc-result-username">' + escapeHtml(username) + '</div>' +
+                  '<div class="lpc-result-email">' + escapeHtml(email) + '</div>' +
+                '</div>' +
+                '<div class="lpc-result-radio" aria-hidden="true"></div>' +
+              '</div>';
+          });
+          $searchResults.html(html);
+
+          $searchResults.find('.lpc-result')
+            .on('click', function () {
+              const userId = $(this).data('user-id');
+              const u = lastResults.find(function (x) { return x.id === userId; });
+              if (u) selectUser(u);
+            })
+            .on('keydown', function (e) {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                $(this).trigger('click');
+              }
+            });
+        }
+
+        function renderResultsError(msg) {
+          $searchResults.addClass('is-active').html(
+            '<div class="lpc-results-error">' +
+              '<i class="fas fa-exclamation-triangle"></i>' +
+              escapeHtml(msg) +
+            '</div>'
+          );
+        }
+
+        function selectUser(user) {
+          selectedUser = user;
+          $searchResults.find('.lpc-result').each(function () {
+            const isSel = $(this).data('user-id') === user.id;
+            $(this).toggleClass('is-selected', isSel).attr('aria-selected', isSel ? 'true' : 'false');
+          });
+          $selectedCard.html(
+            '<img src="' + escapeHtml(safeAvatar(user.profilePicture)) + '" alt="" />' +
+            '<div class="meta">' +
+              '<span class="username">' + escapeHtml(user.username || '(no username)') + '</span>' +
+              '<span class="email">' + escapeHtml(user.email || '') + '</span>' +
+            '</div>' +
+            '<button type="button" class="change-btn" id="lpcSelectedChangeBtn">Change</button>'
+          );
+          $selectedCard.find('img').on('error', function () { this.src = FALLBACK_AVATAR; });
+          $selectedSummary.removeAttr('hidden');
+          $('#lpcSelectedChangeBtn').on('click', clearSelection);
+          setSubmitEnabled();
+        }
+
+        function clearSelection() {
+          selectedUser = null;
+          $selectedCard.empty();
+          $selectedSummary.attr('hidden', true);
+          $searchResults.find('.lpc-result').removeClass('is-selected').attr('aria-selected', 'false');
+          setSubmitEnabled();
+          $searchInput.focus();
+        }
+
+        async function submitLink() {
+          if (!selectedUser || !$termsCheckbox.is(':checked')) return;
+          clearModalError();
+          const restoreLabel = modalMode === 'relink' ? 'Update Link' : 'Link Account';
+          $linkSubmitBtn.prop('disabled', true);
+          $linkSubmitLabel.html('<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i>' + (modalMode === 'relink' ? 'Updating' : 'Linking'));
+          try {
+            const res = await fetch(API_BASE + '/api/v1/admin/admins/' + adminId + '/link-lpc', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                lpcUserId: selectedUser.id,
+                termsAccepted: true,
+                termsVersion: TERMS_VERSION,
+                currentUser: adminData
+              })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+              const msg = (data && (data.error || data.message)) || 'Failed to link account.';
+              showModalError(msg);
+              return;
+            }
+            $linkModal.modal('hide');
+            currentLinked = data.linked || null;
+            if (currentLinked) renderLinked(currentLinked);
+            else await loadLinkedState();
+            if (typeof showAlert === 'function') {
+              showAlert(modalMode === 'relink' ? 'LPC account relinked.' : 'LPC account linked successfully.', 'success');
+            }
+          } catch (err) {
+            console.error('link error', err);
+            showModalError('Network error. Please try again.');
+          } finally {
+            $linkSubmitLabel.text(restoreLabel);
+            setSubmitEnabled();
+          }
+        }
+
+        function openUnlinkModal() {
+          if (!currentLinked) return;
+          const display = currentLinked.username || currentLinked.email || 'this account';
+          $unlinkPrompt.html(
+            'Disconnect <strong>' + escapeHtml(display) + '</strong>? Elevated access on LPC linked features will be removed. You can link another account later.'
+          );
+          $unlinkModal.modal('show');
+        }
+
+        async function submitUnlink() {
+          const original = $unlinkConfirmBtn.html();
+          $unlinkConfirmBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>Disconnecting');
+          try {
+            const res = await fetch(API_BASE + '/api/v1/admin/admins/' + adminId + '/unlink-lpc', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ currentUser: adminData })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+              const msg = (data && (data.error || data.message)) || 'Failed to disconnect.';
+              if (typeof showAlert === 'function') showAlert(msg, 'error');
+              return;
+            }
+            $unlinkModal.modal('hide');
+            currentLinked = null;
+            renderNotLinked();
+            if (typeof showAlert === 'function') showAlert('LPC account disconnected.', 'success');
+          } catch (err) {
+            console.error('unlink error', err);
+            if (typeof showAlert === 'function') showAlert('Network error. Please try again.', 'error');
+          } finally {
+            $unlinkConfirmBtn.prop('disabled', false).html(original);
+          }
+        }
+
+        $searchInput.on('input', handleSearchInput);
+        $termsCheckbox.on('change', setSubmitEnabled);
+        $linkSubmitBtn.on('click', submitLink);
+        $unlinkConfirmBtn.on('click', submitUnlink);
+
+        $linkModal.on('hidden.bs.modal', function () {
+          selectedUser = null;
+          activeSearchToken++;
+          if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+          $searchInput.val('');
+          $searchResults.removeClass('is-active').empty();
+          $searchSpinner.removeClass('is-active');
+          $termsCheckbox.prop('checked', false);
+          $selectedSummary.attr('hidden', true);
+          $selectedCard.empty();
+          clearModalError();
+          setSubmitEnabled();
+        });
+
+        loadLinkedState();
+      })();
+
       $('#profileForm').on('submit', async function(e) {
         e.preventDefault();
 
@@ -518,5 +1564,111 @@
       });
       }); // End $(document).ready()
     </script>
+
+    <!-- Link / Relink LPC Account modal -->
+    <div class="modal fade lpc-modal" id="linkLpcModal" tabindex="-1" role="dialog" aria-labelledby="linkLpcModalTitle" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title" id="linkLpcModalTitle">
+              <i class="fas fa-link modal-title-icon"></i>
+              <span class="lpc-modal-title-text">Link LPC Account</span>
+            </h4>
+            <p class="modal-subtitle">Connect an LPC user to your admin account for elevated access on linked features.</p>
+          </div>
+          <div class="modal-body">
+            <div class="lpc-modal-error" id="lpcLinkError" role="alert">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span></span>
+            </div>
+
+            <div class="lpc-step">
+              <div class="lpc-label">
+                <span class="lpc-step-num">1</span>
+                Search for an LPC user
+              </div>
+              <div class="lpc-search-wrap">
+                <i class="fas fa-search lpc-search-icon"></i>
+                <input type="text" id="lpcUserSearch" class="form-input lpc-search-input"
+                       placeholder="Email or username" autocomplete="off" spellcheck="false" />
+                <span class="lpc-search-spinner" aria-hidden="true">
+                  <i class="fas fa-circle-notch fa-spin"></i>
+                </span>
+              </div>
+              <div class="lpc-results" id="lpcSearchResults" role="listbox" aria-label="Search results"></div>
+            </div>
+
+            <div class="lpc-step lpc-selected-summary" id="lpcSelectedSummary" hidden>
+              <div class="lpc-label">
+                <span class="lpc-step-num">2</span>
+                Account to link
+              </div>
+              <div class="lpc-selected-card" id="lpcSelectedCard"></div>
+            </div>
+
+            <div class="lpc-step">
+              <div class="lpc-label">
+                <span class="lpc-step-num">3</span>
+                Review and accept the linking terms
+              </div>
+              <div class="lpc-disclaimer">
+                <div class="lpc-disclaimer-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="lpc-disclaimer-body">
+                  <p class="lpc-disclaimer-lede">By linking this LPC account you agree to:</p>
+                  <ol class="lpc-disclaimer-list">
+                    <li>Abide by the <strong>LPC Admin Terms of Service</strong> when using elevated features.</li>
+                    <li>Only your linked LPC account will receive elevated access on LPC &mdash; your admin account will be used solely for admin console login.</li>
+                    <li>Linkspolice CAD may revoke elevated access at any time for misuse.</li>
+                  </ol>
+                  <label class="lpc-checkbox">
+                    <input type="checkbox" id="lpcTermsCheckbox" />
+                    <span class="lpc-checkbox-box"><i class="fas fa-check"></i></span>
+                    <span class="lpc-checkbox-text">I have read and agree to the LPC Admin Linking Terms.</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn-gradient" id="lpcLinkSubmitBtn" disabled>
+              <span class="lpc-submit-label">Link Account</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Disconnect Confirmation -->
+    <div class="modal fade lpc-modal lpc-modal-sm" id="unlinkLpcModal" tabindex="-1" role="dialog" aria-labelledby="unlinkLpcModalTitle" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title" id="unlinkLpcModalTitle">
+              <i class="fas fa-unlink modal-title-icon" style="color:#fca5a5;"></i>
+              Disconnect Linked LPC Account
+            </h4>
+          </div>
+          <div class="modal-body">
+            <p class="lpc-unlink-prompt" id="lpcUnlinkPrompt">
+              Disconnect this account? Elevated access on LPC linked features will be removed. You can link another account later.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" data-dismiss="modal">Keep linked</button>
+            <button type="button" class="btn-danger-outline" id="lpcUnlinkConfirmBtn">
+              <i class="fas fa-unlink"></i>
+              Disconnect
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
