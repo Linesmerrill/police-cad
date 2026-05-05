@@ -5366,6 +5366,98 @@
     var casesCurrentFilter = '';
     var casesCurrentPage = 0;
 
+    // Mask an email for display when a user has no username set.
+    // e.g. "merrill@gmail.com" -> "m***l@g*.c"
+    function maskEmail(email) {
+      if (!email) return null;
+      var s = String(email).trim();
+      if (s === '(unknown)') return null;
+      var at = s.indexOf('@');
+      if (at < 1 || at === s.length - 1) return null;
+      var local = s.slice(0, at);
+      var rest = s.slice(at + 1);
+      var dot = rest.lastIndexOf('.');
+      if (dot < 1 || dot === rest.length - 1) return null;
+      var domain = rest.slice(0, dot);
+      var tld = rest.slice(dot + 1);
+      var maskedLocal = local.length <= 2 ? local.charAt(0) + '*' : local.charAt(0) + '***' + local.charAt(local.length - 1);
+      var maskedDomain = domain.charAt(0) + '*';
+      var maskedTld = tld.charAt(0);
+      return maskedLocal + '@' + maskedDomain + '.' + maskedTld;
+    }
+
+    // Resolve a member-ish object (id/username/email) into a human-readable label.
+    // Falls back to a masked email for old accounts with no username, then to a short id.
+    function displayUser(u) {
+      if (!u) return 'Unknown user';
+      var name = u.username;
+      if (name && typeof name === 'string') {
+        name = name.trim();
+        if (name && name !== '(unknown)') return name;
+      }
+      var masked = maskEmail(u.email);
+      if (masked) return masked;
+      var id = u.id || u._id;
+      if (id) {
+        var idStr = String(id);
+        return 'Deleted user (' + idStr.slice(-6) + ')';
+      }
+      return 'Unknown user';
+    }
+
+    // Pull the most informative error string out of a jQuery xhr object.
+    // Avoids the bare "Unknown error" message when the response isn't JSON.
+    function extractAjaxError(xhr) {
+      if (!xhr) return 'Network error (no response)';
+      try {
+        if (xhr.responseJSON) {
+          var rj = xhr.responseJSON;
+          if (rj.error) return rj.error;
+          if (rj.message) return rj.message;
+        }
+      } catch (e) {}
+      var txt = xhr.responseText;
+      if (txt && typeof txt === 'string') {
+        var trimmed = txt.trim();
+        // Try to parse as JSON in case responseJSON wasn't auto-parsed
+        if (trimmed.charAt(0) === '{') {
+          try {
+            var parsed = JSON.parse(trimmed);
+            if (parsed && (parsed.error || parsed.message)) return parsed.error || parsed.message;
+          } catch (e) {}
+        }
+        // Avoid dumping HTML error pages into the UI
+        if (trimmed.charAt(0) !== '<' && trimmed.length < 300) return trimmed;
+      }
+      var status = xhr.status;
+      var statusText = xhr.statusText;
+      if (status === 0) return 'Network error — check your connection or VPN';
+      if (status === 401) return 'Not authenticated (HTTP 401) — your session may have expired, please reload';
+      if (status === 403) return 'Forbidden (HTTP 403) — your account does not have permission for this action';
+      if (status === 404) return 'Not found (HTTP 404)';
+      if (status === 408) return 'Request timed out (HTTP 408)';
+      if (status === 500) return 'Server error (HTTP 500)';
+      if (status === 502 || status === 503 || status === 504) return 'API is temporarily unavailable (HTTP ' + status + ')';
+      if (status) return 'HTTP ' + status + (statusText ? ' ' + statusText : '');
+      return 'Unknown error (no status)';
+    }
+
+    // Resolve the admin's current role in priority order for case actor records.
+    function caseCurrentAdminRole() {
+      if (typeof roles === 'undefined' || !roles || !roles.length) return 'admin';
+      if (roles.indexOf('owner') !== -1) return 'owner';
+      if (roles.indexOf('admin') !== -1) return 'admin';
+      return roles[0] || 'admin';
+    }
+
+    function caseCurrentPerformer() {
+      return {
+        adminEmail: typeof currentUserEmail !== 'undefined' ? currentUserEmail : '',
+        adminName: typeof currentUserName !== 'undefined' ? currentUserName : '',
+        adminRole: caseCurrentAdminRole()
+      };
+    }
+
     function loadCases(status, page) {
       if (typeof page === 'undefined') page = 0;
       casesCurrentFilter = status;
@@ -5614,6 +5706,8 @@
 
     function saveCaseStep(stepName, data, onSuccess) {
       data.currentUser = { email: currentUserEmail, roles: roles };
+      // Record who completed this step so the summary can list every contributor
+      if (data.performedBy === undefined) data.performedBy = caseCurrentPerformer();
       $.ajax({
         url: API_BASE + '/api/v1/admin/cases/' + caseState.id + '/steps/' + stepName,
         method: 'PATCH',
@@ -5635,8 +5729,8 @@
           }
           if (onSuccess) onSuccess();
         },
-        error: function() {
-          showInfoModal('Error', 'Failed to save case progress. Your action was completed but the case state could not be updated. Please try again.');
+        error: function(xhr) {
+          showInfoModal('Error', 'Failed to save case progress: ' + extractAjaxError(xhr) + '. Your action was completed but the case state could not be updated. Please try again.');
         }
       });
     }
@@ -5647,9 +5741,9 @@
       var html = renderCaseStepper(1);
       html += '<div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">';
       html += '<div style="color: var(--ac-text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Current Owner</div>';
-      html += '<div style="color: #fff; font-weight: 600;">' + (owner ? owner.username : 'Unknown') + '</div>';
-      html += '<div style="color: var(--ac-text-muted); font-size: 0.85rem;">' + (owner ? owner.email : 'N/A') + '</div>';
-      html += '<div style="color: var(--ac-text-muted); font-size: 0.75rem;">ID: ' + (owner ? owner.id : 'N/A') + '</div>';
+      html += '<div style="color: #fff; font-weight: 600;">' + displayUser(owner) + '</div>';
+      html += '<div style="color: var(--ac-text-muted); font-size: 0.85rem;">' + (owner && owner.email ? owner.email : 'N/A') + '</div>';
+      html += '<div style="color: var(--ac-text-muted); font-size: 0.75rem;">ID: ' + (owner && owner.id ? owner.id : 'N/A') + '</div>';
       html += '</div>';
       html += '<div style="margin-bottom: 1rem;">';
       html += '<label style="color: var(--ac-text-muted); font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">New Owner Email</label>';
@@ -5683,8 +5777,8 @@
           }
           caseState._newOwner = { id: exactMatch.id, email: exactMatch.email, username: exactMatch.username };
           var previewHtml = '<div style="color: var(--ac-text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">New Owner</div>';
-          previewHtml += '<div style="color: #fff; font-weight: 600;">' + exactMatch.username + '</div>';
-          previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.85rem;">' + exactMatch.email + '</div>';
+          previewHtml += '<div style="color: #fff; font-weight: 600;">' + displayUser(exactMatch) + '</div>';
+          previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.85rem;">' + (exactMatch.email || '') + '</div>';
           previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.75rem;">ID: ' + exactMatch.id + '</div>';
           $('#caseNewOwnerPreview').html(previewHtml).show();
           $('#caseStep1Btn').prop('disabled', false).html('<i class="fas fa-exchange-alt"></i> Transfer Ownership').off('click').on('click', caseConfirmTransfer);
@@ -5702,8 +5796,8 @@
       showConfirmModal(
         'Confirm Ownership Transfer',
         '<p>You are about to transfer ownership of <strong>' + caseState.communityName + '</strong>:</p>' +
-        '<p><strong>From:</strong> ' + (oldOwner ? oldOwner.username + ' (' + oldOwner.email + ')' : 'Unknown') + '</p>' +
-        '<p><strong>To:</strong> ' + newOwner.username + ' (' + newOwner.email + ')</p>' +
+        '<p><strong>From:</strong> ' + (oldOwner ? displayUser(oldOwner) + (oldOwner.email ? ' (' + oldOwner.email + ')' : '') : 'Unknown') + '</p>' +
+        '<p><strong>To:</strong> ' + displayUser(newOwner) + (newOwner.email ? ' (' + newOwner.email + ')' : '') + '</p>' +
         '<p style="color: var(--ac-amber);"><i class="fas fa-exclamation-triangle"></i> This action will be logged.</p>',
         function() { caseExecuteTransfer(); }
       );
@@ -5737,7 +5831,9 @@
           });
         },
         error: function(xhr) {
-          $('#case-detail-content').html('<div style="color: var(--ac-red); padding: 2rem; text-align: center;">Failed to transfer ownership: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error') + ' <button class="ac-btn" onclick="renderCaseStep()">Retry</button></div>');
+          var msg = extractAjaxError(xhr);
+          var safeMsg = $('<div>').text(msg).html();
+          $('#case-detail-content').html('<div style="color: var(--ac-red); padding: 2rem; text-align: center;"><div style="margin-bottom: 0.75rem;"><i class="fas fa-exclamation-triangle"></i> Failed to transfer ownership</div><div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; padding: 0.75rem; color: var(--ac-text); font-size: 0.85rem; text-align: left; white-space: pre-wrap; word-break: break-word; margin-bottom: 1rem;">' + safeMsg + '</div><button class="ac-btn" onclick="renderCaseStep()">Retry</button></div>');
         }
       });
     }
@@ -5750,18 +5846,19 @@
       var addedToHeadAdmin = caseState.steps.transferOwnership.addedToHeadAdmin;
 
       var html = renderCaseStepper(2);
+      var newOwnerLabel = displayUser(newOwner);
       if (addedToHeadAdmin || newOwnerInHeadAdmin) {
         html += '<div style="text-align: center; padding: 1rem;">';
         html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(34,197,94,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
         html += '<i class="fas fa-check" style="color: var(--ac-green); font-size: 1.5rem;"></i></div>';
-        html += '<h5 style="color: #fff; margin-bottom: 0.5rem;">' + newOwner.username + ' is in the Head Admin role</h5>';
+        html += '<h5 style="color: #fff; margin-bottom: 0.5rem;">' + newOwnerLabel + ' is in the Head Admin role</h5>';
         html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">' + (addedToHeadAdmin ? 'They were automatically added during the ownership transfer.' : 'They were already a member of this role.') + '</p>';
         html += '</div>';
       } else {
         html += '<div style="text-align: center; padding: 1rem;">';
         html += '<div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(245,158,11,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">';
         html += '<i class="fas fa-exclamation-triangle" style="color: var(--ac-amber); font-size: 1.5rem;"></i></div>';
-        html += '<h5 style="color: #fff; margin-bottom: 0.5rem;">' + newOwner.username + ' is NOT in the Head Admin role</h5>';
+        html += '<h5 style="color: #fff; margin-bottom: 0.5rem;">' + newOwnerLabel + ' is NOT in the Head Admin role</h5>';
         html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">This is unusual — the new owner should typically be in the Head Admin role.</p>';
         html += '</div>';
       }
@@ -5802,7 +5899,7 @@
             role.members.forEach(function(m) {
               html += '<div style="display: flex; align-items: center; padding: 0.35rem 0; color: var(--ac-text-muted); font-size: 0.85rem;">';
               html += '<i class="fas fa-user" style="margin-right: 0.5rem; font-size: 0.75rem;"></i>';
-              html += m.username + ' <span style="margin-left: 0.5rem; font-size: 0.75rem;">(' + m.id + ')</span></div>';
+              html += displayUser(m) + ' <span style="margin-left: 0.5rem; font-size: 0.75rem;">(' + m.id + ')</span></div>';
             });
           } else {
             html += '<div style="color: var(--ac-text-muted); font-size: 0.85rem;">No members</div>';
@@ -5825,15 +5922,15 @@
       var newOwner = caseState.steps.transferOwnership.newOwner;
       var oldOwner = caseState.steps.transferOwnership.oldOwner || caseState._oldOwner;
       var text = '\u26a0\ufe0f ADMIN ROLES AUDIT \u2014 Community: "' + caseState.communityName + '"\n';
-      text += 'New Owner: ' + newOwner.username + '\n';
-      text += 'Previous Owner: ' + (oldOwner ? oldOwner.username : 'Unknown') + '\n\n';
+      text += 'New Owner: ' + displayUser(newOwner) + '\n';
+      text += 'Previous Owner: ' + (oldOwner ? displayUser(oldOwner) : 'Unknown') + '\n\n';
       text += 'Roles with Administrator Permission:\n';
       var headAdmin = caseState._roles.find(function(r) { return r.isHeadAdmin; });
       if (headAdmin) {
-        text += '\u2022 ' + headAdmin.name + ' (Head Admin) \u2014 Members: ' + (headAdmin.members.map(function(m) { return m.username; }).join(', ') || 'None') + '\n';
+        text += '\u2022 ' + headAdmin.name + ' (Head Admin) \u2014 Members: ' + (headAdmin.members.map(function(m) { return displayUser(m); }).join(', ') || 'None') + '\n';
       }
       (caseState._dangerousRoles || []).forEach(function(role) {
-        text += '\u2022 ' + role.name + ' \u2014 Members: ' + (role.members.map(function(m) { return m.username; }).join(', ') || 'None') + '\n';
+        text += '\u2022 ' + role.name + ' \u2014 Members: ' + (role.members.map(function(m) { return displayUser(m); }).join(', ') || 'None') + '\n';
       });
       text += '\nPlease confirm these role assignments are correct.';
       return text;
@@ -5860,6 +5957,14 @@
       html += '<h5 style="color: #fff;">Remove a User from This Community <span style="color: var(--ac-text-muted); font-weight: 400; font-size: 0.85rem;">(Optional)</span></h5>';
       html += '<p style="color: var(--ac-text-muted); font-size: 0.85rem;">Use this to remove a bad actor who hijacked the community.</p>';
       html += '</div>';
+      // Copy-paste prompt for staff to send to the requester
+      html += '<div style="margin-bottom: 1.25rem;">';
+      html += '<div style="color: var(--ac-text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Ask the requester</div>';
+      html += '<div style="position: relative;">';
+      html += '<button class="ac-btn" onclick="caseCopyStep4Prompt()" style="position: absolute; top: 0.5rem; right: 0.5rem; font-size: 0.75rem; padding: 0.25rem 0.75rem;" id="caseCopyStep4PromptBtn"><i class="fas fa-copy"></i> Copy</button>';
+      html += '<pre style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; padding-right: 5rem; color: var(--ac-text); font-size: 0.85rem; white-space: pre-wrap; word-break: break-word; font-family: \'JetBrains Mono\', monospace; margin: 0;">' + caseGenerateStep4PromptText() + '</pre>';
+      html += '</div>';
+      html += '</div>';
       html += '<div style="margin-bottom: 1rem;">';
       html += '<label style="color: var(--ac-text-muted); font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">User Email to Remove</label>';
       html += '<input type="email" id="caseBadActorEmail" class="form-control" value="' + prefillEmail + '" placeholder="Enter the bad actor\'s email address" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; padding: 0.75rem;">';
@@ -5871,6 +5976,25 @@
       html += '<button class="ac-btn ac-btn-accent" id="caseStep4Btn" onclick="caseLookupBadActor()"><i class="fas fa-search"></i> Look Up User</button>';
       html += '</div>';
       $('#case-detail-content').html(html);
+    }
+
+    function caseGenerateStep4PromptText() {
+      var oldOwner = caseState._oldOwner;
+      var who = oldOwner ? displayUser(oldOwner) : 'the previous owner';
+      var text = 'Before we wrap up, two quick questions about ' + who + ':\n\n';
+      text += '1. Do you want us to remove ' + who + ' from the community?\n';
+      text += '   ☐ Yes    ☐ No\n\n';
+      text += '2. Do you want us to ban them from rejoining in the future?\n';
+      text += '   ☐ Yes    ☐ No\n\n';
+      text += 'Please confirm both so we can finish the ownership reset.';
+      return text;
+    }
+
+    function caseCopyStep4Prompt() {
+      navigator.clipboard.writeText(caseGenerateStep4PromptText()).then(function() {
+        $('#caseCopyStep4PromptBtn').html('<i class="fas fa-check"></i> Copied!');
+        setTimeout(function() { $('#caseCopyStep4PromptBtn').html('<i class="fas fa-copy"></i> Copy'); }, 2000);
+      });
     }
 
     function caseSkipStep4() {
@@ -5899,8 +6023,8 @@
           var userRoles = (caseState._roles || []).filter(function(r) { return r.members.some(function(m) { return m.id === exactMatch.id; }); }).map(function(r) { return r.name; });
           var previewHtml = '<div style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">';
           previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">User to Remove</div>';
-          previewHtml += '<div style="color: #fff; font-weight: 600;">' + exactMatch.username + '</div>';
-          previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.85rem;">' + exactMatch.email + '</div>';
+          previewHtml += '<div style="color: #fff; font-weight: 600;">' + displayUser(exactMatch) + '</div>';
+          previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.85rem;">' + (exactMatch.email || '') + '</div>';
           previewHtml += '<div style="color: var(--ac-text-muted); font-size: 0.75rem;">ID: ' + exactMatch.id + '</div>';
           if (userRoles.length > 0) {
             previewHtml += '<div style="margin-top: 0.5rem; color: var(--ac-amber); font-size: 0.85rem;"><i class="fas fa-shield-alt"></i> In roles: ' + userRoles.join(', ') + '</div>';
@@ -5922,7 +6046,7 @@
       var user = caseState._badActor;
       showConfirmModal(
         'Confirm User Removal',
-        '<p>You are about to remove <strong>' + user.username + ' (' + user.email + ')</strong> from <strong>' + caseState.communityName + '</strong>.</p>' +
+        '<p>You are about to remove <strong>' + displayUser(user) + (user && user.email ? ' (' + user.email + ')' : '') + '</strong> from <strong>' + caseState.communityName + '</strong>.</p>' +
         '<p>This will:</p><ul>' +
         '<li>Remove them from all roles</li>' +
         '<li>Remove the community from their account</li>' +
@@ -5948,7 +6072,9 @@
           }, function() { renderCaseStep(); });
         },
         error: function(xhr) {
-          $('#case-detail-content').html('<div style="color: var(--ac-red); padding: 2rem; text-align: center;">Failed to remove user: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error') + ' <button class="ac-btn" onclick="renderCaseStep()">Retry</button></div>');
+          var msg = extractAjaxError(xhr);
+          var safeMsg = $('<div>').text(msg).html();
+          $('#case-detail-content').html('<div style="color: var(--ac-red); padding: 2rem; text-align: center;"><div style="margin-bottom: 0.75rem;"><i class="fas fa-exclamation-triangle"></i> Failed to remove user</div><div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; padding: 0.75rem; color: var(--ac-text); font-size: 0.85rem; text-align: left; white-space: pre-wrap; word-break: break-word; margin-bottom: 1rem;">' + safeMsg + '</div><button class="ac-btn" onclick="renderCaseStep()">Retry</button></div>');
         }
       });
     }
@@ -6020,18 +6146,23 @@
 
       html += '<div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">';
       html += '<h6 style="color: #fff; margin-bottom: 0.75rem;">Actions Taken</h6>';
+      // Performers contribution line
+      var performers = caseCollectPerformers();
+      if (performers.length > 0) {
+        html += '<div style="padding: 0 0 0.5rem 0; color: var(--ac-text-muted); font-size: 0.8rem;"><i class="fas fa-user-shield" style="margin-right: 0.5rem;"></i> Performed by: ' + caseFormatPerformers(performers) + '</div>';
+      }
       html += '<div style="color: var(--ac-text); font-size: 0.85rem;">';
       if (steps.transferOwnership.completed && steps.transferOwnership.newOwner) {
-        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> Ownership transferred to ' + steps.transferOwnership.newOwner.username + ' (' + steps.transferOwnership.newOwner.email + ')</div>';
+        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> Ownership transferred to ' + displayUser(steps.transferOwnership.newOwner) + (steps.transferOwnership.newOwner.email ? ' (' + steps.transferOwnership.newOwner.email + ')' : '') + '</div>';
       }
-      if (steps.transferOwnership.addedToHeadAdmin) {
-        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + steps.transferOwnership.newOwner.username + ' added to Head Admin role</div>';
+      if (steps.transferOwnership.addedToHeadAdmin && steps.transferOwnership.newOwner) {
+        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + displayUser(steps.transferOwnership.newOwner) + ' added to Head Admin role</div>';
       }
       if (steps.removeBadActor.completed && !steps.removeBadActor.skipped && steps.removeBadActor.badActor) {
-        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + steps.removeBadActor.badActor.username + ' removed from community</div>';
+        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + displayUser(steps.removeBadActor.badActor) + ' removed from community</div>';
       }
       if (steps.removeBadActor.banned && steps.removeBadActor.badActor) {
-        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + steps.removeBadActor.badActor.username + ' banned from rejoining</div>';
+        html += '<div style="padding: 0.25rem 0;"><i class="fas fa-check" style="color: var(--ac-green); margin-right: 0.5rem;"></i> ' + displayUser(steps.removeBadActor.badActor) + ' banned from rejoining</div>';
       }
       if (steps.removeBadActor.skipped) {
         html += '<div style="padding: 0.25rem 0; color: var(--ac-text-muted);"><i class="fas fa-forward" style="margin-right: 0.5rem;"></i> Bad actor removal skipped</div>';
@@ -6040,7 +6171,7 @@
         html += '<div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.06);">';
         html += '<div style="color: var(--ac-amber); font-size: 0.85rem;"><i class="fas fa-exclamation-triangle"></i> Roles with Administrator permission still active:</div>';
         caseState._dangerousRoles.forEach(function(role) {
-          html += '<div style="padding: 0.25rem 0; padding-left: 1.5rem; color: var(--ac-text-muted); font-size: 0.85rem;">\u2022 ' + role.name + ' \u2014 ' + (role.members.map(function(m) { return m.username; }).join(', ') || 'No members') + '</div>';
+          html += '<div style="padding: 0.25rem 0; padding-left: 1.5rem; color: var(--ac-text-muted); font-size: 0.85rem;">\u2022 ' + role.name + ' \u2014 ' + (role.members.map(function(m) { return displayUser(m); }).join(', ') || 'No members') + '</div>';
         });
         html += '</div>';
       }
@@ -6065,6 +6196,35 @@
       $('#case-detail-content').html(html);
     }
 
+    // Collect every admin who touched the case (creator + each step's performer),
+    // de-duped by email, in the order they first contributed.
+    function caseCollectPerformers() {
+      var seen = {};
+      var ordered = [];
+      function add(p) {
+        if (!p) return;
+        var key = (p.adminEmail || p.adminName || '').toLowerCase();
+        if (!key || seen[key]) return;
+        seen[key] = true;
+        ordered.push(p);
+      }
+      add(caseState.createdBy);
+      var steps = caseState.steps || {};
+      ['transferOwnership', 'headAdmin', 'roleAudit', 'removeBadActor', 'summary'].forEach(function(k) {
+        if (steps[k] && steps[k].performedBy) add(steps[k].performedBy);
+      });
+      return ordered;
+    }
+
+    function caseFormatPerformers(performers) {
+      if (!performers || !performers.length) return 'Unknown';
+      return performers.map(function(p) {
+        var name = p.adminName || p.adminEmail || 'Unknown';
+        var role = p.adminRole || 'admin';
+        return name + ' (' + role + ')';
+      }).join(', ');
+    }
+
     function caseGenerateSummaryText() {
       var steps = caseState.steps;
       var isCancelled = caseState.status === 'cancelled';
@@ -6080,43 +6240,43 @@
           text += '\nActions taken before cancellation:\n';
           var n = 1;
           if (steps.transferOwnership.completed && steps.transferOwnership.newOwner) {
-            var oldOwnerName = steps.transferOwnership.oldOwner ? steps.transferOwnership.oldOwner.username : 'Unknown';
-            text += n++ + '. Ownership transferred: ' + oldOwnerName + ' \u2192 ' + steps.transferOwnership.newOwner.username + '\n';
+            var oldOwnerName = displayUser(steps.transferOwnership.oldOwner);
+            text += n++ + '. Ownership transferred: ' + oldOwnerName + ' \u2192 ' + displayUser(steps.transferOwnership.newOwner) + '\n';
           }
           if (steps.transferOwnership.addedToHeadAdmin && steps.transferOwnership.newOwner) {
-            text += n++ + '. ' + steps.transferOwnership.newOwner.username + ' added to Head Admin role\n';
+            text += n++ + '. ' + displayUser(steps.transferOwnership.newOwner) + ' added to Head Admin role\n';
           }
           if (steps.removeBadActor.completed && !steps.removeBadActor.skipped && steps.removeBadActor.badActor) {
-            text += n++ + '. ' + steps.removeBadActor.badActor.username + ' removed from community\n';
+            text += n++ + '. ' + displayUser(steps.removeBadActor.badActor) + ' removed from community\n';
           }
           if (steps.removeBadActor.banned && steps.removeBadActor.badActor) {
-            text += n++ + '. ' + steps.removeBadActor.badActor.username + ' banned from community\n';
+            text += n++ + '. ' + displayUser(steps.removeBadActor.badActor) + ' banned from community\n';
           }
         }
         return text;
       }
 
       var text = '\u2705 OWNERSHIP RESET COMPLETE \u2014 Community: "' + caseState.communityName + '"\n';
-      text += 'Performed by: ' + (caseState.createdBy.adminName || caseState.createdBy.adminEmail) + ' (' + (caseState.createdBy.adminRole || 'admin') + ') on ' + now + '\n\n';
+      text += 'Performed by: ' + caseFormatPerformers(caseCollectPerformers()) + ' on ' + now + '\n\n';
       text += 'Actions taken:\n';
       var n = 1;
       if (steps.transferOwnership.completed && steps.transferOwnership.newOwner) {
-        var oldOwnerName = steps.transferOwnership.oldOwner ? steps.transferOwnership.oldOwner.username : 'Unknown';
-        text += n++ + '. Ownership transferred: ' + oldOwnerName + ' \u2192 ' + steps.transferOwnership.newOwner.username + '\n';
+        var oldOwnerName = displayUser(steps.transferOwnership.oldOwner);
+        text += n++ + '. Ownership transferred: ' + oldOwnerName + ' \u2192 ' + displayUser(steps.transferOwnership.newOwner) + '\n';
       }
       if (steps.transferOwnership.addedToHeadAdmin) {
-        text += n++ + '. ' + steps.transferOwnership.newOwner.username + ' added to Head Admin role\n';
+        text += n++ + '. ' + displayUser(steps.transferOwnership.newOwner) + ' added to Head Admin role\n';
       }
       if (steps.removeBadActor.completed && !steps.removeBadActor.skipped && steps.removeBadActor.badActor) {
-        text += n++ + '. ' + steps.removeBadActor.badActor.username + ' removed from community\n';
+        text += n++ + '. ' + displayUser(steps.removeBadActor.badActor) + ' removed from community\n';
       }
-      if (steps.removeBadActor.banned) {
-        text += n++ + '. ' + steps.removeBadActor.badActor.username + ' banned from community\n';
+      if (steps.removeBadActor.banned && steps.removeBadActor.badActor) {
+        text += n++ + '. ' + displayUser(steps.removeBadActor.badActor) + ' banned from community\n';
       }
       if (caseState._dangerousRoles && caseState._dangerousRoles.length > 0) {
         text += '\n\u26a0\ufe0f Roles with Administrator permission still active:\n';
         caseState._dangerousRoles.forEach(function(role) {
-          text += '\u2022 ' + role.name + ' \u2014 Members: ' + (role.members.map(function(m) { return m.username; }).join(', ') || 'None') + '\n';
+          text += '\u2022 ' + role.name + ' \u2014 Members: ' + (role.members.map(function(m) { return displayUser(m); }).join(', ') || 'None') + '\n';
         });
       }
       return text;
