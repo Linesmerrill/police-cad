@@ -3853,18 +3853,36 @@ module.exports = function (app, passport, server, nextApp, handle) {
         }
       }
 
-      // Check if user's email matches an admin in admin_users collection
+      // Resolve admin status. A Linked LPC Account is the only account that
+      // inherits its admin's elevated privileges; an admin's own email no
+      // longer confers admin on a different LPC account once linked elsewhere.
+      // Order: (1) admin.linkedUserId === user._id, (2) email match where the
+      // admin has no linkedUserId set (legacy / unlinked admins).
       let isAdmin = false;
-      if (user.email) {
-        try {
-          const mongoose = require("mongoose");
-          const adminUser = await mongoose.connection.db.collection("admin_users").findOne({
-            email: { $regex: new RegExp('^' + user.email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }
-          });
-          isAdmin = !!adminUser;
-        } catch (e) {
-          // Silently fail — non-critical
+      try {
+        const mongoose = require("mongoose");
+        const adminCol = mongoose.connection.db.collection("admin_users");
+
+        if (userIdString) {
+          try {
+            const linkedAdmin = await adminCol.findOne({
+              linkedUserId: new mongoose.Types.ObjectId(userIdString),
+            });
+            if (linkedAdmin) isAdmin = true;
+          } catch (e) {
+            // Invalid ObjectID — skip and fall through to email match.
+          }
         }
+
+        if (!isAdmin && user.email) {
+          const unlinkedAdmin = await adminCol.findOne({
+            email: { $regex: new RegExp('^' + user.email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') },
+            $or: [{ linkedUserId: { $exists: false } }, { linkedUserId: null }],
+          });
+          if (unlinkedAdmin) isAdmin = true;
+        }
+      } catch (e) {
+        // Silently fail — non-critical
       }
 
       return res.json({
