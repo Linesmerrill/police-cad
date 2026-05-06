@@ -87,6 +87,10 @@
     .rp-btn-primary:hover { box-shadow: 0 4px 12px rgba(14,165,233,0.3); transform: translateY(-1px); }
     .rp-btn-outline { background: transparent; color: var(--rp-text-muted); border: 1px solid var(--rp-glass-border); }
     .rp-btn-outline:hover { background: var(--rp-surface); color: #fff; }
+    /* .rp-btn's display: inline-flex outranks the UA [hidden] rule, so
+       setting el.hidden = true adds the attribute but the button stays
+       visible. Force the override. */
+    .rp-btn[hidden] { display: none !important; }
 
     .rp-toolbar {
       position: sticky; top: 0; z-index: 5;
@@ -102,9 +106,51 @@
       min-width: 180px;
     }
     .rp-input:focus, .rp-select:focus { outline: none; border-color: var(--rp-accent); }
+    .rp-input-date { min-width: 150px; }
     .rp-toolbar-spacer { flex: 1; }
+    .rp-btn-danger { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #fff; border: none; }
+    .rp-btn-danger:hover { box-shadow: 0 4px 12px rgba(239,68,68,0.3); transform: translateY(-1px); }
+
+    .rp-bulk-bar {
+      position: sticky; top: 56px; z-index: 4;
+      background: var(--rp-bg);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius-sm);
+      padding: 0.55rem 0.85rem;
+      display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap;
+      margin-bottom: 0.85rem;
+    }
+    .rp-bulk-bar[hidden] { display: none; }
+    .rp-bulk-count { font-size: 0.85rem; color: var(--rp-text); font-weight: 600; }
+    .rp-bulk-hint { font-size: 0.78rem; color: var(--rp-amber, #f59e0b); }
+    .rp-bulk-hint[hidden] { display: none; }
+    .rp-bulk-bar-spacer { flex: 1; }
+    /* Mobile: drop the spacer (it eats horizontal room and forces the
+       danger button off-screen), let buttons share full width via wrap,
+       and shrink the verbose action labels so each pair fits on one row. */
+    @media (max-width: 720px) {
+      .rp-bulk-bar { padding: 0.5rem 0.6rem; gap: 0.4rem; }
+      .rp-bulk-bar .rp-bulk-bar-spacer { display: none; }
+      .rp-bulk-bar .rp-btn { padding: 0.45rem 0.6rem; font-size: 0.78rem; }
+      .rp-bulk-bar .rp-bulk-label-full { display: none; }
+      .rp-bulk-bar .rp-bulk-label-short { display: inline; }
+    }
+    .rp-bulk-bar .rp-bulk-label-short { display: none; }
+
+    .rp-row-check {
+      flex-shrink: 0;
+      width: 18px; height: 18px;
+      accent-color: var(--rp-accent);
+      cursor: pointer;
+    }
 
     .rp-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .rp-row { display: flex; align-items: stretch; gap: 0.55rem; }
+    .rp-row > .rp-card { flex: 1; }
+    .rp-row-check-wrap {
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 0.25rem;
+    }
     .rp-card {
       background: var(--rp-surface);
       border: 1px solid var(--rp-glass-border);
@@ -447,6 +493,7 @@
       display: flex; flex-direction: column; justify-content: center; gap: 0.2rem;
       padding: 0.5rem 0.85rem 0.5rem 0;
       border-right: 1px solid var(--rp-glass-border);
+      position: relative;
     }
     .rp-rail-label-row {
       display: flex; align-items: center; gap: 0.45rem;
@@ -454,6 +501,32 @@
       font-size: 0.85rem; font-weight: 600;
       letter-spacing: -0.005em;
     }
+    /* Collapse toggle — chevron sits at the row's far right and rotates
+       180deg when the rail is collapsed. Hover/focus tints match the
+       existing rp-btn-outline tokens for consistency. */
+    .rp-rail-collapse {
+      margin-left: auto;
+      width: 22px; height: 22px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--rp-text-dim);
+      cursor: pointer;
+      font-size: 0.65rem;
+      transition: transform 180ms ease, color 180ms ease, background-color 180ms ease, border-color 180ms ease;
+    }
+    .rp-rail-collapse:hover,
+    .rp-rail-collapse:focus-visible {
+      color: var(--rp-text);
+      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--rp-glass-border);
+      outline: none;
+    }
+    .rp-rail.is-collapsed .rp-rail-collapse { transform: rotate(-90deg); }
+    .rp-rail.is-collapsed { align-items: center; }
+    .rp-rail.is-collapsed .rp-rail-label { padding: 0.25rem 0.85rem 0.25rem 0; }
+    .rp-rail.is-collapsed .rp-rail-track-wrap { display: none; }
     .rp-rail-label-icon {
       width: 22px; height: 22px;
       display: flex; align-items: center; justify-content: center;
@@ -610,6 +683,9 @@
           <div class="rp-rail-label-row">
             <span class="rp-rail-label-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
             Recent
+            <button type="button" class="rp-rail-collapse" data-rail="recent" aria-expanded="true" aria-controls="rp-rail-recent-wrap" aria-label="Toggle Recent" title="Collapse">
+              <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
           </div>
           <div class="rp-rail-sub">For you</div>
         </div>
@@ -622,6 +698,9 @@
           <div class="rp-rail-label-row">
             <span class="rp-rail-label-icon"><i class="fa-solid fa-fire"></i></span>
             Most used
+            <button type="button" class="rp-rail-collapse" data-rail="popular" aria-expanded="true" aria-controls="rp-rail-popular-wrap" aria-label="Toggle Most used" title="Collapse">
+              <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
           </div>
           <div class="rp-rail-sub">In community</div>
         </div>
@@ -635,15 +714,40 @@
       <select id="rp-filter-template" class="rp-select">
         <option value="">All template types</option>
       </select>
+      <select id="rp-filter-department" class="rp-select">
+        <option value="">All departments</option>
+      </select>
       <select id="rp-filter-status" class="rp-select">
         <option value="">All statuses</option>
         <option value="submitted">Submitted</option>
         <option value="draft">Drafts</option>
       </select>
+      <select id="rp-filter-archived" class="rp-select" title="Archived state">
+        <option value="false">Active</option>
+        <option value="true">Archived</option>
+        <option value="all">All</option>
+      </select>
+      <input id="rp-filter-from" class="rp-input rp-input-date" type="datetime-local" title="From" />
+      <input id="rp-filter-to" class="rp-input rp-input-date" type="datetime-local" title="To" />
       <input id="rp-filter-q" class="rp-input" type="search" placeholder="Search by report # or officer…" />
       <div class="rp-toolbar-spacer"></div>
+      <% if (typeof canManageForms !== 'undefined' && canManageForms) { %>
+      <button id="rp-bulk-archive-btn" class="rp-btn rp-btn-outline" title="Bulk archive by date range"><i class="fa-solid fa-box-archive"></i> Bulk archive</button>
+      <% } %>
       <button id="rp-refresh" class="rp-btn rp-btn-outline"><i class="fa-solid fa-rotate"></i> Refresh</button>
     </div>
+
+    <% if (typeof canManageForms !== 'undefined' && canManageForms) { %>
+    <div id="rp-bulk-bar" class="rp-bulk-bar" hidden>
+      <span class="rp-bulk-count"><span id="rp-bulk-count">0</span> selected</span>
+      <span id="rp-bulk-mixed-hint" class="rp-bulk-hint" hidden>Mixed archived &amp; active — clear and reselect</span>
+      <div class="rp-bulk-bar-spacer"></div>
+      <button id="rp-bulk-clear" class="rp-btn rp-btn-outline" type="button">Clear</button>
+      <button id="rp-bulk-archive-selected" class="rp-btn rp-btn-outline" type="button" hidden><i class="fa-solid fa-box-archive"></i> <span class="rp-bulk-label-full">Archive selected</span><span class="rp-bulk-label-short">Archive</span></button>
+      <button id="rp-bulk-unarchive-selected" class="rp-btn rp-btn-outline" type="button" hidden><i class="fa-solid fa-box-open"></i> <span class="rp-bulk-label-full">Unarchive selected</span><span class="rp-bulk-label-short">Unarchive</span></button>
+      <button id="rp-bulk-purge" class="rp-btn rp-btn-danger" type="button" hidden><i class="fa-solid fa-trash"></i> <span class="rp-bulk-label-full">Delete permanently</span><span class="rp-bulk-label-short">Delete</span></button>
+    </div>
+    <% } %>
 
     <div id="rp-list" class="rp-list"></div>
 
@@ -687,8 +791,23 @@
       var communityIdEncoded = <%- JSON.stringify(typeof communityIdEncoded !== 'undefined' ? communityIdEncoded : '') %>;
       var token = <%- JSON.stringify(typeof apiToken !== 'undefined' ? apiToken : '') %>;
 
-      var state = { page: 0, limit: 20, templateSlug: '', status: '', q: '', total: 0 };
+      var canManageForms = <%- JSON.stringify(typeof canManageForms !== 'undefined' && canManageForms) %>;
+      var currentUser = <%- JSON.stringify(typeof currentUser !== 'undefined' ? currentUser : null) %>;
+
+      var state = {
+        page: 0, limit: 20,
+        templateSlug: '', departmentId: '', status: '', archived: 'false',
+        createdFrom: '', createdTo: '',
+        q: '', total: 0,
+      };
       var templates = [];
+      var departments = []; // [{ departmentId, departmentName, count }]
+      var selectedIds = Object.create(null);
+
+      function actorBlock() {
+        if (!currentUser || !currentUser.id) return null;
+        return { userID: currentUser.id, username: currentUser.username || '' };
+      }
 
       function authHeaders() {
         return token ? { 'Authorization': 'Bearer ' + token } : {};
@@ -1020,10 +1139,15 @@
         var recentRail = document.getElementById('rp-rail-recent');
         var popularRail = document.getElementById('rp-rail-popular');
 
+        // Filter to buckets whose slug still resolves to a visible template.
+        // Submissions can outlive templates (archive/hide/delete), and we
+        // shouldn't render an empty rail when every entry maps to nothing.
         var userBuckets = bucketBySlug(payload.user || [])
+          .filter(function (b) { return !!templateBySlug(b.slug); })
           .sort(function (a, b) { return b.lastUsedAt - a.lastUsedAt; })
           .slice(0, 6);
         var commBuckets = bucketBySlug(payload.community || [])
+          .filter(function (b) { return !!templateBySlug(b.slug); })
           .sort(function (a, b) { return b.count - a.count; })
           .slice(0, 6);
 
@@ -1038,6 +1162,7 @@
           }).join('');
           recentRail.style.display = '';
         } else {
+          rTrack.innerHTML = '';
           recentRail.style.display = 'none';
         }
 
@@ -1053,6 +1178,7 @@
           }).join('');
           popularRail.style.display = '';
         } else {
+          pTrack.innerHTML = '';
           popularRail.style.display = 'none';
         }
 
@@ -1063,10 +1189,18 @@
           rails.classList.remove('has-content');
         }
 
-        // Toggle the right-edge fade hint based on overflow.
+        // Re-apply the user's persisted collapse state every render — render
+        // can run multiple times (initial load + refresh), and the rail
+        // visibility flip above doesn't preserve our is-collapsed class.
+        ['recent', 'popular'].forEach(function (key) { applyRailCollapsed(key); });
+
+        // Toggle the right-edge fade hint based on overflow. Skip when the
+        // rail is collapsed — the track has zero width then and would
+        // incorrectly read as non-overflowing.
         ['rp-rail-recent', 'rp-rail-popular'].forEach(function (id) {
           var rail = document.getElementById(id);
           if (rail.style.display === 'none') return;
+          if (rail.classList.contains('is-collapsed')) return;
           var wrap = rail.querySelector('.rp-rail-track-wrap');
           var track = rail.querySelector('.rp-rail-track');
           var overflow = track.scrollWidth > track.clientWidth + 4;
@@ -1079,21 +1213,143 @@
         });
       }
 
+      // ── Rail collapse persistence ────────────────────
+      // Saved in localStorage so the preference survives reloads and is
+      // scoped per-browser (no URL pollution; no server round-trip). Keys
+      // are namespaced by communityId so different communities can have
+      // different collapsed defaults if the user's workflow varies.
+      function railStorageKey(key) {
+        return 'rp:rail:' + (communityId || 'global') + ':' + key + ':collapsed';
+      }
+      // On mobile the rails dominate the fold and push the actual list of
+      // reports off-screen, so default to collapsed when the user hasn't
+      // expressed a preference yet. Desktops keep the expanded default.
+      function isMobileViewport() {
+        try { return window.matchMedia('(max-width: 720px)').matches; }
+        catch (e) { return false; }
+      }
+      function isRailCollapsed(key) {
+        try {
+          var v = localStorage.getItem(railStorageKey(key));
+          if (v === '1') return true;
+          if (v === '0') return false;
+          return isMobileViewport();
+        }
+        catch (e) { return false; }
+      }
+      function setRailCollapsed(key, val) {
+        try {
+          // Persist the explicit choice so an expanded mobile user doesn't
+          // get re-collapsed on next paint by the mobile default above.
+          localStorage.setItem(railStorageKey(key), val ? '1' : '0');
+        } catch (e) { /* private mode / quota — fall back to in-page only */ }
+      }
+      function applyRailCollapsed(key) {
+        var rail = document.getElementById('rp-rail-' + key);
+        if (!rail) return;
+        var collapsed = isRailCollapsed(key);
+        rail.classList.toggle('is-collapsed', collapsed);
+        var btn = rail.querySelector('.rp-rail-collapse');
+        if (btn) {
+          btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+          btn.setAttribute('title', collapsed ? 'Expand' : 'Collapse');
+        }
+      }
+      // Single delegated handler — survives renderRails() rewrites since the
+      // buttons are static markup, not regenerated.
+      document.addEventListener('click', function (e) {
+        var btn = e.target.closest && e.target.closest('.rp-rail-collapse');
+        if (!btn) return;
+        var key = btn.getAttribute('data-rail');
+        if (!key) return;
+        setRailCollapsed(key, !isRailCollapsed(key));
+        applyRailCollapsed(key);
+      });
+      // Apply the persisted state once on initial paint so collapsed rails
+      // never flash open before renderRails() runs.
+      ['recent', 'popular'].forEach(function (k) { applyRailCollapsed(k); });
+
       function loadList() {
         if (!communityId) return;
         var qs = 'page=' + state.page + '&limit=' + state.limit;
         if (state.templateSlug) qs += '&templateSlug=' + encodeURIComponent(state.templateSlug);
+        if (state.departmentId) qs += '&departmentID=' + encodeURIComponent(state.departmentId);
         if (state.status) qs += '&status=' + encodeURIComponent(state.status);
+        if (state.archived) qs += '&archived=' + encodeURIComponent(state.archived);
+        if (state.createdFrom) qs += '&createdFrom=' + encodeURIComponent(state.createdFrom);
+        if (state.createdTo) qs += '&createdTo=' + encodeURIComponent(state.createdTo);
 
         var listEl = document.getElementById('rp-list');
         listEl.innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="rp-empty-title">Loading…</div></div>';
 
         fetch(apiUrl + '/api/v2/form-submissions/community/' + encodeURIComponent(communityId) + '?' + qs, { headers: authHeaders() })
-          .then(function (r) { return r.ok ? r.json() : { data: [], totalCount: 0 }; })
-          .then(renderList)
+          .then(function (r) {
+            if (r.status === 403) { return { __forbidden: true }; }
+            return r.ok ? r.json() : { data: [], totalCount: 0 };
+          })
+          .then(function (payload) {
+            if (payload && payload.__forbidden) {
+              listEl.innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-solid fa-lock"></i></div><div class="rp-empty-title">You do not have access to view this department\'s reports</div><div class="rp-empty-sub">Pick a different department from the filter above.</div></div>';
+              renderPagination();
+              renderBulkBar();
+              return;
+            }
+            renderList(payload);
+          })
           .catch(function (e) {
             listEl.innerHTML = '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="rp-empty-title">Failed to load reports</div><div class="rp-empty-sub">' + (e && e.message ? e.message : 'Network error') + '</div></div>';
           });
+      }
+
+      function loadDepartments() {
+        if (!communityId) return Promise.resolve([]);
+
+        // The previous version sourced the dropdown from the form-submissions
+        // distinct-departments endpoint, which only surfaces departments that
+        // already have a submission. New communities and unused departments
+        // therefore never showed up — making the filter useless until somebody
+        // had filed a report under that dept. Instead, list every department
+        // in the community and overlay submission counts when available.
+        var pAll = fetch(apiUrl + '/api/v1/community/' + encodeURIComponent(communityId) + '/departments', { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { departments: [] }; })
+          .then(function (j) { return (j && j.departments) || []; })
+          .catch(function () { return []; });
+
+        var pCounts = fetch(apiUrl + '/api/v2/form-submissions/community/' + encodeURIComponent(communityId) + '/departments', { headers: authHeaders() })
+          .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+          .then(function (j) { return (j && j.data) || []; })
+          .catch(function () { return []; });
+
+        return Promise.all([pAll, pCounts]).then(function (results) {
+          var allDepts = results[0];
+          var counts = {};
+          results[1].forEach(function (d) {
+            if (d && d.departmentId) counts[d.departmentId] = d.count || 0;
+          });
+
+          departments = allDepts.map(function (d) {
+            var id = d._id || d.id || '';
+            return {
+              departmentId: id,
+              departmentName: d.name || '(unnamed dept)',
+              count: counts[id] || 0,
+            };
+          });
+
+          var sel = document.getElementById('rp-filter-department');
+          departments.forEach(function (d) {
+            var opt = document.createElement('option');
+            opt.value = d.departmentId;
+            // Keep the count visible when present so dispatch can spot which
+            // departments have actual report volume; omit the (0) suffix to
+            // avoid implying inactivity for newly-created departments.
+            opt.textContent = d.count > 0
+              ? d.departmentName + ' (' + d.count + ')'
+              : d.departmentName;
+            sel.appendChild(opt);
+          });
+          return departments;
+        });
       }
 
       function renderList(payload) {
@@ -1119,6 +1375,7 @@
         listEl.innerHTML = '';
         data.forEach(function (sub) {
           var d = sub.formSubmission || {};
+          var id = String(sub._id || '');
           var initials = ((d.signedBy && d.signedBy.username) || '?').slice(0, 2).toUpperCase();
           var statusPill = d.status === 'draft'
             ? '<span class="rp-pill rp-pill-draft"><i class="fa-regular fa-circle-dot"></i> Draft</span>'
@@ -1126,6 +1383,26 @@
           var archivedPill = d.archived
             ? '<span class="rp-pill rp-pill-archived"><i class="fa-solid fa-box-archive"></i> Archived</span>'
             : '';
+
+          var row = document.createElement('div');
+          row.className = 'rp-row';
+
+          if (canManageForms) {
+            var cwrap = document.createElement('label');
+            cwrap.className = 'rp-row-check-wrap';
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'rp-row-check';
+            cb.dataset.id = id;
+            cb.checked = !!selectedIds[id];
+            cb.addEventListener('change', function () {
+              if (cb.checked) selectedIds[id] = true;
+              else delete selectedIds[id];
+              renderBulkBar();
+            });
+            cwrap.appendChild(cb);
+            row.appendChild(cwrap);
+          }
 
           var a = document.createElement('a');
           a.className = 'rp-card' + (d.archived ? ' is-archived' : '');
@@ -1142,10 +1419,51 @@
               '</div>' +
             '</div>' +
             '<i class="fa-solid fa-chevron-right" style="color: var(--rp-text-dim);"></i>';
-          listEl.appendChild(a);
+          row.appendChild(a);
+          listEl.appendChild(row);
         });
 
         renderPagination();
+        renderBulkBar();
+      }
+
+      function renderBulkBar() {
+        var bar = document.getElementById('rp-bulk-bar');
+        if (!bar) return;
+        var ids = Object.keys(selectedIds);
+        var countEl = document.getElementById('rp-bulk-count');
+        if (countEl) countEl.textContent = String(ids.length);
+        if (ids.length === 0) { bar.hidden = true; return; }
+        bar.hidden = false;
+
+        // The action set hinges on whether the selected reports are
+        // archived: archived reports can be unarchived or permanently
+        // deleted, active reports can be archived. Mixed selections
+        // can't be acted on bulk — surface a hint so users know to
+        // narrow the selection.
+        var byId = Object.create(null);
+        var rows = (lastPayload && lastPayload.data) || [];
+        for (var i = 0; i < rows.length; i++) {
+          var sub = rows[i];
+          if (sub && sub._id) byId[String(sub._id)] = sub;
+        }
+        var archivedCount = 0, activeCount = 0;
+        ids.forEach(function (id) {
+          var rec = byId[id];
+          var d = (rec && rec.formSubmission) || {};
+          if (d.archived) archivedCount++; else activeCount++;
+        });
+        var allArchived = archivedCount > 0 && activeCount === 0;
+        var allActive = activeCount > 0 && archivedCount === 0;
+
+        var archBtn = document.getElementById('rp-bulk-archive-selected');
+        var unarchBtn = document.getElementById('rp-bulk-unarchive-selected');
+        var purgeBtn = document.getElementById('rp-bulk-purge');
+        var hint = document.getElementById('rp-bulk-mixed-hint');
+        if (archBtn) archBtn.hidden = !allActive;
+        if (unarchBtn) unarchBtn.hidden = !allArchived;
+        if (purgeBtn) purgeBtn.hidden = !allArchived;
+        if (hint) hint.hidden = allArchived || allActive;
       }
 
       function renderPagination() {
@@ -1262,10 +1580,206 @@
       }
       document.addEventListener('keydown', onCmdKey);
 
-      document.getElementById('rp-filter-template').addEventListener('change', function (e) { state.templateSlug = e.target.value; state.page = 0; loadList(); });
-      document.getElementById('rp-filter-status').addEventListener('change', function (e) { state.status = e.target.value; state.page = 0; loadList(); });
+      function clearSelection() { selectedIds = Object.create(null); renderBulkBar(); }
+
+      document.getElementById('rp-filter-template').addEventListener('change', function (e) { state.templateSlug = e.target.value; state.page = 0; clearSelection(); loadList(); });
+      document.getElementById('rp-filter-department').addEventListener('change', function (e) { state.departmentId = e.target.value; state.page = 0; clearSelection(); loadList(); });
+      document.getElementById('rp-filter-status').addEventListener('change', function (e) { state.status = e.target.value; state.page = 0; clearSelection(); loadList(); });
+      document.getElementById('rp-filter-archived').addEventListener('change', function (e) { state.archived = e.target.value; state.page = 0; clearSelection(); loadList(); });
+
+      function toIsoOrEmpty(localValue) {
+        if (!localValue) return '';
+        var d = new Date(localValue);
+        if (isNaN(d.getTime())) return '';
+        return d.toISOString();
+      }
+      document.getElementById('rp-filter-from').addEventListener('change', function (e) { state.createdFrom = toIsoOrEmpty(e.target.value); state.page = 0; clearSelection(); loadList(); });
+      document.getElementById('rp-filter-to').addEventListener('change', function (e) { state.createdTo = toIsoOrEmpty(e.target.value); state.page = 0; clearSelection(); loadList(); });
+
       document.getElementById('rp-filter-q').addEventListener('input', function (e) { state.q = e.target.value || ''; renderListFromCache(); });
       document.getElementById('rp-refresh').addEventListener('click', loadList);
+
+      // --- bulk actions (admin only) ---
+      var bulkClearBtn = document.getElementById('rp-bulk-clear');
+      if (bulkClearBtn) {
+        bulkClearBtn.addEventListener('click', function () {
+          clearSelection();
+          // uncheck visible boxes
+          document.querySelectorAll('.rp-row-check').forEach(function (b) { b.checked = false; });
+        });
+      }
+
+      var bulkArchSelBtn = document.getElementById('rp-bulk-archive-selected');
+      if (bulkArchSelBtn) {
+        bulkArchSelBtn.addEventListener('click', function () {
+          var ids = Object.keys(selectedIds);
+          if (ids.length === 0) return;
+          var msg = 'Archive ' + ids.length + ' selected report' + (ids.length === 1 ? '' : 's') + '? They will move to the Archived tab and be locked from edits. This is reversible.';
+          showConfirm({
+            title: 'Archive ' + ids.length + ' report' + (ids.length === 1 ? '' : 's'),
+            body: msg,
+            confirm: 'Archive',
+            danger: false,
+          }, function () {
+            // Hit the bulk-archive endpoint via a tight createdAt window per id is overkill;
+            // instead reuse the per-row PUT (existing UpdateFormSubmissionHandler). Sequential
+            // is fine for small selections.
+            var actor = actorBlock();
+            Promise.all(ids.map(function (id) {
+              return fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(id), {
+                method: 'PUT',
+                headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+                body: JSON.stringify({ archived: true, actor: actor }),
+              });
+            })).then(function () {
+              clearSelection();
+              loadList();
+            });
+          });
+        });
+      }
+
+      var bulkUnarchSelBtn = document.getElementById('rp-bulk-unarchive-selected');
+      if (bulkUnarchSelBtn) {
+        bulkUnarchSelBtn.addEventListener('click', function () {
+          var ids = Object.keys(selectedIds);
+          if (ids.length === 0) return;
+          var msg = 'Unarchive ' + ids.length + ' selected report' + (ids.length === 1 ? '' : 's') + '? They will return to the active list and become editable again per the usual lock rules.';
+          showConfirm({
+            title: 'Unarchive ' + ids.length + ' report' + (ids.length === 1 ? '' : 's'),
+            body: msg,
+            confirm: 'Unarchive',
+            danger: false,
+          }, function () {
+            var actor = actorBlock();
+            Promise.all(ids.map(function (id) {
+              return fetch(apiUrl + '/api/v1/form-submission/' + encodeURIComponent(id), {
+                method: 'PUT',
+                headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+                body: JSON.stringify({ archived: false, actor: actor }),
+              });
+            })).then(function () {
+              clearSelection();
+              loadList();
+            });
+          });
+        });
+      }
+
+      var bulkPurgeBtn = document.getElementById('rp-bulk-purge');
+      if (bulkPurgeBtn) {
+        bulkPurgeBtn.addEventListener('click', function () {
+          var ids = Object.keys(selectedIds);
+          if (ids.length === 0) return;
+          showConfirm({
+            title: 'Delete ' + ids.length + ' report' + (ids.length === 1 ? '' : 's') + ' permanently',
+            body: 'This will permanently delete ' + ids.length + ' archived report' + (ids.length === 1 ? '' : 's') + '. This cannot be undone.',
+            confirm: 'Delete permanently',
+            danger: true,
+          }, function () {
+            fetch(apiUrl + '/api/v2/form-submissions/community/' + encodeURIComponent(communityId) + '/purge', {
+              method: 'DELETE',
+              headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+              body: JSON.stringify({ ids: ids, actor: actorBlock() }),
+            }).then(function (r) {
+              if (!r.ok) {
+                return r.text().then(function (t) { throw new Error(t || 'Failed to delete'); });
+              }
+              clearSelection();
+              loadList();
+            }).catch(function (err) {
+              showConfirm({ title: 'Delete failed', body: (err && err.message) || 'Unknown error', confirm: 'OK', danger: false, hideCancel: true }, function () {});
+            });
+          });
+        });
+      }
+
+      var bulkArchBtn = document.getElementById('rp-bulk-archive-btn');
+      if (bulkArchBtn) {
+        bulkArchBtn.addEventListener('click', function () {
+          openBulkArchiveModal();
+        });
+      }
+
+      function openBulkArchiveModal() {
+        var deptOptions = '<option value="">All departments</option>' +
+          departments.map(function (d) {
+            return '<option value="' + escapeHTML(d.departmentId) + '">' + escapeHTML(d.departmentName || '(unnamed dept)') + '</option>';
+          }).join('');
+        var bodyHtml =
+          '<div style="display:flex;flex-direction:column;gap:0.6rem;">' +
+            '<label style="font-size:0.8rem;color:var(--rp-text-muted);">From <input id="rp-ba-from" type="datetime-local" class="rp-input" style="width:100%;margin-top:0.2rem;" /></label>' +
+            '<label style="font-size:0.8rem;color:var(--rp-text-muted);">To <input id="rp-ba-to" type="datetime-local" class="rp-input" style="width:100%;margin-top:0.2rem;" /></label>' +
+            '<label style="font-size:0.8rem;color:var(--rp-text-muted);">Department <select id="rp-ba-dept" class="rp-select" style="width:100%;margin-top:0.2rem;">' + deptOptions + '</select></label>' +
+            '<div style="font-size:0.78rem;color:var(--rp-text-muted);line-height:1.4;">All matching reports will be archived (soft delete). Archived reports are locked from edits but can be restored individually. Cap: 1000 per call.</div>' +
+          '</div>';
+        showConfirm({
+          title: 'Bulk archive reports',
+          body: bodyHtml,
+          confirm: 'Archive',
+          danger: false,
+        }, function () {
+          var fromVal = document.getElementById('rp-ba-from').value;
+          var toVal   = document.getElementById('rp-ba-to').value;
+          var dept    = document.getElementById('rp-ba-dept').value;
+          var fromIso = toIsoOrEmpty(fromVal);
+          var toIso   = toIsoOrEmpty(toVal);
+          if (!fromIso || !toIso) {
+            showConfirm({ title: 'Missing dates', body: 'Both From and To are required.', confirm: 'OK', danger: false, hideCancel: true }, function () {});
+            return;
+          }
+          fetch(apiUrl + '/api/v2/form-submissions/community/' + encodeURIComponent(communityId) + '/bulk-archive', {
+            method: 'POST',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+            body: JSON.stringify({ createdFrom: fromIso, createdTo: toIso, departmentId: dept || undefined, actor: actorBlock() }),
+          }).then(function (r) {
+            if (!r.ok) return r.text().then(function (t) { throw new Error(t || 'Failed to archive'); });
+            return r.json();
+          }).then(function (j) {
+            showConfirm({ title: 'Done', body: 'Archived ' + (j && j.archived || 0) + ' report(s).', confirm: 'OK', danger: false, hideCancel: true }, function () {});
+            loadList();
+          }).catch(function (err) {
+            showConfirm({ title: 'Archive failed', body: (err && err.message) || 'Unknown error', confirm: 'OK', danger: false, hideCancel: true }, function () {});
+          });
+        });
+      }
+
+      // Minimal in-page confirm modal that works regardless of whether
+      // window.ddModal is available on this page (kept simple to avoid
+      // pulling in legacy partials). Matches rp- visual language.
+      function showConfirm(opts, onConfirm) {
+        // Prefer window.ddModal when available (per project convention).
+        if (typeof window.ddModal === 'function') {
+          window.ddModal({
+            type: opts.danger ? 'danger' : 'info',
+            icon: opts.danger ? 'fa-trash' : 'fa-check',
+            title: opts.title,
+            message: opts.body,
+            confirmText: opts.confirm || 'Confirm',
+            onConfirm: onConfirm,
+          });
+          return;
+        }
+        // Fallback inline modal — same affordances.
+        var backdrop = document.createElement('div');
+        backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem;';
+        var panel = document.createElement('div');
+        panel.style.cssText = 'background:var(--rp-bg);border:1px solid var(--rp-glass-border);border-radius:var(--rp-radius);max-width:480px;width:100%;padding:1.25rem;';
+        panel.innerHTML =
+          '<div style="font-size:1.05rem;font-weight:600;color:#fff;margin-bottom:0.6rem;">' + escapeHTML(opts.title || '') + '</div>' +
+          '<div style="font-size:0.9rem;color:var(--rp-text);margin-bottom:1rem;">' + (opts.body || '') + '</div>' +
+          '<div style="display:flex;justify-content:flex-end;gap:0.5rem;">' +
+            (opts.hideCancel ? '' : '<button class="rp-btn rp-btn-outline" data-act="cancel" type="button">' + escapeHTML(opts.cancel || 'Cancel') + '</button>') +
+            '<button class="rp-btn ' + (opts.danger ? 'rp-btn-danger' : 'rp-btn-primary') + '" data-act="ok" type="button">' + escapeHTML(opts.confirm || 'Confirm') + '</button>' +
+          '</div>';
+        backdrop.appendChild(panel);
+        document.body.appendChild(backdrop);
+        function close() { document.body.removeChild(backdrop); }
+        panel.querySelector('[data-act="ok"]').addEventListener('click', function () { close(); onConfirm(); });
+        var cancelBtn = panel.querySelector('[data-act="cancel"]');
+        if (cancelBtn) cancelBtn.addEventListener('click', close);
+        backdrop.addEventListener('click', function (e) { if (e.target === backdrop) close(); });
+      }
 
       // Lightweight client-side q filter — re-renders the last loaded page.
       var lastPayload = null;
@@ -1273,7 +1787,7 @@
       var origRender = renderList;
       renderList = function (p) { lastPayload = p; origRender(p); };
 
-      loadTemplates().then(function () {
+      Promise.all([loadTemplates(), loadDepartments()]).then(function () {
         loadList();
         loadRailStats();
       });

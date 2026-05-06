@@ -10,6 +10,10 @@ node_modules/*
 # nextjs
 next-env.d.ts
 
+# TypeScript incremental build cache (regenerated locally by tsc; Heroku
+# uses `next build` and doesn't need it).
+tsconfig.tsbuildinfo
+
 # Playwright
 e2e/.auth/
 e2e/test-results/

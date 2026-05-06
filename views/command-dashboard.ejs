@@ -85,9 +85,14 @@
       background-size: 200px;
     }
 
-    /* ---- Sidebar ---- */
+    /* ---- Sidebar ----
+       Use 100dvh on top of the 100vh fallback so mobile browsers (Safari)
+       size the sidebar to the *visible* viewport — otherwise the footer
+       (rank + call-sign cards) gets pushed behind the bottom URL bar. */
     .cd-sidebar {
-      position: fixed; top: 0; left: 0; width: var(--cd-sidebar-w); height: 100vh;
+      position: fixed; top: 0; left: 0; width: var(--cd-sidebar-w);
+      height: 100vh;
+      height: 100dvh;
       background: rgba(5, 10, 18, 0.85);
       backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2);
       border-right: 1px solid var(--cd-glass-border);
@@ -170,7 +175,10 @@
        language: same rounded rect, same icon-square, same label/value
        pair. Different functions (rank → modal, call sign → inline edit)
        but visually a family. */
-    .cd-sidebar-footer { padding: 0.875rem 0.875rem 1rem; border-top: 1px solid var(--cd-glass-border); }
+    .cd-sidebar-footer {
+      padding: 0.875rem 0.875rem max(1rem, env(safe-area-inset-bottom));
+      border-top: 1px solid var(--cd-glass-border);
+    }
     .cd-id-card { display: flex; flex-direction: column; gap: 0.625rem; }
 
     /* ─ Identity head ─ */
