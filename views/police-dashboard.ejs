@@ -4801,7 +4801,13 @@ function loadTenCodes() {
     success: function(data) {
       communityData = data;
       tenCodesCache = data?.community?.tenCodes || [];
-      
+
+      // Cache fields used by the civilian record-deletion gate
+      // (read by window.canDeleteCivilianRecords; see name-database.js).
+      window.communityRestrictCivilianRecordDeletion = data?.community?.restrictCivilianRecordDeletion === true;
+      window.communityOwnerIDCached = data?.community?.ownerID || '';
+      window.communityRolesCached = data?.community?.roles || [];
+
       // Set community name with fallback
       const communityName = data?.community?.name || 'Unknown Community';
       $('#community-name').text(communityName);

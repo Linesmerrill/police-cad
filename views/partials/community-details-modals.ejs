@@ -806,6 +806,24 @@
           </div>
         </div>
 
+        <!-- Civilian Record Deletion Section -->
+        <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+            <i class="fa fa-trash-can" style="font-size:1.5rem; color:#ef4444;"></i>
+            <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">Civilian Record Deletion</h4>
+          </div>
+          <p style="color:#a0aec0; margin-bottom:1rem; font-size:0.875rem;">Control whether civilians can delete their own citations, written warnings, and arrest reports</p>
+
+          <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
+              <input type="checkbox" id="allowCivilianRecordDeletion" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;">
+              Allow civilians to delete their own records
+            </label>
+          </div>
+
+          <p style="color:#a0aec0; margin:0; font-size:0.75rem;">When off, civilians can't delete their own citations, written warnings, or arrest reports. Community admins and users with the 'manage records' role permission can still delete records anytime.</p>
+        </div>
+
         <!-- Warrant Approval Mode Section -->
         <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
           <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
@@ -2451,7 +2469,7 @@ function renderPermissionsList() {
   );
 
   const featurePermissions = filteredPermissions.filter(p =>
-    p.name.includes('manage most wanted') || p.name.includes('manage bans')
+    p.name.includes('manage most wanted') || p.name.includes('manage bans') || p.name.includes('manage records')
   );
 
   const advancedPermissions = filteredPermissions.filter(p =>
@@ -9761,26 +9779,33 @@ async function saveEditEvent() {
         }
         
         toggleCivilianApprovalInfo(enableApproval);
-        
+
+        // Set civilian record deletion (UI is the inverse of the stored field)
+        const restrictDeletion = communityData.community?.restrictCivilianRecordDeletion === true;
+        const allowDeletionElement = document.getElementById('allowCivilianRecordDeletion');
+        if (allowDeletionElement) {
+          allowDeletionElement.checked = !restrictDeletion;
+        }
+
         // Set vehicle creation limits - use the actual field names from community JSON
         const enableVehicleLimits = communityData.community?.vehicleCreationLimitsEnabled || false;
-        
+
         const enableVehicleLimitsElement = document.getElementById('enableVehicleLimits');
         if (enableVehicleLimitsElement) {
           enableVehicleLimitsElement.checked = enableVehicleLimits;
         }
-        
+
         toggleVehicleLimitsOptions(enableVehicleLimits);
-        
+
         if (enableVehicleLimits) {
           const maxVehicles = communityData.community?.vehicleCreationLimit || 5;
-          
+
           const maxVehiclesElement = document.getElementById('maxVehiclesPerDept');
           if (maxVehiclesElement) {
             maxVehiclesElement.value = maxVehicles;
           }
         }
-        
+
         // Set firearm creation limits - use the actual field names from community JSON
         const enableFirearmLimits = communityData.community?.firearmCreationLimitsEnabled || false;
         
@@ -9874,7 +9899,14 @@ async function saveEditEvent() {
         }
         
         toggleCivilianApprovalInfo(enableApproval);
-        
+
+        // Set civilian record deletion (UI is the inverse of the stored field)
+        const restrictDeletion2 = communityData?.restrictCivilianRecordDeletion === true;
+        const allowDeletionElement2 = document.getElementById('allowCivilianRecordDeletion');
+        if (allowDeletionElement2) {
+          allowDeletionElement2.checked = !restrictDeletion2;
+        }
+
         // Set vehicle creation limits - use the actual field names from community JSON
         const enableVehicleLimits = communityData?.vehicleCreationLimitsEnabled || false;
         
@@ -9997,6 +10029,9 @@ async function saveEditEvent() {
         const enableLimits = document.getElementById('enableCivilianLimits').checked;
         const maxCivilians = enableLimits ? parseInt(document.getElementById('maxCiviliansPerDept').value) : 5;
         const enableApproval = document.getElementById('enableCivilianApproval').checked;
+        // UI shows "Allow"; stored field is the inverse "Restrict"
+        const allowRecordDeletion = document.getElementById('allowCivilianRecordDeletion').checked;
+        const restrictCivilianRecordDeletion = !allowRecordDeletion;
         
         // Get vehicle limits
         const enableVehicleLimits = document.getElementById('enableVehicleLimits').checked;
@@ -10046,6 +10081,7 @@ async function saveEditEvent() {
           civilianCreationLimitsEnabled: enableLimits,
           civilianCreationLimit: maxCivilians,
           civilianApprovalSystemEnabled: enableApproval,
+          restrictCivilianRecordDeletion: restrictCivilianRecordDeletion,
           vehicleCreationLimitsEnabled: enableVehicleLimits,
           vehicleCreationLimit: maxVehicles,
           firearmCreationLimitsEnabled: enableFirearmLimits,

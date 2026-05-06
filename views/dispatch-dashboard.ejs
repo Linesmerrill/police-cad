@@ -5720,6 +5720,12 @@
       communityRoles = commData.community?.roles || [];
       memberDataCache = commData.community?.members || {};
 
+      // Cache the restrictCivilianRecordDeletion flag for the delete-record gate
+      // (read by window.canDeleteCivilianRecords; see name-database.js).
+      window.communityRestrictCivilianRecordDeletion = commData.community?.restrictCivilianRecordDeletion === true;
+      window.communityOwnerIDCached = communityOwnerID;
+      window.communityRolesCached = communityRoles;
+
       // Update community name in header
       if (commData.community?.name) {
         $('#community-name').text(commData.community.name);
@@ -8402,7 +8408,11 @@
     var socket=io({ transports: ["websocket"] });
     socket.emit('search_citation', data)
     socket.on('load_citation_result', (res) => {
+      var canDelete = (typeof window.canDeleteCivilianRecords === 'function') ? window.canDeleteCivilianRecords() : true;
       res.forEach(citation => {
+      var deleteCell = canDelete
+        ? `<td class="text-align-center"><a class='clickable' onclick="deleteCitation('${citation._id}', '${civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
+        : '<td class="text-align-center"></td>';
       $(`#ticket-body-${civID}`).append(
         `<tr id="${citation._id}">
             <td>
@@ -8414,9 +8424,7 @@
             <td>
               $${citation.ticket.amount}
             </td>
-            <td class="text-align-center">
-              <a class='clickable' onclick="deleteCitation('${citation._id}', '${civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
-            </td>
+            ${deleteCell}
         </tr>`
         ).fadeTo(1, function () {
             $(this).add();
@@ -8433,7 +8441,11 @@
     var socket=io({ transports: ["websocket"] });
     socket.emit('search_warnings', data)
     socket.on('load_warnings_result', (res) => {
+      var canDelete = (typeof window.canDeleteCivilianRecords === 'function') ? window.canDeleteCivilianRecords() : true;
       res.forEach(citation => {
+      var deleteCell = canDelete
+        ? `<td class="text-align-center"><a class='clickable' onclick="deleteWarning('${citation._id}', '${civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
+        : '<td class="text-align-center"></td>';
       $(`#warning-body-${civID}`).append(
         `<tr id="${citation._id}">
             <td>
@@ -8442,9 +8454,7 @@
             <td>
               ${citation.ticket.violation}
             </td>
-            <td class="text-align-center">
-              <a class='clickable' onclick="deleteWarning('${citation._id}', '${civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
-            </td>
+            ${deleteCell}
         </tr>`
         ).fadeTo(1, function () {
             $(this).add();
