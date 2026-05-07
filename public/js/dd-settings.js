@@ -981,6 +981,9 @@
   var membersData = [];
   var membersTotalCount = 0;
   var membersLimit = 10;
+  var membersSearch = '';
+  var membersSearchTimer = null;
+  var membersRequestId = 0;
 
   function renderMembersTab($body) {
     var dept = getDept();
@@ -1000,10 +1003,16 @@
 
     membersPage = 1;
     membersData = [];
+    membersSearch = '';
+    if (membersSearchTimer) { clearTimeout(membersSearchTimer); membersSearchTimer = null; }
     $body.html(
       '<div class="dds-section">' +
         '<div class="dds-section-title">Department Members</div>' +
-        '<div style="display:flex;justify-content:flex-end;margin-bottom:0.75rem;">' +
+        '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">' +
+          '<div style="position:relative;flex:1;">' +
+            '<i class="fa fa-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:var(--dd-text-muted);font-size:0.75rem;pointer-events:none;"></i>' +
+            '<input type="text" class="dds-input" id="dds-members-search" placeholder="Search members..." style="padding-left:2rem;" autocomplete="off" />' +
+          '</div>' +
           '<button class="dds-btn dds-btn-secondary" id="dds-add-members-btn"><i class="fa fa-plus"></i> Add Members</button>' +
         '</div>' +
         '<div id="dds-members-list"><div style="text-align:center;padding:1rem;color:var(--dd-text-muted);"><i class="fa fa-spinner fa-spin"></i> Loading...</div></div>' +
@@ -1013,15 +1022,35 @@
     loadMembers();
 
     $body.find('#dds-add-members-btn').on('click', function () { openAddMembersModal(); });
+
+    $body.find('#dds-members-search').on('input', function () {
+      var v = this.value || '';
+      // Debounce 300ms — matches the community-members search modal cadence.
+      if (membersSearchTimer) clearTimeout(membersSearchTimer);
+      membersSearchTimer = setTimeout(function () {
+        membersSearch = v.trim();
+        membersPage = 1;
+        membersData = [];
+        $('#dds-members-list').html('<div style="text-align:center;padding:1rem;color:var(--dd-text-muted);"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
+        loadMembers();
+      }, 300);
+    });
   }
 
   function loadMembers() {
     var c = cfg();
+    var url = c.API_URL + '/api/v1/community/' + c.communityId + '/departments/' + c.departmentId + '/members?limit=' + membersLimit + '&page=' + membersPage;
+    if (membersSearch) {
+      url += '&search=' + encodeURIComponent(membersSearch);
+    }
+    var requestId = ++membersRequestId;
 
     $.ajax({
-      url: c.API_URL + '/api/v1/community/' + c.communityId + '/departments/' + c.departmentId + '/members?limit=' + membersLimit + '&page=' + membersPage,
+      url: url,
       method: 'GET',
       success: function (res) {
+        // Drop stale responses if a newer search has fired since.
+        if (requestId !== membersRequestId) return;
         var newMembers = res.data || [];
         membersTotalCount = res.totalCount || 0;
 
@@ -1033,6 +1062,7 @@
         renderMembersList();
       },
       error: function () {
+        if (requestId !== membersRequestId) return;
         $('#dds-members-list').html('<div class="dds-members-empty">Failed to load members</div>');
       }
     });
@@ -1045,7 +1075,11 @@
     var $list = $('#dds-members-list');
 
     if (!membersData.length) {
-      $list.html('<div class="dds-members-empty">No members found</div>');
+      $list.html(
+        '<div class="dds-members-empty">' +
+          (membersSearch ? 'No members match "' + esc(membersSearch) + '"' : 'No members found') +
+        '</div>'
+      );
       return;
     }
 
