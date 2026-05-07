@@ -22,10 +22,21 @@ export default function Profile() {
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivating, setDeactivating] = useState<'processing' | 'success' | null>(null);
   const [showChangeEmailModal, setShowChangeEmailModal] = useState(false);
+  const [emailModalStep, setEmailModalStep] = useState<'request' | 'confirm'>('request');
   const [newEmail, setNewEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [emailVerificationCode, setEmailVerificationCode] = useState('');
   const [emailModalError, setEmailModalError] = useState<string | null>(null);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [passwordModalStep, setPasswordModalStep] = useState<'request' | 'confirm'>('request');
+  const [pwdCurrentPassword, setPwdCurrentPassword] = useState('');
+  const [pwdCurrentPasswordVisible, setPwdCurrentPasswordVisible] = useState(false);
+  const [pwdNewPassword, setPwdNewPassword] = useState('');
+  const [pwdNewPasswordVisible, setPwdNewPasswordVisible] = useState(false);
+  const [pwdConfirmNewPassword, setPwdConfirmNewPassword] = useState('');
+  const [pwdVerificationCode, setPwdVerificationCode] = useState('');
+  const [passwordModalError, setPasswordModalError] = useState<string | null>(null);
   const [creatorStatus, setCreatorStatus] = useState<{ hasCreatorProfile: boolean; hasApplication: boolean; status?: string } | null>(null);
   const [uploadingPicture, setUploadingPicture] = useState(false);
   const [cloudinaryConfig, setCloudinaryConfig] = useState<{ cloudName: string; apiKey: string; uploadPreset: string } | null>(null);
@@ -258,22 +269,27 @@ export default function Profile() {
     }
   };
 
-  const changeEmail = async () => {
-    // Clear any previous errors
+  const resetEmailModal = () => {
+    setShowChangeEmailModal(false);
+    setEmailModalStep('request');
+    setNewEmail('');
+    setCurrentPassword('');
+    setPasswordVisible(false);
+    setEmailVerificationCode('');
     setEmailModalError(null);
-    
+  };
+
+  const requestEmailChangeCode = async () => {
+    setEmailModalError(null);
     if (!user || !newEmail.trim() || !currentPassword.trim()) {
       setEmailModalError('Please fill in all fields');
       return;
     }
-
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newEmail.trim())) {
       setEmailModalError('Please enter a valid email address');
       return;
     }
-
     if (newEmail.trim().toLowerCase() === user.email?.toLowerCase()) {
       setEmailModalError('New email must be different from your current email');
       return;
@@ -281,108 +297,132 @@ export default function Profile() {
 
     setSaving('email');
     try {
-      // Step 1: Verify password first
-      const passwordResponse = await fetch('/api/verify-password', {
+      const res = await fetch(`/api/v1/user/${user.id}/email/request-change`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ password: currentPassword }),
-        credentials: 'include'
-      });
-
-      if (!passwordResponse.ok) {
-        setEmailModalError('Unable to verify password. Please try again.');
-        setSaving(null);
-        return;
-      }
-
-      const passwordData = await passwordResponse.json();
-      if (!passwordData.valid) {
-        setEmailModalError('Current password is incorrect. Please try again.');
-        setSaving(null);
-        return;
-      }
-
-      // Step 2: Check if email is already in use
-      const emailCheckResponse = await fetch('/api/check-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: newEmail.trim() }),
-        credentials: 'include'
-      });
-
-      if (!emailCheckResponse.ok) {
-        setEmailModalError('Unable to check email availability. Please try again.');
-        setSaving(null);
-        return;
-      }
-
-      const emailCheckData = await emailCheckResponse.json();
-      if (!emailCheckData.available || emailCheckData.inUse) {
-        setEmailModalError('This email address is already in use by another account. Please use a different email address.');
-        setSaving(null);
-        return;
-      }
-
-      // Step 3: If password is correct and email is available, proceed with the update
-      const params = new URLSearchParams();
-      params.append('action', 'changeEmail');
-      params.append('userID', user.id);
-      params.append('accountEmail', user.email || ''); // Current email (like the curl shows)
-      params.append('newEmail', newEmail.trim());
-      params.append('currentPassword', currentPassword);
-      params.append('page', '/profile');
-
-      const response = await fetch('/manageAccount', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: params.toString(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newEmail: newEmail.trim(), currentPassword }),
         credentials: 'include',
-        redirect: 'follow' // Follow redirects
       });
-
-      // The backend redirects on both success and error, so we need to check if the email actually changed
-      // by refreshing user data after a short delay to allow the backend to process
-      await new Promise(resolve => setTimeout(resolve, 300)); // Small delay for backend processing
-      
-      // Refresh user data to check if email was actually updated
-      const userResponse = await fetch('/api/user/current', {
-        credentials: 'include'
-      });
-      
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        if (userData.user) {
-          const emailWasUpdated = userData.user.email?.toLowerCase() === newEmail.trim().toLowerCase();
-          
-          if (emailWasUpdated) {
-            // Success - email was updated
-            setUser(userData.user);
-            setShowChangeEmailModal(false);
-            setNewEmail('');
-            setCurrentPassword('');
-            setPasswordVisible(false);
-            setEmailModalError(null);
-            showMessage('success', 'Email address updated successfully');
-          } else {
-            // Email wasn't updated - this shouldn't happen since we validated above
-            // But just in case, show a generic error
-            setEmailModalError('Failed to update email address. Please try again.');
-          }
-        } else {
-          setEmailModalError('Failed to verify email update. Please try again.');
-        }
+      if (res.ok) {
+        setEmailModalStep('confirm');
       } else {
-        setEmailModalError('There was an error changing your email. Please try again.');
+        const data = await res.json().catch(() => ({}));
+        setEmailModalError(data.error || 'Failed to send verification code. Please try again.');
       }
-    } catch (error) {
-      console.error('Error changing email:', error);
-      setEmailModalError('An error occurred while changing your email. Please try again.');
+    } catch (err) {
+      console.error('Error requesting email change:', err);
+      setEmailModalError('An error occurred. Please try again.');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const confirmEmailChange = async () => {
+    setEmailModalError(null);
+    if (!user || !emailVerificationCode.trim()) {
+      setEmailModalError('Enter the code we sent to your current email');
+      return;
+    }
+    setSaving('email');
+    try {
+      const res = await fetch(`/api/v1/user/${user.id}/email`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: emailVerificationCode.trim() }),
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const userResp = await fetch('/api/user/current', { credentials: 'include' });
+        if (userResp.ok) {
+          const data = await userResp.json();
+          if (data.user) setUser(data.user);
+        }
+        resetEmailModal();
+        showMessage('success', 'Email address updated successfully');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setEmailModalError(data.error || 'Failed to verify code. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error confirming email change:', err);
+      setEmailModalError('An error occurred. Please try again.');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const resetPasswordModal = () => {
+    setShowChangePasswordModal(false);
+    setPasswordModalStep('request');
+    setPwdCurrentPassword('');
+    setPwdCurrentPasswordVisible(false);
+    setPwdNewPassword('');
+    setPwdNewPasswordVisible(false);
+    setPwdConfirmNewPassword('');
+    setPwdVerificationCode('');
+    setPasswordModalError(null);
+  };
+
+  const requestPasswordChangeCode = async () => {
+    setPasswordModalError(null);
+    if (!user || !pwdCurrentPassword.trim()) {
+      setPasswordModalError('Enter your current password');
+      return;
+    }
+    setSaving('password');
+    try {
+      const res = await fetch(`/api/v1/user/${user.id}/password/request-change`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword: pwdCurrentPassword }),
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setPasswordModalStep('confirm');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setPasswordModalError(data.error || 'Failed to send verification code. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error requesting password change:', err);
+      setPasswordModalError('An error occurred. Please try again.');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const confirmPasswordChange = async () => {
+    setPasswordModalError(null);
+    if (!user || !pwdVerificationCode.trim() || !pwdNewPassword) {
+      setPasswordModalError('Complete all fields to continue');
+      return;
+    }
+    if (pwdNewPassword.length < 8) {
+      setPasswordModalError('New password must be at least 8 characters');
+      return;
+    }
+    if (pwdNewPassword !== pwdConfirmNewPassword) {
+      setPasswordModalError('Passwords do not match');
+      return;
+    }
+    setSaving('password');
+    try {
+      const res = await fetch(`/api/v1/user/${user.id}/password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: pwdVerificationCode.trim(), newPassword: pwdNewPassword }),
+        credentials: 'include',
+      });
+      if (res.ok) {
+        resetPasswordModal();
+        showMessage('success', 'Password updated successfully');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setPasswordModalError(data.error || 'Failed to update password. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error confirming password change:', err);
+      setPasswordModalError('An error occurred. Please try again.');
     } finally {
       setSaving(null);
     }
@@ -1569,10 +1609,13 @@ export default function Profile() {
                 </div>
                 <button
                   onClick={() => {
-                    setShowChangeEmailModal(true);
+                    setEmailModalStep('request');
                     setNewEmail('');
                     setCurrentPassword('');
                     setPasswordVisible(false);
+                    setEmailVerificationCode('');
+                    setEmailModalError(null);
+                    setShowChangeEmailModal(true);
                   }}
                   style={{
                     padding: '0.75rem 1.5rem',
@@ -1644,7 +1687,17 @@ export default function Profile() {
                   </div>
                 </div>
                 <button
-                  onClick={() => window.location.href = '/forgot-password'}
+                  onClick={() => {
+                    setPasswordModalStep('request');
+                    setPwdCurrentPassword('');
+                    setPwdCurrentPasswordVisible(false);
+                    setPwdNewPassword('');
+                    setPwdNewPasswordVisible(false);
+                    setPwdConfirmNewPassword('');
+                    setPwdVerificationCode('');
+                    setPasswordModalError(null);
+                    setShowChangePasswordModal(true);
+                  }}
                   style={{
                     padding: '0.75rem 1.5rem',
                     backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -2071,12 +2124,7 @@ export default function Profile() {
               }}
             >
               <button
-                onClick={() => {
-                  setShowChangeEmailModal(false);
-                  setNewEmail('');
-                  setCurrentPassword('');
-                  setPasswordVisible(false);
-                }}
+                onClick={resetEmailModal}
                 style={{
                   position: 'absolute',
                   top: '1rem',
@@ -2114,7 +2162,7 @@ export default function Profile() {
                 marginBottom: '0.5rem',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
               }}>
-                Change Email Address
+                {emailModalStep === 'request' ? 'Change Email Address' : 'Verify Email Change'}
               </h3>
               <p style={{
                 color: 'rgba(255, 255, 255, 0.7)',
@@ -2123,10 +2171,11 @@ export default function Profile() {
                 lineHeight: '1.6',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
               }}>
-                Enter your new email address and current password to make this change.
+                {emailModalStep === 'request'
+                  ? 'For your security, we will email a 6-digit code to your current address before making this change.'
+                  : `We sent a 6-digit code to ${user.email}. Enter it below to apply the change.`}
               </p>
-              
-              {/* Error Message */}
+
               {emailModalError && (
                 <div style={{
                   marginBottom: '1.5rem',
@@ -2142,122 +2191,206 @@ export default function Profile() {
                   {emailModalError}
                 </div>
               )}
-              
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{
-                  display: 'block',
-                  color: 'rgba(255, 255, 255, 0.8)',
-                  marginBottom: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-                }}>
-                  Current Email
-                </label>
-                <input
-                  type="email"
-                  value={user.email || ''}
-                  readOnly
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '0.5rem',
-                    color: 'rgba(255, 255, 255, 0.6)',
-                    fontSize: '0.875rem',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                    cursor: 'not-allowed'
-                  }}
-                />
-              </div>
 
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{
-                  display: 'block',
-                  color: 'rgba(255, 255, 255, 0.8)',
-                  marginBottom: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-                }}>
-                  New Email
-                </label>
-                <input
-                  type="email"
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  placeholder="Enter new email address"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '0.5rem',
-                    color: '#ffffff',
-                    fontSize: '0.875rem',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{
-                  display: 'block',
-                  color: 'rgba(255, 255, 255, 0.8)',
-                  marginBottom: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-                }}>
-                  Current Password
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={passwordVisible ? 'text' : 'password'}
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter your current password"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      paddingRight: '3rem',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '0.5rem',
-                      color: '#ffffff',
+              {emailModalStep === 'request' ? (
+                <>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{
+                      display: 'block',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      marginBottom: '0.5rem',
                       fontSize: '0.875rem',
+                      fontWeight: '500',
                       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setPasswordVisible(!passwordVisible)}
-                    style={{
-                      position: 'absolute',
-                      right: '0.75rem',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'transparent',
-                      border: 'none',
-                      color: passwordVisible ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.4)',
-                      cursor: 'pointer',
-                      padding: '0.25rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'color 0.2s'
-                    }}
-                    title={passwordVisible ? 'Hide password' : 'Show password'}
-                  >
-                    {passwordVisible ? (
-                      <EyeSlashIcon style={{ width: '20px', height: '20px' }} />
-                    ) : (
-                      <EyeIcon style={{ width: '20px', height: '20px' }} />
-                    )}
-                  </button>
-                </div>
-              </div>
+                    }}>
+                      Current Email
+                    </label>
+                    <input
+                      type="email"
+                      value={user.email || ''}
+                      readOnly
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '0.5rem',
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        fontSize: '0.875rem',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                        cursor: 'not-allowed'
+                      }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{
+                      display: 'block',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                    }}>
+                      New Email
+                    </label>
+                    <input
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder="Enter new email address"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.5rem',
+                        color: '#ffffff',
+                        fontSize: '0.875rem',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                      }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{
+                      display: 'block',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                    }}>
+                      Current Password
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={passwordVisible ? 'text' : 'password'}
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="Enter your current password"
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          paddingRight: '3rem',
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '0.5rem',
+                          color: '#ffffff',
+                          fontSize: '0.875rem',
+                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPasswordVisible(!passwordVisible)}
+                        style={{
+                          position: 'absolute',
+                          right: '0.75rem',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          border: 'none',
+                          color: passwordVisible ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.4)',
+                          cursor: 'pointer',
+                          padding: '0.25rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'color 0.2s'
+                        }}
+                        title={passwordVisible ? 'Hide password' : 'Show password'}
+                      >
+                        {passwordVisible ? (
+                          <EyeSlashIcon style={{ width: '20px', height: '20px' }} />
+                        ) : (
+                          <EyeIcon style={{ width: '20px', height: '20px' }} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{
+                      display: 'block',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                    }}>
+                      Changing email to
+                    </label>
+                    <input
+                      type="email"
+                      value={newEmail}
+                      readOnly
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '0.5rem',
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        fontSize: '0.875rem',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                        cursor: 'not-allowed'
+                      }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{
+                      display: 'block',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                    }}>
+                      Verification Code
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      value={emailVerificationCode}
+                      onChange={(e) => setEmailVerificationCode(e.target.value.replace(/\D/g, ''))}
+                      placeholder="000000"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.5rem',
+                        color: '#ffffff',
+                        fontSize: '1.25rem',
+                        letterSpacing: '0.5em',
+                        textAlign: 'center',
+                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={requestEmailChangeCode}
+                      disabled={saving === 'email'}
+                      style={{
+                        marginTop: '0.75rem',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'rgba(56, 189, 248, 0.9)',
+                        fontSize: '0.8125rem',
+                        cursor: saving === 'email' ? 'not-allowed' : 'pointer',
+                        padding: 0,
+                        textDecoration: 'underline',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                      }}
+                    >
+                      Resend code
+                    </button>
+                  </div>
+                </>
+              )}
 
               <div style={{
                 display: 'flex',
@@ -2266,13 +2399,7 @@ export default function Profile() {
                 flexWrap: 'wrap'
               }}>
                 <button
-                  onClick={() => {
-                    setShowChangeEmailModal(false);
-                    setNewEmail('');
-                    setCurrentPassword('');
-                    setPasswordVisible(false);
-                    setEmailModalError(null);
-                  }}
+                  onClick={resetEmailModal}
                   disabled={saving === 'email'}
                   style={{
                     padding: '0.75rem 1.5rem',
@@ -2288,40 +2415,469 @@ export default function Profile() {
                 >
                   Cancel
                 </button>
+                {emailModalStep === 'request' ? (
+                  <button
+                    onClick={requestEmailChangeCode}
+                    disabled={saving === 'email' || !newEmail.trim() || !currentPassword.trim()}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      backgroundColor: saving === 'email' || !newEmail.trim() || !currentPassword.trim()
+                        ? 'rgba(34, 197, 94, 0.4)'
+                        : 'rgba(34, 197, 94, 0.6)',
+                      border: `1px solid ${saving === 'email' || !newEmail.trim() || !currentPassword.trim()
+                        ? 'rgba(34, 197, 94, 0.4)'
+                        : 'rgba(34, 197, 94, 0.8)'}`,
+                      borderRadius: '0.5rem',
+                      color: '#ffffff',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: saving === 'email' || !newEmail.trim() || !currentPassword.trim() ? 'not-allowed' : 'pointer',
+                      opacity: saving === 'email' || !newEmail.trim() || !currentPassword.trim() ? 0.6 : 1,
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    {saving === 'email' && (
+                      <ArrowPathIcon style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                    )}
+                    {saving === 'email' ? 'Sending...' : 'Send Code'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={confirmEmailChange}
+                    disabled={saving === 'email' || emailVerificationCode.length !== 6}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      backgroundColor: saving === 'email' || emailVerificationCode.length !== 6
+                        ? 'rgba(34, 197, 94, 0.4)'
+                        : 'rgba(34, 197, 94, 0.6)',
+                      border: `1px solid ${saving === 'email' || emailVerificationCode.length !== 6
+                        ? 'rgba(34, 197, 94, 0.4)'
+                        : 'rgba(34, 197, 94, 0.8)'}`,
+                      borderRadius: '0.5rem',
+                      color: '#ffffff',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: saving === 'email' || emailVerificationCode.length !== 6 ? 'not-allowed' : 'pointer',
+                      opacity: saving === 'email' || emailVerificationCode.length !== 6 ? 0.6 : 1,
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    {saving === 'email' && (
+                      <ArrowPathIcon style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                    )}
+                    {saving === 'email' ? 'Verifying...' : 'Confirm Change'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Change Password Modal */}
+        {showChangePasswordModal && (
+          <div
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                resetPasswordModal();
+              }
+            }}
+            onMouseDown={(e) => {
+              if (e.target !== e.currentTarget) {
+                e.stopPropagation();
+              }
+            }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.75)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 10000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '1rem'
+            }}
+          >
+            <div
+              onMouseDown={(e) => {
+                const target = e.target as HTMLElement;
+                if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+                  e.stopPropagation();
+                }
+              }}
+              onClick={(e) => {
+                const target = e.target as HTMLElement;
+                if (e.target === e.currentTarget || (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && target.tagName !== 'BUTTON')) {
+                  e.stopPropagation();
+                }
+              }}
+              style={{
+                backgroundColor: 'rgba(15, 15, 20, 0.98)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '1rem',
+                padding: '2rem',
+                maxWidth: '500px',
+                width: '100%',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)',
+                position: 'relative'
+              }}
+            >
+              <button
+                onClick={resetPasswordModal}
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  cursor: 'pointer',
+                  fontSize: '1.5rem',
+                  lineHeight: '1',
+                  padding: '0.25rem',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#ffffff';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                ×
+              </button>
+              <h3 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                color: '#ffffff',
+                marginBottom: '0.5rem',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+              }}>
+                {passwordModalStep === 'request' ? 'Change Password' : 'Verify Password Change'}
+              </h3>
+              <p style={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                marginBottom: '1.5rem',
+                fontSize: '0.875rem',
+                lineHeight: '1.6',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+              }}>
+                {passwordModalStep === 'request'
+                  ? 'For your security, we will email a 6-digit code to your account address before changing your password.'
+                  : `We sent a 6-digit code to ${user.email}. Enter it along with your new password to apply the change.`}
+              </p>
+
+              {passwordModalError && (
+                <div style={{
+                  marginBottom: '1.5rem',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '0.5rem',
+                  color: '#ef4444',
+                  fontSize: '0.875rem',
+                  lineHeight: '1.5',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                }}>
+                  {passwordModalError}
+                </div>
+              )}
+
+              {passwordModalStep === 'request' ? (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{
+                    display: 'block',
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    marginBottom: '0.5rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                  }}>
+                    Current Password
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={pwdCurrentPasswordVisible ? 'text' : 'password'}
+                      value={pwdCurrentPassword}
+                      onChange={(e) => setPwdCurrentPassword(e.target.value)}
+                      placeholder="Enter your current password"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        paddingRight: '3rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.5rem',
+                        color: '#ffffff',
+                        fontSize: '0.875rem',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPwdCurrentPasswordVisible(!pwdCurrentPasswordVisible)}
+                      style={{
+                        position: 'absolute',
+                        right: '0.75rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'transparent',
+                        border: 'none',
+                        color: pwdCurrentPasswordVisible ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.4)',
+                        cursor: 'pointer',
+                        padding: '0.25rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'color 0.2s'
+                      }}
+                      title={pwdCurrentPasswordVisible ? 'Hide password' : 'Show password'}
+                    >
+                      {pwdCurrentPasswordVisible ? (
+                        <EyeSlashIcon style={{ width: '20px', height: '20px' }} />
+                      ) : (
+                        <EyeIcon style={{ width: '20px', height: '20px' }} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{
+                      display: 'block',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                    }}>
+                      Verification Code
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      value={pwdVerificationCode}
+                      onChange={(e) => setPwdVerificationCode(e.target.value.replace(/\D/g, ''))}
+                      placeholder="000000"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.5rem',
+                        color: '#ffffff',
+                        fontSize: '1.25rem',
+                        letterSpacing: '0.5em',
+                        textAlign: 'center',
+                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={requestPasswordChangeCode}
+                      disabled={saving === 'password'}
+                      style={{
+                        marginTop: '0.75rem',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'rgba(56, 189, 248, 0.9)',
+                        fontSize: '0.8125rem',
+                        cursor: saving === 'password' ? 'not-allowed' : 'pointer',
+                        padding: 0,
+                        textDecoration: 'underline',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                      }}
+                    >
+                      Resend code
+                    </button>
+                  </div>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{
+                      display: 'block',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                    }}>
+                      New Password
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={pwdNewPasswordVisible ? 'text' : 'password'}
+                        value={pwdNewPassword}
+                        onChange={(e) => setPwdNewPassword(e.target.value)}
+                        placeholder="At least 8 characters"
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          paddingRight: '3rem',
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '0.5rem',
+                          color: '#ffffff',
+                          fontSize: '0.875rem',
+                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPwdNewPasswordVisible(!pwdNewPasswordVisible)}
+                        style={{
+                          position: 'absolute',
+                          right: '0.75rem',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          border: 'none',
+                          color: pwdNewPasswordVisible ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.4)',
+                          cursor: 'pointer',
+                          padding: '0.25rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'color 0.2s'
+                        }}
+                        title={pwdNewPasswordVisible ? 'Hide password' : 'Show password'}
+                      >
+                        {pwdNewPasswordVisible ? (
+                          <EyeSlashIcon style={{ width: '20px', height: '20px' }} />
+                        ) : (
+                          <EyeIcon style={{ width: '20px', height: '20px' }} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{
+                      display: 'block',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                    }}>
+                      Confirm New Password
+                    </label>
+                    <input
+                      type={pwdNewPasswordVisible ? 'text' : 'password'}
+                      value={pwdConfirmNewPassword}
+                      onChange={(e) => setPwdConfirmNewPassword(e.target.value)}
+                      placeholder="Re-enter new password"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.5rem',
+                        color: '#ffffff',
+                        fontSize: '0.875rem',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div style={{
+                display: 'flex',
+                gap: '1rem',
+                justifyContent: 'flex-end',
+                flexWrap: 'wrap'
+              }}>
                 <button
-                  onClick={changeEmail}
-                  disabled={saving === 'email' || !newEmail.trim() || !currentPassword.trim()}
+                  onClick={resetPasswordModal}
+                  disabled={saving === 'password'}
                   style={{
                     padding: '0.75rem 1.5rem',
-                    backgroundColor: saving === 'email' || !newEmail.trim() || !currentPassword.trim() 
-                      ? 'rgba(34, 197, 94, 0.4)' 
-                      : 'rgba(34, 197, 94, 0.6)',
-                    border: `1px solid ${saving === 'email' || !newEmail.trim() || !currentPassword.trim() 
-                      ? 'rgba(34, 197, 94, 0.4)' 
-                      : 'rgba(34, 197, 94, 0.8)'}`,
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     borderRadius: '0.5rem',
                     color: '#ffffff',
                     fontSize: '0.875rem',
                     fontWeight: '600',
-                    cursor: saving === 'email' || !newEmail.trim() || !currentPassword.trim() ? 'not-allowed' : 'pointer',
-                    opacity: saving === 'email' || !newEmail.trim() || !currentPassword.trim() ? 0.6 : 1,
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
+                    cursor: saving === 'password' ? 'not-allowed' : 'pointer',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
                   }}
                 >
-                  {saving === 'email' && (
-                    <ArrowPathIcon 
-                      style={{ 
-                        width: '16px', 
-                        height: '16px',
-                        animation: 'spin 1s linear infinite'
-                      }} 
-                    />
-                  )}
-                  {saving === 'email' ? 'Changing...' : 'Change Email'}
+                  Cancel
                 </button>
+                {passwordModalStep === 'request' ? (
+                  <button
+                    onClick={requestPasswordChangeCode}
+                    disabled={saving === 'password' || !pwdCurrentPassword.trim()}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      backgroundColor: saving === 'password' || !pwdCurrentPassword.trim()
+                        ? 'rgba(34, 197, 94, 0.4)'
+                        : 'rgba(34, 197, 94, 0.6)',
+                      border: `1px solid ${saving === 'password' || !pwdCurrentPassword.trim()
+                        ? 'rgba(34, 197, 94, 0.4)'
+                        : 'rgba(34, 197, 94, 0.8)'}`,
+                      borderRadius: '0.5rem',
+                      color: '#ffffff',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: saving === 'password' || !pwdCurrentPassword.trim() ? 'not-allowed' : 'pointer',
+                      opacity: saving === 'password' || !pwdCurrentPassword.trim() ? 0.6 : 1,
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    {saving === 'password' && (
+                      <ArrowPathIcon style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                    )}
+                    {saving === 'password' ? 'Sending...' : 'Send Code'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={confirmPasswordChange}
+                    disabled={saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 8 || pwdNewPassword !== pwdConfirmNewPassword}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      backgroundColor: saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 8 || pwdNewPassword !== pwdConfirmNewPassword
+                        ? 'rgba(34, 197, 94, 0.4)'
+                        : 'rgba(34, 197, 94, 0.6)',
+                      border: `1px solid ${saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 8 || pwdNewPassword !== pwdConfirmNewPassword
+                        ? 'rgba(34, 197, 94, 0.4)'
+                        : 'rgba(34, 197, 94, 0.8)'}`,
+                      borderRadius: '0.5rem',
+                      color: '#ffffff',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 8 || pwdNewPassword !== pwdConfirmNewPassword ? 'not-allowed' : 'pointer',
+                      opacity: saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 8 || pwdNewPassword !== pwdConfirmNewPassword ? 0.6 : 1,
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    {saving === 'password' && (
+                      <ArrowPathIcon style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                    )}
+                    {saving === 'password' ? 'Updating...' : 'Confirm Change'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
