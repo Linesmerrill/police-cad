@@ -1659,13 +1659,11 @@
     var icon = isArrest ? 'fa-handcuffs' : (type === 'Warning' ? 'fa-triangle-exclamation' : 'fa-file-lines');
 
     var recordId = r._id || '';
-    // Legacy records pre-date the departmentId field; on the dept-dashboard
-    // we attribute them to the current department so its toggle applies.
-    var gateRecord = r;
-    if (!(r.departmentId || r.departmentID)) {
-      gateRecord = $.extend({}, r, { departmentId: cfg().departmentId || '' });
-    }
-    var canDelete = canDeleteRecord(gateRecord);
+    // The toggle that gates this UI is the *dashboard's* department, not the
+    // record's original issuer. From a civilian's perspective on Civvies23,
+    // Civvies23's policy decides whether they can delete records here, even
+    // if the citation was issued by Police Dept.
+    var canDelete = canDeleteRecord({ departmentId: cfg().departmentId || '' });
     var deleteHtml = canDelete
       ? ('<button class="dd-civ-btn dd-civ-btn-danger dd-civ-btn-small dd-rec-delete" ' +
           'data-rec-id="' + esc(recordId) + '" data-rec-type="' + (isArrest ? 'arrest' : 'citation') + '" ' +
