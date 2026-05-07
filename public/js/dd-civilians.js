@@ -17,6 +17,36 @@
   var toast = function (m, t) { if (window.ddToast) window.ddToast(m, t); };
   var fmtDate = function (d) { return window.formatDate ? window.formatDate(d) : d || 'N/A'; };
 
+  // Detect the API's "record_deletion_restricted" 403 response so we can show
+  // the friendly explanation instead of a generic "Failed to delete" toast.
+  // Mirrors the helper in name-database.js, inlined here because that file
+  // isn't loaded on the department dashboard.
+  function isRecordDeletionRestrictedError(xhr) {
+    if (!xhr || xhr.status !== 403) return false;
+    var body = xhr.responseJSON;
+    if (!body && typeof xhr.responseText === 'string') {
+      try { body = JSON.parse(xhr.responseText); } catch (e) { body = null; }
+    }
+    if (!body) return false;
+    return body.error === 'record_deletion_restricted'
+        || body.code === 'record_deletion_restricted'
+        || body.errorCode === 'record_deletion_restricted';
+  }
+  function showRecordDeletionRestrictedModal() {
+    if (window.ddModal) {
+      window.ddModal({
+        type: 'warning',
+        icon: 'fa-lock',
+        title: 'Record deletion is restricted',
+        message: "This department doesn't allow civilians to delete their own citations, written warnings, or arrest reports.",
+        detail: "Contact a community admin or a user with the 'manage records' role permission to remove this record.",
+        buttons: [{ label: 'Got it', class: 'dd-modal-btn-primary' }],
+      });
+    } else {
+      toast('Record deletion is restricted for this department', 'warning');
+    }
+  }
+
   // Convert any date value (string, timestamp, ISO) to YYYY-MM-DD for <input type="date">
   function toDateInputVal(val) {
     if (!val) return '';
@@ -392,6 +422,7 @@
     var existing = (c.communityData || {});
     if (existing.civilianApprovalSystemEnabled !== undefined) {
       approvalSystemEnabled = !!(existing.civilianApprovalSystemEnabled);
+      cacheRecordDeletionContext(existing);
       loadCivilians();
       return;
     }
@@ -404,6 +435,7 @@
         success: function (data) {
           var comm = data.community || data || {};
           approvalSystemEnabled = !!(comm.civilianApprovalSystemEnabled);
+          cacheRecordDeletionContext(comm);
         },
         error: function () { approvalSystemEnabled = false; },
         complete: function () { loadCivilians(); }
@@ -412,6 +444,16 @@
       loadCivilians();
     }
   };
+
+  // Cache the per-department restrictCivilianRecordDeletion list plus owner +
+  // roles so window.canDeleteCivilianRecords (name-database.js) can decide
+  // per-record whether to show the delete button.
+  function cacheRecordDeletionContext(comm) {
+    if (!comm) return;
+    window.communityDepartmentsCached = comm.departments || [];
+    window.communityOwnerIDCached = comm.ownerID || '';
+    window.communityRolesCached = comm.roles || [];
+  }
 
   /* ───────────────────────────────────────────
      Data Loading
@@ -1575,12 +1617,16 @@
     var icon = isArrest ? 'fa-handcuffs' : (type === 'Warning' ? 'fa-triangle-exclamation' : 'fa-file-lines');
 
     var recordId = r._id || '';
-    var deleteHtml = '' +
-      '<button class="dd-civ-btn dd-civ-btn-danger dd-civ-btn-small dd-rec-delete" ' +
-        'data-rec-id="' + esc(recordId) + '" data-rec-type="' + (isArrest ? 'arrest' : 'citation') + '" ' +
-        'title="Delete" style="padding:0.25rem 0.4rem;font-size:0.6875rem;">' +
-        '<i class="fa fa-trash"></i>' +
-      '</button>';
+    var canDelete = (typeof window.canDeleteCivilianRecords === 'function')
+      ? window.canDeleteCivilianRecords(r)
+      : true;
+    var deleteHtml = canDelete
+      ? ('<button class="dd-civ-btn dd-civ-btn-danger dd-civ-btn-small dd-rec-delete" ' +
+          'data-rec-id="' + esc(recordId) + '" data-rec-type="' + (isArrest ? 'arrest' : 'citation') + '" ' +
+          'title="Delete" style="padding:0.25rem 0.4rem;font-size:0.6875rem;">' +
+          '<i class="fa fa-trash"></i>' +
+        '</button>')
+      : '';
 
     return '' +
       '<div class="dd-civ-record" style="' + cardOpacity + '">' +
@@ -1647,7 +1693,13 @@
               renderRecordsContent($body);
             }
           },
-          error: function () { toast('Failed to delete record', 'error'); }
+          error: function (xhr) {
+            if (isRecordDeletionRestrictedError(xhr)) {
+              showRecordDeletionRestrictedModal();
+              return;
+            }
+            toast('Failed to delete record', 'error');
+          }
         });
       };
       if (window.ddModal) {

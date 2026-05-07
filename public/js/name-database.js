@@ -4,18 +4,36 @@ function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-// Civilian record-deletion gate.
-// Returns true when the current user is allowed to delete civilian-owned
-// records (citations, written warnings, arrest reports) in the active
-// community. Mirrors the server-side check shape:
-//   !restrictCivilianRecordDeletion
-//   || isCommunityOwner
-//   || hasPermission('administrator')
-//   || hasPermission('manage records')
-// Note: 'manage community settings' does NOT bypass this gate.
-window.canDeleteCivilianRecords = function () {
-  // Legacy default: no restriction → anyone can delete.
-  if (!window.communityRestrictCivilianRecordDeletion) return true;
+// Civilian record-deletion gate (per-issuing-department).
+// Returns true when the current user is allowed to delete the given record
+// (citation / written warning / arrest report). Mirrors the server-side check:
+//   1. If the issuing department's restrictCivilianRecordDeletion is unset or
+//      false → allow (legacy default; preserves prior behavior).
+//   2. Otherwise allow only when the user is the community owner, or holds a
+//      role with "administrator" or "manage records" enabled.
+// 'manage community settings' does NOT bypass this gate.
+//
+// Args:
+//   record: object with at least { departmentId } — pass the criminal-history
+//           item or arrest report. If departmentId is missing (legacy data),
+//           we fall through to the legacy "allow" default.
+window.canDeleteCivilianRecords = function (record) {
+  var deptId = record && (record.departmentId || record.departmentID);
+  var deptList = window.communityDepartmentsCached || [];
+  // Find the issuing department's toggle.
+  var restricted = false;
+  if (deptId) {
+    for (var i = 0; i < deptList.length; i++) {
+      var d = deptList[i];
+      if (!d) continue;
+      var dId = d._id || d.id;
+      if (dId === deptId) {
+        restricted = d.restrictCivilianRecordDeletion === true;
+        break;
+      }
+    }
+  }
+  if (!restricted) return true;
 
   var user = window.dbUser;
   var uid = user && user._id;
@@ -24,13 +42,13 @@ window.canDeleteCivilianRecords = function () {
   if (window.communityOwnerIDCached && window.communityOwnerIDCached === uid) return true;
 
   var roles = window.communityRolesCached || [];
-  for (var i = 0; i < roles.length; i++) {
-    var role = roles[i];
+  for (var r = 0; r < roles.length; r++) {
+    var role = roles[r];
     if (!role || !role.members || role.members.indexOf(uid) === -1) continue;
     var perms = role.permissions || [];
-    for (var j = 0; j < perms.length; j++) {
-      var p = perms[j];
-      if (p && p.enabled === true && (p.name === 'administrator' || p.name === 'manage records')) {
+    for (var p = 0; p < perms.length; p++) {
+      var perm = perms[p];
+      if (perm && perm.enabled === true && (perm.name === 'administrator' || perm.name === 'manage records')) {
         return true;
       }
     }
@@ -399,28 +417,32 @@ function loadTicketsAndWarnings(index) {
     civID: index,
   };
   $.get("/tickets", parameters, function (data) {
-    var canDelete = (typeof window.canDeleteCivilianRecords === "function")
-      ? window.canDeleteCivilianRecords()
-      : true;
+    var canDeleteFor = function (rec) {
+      return (typeof window.canDeleteCivilianRecords === "function")
+        ? window.canDeleteCivilianRecords(rec)
+        : true;
+    };
     data.forEach(function (e) {
-      if (e.ticket.isWarning) {
+      var rec = e.ticket || {};
+      var canDelete = canDeleteFor(rec);
+      if (rec.isWarning) {
         var warningDeleteCell = canDelete
-          ? `<td class="text-align-center"><a class='clickable' onclick="deleteWarning('${e._id}', '${e.ticket.civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
+          ? `<td class="text-align-center"><a class='clickable' onclick="deleteWarning('${e._id}', '${rec.civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
           : `<td class="text-align-center"></td>`;
         var newRowContent = `<tr id="${e._id}">
-          <td>${e.ticket.date}</td>
-          <td>${e.ticket.violation}</td>
+          <td>${rec.date}</td>
+          <td>${rec.violation}</td>
           ${warningDeleteCell}
           </tr>`;
         $("#warningTable tbody").append(newRowContent);
       } else {
         var citationDeleteCell = canDelete
-          ? `<td class="text-align-center"><a class='clickable' onclick="deleteCitation('${e._id}', '${e.ticket.civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
+          ? `<td class="text-align-center"><a class='clickable' onclick="deleteCitation('${e._id}', '${rec.civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
           : `<td class="text-align-center"></td>`;
         var newRowContent = `<tr id="${e._id}">
-            <td>${e.ticket.date}</td>
-            <td>${e.ticket.violation}</td>
-            <td>${e.ticket.amount}</td>
+            <td>${rec.date}</td>
+            <td>${rec.violation}</td>
+            <td>${rec.amount}</td>
             ${citationDeleteCell}
             </tr>`;
         $("#citationTable tbody").append(newRowContent);
@@ -435,12 +457,13 @@ function loadArrests(index) {
     civID: index,
   };
   $.get("/arrests", parameters, function (data) {
-    var canDelete = (typeof window.canDeleteCivilianRecords === "function")
-      ? window.canDeleteCivilianRecords()
-      : true;
     data.forEach(function (e) {
+      var ar = e.arrestReport || {};
+      var canDelete = (typeof window.canDeleteCivilianRecords === "function")
+        ? window.canDeleteCivilianRecords(ar)
+        : true;
       var arrestDeleteCell = canDelete
-        ? `<td class="text-align-center"><a class='clickable' onclick="deleteArrest('${e._id}', '${e.arrestReport.accusedID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
+        ? `<td class="text-align-center"><a class='clickable' onclick="deleteArrest('${e._id}', '${ar.accusedID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
         : `<td class="text-align-center"></td>`;
       var newRowContent = `<tr id="${e._id}">
           <td>${e.arrestReport.date}</td>

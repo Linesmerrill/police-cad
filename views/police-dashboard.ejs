@@ -4802,9 +4802,9 @@ function loadTenCodes() {
       communityData = data;
       tenCodesCache = data?.community?.tenCodes || [];
 
-      // Cache fields used by the civilian record-deletion gate
+      // Cache fields used by the per-record civilian record-deletion gate
       // (read by window.canDeleteCivilianRecords; see name-database.js).
-      window.communityRestrictCivilianRecordDeletion = data?.community?.restrictCivilianRecordDeletion === true;
+      window.communityDepartmentsCached = data?.community?.departments || [];
       window.communityOwnerIDCached = data?.community?.ownerID || '';
       window.communityRolesCached = data?.community?.roles || [];
 

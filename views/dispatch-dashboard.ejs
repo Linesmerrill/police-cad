@@ -5720,9 +5720,10 @@
       communityRoles = commData.community?.roles || [];
       memberDataCache = commData.community?.members || {};
 
-      // Cache the restrictCivilianRecordDeletion flag for the delete-record gate
-      // (read by window.canDeleteCivilianRecords; see name-database.js).
-      window.communityRestrictCivilianRecordDeletion = commData.community?.restrictCivilianRecordDeletion === true;
+      // Cache the per-department restrictCivilianRecordDeletion toggles plus
+      // owner/roles, used by window.canDeleteCivilianRecords (name-database.js)
+      // to gate per-record delete UIs.
+      window.communityDepartmentsCached = commData.community?.departments || [];
       window.communityOwnerIDCached = communityOwnerID;
       window.communityRolesCached = communityRoles;
 
@@ -8408,8 +8409,9 @@
     var socket=io({ transports: ["websocket"] });
     socket.emit('search_citation', data)
     socket.on('load_citation_result', (res) => {
-      var canDelete = (typeof window.canDeleteCivilianRecords === 'function') ? window.canDeleteCivilianRecords() : true;
       res.forEach(citation => {
+      var rec = citation.ticket || {};
+      var canDelete = (typeof window.canDeleteCivilianRecords === 'function') ? window.canDeleteCivilianRecords(rec) : true;
       var deleteCell = canDelete
         ? `<td class="text-align-center"><a class='clickable' onclick="deleteCitation('${citation._id}', '${civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
         : '<td class="text-align-center"></td>';
@@ -8441,8 +8443,9 @@
     var socket=io({ transports: ["websocket"] });
     socket.emit('search_warnings', data)
     socket.on('load_warnings_result', (res) => {
-      var canDelete = (typeof window.canDeleteCivilianRecords === 'function') ? window.canDeleteCivilianRecords() : true;
       res.forEach(citation => {
+      var rec = citation.ticket || {};
+      var canDelete = (typeof window.canDeleteCivilianRecords === 'function') ? window.canDeleteCivilianRecords(rec) : true;
       var deleteCell = canDelete
         ? `<td class="text-align-center"><a class='clickable' onclick="deleteWarning('${citation._id}', '${civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
         : '<td class="text-align-center"></td>';

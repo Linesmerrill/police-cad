@@ -3776,6 +3776,12 @@ $('#dd-loading').hide();
           // Store community data for settings panel (roles, permissions)
           window.ddConfig.communityData = community;
 
+          // Cache fields used by the per-record civilian record-deletion gate
+          // (read by window.canDeleteCivilianRecords; see name-database.js).
+          window.communityDepartmentsCached = community.departments || [];
+          window.communityOwnerIDCached = community.ownerID || '';
+          window.communityRolesCached = community.roles || [];
+
           // Re-render settings component now that permissions are available
           if (window.ddSettingsInit) window.ddSettingsInit();
 
