@@ -47,6 +47,48 @@
     }
   }
 
+  // Per-record civilian record-deletion gate. Mirrors window.canDeleteCivilianRecords
+  // in name-database.js — re-defined here because that script isn't loaded on
+  // the department dashboard. Reads window.communityDepartmentsCached and the
+  // user's roles populated by cacheRecordDeletionContext().
+  function canDeleteRecord(record) {
+    var deptId = record && (record.departmentId || record.departmentID);
+    var deptList = window.communityDepartmentsCached || [];
+    var restricted = false;
+    if (deptId) {
+      for (var i = 0; i < deptList.length; i++) {
+        var d = deptList[i];
+        if (!d) continue;
+        var dId = d._id || d.id;
+        if (dId === deptId) {
+          restricted = d.restrictCivilianRecordDeletion === true;
+          break;
+        }
+      }
+    }
+    if (!restricted) return true;
+
+    var user = window.dbUser || (cfg().dbUser);
+    var uid = user && user._id;
+    if (!uid) return false;
+
+    if (window.communityOwnerIDCached && window.communityOwnerIDCached === uid) return true;
+
+    var roles = window.communityRolesCached || [];
+    for (var r = 0; r < roles.length; r++) {
+      var role = roles[r];
+      if (!role || !role.members || role.members.indexOf(uid) === -1) continue;
+      var perms = role.permissions || [];
+      for (var p = 0; p < perms.length; p++) {
+        var perm = perms[p];
+        if (perm && perm.enabled === true && (perm.name === 'administrator' || perm.name === 'manage records')) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   // Convert any date value (string, timestamp, ISO) to YYYY-MM-DD for <input type="date">
   function toDateInputVal(val) {
     if (!val) return '';
@@ -1623,9 +1665,7 @@
     if (!(r.departmentId || r.departmentID)) {
       gateRecord = $.extend({}, r, { departmentId: cfg().departmentId || '' });
     }
-    var canDelete = (typeof window.canDeleteCivilianRecords === 'function')
-      ? window.canDeleteCivilianRecords(gateRecord)
-      : true;
+    var canDelete = canDeleteRecord(gateRecord);
     var deleteHtml = canDelete
       ? ('<button class="dd-civ-btn dd-civ-btn-danger dd-civ-btn-small dd-rec-delete" ' +
           'data-rec-id="' + esc(recordId) + '" data-rec-type="' + (isArrest ? 'arrest' : 'citation') + '" ' +
