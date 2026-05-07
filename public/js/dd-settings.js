@@ -1181,6 +1181,12 @@
   var allCommunityMembers = [];
   var communityMembersPage = 1;
   var communityMembersLimit = 20;
+  var communityMembersTotal = 0;
+  var communityMembersSearch = '';
+  var communityMembersLoading = false;
+  var communityMembersHasMore = false;
+  var communityMembersRequestId = 0;
+  var communityMembersSearchTimer = null;
 
   function openAddMembersModal() {
     if (!addMembersOverlay) {
@@ -1218,18 +1224,38 @@
     setTimeout(function() { addMembersOverlay.addClass('visible'); }, 10);
     selectedMemberIds = [];
     communityMembersPage = 1;
+    communityMembersTotal = 0;
+    communityMembersSearch = '';
+    communityMembersHasMore = false;
     allCommunityMembers = [];
+    if (communityMembersSearchTimer) { clearTimeout(communityMembersSearchTimer); communityMembersSearchTimer = null; }
     loadCommunityMembers();
 
-    var searchTimer = null;
     addMembersOverlay.find('#dds-add-search').val('').off('input').on('input', function () {
-      var q = $(this).val();
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(function () { filterCommunityMembers(q); }, 250);
+      var q = ($(this).val() || '').trim();
+      if (communityMembersSearchTimer) clearTimeout(communityMembersSearchTimer);
+      communityMembersSearchTimer = setTimeout(function () {
+        communityMembersSearch = q;
+        communityMembersPage = 1;
+        allCommunityMembers = [];
+        $('#dds-add-list').html('<div class="dds-add-loading"><i class="fa fa-spinner fa-spin"></i> Searching...</div>');
+        loadCommunityMembers();
+      }, 300);
     });
 
     addMembersOverlay.find('#dds-add-confirm').off('click').on('click', function () {
       addSelectedMembers();
+    });
+
+    // Infinite scroll on the modal body
+    var $body = addMembersOverlay.find('#dds-add-body');
+    $body.off('scroll').on('scroll', function () {
+      var el = this;
+      if (communityMembersLoading || !communityMembersHasMore) return;
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+        communityMembersPage++;
+        loadCommunityMembers();
+      }
     });
   }
 
@@ -1242,57 +1268,73 @@
 
   function loadCommunityMembers() {
     var c = cfg();
+    var requestId = ++communityMembersRequestId;
+    communityMembersLoading = true;
+
+    var url;
+    if (communityMembersSearch) {
+      url = c.API_URL + '/api/v1/community/' + c.communityId + '/members/search'
+        + '?q=' + encodeURIComponent(communityMembersSearch)
+        + '&page=' + communityMembersPage
+        + '&limit=' + communityMembersLimit;
+    } else {
+      url = c.API_URL + '/api/v1/community/' + c.communityId + '/members'
+        + '?page=' + communityMembersPage
+        + '&limit=' + communityMembersLimit;
+    }
+    if (c.departmentId) {
+      url += '&exclude_dept_id=' + encodeURIComponent(c.departmentId);
+    }
 
     $.ajax({
-      url: c.API_URL + '/api/v2/community/' + c.communityId + '/members?limit=' + communityMembersLimit + '&page=' + communityMembersPage,
+      url: url,
       method: 'GET',
       success: function (res) {
+        if (requestId !== communityMembersRequestId) return; // drop stale
+        communityMembersLoading = false;
         var members = res.members || res.data || [];
+        if (res.pagination && typeof res.pagination.totalCount === 'number') {
+          communityMembersTotal = res.pagination.totalCount;
+        } else if (typeof res.totalUsers === 'number') {
+          communityMembersTotal = res.totalUsers;
+        } else if (typeof res.totalCount === 'number') {
+          communityMembersTotal = res.totalCount;
+        }
+
         if (communityMembersPage === 1) {
           allCommunityMembers = members;
         } else {
           allCommunityMembers = allCommunityMembers.concat(members);
         }
+        communityMembersHasMore = allCommunityMembers.length < communityMembersTotal;
         renderAddMembersList(allCommunityMembers);
       },
       error: function () {
-        $('#dds-add-list').html('<div class="dds-add-empty">Failed to load members</div>');
+        if (requestId !== communityMembersRequestId) return;
+        communityMembersLoading = false;
+        if (communityMembersPage === 1) {
+          $('#dds-add-list').html('<div class="dds-add-empty">Failed to load members</div>');
+        } else {
+          // Step the page back so a future scroll will retry the same page.
+          communityMembersPage = Math.max(1, communityMembersPage - 1);
+        }
       }
     });
   }
 
-  function filterCommunityMembers(query) {
-    var q = (query || '').toLowerCase();
-    if (!q) { renderAddMembersList(allCommunityMembers); return; }
-    var filtered = allCommunityMembers.filter(function (m) {
-      var name = (m.user && m.user.username) || m.username || '';
-      return name.toLowerCase().indexOf(q) !== -1;
-    });
-    renderAddMembersList(filtered);
-  }
-
   function renderAddMembersList(members) {
     var $list = $('#dds-add-list');
-    var existingIds = {};
-    membersData.forEach(function (m) {
-      var uid = (m.user && m.user.userID) || m.id || m._id || '';
-      if (uid && typeof uid === 'object' && uid.$oid) uid = uid.$oid;
-      if (uid) existingIds[String(uid)] = true;
-    });
 
-    var available = members.filter(function (m) {
-      var uid = (m.user && m.user.userID) || m.id || m._id || '';
-      if (uid && typeof uid === 'object' && uid.$oid) uid = uid.$oid;
-      return !existingIds[String(uid)];
-    });
-
-    if (!available.length) {
-      $list.html('<div class="dds-add-empty">No available members to add</div>');
+    if (!members.length) {
+      var emptyMsg = communityMembersSearch
+        ? 'No members match "' + esc(communityMembersSearch) + '"'
+        : 'No available members to add';
+      $list.html('<div class="dds-add-empty">' + emptyMsg + '</div>');
       return;
     }
 
     var html = '';
-    available.forEach(function (m) {
+    members.forEach(function (m) {
       var user = m.user || {};
       var uid = user.userID || m.id || m._id || '';
       if (uid && typeof uid === 'object' && uid.$oid) uid = uid.$oid;
@@ -1304,6 +1346,10 @@
         '<span class="dds-add-item-name">' + esc(name) + '</span>' +
       '</div>';
     });
+
+    if (communityMembersHasMore) {
+      html += '<div class="dds-add-loading" id="dds-add-more-loader"><i class="fa fa-spinner fa-spin"></i> Loading more...</div>';
+    }
 
     $list.html(html);
 
