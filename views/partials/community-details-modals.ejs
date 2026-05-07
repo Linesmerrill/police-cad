@@ -806,18 +806,6 @@
           </div>
         </div>
 
-        <!-- Civilian Record Deletion (per-department) -->
-        <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
-          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
-            <i class="fa fa-trash-can" style="font-size:1.5rem; color:#ef4444;"></i>
-            <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">Civilian Record Deletion</h4>
-          </div>
-          <p style="color:#a0aec0; margin-bottom:1rem; font-size:0.875rem;">Control civilian-initiated deletion of citations, written warnings, and arrest reports per department. Records issued by a locked department can only be deleted by community admins or users with the 'manage records' role permission.</p>
-
-          <div id="recordDeletionDeptList" style="display:flex; flex-direction:column; gap:0.5rem;">
-            <p style="color:#6b7280; font-size:0.75rem; margin:0;">Loading departments&hellip;</p>
-          </div>
-        </div>
 
         <!-- Warrant Approval Mode Section -->
         <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
@@ -6949,6 +6937,10 @@ function populateEditDeptModal(dept) {
   document.getElementById('editDeptName').value = dept.name || '';
   document.getElementById('editDeptDescription').value = dept.description || '';
   document.getElementById('editDeptApprovalRequired').checked = !!dept.approvalRequired;
+  // Per-department civilian-record deletion lock. Legacy departments come up
+  // unset → unchecked (allow); new departments default to true on the API.
+  var restrictCb = document.getElementById('editDeptRestrictRecordDeletion');
+  if (restrictCb) restrictCb.checked = dept.restrictCivilianRecordDeletion === true;
 
   // Update image preview
   var preview = document.getElementById('editDeptImagePreview');
@@ -8176,6 +8168,41 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
               </div>
             </div>
 
+            <!-- Records -->
+            <div class="edm-section is-open">
+              <div class="edm-section-header" onclick="this.parentElement.classList.toggle('is-open')">
+                <div class="edm-section-title">
+                  <i class="fa fa-trash-can"></i>
+                  Records
+                </div>
+                <i class="fa fa-chevron-down edm-section-chevron"></i>
+              </div>
+              <div class="edm-section-body">
+                <div class="edm-section-inner">
+                  <div class="edm-vis-row">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <span class="edm-vis-label" style="color:#94a3b8;">Restrict civilian record deletion</span>
+                      <div class="edm-vis-tooltip" onmouseenter="positionEdmTooltip(this)" onmouseleave="hideEdmTooltip(this)">
+                        <i class="fa fa-info-circle"></i>
+                        <div class="edm-vis-tooltip-text">
+                          When on, civilians can't delete citations, written warnings, or arrest reports issued by this department. Community admins and users with the 'manage records' role permission can still delete them.
+                        </div>
+                      </div>
+                    </div>
+                    <div class="edm-vis-labels">
+                      <span class="edm-vis-label" style="color:#64748b;">Off</span>
+                      <label class="edm-toggle">
+                        <input type="checkbox" id="editDeptRestrictRecordDeletion" onchange="triggerEditDeptAutoSaveImmediate()">
+                        <div class="edm-toggle-track"></div>
+                        <div class="edm-toggle-knob"></div>
+                      </label>
+                      <span class="edm-vis-label" style="color:#64748b;">On</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Components -->
             <div class="edm-section is-open">
               <div class="edm-section-header" onclick="this.parentElement.classList.toggle('is-open')">
@@ -8300,10 +8327,12 @@ async function saveEditDepartment() {
 
     // Create the department object with only the fields we want to update
     var toneSound = document.getElementById('editDeptToneSound') ? document.getElementById('editDeptToneSound').value : '';
+    var restrictCb = document.getElementById('editDeptRestrictRecordDeletion');
     var payload = {
       name: name,
       description: description,
       approvalRequired: document.getElementById('editDeptApprovalRequired').checked,
+      restrictCivilianRecordDeletion: restrictCb ? restrictCb.checked : false,
       image: finalImage,
       toneSound: toneSound
     };
@@ -9775,9 +9804,6 @@ async function saveEditEvent() {
         
         toggleCivilianApprovalInfo(enableApproval);
 
-        // Render per-department record-deletion toggles
-        renderRecordDeletionDeptList(communityData.community?.departments || []);
-
         // Set vehicle creation limits - use the actual field names from community JSON
         const enableVehicleLimits = communityData.community?.vehicleCreationLimitsEnabled || false;
 
@@ -9890,9 +9916,6 @@ async function saveEditEvent() {
         }
         
         toggleCivilianApprovalInfo(enableApproval);
-
-        // Render per-department record-deletion toggles
-        renderRecordDeletionDeptList(communityData?.departments || []);
 
         // Set vehicle creation limits - use the actual field names from community JSON
         const enableVehicleLimits = communityData?.vehicleCreationLimitsEnabled || false;
@@ -10017,8 +10040,6 @@ async function saveEditEvent() {
         const maxCivilians = enableLimits ? parseInt(document.getElementById('maxCiviliansPerDept').value) : 5;
         const enableApproval = document.getElementById('enableCivilianApproval').checked;
 
-        // Per-department record-deletion overrides are saved separately below.
-
         // Get vehicle limits
         const enableVehicleLimits = document.getElementById('enableVehicleLimits').checked;
         const maxVehicles = enableVehicleLimits ? parseInt(document.getElementById('maxVehiclesPerDept').value) : 5;
@@ -10079,89 +10100,22 @@ async function saveEditEvent() {
         const communityId = '<%= community._id %>';
         const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
-        // Save per-department record-deletion overrides in parallel with the
-        // community-level fields. Each toggle gets its own PATCH against
-        // /community/{c}/departments/{d} so the server can apply the partial
-        // update with its existing positional-array logic.
-        const deptToggleSaves = (window.recordDeletionDeptDirty || []).map((entry) => {
-          return fetch(`${apiUrl}/api/v1/community/${communityId}/departments/${entry.id}?userId=${window.dbUser?._id || ''}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ restrictCivilianRecordDeletion: entry.value }),
-          }).then(res => {
-            if (!res.ok) throw new Error('dept-save-failed:' + entry.id);
-          });
-        });
-
-        const communitySave = fetch(`${apiUrl}/api/v1/community/${communityId}?userId=${window.dbUser?._id || ''}`, {
+        fetch(`${apiUrl}/api/v1/community/${communityId}?userId=${window.dbUser?._id || ''}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updateData)
-        }).then(res => {
-          if (!res.ok) throw new Error('community-save-failed');
-        });
-
-        Promise.all([communitySave, ...deptToggleSaves])
-          .then(() => {
-            window.recordDeletionDeptDirty = [];
+        })
+        .then(res => {
+          if (res.ok) {
             showSettingsSuccess('General settings saved successfully!');
             closeGeneralSettingsModal();
-          })
-          .catch(error => {
-            console.error('Error saving general settings:', error);
-            showSettingsError('Failed to save general settings. Please try again.');
-          });
-      }
-
-      // Render the per-department list of "Restrict civilian record deletion"
-      // toggles inside the General Settings modal. Each toggle reflects the
-      // department's current restrictCivilianRecordDeletion field; legacy
-      // departments without the field render as "off" (legacy = allow).
-      function renderRecordDeletionDeptList(departments) {
-        const host = document.getElementById('recordDeletionDeptList');
-        if (!host) return;
-        window.recordDeletionDeptDirty = [];
-        if (!departments || departments.length === 0) {
-          host.innerHTML = '<p style="color:#6b7280; font-size:0.75rem; margin:0;">No departments yet. Add a department to configure this setting.</p>';
-          return;
-        }
-        const esc = (s) => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        host.innerHTML = departments.map((d) => {
-          const id = d._id || '';
-          // Treat missing/null as legacy "allow" (restrict=false). Only an
-          // explicit true is restricted.
-          const restricted = d.restrictCivilianRecordDeletion === true;
-          return ''
-            + '<label class="rd-dept-row" data-dept-id="' + esc(id) + '" '
-            + 'style="display:flex; align-items:center; gap:0.75rem; padding:0.625rem 0.75rem; background:#1a202c; border-radius:8px; border:1px solid #2d3748; cursor:pointer;">'
-            + '<input type="checkbox" class="rd-dept-toggle" '
-            +   (restricted ? 'checked ' : '')
-            +   'data-initial="' + (restricted ? '1' : '0') + '" '
-            +   'style="width:1.125rem; height:1.125rem; accent-color:#ef4444;">'
-            + '<div style="flex:1; min-width:0;">'
-            +   '<div style="color:#fff; font-size:0.875rem; font-weight:500;">' + esc(d.name || 'Unnamed Department') + '</div>'
-            +   '<div style="color:#9ca3af; font-size:0.7rem;">When on, civilians cannot delete citations, written warnings, or arrest reports issued by this department.</div>'
-            + '</div>'
-            + '</label>';
-        }).join('');
-
-        host.querySelectorAll('.rd-dept-toggle').forEach((cb) => {
-          cb.addEventListener('change', () => {
-            const row = cb.closest('.rd-dept-row');
-            if (!row) return;
-            const id = row.getAttribute('data-dept-id');
-            const initial = cb.getAttribute('data-initial') === '1';
-            const value = cb.checked;
-            const arr = (window.recordDeletionDeptDirty = window.recordDeletionDeptDirty || []);
-            const idx = arr.findIndex(e => e.id === id);
-            if (value === initial) {
-              if (idx >= 0) arr.splice(idx, 1);
-            } else if (idx >= 0) {
-              arr[idx].value = value;
-            } else {
-              arr.push({ id: id, value: value });
-            }
-          });
+          } else {
+            throw new Error('Failed to save general settings');
+          }
+        })
+        .catch(error => {
+          console.error('Error saving general settings:', error);
+          showSettingsError('Failed to save general settings. Please try again.');
         });
       }
 
