@@ -455,24 +455,29 @@
 
     // Records — per-department civilian record-deletion lock. Visible to
     // everyone (so members can see whether their dept restricts deletion);
-    // editable only with manage-departments permission.
-    var restrictRecords = dept.restrictCivilianRecordDeletion === true;
-    html += '<div class="dds-section">';
-    html += '<div class="dds-section-title-row"><span class="dds-section-title" style="margin-bottom:0;">Records</span><span class="dds-autosave" id="dds-records-status" style="opacity:0;"></span></div>';
-    html += '<div class="dds-toggle-row" style="border-bottom:none;">' +
-      '<div class="dds-toggle-info">' +
-        '<span class="dds-toggle-label">Restrict civilian record deletion</span>' +
-        '<span class="dds-toggle-desc" id="dds-records-desc">' +
-          (restrictRecords
-            ? "Civilians can't delete citations, written warnings, or arrest reports issued by this department"
-            : 'Civilians can delete their own citations, written warnings, and arrest reports') +
-        '</span>' +
-      '</div>' +
-      '<label class="dds-switch">' +
-        '<input type="checkbox" id="dds-restrict-records"' + (restrictRecords ? ' checked' : '') + (canEdit ? '' : ' disabled') + ' />' +
-        '<span class="dds-switch-track"></span>' +
-      '</label>' +
-    '</div></div>';
+    // editable only with manage-departments permission. Civilian-template
+    // depts only — that's where civilian dashboards live and the gate is
+    // consulted; the flag is never read on police/fire/ems/dispatch depts.
+    var isCivilianTemplate = dept.template && dept.template.name === 'Civilian';
+    if (isCivilianTemplate) {
+      var restrictRecords = dept.restrictCivilianRecordDeletion === true;
+      html += '<div class="dds-section">';
+      html += '<div class="dds-section-title-row"><span class="dds-section-title" style="margin-bottom:0;">Records</span><span class="dds-autosave" id="dds-records-status" style="opacity:0;"></span></div>';
+      html += '<div class="dds-toggle-row" style="border-bottom:none;">' +
+        '<div class="dds-toggle-info">' +
+          '<span class="dds-toggle-label">Restrict civilian record deletion</span>' +
+          '<span class="dds-toggle-desc" id="dds-records-desc">' +
+            (restrictRecords
+              ? "Civilians can't delete citations, written warnings, or arrest reports issued by this department"
+              : 'Civilians can delete their own citations, written warnings, and arrest reports') +
+          '</span>' +
+        '</div>' +
+        '<label class="dds-switch">' +
+          '<input type="checkbox" id="dds-restrict-records"' + (restrictRecords ? ' checked' : '') + (canEdit ? '' : ' disabled') + ' />' +
+          '<span class="dds-switch-track"></span>' +
+        '</label>' +
+      '</div></div>';
+    }
 
     // Sound settings
     var soundEnabled = window.dbUser && window.dbUser.user && window.dbUser.user.panicButtonSound;

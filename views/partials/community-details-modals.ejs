@@ -6939,6 +6939,11 @@ function populateEditDeptModal(dept) {
   document.getElementById('editDeptApprovalRequired').checked = !!dept.approvalRequired;
   // Per-department civilian-record deletion lock. Legacy departments come up
   // unset → unchecked (allow); new departments default to true on the API.
+  // The lock only applies to civilian-template depts (where civilian
+  // dashboards live) — hide the section entirely on police/fire/ems/etc.
+  var isCivilianTemplate = dept && dept.template && dept.template.name === 'Civilian';
+  var recordsSection = document.getElementById('editDeptRecordsSection');
+  if (recordsSection) recordsSection.style.display = isCivilianTemplate ? '' : 'none';
   var restrictCb = document.getElementById('editDeptRestrictRecordDeletion');
   if (restrictCb) restrictCb.checked = dept.restrictCivilianRecordDeletion === true;
 
@@ -8168,8 +8173,8 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
               </div>
             </div>
 
-            <!-- Records -->
-            <div class="edm-section is-open">
+            <!-- Records — civilian-template depts only; populateEditDeptModal toggles display. -->
+            <div class="edm-section is-open" id="editDeptRecordsSection">
               <div class="edm-section-header" onclick="this.parentElement.classList.toggle('is-open')">
                 <div class="edm-section-title">
                   <i class="fa fa-trash-can"></i>
@@ -8328,14 +8333,21 @@ async function saveEditDepartment() {
     // Create the department object with only the fields we want to update
     var toneSound = document.getElementById('editDeptToneSound') ? document.getElementById('editDeptToneSound').value : '';
     var restrictCb = document.getElementById('editDeptRestrictRecordDeletion');
+    var recordsSectionEl = document.getElementById('editDeptRecordsSection');
+    var recordsSectionVisible = recordsSectionEl && recordsSectionEl.style.display !== 'none';
     var payload = {
       name: name,
       description: description,
       approvalRequired: document.getElementById('editDeptApprovalRequired').checked,
-      restrictCivilianRecordDeletion: restrictCb ? restrictCb.checked : false,
       image: finalImage,
       toneSound: toneSound
     };
+    // Only persist the records-lock flag on civilian-template depts (where the
+    // section is rendered). Non-civilian depts never consult this flag, so
+    // writing it would just be noise on the document.
+    if (recordsSectionVisible && restrictCb) {
+      payload.restrictCivilianRecordDeletion = restrictCb.checked;
+    }
 
     // Update the template components - include in the same PATCH request
     if (currentDept.template) {
