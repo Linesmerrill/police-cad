@@ -1617,8 +1617,14 @@
     var icon = isArrest ? 'fa-handcuffs' : (type === 'Warning' ? 'fa-triangle-exclamation' : 'fa-file-lines');
 
     var recordId = r._id || '';
+    // Legacy records pre-date the departmentId field; on the dept-dashboard
+    // we attribute them to the current department so its toggle applies.
+    var gateRecord = r;
+    if (!(r.departmentId || r.departmentID)) {
+      gateRecord = $.extend({}, r, { departmentId: cfg().departmentId || '' });
+    }
     var canDelete = (typeof window.canDeleteCivilianRecords === 'function')
-      ? window.canDeleteCivilianRecords(r)
+      ? window.canDeleteCivilianRecords(gateRecord)
       : true;
     var deleteHtml = canDelete
       ? ('<button class="dd-civ-btn dd-civ-btn-danger dd-civ-btn-small dd-rec-delete" ' +
