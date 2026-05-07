@@ -659,7 +659,15 @@
     if (!person) return;
     var name = ((person.firstName || '') + ' ' + (person.lastName || '')).trim() || person.name || '';
     if (window.cdShowArrestForm) {
-      window.cdShowArrestForm(civId, name, person, function() { doSearch(state.searchQuery, state.page); });
+      window.cdShowArrestForm(civId, name, person, function() {
+        // Arrests live in arrest-report collection (not on the civilian doc),
+        // so doSearch alone won't pick up the new entry — fetchArrests
+        // short-circuits on its cache. Invalidate, refetch fresh, then re-search.
+        delete state.arrestCache[civId];
+        fetchArrests(civId, function () {
+          doSearch(state.searchQuery, state.page);
+        });
+      });
     } else {
       window.ddToast('Arrest form not available', 'error');
     }
