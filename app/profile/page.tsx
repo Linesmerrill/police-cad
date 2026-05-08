@@ -397,8 +397,8 @@ export default function Profile() {
       setPasswordModalError('Complete all fields to continue');
       return;
     }
-    if (pwdNewPassword.length < 8) {
-      setPasswordModalError('New password must be at least 8 characters');
+    if (pwdNewPassword.length < 6) {
+      setPasswordModalError('New password must be at least 6 characters');
       return;
     }
     if (pwdNewPassword !== pwdConfirmNewPassword) {
@@ -2724,7 +2724,7 @@ export default function Profile() {
                         type={pwdNewPasswordVisible ? 'text' : 'password'}
                         value={pwdNewPassword}
                         onChange={(e) => setPwdNewPassword(e.target.value)}
-                        placeholder="At least 8 characters"
+                        placeholder="At least 6 characters"
                         style={{
                           width: '100%',
                           padding: '0.75rem',
@@ -2851,21 +2851,21 @@ export default function Profile() {
                 ) : (
                   <button
                     onClick={confirmPasswordChange}
-                    disabled={saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 8 || pwdNewPassword !== pwdConfirmNewPassword}
+                    disabled={saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 6 || pwdNewPassword !== pwdConfirmNewPassword}
                     style={{
                       padding: '0.75rem 1.5rem',
-                      backgroundColor: saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 8 || pwdNewPassword !== pwdConfirmNewPassword
+                      backgroundColor: saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 6 || pwdNewPassword !== pwdConfirmNewPassword
                         ? 'rgba(34, 197, 94, 0.4)'
                         : 'rgba(34, 197, 94, 0.6)',
-                      border: `1px solid ${saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 8 || pwdNewPassword !== pwdConfirmNewPassword
+                      border: `1px solid ${saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 6 || pwdNewPassword !== pwdConfirmNewPassword
                         ? 'rgba(34, 197, 94, 0.4)'
                         : 'rgba(34, 197, 94, 0.8)'}`,
                       borderRadius: '0.5rem',
                       color: '#ffffff',
                       fontSize: '0.875rem',
                       fontWeight: '600',
-                      cursor: saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 8 || pwdNewPassword !== pwdConfirmNewPassword ? 'not-allowed' : 'pointer',
-                      opacity: saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 8 || pwdNewPassword !== pwdConfirmNewPassword ? 0.6 : 1,
+                      cursor: saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 6 || pwdNewPassword !== pwdConfirmNewPassword ? 'not-allowed' : 'pointer',
+                      opacity: saving === 'password' || pwdVerificationCode.length !== 6 || pwdNewPassword.length < 6 || pwdNewPassword !== pwdConfirmNewPassword ? 0.6 : 1,
                       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                       display: 'flex',
                       alignItems: 'center',
