@@ -453,6 +453,32 @@
       '</label>' +
     '</div></div>';
 
+    // Records — per-department civilian record-deletion lock. Visible to
+    // everyone (so members can see whether their dept restricts deletion);
+    // editable only with manage-departments permission. Civilian-template
+    // depts only — that's where civilian dashboards live and the gate is
+    // consulted; the flag is never read on police/fire/ems/dispatch depts.
+    var isCivilianTemplate = dept.template && dept.template.name === 'Civilian';
+    if (isCivilianTemplate) {
+      var restrictRecords = dept.restrictCivilianRecordDeletion === true;
+      html += '<div class="dds-section">';
+      html += '<div class="dds-section-title-row"><span class="dds-section-title" style="margin-bottom:0;">Records</span><span class="dds-autosave" id="dds-records-status" style="opacity:0;"></span></div>';
+      html += '<div class="dds-toggle-row" style="border-bottom:none;">' +
+        '<div class="dds-toggle-info">' +
+          '<span class="dds-toggle-label">Restrict civilian record deletion</span>' +
+          '<span class="dds-toggle-desc" id="dds-records-desc">' +
+            (restrictRecords
+              ? "Civilians can't delete citations, written warnings, or arrest reports issued by this department"
+              : 'Civilians can delete their own citations, written warnings, and arrest reports') +
+          '</span>' +
+        '</div>' +
+        '<label class="dds-switch">' +
+          '<input type="checkbox" id="dds-restrict-records"' + (restrictRecords ? ' checked' : '') + (canEdit ? '' : ' disabled') + ' />' +
+          '<span class="dds-switch-track"></span>' +
+        '</label>' +
+      '</div></div>';
+    }
+
     // Sound settings
     var soundEnabled = window.dbUser && window.dbUser.user && window.dbUser.user.panicButtonSound;
     var volumeLevel = (window.dbUser && window.dbUser.user && window.dbUser.user.alertVolumeLevel != null) ? window.dbUser.user.alertVolumeLevel : 50;
@@ -572,7 +598,14 @@
         autoSavePrivacy(v);
       });
 
-
+      // Immediate save on the records-restriction toggle
+      $body.find('#dds-restrict-records').on('change', function () {
+        var v = $(this).is(':checked');
+        $('#dds-records-desc').text(v
+          ? "Civilians can't delete citations, written warnings, or arrest reports issued by this department"
+          : 'Civilians can delete their own citations, written warnings, and arrest reports');
+        autoSaveRestrictRecords(v);
+      });
     }
   }
 
@@ -611,6 +644,36 @@
       },
       error: function () {
         showSaveStatus(statusSelector, 'error', 'Save failed');
+      }
+    });
+  }
+
+  /** Immediate auto-save for the records-restriction toggle only. */
+  function autoSaveRestrictRecords(restrict) {
+    var c = cfg();
+    var dept = getDept();
+    showSaveStatus('#dds-records-status', 'saving');
+    $.ajax({
+      url: c.API_URL + '/api/v1/community/' + c.communityId + '/departments/' + c.departmentId + '?userId=' + (window.dbUser && window.dbUser._id || ''),
+      method: 'PATCH',
+      contentType: 'application/json',
+      data: JSON.stringify({ restrictCivilianRecordDeletion: restrict }),
+      success: function () {
+        dept.restrictCivilianRecordDeletion = restrict;
+        // Keep the global cache used by canDeleteCivilianRecords in sync so the
+        // delete button visibility updates without a full reload.
+        var cached = window.communityDepartmentsCached || [];
+        for (var i = 0; i < cached.length; i++) {
+          var d = cached[i];
+          if (d && (d._id || d.id) === c.departmentId) {
+            d.restrictCivilianRecordDeletion = restrict;
+            break;
+          }
+        }
+        showSaveStatus('#dds-records-status', 'saved');
+      },
+      error: function () {
+        showSaveStatus('#dds-records-status', 'error', 'Save failed');
       }
     });
   }
@@ -923,6 +986,9 @@
   var membersData = [];
   var membersTotalCount = 0;
   var membersLimit = 10;
+  var membersSearch = '';
+  var membersSearchTimer = null;
+  var membersRequestId = 0;
 
   function renderMembersTab($body) {
     var dept = getDept();
@@ -942,10 +1008,16 @@
 
     membersPage = 1;
     membersData = [];
+    membersSearch = '';
+    if (membersSearchTimer) { clearTimeout(membersSearchTimer); membersSearchTimer = null; }
     $body.html(
       '<div class="dds-section">' +
         '<div class="dds-section-title">Department Members</div>' +
-        '<div style="display:flex;justify-content:flex-end;margin-bottom:0.75rem;">' +
+        '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">' +
+          '<div style="position:relative;flex:1;">' +
+            '<i class="fa fa-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:var(--dd-text-muted);font-size:0.75rem;pointer-events:none;"></i>' +
+            '<input type="text" class="dds-input" id="dds-members-search" placeholder="Search members..." style="padding-left:2rem;" autocomplete="off" />' +
+          '</div>' +
           '<button class="dds-btn dds-btn-secondary" id="dds-add-members-btn"><i class="fa fa-plus"></i> Add Members</button>' +
         '</div>' +
         '<div id="dds-members-list"><div style="text-align:center;padding:1rem;color:var(--dd-text-muted);"><i class="fa fa-spinner fa-spin"></i> Loading...</div></div>' +
@@ -955,15 +1027,35 @@
     loadMembers();
 
     $body.find('#dds-add-members-btn').on('click', function () { openAddMembersModal(); });
+
+    $body.find('#dds-members-search').on('input', function () {
+      var v = this.value || '';
+      // Debounce 300ms — matches the community-members search modal cadence.
+      if (membersSearchTimer) clearTimeout(membersSearchTimer);
+      membersSearchTimer = setTimeout(function () {
+        membersSearch = v.trim();
+        membersPage = 1;
+        membersData = [];
+        $('#dds-members-list').html('<div style="text-align:center;padding:1rem;color:var(--dd-text-muted);"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
+        loadMembers();
+      }, 300);
+    });
   }
 
   function loadMembers() {
     var c = cfg();
+    var url = c.API_URL + '/api/v1/community/' + c.communityId + '/departments/' + c.departmentId + '/members?limit=' + membersLimit + '&page=' + membersPage;
+    if (membersSearch) {
+      url += '&search=' + encodeURIComponent(membersSearch);
+    }
+    var requestId = ++membersRequestId;
 
     $.ajax({
-      url: c.API_URL + '/api/v1/community/' + c.communityId + '/departments/' + c.departmentId + '/members?limit=' + membersLimit + '&page=' + membersPage,
+      url: url,
       method: 'GET',
       success: function (res) {
+        // Drop stale responses if a newer search has fired since.
+        if (requestId !== membersRequestId) return;
         var newMembers = res.data || [];
         membersTotalCount = res.totalCount || 0;
 
@@ -975,6 +1067,7 @@
         renderMembersList();
       },
       error: function () {
+        if (requestId !== membersRequestId) return;
         $('#dds-members-list').html('<div class="dds-members-empty">Failed to load members</div>');
       }
     });
@@ -987,7 +1080,11 @@
     var $list = $('#dds-members-list');
 
     if (!membersData.length) {
-      $list.html('<div class="dds-members-empty">No members found</div>');
+      $list.html(
+        '<div class="dds-members-empty">' +
+          (membersSearch ? 'No members match "' + esc(membersSearch) + '"' : 'No members found') +
+        '</div>'
+      );
       return;
     }
 
@@ -1089,6 +1186,12 @@
   var allCommunityMembers = [];
   var communityMembersPage = 1;
   var communityMembersLimit = 20;
+  var communityMembersTotal = 0;
+  var communityMembersSearch = '';
+  var communityMembersLoading = false;
+  var communityMembersHasMore = false;
+  var communityMembersRequestId = 0;
+  var communityMembersSearchTimer = null;
 
   function openAddMembersModal() {
     if (!addMembersOverlay) {
@@ -1126,18 +1229,38 @@
     setTimeout(function() { addMembersOverlay.addClass('visible'); }, 10);
     selectedMemberIds = [];
     communityMembersPage = 1;
+    communityMembersTotal = 0;
+    communityMembersSearch = '';
+    communityMembersHasMore = false;
     allCommunityMembers = [];
+    if (communityMembersSearchTimer) { clearTimeout(communityMembersSearchTimer); communityMembersSearchTimer = null; }
     loadCommunityMembers();
 
-    var searchTimer = null;
     addMembersOverlay.find('#dds-add-search').val('').off('input').on('input', function () {
-      var q = $(this).val();
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(function () { filterCommunityMembers(q); }, 250);
+      var q = ($(this).val() || '').trim();
+      if (communityMembersSearchTimer) clearTimeout(communityMembersSearchTimer);
+      communityMembersSearchTimer = setTimeout(function () {
+        communityMembersSearch = q;
+        communityMembersPage = 1;
+        allCommunityMembers = [];
+        $('#dds-add-list').html('<div class="dds-add-loading"><i class="fa fa-spinner fa-spin"></i> Searching...</div>');
+        loadCommunityMembers();
+      }, 300);
     });
 
     addMembersOverlay.find('#dds-add-confirm').off('click').on('click', function () {
       addSelectedMembers();
+    });
+
+    // Infinite scroll on the modal body
+    var $body = addMembersOverlay.find('#dds-add-body');
+    $body.off('scroll').on('scroll', function () {
+      var el = this;
+      if (communityMembersLoading || !communityMembersHasMore) return;
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+        communityMembersPage++;
+        loadCommunityMembers();
+      }
     });
   }
 
@@ -1150,57 +1273,73 @@
 
   function loadCommunityMembers() {
     var c = cfg();
+    var requestId = ++communityMembersRequestId;
+    communityMembersLoading = true;
+
+    var url;
+    if (communityMembersSearch) {
+      url = c.API_URL + '/api/v1/community/' + c.communityId + '/members/search'
+        + '?q=' + encodeURIComponent(communityMembersSearch)
+        + '&page=' + communityMembersPage
+        + '&limit=' + communityMembersLimit;
+    } else {
+      url = c.API_URL + '/api/v1/community/' + c.communityId + '/members'
+        + '?page=' + communityMembersPage
+        + '&limit=' + communityMembersLimit;
+    }
+    if (c.departmentId) {
+      url += '&exclude_dept_id=' + encodeURIComponent(c.departmentId);
+    }
 
     $.ajax({
-      url: c.API_URL + '/api/v2/community/' + c.communityId + '/members?limit=' + communityMembersLimit + '&page=' + communityMembersPage,
+      url: url,
       method: 'GET',
       success: function (res) {
+        if (requestId !== communityMembersRequestId) return; // drop stale
+        communityMembersLoading = false;
         var members = res.members || res.data || [];
+        if (res.pagination && typeof res.pagination.totalCount === 'number') {
+          communityMembersTotal = res.pagination.totalCount;
+        } else if (typeof res.totalUsers === 'number') {
+          communityMembersTotal = res.totalUsers;
+        } else if (typeof res.totalCount === 'number') {
+          communityMembersTotal = res.totalCount;
+        }
+
         if (communityMembersPage === 1) {
           allCommunityMembers = members;
         } else {
           allCommunityMembers = allCommunityMembers.concat(members);
         }
+        communityMembersHasMore = allCommunityMembers.length < communityMembersTotal;
         renderAddMembersList(allCommunityMembers);
       },
       error: function () {
-        $('#dds-add-list').html('<div class="dds-add-empty">Failed to load members</div>');
+        if (requestId !== communityMembersRequestId) return;
+        communityMembersLoading = false;
+        if (communityMembersPage === 1) {
+          $('#dds-add-list').html('<div class="dds-add-empty">Failed to load members</div>');
+        } else {
+          // Step the page back so a future scroll will retry the same page.
+          communityMembersPage = Math.max(1, communityMembersPage - 1);
+        }
       }
     });
   }
 
-  function filterCommunityMembers(query) {
-    var q = (query || '').toLowerCase();
-    if (!q) { renderAddMembersList(allCommunityMembers); return; }
-    var filtered = allCommunityMembers.filter(function (m) {
-      var name = (m.user && m.user.username) || m.username || '';
-      return name.toLowerCase().indexOf(q) !== -1;
-    });
-    renderAddMembersList(filtered);
-  }
-
   function renderAddMembersList(members) {
     var $list = $('#dds-add-list');
-    var existingIds = {};
-    membersData.forEach(function (m) {
-      var uid = (m.user && m.user.userID) || m.id || m._id || '';
-      if (uid && typeof uid === 'object' && uid.$oid) uid = uid.$oid;
-      if (uid) existingIds[String(uid)] = true;
-    });
 
-    var available = members.filter(function (m) {
-      var uid = (m.user && m.user.userID) || m.id || m._id || '';
-      if (uid && typeof uid === 'object' && uid.$oid) uid = uid.$oid;
-      return !existingIds[String(uid)];
-    });
-
-    if (!available.length) {
-      $list.html('<div class="dds-add-empty">No available members to add</div>');
+    if (!members.length) {
+      var emptyMsg = communityMembersSearch
+        ? 'No members match "' + esc(communityMembersSearch) + '"'
+        : 'No available members to add';
+      $list.html('<div class="dds-add-empty">' + emptyMsg + '</div>');
       return;
     }
 
     var html = '';
-    available.forEach(function (m) {
+    members.forEach(function (m) {
       var user = m.user || {};
       var uid = user.userID || m.id || m._id || '';
       if (uid && typeof uid === 'object' && uid.$oid) uid = uid.$oid;
@@ -1212,6 +1351,10 @@
         '<span class="dds-add-item-name">' + esc(name) + '</span>' +
       '</div>';
     });
+
+    if (communityMembersHasMore) {
+      html += '<div class="dds-add-loading" id="dds-add-more-loader"><i class="fa fa-spinner fa-spin"></i> Loading more...</div>';
+    }
 
     $list.html(html);
 

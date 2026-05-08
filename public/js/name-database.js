@@ -4,6 +4,92 @@ function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// Civilian record-deletion gate (per-issuing-department).
+// Returns true when the current user is allowed to delete the given record
+// (citation / written warning / arrest report). Mirrors the server-side check:
+//   1. If the issuing department's restrictCivilianRecordDeletion is unset or
+//      false → allow (legacy default; preserves prior behavior).
+//   2. Otherwise allow only when the user is the community owner, or holds a
+//      role with "administrator" or "manage records" enabled.
+// 'manage community settings' does NOT bypass this gate.
+//
+// Args:
+//   record: object with at least { departmentId } — pass the criminal-history
+//           item or arrest report. If departmentId is missing (legacy data),
+//           we fall through to the legacy "allow" default.
+window.canDeleteCivilianRecords = function (record) {
+  var deptId = record && (record.departmentId || record.departmentID);
+  var deptList = window.communityDepartmentsCached || [];
+  // Find the issuing department's toggle.
+  var restricted = false;
+  if (deptId) {
+    for (var i = 0; i < deptList.length; i++) {
+      var d = deptList[i];
+      if (!d) continue;
+      var dId = d._id || d.id;
+      if (dId === deptId) {
+        restricted = d.restrictCivilianRecordDeletion === true;
+        break;
+      }
+    }
+  }
+  if (!restricted) return true;
+
+  var user = window.dbUser;
+  var uid = user && user._id;
+  if (!uid) return false;
+
+  if (window.communityOwnerIDCached && window.communityOwnerIDCached === uid) return true;
+
+  var roles = window.communityRolesCached || [];
+  for (var r = 0; r < roles.length; r++) {
+    var role = roles[r];
+    if (!role || !role.members || role.members.indexOf(uid) === -1) continue;
+    var perms = role.permissions || [];
+    for (var p = 0; p < perms.length; p++) {
+      var perm = perms[p];
+      if (perm && perm.enabled === true && (perm.name === 'administrator' || perm.name === 'manage records')) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
+// Show the friendly "deletion is restricted" warning when the API returns 403
+// with code "record_deletion_restricted". Falls back to a generic toast.
+function showRecordDeletionRestrictedModal() {
+  if (window.ddModal) {
+    window.ddModal({
+      type: 'warning',
+      icon: 'fa-lock',
+      title: 'Record deletion is restricted',
+      message: "Civilians can't delete their own citations, written warnings, or arrest reports in this community.",
+      detail: "Contact a community admin or a user with the 'manage records' role permission to remove this record.",
+      buttons: [
+        { label: 'Got it', class: 'dd-modal-btn-primary' },
+      ],
+    });
+  } else if (typeof window.ddToast === 'function') {
+    window.ddToast('Record deletion is restricted in this community', 'warning');
+  } else {
+    console.warn('Record deletion is restricted in this community.');
+  }
+}
+
+// Inspect a jqXHR for the API's record_deletion_restricted error code.
+function isRecordDeletionRestrictedError(xhr) {
+  if (!xhr || xhr.status !== 403) return false;
+  var body = xhr.responseJSON;
+  if (!body && typeof xhr.responseText === 'string') {
+    try { body = JSON.parse(xhr.responseText); } catch (e) { body = null; }
+  }
+  if (!body) return false;
+  return body.error === 'record_deletion_restricted'
+      || body.code === 'record_deletion_restricted'
+      || body.errorCode === 'record_deletion_restricted';
+}
+
 function nameSearchPoliceForm() {
   $("#search-results-civilians-loading").show();
   var socket = io({ transports: ["websocket"] });
@@ -331,20 +417,33 @@ function loadTicketsAndWarnings(index) {
     civID: index,
   };
   $.get("/tickets", parameters, function (data) {
+    var canDeleteFor = function (rec) {
+      return (typeof window.canDeleteCivilianRecords === "function")
+        ? window.canDeleteCivilianRecords(rec)
+        : true;
+    };
     data.forEach(function (e) {
-      if (e.ticket.isWarning) {
+      var rec = e.ticket || {};
+      var canDelete = canDeleteFor(rec);
+      if (rec.isWarning) {
+        var warningDeleteCell = canDelete
+          ? `<td class="text-align-center"><a class='clickable' onclick="deleteWarning('${e._id}', '${rec.civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
+          : `<td class="text-align-center"></td>`;
         var newRowContent = `<tr id="${e._id}">
-          <td>${e.ticket.date}</td>
-          <td>${e.ticket.violation}</td>
-          <td class="text-align-center"><a class='clickable' onclick="deleteWarning('${e._id}', '${e.ticket.civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>
+          <td>${rec.date}</td>
+          <td>${rec.violation}</td>
+          ${warningDeleteCell}
           </tr>`;
         $("#warningTable tbody").append(newRowContent);
       } else {
+        var citationDeleteCell = canDelete
+          ? `<td class="text-align-center"><a class='clickable' onclick="deleteCitation('${e._id}', '${rec.civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
+          : `<td class="text-align-center"></td>`;
         var newRowContent = `<tr id="${e._id}">
-            <td>${e.ticket.date}</td>
-            <td>${e.ticket.violation}</td>
-            <td>${e.ticket.amount}</td>
-            <td class="text-align-center"><a class='clickable' onclick="deleteCitation('${e._id}', '${e.ticket.civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>
+            <td>${rec.date}</td>
+            <td>${rec.violation}</td>
+            <td>${rec.amount}</td>
+            ${citationDeleteCell}
             </tr>`;
         $("#citationTable tbody").append(newRowContent);
       }
@@ -359,35 +458,115 @@ function loadArrests(index) {
   };
   $.get("/arrests", parameters, function (data) {
     data.forEach(function (e) {
+      var ar = e.arrestReport || {};
+      var canDelete = (typeof window.canDeleteCivilianRecords === "function")
+        ? window.canDeleteCivilianRecords(ar)
+        : true;
+      var arrestDeleteCell = canDelete
+        ? `<td class="text-align-center"><a class='clickable' onclick="deleteArrest('${e._id}', '${ar.accusedID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
+        : `<td class="text-align-center"></td>`;
       var newRowContent = `<tr id="${e._id}">
           <td>${e.arrestReport.date}</td>
           <td>${e.arrestReport.charges}</td>
           <td>${e.arrestReport.summary}</td>
-          <td class="text-align-center"><a class='clickable' onclick="deleteArrest('${e._id}', '${e.arrestReport.accusedID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>
+          ${arrestDeleteCell}
           </tr>`;
       $("#arrestTable tbody").append(newRowContent);
     });
   });
 }
 
+// Shared helper to perform a record-delete request with consistent 403 handling
+// for the API's "record_deletion_restricted" error code. Used by all three
+// civilian-record delete flows below.
+function performRecordDelete(opts) {
+  $.ajax({
+    url: opts.url,
+    method: "DELETE",
+  })
+    .done(function () {
+      if (typeof opts.onSuccess === "function") opts.onSuccess();
+      if (typeof window.ddToast === "function") window.ddToast(opts.successMessage, "success");
+    })
+    .fail(function (xhr) {
+      if (isRecordDeletionRestrictedError(xhr)) {
+        showRecordDeletionRestrictedModal();
+        return;
+      }
+      if (typeof window.ddToast === "function") window.ddToast(opts.errorMessage, "error");
+      console.error("[name-database] " + opts.label + " delete failed", xhr && xhr.responseText);
+    });
+}
+
 function deleteCitation(citationID, civilianID) {
-  var parameters = { citationID: citationID };
-  $.delete("/citation/" + citationID, parameters, function (data) {
-    $(`table#citationTable tr#${citationID}`).remove();
+  var performDelete = function () {
+    performRecordDelete({
+      url: "/citation/" + encodeURIComponent(citationID),
+      label: "citation",
+      successMessage: "Citation deleted",
+      errorMessage: "Failed to delete citation",
+      onSuccess: function () { $(`table#citationTable tr#${citationID}`).remove(); },
+    });
+  };
+  // Confirmation goes through ddModal per project rule (never browser confirm).
+  // If ddModal isn't available in this view, skip confirmation and proceed —
+  // matches prior behavior (no confirm prompt) and never falls back to confirm().
+  if (!window.ddModal) { performDelete(); return; }
+  window.ddModal({
+    type: "danger",
+    icon: "fa-trash",
+    title: "Delete citation?",
+    message: "This citation will be permanently removed from this civilian's record.",
+    detail: "This action cannot be undone.",
+    confirmText: "Delete citation",
+    confirmIcon: "fa-trash",
+    onConfirm: performDelete,
   });
 }
 
 function deleteWarning(warningID, civilianID) {
-  var parameters = { citationID: warningID };
-  $.delete("/warning/" + warningID, parameters, function (data) {
-    $(`table#warningTable tr#${warningID}`).remove();
+  var performDelete = function () {
+    performRecordDelete({
+      url: "/warning/" + encodeURIComponent(warningID),
+      label: "warning",
+      successMessage: "Written warning deleted",
+      errorMessage: "Failed to delete warning",
+      onSuccess: function () { $(`table#warningTable tr#${warningID}`).remove(); },
+    });
+  };
+  if (!window.ddModal) { performDelete(); return; }
+  window.ddModal({
+    type: "danger",
+    icon: "fa-trash",
+    title: "Delete written warning?",
+    message: "This written warning will be permanently removed from this civilian's record.",
+    detail: "This action cannot be undone.",
+    confirmText: "Delete warning",
+    confirmIcon: "fa-trash",
+    onConfirm: performDelete,
   });
 }
 
 function deleteArrest(arrestID, civilianID) {
-  var parameters = { arrestID: arrestID };
-  $.delete("/arrestReport/" + arrestID, parameters, function (data) {
-    $(`table#arrestTable tr#${arrestID}`).remove();
+  var performDelete = function () {
+    performRecordDelete({
+      url: "/arrestReport/" + encodeURIComponent(arrestID),
+      label: "arrest",
+      successMessage: "Arrest report deleted",
+      errorMessage: "Failed to delete arrest report",
+      onSuccess: function () { $(`table#arrestTable tr#${arrestID}`).remove(); },
+    });
+  };
+  if (!window.ddModal) { performDelete(); return; }
+  window.ddModal({
+    type: "danger",
+    icon: "fa-trash",
+    title: "Delete arrest report?",
+    message: "This arrest report will be permanently removed from this civilian's record.",
+    detail: "This action cannot be undone.",
+    confirmText: "Delete report",
+    confirmIcon: "fa-trash",
+    onConfirm: performDelete,
   });
 }
 
