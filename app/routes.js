@@ -3948,9 +3948,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
-  // Verified email/password change — proxies to the Go API which owns the verification-code
-  // state (pendingVerifications). All four routes require the caller's session to match the
-  // URL user_id, so a hijacked api token alone can't drive a change against another account.
+  // Verified email/password change — proxies to the Go API's v2 verified-flow endpoints,
+  // which own the verification-code state (pendingVerifications). All four routes require
+  // the caller's session to match the URL user_id, so a hijacked api token alone can't
+  // drive a change against another account. The legacy v1 PUT /user/{id}/email continues
+  // to work for any clients still on the password-only flow during migration.
   function ensureSelfAccountId(req, res) {
     const requestedUserId = req.params.user_id;
     if (!isValidObjectId(requestedUserId)) {
@@ -3975,7 +3977,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       if (!userId) return;
       const response = await axios({
         method,
-        url: `${policeCadApiUrl}/api/v1/user/${userId}${path}`,
+        url: `${policeCadApiUrl}/api/v2/user/${userId}${path}`,
         data: req.body,
         headers: { ...config.headers, 'Content-Type': 'application/json' },
       });
@@ -3989,16 +3991,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   }
 
-  app.post("/api/v1/user/:user_id/email/request-change", apiAuthCheck, function (req, res) {
+  app.post("/api/v2/user/:user_id/email/request-change", apiAuthCheck, function (req, res) {
     return proxyAccountChange(req, res, 'post', '/email/request-change', 'request email change');
   });
-  app.put("/api/v1/user/:user_id/email", apiAuthCheck, function (req, res) {
+  app.put("/api/v2/user/:user_id/email", apiAuthCheck, function (req, res) {
     return proxyAccountChange(req, res, 'put', '/email', 'confirm email change');
   });
-  app.post("/api/v1/user/:user_id/password/request-change", apiAuthCheck, function (req, res) {
+  app.post("/api/v2/user/:user_id/password/request-change", apiAuthCheck, function (req, res) {
     return proxyAccountChange(req, res, 'post', '/password/request-change', 'request password change');
   });
-  app.put("/api/v1/user/:user_id/password", apiAuthCheck, function (req, res) {
+  app.put("/api/v2/user/:user_id/password", apiAuthCheck, function (req, res) {
     return proxyAccountChange(req, res, 'put', '/password', 'confirm password change');
   });
 

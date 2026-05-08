@@ -297,7 +297,7 @@ export default function Profile() {
 
     setSaving('email');
     try {
-      const res = await fetch(`/api/v1/user/${user.id}/email/request-change`, {
+      const res = await fetch(`/api/v2/user/${user.id}/email/request-change`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newEmail: newEmail.trim(), currentPassword }),
@@ -325,7 +325,7 @@ export default function Profile() {
     }
     setSaving('email');
     try {
-      const res = await fetch(`/api/v1/user/${user.id}/email`, {
+      const res = await fetch(`/api/v2/user/${user.id}/email`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: emailVerificationCode.trim() }),
@@ -371,7 +371,7 @@ export default function Profile() {
     }
     setSaving('password');
     try {
-      const res = await fetch(`/api/v1/user/${user.id}/password/request-change`, {
+      const res = await fetch(`/api/v2/user/${user.id}/password/request-change`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPassword: pwdCurrentPassword }),
@@ -407,7 +407,7 @@ export default function Profile() {
     }
     setSaving('password');
     try {
-      const res = await fetch(`/api/v1/user/${user.id}/password`, {
+      const res = await fetch(`/api/v2/user/${user.id}/password`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: pwdVerificationCode.trim(), newPassword: pwdNewPassword }),
