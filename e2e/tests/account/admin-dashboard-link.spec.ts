@@ -1,29 +1,33 @@
 import { test, expect } from '@playwright/test';
 
-// The Navbar's user dropdown shows an "Admin Dashboard" option only when
-// `/api/user/current` reports the logged-in user as an admin (resolved via
-// the admin_users collection in routes.js). The seeded test user is not
-// an admin, so we mock the API for the positive case and exercise the
-// real response for the negative case.
+// The site has two profile dropdowns that should both behave identically:
+//   - Next.js Navbar (components/Navbar.tsx) — renders the admin link
+//     conditionally based on user.isAdmin in /api/user/current.
+//   - Legacy EJS dropdown (views/communities.ejs, views/community-details.ejs)
+//     — renders the admin link hidden by default; account-dropdown-admin.js
+//     fetches /api/user/current and toggles display when isAdmin is true.
+//
+// Both dropdowns mark the option with data-testid="navbar-admin-dashboard"
+// so we use `toBeVisible()` / `toBeHidden()` (not `toHaveCount`) — that way
+// the same assertions work whether the element is conditionally rendered
+// out of the DOM or simply CSS-hidden.
+
+async function openProfileDropdown(page) {
+  await page.getByRole('button', { name: /testuser/i }).first().click();
+}
 
 test.describe('Profile dropdown — Admin Dashboard option', { tag: '@auth' }, () => {
-  test('hidden for non-admin users', async ({ page }) => {
+  test('hidden on /communities for non-admin users', async ({ page }) => {
     await page.goto('/communities');
+    await openProfileDropdown(page);
 
-    // Open the user dropdown via the username button (works on desktop &
-    // small-screen layouts because both render the same nav node).
-    await page.getByRole('button', { name: /testuser/i }).first().click();
-
-    // Account Settings + Logout always show; Admin Dashboard must not.
-    await expect(page.getByRole('link', { name: /Account Settings/i })).toBeVisible();
-    await expect(
-      page.getByTestId('navbar-admin-dashboard')
-    ).toHaveCount(0);
+    await expect(page.getByRole('link', { name: /Account Settings/i }).first()).toBeVisible();
+    await expect(page.getByTestId('navbar-admin-dashboard')).toBeHidden();
   });
 
-  test('visible for admin users and links to /admin', async ({ page }) => {
-    // Override /api/user/current with isAdmin:true so the conditional branch
-    // renders without needing a seeded admin_users row.
+  test('visible on /communities for admin users and links to /admin', async ({ page }) => {
+    // Override /api/user/current with isAdmin:true so the legacy dropdown's
+    // reveal script (and the Next.js Navbar's conditional) treat us as admin.
     await page.route('**/api/user/current', async (route) => {
       const original = await route.fetch();
       const body = await original.json();
@@ -32,9 +36,9 @@ test.describe('Profile dropdown — Admin Dashboard option', { tag: '@auth' }, (
     });
 
     await page.goto('/communities');
-    await page.getByRole('button', { name: /testuser/i }).first().click();
+    await openProfileDropdown(page);
 
-    const adminLink = page.getByTestId('navbar-admin-dashboard');
+    const adminLink = page.getByTestId('navbar-admin-dashboard').first();
     await expect(adminLink).toBeVisible();
     await expect(adminLink).toContainText(/Admin Dashboard/i);
     await expect(adminLink).toHaveAttribute('href', '/admin');
