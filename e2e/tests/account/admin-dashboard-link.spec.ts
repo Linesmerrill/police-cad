@@ -1,4 +1,9 @@
 import { test, expect } from '@playwright/test';
+import {
+  seedLinkedAdminForTestUser,
+  seedUnlinkedAdminMatchingTestUserEmail,
+  removeSeededAdminUsers,
+} from '../../helpers/admin-users';
 
 // The site has two profile dropdowns that should both behave identically:
 //   - Next.js Navbar (components/Navbar.tsx) — renders the admin link
@@ -45,5 +50,38 @@ test.describe('Profile dropdown — Admin Dashboard option', { tag: '@auth' }, (
 
     await adminLink.click();
     await expect(page).toHaveURL(/\/admin(\?|$)/, { timeout: 10_000 });
+  });
+});
+
+// These tests skip the page.route mock and instead seed real admin_users
+// rows so we exercise the actual resolution logic in /api/user/current
+// (linkedUserId match, then unlinked email match). Each test cleans up
+// after itself so the default seeded testuser remains a non-admin for
+// the rest of the suite.
+test.describe('Profile dropdown — Admin Dashboard option (real backend lookup)', { tag: '@auth' }, () => {
+  test.afterEach(async () => {
+    await removeSeededAdminUsers();
+  });
+
+  test('shows for an admin linked to the test user via linkedUserId', async ({ page }) => {
+    await seedLinkedAdminForTestUser();
+
+    await page.goto('/communities');
+    await page.getByRole('button', { name: /testuser/i }).first().click();
+
+    const adminLink = page.getByTestId('navbar-admin-dashboard').first();
+    await expect(adminLink).toBeVisible({ timeout: 10_000 });
+    await expect(adminLink).toHaveAttribute('href', '/admin');
+  });
+
+  test('shows for an unlinked admin whose email matches the user', async ({ page }) => {
+    await seedUnlinkedAdminMatchingTestUserEmail();
+
+    await page.goto('/communities');
+    await page.getByRole('button', { name: /testuser/i }).first().click();
+
+    await expect(
+      page.getByTestId('navbar-admin-dashboard').first()
+    ).toBeVisible({ timeout: 10_000 });
   });
 });
