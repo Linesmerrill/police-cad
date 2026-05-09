@@ -94,6 +94,9 @@
         float:right; background:var(--ac-accent); color:#fff; font-size:0.625rem; font-weight:700;
         padding:0.125rem 0.5rem; border-radius:99px; min-width:20px; text-align:center; line-height:1.4;
       }
+      /* "Back to CAD" exit row — visually separated from panel-switching items */
+      .ac-nav-exit { margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--ac-glass-border); }
+      .ac-nav-exit .ac-nav-item i { color:var(--ac-accent); }
       .ac-sidebar-footer { padding:0.75rem 1rem; border-top:1px solid var(--ac-glass-border); }
       .ac-sidebar-user { display:flex; align-items:center; gap:0.625rem; padding:0.5rem; border-radius:var(--ac-radius-sm); }
       .ac-user-avatar {
@@ -754,6 +757,12 @@
           <div class="ac-nav-item" data-panel="metrics">
             <i class="fas fa-chart-line"></i> Metrics
           </div>
+        </div>
+
+        <div class="ac-nav-section ac-nav-exit">
+          <a class="ac-nav-item" href="/communities" id="ac-back-to-cad" data-testid="admin-back-to-cad">
+            <i class="fas fa-arrow-left"></i> Back to CAD
+          </a>
         </div>
       </nav>
 
