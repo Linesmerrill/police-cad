@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Bars3Icon, XMarkIcon, ChevronDownIcon, ChevronUpIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, ChevronDownIcon, ChevronUpIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { UserIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import { DISCORD_COMMUNITY } from '@/constants/discord';
@@ -246,6 +246,31 @@ export default function Navbar() {
                 <Cog6ToothIcon style={{ width: '18px', height: '18px' }} />
                 Account Settings
               </Link>
+
+              {user.isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={() => setUserMenuOpen(false)}
+                  data-testid="navbar-admin-dashboard"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.75rem',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    textDecoration: 'none',
+                    borderRadius: '4px',
+                    transition: 'background-color 0.2s',
+                    fontSize: '0.875rem',
+                    marginTop: '0.25rem'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(56, 189, 248, 0.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <ShieldCheckIcon style={{ width: '18px', height: '18px', color: '#38bdf8' }} />
+                  Admin Dashboard
+                </Link>
+              )}
 
               <a
                 href="/logout"
