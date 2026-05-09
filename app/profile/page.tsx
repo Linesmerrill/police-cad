@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { UserIcon, EnvelopeIcon, CalendarIcon, CurrencyDollarIcon, LockClosedIcon, SpeakerWaveIcon, BellIcon, TrashIcon, EyeIcon, EyeSlashIcon, IdentificationIcon, CameraIcon } from '@heroicons/react/24/solid';
@@ -28,6 +28,8 @@ export default function Profile() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [emailVerificationCode, setEmailVerificationCode] = useState('');
   const [emailModalError, setEmailModalError] = useState<string | null>(null);
+  const [emailResendCooldown, setEmailResendCooldown] = useState(0);
+  const [emailResendNotice, setEmailResendNotice] = useState<string | null>(null);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [passwordModalStep, setPasswordModalStep] = useState<'request' | 'confirm'>('request');
   const [pwdCurrentPassword, setPwdCurrentPassword] = useState('');
@@ -37,9 +39,14 @@ export default function Profile() {
   const [pwdConfirmNewPassword, setPwdConfirmNewPassword] = useState('');
   const [pwdVerificationCode, setPwdVerificationCode] = useState('');
   const [passwordModalError, setPasswordModalError] = useState<string | null>(null);
+  const [pwdResendCooldown, setPwdResendCooldown] = useState(0);
+  const [pwdResendNotice, setPwdResendNotice] = useState<string | null>(null);
   const [creatorStatus, setCreatorStatus] = useState<{ hasCreatorProfile: boolean; hasApplication: boolean; status?: string } | null>(null);
   const [uploadingPicture, setUploadingPicture] = useState(false);
   const [cloudinaryConfig, setCloudinaryConfig] = useState<{ cloudName: string; apiKey: string; uploadPreset: string } | null>(null);
+
+  const emailCodeInputRef = useRef<HTMLInputElement>(null);
+  const pwdCodeInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -139,6 +146,18 @@ export default function Profile() {
       : '***';
     return `${maskedLocal}@${maskedDomain}`;
   };
+
+  useEffect(() => {
+    if (emailResendCooldown <= 0) return;
+    const t = setTimeout(() => setEmailResendCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [emailResendCooldown]);
+
+  useEffect(() => {
+    if (pwdResendCooldown <= 0) return;
+    const t = setTimeout(() => setPwdResendCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [pwdResendCooldown]);
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
@@ -277,6 +296,41 @@ export default function Profile() {
     setPasswordVisible(false);
     setEmailVerificationCode('');
     setEmailModalError(null);
+    setEmailResendCooldown(0);
+    setEmailResendNotice(null);
+  };
+
+  const handleResendEmailCode = async () => {
+    if (!user || emailResendCooldown > 0 || saving === 'email') return;
+    setEmailModalError(null);
+    setEmailResendNotice(null);
+    setSaving('email');
+    try {
+      const res = await fetch(`/api/v2/user/${user.id}/email/request-change`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newEmail: newEmail.trim(), currentPassword }),
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setEmailVerificationCode('');
+        setEmailResendCooldown(60);
+        setEmailResendNotice(`A new code was sent to ${user.email}`);
+        setTimeout(() => setEmailResendNotice(null), 5000);
+        setTimeout(() => emailCodeInputRef.current?.focus(), 0);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 429) {
+          setEmailResendCooldown(60);
+        }
+        setEmailModalError(data.error || 'Failed to resend code. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error resending email change code:', err);
+      setEmailModalError('An error occurred. Please try again.');
+    } finally {
+      setSaving(null);
+    }
   };
 
   const requestEmailChangeCode = async () => {
@@ -361,6 +415,41 @@ export default function Profile() {
     setPwdConfirmNewPassword('');
     setPwdVerificationCode('');
     setPasswordModalError(null);
+    setPwdResendCooldown(0);
+    setPwdResendNotice(null);
+  };
+
+  const handleResendPasswordCode = async () => {
+    if (!user || pwdResendCooldown > 0 || saving === 'password') return;
+    setPasswordModalError(null);
+    setPwdResendNotice(null);
+    setSaving('password');
+    try {
+      const res = await fetch(`/api/v2/user/${user.id}/password/request-change`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword: pwdCurrentPassword }),
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setPwdVerificationCode('');
+        setPwdResendCooldown(60);
+        setPwdResendNotice(`A new code was sent to ${user.email}`);
+        setTimeout(() => setPwdResendNotice(null), 5000);
+        setTimeout(() => pwdCodeInputRef.current?.focus(), 0);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 429) {
+          setPwdResendCooldown(60);
+        }
+        setPasswordModalError(data.error || 'Failed to resend code. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error resending password change code:', err);
+      setPasswordModalError('An error occurred. Please try again.');
+    } finally {
+      setSaving(null);
+    }
   };
 
   const requestPasswordChangeCode = async () => {
@@ -2192,6 +2281,22 @@ export default function Profile() {
                 </div>
               )}
 
+              {emailResendNotice && (
+                <div style={{
+                  marginBottom: '1.5rem',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  borderRadius: '0.5rem',
+                  color: '#7dd3fc',
+                  fontSize: '0.875rem',
+                  lineHeight: '1.5',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                }}>
+                  {emailResendNotice}
+                </div>
+              )}
+
               {emailModalStep === 'request' ? (
                 <>
                   <div style={{ marginBottom: '1.5rem' }}>
@@ -2350,6 +2455,7 @@ export default function Profile() {
                       Verification Code
                     </label>
                     <input
+                      ref={emailCodeInputRef}
                       type="text"
                       inputMode="numeric"
                       autoComplete="one-time-code"
@@ -2372,21 +2478,21 @@ export default function Profile() {
                     />
                     <button
                       type="button"
-                      onClick={requestEmailChangeCode}
-                      disabled={saving === 'email'}
+                      onClick={handleResendEmailCode}
+                      disabled={saving === 'email' || emailResendCooldown > 0}
                       style={{
                         marginTop: '0.75rem',
                         background: 'transparent',
                         border: 'none',
-                        color: 'rgba(56, 189, 248, 0.9)',
+                        color: emailResendCooldown > 0 ? 'rgba(255, 255, 255, 0.4)' : 'rgba(56, 189, 248, 0.9)',
                         fontSize: '0.8125rem',
-                        cursor: saving === 'email' ? 'not-allowed' : 'pointer',
+                        cursor: saving === 'email' || emailResendCooldown > 0 ? 'not-allowed' : 'pointer',
                         padding: 0,
-                        textDecoration: 'underline',
+                        textDecoration: emailResendCooldown > 0 ? 'none' : 'underline',
                         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
                       }}
                     >
-                      Resend code
+                      {emailResendCooldown > 0 ? `Resend code in ${emailResendCooldown}s` : 'Resend code'}
                     </button>
                   </div>
                 </>
@@ -2597,6 +2703,22 @@ export default function Profile() {
                 </div>
               )}
 
+              {pwdResendNotice && (
+                <div style={{
+                  marginBottom: '1.5rem',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  borderRadius: '0.5rem',
+                  color: '#7dd3fc',
+                  fontSize: '0.875rem',
+                  lineHeight: '1.5',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                }}>
+                  {pwdResendNotice}
+                </div>
+              )}
+
               {passwordModalStep === 'request' ? (
                 <div style={{ marginBottom: '1.5rem' }}>
                   <label style={{
@@ -2669,6 +2791,7 @@ export default function Profile() {
                       Verification Code
                     </label>
                     <input
+                      ref={pwdCodeInputRef}
                       type="text"
                       inputMode="numeric"
                       autoComplete="one-time-code"
@@ -2691,21 +2814,21 @@ export default function Profile() {
                     />
                     <button
                       type="button"
-                      onClick={requestPasswordChangeCode}
-                      disabled={saving === 'password'}
+                      onClick={handleResendPasswordCode}
+                      disabled={saving === 'password' || pwdResendCooldown > 0}
                       style={{
                         marginTop: '0.75rem',
                         background: 'transparent',
                         border: 'none',
-                        color: 'rgba(56, 189, 248, 0.9)',
+                        color: pwdResendCooldown > 0 ? 'rgba(255, 255, 255, 0.4)' : 'rgba(56, 189, 248, 0.9)',
                         fontSize: '0.8125rem',
-                        cursor: saving === 'password' ? 'not-allowed' : 'pointer',
+                        cursor: saving === 'password' || pwdResendCooldown > 0 ? 'not-allowed' : 'pointer',
                         padding: 0,
-                        textDecoration: 'underline',
+                        textDecoration: pwdResendCooldown > 0 ? 'none' : 'underline',
                         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
                       }}
                     >
-                      Resend code
+                      {pwdResendCooldown > 0 ? `Resend code in ${pwdResendCooldown}s` : 'Resend code'}
                     </button>
                   </div>
                   <div style={{ marginBottom: '1.5rem' }}>

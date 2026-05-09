@@ -330,15 +330,15 @@
             sendData.message &&
             sendData.message.toLowerCase().includes('verification already in progress')
           ) {
-            // Call resend-verification-code and move to step 2
-            await fetch(`${API_URL}/api/v1/verify/resend-verification-code`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email })
-            });
+            // A pending row already exists from an earlier attempt with this email.
+            // Don't auto-fire resend — it can be silently rate-limited (429 within 60s)
+            // and we'd be lying about a "new code sent". Send the user to step 2 with
+            // the existing code, and arm the resend countdown so they can request a
+            // fresh one after 60s if needed.
             signupState.email = email;
             showStep(2);
-            showStatus('code-error', 'A new verification code has been sent to your email.');
+            startResendTimer();
+            showStatus('code-error', 'We already sent a code to this email. Check your inbox (and spam) — or click Resend Code below if you don\'t see it.');
             return;
           }
           if (!sendRes.ok) throw new Error('Failed to send code');
