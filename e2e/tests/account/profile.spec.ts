@@ -44,12 +44,17 @@ test.describe('Profile Page', { tag: '@auth' }, () => {
     await expect(page.getByRole('button', { name: /Change Email/i })).toBeVisible();
   });
 
-  test('Change Password button navigates to forgot-password flow', async ({ page }) => {
+  test('Change Password button opens verified change-password modal', async ({ page }) => {
     await page.goto('/profile');
     await expect(page.getByText('Account Overview')).toBeVisible({ timeout: 15_000 });
 
     await page.getByRole('button', { name: /Change Password/i }).click();
-    await expect(page).toHaveURL(/\/forgot-password/, { timeout: 10_000 });
+
+    // Modal opens in-page (no nav). It explains the email-code verification step.
+    await expect(
+      page.getByText(/we will email a 6-digit code/i)
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(page).toHaveURL(/\/profile/);
   });
 
   test('shows danger zone with deactivate button', async ({ page }) => {
