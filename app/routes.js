@@ -3948,6 +3948,62 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Verified email/password change — proxies to the Go API's v2 verified-flow endpoints,
+  // which own the verification-code state (pendingVerifications). All four routes require
+  // the caller's session to match the URL user_id, so a hijacked api token alone can't
+  // drive a change against another account. The legacy v1 PUT /user/{id}/email continues
+  // to work for any clients still on the password-only flow during migration.
+  function ensureSelfAccountId(req, res) {
+    const requestedUserId = req.params.user_id;
+    if (!isValidObjectId(requestedUserId)) {
+      res.status(400).json({ error: "Invalid user ID" });
+      return null;
+    }
+    const userData = req.user._doc || req.user;
+    const documentId = req.user._id || userData._id;
+    const currentUserId = documentId
+      ? (typeof documentId === 'object' ? (documentId.$oid || documentId.toString()) : String(documentId))
+      : '';
+    if (requestedUserId !== currentUserId) {
+      res.status(403).json({ error: "You can only manage your own account" });
+      return null;
+    }
+    return requestedUserId;
+  }
+
+  async function proxyAccountChange(req, res, method, path, label) {
+    try {
+      const userId = ensureSelfAccountId(req, res);
+      if (!userId) return;
+      const response = await axios({
+        method,
+        url: `${policeCadApiUrl}/api/v2/user/${userId}${path}`,
+        data: req.body,
+        headers: { ...config.headers, 'Content-Type': 'application/json' },
+      });
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error(`[${label}] Error:`, error.message);
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      }
+      return res.status(500).json({ error: `Failed to ${label}` });
+    }
+  }
+
+  app.post("/api/v2/user/:user_id/email/request-change", apiAuthCheck, function (req, res) {
+    return proxyAccountChange(req, res, 'post', '/email/request-change', 'request email change');
+  });
+  app.put("/api/v2/user/:user_id/email", apiAuthCheck, function (req, res) {
+    return proxyAccountChange(req, res, 'put', '/email', 'confirm email change');
+  });
+  app.post("/api/v2/user/:user_id/password/request-change", apiAuthCheck, function (req, res) {
+    return proxyAccountChange(req, res, 'post', '/password/request-change', 'request password change');
+  });
+  app.put("/api/v2/user/:user_id/password", apiAuthCheck, function (req, res) {
+    return proxyAccountChange(req, res, 'put', '/password', 'confirm password change');
+  });
+
   // API route to verify password
   app.post("/api/verify-password", auth, function (req, res) {
     if (!req.isAuthenticated() || !req.user) {
@@ -6584,129 +6640,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
             console.error(err);
           }
           return res.redirect("back");
-        }
-      );
-    } else if (req.body.action === "changeEmail") {
-      var isValid = isValidObjectIdLength(
-        req.body.userID,
-        "cannot lookup invalid length userID, route: /manageAccount"
-      );
-      if (!isValid) {
-        req.app.locals.specialContext = "invalidRequest";
-        return res.redirect("back");
-      }
-
-      if (!exists(req.body.newEmail) || !exists(req.body.currentPassword)) {
-        console.log('changeEmail: Missing required fields', {
-          hasNewEmail: exists(req.body.newEmail),
-          hasCurrentPassword: exists(req.body.currentPassword),
-          body: Object.keys(req.body)
-        });
-        req.app.locals.specialContext = "invalidRequest";
-        return res.redirect("back");
-      }
-
-      var newEmail = req.body.newEmail.trim().toLowerCase();
-      var currentPassword = req.body.currentPassword;
-      
-      console.log('changeEmail: Processing request', {
-        userID: req.body.userID,
-        newEmail: newEmail,
-        hasPassword: !!currentPassword
-      });
-
-      // Find user and verify password
-      User.findOne(
-        {
-          _id: ObjectId(req.body.userID),
-        },
-        function (err, user) {
-          if (err) {
-            console.error('changeEmail: Error finding user', err);
-            req.app.locals.specialContext = "error";
-            return res.redirect("back");
-          }
-          if (!user) {
-            console.log('changeEmail: User not found', { userID: req.body.userID });
-            req.app.locals.specialContext = "error";
-            return res.redirect("back");
-          }
-
-          console.log('changeEmail: User found, verifying password');
-
-          // Verify current password
-          var bcrypt = require("bcrypt-nodejs");
-          var passwordMatch = bcrypt.compareSync(currentPassword, user.user.password);
-          console.log('changeEmail: Password verification', { 
-            passwordMatch: passwordMatch,
-            hasStoredPassword: !!user.user.password
-          });
-          
-          if (!passwordMatch) {
-            console.log('changeEmail: Password verification failed');
-            req.app.locals.specialContext = "invalidPassword";
-            return res.redirect("back");
-          }
-
-          console.log('changeEmail: Password verified, checking if email is in use');
-
-          // Check if email is already in use
-          User.findOne(
-            {
-              "user.email": newEmail,
-              _id: { $ne: ObjectId(req.body.userID) }
-            },
-            function (err, existingUser) {
-              if (err) {
-                console.error('changeEmail: Error checking existing email', err);
-                req.app.locals.specialContext = "error";
-                return res.redirect("back");
-              }
-              if (existingUser) {
-                console.log('changeEmail: Email already in use', { 
-                  existingUserID: existingUser._id 
-                });
-                req.app.locals.specialContext = "emailInUse";
-                return res.redirect("back");
-              }
-
-              console.log('changeEmail: Email available, updating database');
-
-              // Update email
-              User.findOneAndUpdate(
-                {
-                  _id: ObjectId(req.body.userID),
-                },
-                {
-                  $set: {
-                    "user.email": newEmail,
-                    "user.updatedAt": new Date(),
-                  },
-                },
-                { new: true }, // Return updated document
-                function (err, updatedUser) {
-                  if (err) {
-                    console.error('changeEmail: Database error', err);
-                    req.app.locals.specialContext = "error";
-                    return res.redirect("back");
-                  }
-                  if (!updatedUser) {
-                    console.log('changeEmail: User not found for update', { userID: req.body.userID });
-                    req.app.locals.specialContext = "error";
-                    return res.redirect("back");
-                  }
-                  console.log('changeEmail: Email updated successfully', {
-                    userID: req.body.userID,
-                    oldEmail: user.user.email,
-                    newEmail: newEmail,
-                    updatedEmail: updatedUser.user?.email
-                  });
-                  req.app.locals.specialContext = "emailChanged";
-                  return res.redirect("back");
-                }
-              );
-            }
-          );
         }
       );
     } else if (req.body.action === "updateProfilePicture") {

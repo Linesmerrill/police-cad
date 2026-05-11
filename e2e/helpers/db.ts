@@ -153,6 +153,31 @@ export function generateToken(): string {
   return crypto.randomBytes(20).toString('hex');
 }
 
+/**
+ * Read the most-recent pendingVerifications row for an account-change flow.
+ * Tests use this to grab the 6-digit code that the API would normally email out
+ * (the test env has no SMTP, so we look at the row directly).
+ */
+export async function getPendingVerificationCode(
+  userId: ObjectId,
+  purpose: 'email_change' | 'password_change'
+): Promise<{ code: string; newEmail?: string } | null> {
+  return withDb(async (db) => {
+    const row = await db.collection('pendingVerifications').findOne({
+      userID: userId,
+      purpose,
+    });
+    if (!row) return null;
+    return { code: row.code as string, newEmail: row.newEmail as string | undefined };
+  });
+}
+
+export async function deletePendingVerifications(userId: ObjectId): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('pendingVerifications').deleteMany({ userID: userId });
+  });
+}
+
 export function uniqueTestEmail(prefix: string): string {
   return `phase7-${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}@test.com`;
 }
