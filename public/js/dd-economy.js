@@ -324,7 +324,16 @@
   const STATUS_CAPABLE_TEMPLATES = { police: 1, ems: 1, fire: 1, dispatch: 1 };
   function deptUsesStatusCodes(dept) {
     if (!dept) return false;
-    const t = String(dept.template || '').toLowerCase();
+    // The community endpoint serializes Department.template as an object
+    // ({ _id, name, description }) — so we need template.name, not the
+    // object itself. Also tolerate the legacy string form just in case.
+    let t = '';
+    if (typeof dept.template === 'string') {
+      t = dept.template;
+    } else if (dept.template && typeof dept.template === 'object') {
+      t = dept.template.name || '';
+    }
+    t = t.toLowerCase().trim();
     return !!STATUS_CAPABLE_TEMPLATES[t];
   }
 
@@ -601,9 +610,12 @@
       // so dispatch + MDT reflect the shift change without a second click.
       // Only applies to dept templates that actually run shifts on the
       // 10-41/10-42 convention (police / ems / fire / dispatch).
-      const onDutyCode = deptUsesStatusCodes(state.dept)
-        ? findCodeBySuffix(state.communityEcon.tenCodes, '41')
-        : null;
+      const eligible = deptUsesStatusCodes(state.dept);
+      const onDutyCode = eligible ? findCodeBySuffix(state.communityEcon.tenCodes, '41') : null;
+      console.log('[dd-economy] auto on-duty:',
+        { eligible, deptTemplate: state.dept && state.dept.template,
+          tenCodesCount: (state.communityEcon.tenCodes || []).length,
+          found: onDutyCode && onDutyCode.code });
       if (onDutyCode) {
         await setMemberTenCode(cfg, onDutyCode._id);
       }
@@ -630,9 +642,12 @@
       if (!res.ok) throw new Error('clock-out failed: ' + res.status);
       // Auto-set the user's status to the community's off-duty code ("X-42").
       // Gated to status-capable templates (see clock-in path).
-      const offDutyCode = deptUsesStatusCodes(state.dept)
-        ? findCodeBySuffix(state.communityEcon.tenCodes, '42')
-        : null;
+      const eligible = deptUsesStatusCodes(state.dept);
+      const offDutyCode = eligible ? findCodeBySuffix(state.communityEcon.tenCodes, '42') : null;
+      console.log('[dd-economy] auto off-duty:',
+        { eligible, deptTemplate: state.dept && state.dept.template,
+          tenCodesCount: (state.communityEcon.tenCodes || []).length,
+          found: offDutyCode && offDutyCode.code });
       if (offDutyCode) {
         await setMemberTenCode(cfg, offDutyCode._id);
       }
