@@ -37,7 +37,6 @@ var civilianSchema = mongoose.Schema({
     userID: String,
     balance: Number,
     balanceInitialized: Boolean,
-    jobId: String,
     createdAt: Date,
     updatedAt: Date,
   },

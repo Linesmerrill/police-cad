@@ -499,11 +499,8 @@
     window.communityDepartmentsCached = comm.departments || [];
     window.communityOwnerIDCached = comm.ownerID || '';
     window.communityRolesCached = comm.roles || [];
-    // Economy: cache non-archived Jobs + the master enable flag so the civilian
-    // grid + forms can render economy-aware UI without an extra fetch.
-    window.communityJobsCached = ((comm.jobs || []).filter(function (j) { return !j.archived; }))
-      .slice()
-      .sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0) || (a.name || '').localeCompare(b.name || ''); });
+    // Economy: cache the master enable flag so the civilian grid can show
+    // balance chips without an extra fetch.
     window.communityEconomyEnabled = !!(comm.economy && comm.economy.enabled);
   }
 
@@ -516,19 +513,6 @@
     var dollars = Math.floor(abs / 100);
     var rem = abs % 100;
     return sign + '$' + dollars.toLocaleString() + '.' + (rem < 10 ? '0' : '') + rem;
-  }
-
-  // Build <option> markup for the Job picker. selectedId can be empty.
-  function ddCivJobOptions(selectedId) {
-    var jobs = window.communityJobsCached || [];
-    var html = '<option value=""' + (selectedId ? '' : ' selected') + '>— none —</option>';
-    jobs.forEach(function (j) {
-      var pay = '$' + (((j.payPerHour || 0) / 100).toFixed(2)) + '/hr';
-      var sel = (selectedId && j._id === selectedId) ? ' selected' : '';
-      // esc() is defined later in this file but is hoisted at module scope; safe to call.
-      html += '<option value="' + j._id + '"' + sel + '>' + esc(j.name) + ' — ' + pay + '</option>';
-    });
-    return html;
   }
 
   /* ───────────────────────────────────────────
@@ -990,31 +974,10 @@
           '<label>Address</label>' +
           '<input type="text" name="address" value="' + esc(c.address || '') + '" placeholder="Address" />' +
         '</div>' +
-        ((function () {
-          var hasJobs = !!(window.communityJobsCached && window.communityJobsCached.length);
-          var currentJob = hasJobs && c.jobId ? window.communityJobsCached.find(function (j) { return j._id === c.jobId; }) : null;
-          var jobIsSet = !!currentJob;
-          var occInput =
-            '<div class="dd-civ-field dd-civ-occupation-field" style="' + (jobIsSet ? 'display:none;' : '') + '">' +
-              '<label>Occupation</label>' +
-              '<input type="text" name="occupation" value="' + esc(c.occupation || '') + '" placeholder="Occupation" />' +
-            '</div>';
-          var workingAs =
-            '<div class="dd-civ-field dd-civ-working-as" style="' + (jobIsSet ? '' : 'display:none;') + '">' +
-              '<label>Working as</label>' +
-              '<div class="dd-civ-readonly" style="padding:0.6rem 0.75rem;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);border-radius:8px;color:var(--dd-text);font-size:0.9rem;">' +
-                '<i class="fa fa-briefcase" style="margin-right:0.4rem;opacity:0.7;"></i>' +
-                '<span class="dd-civ-working-as-name">' + esc(currentJob ? currentJob.name : '') + '</span>' +
-              '</div>' +
-            '</div>';
-          var jobPicker = hasJobs
-            ? '<div class="dd-civ-field">' +
-                '<label>Job (economy)</label>' +
-                '<select name="jobId">' + ddCivJobOptions(c.jobId || '') + '</select>' +
-              '</div>'
-            : '';
-          return occInput + workingAs + jobPicker;
-        })()) +
+        '<div class="dd-civ-field">' +
+          '<label>Occupation</label>' +
+          '<input type="text" name="occupation" value="' + esc(c.occupation || '') + '" placeholder="Occupation" />' +
+        '</div>' +
 
         /* ── Advanced Details divider ── */
         '<div class="dd-civ-section-label">Advanced Details <span style="font-size:0.75rem;color:var(--dd-text-dim);">(Optional)</span></div>' +
@@ -1096,21 +1059,6 @@
       $body.find('.dd-civ-height-metric').toggle(val === 'metric');
     });
 
-    // Job picker: when a Job is picked, collapse the free-text Occupation
-    // input into a read-only "Working as" line. When cleared, restore the
-    // Occupation input. The underlying <input name="occupation"> value is
-    // preserved so unsetting the Job doesn't lose what the user had typed.
-    $body.find('[name="jobId"]').on('change', function () {
-      var $sel = $(this);
-      var jobId = $sel.val() || '';
-      var jobName = $sel.find('option:selected').text().split(' — ')[0];
-      var hasJob = !!jobId;
-      $body.find('.dd-civ-occupation-field').toggle(!hasJob);
-      $body.find('.dd-civ-working-as').toggle(hasJob);
-      if (hasJob) {
-        $body.find('.dd-civ-working-as-name').text(jobName);
-      }
-    });
 
     // Weight toggle
     $body.find('.dd-civ-weight-toggle').on('click', function () {
@@ -1186,15 +1134,6 @@
 
     var fullName = $.trim($form.find('[name="name"]').val());
 
-    // When a Job is picked, mirror the Job's name into occupation for legacy
-    // readers (the Occupation input is hidden in that case). When no Job is
-    // picked, use whatever the user typed in the Occupation field.
-    var $jobSel = $form.find('[name="jobId"]');
-    var pickedJobId = $jobSel.length ? ($jobSel.val() || '') : undefined;
-    var occupationVal = pickedJobId
-      ? $jobSel.find('option:selected').text().split(' — ')[0]
-      : $form.find('[name="occupation"]').val();
-
     var payload = {
       name: fullName,
       firstName: fullName.split(' ')[0] || '',
@@ -1202,7 +1141,7 @@
       birthday: $form.find('[name="birthday"]').val(),
       gender: $form.find('[name="gender"]').val(),
       address: $form.find('[name="address"]').val(),
-      occupation: occupationVal,
+      occupation: $form.find('[name="occupation"]').val(),
       eyeColor: $form.find('[name="eyeColor"]').val(),
       hairColor: $form.find('[name="hairColor"]').val(),
       height: height,
@@ -1215,7 +1154,6 @@
       onProbation: $form.find('[name="onProbation"]').is(':checked'),
       image: $form.find('[name="image"]').val() || ''
     };
-    if (pickedJobId !== undefined) payload.jobId = pickedJobId;
 
     $.ajax({
       url: c.API_URL + '/api/v1/civilian/' + currentCiv._id,
@@ -2828,23 +2766,10 @@
                 '<label>Address</label>' +
                 '<input type="text" name="address" placeholder="Address (optional)" />' +
               '</div>' +
-              '<div class="dd-civ-field dd-civ-form-full dd-civ-occupation-field">' +
+              '<div class="dd-civ-field dd-civ-form-full">' +
                 '<label>Occupation</label>' +
                 '<input type="text" name="occupation" placeholder="Job/occupation (optional)" />' +
               '</div>' +
-              '<div class="dd-civ-field dd-civ-form-full dd-civ-working-as" style="display:none;">' +
-                '<label>Working as</label>' +
-                '<div class="dd-civ-readonly" style="padding:0.6rem 0.75rem;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);border-radius:8px;color:var(--dd-text);font-size:0.9rem;">' +
-                  '<i class="fa fa-briefcase" style="margin-right:0.4rem;opacity:0.7;"></i>' +
-                  '<span class="dd-civ-working-as-name"></span>' +
-                '</div>' +
-              '</div>' +
-              ((window.communityJobsCached && window.communityJobsCached.length)
-                ? '<div class="dd-civ-field dd-civ-form-full">' +
-                    '<label>Job (economy)</label>' +
-                    '<select name="jobId">' + ddCivJobOptions('') + '</select>' +
-                  '</div>'
-                : '') +
 
               /* ── Additional Details ── */
               '<div class="dd-civ-section-label"><i class="fa fa-user-cog" style="margin-right:0.3rem;"></i> Additional Details</div>' +
@@ -2913,19 +2838,6 @@
 
     $('body').append(html);
     $newOverlay = $('#dd-civ-new-overlay');
-
-    // Job picker: same hide-when-Job-set behavior as the edit form.
-    $newOverlay.on('change', '[name="jobId"]', function () {
-      var $sel = $(this);
-      var jobId = $sel.val() || '';
-      var jobName = $sel.find('option:selected').text().split(' — ')[0];
-      var hasJob = !!jobId;
-      $newOverlay.find('.dd-civ-occupation-field').toggle(!hasJob);
-      $newOverlay.find('.dd-civ-working-as').toggle(hasJob);
-      if (hasJob) {
-        $newOverlay.find('.dd-civ-working-as-name').text(jobName);
-      }
-    });
 
     // Close handlers
     $newOverlay.on('click', function (e) {
@@ -3065,19 +2977,13 @@
       weightClassification = 'lbs';
     }
 
-    var $jobSel = $form.find('[name="jobId"]');
-    var pickedJobId = $jobSel.length ? ($jobSel.val() || '') : undefined;
-    var occupationVal = pickedJobId
-      ? $jobSel.find('option:selected').text().split(' — ')[0]
-      : $form.find('[name="occupation"]').val();
-
     var payload = {
       name: fullName,
       firstName: fullName.split(' ')[0] || '',
       lastName: fullName.split(' ').slice(1).join(' ') || '',
       birthday: birthday,
       address: $form.find('[name="address"]').val(),
-      occupation: occupationVal,
+      occupation: $form.find('[name="occupation"]').val(),
       gender: $form.find('[name="gender"]').val(),
       height: height,
       heightClassification: heightClassification,
@@ -3093,7 +2999,6 @@
       userID: c.userId,
       activeCommunityID: c.communityId
     };
-    if (pickedJobId !== undefined) payload.jobId = pickedJobId;
 
     // Only set approval status when community has the approval system enabled
     if (approvalSystemEnabled) {

@@ -117,6 +117,17 @@
       border-radius: var(--in-radius);
     }
 
+    /* Highlight pulse when an item is deep-linked from /wallet */
+    .in-item-focused {
+      animation: in-pulse 2s ease-out;
+      box-shadow: 0 0 0 2px var(--in-accent-border) inset;
+    }
+    @keyframes in-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(56,189,248,0.6), 0 0 0 2px var(--in-accent-border) inset; }
+      35%  { box-shadow: 0 0 0 12px rgba(56,189,248,0), 0 0 0 2px var(--in-accent-border) inset; }
+      100% { box-shadow: 0 0 0 0 rgba(56,189,248,0), 0 0 0 2px var(--in-accent-border) inset; }
+    }
+
     .in-pagination {
       display: flex; align-items: center; justify-content: space-between;
       margin-top: 1.25rem; font-size: 0.85rem; color: var(--in-text-muted);
@@ -228,7 +239,7 @@
       const status = it.status || 'pending';
       const due = it.dueAt ? `Due ${fmtDate(it.dueAt)}` : '';
       return `
-        <div class="in-item ${escapeHtml(status)}" data-id="${escapeHtml(it._id)}">
+        <div class="in-item ${escapeHtml(status)}" id="item-${escapeHtml(it._id)}" data-id="${escapeHtml(it._id)}">
           <div class="in-item-icon"><i class="fa ${icon}"></i></div>
           <div class="in-item-body">
             <div class="in-item-title">${escapeHtml(it.title || it.type || 'Item')}</div>
@@ -254,6 +265,21 @@
       });
     });
     updatePagination();
+    maybeFocusHashItem();
+  }
+
+  // When the user lands here via /inbox#item-<id> (e.g. from /wallet Recent
+  // Inbox), scroll the target into view and pulse a highlight ring. Runs on
+  // every render so the same hash works after pay/dismiss refreshes.
+  function maybeFocusHashItem() {
+    const hash = window.location.hash || '';
+    const m = hash.match(/^#item-(.+)$/);
+    if (!m) return;
+    const target = document.getElementById('item-' + m[1]);
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.classList.add('in-item-focused');
+    setTimeout(() => target.classList.remove('in-item-focused'), 2400);
   }
 
   function updatePagination() {
