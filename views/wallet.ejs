@@ -214,17 +214,22 @@
   }
 
   async function refreshWallet() {
+    const balEl = document.getElementById('balanceValue');
+    const inboxHost = document.getElementById('recentInbox');
     try {
-      const res = await fetch(`${API_URL}/api/v2/economy/wallet/${CIVILIAN_ID}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('wallet fetch failed');
+      const res = await fetch(`${API_URL}/api/v2/economy/wallet/${CIVILIAN_ID}`);
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status}${txt ? ': ' + txt.slice(0, 200) : ''}`);
+      }
       const data = await res.json();
-      const balEl = document.getElementById('balanceValue');
       balEl.textContent = fmtMoney(data.balance || 0);
       balEl.classList.toggle('neg', (data.balance || 0) < 0);
       renderRecentInbox(data.recentInbox || []);
     } catch (err) {
-      console.error(err);
-      document.getElementById('balanceValue').textContent = '—';
+      console.error('wallet load failed:', err);
+      balEl.textContent = '—';
+      inboxHost.innerHTML = '<div class="w-empty" style="color:#ef4444;">Wallet API unavailable. ' + escapeHtml(err.message || '') + '</div>';
     }
   }
 
@@ -254,13 +259,16 @@
 
   async function refreshActiveSession() {
     try {
-      const res = await fetch(`${API_URL}/api/v2/economy/session/active?civilianId=${encodeURIComponent(CIVILIAN_ID)}`, { credentials: 'include' });
-      if (!res.ok) { activeSession = null; renderActive(); return; }
+      const res = await fetch(`${API_URL}/api/v2/economy/session/active?civilianId=${encodeURIComponent(CIVILIAN_ID)}`);
+      if (!res.ok) {
+        console.warn('session/active returned', res.status);
+        activeSession = null; renderActive(); return;
+      }
       const text = await res.text();
-      activeSession = text === 'null' ? null : JSON.parse(text);
+      activeSession = (!text || text === 'null') ? null : JSON.parse(text);
       renderActive();
     } catch (err) {
-      console.error(err);
+      console.error('session/active failed:', err);
       activeSession = null; renderActive();
     }
   }
@@ -318,9 +326,17 @@
   }
 
   async function refreshDepartments() {
+    const host = document.getElementById('clockList');
+    if (!COMMUNITY_ID) {
+      host.innerHTML = '<div class="w-empty">This civilian has no active community. Open the civilian and pick a community first.</div>';
+      return;
+    }
     try {
-      const res = await fetch(`${API_URL}/api/v1/community/${COMMUNITY_ID}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('community fetch failed');
+      const res = await fetch(`${API_URL}/api/v1/community/${COMMUNITY_ID}`);
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status}${txt ? ': ' + txt.slice(0, 200) : ''}`);
+      }
       const community = await res.json();
       const depts = (community.community && community.community.departments) || [];
       const myDepts = depts.filter(d => {
@@ -330,10 +346,14 @@
         }
         return (d.members || []).some(m => m.userID === USER_ID);
       });
+      if (!myDepts.length && depts.some(d => d.economyEnabled)) {
+        host.innerHTML = '<div class="w-empty">Economy is enabled, but you are not a member of any economy-enabled department.</div>';
+        return;
+      }
       renderDepartments(myDepts);
     } catch (err) {
-      console.error(err);
-      document.getElementById('clockList').innerHTML = '<div class="w-empty">Could not load departments.</div>';
+      console.error('community load failed:', err);
+      host.innerHTML = '<div class="w-empty" style="color:#ef4444;">Could not load departments. ' + escapeHtml(err.message || '') + '</div>';
     }
   }
 
