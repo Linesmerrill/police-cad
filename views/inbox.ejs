@@ -539,7 +539,10 @@
       let actions = '';
       if (status === 'pending' || status === 'delinquent') {
         actions += `<button class="in-btn" data-action="pay">Pay</button>`;
-        if (isFine) {
+        // Contest only when the fine hasn't already been through the courts.
+        // Once `resolution` is set (upheld / partial / dismissed) the verdict
+        // is final and re-contesting isn't allowed.
+        if (isFine && !it.resolution) {
           actions += `<button class="in-btn ghost" data-action="contest">Contest</button>`;
         }
       }
