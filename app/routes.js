@@ -1668,6 +1668,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         user: req.user,
         apiUrl: policeCadApiUrl,
         communityId,
+        encodedCommunityId: encodeId(communityId),
         communityName,
         userId,
       });

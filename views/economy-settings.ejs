@@ -156,8 +156,8 @@
   user: user,
   communityName: communityName,
   pageLabel: 'Economy Settings',
-  backHref: '/communities',
-  backLabel: 'Back to dashboard'
+  backHref: encodedCommunityId ? ('/community/' + encodedCommunityId) : '/communities',
+  backLabel: 'Back to community'
 }) %>
 
 <div class="es-shell">
