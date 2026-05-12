@@ -84,6 +84,24 @@
       margin-bottom: 0.85rem;
     }
     .w-section-title i { color: var(--w-text-muted); }
+    .w-jobs-info {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      color: var(--w-text-muted); cursor: pointer;
+      transition: color 120ms ease, background 120ms ease;
+      font-size: 0.78rem;
+    }
+    .w-jobs-info:hover { color: var(--w-accent, #38bdf8); background: rgba(56,189,248,0.08); }
+    .w-jobs-hint {
+      font-size: 0.74rem; color: var(--w-text-muted);
+      background: rgba(56,189,248,0.06);
+      border: 1px solid rgba(56,189,248,0.18);
+      border-radius: 6px;
+      padding: 0.45rem 0.6rem; margin-bottom: 0.7rem;
+      line-height: 1.4;
+    }
+    .w-jobs-hint a { color: var(--w-accent, #38bdf8); text-decoration: none; }
+    .w-jobs-hint a:hover { text-decoration: underline; }
 
     /* Inbox preview */
     .w-inbox-row {
@@ -194,7 +212,11 @@
     </div>
 
     <div class="w-card">
-      <div class="w-section-title"><i class="fa fa-briefcase"></i> Jobs</div>
+      <div class="w-section-title" style="justify-content:space-between;">
+        <span style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="fa fa-briefcase"></i> Jobs</span>
+        <span id="jobsInfo" class="w-jobs-info" title=""><i class="fa fa-circle-info"></i></span>
+      </div>
+      <div class="w-jobs-hint" id="jobsHint" style="display:none;"></div>
       <div class="w-clock-list" id="clockList"><div class="w-empty">Loading departments…</div></div>
     </div>
   </div>
@@ -335,6 +357,25 @@
     } catch (err) { console.error(err); }
   }
 
+  function updateJobsInfo(shownCount, totalCount) {
+    const info = document.getElementById('jobsInfo');
+    const hint = document.getElementById('jobsHint');
+    if (!info || !hint) return;
+    const hiddenCount = Math.max(0, totalCount - shownCount);
+    const summary = totalCount === 0
+      ? 'This community has no departments yet.'
+      : `Showing ${shownCount} of ${totalCount} department${totalCount === 1 ? '' : 's'} — only departments with economy enabled appear here.`;
+    info.setAttribute('title', summary);
+    let msg = summary;
+    if (hiddenCount > 0) {
+      msg += ` <a href="/economy-settings">Enable economy on more departments →</a>`;
+    }
+    hint.innerHTML = msg;
+    info.onclick = () => {
+      hint.style.display = hint.style.display === 'none' ? 'block' : 'none';
+    };
+  }
+
   async function refreshDepartments() {
     const host = document.getElementById('clockList');
     if (!COMMUNITY_ID) {
@@ -351,6 +392,7 @@
       const depts = (community.community && community.community.departments) || [];
 
       const economyDepts = depts.filter(d => d.economyEnabled);
+      updateJobsInfo(economyDepts.length, depts.length);
       const decorated = economyDepts.map(d => {
         const approvalRequired = !!d.approvalRequired;
         const isExplicitMember = (d.members || []).some(m => m.userID === USER_ID);
