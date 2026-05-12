@@ -525,21 +525,20 @@
   var ddCivInboxWs = null;
 
   function ddCivApplyInboxCounts() {
+    // Reset every visible button first so badges from prior loads clear when
+    // items get resolved (the pending-counts endpoint only returns positive
+    // entries, so we can't rely on the map alone to find what to hide).
+    $('.dd-civ-inbox-btn').removeClass('has-pending').each(function () {
+      $(this).find('.dd-civ-inbox-count').hide().text('0');
+      $(this).find('.dd-civ-inbox-dot').hide();
+    });
     Object.keys(ddCivInboxCounts).forEach(function (civId) {
       var count = ddCivInboxCounts[civId] || 0;
-      var $count = $('[data-civ-inbox-count="' + civId + '"]');
-      var $dot = $('[data-civ-inbox-dot="' + civId + '"]');
+      if (count <= 0) return;
       var $btn = $('[data-civ-inbox="' + civId + '"]');
       if (!$btn.length) return;
-      if (count > 0) {
-        $btn.addClass('has-pending');
-        $count.text(count > 99 ? '99+' : count).show();
-        $dot.hide();
-      } else {
-        $btn.removeClass('has-pending');
-        $count.hide();
-        $dot.hide();
-      }
+      $btn.addClass('has-pending');
+      $btn.find('.dd-civ-inbox-count').text(count > 99 ? '99+' : count).show();
     });
   }
 
