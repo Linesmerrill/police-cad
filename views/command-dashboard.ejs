@@ -694,6 +694,15 @@
           <i class="fa fa-map"></i>
           Map
         </a>
+        <a class="cd-nav-item" href="/wallet">
+          <i class="fa fa-wallet"></i>
+          Wallet
+        </a>
+        <a class="cd-nav-item" href="/inbox">
+          <i class="fa fa-inbox"></i>
+          Inbox
+          <span class="dd-nav-badge" id="dd-inbox-count" style="display:none;">0</span>
+        </a>
         <a class="cd-nav-item" href="/help">
           <i class="fa fa-circle-question"></i>
           Help & Tutorials
@@ -844,6 +853,8 @@
     <div class="cd-content" id="dd-content">
       <div id="dd-loading" class="cd-spinner"></div>
       <div id="dd-panels" style="display:none;"></div>
+      <!-- Smart on-the-clock / clock-in economy card (rendered by dd-economy.js). -->
+      <div id="dd-economy-slot" style="margin-bottom:1rem;"></div>
       <div id="dd-rank-wrap" style="margin-bottom:1rem;">
         <% include partials/rank-progress-card %>
       </div>
@@ -2415,6 +2426,7 @@
   <script src="/static/js/cd-dispatch-layout.js"></script>
   <script src="/static/js/rank-progress.js"></script>
   <script>if (typeof loadMyRankProgress === 'function') loadMyRankProgress();</script>
+  <script src="/static/js/dd-economy.js"></script>
   <%- include('partials/last-dashboard-tracker') %>
 </body>
 
