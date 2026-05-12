@@ -1610,7 +1610,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
       } catch (e) {}
     }
     const resolvedCivId = civilian ? String(civilian._id) : "";
-    const civName = civilian ? [civilian.civilian?.firstName, civilian.civilian?.lastName].filter(Boolean).join(" ") : "";
+    // Older civ docs store the full name in `name` rather than firstName/lastName,
+    // so fall back to that before returning an empty string.
+    const civName = civilian
+      ? ([civilian.civilian?.firstName, civilian.civilian?.lastName].filter(Boolean).join(" ")
+         || civilian.civilian?.name || "")
+      : "";
     const communityId = civilian?.civilian?.activeCommunityID
                      || req.user?.user?.lastAccessedCommunity?.communityID
                      || req.user?.user?.activeCommunity
