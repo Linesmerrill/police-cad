@@ -141,12 +141,17 @@
 }) %>
 
 <div class="in-shell">
-  <div class="in-header">
-    <div class="in-header-icon"><i class="fa fa-inbox"></i></div>
-    <div>
-      <div class="in-title">Inbox</div>
-      <div class="in-subtitle" id="inboxSubtitle">Fines, fees, and notices</div>
+  <div class="in-header" style="justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:0.85rem;">
+      <div class="in-header-icon"><i class="fa fa-inbox"></i></div>
+      <div>
+        <div class="in-title">Inbox</div>
+        <div class="in-subtitle" id="inboxSubtitle">Fines, fees, and notices</div>
+      </div>
     </div>
+    <a class="in-btn ghost" id="walletLink" href="/wallet?c=<%= encodedCivId || '' %>" style="text-decoration:none;align-self:center;">
+      <i class="fa fa-wallet"></i> Wallet
+    </a>
   </div>
 
   <div class="in-filter-bar" id="filterBar">
