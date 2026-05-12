@@ -49,6 +49,88 @@
     }
     .w-title { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.01em; }
     .w-subtitle { font-size: 0.85rem; color: var(--w-text-muted); margin-top: 0.1rem; }
+    .w-subtitle-row { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .w-swap-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(56,189,248,0.08); color: var(--w-accent, #38bdf8);
+      border: 1px solid rgba(56,189,248,0.18); cursor: pointer;
+      font-size: 0.65rem;
+      transition: background 120ms, border-color 120ms, transform 120ms;
+    }
+    .w-swap-btn:hover { background: rgba(56,189,248,0.18); border-color: rgba(56,189,248,0.35); transform: rotate(180deg); }
+
+    /* Civilian swap modal */
+    .w-swap-backdrop {
+      position: fixed; inset: 0; background: rgba(2,6,12,0.6);
+      backdrop-filter: blur(6px);
+      opacity: 0; pointer-events: none;
+      transition: opacity 160ms ease;
+      z-index: 60;
+    }
+    .w-swap-backdrop.is-open { opacity: 1; pointer-events: auto; }
+    .w-swap-modal {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -48%) scale(0.97);
+      width: min(440px, calc(100vw - 2rem));
+      max-height: min(72vh, 600px); display: flex; flex-direction: column;
+      background: #0b1220;
+      border: 1px solid rgba(56,189,248,0.22);
+      border-radius: 12px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+      opacity: 0; pointer-events: none;
+      transition: opacity 160ms ease, transform 160ms ease;
+      z-index: 61;
+    }
+    .w-swap-modal.is-open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+    .w-swap-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 0.9rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-weight: 600; color: var(--w-text);
+    }
+    .w-swap-header button {
+      background: none; border: none; color: var(--w-text-muted);
+      cursor: pointer; font-size: 0.9rem; padding: 0.25rem;
+    }
+    .w-swap-header button:hover { color: var(--w-text); }
+    .w-swap-search {
+      margin: 0.7rem 0.9rem 0.4rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; padding: 0.45rem 0.65rem;
+    }
+    .w-swap-search i { color: var(--w-text-muted); font-size: 0.75rem; }
+    .w-swap-search input {
+      background: transparent; border: none; outline: none; color: var(--w-text);
+      flex: 1; font-size: 0.85rem;
+    }
+    .w-swap-list { overflow-y: auto; padding: 0.35rem 0.6rem 0.7rem; }
+    .w-swap-row {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.55rem 0.6rem; border-radius: 8px; cursor: pointer;
+      transition: background 100ms;
+    }
+    .w-swap-row:hover { background: rgba(56,189,248,0.06); }
+    .w-swap-row.is-current { background: rgba(56,189,248,0.1); cursor: default; }
+    .w-swap-row.is-current:hover { background: rgba(56,189,248,0.1); }
+    .w-swap-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(56,189,248,0.12); color: var(--w-accent, #38bdf8);
+      display: grid; place-items: center; font-weight: 700; font-size: 0.78rem;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .w-swap-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .w-swap-name { font-size: 0.88rem; color: var(--w-text); text-transform: capitalize; }
+    .w-swap-bal { font-size: 0.74rem; color: var(--w-text-muted); font-variant-numeric: tabular-nums; }
+    .w-swap-info { flex: 1; min-width: 0; }
+    .w-swap-current-pill {
+      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--w-accent, #38bdf8); background: rgba(56,189,248,0.12);
+      padding: 0.1rem 0.4rem; border-radius: 4px;
+    }
+    .w-swap-empty { padding: 1.5rem; text-align: center; color: var(--w-text-muted); font-size: 0.85rem; }
 
     .w-card {
       background: var(--w-glass); border: 1px solid var(--w-glass-border);
@@ -180,8 +262,26 @@
     <div class="w-header-icon"><i class="fa fa-wallet"></i></div>
     <div>
       <div class="w-title">Wallet</div>
-      <div class="w-subtitle" id="walletSubtitle">Loading civilian…</div>
+      <div class="w-subtitle w-subtitle-row">
+        <span id="walletSubtitle">Loading civilian…</span>
+        <button type="button" class="w-swap-btn" id="swapCivBtn" title="Switch civilian" aria-label="Switch civilian">
+          <i class="fa fa-right-left"></i>
+        </button>
+      </div>
     </div>
+  </div>
+
+  <div class="w-swap-backdrop" id="swapBackdrop"></div>
+  <div class="w-swap-modal" id="swapModal" role="dialog" aria-modal="true" aria-label="Switch civilian">
+    <div class="w-swap-header">
+      <span><i class="fa fa-right-left" style="margin-right:0.4rem; color:var(--w-text-muted);"></i> Switch civilian</span>
+      <button type="button" id="swapCloseBtn" aria-label="Close"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="w-swap-search">
+      <i class="fa fa-search"></i>
+      <input type="search" id="swapSearch" placeholder="Search your civilians…" autocomplete="off">
+    </div>
+    <div class="w-swap-list" id="swapList"><div class="w-swap-empty">Loading civilians…</div></div>
   </div>
 
   <!-- Active session banner (hidden until loaded) -->
@@ -494,6 +594,106 @@
     await Promise.all([refreshWallet(), refreshActiveSession(), refreshDepartments()]);
     if (activeSession) startHeartbeat();
   })();
+
+  // ---------- Civilian quick-swap ----------
+  const swapBackdrop = document.getElementById('swapBackdrop');
+  const swapModal = document.getElementById('swapModal');
+  const swapSearch = document.getElementById('swapSearch');
+  const swapList = document.getElementById('swapList');
+  let swapCivilians = null;
+
+  function encodeCivIdClient(id) {
+    return btoa(id).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function openSwapModal() {
+    swapBackdrop.classList.add('is-open');
+    swapModal.classList.add('is-open');
+    swapSearch.value = '';
+    setTimeout(() => swapSearch.focus(), 80);
+    if (!swapCivilians) loadSwapCivilians();
+    else renderSwapList();
+  }
+  function closeSwapModal() {
+    swapBackdrop.classList.remove('is-open');
+    swapModal.classList.remove('is-open');
+  }
+  document.getElementById('swapCivBtn').addEventListener('click', openSwapModal);
+  document.getElementById('swapCloseBtn').addEventListener('click', closeSwapModal);
+  swapBackdrop.addEventListener('click', closeSwapModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && swapModal.classList.contains('is-open')) closeSwapModal();
+  });
+  swapSearch.addEventListener('input', renderSwapList);
+
+  async function loadSwapCivilians() {
+    swapList.innerHTML = '<div class="w-swap-empty">Loading civilians…</div>';
+    try {
+      const url = `${API_URL}/api/v1/civilians/user/${encodeURIComponent(USER_ID)}` +
+        (COMMUNITY_ID ? `?active_community_id=${encodeURIComponent(COMMUNITY_ID)}` : '');
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      swapCivilians = Array.isArray(data) ? data : [];
+      renderSwapList();
+    } catch (err) {
+      console.error('swap civs load failed:', err);
+      swapList.innerHTML = '<div class="w-swap-empty" style="color:#ef4444;">Could not load civilians.</div>';
+    }
+  }
+
+  function renderSwapList() {
+    if (!swapCivilians) return;
+    const q = (swapSearch.value || '').trim().toLowerCase();
+    const rows = swapCivilians
+      .map(c => {
+        const inner = c.civilian || {};
+        const fn = (inner.firstName || '').trim();
+        const ln = (inner.lastName || '').trim();
+        const name = [fn, ln].filter(Boolean).join(' ') || 'Unnamed civilian';
+        return {
+          id: c._id,
+          name,
+          image: inner.image || '',
+          balance: typeof inner.balance === 'number' ? inner.balance : 0,
+          initials: ((fn[0] || '') + (ln[0] || '')).toUpperCase() || '?',
+        };
+      })
+      .filter(r => !q || r.name.toLowerCase().includes(q));
+
+    if (rows.length === 0) {
+      swapList.innerHTML = `<div class="w-swap-empty">${q ? 'No civilians match that search.' : 'You have no other civilians in this community.'}</div>`;
+      return;
+    }
+
+    swapList.innerHTML = rows.map(r => {
+      const isCurrent = r.id === CIVILIAN_ID;
+      const avatar = r.image
+        ? `<img src="${escapeHtml(r.image)}" alt="">`
+        : escapeHtml(r.initials);
+      const pill = isCurrent ? '<span class="w-swap-current-pill">Current</span>' : '';
+      const cls = 'w-swap-row' + (isCurrent ? ' is-current' : '');
+      return `
+        <div class="${cls}" data-civ-id="${escapeHtml(r.id)}">
+          <div class="w-swap-avatar">${avatar}</div>
+          <div class="w-swap-info">
+            <div class="w-swap-name">${escapeHtml(r.name)}</div>
+            <div class="w-swap-bal">${fmtMoney(r.balance)}</div>
+          </div>
+          ${pill}
+        </div>
+      `;
+    }).join('');
+
+    swapList.querySelectorAll('.w-swap-row').forEach(row => {
+      const id = row.dataset.civId;
+      if (id === CIVILIAN_ID) return;
+      row.addEventListener('click', () => {
+        const encoded = encodeCivIdClient(id);
+        window.location.href = `/wallet?c=${encodeURIComponent(encoded)}`;
+      });
+    });
+  }
 </script>
 </body>
 </html>
