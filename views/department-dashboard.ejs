@@ -3077,6 +3077,15 @@
           <i class="fa fa-briefcase"></i>
           Court Cases
         </a>
+        <a class="dd-nav-item" href="/wallet">
+          <i class="fa fa-wallet"></i>
+          Wallet
+        </a>
+        <a class="dd-nav-item" href="/inbox">
+          <i class="fa fa-inbox"></i>
+          Inbox
+          <span class="dd-nav-badge" id="dd-inbox-count" style="display:none;">0</span>
+        </a>
         <a class="dd-nav-item" href="/help">
           <i class="fa fa-circle-question"></i>
           Help & Tutorials
@@ -3700,6 +3709,8 @@ $('#dd-loading').hide();
       // Overview panel: shows all components in a grid
       var $overview = $('<div id="dd-panel-overview"></div>');
       $overview.append($statsRow);
+      // Slot for the smart on-the-clock / clock-in economy card (rendered by dd-economy.js).
+      $overview.append('<div id="dd-economy-slot"></div>');
       var $grid = $('<div class="dd-grid dd-animate-in"></div>');
 
       // Sort keys so priority components (call911) appear first in overview
@@ -7311,6 +7322,7 @@ $('#dd-loading').hide();
   <script src="/static/js/dd-notifications.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
   <script src="/static/js/dd-settings.js"></script>
+  <script src="/static/js/dd-economy.js"></script>
   <script src="/static/js/rank-progress.js"></script>
   <script>if (typeof loadMyRankProgress === 'function') loadMyRankProgress();</script>
 </body>
