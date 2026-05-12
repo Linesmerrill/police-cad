@@ -16164,7 +16164,7 @@ async function saveEditEvent() {
         }, 800);
       }
 
-      if (typeof showToast === 'function') showToast('Officer promoted!', 3000, 'success');
+      if (typeof showToast === 'function') showToast('Member promoted!', 3000, 'success');
 
       // Refresh data
       loadRanks();
@@ -16186,7 +16186,7 @@ async function saveEditEvent() {
       console.error('Error promoting officer:', err);
       btnEl.disabled = false;
       btnEl.innerHTML = '<i class="fa fa-arrow-up"></i> Retry Promote';
-      if (typeof showToast === 'function') showToast('Failed to promote officer', 3000, 'error');
+      if (typeof showToast === 'function') showToast('Failed to promote member', 3000, 'error');
     });
   };
 
