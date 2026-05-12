@@ -984,19 +984,42 @@
       html += '<div class="jd-docket-detail-label">Contested Items</div>';
       html += items.map(function(item) {
         var typeClass = (item.itemType || '').toLowerCase();
+        var res = resolutionMap[item.itemID];
+        var hasChargeRulings = res && Array.isArray(res.chargeResolutions) && res.chargeResolutions.length > 0;
+
         var row = '<div class="jd-docket-item-row">' +
           '<span class="jd-docket-item-type ' + typeClass + '">' + escHtml(item.itemType || '') + '</span>' +
           '<span class="jd-docket-item-summary">' + escHtml(item.summary || 'No description') + '</span>';
 
-        // Show verdict badge inline if resolved
-        var res = resolutionMap[item.itemID];
+        // Top-level verdict badge (upheld | dismissed | partial)
         if (res && res.verdict) {
-          var isDismissed = res.verdict === 'dismissed';
-          var badgeClass = isDismissed ? 'jd-verdict-dismissed' : 'jd-verdict-upheld';
-          row += '<span class="jd-verdict-badge ' + badgeClass + '">' + escHtml(res.verdict) + '</span>';
+          var v = res.verdict;
+          var badgeClass = v === 'dismissed' ? 'jd-verdict-dismissed'
+                         : v === 'partial'   ? 'jd-verdict-partial'
+                         : 'jd-verdict-upheld';
+          row += '<span class="jd-verdict-badge ' + badgeClass + '">' + escHtml(v) + '</span>';
         }
 
         row += '</div>';
+
+        // Per-charge breakdown when the judge ruled per-fine. Pair indices
+        // with comma-split summary tokens so we can label each row with the
+        // original charge name (best-effort — falls back to "Charge N").
+        if (hasChargeRulings) {
+          var labels = (item.summary || '').split(',').map(function(s) { return s.trim(); });
+          row += '<div class="jd-docket-charges">';
+          row += res.chargeResolutions.map(function(cr) {
+            var label = labels[cr.fineIndex] || ('Charge ' + ((cr.fineIndex || 0) + 1));
+            var cls = cr.verdict === 'dismissed' ? 'jd-charge-dismissed' : 'jd-charge-upheld';
+            var icon = cr.verdict === 'dismissed' ? 'fa-ban' : 'fa-gavel';
+            return '<div class="jd-docket-charge-row ' + cls + '">' +
+                     '<i class="fa ' + icon + '"></i>' +
+                     '<span class="jd-docket-charge-label">' + escHtml(label) + '</span>' +
+                     '<span class="jd-docket-charge-verdict">' + escHtml(cr.verdict) + '</span>' +
+                   '</div>';
+          }).join('');
+          row += '</div>';
+        }
 
         // Show judge notes if any
         if (res && res.judgeNotes) {

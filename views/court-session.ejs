@@ -492,6 +492,37 @@
     }
     .jd-verdict-dismissed { background: rgba(110,231,183,0.12); color: #6ee7b7; }
     .jd-verdict-upheld { background: rgba(252,165,165,0.12); color: #fca5a5; }
+    .jd-verdict-partial { background: rgba(168,85,247,0.14); color: #c4b5fd; }
+
+    /* Per-charge breakdown shown under a contested-item row in the docket
+       history when the judge ruled per-fine. Compact, indented from the
+       summary so the rulings read as belonging to that citation. */
+    .jd-docket-charges {
+      display: flex; flex-direction: column; gap: 0.2rem;
+      margin: 0.35rem 0 0.1rem 1.6rem;
+      padding-left: 0.6rem;
+      border-left: 2px solid var(--border-subtle);
+    }
+    .jd-docket-charge-row {
+      display: flex; align-items: center; gap: 0.45rem;
+      font-size: 0.74rem;
+    }
+    .jd-docket-charge-row i { font-size: 0.62rem; flex-shrink: 0; }
+    .jd-docket-charge-label { flex: 1; color: var(--text-secondary); }
+    .jd-docket-charge-verdict {
+      font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em;
+      font-weight: 700;
+      padding: 0.08rem 0.4rem; border-radius: 3px;
+    }
+    .jd-docket-charge-row.jd-charge-dismissed { color: #6ee7b7; }
+    .jd-docket-charge-row.jd-charge-dismissed .jd-docket-charge-label { text-decoration: line-through; color: var(--text-muted); }
+    .jd-docket-charge-row.jd-charge-dismissed .jd-docket-charge-verdict {
+      background: rgba(110,231,183,0.15); color: #6ee7b7;
+    }
+    .jd-docket-charge-row.jd-charge-upheld { color: #fca5a5; }
+    .jd-docket-charge-row.jd-charge-upheld .jd-docket-charge-verdict {
+      background: rgba(252,165,165,0.14); color: #fca5a5;
+    }
     .jd-docket-judge-notes {
       font-size: 0.72rem;
       color: var(--text-tertiary);
