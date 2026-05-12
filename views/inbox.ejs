@@ -94,6 +94,18 @@
     .in-item.paid .in-item-amount { color: var(--in-green); }
     .in-item.delinquent .in-item-amount { color: var(--in-red); }
     .in-item.dismissed .in-item-amount { color: var(--in-text-dim); text-decoration: line-through; }
+    .in-item.dismissed { opacity: 0.55; }
+    .in-item.dismissed .in-item-title { text-decoration: line-through; color: var(--in-text-dim); }
+    .in-item.contested .in-item-icon { background: rgba(168,85,247,0.12); color: #a78bfa; }
+    .in-item.contested { border-color: rgba(168,85,247,0.28); background: linear-gradient(135deg, rgba(168,85,247,0.05), var(--in-glass)); }
+    .in-pill {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.1rem 0.45rem; border-radius: 4px;
+      font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .in-pill.contested { color: #c4b5fd; background: rgba(139,92,246,0.18); border: 1px solid rgba(139,92,246,0.32); }
+    .in-pill.dismissed { color: #94a3b8; background: rgba(148,163,184,0.12); border: 1px solid rgba(148,163,184,0.2); }
+    .in-pill.upheld { color: #fbbf24; background: rgba(251,191,36,0.14); border: 1px solid rgba(251,191,36,0.28); }
 
     .in-actions { display: flex; gap: 0.4rem; }
     .in-btn {
@@ -171,6 +183,7 @@
     <button class="in-chip" data-status="pending">Pending</button>
     <button class="in-chip" data-status="delinquent">Delinquent</button>
     <button class="in-chip" data-status="paid">Paid</button>
+    <button class="in-chip" data-status="contested">Contested</button>
     <button class="in-chip" data-status="dismissed">Dismissed</button>
   </div>
 
@@ -238,7 +251,37 @@
                  : it.type === 'verdict' ? 'fa-scale-balanced'
                  : 'fa-file-invoice-dollar';
       const status = it.status || 'pending';
+      const isFine = (it.type === 'fine') || (it.source === 'citation');
       const due = it.dueAt ? `Due ${fmtDate(it.dueAt)}` : '';
+
+      // Build meta line — replace the raw status word with a styled pill for
+      // contested/dismissed; surface contest extension + resolution context.
+      let statusBit = '';
+      if (status === 'contested') {
+        statusBit = `<span><span class="in-pill contested"><i class="fa fa-scale-balanced"></i> Contested</span></span>`;
+      } else if (status === 'dismissed') {
+        statusBit = `<span><span class="in-pill dismissed"><i class="fa fa-ban"></i> Dismissed</span></span>`;
+      } else {
+        statusBit = `<span>· ${escapeHtml(status)}</span>`;
+      }
+
+      const contestedSub = (status === 'contested')
+        ? `<span>· Awaiting judge review</span>` +
+          (it.originalDueAt ? `<span>· Original due ${escapeHtml(fmtDate(it.originalDueAt))}</span>` : '') +
+          (it.contestReason ? `<span>· Reason: ${escapeHtml(it.contestReason)}</span>` : '')
+        : '';
+      const resolutionSub = (status === 'pending' && it.resolution === 'upheld')
+        ? `<span><span class="in-pill upheld"><i class="fa fa-gavel"></i> Contest denied</span></span>`
+        : '';
+
+      let actions = '';
+      if (status === 'pending' || status === 'delinquent') {
+        actions += `<button class="in-btn" data-action="pay">Pay</button>`;
+        if (isFine) {
+          actions += `<button class="in-btn ghost" data-action="contest">Contest</button>`;
+        }
+      }
+
       return `
         <div class="in-item ${escapeHtml(status)}" id="item-${escapeHtml(it._id)}" data-id="${escapeHtml(it._id)}">
           <div class="in-item-icon"><i class="fa ${icon}"></i></div>
@@ -246,16 +289,15 @@
             <div class="in-item-title">${escapeHtml(it.title || it.type || 'Item')}</div>
             <div class="in-item-meta">
               <span>${escapeHtml(it.source || '')}</span>
-              <span>· ${escapeHtml(status)}</span>
+              ${statusBit}
+              ${resolutionSub}
               ${due ? `<span>· ${escapeHtml(due)}</span>` : ''}
+              ${contestedSub}
               ${it.body ? `<span>· ${escapeHtml(it.body)}</span>` : ''}
             </div>
           </div>
           <div class="in-item-amount">${fmtMoney(it.amount || 0)}</div>
-          <div class="in-actions">
-            ${(status === 'pending' || status === 'delinquent')
-              ? `<button class="in-btn" data-action="pay">Pay</button>` : ''}
-          </div>
+          <div class="in-actions">${actions}</div>
         </div>
       `;
     }).join('');
@@ -263,6 +305,12 @@
       btn.addEventListener('click', e => {
         const id = e.target.closest('[data-id]').dataset.id;
         onPay(id);
+      });
+    });
+    host.querySelectorAll('[data-action="contest"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const id = e.target.closest('[data-id]').dataset.id;
+        onContest(id);
       });
     });
     updatePagination();
@@ -300,6 +348,49 @@
         onConfirm: () => doPay(id),
       });
     } else { doPay(id); }
+  }
+
+  function onContest(id) {
+    const promptForReason = () => {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `
+        <label style="display:block; font-size:0.8rem; color:#94a3b8; margin-bottom:0.35rem;">Why are you contesting?</label>
+        <textarea id="contestReasonInput" rows="3" style="width:100%; padding:0.55rem; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:#e2e8f0; font:inherit; font-size:0.85rem; resize:vertical;" placeholder="Brief explanation for the judge…"></textarea>
+      `;
+      if (window.ddModal) {
+        window.ddModal({
+          type: 'info',
+          icon: 'fa-scale-balanced',
+          title: 'Contest this fine?',
+          message: 'A judge will review it. Your due date will be extended while it’s under review.',
+          html: wrap,
+          confirmText: 'Submit contest',
+          onConfirm: () => {
+            const reason = (document.getElementById('contestReasonInput')?.value || '').trim();
+            doContest(id, reason);
+          },
+        });
+      } else {
+        const reason = window.prompt('Why are you contesting?') || '';
+        if (reason !== null) doContest(id, reason);
+      }
+    };
+    promptForReason();
+  }
+
+  async function doContest(id, reason) {
+    try {
+      const res = await fetch(`${API_URL}/api/v2/economy/inbox/${id}/contest?userId=${encodeURIComponent(USER_ID)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason || '' }),
+      });
+      if (!res.ok) throw new Error(`contest failed: ${res.status}`);
+      await load();
+    } catch (err) {
+      console.error(err);
+      if (window.ddModal) window.ddModal({ type: 'danger', icon: 'fa-triangle-exclamation', title: 'Could not contest', message: err.message });
+    }
   }
 
   async function doPay(id) {
