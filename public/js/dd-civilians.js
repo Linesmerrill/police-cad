@@ -225,6 +225,10 @@
       '.dd-civ-badge-pending{background:rgba(245,158,11,0.15);color:var(--dd-amber);}' +
       '.dd-civ-badge-edits{background:rgba(245,158,11,0.15);color:var(--dd-amber);}' +
       '.dd-civ-badge-default{background:rgba(100,116,139,0.15);color:var(--dd-text-muted);}' +
+      '.dd-civ-card-chips{display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;margin-top:0.35rem;}' +
+      '.dd-civ-card-chips .dd-civ-badge{margin-top:0;}' +
+      '.dd-civ-balance-chip{display:inline-flex;align-items:center;font-size:0.7rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:999px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.25);font-variant-numeric:tabular-nums;letter-spacing:0.01em;}' +
+      '.dd-civ-balance-chip.dd-civ-balance-neg{background:rgba(239,68,68,0.12);color:var(--dd-red);border-color:rgba(239,68,68,0.25);}' +
 
       /* ── Pagination ── */
       '.dd-civ-pagination{display:flex;align-items:center;justify-content:center;gap:0.75rem;margin-top:1rem;}' +
@@ -495,11 +499,23 @@
     window.communityDepartmentsCached = comm.departments || [];
     window.communityOwnerIDCached = comm.ownerID || '';
     window.communityRolesCached = comm.roles || [];
-    // Economy: cache non-archived Jobs so civilian forms can render the picker
-    // without an extra fetch.
+    // Economy: cache non-archived Jobs + the master enable flag so the civilian
+    // grid + forms can render economy-aware UI without an extra fetch.
     window.communityJobsCached = ((comm.jobs || []).filter(function (j) { return !j.archived; }))
       .slice()
       .sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0) || (a.name || '').localeCompare(b.name || ''); });
+    window.communityEconomyEnabled = !!(comm.economy && comm.economy.enabled);
+  }
+
+  // Format a cents balance as a USD-style string. Inline since dd-civilians.js
+  // doesn't pull a shared money helper.
+  function ddCivFmtBalance(cents) {
+    var c = typeof cents === 'number' ? cents : 0;
+    var sign = c < 0 ? '-' : '';
+    var abs = Math.abs(c);
+    var dollars = Math.floor(abs / 100);
+    var rem = abs % 100;
+    return sign + '$' + dollars.toLocaleString() + '.' + (rem < 10 ? '0' : '') + rem;
   }
 
   // Build <option> markup for the Job picker. selectedId can be empty.
@@ -625,6 +641,18 @@
         var badge = approvalBadge(civ.approvalStatus);
         badgeHtml = '<span class="dd-civ-badge ' + badge.cls + '">' + esc(badge.label) + '</span>';
       }
+      // Economy: balance chip when the community has economy turned on.
+      // We render it whether or not the field is initialized — uninitialized
+      // civilians read as $0.00 until they're first touched by an economy flow.
+      var balanceHtml = '';
+      if (window.communityEconomyEnabled) {
+        var bal = typeof civ.balance === 'number' ? civ.balance : 0;
+        var negCls = bal < 0 ? ' dd-civ-balance-neg' : '';
+        balanceHtml = '<span class="dd-civ-balance-chip' + negCls + '" title="Wallet balance">' +
+          '<i class="fa fa-wallet" style="margin-right:0.3rem;opacity:0.7;"></i>' +
+          esc(ddCivFmtBalance(bal)) +
+        '</span>';
+      }
 
       var html = '' +
         '<div class="dd-civ-card' + statusCls + '" data-civ-id="' + esc(civ._id) + '">' +
@@ -638,7 +666,10 @@
               ((age || civ.gender) && civ.address ? ' &middot; ' : '') +
               esc(civ.address || '') +
             '</div>' +
-            badgeHtml +
+            '<div class="dd-civ-card-chips">' +
+              badgeHtml +
+              balanceHtml +
+            '</div>' +
           '</div>' +
         '</div>';
 
@@ -740,6 +771,9 @@
               '<div class="dd-civ-detail-name" id="dd-civ-d-name"></div>' +
               '<div class="dd-civ-detail-sub" id="dd-civ-d-sub"></div>' +
             '</div>' +
+            '<a id="dd-civ-d-wallet" class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small" href="#" style="margin-right:0.5rem;align-self:center;">' +
+              '<i class="fa fa-wallet" style="margin-right:0.3rem;"></i>Wallet' +
+            '</a>' +
             '<button class="dd-civ-close" id="dd-civ-d-close"><i class="fa fa-times"></i></button>' +
           '</div>' +
           '<div class="dd-civ-tabs" id="dd-civ-d-tabs"></div>' +
@@ -788,6 +822,9 @@
     var age = calcAge(civ.birthday);
     var sub = [age ? age + ' yrs' : '', civ.gender || '', civ.occupation || ''].filter(Boolean).join(' \u00b7 ');
     $('#dd-civ-d-sub').text(sub || 'Civilian');
+
+    // Wallet entry point \u2014 points the standalone /wallet page at this civilian.
+    $('#dd-civ-d-wallet').attr('href', '/wallet?civId=' + encodeURIComponent(civ._id));
 
     // Tabs
     var tabs = [
