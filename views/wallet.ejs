@@ -200,6 +200,7 @@
   const API_URL = "<%- apiUrl %>";
   const CIVILIAN_ID = "<%- civilianId %>";
   const COMMUNITY_ID = "<%- communityId %>";
+  const ENCODED_COMMUNITY_ID = "<%- encodedCommunityId %>";
   const USER_ID = "<%- userId %>";
   const CIVILIAN_NAME = "<%- civilianName %>";
 
@@ -339,42 +340,59 @@
       }
       const community = await res.json();
       const depts = (community.community && community.community.departments) || [];
-      const myDepts = depts.filter(d => {
-        if (!d.economyEnabled) return false;
-        if (d.departmentKind === 'civilian') {
-          return (d.civilianMembers || []).some(m => m.civilianID === CIVILIAN_ID);
-        }
-        return (d.members || []).some(m => m.userID === USER_ID);
-      });
-      if (!myDepts.length && depts.some(d => d.economyEnabled)) {
-        host.innerHTML = '<div class="w-empty">Economy is enabled, but you are not a member of any economy-enabled department.</div>';
+      const economyDepts = depts.filter(d => d.economyEnabled);
+      if (!economyDepts.length) {
+        host.innerHTML = '<div class="w-empty">No departments have economy enabled yet. Ask an admin to enable it on a department.</div>';
         return;
       }
-      renderDepartments(myDepts);
+      const decorated = economyDepts.map(d => {
+        const isCivilianKind = d.departmentKind === 'civilian';
+        const isMember = isCivilianKind
+          ? (d.civilianMembers || []).some(m => m.civilianID === CIVILIAN_ID)
+          : (d.members || []).some(m => m.userID === USER_ID);
+        return { dept: d, isMember, isCivilianKind };
+      });
+      // Members first, then non-members (so the actionable rows are at the top).
+      decorated.sort((a, b) => (b.isMember ? 1 : 0) - (a.isMember ? 1 : 0));
+      renderDepartments(decorated);
     } catch (err) {
       console.error('community load failed:', err);
       host.innerHTML = '<div class="w-empty" style="color:#ef4444;">Could not load departments. ' + escapeHtml(err.message || '') + '</div>';
     }
   }
 
-  function renderDepartments(depts) {
+  function renderDepartments(entries) {
     const host = document.getElementById('clockList');
-    if (!depts.length) {
+    if (!entries.length) {
       host.innerHTML = '<div class="w-empty">No departments with active economy. Ask an admin to enable it.</div>';
       return;
     }
-    host.innerHTML = depts.map(d => {
+    const communityHref = ENCODED_COMMUNITY_ID
+      ? `/community/${encodeURIComponent(ENCODED_COMMUNITY_ID)}#departments-section`
+      : '/communities';
+    host.innerHTML = entries.map(({ dept: d, isMember, isCivilianKind }) => {
       const ratePerHr = (d.basePayPerHour || 0);
-      const disabled = !!activeSession;
+      let action = '';
+      if (isMember) {
+        const disabled = !!activeSession;
+        action = `<button class="w-btn" data-action="clock-in" ${disabled ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>` +
+          `<i class="fa fa-play"></i> Clock in</button>`;
+      } else if (isCivilianKind) {
+        action = `<span class="w-clock-rate" style="font-style:italic;">Ask an admin to assign you</span>`;
+      } else {
+        action = `<a class="w-btn ghost" href="${communityHref}"><i class="fa fa-arrow-up-right-from-square"></i> View department</a>`;
+      }
+      const dim = isMember ? '' : 'style="opacity:0.75;"';
+      const kindBadge = isCivilianKind
+        ? ` <span style="font-size:0.7rem;color:var(--w-text-dim);">· civilian</span>`
+        : '';
       return `
-        <div class="w-clock-row" data-dept-id="${escapeHtml(d._id)}" data-kind="${escapeHtml(d.departmentKind || '')}">
+        <div class="w-clock-row" ${dim} data-dept-id="${escapeHtml(d._id)}" data-kind="${escapeHtml(d.departmentKind || '')}">
           <div>
-            <div class="w-clock-dept">${escapeHtml(d.name)}</div>
-            <div class="w-clock-rate">${fmtMoney(ratePerHr)} / hr base</div>
+            <div class="w-clock-dept">${escapeHtml(d.name)}${kindBadge}</div>
+            <div class="w-clock-rate">${fmtMoney(ratePerHr)} / hr base${isMember ? '' : ' · not a member'}</div>
           </div>
-          <button class="w-btn" data-action="clock-in" ${disabled ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
-            <i class="fa fa-play"></i> Clock in
-          </button>
+          ${action}
         </div>
       `;
     }).join('');

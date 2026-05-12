@@ -1627,6 +1627,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       civilianName: civName,
       encodedCivId: resolvedCivId ? encodeId(resolvedCivId) : "",
       communityId,
+      encodedCommunityId: communityId ? encodeId(communityId) : "",
       communityName,
       userId: userId || "",
     };
