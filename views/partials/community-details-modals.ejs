@@ -217,8 +217,16 @@
                openFineSettingsModal() is left intact so any legacy deep-link still works. -->
 
           <!-- Economy Settings -->
+          <%
+            // Show a small "Beta" badge for two weeks after launch.
+            var _economyBetaUntil = new Date('2026-05-26');
+            var _economyShowBeta = new Date() < _economyBetaUntil;
+          %>
           <% if (canManageGeneralSettings) { %>
-            <div id="economySettingsCard" onclick="window.location.href='/economy-settings'" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
+            <div id="economySettingsCard" onclick="window.location.href='/economy-settings'" style="position:relative; background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
+              <% if (_economyShowBeta) { %>
+                <span style="position:absolute; top:0.55rem; right:0.55rem; background:linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25)); color:#c4b5fd; padding:1px 7px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(139,92,246,0.3);">Beta</span>
+              <% } %>
               <div style="text-align:center;">
                 <i class="fa fa-coins" style="font-size:2rem; color:#38bdf8; margin-bottom:0.5rem;"></i>
                 <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Economy</h5>
@@ -226,7 +234,10 @@
               </div>
             </div>
           <% } else { %>
-            <div id="economySettingsCard" onclick="showNoGeneralSettingsPermissionModal()" style="background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
+            <div id="economySettingsCard" onclick="showNoGeneralSettingsPermissionModal()" style="position:relative; background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
+              <% if (_economyShowBeta) { %>
+                <span style="position:absolute; top:0.55rem; right:0.55rem; background:linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.2)); color:#a78bfa; padding:1px 7px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(139,92,246,0.25);">Beta</span>
+              <% } %>
               <div style="text-align:center;">
                 <i class="fa fa-coins" style="font-size:2rem; color:#6b7280; margin-bottom:0.5rem;"></i>
                 <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">Economy</h5>
