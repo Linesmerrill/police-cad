@@ -1652,6 +1652,33 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  app.get("/economy-settings", authCheck, async function (req, res) {
+    try {
+      const userId = (req.user && req.user._id) ? String(req.user._id) : "";
+      const communityId = req.user?.user?.lastAccessedCommunity?.communityID
+                       || req.user?.user?.activeCommunity;
+      if (!communityId) return res.redirect("/communities");
+      let communityName = null;
+      try {
+        const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
+        communityName = r.data?.community?.name || null;
+      } catch (e) {}
+      res.render("economy-settings", {
+        user: req.user,
+        apiUrl: policeCadApiUrl,
+        communityId,
+        communityName,
+        userId,
+      });
+    } catch (error) {
+      console.error("Error in /economy-settings route:", error);
+      return res.status(500).render("error", {
+        message: "An error occurred while loading economy settings. Please try again.",
+        redirect: "/communities",
+      });
+    }
+  });
+
   app.get("/inbox", authCheck, async function (req, res) {
     try {
       const ctx = await resolveEconomyContext(req);

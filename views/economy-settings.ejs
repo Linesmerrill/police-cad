@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Economy Settings - Lines Police CAD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --es-bg: #08090c;
+      --es-glass: rgba(255,255,255,0.04);
+      --es-glass-border: rgba(255,255,255,0.06);
+      --es-text: #e2e8f0;
+      --es-text-muted: #94a3b8;
+      --es-text-dim: #64748b;
+      --es-accent: #38bdf8;
+      --es-accent-dim: rgba(56,189,248,0.12);
+      --es-accent-border: rgba(56,189,248,0.25);
+      --es-green: #22c55e;
+      --es-red: #ef4444;
+      --es-radius: 12px;
+    }
+    body {
+      background: var(--es-bg); color: var(--es-text);
+      font-family: 'Outfit', -apple-system, sans-serif;
+      min-height: 100vh; line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      padding-top: 36px;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: radial-gradient(ellipse 700px 500px at 10% 15%, rgba(56,189,248,0.06) 0%, transparent 70%);
+    }
+    .es-shell { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .es-header { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.5rem; }
+    .es-header-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--es-accent-dim); color: var(--es-accent); font-size: 1.2rem;
+      border: 1px solid var(--es-accent-border);
+    }
+    .es-title { font-size: 1.4rem; font-weight: 600; }
+    .es-subtitle { font-size: 0.85rem; color: var(--es-text-muted); margin-top: 0.1rem; }
+    .es-card { background: var(--es-glass); border: 1px solid var(--es-glass-border); border-radius: var(--es-radius); padding: 1.4rem; margin-bottom: 1rem; }
+    .es-section-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.85rem; }
+    .es-field { margin-bottom: 1rem; }
+    .es-field:last-child { margin-bottom: 0; }
+    .es-label { display: block; font-size: 0.82rem; color: var(--es-text-muted); margin-bottom: 0.4rem; }
+    .es-input, .es-select {
+      width: 100%; padding: 0.55rem 0.75rem;
+      background: rgba(255,255,255,0.02); color: var(--es-text);
+      border: 1px solid var(--es-glass-border); border-radius: 8px;
+      font: inherit; font-size: 0.9rem;
+    }
+    .es-input:focus, .es-select:focus { outline: none; border-color: var(--es-accent); }
+    .es-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .es-toggle-desc { font-size: 0.78rem; color: var(--es-text-dim); margin-top: 0.15rem; }
+    .es-switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+    .es-switch input { opacity: 0; width: 0; height: 0; }
+    .es-switch-track { position: absolute; cursor: pointer; inset: 0; background: rgba(255,255,255,0.1); border-radius: 22px; transition: 0.2s; }
+    .es-switch-track::before { position: absolute; content: ''; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+    .es-switch input:checked + .es-switch-track { background: var(--es-accent); }
+    .es-switch input:checked + .es-switch-track::before { transform: translateX(18px); }
+    .es-actions { display: flex; gap: 0.5rem; align-items: center; justify-content: flex-end; }
+    .es-btn {
+      padding: 0.55rem 1.1rem; border-radius: 8px;
+      background: var(--es-accent-dim); color: var(--es-accent);
+      border: 1px solid var(--es-accent-border);
+      font: inherit; font-size: 0.88rem; font-weight: 500;
+      cursor: pointer; transition: background 120ms ease;
+    }
+    .es-btn:hover { background: rgba(56,189,248,0.2); }
+    .es-status { font-size: 0.82rem; }
+    .es-status.saving { color: var(--es-text-muted); }
+    .es-status.saved { color: var(--es-green); }
+    .es-status.error { color: var(--es-red); }
+  </style>
+</head>
+<body>
+
+<%- include('partials/standalone-utility', {
+  user: user,
+  communityName: communityName,
+  pageLabel: 'Economy Settings',
+  backHref: '/communities',
+  backLabel: 'Back to dashboard'
+}) %>
+
+<div class="es-shell">
+  <div class="es-header">
+    <div class="es-header-icon"><i class="fa fa-coins"></i></div>
+    <div>
+      <div class="es-title">Economy Settings</div>
+      <div class="es-subtitle">Community-wide controls for the new economy system</div>
+    </div>
+  </div>
+
+  <div class="es-card">
+    <div class="es-section-title">General</div>
+    <div class="es-field es-toggle-row">
+      <div>
+        <div>Enable economy for this community</div>
+        <div class="es-toggle-desc">Master switch. Departments also need to be individually enabled.</div>
+      </div>
+      <label class="es-switch">
+        <input type="checkbox" id="es-enabled">
+        <span class="es-switch-track"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="es-card">
+    <div class="es-section-title">New civilian defaults</div>
+    <div class="es-field">
+      <label class="es-label" for="es-starting-balance">Default starting balance ($)</label>
+      <input type="number" min="0" step="0.01" class="es-input" id="es-starting-balance" value="0">
+    </div>
+  </div>
+
+  <div class="es-card">
+    <div class="es-section-title">Fines & Inbox</div>
+    <div class="es-field">
+      <label class="es-label" for="es-fine-mode">Fine mode</label>
+      <select class="es-select" id="es-fine-mode">
+        <option value="inbox">Inbox — civilian reviews and pays (recommended)</option>
+        <option value="auto_debit">Auto-debit at issue — fines are deducted immediately</option>
+      </select>
+    </div>
+    <div class="es-field">
+      <label class="es-label" for="es-due-days">Default due days</label>
+      <input type="number" min="1" step="1" class="es-input" id="es-due-days" value="14">
+    </div>
+    <div class="es-field es-toggle-row">
+      <div>
+        <div>Allow negative balances</div>
+        <div class="es-toggle-desc">When off, civilians can't pay an inbox item they can't afford.</div>
+      </div>
+      <label class="es-switch">
+        <input type="checkbox" id="es-allow-neg">
+        <span class="es-switch-track"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="es-actions">
+    <span class="es-status" id="es-status"></span>
+    <button class="es-btn" id="es-save">Save changes</button>
+  </div>
+</div>
+
+<script>
+  const API_URL = "<%- apiUrl %>";
+  const COMMUNITY_ID = "<%- communityId %>";
+  const USER_ID = "<%- userId %>";
+
+  function setStatus(kind, msg) {
+    const el = document.getElementById('es-status');
+    el.className = 'es-status ' + (kind || '');
+    el.textContent = msg || '';
+    if (kind === 'saved') setTimeout(() => { if (el.textContent === msg) { el.textContent = ''; el.className = 'es-status'; } }, 2000);
+  }
+
+  async function load() {
+    try {
+      const res = await fetch(`${API_URL}/api/v1/community/${COMMUNITY_ID}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('community fetch failed');
+      const data = await res.json();
+      const econ = (data.community && data.community.economy) || {};
+      document.getElementById('es-enabled').checked = !!econ.enabled;
+      document.getElementById('es-starting-balance').value = (typeof econ.defaultStartingBalance === 'number' ? econ.defaultStartingBalance / 100 : 0).toFixed(2);
+      document.getElementById('es-fine-mode').value = econ.fineMode === 'auto_debit' ? 'auto_debit' : 'inbox';
+      document.getElementById('es-due-days').value = (typeof econ.defaultDueDays === 'number' && econ.defaultDueDays > 0) ? econ.defaultDueDays : 14;
+      document.getElementById('es-allow-neg').checked = !!econ.allowNegativeBalance;
+    } catch (err) {
+      console.error(err);
+      setStatus('error', 'Could not load settings');
+    }
+  }
+
+  async function save() {
+    const body = {
+      economy: {
+        enabled: document.getElementById('es-enabled').checked,
+        defaultStartingBalance: Math.round((parseFloat(document.getElementById('es-starting-balance').value) || 0) * 100),
+        fineMode: document.getElementById('es-fine-mode').value === 'auto_debit' ? 'auto_debit' : 'inbox',
+        defaultDueDays: parseInt(document.getElementById('es-due-days').value, 10) || 14,
+        allowNegativeBalance: document.getElementById('es-allow-neg').checked,
+      }
+    };
+    setStatus('saving', 'Saving…');
+    try {
+      const res = await fetch(`${API_URL}/api/v1/community/${COMMUNITY_ID}?userId=${encodeURIComponent(USER_ID)}`, {
+        method: 'PATCH', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`save failed: ${res.status}`);
+      setStatus('saved', 'Saved');
+    } catch (err) {
+      console.error(err);
+      setStatus('error', 'Save failed');
+    }
+  }
+
+  document.getElementById('es-save').addEventListener('click', save);
+  load();
+</script>
+</body>
+</html>

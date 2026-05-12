@@ -479,6 +479,70 @@
       '</div></div>';
     }
 
+    // Economy — per-department settings.
+    // Always visible (so members can see how their pay is configured), editable
+    // only with manage-departments permission. All money inputs are entered as
+    // dollars and converted to cents at save-time.
+    var economyEnabled = dept.economyEnabled === true;
+    var basePayDollars = (typeof dept.basePayPerHour === 'number') ? (dept.basePayPerHour / 100) : 0;
+    var maxSessionMinutes = (typeof dept.maxSessionMinutes === 'number' && dept.maxSessionMinutes > 0) ? dept.maxSessionMinutes : 120;
+    var afkPromptSec = (typeof dept.afkPromptIntervalSeconds === 'number' && dept.afkPromptIntervalSeconds > 0) ? dept.afkPromptIntervalSeconds : 600;
+    var afkGraceSec = (typeof dept.afkGraceSeconds === 'number' && dept.afkGraceSeconds > 0) ? dept.afkGraceSeconds : 60;
+    var payoutMode = (dept.payoutMode === 'on_clockout') ? 'on_clockout' : 'on_heartbeat';
+    var deptKind = (dept.departmentKind === 'civilian') ? 'civilian' : '';
+    var disAttr = canEdit ? '' : ' disabled';
+
+    html += '<div class="dds-section">';
+    html += '<div class="dds-section-title-row"><span class="dds-section-title" style="margin-bottom:0;">Economy</span><span class="dds-autosave" id="dds-economy-status" style="opacity:0;"></span></div>';
+    html += '<div class="dds-toggle-row" style="border-bottom:none;">' +
+      '<div class="dds-toggle-info">' +
+        '<span class="dds-toggle-label">Enable economy for this department</span>' +
+        '<span class="dds-toggle-desc" id="dds-economy-enabled-desc">' +
+          (economyEnabled ? 'Members can clock in and earn pay' : 'Clock-in is disabled') +
+        '</span>' +
+      '</div>' +
+      '<label class="dds-switch">' +
+        '<input type="checkbox" id="dds-economy-enabled"' + (economyEnabled ? ' checked' : '') + disAttr + ' />' +
+        '<span class="dds-switch-track"></span>' +
+      '</label>' +
+    '</div>';
+    html += '<div id="dds-economy-fields" style="' + (economyEnabled ? '' : 'display:none;') + '">' +
+      '<div class="dds-field">' +
+        '<label class="dds-field-label">Base pay ($/hour)</label>' +
+        '<input type="number" class="dds-input" id="dds-economy-base-pay" min="0" step="0.01" value="' + basePayDollars.toFixed(2) + '"' + disAttr + ' />' +
+      '</div>' +
+      '<div class="dds-field">' +
+        '<label class="dds-field-label">Payout mode</label>' +
+        '<select class="dds-input" id="dds-economy-payout-mode"' + disAttr + '>' +
+          '<option value="on_heartbeat"' + (payoutMode === 'on_heartbeat' ? ' selected' : '') + '>On heartbeat (live)</option>' +
+          '<option value="on_clockout"' + (payoutMode === 'on_clockout' ? ' selected' : '') + '>On clock-out only</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="dds-field">' +
+        '<label class="dds-field-label">Max session (minutes)</label>' +
+        '<input type="number" class="dds-input" id="dds-economy-max-session" min="1" step="1" value="' + maxSessionMinutes + '"' + disAttr + ' />' +
+      '</div>' +
+      '<div class="dds-field">' +
+        '<label class="dds-field-label">AFK prompt interval (seconds)</label>' +
+        '<input type="number" class="dds-input" id="dds-economy-afk-prompt" min="30" step="1" value="' + afkPromptSec + '"' + disAttr + ' />' +
+      '</div>' +
+      '<div class="dds-field">' +
+        '<label class="dds-field-label">AFK grace (seconds)</label>' +
+        '<input type="number" class="dds-input" id="dds-economy-afk-grace" min="10" step="1" value="' + afkGraceSec + '"' + disAttr + ' />' +
+      '</div>' +
+      '<div class="dds-field">' +
+        '<label class="dds-field-label">Department kind</label>' +
+        '<select class="dds-input" id="dds-economy-kind"' + disAttr + '>' +
+          '<option value=""' + (deptKind === '' ? ' selected' : '') + '>User-scoped (police, EMS, etc.)</option>' +
+          '<option value="civilian"' + (deptKind === 'civilian' ? ' selected' : '') + '>Civilian (Sanitation, etc.)</option>' +
+        '</select>' +
+        '<div class="dds-info" style="margin-top:0.5rem;"><i class="fa fa-info-circle"></i>' +
+          '<span>Civilian departments key membership on individual civilians instead of user accounts.</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+    html += '</div>';
+
     // Sound settings
     var soundEnabled = window.dbUser && window.dbUser.user && window.dbUser.user.panicButtonSound;
     var volumeLevel = (window.dbUser && window.dbUser.user && window.dbUser.user.alertVolumeLevel != null) ? window.dbUser.user.alertVolumeLevel : 50;
@@ -606,7 +670,69 @@
           : 'Civilians can delete their own citations, written warnings, and arrest reports');
         autoSaveRestrictRecords(v);
       });
+
+      // Economy — show/hide nested fields when master toggle flips; save immediately.
+      $body.find('#dds-economy-enabled').on('change', function () {
+        var on = $(this).is(':checked');
+        $('#dds-economy-fields').toggle(on);
+        $('#dds-economy-enabled-desc').text(on ? 'Members can clock in and earn pay' : 'Clock-in is disabled');
+        autoSaveEconomy();
+      });
+      $body.find('#dds-economy-base-pay, #dds-economy-max-session, #dds-economy-afk-prompt, #dds-economy-afk-grace').on('input', function () {
+        debounceSave('economy', autoSaveEconomy, DEBOUNCE_MS);
+      });
+      $body.find('#dds-economy-payout-mode, #dds-economy-kind').on('change', function () {
+        autoSaveEconomy();
+      });
     }
+  }
+
+  /** Save per-department economy settings. Money entered as dollars; persisted as cents. */
+  function autoSaveEconomy() {
+    var c = cfg();
+    var dept = getDept();
+    var enabled = $('#dds-economy-enabled').is(':checked');
+    var basePayDollars = parseFloat($('#dds-economy-base-pay').val());
+    if (!isFinite(basePayDollars) || basePayDollars < 0) basePayDollars = 0;
+    var basePayCents = Math.round(basePayDollars * 100);
+    var maxSession = parseInt($('#dds-economy-max-session').val(), 10);
+    if (!isFinite(maxSession) || maxSession < 1) maxSession = 120;
+    var afkPrompt = parseInt($('#dds-economy-afk-prompt').val(), 10);
+    if (!isFinite(afkPrompt) || afkPrompt < 30) afkPrompt = 600;
+    var afkGrace = parseInt($('#dds-economy-afk-grace').val(), 10);
+    if (!isFinite(afkGrace) || afkGrace < 10) afkGrace = 60;
+    var payoutMode = $('#dds-economy-payout-mode').val() === 'on_clockout' ? 'on_clockout' : 'on_heartbeat';
+    var kind = $('#dds-economy-kind').val() === 'civilian' ? 'civilian' : '';
+
+    showSaveStatus('#dds-economy-status', 'saving');
+
+    $.ajax({
+      url: c.API_URL + '/api/v1/community/' + c.communityId + '/departments/' + c.departmentId + '?userId=' + (window.dbUser && window.dbUser._id || ''),
+      method: 'PATCH',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        economyEnabled: enabled,
+        basePayPerHour: basePayCents,
+        maxSessionMinutes: maxSession,
+        afkPromptIntervalSeconds: afkPrompt,
+        afkGraceSeconds: afkGrace,
+        payoutMode: payoutMode,
+        departmentKind: kind,
+      }),
+      success: function () {
+        dept.economyEnabled = enabled;
+        dept.basePayPerHour = basePayCents;
+        dept.maxSessionMinutes = maxSession;
+        dept.afkPromptIntervalSeconds = afkPrompt;
+        dept.afkGraceSeconds = afkGrace;
+        dept.payoutMode = payoutMode;
+        dept.departmentKind = kind;
+        showSaveStatus('#dds-economy-status', 'saved');
+      },
+      error: function () {
+        showSaveStatus('#dds-economy-status', 'error', 'Save failed');
+      }
+    });
   }
 
   /** Auto-save settings (name + description). Called after debounce. */
