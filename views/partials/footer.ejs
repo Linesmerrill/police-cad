@@ -61,7 +61,10 @@
   try {
     var p = window.location.pathname;
     if (/^\/(civ|department|police|ems|dispatch|command|judicial|fire|community)-dashboard\/?$/.test(p)) {
-      localStorage.setItem('lpc.lastDashboard', p.replace(/\/$/, ''));
+      // Preserve search + hash so /department-dashboard?departmentId=X returns
+      // to the same department (not a generic landing).
+      var full = p.replace(/\/$/, '') + (window.location.search || '') + (window.location.hash || '');
+      localStorage.setItem('lpc.lastDashboard', full);
     }
   } catch (e) {}
 })();

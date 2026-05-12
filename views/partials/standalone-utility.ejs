@@ -186,7 +186,9 @@
     var link = document.querySelector('.lpc-utility-back[data-use-last-dashboard="1"]');
     if (!link) return;
     var last = localStorage.getItem('lpc.lastDashboard');
-    if (last && /^\/(civ|department|police|ems|dispatch|command|judicial|fire|community)-dashboard$/.test(last)) {
+    // Accept path with optional ?query and #hash so we restore the exact
+    // dashboard the user was on (e.g. /department-dashboard?departmentId=...).
+    if (last && /^\/(civ|department|police|ems|dispatch|command|judicial|fire|community)-dashboard(?:[/?#].*)?$/.test(last)) {
       link.setAttribute('href', last);
     }
   } catch (e) {}
