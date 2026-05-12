@@ -314,8 +314,8 @@
 
   async function doClockOut() {
     try {
-      await fetch(`${API_URL}/api/v2/economy/clock-out`, {
-        method: 'POST', credentials: 'include',
+      await fetch(`${API_URL}/api/v2/economy/clock-out?userId=${encodeURIComponent(USER_ID)}`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId: activeSession._id }),
       });
@@ -390,8 +390,8 @@
     try {
       const body = { communityId: COMMUNITY_ID, departmentId: deptId };
       if (kind === 'civilian') body.civilianId = CIVILIAN_ID;
-      const res = await fetch(`${API_URL}/api/v2/economy/clock-in`, {
-        method: 'POST', credentials: 'include',
+      const res = await fetch(`${API_URL}/api/v2/economy/clock-in?userId=${encodeURIComponent(USER_ID)}`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
@@ -412,8 +412,8 @@
     heartbeatTimer = setInterval(async () => {
       if (!activeSession) return;
       try {
-        const res = await fetch(`${API_URL}/api/v2/economy/heartbeat`, {
-          method: 'POST', credentials: 'include',
+        const res = await fetch(`${API_URL}/api/v2/economy/heartbeat?userId=${encodeURIComponent(USER_ID)}`, {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId: activeSession._id }),
         });

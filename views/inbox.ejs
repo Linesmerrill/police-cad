@@ -197,7 +197,7 @@
     q.set('limit', state.limit);
     if (state.status) q.set('status', state.status);
     try {
-      const res = await fetch(`${API_URL}/api/v2/economy/inbox?${q.toString()}`, { credentials: 'include' });
+      const res = await fetch(`${API_URL}/api/v2/economy/inbox?${q.toString()}`);
       if (!res.ok) throw new Error('inbox fetch failed');
       const data = await res.json();
       state.totalCount = data.totalCount || 0;
@@ -272,8 +272,8 @@
 
   async function doPay(id) {
     try {
-      const res = await fetch(`${API_URL}/api/v2/economy/inbox/${id}/pay`, {
-        method: 'POST', credentials: 'include',
+      const res = await fetch(`${API_URL}/api/v2/economy/inbox/${id}/pay?userId=${encodeURIComponent(USER_ID)}`, {
+        method: 'POST',
       });
       if (res.status === 402) {
         if (window.ddModal) window.ddModal({ type: 'danger', icon: 'fa-circle-exclamation', title: 'Insufficient balance', message: 'Your civilian doesn’t have enough money to pay this item.' });

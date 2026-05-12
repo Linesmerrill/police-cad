@@ -165,7 +165,7 @@
 
   async function load() {
     try {
-      const res = await fetch(`${API_URL}/api/v1/community/${COMMUNITY_ID}`, { credentials: 'include' });
+      const res = await fetch(`${API_URL}/api/v1/community/${COMMUNITY_ID}`);
       if (!res.ok) throw new Error('community fetch failed');
       const data = await res.json();
       const econ = (data.community && data.community.economy) || {};
@@ -193,7 +193,7 @@
     setStatus('saving', 'Saving…');
     try {
       const res = await fetch(`${API_URL}/api/v1/community/${COMMUNITY_ID}?userId=${encodeURIComponent(USER_ID)}`, {
-        method: 'PATCH', credentials: 'include',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
