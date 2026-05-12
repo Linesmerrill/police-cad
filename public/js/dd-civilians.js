@@ -771,6 +771,7 @@
               '<div class="dd-civ-detail-name" id="dd-civ-d-name"></div>' +
               '<div class="dd-civ-detail-sub" id="dd-civ-d-sub"></div>' +
             '</div>' +
+            '<span id="dd-civ-d-balance" class="dd-civ-balance-chip" style="display:none;margin-right:0.4rem;align-self:center;"></span>' +
             '<a id="dd-civ-d-wallet" class="dd-civ-btn dd-civ-btn-secondary dd-civ-btn-small" href="#" style="margin-right:0.5rem;align-self:center;">' +
               '<i class="fa fa-wallet" style="margin-right:0.3rem;"></i>Wallet' +
             '</a>' +
@@ -825,6 +826,17 @@
 
     // Wallet entry point \u2014 points the standalone /wallet page at this civilian.
     $('#dd-civ-d-wallet').attr('href', '/wallet?civId=' + encodeURIComponent(civ._id));
+
+    // Balance chip \u2014 only when economy is enabled for this community.
+    var $bal = $('#dd-civ-d-balance');
+    if (window.communityEconomyEnabled) {
+      var bal = typeof civ.balance === 'number' ? civ.balance : 0;
+      $bal.html('<i class="fa fa-wallet" style="margin-right:0.3rem;opacity:0.7;"></i>' + esc(ddCivFmtBalance(bal)))
+        .toggleClass('dd-civ-balance-neg', bal < 0)
+        .show();
+    } else {
+      $bal.hide();
+    }
 
     // Tabs
     var tabs = [
