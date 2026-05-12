@@ -65,6 +65,39 @@
     .es-switch input:checked + .es-switch-track { background: var(--es-accent); }
     .es-switch input:checked + .es-switch-track::before { transform: translateX(18px); }
     .es-actions { display: flex; gap: 0.5rem; align-items: center; justify-content: flex-end; }
+    .es-card-actions {
+      display: flex; gap: 0.5rem; align-items: center; justify-content: flex-end;
+      margin-top: 1.1rem; padding-top: 1rem;
+      border-top: 1px dashed var(--es-glass-border);
+    }
+
+    /* Section divider — used to break community-wide settings from per-department list */
+    .es-section-divider {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin: 1.6rem 0 0.9rem;
+      color: var(--es-text-muted);
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600;
+    }
+    .es-section-divider::before,
+    .es-section-divider::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(to right, transparent, var(--es-glass-border), transparent);
+    }
+
+    /* Card header (icon + title + subtitle) — used on Departments card */
+    .es-card-head {
+      display: flex; align-items: center; gap: 0.7rem;
+      margin-bottom: 1rem;
+    }
+    .es-card-head-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--es-accent-dim); color: var(--es-accent);
+      border: 1px solid var(--es-accent-border);
+      font-size: 0.78rem; flex-shrink: 0;
+    }
+    .es-card-head-title { font-size: 0.98rem; font-weight: 600; color: var(--es-text); }
+    .es-card-head-sub { font-size: 0.76rem; color: var(--es-text-dim); margin-top: 0.1rem; }
     .es-btn {
       padding: 0.55rem 1.1rem; border-radius: 8px;
       background: var(--es-accent-dim); color: var(--es-accent);
@@ -181,16 +214,22 @@
         <span class="es-switch-track"></span>
       </label>
     </div>
+    <div class="es-card-actions">
+      <span class="es-status" id="es-status"></span>
+      <button class="es-btn" id="es-save">Save community settings</button>
+    </div>
   </div>
 
-  <div class="es-actions">
-    <span class="es-status" id="es-status"></span>
-    <button class="es-btn" id="es-save">Save changes</button>
-  </div>
+  <div class="es-section-divider">Per-department</div>
 
   <div class="es-card">
-    <div class="es-section-title">Departments</div>
-    <div class="es-toggle-desc" style="margin-bottom:0.85rem;">Per-department economy config. Mirrors what's available in each department's Settings tab.</div>
+    <div class="es-card-head">
+      <div class="es-card-head-icon"><i class="fa fa-building"></i></div>
+      <div>
+        <div class="es-card-head-title">Departments</div>
+        <div class="es-card-head-sub">Same controls as each department's Settings → Economy tab.</div>
+      </div>
+    </div>
     <div class="es-dept-list" id="es-dept-list">
       <div class="es-dept-empty">Loading departments…</div>
     </div>
