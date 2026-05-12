@@ -77,6 +77,44 @@
     .es-status.saving { color: var(--es-text-muted); }
     .es-status.saved { color: var(--es-green); }
     .es-status.error { color: var(--es-red); }
+
+    /* Per-department list */
+    .es-dept-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .es-dept {
+      border: 1px solid var(--es-glass-border);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.015);
+      overflow: hidden;
+      transition: border-color 120ms ease;
+    }
+    .es-dept.is-open { border-color: var(--es-accent-border); }
+    .es-dept-header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.75rem; padding: 0.75rem 0.9rem; cursor: pointer;
+      user-select: none;
+    }
+    .es-dept-header:hover { background: rgba(255,255,255,0.02); }
+    .es-dept-name { font-size: 0.92rem; font-weight: 500; color: var(--es-text); display: flex; align-items: center; gap: 0.55rem; min-width: 0; }
+    .es-dept-name .es-dept-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .es-dept-pill {
+      font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 0.1rem 0.45rem; border-radius: 4px; font-weight: 600;
+      flex-shrink: 0;
+    }
+    .es-dept-pill.on { color: var(--es-green); background: rgba(34,197,94,0.12); }
+    .es-dept-pill.off { color: var(--es-text-dim); background: rgba(255,255,255,0.04); }
+    .es-dept-chevron { color: var(--es-text-dim); font-size: 0.7rem; transition: transform 160ms ease; flex-shrink: 0; }
+    .es-dept.is-open .es-dept-chevron { transform: rotate(90deg); }
+    .es-dept-body {
+      display: none;
+      padding: 0.25rem 0.9rem 0.9rem;
+      border-top: 1px dashed var(--es-glass-border);
+    }
+    .es-dept.is-open .es-dept-body { display: block; }
+    .es-dept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-top: 0.85rem; }
+    @media (max-width: 600px) { .es-dept-grid { grid-template-columns: 1fr; } }
+    .es-dept-actions { display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; margin-top: 0.85rem; }
+    .es-dept-empty { color: var(--es-text-muted); font-size: 0.85rem; padding: 0.5rem 0; }
   </style>
 </head>
 <body>
@@ -149,6 +187,14 @@
     <span class="es-status" id="es-status"></span>
     <button class="es-btn" id="es-save">Save changes</button>
   </div>
+
+  <div class="es-card">
+    <div class="es-section-title">Departments</div>
+    <div class="es-toggle-desc" style="margin-bottom:0.85rem;">Per-department economy config. Mirrors what's available in each department's Settings tab.</div>
+    <div class="es-dept-list" id="es-dept-list">
+      <div class="es-dept-empty">Loading departments…</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -207,6 +253,163 @@
 
   document.getElementById('es-save').addEventListener('click', save);
   load();
+
+  // ---------- Per-department economy ----------
+  let DEPTS = [];
+
+  function escHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  async function loadDepartments() {
+    const host = document.getElementById('es-dept-list');
+    try {
+      const res = await fetch(`${API_URL}/api/v1/community/${COMMUNITY_ID}`);
+      if (!res.ok) throw new Error('community fetch failed');
+      const data = await res.json();
+      DEPTS = (data.community && data.community.departments) || [];
+      renderDepartments();
+    } catch (err) {
+      console.error(err);
+      host.innerHTML = '<div class="es-dept-empty" style="color:var(--es-red);">Could not load departments.</div>';
+    }
+  }
+
+  function renderDepartments() {
+    const host = document.getElementById('es-dept-list');
+    if (!DEPTS.length) {
+      host.innerHTML = '<div class="es-dept-empty">This community has no departments yet.</div>';
+      return;
+    }
+    host.innerHTML = DEPTS.map((d, idx) => {
+      const enabled = d.economyEnabled === true;
+      const basePay = (typeof d.basePayPerHour === 'number') ? (d.basePayPerHour / 100).toFixed(2) : '0.00';
+      const maxSess = (typeof d.maxSessionMinutes === 'number' && d.maxSessionMinutes > 0) ? d.maxSessionMinutes : 120;
+      const afkPrompt = (typeof d.afkPromptIntervalSeconds === 'number' && d.afkPromptIntervalSeconds > 0) ? d.afkPromptIntervalSeconds : 600;
+      const afkGrace = (typeof d.afkGraceSeconds === 'number' && d.afkGraceSeconds > 0) ? d.afkGraceSeconds : 60;
+      const payoutMode = d.payoutMode === 'on_clockout' ? 'on_clockout' : 'on_heartbeat';
+      return `
+        <div class="es-dept" data-idx="${idx}" data-dept-id="${escHtml(d._id)}">
+          <div class="es-dept-header" data-action="toggle">
+            <div class="es-dept-name">
+              <span class="es-dept-pill ${enabled ? 'on' : 'off'}">${enabled ? 'On' : 'Off'}</span>
+              <span class="es-dept-name-text">${escHtml(d.name || 'Untitled department')}</span>
+            </div>
+            <i class="fa fa-chevron-right es-dept-chevron"></i>
+          </div>
+          <div class="es-dept-body">
+            <div class="es-field es-toggle-row">
+              <div>
+                <div>Enable economy for this department</div>
+                <div class="es-toggle-desc">Members can clock in and earn pay when on.</div>
+              </div>
+              <label class="es-switch">
+                <input type="checkbox" data-field="economyEnabled" ${enabled ? 'checked' : ''}>
+                <span class="es-switch-track"></span>
+              </label>
+            </div>
+            <div class="es-dept-grid">
+              <div class="es-field">
+                <label class="es-label">Base pay ($/hr)</label>
+                <input type="number" min="0" step="0.01" class="es-input" data-field="basePayPerHour" value="${basePay}">
+              </div>
+              <div class="es-field">
+                <label class="es-label">Payout mode</label>
+                <select class="es-select" data-field="payoutMode">
+                  <option value="on_heartbeat" ${payoutMode === 'on_heartbeat' ? 'selected' : ''}>On heartbeat (live)</option>
+                  <option value="on_clockout" ${payoutMode === 'on_clockout' ? 'selected' : ''}>On clock-out only</option>
+                </select>
+              </div>
+              <div class="es-field">
+                <label class="es-label">Max session (minutes)</label>
+                <input type="number" min="1" step="1" class="es-input" data-field="maxSessionMinutes" value="${maxSess}">
+              </div>
+              <div class="es-field">
+                <label class="es-label">AFK prompt every (seconds)</label>
+                <input type="number" min="30" step="1" class="es-input" data-field="afkPromptIntervalSeconds" value="${afkPrompt}">
+              </div>
+              <div class="es-field">
+                <label class="es-label">AFK grace (seconds)</label>
+                <input type="number" min="10" step="1" class="es-input" data-field="afkGraceSeconds" value="${afkGrace}">
+              </div>
+            </div>
+            <div class="es-dept-actions">
+              <span class="es-status" data-role="status"></span>
+              <button class="es-btn" data-action="save">Save</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    host.querySelectorAll('.es-dept').forEach(deptEl => {
+      const header = deptEl.querySelector('[data-action="toggle"]');
+      header.addEventListener('click', () => deptEl.classList.toggle('is-open'));
+      const saveBtn = deptEl.querySelector('[data-action="save"]');
+      saveBtn.addEventListener('click', (e) => { e.stopPropagation(); saveDepartment(deptEl); });
+      // Stop input clicks from collapsing the panel
+      deptEl.querySelector('.es-dept-body').addEventListener('click', (e) => e.stopPropagation());
+    });
+  }
+
+  async function saveDepartment(deptEl) {
+    const idx = parseInt(deptEl.dataset.idx, 10);
+    const dept = DEPTS[idx];
+    if (!dept) return;
+    const statusEl = deptEl.querySelector('[data-role="status"]');
+    const setRowStatus = (kind, msg) => {
+      statusEl.className = 'es-status ' + (kind || '');
+      statusEl.textContent = msg || '';
+      if (kind === 'saved') setTimeout(() => { if (statusEl.textContent === msg) { statusEl.textContent = ''; statusEl.className = 'es-status'; } }, 2000);
+    };
+    const get = (field) => deptEl.querySelector(`[data-field="${field}"]`);
+    const enabled = get('economyEnabled').checked;
+    let basePay = parseFloat(get('basePayPerHour').value);
+    if (!isFinite(basePay) || basePay < 0) basePay = 0;
+    let maxSess = parseInt(get('maxSessionMinutes').value, 10);
+    if (!isFinite(maxSess) || maxSess < 1) maxSess = 120;
+    let afkPrompt = parseInt(get('afkPromptIntervalSeconds').value, 10);
+    if (!isFinite(afkPrompt) || afkPrompt < 30) afkPrompt = 600;
+    let afkGrace = parseInt(get('afkGraceSeconds').value, 10);
+    if (!isFinite(afkGrace) || afkGrace < 10) afkGrace = 60;
+    const payoutMode = get('payoutMode').value === 'on_clockout' ? 'on_clockout' : 'on_heartbeat';
+
+    setRowStatus('saving', 'Saving…');
+    try {
+      const res = await fetch(`${API_URL}/api/v1/community/${COMMUNITY_ID}/departments/${dept._id}?userId=${encodeURIComponent(USER_ID)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          economyEnabled: enabled,
+          basePayPerHour: Math.round(basePay * 100),
+          maxSessionMinutes: maxSess,
+          afkPromptIntervalSeconds: afkPrompt,
+          afkGraceSeconds: afkGrace,
+          payoutMode: payoutMode,
+        }),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      dept.economyEnabled = enabled;
+      dept.basePayPerHour = Math.round(basePay * 100);
+      dept.maxSessionMinutes = maxSess;
+      dept.afkPromptIntervalSeconds = afkPrompt;
+      dept.afkGraceSeconds = afkGrace;
+      dept.payoutMode = payoutMode;
+      // Update the pill without re-rendering everything
+      const pill = deptEl.querySelector('.es-dept-pill');
+      pill.classList.toggle('on', enabled);
+      pill.classList.toggle('off', !enabled);
+      pill.textContent = enabled ? 'On' : 'Off';
+      setRowStatus('saved', 'Saved');
+    } catch (err) {
+      console.error('dept save failed', err);
+      setRowStatus('error', 'Save failed');
+    }
+  }
+
+  loadDepartments();
 </script>
 </body>
 </html>
