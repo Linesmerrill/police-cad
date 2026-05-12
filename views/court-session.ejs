@@ -345,10 +345,23 @@
     .jd-item-fine-row {
       flex-wrap: wrap;
     }
-    .jd-charges-hint {
-      font-size: 0.7rem; color: var(--text-muted); margin-top: 0.4rem;
-      font-style: italic;
+    .jd-charges-applyall {
+      display: flex; align-items: center; gap: 0.4rem;
+      margin-top: 0.55rem; padding-top: 0.5rem;
+      border-top: 1px dashed var(--border-subtle);
+      font-size: 0.7rem;
     }
+    .jd-charges-applyall-label {
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 0.04em; font-weight: 600;
+    }
+    .jd-charges-applyall-btn {
+      padding: 0.15rem 0.5rem; font-size: 0.66rem; font-weight: 600;
+      border: 1px solid var(--border-subtle); border-radius: 4px;
+      background: transparent; color: var(--text-muted); cursor: pointer;
+      transition: var(--transition); font-family: var(--font-body);
+    }
+    .jd-charges-applyall-btn:hover { border-color: rgba(255,255,255,0.18); color: var(--text-secondary); }
     .jd-toggle-btn {
       padding: 0.3rem 0.65rem; font-size: 0.75rem; font-weight: 600;
       border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);

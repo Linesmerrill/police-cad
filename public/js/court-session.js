@@ -111,6 +111,19 @@
       toggleChargeResolution(parseInt(idx, 10), parseInt(fineIdx, 10), verdict);
     });
 
+    // Apply-to-all shortcut inside the charges block
+    $(document).on('click', '.jd-charges-applyall-btn', function() {
+      var idx = $(this).data('item-index');
+      var verdict = $(this).data('verdict');
+      if (idx == null || !verdict) return;
+      idx = parseInt(idx, 10);
+      if (allChargesMatch(idx, verdict)) {
+        clearChargeResolutions(idx);
+      } else {
+        setAllChargeResolutions(idx, verdict);
+      }
+    });
+
     // Submit resolution
     $(document).on('click', '#submitResolutionBtn', function() {
       submitResolution();
@@ -623,6 +636,10 @@
         var itemIndexForCharges = (typeof window.__jdCurrentItemIndex === 'number') ? window.__jdCurrentItemIndex : null;
         if (itemIndexForCharges != null) {
           itemChargeCounts[itemIndexForCharges] = fines.length;
+          // Hide the top-level Dismiss / Uphold toggles — they're confusing
+          // alongside per-charge buttons. The "Apply to all" link inside
+          // the charges block provides the bulk shortcut.
+          $('.jd-contested-item[data-item-index="' + itemIndexForCharges + '"] .jd-resolution-toggles').hide();
         }
 
         html += '<div class="jd-item-fines">';
@@ -652,7 +669,12 @@
           html += '</div>';
         }
         if (currentRole === 'judge') {
-          html += '<div class="jd-charges-hint"><i class="fa fa-circle-info"></i> Resolve each charge individually, or use the Dismiss / Uphold buttons above to apply to all.</div>';
+          html +=
+            '<div class="jd-charges-applyall">' +
+              '<span class="jd-charges-applyall-label">Apply to all:</span>' +
+              '<button class="jd-charges-applyall-btn" data-item-index="' + itemIndexForCharges + '" data-verdict="dismissed">Dismiss</button>' +
+              '<button class="jd-charges-applyall-btn" data-item-index="' + itemIndexForCharges + '" data-verdict="upheld">Uphold</button>' +
+            '</div>';
         }
         html += '</div>';
       }
