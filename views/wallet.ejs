@@ -201,6 +201,46 @@
     .w-inbox-amount.delinquent { color: var(--w-red); }
     .w-empty { font-size: 0.85rem; color: var(--w-text-dim); padding: 0.85rem 0; }
 
+    /* Shift history */
+    .w-shifts { display: flex; flex-direction: column; gap: 0.5rem; }
+    .w-shift-row {
+      display: grid;
+      grid-template-columns: minmax(110px, 0.9fr) minmax(120px, 1.2fr) 80px 110px;
+      align-items: center; gap: 0.85rem;
+      padding: 0.7rem 0.9rem;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 9px;
+      font-size: 0.82rem;
+    }
+    .w-shift-date { color: var(--w-text); font-weight: 500; }
+    .w-shift-date small { display:block; color: var(--w-text-dim); font-weight:400; margin-top:2px; font-size:0.7rem; }
+    .w-shift-dept { color: var(--w-text-muted); font-size: 0.78rem; }
+    .w-shift-hours { color: var(--w-text); font-variant-numeric: tabular-nums; text-align: right; font-size: 0.82rem; }
+    .w-shift-earned { color: var(--w-green); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+    .w-shift-status-pill {
+      display: inline-block; padding: 2px 7px; border-radius: 4px;
+      font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+      background: rgba(148,163,184,0.12); color: var(--w-text-dim); margin-left: 6px;
+    }
+    .w-shift-status-pill.expired { background: rgba(251,191,36,0.14); color: #fbbf24; }
+    .w-shift-status-pill.abandoned { background: rgba(148,163,184,0.12); color: #94a3b8; }
+    .w-shifts-pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 0.75rem; font-size: 0.78rem; color: var(--w-text-dim);
+    }
+    .w-shifts-page-btn {
+      background: transparent; border: 1px solid rgba(255,255,255,0.08);
+      color: var(--w-text-muted); padding: 0.35rem 0.7rem; border-radius: 6px;
+      cursor: pointer; font: inherit; font-size: 0.75rem;
+    }
+    .w-shifts-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .w-shifts-page-btn:hover:not(:disabled) { color: var(--w-text); border-color: rgba(255,255,255,0.18); }
+    @media (max-width: 700px) {
+      .w-shift-row { grid-template-columns: 1fr 1fr; row-gap: 0.45rem; }
+      .w-shift-hours, .w-shift-earned { text-align: left; }
+    }
+
     /* Clock-in widget */
     .w-clock-list { display: flex; flex-direction: column; gap: 0.55rem; }
     .w-clock-row {
@@ -318,6 +358,17 @@
       </div>
       <div class="w-jobs-hint" id="jobsHint" style="display:none;"></div>
       <div class="w-clock-list" id="clockList"><div class="w-empty">Loading departments…</div></div>
+    </div>
+  </div>
+
+  <!-- Shift history -->
+  <div class="w-card" style="margin-top:1rem;">
+    <div class="w-section-title"><i class="fa fa-clock-rotate-left"></i> Recent shifts</div>
+    <div id="shiftsList" class="w-shifts"><div class="w-empty">Loading…</div></div>
+    <div class="w-shifts-pagination" id="shiftsPagination" style="display:none;">
+      <button class="w-shifts-page-btn" id="shiftsPrev" disabled><i class="fa fa-chevron-left"></i> Prev</button>
+      <span id="shiftsPageInfo">Page 1</span>
+      <button class="w-shifts-page-btn" id="shiftsNext" disabled>Next <i class="fa fa-chevron-right"></i></button>
     </div>
   </div>
 </div>
@@ -453,7 +504,7 @@
       });
       activeSession = null;
       if (activeTimer) clearInterval(activeTimer);
-      await Promise.all([refreshWallet(), refreshActiveSession(), refreshDepartments()]);
+      await Promise.all([refreshWallet(), refreshActiveSession(), refreshDepartments(), refreshShifts()]);
     } catch (err) { console.error(err); }
   }
 
@@ -590,8 +641,82 @@
     }, 30000);
   }
 
+  // ---------- Shift history ----------
+  let shiftsPage = 1;
+  const SHIFTS_LIMIT = 10;
+
+  function fmtDuration(seconds) {
+    const s = Math.max(0, Math.floor(Number(seconds) || 0));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    if (h === 0) return m + 'm';
+    if (m === 0) return h + 'h';
+    return h + 'h ' + m + 'm';
+  }
+  function fmtShiftDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function fmtShiftTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  }
+
+  async function refreshShifts() {
+    const host = document.getElementById('shiftsList');
+    const pag = document.getElementById('shiftsPagination');
+    if (!CIVILIAN_ID) {
+      host.innerHTML = '<div class="w-empty">No civilian context — past shifts unavailable.</div>';
+      return;
+    }
+    host.innerHTML = '<div class="w-empty">Loading…</div>';
+    try {
+      const res = await fetch(`${API_URL}/api/v2/economy/sessions/civilian/${CIVILIAN_ID}?page=${shiftsPage}&limit=${SHIFTS_LIMIT}`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const payload = await res.json();
+      const data = payload.data || [];
+      const total = payload.totalCount || 0;
+      if (!data.length) {
+        host.innerHTML = '<div class="w-empty">No shifts logged yet. Clock in to start your first one.</div>';
+        pag.style.display = 'none';
+        return;
+      }
+      host.innerHTML = data.map(s => {
+        const statusPill = (s.status && s.status !== 'ended')
+          ? `<span class="w-shift-status-pill ${escapeHtml(s.status)}">${escapeHtml(s.status)}</span>` : '';
+        const startStr = fmtShiftDate(s.startedAt);
+        const timeStr = fmtShiftTime(s.startedAt) + (s.endedAt ? ' – ' + fmtShiftTime(s.endedAt) : '');
+        return `
+          <div class="w-shift-row">
+            <div class="w-shift-date">${escapeHtml(startStr)}${statusPill}<small>${escapeHtml(timeStr)}</small></div>
+            <div class="w-shift-dept">${escapeHtml(s.departmentName || 'Department')}</div>
+            <div class="w-shift-hours">${escapeHtml(fmtDuration(s.paidSeconds))}</div>
+            <div class="w-shift-earned">${fmtMoney(s.earnings || 0)}</div>
+          </div>
+        `;
+      }).join('');
+      const totalPages = Math.max(1, Math.ceil(total / SHIFTS_LIMIT));
+      pag.style.display = totalPages > 1 ? 'flex' : 'none';
+      document.getElementById('shiftsPageInfo').textContent = `Page ${shiftsPage} of ${totalPages} · ${total} shift${total === 1 ? '' : 's'}`;
+      document.getElementById('shiftsPrev').disabled = shiftsPage <= 1;
+      document.getElementById('shiftsNext').disabled = shiftsPage >= totalPages;
+    } catch (err) {
+      host.innerHTML = `<div class="w-empty" style="color:#ef4444;">Couldn't load shifts: ${escapeHtml(err.message || '')}</div>`;
+    }
+  }
+  document.getElementById('shiftsPrev').addEventListener('click', () => {
+    if (shiftsPage > 1) { shiftsPage -= 1; refreshShifts(); }
+  });
+  document.getElementById('shiftsNext').addEventListener('click', () => {
+    shiftsPage += 1; refreshShifts();
+  });
+
   (async function init() {
-    await Promise.all([refreshWallet(), refreshActiveSession(), refreshDepartments()]);
+    await Promise.all([refreshWallet(), refreshActiveSession(), refreshDepartments(), refreshShifts()]);
     if (activeSession) startHeartbeat();
   })();
 

@@ -245,19 +245,29 @@
         color: var(--cd-text, #e2e8f0); font-weight: 600;
         font-variant-numeric: tabular-nums;
       }
+      .dd-econ-pill-civ {
+        margin-top: 0.3rem;
+        font-size: 0.7rem;
+        color: var(--cd-text-muted, #94a3b8);
+        display: flex; align-items: center; gap: 0.35rem;
+      }
+      .dd-econ-pill-civ i { font-size: 0.6rem; opacity: 0.6; }
+      .dd-econ-pill-civ b {
+        color: var(--cd-text, #e2e8f0); font-weight: 600;
+      }
     `;
     document.head.appendChild(style);
   }
 
   // ---------- API helpers ----------
 
-  async function fetchActiveCivilianId(cfg) {
-    if (!cfg.userId || !cfg.communityId) return '';
+  async function fetchActiveCivilian(cfg) {
+    if (!cfg.userId || !cfg.communityId) return null;
     try {
       const res = await fetch(`${cfg.API_URL}/api/v1/civilians/user/${encodeURIComponent(cfg.userId)}?active_community_id=${encodeURIComponent(cfg.communityId)}`);
-      if (!res.ok) return '';
+      if (!res.ok) return null;
       const civs = await res.json();
-      if (!Array.isArray(civs) || !civs.length) return '';
+      if (!Array.isArray(civs) || !civs.length) return null;
       // Pick the most-recently-updated as the "active" civilian. Mirrors the
       // server-side resolveEconomyContext logic used by /wallet.
       civs.sort((a, b) => {
@@ -265,11 +275,20 @@
         const bu = new Date(b?.civilian?.updatedAt || 0).getTime();
         return bu - au;
       });
-      return civs[0]._id || '';
+      return civs[0] || null;
     } catch (err) {
       console.warn('[dd-economy] civ resolve failed', err);
-      return '';
+      return null;
     }
+  }
+
+  function civDisplayName(civ) {
+    if (!civ) return '';
+    const inner = civ.civilian || {};
+    const first = (inner.firstName || '').trim();
+    const last = (inner.lastName || '').trim();
+    const joined = (first + ' ' + last).trim();
+    return joined || (inner.name || '').trim() || 'Civilian';
   }
 
   async function fetchActiveSession(cfg, civId) {
@@ -422,6 +441,7 @@
           <span>On the clock</span>
         </div>
         <div class="dd-econ-pill-dept">${escapeHtml(session.departmentName || 'Active shift')}</div>
+        ${state.civName ? `<div class="dd-econ-pill-civ"><i class="fa fa-user"></i> as <b>${escapeHtml(state.civName)}</b></div>` : ''}
         <div class="dd-econ-pill-readout">
           <div class="dd-econ-pill-time" data-role="pill-time">${formatTimeHTML(elapsedSec)}</div>
           <div class="dd-econ-pill-earned" data-role="pill-earned">${fmtMoney(earned)}</div>
@@ -466,6 +486,7 @@
           <span>Off duty</span>
         </div>
         <div class="dd-econ-pill-idle-sub">${escapeHtml(dept.name || 'This department')} · <b>${fmtMoney(rate)}</b>/hr</div>
+        ${state.civName ? `<div class="dd-econ-pill-civ"><i class="fa fa-user"></i> as <b>${escapeHtml(state.civName)}</b></div>` : ''}
         <div class="dd-econ-pill-actions">
           <button class="dd-econ-pill-btn primary" data-action="pill-clock-in"><i class="fa fa-play"></i> Clock in</button>
         </div>
@@ -708,13 +729,17 @@
     const state = {
       cfg,
       civId: '',
+      civName: '',
       session: null,
       communityEcon: { economyEnabled: false },
       dept: null,
       tickHandle: null,
     };
+    _state = state;
 
-    state.civId = await fetchActiveCivilianId(cfg);
+    const activeCiv = await fetchActiveCivilian(cfg);
+    state.civId = activeCiv ? (activeCiv._id || '') : '';
+    state.civName = civDisplayName(activeCiv);
     const econ = await fetchCommunityEcon(cfg);
     state.communityEcon = econ;
     state.dept = econ.dept;
@@ -744,6 +769,75 @@
     // AFK sweep, clock-out from /wallet, etc.) is reflected here too.
     setInterval(() => { refresh(state); }, 60000);
   }
+
+  // ---------- External hooks ----------
+
+  // Public hook so cd-status-panel can trigger clock-in / clock-out when
+  // the user manually flips their ten-code to an on/off-duty signal.
+  // Suffix should be "41" (on-duty) or "42" (off-duty); anything else
+  // is ignored. No-op when economy isn't enabled here or the user
+  // isn't eligible — caller can safely fire on every code change.
+  window.ddEconomyHandleTenCodeChange = async function (suffix) {
+    if (!_state) return;
+    const s = String(suffix || '').trim();
+    if (s !== '41' && s !== '42') return;
+    if (!deptUsesStatusCodes(_state.dept)) return;
+    if (!_state.communityEcon || !_state.communityEcon.economyEnabled) return;
+    if (!_state.dept || !_state.dept.economyEnabled) return;
+
+    // Already in the desired clock state? Bail — avoids double clock-in
+    // when the auto-status PUT echoes back through the same path.
+    const hasSession = !!_state.session;
+    const wantsClockIn = (s === '41');
+    if (wantsClockIn && hasSession && _state.session.departmentId === _state.cfg.departmentId) return;
+    if (!wantsClockIn && !hasSession) return;
+
+    try {
+      if (wantsClockIn) {
+        await doClockInSilent(_state);
+        if (window.ddToast) window.ddToast('Clocked in as ' + (_state.civName || 'civilian'), 'success');
+      } else {
+        await doClockOutSilent(_state);
+        if (window.ddToast) window.ddToast('Clocked out as ' + (_state.civName || 'civilian'), 'success');
+      }
+    } catch (err) {
+      console.warn('[dd-economy] manual-status reverse hook failed', err);
+    }
+  };
+
+  // Silent variants that skip the auto-status PUT (we got HERE *from* a
+  // manual status change — re-PUTing would loop / fight cd-status-panel).
+  async function doClockInSilent(state) {
+    const cfg = state.cfg;
+    if (!cfg.communityId || !cfg.departmentId || !state.civId) return;
+    const res = await fetch(`${cfg.API_URL}/api/v2/economy/clock-in?userId=${encodeURIComponent(cfg.userId)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        communityId: cfg.communityId,
+        departmentId: cfg.departmentId,
+        civilianId: state.civId,
+      }),
+    });
+    if (!res.ok) throw new Error('clock-in failed: ' + res.status);
+    await refresh(state);
+  }
+  async function doClockOutSilent(state) {
+    if (!state.session) return;
+    const cfg = state.cfg;
+    const res = await fetch(`${cfg.API_URL}/api/v2/economy/clock-out?userId=${encodeURIComponent(cfg.userId)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: state.session._id }),
+    });
+    if (!res.ok) throw new Error('clock-out failed: ' + res.status);
+    if (state.tickHandle) { clearInterval(state.tickHandle); state.tickHandle = null; }
+    await refresh(state);
+  }
+
+  // Module-level state handle so the public hook can reach it. Boot
+  // assigns into this on startup.
+  let _state = null;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
