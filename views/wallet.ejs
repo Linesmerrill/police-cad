@@ -203,6 +203,8 @@
   const ENCODED_COMMUNITY_ID = "<%- encodedCommunityId %>";
   const USER_ID = "<%- userId %>";
   const CIVILIAN_NAME = "<%- civilianName %>";
+  let CIVILIAN_JOB_ID = "<%- civilianJobId %>";
+  let COMMUNITY_JOBS = []; // populated by refreshDepartments
 
   document.getElementById('walletSubtitle').textContent = CIVILIAN_NAME || 'Civilian';
 
@@ -340,81 +342,174 @@
       }
       const community = await res.json();
       const depts = (community.community && community.community.departments) || [];
+      COMMUNITY_JOBS = ((community.community && community.community.jobs) || []).filter(j => !j.archived);
+
       const economyDepts = depts.filter(d => d.economyEnabled);
-      if (!economyDepts.length) {
-        host.innerHTML = '<div class="w-empty">No departments have economy enabled yet. Ask an admin to enable it on a department.</div>';
-        return;
-      }
       const decorated = economyDepts.map(d => {
-        const isCivilianKind = d.departmentKind === 'civilian';
-        const isMember = isCivilianKind
-          ? (d.civilianMembers || []).some(m => m.civilianID === CIVILIAN_ID)
-          : (d.members || []).some(m => m.userID === USER_ID);
-        return { dept: d, isMember, isCivilianKind };
+        const approvalRequired = !!d.approvalRequired;
+        const isExplicitMember = (d.members || []).some(m => m.userID === USER_ID);
+        // Public departments treat any community member as implicitly eligible.
+        const isMember = isExplicitMember || !approvalRequired;
+        return { dept: d, isMember };
       });
-      // Members first, then non-members (so the actionable rows are at the top).
       decorated.sort((a, b) => (b.isMember ? 1 : 0) - (a.isMember ? 1 : 0));
-      renderDepartments(decorated);
+      renderJobsPanel(decorated);
     } catch (err) {
       console.error('community load failed:', err);
       host.innerHTML = '<div class="w-empty" style="color:#ef4444;">Could not load departments. ' + escapeHtml(err.message || '') + '</div>';
     }
   }
 
-  function renderDepartments(entries) {
+  function renderJobsPanel(deptEntries) {
     const host = document.getElementById('clockList');
-    if (!entries.length) {
-      host.innerHTML = '<div class="w-empty">No departments with active economy. Ask an admin to enable it.</div>';
-      return;
-    }
     const communityHref = ENCODED_COMMUNITY_ID
       ? `/community/${encodeURIComponent(ENCODED_COMMUNITY_ID)}#departments-section`
       : '/communities';
-    host.innerHTML = entries.map(({ dept: d, isMember, isCivilianKind }) => {
+
+    const parts = [];
+
+    // ---- Current Job row (civilian-side) ----
+    const currentJob = CIVILIAN_JOB_ID
+      ? COMMUNITY_JOBS.find(j => j._id === CIVILIAN_JOB_ID)
+      : null;
+    if (currentJob) {
+      const disabled = !!activeSession;
+      parts.push(`
+        <div class="w-clock-row" data-job-id="${escapeHtml(currentJob._id)}" style="border-color:var(--w-accent-border);background:var(--w-accent-dim);">
+          <div>
+            <div class="w-clock-dept">${escapeHtml(currentJob.name)} <span style="font-size:0.7rem;color:var(--w-text-dim);">· your job</span></div>
+            <div class="w-clock-rate">${fmtMoney(currentJob.payPerHour || 0)} / hr</div>
+          </div>
+          <div style="display:flex;gap:0.4rem;">
+            <button class="w-btn ghost" data-action="change-job"><i class="fa fa-pen"></i> Change</button>
+            <button class="w-btn" data-action="clock-in-job" ${disabled ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
+              <i class="fa fa-play"></i> Clock in
+            </button>
+          </div>
+        </div>
+      `);
+    } else if (COMMUNITY_JOBS.length) {
+      parts.push(`
+        <div class="w-clock-row" style="border-color:var(--w-accent-border);">
+          <div>
+            <div class="w-clock-dept">No job picked yet</div>
+            <div class="w-clock-rate">${COMMUNITY_JOBS.length} job${COMMUNITY_JOBS.length === 1 ? '' : 's'} available in this community</div>
+          </div>
+          <button class="w-btn" data-action="pick-job"><i class="fa fa-briefcase"></i> Pick a job</button>
+        </div>
+      `);
+    }
+
+    // ---- Department rows ----
+    if (!deptEntries.length && !COMMUNITY_JOBS.length && !currentJob) {
+      host.innerHTML = '<div class="w-empty">No departments have economy enabled and no jobs are set up yet. Ask an admin.</div>';
+      return;
+    }
+    deptEntries.forEach(({ dept: d, isMember }) => {
       const ratePerHr = (d.basePayPerHour || 0);
-      let action = '';
+      let action;
       if (isMember) {
         const disabled = !!activeSession;
         action = `<button class="w-btn" data-action="clock-in" ${disabled ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>` +
           `<i class="fa fa-play"></i> Clock in</button>`;
-      } else if (isCivilianKind) {
-        action = `<span class="w-clock-rate" style="font-style:italic;">Ask an admin to assign you</span>`;
       } else {
         action = `<a class="w-btn ghost" href="${communityHref}"><i class="fa fa-arrow-up-right-from-square"></i> View department</a>`;
       }
       const dim = isMember ? '' : 'style="opacity:0.75;"';
-      const kindBadge = isCivilianKind
-        ? ` <span style="font-size:0.7rem;color:var(--w-text-dim);">· civilian</span>`
-        : '';
-      return `
-        <div class="w-clock-row" ${dim} data-dept-id="${escapeHtml(d._id)}" data-kind="${escapeHtml(d.departmentKind || '')}">
+      parts.push(`
+        <div class="w-clock-row" ${dim} data-dept-id="${escapeHtml(d._id)}">
           <div>
-            <div class="w-clock-dept">${escapeHtml(d.name)}${kindBadge}</div>
+            <div class="w-clock-dept">${escapeHtml(d.name)}</div>
             <div class="w-clock-rate">${fmtMoney(ratePerHr)} / hr base${isMember ? '' : ' · not a member'}</div>
           </div>
           ${action}
         </div>
-      `;
-    }).join('');
+      `);
+    });
+
+    host.innerHTML = parts.join('');
     host.querySelectorAll('[data-action="clock-in"]').forEach(btn => {
       btn.addEventListener('click', e => {
         const row = e.target.closest('[data-dept-id]');
-        clockIn(row.dataset.deptId, row.dataset.kind);
+        clockInDept(row.dataset.deptId);
       });
+    });
+    host.querySelectorAll('[data-action="clock-in-job"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const row = e.target.closest('[data-job-id]');
+        clockInJob(row.dataset.jobId);
+      });
+    });
+    host.querySelectorAll('[data-action="pick-job"], [data-action="change-job"]').forEach(btn => {
+      btn.addEventListener('click', openJobPicker);
     });
   }
 
-  async function clockIn(deptId, kind) {
+  function openJobPicker() {
+    if (!COMMUNITY_JOBS.length) {
+      if (window.ddModal) window.ddModal({ type: 'info', icon: 'fa-circle-info', title: 'No jobs available', message: 'No jobs are set up in this community yet. Ask an admin to add some.' });
+      return;
+    }
+    // Build a minimal job-picker modal — keep it inline rather than pulling in another component.
+    const existing = document.getElementById('jobPickerBackdrop');
+    if (existing) existing.remove();
+    const backdrop = document.createElement('div');
+    backdrop.id = 'jobPickerBackdrop';
+    backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem;';
+    backdrop.innerHTML = `
+      <div style="background:#0c0e13;border:1px solid var(--w-glass-border);border-radius:14px;padding:1.5rem;max-width:480px;width:100%;max-height:80vh;overflow:auto;">
+        <h3 style="font-size:1.1rem;font-weight:600;margin-bottom:0.85rem;">Pick a job</h3>
+        <div id="jobPickerList" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+        <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem;">
+          <button class="w-btn ghost" id="jobPickerCancel">Cancel</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+    const list = document.getElementById('jobPickerList');
+    list.innerHTML = COMMUNITY_JOBS.map(j => `
+      <button data-pick="${escapeHtml(j._id)}" class="w-btn ghost" style="text-align:left;padding:0.75rem 1rem;">
+        <div style="font-weight:500;color:var(--w-text);">${escapeHtml(j.name)}</div>
+        <div style="font-size:0.78rem;color:var(--w-text-muted);">${fmtMoney(j.payPerHour || 0)} / hr</div>
+      </button>
+    `).join('');
+    list.querySelectorAll('[data-pick]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        backdrop.remove();
+        pickJob(btn.dataset.pick);
+      });
+    });
+    document.getElementById('jobPickerCancel').addEventListener('click', () => backdrop.remove());
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) backdrop.remove(); });
+  }
+
+  async function pickJob(jobId) {
     try {
-      const body = { communityId: COMMUNITY_ID, departmentId: deptId };
-      if (kind === 'civilian') body.civilianId = CIVILIAN_ID;
+      const job = COMMUNITY_JOBS.find(j => j._id === jobId);
+      const res = await fetch(`${API_URL}/api/v1/civilian/${CIVILIAN_ID}?userId=${encodeURIComponent(USER_ID)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId, occupation: job ? job.name : undefined }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      CIVILIAN_JOB_ID = jobId;
+      await refreshDepartments();
+    } catch (err) {
+      console.error(err);
+      if (window.ddModal) window.ddModal({ type: 'danger', icon: 'fa-triangle-exclamation', title: 'Could not assign job', message: err.message });
+    }
+  }
+
+  async function doClockIn(body) {
+    try {
       const res = await fetch(`${API_URL}/api/v2/economy/clock-in?userId=${encodeURIComponent(USER_ID)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       if (!res.ok && res.status !== 409) {
-        throw new Error(`clock-in failed: ${res.status}`);
+        const txt = await res.text().catch(() => '');
+        throw new Error(`clock-in failed: ${res.status}${txt ? ' — ' + txt.slice(0, 200) : ''}`);
       }
       await Promise.all([refreshActiveSession(), refreshWallet(), refreshDepartments()]);
       startHeartbeat();
@@ -422,6 +517,14 @@
       console.error(err);
       if (window.ddModal) window.ddModal({ type: 'danger', icon: 'fa-triangle-exclamation', title: 'Could not clock in', message: err.message });
     }
+  }
+
+  function clockInDept(deptId) {
+    return doClockIn({ communityId: COMMUNITY_ID, departmentId: deptId });
+  }
+
+  function clockInJob(jobId) {
+    return doClockIn({ communityId: COMMUNITY_ID, jobId, civilianId: CIVILIAN_ID });
   }
 
   let heartbeatTimer = null;

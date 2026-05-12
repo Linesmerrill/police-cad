@@ -1645,6 +1645,12 @@
                   <label for="civOccupation" style="color:#e0e7ff; font-weight:500;">Occupation</label>
                   <input id="civOccupation" name="occupation" type="text" class="heroui-input civ-input" style="width:100%; margin-top:0.2rem;" placeholder="Occupation" />
                 </div>
+                <div id="civJobWrap" style="flex:2 1 180px; min-width:140px; margin-bottom:1rem; display:none;">
+                  <label for="civJobId" style="color:#e0e7ff; font-weight:500;">Job (economy)</label>
+                  <select id="civJobId" name="jobId" class="heroui-input civ-input" style="width:100%; margin-top:0.2rem;">
+                    <option value="">— none —</option>
+                  </select>
+                </div>
               </div>
               <div style="font-size:1.1rem; color:#a0aec0; margin-bottom:0.75rem; margin-top:1.2rem;">Advanced Details <span style="font-size:0.95rem; color:#888;">(Optional)</span></div>
 
@@ -4865,6 +4871,84 @@
     var settingsToggle = document.getElementById('beta-settings-toggle');
     if (settingsToggle) settingsToggle.addEventListener('click', function() { enableBetaDashboard(this); });
   })();
+  </script>
+
+  <script>
+    // Economy: Job picker on the civilian form.
+    // Loads the community's jobs once, populates #civJobId, syncs occupation, and
+    // PATCHes the civilian's jobId on change. Self-contained — does not touch the
+    // existing form-save flow. Hidden when the community has no jobs configured.
+    (function () {
+      var communityId = (typeof dbUser !== 'undefined' && dbUser && dbUser.user && dbUser.user.lastAccessedCommunity && dbUser.user.lastAccessedCommunity.communityID) || null;
+      if (!communityId) return;
+      var jobsApiUrl = (typeof API_URL !== 'undefined' ? API_URL : '');
+      var wrap = document.getElementById('civJobWrap');
+      var sel = document.getElementById('civJobId');
+      var occInput = document.getElementById('civOccupation');
+      if (!wrap || !sel) return;
+
+      function currentCivId() {
+        var hidden = document.getElementById('civIdHidden');
+        return hidden && hidden.value ? hidden.value : '';
+      }
+
+      fetch(jobsApiUrl + '/api/v1/community/' + communityId).then(function (r) {
+        if (!r.ok) throw new Error('community fetch failed');
+        return r.json();
+      }).then(function (data) {
+        var jobs = (data.community && data.community.jobs) || [];
+        jobs = jobs.filter(function (j) { return !j.archived; });
+        if (!jobs.length) return; // leave the wrapper hidden
+        jobs.sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0) || (a.name || '').localeCompare(b.name || ''); });
+        jobs.forEach(function (j) {
+          var opt = document.createElement('option');
+          opt.value = j._id;
+          opt.textContent = j.name + ' — $' + ((j.payPerHour || 0) / 100).toFixed(2) + '/hr';
+          opt.setAttribute('data-name', j.name);
+          opt.setAttribute('data-pay', String(j.payPerHour || 0));
+          sel.appendChild(opt);
+        });
+        wrap.style.display = '';
+        window.__economyJobs = jobs;
+      }).catch(function (e) { console.warn('Could not load community jobs:', e); });
+
+      // When a civilian gets loaded into the form elsewhere, sync the dropdown.
+      // We poll #civIdHidden + (hidden) #civJobIdHidden if it exists; otherwise we
+      // fall back to reading the civilian's record on demand from the API.
+      var lastSyncedCiv = null;
+      function maybeSyncFromCivilian() {
+        var cid = currentCivId();
+        if (!cid || cid === lastSyncedCiv) return;
+        lastSyncedCiv = cid;
+        fetch(jobsApiUrl + '/api/v1/civilian/' + cid).then(function (r) {
+          return r.ok ? r.json() : null;
+        }).then(function (civ) {
+          var jobId = civ && civ.civilian && civ.civilian.jobId ? civ.civilian.jobId : '';
+          // Tolerate the value not being in the dropdown (archived job)
+          var found = Array.prototype.slice.call(sel.options).some(function (o) { return o.value === jobId; });
+          sel.value = found ? jobId : '';
+        }).catch(function () { /* non-fatal */ });
+      }
+      setInterval(maybeSyncFromCivilian, 1500);
+      maybeSyncFromCivilian();
+
+      sel.addEventListener('change', function () {
+        var cid = currentCivId();
+        if (!cid) return;
+        var jobId = sel.value || '';
+        var body = { jobId: jobId };
+        var picked = sel.options[sel.selectedIndex];
+        if (picked && picked.getAttribute('data-name') && occInput) {
+          occInput.value = picked.getAttribute('data-name');
+          body.occupation = picked.getAttribute('data-name');
+        }
+        fetch(jobsApiUrl + '/api/v1/civilian/' + cid + '?userId=' + encodeURIComponent((dbUser && dbUser._id) || ''), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }).catch(function (e) { console.error('failed to save jobId:', e); });
+      });
+    })();
   </script>
 
 </body>

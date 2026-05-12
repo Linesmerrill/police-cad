@@ -489,7 +489,6 @@
     var afkPromptSec = (typeof dept.afkPromptIntervalSeconds === 'number' && dept.afkPromptIntervalSeconds > 0) ? dept.afkPromptIntervalSeconds : 600;
     var afkGraceSec = (typeof dept.afkGraceSeconds === 'number' && dept.afkGraceSeconds > 0) ? dept.afkGraceSeconds : 60;
     var payoutMode = (dept.payoutMode === 'on_clockout') ? 'on_clockout' : 'on_heartbeat';
-    var deptKind = (dept.departmentKind === 'civilian') ? 'civilian' : '';
     var disAttr = canEdit ? '' : ' disabled';
 
     html += '<div class="dds-section">';
@@ -529,16 +528,6 @@
       '<div class="dds-field">' +
         '<label class="dds-field-label">AFK grace (seconds)</label>' +
         '<input type="number" class="dds-input" id="dds-economy-afk-grace" min="10" step="1" value="' + afkGraceSec + '"' + disAttr + ' />' +
-      '</div>' +
-      '<div class="dds-field">' +
-        '<label class="dds-field-label">Department kind</label>' +
-        '<select class="dds-input" id="dds-economy-kind"' + disAttr + '>' +
-          '<option value=""' + (deptKind === '' ? ' selected' : '') + '>User-scoped (police, EMS, etc.)</option>' +
-          '<option value="civilian"' + (deptKind === 'civilian' ? ' selected' : '') + '>Civilian (Sanitation, etc.)</option>' +
-        '</select>' +
-        '<div class="dds-info" style="margin-top:0.5rem;"><i class="fa fa-info-circle"></i>' +
-          '<span>Civilian departments key membership on individual civilians instead of user accounts.</span>' +
-        '</div>' +
       '</div>' +
     '</div>';
     html += '</div>';
@@ -681,7 +670,7 @@
       $body.find('#dds-economy-base-pay, #dds-economy-max-session, #dds-economy-afk-prompt, #dds-economy-afk-grace').on('input', function () {
         debounceSave('economy', autoSaveEconomy, DEBOUNCE_MS);
       });
-      $body.find('#dds-economy-payout-mode, #dds-economy-kind').on('change', function () {
+      $body.find('#dds-economy-payout-mode').on('change', function () {
         autoSaveEconomy();
       });
     }
@@ -702,7 +691,6 @@
     var afkGrace = parseInt($('#dds-economy-afk-grace').val(), 10);
     if (!isFinite(afkGrace) || afkGrace < 10) afkGrace = 60;
     var payoutMode = $('#dds-economy-payout-mode').val() === 'on_clockout' ? 'on_clockout' : 'on_heartbeat';
-    var kind = $('#dds-economy-kind').val() === 'civilian' ? 'civilian' : '';
 
     showSaveStatus('#dds-economy-status', 'saving');
 
@@ -717,7 +705,6 @@
         afkPromptIntervalSeconds: afkPrompt,
         afkGraceSeconds: afkGrace,
         payoutMode: payoutMode,
-        departmentKind: kind,
       }),
       success: function () {
         dept.economyEnabled = enabled;
@@ -726,7 +713,6 @@
         dept.afkPromptIntervalSeconds = afkPrompt;
         dept.afkGraceSeconds = afkGrace;
         dept.payoutMode = payoutMode;
-        dept.departmentKind = kind;
         showSaveStatus('#dds-economy-status', 'saved');
       },
       error: function () {

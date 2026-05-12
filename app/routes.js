@@ -1622,10 +1622,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
         communityName = r.data?.community?.name || null;
       } catch (e) {}
     }
+    const civilianJobId = civilian?.civilian?.jobId || "";
     return {
       civilianId: resolvedCivId,
       civilianName: civName,
       encodedCivId: resolvedCivId ? encodeId(resolvedCivId) : "",
+      civilianJobId,
       communityId,
       encodedCommunityId: communityId ? encodeId(communityId) : "",
       communityName,
@@ -1649,6 +1651,33 @@ module.exports = function (app, passport, server, nextApp, handle) {
       return res.status(500).render("error", {
         message: "An error occurred while loading your wallet. Please try again.",
         redirect: "/civ-dashboard",
+      });
+    }
+  });
+
+  app.get("/jobs-settings", authCheck, async function (req, res) {
+    try {
+      const userId = (req.user && req.user._id) ? String(req.user._id) : "";
+      const communityId = req.user?.user?.lastAccessedCommunity?.communityID
+                       || req.user?.user?.activeCommunity;
+      if (!communityId) return res.redirect("/communities");
+      let communityName = null;
+      try {
+        const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
+        communityName = r.data?.community?.name || null;
+      } catch (e) {}
+      res.render("jobs-settings", {
+        user: req.user,
+        apiUrl: policeCadApiUrl,
+        communityId,
+        communityName,
+        userId,
+      });
+    } catch (error) {
+      console.error("Error in /jobs-settings route:", error);
+      return res.status(500).render("error", {
+        message: "An error occurred while loading the jobs admin. Please try again.",
+        redirect: "/communities",
       });
     }
   });
