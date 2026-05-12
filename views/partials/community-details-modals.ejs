@@ -16009,8 +16009,8 @@ async function saveEditEvent() {
   var _pendingPromotions = [];
 
   function loadPendingPromotions() {
-    if (!rankMgmtDeptId) return;
-    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/pending-promotions')
+    if (!rankMgmtDeptId) return Promise.resolve();
+    return fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/pending-promotions')
       .then(function(r) { return r.json(); })
       .then(function(data) {
         _pendingPromotions = data.pending || [];
@@ -16036,6 +16036,8 @@ async function saveEditEvent() {
     document.getElementById('rkmPromoBackdrop').classList.add('is-open');
     document.getElementById('rkmPromoPanel').classList.add('is-open');
     renderPendingPromotions();
+    // Always refetch on open so manual-check state stays in sync with the server.
+    loadPendingPromotions().then(renderPendingPromotions).catch(function() {});
   };
 
   window.closePromotionsPanel = function() {
@@ -16189,6 +16191,18 @@ async function saveEditEvent() {
   };
 
   window.toggleCustomReq = function(userId, requirementId, met) {
+    // Optimistically update local state so the Promote button unlocks
+    // immediately when all custom requirements are met (or relocks otherwise).
+    var pending = _pendingPromotions.find(function(p) { return p.userId === userId; });
+    var prog = pending && (pending.progress || []).find(function(pr) { return pr.isCustom && pr.requirementId === requirementId; });
+    var previousMet = prog ? !!prog.met : null;
+    if (prog) {
+      prog.met = met;
+      prog.currentValue = met ? 1 : 0;
+      prog.percentage = met ? 1.0 : 0.0;
+      renderPendingPromotions();
+    }
+
     fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/custom-requirements/' + requirementId + '?userId=' + rankMgmtUserId, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -16201,6 +16215,13 @@ async function saveEditEvent() {
     .catch(function(err) {
       console.error('Error toggling custom requirement:', err);
       if (typeof showToast === 'function') showToast('Failed to update requirement', 2500, 'error');
+      // Revert optimistic update on failure
+      if (prog && previousMet !== null) {
+        prog.met = previousMet;
+        prog.currentValue = previousMet ? 1 : 0;
+        prog.percentage = previousMet ? 1.0 : 0.0;
+        renderPendingPromotions();
+      }
     });
   };
 
