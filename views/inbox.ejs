@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inbox - Lines Police CAD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --in-bg: #08090c;
+      --in-glass: rgba(255,255,255,0.04);
+      --in-glass-border: rgba(255,255,255,0.06);
+      --in-glass-hover: rgba(255,255,255,0.07);
+      --in-text: #e2e8f0;
+      --in-text-muted: #94a3b8;
+      --in-text-dim: #64748b;
+      --in-accent: #38bdf8;
+      --in-accent-dim: rgba(56,189,248,0.12);
+      --in-accent-border: rgba(56,189,248,0.25);
+      --in-green: #22c55e;
+      --in-red: #ef4444;
+      --in-amber: #f59e0b;
+      --in-radius: 12px;
+    }
+    html { font-size: 16px; }
+    body {
+      background: var(--in-bg); color: var(--in-text);
+      font-family: 'Outfit', -apple-system, sans-serif;
+      min-height: 100vh; line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      padding-top: 36px;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: radial-gradient(ellipse 700px 500px at 10% 15%, rgba(245,158,11,0.05) 0%, transparent 70%);
+    }
+    .in-shell { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .in-header { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.5rem; }
+    .in-header-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(245,158,11,0.12); color: var(--in-amber); font-size: 1.2rem;
+      border: 1px solid rgba(245,158,11,0.25);
+    }
+    .in-title { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.01em; }
+    .in-subtitle { font-size: 0.85rem; color: var(--in-text-muted); margin-top: 0.1rem; }
+
+    .in-filter-bar {
+      display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .in-chip {
+      padding: 0.4rem 0.85rem; border-radius: 999px;
+      background: var(--in-glass); border: 1px solid var(--in-glass-border);
+      color: var(--in-text-muted); font: inherit; font-size: 0.8rem;
+      cursor: pointer; transition: all 120ms ease;
+    }
+    .in-chip:hover { background: var(--in-glass-hover); color: var(--in-text); }
+    .in-chip.active {
+      background: var(--in-accent-dim); color: var(--in-accent);
+      border-color: var(--in-accent-border);
+    }
+
+    .in-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .in-item {
+      display: grid; grid-template-columns: auto 1fr auto auto; gap: 0.9rem;
+      align-items: center;
+      background: var(--in-glass); border: 1px solid var(--in-glass-border);
+      border-radius: var(--in-radius); padding: 0.95rem 1.1rem;
+    }
+    .in-item-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(245,158,11,0.1); color: var(--in-amber);
+    }
+    .in-item.paid .in-item-icon { background: rgba(34,197,94,0.1); color: var(--in-green); }
+    .in-item.delinquent .in-item-icon { background: rgba(239,68,68,0.1); color: var(--in-red); }
+    .in-item.dismissed .in-item-icon { background: rgba(148,163,184,0.1); color: var(--in-text-dim); }
+
+    .in-item-body { min-width: 0; }
+    .in-item-title { font-size: 0.95rem; font-weight: 500; color: var(--in-text); }
+    .in-item-meta {
+      font-size: 0.75rem; color: var(--in-text-dim);
+      display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.25rem;
+    }
+    .in-item-meta span { white-space: nowrap; }
+    .in-item-amount {
+      font-size: 1rem; font-weight: 600; color: var(--in-amber);
+      white-space: nowrap;
+    }
+    .in-item.paid .in-item-amount { color: var(--in-green); }
+    .in-item.delinquent .in-item-amount { color: var(--in-red); }
+    .in-item.dismissed .in-item-amount { color: var(--in-text-dim); text-decoration: line-through; }
+
+    .in-actions { display: flex; gap: 0.4rem; }
+    .in-btn {
+      padding: 0.42rem 0.75rem; border-radius: 7px;
+      background: var(--in-accent-dim); color: var(--in-accent);
+      border: 1px solid var(--in-accent-border);
+      font: inherit; font-size: 0.78rem; font-weight: 500;
+      cursor: pointer; transition: background 120ms ease;
+    }
+    .in-btn:hover { background: rgba(56,189,248,0.2); }
+    .in-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .in-btn.ghost {
+      background: transparent; color: var(--in-text-muted);
+      border-color: var(--in-glass-border);
+    }
+    .in-btn.ghost:hover { background: var(--in-glass-hover); color: var(--in-text); }
+
+    .in-empty {
+      padding: 2rem 1rem; text-align: center; color: var(--in-text-dim);
+      background: var(--in-glass); border: 1px dashed var(--in-glass-border);
+      border-radius: var(--in-radius);
+    }
+
+    .in-pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 1.25rem; font-size: 0.85rem; color: var(--in-text-muted);
+    }
+    .in-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    @media (max-width: 600px) {
+      .in-item { grid-template-columns: auto 1fr; row-gap: 0.5rem; }
+      .in-item-amount { grid-column: 2; text-align: right; }
+      .in-actions { grid-column: 1 / -1; justify-content: flex-end; }
+    }
+  </style>
+</head>
+<body>
+
+<%- include('partials/standalone-utility', {
+  user: user,
+  communityName: communityName,
+  pageLabel: 'Inbox',
+  backHref: '/civ-dashboard',
+  backLabel: 'Back to dashboard'
+}) %>
+
+<div class="in-shell">
+  <div class="in-header">
+    <div class="in-header-icon"><i class="fa fa-inbox"></i></div>
+    <div>
+      <div class="in-title">Inbox</div>
+      <div class="in-subtitle" id="inboxSubtitle">Fines, fees, and notices</div>
+    </div>
+  </div>
+
+  <div class="in-filter-bar" id="filterBar">
+    <button class="in-chip active" data-status="">All</button>
+    <button class="in-chip" data-status="pending">Pending</button>
+    <button class="in-chip" data-status="delinquent">Delinquent</button>
+    <button class="in-chip" data-status="paid">Paid</button>
+    <button class="in-chip" data-status="dismissed">Dismissed</button>
+  </div>
+
+  <div class="in-list" id="inboxList"><div class="in-empty">Loading…</div></div>
+
+  <div class="in-pagination">
+    <button class="in-btn ghost" id="prevBtn"><i class="fa fa-chevron-left"></i> Prev</button>
+    <span id="pageInfo">—</span>
+    <button class="in-btn ghost" id="nextBtn">Next <i class="fa fa-chevron-right"></i></button>
+  </div>
+</div>
+
+<script>
+  const API_URL = "<%- apiUrl %>";
+  const CIVILIAN_ID = "<%- civilianId %>";
+  const USER_ID = "<%- userId %>";
+
+  let state = { page: 1, limit: 25, status: '', totalCount: 0 };
+
+  function fmtMoney(cents) {
+    const sign = cents < 0 ? '-' : '';
+    const abs = Math.abs(cents);
+    const dollars = Math.floor(abs / 100);
+    const rem = abs % 100;
+    return sign + '$' + dollars.toLocaleString() + '.' + String(rem).padStart(2, '0');
+  }
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function fmtDate(s) {
+    if (!s) return '';
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  async function load() {
+    const q = new URLSearchParams();
+    if (CIVILIAN_ID) q.set('civilianId', CIVILIAN_ID); else if (USER_ID) q.set('userId', USER_ID);
+    q.set('page', state.page);
+    q.set('limit', state.limit);
+    if (state.status) q.set('status', state.status);
+    try {
+      const res = await fetch(`${API_URL}/api/v2/economy/inbox?${q.toString()}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('inbox fetch failed');
+      const data = await res.json();
+      state.totalCount = data.totalCount || 0;
+      render(data.data || []);
+    } catch (err) {
+      console.error(err);
+      document.getElementById('inboxList').innerHTML = '<div class="in-empty">Could not load inbox.</div>';
+    }
+  }
+
+  function render(items) {
+    const host = document.getElementById('inboxList');
+    if (!items.length) {
+      host.innerHTML = '<div class="in-empty">No items match this filter.</div>';
+      updatePagination();
+      return;
+    }
+    host.innerHTML = items.map(it => {
+      const icon = it.type === 'fine' ? 'fa-gavel'
+                 : it.type === 'payroll' ? 'fa-money-bill-wave'
+                 : it.type === 'verdict' ? 'fa-scale-balanced'
+                 : 'fa-file-invoice-dollar';
+      const status = it.status || 'pending';
+      const due = it.dueAt ? `Due ${fmtDate(it.dueAt)}` : '';
+      return `
+        <div class="in-item ${escapeHtml(status)}" data-id="${escapeHtml(it._id)}">
+          <div class="in-item-icon"><i class="fa ${icon}"></i></div>
+          <div class="in-item-body">
+            <div class="in-item-title">${escapeHtml(it.title || it.type || 'Item')}</div>
+            <div class="in-item-meta">
+              <span>${escapeHtml(it.source || '')}</span>
+              <span>· ${escapeHtml(status)}</span>
+              ${due ? `<span>· ${escapeHtml(due)}</span>` : ''}
+              ${it.body ? `<span>· ${escapeHtml(it.body)}</span>` : ''}
+            </div>
+          </div>
+          <div class="in-item-amount">${fmtMoney(it.amount || 0)}</div>
+          <div class="in-actions">
+            ${(status === 'pending' || status === 'delinquent')
+              ? `<button class="in-btn" data-action="pay">Pay</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+    host.querySelectorAll('[data-action="pay"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const id = e.target.closest('[data-id]').dataset.id;
+        onPay(id);
+      });
+    });
+    updatePagination();
+  }
+
+  function updatePagination() {
+    const totalPages = Math.max(1, Math.ceil(state.totalCount / state.limit));
+    document.getElementById('pageInfo').textContent = `Page ${state.page} of ${totalPages} · ${state.totalCount} items`;
+    document.getElementById('prevBtn').disabled = state.page <= 1;
+    document.getElementById('nextBtn').disabled = state.page >= totalPages;
+  }
+
+  function onPay(id) {
+    if (window.ddModal) {
+      window.ddModal({
+        type: 'info', icon: 'fa-credit-card',
+        title: 'Pay this item?',
+        message: 'This will debit your civilian’s wallet.',
+        confirmText: 'Pay',
+        onConfirm: () => doPay(id),
+      });
+    } else { doPay(id); }
+  }
+
+  async function doPay(id) {
+    try {
+      const res = await fetch(`${API_URL}/api/v2/economy/inbox/${id}/pay`, {
+        method: 'POST', credentials: 'include',
+      });
+      if (res.status === 402) {
+        if (window.ddModal) window.ddModal({ type: 'danger', icon: 'fa-circle-exclamation', title: 'Insufficient balance', message: 'Your civilian doesn’t have enough money to pay this item.' });
+        return;
+      }
+      if (!res.ok) throw new Error(`pay failed: ${res.status}`);
+      await load();
+    } catch (err) {
+      console.error(err);
+      if (window.ddModal) window.ddModal({ type: 'danger', icon: 'fa-triangle-exclamation', title: 'Payment failed', message: err.message });
+    }
+  }
+
+  document.getElementById('filterBar').addEventListener('click', e => {
+    const chip = e.target.closest('.in-chip');
+    if (!chip) return;
+    document.querySelectorAll('.in-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    state.status = chip.dataset.status;
+    state.page = 1;
+    load();
+  });
+  document.getElementById('prevBtn').addEventListener('click', () => { if (state.page > 1) { state.page--; load(); } });
+  document.getElementById('nextBtn').addEventListener('click', () => { state.page++; load(); });
+
+  load();
+</script>
+</body>
+</html>

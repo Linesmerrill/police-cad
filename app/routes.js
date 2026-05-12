@@ -1586,6 +1586,89 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // ----- Economy: Wallet + Inbox (Phase 1) -----
+  async function resolveEconomyContext(req) {
+    const communityIdPattern = /^[a-fA-F0-9]{24}$/;
+    let civilianId = null;
+    if (req.query.c) {
+      try {
+        const decoded = decodeId(req.query.c);
+        if (communityIdPattern.test(decoded)) civilianId = decoded;
+      } catch (e) {}
+    }
+    if (!civilianId && req.query.civId && communityIdPattern.test(req.query.civId)) {
+      civilianId = req.query.civId;
+    }
+    const userId = (req.user && req.user._id) ? String(req.user._id) : null;
+    let civilian = null;
+    if (civilianId) {
+      try { civilian = await Civilian.findById(civilianId).lean(); } catch (e) {}
+    }
+    if (!civilian && userId) {
+      try {
+        civilian = await Civilian.findOne({ "civilian.userID": userId }).sort({ "civilian.updatedAt": -1 }).lean();
+      } catch (e) {}
+    }
+    const resolvedCivId = civilian ? String(civilian._id) : "";
+    const civName = civilian ? [civilian.civilian?.firstName, civilian.civilian?.lastName].filter(Boolean).join(" ") : "";
+    const communityId = civilian?.civilian?.activeCommunityID
+                     || req.user?.user?.lastAccessedCommunity?.communityID
+                     || req.user?.user?.activeCommunity
+                     || "";
+    let communityName = null;
+    if (communityId) {
+      try {
+        const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
+        communityName = r.data?.community?.name || null;
+      } catch (e) {}
+    }
+    return {
+      civilianId: resolvedCivId,
+      civilianName: civName,
+      encodedCivId: resolvedCivId ? encodeId(resolvedCivId) : "",
+      communityId,
+      communityName,
+      userId: userId || "",
+    };
+  }
+
+  app.get("/wallet", authCheck, async function (req, res) {
+    try {
+      const ctx = await resolveEconomyContext(req);
+      if (!ctx.civilianId) {
+        return res.redirect("/civ-dashboard");
+      }
+      res.render("wallet", {
+        user: req.user,
+        apiUrl: policeCadApiUrl,
+        ...ctx,
+      });
+    } catch (error) {
+      console.error("Error in /wallet route:", error);
+      return res.status(500).render("error", {
+        message: "An error occurred while loading your wallet. Please try again.",
+        redirect: "/civ-dashboard",
+      });
+    }
+  });
+
+  app.get("/inbox", authCheck, async function (req, res) {
+    try {
+      const ctx = await resolveEconomyContext(req);
+      res.render("inbox", {
+        user: req.user,
+        apiUrl: policeCadApiUrl,
+        ...ctx,
+      });
+    } catch (error) {
+      console.error("Error in /inbox route:", error);
+      return res.status(500).render("error", {
+        message: "An error occurred while loading your inbox. Please try again.",
+        redirect: "/civ-dashboard",
+      });
+    }
+  });
+
   // ----- Configurable Forms / Reports -----
   // Resolve the current community from the optional ?c= encoded id, falling
   // back to the user's lastAccessedCommunity. Returns nulls when none.
