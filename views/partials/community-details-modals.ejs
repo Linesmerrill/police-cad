@@ -213,14 +213,28 @@
             </div>
           <% } %>
 
-          <!-- Fine Settings -->
-          <div id="fineSettingsCard" onclick="openFineSettingsModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
-            <div style="text-align:center;">
-              <i class="fa fa-dollar-sign" style="font-size:2rem; color:#10b981; margin-bottom:0.5rem;"></i>
-              <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Fine Settings</h5>
-              <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Configure fines & penalties</p>
+          <!-- Fine Settings (deprecated by the new economy system — hidden from the grid).
+               openFineSettingsModal() is left intact so any legacy deep-link still works. -->
+
+          <!-- Economy Settings -->
+          <% if (canManageGeneralSettings) { %>
+            <div id="economySettingsCard" onclick="window.location.href='/economy-settings'" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
+              <div style="text-align:center;">
+                <i class="fa fa-coins" style="font-size:2rem; color:#38bdf8; margin-bottom:0.5rem;"></i>
+                <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Economy</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Balances, pay, fines & inbox</p>
+              </div>
             </div>
-          </div>
+          <% } else { %>
+            <div id="economySettingsCard" onclick="showNoGeneralSettingsPermissionModal()" style="background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
+              <div style="text-align:center;">
+                <i class="fa fa-coins" style="font-size:2rem; color:#6b7280; margin-bottom:0.5rem;"></i>
+                <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">Economy</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Balances, pay, fines & inbox</p>
+                <p style="color:#6b7280; margin:0.5rem 0 0 0; font-size:0.75rem; font-style:italic;">Permission Required</p>
+              </div>
+            </div>
+          <% } %>
 
           <!-- Penal Codes -->
           <div id="penalCodesCard" onclick="openPenalCodesSettings()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#f59e0b;">
