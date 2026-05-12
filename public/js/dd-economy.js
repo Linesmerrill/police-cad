@@ -19,6 +19,7 @@
   'use strict';
 
   const SLOT_ID = 'dd-economy-slot';
+  const PILL_ID = 'dd-economy-pill';
 
   function getCfg() {
     return window.ddConfig || null;
@@ -132,6 +133,118 @@
         .dd-econ-card { flex-wrap: wrap; }
         .dd-econ-actions { width: 100%; justify-content: flex-end; margin-top: 0.4rem; }
       }
+
+      /* ---------- Compact sidebar pill (command/judicial) ---------- */
+      .dd-econ-pill {
+        position: relative;
+        margin: 0.5rem 0.75rem 0.75rem;
+        padding: 0.7rem 0.75rem;
+        border-radius: 10px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01));
+        border: 1px solid rgba(255,255,255,0.06);
+        overflow: hidden;
+        font-family: inherit;
+      }
+      .dd-econ-pill[data-state="active"] {
+        background:
+          radial-gradient(120% 80% at 0% 0%, rgba(34,197,94,0.10), transparent 60%),
+          linear-gradient(180deg, rgba(34,197,94,0.05), rgba(34,197,94,0.015));
+        border-color: rgba(34,197,94,0.30);
+        box-shadow: inset 0 0 0 1px rgba(34,197,94,0.06), 0 0 24px -8px rgba(34,197,94,0.35);
+      }
+      .dd-econ-pill[data-state="other"] {
+        background: linear-gradient(180deg, rgba(251,191,36,0.06), rgba(251,191,36,0.015));
+        border-color: rgba(251,191,36,0.32);
+      }
+      .dd-econ-pill-head {
+        display: flex; align-items: center; gap: 0.45rem;
+        font-size: 0.68rem; font-weight: 600;
+        letter-spacing: 0.12em; text-transform: uppercase;
+        color: var(--cd-text-muted, #94a3b8);
+      }
+      .dd-econ-pill[data-state="active"] .dd-econ-pill-head { color: #4ade80; }
+      .dd-econ-pill[data-state="other"]  .dd-econ-pill-head { color: #fbbf24; }
+      .dd-econ-pill-dot {
+        width: 7px; height: 7px; border-radius: 50%;
+        background: var(--cd-text-dim, #64748b);
+        flex-shrink: 0;
+      }
+      .dd-econ-pill[data-state="active"] .dd-econ-pill-dot {
+        background: #22c55e;
+        box-shadow: 0 0 0 0 rgba(34,197,94,0.6);
+        animation: ddEconPillPulse 1.8s ease-out infinite;
+      }
+      @keyframes ddEconPillPulse {
+        0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
+        70%  { box-shadow: 0 0 0 7px rgba(34,197,94,0); }
+        100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+      }
+      .dd-econ-pill-dept {
+        margin-top: 0.25rem;
+        font-size: 0.78rem; color: var(--cd-text, #e2e8f0);
+        font-weight: 500;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .dd-econ-pill-readout {
+        display: flex; align-items: baseline; gap: 0.55rem;
+        margin-top: 0.4rem;
+      }
+      .dd-econ-pill-time {
+        font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+        font-size: 1.05rem; font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.02em;
+        color: var(--cd-text, #e2e8f0);
+      }
+      .dd-econ-pill[data-state="active"] .dd-econ-pill-time { color: #d1fae5; }
+      /* Blink the colons on tick so the timer feels alive */
+      .dd-econ-pill[data-state="active"] .dd-econ-pill-time .sep {
+        animation: ddEconSep 1s steps(2, start) infinite;
+      }
+      @keyframes ddEconSep { 50% { opacity: 0.32; } }
+      .dd-econ-pill-earned {
+        font-size: 0.74rem; font-weight: 500;
+        font-variant-numeric: tabular-nums;
+        color: #22c55e;
+        margin-left: auto;
+      }
+      .dd-econ-pill-actions {
+        display: flex; gap: 0.35rem;
+        margin-top: 0.55rem;
+      }
+      .dd-econ-pill-btn {
+        flex: 1;
+        display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;
+        padding: 0.4rem 0.55rem;
+        font-size: 0.72rem; font-weight: 500;
+        border-radius: 7px; cursor: pointer; border: 1px solid transparent;
+        font-family: inherit;
+        transition: background 120ms, color 120ms, border-color 120ms;
+      }
+      .dd-econ-pill-btn.danger {
+        background: rgba(239,68,68,0.10); color: #f87171;
+        border-color: rgba(239,68,68,0.22);
+      }
+      .dd-econ-pill-btn.danger:hover:not(:disabled) { background: rgba(239,68,68,0.20); color: #fca5a5; }
+      .dd-econ-pill-btn.primary {
+        background: rgba(56,189,248,0.10); color: #38bdf8;
+        border-color: rgba(56,189,248,0.24);
+      }
+      .dd-econ-pill-btn.primary:hover:not(:disabled) { background: rgba(56,189,248,0.20); }
+      .dd-econ-pill-btn.ghost {
+        background: transparent; color: var(--cd-text-muted, #94a3b8);
+        border-color: rgba(255,255,255,0.08);
+      }
+      .dd-econ-pill-btn.ghost:hover:not(:disabled) { color: var(--cd-text, #e2e8f0); border-color: rgba(255,255,255,0.18); }
+      .dd-econ-pill-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+      .dd-econ-pill-idle-sub {
+        margin-top: 0.3rem;
+        font-size: 0.7rem; color: var(--cd-text-muted, #94a3b8);
+      }
+      .dd-econ-pill-idle-sub b {
+        color: var(--cd-text, #e2e8f0); font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -192,20 +305,107 @@
   // ---------- Rendering ----------
 
   function slotEl() { return document.getElementById(SLOT_ID); }
+  function pillEl() { return document.getElementById(PILL_ID); }
+
+  // Wrap colons in the timer string so CSS can blink them while the
+  // hh and mm/ss segments stay rock-steady.
+  function formatTimeHTML(seconds) {
+    const t = fmtElapsed(seconds);
+    return t.replace(/:/g, '<span class="sep">:</span>');
+  }
 
   function renderEmpty() {
     const slot = slotEl();
     if (slot) slot.innerHTML = '';
+    const pill = pillEl();
+    if (pill) pill.innerHTML = '';
+  }
+
+  function renderPillActiveHere(state, startedAt, elapsedSec, earned) {
+    const pill = pillEl();
+    if (!pill) return;
+    const session = state.session;
+    pill.innerHTML = `
+      <div class="dd-econ-pill" data-state="active">
+        <div class="dd-econ-pill-head">
+          <span class="dd-econ-pill-dot"></span>
+          <span>On the clock</span>
+        </div>
+        <div class="dd-econ-pill-dept">${escapeHtml(session.departmentName || 'Active shift')}</div>
+        <div class="dd-econ-pill-readout">
+          <div class="dd-econ-pill-time" data-role="pill-time">${formatTimeHTML(elapsedSec)}</div>
+          <div class="dd-econ-pill-earned" data-role="pill-earned">${fmtMoney(earned)}</div>
+        </div>
+        <div class="dd-econ-pill-actions">
+          <a class="dd-econ-pill-btn ghost" href="/wallet"><i class="fa fa-wallet"></i> Wallet</a>
+          <button class="dd-econ-pill-btn danger" data-action="pill-clock-out"><i class="fa fa-stop"></i> Clock out</button>
+        </div>
+      </div>
+    `;
+    pill.querySelector('[data-action="pill-clock-out"]').addEventListener('click', () => doClockOut(state));
+  }
+
+  function renderPillActiveElsewhere(state) {
+    const pill = pillEl();
+    if (!pill) return;
+    const otherName = state.session.departmentName || 'another department';
+    pill.innerHTML = `
+      <div class="dd-econ-pill" data-state="other">
+        <div class="dd-econ-pill-head">
+          <i class="fa fa-triangle-exclamation" style="font-size:0.7rem;"></i>
+          <span>Active elsewhere</span>
+        </div>
+        <div class="dd-econ-pill-dept">${escapeHtml(otherName)}</div>
+        <div class="dd-econ-pill-actions">
+          <button class="dd-econ-pill-btn danger" data-action="pill-clock-out"><i class="fa fa-stop"></i> Clock out</button>
+        </div>
+      </div>
+    `;
+    pill.querySelector('[data-action="pill-clock-out"]').addEventListener('click', () => doClockOut(state));
+  }
+
+  function renderPillIdle(state) {
+    const pill = pillEl();
+    if (!pill) return;
+    const dept = state.dept || {};
+    const rate = dept.basePayPerHour || 0;
+    pill.innerHTML = `
+      <div class="dd-econ-pill" data-state="idle">
+        <div class="dd-econ-pill-head">
+          <span class="dd-econ-pill-dot"></span>
+          <span>Off duty</span>
+        </div>
+        <div class="dd-econ-pill-idle-sub">${escapeHtml(dept.name || 'This department')} · <b>${fmtMoney(rate)}</b>/hr</div>
+        <div class="dd-econ-pill-actions">
+          <button class="dd-econ-pill-btn primary" data-action="pill-clock-in"><i class="fa fa-play"></i> Clock in</button>
+        </div>
+      </div>
+    `;
+    pill.querySelector('[data-action="pill-clock-in"]').addEventListener('click', () => doClockIn(state));
   }
 
   function renderActiveHere(state) {
-    const slot = slotEl();
-    if (!slot) return;
     ensureStyles();
     const session = state.session;
     const startedAt = new Date(session.startedAt || session.createdAt || Date.now()).getTime();
     const elapsedSec = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
     const earned = Math.floor((session.payRateSnapshot || 0) * (elapsedSec / 3600));
+    renderPillActiveHere(state, startedAt, elapsedSec, earned);
+    const slot = slotEl();
+    if (!slot) {
+      // Pill-only mode (command/judicial). Still need the live tick.
+      if (state.tickHandle) clearInterval(state.tickHandle);
+      state.tickHandle = setInterval(() => {
+        const pill = pillEl()?.querySelector('[data-state="active"]');
+        if (!pill) { clearInterval(state.tickHandle); state.tickHandle = null; return; }
+        const sec = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+        const tEl = pill.querySelector('[data-role="pill-time"]');
+        const eEl = pill.querySelector('[data-role="pill-earned"]');
+        if (tEl) tEl.innerHTML = formatTimeHTML(sec);
+        if (eEl) eEl.textContent = fmtMoney(Math.floor((session.payRateSnapshot || 0) * (sec / 3600)));
+      }, 1000);
+      return;
+    }
     slot.innerHTML = `
       <div class="dd-econ-wrap">
         <div class="dd-econ-card is-active" data-state="active">
@@ -231,22 +431,28 @@
         </div>
       </div>
     `;
-    // Live tick
+    // Live tick — updates both the main card and the sidebar pill if present.
     if (state.tickHandle) clearInterval(state.tickHandle);
     state.tickHandle = setInterval(() => {
       const card = slot.querySelector('[data-state="active"]');
       if (!card) { clearInterval(state.tickHandle); state.tickHandle = null; return; }
       const sec = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+      const earnedNow = Math.floor((session.payRateSnapshot || 0) * (sec / 3600));
       card.querySelector('[data-role="time"]').textContent = fmtElapsed(sec);
-      card.querySelector('[data-role="earned"]').textContent = fmtMoney(Math.floor((session.payRateSnapshot || 0) * (sec / 3600)));
+      card.querySelector('[data-role="earned"]').textContent = fmtMoney(earnedNow);
+      const pillTime = pillEl()?.querySelector('[data-role="pill-time"]');
+      const pillEarned = pillEl()?.querySelector('[data-role="pill-earned"]');
+      if (pillTime) pillTime.innerHTML = formatTimeHTML(sec);
+      if (pillEarned) pillEarned.textContent = fmtMoney(earnedNow);
     }, 1000);
     slot.querySelector('[data-action="clock-out"]').addEventListener('click', () => doClockOut(state));
   }
 
   function renderActiveElsewhere(state) {
+    ensureStyles();
+    renderPillActiveElsewhere(state);
     const slot = slotEl();
     if (!slot) return;
-    ensureStyles();
     const otherName = state.session.departmentName || 'another department';
     slot.innerHTML = `
       <div class="dd-econ-wrap">
@@ -267,9 +473,10 @@
   }
 
   function renderIdle(state) {
+    ensureStyles();
+    renderPillIdle(state);
     const slot = slotEl();
     if (!slot) return;
-    ensureStyles();
     const dept = state.dept || {};
     const rate = dept.basePayPerHour || 0;
     slot.innerHTML = `
@@ -295,7 +502,8 @@
   async function doClockIn(state) {
     const cfg = state.cfg;
     if (!cfg.communityId || !cfg.departmentId || !state.civId) return;
-    const btn = slotEl()?.querySelector('[data-action="clock-in"]');
+    const btn = slotEl()?.querySelector('[data-action="clock-in"]')
+             || pillEl()?.querySelector('[data-action="pill-clock-in"]');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Clocking in…'; }
     try {
       const res = await fetch(`${cfg.API_URL}/api/v2/economy/clock-in?userId=${encodeURIComponent(cfg.userId)}`, {
@@ -319,7 +527,8 @@
   async function doClockOut(state) {
     if (!state.session) return;
     const cfg = state.cfg;
-    const btn = slotEl()?.querySelector('[data-action="clock-out"]');
+    const btn = slotEl()?.querySelector('[data-action="clock-out"]')
+             || pillEl()?.querySelector('[data-action="pill-clock-out"]');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Clocking out…'; }
     try {
       const res = await fetch(`${cfg.API_URL}/api/v2/economy/clock-out?userId=${encodeURIComponent(cfg.userId)}`, {
@@ -377,10 +586,10 @@
     // Wait until the overview slot is in the DOM (the dashboard renders
     // panels asynchronously after fetching departments).
     let tries = 0;
-    while (!slotEl() && tries++ < 80) {
+    while (!slotEl() && !pillEl() && tries++ < 80) {
       await new Promise(r => setTimeout(r, 75));
     }
-    if (!slotEl()) return;
+    if (!slotEl() && !pillEl()) return;
 
     const state = {
       cfg,
