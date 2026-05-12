@@ -322,6 +322,33 @@
       font-style: italic;
     }
     .jd-resolution-toggles { display: flex; gap: 0.35rem; flex-shrink: 0; }
+
+    /* Per-charge mini toggles (Dismiss/Uphold next to each fine) */
+    .jd-fine-toggles { display: inline-flex; gap: 0.25rem; margin-left: auto; }
+    .jd-fine-toggle {
+      padding: 0.15rem 0.5rem; font-size: 0.66rem; font-weight: 600;
+      border: 1px solid var(--border-subtle); border-radius: 4px;
+      background: transparent; color: var(--text-muted); cursor: pointer;
+      transition: var(--transition); font-family: var(--font-body);
+      letter-spacing: 0.03em;
+    }
+    .jd-fine-toggle:hover { border-color: rgba(255,255,255,0.18); color: var(--text-secondary); }
+    .jd-fine-toggle.dismiss-active {
+      background: rgba(110,231,183,0.14); color: #6ee7b7;
+      border-color: rgba(110,231,183,0.32);
+    }
+    .jd-fine-toggle.uphold-active {
+      background: rgba(252,165,165,0.14); color: #fca5a5;
+      border-color: rgba(252,165,165,0.32);
+    }
+    .jd-fine-status-strike { text-decoration: line-through; opacity: 0.6; }
+    .jd-item-fine-row {
+      flex-wrap: wrap;
+    }
+    .jd-charges-hint {
+      font-size: 0.7rem; color: var(--text-muted); margin-top: 0.4rem;
+      font-style: italic;
+    }
     .jd-toggle-btn {
       padding: 0.3rem 0.65rem; font-size: 0.75rem; font-weight: 600;
       border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
