@@ -156,6 +156,11 @@
       border-color: var(--w-glass-border);
     }
     .w-btn.ghost:hover { background: var(--w-glass-hover); color: var(--w-text); }
+    .w-btn.danger {
+      background: rgba(239,68,68,0.12); color: #f87171;
+      border-color: rgba(239,68,68,0.28);
+    }
+    .w-btn.danger:hover { background: rgba(239,68,68,0.22); color: #fca5a5; }
 
     .w-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     @media (max-width: 800px) { .w-grid { grid-template-columns: 1fr; } }
@@ -445,14 +450,15 @@
       const res = await fetch(`${API_URL}/api/v2/economy/session/active?civilianId=${encodeURIComponent(CIVILIAN_ID)}`);
       if (!res.ok) {
         console.warn('session/active returned', res.status);
-        activeSession = null; renderActive(); return;
+        activeSession = null; renderActive(); rerenderDepartments(); return;
       }
       const text = await res.text();
       activeSession = (!text || text === 'null') ? null : JSON.parse(text);
       renderActive();
+      rerenderDepartments();
     } catch (err) {
       console.error('session/active failed:', err);
-      activeSession = null; renderActive();
+      activeSession = null; renderActive(); rerenderDepartments();
     }
   }
 
@@ -559,7 +565,12 @@
     }
   }
 
+  // Cache the latest department list so we can re-render when the active
+  // session changes (clock-in / clock-out) without refetching the community.
+  let _lastDeptEntries = null;
+
   function renderDepartments(deptEntries) {
+    _lastDeptEntries = deptEntries;
     const host = document.getElementById('clockList');
     const communityHref = ENCODED_COMMUNITY_ID
       ? `/community/${encodeURIComponent(ENCODED_COMMUNITY_ID)}#departments-section`
@@ -570,22 +581,35 @@
       return;
     }
 
+    const activeDeptId = activeSession && activeSession.departmentId;
+
     host.innerHTML = deptEntries.map(({ dept: d, isMember }) => {
       const ratePerHr = (d.basePayPerHour || 0);
+      const isActiveHere = activeDeptId && d._id === activeDeptId;
       let action;
-      if (isMember) {
-        const disabled = !!activeSession;
-        action = `<button class="w-btn" data-action="clock-in" ${disabled ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>` +
+      let rowExtra = '';
+      if (isActiveHere) {
+        // This dept owns the live session — let the user clock out directly.
+        action = `<button class="w-btn danger" data-action="row-clock-out">` +
+          `<i class="fa fa-stop"></i> Clock out</button>`;
+        rowExtra = 'style="border-color:rgba(34,197,94,0.32);background:linear-gradient(135deg,rgba(34,197,94,0.06),rgba(255,255,255,0.02));"';
+      } else if (isMember) {
+        const blocked = !!activeSession; // active elsewhere — block clock-in here
+        action = `<button class="w-btn" data-action="clock-in" ${blocked ? 'disabled style="opacity:0.5;cursor:not-allowed;" title="Clock out of your current shift first"' : ''}>` +
           `<i class="fa fa-play"></i> Clock in</button>`;
       } else {
         action = `<a class="w-btn ghost" href="${communityHref}"><i class="fa fa-arrow-up-right-from-square"></i> View department</a>`;
       }
-      const dim = isMember ? '' : 'style="opacity:0.75;"';
+      const dim = (isMember || isActiveHere) ? '' : 'style="opacity:0.75;"';
+      const baseAttrs = rowExtra || dim;
+      const statusLine = isActiveHere
+        ? `<div class="w-clock-rate" style="color:#22c55e;">● On the clock</div>`
+        : `<div class="w-clock-rate">${fmtMoney(ratePerHr)} / hr base${isMember ? '' : ' · not a member'}</div>`;
       return `
-        <div class="w-clock-row" ${dim} data-dept-id="${escapeHtml(d._id)}">
+        <div class="w-clock-row" ${baseAttrs} data-dept-id="${escapeHtml(d._id)}">
           <div>
             <div class="w-clock-dept">${escapeHtml(d.name)}</div>
-            <div class="w-clock-rate">${fmtMoney(ratePerHr)} / hr base${isMember ? '' : ' · not a member'}</div>
+            ${statusLine}
           </div>
           ${action}
         </div>
@@ -598,6 +622,16 @@
         clockIn(row.dataset.deptId);
       });
     });
+    host.querySelectorAll('[data-action="row-clock-out"]').forEach(btn => {
+      btn.addEventListener('click', () => doClockOut());
+    });
+  }
+
+  // Re-render the Jobs panel using the cached dept list. Called after
+  // activeSession changes so the active row picks up its "On the clock"
+  // styling without a community refetch.
+  function rerenderDepartments() {
+    if (_lastDeptEntries) renderDepartments(_lastDeptEntries);
   }
 
   async function clockIn(deptId) {
