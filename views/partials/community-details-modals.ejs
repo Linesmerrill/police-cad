@@ -16175,6 +16175,22 @@ async function saveEditEvent() {
       var subtext = document.getElementById('rkmPromoBannerSubtext');
       countEl.textContent = _pendingPromotions.length;
       subtext.textContent = _pendingPromotions.length === 1 ? '1 member ready for review' : _pendingPromotions.length + ' members ready for review';
+
+      // Keep the Manage Ranks card badge on the edit-department modal in sync.
+      var edmBadge = document.getElementById('edmRanksBadge');
+      var edmBadgeCount = document.getElementById('edmRanksBadgeCount');
+      if (edmBadge && edmBadgeCount) {
+        if (_pendingPromotions.length > 0) {
+          edmBadgeCount.textContent = _pendingPromotions.length;
+          edmBadge.classList.add('has-count');
+        } else {
+          edmBadge.classList.remove('has-count');
+        }
+      }
+      if (window.pendingPromoCounts && rankMgmtDeptId) {
+        window.pendingPromoCounts[rankMgmtDeptId] = _pendingPromotions.length;
+      }
+
       if (_pendingPromotions.length === 0) {
         document.getElementById('rkmPromoBanner').classList.remove('has-pending');
         setTimeout(function() {
