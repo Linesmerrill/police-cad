@@ -225,21 +225,6 @@
     </div>
   </div>
 
-  <div class="es-section-divider">Judge review</div>
-
-  <div class="es-card">
-    <div class="es-card-head">
-      <div class="es-card-head-icon" style="background:rgba(139,92,246,0.12); color:#a78bfa; border-color:rgba(139,92,246,0.3);"><i class="fa fa-scale-balanced"></i></div>
-      <div>
-        <div class="es-card-head-title">Contested fines <span id="es-contest-count" style="margin-left:0.45rem; font-size:0.7rem; font-weight:600; padding:0.1rem 0.45rem; border-radius:4px; background:rgba(139,92,246,0.18); color:#c4b5fd; display:none;">0</span></div>
-        <div class="es-card-head-sub">Fines awaiting a judge's call. Uphold to force payment, dismiss to throw the fine out.</div>
-      </div>
-    </div>
-    <div id="es-contest-list">
-      <div class="es-dept-empty">Loading…</div>
-    </div>
-  </div>
-
   <div class="es-section-divider">Per-department</div>
 
   <div class="es-card">
@@ -471,82 +456,6 @@
   }
 
   loadDepartments();
-
-  // ---------- Contested fines (judge surface) ----------
-
-  function fmtMoneyCents(cents) {
-    const sign = cents < 0 ? '-' : '';
-    const abs = Math.abs(cents || 0);
-    return sign + '$' + Math.floor(abs / 100).toLocaleString() + '.' + String(abs % 100).padStart(2, '0');
-  }
-  function fmtDateShort(s) {
-    if (!s) return '';
-    const d = new Date(s);
-    if (isNaN(d.getTime())) return '';
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-  }
-
-  async function loadContested() {
-    const host = document.getElementById('es-contest-list');
-    const countEl = document.getElementById('es-contest-count');
-    try {
-      const res = await fetch(`${API_URL}/api/v2/economy/inbox?communityId=${encodeURIComponent(COMMUNITY_ID)}&status=contested&limit=50`);
-      if (!res.ok) throw new Error('contested fetch failed: ' + res.status);
-      const data = await res.json();
-      const items = data.data || [];
-      if (!items.length) {
-        host.innerHTML = '<div class="es-dept-empty">No contested fines right now.</div>';
-        countEl.style.display = 'none';
-        return;
-      }
-      countEl.textContent = items.length;
-      countEl.style.display = 'inline-block';
-      host.innerHTML = items.map(it => {
-        const id = escHtml(it._id);
-        return `
-          <div class="es-dept" style="border-color:rgba(139,92,246,0.2);">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.75rem 0.9rem;">
-              <div style="min-width:0; flex:1;">
-                <div style="font-size:0.92rem; font-weight:500; color:var(--es-text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                  ${escHtml(it.title || 'Fine')}
-                </div>
-                <div style="font-size:0.72rem; color:var(--es-text-dim); margin-top:0.25rem;">
-                  ${escHtml(it.source || '')}
-                  · ${fmtMoneyCents(it.amount || 0)}
-                  ${it.dueAt ? ' · Extended due ' + escHtml(fmtDateShort(it.dueAt)) : ''}
-                  ${it.contestReason ? ' · Reason: ' + escHtml(it.contestReason) : ''}
-                </div>
-              </div>
-              <div style="display:flex; gap:0.45rem; flex-shrink:0;">
-                <button class="es-btn" style="background:rgba(34,197,94,0.12); color:#22c55e; border-color:rgba(34,197,94,0.28);" data-action="dismiss" data-id="${id}"><i class="fa fa-ban"></i> Dismiss</button>
-                <button class="es-btn" style="background:rgba(251,191,36,0.14); color:#fbbf24; border-color:rgba(251,191,36,0.28);" data-action="uphold" data-id="${id}"><i class="fa fa-gavel"></i> Uphold</button>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-      host.querySelectorAll('[data-action="dismiss"]').forEach(b => b.addEventListener('click', () => resolveContest(b.dataset.id, 'dismiss')));
-      host.querySelectorAll('[data-action="uphold"]').forEach(b => b.addEventListener('click', () => resolveContest(b.dataset.id, 'uphold')));
-    } catch (err) {
-      console.error(err);
-      host.innerHTML = '<div class="es-dept-empty" style="color:var(--es-red);">Could not load contested fines.</div>';
-    }
-  }
-
-  async function resolveContest(id, action) {
-    if (!id) return;
-    try {
-      const res = await fetch(`${API_URL}/api/v2/economy/inbox/${id}/${action}?userId=${encodeURIComponent(USER_ID)}`, {
-        method: 'POST',
-      });
-      if (!res.ok) throw new Error(`${action} failed: ${res.status}`);
-      await loadContested();
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  loadContested();
 </script>
 </body>
 </html>
