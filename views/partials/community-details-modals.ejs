@@ -15024,6 +15024,7 @@ async function saveEditEvent() {
   .rkm-tag-default { background: rgba(251,191,36,0.12); color: #fbbf24; }
   .rkm-tag-auto { background: rgba(16,185,129,0.12); color: #34d399; }
   .rkm-tag-req { background: rgba(255,255,255,0.04); color: #64748b; font-weight: 500; }
+  .rkm-tag-pay { background: rgba(56,189,248,0.12); color: #38bdf8; font-variant-numeric: tabular-nums; }
 
   .rkm-rank-actions {
     display: flex; gap: 0.2rem; flex-shrink: 0; opacity: 0; transition: opacity 0.15s;
@@ -15453,6 +15454,10 @@ async function saveEditEvent() {
           <label>Prefix</label>
           <input type="text" id="rankFormPrefix" placeholder="e.g. SGT">
         </div>
+        <div class="rkm-field" style="grid-column: 1 / -1;">
+          <label>Pay rate ($/hr) <span style="color:#64748b; font-weight:400;">— optional, overrides department base pay</span></label>
+          <input type="number" id="rankFormPayRate" min="0" step="0.01" placeholder="e.g. 25.00">
+        </div>
       </div>
       <div class="rkm-checks">
         <label class="rkm-check"><input type="checkbox" id="rankFormAutoPromote"> Auto Promote</label>
@@ -15551,6 +15556,9 @@ async function saveEditEvent() {
       if (rank.prefix) tags += '<span class="rkm-rank-tag rkm-tag-prefix">' + escapeRankHtml(rank.prefix) + '</span>';
       if (rank.isDefault) tags += '<span class="rkm-rank-tag rkm-tag-default">Default</span>';
       if (rank.autoPromote) tags += '<span class="rkm-rank-tag rkm-tag-auto">Auto</span>';
+      if (typeof rank.payRatePerHour === 'number' && rank.payRatePerHour > 0) {
+        tags += '<span class="rkm-rank-tag rkm-tag-pay">$' + (rank.payRatePerHour / 100).toFixed(2) + '/hr</span>';
+      }
       if (rank.requirements && rank.requirements.length > 0) {
         tags += '<span class="rkm-rank-tag rkm-tag-req">' + rank.requirements.length + ' req' + (rank.requirements.length > 1 ? 's' : '') + '</span>';
       }
@@ -15826,6 +15834,8 @@ async function saveEditEvent() {
     document.getElementById('rankFormPrefix').value = (rank && rank.prefix) || '';
     document.getElementById('rankFormAutoPromote').checked = (rank && rank.autoPromote) || false;
     document.getElementById('rankFormIsDefault').checked = (rank && rank.isDefault) || false;
+    var payCents = (rank && typeof rank.payRatePerHour === 'number') ? rank.payRatePerHour : 0;
+    document.getElementById('rankFormPayRate').value = payCents > 0 ? (payCents / 100).toFixed(2) : '';
     var titleEl = document.getElementById('rankFormTitle');
     titleEl.innerHTML = (rank && rank._id)
       ? '<i class="fa fa-pencil"></i> <span>Edit Rank</span>'
@@ -15919,12 +15929,16 @@ async function saveEditEvent() {
       }
     });
 
+    var payDollars = parseFloat(document.getElementById('rankFormPayRate').value);
+    var payCents = isFinite(payDollars) && payDollars > 0 ? Math.round(payDollars * 100) : 0;
+
     var payload = {
       name: name,
       prefix: document.getElementById('rankFormPrefix').value.trim(),
       autoPromote: document.getElementById('rankFormAutoPromote').checked,
       canViewStats: true,
       isDefault: document.getElementById('rankFormIsDefault').checked,
+      payRatePerHour: payCents,
       requirements: requirements
     };
 

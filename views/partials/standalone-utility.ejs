@@ -154,10 +154,11 @@
   var _utilBackHref = (typeof backHref !== 'undefined' && backHref) ? backHref : '/communities';
   var _utilBackLabel = (typeof backLabel !== 'undefined' && backLabel) ? backLabel : 'Back';
   var _utilPageLabel = (typeof pageLabel !== 'undefined' && pageLabel) ? pageLabel : '';
+  var _utilUseLastDashboard = (typeof useLastDashboard !== 'undefined' && useLastDashboard) ? '1' : '';
 %>
 <header class="lpc-utility-strip" role="banner">
   <div class="lpc-utility-left">
-    <a href="<%= _utilBackHref %>" class="lpc-utility-back">
+    <a href="<%= _utilBackHref %>" class="lpc-utility-back" data-use-last-dashboard="<%= _utilUseLastDashboard %>">
       <i class="fa-solid fa-arrow-left"></i><span><%= _utilBackLabel %></span>
     </a>
     <span class="lpc-utility-divider">/</span>
@@ -179,3 +180,15 @@
     </a>
   </div>
 </header>
+<script>
+(function() {
+  try {
+    var link = document.querySelector('.lpc-utility-back[data-use-last-dashboard="1"]');
+    if (!link) return;
+    var last = localStorage.getItem('lpc.lastDashboard');
+    if (last && /^\/(civ|department|police|ems|dispatch|command|judicial|fire|community)-dashboard$/.test(last)) {
+      link.setAttribute('href', last);
+    }
+  } catch (e) {}
+})();
+</script>

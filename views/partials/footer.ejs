@@ -58,6 +58,14 @@
 </style>
 <script>
 (function() {
+  try {
+    var p = window.location.pathname;
+    if (/^\/(civ|department|police|ems|dispatch|command|judicial|fire|community)-dashboard\/?$/.test(p)) {
+      localStorage.setItem('lpc.lastDashboard', p.replace(/\/$/, ''));
+    }
+  } catch (e) {}
+})();
+(function() {
   var el = document.getElementById('footer-build-version');
   if (el) {
     el.addEventListener('click', function() {
