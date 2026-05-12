@@ -309,6 +309,7 @@
     .in-pill.contested { color: #c4b5fd; background: rgba(139,92,246,0.18); border: 1px solid rgba(139,92,246,0.32); }
     .in-pill.dismissed { color: #94a3b8; background: rgba(148,163,184,0.12); border: 1px solid rgba(148,163,184,0.2); }
     .in-pill.upheld { color: #fbbf24; background: rgba(251,191,36,0.14); border: 1px solid rgba(251,191,36,0.28); }
+    .in-pill.partial { color: #c4b5fd; background: rgba(139,92,246,0.18); border: 1px solid rgba(139,92,246,0.32); }
 
     .in-actions { display: flex; gap: 0.4rem; }
     .in-btn {
@@ -500,6 +501,8 @@
         : '';
       const resolutionSub = (status === 'pending' && it.resolution === 'upheld')
         ? `<span><span class="in-pill upheld"><i class="fa fa-gavel"></i> Contest denied</span></span>`
+        : (status === 'pending' && it.resolution === 'partial')
+        ? `<span><span class="in-pill partial"><i class="fa fa-scale-balanced"></i> Partially upheld</span></span>`
         : '';
 
       let actions = '';
