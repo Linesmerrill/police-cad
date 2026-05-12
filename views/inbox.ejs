@@ -200,6 +200,7 @@
   const API_URL = "<%- apiUrl %>";
   const CIVILIAN_ID = "<%- civilianId %>";
   const USER_ID = "<%- userId %>";
+  const COMMUNITY_ID = "<%- communityId || '' %>";
 
   let state = { page: 1, limit: 25, status: '', totalCount: 0 };
 
@@ -409,6 +410,51 @@
       if (window.ddModal) window.ddModal({ type: 'danger', icon: 'fa-triangle-exclamation', title: 'Payment failed', message: err.message });
     }
   }
+
+  // ---------- Live updates via WebSocket ----------
+  // Subscribe to /ws/notifications scoped to the community. When the API
+  // broadcasts inbox.created / inbox.updated for an item that matches the
+  // current civilian/user view, refresh the list in place.
+  (function startInboxSocket() {
+    if (!USER_ID || !API_URL) return;
+    const proto = API_URL.indexOf('https') === 0 ? 'wss' : 'ws';
+    const host = API_URL.replace(/^https?:\/\//, '');
+    const params = new URLSearchParams();
+    params.set('userId', USER_ID);
+    if (typeof COMMUNITY_ID !== 'undefined' && COMMUNITY_ID) params.set('communityId', COMMUNITY_ID);
+    let ws;
+    let reconnectTimer = null;
+    let reloadTimer = null;
+
+    function scheduleReload() {
+      // Debounce a burst of events into a single refresh so we don't
+      // hammer the list endpoint when a court case drops 5 fines at once.
+      if (reloadTimer) return;
+      reloadTimer = setTimeout(() => { reloadTimer = null; load(); }, 250);
+    }
+
+    function connect() {
+      try {
+        ws = new WebSocket(`${proto}://${host}/ws/notifications?${params.toString()}`);
+      } catch (e) { return; }
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          if (msg.event !== 'inbox.created' && msg.event !== 'inbox.updated') return;
+          const item = msg.data || {};
+          // Only refresh if this event is relevant to the view we're showing.
+          if (CIVILIAN_ID && item.civilianId !== CIVILIAN_ID) return;
+          if (!CIVILIAN_ID && item.userId !== USER_ID) return;
+          scheduleReload();
+        } catch (e) { /* swallow */ }
+      };
+      ws.onclose = () => {
+        if (reconnectTimer) return;
+        reconnectTimer = setTimeout(() => { reconnectTimer = null; connect(); }, 5000);
+      };
+    }
+    connect();
+  })();
 
   document.getElementById('filterBar').addEventListener('click', e => {
     const chip = e.target.closest('.in-chip');

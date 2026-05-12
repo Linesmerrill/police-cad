@@ -230,6 +230,13 @@
       '.dd-civ-balance-chip{display:inline-flex;align-items:center;font-size:0.7rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:999px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.25);font-variant-numeric:tabular-nums;letter-spacing:0.01em;}' +
       '.dd-civ-balance-chip.dd-civ-balance-neg{background:rgba(239,68,68,0.12);color:var(--dd-red);border-color:rgba(239,68,68,0.25);}' +
 
+      /* ── Inbox button on civ cards ── */
+      '.dd-civ-inbox-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.04);border:1px solid var(--dd-glass-border);color:var(--dd-text-muted);cursor:pointer;font-size:0.78rem;flex-shrink:0;align-self:flex-start;transition:all 0.15s;}' +
+      '.dd-civ-inbox-btn:hover{background:rgba(56,189,248,0.12);border-color:rgba(56,189,248,0.3);color:#38bdf8;}' +
+      '.dd-civ-inbox-btn.has-pending{background:rgba(245,158,11,0.14);border-color:rgba(245,158,11,0.35);color:#fbbf24;}' +
+      '.dd-civ-inbox-btn.has-pending:hover{background:rgba(245,158,11,0.22);}' +
+      '.dd-civ-inbox-count{position:absolute;top:-5px;right:-5px;background:#f59e0b;color:#0a0a0f;font-size:0.6rem;font-weight:700;min-width:16px;height:16px;padding:0 4px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--dd-bg,#08090c);font-variant-numeric:tabular-nums;}' +
+
       /* ── Pagination ── */
       '.dd-civ-pagination{display:flex;align-items:center;justify-content:center;gap:0.75rem;margin-top:1rem;}' +
       '.dd-civ-page-info{font-size:0.75rem;color:var(--dd-text-muted);}' +
@@ -504,6 +511,83 @@
     window.communityEconomyEnabled = !!(comm.economy && comm.economy.enabled);
   }
 
+  // Base64url-encode a civilian id so links can use the standard ?c= param
+  // that resolveEconomyContext expects (mirrors the server-side encodeId).
+  function ddCivEncodeId(id) {
+    try {
+      return btoa(String(id)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    } catch (e) { return id; }
+  }
+
+  // Inbox pending-counts plumbing. Decorates each card's <inbox> button with
+  // the count of pending/delinquent/contested items for that civilian.
+  var ddCivInboxCounts = {};
+  var ddCivInboxWs = null;
+
+  function ddCivApplyInboxCounts() {
+    Object.keys(ddCivInboxCounts).forEach(function (civId) {
+      var count = ddCivInboxCounts[civId] || 0;
+      var $count = $('[data-civ-inbox-count="' + civId + '"]');
+      var $dot = $('[data-civ-inbox-dot="' + civId + '"]');
+      var $btn = $('[data-civ-inbox="' + civId + '"]');
+      if (!$btn.length) return;
+      if (count > 0) {
+        $btn.addClass('has-pending');
+        $count.text(count > 99 ? '99+' : count).show();
+        $dot.hide();
+      } else {
+        $btn.removeClass('has-pending');
+        $count.hide();
+        $dot.hide();
+      }
+    });
+  }
+
+  function ddCivLoadInboxCounts() {
+    var c = cfg();
+    if (!window.communityEconomyEnabled || !c.userId || !c.communityId) return;
+    $.ajax({
+      url: c.API_URL + '/api/v2/economy/inbox/pending-counts',
+      data: { userId: c.userId, communityId: c.communityId },
+      method: 'GET',
+      success: function (resp) {
+        ddCivInboxCounts = (resp && resp.counts) || {};
+        ddCivApplyInboxCounts();
+      },
+      error: function () { /* swallow — non-essential decoration */ }
+    });
+    ddCivEnsureInboxSocket();
+  }
+
+  function ddCivEnsureInboxSocket() {
+    if (ddCivInboxWs && ddCivInboxWs.readyState <= 1) return;
+    var c = cfg();
+    if (!c.userId || !c.communityId || !c.API_URL) return;
+    var proto = c.API_URL.indexOf('https') === 0 ? 'wss' : 'ws';
+    var host = c.API_URL.replace(/^https?:\/\//, '');
+    var url = proto + '://' + host + '/ws/notifications?userId=' + encodeURIComponent(c.userId)
+            + '&communityId=' + encodeURIComponent(c.communityId);
+    try {
+      ddCivInboxWs = new WebSocket(url);
+    } catch (e) { return; }
+    ddCivInboxWs.onmessage = function (ev) {
+      try {
+        var msg = JSON.parse(ev.data);
+        if (msg.event !== 'inbox.created' && msg.event !== 'inbox.updated') return;
+        var item = msg.data || {};
+        var civId = item.civilianId;
+        if (!civId) return;
+        // Recompute count for that civ — easier than diff math.
+        ddCivLoadInboxCounts();
+      } catch (e) { /* swallow */ }
+    };
+    ddCivInboxWs.onclose = function () {
+      ddCivInboxWs = null;
+      // Light reconnect after 5s; the dashboard stays mounted while the user works.
+      setTimeout(ddCivEnsureInboxSocket, 5000);
+    };
+  }
+
   // Format a cents balance as a USD-style string. Inline since dd-civilians.js
   // doesn't pull a shared money helper.
   function ddCivFmtBalance(cents) {
@@ -638,6 +722,18 @@
         '</span>';
       }
 
+      // Inbox indicator — only when economy is on. Hidden by default until
+      // the pending-counts fetch resolves; updated in place by ddCivApplyInboxCounts.
+      var inboxBtnHtml = '';
+      if (window.communityEconomyEnabled) {
+        inboxBtnHtml =
+          '<button class="dd-civ-inbox-btn" data-civ-inbox="' + esc(civ._id) + '" title="Open inbox" aria-label="Open inbox">' +
+            '<i class="fa fa-inbox"></i>' +
+            '<span class="dd-civ-inbox-dot" data-civ-inbox-dot="' + esc(civ._id) + '" style="display:none;"></span>' +
+            '<span class="dd-civ-inbox-count" data-civ-inbox-count="' + esc(civ._id) + '" style="display:none;">0</span>' +
+          '</button>';
+      }
+
       var html = '' +
         '<div class="dd-civ-card' + statusCls + '" data-civ-id="' + esc(civ._id) + '">' +
           '<div class="dd-civ-avatar">' + avatarInner + '</div>' +
@@ -655,17 +751,28 @@
               balanceHtml +
             '</div>' +
           '</div>' +
+          inboxBtnHtml +
         '</div>';
 
       $grid.append(html);
     });
 
     // Click handler for cards
-    $grid.find('.dd-civ-card').off('click').on('click', function () {
+    $grid.find('.dd-civ-card').off('click').on('click', function (e) {
+      if ($(e.target).closest('.dd-civ-inbox-btn').length) return; // inbox button has its own handler
       var id = $(this).attr('data-civ-id');
       var civ = ddCivData.find(function (c) { return c._id === id; });
       if (civ) openDetailModal(civ);
     });
+    // Inbox button → navigate to the per-civ inbox.
+    $grid.find('.dd-civ-inbox-btn').off('click').on('click', function (e) {
+      e.stopPropagation();
+      var id = $(this).attr('data-civ-inbox');
+      window.location.href = '/inbox?c=' + encodeURIComponent(ddCivEncodeId(id));
+    });
+
+    // Kick off pending-counts fetch + decorate cards once it returns.
+    ddCivLoadInboxCounts();
 
     updatePagination();
   }
