@@ -366,6 +366,31 @@
     }
     .cc-verdict.dismissed { color: #6ee7b7; }
     .cc-verdict.upheld { color: #fca5a5; }
+    .cc-verdict.partial { color: #c4b5fd; }
+
+    /* Per-charge breakdown — indented list under a docket / resolution row */
+    .cc-charges {
+      display: flex; flex-direction: column; gap: 0.18rem;
+      margin: 0.35rem 0 0.1rem 1.5rem;
+      padding-left: 0.6rem;
+      border-left: 2px solid var(--cc-glass-border);
+    }
+    .cc-charge-row {
+      display: flex; align-items: center; gap: 0.45rem;
+      font-size: 0.74rem;
+    }
+    .cc-charge-row i { font-size: 0.6rem; flex-shrink: 0; }
+    .cc-charge-label { flex: 1; }
+    .cc-charge-verdict {
+      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;
+      font-weight: 700;
+      padding: 0.08rem 0.4rem; border-radius: 3px;
+    }
+    .cc-charge-row.dismissed { color: #6ee7b7; }
+    .cc-charge-row.dismissed .cc-charge-label { text-decoration: line-through; color: var(--cc-text-dim); }
+    .cc-charge-row.dismissed .cc-charge-verdict { background: rgba(110,231,183,0.15); color: #6ee7b7; }
+    .cc-charge-row.upheld { color: #fca5a5; }
+    .cc-charge-row.upheld .cc-charge-verdict { background: rgba(252,165,165,0.14); color: #fca5a5; }
     .cc-participant-chips {
       display: flex;
       flex-wrap: wrap;
@@ -1433,6 +1458,26 @@
     });
   };
 
+  // Renders an indented list of per-charge rulings when the judge ruled
+  // per-fine. Labels come from the comma-split item summary (best-effort,
+  // falls back to "Charge N"). Returns empty string when no per-charge
+  // rulings exist so the caller can unconditionally inline the result.
+  function renderChargeRulings(item, res) {
+    if (!res || !Array.isArray(res.chargeResolutions) || res.chargeResolutions.length === 0) return '';
+    var labels = ((item && item.summary) || '').split(',').map(function(s) { return s.trim(); });
+    var rows = res.chargeResolutions.map(function(cr) {
+      var label = labels[cr.fineIndex] || ('Charge ' + ((cr.fineIndex || 0) + 1));
+      var v = cr.verdict || '';
+      var icon = v === 'dismissed' ? 'fa-ban' : 'fa-gavel';
+      return '<div class="cc-charge-row ' + esc(v) + '">' +
+               '<i class="fa ' + icon + '"></i>' +
+               '<span class="cc-charge-label">' + esc(label) + '</span>' +
+               '<span class="cc-charge-verdict">' + esc(v) + '</span>' +
+             '</div>';
+    }).join('');
+    return '<div class="cc-charges">' + rows + '</div>';
+  }
+
   function renderDocketResolutions($container, caseData) {
     var resolutions = caseData.resolutions || [];
     var contestedItems = caseData.contestedItems || [];
@@ -1458,7 +1503,8 @@
         '<span class="cc-resolution-type ' + typeClass + '">' + esc(item.itemType || '') + '</span>' +
         '<span class="cc-resolution-summary">' + esc(item.summary || 'No description') + '</span>' +
         verdictHtml +
-      '</div>';
+      '</div>' +
+      renderChargeRulings(item, res);
     }).join('');
 
     var notesHtml = '';
@@ -1517,12 +1563,21 @@
 
         var resolutionsHtml = '';
         if (d.resolutions && d.resolutions.length > 0) {
+          // Map contested items by id so per-charge labels can pull from the
+          // original summary string.
+          var itemByID = {};
+          (d.contestedItems || []).forEach(function(it) { itemByID[it.itemID] = it; });
           resolutionsHtml = '<div style="margin-top:1rem;"><div class="cc-form-label">Resolutions</div>' +
             d.resolutions.map(function(r) {
-              var verdictColor = r.verdict === 'dismissed' ? 'color:#6ee7b7;' : 'color:#fca5a5;';
-              return '<div style="background:var(--cc-surface);border:1px solid var(--cc-glass-border);border-radius:var(--cc-radius-sm);padding:0.5rem 0.75rem;margin-bottom:0.4rem;display:flex;justify-content:space-between;align-items:center;">' +
-                '<span style="font-size:0.85rem;color:var(--cc-text);">' + esc(r.itemType) + '</span>' +
-                '<span style="font-size:0.78rem;font-weight:600;' + verdictColor + 'text-transform:uppercase;">' + esc(r.verdict) + '</span>' +
+              var verdictColor = r.verdict === 'dismissed' ? 'color:#6ee7b7;'
+                                : r.verdict === 'partial'   ? 'color:#c4b5fd;'
+                                : 'color:#fca5a5;';
+              return '<div style="background:var(--cc-surface);border:1px solid var(--cc-glass-border);border-radius:var(--cc-radius-sm);padding:0.5rem 0.75rem;margin-bottom:0.4rem;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                  '<span style="font-size:0.85rem;color:var(--cc-text);">' + esc(r.itemType) + '</span>' +
+                  '<span style="font-size:0.78rem;font-weight:600;' + verdictColor + 'text-transform:uppercase;">' + esc(r.verdict) + '</span>' +
+                '</div>' +
+                renderChargeRulings(itemByID[r.itemID], r) +
               '</div>';
             }).join('') +
           '</div>';
