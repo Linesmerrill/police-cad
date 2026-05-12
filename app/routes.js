@@ -1602,7 +1602,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     const userId = (req.user && req.user._id) ? String(req.user._id) : null;
     let civilian = null;
     if (civilianId) {
-      try { civilian = await Civilian.findById(civilianId).lean(); } catch (e) {}
+      try { civilian = await Civilian.findById(ObjectId(civilianId)).lean(); } catch (e) {}
     }
     if (!civilian && userId) {
       try {
