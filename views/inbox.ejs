@@ -346,6 +346,9 @@
   }
 
   function render(items) {
+    // Cache so the Contest handler can re-read the full item (refType, refId,
+    // body, amount, etc.) without re-fetching.
+    window._inboxItems = items;
     const host = document.getElementById('inboxList');
     if (!items.length) {
       host.innerHTML = '<div class="in-empty">No items match this filter.</div>';
@@ -457,40 +460,95 @@
     } else { doPay(id); }
   }
 
-  function onContest(id) {
-    const promptForReason = () => {
-      const wrap = document.createElement('div');
-      wrap.innerHTML = `
-        <label style="display:block; font-size:0.8rem; color:#94a3b8; margin-bottom:0.35rem;">Why are you contesting?</label>
-        <textarea id="contestReasonInput" rows="3" style="width:100%; padding:0.55rem; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:#e2e8f0; font:inherit; font-size:0.85rem; resize:vertical;" placeholder="Brief explanation for the judge…"></textarea>
-      `;
-      if (window.ddModal) {
-        window.ddModal({
-          type: 'info',
-          icon: 'fa-scale-balanced',
-          title: 'Contest this fine?',
-          message: 'A judge will review it. Your due date will be extended while it’s under review.',
-          html: wrap,
-          confirmText: 'Submit contest',
-          onConfirm: () => {
-            const reason = (document.getElementById('contestReasonInput')?.value || '').trim();
-            doContest(id, reason);
-          },
-        });
-      } else {
-        const reason = window.prompt('Why are you contesting?') || '';
-        if (reason !== null) doContest(id, reason);
-      }
-    };
-    promptForReason();
+  // Contest flow.
+  //
+  // For fines linked to a criminal-history record (refType=criminalHistoryId),
+  // we mirror the records-tab contest flow on dept-dashboard: a court case is
+  // filed with the underlying record as the contested item, so judges have a
+  // SINGLE queue regardless of whether the civilian filed from the records
+  // tab or from their own inbox. We then mark the inbox item itself as
+  // contested so the due date is extended and the row gets the
+  // "Contested — awaiting judge review" visual.
+  //
+  // For inbox items without a linked record (admin fees, verdict notices),
+  // there's no underlying record to contest — fall back to the direct
+  // inbox-only contest (status flip + reason).
+  function findItemById(id) {
+    return (window._inboxItems || []).find(it => it._id === id);
   }
 
-  async function doContest(id, reason) {
+  function onContest(id) {
+    const item = findItemById(id);
+    if (!item) return;
+    const linkedToRecord = item.refType === 'criminalHistoryId' && !!item.refId;
+    const wrap = document.createElement('div');
+    const summary = item.body || item.title || 'this fine';
+    wrap.innerHTML = `
+      <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:0.55rem 0.7rem; margin-bottom:0.7rem; display:flex; align-items:center; gap:0.6rem; font-size:0.82rem;">
+        <span style="display:inline-block; background:rgba(99,102,241,0.18); color:#a5b4fc; padding:0.1rem 0.45rem; border-radius:4px; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.05em;">Citation</span>
+        <span style="color:#cbd5e1;">${escapeHtml(summary)} · ${escapeHtml(fmtMoney(item.amount || 0))}</span>
+      </div>
+      <label style="display:block; font-size:0.78rem; color:#94a3b8; margin-bottom:0.35rem;">Your statement <span style="color:#ef4444;">*</span></label>
+      <textarea id="contestStatementInput" rows="4" style="width:100%; padding:0.55rem; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:#e2e8f0; font:inherit; font-size:0.85rem; resize:vertical;" placeholder="Explain why you're contesting this — a judge will review."></textarea>
+    `;
+    if (window.ddModal) {
+      window.ddModal({
+        type: 'info',
+        icon: 'fa-scale-balanced',
+        title: linkedToRecord ? 'Contest this citation?' : 'Contest this fine?',
+        message: linkedToRecord
+          ? 'This opens a court case for a judge to review. Your due date is extended while the case is open.'
+          : 'A judge will review your contest. Your due date is extended while it\'s under review.',
+        html: wrap,
+        confirmText: 'Submit contest',
+        onConfirm: () => {
+          const statement = (document.getElementById('contestStatementInput')?.value || '').trim();
+          if (!statement) {
+            if (window.ddModal) window.ddModal({ type: 'danger', icon: 'fa-triangle-exclamation', title: 'Statement required', message: 'Please explain why you\'re contesting.' });
+            return;
+          }
+          doContest(item, statement);
+        },
+      });
+    } else {
+      const statement = window.prompt('Statement for contest:') || '';
+      if (statement.trim()) doContest(item, statement.trim());
+    }
+  }
+
+  async function doContest(item, statement) {
+    const linkedToRecord = item.refType === 'criminalHistoryId' && !!item.refId;
     try {
-      const res = await fetch(`${API_URL}/api/v2/economy/inbox/${id}/contest?userId=${encodeURIComponent(USER_ID)}`, {
+      // 1. When linked to a criminal-history record, file a court case so
+      // the contest lands in the judicial review queue alongside contests
+      // filed from the records tab.
+      if (linkedToRecord) {
+        const summary = item.body || item.title || 'Citation';
+        const payload = {
+          courtCase: {
+            civilianID: CIVILIAN_ID,
+            civilianName: CIVILIAN_NAME,
+            userID: USER_ID,
+            communityID: COMMUNITY_ID,
+            departmentID: '',
+            statement: statement,
+            contestedItems: [{ itemID: item.refId, itemType: 'citation', summary: summary }],
+          },
+        };
+        const ccRes = await fetch(`${API_URL}/api/v2/court-cases`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!ccRes.ok) throw new Error(`court case create failed: ${ccRes.status}`);
+      }
+
+      // 2. Always mark the inbox item itself as contested so the due date
+      // is extended and the row renders in the contested state.
+      const res = await fetch(`${API_URL}/api/v2/economy/inbox/${item._id}/contest?userId=${encodeURIComponent(USER_ID)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: reason || '' }),
+        body: JSON.stringify({ reason: statement }),
       });
       if (!res.ok) throw new Error(`contest failed: ${res.status}`);
       await load();
