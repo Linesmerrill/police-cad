@@ -47,6 +47,91 @@
     }
     .in-title { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.01em; }
     .in-subtitle { font-size: 0.85rem; color: var(--in-text-muted); margin-top: 0.1rem; }
+    .in-subtitle-row { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .in-swap-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(56,189,248,0.08); color: var(--in-accent, #38bdf8);
+      border: 1px solid rgba(56,189,248,0.18); cursor: pointer;
+      font-size: 0.65rem;
+      transition: background 120ms, border-color 120ms, transform 120ms;
+    }
+    .in-swap-btn:hover { background: rgba(56,189,248,0.18); border-color: rgba(56,189,248,0.35); transform: rotate(180deg); }
+
+    /* Civilian swap modal (mirrors wallet.ejs) */
+    .in-swap-backdrop {
+      position: fixed; inset: 0; background: rgba(2,6,12,0.6);
+      backdrop-filter: blur(6px); opacity: 0; pointer-events: none;
+      transition: opacity 160ms ease; z-index: 60;
+    }
+    .in-swap-backdrop.is-open { opacity: 1; pointer-events: auto; }
+    .in-swap-modal {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -48%) scale(0.97);
+      width: min(440px, calc(100vw - 2rem));
+      max-height: min(72vh, 600px); display: flex; flex-direction: column;
+      background: #0b1220;
+      border: 1px solid rgba(56,189,248,0.22);
+      border-radius: 12px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+      opacity: 0; pointer-events: none;
+      transition: opacity 160ms ease, transform 160ms ease;
+      z-index: 61;
+    }
+    .in-swap-modal.is-open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+    .in-swap-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 0.9rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-weight: 600; color: var(--in-text);
+    }
+    .in-swap-header button {
+      background: none; border: none; color: var(--in-text-muted);
+      cursor: pointer; font-size: 0.9rem; padding: 0.25rem;
+    }
+    .in-swap-header button:hover { color: var(--in-text); }
+    .in-swap-search {
+      margin: 0.7rem 0.9rem 0.4rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; padding: 0.45rem 0.65rem;
+    }
+    .in-swap-search i { color: var(--in-text-muted); font-size: 0.75rem; }
+    .in-swap-search input {
+      background: transparent; border: none; outline: none; color: var(--in-text);
+      flex: 1; font-size: 0.85rem;
+    }
+    .in-swap-list { overflow-y: auto; padding: 0.35rem 0.6rem 0.7rem; }
+    .in-swap-row {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.55rem 0.6rem; border-radius: 8px; cursor: pointer;
+      transition: background 100ms;
+    }
+    .in-swap-row:hover { background: rgba(56,189,248,0.06); }
+    .in-swap-row.is-current { background: rgba(56,189,248,0.1); cursor: default; }
+    .in-swap-row.is-current:hover { background: rgba(56,189,248,0.1); }
+    .in-swap-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(56,189,248,0.12); color: var(--in-accent, #38bdf8);
+      display: grid; place-items: center; font-weight: 700; font-size: 0.78rem;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .in-swap-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .in-swap-name { font-size: 0.88rem; color: var(--in-text); text-transform: capitalize; }
+    .in-swap-bal { font-size: 0.74rem; color: var(--in-text-muted); font-variant-numeric: tabular-nums; }
+    .in-swap-info { flex: 1; min-width: 0; }
+    .in-swap-pending {
+      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: #fbbf24; background: rgba(245,158,11,0.14);
+      padding: 0.1rem 0.4rem; border-radius: 4px; flex-shrink: 0;
+    }
+    .in-swap-current-pill {
+      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--in-accent, #38bdf8); background: rgba(56,189,248,0.12);
+      padding: 0.1rem 0.4rem; border-radius: 4px; flex-shrink: 0;
+    }
+    .in-swap-empty { padding: 1.5rem; text-align: center; color: var(--in-text-muted); font-size: 0.85rem; }
 
     .in-filter-bar {
       display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
@@ -170,12 +255,30 @@
       <div class="in-header-icon"><i class="fa fa-inbox"></i></div>
       <div>
         <div class="in-title" style="display:flex; align-items:center; gap:0.5rem;">Inbox<% if (new Date() < new Date('2026-05-26')) { %><span style="background:linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25)); color:#c4b5fd; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(139,92,246,0.3);">Beta</span><% } %></div>
-        <div class="in-subtitle" id="inboxSubtitle">Fines, fees, and notices</div>
+        <div class="in-subtitle in-subtitle-row" style="text-transform:capitalize;">
+          <span id="inboxSubtitle">Loading civilian…</span>
+          <button type="button" class="in-swap-btn" id="swapCivBtn" title="Switch civilian" aria-label="Switch civilian">
+            <i class="fa fa-right-left"></i>
+          </button>
+        </div>
       </div>
     </div>
     <a class="in-btn ghost" id="walletLink" href="/wallet?c=<%= encodedCivId || '' %>" style="text-decoration:none;align-self:center;">
       <i class="fa fa-wallet"></i> Wallet
     </a>
+  </div>
+
+  <div class="in-swap-backdrop" id="swapBackdrop"></div>
+  <div class="in-swap-modal" id="swapModal" role="dialog" aria-modal="true" aria-label="Switch civilian">
+    <div class="in-swap-header">
+      <span><i class="fa fa-right-left" style="margin-right:0.4rem; color:var(--in-text-muted);"></i> Switch civilian</span>
+      <button type="button" id="swapCloseBtn" aria-label="Close"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="in-swap-search">
+      <i class="fa fa-search"></i>
+      <input type="search" id="swapSearch" placeholder="Search your civilians…" autocomplete="off">
+    </div>
+    <div class="in-swap-list" id="swapList"><div class="in-swap-empty">Loading civilians…</div></div>
   </div>
 
   <div class="in-filter-bar" id="filterBar">
@@ -201,6 +304,9 @@
   const CIVILIAN_ID = "<%- civilianId %>";
   const USER_ID = "<%- userId %>";
   const COMMUNITY_ID = "<%- communityId || '' %>";
+  const CIVILIAN_NAME = "<%- civilianName || '' %>";
+
+  document.getElementById('inboxSubtitle').textContent = CIVILIAN_NAME || 'Civilian';
 
   let state = { page: 1, limit: 25, status: '', totalCount: 0 };
 
@@ -469,6 +575,135 @@
   document.getElementById('nextBtn').addEventListener('click', () => { state.page++; load(); });
 
   load();
+
+  // ---------- Civilian quick-swap ----------
+  // Mirrors the wallet picker so users can hop between civilians without
+  // bouncing through a dashboard. Includes per-civ pending counts so the
+  // user can see which civilian's inbox actually needs attention.
+  const swapBackdrop = document.getElementById('swapBackdrop');
+  const swapModal = document.getElementById('swapModal');
+  const swapSearch = document.getElementById('swapSearch');
+  const swapList = document.getElementById('swapList');
+  let swapCivilians = null;
+  let swapPendingCounts = {};
+
+  function encodeCivIdClient(id) {
+    return btoa(id).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function openSwapModal() {
+    swapBackdrop.classList.add('is-open');
+    swapModal.classList.add('is-open');
+    swapSearch.value = '';
+    setTimeout(() => swapSearch.focus(), 80);
+    if (!swapCivilians) loadSwapCivilians();
+    else renderSwapList();
+  }
+  function closeSwapModal() {
+    swapBackdrop.classList.remove('is-open');
+    swapModal.classList.remove('is-open');
+  }
+  document.getElementById('swapCivBtn').addEventListener('click', openSwapModal);
+  document.getElementById('swapCloseBtn').addEventListener('click', closeSwapModal);
+  swapBackdrop.addEventListener('click', closeSwapModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && swapModal.classList.contains('is-open')) closeSwapModal();
+  });
+  swapSearch.addEventListener('input', renderSwapList);
+
+  async function loadSwapCivilians() {
+    swapList.innerHTML = '<div class="in-swap-empty">Loading civilians…</div>';
+    try {
+      const url = `${API_URL}/api/v1/civilians/user/${encodeURIComponent(USER_ID)}` +
+        (COMMUNITY_ID ? `?active_community_id=${encodeURIComponent(COMMUNITY_ID)}` : '');
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      swapCivilians = Array.isArray(data) ? data : [];
+
+      // Pull pending counts so each row can hint which civilian still has
+      // work to do. Non-essential; rendered list is shown either way.
+      if (COMMUNITY_ID) {
+        try {
+          const cRes = await fetch(`${API_URL}/api/v2/economy/inbox/pending-counts?userId=${encodeURIComponent(USER_ID)}&communityId=${encodeURIComponent(COMMUNITY_ID)}`);
+          if (cRes.ok) {
+            const cData = await cRes.json();
+            swapPendingCounts = (cData && cData.counts) || {};
+          }
+        } catch (e) { /* swallow */ }
+      }
+
+      renderSwapList();
+    } catch (err) {
+      console.error('swap civs load failed:', err);
+      swapList.innerHTML = '<div class="in-swap-empty" style="color:#ef4444;">Could not load civilians.</div>';
+    }
+  }
+
+  function escapeAttr(s) {
+    return String(s == null ? '' : s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+
+  function renderSwapList() {
+    if (!swapCivilians) return;
+    const q = (swapSearch.value || '').trim().toLowerCase();
+    const rows = swapCivilians
+      .map(c => {
+        const inner = c.civilian || {};
+        const fn = (inner.firstName || '').trim();
+        const ln = (inner.lastName || '').trim();
+        const combined = (inner.name || '').trim();
+        const name = [fn, ln].filter(Boolean).join(' ') || combined || 'Unnamed civilian';
+        const parts = name.split(/\s+/);
+        const initials = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?';
+        return {
+          id: c._id,
+          name,
+          image: inner.image || '',
+          balance: typeof inner.balance === 'number' ? inner.balance : 0,
+          pending: swapPendingCounts[c._id] || 0,
+          initials,
+        };
+      })
+      .filter(r => !q || r.name.toLowerCase().includes(q));
+
+    if (rows.length === 0) {
+      swapList.innerHTML = `<div class="in-swap-empty">${q ? 'No civilians match that search.' : 'You have no other civilians in this community.'}</div>`;
+      return;
+    }
+
+    swapList.innerHTML = rows.map(r => {
+      const isCurrent = r.id === CIVILIAN_ID;
+      const avatar = r.image
+        ? `<img src="${escapeAttr(r.image)}" alt="">`
+        : escapeHtml(r.initials);
+      const pendingPill = (r.pending > 0 && !isCurrent)
+        ? `<span class="in-swap-pending">${r.pending > 99 ? '99+' : r.pending} pending</span>`
+        : '';
+      const currentPill = isCurrent ? '<span class="in-swap-current-pill">Current</span>' : '';
+      const cls = 'in-swap-row' + (isCurrent ? ' is-current' : '');
+      return `
+        <div class="${cls}" data-civ-id="${escapeAttr(r.id)}">
+          <div class="in-swap-avatar">${avatar}</div>
+          <div class="in-swap-info">
+            <div class="in-swap-name">${escapeHtml(r.name)}</div>
+            <div class="in-swap-bal">${fmtMoney(r.balance)}</div>
+          </div>
+          ${pendingPill}
+          ${currentPill}
+        </div>
+      `;
+    }).join('');
+
+    swapList.querySelectorAll('.in-swap-row').forEach(row => {
+      const id = row.dataset.civId;
+      if (id === CIVILIAN_ID) return;
+      row.addEventListener('click', () => {
+        const encoded = encodeCivIdClient(id);
+        window.location.href = `/inbox?c=${encodeURIComponent(encoded)}`;
+      });
+    });
+  }
 </script>
 </body>
 </html>
