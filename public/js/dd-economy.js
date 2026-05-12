@@ -286,19 +286,79 @@
   }
 
   async function fetchCommunityEcon(cfg) {
-    if (!cfg.communityId) return { economyEnabled: false, dept: null };
+    if (!cfg.communityId) return { economyEnabled: false, dept: null, tenCodes: [] };
     try {
       const res = await fetch(`${cfg.API_URL}/api/v1/community/${encodeURIComponent(cfg.communityId)}`);
-      if (!res.ok) return { economyEnabled: false, dept: null };
+      if (!res.ok) return { economyEnabled: false, dept: null, tenCodes: [] };
       const data = await res.json();
       const community = data.community || {};
       const econ = community.economy || {};
       const depts = community.departments || [];
       const dept = depts.find(d => d._id === cfg.departmentId) || null;
-      return { economyEnabled: !!econ.enabled, dept: dept };
+      return {
+        economyEnabled: !!econ.enabled,
+        dept: dept,
+        tenCodes: community.tenCodes || [],
+      };
     } catch (err) {
       console.warn('[dd-economy] community fetch failed', err);
-      return { economyEnabled: false, dept: null };
+      return { economyEnabled: false, dept: null, tenCodes: [] };
+    }
+  }
+
+  // Pull the numeric suffix from "10-41", "signal 41", "S-41" → "41".
+  // Mirrors cd-dispatch-roster.js so on-duty / off-duty classification is
+  // consistent across the app.
+  function codeSuffix(code) {
+    let c = String(code || '').toLowerCase().trim();
+    if (!c) return '';
+    c = c.replace(/^signal[\s\-_]*/, '').replace(/^s[\s\-_]+/, '');
+    c = c.replace(/^10[\s\-_]+/, '');
+    return c.trim();
+  }
+
+  // Templates that use ten-code on/off-duty status. Civilian and judicial
+  // departments don't run shifts the same way (no dispatchable units, no
+  // 10-41/10-42 convention) so we skip auto-status for them — clock-in
+  // still works, just doesn't touch the user's ten-code.
+  const STATUS_CAPABLE_TEMPLATES = { police: 1, ems: 1, fire: 1, dispatch: 1 };
+  function deptUsesStatusCodes(dept) {
+    if (!dept) return false;
+    const t = String(dept.template || '').toLowerCase();
+    return !!STATUS_CAPABLE_TEMPLATES[t];
+  }
+
+  // Find a ten-code in the community config whose code matches a target
+  // suffix ("41" = on-duty, "42" = off-duty). Returns null when the
+  // community hasn't configured one — in that case auto-status is a no-op.
+  function findCodeBySuffix(tenCodes, targetSuffix) {
+    if (!Array.isArray(tenCodes)) return null;
+    for (const tc of tenCodes) {
+      if (codeSuffix(tc && tc.code) === targetSuffix) return tc;
+    }
+    return null;
+  }
+
+  // PUT the user's ten-code for this department. Mirrors cd-status-panel's
+  // setTenCode call so all downstream listeners (MDT bar, dispatch roster
+  // socket broadcasts) update the same way as a manual status change.
+  async function setMemberTenCode(cfg, tenCodeID) {
+    if (!tenCodeID || !cfg.communityId || !cfg.userId || !cfg.departmentId) return;
+    try {
+      await fetch(
+        `${cfg.API_URL}/api/v1/community/${encodeURIComponent(cfg.communityId)}/members/${encodeURIComponent(cfg.userId)}/tenCode`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            departmentID: cfg.departmentId,
+            tenCodeID: tenCodeID,
+            activeDepartmentId: cfg.departmentId,
+          }),
+        },
+      );
+    } catch (err) {
+      console.warn('[dd-economy] auto-status set failed', err);
     }
   }
 
@@ -516,6 +576,18 @@
         }),
       });
       if (!res.ok) throw new Error('clock-in failed: ' + res.status);
+      // Auto-set the user's status to the community's on-duty code ("X-41")
+      // so dispatch + MDT reflect the shift change without a second click.
+      // Only applies to dept templates that actually run shifts on the
+      // 10-41/10-42 convention (police / ems / fire / dispatch).
+      const onDutyCode = deptUsesStatusCodes(state.dept)
+        ? findCodeBySuffix(state.communityEcon.tenCodes, '41')
+        : null;
+      if (onDutyCode) {
+        await setMemberTenCode(cfg, onDutyCode._id);
+        if (window.cdStatusRefresh) window.cdStatusRefresh();
+        if (window.applyMDTStatus) window.applyMDTStatus();
+      }
       await refresh(state);
     } catch (err) {
       console.error('[dd-economy] clock-in failed', err);
@@ -537,6 +609,16 @@
         body: JSON.stringify({ sessionId: state.session._id }),
       });
       if (!res.ok) throw new Error('clock-out failed: ' + res.status);
+      // Auto-set the user's status to the community's off-duty code ("X-42").
+      // Gated to status-capable templates (see clock-in path).
+      const offDutyCode = deptUsesStatusCodes(state.dept)
+        ? findCodeBySuffix(state.communityEcon.tenCodes, '42')
+        : null;
+      if (offDutyCode) {
+        await setMemberTenCode(cfg, offDutyCode._id);
+        if (window.cdStatusRefresh) window.cdStatusRefresh();
+        if (window.applyMDTStatus) window.applyMDTStatus();
+      }
       if (state.tickHandle) { clearInterval(state.tickHandle); state.tickHandle = null; }
       await refresh(state);
     } catch (err) {
