@@ -311,6 +311,37 @@
     .in-pill.upheld { color: #fbbf24; background: rgba(251,191,36,0.14); border: 1px solid rgba(251,191,36,0.28); }
     .in-pill.partial { color: #c4b5fd; background: rgba(139,92,246,0.18); border: 1px solid rgba(139,92,246,0.32); }
 
+    .in-charges {
+      display: flex; flex-wrap: wrap; gap: 0.3rem;
+      margin-top: 0.45rem;
+    }
+    .in-charge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.2rem 0.55rem; border-radius: 999px;
+      font-size: 0.72rem; line-height: 1.1;
+      background: rgba(148,163,184,0.08);
+      border: 1px solid rgba(148,163,184,0.18);
+      color: var(--in-text);
+    }
+    .in-charge .in-charge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--in-text-dim); flex-shrink: 0;
+    }
+    .in-charge.upheld { color: #fcd34d; background: rgba(251,191,36,0.10); border-color: rgba(251,191,36,0.28); }
+    .in-charge.upheld .in-charge-dot { background: #fbbf24; }
+    .in-charge.dismissed { color: #94a3b8; background: rgba(148,163,184,0.08); border-color: rgba(148,163,184,0.18); }
+    .in-charge.dismissed .in-charge-label { text-decoration: line-through; opacity: 0.75; }
+    .in-charge.dismissed .in-charge-dot { background: #64748b; }
+    .in-charge-amount { color: var(--in-text-dim); font-variant-numeric: tabular-nums; font-size: 0.68rem; }
+    .in-charges[data-expanded="false"] .in-charge.hidden { display: none; }
+    .in-charges-more {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.2rem 0.6rem; border-radius: 999px;
+      background: transparent; border: 1px dashed rgba(148,163,184,0.32);
+      color: var(--in-text-dim); font: inherit; font-size: 0.7rem; cursor: pointer;
+    }
+    .in-charges-more:hover { color: var(--in-accent); border-color: var(--in-accent-border); }
+
     .in-actions { display: flex; gap: 0.4rem; }
     .in-btn {
       padding: 0.42rem 0.75rem; border-radius: 7px;
@@ -513,6 +544,33 @@
         }
       }
 
+      // Charges block — structured per-charge breakdown when the API
+      // included a `charges` array. Falls back to the legacy `body` string
+      // for older items (no migration on those yet).
+      const COLLAPSE_AT = 2;
+      const charges = Array.isArray(it.charges) ? it.charges : [];
+      let chargesBlock = '';
+      if (charges.length > 0) {
+        const overflow = Math.max(0, charges.length - COLLAPSE_AT);
+        const chargeHtml = charges.map((c, idx) => {
+          const cStatus = (c.status || 'pending').toLowerCase();
+          const hiddenCls = idx >= COLLAPSE_AT ? ' hidden' : '';
+          const amt = (typeof c.amount === 'number' && c.amount > 0)
+            ? `<span class="in-charge-amount">${fmtMoney(c.amount)}</span>` : '';
+          return `<span class="in-charge ${escapeHtml(cStatus)}${hiddenCls}">
+            <span class="in-charge-dot"></span>
+            <span class="in-charge-label">${escapeHtml(c.label || 'Charge')}</span>
+            ${amt}
+          </span>`;
+        }).join('');
+        const moreBtn = overflow > 0
+          ? `<button type="button" class="in-charges-more" data-action="toggle-charges"><i class="fa fa-chevron-down"></i> Show ${overflow} more</button>`
+          : '';
+        chargesBlock = `<div class="in-charges" data-expanded="false">${chargeHtml}${moreBtn}</div>`;
+      } else if (it.body) {
+        chargesBlock = `<div class="in-item-meta"><span>· ${escapeHtml(it.body)}</span></div>`;
+      }
+
       return `
         <div class="in-item ${escapeHtml(status)}" id="item-${escapeHtml(it._id)}" data-id="${escapeHtml(it._id)}">
           <div class="in-item-icon"><i class="fa ${icon}"></i></div>
@@ -524,14 +582,26 @@
               ${resolutionSub}
               ${due ? `<span>· ${escapeHtml(due)}</span>` : ''}
               ${contestedSub}
-              ${it.body ? `<span>· ${escapeHtml(it.body)}</span>` : ''}
             </div>
+            ${chargesBlock}
           </div>
           <div class="in-item-amount">${fmtMoney(it.amount || 0)}</div>
           <div class="in-actions">${actions}</div>
         </div>
       `;
     }).join('');
+    host.querySelectorAll('[data-action="toggle-charges"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const wrap = e.currentTarget.closest('.in-charges');
+        if (!wrap) return;
+        const expanded = wrap.getAttribute('data-expanded') === 'true';
+        wrap.setAttribute('data-expanded', expanded ? 'false' : 'true');
+        const overflow = wrap.querySelectorAll('.in-charge.hidden').length;
+        e.currentTarget.innerHTML = expanded
+          ? `<i class="fa fa-chevron-down"></i> Show ${overflow} more`
+          : `<i class="fa fa-chevron-up"></i> Show less`;
+      });
+    });
     host.querySelectorAll('[data-action="pay"]').forEach(btn => {
       btn.addEventListener('click', e => {
         const id = e.target.closest('[data-id]').dataset.id;
