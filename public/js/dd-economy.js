@@ -345,7 +345,7 @@
   async function setMemberTenCode(cfg, tenCodeID) {
     if (!tenCodeID || !cfg.communityId || !cfg.userId || !cfg.departmentId) return;
     try {
-      await fetch(
+      const res = await fetch(
         `${cfg.API_URL}/api/v1/community/${encodeURIComponent(cfg.communityId)}/members/${encodeURIComponent(cfg.userId)}/tenCode`,
         {
           method: 'PUT',
@@ -357,6 +357,27 @@
           }),
         },
       );
+      if (!res.ok) return;
+      // Mirror the local-cache writes cd-status-panel makes so the MDT
+      // bar (and anything else reading window.ddConfig.communityData)
+      // reflects the change without waiting for a refetch.
+      if (window.ddConfig && window.ddConfig.communityData) {
+        const members = window.ddConfig.communityData.members || {};
+        if (members[cfg.userId]) {
+          members[cfg.userId].tenCodeID = tenCodeID;
+        } else {
+          members[cfg.userId] = { tenCodeID: tenCodeID };
+        }
+        window.ddConfig.communityData.members = members;
+      }
+      if (typeof window.applyMDTStatus === 'function') {
+        try { window.applyMDTStatus(); } catch (_) {}
+      }
+      // Re-init the Status Codes panel so its internal activeTenCodeID
+      // catches up; cheap (just a community fetch + re-render).
+      if (typeof window.cdStatusPanelInit === 'function') {
+        try { window.cdStatusPanelInit(); } catch (_) {}
+      }
     } catch (err) {
       console.warn('[dd-economy] auto-status set failed', err);
     }
@@ -585,8 +606,6 @@
         : null;
       if (onDutyCode) {
         await setMemberTenCode(cfg, onDutyCode._id);
-        if (window.cdStatusRefresh) window.cdStatusRefresh();
-        if (window.applyMDTStatus) window.applyMDTStatus();
       }
       await refresh(state);
     } catch (err) {
@@ -616,8 +635,6 @@
         : null;
       if (offDutyCode) {
         await setMemberTenCode(cfg, offDutyCode._id);
-        if (window.cdStatusRefresh) window.cdStatusRefresh();
-        if (window.applyMDTStatus) window.applyMDTStatus();
       }
       if (state.tickHandle) { clearInterval(state.tickHandle); state.tickHandle = null; }
       await refresh(state);
