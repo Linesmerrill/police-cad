@@ -650,13 +650,18 @@
         const inner = c.civilian || {};
         const fn = (inner.firstName || '').trim();
         const ln = (inner.lastName || '').trim();
-        const name = [fn, ln].filter(Boolean).join(' ') || 'Unnamed civilian';
+        const combined = (inner.name || '').trim();
+        // Many older civ docs store the full name in `name` rather than
+        // firstName/lastName, so fall back to that before "Unnamed".
+        const name = [fn, ln].filter(Boolean).join(' ') || combined || 'Unnamed civilian';
+        const parts = name.split(/\s+/);
+        const initials = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?';
         return {
           id: c._id,
           name,
           image: inner.image || '',
           balance: typeof inner.balance === 'number' ? inner.balance : 0,
-          initials: ((fn[0] || '') + (ln[0] || '')).toUpperCase() || '?',
+          initials,
         };
       })
       .filter(r => !q || r.name.toLowerCase().includes(q));
