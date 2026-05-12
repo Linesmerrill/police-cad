@@ -941,16 +941,31 @@
           '<label>Address</label>' +
           '<input type="text" name="address" value="' + esc(c.address || '') + '" placeholder="Address" />' +
         '</div>' +
-        '<div class="dd-civ-field">' +
-          '<label>Occupation</label>' +
-          '<input type="text" name="occupation" value="' + esc(c.occupation || '') + '" placeholder="Occupation" />' +
-        '</div>' +
-        ((window.communityJobsCached && window.communityJobsCached.length)
-          ? '<div class="dd-civ-field">' +
-              '<label>Job (economy)</label>' +
-              '<select name="jobId">' + ddCivJobOptions(c.jobId || '') + '</select>' +
-            '</div>'
-          : '') +
+        ((function () {
+          var hasJobs = !!(window.communityJobsCached && window.communityJobsCached.length);
+          var currentJob = hasJobs && c.jobId ? window.communityJobsCached.find(function (j) { return j._id === c.jobId; }) : null;
+          var jobIsSet = !!currentJob;
+          var occInput =
+            '<div class="dd-civ-field dd-civ-occupation-field" style="' + (jobIsSet ? 'display:none;' : '') + '">' +
+              '<label>Occupation</label>' +
+              '<input type="text" name="occupation" value="' + esc(c.occupation || '') + '" placeholder="Occupation" />' +
+            '</div>';
+          var workingAs =
+            '<div class="dd-civ-field dd-civ-working-as" style="' + (jobIsSet ? '' : 'display:none;') + '">' +
+              '<label>Working as</label>' +
+              '<div class="dd-civ-readonly" style="padding:0.6rem 0.75rem;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);border-radius:8px;color:var(--dd-text);font-size:0.9rem;">' +
+                '<i class="fa fa-briefcase" style="margin-right:0.4rem;opacity:0.7;"></i>' +
+                '<span class="dd-civ-working-as-name">' + esc(currentJob ? currentJob.name : '') + '</span>' +
+              '</div>' +
+            '</div>';
+          var jobPicker = hasJobs
+            ? '<div class="dd-civ-field">' +
+                '<label>Job (economy)</label>' +
+                '<select name="jobId">' + ddCivJobOptions(c.jobId || '') + '</select>' +
+              '</div>'
+            : '';
+          return occInput + workingAs + jobPicker;
+        })()) +
 
         /* ── Advanced Details divider ── */
         '<div class="dd-civ-section-label">Advanced Details <span style="font-size:0.75rem;color:var(--dd-text-dim);">(Optional)</span></div>' +
@@ -1032,6 +1047,22 @@
       $body.find('.dd-civ-height-metric').toggle(val === 'metric');
     });
 
+    // Job picker: when a Job is picked, collapse the free-text Occupation
+    // input into a read-only "Working as" line. When cleared, restore the
+    // Occupation input. The underlying <input name="occupation"> value is
+    // preserved so unsetting the Job doesn't lose what the user had typed.
+    $body.find('[name="jobId"]').on('change', function () {
+      var $sel = $(this);
+      var jobId = $sel.val() || '';
+      var jobName = $sel.find('option:selected').text().split(' — ')[0];
+      var hasJob = !!jobId;
+      $body.find('.dd-civ-occupation-field').toggle(!hasJob);
+      $body.find('.dd-civ-working-as').toggle(hasJob);
+      if (hasJob) {
+        $body.find('.dd-civ-working-as-name').text(jobName);
+      }
+    });
+
     // Weight toggle
     $body.find('.dd-civ-weight-toggle').on('click', function () {
       $body.find('.dd-civ-weight-toggle').removeClass('active');
@@ -1106,17 +1137,14 @@
 
     var fullName = $.trim($form.find('[name="name"]').val());
 
+    // When a Job is picked, mirror the Job's name into occupation for legacy
+    // readers (the Occupation input is hidden in that case). When no Job is
+    // picked, use whatever the user typed in the Occupation field.
     var $jobSel = $form.find('[name="jobId"]');
     var pickedJobId = $jobSel.length ? ($jobSel.val() || '') : undefined;
-    var occupationVal = $form.find('[name="occupation"]').val();
-    // If a Job is picked and the free-text occupation matches the prior job name
-    // (or is empty), mirror the job name into occupation for legacy readers.
-    if (pickedJobId && $jobSel.length) {
-      var jobName = $jobSel.find('option:selected').text().split(' — ')[0];
-      if (!occupationVal || /\s—\s\$.*\/hr$/.test(occupationVal) === false) {
-        if (!occupationVal) occupationVal = jobName;
-      }
-    }
+    var occupationVal = pickedJobId
+      ? $jobSel.find('option:selected').text().split(' — ')[0]
+      : $form.find('[name="occupation"]').val();
 
     var payload = {
       name: fullName,
@@ -2751,9 +2779,16 @@
                 '<label>Address</label>' +
                 '<input type="text" name="address" placeholder="Address (optional)" />' +
               '</div>' +
-              '<div class="dd-civ-field dd-civ-form-full">' +
+              '<div class="dd-civ-field dd-civ-form-full dd-civ-occupation-field">' +
                 '<label>Occupation</label>' +
                 '<input type="text" name="occupation" placeholder="Job/occupation (optional)" />' +
+              '</div>' +
+              '<div class="dd-civ-field dd-civ-form-full dd-civ-working-as" style="display:none;">' +
+                '<label>Working as</label>' +
+                '<div class="dd-civ-readonly" style="padding:0.6rem 0.75rem;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);border-radius:8px;color:var(--dd-text);font-size:0.9rem;">' +
+                  '<i class="fa fa-briefcase" style="margin-right:0.4rem;opacity:0.7;"></i>' +
+                  '<span class="dd-civ-working-as-name"></span>' +
+                '</div>' +
               '</div>' +
               ((window.communityJobsCached && window.communityJobsCached.length)
                 ? '<div class="dd-civ-field dd-civ-form-full">' +
@@ -2829,6 +2864,19 @@
 
     $('body').append(html);
     $newOverlay = $('#dd-civ-new-overlay');
+
+    // Job picker: same hide-when-Job-set behavior as the edit form.
+    $newOverlay.on('change', '[name="jobId"]', function () {
+      var $sel = $(this);
+      var jobId = $sel.val() || '';
+      var jobName = $sel.find('option:selected').text().split(' — ')[0];
+      var hasJob = !!jobId;
+      $newOverlay.find('.dd-civ-occupation-field').toggle(!hasJob);
+      $newOverlay.find('.dd-civ-working-as').toggle(hasJob);
+      if (hasJob) {
+        $newOverlay.find('.dd-civ-working-as-name').text(jobName);
+      }
+    });
 
     // Close handlers
     $newOverlay.on('click', function (e) {
@@ -2970,10 +3018,9 @@
 
     var $jobSel = $form.find('[name="jobId"]');
     var pickedJobId = $jobSel.length ? ($jobSel.val() || '') : undefined;
-    var occupationVal = $form.find('[name="occupation"]').val();
-    if (pickedJobId && !occupationVal && $jobSel.length) {
-      occupationVal = $jobSel.find('option:selected').text().split(' — ')[0];
-    }
+    var occupationVal = pickedJobId
+      ? $jobSel.find('option:selected').text().split(' — ')[0]
+      : $form.find('[name="occupation"]').val();
 
     var payload = {
       name: fullName,
