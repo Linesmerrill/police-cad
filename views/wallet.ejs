@@ -261,7 +261,7 @@
   <div class="w-header">
     <div class="w-header-icon"><i class="fa fa-wallet"></i></div>
     <div>
-      <div class="w-title">Wallet</div>
+      <div class="w-title" style="display:flex; align-items:center; gap:0.5rem;">Wallet<% if (new Date() < new Date('2026-05-26')) { %><span style="background:linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25)); color:#c4b5fd; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(139,92,246,0.3);">Beta</span><% } %></div>
       <div class="w-subtitle w-subtitle-row">
         <span id="walletSubtitle">Loading civilian…</span>
         <button type="button" class="w-swap-btn" id="swapCivBtn" title="Switch civilian" aria-label="Switch civilian">

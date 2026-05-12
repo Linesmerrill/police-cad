@@ -157,7 +157,7 @@
     <div style="display:flex;align-items:center;gap:0.85rem;">
       <div class="in-header-icon"><i class="fa fa-inbox"></i></div>
       <div>
-        <div class="in-title">Inbox</div>
+        <div class="in-title" style="display:flex; align-items:center; gap:0.5rem;">Inbox<% if (new Date() < new Date('2026-05-26')) { %><span style="background:linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25)); color:#c4b5fd; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(139,92,246,0.3);">Beta</span><% } %></div>
         <div class="in-subtitle" id="inboxSubtitle">Fines, fees, and notices</div>
       </div>
     </div>
