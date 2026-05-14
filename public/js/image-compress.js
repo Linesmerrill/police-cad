@@ -17,10 +17,15 @@
   // pixels AND fewer compression artifacts — owners zoom past 30x to read
   // postal-code labels, so at that point the limiting factor is the saved
   // resolution, not the quality setting.
+  //
+  // "Original" skips downscaling entirely (Infinity max-dimension) and
+  // accepts a larger output budget; auto-shrink still kicks in if even
+  // that budget is exceeded.
   var QUALITY_PRESETS = {
-    low:    { quality: 0.65, maxDimension: 3072, maxBytes:  5 * 1024 * 1024 },
-    medium: { quality: 0.82, maxDimension: 4096, maxBytes:  5 * 1024 * 1024 },
-    high:   { quality: 0.96, maxDimension: 8192, maxBytes: 10 * 1024 * 1024 },
+    low:      { quality: 0.65, maxDimension: 3072,     maxBytes:  5 * 1024 * 1024 },
+    medium:   { quality: 0.82, maxDimension: 4096,     maxBytes:  5 * 1024 * 1024 },
+    high:     { quality: 0.96, maxDimension: 8192,     maxBytes: 10 * 1024 * 1024 },
+    original: { quality: 0.97, maxDimension: Infinity, maxBytes: 25 * 1024 * 1024 },
   };
 
   var DEFAULTS = {
@@ -85,7 +90,10 @@
   async function compressImage(file, opts) {
     opts = Object.assign({}, DEFAULTS, opts || {});
     var img = await loadImage(file);
-    var maxDim = opts.maxDimension;
+    var sourceLongest = Math.max(img.naturalWidth, img.naturalHeight);
+    // Cap the working maxDim by the source so an Infinity/oversized request
+    // can still be downscaled in the auto-shrink loop.
+    var maxDim = Math.min(opts.maxDimension, sourceLongest);
     var quality = opts.quality;
     var blob;
     var canvas;

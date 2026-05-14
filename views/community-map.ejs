@@ -281,10 +281,11 @@
     }
     .cm-preview-stage-busy.active { display: flex; }
     .cm-preset-row {
-      display: flex; gap: 0.5rem; margin-top: 1rem;
+      display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem;
     }
     .cm-preset-btn {
-      flex: 1;
+      flex: 1 1 calc(50% - 0.25rem);
+      min-width: 130px;
       padding: 0.625rem 0.75rem;
       border-radius: var(--cm-radius-sm);
       background: var(--cm-glass);
@@ -505,6 +506,9 @@
           <button type="button" class="cm-preset-btn" data-preset="high" role="radio" aria-checked="false">
             High <small>~96% · 8192px · ≤10MB</small>
           </button>
+          <button type="button" class="cm-preset-btn" data-preset="original" role="radio" aria-checked="false">
+            Original <small>~97% · native res · ≤25MB</small>
+          </button>
         </div>
         <div class="cm-preview-stats">
           <div>Original: <strong id="statOriginal">—</strong></div>
@@ -686,10 +690,6 @@
 
     function pvApply() {
       previewImage.style.transform = 'translate(' + pvTx + 'px, ' + pvTy + 'px) scale(' + pvScale + ')';
-      // Past 4x, switch to nearest-neighbor so the user sees the actual
-      // saved pixels rather than browser-interpolated smoothing — that's
-      // the honest "is this quality good enough?" view.
-      previewImage.style.imageRendering = pvScale > 4 ? 'pixelated' : 'auto';
       if (previewZoomReadout) previewZoomReadout.textContent = Math.round(pvScale * 100) + '%';
     }
     function pvReset() {
