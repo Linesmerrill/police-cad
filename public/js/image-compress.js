@@ -118,6 +118,27 @@
       }
     }
 
+    // If the source already fits our caps AND our re-encode ended up
+    // BIGGER than the source, pass the source bytes through unchanged.
+    // Phone-camera JPEGs are typically ~q=0.8 — re-encoding them at q=0.96
+    // produces a larger file with no perceptual gain, and owners are
+    // (correctly) confused when "Optimized" exceeds "Original".
+    var sourceFitsAsIs =
+      file.size > 0 &&
+      file.size <= opts.maxBytes &&
+      sourceLongest <= opts.maxDimension;
+    if (sourceFitsAsIs && blob.size > file.size) {
+      return {
+        blob: file,
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+        quality: 1.0,
+        originalBytes: file.size,
+        bytes: file.size,
+        mimeType: file.type || opts.mimeType,
+      };
+    }
+
     return {
       blob: blob,
       width: canvas.width,
