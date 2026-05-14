@@ -724,6 +724,24 @@
       mapImg.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ')';
     }
 
+    // Center the image vertically inside its container at scale=1. With
+    // `transform-origin: 0 0` and `width: 100%`, a portrait map would
+    // otherwise render top-aligned and the user would see only the top
+    // strip on initial load. This shifts translateY so the image's
+    // middle is centered in the container. Horizontal axis is already
+    // handled by `width: 100%`.
+    function centerMapVertically() {
+      if (!mapImg || !mapContainer) return;
+      var cw = mapContainer.clientWidth;
+      var ch = mapContainer.clientHeight;
+      var iw = mapImg.naturalWidth;
+      var ih = mapImg.naturalHeight;
+      if (!iw || !ih || !cw || !ch) return;
+      var renderedH = cw * (ih / iw);
+      translateY = (ch - renderedH) / 2;
+      updateTransform();
+    }
+
     // Mouse drag
     mapContainer.addEventListener('mousedown', function(e) {
       isDragging = true;
@@ -776,7 +794,7 @@
 
     function resetView() {
       scale = 1; translateX = 0; translateY = 0;
-      updateTransform();
+      centerMapVertically();
     }
     function zoomIn() {
       scale = Math.min(MAX_SCALE, scale * 1.3);
@@ -1232,6 +1250,14 @@
       mapImg.src = '/static/images/GTA-V-Custom-Postal-Code-Map.jpg';
       updateDefaultLabel(true);
     });
+
+    // Center the image vertically on each load. Also covers the cached
+    // case where the browser already had bytes and the load event won't
+    // fire — fall back to a one-shot rAF after measure is available.
+    mapImg.addEventListener('load', centerMapVertically);
+    if (mapImg.complete && mapImg.naturalWidth) {
+      requestAnimationFrame(centerMapVertically);
+    }
 
     // Smart back: store the page the user arrived from so the strip's
     // back link returns there instead of the static dashboard default.
