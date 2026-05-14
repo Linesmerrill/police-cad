@@ -426,6 +426,45 @@
     @media (min-width: 769px) {
       .cm-btn .cm-btn-label { display: inline; }
     }
+
+    /* One-time map-quality-upgrade notice */
+    .cm-notice-modal { max-width: 460px; padding: 1.75rem 1.5rem 1.5rem 1.5rem; }
+    .cm-notice-modal .cm-modal-accent { background: var(--cm-accent); opacity: 0.85; }
+    .cm-notice-icon {
+      width: 44px; height: 44px;
+      border-radius: 999px;
+      background: var(--cm-accent-glow);
+      color: var(--cm-accent);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.12);
+      font-size: 1.0625rem;
+    }
+    .cm-notice-title {
+      color: var(--cm-text);
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin: 0 0 0.75rem 0;
+      letter-spacing: -0.01em;
+    }
+    .cm-notice-body p {
+      color: var(--cm-text-muted);
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin: 0 0 0.625rem 0;
+    }
+    .cm-notice-body p:last-child { margin-bottom: 0; }
+    .cm-notice-body strong { color: var(--cm-text); font-weight: 600; }
+    .cm-notice-thanks {
+      margin: 1rem 0 1.25rem 0;
+      padding-top: 0.875rem;
+      border-top: 1px solid var(--cm-glass-border);
+      color: var(--cm-text-dim);
+      font-size: 0.75rem;
+    }
+    .cm-notice-actions { display: flex; justify-content: flex-end; }
   </style>
 </head>
 <body>
@@ -543,6 +582,26 @@
       <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
         <button class="cm-btn cm-btn-glass" onclick="closeRemoveModal()">Cancel</button>
         <button class="cm-btn cm-btn-danger" onclick="removeMap()">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- One-time map-quality-upgrade notice (shown only to users whose
+       community has a custom map AND who haven't dismissed before) -->
+  <div id="qualityNoticeModal" class="cm-modal-overlay" role="dialog" aria-labelledby="cm-notice-title" aria-describedby="cm-notice-body" aria-modal="true">
+    <div class="cm-modal cm-notice-modal">
+      <div class="cm-modal-accent"></div>
+      <div class="cm-notice-icon" aria-hidden="true">
+        <i class="fa fa-wand-magic-sparkles"></i>
+      </div>
+      <h3 id="cm-notice-title" class="cm-notice-title">Your map can look sharper</h3>
+      <div id="cm-notice-body" class="cm-notice-body">
+        <p>We just shipped an upgrade that lets community maps upload at full resolution — they now stay crisp even at high zoom.</p>
+        <p>Your map was uploaded before this change, so it's still rendering at the older, lower quality. Ask a community admin to <strong>re-upload it</strong> to get the sharper version.</p>
+      </div>
+      <p class="cm-notice-thanks">Thanks for using custom maps — they make your community feel like its own world.</p>
+      <div class="cm-notice-actions">
+        <button type="button" class="cm-btn cm-btn-accent" id="qualityNoticeAckBtn">Got it</button>
       </div>
     </div>
   </div>
@@ -1192,6 +1251,44 @@
           var stored = '';
           try { stored = sessionStorage.getItem(RETURN_KEY) || ''; } catch (e2) {}
           if (stored) { e.preventDefault(); window.location.href = stored; }
+        });
+      });
+    })();
+
+    // One-time notice: nudge owners of pre-upgrade custom maps to re-upload
+    // for the sharper full-resolution treatment. Persists dismissal on the
+    // user via the existing dismissedTutorials array so it doesn't reappear
+    // on other devices.
+    (function () {
+      var NOTICE_KEY = 'community_map_quality_upgrade_2026_05';
+      var hasCustomMap = <%= (community && community.community && community.community.mapLink) ? 'true' : 'false' %>;
+      if (!hasCustomMap) return;
+      var dbUser = <%- JSON.stringify(user || null) %>;
+      if (!dbUser) return;
+      // Mongoose docs come through as `{ _doc: { user: {...} } }` in some
+      // routes and as `{ user: {...} }` in others — check both shapes.
+      var userDetails = (dbUser._doc && dbUser._doc.user) || dbUser.user || {};
+      var dismissed = Array.isArray(userDetails.dismissedTutorials) ? userDetails.dismissedTutorials : [];
+      if (dismissed.indexOf(NOTICE_KEY) !== -1) return;
+      var userId = (dbUser._doc && dbUser._doc._id) || dbUser._id;
+      if (!userId) return;
+      var modal = document.getElementById('qualityNoticeModal');
+      var ackBtn = document.getElementById('qualityNoticeAckBtn');
+      if (!modal || !ackBtn) return;
+      // Brief delay so the page mount animation lands first.
+      setTimeout(function () { modal.classList.add('active'); }, 350);
+      ackBtn.addEventListener('click', function () {
+        modal.classList.remove('active');
+        var apiUrl = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+        fetch(apiUrl + '/api/v1/user/' + userId + '/dismiss-tutorial', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tutorialKey: NOTICE_KEY }),
+        }).catch(function (err) {
+          // Best-effort — the user has already seen the notice locally, so
+          // log and continue. Worst case: they see it once more on another
+          // device.
+          console.error('Failed to dismiss map quality notice:', err);
         });
       });
     })();
