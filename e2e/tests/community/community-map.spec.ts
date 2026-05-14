@@ -53,11 +53,15 @@ test.describe('Community Map — Optimize-on-Upload Modal', { tag: '@auth' }, ()
     expect(result.alreadyTransformed.match(/f_auto/g)?.length).toBe(1);
   });
 
-  test('opens the optimize modal when a file is selected, then cancels cleanly', async ({ page }) => {
+  test('skips the modal entirely for sub-2MB sources (fast path)', async ({ page }) => {
     await page.goto(mapUrl());
     await expect(page).not.toHaveURL(/\/login/);
 
-    // 1x1 red PNG (43 bytes) — smallest valid PNG for the file picker.
+    // Block the Cloudinary signature call so the fast path can't actually
+    // upload during the test — we only care that the modal stays closed.
+    await page.route('**/api/v1/generate-signature', (route) => route.abort());
+
+    // 1x1 red PNG (~43 bytes) — well under the 2MB fast-path threshold.
     const tinyPng = Buffer.from(
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
       'base64',
@@ -69,45 +73,43 @@ test.describe('Community Map — Optimize-on-Upload Modal', { tag: '@auth' }, ()
       buffer: tinyPng,
     });
 
-    // Modal opens.
+    // Give the fast path a moment to run (or fail at the signature call).
+    await page.waitForTimeout(500);
+
+    // The optimize modal must NOT appear for a sub-2MB source.
+    await expect(page.locator('#uploadPreviewModal')).not.toHaveClass(/active/);
+  });
+
+  test('opens the optimize modal with High default for sources >=2MB', async ({ page }) => {
+    await page.goto(mapUrl());
+    await expect(page).not.toHaveURL(/\/login/);
+
+    // 3MB zero-filled buffer — invalid pixels but the input layer only
+    // checks file.size before deciding fast-path vs modal. Modal must
+    // still open (compression failure surfaces inside, that's a separate
+    // assertion).
+    const bigBuffer = Buffer.alloc(3 * 1024 * 1024);
+
+    await page.setInputFiles('#mapFileInput', {
+      name: 'big.png',
+      mimeType: 'image/png',
+      buffer: bigBuffer,
+    });
+
     const modal = page.locator('#uploadPreviewModal');
     await expect(modal).toHaveClass(/active/, { timeout: 5_000 });
 
-    // Preset radios present, Medium is default.
-    await expect(page.locator('.cm-preset-btn[data-preset="low"]')).toBeVisible();
-    await expect(page.locator('.cm-preset-btn[data-preset="medium"]')).toHaveClass(/active/);
-    await expect(page.locator('.cm-preset-btn[data-preset="high"]')).toBeVisible();
+    // Player-benefit copy is present.
+    await expect(page.locator('#statLoad')).toBeVisible();
+    await expect(page.getByText(/use less player data/i)).toBeVisible();
 
-    // Stats populate once compression finishes.
-    await expect(page.locator('#statOriginal')).not.toHaveText('—', { timeout: 5_000 });
-    await expect(page.locator('#statOptimized')).not.toHaveText('—');
-    await expect(page.locator('#statDims')).not.toHaveText('—');
+    // The disclosure is collapsed by default — Medium/Low aren't competing
+    // for attention with the Save button.
+    const altDisclosure = page.locator('#altDisclosure');
+    await expect(altDisclosure).not.toHaveAttribute('open', '');
 
     // Cancel closes the modal — does NOT hit the API.
     await page.getByRole('button', { name: /^cancel$/i }).click();
     await expect(modal).not.toHaveClass(/active/);
-  });
-
-  test('preset switch re-runs compression and updates stats', async ({ page }) => {
-    await page.goto(mapUrl());
-    await expect(page).not.toHaveURL(/\/login/);
-
-    const tinyPng = Buffer.from(
-      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
-      'base64',
-    );
-    await page.setInputFiles('#mapFileInput', {
-      name: 'tiny.png',
-      mimeType: 'image/png',
-      buffer: tinyPng,
-    });
-
-    await expect(page.locator('#uploadPreviewModal')).toHaveClass(/active/);
-    await expect(page.locator('#statOptimized')).not.toHaveText('—', { timeout: 5_000 });
-
-    // Switching preset toggles the active class.
-    await page.locator('.cm-preset-btn[data-preset="low"]').click();
-    await expect(page.locator('.cm-preset-btn[data-preset="low"]')).toHaveClass(/active/);
-    await expect(page.locator('.cm-preset-btn[data-preset="medium"]')).not.toHaveClass(/active/);
   });
 });

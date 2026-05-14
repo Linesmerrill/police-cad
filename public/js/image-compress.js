@@ -12,21 +12,24 @@
 (function (global) {
   'use strict';
 
-  // Each preset bundles a starting JPEG quality, a maximum longest-edge
-  // dimension, and its own output byte cap. Higher presets keep more
-  // pixels AND fewer compression artifacts — owners zoom past 30x to read
-  // postal-code labels, so at that point the limiting factor is the saved
-  // resolution, not the quality setting.
-  //
-  // "Original" skips downscaling entirely (Infinity max-dimension) and
-  // accepts a larger output budget; auto-shrink still kicks in if even
-  // that budget is exceeded.
+  // "High" is the default — visually-lossless for normal viewing AND
+  // sharp at deep zoom because it preserves up to an 8192px source.
+  // "Medium" and "Low" exist as opt-in faster-loading alternatives surfaced
+  // through the "Use less player data" disclosure in the upload modal.
   var QUALITY_PRESETS = {
-    low:      { quality: 0.65, maxDimension: 3072,     maxBytes:  5 * 1024 * 1024 },
-    medium:   { quality: 0.82, maxDimension: 4096,     maxBytes:  5 * 1024 * 1024 },
-    high:     { quality: 0.96, maxDimension: 8192,     maxBytes: 10 * 1024 * 1024 },
-    original: { quality: 0.97, maxDimension: Infinity, maxBytes: 25 * 1024 * 1024 },
+    low:    { quality: 0.65, maxDimension: 3072, maxBytes:  5 * 1024 * 1024 },
+    medium: { quality: 0.82, maxDimension: 4096, maxBytes:  5 * 1024 * 1024 },
+    high:   { quality: 0.96, maxDimension: 8192, maxBytes: 10 * 1024 * 1024 },
   };
+
+  // Conservative real-world 4G throughput for one community member's
+  // download. 800 KB/s lines up with median LTE measurements once TLS,
+  // TCP slow start, and Cloudinary RTT are folded in.
+  var BYTES_PER_SECOND_4G = 800 * 1024;
+
+  function estimateLoadSeconds(bytes) {
+    return Math.max(1, Math.round(bytes / BYTES_PER_SECOND_4G));
+  }
 
   var DEFAULTS = {
     quality:     QUALITY_PRESETS.medium.quality,
@@ -153,6 +156,7 @@
     QUALITY_PRESETS: QUALITY_PRESETS,
     compressImage: compressImage,
     formatBytes: formatBytes,
+    estimateLoadSeconds: estimateLoadSeconds,
     withCloudinaryDelivery: withCloudinaryDelivery,
   };
 })(window);
