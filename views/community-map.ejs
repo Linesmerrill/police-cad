@@ -1071,9 +1071,17 @@
     });
 
     // Switching to an alternative preset from the disclosure cards.
+    // Allowlist the key against known presets before letting it flow into
+    // compressForPreset / QUALITY_PRESETS. The chips are developer-authored
+    // so the practical risk is zero, but CodeQL's js/xss-through-dom traces
+    // `card.dataset.preset` -> currentPreset -> URL.createObjectURL(...)
+    // -> previewImage.src and flags it. Pinning to the literal set both
+    // satisfies the analyzer and hardens against future markup churn.
+    var ALLOWED_PRESETS = { high: 1, medium: 1, low: 1 };
     altCards.forEach(function(card) {
       card.addEventListener('click', function() {
         var key = card.dataset.preset;
+        if (!Object.prototype.hasOwnProperty.call(ALLOWED_PRESETS, key)) return;
         if (key === currentPreset) return;
         currentPreset = key;
         recompress();
