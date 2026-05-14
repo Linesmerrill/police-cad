@@ -112,8 +112,9 @@ test.describe('Community Map — Optimize-on-Upload Modal', { tag: '@auth' }, ()
     const altDisclosure = page.locator('#altDisclosure');
     await expect(altDisclosure).not.toHaveAttribute('open', '');
 
-    // Cancel closes the modal — does NOT hit the API.
-    await page.getByRole('button', { name: /^cancel$/i }).click();
+    // Cancel closes the modal — does NOT hit the API. Scoped to the optimize
+    // modal because the page also renders #removeModal with its own Cancel.
+    await modal.getByRole('button', { name: /^cancel$/i }).click();
     await expect(modal).not.toHaveClass(/active/);
   });
 });
