@@ -497,13 +497,13 @@
         </div>
         <div class="cm-preset-row" role="radiogroup" aria-label="Image quality preset">
           <button type="button" class="cm-preset-btn" data-preset="low" role="radio" aria-checked="false">
-            Low <small>~60% — smallest</small>
+            Low <small>~65% · 3072px max</small>
           </button>
           <button type="button" class="cm-preset-btn active" data-preset="medium" role="radio" aria-checked="true">
-            Medium <small>~80% — balanced</small>
+            Medium <small>~82% · 4096px max</small>
           </button>
           <button type="button" class="cm-preset-btn" data-preset="high" role="radio" aria-checked="false">
-            High <small>~92% — sharpest</small>
+            High <small>~96% · 6144px max</small>
           </button>
         </div>
         <div class="cm-preview-stats">
@@ -686,6 +686,10 @@
 
     function pvApply() {
       previewImage.style.transform = 'translate(' + pvTx + 'px, ' + pvTy + 'px) scale(' + pvScale + ')';
+      // Past 4x, switch to nearest-neighbor so the user sees the actual
+      // saved pixels rather than browser-interpolated smoothing — that's
+      // the honest "is this quality good enough?" view.
+      previewImage.style.imageRendering = pvScale > 4 ? 'pixelated' : 'auto';
       if (previewZoomReadout) previewZoomReadout.textContent = Math.round(pvScale * 100) + '%';
     }
     function pvReset() {
@@ -727,9 +731,10 @@
       setBusy(true);
       setPreviewError('');
       try {
-        var quality = window.ImageCompress.QUALITY_PRESETS[currentPreset];
+        var preset = window.ImageCompress.QUALITY_PRESETS[currentPreset];
         var result = await window.ImageCompress.compressImage(pendingFile, {
-          quality: quality,
+          quality: preset.quality,
+          maxDimension: preset.maxDimension,
           maxBytes: OUTPUT_MAX_BYTES,
         });
         if (token !== compressToken) return; // a newer pass started

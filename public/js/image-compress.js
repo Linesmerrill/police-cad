@@ -12,15 +12,18 @@
 (function (global) {
   'use strict';
 
+  // Each preset bundles a starting JPEG quality and a maximum longest-edge
+  // dimension. Higher presets keep more pixels AND fewer compression
+  // artifacts — important when owners zoom past 10x to verify legibility.
   var QUALITY_PRESETS = {
-    low:    0.60,
-    medium: 0.80,
-    high:   0.92,
+    low:    { quality: 0.65, maxDimension: 3072 },
+    medium: { quality: 0.82, maxDimension: 4096 },
+    high:   { quality: 0.96, maxDimension: 6144 },
   };
 
   var DEFAULTS = {
-    quality:     QUALITY_PRESETS.medium,
-    maxDimension: 4096,
+    quality:     QUALITY_PRESETS.medium.quality,
+    maxDimension: QUALITY_PRESETS.medium.maxDimension,
     maxBytes:    5 * 1024 * 1024,
     mimeType:    'image/jpeg',
     minQuality:  0.40,
