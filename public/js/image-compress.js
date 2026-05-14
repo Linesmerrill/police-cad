@@ -136,20 +136,19 @@
   }
 
   /**
-   * Inject Cloudinary delivery transforms into a Cloudinary URL so the
-   * delivered bytes auto-pick the best format (AVIF/WebP/JPEG) and quality
-   * per client. No-op for non-Cloudinary URLs.
+   * Return the Cloudinary URL as-is. We deliberately do NOT inject
+   * f_auto/q_auto here: Cloudinary's q_auto applies its own quality
+   * heuristics on top of the already-compressed JPEG we uploaded,
+   * producing a visible double-compression hit at high zoom. We pay a
+   * larger wire-size cost in exchange for "what you previewed is what
+   * gets served", which is the contract owners expect.
+   *
+   * Left as a function (rather than removed entirely) so callers don't
+   * need to change and so re-enabling a more conservative transform
+   * (e.g. q_auto:best) later is a one-line edit.
    */
-  function withCloudinaryDelivery(url, extra) {
-    if (!url || typeof url !== 'string') return url;
-    if (url.indexOf('res.cloudinary.com') === -1) return url;
-    if (url.indexOf('/upload/') === -1) return url;
-    var transform = 'f_auto,q_auto';
-    if (extra) transform += ',' + extra;
-    // Don't double-inject if a transform segment already starts with f_/q_.
-    var afterUpload = url.split('/upload/')[1] || '';
-    if (/^[^/]*\b(f_auto|q_auto)\b/.test(afterUpload)) return url;
-    return url.replace('/upload/', '/upload/' + transform + '/');
+  function withCloudinaryDelivery(url /* , extra */) {
+    return url;
   }
 
   global.ImageCompress = {

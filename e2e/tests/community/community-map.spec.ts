@@ -31,26 +31,30 @@ test.describe('Community Map — Optimize-on-Upload Modal', { tag: '@auth' }, ()
     expect(hasHelper).toBe(true);
   });
 
-  test('withCloudinaryDelivery injects f_auto,q_auto into Cloudinary URLs', async ({ page }) => {
+  test('withCloudinaryDelivery serves the URL unchanged (no double-compression)', async ({ page }) => {
     await page.goto(mapUrl());
     await expect(page).not.toHaveURL(/\/login/);
 
+    // We deliberately do NOT inject f_auto/q_auto on delivery: Cloudinary's
+    // q_auto re-encodes the already-client-compressed JPEG and visibly
+    // degrades quality at high zoom on the community map page. The helper
+    // is kept as an identity function so callers don't need to change.
     const result = await page.evaluate(() => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const fn = (window as any).ImageCompress.withCloudinaryDelivery as (u: string) => string;
       return {
         cloudinary: fn('https://res.cloudinary.com/demo/image/upload/v123/community-maps/abc.jpg'),
         nonCloudinary: fn('/static/images/GTA-V-Custom-Postal-Code-Map.jpg'),
-        alreadyTransformed: fn(
-          'https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/community-maps/abc.jpg',
-        ),
       };
     });
 
-    expect(result.cloudinary).toContain('/upload/f_auto,q_auto/');
+    expect(result.cloudinary).toBe(
+      'https://res.cloudinary.com/demo/image/upload/v123/community-maps/abc.jpg',
+    );
     expect(result.nonCloudinary).toBe('/static/images/GTA-V-Custom-Postal-Code-Map.jpg');
-    // Idempotent — doesn't double-inject.
-    expect(result.alreadyTransformed.match(/f_auto/g)?.length).toBe(1);
+    // Critically: must NOT contain f_auto or q_auto transforms.
+    expect(result.cloudinary).not.toContain('f_auto');
+    expect(result.cloudinary).not.toContain('q_auto');
   });
 
   test('skips the modal entirely for sub-2MB sources (fast path)', async ({ page }) => {
