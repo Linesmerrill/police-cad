@@ -217,12 +217,105 @@
       height: 2px; background: var(--cm-red); opacity: 0.8;
     }
 
+    /* Upload preview modal — wider variant of cm-modal for image preview */
+    .cm-preview-modal {
+      width: 95%;
+      max-width: 720px;
+      padding: 0;
+      max-height: 90vh;
+      display: flex; flex-direction: column;
+    }
+    .cm-preview-modal .cm-modal-accent { background: var(--cm-accent); }
+    .cm-preview-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--cm-glass-border);
+    }
+    .cm-preview-title {
+      font-size: 0.875rem; font-weight: 600; color: var(--cm-text);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .cm-preview-body { padding: 1rem 1.25rem; overflow-y: auto; }
+    .cm-preview-stage {
+      position: relative;
+      width: 100%; aspect-ratio: 16 / 9;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--cm-glass-border);
+      border-radius: var(--cm-radius-sm);
+      overflow: hidden; cursor: zoom-in;
+    }
+    .cm-preview-stage.zoomed { cursor: zoom-out; }
+    .cm-preview-stage img {
+      width: 100%; height: 100%; object-fit: contain;
+      transform-origin: var(--zx, 50%) var(--zy, 50%);
+      transition: transform 0.2s ease;
+      display: block;
+    }
+    .cm-preview-stage.zoomed img { transform: scale(3); }
+    .cm-preview-stage-busy {
+      position: absolute; inset: 0;
+      background: rgba(8, 9, 12, 0.7);
+      display: none; align-items: center; justify-content: center; gap: 0.5rem;
+      color: var(--cm-text-muted); font-size: 0.75rem;
+    }
+    .cm-preview-stage-busy.active { display: flex; }
+    .cm-preset-row {
+      display: flex; gap: 0.5rem; margin-top: 1rem;
+    }
+    .cm-preset-btn {
+      flex: 1;
+      padding: 0.625rem 0.75rem;
+      border-radius: var(--cm-radius-sm);
+      background: var(--cm-glass);
+      border: 1px solid var(--cm-glass-border);
+      color: var(--cm-text-muted);
+      font-family: 'Outfit', sans-serif; font-size: 0.75rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s ease;
+      display: flex; flex-direction: column; align-items: center; gap: 0.125rem;
+    }
+    .cm-preset-btn:hover { background: var(--cm-glass-hover); color: var(--cm-text); }
+    .cm-preset-btn.active {
+      background: var(--cm-accent-glow);
+      color: var(--cm-accent);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+    .cm-preset-btn small {
+      font-size: 0.625rem; opacity: 0.7; font-weight: 500;
+    }
+    .cm-preview-stats {
+      margin-top: 1rem;
+      padding: 0.625rem 0.75rem;
+      background: var(--cm-glass);
+      border: 1px solid var(--cm-glass-border);
+      border-radius: var(--cm-radius-sm);
+      font-size: 0.75rem; color: var(--cm-text-muted);
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem 1rem;
+    }
+    .cm-preview-stats strong { color: var(--cm-text); font-weight: 600; }
+    .cm-preview-footer {
+      display: flex; gap: 0.5rem; justify-content: flex-end;
+      padding: 0.875rem 1.25rem;
+      border-top: 1px solid var(--cm-glass-border);
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .cm-preview-error {
+      margin-top: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: var(--cm-radius-sm);
+      color: var(--cm-red); font-size: 0.75rem;
+      display: none;
+    }
+    .cm-preview-error.active { display: block; }
+
     /* Responsive */
     @media (max-width: 768px) {
       .cm-content { padding: 1rem; }
       .cm-card-header { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
       .cm-map-container { min-height: 300px; max-height: calc(100vh - 280px); }
       .cm-btn .cm-btn-label { display: none; }
+      .cm-preview-stats { grid-template-columns: 1fr; }
     }
     @media (prefers-reduced-motion: reduce) {
       .cm-bg-mesh { animation: none; }
@@ -354,6 +447,56 @@
   <!-- Hidden file input -->
   <input type="file" id="mapFileInput" accept=".jpg,.jpeg,.png,.webp" style="display: none;" />
 
+  <!-- Upload preview / optimize modal -->
+  <div id="uploadPreviewModal" class="cm-modal-overlay">
+    <div class="cm-modal cm-preview-modal" role="dialog" aria-labelledby="cm-preview-title">
+      <div class="cm-modal-accent"></div>
+      <div class="cm-preview-header">
+        <div id="cm-preview-title" class="cm-preview-title">
+          <i class="fa fa-image" style="color: var(--cm-accent);"></i>
+          Optimize Map
+        </div>
+        <button class="cm-btn cm-btn-glass" id="previewCancelXBtn" aria-label="Close" type="button" style="padding: 0.375rem 0.625rem;">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <div class="cm-preview-body">
+        <div id="previewStage" class="cm-preview-stage" role="img" aria-label="Optimized map preview (click to zoom)">
+          <img id="previewImage" alt="" />
+          <div id="previewBusy" class="cm-preview-stage-busy">
+            <div class="cm-spinner" style="width: 20px; height: 20px;"></div>
+            <span>Compressing…</span>
+          </div>
+        </div>
+        <div class="cm-preset-row" role="radiogroup" aria-label="Image quality preset">
+          <button type="button" class="cm-preset-btn" data-preset="low" role="radio" aria-checked="false">
+            Low <small>~60% — smallest</small>
+          </button>
+          <button type="button" class="cm-preset-btn active" data-preset="medium" role="radio" aria-checked="true">
+            Medium <small>~80% — balanced</small>
+          </button>
+          <button type="button" class="cm-preset-btn" data-preset="high" role="radio" aria-checked="false">
+            High <small>~92% — sharpest</small>
+          </button>
+        </div>
+        <div class="cm-preview-stats">
+          <div>Original: <strong id="statOriginal">—</strong></div>
+          <div>Optimized: <strong id="statOptimized">—</strong></div>
+          <div>Dimensions: <strong id="statDims">—</strong></div>
+          <div>Format: <strong>JPEG</strong></div>
+        </div>
+        <div id="previewError" class="cm-preview-error" role="alert"></div>
+      </div>
+      <div class="cm-preview-footer">
+        <button class="cm-btn cm-btn-glass" id="previewCancelBtn" type="button">Cancel</button>
+        <button class="cm-btn cm-btn-accent" id="previewSaveBtn" type="button">
+          <i class="fa fa-cloud-upload-alt"></i>
+          <span class="cm-btn-label">Save Map</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Cloudinary config and upload utility -->
   <script>
     window.API_URL = '<%= process.env.POLICE_CAD_API_URL || "" %>';
@@ -361,6 +504,7 @@
     window.CLOUDINARY_API_KEY = '<%= process.env.CLOUDINARY_API_KEY || "" %>';
     window.CLOUDINARY_UPLOAD_PRESET = '<%= process.env.CLOUDINARY_UPLOAD_PRESET || "" %>';
   </script>
+  <script src="/static/js/image-compress.js"></script>
   <script src="/static/js/cloudinary-upload.js"></script>
 
   <script>
@@ -375,6 +519,16 @@
 
     var mapImg = document.getElementById('mapImage');
     var mapContainer = document.getElementById('mapContainer');
+
+    // Rewrite the initial map URL through Cloudinary's f_auto,q_auto so
+    // browsers receive AVIF/WebP/JPEG variants per their capability. No-op
+    // for the default static map (non-Cloudinary).
+    (function applyDeliveryTransform() {
+      if (!window.ImageCompress) return;
+      var current = mapImg.getAttribute('src') || '';
+      var rewritten = window.ImageCompress.withCloudinaryDelivery(current);
+      if (rewritten !== current) mapImg.setAttribute('src', rewritten);
+    })();
 
     function updateTransform() {
       mapImg.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ')';
@@ -451,43 +605,166 @@
       fileInput.click();
     }
 
+    // ===== Upload Preview Modal =====
+    var INPUT_MAX_BYTES = 50 * 1024 * 1024;   // 50MB raw input cap
+    var OUTPUT_MAX_BYTES = 5 * 1024 * 1024;   // 5MB final compressed cap
+    var pendingFile = null;
+    var pendingBlob = null;
+    var currentPreset = 'medium';
+    var compressToken = 0;
+
+    var previewModal      = document.getElementById('uploadPreviewModal');
+    var previewImage      = document.getElementById('previewImage');
+    var previewStage      = document.getElementById('previewStage');
+    var previewBusy       = document.getElementById('previewBusy');
+    var previewSaveBtn    = document.getElementById('previewSaveBtn');
+    var previewCancelBtn  = document.getElementById('previewCancelBtn');
+    var previewCancelXBtn = document.getElementById('previewCancelXBtn');
+    var previewError      = document.getElementById('previewError');
+    var statOriginal      = document.getElementById('statOriginal');
+    var statOptimized     = document.getElementById('statOptimized');
+    var statDims          = document.getElementById('statDims');
+    var presetButtons     = document.querySelectorAll('.cm-preset-btn');
+
+    function setPreviewError(msg) {
+      if (msg) {
+        previewError.textContent = msg;
+        previewError.classList.add('active');
+      } else {
+        previewError.textContent = '';
+        previewError.classList.remove('active');
+      }
+    }
+
+    function setBusy(busy) {
+      previewBusy.classList.toggle('active', !!busy);
+      previewSaveBtn.disabled = !!busy;
+      previewSaveBtn.style.opacity = busy ? 0.5 : 1;
+      previewSaveBtn.style.cursor = busy ? 'wait' : 'pointer';
+    }
+
+    function openPreviewModal() {
+      previewModal.classList.add('active');
+    }
+    function closePreviewModal() {
+      previewModal.classList.remove('active');
+      if (previewImage.src) URL.revokeObjectURL(previewImage.src);
+      previewImage.removeAttribute('src');
+      pendingFile = null;
+      pendingBlob = null;
+      setPreviewError('');
+      setBusy(false);
+      previewStage.classList.remove('zoomed');
+    }
+
+    async function recompress() {
+      if (!pendingFile) return;
+      var token = ++compressToken;
+      setBusy(true);
+      setPreviewError('');
+      try {
+        var quality = window.ImageCompress.QUALITY_PRESETS[currentPreset];
+        var result = await window.ImageCompress.compressImage(pendingFile, {
+          quality: quality,
+          maxBytes: OUTPUT_MAX_BYTES,
+        });
+        if (token !== compressToken) return; // a newer pass started
+        pendingBlob = result.blob;
+        if (previewImage.src) URL.revokeObjectURL(previewImage.src);
+        previewImage.src = URL.createObjectURL(result.blob);
+        statOriginal.textContent = window.ImageCompress.formatBytes(result.originalBytes);
+        statOptimized.textContent = window.ImageCompress.formatBytes(result.bytes);
+        statDims.textContent = result.width + ' × ' + result.height;
+        if (result.bytes > OUTPUT_MAX_BYTES) {
+          setPreviewError('Could not shrink under 5MB even at lowest quality. Try a smaller source image.');
+          previewSaveBtn.disabled = true;
+          previewSaveBtn.style.opacity = 0.5;
+        }
+      } catch (err) {
+        console.error('Compression error:', err);
+        if (token === compressToken) setPreviewError('Could not process this image. Try a different file.');
+      } finally {
+        if (token === compressToken) setBusy(false);
+      }
+    }
+
     fileInput.addEventListener('change', async function(e) {
       var file = e.target.files[0];
+      fileInput.value = '';
       if (!file) return;
 
-      // Validate file type
       var validTypes = ['image/jpeg', 'image/png', 'image/webp'];
       if (validTypes.indexOf(file.type) === -1) {
         showError('Please select a JPG, PNG, or WebP image.');
-        fileInput.value = '';
+        return;
+      }
+      if (file.size > INPUT_MAX_BYTES) {
+        showError('Image must be under 50MB.');
         return;
       }
 
-      // Validate file size (10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        showError('Image must be under 10MB.');
-        fileInput.value = '';
-        return;
-      }
+      pendingFile = file;
+      // Reset preset to medium each open.
+      currentPreset = 'medium';
+      presetButtons.forEach(function(b) {
+        var active = b.dataset.preset === currentPreset;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-checked', active ? 'true' : 'false');
+      });
+      openPreviewModal();
+      recompress();
+    });
 
-      showLoading(true);
+    presetButtons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (btn.classList.contains('active')) return;
+        currentPreset = btn.dataset.preset;
+        presetButtons.forEach(function(b) {
+          var active = b === btn;
+          b.classList.toggle('active', active);
+          b.setAttribute('aria-checked', active ? 'true' : 'false');
+        });
+        recompress();
+      });
+    });
 
+    previewStage.addEventListener('click', function(e) {
+      if (!previewImage.src) return;
+      var rect = previewStage.getBoundingClientRect();
+      var x = ((e.clientX - rect.left) / rect.width) * 100;
+      var y = ((e.clientY - rect.top) / rect.height) * 100;
+      previewImage.style.setProperty('--zx', x + '%');
+      previewImage.style.setProperty('--zy', y + '%');
+      previewStage.classList.toggle('zoomed');
+    });
+
+    previewCancelBtn.addEventListener('click', closePreviewModal);
+    previewCancelXBtn.addEventListener('click', closePreviewModal);
+    previewModal.addEventListener('click', function(e) {
+      if (e.target === previewModal) closePreviewModal();
+    });
+
+    previewSaveBtn.addEventListener('click', async function() {
+      if (!pendingBlob) return;
+      setBusy(true);
+      setPreviewError('');
       try {
-        var url = await uploadToCloudinary(file, 'community-maps', communityId);
-
-        // Save mapLink to community via proxy route
+        // Wrap blob as a File so Cloudinary picks up a sensible filename.
+        var fileToUpload = new File([pendingBlob], 'community-map.jpg', { type: 'image/jpeg' });
+        var url = await uploadToCloudinary(fileToUpload, 'community-maps', communityId);
         var response = await fetch('/api/v1/community/' + communityId + '/map', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ mapLink: url }),
         });
-
         if (!response.ok) throw new Error('Failed to save map');
 
-        // Update the displayed image (clear handlers first to prevent stale triggers)
+        var deliveryUrl = window.ImageCompress.withCloudinaryDelivery(url);
+        closePreviewModal();
+        showLoading(true);
         mapImg.onload = null;
         mapImg.onerror = null;
-        mapImg.src = url;
+        mapImg.src = deliveryUrl;
         mapImg.onload = function() {
           mapImg.onload = null;
           resetView();
@@ -501,11 +778,9 @@
         };
       } catch (err) {
         console.error('Upload error:', err);
-        showLoading(false);
-        showError('Failed to upload map. Please try again.');
+        setPreviewError('Failed to upload map. Please try again.');
+        setBusy(false);
       }
-
-      fileInput.value = '';
     });
 
     // Remove map
