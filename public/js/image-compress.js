@@ -12,13 +12,15 @@
 (function (global) {
   'use strict';
 
-  // Each preset bundles a starting JPEG quality and a maximum longest-edge
-  // dimension. Higher presets keep more pixels AND fewer compression
-  // artifacts — important when owners zoom past 10x to verify legibility.
+  // Each preset bundles a starting JPEG quality, a maximum longest-edge
+  // dimension, and its own output byte cap. Higher presets keep more
+  // pixels AND fewer compression artifacts — owners zoom past 30x to read
+  // postal-code labels, so at that point the limiting factor is the saved
+  // resolution, not the quality setting.
   var QUALITY_PRESETS = {
-    low:    { quality: 0.65, maxDimension: 3072 },
-    medium: { quality: 0.82, maxDimension: 4096 },
-    high:   { quality: 0.96, maxDimension: 6144 },
+    low:    { quality: 0.65, maxDimension: 3072, maxBytes:  5 * 1024 * 1024 },
+    medium: { quality: 0.82, maxDimension: 4096, maxBytes:  5 * 1024 * 1024 },
+    high:   { quality: 0.96, maxDimension: 8192, maxBytes: 10 * 1024 * 1024 },
   };
 
   var DEFAULTS = {

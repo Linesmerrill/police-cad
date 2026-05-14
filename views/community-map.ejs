@@ -497,13 +497,13 @@
         </div>
         <div class="cm-preset-row" role="radiogroup" aria-label="Image quality preset">
           <button type="button" class="cm-preset-btn" data-preset="low" role="radio" aria-checked="false">
-            Low <small>~65% · 3072px max</small>
+            Low <small>~65% · 3072px · ≤5MB</small>
           </button>
           <button type="button" class="cm-preset-btn active" data-preset="medium" role="radio" aria-checked="true">
-            Medium <small>~82% · 4096px max</small>
+            Medium <small>~82% · 4096px · ≤5MB</small>
           </button>
           <button type="button" class="cm-preset-btn" data-preset="high" role="radio" aria-checked="false">
-            High <small>~96% · 6144px max</small>
+            High <small>~96% · 8192px · ≤10MB</small>
           </button>
         </div>
         <div class="cm-preview-stats">
@@ -633,8 +633,8 @@
     }
 
     // ===== Upload Preview Modal =====
-    var INPUT_MAX_BYTES = 50 * 1024 * 1024;   // 50MB raw input cap
-    var OUTPUT_MAX_BYTES = 5 * 1024 * 1024;   // 5MB final compressed cap
+    var INPUT_MAX_BYTES = 50 * 1024 * 1024;   // 50MB raw input cap.
+    // Final compressed cap is taken from the active preset (see QUALITY_PRESETS).
     var pendingFile = null;
     var pendingBlob = null;
     var currentPreset = 'medium';
@@ -735,7 +735,7 @@
         var result = await window.ImageCompress.compressImage(pendingFile, {
           quality: preset.quality,
           maxDimension: preset.maxDimension,
-          maxBytes: OUTPUT_MAX_BYTES,
+          maxBytes: preset.maxBytes,
         });
         if (token !== compressToken) return; // a newer pass started
         pendingBlob = result.blob;
@@ -744,8 +744,9 @@
         statOriginal.textContent = window.ImageCompress.formatBytes(result.originalBytes);
         statOptimized.textContent = window.ImageCompress.formatBytes(result.bytes);
         statDims.textContent = result.width + ' × ' + result.height;
-        if (result.bytes > OUTPUT_MAX_BYTES) {
-          setPreviewError('Could not shrink under 5MB even at lowest quality. Try a smaller source image.');
+        if (result.bytes > preset.maxBytes) {
+          var capLabel = window.ImageCompress.formatBytes(preset.maxBytes);
+          setPreviewError('Could not shrink under ' + capLabel + ' even at lowest quality. Try a smaller source image.');
           previewSaveBtn.disabled = true;
           previewSaveBtn.style.opacity = 0.5;
         }
