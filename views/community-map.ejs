@@ -1069,7 +1069,10 @@
     async function saveOptimized() {
       if (!pendingBlob) throw new Error('No optimized blob to save');
       var fileToUpload = new File([pendingBlob], 'community-map.jpg', { type: 'image/jpeg' });
-      var url = await uploadToCloudinary(fileToUpload, 'community-maps', communityId);
+      // 'community-maps' preset has no incoming transformation, so the
+      // full-resolution map we just compressed survives Cloudinary intake.
+      // The default preset caps at ~1000px — fine for avatars, ruinous for maps.
+      var url = await uploadToCloudinary(fileToUpload, 'community-maps', communityId, 'community-maps');
       var response = await fetch('/api/v1/community/' + communityId + '/map', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
