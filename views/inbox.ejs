@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inbox - Lines Police CAD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --in-bg: #08090c;
+      --in-glass: rgba(255,255,255,0.04);
+      --in-glass-border: rgba(255,255,255,0.06);
+      --in-glass-hover: rgba(255,255,255,0.07);
+      --in-text: #e2e8f0;
+      --in-text-muted: #94a3b8;
+      --in-text-dim: #64748b;
+      --in-accent: #38bdf8;
+      --in-accent-dim: rgba(56,189,248,0.12);
+      --in-accent-border: rgba(56,189,248,0.25);
+      --in-green: #22c55e;
+      --in-red: #ef4444;
+      --in-amber: #f59e0b;
+      --in-radius: 12px;
+    }
+    html { font-size: 16px; }
+    body {
+      background: var(--in-bg); color: var(--in-text);
+      font-family: 'Outfit', -apple-system, sans-serif;
+      min-height: 100vh; line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      padding-top: 36px;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: radial-gradient(ellipse 700px 500px at 10% 15%, rgba(245,158,11,0.05) 0%, transparent 70%);
+    }
+    .in-shell { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .in-header { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.5rem; }
+    .in-header-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(245,158,11,0.12); color: var(--in-amber); font-size: 1.2rem;
+      border: 1px solid rgba(245,158,11,0.25);
+    }
+    .in-title { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.01em; }
+    .in-subtitle { font-size: 0.85rem; color: var(--in-text-muted); margin-top: 0.1rem; }
+    .in-subtitle-row { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .in-swap-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(56,189,248,0.08); color: var(--in-accent, #38bdf8);
+      border: 1px solid rgba(56,189,248,0.18); cursor: pointer;
+      font-size: 0.65rem;
+      transition: background 120ms, border-color 120ms, transform 120ms;
+    }
+    .in-swap-btn:hover { background: rgba(56,189,248,0.18); border-color: rgba(56,189,248,0.35); transform: rotate(180deg); }
+
+    /* Civilian swap modal (mirrors wallet.ejs) */
+    .in-swap-backdrop {
+      position: fixed; inset: 0; background: rgba(2,6,12,0.6);
+      backdrop-filter: blur(6px); opacity: 0; pointer-events: none;
+      transition: opacity 160ms ease; z-index: 60;
+    }
+    .in-swap-backdrop.is-open { opacity: 1; pointer-events: auto; }
+    .in-swap-modal {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -48%) scale(0.97);
+      width: min(440px, calc(100vw - 2rem));
+      max-height: min(72vh, 600px); display: flex; flex-direction: column;
+      background: #0b1220;
+      border: 1px solid rgba(56,189,248,0.22);
+      border-radius: 12px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+      opacity: 0; pointer-events: none;
+      transition: opacity 160ms ease, transform 160ms ease;
+      z-index: 61;
+    }
+    .in-swap-modal.is-open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+    .in-swap-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 0.9rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-weight: 600; color: var(--in-text);
+    }
+    .in-swap-header button {
+      background: none; border: none; color: var(--in-text-muted);
+      cursor: pointer; font-size: 0.9rem; padding: 0.25rem;
+    }
+    .in-swap-header button:hover { color: var(--in-text); }
+    .in-swap-search {
+      margin: 0.7rem 0.9rem 0.4rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; padding: 0.45rem 0.65rem;
+    }
+    .in-swap-search i { color: var(--in-text-muted); font-size: 0.75rem; }
+    .in-swap-search input {
+      background: transparent; border: none; outline: none; color: var(--in-text);
+      flex: 1; font-size: 0.85rem;
+    }
+    .in-swap-list { overflow-y: auto; padding: 0.35rem 0.6rem 0.7rem; }
+    .in-swap-row {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.55rem 0.6rem; border-radius: 8px; cursor: pointer;
+      transition: background 100ms;
+    }
+    .in-swap-row:hover { background: rgba(56,189,248,0.06); }
+    .in-swap-row.is-current { background: rgba(56,189,248,0.1); cursor: default; }
+    .in-swap-row.is-current:hover { background: rgba(56,189,248,0.1); }
+    .in-swap-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(56,189,248,0.12); color: var(--in-accent, #38bdf8);
+      display: grid; place-items: center; font-weight: 700; font-size: 0.78rem;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .in-swap-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .in-swap-name { font-size: 0.88rem; color: var(--in-text); text-transform: capitalize; }
+    .in-swap-bal { font-size: 0.74rem; color: var(--in-text-muted); font-variant-numeric: tabular-nums; }
+    .in-swap-info { flex: 1; min-width: 0; }
+    .in-swap-pending {
+      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: #fbbf24; background: rgba(245,158,11,0.14);
+      padding: 0.1rem 0.4rem; border-radius: 4px; flex-shrink: 0;
+    }
+    .in-swap-current-pill {
+      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--in-accent, #38bdf8); background: rgba(56,189,248,0.12);
+      padding: 0.1rem 0.4rem; border-radius: 4px; flex-shrink: 0;
+    }
+    .in-swap-empty { padding: 1.5rem; text-align: center; color: var(--in-text-muted); font-size: 0.85rem; }
+
+    /* Contest modal — mirrors the records-tab Contest modal style
+       (#dd-contest-overlay in dd-civilians.js) so the experience reads as
+       the same flow regardless of where the civilian filed from. */
+    .in-contest-overlay {
+      position: fixed; inset: 0; z-index: 70;
+      background: rgba(2,6,12,0.7);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1rem; opacity: 0; pointer-events: none;
+      transition: opacity 160ms ease;
+    }
+    .in-contest-overlay.is-open { opacity: 1; pointer-events: auto; }
+    .in-contest-panel {
+      width: min(520px, 100%);
+      max-height: min(80vh, 640px);
+      display: flex; flex-direction: column;
+      background: #0b1220;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+      transform: translateY(8px) scale(0.98);
+      transition: transform 180ms ease;
+    }
+    .in-contest-overlay.is-open .in-contest-panel { transform: translateY(0) scale(1); }
+    .in-contest-header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.9rem 1.1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .in-contest-title {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-weight: 600; color: var(--in-text);
+    }
+    .in-contest-title i { color: var(--in-amber); }
+    .in-contest-close {
+      background: none; border: none; color: var(--in-text-muted);
+      cursor: pointer; padding: 0.25rem; font-size: 0.95rem;
+      border-radius: 6px;
+    }
+    .in-contest-close:hover { color: var(--in-text); background: rgba(255,255,255,0.04); }
+    .in-contest-body {
+      padding: 1.25rem;
+      overflow-y: auto; flex: 1;
+    }
+    .in-contest-section-label {
+      display: block; font-size: 0.72rem; color: var(--in-text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .in-contest-item-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+      margin-bottom: 0.4rem;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .in-contest-item-tag {
+      display: inline-block;
+      background: rgba(99,102,241,0.18);
+      color: #a5b4fc;
+      font-size: 0.65rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      text-transform: capitalize;
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+    }
+    .in-contest-item-summary { color: var(--in-text); font-size: 0.82rem; }
+    .in-contest-field { margin-top: 1rem; }
+    .in-contest-field label {
+      font-size: 0.72rem; color: var(--in-text-muted);
+      display: block; margin-bottom: 0.35rem;
+    }
+    .in-contest-field label .req { color: var(--in-red); }
+    .in-contest-field textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1.5px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+      color: var(--in-text);
+      font: inherit; font-size: 0.82rem;
+      resize: vertical;
+    }
+    .in-contest-field textarea:focus {
+      outline: none; border-color: var(--in-accent);
+    }
+    .in-contest-actions {
+      display: flex; gap: 0.5rem; justify-content: flex-end;
+      margin-top: 1.2rem;
+    }
+    .in-contest-btn {
+      padding: 0.5rem 0.85rem;
+      border-radius: 8px;
+      font: inherit; font-size: 0.82rem; font-weight: 500;
+      cursor: pointer; border: 1px solid transparent;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      transition: filter 120ms ease, background 120ms ease;
+    }
+    .in-contest-btn-cancel {
+      background: rgba(255,255,255,0.04);
+      color: var(--in-text-muted);
+      border-color: rgba(255,255,255,0.08);
+    }
+    .in-contest-btn-cancel:hover { background: rgba(255,255,255,0.08); color: var(--in-text); }
+    .in-contest-btn-submit {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #0a0a0f; border: none;
+    }
+    .in-contest-btn-submit:hover { filter: brightness(1.07); }
+    .in-contest-btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    .in-contest-hint {
+      font-size: 0.72rem; color: var(--in-text-dim);
+      margin-top: 0.6rem; line-height: 1.45;
+    }
+    .in-contest-hint i { color: var(--in-amber); margin-right: 0.25rem; }
+
+    .in-filter-bar {
+      display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .in-chip {
+      padding: 0.4rem 0.85rem; border-radius: 999px;
+      background: var(--in-glass); border: 1px solid var(--in-glass-border);
+      color: var(--in-text-muted); font: inherit; font-size: 0.8rem;
+      cursor: pointer; transition: all 120ms ease;
+    }
+    .in-chip:hover { background: var(--in-glass-hover); color: var(--in-text); }
+    .in-chip.active {
+      background: var(--in-accent-dim); color: var(--in-accent);
+      border-color: var(--in-accent-border);
+    }
+
+    .in-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .in-item {
+      display: grid; grid-template-columns: auto 1fr auto auto; gap: 0.9rem;
+      align-items: center;
+      background: var(--in-glass); border: 1px solid var(--in-glass-border);
+      border-radius: var(--in-radius); padding: 0.95rem 1.1rem;
+    }
+    .in-item-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(245,158,11,0.1); color: var(--in-amber);
+    }
+    .in-item.paid .in-item-icon { background: rgba(34,197,94,0.1); color: var(--in-green); }
+    .in-item.delinquent .in-item-icon { background: rgba(239,68,68,0.1); color: var(--in-red); }
+    .in-item.dismissed .in-item-icon { background: rgba(148,163,184,0.1); color: var(--in-text-dim); }
+
+    .in-item-body { min-width: 0; }
+    .in-item-title { font-size: 0.95rem; font-weight: 500; color: var(--in-text); }
+    .in-item-meta {
+      font-size: 0.75rem; color: var(--in-text-dim);
+      display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.25rem;
+    }
+    .in-item-meta span { white-space: nowrap; }
+    .in-item-amount {
+      font-size: 1rem; font-weight: 600; color: var(--in-amber);
+      white-space: nowrap;
+    }
+    .in-item.paid .in-item-amount { color: var(--in-green); }
+    .in-item.delinquent .in-item-amount { color: var(--in-red); }
+    .in-item.dismissed .in-item-amount { color: var(--in-text-dim); text-decoration: line-through; }
+    .in-item.dismissed { opacity: 0.55; }
+    .in-item.dismissed .in-item-title { text-decoration: line-through; color: var(--in-text-dim); }
+    .in-item.contested .in-item-icon { background: rgba(168,85,247,0.12); color: #a78bfa; }
+    .in-item.contested { border-color: rgba(168,85,247,0.28); background: linear-gradient(135deg, rgba(168,85,247,0.05), var(--in-glass)); }
+    .in-pill {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.1rem 0.45rem; border-radius: 4px;
+      font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .in-pill.contested { color: #c4b5fd; background: rgba(139,92,246,0.18); border: 1px solid rgba(139,92,246,0.32); }
+    .in-pill.dismissed { color: #94a3b8; background: rgba(148,163,184,0.12); border: 1px solid rgba(148,163,184,0.2); }
+    .in-pill.upheld { color: #fbbf24; background: rgba(251,191,36,0.14); border: 1px solid rgba(251,191,36,0.28); }
+    .in-pill.partial { color: #c4b5fd; background: rgba(139,92,246,0.18); border: 1px solid rgba(139,92,246,0.32); }
+
+    .in-charges {
+      display: flex; flex-wrap: wrap; gap: 0.3rem;
+      margin-top: 0.45rem;
+    }
+    .in-charge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.2rem 0.55rem; border-radius: 999px;
+      font-size: 0.72rem; line-height: 1.1;
+      background: rgba(148,163,184,0.08);
+      border: 1px solid rgba(148,163,184,0.18);
+      color: var(--in-text);
+    }
+    .in-charge .in-charge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--in-text-dim); flex-shrink: 0;
+    }
+    .in-charge.upheld { color: #fcd34d; background: rgba(251,191,36,0.10); border-color: rgba(251,191,36,0.28); }
+    .in-charge.upheld .in-charge-dot { background: #fbbf24; }
+    .in-charge.dismissed { color: #94a3b8; background: rgba(148,163,184,0.08); border-color: rgba(148,163,184,0.18); }
+    .in-charge.dismissed .in-charge-label { text-decoration: line-through; opacity: 0.75; }
+    .in-charge.dismissed .in-charge-dot { background: #64748b; }
+    .in-charge-amount { color: var(--in-text-dim); font-variant-numeric: tabular-nums; font-size: 0.68rem; }
+    .in-charges[data-expanded="false"] .in-charge.hidden { display: none; }
+    .in-charges-more {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.2rem 0.6rem; border-radius: 999px;
+      background: transparent; border: 1px dashed rgba(148,163,184,0.32);
+      color: var(--in-text-dim); font: inherit; font-size: 0.7rem; cursor: pointer;
+    }
+    .in-charges-more:hover { color: var(--in-accent); border-color: var(--in-accent-border); }
+
+    .in-actions { display: flex; gap: 0.4rem; }
+    .in-btn {
+      padding: 0.42rem 0.75rem; border-radius: 7px;
+      background: var(--in-accent-dim); color: var(--in-accent);
+      border: 1px solid var(--in-accent-border);
+      font: inherit; font-size: 0.78rem; font-weight: 500;
+      cursor: pointer; transition: background 120ms ease;
+    }
+    .in-btn:hover { background: rgba(56,189,248,0.2); }
+    .in-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .in-btn.ghost {
+      background: transparent; color: var(--in-text-muted);
+      border-color: var(--in-glass-border);
+    }
+    .in-btn.ghost:hover { background: var(--in-glass-hover); color: var(--in-text); }
+
+    .in-empty {
+      padding: 2rem 1rem; text-align: center; color: var(--in-text-dim);
+      background: var(--in-glass); border: 1px dashed var(--in-glass-border);
+      border-radius: var(--in-radius);
+    }
+
+    /* Highlight pulse when an item is deep-linked from /wallet */
+    .in-item-focused {
+      animation: in-pulse 2s ease-out;
+      box-shadow: 0 0 0 2px var(--in-accent-border) inset;
+    }
+    @keyframes in-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(56,189,248,0.6), 0 0 0 2px var(--in-accent-border) inset; }
+      35%  { box-shadow: 0 0 0 12px rgba(56,189,248,0), 0 0 0 2px var(--in-accent-border) inset; }
+      100% { box-shadow: 0 0 0 0 rgba(56,189,248,0), 0 0 0 2px var(--in-accent-border) inset; }
+    }
+
+    .in-pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 1.25rem; font-size: 0.85rem; color: var(--in-text-muted);
+    }
+    .in-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    @media (max-width: 600px) {
+      .in-item { grid-template-columns: auto 1fr; row-gap: 0.5rem; }
+      .in-item-amount { grid-column: 2; text-align: right; }
+      .in-actions { grid-column: 1 / -1; justify-content: flex-end; }
+    }
+  </style>
+</head>
+<body>
+
+<%- include('partials/standalone-utility', {
+  user: user,
+  communityName: communityName,
+  pageLabel: 'Inbox',
+  backHref: '/civ-dashboard',
+  backLabel: 'Back to dashboard',
+  useLastDashboard: true
+}) %>
+
+<div class="in-shell">
+  <div class="in-header" style="justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:0.85rem;">
+      <div class="in-header-icon"><i class="fa fa-inbox"></i></div>
+      <div>
+        <div class="in-title" style="display:flex; align-items:center; gap:0.5rem;">Inbox<% if (new Date() < new Date('2026-05-26')) { %><span style="background:linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25)); color:#c4b5fd; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(139,92,246,0.3);">Beta</span><% } %></div>
+        <div class="in-subtitle in-subtitle-row" style="text-transform:capitalize;">
+          <span id="inboxSubtitle">Loading civilian…</span>
+          <button type="button" class="in-swap-btn" id="swapCivBtn" title="Switch civilian" aria-label="Switch civilian">
+            <i class="fa fa-right-left"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <a class="in-btn ghost" id="walletLink" href="/wallet?c=<%= encodedCivId || '' %>" style="text-decoration:none;align-self:center;">
+      <i class="fa fa-wallet"></i> Wallet
+    </a>
+  </div>
+
+  <div class="in-swap-backdrop" id="swapBackdrop"></div>
+  <div class="in-swap-modal" id="swapModal" role="dialog" aria-modal="true" aria-label="Switch civilian">
+    <div class="in-swap-header">
+      <span><i class="fa fa-right-left" style="margin-right:0.4rem; color:var(--in-text-muted);"></i> Switch civilian</span>
+      <button type="button" id="swapCloseBtn" aria-label="Close"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="in-swap-search">
+      <i class="fa fa-search"></i>
+      <input type="search" id="swapSearch" placeholder="Search your civilians…" autocomplete="off">
+    </div>
+    <div class="in-swap-list" id="swapList"><div class="in-swap-empty">Loading civilians…</div></div>
+  </div>
+
+  <div class="in-filter-bar" id="filterBar">
+    <button class="in-chip active" data-status="">All</button>
+    <button class="in-chip" data-status="pending">Pending</button>
+    <button class="in-chip" data-status="delinquent">Delinquent</button>
+    <button class="in-chip" data-status="paid">Paid</button>
+    <button class="in-chip" data-status="contested">Contested</button>
+    <button class="in-chip" data-status="dismissed">Dismissed</button>
+  </div>
+
+  <div class="in-list" id="inboxList"><div class="in-empty">Loading…</div></div>
+
+  <div class="in-pagination">
+    <button class="in-btn ghost" id="prevBtn"><i class="fa fa-chevron-left"></i> Prev</button>
+    <span id="pageInfo">—</span>
+    <button class="in-btn ghost" id="nextBtn">Next <i class="fa fa-chevron-right"></i></button>
+  </div>
+</div>
+
+<script>
+  const API_URL = "<%- apiUrl %>";
+  const CIVILIAN_ID = "<%- civilianId %>";
+  const USER_ID = "<%- userId %>";
+  const COMMUNITY_ID = "<%- communityId || '' %>";
+  const CIVILIAN_NAME = "<%- civilianName || '' %>";
+
+  document.getElementById('inboxSubtitle').textContent = CIVILIAN_NAME || 'Civilian';
+
+  let state = { page: 1, limit: 25, status: '', totalCount: 0 };
+
+  function fmtMoney(cents) {
+    const sign = cents < 0 ? '-' : '';
+    const abs = Math.abs(cents);
+    const dollars = Math.floor(abs / 100);
+    const rem = abs % 100;
+    return sign + '$' + dollars.toLocaleString() + '.' + String(rem).padStart(2, '0');
+  }
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function fmtDate(s) {
+    if (!s) return '';
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  async function load() {
+    const q = new URLSearchParams();
+    if (CIVILIAN_ID) q.set('civilianId', CIVILIAN_ID); else if (USER_ID) q.set('userId', USER_ID);
+    q.set('page', state.page);
+    q.set('limit', state.limit);
+    if (state.status) q.set('status', state.status);
+    try {
+      const res = await fetch(`${API_URL}/api/v2/economy/inbox?${q.toString()}`);
+      if (!res.ok) throw new Error('inbox fetch failed');
+      const data = await res.json();
+      state.totalCount = data.totalCount || 0;
+      render(data.data || []);
+    } catch (err) {
+      console.error(err);
+      document.getElementById('inboxList').innerHTML = '<div class="in-empty">Could not load inbox.</div>';
+    }
+  }
+
+  function render(items) {
+    // Cache so the Contest handler can re-read the full item (refType, refId,
+    // body, amount, etc.) without re-fetching.
+    window._inboxItems = items;
+    const host = document.getElementById('inboxList');
+    if (!items.length) {
+      host.innerHTML = '<div class="in-empty">No items match this filter.</div>';
+      updatePagination();
+      return;
+    }
+    host.innerHTML = items.map(it => {
+      const icon = it.type === 'fine' ? 'fa-gavel'
+                 : it.type === 'payroll' ? 'fa-money-bill-wave'
+                 : it.type === 'verdict' ? 'fa-scale-balanced'
+                 : 'fa-file-invoice-dollar';
+      const status = it.status || 'pending';
+      const isFine = (it.type === 'fine') || (it.source === 'citation');
+      const due = it.dueAt ? `Due ${fmtDate(it.dueAt)}` : '';
+
+      // Build meta line — replace the raw status word with a styled pill for
+      // contested/dismissed; surface contest extension + resolution context.
+      let statusBit = '';
+      if (status === 'contested') {
+        statusBit = `<span><span class="in-pill contested"><i class="fa fa-scale-balanced"></i> Contested</span></span>`;
+      } else if (status === 'dismissed') {
+        statusBit = `<span><span class="in-pill dismissed"><i class="fa fa-ban"></i> Dismissed</span></span>`;
+      } else {
+        statusBit = `<span>· ${escapeHtml(status)}</span>`;
+      }
+
+      const contestedSub = (status === 'contested')
+        ? `<span>· Awaiting judge review</span>` +
+          (it.originalDueAt ? `<span>· Original due ${escapeHtml(fmtDate(it.originalDueAt))}</span>` : '') +
+          (it.contestReason ? `<span>· Reason: ${escapeHtml(it.contestReason)}</span>` : '')
+        : '';
+      const resolutionSub = (status === 'pending' && it.resolution === 'upheld')
+        ? `<span><span class="in-pill upheld"><i class="fa fa-gavel"></i> Contest denied</span></span>`
+        : (status === 'pending' && it.resolution === 'partial')
+        ? `<span><span class="in-pill partial"><i class="fa fa-scale-balanced"></i> Partially upheld</span></span>`
+        : '';
+
+      let actions = '';
+      if (status === 'pending' || status === 'delinquent') {
+        actions += `<button class="in-btn" data-action="pay">Pay</button>`;
+        // Contest only when the fine hasn't already been through the courts.
+        // Once `resolution` is set (upheld / partial / dismissed) the verdict
+        // is final and re-contesting isn't allowed.
+        if (isFine && !it.resolution) {
+          actions += `<button class="in-btn ghost" data-action="contest">Contest</button>`;
+        }
+      }
+
+      // Charges block — structured per-charge breakdown when the API
+      // included a `charges` array. Falls back to the legacy `body` string
+      // for older items (no migration on those yet).
+      const COLLAPSE_AT = 2;
+      const charges = Array.isArray(it.charges) ? it.charges : [];
+      let chargesBlock = '';
+      if (charges.length > 0) {
+        const overflow = Math.max(0, charges.length - COLLAPSE_AT);
+        const chargeHtml = charges.map((c, idx) => {
+          const cStatus = (c.status || 'pending').toLowerCase();
+          const hiddenCls = idx >= COLLAPSE_AT ? ' hidden' : '';
+          const amt = (typeof c.amount === 'number' && c.amount > 0)
+            ? `<span class="in-charge-amount">${fmtMoney(c.amount)}</span>` : '';
+          return `<span class="in-charge ${escapeHtml(cStatus)}${hiddenCls}">
+            <span class="in-charge-dot"></span>
+            <span class="in-charge-label">${escapeHtml(c.label || 'Charge')}</span>
+            ${amt}
+          </span>`;
+        }).join('');
+        const moreBtn = overflow > 0
+          ? `<button type="button" class="in-charges-more" data-action="toggle-charges"><i class="fa fa-chevron-down"></i> Show ${overflow} more</button>`
+          : '';
+        chargesBlock = `<div class="in-charges" data-expanded="false">${chargeHtml}${moreBtn}</div>`;
+      } else if (it.body) {
+        chargesBlock = `<div class="in-item-meta"><span>· ${escapeHtml(it.body)}</span></div>`;
+      }
+
+      return `
+        <div class="in-item ${escapeHtml(status)}" id="item-${escapeHtml(it._id)}" data-id="${escapeHtml(it._id)}">
+          <div class="in-item-icon"><i class="fa ${icon}"></i></div>
+          <div class="in-item-body">
+            <div class="in-item-title">${escapeHtml(it.title || it.type || 'Item')}</div>
+            <div class="in-item-meta">
+              <span>${escapeHtml(it.source || '')}</span>
+              ${statusBit}
+              ${resolutionSub}
+              ${due ? `<span>· ${escapeHtml(due)}</span>` : ''}
+              ${contestedSub}
+            </div>
+            ${chargesBlock}
+          </div>
+          <div class="in-item-amount">${fmtMoney(it.amount || 0)}</div>
+          <div class="in-actions">${actions}</div>
+        </div>
+      `;
+    }).join('');
+    host.querySelectorAll('[data-action="toggle-charges"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const wrap = e.currentTarget.closest('.in-charges');
+        if (!wrap) return;
+        const expanded = wrap.getAttribute('data-expanded') === 'true';
+        wrap.setAttribute('data-expanded', expanded ? 'false' : 'true');
+        const overflow = wrap.querySelectorAll('.in-charge.hidden').length;
+        e.currentTarget.innerHTML = expanded
+          ? `<i class="fa fa-chevron-down"></i> Show ${overflow} more`
+          : `<i class="fa fa-chevron-up"></i> Show less`;
+      });
+    });
+    host.querySelectorAll('[data-action="pay"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const id = e.target.closest('[data-id]').dataset.id;
+        onPay(id);
+      });
+    });
+    host.querySelectorAll('[data-action="contest"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const id = e.target.closest('[data-id]').dataset.id;
+        onContest(id);
+      });
+    });
+    updatePagination();
+    maybeFocusHashItem();
+  }
+
+  // When the user lands here via /inbox#item-<id> (e.g. from /wallet Recent
+  // Inbox), scroll the target into view and pulse a highlight ring. Runs on
+  // every render so the same hash works after pay/dismiss refreshes.
+  function maybeFocusHashItem() {
+    const hash = window.location.hash || '';
+    const m = hash.match(/^#item-(.+)$/);
+    if (!m) return;
+    const target = document.getElementById('item-' + m[1]);
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.classList.add('in-item-focused');
+    setTimeout(() => target.classList.remove('in-item-focused'), 2400);
+  }
+
+  function updatePagination() {
+    const totalPages = Math.max(1, Math.ceil(state.totalCount / state.limit));
+    document.getElementById('pageInfo').textContent = `Page ${state.page} of ${totalPages} · ${state.totalCount} items`;
+    document.getElementById('prevBtn').disabled = state.page <= 1;
+    document.getElementById('nextBtn').disabled = state.page >= totalPages;
+  }
+
+  function onPay(id) {
+    if (window.ddModal) {
+      window.ddModal({
+        type: 'info', icon: 'fa-credit-card',
+        title: 'Pay this item?',
+        message: 'This will debit your civilian’s wallet.',
+        confirmText: 'Pay',
+        onConfirm: () => doPay(id),
+      });
+    } else { doPay(id); }
+  }
+
+  // Contest flow.
+  //
+  // For fines linked to a criminal-history record (refType=criminalHistoryId),
+  // we mirror the records-tab contest flow on dept-dashboard: a court case is
+  // filed with the underlying record as the contested item, so judges have a
+  // SINGLE queue regardless of whether the civilian filed from the records
+  // tab or from their own inbox. We then mark the inbox item itself as
+  // contested so the due date is extended and the row gets the
+  // "Contested — awaiting judge review" visual.
+  //
+  // For inbox items without a linked record (admin fees, verdict notices),
+  // there's no underlying record to contest — fall back to the direct
+  // inbox-only contest (status flip + reason).
+  function findItemById(id) {
+    return (window._inboxItems || []).find(it => it._id === id);
+  }
+
+  function ensureContestModal() {
+    if (document.getElementById('inContestOverlay')) return;
+    const html = `
+      <div class="in-contest-overlay" id="inContestOverlay" role="dialog" aria-modal="true" aria-label="Contest">
+        <div class="in-contest-panel">
+          <div class="in-contest-header">
+            <div class="in-contest-title">
+              <i class="fa fa-gavel"></i>
+              <span id="inContestTitle">Contest fine</span>
+            </div>
+            <button type="button" class="in-contest-close" id="inContestClose" aria-label="Close"><i class="fa fa-times"></i></button>
+          </div>
+          <div class="in-contest-body">
+            <span class="in-contest-section-label" id="inContestItemsLabel">Fine to contest</span>
+            <div id="inContestItems"></div>
+            <div class="in-contest-field">
+              <label for="inContestStatement">Your statement <span class="req">*</span></label>
+              <textarea id="inContestStatement" rows="4" placeholder="Explain why you are contesting — a judge will review."></textarea>
+            </div>
+            <div class="in-contest-hint" id="inContestHint"></div>
+            <div class="in-contest-actions">
+              <button type="button" class="in-contest-btn in-contest-btn-cancel" id="inContestCancel">Cancel</button>
+              <button type="button" class="in-contest-btn in-contest-btn-submit" id="inContestSubmit"><i class="fa fa-gavel"></i> Submit Contest</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+    const overlay = document.getElementById('inContestOverlay');
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeContestModal();
+    });
+    document.getElementById('inContestClose').addEventListener('click', closeContestModal);
+    document.getElementById('inContestCancel').addEventListener('click', closeContestModal);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && overlay.classList.contains('is-open')) closeContestModal();
+    });
+  }
+
+  function closeContestModal() {
+    const overlay = document.getElementById('inContestOverlay');
+    if (!overlay) return;
+    overlay.classList.remove('is-open');
+  }
+
+  let _contestActiveItem = null;
+
+  function onContest(id) {
+    const item = findItemById(id);
+    if (!item) return;
+    _contestActiveItem = item;
+    ensureContestModal();
+    const linkedToRecord = item.refType === 'criminalHistoryId' && !!item.refId;
+    const summary = item.body || item.title || 'this fine';
+    document.getElementById('inContestTitle').textContent = linkedToRecord ? 'Contest citation' : 'Contest fine';
+    document.getElementById('inContestItemsLabel').textContent = linkedToRecord ? 'Citation to contest' : 'Fine to contest';
+    document.getElementById('inContestItems').innerHTML = `
+      <div class="in-contest-item-card">
+        <span class="in-contest-item-tag">${linkedToRecord ? 'Citation' : 'Fine'}</span>
+        <span class="in-contest-item-summary">${escapeHtml(summary)} · ${escapeHtml(fmtMoney(item.amount || 0))}</span>
+      </div>
+    `;
+    document.getElementById('inContestHint').innerHTML = linkedToRecord
+      ? '<i class="fa fa-circle-info"></i> Filing a contest opens a court case for a judge to review. Your due date is extended while the case is open.'
+      : '<i class="fa fa-circle-info"></i> A judge will review your contest. Your due date is extended while it\'s under review.';
+
+    const ta = document.getElementById('inContestStatement');
+    ta.value = '';
+    const submitBtn = document.getElementById('inContestSubmit');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fa fa-gavel"></i> Submit Contest';
+
+    // Re-bind submit each open so the closure captures the latest item.
+    submitBtn.onclick = async () => {
+      const statement = (ta.value || '').trim();
+      if (!statement) {
+        ta.focus();
+        ta.style.borderColor = 'var(--in-red)';
+        setTimeout(() => { ta.style.borderColor = ''; }, 1200);
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Submitting…';
+      try {
+        await doContest(_contestActiveItem, statement);
+        closeContestModal();
+      } catch (err) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa fa-gavel"></i> Submit Contest';
+      }
+    };
+
+    document.getElementById('inContestOverlay').classList.add('is-open');
+    setTimeout(() => ta.focus(), 80);
+  }
+
+  async function doContest(item, statement) {
+    const linkedToRecord = item.refType === 'criminalHistoryId' && !!item.refId;
+    try {
+      // 1. When linked to a criminal-history record, file a court case so
+      // the contest lands in the judicial review queue alongside contests
+      // filed from the records tab.
+      if (linkedToRecord) {
+        const summary = item.body || item.title || 'Citation';
+        const payload = {
+          courtCase: {
+            civilianID: CIVILIAN_ID,
+            civilianName: CIVILIAN_NAME,
+            userID: USER_ID,
+            communityID: COMMUNITY_ID,
+            departmentID: '',
+            statement: statement,
+            contestedItems: [{ itemID: item.refId, itemType: 'citation', summary: summary }],
+          },
+        };
+        const ccRes = await fetch(`${API_URL}/api/v2/court-cases`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!ccRes.ok) throw new Error(`court case create failed: ${ccRes.status}`);
+      }
+
+      // 2. Always mark the inbox item itself as contested so the due date
+      // is extended and the row renders in the contested state.
+      const res = await fetch(`${API_URL}/api/v2/economy/inbox/${item._id}/contest?userId=${encodeURIComponent(USER_ID)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: statement }),
+      });
+      if (!res.ok) throw new Error(`contest failed: ${res.status}`);
+      await load();
+    } catch (err) {
+      console.error(err);
+      if (window.ddModal) {
+        window.ddModal({ type: 'danger', icon: 'fa-triangle-exclamation', title: 'Could not contest', message: err.message });
+      }
+      throw err;
+    }
+  }
+
+  async function doPay(id) {
+    try {
+      const res = await fetch(`${API_URL}/api/v2/economy/inbox/${id}/pay?userId=${encodeURIComponent(USER_ID)}`, {
+        method: 'POST',
+      });
+      if (res.status === 402) {
+        if (window.ddModal) window.ddModal({ type: 'danger', icon: 'fa-circle-exclamation', title: 'Insufficient balance', message: 'Your civilian doesn’t have enough money to pay this item.' });
+        return;
+      }
+      if (!res.ok) throw new Error(`pay failed: ${res.status}`);
+      await load();
+    } catch (err) {
+      console.error(err);
+      if (window.ddModal) window.ddModal({ type: 'danger', icon: 'fa-triangle-exclamation', title: 'Payment failed', message: err.message });
+    }
+  }
+
+  // ---------- Live updates via WebSocket ----------
+  // Subscribe to /ws/notifications scoped to the community. When the API
+  // broadcasts inbox.created / inbox.updated for an item that matches the
+  // current civilian/user view, refresh the list in place.
+  (function startInboxSocket() {
+    if (!USER_ID || !API_URL) return;
+    const proto = API_URL.indexOf('https') === 0 ? 'wss' : 'ws';
+    const host = API_URL.replace(/^https?:\/\//, '');
+    const params = new URLSearchParams();
+    params.set('userId', USER_ID);
+    if (typeof COMMUNITY_ID !== 'undefined' && COMMUNITY_ID) params.set('communityId', COMMUNITY_ID);
+    let ws;
+    let reconnectTimer = null;
+    let reloadTimer = null;
+
+    function scheduleReload() {
+      // Debounce a burst of events into a single refresh so we don't
+      // hammer the list endpoint when a court case drops 5 fines at once.
+      if (reloadTimer) return;
+      reloadTimer = setTimeout(() => { reloadTimer = null; load(); }, 250);
+    }
+
+    function connect() {
+      try {
+        ws = new WebSocket(`${proto}://${host}/ws/notifications?${params.toString()}`);
+      } catch (e) { return; }
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          if (msg.event !== 'inbox.created' && msg.event !== 'inbox.updated') return;
+          const item = msg.data || {};
+          // Only refresh if this event is relevant to the view we're showing.
+          if (CIVILIAN_ID && item.civilianId !== CIVILIAN_ID) return;
+          if (!CIVILIAN_ID && item.userId !== USER_ID) return;
+          scheduleReload();
+        } catch (e) { /* swallow */ }
+      };
+      ws.onclose = () => {
+        if (reconnectTimer) return;
+        reconnectTimer = setTimeout(() => { reconnectTimer = null; connect(); }, 5000);
+      };
+    }
+    connect();
+  })();
+
+  document.getElementById('filterBar').addEventListener('click', e => {
+    const chip = e.target.closest('.in-chip');
+    if (!chip) return;
+    document.querySelectorAll('.in-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    state.status = chip.dataset.status;
+    state.page = 1;
+    load();
+  });
+  document.getElementById('prevBtn').addEventListener('click', () => { if (state.page > 1) { state.page--; load(); } });
+  document.getElementById('nextBtn').addEventListener('click', () => { state.page++; load(); });
+
+  load();
+
+  // ---------- Civilian quick-swap ----------
+  // Mirrors the wallet picker so users can hop between civilians without
+  // bouncing through a dashboard. Includes per-civ pending counts so the
+  // user can see which civilian's inbox actually needs attention.
+  const swapBackdrop = document.getElementById('swapBackdrop');
+  const swapModal = document.getElementById('swapModal');
+  const swapSearch = document.getElementById('swapSearch');
+  const swapList = document.getElementById('swapList');
+  let swapCivilians = null;
+  let swapPendingCounts = {};
+
+  function encodeCivIdClient(id) {
+    return btoa(id).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function openSwapModal() {
+    swapBackdrop.classList.add('is-open');
+    swapModal.classList.add('is-open');
+    swapSearch.value = '';
+    setTimeout(() => swapSearch.focus(), 80);
+    if (!swapCivilians) loadSwapCivilians();
+    else renderSwapList();
+  }
+  function closeSwapModal() {
+    swapBackdrop.classList.remove('is-open');
+    swapModal.classList.remove('is-open');
+  }
+  document.getElementById('swapCivBtn').addEventListener('click', openSwapModal);
+  document.getElementById('swapCloseBtn').addEventListener('click', closeSwapModal);
+  swapBackdrop.addEventListener('click', closeSwapModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && swapModal.classList.contains('is-open')) closeSwapModal();
+  });
+  swapSearch.addEventListener('input', renderSwapList);
+
+  async function loadSwapCivilians() {
+    swapList.innerHTML = '<div class="in-swap-empty">Loading civilians…</div>';
+    try {
+      const url = `${API_URL}/api/v1/civilians/user/${encodeURIComponent(USER_ID)}` +
+        (COMMUNITY_ID ? `?active_community_id=${encodeURIComponent(COMMUNITY_ID)}` : '');
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      swapCivilians = Array.isArray(data) ? data : [];
+
+      // Pull pending counts so each row can hint which civilian still has
+      // work to do. Non-essential; rendered list is shown either way.
+      if (COMMUNITY_ID) {
+        try {
+          const cRes = await fetch(`${API_URL}/api/v2/economy/inbox/pending-counts?userId=${encodeURIComponent(USER_ID)}&communityId=${encodeURIComponent(COMMUNITY_ID)}`);
+          if (cRes.ok) {
+            const cData = await cRes.json();
+            swapPendingCounts = (cData && cData.counts) || {};
+          }
+        } catch (e) { /* swallow */ }
+      }
+
+      renderSwapList();
+    } catch (err) {
+      console.error('swap civs load failed:', err);
+      swapList.innerHTML = '<div class="in-swap-empty" style="color:#ef4444;">Could not load civilians.</div>';
+    }
+  }
+
+  function escapeAttr(s) {
+    return String(s == null ? '' : s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+
+  function renderSwapList() {
+    if (!swapCivilians) return;
+    const q = (swapSearch.value || '').trim().toLowerCase();
+    const rows = swapCivilians
+      .map(c => {
+        const inner = c.civilian || {};
+        const fn = (inner.firstName || '').trim();
+        const ln = (inner.lastName || '').trim();
+        const combined = (inner.name || '').trim();
+        const name = [fn, ln].filter(Boolean).join(' ') || combined || 'Unnamed civilian';
+        const parts = name.split(/\s+/);
+        const initials = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?';
+        return {
+          id: c._id,
+          name,
+          image: inner.image || '',
+          balance: typeof inner.balance === 'number' ? inner.balance : 0,
+          pending: swapPendingCounts[c._id] || 0,
+          initials,
+        };
+      })
+      .filter(r => !q || r.name.toLowerCase().includes(q));
+
+    if (rows.length === 0) {
+      swapList.innerHTML = `<div class="in-swap-empty">${q ? 'No civilians match that search.' : 'You have no other civilians in this community.'}</div>`;
+      return;
+    }
+
+    swapList.innerHTML = rows.map(r => {
+      const isCurrent = r.id === CIVILIAN_ID;
+      const avatar = r.image
+        ? `<img src="${escapeAttr(r.image)}" alt="">`
+        : escapeHtml(r.initials);
+      const pendingPill = (r.pending > 0 && !isCurrent)
+        ? `<span class="in-swap-pending">${r.pending > 99 ? '99+' : r.pending} pending</span>`
+        : '';
+      const currentPill = isCurrent ? '<span class="in-swap-current-pill">Current</span>' : '';
+      const cls = 'in-swap-row' + (isCurrent ? ' is-current' : '');
+      return `
+        <div class="${cls}" data-civ-id="${escapeAttr(r.id)}">
+          <div class="in-swap-avatar">${avatar}</div>
+          <div class="in-swap-info">
+            <div class="in-swap-name">${escapeHtml(r.name)}</div>
+            <div class="in-swap-bal">${fmtMoney(r.balance)}</div>
+          </div>
+          ${pendingPill}
+          ${currentPill}
+        </div>
+      `;
+    }).join('');
+
+    swapList.querySelectorAll('.in-swap-row').forEach(row => {
+      const id = row.dataset.civId;
+      if (id === CIVILIAN_ID) return;
+      row.addEventListener('click', () => {
+        const encoded = encodeCivIdClient(id);
+        window.location.href = `/inbox?c=${encodeURIComponent(encoded)}`;
+      });
+    });
+  }
+</script>
+</body>
+</html>

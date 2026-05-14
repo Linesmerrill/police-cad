@@ -1,0 +1,23 @@
+<%#
+  last-dashboard-tracker.ejs — records the current dashboard path so the
+  Back link on standalone pages (/wallet, /inbox, /economy-settings, ...)
+  can return the user to whichever dashboard they came from.
+
+  Saves pathname + search + hash to localStorage under `lpc.lastDashboard`.
+  standalone-utility.ejs reads this when `useLastDashboard: true` is set.
+
+  Include this on every dashboard page that DOESN'T already include
+  partials/footer.ejs (which has the same tracker inline). Safe to include
+  anywhere — the script no-ops on non-dashboard URLs.
+%>
+<script>
+(function() {
+  try {
+    var p = window.location.pathname;
+    if (/^\/(civ|department|police|ems|dispatch|command|judicial|fire|community)-dashboard\/?$/.test(p)) {
+      var full = p.replace(/\/$/, '') + (window.location.search || '') + (window.location.hash || '');
+      localStorage.setItem('lpc.lastDashboard', full);
+    }
+  } catch (e) {}
+})();
+</script>

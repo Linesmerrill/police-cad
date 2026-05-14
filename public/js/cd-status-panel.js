@@ -24,6 +24,16 @@
   function toast(m, t) { if (window.ddToast) window.ddToast(m, t); }
   function apiUrl() { return cfg().API_URL || ''; }
 
+  // Match the suffix-extraction logic in dd-economy / dispatch-roster so
+  // on/off-duty classification is consistent across the app.
+  function ddCodeSuffix(code) {
+    var c = String(code || '').toLowerCase().trim();
+    if (!c) return '';
+    c = c.replace(/^signal[\s\-_]*/, '').replace(/^s[\s\-_]+/, '');
+    c = c.replace(/^10[\s\-_]+/, '');
+    return c.trim();
+  }
+
   function deptName() {
     var d = cfg().departmentData;
     if (d && d.name) return d.name;
@@ -268,6 +278,16 @@
           }
         }
         if (window.applyMDTStatus) window.applyMDTStatus();
+        // Reverse-hook to the economy clock: if the user flipped to an
+        // on-duty (X-41) or off-duty (X-42) code, mirror it into the
+        // economy clock so they don't have to clock in/out separately.
+        // dd-economy guards against loops + ineligible templates.
+        if (tc && typeof window.ddEconomyHandleTenCodeChange === 'function') {
+          var suffix = ddCodeSuffix(tc.code);
+          if (suffix === '41' || suffix === '42') {
+            try { window.ddEconomyHandleTenCodeChange(suffix); } catch (_) {}
+          }
+        }
         if (onDone) onDone(true);
       },
       error: function (xhr, status, err) {

@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wallet - Lines Police CAD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --w-bg: #08090c;
+      --w-glass: rgba(255,255,255,0.04);
+      --w-glass-border: rgba(255,255,255,0.06);
+      --w-glass-hover: rgba(255,255,255,0.07);
+      --w-text: #e2e8f0;
+      --w-text-muted: #94a3b8;
+      --w-text-dim: #64748b;
+      --w-accent: #38bdf8;
+      --w-accent-dim: rgba(56,189,248,0.12);
+      --w-accent-border: rgba(56,189,248,0.25);
+      --w-green: #22c55e;
+      --w-red: #ef4444;
+      --w-amber: #f59e0b;
+      --w-radius: 12px;
+    }
+    html { font-size: 16px; }
+    body {
+      background: var(--w-bg); color: var(--w-text);
+      font-family: 'Outfit', -apple-system, sans-serif;
+      min-height: 100vh; line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      padding-top: 36px;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 700px 500px at 10% 15%, rgba(56,189,248,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 90% 85%, rgba(34,197,94,0.03) 0%, transparent 70%);
+    }
+    .w-shell { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .w-header { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.5rem; }
+    .w-header-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--w-accent-dim); color: var(--w-accent); font-size: 1.2rem;
+      border: 1px solid var(--w-accent-border);
+    }
+    .w-title { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.01em; }
+    .w-subtitle { font-size: 0.85rem; color: var(--w-text-muted); margin-top: 0.1rem; }
+    .w-subtitle-row { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .w-swap-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(56,189,248,0.08); color: var(--w-accent, #38bdf8);
+      border: 1px solid rgba(56,189,248,0.18); cursor: pointer;
+      font-size: 0.65rem;
+      transition: background 120ms, border-color 120ms, transform 120ms;
+    }
+    .w-swap-btn:hover { background: rgba(56,189,248,0.18); border-color: rgba(56,189,248,0.35); transform: rotate(180deg); }
+
+    /* Civilian swap modal */
+    .w-swap-backdrop {
+      position: fixed; inset: 0; background: rgba(2,6,12,0.6);
+      backdrop-filter: blur(6px);
+      opacity: 0; pointer-events: none;
+      transition: opacity 160ms ease;
+      z-index: 60;
+    }
+    .w-swap-backdrop.is-open { opacity: 1; pointer-events: auto; }
+    .w-swap-modal {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -48%) scale(0.97);
+      width: min(440px, calc(100vw - 2rem));
+      max-height: min(72vh, 600px); display: flex; flex-direction: column;
+      background: #0b1220;
+      border: 1px solid rgba(56,189,248,0.22);
+      border-radius: 12px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+      opacity: 0; pointer-events: none;
+      transition: opacity 160ms ease, transform 160ms ease;
+      z-index: 61;
+    }
+    .w-swap-modal.is-open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+    .w-swap-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 0.9rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-weight: 600; color: var(--w-text);
+    }
+    .w-swap-header button {
+      background: none; border: none; color: var(--w-text-muted);
+      cursor: pointer; font-size: 0.9rem; padding: 0.25rem;
+    }
+    .w-swap-header button:hover { color: var(--w-text); }
+    .w-swap-search {
+      margin: 0.7rem 0.9rem 0.4rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; padding: 0.45rem 0.65rem;
+    }
+    .w-swap-search i { color: var(--w-text-muted); font-size: 0.75rem; }
+    .w-swap-search input {
+      background: transparent; border: none; outline: none; color: var(--w-text);
+      flex: 1; font-size: 0.85rem;
+    }
+    .w-swap-list { overflow-y: auto; padding: 0.35rem 0.6rem 0.7rem; }
+    .w-swap-row {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.55rem 0.6rem; border-radius: 8px; cursor: pointer;
+      transition: background 100ms;
+    }
+    .w-swap-row:hover { background: rgba(56,189,248,0.06); }
+    .w-swap-row.is-current { background: rgba(56,189,248,0.1); cursor: default; }
+    .w-swap-row.is-current:hover { background: rgba(56,189,248,0.1); }
+    .w-swap-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(56,189,248,0.12); color: var(--w-accent, #38bdf8);
+      display: grid; place-items: center; font-weight: 700; font-size: 0.78rem;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .w-swap-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .w-swap-name { font-size: 0.88rem; color: var(--w-text); text-transform: capitalize; }
+    .w-swap-bal { font-size: 0.74rem; color: var(--w-text-muted); font-variant-numeric: tabular-nums; }
+    .w-swap-info { flex: 1; min-width: 0; }
+    .w-swap-current-pill {
+      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--w-accent, #38bdf8); background: rgba(56,189,248,0.12);
+      padding: 0.1rem 0.4rem; border-radius: 4px;
+    }
+    .w-swap-empty { padding: 1.5rem; text-align: center; color: var(--w-text-muted); font-size: 0.85rem; }
+
+    .w-card {
+      background: var(--w-glass); border: 1px solid var(--w-glass-border);
+      border-radius: var(--w-radius); padding: 1.25rem 1.4rem;
+    }
+    .w-balance-card { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+    .w-balance-label { font-size: 0.78rem; color: var(--w-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .w-balance-value { font-size: 2.4rem; font-weight: 600; color: var(--w-accent); margin-top: 0.25rem; }
+    .w-balance-value.neg { color: var(--w-red); }
+    .w-balance-actions { display: flex; gap: 0.5rem; }
+    .w-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.5rem 0.85rem; border-radius: 8px;
+      background: var(--w-accent-dim); color: var(--w-accent);
+      border: 1px solid var(--w-accent-border);
+      font: inherit; font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; transition: background 120ms ease, transform 120ms ease;
+      text-decoration: none;
+    }
+    .w-btn:hover { background: rgba(56,189,248,0.18); transform: translateY(-1px); }
+    .w-btn.ghost {
+      background: transparent; color: var(--w-text-muted);
+      border-color: var(--w-glass-border);
+    }
+    .w-btn.ghost:hover { background: var(--w-glass-hover); color: var(--w-text); }
+    .w-btn.danger {
+      background: rgba(239,68,68,0.12); color: #f87171;
+      border-color: rgba(239,68,68,0.28);
+    }
+    .w-btn.danger:hover { background: rgba(239,68,68,0.22); color: #fca5a5; }
+
+    .w-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 800px) { .w-grid { grid-template-columns: 1fr; } }
+
+    .w-section-title {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.9rem; font-weight: 600; color: var(--w-text);
+      margin-bottom: 0.85rem;
+    }
+    .w-section-title i { color: var(--w-text-muted); }
+    .w-jobs-info {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      color: var(--w-text-muted); cursor: pointer;
+      transition: color 120ms ease, background 120ms ease;
+      font-size: 0.78rem;
+    }
+    .w-jobs-info:hover { color: var(--w-accent, #38bdf8); background: rgba(56,189,248,0.08); }
+    .w-jobs-hint {
+      font-size: 0.74rem; color: var(--w-text-muted);
+      background: rgba(56,189,248,0.06);
+      border: 1px solid rgba(56,189,248,0.18);
+      border-radius: 6px;
+      padding: 0.45rem 0.6rem; margin-bottom: 0.7rem;
+      line-height: 1.4;
+    }
+    .w-jobs-hint a { color: var(--w-accent, #38bdf8); text-decoration: none; }
+    .w-jobs-hint a:hover { text-decoration: underline; }
+
+    /* Inbox preview */
+    .w-inbox-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+      padding: 0.65rem 0.4rem; border-bottom: 1px dashed var(--w-glass-border);
+      margin: 0 -0.4rem;
+    }
+    .w-inbox-row:last-child { border-bottom: 0; }
+    .w-inbox-row-link { color: inherit; text-decoration: none; border-radius: 6px; transition: background 120ms ease; }
+    .w-inbox-row-link:hover { background: var(--w-glass-hover); }
+    .w-inbox-title { font-size: 0.88rem; color: var(--w-text); }
+    .w-inbox-meta { font-size: 0.74rem; color: var(--w-text-dim); margin-top: 0.15rem; }
+    .w-inbox-amount { font-size: 0.92rem; font-weight: 600; color: var(--w-amber); white-space: nowrap; }
+    .w-inbox-amount.paid { color: var(--w-green); }
+    .w-inbox-amount.delinquent { color: var(--w-red); }
+    .w-empty { font-size: 0.85rem; color: var(--w-text-dim); padding: 0.85rem 0; }
+
+    /* Shift history */
+    .w-shifts { display: flex; flex-direction: column; gap: 0.5rem; }
+    .w-shift-row {
+      display: grid;
+      grid-template-columns: minmax(110px, 0.9fr) minmax(120px, 1.2fr) 80px 110px;
+      align-items: center; gap: 0.85rem;
+      padding: 0.7rem 0.9rem;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 9px;
+      font-size: 0.82rem;
+    }
+    .w-shift-date { color: var(--w-text); font-weight: 500; }
+    .w-shift-date small { display:block; color: var(--w-text-dim); font-weight:400; margin-top:2px; font-size:0.7rem; }
+    .w-shift-dept { color: var(--w-text-muted); font-size: 0.78rem; }
+    .w-shift-hours { color: var(--w-text); font-variant-numeric: tabular-nums; text-align: right; font-size: 0.82rem; }
+    .w-shift-earned { color: var(--w-green); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+    .w-shift-status-pill {
+      display: inline-block; padding: 2px 7px; border-radius: 4px;
+      font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+      background: rgba(148,163,184,0.12); color: var(--w-text-dim); margin-left: 6px;
+    }
+    .w-shift-status-pill.expired { background: rgba(251,191,36,0.14); color: #fbbf24; }
+    .w-shift-status-pill.abandoned { background: rgba(148,163,184,0.12); color: #94a3b8; }
+    .w-shifts-pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 0.75rem; font-size: 0.78rem; color: var(--w-text-dim);
+    }
+    .w-shifts-page-btn {
+      background: transparent; border: 1px solid rgba(255,255,255,0.08);
+      color: var(--w-text-muted); padding: 0.35rem 0.7rem; border-radius: 6px;
+      cursor: pointer; font: inherit; font-size: 0.75rem;
+    }
+    .w-shifts-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .w-shifts-page-btn:hover:not(:disabled) { color: var(--w-text); border-color: rgba(255,255,255,0.18); }
+    @media (max-width: 700px) {
+      .w-shift-row { grid-template-columns: 1fr 1fr; row-gap: 0.45rem; }
+      .w-shift-hours, .w-shift-earned { text-align: left; }
+    }
+
+    /* Clock-in widget */
+    .w-clock-list { display: flex; flex-direction: column; gap: 0.55rem; }
+    .w-clock-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+      padding: 0.7rem 0.85rem; border-radius: 8px;
+      background: rgba(255,255,255,0.02); border: 1px solid var(--w-glass-border);
+    }
+    .w-clock-dept { font-size: 0.9rem; font-weight: 500; color: var(--w-text); }
+    .w-clock-rate { font-size: 0.74rem; color: var(--w-text-muted); margin-top: 0.1rem; }
+
+    .w-status-pill {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.25rem 0.55rem; border-radius: 999px;
+      font-size: 0.72rem; font-weight: 600;
+      background: rgba(34,197,94,0.12); color: var(--w-green);
+      border: 1px solid rgba(34,197,94,0.25);
+    }
+    .w-pulse {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--w-green);
+      box-shadow: 0 0 0 0 rgba(34,197,94,0.6);
+      animation: w-pulse 2s infinite;
+    }
+    @keyframes w-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+      70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+      100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    }
+
+    .w-active-banner {
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2);
+      border-radius: var(--w-radius); padding: 0.85rem 1rem; margin-bottom: 1rem;
+    }
+    .w-active-info { display: flex; flex-direction: column; gap: 0.15rem; }
+    .w-active-info b { font-weight: 600; color: var(--w-green); }
+    .w-active-info span { font-size: 0.78rem; color: var(--w-text-muted); }
+
+    .w-spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid var(--w-text-dim); border-top-color: var(--w-accent);
+      border-radius: 50%; animation: w-spin 0.8s linear infinite;
+    }
+    @keyframes w-spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<%- include('partials/standalone-utility', {
+  user: user,
+  communityName: communityName,
+  pageLabel: 'Wallet',
+  backHref: '/civ-dashboard',
+  backLabel: 'Back to dashboard',
+  useLastDashboard: true
+}) %>
+
+<div class="w-shell">
+  <div class="w-header">
+    <div class="w-header-icon"><i class="fa fa-wallet"></i></div>
+    <div>
+      <div class="w-title" style="display:flex; align-items:center; gap:0.5rem;">Wallet<% if (new Date() < new Date('2026-05-26')) { %><span style="background:linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25)); color:#c4b5fd; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(139,92,246,0.3);">Beta</span><% } %></div>
+      <div class="w-subtitle w-subtitle-row">
+        <span id="walletSubtitle">Loading civilian…</span>
+        <button type="button" class="w-swap-btn" id="swapCivBtn" title="Switch civilian" aria-label="Switch civilian">
+          <i class="fa fa-right-left"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="w-swap-backdrop" id="swapBackdrop"></div>
+  <div class="w-swap-modal" id="swapModal" role="dialog" aria-modal="true" aria-label="Switch civilian">
+    <div class="w-swap-header">
+      <span><i class="fa fa-right-left" style="margin-right:0.4rem; color:var(--w-text-muted);"></i> Switch civilian</span>
+      <button type="button" id="swapCloseBtn" aria-label="Close"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="w-swap-search">
+      <i class="fa fa-search"></i>
+      <input type="search" id="swapSearch" placeholder="Search your civilians…" autocomplete="off">
+    </div>
+    <div class="w-swap-list" id="swapList"><div class="w-swap-empty">Loading civilians…</div></div>
+  </div>
+
+  <!-- Active session banner (hidden until loaded) -->
+  <div class="w-active-banner" id="activeBanner" style="display:none;">
+    <div class="w-active-info">
+      <b id="activeDeptName">On the clock</b>
+      <span id="activeSessionMeta">—</span>
+    </div>
+    <button class="w-btn ghost" id="clockOutBtn"><i class="fa fa-stop"></i> Clock out</button>
+  </div>
+
+  <!-- Balance card -->
+  <div class="w-card w-balance-card">
+    <div>
+      <div class="w-balance-label">Current Balance</div>
+      <div class="w-balance-value" id="balanceValue">—</div>
+    </div>
+    <div class="w-balance-actions">
+      <a class="w-btn ghost" href="/inbox?c=<%= encodedCivId || '' %>"><i class="fa fa-inbox"></i> Inbox</a>
+    </div>
+  </div>
+
+  <!-- Two-column: recent inbox + clock-in -->
+  <div class="w-grid">
+    <div class="w-card">
+      <div class="w-section-title"><i class="fa fa-receipt"></i> Recent Inbox</div>
+      <div id="recentInbox"><div class="w-empty">Loading…</div></div>
+    </div>
+
+    <div class="w-card">
+      <div class="w-section-title" style="justify-content:space-between;">
+        <span style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="fa fa-briefcase"></i> Jobs</span>
+        <span id="jobsInfo" class="w-jobs-info" title=""><i class="fa fa-circle-info"></i></span>
+      </div>
+      <div class="w-jobs-hint" id="jobsHint" style="display:none;"></div>
+      <div class="w-clock-list" id="clockList"><div class="w-empty">Loading departments…</div></div>
+    </div>
+  </div>
+
+  <!-- Shift history -->
+  <div class="w-card" style="margin-top:1rem;">
+    <div class="w-section-title"><i class="fa fa-clock-rotate-left"></i> Recent shifts</div>
+    <div id="shiftsList" class="w-shifts"><div class="w-empty">Loading…</div></div>
+    <div class="w-shifts-pagination" id="shiftsPagination" style="display:none;">
+      <button class="w-shifts-page-btn" id="shiftsPrev" disabled><i class="fa fa-chevron-left"></i> Prev</button>
+      <span id="shiftsPageInfo">Page 1</span>
+      <button class="w-shifts-page-btn" id="shiftsNext" disabled>Next <i class="fa fa-chevron-right"></i></button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = "<%- apiUrl %>";
+  const CIVILIAN_ID = "<%- civilianId %>";
+  const ENCODED_CIV_ID = "<%- encodedCivId %>";
+  const COMMUNITY_ID = "<%- communityId %>";
+  const ENCODED_COMMUNITY_ID = "<%- encodedCommunityId %>";
+  const USER_ID = "<%- userId %>";
+  const CIVILIAN_NAME = "<%- civilianName %>";
+
+  document.getElementById('walletSubtitle').textContent = CIVILIAN_NAME || 'Civilian';
+
+  function fmtMoney(cents) {
+    const sign = cents < 0 ? '-' : '';
+    const abs = Math.abs(cents);
+    const dollars = Math.floor(abs / 100);
+    const rem = abs % 100;
+    return sign + '$' + dollars.toLocaleString() + '.' + String(rem).padStart(2, '0');
+  }
+
+  async function refreshWallet() {
+    const balEl = document.getElementById('balanceValue');
+    const inboxHost = document.getElementById('recentInbox');
+    try {
+      const res = await fetch(`${API_URL}/api/v2/economy/wallet/${CIVILIAN_ID}`);
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status}${txt ? ': ' + txt.slice(0, 200) : ''}`);
+      }
+      const data = await res.json();
+      balEl.textContent = fmtMoney(data.balance || 0);
+      balEl.classList.toggle('neg', (data.balance || 0) < 0);
+      renderRecentInbox(data.recentInbox || []);
+    } catch (err) {
+      console.error('wallet load failed:', err);
+      balEl.textContent = '—';
+      inboxHost.innerHTML = '<div class="w-empty" style="color:#ef4444;">Wallet API unavailable. ' + escapeHtml(err.message || '') + '</div>';
+    }
+  }
+
+  function renderRecentInbox(items) {
+    const host = document.getElementById('recentInbox');
+    if (!items.length) { host.innerHTML = '<div class="w-empty">No items in your inbox.</div>'; return; }
+    const civParam = ENCODED_CIV_ID ? '?c=' + encodeURIComponent(ENCODED_CIV_ID) : '';
+    host.innerHTML = items.slice(0, 5).map(it => {
+      const cls = it.status === 'paid' ? 'paid' : (it.status === 'delinquent' ? 'delinquent' : '');
+      // Link each row to the corresponding item in /inbox. Hash is read by the
+      // inbox page to scroll + highlight after the list loads.
+      const href = '/inbox' + civParam + '#item-' + encodeURIComponent(it._id || '');
+      return `
+        <a class="w-inbox-row w-inbox-row-link" href="${href}">
+          <div>
+            <div class="w-inbox-title">${escapeHtml(it.title || it.type || 'Item')}</div>
+            <div class="w-inbox-meta">${escapeHtml(it.source || '')} · ${escapeHtml(it.status || '')}</div>
+          </div>
+          <div class="w-inbox-amount ${cls}">${fmtMoney(it.amount || 0)}</div>
+        </a>
+      `;
+    }).join('');
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  let activeSession = null;
+  let activeTimer = null;
+
+  async function refreshActiveSession() {
+    try {
+      const res = await fetch(`${API_URL}/api/v2/economy/session/active?civilianId=${encodeURIComponent(CIVILIAN_ID)}`);
+      if (!res.ok) {
+        console.warn('session/active returned', res.status);
+        activeSession = null; renderActive(); rerenderDepartments(); return;
+      }
+      const text = await res.text();
+      activeSession = (!text || text === 'null') ? null : JSON.parse(text);
+      renderActive();
+      rerenderDepartments();
+    } catch (err) {
+      console.error('session/active failed:', err);
+      activeSession = null; renderActive(); rerenderDepartments();
+    }
+  }
+
+  function renderActive() {
+    const banner = document.getElementById('activeBanner');
+    if (!activeSession) { banner.style.display = 'none'; return; }
+    banner.style.display = 'flex';
+    document.getElementById('activeDeptName').innerHTML =
+      `<span class="w-pulse" style="display:inline-block;margin-right:6px;vertical-align:middle;"></span>` +
+      `On the clock at <strong>${escapeHtml(activeSession.departmentName || 'department')}</strong>`;
+    updateMeta();
+    if (activeTimer) clearInterval(activeTimer);
+    activeTimer = setInterval(updateMeta, 1000);
+  }
+
+  function updateMeta() {
+    if (!activeSession) return;
+    const start = new Date(activeSession.startedAt);
+    const elapsedSec = Math.max(0, Math.floor((Date.now() - start.getTime()) / 1000));
+    const h = Math.floor(elapsedSec / 3600);
+    const m = Math.floor((elapsedSec % 3600) / 60);
+    const s = elapsedSec % 60;
+    const earnings = ((activeSession.payRateSnapshot || 0) * elapsedSec / 3600);
+    const earned = Math.min(earnings, (activeSession.payRateSnapshot || 0) * (activeSession.maxSessionMinutes || 0) / 60);
+    document.getElementById('activeSessionMeta').textContent =
+      `${pad(h)}:${pad(m)}:${pad(s)} elapsed · ~${fmtMoney(Math.floor(earned))} earned (estimate)`;
+  }
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  document.getElementById('clockOutBtn').addEventListener('click', async () => {
+    if (!activeSession) return;
+    if (window.ddModal) {
+      window.ddModal({
+        type: 'warning', icon: 'fa-stop',
+        title: 'Clock out?',
+        message: 'This will finalize your shift and credit any pending pay to your civilian.',
+        confirmText: 'Clock out',
+        onConfirm: doClockOut,
+      });
+    } else { doClockOut(); }
+  });
+
+  async function doClockOut() {
+    try {
+      await fetch(`${API_URL}/api/v2/economy/clock-out?userId=${encodeURIComponent(USER_ID)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: activeSession._id }),
+      });
+      activeSession = null;
+      if (activeTimer) clearInterval(activeTimer);
+      await Promise.all([refreshWallet(), refreshActiveSession(), refreshDepartments(), refreshShifts()]);
+    } catch (err) { console.error(err); }
+  }
+
+  function updateJobsInfo(shownCount, totalCount) {
+    const info = document.getElementById('jobsInfo');
+    const hint = document.getElementById('jobsHint');
+    if (!info || !hint) return;
+    const hiddenCount = Math.max(0, totalCount - shownCount);
+    const summary = totalCount === 0
+      ? 'This community has no departments yet.'
+      : `Showing ${shownCount} of ${totalCount} department${totalCount === 1 ? '' : 's'} — only departments with economy enabled appear here.`;
+    info.setAttribute('title', summary);
+    let msg = summary;
+    if (hiddenCount > 0) {
+      msg += ` <a href="/economy-settings">Enable economy on more departments →</a>`;
+    }
+    hint.innerHTML = msg;
+    info.onclick = () => {
+      hint.style.display = hint.style.display === 'none' ? 'block' : 'none';
+    };
+  }
+
+  async function refreshDepartments() {
+    const host = document.getElementById('clockList');
+    if (!COMMUNITY_ID) {
+      host.innerHTML = '<div class="w-empty">This civilian has no active community. Open the civilian and pick a community first.</div>';
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/api/v1/community/${COMMUNITY_ID}`);
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status}${txt ? ': ' + txt.slice(0, 200) : ''}`);
+      }
+      const community = await res.json();
+      const depts = (community.community && community.community.departments) || [];
+
+      const economyDepts = depts.filter(d => d.economyEnabled);
+      updateJobsInfo(economyDepts.length, depts.length);
+      const decorated = economyDepts.map(d => {
+        const approvalRequired = !!d.approvalRequired;
+        const isExplicitMember = (d.members || []).some(m => m.userID === USER_ID);
+        // Public departments treat any community member as implicitly eligible.
+        const isMember = isExplicitMember || !approvalRequired;
+        return { dept: d, isMember };
+      });
+      decorated.sort((a, b) => (b.isMember ? 1 : 0) - (a.isMember ? 1 : 0));
+      renderDepartments(decorated);
+    } catch (err) {
+      console.error('community load failed:', err);
+      host.innerHTML = '<div class="w-empty" style="color:#ef4444;">Could not load departments. ' + escapeHtml(err.message || '') + '</div>';
+    }
+  }
+
+  // Cache the latest department list so we can re-render when the active
+  // session changes (clock-in / clock-out) without refetching the community.
+  let _lastDeptEntries = null;
+
+  function renderDepartments(deptEntries) {
+    _lastDeptEntries = deptEntries;
+    const host = document.getElementById('clockList');
+    const communityHref = ENCODED_COMMUNITY_ID
+      ? `/community/${encodeURIComponent(ENCODED_COMMUNITY_ID)}#departments-section`
+      : '/communities';
+
+    if (!deptEntries.length) {
+      host.innerHTML = '<div class="w-empty">No departments have economy enabled yet. Ask an admin to enable economy on a department, or create a civilian-template department for RP jobs.</div>';
+      return;
+    }
+
+    const activeDeptId = activeSession && activeSession.departmentId;
+
+    host.innerHTML = deptEntries.map(({ dept: d, isMember }) => {
+      const ratePerHr = (d.basePayPerHour || 0);
+      const isActiveHere = activeDeptId && d._id === activeDeptId;
+      let action;
+      let rowExtra = '';
+      if (isActiveHere) {
+        // This dept owns the live session — let the user clock out directly.
+        action = `<button class="w-btn danger" data-action="row-clock-out">` +
+          `<i class="fa fa-stop"></i> Clock out</button>`;
+        rowExtra = 'style="border-color:rgba(34,197,94,0.32);background:linear-gradient(135deg,rgba(34,197,94,0.06),rgba(255,255,255,0.02));"';
+      } else if (isMember) {
+        const blocked = !!activeSession; // active elsewhere — block clock-in here
+        action = `<button class="w-btn" data-action="clock-in" ${blocked ? 'disabled style="opacity:0.5;cursor:not-allowed;" title="Clock out of your current shift first"' : ''}>` +
+          `<i class="fa fa-play"></i> Clock in</button>`;
+      } else {
+        action = `<a class="w-btn ghost" href="${communityHref}"><i class="fa fa-arrow-up-right-from-square"></i> View department</a>`;
+      }
+      const dim = (isMember || isActiveHere) ? '' : 'style="opacity:0.75;"';
+      const baseAttrs = rowExtra || dim;
+      const statusLine = isActiveHere
+        ? `<div class="w-clock-rate" style="color:#22c55e;">● On the clock</div>`
+        : `<div class="w-clock-rate">${fmtMoney(ratePerHr)} / hr base${isMember ? '' : ' · not a member'}</div>`;
+      return `
+        <div class="w-clock-row" ${baseAttrs} data-dept-id="${escapeHtml(d._id)}">
+          <div>
+            <div class="w-clock-dept">${escapeHtml(d.name)}</div>
+            ${statusLine}
+          </div>
+          ${action}
+        </div>
+      `;
+    }).join('');
+
+    host.querySelectorAll('[data-action="clock-in"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const row = e.target.closest('[data-dept-id]');
+        clockIn(row.dataset.deptId);
+      });
+    });
+    host.querySelectorAll('[data-action="row-clock-out"]').forEach(btn => {
+      btn.addEventListener('click', () => doClockOut());
+    });
+  }
+
+  // Re-render the Jobs panel using the cached dept list. Called after
+  // activeSession changes so the active row picks up its "On the clock"
+  // styling without a community refetch.
+  function rerenderDepartments() {
+    if (_lastDeptEntries) renderDepartments(_lastDeptEntries);
+  }
+
+  async function clockIn(deptId) {
+    try {
+      const res = await fetch(`${API_URL}/api/v2/economy/clock-in?userId=${encodeURIComponent(USER_ID)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ communityId: COMMUNITY_ID, departmentId: deptId, civilianId: CIVILIAN_ID }),
+      });
+      if (!res.ok && res.status !== 409) {
+        const txt = await res.text().catch(() => '');
+        throw new Error(`clock-in failed: ${res.status}${txt ? ' — ' + txt.slice(0, 200) : ''}`);
+      }
+      await Promise.all([refreshActiveSession(), refreshWallet(), refreshDepartments()]);
+      startHeartbeat();
+    } catch (err) {
+      console.error(err);
+      if (window.ddModal) window.ddModal({ type: 'danger', icon: 'fa-triangle-exclamation', title: 'Could not clock in', message: err.message });
+    }
+  }
+
+  let heartbeatTimer = null;
+  function startHeartbeat() {
+    if (heartbeatTimer) clearInterval(heartbeatTimer);
+    heartbeatTimer = setInterval(async () => {
+      if (!activeSession) return;
+      try {
+        const res = await fetch(`${API_URL}/api/v2/economy/heartbeat?userId=${encodeURIComponent(USER_ID)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: activeSession._id }),
+        });
+        if (res.status === 410) {
+          activeSession = null; renderActive(); await refreshWallet(); return;
+        }
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.session) activeSession = data.session;
+        }
+      } catch (err) { console.error('heartbeat failed', err); }
+    }, 30000);
+  }
+
+  // ---------- Shift history ----------
+  let shiftsPage = 1;
+  const SHIFTS_LIMIT = 10;
+
+  function fmtDuration(seconds) {
+    const s = Math.max(0, Math.floor(Number(seconds) || 0));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    if (h === 0) return m + 'm';
+    if (m === 0) return h + 'h';
+    return h + 'h ' + m + 'm';
+  }
+  function fmtShiftDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function fmtShiftTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  }
+
+  async function refreshShifts() {
+    const host = document.getElementById('shiftsList');
+    const pag = document.getElementById('shiftsPagination');
+    if (!CIVILIAN_ID) {
+      host.innerHTML = '<div class="w-empty">No civilian context — past shifts unavailable.</div>';
+      return;
+    }
+    host.innerHTML = '<div class="w-empty">Loading…</div>';
+    try {
+      const res = await fetch(`${API_URL}/api/v2/economy/sessions/civilian/${CIVILIAN_ID}?page=${shiftsPage}&limit=${SHIFTS_LIMIT}`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const payload = await res.json();
+      const data = payload.data || [];
+      const total = payload.totalCount || 0;
+      if (!data.length) {
+        host.innerHTML = '<div class="w-empty">No shifts logged yet. Clock in to start your first one.</div>';
+        pag.style.display = 'none';
+        return;
+      }
+      host.innerHTML = data.map(s => {
+        const statusPill = (s.status && s.status !== 'ended')
+          ? `<span class="w-shift-status-pill ${escapeHtml(s.status)}">${escapeHtml(s.status)}</span>` : '';
+        const startStr = fmtShiftDate(s.startedAt);
+        const timeStr = fmtShiftTime(s.startedAt) + (s.endedAt ? ' – ' + fmtShiftTime(s.endedAt) : '');
+        return `
+          <div class="w-shift-row">
+            <div class="w-shift-date">${escapeHtml(startStr)}${statusPill}<small>${escapeHtml(timeStr)}</small></div>
+            <div class="w-shift-dept">${escapeHtml(s.departmentName || 'Department')}</div>
+            <div class="w-shift-hours">${escapeHtml(fmtDuration(s.paidSeconds))}</div>
+            <div class="w-shift-earned">${fmtMoney(s.earnings || 0)}</div>
+          </div>
+        `;
+      }).join('');
+      const totalPages = Math.max(1, Math.ceil(total / SHIFTS_LIMIT));
+      pag.style.display = totalPages > 1 ? 'flex' : 'none';
+      document.getElementById('shiftsPageInfo').textContent = `Page ${shiftsPage} of ${totalPages} · ${total} shift${total === 1 ? '' : 's'}`;
+      document.getElementById('shiftsPrev').disabled = shiftsPage <= 1;
+      document.getElementById('shiftsNext').disabled = shiftsPage >= totalPages;
+    } catch (err) {
+      host.innerHTML = `<div class="w-empty" style="color:#ef4444;">Couldn't load shifts: ${escapeHtml(err.message || '')}</div>`;
+    }
+  }
+  document.getElementById('shiftsPrev').addEventListener('click', () => {
+    if (shiftsPage > 1) { shiftsPage -= 1; refreshShifts(); }
+  });
+  document.getElementById('shiftsNext').addEventListener('click', () => {
+    shiftsPage += 1; refreshShifts();
+  });
+
+  (async function init() {
+    await Promise.all([refreshWallet(), refreshActiveSession(), refreshDepartments(), refreshShifts()]);
+    if (activeSession) startHeartbeat();
+  })();
+
+  // ---------- Civilian quick-swap ----------
+  const swapBackdrop = document.getElementById('swapBackdrop');
+  const swapModal = document.getElementById('swapModal');
+  const swapSearch = document.getElementById('swapSearch');
+  const swapList = document.getElementById('swapList');
+  let swapCivilians = null;
+
+  function encodeCivIdClient(id) {
+    return btoa(id).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function openSwapModal() {
+    swapBackdrop.classList.add('is-open');
+    swapModal.classList.add('is-open');
+    swapSearch.value = '';
+    setTimeout(() => swapSearch.focus(), 80);
+    if (!swapCivilians) loadSwapCivilians();
+    else renderSwapList();
+  }
+  function closeSwapModal() {
+    swapBackdrop.classList.remove('is-open');
+    swapModal.classList.remove('is-open');
+  }
+  document.getElementById('swapCivBtn').addEventListener('click', openSwapModal);
+  document.getElementById('swapCloseBtn').addEventListener('click', closeSwapModal);
+  swapBackdrop.addEventListener('click', closeSwapModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && swapModal.classList.contains('is-open')) closeSwapModal();
+  });
+  swapSearch.addEventListener('input', renderSwapList);
+
+  async function loadSwapCivilians() {
+    swapList.innerHTML = '<div class="w-swap-empty">Loading civilians…</div>';
+    try {
+      const url = `${API_URL}/api/v1/civilians/user/${encodeURIComponent(USER_ID)}` +
+        (COMMUNITY_ID ? `?active_community_id=${encodeURIComponent(COMMUNITY_ID)}` : '');
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      swapCivilians = Array.isArray(data) ? data : [];
+      renderSwapList();
+    } catch (err) {
+      console.error('swap civs load failed:', err);
+      swapList.innerHTML = '<div class="w-swap-empty" style="color:#ef4444;">Could not load civilians.</div>';
+    }
+  }
+
+  function renderSwapList() {
+    if (!swapCivilians) return;
+    const q = (swapSearch.value || '').trim().toLowerCase();
+    const rows = swapCivilians
+      .map(c => {
+        const inner = c.civilian || {};
+        const fn = (inner.firstName || '').trim();
+        const ln = (inner.lastName || '').trim();
+        const combined = (inner.name || '').trim();
+        // Many older civ docs store the full name in `name` rather than
+        // firstName/lastName, so fall back to that before "Unnamed".
+        const name = [fn, ln].filter(Boolean).join(' ') || combined || 'Unnamed civilian';
+        const parts = name.split(/\s+/);
+        const initials = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?';
+        return {
+          id: c._id,
+          name,
+          image: inner.image || '',
+          balance: typeof inner.balance === 'number' ? inner.balance : 0,
+          initials,
+        };
+      })
+      .filter(r => !q || r.name.toLowerCase().includes(q));
+
+    if (rows.length === 0) {
+      swapList.innerHTML = `<div class="w-swap-empty">${q ? 'No civilians match that search.' : 'You have no other civilians in this community.'}</div>`;
+      return;
+    }
+
+    swapList.innerHTML = rows.map(r => {
+      const isCurrent = r.id === CIVILIAN_ID;
+      const avatar = r.image
+        ? `<img src="${escapeHtml(r.image)}" alt="">`
+        : escapeHtml(r.initials);
+      const pill = isCurrent ? '<span class="w-swap-current-pill">Current</span>' : '';
+      const cls = 'w-swap-row' + (isCurrent ? ' is-current' : '');
+      return `
+        <div class="${cls}" data-civ-id="${escapeHtml(r.id)}">
+          <div class="w-swap-avatar">${avatar}</div>
+          <div class="w-swap-info">
+            <div class="w-swap-name">${escapeHtml(r.name)}</div>
+            <div class="w-swap-bal">${fmtMoney(r.balance)}</div>
+          </div>
+          ${pill}
+        </div>
+      `;
+    }).join('');
+
+    swapList.querySelectorAll('.w-swap-row').forEach(row => {
+      const id = row.dataset.civId;
+      if (id === CIVILIAN_ID) return;
+      row.addEventListener('click', () => {
+        const encoded = encodeCivIdClient(id);
+        window.location.href = `/wallet?c=${encodeURIComponent(encoded)}`;
+      });
+    });
+  }
+</script>
+</body>
+</html>
