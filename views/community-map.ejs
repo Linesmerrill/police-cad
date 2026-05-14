@@ -242,16 +242,37 @@
       background: rgba(0, 0, 0, 0.4);
       border: 1px solid var(--cm-glass-border);
       border-radius: var(--cm-radius-sm);
-      overflow: hidden; cursor: zoom-in;
+      overflow: hidden; cursor: grab;
+      touch-action: none;
     }
-    .cm-preview-stage.zoomed { cursor: zoom-out; }
+    .cm-preview-stage:active { cursor: grabbing; }
     .cm-preview-stage img {
       width: 100%; height: 100%; object-fit: contain;
-      transform-origin: var(--zx, 50%) var(--zy, 50%);
-      transition: transform 0.2s ease;
+      transform-origin: 0 0;
+      user-select: none; -webkit-user-drag: none;
       display: block;
     }
-    .cm-preview-stage.zoomed img { transform: scale(3); }
+    .cm-preview-zoom-controls {
+      position: absolute; right: 8px; bottom: 8px;
+      display: flex; gap: 4px; z-index: 2;
+    }
+    .cm-preview-zoom-controls .cm-btn {
+      padding: 0.375rem 0.5rem; font-size: 0.75rem;
+      background: rgba(8, 9, 12, 0.7);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    .cm-preview-zoom-readout {
+      position: absolute; left: 8px; bottom: 8px;
+      padding: 0.25rem 0.5rem;
+      background: rgba(8, 9, 12, 0.7);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      border-radius: 6px;
+      color: var(--cm-text-muted);
+      font-size: 0.6875rem;
+      font-variant-numeric: tabular-nums;
+      pointer-events: none;
+      z-index: 2;
+    }
     .cm-preview-stage-busy {
       position: absolute; inset: 0;
       background: rgba(8, 9, 12, 0.7);
@@ -461,11 +482,17 @@
         </button>
       </div>
       <div class="cm-preview-body">
-        <div id="previewStage" class="cm-preview-stage" role="img" aria-label="Optimized map preview (click to zoom)">
+        <div id="previewStage" class="cm-preview-stage" role="img" aria-label="Optimized map preview — scroll to zoom, drag to pan">
           <img id="previewImage" alt="" />
           <div id="previewBusy" class="cm-preview-stage-busy">
             <div class="cm-spinner" style="width: 20px; height: 20px;"></div>
             <span>Compressing…</span>
+          </div>
+          <div class="cm-preview-zoom-readout"><span id="previewZoomReadout">100%</span></div>
+          <div class="cm-preview-zoom-controls">
+            <button type="button" class="cm-btn cm-btn-glass" id="previewZoomOutBtn" title="Zoom out" aria-label="Zoom out"><i class="fa fa-minus"></i></button>
+            <button type="button" class="cm-btn cm-btn-glass" id="previewZoomResetBtn" title="Fit to view" aria-label="Fit to view"><i class="fa fa-expand"></i></button>
+            <button type="button" class="cm-btn cm-btn-glass" id="previewZoomInBtn" title="Zoom in" aria-label="Zoom in"><i class="fa fa-plus"></i></button>
           </div>
         </div>
         <div class="cm-preset-row" role="radiogroup" aria-label="Image quality preset">
@@ -643,8 +670,45 @@
       previewSaveBtn.style.cursor = busy ? 'wait' : 'pointer';
     }
 
+    // ===== Preview pan/zoom (matches the main map viewer) =====
+    var PV_MIN_SCALE = 1;
+    var PV_MAX_SCALE = 40;
+    var pvScale = 1;
+    var pvTx = 0;
+    var pvTy = 0;
+    var pvDragging = false;
+    var pvDragStartX = 0;
+    var pvDragStartY = 0;
+    var previewZoomReadout = document.getElementById('previewZoomReadout');
+    var previewZoomInBtn   = document.getElementById('previewZoomInBtn');
+    var previewZoomOutBtn  = document.getElementById('previewZoomOutBtn');
+    var previewZoomResetBtn = document.getElementById('previewZoomResetBtn');
+
+    function pvApply() {
+      previewImage.style.transform = 'translate(' + pvTx + 'px, ' + pvTy + 'px) scale(' + pvScale + ')';
+      if (previewZoomReadout) previewZoomReadout.textContent = Math.round(pvScale * 100) + '%';
+    }
+    function pvReset() {
+      pvScale = 1; pvTx = 0; pvTy = 0;
+      pvApply();
+    }
+    function pvZoomTo(newScale, originX, originY) {
+      newScale = Math.min(PV_MAX_SCALE, Math.max(PV_MIN_SCALE, newScale));
+      if (newScale === pvScale) return;
+      // Zoom toward the given stage-relative origin (defaults to center).
+      var rect = previewStage.getBoundingClientRect();
+      var cx = (originX == null) ? rect.width / 2 : originX;
+      var cy = (originY == null) ? rect.height / 2 : originY;
+      var ratio = newScale / pvScale;
+      pvTx = cx - ratio * (cx - pvTx);
+      pvTy = cy - ratio * (cy - pvTy);
+      pvScale = newScale;
+      pvApply();
+    }
+
     function openPreviewModal() {
       previewModal.classList.add('active');
+      pvReset();
     }
     function closePreviewModal() {
       previewModal.classList.remove('active');
@@ -654,7 +718,7 @@
       pendingBlob = null;
       setPreviewError('');
       setBusy(false);
-      previewStage.classList.remove('zoomed');
+      pvReset();
     }
 
     async function recompress() {
@@ -728,15 +792,60 @@
       });
     });
 
-    previewStage.addEventListener('click', function(e) {
+    // Reset pan/zoom whenever a new compressed image is loaded.
+    previewImage.addEventListener('load', pvReset);
+
+    // Wheel zoom — centered on cursor, like the main map viewer.
+    previewStage.addEventListener('wheel', function(e) {
       if (!previewImage.src) return;
+      e.preventDefault();
       var rect = previewStage.getBoundingClientRect();
-      var x = ((e.clientX - rect.left) / rect.width) * 100;
-      var y = ((e.clientY - rect.top) / rect.height) * 100;
-      previewImage.style.setProperty('--zx', x + '%');
-      previewImage.style.setProperty('--zy', y + '%');
-      previewStage.classList.toggle('zoomed');
+      var mx = e.clientX - rect.left;
+      var my = e.clientY - rect.top;
+      // Tame the zoom step on touchpads which emit large deltaY values.
+      var step = Math.min(0.25, Math.abs(e.deltaY) / 500);
+      var factor = e.deltaY > 0 ? (1 - step) : (1 + step);
+      pvZoomTo(pvScale * factor, mx, my);
+    }, { passive: false });
+
+    // Mouse drag to pan.
+    previewStage.addEventListener('mousedown', function(e) {
+      if (!previewImage.src) return;
+      pvDragging = true;
+      pvDragStartX = e.clientX - pvTx;
+      pvDragStartY = e.clientY - pvTy;
+      e.preventDefault();
     });
+    document.addEventListener('mousemove', function(e) {
+      if (!pvDragging) return;
+      pvTx = e.clientX - pvDragStartX;
+      pvTy = e.clientY - pvDragStartY;
+      pvApply();
+    });
+    document.addEventListener('mouseup', function() { pvDragging = false; });
+
+    // Single-finger touch drag to pan.
+    previewStage.addEventListener('touchstart', function(e) {
+      if (!previewImage.src || e.touches.length !== 1) return;
+      pvDragging = true;
+      pvDragStartX = e.touches[0].clientX - pvTx;
+      pvDragStartY = e.touches[0].clientY - pvTy;
+    }, { passive: true });
+    previewStage.addEventListener('touchmove', function(e) {
+      if (!pvDragging || e.touches.length !== 1) return;
+      e.preventDefault();
+      pvTx = e.touches[0].clientX - pvDragStartX;
+      pvTy = e.touches[0].clientY - pvDragStartY;
+      pvApply();
+    }, { passive: false });
+    previewStage.addEventListener('touchend', function() { pvDragging = false; });
+
+    // Double-click resets the view (also matches main map viewer).
+    previewStage.addEventListener('dblclick', pvReset);
+
+    previewZoomInBtn.addEventListener('click', function() { pvZoomTo(pvScale * 1.6); });
+    previewZoomOutBtn.addEventListener('click', function() { pvZoomTo(pvScale / 1.6); });
+    previewZoomResetBtn.addEventListener('click', pvReset);
 
     previewCancelBtn.addEventListener('click', closePreviewModal);
     previewCancelXBtn.addEventListener('click', closePreviewModal);
