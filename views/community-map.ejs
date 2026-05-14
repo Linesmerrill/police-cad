@@ -225,6 +225,16 @@
       max-height: 90vh;
       display: flex; flex-direction: column;
     }
+    .cm-stage-hint {
+      margin: 0.5rem 0 0 0;
+      color: var(--cm-text-dim);
+      font-size: 0.6875rem;
+      text-align: center;
+      display: flex; align-items: center; justify-content: center; gap: 0.375rem;
+      transition: opacity 0.2s, color 0.2s;
+    }
+    .cm-stage-hint i { color: var(--cm-text-muted); font-size: 0.625rem; }
+    .cm-stage-hint.satisfied { opacity: 0.4; }
     .cm-load-line {
       margin-top: 0.625rem;
       padding: 0.5rem 0.75rem;
@@ -566,6 +576,10 @@
             <button type="button" class="cm-btn cm-btn-glass" id="previewZoomInBtn" title="Zoom in" aria-label="Zoom in"><i class="fa fa-plus"></i></button>
           </div>
         </div>
+        <p class="cm-stage-hint" id="stageHint">
+          <i class="fa fa-search-plus" aria-hidden="true"></i>
+          Zoom in to verify pixel quality before saving
+        </p>
         <div class="cm-preview-stats">
           <div>Original: <strong id="statOriginal">—</strong></div>
           <div>Optimized: <strong id="statOptimized">—</strong></div>
@@ -781,10 +795,14 @@
     var previewZoomInBtn   = document.getElementById('previewZoomInBtn');
     var previewZoomOutBtn  = document.getElementById('previewZoomOutBtn');
     var previewZoomResetBtn = document.getElementById('previewZoomResetBtn');
+    var stageHint = document.getElementById('stageHint');
 
     function pvApply() {
       previewImage.style.transform = 'translate(' + pvTx + 'px, ' + pvTy + 'px) scale(' + pvScale + ')';
       if (previewZoomReadout) previewZoomReadout.textContent = Math.round(pvScale * 100) + '%';
+      // Dim the "zoom in to verify" nudge once they've actually zoomed —
+      // it has done its job, no need to keep shouting.
+      if (stageHint) stageHint.classList.toggle('satisfied', pvScale > 1.5);
     }
     function pvReset() {
       pvScale = 1; pvTx = 0; pvTy = 0;
