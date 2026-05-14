@@ -112,7 +112,26 @@
     .es-status.error { color: var(--es-red); }
 
     /* Per-department list */
+    .es-dept-search {
+      position: relative;
+      margin-bottom: 0.75rem;
+      display: none;
+    }
+    .es-dept-search.is-visible { display: block; }
+    .es-dept-search-icon {
+      position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%);
+      color: var(--es-text-dim); font-size: 0.78rem; pointer-events: none;
+    }
+    .es-dept-search-input {
+      width: 100%; padding: 0.5rem 0.75rem 0.5rem 2rem;
+      background: rgba(255,255,255,0.02); color: var(--es-text);
+      border: 1px solid var(--es-glass-border); border-radius: 8px;
+      font: inherit; font-size: 0.88rem;
+    }
+    .es-dept-search-input:focus { outline: none; border-color: var(--es-accent); }
+    .es-dept-search-input::placeholder { color: var(--es-text-dim); }
     .es-dept-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .es-dept.is-hidden { display: none; }
     .es-dept {
       border: 1px solid var(--es-glass-border);
       border-radius: 10px;
@@ -235,9 +254,14 @@
         <div class="es-card-head-sub">Same controls as each department's Settings → Economy tab.</div>
       </div>
     </div>
+    <div class="es-dept-search" id="es-dept-search">
+      <i class="fa fa-search es-dept-search-icon"></i>
+      <input type="text" class="es-dept-search-input" id="es-dept-search-input" placeholder="Search departments…" autocomplete="off">
+    </div>
     <div class="es-dept-list" id="es-dept-list">
       <div class="es-dept-empty">Loading departments…</div>
     </div>
+    <div class="es-dept-empty" id="es-dept-no-match" style="display:none;">No departments match your search.</div>
   </div>
 </div>
 
@@ -325,10 +349,14 @@
 
   function renderDepartments() {
     const host = document.getElementById('es-dept-list');
+    const searchWrap = document.getElementById('es-dept-search');
     if (!DEPTS.length) {
       host.innerHTML = '<div class="es-dept-empty">This community has no departments yet.</div>';
+      searchWrap.classList.remove('is-visible');
       return;
     }
+    // Only surface the search bar when the list is long enough to benefit from filtering.
+    searchWrap.classList.toggle('is-visible', DEPTS.length > 5);
     host.innerHTML = DEPTS.map((d, idx) => {
       const enabled = d.economyEnabled === true;
       const basePay = (typeof d.basePayPerHour === 'number') ? (d.basePayPerHour / 100).toFixed(2) : '0.00';
@@ -337,7 +365,7 @@
       const afkGrace = (typeof d.afkGraceSeconds === 'number' && d.afkGraceSeconds > 0) ? d.afkGraceSeconds : 60;
       const payoutMode = d.payoutMode === 'on_clockout' ? 'on_clockout' : 'on_heartbeat';
       return `
-        <div class="es-dept" data-idx="${idx}" data-dept-id="${escHtml(d._id)}">
+        <div class="es-dept" data-idx="${idx}" data-dept-id="${escHtml(d._id)}" data-name="${escHtml(String(d.name || '').toLowerCase())}">
           <div class="es-dept-header" data-action="toggle">
             <div class="es-dept-name">
               <span class="es-dept-pill ${enabled ? 'on' : 'off'}">${enabled ? 'On' : 'Off'}</span>
@@ -398,7 +426,26 @@
       // Stop input clicks from collapsing the panel
       deptEl.querySelector('.es-dept-body').addEventListener('click', (e) => e.stopPropagation());
     });
+
+    // Re-apply any active filter so a re-render doesn't expose hidden rows.
+    applyDeptFilter();
   }
+
+  function applyDeptFilter() {
+    const input = document.getElementById('es-dept-search-input');
+    const host = document.getElementById('es-dept-list');
+    const noMatch = document.getElementById('es-dept-no-match');
+    const q = (input.value || '').trim().toLowerCase();
+    let visible = 0;
+    host.querySelectorAll('.es-dept').forEach(el => {
+      const hit = !q || (el.dataset.name || '').includes(q);
+      el.classList.toggle('is-hidden', !hit);
+      if (hit) visible++;
+    });
+    noMatch.style.display = (q && visible === 0) ? '' : 'none';
+  }
+
+  document.getElementById('es-dept-search-input').addEventListener('input', applyDeptFilter);
 
   async function saveDepartment(deptEl) {
     const idx = parseInt(deptEl.dataset.idx, 10);
