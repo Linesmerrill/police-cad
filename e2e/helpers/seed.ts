@@ -70,6 +70,12 @@ export async function seedTestData(): Promise<void> {
               communityID: communityId,
               createdAt: now,
             },
+            communities: [
+              {
+                communityId,
+                status: 'approved',
+              },
+            ],
             dispatchStatus: '10-8',
             dispatchOnDuty: false,
             panicButtonSound: true,

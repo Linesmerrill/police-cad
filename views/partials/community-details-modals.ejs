@@ -213,14 +213,39 @@
             </div>
           <% } %>
 
-          <!-- Fine Settings -->
-          <div id="fineSettingsCard" onclick="openFineSettingsModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
-            <div style="text-align:center;">
-              <i class="fa fa-dollar-sign" style="font-size:2rem; color:#10b981; margin-bottom:0.5rem;"></i>
-              <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Fine Settings</h5>
-              <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Configure fines & penalties</p>
+          <!-- Fine Settings (deprecated by the new economy system — hidden from the grid).
+               openFineSettingsModal() is left intact so any legacy deep-link still works. -->
+
+          <!-- Economy Settings -->
+          <%
+            // Show a small "Beta" badge for two weeks after launch.
+            var _economyBetaUntil = new Date('2026-05-26');
+            var _economyShowBeta = new Date() < _economyBetaUntil;
+          %>
+          <% if (canManageGeneralSettings) { %>
+            <div id="economySettingsCard" onclick="window.location.href='/economy-settings'" style="position:relative; background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
+              <% if (_economyShowBeta) { %>
+                <span style="position:absolute; top:0.55rem; right:0.55rem; background:linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25)); color:#c4b5fd; padding:1px 7px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(139,92,246,0.3);">Beta</span>
+              <% } %>
+              <div style="text-align:center;">
+                <i class="fa fa-coins" style="font-size:2rem; color:#38bdf8; margin-bottom:0.5rem;"></i>
+                <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Economy</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage community pay</p>
+              </div>
             </div>
-          </div>
+          <% } else { %>
+            <div id="economySettingsCard" onclick="showNoGeneralSettingsPermissionModal()" style="position:relative; background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
+              <% if (_economyShowBeta) { %>
+                <span style="position:absolute; top:0.55rem; right:0.55rem; background:linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.2)); color:#a78bfa; padding:1px 7px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(139,92,246,0.25);">Beta</span>
+              <% } %>
+              <div style="text-align:center;">
+                <i class="fa fa-coins" style="font-size:2rem; color:#6b7280; margin-bottom:0.5rem;"></i>
+                <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">Economy</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage community pay</p>
+                <p style="color:#6b7280; margin:0.5rem 0 0 0; font-size:0.75rem; font-style:italic;">Permission Required</p>
+              </div>
+            </div>
+          <% } %>
 
           <!-- Penal Codes -->
           <div id="penalCodesCard" onclick="openPenalCodesSettings()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#f59e0b;">
@@ -15024,6 +15049,7 @@ async function saveEditEvent() {
   .rkm-tag-default { background: rgba(251,191,36,0.12); color: #fbbf24; }
   .rkm-tag-auto { background: rgba(16,185,129,0.12); color: #34d399; }
   .rkm-tag-req { background: rgba(255,255,255,0.04); color: #64748b; font-weight: 500; }
+  .rkm-tag-pay { background: rgba(56,189,248,0.12); color: #38bdf8; font-variant-numeric: tabular-nums; }
 
   .rkm-rank-actions {
     display: flex; gap: 0.2rem; flex-shrink: 0; opacity: 0; transition: opacity 0.15s;
@@ -15453,6 +15479,10 @@ async function saveEditEvent() {
           <label>Prefix</label>
           <input type="text" id="rankFormPrefix" placeholder="e.g. SGT">
         </div>
+        <div class="rkm-field" style="grid-column: 1 / -1;">
+          <label>Pay rate ($/hr) <span style="color:#64748b; font-weight:400;">— optional, overrides department base pay</span></label>
+          <input type="number" id="rankFormPayRate" min="0" step="0.01" placeholder="e.g. 25.00">
+        </div>
       </div>
       <div class="rkm-checks">
         <label class="rkm-check"><input type="checkbox" id="rankFormAutoPromote"> Auto Promote</label>
@@ -15551,6 +15581,9 @@ async function saveEditEvent() {
       if (rank.prefix) tags += '<span class="rkm-rank-tag rkm-tag-prefix">' + escapeRankHtml(rank.prefix) + '</span>';
       if (rank.isDefault) tags += '<span class="rkm-rank-tag rkm-tag-default">Default</span>';
       if (rank.autoPromote) tags += '<span class="rkm-rank-tag rkm-tag-auto">Auto</span>';
+      if (typeof rank.payRatePerHour === 'number' && rank.payRatePerHour > 0) {
+        tags += '<span class="rkm-rank-tag rkm-tag-pay">$' + (rank.payRatePerHour / 100).toFixed(2) + '/hr</span>';
+      }
       if (rank.requirements && rank.requirements.length > 0) {
         tags += '<span class="rkm-rank-tag rkm-tag-req">' + rank.requirements.length + ' req' + (rank.requirements.length > 1 ? 's' : '') + '</span>';
       }
@@ -15826,6 +15859,8 @@ async function saveEditEvent() {
     document.getElementById('rankFormPrefix').value = (rank && rank.prefix) || '';
     document.getElementById('rankFormAutoPromote').checked = (rank && rank.autoPromote) || false;
     document.getElementById('rankFormIsDefault').checked = (rank && rank.isDefault) || false;
+    var payCents = (rank && typeof rank.payRatePerHour === 'number') ? rank.payRatePerHour : 0;
+    document.getElementById('rankFormPayRate').value = payCents > 0 ? (payCents / 100).toFixed(2) : '';
     var titleEl = document.getElementById('rankFormTitle');
     titleEl.innerHTML = (rank && rank._id)
       ? '<i class="fa fa-pencil"></i> <span>Edit Rank</span>'
@@ -15919,12 +15954,16 @@ async function saveEditEvent() {
       }
     });
 
+    var payDollars = parseFloat(document.getElementById('rankFormPayRate').value);
+    var payCents = isFinite(payDollars) && payDollars > 0 ? Math.round(payDollars * 100) : 0;
+
     var payload = {
       name: name,
       prefix: document.getElementById('rankFormPrefix').value.trim(),
       autoPromote: document.getElementById('rankFormAutoPromote').checked,
       canViewStats: true,
       isDefault: document.getElementById('rankFormIsDefault').checked,
+      payRatePerHour: payCents,
       requirements: requirements
     };
 
@@ -15995,8 +16034,8 @@ async function saveEditEvent() {
   var _pendingPromotions = [];
 
   function loadPendingPromotions() {
-    if (!rankMgmtDeptId) return;
-    fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/pending-promotions')
+    if (!rankMgmtDeptId) return Promise.resolve();
+    return fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/pending-promotions')
       .then(function(r) { return r.json(); })
       .then(function(data) {
         _pendingPromotions = data.pending || [];
@@ -16022,6 +16061,8 @@ async function saveEditEvent() {
     document.getElementById('rkmPromoBackdrop').classList.add('is-open');
     document.getElementById('rkmPromoPanel').classList.add('is-open');
     renderPendingPromotions();
+    // Always refetch on open so manual-check state stays in sync with the server.
+    loadPendingPromotions().then(renderPendingPromotions).catch(function() {});
   };
 
   window.closePromotionsPanel = function() {
@@ -16148,7 +16189,7 @@ async function saveEditEvent() {
         }, 800);
       }
 
-      if (typeof showToast === 'function') showToast('Officer promoted!', 3000, 'success');
+      if (typeof showToast === 'function') showToast('Member promoted!', 3000, 'success');
 
       // Refresh data
       loadRanks();
@@ -16159,6 +16200,22 @@ async function saveEditEvent() {
       var subtext = document.getElementById('rkmPromoBannerSubtext');
       countEl.textContent = _pendingPromotions.length;
       subtext.textContent = _pendingPromotions.length === 1 ? '1 member ready for review' : _pendingPromotions.length + ' members ready for review';
+
+      // Keep the Manage Ranks card badge on the edit-department modal in sync.
+      var edmBadge = document.getElementById('edmRanksBadge');
+      var edmBadgeCount = document.getElementById('edmRanksBadgeCount');
+      if (edmBadge && edmBadgeCount) {
+        if (_pendingPromotions.length > 0) {
+          edmBadgeCount.textContent = _pendingPromotions.length;
+          edmBadge.classList.add('has-count');
+        } else {
+          edmBadge.classList.remove('has-count');
+        }
+      }
+      if (window.pendingPromoCounts && rankMgmtDeptId) {
+        window.pendingPromoCounts[rankMgmtDeptId] = _pendingPromotions.length;
+      }
+
       if (_pendingPromotions.length === 0) {
         document.getElementById('rkmPromoBanner').classList.remove('has-pending');
         setTimeout(function() {
@@ -16170,11 +16227,23 @@ async function saveEditEvent() {
       console.error('Error promoting officer:', err);
       btnEl.disabled = false;
       btnEl.innerHTML = '<i class="fa fa-arrow-up"></i> Retry Promote';
-      if (typeof showToast === 'function') showToast('Failed to promote officer', 3000, 'error');
+      if (typeof showToast === 'function') showToast('Failed to promote member', 3000, 'error');
     });
   };
 
   window.toggleCustomReq = function(userId, requirementId, met) {
+    // Optimistically update local state so the Promote button unlocks
+    // immediately when all custom requirements are met (or relocks otherwise).
+    var pending = _pendingPromotions.find(function(p) { return p.userId === userId; });
+    var prog = pending && (pending.progress || []).find(function(pr) { return pr.isCustom && pr.requirementId === requirementId; });
+    var previousMet = prog ? !!prog.met : null;
+    if (prog) {
+      prog.met = met;
+      prog.currentValue = met ? 1 : 0;
+      prog.percentage = met ? 1.0 : 0.0;
+      renderPendingPromotions();
+    }
+
     fetch(RANK_API + '/api/v1/community/' + rankMgmtCommunityId + '/departments/' + rankMgmtDeptId + '/members/' + userId + '/custom-requirements/' + requirementId + '?userId=' + rankMgmtUserId, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -16187,6 +16256,13 @@ async function saveEditEvent() {
     .catch(function(err) {
       console.error('Error toggling custom requirement:', err);
       if (typeof showToast === 'function') showToast('Failed to update requirement', 2500, 'error');
+      // Revert optimistic update on failure
+      if (prog && previousMet !== null) {
+        prog.met = previousMet;
+        prog.currentValue = previousMet ? 1 : 0;
+        prog.percentage = previousMet ? 1.0 : 0.0;
+        renderPendingPromotions();
+      }
     });
   };
 

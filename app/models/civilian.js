@@ -35,6 +35,8 @@ var civilianSchema = mongoose.Schema({
     age: String,
     activeCommunityID: String,
     userID: String,
+    balance: Number,
+    balanceInitialized: Boolean,
     createdAt: Date,
     updatedAt: Date,
   },
