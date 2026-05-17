@@ -631,6 +631,15 @@
           civilianId: state.civId,
         }),
       });
+      // 409 → user already has an active session somewhere. Offer to swap
+      // shifts rather than failing silently.
+      if (res.status === 409) {
+        const existing = await res.json().catch(() => null);
+        if (existing && existing._id) {
+          promptSwapClockIn(state, existing, btn);
+          return;
+        }
+      }
       if (!res.ok) throw new Error('clock-in failed: ' + res.status);
       // Auto-set the user's status to the community's on-duty code ("X-41")
       // so dispatch + MDT reflect the shift change without a second click.
@@ -649,6 +658,67 @@
     } catch (err) {
       console.error('[dd-economy] clock-in failed', err);
       if (window.showToast) window.showToast('Could not clock in', 2500, 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-play"></i> Clock in'; }
+    }
+  }
+
+  // 409 handler: the user is already on the clock somewhere else (different
+  // civilian or different department). Prompt to clock the other shift out
+  // before starting this one. We reuse ddModal when available so it
+  // matches the rest of the dashboard's confirmation UX.
+  function promptSwapClockIn(state, existing, btn) {
+    const cfg = state.cfg;
+    const deptName = existing.departmentName || 'another department';
+    if (!window.ddModal) {
+      if (!confirm('You\'re already on the clock at ' + deptName + '. Clock out and clock in here?')) {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-play"></i> Clock in'; }
+        return;
+      }
+      doSwapClockIn(state, existing, btn);
+      return;
+    }
+    window.ddModal({
+      type: 'warning',
+      icon: 'fa-triangle-exclamation',
+      title: 'You\'re already on the clock',
+      message: 'You\'re on the clock at <strong>' + escapeHtml(deptName) + '</strong>. Clock out there and start a shift here instead?',
+      detail: 'Earnings from the running shift will be finalized first.',
+      confirmText: 'Clock out & clock in here',
+      confirmIcon: 'fa-arrows-rotate',
+      onConfirm: function () { doSwapClockIn(state, existing, btn); },
+      onCancel: function () {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-play"></i> Clock in'; }
+      },
+    });
+  }
+
+  async function doSwapClockIn(state, existing, btn) {
+    const cfg = state.cfg;
+    try {
+      const outRes = await fetch(`${cfg.API_URL}/api/v2/economy/clock-out?userId=${encodeURIComponent(cfg.userId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: existing._id }),
+      });
+      if (!outRes.ok) throw new Error('clock-out failed: ' + outRes.status);
+      const inRes = await fetch(`${cfg.API_URL}/api/v2/economy/clock-in?userId=${encodeURIComponent(cfg.userId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          communityId: cfg.communityId,
+          departmentId: cfg.departmentId,
+          civilianId: state.civId,
+        }),
+      });
+      if (!inRes.ok) throw new Error('clock-in failed: ' + inRes.status);
+      // Replay the on-duty status side-effect so it stays in sync.
+      const eligible = deptUsesStatusCodes(state.dept);
+      const onDutyCode = eligible ? findCodeBySuffix(state.communityEcon.tenCodes, '41') : null;
+      if (onDutyCode) await setMemberTenCode(cfg, onDutyCode._id);
+      await refresh(state);
+    } catch (err) {
+      console.error('[dd-economy] shift swap failed', err);
+      if (window.showToast) window.showToast('Could not swap shifts', 2500, 'error');
       if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-play"></i> Clock in'; }
     }
   }

@@ -672,7 +672,18 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ communityId: COMMUNITY_ID, departmentId: deptId, civilianId: CIVILIAN_ID }),
       });
-      if (!res.ok && res.status !== 409) {
+      // The API rejects a second clock-in (any civilian, any dept) for the
+      // same user with 409 and the existing session in the body. Offer to
+      // clock out the running shift and clock in here, so the user doesn't
+      // have to manually navigate to the other dashboard to free things up.
+      if (res.status === 409) {
+        const existing = await res.json().catch(() => null);
+        if (existing && existing._id) {
+          await handleClockInConflict(deptId, existing);
+          return;
+        }
+      }
+      if (!res.ok) {
         const txt = await res.text().catch(() => '');
         throw new Error(`clock-in failed: ${res.status}${txt ? ' — ' + txt.slice(0, 200) : ''}`);
       }
@@ -681,6 +692,59 @@
     } catch (err) {
       console.error(err);
       if (window.ddModal) window.ddModal({ type: 'danger', icon: 'fa-triangle-exclamation', title: 'Could not clock in', message: err.message });
+    }
+  }
+
+  async function handleClockInConflict(deptId, existing) {
+    var deptName = existing.departmentName || 'another department';
+    var sameCiv = existing.civilianId && existing.civilianId === CIVILIAN_ID;
+    var msg = sameCiv
+      ? 'You\'re already on the clock at <strong>' + escapeHtml(deptName) + '</strong> with this civilian. Clock out and start a new shift here?'
+      : 'Another civilian on this account is currently on the clock at <strong>' + escapeHtml(deptName) + '</strong>. Clock them out and clock in here as <strong>' + escapeHtml(CIVILIAN_NAME || 'this civilian') + '</strong>?';
+    if (!window.ddModal) {
+      if (!confirm('You\'re already on the clock at ' + deptName + '. Clock out and clock in here?')) return;
+      await swapClockIn(deptId, existing);
+      return;
+    }
+    window.ddModal({
+      type: 'warning',
+      icon: 'fa-triangle-exclamation',
+      title: 'You\'re already on the clock',
+      message: msg,
+      detail: 'Earnings from the running shift will be finalized before the new one starts.',
+      confirmText: 'Clock out & clock in here',
+      confirmIcon: 'fa-arrows-rotate',
+      onConfirm: function () { swapClockIn(deptId, existing); },
+    });
+  }
+
+  async function swapClockIn(deptId, existing) {
+    try {
+      // Best-effort clock-out: if it fails we still surface the error
+      // rather than blindly trying to clock in (which would just 409 again).
+      const outRes = await fetch(`${API_URL}/api/v2/economy/clock-out?userId=${encodeURIComponent(USER_ID)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: existing._id }),
+      });
+      if (!outRes.ok) {
+        const txt = await outRes.text().catch(() => '');
+        throw new Error(`clock-out failed: ${outRes.status}${txt ? ' — ' + txt.slice(0, 200) : ''}`);
+      }
+      const inRes = await fetch(`${API_URL}/api/v2/economy/clock-in?userId=${encodeURIComponent(USER_ID)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ communityId: COMMUNITY_ID, departmentId: deptId, civilianId: CIVILIAN_ID }),
+      });
+      if (!inRes.ok) {
+        const txt = await inRes.text().catch(() => '');
+        throw new Error(`clock-in failed: ${inRes.status}${txt ? ' — ' + txt.slice(0, 200) : ''}`);
+      }
+      await Promise.all([refreshActiveSession(), refreshWallet(), refreshDepartments()]);
+      startHeartbeat();
+    } catch (err) {
+      console.error(err);
+      if (window.ddModal) window.ddModal({ type: 'danger', icon: 'fa-triangle-exclamation', title: 'Could not swap shift', message: err.message });
     }
   }
 
