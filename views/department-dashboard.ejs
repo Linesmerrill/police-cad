@@ -223,6 +223,24 @@
       text-align: center;
       line-height: 1.4;
     }
+    /* Glass-style Beta pill, used inline next to nav labels.
+       Time-gated in markup — auto-disappears after the cutoff date. */
+    .dd-nav-beta {
+      margin-left: auto;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(168,85,247,0.18));
+      color: #c4b5fd;
+      border: 1px solid rgba(139,92,246,0.32);
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      line-height: 1.45;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .dd-nav-beta + .dd-nav-badge { margin-left: 0.35rem; }
     .dd-cc-live-badge {
       background: #ef4444 !important;
       box-shadow: 0 0 8px rgba(239,68,68,0.4);
@@ -3085,13 +3103,15 @@
           <i class="fa fa-briefcase"></i>
           Court Cases
         </a>
-        <a class="dd-nav-item" href="/wallet<%= encodedCommunityId ? ('?community=' + encodedCommunityId) : '' %>">
+        <a class="dd-nav-item" href="/wallet<%= encodedCommunityId ? ('?community=' + encodedCommunityId) : '' %>" onclick="return ddRequireCivilian(event, 'wallet')">
           <i class="fa fa-wallet"></i>
           Wallet
+          <% if (new Date() < new Date('2026-05-31')) { %><span class="dd-nav-beta">Beta</span><% } %>
         </a>
-        <a class="dd-nav-item" href="/inbox<%= encodedCommunityId ? ('?community=' + encodedCommunityId) : '' %>">
+        <a class="dd-nav-item" href="/inbox<%= encodedCommunityId ? ('?community=' + encodedCommunityId) : '' %>" onclick="return ddRequireCivilian(event, 'inbox')">
           <i class="fa fa-inbox"></i>
           Inbox
+          <% if (new Date() < new Date('2026-05-31')) { %><span class="dd-nav-beta">Beta</span><% } %>
           <span class="dd-nav-badge" id="dd-inbox-count" style="display:none;">0</span>
         </a>
         <a class="dd-nav-item" href="/help">
@@ -3290,6 +3310,12 @@
       dbUser: dbUser,
       userName: userName
     };
+
+    // Active-community / civilian flags consumed by ddRequireCivilian to
+    // gate the Wallet/Inbox sidebar links.
+    window.DD_HAS_CIVILIAN_IN_COMMUNITY = <%= hasCivilianInCommunity ? 'true' : 'false' %>;
+    window.DD_COMMUNITY_NAME = <%- JSON.stringify(communityName || '') %>;
+    window.DD_ENCODED_COMMUNITY_ID = <%- JSON.stringify(encodedCommunityId || '') %>;
 
     var enabledComponents = {};
     var pendingWarrants = [];
@@ -7199,6 +7225,56 @@ $('#dd-loading').hide();
       $('#dd-modal-overlay').addClass('visible');
     }
     window.ddModal = ddModal;
+
+    // Sidebar Wallet/Inbox clicks call into this to gate navigation on
+    // whether the user has a civilian in the *active* community (server-
+    // resolved). Without one, we keep them on the dashboard and show a
+    // modal — if the current department is a civilian template, we offer
+    // a one-click jump into the in-dashboard Civilians section; otherwise
+    // we link out to the community page where civilians live.
+    window.ddRequireCivilian = function(event, feature) {
+      if (window.DD_HAS_CIVILIAN_IN_COMMUNITY) return true;
+      if (event && event.preventDefault) event.preventDefault();
+      var featureLabel = feature === 'inbox' ? 'inbox' : 'wallet';
+      var communityLabel = window.DD_COMMUNITY_NAME || 'this community';
+      // currentTemplateName is set by buildDashboard once the dept template
+      // loads. Check it here so we can route the CTA in-app when we're
+      // already sitting on a civilian dept.
+      var inCivDept = (typeof currentTemplateName !== 'undefined' && currentTemplateName === 'civilian');
+      var civNavKey = 'createCivilians';
+      var componentsEnabled = (window.ddConfig && window.ddConfig._enabledComponents) || {};
+      var canNavInPlace = inCivDept && !!componentsEnabled[civNavKey] && typeof window.ddNavTo === 'function';
+      var buttons = [{ label: 'Not now', class: 'dd-modal-btn-secondary' }];
+      if (canNavInPlace) {
+        buttons.push({
+          label: 'Add a civilian here', class: 'dd-modal-btn-primary', icon: 'fa-plus',
+          onClick: function() { window.ddNavTo(civNavKey); }
+        });
+      } else if (window.DD_ENCODED_COMMUNITY_ID) {
+        buttons.push({
+          label: 'Go to civilians', class: 'dd-modal-btn-primary', icon: 'fa-arrow-right',
+          href: '/community/' + window.DD_ENCODED_COMMUNITY_ID + '#civilians-section'
+        });
+      }
+      if (!window.ddModal) {
+        // Fallback if the modal helper hasn't loaded yet — just navigate
+        // and let the page render its empty state.
+        return true;
+      }
+      window.ddModal({
+        type: 'info',
+        icon: 'fa-user-plus',
+        title: 'Create a civilian first',
+        message: 'The ' + featureLabel + ' is tied to a civilian, but you don\'t have one in <strong>' +
+                 String(communityLabel).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}) +
+                 '</strong> yet.',
+        detail: canNavInPlace
+          ? 'You can add one right here in the Civilians section.'
+          : 'Add a civilian in this community to start using the ' + featureLabel + '.',
+        buttons: buttons,
+      });
+      return false;
+    };
 
     function ddCloseModal() {
       $('#dd-modal-overlay').removeClass('visible');

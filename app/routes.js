@@ -2655,6 +2655,22 @@ module.exports = function (app, passport, server, nextApp, handle) {
       // drives the lock-icon affordance on the Forms nav link.
       const canManageForms = communityId ? await userCanManageCommunity(req, communityId) : false;
 
+      // Wallet/Inbox are per-civilian. The sidebar checks this flag and
+      // shows a "create a civilian first" modal instead of navigating when
+      // the user has no civilian in the active community.
+      let hasCivilianInCommunity = false;
+      if (communityId && req.user?._id) {
+        try {
+          const civCount = await Civilian.countDocuments({
+            "civilian.userID": String(req.user._id),
+            "civilian.activeCommunityID": communityId,
+          });
+          hasCivilianInCommunity = civCount > 0;
+        } catch (err) {
+          console.error('Error counting civilians for command dashboard:', err.message);
+        }
+      }
+
       res.render("command-dashboard", {
         user: req.user,
         referer: encodeURIComponent("/command-dashboard"),
@@ -2662,7 +2678,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         context: null,
         departmentId: departmentId || req.session.departmentId || null,
         departmentName: departmentName,
+        communityId: communityId || null,
+        encodedCommunityId: communityId ? encodeId(communityId) : null,
         communityName: communityName,
+        hasCivilianInCommunity,
         apiUrl: policeCadApiUrl,
         canManageForms,
       });
@@ -2940,6 +2959,22 @@ module.exports = function (app, passport, server, nextApp, handle) {
         }
       }
 
+      // Wallet/Inbox are per-civilian. The sidebar checks this flag and
+      // shows a "create a civilian first" modal instead of navigating when
+      // the user has no civilian in the active community.
+      let hasCivilianInCommunity = false;
+      if (communityId && req.user?._id) {
+        try {
+          const civCount = await Civilian.countDocuments({
+            "civilian.userID": String(req.user._id),
+            "civilian.activeCommunityID": communityId,
+          });
+          hasCivilianInCommunity = civCount > 0;
+        } catch (err) {
+          console.error('Error counting civilians for dept dashboard:', err.message);
+        }
+      }
+
       res.render("department-dashboard", {
         user: req.user,
         referer: encodeURIComponent("/department-dashboard"),
@@ -2950,6 +2985,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         communityId: communityId || null,
         encodedCommunityId: communityId ? encodeId(communityId) : null,
         communityName: communityName,
+        hasCivilianInCommunity,
         apiUrl: policeCadApiUrl,
       });
     } catch (error) {
