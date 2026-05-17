@@ -1075,51 +1075,61 @@
     setActiveBtn.addEventListener('click', async () => {
       if (!USER_ID || !COMMUNITY_ID || !CIVILIAN_ID) return;
 
-      // If a different civilian on this account is currently on the
-      // clock, warn the user before swapping the pin. The active pin
-      // and the running shift are technically independent (the shift
-      // keeps accruing earnings against whichever civilian started
-      // it), but in practice users will conflate them — so surface
-      // the discrepancy and let them proceed knowingly.
+      // The active civilian drives downstream UI (job cards, clock-in/out
+      // modals, default civ for the bot, etc.), so it must always match
+      // whichever civilian is currently on the clock. If a different
+      // civilian on this account is clocked in, refuse the swap and tell
+      // the user to clock them out first — keeps every surface in sync.
       try {
         const sessRes = await fetch(`${API_URL}/api/v2/economy/session/active?userId=${encodeURIComponent(USER_ID)}`);
         if (sessRes.ok) {
           const sessText = await sessRes.text();
           const session = (!sessText || sessText === 'null') ? null : JSON.parse(sessText);
           if (session && session._id && session.civilianId && session.civilianId !== CIVILIAN_ID) {
-            const proceed = await confirmSetActiveWhileClockedIn(session);
-            if (!proceed) return;
+            showSetActiveBlockedByShift(session);
+            return;
           }
         }
       } catch (e) {
         // Don't block on a session lookup failure — fall through to the
-        // PUT below.
+        // PUT below. Server-side enforcement is the backstop.
       }
 
       await doSetActive();
     });
   }
 
-  // Modal: another civilian is currently clocked in but the user is
-  // pinning a different one as active. Returns true on confirm,
-  // false on cancel/close.
-  function confirmSetActiveWhileClockedIn(session) {
-    return new Promise((resolve) => {
-      const deptName = escapeHtml(session.departmentName || 'a department');
-      const newName = escapeHtml(CIVILIAN_NAME || 'this civilian');
-      window.ddModal({
-        type: 'warning',
-        icon: 'fa-triangle-exclamation',
-        title: 'Another civilian is on the clock',
-        message:
-          'A different civilian on this account is currently on the clock at <strong>' + deptName +
-          '</strong>. Pinning <strong>' + newName + '</strong> as active won\'t end that shift — they\'ll keep earning until you clock them out.',
-        detail: 'You can clock out from that civilian\'s wallet at any time.',
-        confirmText: 'Pin anyway',
-        confirmIcon: 'fa-thumbtack',
-        onConfirm: () => resolve(true),
-        onCancel: () => resolve(false),
-      });
+  // Block modal: another civilian on this account is on the clock, so we
+  // refuse the pin swap. The active civilian and the running shift must
+  // stay aligned — otherwise the wallet header, job cards, and clock-in
+  // modals all desync from the shift that's actually earning money.
+  function showSetActiveBlockedByShift(session) {
+    const deptName = escapeHtml(session.departmentName || 'a department');
+    const newName = escapeHtml(CIVILIAN_NAME || 'this civilian');
+    // Best-effort: deep-link to the on-the-clock civilian's wallet so
+    // they can clock out in one click. We have their civilianId from the
+    // session payload — base64url-encode it the same way the swap modal
+    // does.
+    const otherCivId = session.civilianId || '';
+    let otherWalletHref = '/wallet';
+    if (otherCivId) {
+      try {
+        const encoded = btoa(otherCivId).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        otherWalletHref = '/wallet?c=' + encodeURIComponent(encoded);
+      } catch (_) {}
+    }
+    window.ddModal({
+      type: 'warning',
+      icon: 'fa-stopwatch',
+      title: 'Clock out first',
+      message:
+        'A different civilian on this account is currently on the clock at <strong>' + deptName +
+        '</strong>. Clock them out before pinning <strong>' + newName + '</strong> as active — the active civilian has to match the one earning right now.',
+      detail: 'This keeps the wallet header, job cards, and clock-in modals in sync.',
+      buttons: [
+        { label: 'Got it', class: 'ddm-btn-secondary' },
+        { label: 'Go to that wallet', class: 'ddm-btn-primary', icon: 'fa-arrow-right', href: otherWalletHref },
+      ],
     });
   }
 
@@ -1133,6 +1143,21 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: USER_ID, communityId: COMMUNITY_ID, civilianId: CIVILIAN_ID }),
       });
+      // The API enforces the same "active must equal currently-clocked-in"
+      // rule we pre-check above — if the pre-check raced or was skipped
+      // (transient lookup failure), the server still refuses with 409 and
+      // returns the existing session. Surface the same "clock out first"
+      // modal in that case rather than showing a generic error.
+      if (res.status === 409) {
+        const body = await res.json().catch(() => null);
+        const session = body && body.session;
+        setActiveBtn.disabled = false;
+        setActiveBtn.innerHTML = originalHTML;
+        if (session && session._id) {
+          showSetActiveBlockedByShift(session);
+          return;
+        }
+      }
       if (!res.ok) {
         const txt = await res.text().catch(() => '');
         throw new Error(`HTTP ${res.status}${txt ? ' — ' + txt.slice(0, 200) : ''}`);
