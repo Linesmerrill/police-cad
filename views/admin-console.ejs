@@ -45,6 +45,19 @@
         font-family:'Outfit',-apple-system,BlinkMacSystemFont,sans-serif;
         min-height:100vh; overflow-x:hidden;
       }
+      /* Text-selection — the browser default on dark backgrounds was
+         dark-blue-on-near-black, basically invisible. Use the panel's
+         accent purple at ~36% opacity so the highlight reads clearly
+         on every surface (bg, glass cards, input fields) without
+         changing the underlying text color. */
+      body.ac-body ::selection {
+        background: rgba(139, 92, 246, 0.36);
+        color: #ffffff;
+      }
+      body.ac-body ::-moz-selection {
+        background: rgba(139, 92, 246, 0.36);
+        color: #ffffff;
+      }
 
       /* ── Background mesh ── */
       .ac-bg-mesh {
