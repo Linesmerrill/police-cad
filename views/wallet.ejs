@@ -235,30 +235,9 @@
     .w-inbox-amount.delinquent { color: var(--w-red); }
     .w-empty { font-size: 0.85rem; color: var(--w-text-dim); padding: 0.85rem 0; }
 
-    /* Shift history */
-    .w-shifts { display: flex; flex-direction: column; gap: 0.5rem; }
-    .w-shift-row {
-      display: grid;
-      grid-template-columns: minmax(110px, 0.9fr) minmax(120px, 1.2fr) 80px 110px;
-      align-items: center; gap: 0.85rem;
-      padding: 0.7rem 0.9rem;
-      background: rgba(255,255,255,0.025);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 9px;
-      font-size: 0.82rem;
-    }
-    .w-shift-date { color: var(--w-text); font-weight: 500; }
-    .w-shift-date small { display:block; color: var(--w-text-dim); font-weight:400; margin-top:2px; font-size:0.7rem; }
-    .w-shift-dept { color: var(--w-text-muted); font-size: 0.78rem; }
-    .w-shift-hours { color: var(--w-text); font-variant-numeric: tabular-nums; text-align: right; font-size: 0.82rem; }
-    .w-shift-earned { color: var(--w-green); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
-    .w-shift-status-pill {
-      display: inline-block; padding: 2px 7px; border-radius: 4px;
-      font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
-      background: rgba(148,163,184,0.12); color: var(--w-text-dim); margin-left: 6px;
-    }
-    .w-shift-status-pill.expired { background: rgba(251,191,36,0.14); color: #fbbf24; }
-    .w-shift-status-pill.abandoned { background: rgba(148,163,184,0.12); color: #94a3b8; }
+    /* Transaction pagination (shared style — class names preserved
+       so .w-shifts-pagination / .w-shifts-page-btn stays a recognizable
+       small-pager pattern across the wallet). */
     .w-shifts-pagination {
       display: flex; align-items: center; justify-content: space-between;
       margin-top: 0.75rem; font-size: 0.78rem; color: var(--w-text-dim);
@@ -270,9 +249,62 @@
     }
     .w-shifts-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .w-shifts-page-btn:hover:not(:disabled) { color: var(--w-text); border-color: rgba(255,255,255,0.18); }
-    @media (max-width: 700px) {
-      .w-shift-row { grid-template-columns: 1fr 1fr; row-gap: 0.45rem; }
-      .w-shift-hours, .w-shift-earned { text-align: left; }
+
+    /* Transaction ledger — groups by date, each row is icon + title/subtitle + amount + balance-after.
+       Bank-statement style: signed amount, post-transaction balance underneath. */
+    .w-tx-list { display: flex; flex-direction: column; gap: 1rem; }
+    .w-tx-group { display: flex; flex-direction: column; gap: 0.45rem; }
+    .w-tx-date {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--w-text-dim);
+      padding: 0 0.15rem;
+    }
+    .w-tx-card {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .w-tx-row {
+      display: grid;
+      grid-template-columns: 36px 1fr auto;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.7rem 0.85rem;
+    }
+    .w-tx-row + .w-tx-row { border-top: 1px solid rgba(255,255,255,0.05); }
+    .w-tx-icon {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.8rem;
+    }
+    .w-tx-icon.credit { background: rgba(52,211,153,0.16); color: var(--w-green); }
+    .w-tx-icon.debit { background: rgba(239,68,68,0.16); color: var(--w-red); }
+    .w-tx-body { min-width: 0; }
+    .w-tx-title {
+      color: var(--w-text); font-size: 0.88rem; font-weight: 500;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .w-tx-sub {
+      color: var(--w-text-dim); font-size: 0.74rem; margin-top: 0.15rem;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .w-tx-trail { text-align: right; font-variant-numeric: tabular-nums; }
+    .w-tx-amount { font-size: 0.92rem; font-weight: 600; white-space: nowrap; }
+    .w-tx-amount.credit { color: var(--w-green); }
+    .w-tx-amount.debit { color: var(--w-red); }
+    .w-tx-balance { font-size: 0.7rem; color: var(--w-text-dim); margin-top: 0.15rem; }
+    .w-tx-status-pill {
+      display: inline-block; padding: 1px 6px; border-radius: 4px;
+      font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+      background: rgba(148,163,184,0.12); color: var(--w-text-dim); margin-left: 6px;
+      vertical-align: middle;
+    }
+    .w-tx-status-pill.expired { background: rgba(251,191,36,0.14); color: #fbbf24; }
+    .w-tx-status-pill.abandoned { background: rgba(148,163,184,0.12); color: #94a3b8; }
+    @media (max-width: 480px) {
+      .w-tx-row { padding: 0.65rem 0.7rem; gap: 0.65rem; }
+      .w-tx-title { font-size: 0.84rem; }
     }
 
     /* Clock-in widget */
@@ -527,14 +559,14 @@
     </div>
   </div>
 
-  <!-- Shift history -->
+  <!-- Transaction history -->
   <div class="w-card" style="margin-top:1rem;">
-    <div class="w-section-title"><i class="fa fa-clock-rotate-left"></i> Recent shifts</div>
-    <div id="shiftsList" class="w-shifts"><div class="w-empty">Loading…</div></div>
-    <div class="w-shifts-pagination" id="shiftsPagination" style="display:none;">
-      <button class="w-shifts-page-btn" id="shiftsPrev" disabled><i class="fa fa-chevron-left"></i> Prev</button>
-      <span id="shiftsPageInfo">Page 1</span>
-      <button class="w-shifts-page-btn" id="shiftsNext" disabled>Next <i class="fa fa-chevron-right"></i></button>
+    <div class="w-section-title"><i class="fa fa-clock-rotate-left"></i> Transactions</div>
+    <div id="txList" class="w-tx-list"><div class="w-empty">Loading…</div></div>
+    <div class="w-shifts-pagination" id="txPagination" style="display:none;">
+      <button class="w-shifts-page-btn" id="txPrev" disabled><i class="fa fa-chevron-left"></i> Prev</button>
+      <span id="txPageInfo">Page 1</span>
+      <button class="w-shifts-page-btn" id="txNext" disabled>Next <i class="fa fa-chevron-right"></i></button>
     </div>
   </div>
   <% } %>
@@ -683,7 +715,7 @@
       });
       activeSession = null;
       if (activeTimer) clearInterval(activeTimer);
-      await Promise.all([refreshWallet(), refreshActiveSession(), refreshDepartments(), refreshShifts()]);
+      await Promise.all([refreshWallet(), refreshActiveSession(), refreshDepartments(), refreshTransactions()]);
     } catch (err) { console.error(err); }
   }
 
@@ -1026,9 +1058,9 @@
     }, 30000);
   }
 
-  // ---------- Shift history ----------
-  let shiftsPage = 1;
-  const SHIFTS_LIMIT = 10;
+  // ---------- Transaction history ----------
+  let txPage = 1;
+  const TX_LIMIT = 10;
 
   function fmtDuration(seconds) {
     const s = Math.max(0, Math.floor(Number(seconds) || 0));
@@ -1038,70 +1070,123 @@
     if (m === 0) return h + 'h';
     return h + 'h ' + m + 'm';
   }
-  function fmtShiftDate(iso) {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return '—';
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-  }
   function fmtShiftTime(iso) {
     if (!iso) return '';
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '';
     return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
   }
+  // Bucket label for date-grouping. Mirrors the mobile wallet's
+  // Today / Yesterday / weekday / full-date scheme so the two surfaces feel
+  // like the same ledger.
+  function txDateLabel(iso) {
+    if (!iso) return 'Unknown';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return 'Unknown';
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const dDay = new Date(d); dDay.setHours(0, 0, 0, 0);
+    const diff = Math.round((today - dDay) / 86400000);
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Yesterday';
+    if (diff > 1 && diff < 7) return d.toLocaleDateString(undefined, { weekday: 'long' });
+    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function txIconClass(tx) {
+    if (tx.direction === 'credit') return 'fa fa-plus';
+    return 'fa fa-minus';
+  }
+  function txTitle(tx) {
+    if (tx.type === 'shift') return (tx.departmentName || tx.title || 'Department') + ' shift';
+    return tx.title || (tx.direction === 'credit' ? 'Credit' : 'Charge');
+  }
+  function txSubtitle(tx) {
+    const parts = [];
+    if (tx.type === 'shift') {
+      if (tx.paidSeconds) parts.push(fmtDuration(tx.paidSeconds));
+      if (tx.status && tx.status !== 'ended') parts.push(`<span class="w-tx-status-pill ${escapeHtml(tx.status)}">${escapeHtml(tx.status)}</span>`);
+    } else if (tx.subtitle) {
+      const s = String(tx.subtitle);
+      parts.push(s.charAt(0).toUpperCase() + s.slice(1));
+    }
+    const time = fmtShiftTime(tx.occurredAt);
+    if (time) parts.push(time);
+    return parts.join(' · ');
+  }
 
-  async function refreshShifts() {
-    const host = document.getElementById('shiftsList');
-    const pag = document.getElementById('shiftsPagination');
+  async function refreshTransactions() {
+    const host = document.getElementById('txList');
+    const pag = document.getElementById('txPagination');
     if (!CIVILIAN_ID) {
-      host.innerHTML = '<div class="w-empty">No civilian context — past shifts unavailable.</div>';
+      host.innerHTML = '<div class="w-empty">No civilian context — transaction history unavailable.</div>';
       return;
     }
     host.innerHTML = '<div class="w-empty">Loading…</div>';
     try {
-      const res = await fetch(`${API_URL}/api/v2/economy/sessions/civilian/${CIVILIAN_ID}?page=${shiftsPage}&limit=${SHIFTS_LIMIT}`);
+      const res = await fetch(`${API_URL}/api/v2/economy/transactions/civilian/${CIVILIAN_ID}?page=${txPage}&limit=${TX_LIMIT}`);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const payload = await res.json();
       const data = payload.data || [];
       const total = payload.totalCount || 0;
       if (!data.length) {
-        host.innerHTML = '<div class="w-empty">No shifts logged yet. Clock in to start your first one.</div>';
+        host.innerHTML = '<div class="w-empty">No activity yet. Shift earnings and payments will show up here.</div>';
         pag.style.display = 'none';
         return;
       }
-      host.innerHTML = data.map(s => {
-        const statusPill = (s.status && s.status !== 'ended')
-          ? `<span class="w-shift-status-pill ${escapeHtml(s.status)}">${escapeHtml(s.status)}</span>` : '';
-        const startStr = fmtShiftDate(s.startedAt);
-        const timeStr = fmtShiftTime(s.startedAt) + (s.endedAt ? ' – ' + fmtShiftTime(s.endedAt) : '');
-        return `
-          <div class="w-shift-row">
-            <div class="w-shift-date">${escapeHtml(startStr)}${statusPill}<small>${escapeHtml(timeStr)}</small></div>
-            <div class="w-shift-dept">${escapeHtml(s.departmentName || 'Department')}</div>
-            <div class="w-shift-hours">${escapeHtml(fmtDuration(s.paidSeconds))}</div>
-            <div class="w-shift-earned">${fmtMoney(s.earnings || 0)}</div>
+      // Group by date label, preserving newest-first order from the API.
+      const groups = [];
+      for (const tx of data) {
+        const label = txDateLabel(tx.occurredAt);
+        let g = groups[groups.length - 1];
+        if (!g || g.label !== label) {
+          g = { label, items: [] };
+          groups.push(g);
+        }
+        g.items.push(tx);
+      }
+      host.innerHTML = groups.map(g => `
+        <div class="w-tx-group">
+          <div class="w-tx-date">${escapeHtml(g.label)}</div>
+          <div class="w-tx-card">
+            ${g.items.map(tx => {
+              const sign = tx.direction === 'credit' ? '+' : '-';
+              const balanceLine = tx.balanceAfterKnown
+                ? `<div class="w-tx-balance">Balance ${escapeHtml(fmtMoney(tx.balanceAfter || 0))}</div>`
+                : '';
+              return `
+                <div class="w-tx-row">
+                  <div class="w-tx-icon ${escapeHtml(tx.direction)}"><i class="${escapeHtml(txIconClass(tx))}"></i></div>
+                  <div class="w-tx-body">
+                    <div class="w-tx-title">${escapeHtml(txTitle(tx))}</div>
+                    <div class="w-tx-sub">${txSubtitle(tx)}</div>
+                  </div>
+                  <div class="w-tx-trail">
+                    <div class="w-tx-amount ${escapeHtml(tx.direction)}">${sign}${escapeHtml(fmtMoney(tx.amount || 0))}</div>
+                    ${balanceLine}
+                  </div>
+                </div>
+              `;
+            }).join('')}
           </div>
-        `;
-      }).join('');
-      const totalPages = Math.max(1, Math.ceil(total / SHIFTS_LIMIT));
+        </div>
+      `).join('');
+      const totalPages = Math.max(1, Math.ceil(total / TX_LIMIT));
       pag.style.display = totalPages > 1 ? 'flex' : 'none';
-      document.getElementById('shiftsPageInfo').textContent = `Page ${shiftsPage} of ${totalPages} · ${total} shift${total === 1 ? '' : 's'}`;
-      document.getElementById('shiftsPrev').disabled = shiftsPage <= 1;
-      document.getElementById('shiftsNext').disabled = shiftsPage >= totalPages;
+      document.getElementById('txPageInfo').textContent = `Page ${txPage} of ${totalPages} · ${total} transaction${total === 1 ? '' : 's'}`;
+      document.getElementById('txPrev').disabled = txPage <= 1;
+      document.getElementById('txNext').disabled = txPage >= totalPages;
     } catch (err) {
-      host.innerHTML = `<div class="w-empty" style="color:#ef4444;">Couldn't load shifts: ${escapeHtml(err.message || '')}</div>`;
+      host.innerHTML = `<div class="w-empty" style="color:#ef4444;">Couldn't load transactions: ${escapeHtml(err.message || '')}</div>`;
     }
   }
-  document.getElementById('shiftsPrev').addEventListener('click', () => {
-    if (shiftsPage > 1) { shiftsPage -= 1; refreshShifts(); }
+  document.getElementById('txPrev').addEventListener('click', () => {
+    if (txPage > 1) { txPage -= 1; refreshTransactions(); }
   });
-  document.getElementById('shiftsNext').addEventListener('click', () => {
-    shiftsPage += 1; refreshShifts();
+  document.getElementById('txNext').addEventListener('click', () => {
+    txPage += 1; refreshTransactions();
   });
 
   (async function init() {
-    await Promise.all([refreshWallet(), refreshActiveSession(), refreshDepartments(), refreshShifts()]);
+    await Promise.all([refreshWallet(), refreshActiveSession(), refreshDepartments(), refreshTransactions()]);
     if (activeSession) startHeartbeat();
   })();
 
