@@ -1626,6 +1626,44 @@ module.exports = function (app, passport, server, nextApp, handle) {
     if (civilianId) {
       try { civilian = await Civilian.findById(ObjectId(civilianId)).lean(); } catch (e) {}
     }
+
+    // Fetch the user's persisted "active civilian" for this community (the
+    // shared pick written by the wallet's Set-as-active button and the
+    // bot's /set-active-civilian). We use it for two things:
+    //   - identifying the active civ in the UI even when the user is
+    //     viewing a different one via ?c=<encoded>
+    //   - falling back to it when no civilian is pinned in the URL
+    // The civilian may have been deleted since the row was written, so we
+    // re-verify it exists before trusting it.
+    let activeCivilianId = "";
+    if (userId && communityId) {
+      try {
+        const acResp = await axios.get(
+          `${policeCadApiUrl}/api/v2/user/active-civilian?userId=${encodeURIComponent(userId)}&communityId=${encodeURIComponent(communityId)}`,
+          config,
+        );
+        const candidate = acResp?.data?.civilianId || "";
+        if (candidate && objectIdPattern.test(candidate)) {
+          // Verify the civilian still exists and still belongs to this
+          // user + community. If it doesn't, treat the pick as gone and
+          // fall through to the most-recently-updated fallback.
+          try {
+            const verify = await Civilian.findOne({
+              _id: ObjectId(candidate),
+              "civilian.userID": userId,
+              "civilian.activeCommunityID": communityId,
+            }).lean();
+            if (verify) activeCivilianId = candidate;
+          } catch (e) {}
+        }
+      } catch (e) {
+        // 4xx/5xx/null body — no persisted active civ; that's fine.
+      }
+    }
+
+    if (!civilian && activeCivilianId) {
+      try { civilian = await Civilian.findById(ObjectId(activeCivilianId)).lean(); } catch (e) {}
+    }
     if (!civilian && userId) {
       try {
         const query = { "civilian.userID": userId };
@@ -1663,6 +1701,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
       encodedCommunityId: communityId ? encodeId(communityId) : "",
       communityName,
       userId: userId || "",
+      // Lets the wallet show a "Set as active" affordance when the viewer
+      // is browsing a different civilian than their persisted active pick.
+      activeCivilianId,
+      isActiveCivilian: !!(resolvedCivId && activeCivilianId && resolvedCivId === activeCivilianId),
     };
   }
 

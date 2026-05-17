@@ -59,6 +59,27 @@
       transition: background 120ms, border-color 120ms, transform 120ms;
     }
     .w-swap-btn:hover { background: rgba(56,189,248,0.18); border-color: rgba(56,189,248,0.35); transform: rotate(180deg); }
+    /* "Active" indicator + "Set as active" button sit inline with the swap
+       affordance so the active civilian is always one glance away. */
+    .w-active-pill {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 2px 8px; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: rgba(34,197,94,0.12); color: #4ade80;
+      border: 1px solid rgba(34,197,94,0.32); border-radius: 999px;
+    }
+    .w-active-pill i { font-size: 0.55rem; }
+    .w-set-active-btn {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 2px 8px; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: rgba(139,92,246,0.10); color: #c4b5fd;
+      border: 1px solid rgba(139,92,246,0.30); border-radius: 999px;
+      cursor: pointer; transition: background 120ms, border-color 120ms, color 120ms;
+    }
+    .w-set-active-btn:hover { background: rgba(139,92,246,0.20); border-color: rgba(139,92,246,0.5); color: #fff; }
+    .w-set-active-btn i { font-size: 0.55rem; }
+    .w-set-active-btn[disabled] { opacity: 0.55; cursor: progress; }
 
     /* Civilian swap modal */
     .w-swap-backdrop {
@@ -313,6 +334,17 @@
         <button type="button" class="w-swap-btn" id="swapCivBtn" title="Switch civilian" aria-label="Switch civilian">
           <i class="fa fa-right-left"></i>
         </button>
+        <% if (isActiveCivilian) { %>
+        <span class="w-active-pill" title="This is the civilian the wallet, inbox, and bot default to."><i class="fa fa-check"></i> Active</span>
+        <% } else if (activeCivilianId) { %>
+        <button type="button" class="w-set-active-btn" id="setActiveBtn" title="Make this civilian the default for the wallet, inbox, and bot.">
+          <i class="fa fa-thumbtack"></i> Set as active
+        </button>
+        <% } else { %>
+        <button type="button" class="w-set-active-btn" id="setActiveBtn" title="Pin this civilian as the default for the wallet, inbox, and bot.">
+          <i class="fa fa-thumbtack"></i> Set as active
+        </button>
+        <% } %>
         <% } %>
       </div>
     </div>
@@ -413,6 +445,10 @@
   const ENCODED_COMMUNITY_ID = "<%- encodedCommunityId %>";
   const USER_ID = "<%- userId %>";
   const CIVILIAN_NAME = "<%- civilianName %>";
+  // The "active civilian" the wallet/inbox/bot default to. Distinct from
+  // CIVILIAN_ID: the user can browse another civilian's wallet without
+  // changing this. Empty string when no pick is persisted yet.
+  let ACTIVE_CIVILIAN_ID = "<%- activeCivilianId %>";
 
   // When the user has no civilian in this community, the EJS renders an
   // empty-state card instead of the wallet shell — none of the elements
@@ -927,10 +963,18 @@
 
     swapList.innerHTML = rows.map(r => {
       const isCurrent = r.id === CIVILIAN_ID;
+      const isActive = !!ACTIVE_CIVILIAN_ID && r.id === ACTIVE_CIVILIAN_ID;
       const avatar = r.image
         ? `<img src="${escapeHtml(r.image)}" alt="">`
         : escapeHtml(r.initials);
-      const pill = isCurrent ? '<span class="w-swap-current-pill">Current</span>' : '';
+      // "Current" = the wallet you're looking at right now.
+      // "Active"  = the wallet everything defaults to.
+      // Both can be true at once; render both pills so the distinction is obvious.
+      const pills = [
+        isCurrent ? '<span class="w-swap-current-pill">Current</span>' : '',
+        isActive  ? '<span class="w-active-pill" style="margin-left:0.3rem;"><i class="fa fa-check"></i> Active</span>' : '',
+      ].join('');
+      const pill = pills;
       const cls = 'w-swap-row' + (isCurrent ? ' is-current' : '');
       return `
         <div class="${cls}" data-civ-id="${escapeHtml(r.id)}">
@@ -951,6 +995,50 @@
         const encoded = encodeCivIdClient(id);
         window.location.href = `/wallet?c=${encodeURIComponent(encoded)}`;
       });
+    });
+  }
+
+  // ---------- Set-as-active ----------
+  // PUTs /api/v2/user/active-civilian so this civ becomes the default for
+  // the wallet, inbox, and the Discord bot. Swap (the arrows button) is
+  // for browsing — it just navigates. Set-as-active is the explicit
+  // commitment.
+  const setActiveBtn = document.getElementById('setActiveBtn');
+  if (setActiveBtn) {
+    setActiveBtn.addEventListener('click', async () => {
+      if (!USER_ID || !COMMUNITY_ID || !CIVILIAN_ID) return;
+      setActiveBtn.disabled = true;
+      const originalHTML = setActiveBtn.innerHTML;
+      setActiveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving…';
+      try {
+        const res = await fetch(`${API_URL}/api/v2/user/active-civilian`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: USER_ID, communityId: COMMUNITY_ID, civilianId: CIVILIAN_ID }),
+        });
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          throw new Error(`HTTP ${res.status}${txt ? ' — ' + txt.slice(0, 200) : ''}`);
+        }
+        ACTIVE_CIVILIAN_ID = CIVILIAN_ID;
+        // Swap the button out for the "Active" pill in place — no full
+        // page reload needed.
+        const pill = document.createElement('span');
+        pill.className = 'w-active-pill';
+        pill.title = 'This is the civilian the wallet, inbox, and bot default to.';
+        pill.innerHTML = '<i class="fa fa-check"></i> Active';
+        setActiveBtn.replaceWith(pill);
+      } catch (err) {
+        console.error('set-active-civilian failed', err);
+        setActiveBtn.disabled = false;
+        setActiveBtn.innerHTML = originalHTML;
+        if (window.ddModal) {
+          window.ddModal({
+            type: 'danger', icon: 'fa-triangle-exclamation',
+            title: 'Could not set active civilian', message: escapeHtml(err.message || ''),
+          });
+        }
+      }
     });
   }
   } // end if (CIVILIAN_ID)
