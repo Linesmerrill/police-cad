@@ -399,6 +399,8 @@
   useLastDashboard: true
 }) %>
 
+<%- include('partials/dd-modal') %>
+
 <div class="in-shell">
   <div class="in-header" style="justify-content:space-between;">
     <div style="display:flex;align-items:center;gap:0.85rem;">
@@ -406,18 +408,23 @@
       <div>
         <div class="in-title" style="display:flex; align-items:center; gap:0.5rem;">Inbox<% if (new Date() < new Date('2026-05-26')) { %><span style="background:linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25)); color:#c4b5fd; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(139,92,246,0.3);">Beta</span><% } %></div>
         <div class="in-subtitle in-subtitle-row" style="text-transform:capitalize;">
-          <span id="inboxSubtitle">Loading civilian…</span>
+          <span id="inboxSubtitle"><%= civilianId ? 'Loading civilian…' : (communityName || 'this community') %></span>
+          <% if (civilianId) { %>
           <button type="button" class="in-swap-btn" id="swapCivBtn" title="Switch civilian" aria-label="Switch civilian">
             <i class="fa fa-right-left"></i>
           </button>
+          <% } %>
         </div>
       </div>
     </div>
+    <% if (civilianId) { %>
     <a class="in-btn ghost" id="walletLink" href="/wallet?c=<%= encodedCivId || '' %>" style="text-decoration:none;align-self:center;">
       <i class="fa fa-wallet"></i> Wallet
     </a>
+    <% } %>
   </div>
 
+  <% if (civilianId) { %>
   <div class="in-swap-backdrop" id="swapBackdrop"></div>
   <div class="in-swap-modal" id="swapModal" role="dialog" aria-modal="true" aria-label="Switch civilian">
     <div class="in-swap-header">
@@ -447,6 +454,29 @@
     <span id="pageInfo">—</span>
     <button class="in-btn ghost" id="nextBtn">Next <i class="fa fa-chevron-right"></i></button>
   </div>
+  <% } else { %>
+  <!-- Empty state: user has no civilian in this community -->
+  <div class="in-card" style="text-align:center; padding:2.5rem 1.5rem; background:var(--in-glass); border:1px solid var(--in-glass-border); border-radius:var(--in-radius);">
+    <div style="font-size:2.5rem; color:var(--in-text-muted); margin-bottom:0.75rem;">
+      <i class="fa fa-user-plus"></i>
+    </div>
+    <div style="font-size:1.1rem; font-weight:600; color:var(--in-text); margin-bottom:0.4rem;">
+      No civilian in <%= communityName || 'this community' %>
+    </div>
+    <div style="font-size:0.9rem; color:var(--in-text-muted); margin-bottom:1.25rem; max-width:36rem; margin-left:auto; margin-right:auto;">
+      Tickets, fees, and other inbox items are tied to a civilian. Create one in this community to start receiving notices.
+    </div>
+    <% if (encodedCommunityId) { %>
+    <a class="in-btn" href="/community/<%= encodedCommunityId %>#civilians-section" style="display:inline-flex; align-items:center; gap:0.4rem;">
+      <i class="fa fa-plus"></i> Create a civilian
+    </a>
+    <% } else { %>
+    <a class="in-btn" href="/communities" style="display:inline-flex; align-items:center; gap:0.4rem;">
+      <i class="fa fa-layer-group"></i> Pick a community
+    </a>
+    <% } %>
+  </div>
+  <% } %>
 </div>
 
 <script>
@@ -455,7 +485,14 @@
   const USER_ID = "<%- userId %>";
   const COMMUNITY_ID = "<%- communityId || '' %>";
   const CIVILIAN_NAME = "<%- civilianName || '' %>";
+  // Community currency — sourced from community.penalCodes (fines are
+  // deprecated). Falls back to USD/$ when not configured.
+  const CURRENCY_SYMBOL = <%- JSON.stringify(currencySymbol || '$') %>;
 
+  // When the user has no civilian in this community, the EJS renders an
+  // empty-state card instead of the inbox list — none of the elements
+  // wired up below exist on the page, so bail out before touching them.
+  if (CIVILIAN_ID) {
   document.getElementById('inboxSubtitle').textContent = CIVILIAN_NAME || 'Civilian';
 
   let state = { page: 1, limit: 25, status: '', totalCount: 0 };
@@ -465,7 +502,7 @@
     const abs = Math.abs(cents);
     const dollars = Math.floor(abs / 100);
     const rem = abs % 100;
-    return sign + '$' + dollars.toLocaleString() + '.' + String(rem).padStart(2, '0');
+    return sign + CURRENCY_SYMBOL + dollars.toLocaleString() + '.' + String(rem).padStart(2, '0');
   }
   function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1017,6 +1054,7 @@
       });
     });
   }
+  } // end if (CIVILIAN_ID)
 </script>
 </body>
 </html>

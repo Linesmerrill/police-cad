@@ -1588,25 +1588,90 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   // ----- Economy: Wallet + Inbox (Phase 1) -----
   async function resolveEconomyContext(req) {
-    const communityIdPattern = /^[a-fA-F0-9]{24}$/;
+    const objectIdPattern = /^[a-fA-F0-9]{24}$/;
+
+    // 1. Resolve an explicit civilian target from the URL (?c=<encoded>) so
+    //    deep-links and the on-page civilian-switcher keep working.
     let civilianId = null;
     if (req.query.c) {
       try {
         const decoded = decodeId(req.query.c);
-        if (communityIdPattern.test(decoded)) civilianId = decoded;
+        if (objectIdPattern.test(decoded)) civilianId = decoded;
       } catch (e) {}
     }
-    if (!civilianId && req.query.civId && communityIdPattern.test(req.query.civId)) {
+    if (!civilianId && req.query.civId && objectIdPattern.test(req.query.civId)) {
       civilianId = req.query.civId;
     }
+
+    // 2. Resolve the active community: prefer the explicit ?community=<encoded>
+    //    param sent by dashboards, then fall back to session state. This is
+    //    the source of truth for which community's wallet/inbox we render,
+    //    and it scopes the civilian fallback below so we don't accidentally
+    //    pick a civilian from another community the user belongs to.
+    let communityId = "";
+    if (req.query.community) {
+      try {
+        const decoded = decodeId(req.query.community);
+        if (objectIdPattern.test(decoded)) communityId = decoded;
+      } catch (e) {}
+    }
+    if (!communityId) {
+      communityId = req.user?.user?.lastAccessedCommunity?.communityID
+                 || req.user?.user?.activeCommunity
+                 || "";
+    }
+
     const userId = (req.user && req.user._id) ? String(req.user._id) : null;
     let civilian = null;
     if (civilianId) {
       try { civilian = await Civilian.findById(ObjectId(civilianId)).lean(); } catch (e) {}
     }
+
+    // Fetch the user's persisted "active civilian" for this community (the
+    // shared pick written by the wallet's Set-as-active button and the
+    // bot's /set-active-civilian). We use it for two things:
+    //   - identifying the active civ in the UI even when the user is
+    //     viewing a different one via ?c=<encoded>
+    //   - falling back to it when no civilian is pinned in the URL
+    // The civilian may have been deleted since the row was written, so we
+    // re-verify it exists before trusting it.
+    let activeCivilianId = "";
+    if (userId && communityId) {
+      try {
+        const acResp = await axios.get(
+          `${policeCadApiUrl}/api/v2/user/active-civilian?userId=${encodeURIComponent(userId)}&communityId=${encodeURIComponent(communityId)}`,
+          config,
+        );
+        const candidate = acResp?.data?.civilianId || "";
+        if (candidate && objectIdPattern.test(candidate)) {
+          // Verify the civilian still exists and still belongs to this
+          // user + community. If it doesn't, treat the pick as gone and
+          // fall through to the most-recently-updated fallback.
+          try {
+            const verify = await Civilian.findOne({
+              _id: ObjectId(candidate),
+              "civilian.userID": userId,
+              "civilian.activeCommunityID": communityId,
+            }).lean();
+            if (verify) activeCivilianId = candidate;
+          } catch (e) {}
+        }
+      } catch (e) {
+        // 4xx/5xx/null body — no persisted active civ; that's fine.
+      }
+    }
+
+    if (!civilian && activeCivilianId) {
+      try { civilian = await Civilian.findById(ObjectId(activeCivilianId)).lean(); } catch (e) {}
+    }
     if (!civilian && userId) {
       try {
-        civilian = await Civilian.findOne({ "civilian.userID": userId }).sort({ "civilian.updatedAt": -1 }).lean();
+        const query = { "civilian.userID": userId };
+        // Scope to the active community when known so we don't surface a
+        // civilian from a different community the user happens to have
+        // touched more recently.
+        if (communityId) query["civilian.activeCommunityID"] = communityId;
+        civilian = await Civilian.findOne(query).sort({ "civilian.updatedAt": -1 }).lean();
       } catch (e) {}
     }
     const resolvedCivId = civilian ? String(civilian._id) : "";
@@ -1616,15 +1681,24 @@ module.exports = function (app, passport, server, nextApp, handle) {
       ? ([civilian.civilian?.firstName, civilian.civilian?.lastName].filter(Boolean).join(" ")
          || civilian.civilian?.name || "")
       : "";
-    const communityId = civilian?.civilian?.activeCommunityID
-                     || req.user?.user?.lastAccessedCommunity?.communityID
-                     || req.user?.user?.activeCommunity
-                     || "";
+    // If the URL pinned an explicit civilian but no community was provided,
+    // honor the civilian's own community so the page header matches.
+    if (!communityId && civilian?.civilian?.activeCommunityID) {
+      communityId = civilian.civilian.activeCommunityID;
+    }
     let communityName = null;
+    // Per-community currency: the wallet/inbox/jobs widgets all use this
+    // to render amounts. Sourced from community.penalCodes (the active
+    // currency surface; community.fines is deprecated).
+    let currencyCode = "USD";
+    let currencySymbol = "$";
     if (communityId) {
       try {
         const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
         communityName = r.data?.community?.name || null;
+        const cur = resolveCommunityCurrency(r.data);
+        currencyCode = cur.code;
+        currencySymbol = cur.symbol;
       } catch (e) {}
     }
     return {
@@ -1635,15 +1709,48 @@ module.exports = function (app, passport, server, nextApp, handle) {
       encodedCommunityId: communityId ? encodeId(communityId) : "",
       communityName,
       userId: userId || "",
+      // Lets the wallet show a "Set as active" affordance when the viewer
+      // is browsing a different civilian than their persisted active pick.
+      activeCivilianId,
+      isActiveCivilian: !!(resolvedCivId && activeCivilianId && resolvedCivId === activeCivilianId),
+      currencyCode,
+      currencySymbol,
     };
+  }
+
+  // Mirror of the builtin map in public/js/details-modal.js — kept in sync
+  // so server-rendered defaults match what the existing ticket flow shows
+  // when a community hasn't extended `penalCodes.currencies` with a custom
+  // entry.
+  function builtinCurrencySymbol(code) {
+    const builtin = { USD: "$", EUR: "€", GBP: "£", CAD: "C$", AUD: "A$" };
+    return builtin[code] || code || "$";
+  }
+
+  // Resolve the community's active currency from a /api/v1/community/<id>
+  // response. Used by the economy-aware dashboards (wallet, inbox, dept,
+  // command) so all amounts render with the community-configured symbol.
+  // Sourced from community.penalCodes — community.fines is deprecated.
+  function resolveCommunityCurrency(communityResponseData) {
+    const pc = communityResponseData?.community?.penalCodes;
+    const code = (pc && pc.currency) ? String(pc.currency) : "USD";
+    let symbol = builtinCurrencySymbol(code);
+    if (Array.isArray(pc?.currencies)) {
+      const match = pc.currencies.find(opt => opt && opt.code === code);
+      if (match && match.symbol) symbol = String(match.symbol);
+    }
+    return { code, symbol };
   }
 
   app.get("/wallet", authCheck, async function (req, res) {
     try {
       const ctx = await resolveEconomyContext(req);
-      if (!ctx.civilianId) {
-        return res.redirect("/civ-dashboard");
-      }
+      // We deliberately render the wallet shell even when no civilian
+      // exists in the active community — the page shows a "create a
+      // civilian here" empty state in that case. Redirecting away (the
+      // old behavior) silently bounced the user to /civ-dashboard →
+      // /department-dashboard (beta pref) and dropped the community
+      // context entirely.
       res.render("wallet", {
         user: req.user,
         apiUrl: policeCadApiUrl,
@@ -1689,6 +1796,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.get("/inbox", authCheck, async function (req, res) {
     try {
       const ctx = await resolveEconomyContext(req);
+      // Render the shell even with no civilian; the page shows a clear
+      // empty state in that case (and avoids the legacy user-level
+      // fallback fetch, which leaks items from other communities).
       res.render("inbox", {
         user: req.user,
         apiUrl: policeCadApiUrl,
@@ -2554,6 +2664,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
 
       let communityName = null;
+      let currencyCode = "USD";
+      let currencySymbol = "$";
       if (communityId) {
         try {
           const communityResponse = await axios.get(
@@ -2561,6 +2673,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
             config
           );
           communityName = communityResponse.data?.community?.name || null;
+          const cur = resolveCommunityCurrency(communityResponse.data);
+          currencyCode = cur.code;
+          currencySymbol = cur.symbol;
         } catch (err) {
           console.error('Error fetching community:', err.message);
         }
@@ -2621,6 +2736,22 @@ module.exports = function (app, passport, server, nextApp, handle) {
       // drives the lock-icon affordance on the Forms nav link.
       const canManageForms = communityId ? await userCanManageCommunity(req, communityId) : false;
 
+      // Wallet/Inbox are per-civilian. The sidebar checks this flag and
+      // shows a "create a civilian first" modal instead of navigating when
+      // the user has no civilian in the active community.
+      let hasCivilianInCommunity = false;
+      if (communityId && req.user?._id) {
+        try {
+          const civCount = await Civilian.countDocuments({
+            "civilian.userID": String(req.user._id),
+            "civilian.activeCommunityID": communityId,
+          });
+          hasCivilianInCommunity = civCount > 0;
+        } catch (err) {
+          console.error('Error counting civilians for command dashboard:', err.message);
+        }
+      }
+
       res.render("command-dashboard", {
         user: req.user,
         referer: encodeURIComponent("/command-dashboard"),
@@ -2628,7 +2759,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
         context: null,
         departmentId: departmentId || req.session.departmentId || null,
         departmentName: departmentName,
+        communityId: communityId || null,
+        encodedCommunityId: communityId ? encodeId(communityId) : null,
         communityName: communityName,
+        hasCivilianInCommunity,
+        currencyCode,
+        currencySymbol,
         apiUrl: policeCadApiUrl,
         canManageForms,
       });
@@ -2894,6 +3030,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
 
       let communityName = null;
+      let currencyCode = "USD";
+      let currencySymbol = "$";
       if (communityId) {
         try {
           const communityResponse = await axios.get(
@@ -2901,8 +3039,27 @@ module.exports = function (app, passport, server, nextApp, handle) {
             config
           );
           communityName = communityResponse.data?.community?.name || null;
+          const cur = resolveCommunityCurrency(communityResponse.data);
+          currencyCode = cur.code;
+          currencySymbol = cur.symbol;
         } catch (err) {
           console.error('Error fetching community:', err.message);
+        }
+      }
+
+      // Wallet/Inbox are per-civilian. The sidebar checks this flag and
+      // shows a "create a civilian first" modal instead of navigating when
+      // the user has no civilian in the active community.
+      let hasCivilianInCommunity = false;
+      if (communityId && req.user?._id) {
+        try {
+          const civCount = await Civilian.countDocuments({
+            "civilian.userID": String(req.user._id),
+            "civilian.activeCommunityID": communityId,
+          });
+          hasCivilianInCommunity = civCount > 0;
+        } catch (err) {
+          console.error('Error counting civilians for dept dashboard:', err.message);
         }
       }
 
@@ -2913,7 +3070,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
         context: null,
         departmentId: departmentId || req.session.departmentId || null,
         departmentName: departmentName,
+        communityId: communityId || null,
+        encodedCommunityId: communityId ? encodeId(communityId) : null,
         communityName: communityName,
+        hasCivilianInCommunity,
+        currencyCode,
+        currencySymbol,
         apiUrl: policeCadApiUrl,
       });
     } catch (error) {
