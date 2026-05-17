@@ -272,6 +272,7 @@
        stretching the card way past the Recent Inbox card next to it; the
        inbox is short by nature, so the imbalance read as broken. Scroll
        the overflow inside the card instead. */
+    .w-clock-list-wrap { position: relative; }
     .w-clock-list {
       display: flex; flex-direction: column; gap: 0.55rem;
       max-height: 32rem;
@@ -290,6 +291,69 @@
       border-radius: 3px;
     }
     .w-clock-list::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+
+    /* Scroll affordances. Three layered cues so the cap doesn't read as
+       a hidden cliff (users were missing departments below the fold):
+         1. Soft fade mask at the edge that has more content.
+         2. Floating count chip ("↓ 2 more") with a subtle bounce.
+         3. Chip is clickable — taps scroll the next page into view.
+       All three fade in/out smoothly as scroll position changes. */
+    .w-clock-fade {
+      position: absolute; left: 0; right: 0;
+      height: 3rem; pointer-events: none; z-index: 1;
+      opacity: 0; transition: opacity 0.18s ease;
+    }
+    .w-clock-fade.is-top {
+      top: 0;
+      background: linear-gradient(to top, rgba(8,9,12,0) 0%, rgba(8,9,12,0.85) 90%);
+      height: 1.75rem;
+    }
+    .w-clock-fade.is-bottom {
+      bottom: 0;
+      background: linear-gradient(to bottom, rgba(8,9,12,0) 0%, rgba(8,9,12,0.92) 92%);
+    }
+    .w-clock-list-wrap.has-more-above .w-clock-fade.is-top { opacity: 1; }
+    .w-clock-list-wrap.has-more-below .w-clock-fade.is-bottom { opacity: 1; }
+
+    .w-clock-more {
+      position: absolute; left: 50%; bottom: 0.6rem;
+      transform: translate(-50%, 0.45rem);
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.32rem 0.75rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.72rem; font-weight: 500; letter-spacing: 0.02em;
+      color: #7dd3fc;
+      background: rgba(8,9,12,0.85);
+      border: 1px solid rgba(56,189,248,0.32);
+      border-radius: 999px;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 18px rgba(0,0,0,0.45), 0 0 0 1px rgba(56,189,248,0.06) inset;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), background 0.15s, border-color 0.15s, color 0.15s;
+      z-index: 2;
+    }
+    .w-clock-more:hover { color: #fff; background: rgba(56,189,248,0.18); border-color: rgba(56,189,248,0.55); }
+    .w-clock-more:focus-visible {
+      outline: 2px solid rgba(56,189,248,0.55);
+      outline-offset: 2px;
+    }
+    .w-clock-list-wrap.has-more-below .w-clock-more {
+      opacity: 1; pointer-events: auto;
+      transform: translate(-50%, 0);
+    }
+    .w-clock-more .fa-chevron-down {
+      font-size: 0.6rem;
+      animation: w-bob 1.9s ease-in-out infinite;
+    }
+    @keyframes w-bob {
+      0%, 55%, 100% { transform: translateY(0); }
+      28% { transform: translateY(2px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .w-clock-more .fa-chevron-down { animation: none; }
+    }
     .w-clock-row {
       display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
       padding: 0.7rem 0.85rem; border-radius: 8px;
@@ -443,7 +507,15 @@
         <span id="jobsInfo" class="w-jobs-info" title=""><i class="fa fa-circle-info"></i></span>
       </div>
       <div class="w-jobs-hint" id="jobsHint" style="display:none;"></div>
-      <div class="w-clock-list" id="clockList"><div class="w-empty">Loading departments…</div></div>
+      <div class="w-clock-list-wrap" id="clockListWrap">
+        <div class="w-clock-fade is-top" aria-hidden="true"></div>
+        <div class="w-clock-list" id="clockList"><div class="w-empty">Loading departments…</div></div>
+        <div class="w-clock-fade is-bottom" aria-hidden="true"></div>
+        <button type="button" class="w-clock-more" id="clockMoreBtn" aria-label="Scroll for more departments" tabindex="-1">
+          <span id="clockMoreCount">More</span>
+          <i class="fa fa-chevron-down" aria-hidden="true"></i>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -718,6 +790,9 @@
     host.querySelectorAll('[data-action="row-clock-out"]').forEach(btn => {
       btn.addEventListener('click', () => doClockOut());
     });
+    // Layout settles on the next frame after innerHTML, so defer the
+    // overflow check — otherwise clientHeight/scrollHeight are stale.
+    requestAnimationFrame(updateClockListAffordance);
   }
 
   // Re-render the Jobs panel using the cached dept list. Called after
@@ -726,6 +801,54 @@
   function rerenderDepartments() {
     if (_lastDeptEntries) renderDepartments(_lastDeptEntries);
   }
+
+  // ---------- Jobs list scroll affordance ----------
+  // Users were missing departments below the fold because the list was
+  // capped at ~32rem but gave no visual cue. Toggle has-more-above /
+  // has-more-below classes on the wrapper so the gradient fades + the
+  // "↓ N more" chip animate in, and update the count to whatever's still
+  // hidden below the current scroll position.
+  function updateClockListAffordance() {
+    const wrap = document.getElementById('clockListWrap');
+    const list = document.getElementById('clockList');
+    const count = document.getElementById('clockMoreCount');
+    if (!wrap || !list || !count) return;
+    const scrollTop = Math.round(list.scrollTop);
+    const clientH = list.clientHeight;
+    const scrollH = list.scrollHeight;
+    const hasOverflow = scrollH - clientH > 2;
+    const remaining = scrollH - (scrollTop + clientH);
+    wrap.classList.toggle('has-more-above', scrollTop > 4);
+    const showBelow = hasOverflow && remaining > 4;
+    wrap.classList.toggle('has-more-below', showBelow);
+    if (showBelow) {
+      // Count rows that are fully below the visible viewport. More honest
+      // than estimating from pixel math since row heights can vary
+      // (member/non-member rows differ slightly).
+      const rows = list.querySelectorAll('.w-clock-row');
+      const fold = scrollTop + clientH;
+      let hidden = 0;
+      rows.forEach(row => {
+        if (row.offsetTop + row.offsetHeight - 4 > fold) hidden++;
+      });
+      count.textContent = hidden > 0 ? (hidden + ' more') : 'More';
+    }
+  }
+
+  (function wireClockListAffordance() {
+    const list = document.getElementById('clockList');
+    const btn = document.getElementById('clockMoreBtn');
+    if (!list || !btn) return;
+    list.addEventListener('scroll', updateClockListAffordance, { passive: true });
+    btn.addEventListener('click', () => {
+      // Scroll roughly one viewport down so users can keep paging through.
+      // Falls back to scrollTo(end) when remaining < one viewport.
+      const step = Math.max(100, list.clientHeight - 40);
+      list.scrollTo({ top: list.scrollTop + step, behavior: 'smooth' });
+    });
+    // Recompute on window resize since clientHeight can change.
+    window.addEventListener('resize', updateClockListAffordance, { passive: true });
+  })();
 
   async function clockIn(deptId) {
     // If a different civilian is currently pinned as active, warn the user
