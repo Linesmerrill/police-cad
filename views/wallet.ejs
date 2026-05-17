@@ -271,7 +271,10 @@
       align-items: center;
       gap: 0.85rem;
       padding: 0.7rem 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s ease;
     }
+    .w-tx-row:hover { background: rgba(255,255,255,0.03); }
     .w-tx-row + .w-tx-row { border-top: 1px solid rgba(255,255,255,0.05); }
     .w-tx-icon {
       width: 32px; height: 32px; border-radius: 50%;
@@ -305,6 +308,26 @@
     @media (max-width: 480px) {
       .w-tx-row { padding: 0.65rem 0.7rem; gap: 0.65rem; }
       .w-tx-title { font-size: 0.84rem; }
+    }
+
+    /* Transaction detail modal — definition-list rendered inside ddModal's
+       message slot. ddModal's body centers everything; we override locally so
+       the rows read like a receipt. */
+    .w-tx-detail { text-align: left; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.25rem; }
+    .w-tx-detail-row {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 0.85rem; padding: 0.35rem 0; font-size: 0.82rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .w-tx-detail-row:last-child { border-bottom: none; }
+    .w-tx-detail-label { color: var(--w-text-dim); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .w-tx-detail-value { color: var(--w-text); font-variant-numeric: tabular-nums; text-align: right; }
+    .w-tx-detail-value.credit { color: var(--w-green); font-weight: 600; }
+    .w-tx-detail-value.debit { color: var(--w-red); font-weight: 600; }
+    .w-tx-detail-body {
+      margin-top: 0.5rem; padding: 0.65rem 0.75rem; border-radius: 7px;
+      background: rgba(255,255,255,0.03); color: var(--w-text-muted);
+      font-size: 0.8rem; line-height: 1.5; text-align: left;
     }
 
     /* Clock-in widget */
@@ -1091,9 +1114,22 @@
     if (diff > 1 && diff < 7) return d.toLocaleDateString(undefined, { weekday: 'long' });
     return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
   }
+  // Map a transaction to a FontAwesome glyph that mirrors the mobile wallet:
+  // briefcase for shifts, gavel for citations/court verdicts, etc. The swatch
+  // color is still driven by `direction` (green for credits, red for debits)
+  // so the icon adds *what* without changing the at-a-glance +/- signal.
   function txIconClass(tx) {
-    if (tx.direction === 'credit') return 'fa fa-plus';
-    return 'fa fa-minus';
+    if (tx.type === 'shift') return 'fa fa-briefcase';
+    if (tx.type === 'payroll') return 'fa fa-money-bill-trend-up';
+    const src = (tx.subtitle || '').toLowerCase();
+    if (src === 'citation') return 'fa fa-gavel';
+    if (src === 'judicial' || tx.type === 'verdict') return 'fa fa-gavel';
+    if (src === 'admin') return 'fa fa-user-shield';
+    if (src === 'shop') return 'fa fa-cart-shopping';
+    if (src === 'system') return 'fa fa-circle-info';
+    if (tx.type === 'fee') return 'fa fa-receipt';
+    if (tx.type === 'fine') return 'fa fa-file-invoice-dollar';
+    return tx.direction === 'credit' ? 'fa fa-plus' : 'fa fa-minus';
   }
   function txTitle(tx) {
     if (tx.type === 'shift') return (tx.departmentName || tx.title || 'Department') + ' shift';
@@ -1153,7 +1189,7 @@
                 ? `<div class="w-tx-balance">Balance ${escapeHtml(fmtMoney(tx.balanceAfter || 0))}</div>`
                 : '';
               return `
-                <div class="w-tx-row">
+                <div class="w-tx-row" data-tx-ref-type="${escapeHtml(tx.refType)}" data-tx-ref-id="${escapeHtml(tx.refId)}" role="button" tabindex="0">
                   <div class="w-tx-icon ${escapeHtml(tx.direction)}"><i class="${escapeHtml(txIconClass(tx))}"></i></div>
                   <div class="w-tx-body">
                     <div class="w-tx-title">${escapeHtml(txTitle(tx))}</div>
@@ -1183,6 +1219,110 @@
   });
   document.getElementById('txNext').addEventListener('click', () => {
     txPage += 1; refreshTransactions();
+  });
+
+  // ---------- Transaction detail modal ----------
+  function fmtFullDateTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+  function titleCase(s) {
+    if (!s) return '';
+    return String(s).replace(/\b\w/g, c => c.toUpperCase());
+  }
+  function detailRow(label, value, className) {
+    const cls = className ? ' ' + className : '';
+    return `<div class="w-tx-detail-row"><span class="w-tx-detail-label">${escapeHtml(label)}</span><span class="w-tx-detail-value${cls}">${value}</span></div>`;
+  }
+
+  async function openShiftDetail(sessionId) {
+    if (!sessionId) return;
+    try {
+      const res = await fetch(`${API_URL}/api/v2/economy/session/${encodeURIComponent(sessionId)}?userId=${encodeURIComponent(USER_ID)}`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const s = await res.json();
+      if (!s || !s._id) throw new Error('Session not found');
+      const rows = [];
+      rows.push(detailRow('Department', escapeHtml(s.departmentName || 'Department')));
+      rows.push(detailRow('Started', escapeHtml(fmtFullDateTime(s.startedAt))));
+      rows.push(detailRow('Ended', escapeHtml(s.endedAt ? fmtFullDateTime(s.endedAt) : '—')));
+      rows.push(detailRow('Duration', escapeHtml(fmtDuration(s.paidSeconds))));
+      // payRateSnapshot is cents/hr; surface as $/hr for context.
+      if (s.payRateSnapshot) rows.push(detailRow('Pay rate', escapeHtml(fmtMoney(s.payRateSnapshot) + '/hr')));
+      rows.push(detailRow('Earnings', '+' + escapeHtml(fmtMoney(s.earnings || 0)), 'credit'));
+      if (s.balanceAfter) rows.push(detailRow('Balance after', escapeHtml(fmtMoney(s.balanceAfter))));
+      const statusLabel = s.status === 'ended' ? 'Completed' : titleCase(s.status || '');
+      rows.push(detailRow('Status', escapeHtml(statusLabel)));
+      window.ddModal({
+        type: 'info',
+        icon: 'fa-briefcase',
+        title: 'Shift details',
+        message: `<div class="w-tx-detail">${rows.join('')}</div>`,
+        buttons: [{ label: 'Close', class: 'ddm-btn-secondary' }],
+      });
+    } catch (err) {
+      window.ddModal({ type: 'danger', icon: 'fa-triangle-exclamation', title: 'Couldn’t load shift', message: escapeHtml(err.message || 'Unknown error') });
+    }
+  }
+
+  async function openInboxDetail(itemId) {
+    if (!itemId) return;
+    try {
+      const res = await fetch(`${API_URL}/api/v2/economy/inbox/${encodeURIComponent(itemId)}?userId=${encodeURIComponent(USER_ID)}`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const it = await res.json();
+      if (!it || !it._id) throw new Error('Item not found');
+      const rows = [];
+      // Inbox `amount` is signed: positive = owed (debit on pay), negative =
+      // credit. Normalize to direction + unsigned amount so the modal reads
+      // bank-statement style.
+      const amt = it.amount || 0;
+      const direction = amt < 0 ? 'credit' : 'debit';
+      const absAmt = Math.abs(amt);
+      const sign = direction === 'credit' ? '+' : '-';
+      const typeLabel = titleCase(it.type || 'Other');
+      const sourceLabel = titleCase(it.source || '');
+      rows.push(detailRow('Type', escapeHtml(typeLabel)));
+      if (sourceLabel) rows.push(detailRow('Source', escapeHtml(sourceLabel)));
+      rows.push(detailRow('Amount', sign + escapeHtml(fmtMoney(absAmt)), direction));
+      rows.push(detailRow('Issued', escapeHtml(fmtFullDateTime(it.createdAt))));
+      if (it.paidAt) rows.push(detailRow('Paid', escapeHtml(fmtFullDateTime(it.paidAt))));
+      if (it.dismissedAt) rows.push(detailRow('Dismissed', escapeHtml(fmtFullDateTime(it.dismissedAt))));
+      if (it.balanceAfter) rows.push(detailRow('Balance after', escapeHtml(fmtMoney(it.balanceAfter))));
+      rows.push(detailRow('Status', escapeHtml(titleCase(it.status || 'pending'))));
+      const bodyHtml = it.body ? `<div class="w-tx-detail-body">${escapeHtml(it.body)}</div>` : '';
+      // Choose accent based on the credit/debit nature so the icon swatch
+      // matches the row a user just clicked.
+      window.ddModal({
+        type: direction === 'credit' ? 'info' : 'warning',
+        icon: direction === 'credit' ? 'fa-money-bill-trend-up' : 'fa-file-invoice-dollar',
+        title: it.title || (direction === 'credit' ? 'Credit details' : 'Charge details'),
+        message: `<div class="w-tx-detail">${rows.join('')}</div>${bodyHtml}`,
+        buttons: [{ label: 'Close', class: 'ddm-btn-secondary' }],
+      });
+    } catch (err) {
+      window.ddModal({ type: 'danger', icon: 'fa-triangle-exclamation', title: 'Couldn’t load item', message: escapeHtml(err.message || 'Unknown error') });
+    }
+  }
+
+  // Delegate row clicks from the static container so we don't have to rebind
+  // every time refreshTransactions replaces innerHTML.
+  document.getElementById('txList').addEventListener('click', (ev) => {
+    const row = ev.target.closest('.w-tx-row[data-tx-ref-id]');
+    if (!row) return;
+    const refType = row.getAttribute('data-tx-ref-type');
+    const refId = row.getAttribute('data-tx-ref-id');
+    if (refType === 'clockSession') openShiftDetail(refId);
+    else if (refType === 'inboxItem') openInboxDetail(refId);
+  });
+  document.getElementById('txList').addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    const row = ev.target.closest('.w-tx-row[data-tx-ref-id]');
+    if (!row) return;
+    ev.preventDefault();
+    row.click();
   });
 
   (async function init() {
