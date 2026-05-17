@@ -757,6 +757,9 @@
           <div class="ac-nav-item" data-panel="metrics">
             <i class="fas fa-chart-line"></i> Metrics
           </div>
+          <div class="ac-nav-item" data-panel="subscriptions">
+            <i class="fas fa-receipt"></i> Subscriptions
+          </div>
         </div>
 
         <div class="ac-nav-section ac-nav-exit">
@@ -2258,6 +2261,53 @@
 
         </div>
 
+        <!-- Panel: Subscriptions (audit lookup) -->
+        <div class="ac-panel" id="panel-subscriptions">
+          <div class="ac-card">
+            <div class="ac-card-body">
+              <div style="margin-bottom: 1rem;">
+                <div style="font-size: 0.875rem; color: var(--ac-text); font-weight: 600; margin-bottom: 0.25rem;">Subscription Events</div>
+                <div style="font-size: 0.75rem; color: var(--ac-text-muted);">
+                  Audit trail of every RevenueCat / Stripe / mobile-app / admin subscription event.
+                  Search by Google Play order ID (e.g. <code style="background:var(--ac-glass);padding:1px 5px;border-radius:3px;">GPA.3377-7617-...</code>),
+                  Stripe subscription ID, product ID, user email, or user ID.
+                </div>
+              </div>
+
+              <form id="subscription-events-form" style="display:flex; gap:0.5rem; margin-bottom:1rem;" data-testid="subscription-events-form">
+                <input type="text" id="subscription-events-q" class="ac-input"
+                       data-testid="subscription-events-search"
+                       placeholder="Order ID, email, product ID, etc."
+                       style="flex:1;" />
+                <button type="submit" class="ac-btn ac-btn-accent" data-testid="subscription-events-submit">
+                  <i class="fas fa-search"></i> Search
+                </button>
+              </form>
+
+              <div id="subscription-events-status" style="font-size:0.75rem; color: var(--ac-text-muted); margin-bottom: 0.5rem; min-height: 1.1em;"></div>
+
+              <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.8125rem;" data-testid="subscription-events-table">
+                  <thead style="background: var(--ac-glass); position: sticky; top: 0; backdrop-filter: blur(0);">
+                    <tr style="text-align:left;">
+                      <th style="padding:0.5rem 0.75rem; font-weight:600; color: var(--ac-text-muted);">When</th>
+                      <th style="padding:0.5rem 0.75rem; font-weight:600; color: var(--ac-text-muted);">User</th>
+                      <th style="padding:0.5rem 0.75rem; font-weight:600; color: var(--ac-text-muted);">Provider</th>
+                      <th style="padding:0.5rem 0.75rem; font-weight:600; color: var(--ac-text-muted);">Store</th>
+                      <th style="padding:0.5rem 0.75rem; font-weight:600; color: var(--ac-text-muted);">Event</th>
+                      <th style="padding:0.5rem 0.75rem; font-weight:600; color: var(--ac-text-muted);">Plan</th>
+                      <th style="padding:0.5rem 0.75rem; font-weight:600; color: var(--ac-text-muted);">Transaction ID</th>
+                      <th style="padding:0.5rem 0.75rem; font-weight:600; color: var(--ac-text-muted);">Amount</th>
+                      <th style="padding:0.5rem 0.75rem; font-weight:600; color: var(--ac-text-muted);"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="subscription-events-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div><!-- end ac-content -->
     </main>
 
@@ -2580,7 +2630,8 @@
         'admin-management': 'Admin Management',
         'email': 'Email',
         'metrics': 'Metrics',
-        'wiki': 'Wiki'
+        'wiki': 'Wiki',
+        'subscriptions': 'Subscriptions'
       };
 
       // Data-load callbacks for lazy-loaded panels
@@ -2589,6 +2640,7 @@
         'admin-management': function() { if (typeof loadAllAdmins === 'function') loadAllAdmins(); },
         'content-creators': function() { if (typeof loadCCApplications === 'function') { loadCCApplications(); loadCCStats(); } },
         'metrics': function() { loadMetricsPanel(); },
+        'subscriptions': function() { initSubscriptionsPanel(); },
         'cases': function() {
           var hash = window.location.hash.replace('#', '');
           // Handle cases/N deep link
@@ -7888,6 +7940,114 @@
         });
       });
 
+
+      // =====================================================
+      // =====================================================
+      // SUBSCRIPTIONS PANEL
+      // Audit lookup for subscription events. Backed by
+      // GET /api/v1/admin/subscription-events?q=...
+      // =====================================================
+      var subscriptionsPanelInitialized = false;
+
+      function initSubscriptionsPanel() {
+        if (subscriptionsPanelInitialized) return;
+        subscriptionsPanelInitialized = true;
+
+        var form = document.getElementById('subscription-events-form');
+        var qInput = document.getElementById('subscription-events-q');
+        if (form && qInput) {
+          form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            searchSubscriptionEvents(qInput.value.trim());
+          });
+        }
+
+        // Initial load: show the 50 most recent events so the panel has
+        // content the moment you click it (helps confirm webhooks are flowing).
+        searchSubscriptionEvents('');
+      }
+
+      async function searchSubscriptionEvents(q) {
+        var status = document.getElementById('subscription-events-status');
+        var tbody = document.getElementById('subscription-events-tbody');
+        if (!tbody) return;
+        status.textContent = q ? ('Searching for "' + q + '"...') : 'Loading recent events...';
+        tbody.innerHTML = '';
+
+        try {
+          var url = API_BASE + '/api/v1/admin/subscription-events?limit=50';
+          if (q) url += '&q=' + encodeURIComponent(q);
+          var res = await fetch(url);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          var body = await res.json();
+          renderSubscriptionEvents(body.data || [], body.totalCount || 0, q);
+        } catch (err) {
+          status.textContent = 'Failed to load: ' + err.message;
+        }
+      }
+
+      function renderSubscriptionEvents(events, totalCount, q) {
+        var status = document.getElementById('subscription-events-status');
+        var tbody = document.getElementById('subscription-events-tbody');
+        if (events.length === 0) {
+          status.textContent = q ? ('No events found matching "' + q + '"') : 'No events recorded yet.';
+          tbody.innerHTML = '';
+          return;
+        }
+        status.textContent = 'Showing ' + events.length + ' of ' + totalCount + ' event' + (totalCount === 1 ? '' : 's') + (q ? (' matching "' + q + '"') : '');
+
+        var rows = events.map(function(ev) {
+          return renderSubscriptionEventRow(ev);
+        }).join('');
+        tbody.innerHTML = rows;
+
+        // Wire up "view raw" toggles.
+        tbody.querySelectorAll('[data-action="toggle-raw"]').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var id = this.getAttribute('data-id');
+            var rawRow = document.getElementById('raw-' + id);
+            if (rawRow) {
+              rawRow.style.display = rawRow.style.display === 'none' ? '' : 'none';
+            }
+          });
+        });
+      }
+
+      function renderSubscriptionEventRow(ev) {
+        var id = (ev._id && ev._id.$oid) || ev._id || Math.random().toString(36).slice(2);
+        var when = ev.createdAt ? new Date(ev.createdAt).toLocaleString() : '—';
+        var emailLabel = ev.userEmail ? escapeHtml(ev.userEmail) : (ev.userId ? ('<span style="color:var(--ac-text-dim);font-size:0.7rem;">' + escapeHtml(ev.userId) + '</span>') : '<span style="color:var(--ac-text-dim);">user_not_found</span>');
+        var amount = ev.priceUsd ? ('$' + ev.priceUsd.toFixed(2)) : (ev.priceLocal ? (ev.priceLocal.toFixed(2) + ' ' + (ev.currency || '')) : '');
+        var txn = ev.transactionId ? escapeHtml(ev.transactionId) : '';
+        var pendingDup = ev.processingStatus && ev.processingStatus !== 'ok' ? (' <span style="color:#f59e0b;font-size:0.65rem;">(' + escapeHtml(ev.processingStatus) + ')</span>') : '';
+
+        var pretty;
+        try {
+          pretty = JSON.stringify(JSON.parse(ev.rawPayload || '{}'), null, 2);
+        } catch (e) {
+          pretty = ev.rawPayload || '';
+        }
+
+        return '' +
+          '<tr style="border-top:1px solid var(--ac-glass-border);" data-testid="subscription-event-row">' +
+            '<td style="padding:0.5rem 0.75rem; white-space:nowrap;">' + escapeHtml(when) + '</td>' +
+            '<td style="padding:0.5rem 0.75rem;">' + emailLabel + '</td>' +
+            '<td style="padding:0.5rem 0.75rem;">' + escapeHtml(ev.provider || '') + '</td>' +
+            '<td style="padding:0.5rem 0.75rem;">' + escapeHtml(ev.store || '') + '</td>' +
+            '<td style="padding:0.5rem 0.75rem; font-family: ui-monospace, monospace; font-size:0.75rem;">' + escapeHtml(ev.eventType || '') + pendingDup + '</td>' +
+            '<td style="padding:0.5rem 0.75rem;">' + escapeHtml(ev.plan || '') + (ev.isAnnual ? ' (yr)' : '') + '</td>' +
+            '<td style="padding:0.5rem 0.75rem; font-family: ui-monospace, monospace; font-size:0.7rem; word-break: break-all;">' + txn + '</td>' +
+            '<td style="padding:0.5rem 0.75rem; white-space:nowrap;">' + escapeHtml(amount) + '</td>' +
+            '<td style="padding:0.5rem 0.75rem; text-align:right;">' +
+              '<button class="ac-btn" data-action="toggle-raw" data-id="' + id + '" style="font-size:0.7rem; padding:0.25rem 0.5rem;">Raw</button>' +
+            '</td>' +
+          '</tr>' +
+          '<tr id="raw-' + id + '" style="display:none; border-top: 1px dashed var(--ac-glass-border);">' +
+            '<td colspan="9" style="padding:0.75rem; background: var(--ac-glass);">' +
+              '<pre style="margin:0; font-size:0.7rem; max-height: 260px; overflow:auto; white-space: pre-wrap; word-break: break-word; color: var(--ac-text-muted);">' + escapeHtml(pretty) + '</pre>' +
+            '</td>' +
+          '</tr>';
+      }
 
       // =====================================================
       // METRICS PANEL
