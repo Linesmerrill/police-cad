@@ -2720,7 +2720,7 @@
               display: grid;
               grid-template-columns: 1fr 1fr;
               gap: 1px;
-              margin: 1.25rem;
+              margin: 0;
               background: var(--subs-rule);
               border-radius: 10px;
               border: 1px solid var(--subs-rule);
@@ -2802,13 +2802,40 @@
             }
 
             /* ----- Payment timeline ----- */
-            .subs-section { margin: 0.5rem 1.25rem 1.25rem; }
+            .subs-section { margin: 1.5rem 1.25rem 1.25rem; }
+            /* The first section after the banner sits closer; subsequent ones get
+               a hairline divider so the eye registers them as new territory. */
+            .subs-section + .subs-section { border-top: 1px solid var(--subs-rule); padding-top: 1.25rem; }
 
             .subs-section-head {
               display: flex;
-              align-items: baseline;
+              align-items: center;
               justify-content: space-between;
-              padding: 0.625rem 0 0.5rem;
+              gap: 0.75rem;
+              padding: 0 0 0.875rem;
+            }
+            /* Real section title — mixed case, prose-style, with a leading
+               icon. Distinct from the small uppercase tracked labels used for
+               sub-elements so the eye can tell "section" from "sub-label". */
+            .subs-section-title {
+              display: inline-flex;
+              align-items: center;
+              gap: 0.5rem;
+              font-size: 0.9375rem;
+              font-weight: 600;
+              color: var(--ac-text);
+              letter-spacing: -0.005em;
+            }
+            .subs-section-title-icon {
+              display: inline-grid;
+              place-items: center;
+              width: 22px;
+              height: 22px;
+              border-radius: 6px;
+              background: var(--ac-glass-hover);
+              border: 1px solid var(--subs-rule);
+              color: var(--ac-text-muted);
+              font-size: 0.6875rem;
             }
             .subs-section-meta {
               font-size: 0.6875rem;
@@ -2816,6 +2843,7 @@
               font-variant-numeric: tabular-nums;
               font-family: var(--subs-mono);
               letter-spacing: 0.02em;
+              text-align: right;
             }
 
             .subs-timeline {
@@ -9063,27 +9091,39 @@
                 ];
 
             const sourceTag = (auth.source || 'live').toUpperCase();
+            const statusMeta = auth.status === 'none'
+              ? 'No authoritative record'
+              : `${auth.status}${auth.source ? ' · ' + auth.source : ''}`;
 
             return `
-              <section class="subs-compare">
-                <div class="subs-compare-col">
-                  <div class="subs-compare-head">
-                    <span class="subs-section-label">Our database</span>
-                    <span class="subs-compare-tag">MONGO</span>
-                  </div>
-                  <div class="subs-field-list">
-                    ${dbRows.map(r => renderField(r, mmFields.has(r.field))).join('')}
-                  </div>
+              <section class="subs-section">
+                <div class="subs-section-head">
+                  <span class="subs-section-title">
+                    <span class="subs-section-title-icon"><i class="fas fa-right-left"></i></span>
+                    Subscription state
+                  </span>
+                  <span class="subs-section-meta">${escapeHtml(statusMeta)}</span>
                 </div>
-                <div class="subs-compare-col">
-                  <div class="subs-compare-head">
-                    <span class="subs-section-label">Live${auth.source ? ' — ' + auth.source : ''}</span>
-                    <span class="subs-compare-tag">${escapeHtml(sourceTag)}</span>
+                <section class="subs-compare">
+                  <div class="subs-compare-col">
+                    <div class="subs-compare-head">
+                      <span class="subs-section-label">Our database</span>
+                      <span class="subs-compare-tag">MONGO</span>
+                    </div>
+                    <div class="subs-field-list">
+                      ${dbRows.map(r => renderField(r, mmFields.has(r.field))).join('')}
+                    </div>
                   </div>
-                  <div class="subs-field-list">
-                    ${authRows.map(r => renderField(r, mmFields.has(r.field))).join('')}
+                  <div class="subs-compare-col">
+                    <div class="subs-compare-head">
+                      <span class="subs-section-label">Live${auth.source ? ' — ' + auth.source : ''}</span>
+                      <span class="subs-compare-tag">${escapeHtml(sourceTag)}</span>
+                    </div>
+                    <div class="subs-field-list">
+                      ${authRows.map(r => renderField(r, mmFields.has(r.field))).join('')}
+                    </div>
                   </div>
-                </div>
+                </section>
               </section>`;
           }
 
@@ -9101,11 +9141,17 @@
           }
 
           function renderTimeline(payments) {
+            const titleEl = `
+              <span class="subs-section-title">
+                <span class="subs-section-title-icon"><i class="fas fa-clock-rotate-left"></i></span>
+                Payment history
+              </span>`;
+
             if (!payments.length) {
               return `
                 <section class="subs-section">
                   <div class="subs-section-head">
-                    <span class="subs-section-label">Payment history</span>
+                    ${titleEl}
                     <span class="subs-section-meta">no payments</span>
                   </div>
                   <div style="padding:1.75rem 0.5rem;text-align:center;color:var(--ac-text-dim);font-size:0.8125rem;border-top:1px solid var(--subs-rule);">
@@ -9137,7 +9183,7 @@
             return `
               <section class="subs-section">
                 <div class="subs-section-head">
-                  <span class="subs-section-label">Payment history</span>
+                  ${titleEl}
                   <span class="subs-section-meta">${payments.length} event${payments.length === 1 ? '' : 's'} · ${successful.length} paid · $${total.toFixed(2)} total</span>
                 </div>
                 <div class="subs-timeline" data-testid="subs-timeline">
