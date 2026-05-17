@@ -2627,7 +2627,7 @@
 
             /* ----- Status banner ----- */
             .subs-banner {
-              margin: 1.25rem 1.25rem 0;
+              margin: 0.875rem 1.25rem 0;
               display: flex;
               align-items: center;
               gap: 1rem;
@@ -2729,6 +2729,34 @@
             @media (max-width: 720px) {
               .subs-compare { grid-template-columns: 1fr; }
             }
+            /* Solo mode — when only one side has data, span full width
+               and pack the fields into a 2-col grid so 10 rows become 5. */
+            .subs-compare--solo { grid-template-columns: 1fr; }
+            .subs-compare--solo .subs-field-list {
+              display: grid;
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+              column-gap: 1.25rem;
+              row-gap: 0.5rem;
+            }
+            @media (max-width: 600px) {
+              .subs-compare--solo .subs-field-list { grid-template-columns: 1fr; }
+            }
+            .subs-compare-soloflag {
+              display: inline-flex;
+              align-items: center;
+              gap: 0.4rem;
+              font-size: 0.6875rem;
+              color: var(--ac-text-dim);
+              font-style: italic;
+            }
+            .subs-compare-soloflag::before {
+              content: '';
+              width: 5px;
+              height: 5px;
+              border-radius: 50%;
+              background: var(--ac-text-dim);
+              opacity: 0.6;
+            }
 
             .subs-compare-col {
               background: var(--ac-bg, #0a0a0a);
@@ -2802,17 +2830,17 @@
             }
 
             /* ----- Payment timeline ----- */
-            .subs-section { margin: 1.5rem 1.25rem 1.25rem; }
+            .subs-section { margin: 0.875rem 1.25rem 1rem; }
             /* The first section after the banner sits closer; subsequent ones get
                a hairline divider so the eye registers them as new territory. */
-            .subs-section + .subs-section { border-top: 1px solid var(--subs-rule); padding-top: 1.25rem; }
+            .subs-section + .subs-section { border-top: 1px solid var(--subs-rule); padding-top: 0.875rem; margin-top: 0.875rem; }
 
             .subs-section-head {
               display: flex;
               align-items: center;
               justify-content: space-between;
               gap: 0.75rem;
-              padding: 0 0 0.875rem;
+              padding: 0 0 0.625rem;
             }
             /* Real section title — mixed case, prose-style, with a leading
                icon. Distinct from the small uppercase tracked labels used for
@@ -9123,8 +9151,35 @@
 
             const sourceTag = (auth.source || 'live').toUpperCase();
             const statusMeta = auth.status === 'none'
-              ? 'No authoritative record'
+              ? 'No live record found'
               : `${auth.status}${auth.source ? ' · ' + auth.source : ''}`;
+
+            // Solo mode: when there's no authoritative record, the right-hand
+            // "LIVE" column is just an empty placeholder. Collapse to a single
+            // wide DB card with a 2-col field grid so 10 rows pack into 5.
+            if (auth.status === 'none') {
+              return `
+                <section class="subs-section">
+                  <div class="subs-section-head">
+                    <span class="subs-section-title">
+                      <span class="subs-section-title-icon"><i class="fas fa-right-left"></i></span>
+                      Subscription state
+                    </span>
+                    <span class="subs-compare-soloflag">No live record in RevenueCat or Stripe</span>
+                  </div>
+                  <section class="subs-compare subs-compare--solo">
+                    <div class="subs-compare-col">
+                      <div class="subs-compare-head">
+                        <span class="subs-section-label">Our database</span>
+                        <span class="subs-compare-tag">MONGO</span>
+                      </div>
+                      <div class="subs-field-list">
+                        ${dbRows.map(r => renderField(r, false)).join('')}
+                      </div>
+                    </div>
+                  </section>
+                </section>`;
+            }
 
             return `
               <section class="subs-section">
