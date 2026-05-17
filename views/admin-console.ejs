@@ -3208,8 +3208,13 @@
             <!-- Two-column work surface -->
             <div class="subs-layout">
 
-              <!-- Left: results list -->
-              <aside class="subs-sidebar">
+              <!-- Left: results list. <div> not <aside> on purpose —
+                   styles.css ships a global `aside { padding: 50px 0 }`
+                   landing-page rule that adds 100px of vertical padding
+                   to every aside, even when overridden via specific
+                   selectors (browser was ignoring our !important rule
+                   in some cascade orderings). Sidestep entirely. -->
+              <div class="subs-sidebar">
                 <div class="subs-sidebar-head">
                   <span class="subs-section-label" id="subs-results-title">Search</span>
                   <span class="subs-section-count" id="subs-results-count"></span>
@@ -3223,10 +3228,11 @@
                     </div>
                   </div>
                 </div>
-              </aside>
+              </div>
 
-              <!-- Right: detail pane -->
-              <main class="subs-detail" id="subs-detail" data-testid="subs-detail">
+              <!-- Right: detail pane (div not main — defensive against
+                   any global element-level rules in styles.css) -->
+              <div class="subs-detail" id="subs-detail" data-testid="subs-detail">
                 <div class="subs-detail-state">
                   <div class="subs-empty-icon"><i class="fas fa-user"></i></div>
                   <div class="subs-empty-title">No customer selected</div>
@@ -3235,7 +3241,7 @@
                     DB record, and full payment history.
                   </div>
                 </div>
-              </main>
+              </div>
 
             </div>
           </div>
