@@ -291,10 +291,15 @@
     return joined || (inner.name || '').trim() || 'Civilian';
   }
 
-  async function fetchActiveSession(cfg, civId) {
-    if (!civId) return null;
+  async function fetchActiveSession(cfg) {
+    // Query by userId, not civilianId. The user can have at most one active
+    // session (enforced server-side), and we want to surface it regardless
+    // of which civilian it's tied to — otherwise swapping civilians in
+    // /wallet then coming back here would render an "off the clock" state
+    // while a session is still ticking against another civilian.
+    if (!cfg.userId) return null;
     try {
-      const res = await fetch(`${cfg.API_URL}/api/v2/economy/session/active?civilianId=${encodeURIComponent(civId)}`);
+      const res = await fetch(`${cfg.API_URL}/api/v2/economy/session/active?userId=${encodeURIComponent(cfg.userId)}`);
       if (!res.ok) return null;
       const data = await res.json();
       return data && data._id ? data : null;
@@ -685,7 +690,7 @@
 
   async function refresh(state) {
     const cfg = state.cfg;
-    state.session = await fetchActiveSession(cfg, state.civId);
+    state.session = await fetchActiveSession(cfg);
     if (state.session) {
       if (state.session.departmentId === cfg.departmentId) {
         renderActiveHere(state);
@@ -744,13 +749,24 @@
     state.communityEcon = econ;
     state.dept = econ.dept;
 
-    if (!state.civId) {
-      // No civilian for this user in this community — nothing to do here.
+    // Fetch the user's active session first — independent of civId — so a
+    // session running against another civilian (or in another dept) still
+    // surfaces here. Only fall back to renderEmpty when there's no session
+    // *and* no civilian to clock in.
+    state.session = await fetchActiveSession(cfg);
+    if (!state.session && !state.civId) {
       renderEmpty();
       return;
     }
-
-    await refresh(state);
+    if (state.session) {
+      if (state.session.departmentId === cfg.departmentId) {
+        renderActiveHere(state);
+      } else {
+        renderActiveElsewhere(state);
+      }
+    } else {
+      await refresh(state);
+    }
 
     // Heartbeat for active sessions so the server-side AFK timers stay alive
     // while the user is on the dashboard.
