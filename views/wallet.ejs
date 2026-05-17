@@ -268,7 +268,28 @@
     }
 
     /* Clock-in widget */
-    .w-clock-list { display: flex; flex-direction: column; gap: 0.55rem; }
+    /* Cap the Jobs list around ~8 rows. Communities with many depts were
+       stretching the card way past the Recent Inbox card next to it; the
+       inbox is short by nature, so the imbalance read as broken. Scroll
+       the overflow inside the card instead. */
+    .w-clock-list {
+      display: flex; flex-direction: column; gap: 0.55rem;
+      max-height: 32rem;
+      overflow-y: auto;
+      /* Compensate for the scrollbar gutter so rows don't shift when the
+         list grows past the cap. */
+      padding-right: 0.25rem;
+      margin-right: -0.25rem;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.12) transparent;
+    }
+    .w-clock-list::-webkit-scrollbar { width: 6px; }
+    .w-clock-list::-webkit-scrollbar-track { background: transparent; }
+    .w-clock-list::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.10);
+      border-radius: 3px;
+    }
+    .w-clock-list::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
     .w-clock-row {
       display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
       padding: 0.7rem 0.85rem; border-radius: 8px;
