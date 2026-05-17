@@ -115,7 +115,9 @@ test.describe('Admin → Subscriptions panel', { tag: '@admin' }, () => {
 
   test('search → result list shows matching users', async ({ page }) => {
     let lastSearchQ: string | null = null;
-    await page.route('**/api/v1/admin/subscription/users*', async (route) => {
+    // Use `**` (not `*`) so the detail/sync URLs that include `/<userId>`
+// also match — single `*` doesn't cross path separators.
+await page.route('**/api/v1/admin/subscription/users**', async (route) => {
       const u = new URL(route.request().url());
       // Only match the search endpoint, not the per-user detail.
       if (u.pathname.endsWith('/admin/subscription/users')) {
@@ -146,7 +148,9 @@ test.describe('Admin → Subscriptions panel', { tag: '@admin' }, () => {
   });
 
   test('clicking a result loads detail with mismatch banner + payment timeline', async ({ page }) => {
-    await page.route('**/api/v1/admin/subscription/users*', async (route) => {
+    // Use `**` (not `*`) so the detail/sync URLs that include `/<userId>`
+// also match — single `*` doesn't cross path separators.
+await page.route('**/api/v1/admin/subscription/users**', async (route) => {
       const u = new URL(route.request().url());
       if (u.pathname.endsWith('/admin/subscription/users')) {
         await route.fulfill({
@@ -197,7 +201,9 @@ test.describe('Admin → Subscriptions panel', { tag: '@admin' }, () => {
     let detailCalls = 0;
     let inSyncAfterFix = false;
 
-    await page.route('**/api/v1/admin/subscription/users*', async (route) => {
+    // Use `**` (not `*`) so the detail/sync URLs that include `/<userId>`
+// also match — single `*` doesn't cross path separators.
+await page.route('**/api/v1/admin/subscription/users**', async (route) => {
       const u = new URL(route.request().url());
       const isSync = u.pathname.endsWith('/sync') && route.request().method() === 'POST';
       const isDetail = u.pathname.endsWith('/admin/subscription/users/' + MOCK_USER.userId) && !isSync;
