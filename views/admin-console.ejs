@@ -81,7 +81,7 @@
         background:rgba(12,13,18,0.95); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
         border-right:1px solid var(--ac-glass-border); z-index:100;
         display:flex; flex-direction:column;
-        transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
+        transition:transform 0.3s cubic-bezier(0.4,0,0.2,1), width 0.25s cubic-bezier(0.4,0,0.2,1);
       }
       .ac-sidebar-header { padding:1rem 1.25rem 1rem; border-bottom:1px solid var(--ac-glass-border); }
       .ac-sidebar-brand { display:flex; align-items:center; gap:0.625rem; text-decoration:none; margin-bottom:1rem; }
@@ -91,7 +91,11 @@
       .ac-sidebar-status { font-size:0.75rem; color:var(--ac-text-muted); margin:0; display:flex; align-items:center; gap:0.375rem; }
       .ac-sidebar-status i { font-size:0.5rem; color:var(--ac-green); animation:ac-blink 3s ease-in-out infinite; }
       @keyframes ac-blink { 0%,90%,100%{opacity:1} 95%{opacity:0.3} }
-      .ac-sidebar-nav { flex:1; overflow-y:auto; padding:0.75rem 0; }
+      .ac-sidebar-nav { flex:1; overflow-y:auto; overflow-x:hidden; padding:0.75rem 0; }
+      .ac-sidebar-nav::-webkit-scrollbar { width:4px; }
+      .ac-sidebar-nav::-webkit-scrollbar-track { background:transparent; }
+      .ac-sidebar-nav::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:3px; }
+      .ac-sidebar-nav::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.16); }
       .ac-nav-section { padding:0 0.75rem; margin-bottom:0.5rem; }
       .ac-nav-section-label { font-size:0.625rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--ac-text-dim); padding:0.5rem 0.5rem 0.375rem; font-weight:600; }
       .ac-nav-item {
@@ -163,8 +167,57 @@
       }
       .ac-sidebar-close:hover { color:#fff; background:var(--ac-glass-hover); }
 
+      /* ── Sidebar collapse toggle (desktop only) ── */
+      .ac-sidebar-collapse {
+        display:none; width:28px; height:28px; border-radius:var(--ac-radius-sm);
+        background:var(--ac-glass); border:1px solid var(--ac-glass-border);
+        color:var(--ac-text-muted); font-size:0.7rem; cursor:pointer;
+        align-items:center; justify-content:center; flex-shrink:0;
+        transition:all 0.15s;
+      }
+      .ac-sidebar-collapse:hover { color:#fff; background:var(--ac-glass-hover); border-color:rgba(139,92,246,0.4); }
+      @media (min-width:769px) { .ac-sidebar-collapse { display:flex; } }
+
+      /* ── Collapsed sidebar (desktop only) ── */
+      @media (min-width:769px) {
+        body.ac-sidebar-collapsed { --ac-sidebar-w:68px; }
+        body.ac-sidebar-collapsed .ac-sidebar-brand span,
+        body.ac-sidebar-collapsed .ac-sidebar-dept,
+        body.ac-sidebar-collapsed .ac-sidebar-status,
+        body.ac-sidebar-collapsed .ac-nav-section-label,
+        body.ac-sidebar-collapsed .ac-nav-sub,
+        body.ac-sidebar-collapsed .ac-user-info { display:none; }
+        body.ac-sidebar-collapsed .ac-sidebar-header { padding:0.75rem 0.5rem; }
+        body.ac-sidebar-collapsed .ac-sidebar-header > div:first-child { flex-direction:column; gap:0.5rem; margin-bottom:0 !important; align-items:center; }
+        body.ac-sidebar-collapsed .ac-sidebar-brand { margin-bottom:0; justify-content:center; }
+        body.ac-sidebar-collapsed .ac-sidebar-brand img { height:28px; }
+        body.ac-sidebar-collapsed .ac-nav-section { padding:0 0.5rem; }
+        body.ac-sidebar-collapsed .ac-nav-item {
+          font-size:0; padding:0.625rem 0; text-align:center; white-space:nowrap;
+        }
+        body.ac-sidebar-collapsed .ac-nav-item i {
+          font-size:1rem; margin-right:0; width:100%; display:inline-block;
+        }
+        body.ac-sidebar-collapsed .ac-nav-badge {
+          float:none; position:absolute; top:2px; right:6px; min-width:14px;
+          padding:1px 4px; font-size:0.5rem; line-height:1.3;
+        }
+        body.ac-sidebar-collapsed .ac-nav-item[data-label]:hover::after {
+          content:attr(data-label);
+          position:absolute; left:calc(100% + 10px); top:50%; transform:translateY(-50%);
+          background:rgba(20,22,28,0.98); color:#fff; padding:0.375rem 0.625rem;
+          border-radius:var(--ac-radius-sm); border:1px solid var(--ac-glass-border);
+          box-shadow:0 4px 12px rgba(0,0,0,0.4);
+          font-size:0.75rem; font-weight:500; letter-spacing:0; white-space:nowrap; z-index:300;
+          pointer-events:none;
+        }
+        body.ac-sidebar-collapsed .ac-sidebar-footer { padding:0.75rem 0.5rem; }
+        body.ac-sidebar-collapsed .ac-sidebar-user { justify-content:center; padding:0.25rem; }
+        body.ac-sidebar-collapsed .ac-sidebar-actions { justify-content:center; padding:0.5rem 0 0; flex-wrap:wrap; }
+      }
+
       /* ── Main ── */
-      .ac-main { margin-left:var(--ac-sidebar-w); min-height:100vh; position:relative; z-index:1; }
+      .ac-main { margin-left:var(--ac-sidebar-w); min-height:100vh; position:relative; z-index:1; transition:margin-left 0.25s cubic-bezier(0.4,0,0.2,1); }
       .ac-topbar {
         position:sticky; top:0; z-index:50; padding:1rem 2rem;
         background:rgba(8,9,12,0.8); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
@@ -688,6 +741,7 @@
       .ac-footer {
         margin-left:var(--ac-sidebar-w); padding:1.5rem 2rem;
         border-top:1px solid var(--ac-glass-border);
+        transition:margin-left 0.25s cubic-bezier(0.4,0,0.2,1);
       }
       .ac-footer-inner {
         max-width:1200px; margin:0 auto;
@@ -736,6 +790,9 @@
             <img src="/static/images/dispatch-logo-512.png" alt="LPC">
             <span>Lines Police CAD</span>
           </a>
+          <button class="ac-sidebar-collapse" id="ac-sidebar-collapse-btn" type="button" onclick="acToggleSidebarCollapse()" aria-label="Collapse sidebar" title="Collapse sidebar">
+            <i class="fas fa-angles-left"></i>
+          </button>
           <button class="ac-sidebar-close" onclick="document.querySelector('.ac-sidebar').classList.remove('open'); document.getElementById('ac-sidebar-open').style.display='';">
             <i class="fas fa-times"></i>
           </button>
@@ -3914,7 +3971,44 @@
             if (panel) acNavTo(panel);
           });
         });
+
+        // Seed data-label for tooltips when sidebar is collapsed.
+        // Clone the node and strip badges/sub-pills so the tooltip is just the item label.
+        document.querySelectorAll('.ac-sidebar-nav .ac-nav-item').forEach(function(item) {
+          if (item.hasAttribute('data-label')) return;
+          var clone = item.cloneNode(true);
+          clone.querySelectorAll('.ac-nav-badge, .ac-nav-sub').forEach(function(el) { el.remove(); });
+          var label = (clone.textContent || '').replace(/\s+/g, ' ').trim();
+          if (label) item.setAttribute('data-label', label);
+        });
+
+        // Restore collapsed state from localStorage (desktop only)
+        try {
+          if (window.innerWidth >= 769 && localStorage.getItem('ac-sidebar-collapsed') === '1') {
+            document.body.classList.add('ac-sidebar-collapsed');
+            acSyncCollapseBtn(true);
+          }
+        } catch (e) { /* localStorage may be disabled */ }
       });
+
+      function acSyncCollapseBtn(collapsed) {
+        var btn = document.getElementById('ac-sidebar-collapse-btn');
+        if (!btn) return;
+        var icon = btn.querySelector('i');
+        if (icon) {
+          icon.classList.toggle('fa-angles-left', !collapsed);
+          icon.classList.toggle('fa-angles-right', collapsed);
+        }
+        var label = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+        btn.setAttribute('aria-label', label);
+        btn.setAttribute('title', label);
+      }
+
+      function acToggleSidebarCollapse() {
+        var collapsed = document.body.classList.toggle('ac-sidebar-collapsed');
+        acSyncCollapseBtn(collapsed);
+        try { localStorage.setItem('ac-sidebar-collapsed', collapsed ? '1' : '0'); } catch (e) { /* noop */ }
+      }
 
       // Show success/error messages on page load
       $(document).ready(function() {
