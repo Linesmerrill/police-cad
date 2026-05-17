@@ -535,7 +535,7 @@
           <div class="dd-econ-icon" style="position:relative;"><i class="fa fa-stopwatch"></i></div>
           <div class="dd-econ-body">
             <div class="dd-econ-title">On the clock <span style="color:#22c55e;">●</span></div>
-            <div class="dd-econ-sub">${escapeHtml(session.departmentName || 'this department')}</div>
+            <div class="dd-econ-sub">${state.civName ? `as <b style="color:var(--dd-text,#e2e8f0);">${escapeHtml(state.civName)}</b> · ` : ''}${escapeHtml(session.departmentName || 'this department')}</div>
             <div class="dd-econ-metrics">
               <div>
                 <div class="dd-econ-metric-label">Time</div>
@@ -582,7 +582,7 @@
         <div class="dd-econ-card is-other">
           <div class="dd-econ-icon"><i class="fa fa-triangle-exclamation"></i></div>
           <div class="dd-econ-body">
-            <div class="dd-econ-title">You're on the clock at ${escapeHtml(otherName)}</div>
+            <div class="dd-econ-title">You're on the clock at ${escapeHtml(otherName)}${state.civName ? ` as <span style="color:var(--dd-text,#e2e8f0);">${escapeHtml(state.civName)}</span>` : ''}</div>
             <div class="dd-econ-sub">Clock out first if you want to clock in here.</div>
           </div>
           <div class="dd-econ-actions">
