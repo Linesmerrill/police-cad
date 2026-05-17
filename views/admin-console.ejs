@@ -9263,8 +9263,8 @@
                 ? `<span class="subs-compare-soloflag subs-compare-soloflag--warn" title="${escapeHtml(live.note)}">${escapeHtml(rcLabel(rcStatus))} · ${escapeHtml(stripeLabel(stStatus))}</span>`
                 : `<span class="subs-compare-soloflag">No live record in RevenueCat or Stripe</span>`;
               return `
-                <section class="subs-section" style="margin:0 1.25rem;padding:0;">
-                  <div class="subs-section-head">
+                <section class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
+                  <div class="subs-section-head" style="margin:0;padding:0;">
                     <span class="subs-section-title">
                       <span class="subs-section-title-icon"><i class="fas fa-right-left"></i></span>
                       Subscription state
@@ -9276,7 +9276,7 @@
                       <i class="fas fa-circle-info"></i>
                       <span>${escapeHtml(live.note)}</span>
                     </div>` : ''}
-                  <section class="subs-compare subs-compare--solo">
+                  <section class="subs-compare subs-compare--solo" style="margin:0;">
                     <div class="subs-compare-col">
                       <div class="subs-compare-head">
                         <span class="subs-section-label">Our database</span>
@@ -9291,15 +9291,15 @@
             }
 
             return `
-              <section class="subs-section" style="margin:0 1.25rem;padding:0;">
-                <div class="subs-section-head">
+              <section class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
+                <div class="subs-section-head" style="margin:0;padding:0;">
                   <span class="subs-section-title">
                     <span class="subs-section-title-icon"><i class="fas fa-right-left"></i></span>
                     Subscription state
                   </span>
                   <span class="subs-section-meta">${escapeHtml(statusMeta)}</span>
                 </div>
-                <section class="subs-compare">
+                <section class="subs-compare" style="margin:0;">
                   <div class="subs-compare-col">
                     <div class="subs-compare-head">
                       <span class="subs-section-label">Our database</span>
@@ -9344,8 +9344,8 @@
 
             if (!payments.length) {
               return `
-                <section class="subs-section" style="margin:0 1.25rem;padding:0;">
-                  <div class="subs-section-head">
+                <section class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
+                  <div class="subs-section-head" style="margin:0;padding:0;">
                     ${titleEl}
                     <span class="subs-section-meta">no payments</span>
                   </div>
@@ -9376,12 +9376,12 @@
             const total = successful.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
 
             return `
-              <section class="subs-section" style="margin:0 1.25rem;padding:0;">
-                <div class="subs-section-head">
+              <section class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
+                <div class="subs-section-head" style="margin:0;padding:0;">
                   ${titleEl}
                   <span class="subs-section-meta">${payments.length} event${payments.length === 1 ? '' : 's'} · ${successful.length} paid · $${total.toFixed(2)} total</span>
                 </div>
-                <div class="subs-timeline" data-testid="subs-timeline">
+                <div class="subs-timeline" data-testid="subs-timeline" style="margin:0;">
                   ${groups.map(g => `
                     <div class="subs-timeline-month">${escapeHtml(g.month)}</div>
                     ${g.items.map(renderPayment).join('')}
