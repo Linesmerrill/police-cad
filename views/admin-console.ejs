@@ -2552,9 +2552,20 @@
             }
 
             /* ----- Detail content (slides in) ----- */
+            /* Flex column + explicit gap so child spacing is 100%
+               predictable. Margin-collapsing across sections + headers
+               was producing ~100px dead zones in some browsers; with
+               flex gap, every child sits exactly 14px from the next. */
             .subs-detail-content {
               animation: subs-fade-in 0.28s cubic-bezier(0.2, 0, 0.2, 1);
+              display: flex;
+              flex-direction: column;
+              gap: 0.875rem;
             }
+            .subs-detail-content > * { margin: 0 !important; }
+            .subs-detail-content > .subs-user-head { margin: 0 0 0.25rem !important; }
+            .subs-detail-content > .subs-banner,
+            .subs-detail-content > .subs-section { margin: 0 1.25rem !important; }
             @keyframes subs-fade-in {
               from { opacity: 0; transform: translateY(6px); }
               to { opacity: 1; transform: translateY(0); }
@@ -2704,27 +2715,36 @@
               line-height: 1.4;
             }
 
+            /* Hostile global cascade keeps stripping the button background
+               (Bootstrap-reboot interactions, button::-webkit-appearance,
+               etc.). Hex fallbacks + !important to defeat anything that
+               re-paints the button transparent or dark-on-dark. */
+            .subs-banner .subs-fix-btn,
             .subs-fix-btn {
-              display: inline-flex;
+              display: inline-flex !important;
               align-items: center;
               gap: 0.5rem;
               padding: 0.55rem 0.9rem;
-              border-radius: 8px;
-              background: var(--subs-warn);
-              color: #1a1206;
-              border: 0;
+              border-radius: 8px !important;
+              background: #f59e0b !important;
+              background-image: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%) !important;
+              color: #1a1206 !important;
+              border: 1px solid #d97706 !important;
               font-size: 0.8125rem;
               font-weight: 700;
               letter-spacing: -0.005em;
               cursor: pointer;
-              transition: all 0.15s ease;
+              transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
               font-family: inherit;
               white-space: nowrap;
+              text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+              box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 12px -4px rgba(245,158,11,0.45);
             }
+            .subs-banner .subs-fix-btn:hover:not(:disabled),
             .subs-fix-btn:hover:not(:disabled) {
-              background: var(--subs-warn-strong);
+              filter: brightness(1.08);
               transform: translateY(-1px);
-              box-shadow: 0 6px 16px -4px rgba(245, 158, 11, 0.45);
+              box-shadow: 0 1px 0 rgba(255,255,255,0.22) inset, 0 8px 18px -4px rgba(245,158,11,0.6) !important;
             }
             .subs-fix-btn:disabled {
               opacity: 0.7;
@@ -2880,11 +2900,11 @@
               font-weight: 500;
             }
 
-            /* ----- Payment timeline ----- */
-            .subs-section { margin: 0.875rem 1.25rem 1rem; }
-            /* The first section after the banner sits closer; subsequent ones get
-               a hairline divider so the eye registers them as new territory. */
-            .subs-section + .subs-section { border-top: 1px solid var(--subs-rule); padding-top: 0.875rem; margin-top: 0.875rem; }
+            /* ----- Payment timeline -----
+               Spacing now controlled by the flex gap on
+               .subs-detail-content; sections only contribute a top
+               hairline rule when they're not the first. */
+            .subs-section + .subs-section { border-top: 1px solid var(--subs-rule); padding-top: 0.875rem; }
 
             .subs-section-head {
               display: flex;
