@@ -910,7 +910,13 @@
       departmentId: _departmentId,
       dbUser: _dbUser,
       userName: _userName,
-      currentTemplateName: 'police'
+      currentTemplateName: 'police',
+      // Community-configured currency (sourced from community.penalCodes;
+      // community.fines is deprecated). Picked up by dd-economy.js's
+      // fmtMoney so wallet/inbox/on-the-clock amounts render with the
+      // community's chosen symbol.
+      currencyCode: <%- JSON.stringify(currencyCode || 'USD') %>,
+      currencySymbol: <%- JSON.stringify(currencySymbol || '$') %>
     };
     window.cdConfig = window.ddConfig;
     window.dbUser = _dbUser;

@@ -449,6 +449,9 @@
   // CIVILIAN_ID: the user can browse another civilian's wallet without
   // changing this. Empty string when no pick is persisted yet.
   let ACTIVE_CIVILIAN_ID = "<%- activeCivilianId %>";
+  // Community currency — sourced from community.penalCodes (fines are
+  // deprecated). Falls back to USD/$ when not configured.
+  const CURRENCY_SYMBOL = <%- JSON.stringify(currencySymbol || '$') %>;
 
   // When the user has no civilian in this community, the EJS renders an
   // empty-state card instead of the wallet shell — none of the elements
@@ -461,7 +464,7 @@
     const abs = Math.abs(cents);
     const dollars = Math.floor(abs / 100);
     const rem = abs % 100;
-    return sign + '$' + dollars.toLocaleString() + '.' + String(rem).padStart(2, '0');
+    return sign + CURRENCY_SYMBOL + dollars.toLocaleString() + '.' + String(rem).padStart(2, '0');
   }
 
   async function refreshWallet() {
@@ -551,7 +554,7 @@
     const earnings = ((activeSession.payRateSnapshot || 0) * elapsedSec / 3600);
     const earned = Math.min(earnings, (activeSession.payRateSnapshot || 0) * (activeSession.maxSessionMinutes || 0) / 60);
     document.getElementById('activeSessionMeta').textContent =
-      `${pad(h)}:${pad(m)}:${pad(s)} elapsed · ~${fmtMoney(Math.floor(earned))} earned (estimate)`;
+      `${pad(h)}:${pad(m)}:${pad(s)} elapsed · ${fmtMoney(Math.floor(earned))} earned (estimate)`;
   }
   function pad(n) { return String(n).padStart(2, '0'); }
 

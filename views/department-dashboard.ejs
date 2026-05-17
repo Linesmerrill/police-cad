@@ -3308,7 +3308,13 @@
       userId: userId,
       departmentId: departmentId,
       dbUser: dbUser,
-      userName: userName
+      userName: userName,
+      // Community-configured currency (sourced from community.penalCodes;
+      // community.fines is deprecated). Picked up by dd-economy.js's
+      // fmtMoney so wallet/inbox/on-the-clock amounts render with the
+      // community's chosen symbol.
+      currencyCode: <%- JSON.stringify(currencyCode || 'USD') %>,
+      currencySymbol: <%- JSON.stringify(currencySymbol || '$') %>
     };
 
     // Active-community / civilian flags consumed by ddRequireCivilian to

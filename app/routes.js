@@ -1687,10 +1687,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
       communityId = civilian.civilian.activeCommunityID;
     }
     let communityName = null;
+    // Per-community currency: the wallet/inbox/jobs widgets all use this
+    // to render amounts. Sourced from community.penalCodes (the active
+    // currency surface; community.fines is deprecated).
+    let currencyCode = "USD";
+    let currencySymbol = "$";
     if (communityId) {
       try {
         const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
         communityName = r.data?.community?.name || null;
+        const cur = resolveCommunityCurrency(r.data);
+        currencyCode = cur.code;
+        currencySymbol = cur.symbol;
       } catch (e) {}
     }
     return {
@@ -1705,7 +1713,33 @@ module.exports = function (app, passport, server, nextApp, handle) {
       // is browsing a different civilian than their persisted active pick.
       activeCivilianId,
       isActiveCivilian: !!(resolvedCivId && activeCivilianId && resolvedCivId === activeCivilianId),
+      currencyCode,
+      currencySymbol,
     };
+  }
+
+  // Mirror of the builtin map in public/js/details-modal.js — kept in sync
+  // so server-rendered defaults match what the existing ticket flow shows
+  // when a community hasn't extended `penalCodes.currencies` with a custom
+  // entry.
+  function builtinCurrencySymbol(code) {
+    const builtin = { USD: "$", EUR: "€", GBP: "£", CAD: "C$", AUD: "A$" };
+    return builtin[code] || code || "$";
+  }
+
+  // Resolve the community's active currency from a /api/v1/community/<id>
+  // response. Used by the economy-aware dashboards (wallet, inbox, dept,
+  // command) so all amounts render with the community-configured symbol.
+  // Sourced from community.penalCodes — community.fines is deprecated.
+  function resolveCommunityCurrency(communityResponseData) {
+    const pc = communityResponseData?.community?.penalCodes;
+    const code = (pc && pc.currency) ? String(pc.currency) : "USD";
+    let symbol = builtinCurrencySymbol(code);
+    if (Array.isArray(pc?.currencies)) {
+      const match = pc.currencies.find(opt => opt && opt.code === code);
+      if (match && match.symbol) symbol = String(match.symbol);
+    }
+    return { code, symbol };
   }
 
   app.get("/wallet", authCheck, async function (req, res) {
@@ -2630,6 +2664,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
 
       let communityName = null;
+      let currencyCode = "USD";
+      let currencySymbol = "$";
       if (communityId) {
         try {
           const communityResponse = await axios.get(
@@ -2637,6 +2673,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
             config
           );
           communityName = communityResponse.data?.community?.name || null;
+          const cur = resolveCommunityCurrency(communityResponse.data);
+          currencyCode = cur.code;
+          currencySymbol = cur.symbol;
         } catch (err) {
           console.error('Error fetching community:', err.message);
         }
@@ -2724,6 +2763,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
         encodedCommunityId: communityId ? encodeId(communityId) : null,
         communityName: communityName,
         hasCivilianInCommunity,
+        currencyCode,
+        currencySymbol,
         apiUrl: policeCadApiUrl,
         canManageForms,
       });
@@ -2989,6 +3030,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
 
       let communityName = null;
+      let currencyCode = "USD";
+      let currencySymbol = "$";
       if (communityId) {
         try {
           const communityResponse = await axios.get(
@@ -2996,6 +3039,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
             config
           );
           communityName = communityResponse.data?.community?.name || null;
+          const cur = resolveCommunityCurrency(communityResponse.data);
+          currencyCode = cur.code;
+          currencySymbol = cur.symbol;
         } catch (err) {
           console.error('Error fetching community:', err.message);
         }
@@ -3028,6 +3074,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
         encodedCommunityId: communityId ? encodeId(communityId) : null,
         communityName: communityName,
         hasCivilianInCommunity,
+        currencyCode,
+        currencySymbol,
         apiUrl: policeCadApiUrl,
       });
     } catch (error) {

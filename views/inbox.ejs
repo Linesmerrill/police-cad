@@ -483,6 +483,9 @@
   const USER_ID = "<%- userId %>";
   const COMMUNITY_ID = "<%- communityId || '' %>";
   const CIVILIAN_NAME = "<%- civilianName || '' %>";
+  // Community currency — sourced from community.penalCodes (fines are
+  // deprecated). Falls back to USD/$ when not configured.
+  const CURRENCY_SYMBOL = <%- JSON.stringify(currencySymbol || '$') %>;
 
   // When the user has no civilian in this community, the EJS renders an
   // empty-state card instead of the inbox list — none of the elements
@@ -497,7 +500,7 @@
     const abs = Math.abs(cents);
     const dollars = Math.floor(abs / 100);
     const rem = abs % 100;
-    return sign + '$' + dollars.toLocaleString() + '.' + String(rem).padStart(2, '0');
+    return sign + CURRENCY_SYMBOL + dollars.toLocaleString() + '.' + String(rem).padStart(2, '0');
   }
   function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

@@ -25,12 +25,19 @@
     return window.ddConfig || null;
   }
 
+  // Currency symbol comes from window.ddConfig (set by the dept-/command-
+  // dashboard EJS from community.penalCodes — community.fines is
+  // deprecated). Falls back to $ when ddConfig isn't wired yet or the
+  // community hasn't picked a currency.
+  function currencySymbol() {
+    return (window.ddConfig && window.ddConfig.currencySymbol) || '$';
+  }
   function fmtMoney(cents) {
     const sign = cents < 0 ? '-' : '';
     const abs = Math.abs(cents || 0);
     const dollars = Math.floor(abs / 100);
     const rem = abs % 100;
-    return sign + '$' + dollars.toLocaleString() + '.' + String(rem).padStart(2, '0');
+    return sign + currencySymbol() + dollars.toLocaleString() + '.' + String(rem).padStart(2, '0');
   }
 
   function fmtElapsed(seconds) {
