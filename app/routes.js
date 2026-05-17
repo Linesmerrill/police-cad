@@ -1670,6 +1670,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
     try {
       const ctx = await resolveEconomyContext(req);
       if (!ctx.civilianId) {
+        // Wallet is per-civilian. If the user has no civilian in the active
+        // community, bounce them to that community page so they can create
+        // one — never to /civ-dashboard, which (with the beta dashboard
+        // preference on) then redirects to /department-dashboard and drops
+        // the community context entirely.
+        if (ctx.encodedCommunityId) {
+          return res.redirect(`/community/${ctx.encodedCommunityId}?notice=createCivilianForWallet`);
+        }
         return res.redirect("/civ-dashboard");
       }
       res.render("wallet", {
@@ -1717,6 +1725,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.get("/inbox", authCheck, async function (req, res) {
     try {
       const ctx = await resolveEconomyContext(req);
+      // Mirror /wallet: without a civilian in the active community, the
+      // inbox JS falls back to fetching user-level items — which surfaces
+      // entries from other communities the user belongs to. Bounce to the
+      // community page so they can create a civilian here first.
+      if (!ctx.civilianId && ctx.encodedCommunityId) {
+        return res.redirect(`/community/${ctx.encodedCommunityId}?notice=createCivilianForInbox`);
+      }
       res.render("inbox", {
         user: req.user,
         apiUrl: policeCadApiUrl,
