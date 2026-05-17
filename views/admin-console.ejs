@@ -2289,14 +2289,25 @@
               min-height: 600px;
             }
 
-            /* ----- Sticky search bar ----- */
+            /* ----- Sticky search bar -----
+               Transparent by default so it doesn't paint a darker rectangle
+               around the rounded search input. We only paint a backdrop
+               when the bar has actually scrolled away from its anchor — a
+               tiny shadow + blur make text underneath legible without the
+               flat "dark square behind the bar" artifact.                  */
             .subs-search {
               position: sticky;
               top: 0;
               z-index: 2;
               padding: 0.25rem 0 0.5rem;
-              background: var(--ac-bg);
-              backdrop-filter: blur(8px);
+              background: transparent;
+              transition: background 0.15s ease, box-shadow 0.15s ease;
+            }
+            .subs-search.is-stuck {
+              background: rgba(8, 9, 12, 0.72);
+              backdrop-filter: blur(10px) saturate(140%);
+              -webkit-backdrop-filter: blur(10px) saturate(140%);
+              box-shadow: 0 6px 18px -12px rgba(0, 0, 0, 0.6);
             }
 
             .subs-search-bar {
@@ -2352,8 +2363,14 @@
               .subs-layout { grid-template-columns: 1fr; }
             }
 
-            /* ----- Results sidebar ----- */
+            /* ----- Results sidebar -----
+               align-self: start so the sidebar hugs its own content and
+               doesn't get stretched to match the (much taller) detail
+               pane's row track. max-height + internal scroll still kicks
+               in for long lists, but a single-row result no longer leaves
+               a half-screen of dead space underneath.                     */
             .subs-sidebar {
+              align-self: start;
               background: var(--ac-glass);
               border: 1px solid var(--ac-glass-border);
               border-radius: var(--ac-radius, 12px);
@@ -2390,7 +2407,6 @@
 
             .subs-results {
               overflow-y: auto;
-              flex: 1;
             }
 
             .subs-result {
@@ -9483,6 +9499,22 @@
             }
 
             setTimeout(() => input.focus(), 120);
+
+            // Toggle is-stuck on the sticky search wrapper only after it
+            // detaches from its anchor position. A 1px sentinel placed
+            // right above the bar tells us when we've scrolled past it —
+            // way cheaper than listening to scroll.
+            const search = panel && panel.querySelector('.subs-search');
+            if (search && !search.dataset.stickObs) {
+              search.dataset.stickObs = '1';
+              const sentinel = document.createElement('div');
+              sentinel.style.cssText = 'position:absolute;top:-1px;left:0;width:1px;height:1px;pointer-events:none;';
+              search.parentElement.insertBefore(sentinel, search);
+              const io = new IntersectionObserver(entries => {
+                search.classList.toggle('is-stuck', !entries[0].isIntersecting);
+              }, { threshold: [0] });
+              io.observe(sentinel);
+            }
           };
         })();
 
