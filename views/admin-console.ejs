@@ -2546,8 +2546,16 @@
               align-items: center;
               justify-content: space-between;
               gap: 1rem;
-              padding: 1rem 1.25rem;
+              padding: 1.25rem 1.5rem;
               border-bottom: 1px solid var(--subs-rule);
+              /* Atmospheric hero image with a strong dark gradient overlay
+                 for text contrast. Image matches the marketing site so the
+                 admin surface feels of-a-piece with the product. The
+                 explicit background here also overrides any bleed-through
+                 from semi-transparent parent panels. */
+              background:
+                linear-gradient(135deg, rgba(8,9,12,0.88) 0%, rgba(8,9,12,0.75) 100%),
+                url('/static/static/images/landing-bg.jpg') center/cover no-repeat;
             }
 
             .subs-user-identity {
@@ -2579,6 +2587,9 @@
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
+              /* Slight edge against the photographic background — keeps
+                 the type crisp across bright + dark patches of the image. */
+              text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
             }
 
             .subs-user-id {
@@ -2587,6 +2598,7 @@
               color: var(--ac-text-dim);
               margin-top: 3px;
               letter-spacing: 0.02em;
+              text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
             }
 
             .subs-user-actions {
