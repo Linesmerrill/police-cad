@@ -1,18 +1,31 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import {
-  seedLinkedAdminForTestUser,
-  removeSeededAdminUsers,
+  seedConsoleAdmin,
+  removeConsoleAdmin,
+  TEST_CONSOLE_ADMIN_EMAIL,
+  TEST_CONSOLE_ADMIN_PASSWORD,
 } from '../../helpers/admin-users';
 
-// Admin gating: instead of relying on a separate admin.json storageState
-// (which isn't checked in and doesn't exist on CI), we seed an
-// admin_users row linked to the default test user. /api/user/current then
-// resolves the test user as isAdmin: true via the linkedUserId branch,
-// so /admin renders and the test can drive the Subscriptions panel.
+// /admin/console is gated by req.session.adminToken (set only by a real
+// POST /admin login — distinct from the regular user/passport session;
+// see app/routes.js requireAdminSession). So we can't piggyback on the
+// shared user.json storageState. Each test logs in as a seeded admin
+// (real bcrypt-hashed password) before driving the panel.
 //
-// Endpoints (GET /api/v1/admin/subscription/users and GET /…/users/{id})
-// are still mocked with page.route — the test exercises panel rendering,
+// API endpoints (GET /api/v1/admin/subscription/users and detail) are
+// still mocked with page.route — the test exercises panel rendering,
 // not the API.
+test.use({ storageState: { cookies: [], origins: [] } });
+
+async function loginAsConsoleAdmin(page: Page) {
+  await page.goto('/admin');
+  await page.locator('input[name="email"]').fill(TEST_CONSOLE_ADMIN_EMAIL);
+  await page.locator('input[name="password"]').fill(TEST_CONSOLE_ADMIN_PASSWORD);
+  await Promise.all([
+    page.waitForURL('**/admin/console**', { timeout: 15_000 }),
+    page.locator('button[type="submit"]').click(),
+  ]);
+}
 
 const MOCK_USER = {
   userId: '5e8adfd6e18b510004e2cbff',
@@ -89,11 +102,15 @@ const MOCK_DETAIL = {
 
 test.describe('Admin → Subscriptions panel', { tag: '@admin' }, () => {
   test.beforeAll(async () => {
-    await seedLinkedAdminForTestUser();
+    await seedConsoleAdmin();
   });
 
   test.afterAll(async () => {
-    await removeSeededAdminUsers();
+    await removeConsoleAdmin();
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await loginAsConsoleAdmin(page);
   });
 
   test('search → result list shows matching users', async ({ page }) => {
@@ -113,7 +130,7 @@ test.describe('Admin → Subscriptions panel', { tag: '@admin' }, () => {
       await route.fallback();
     });
 
-    await page.goto('/admin#subscriptions');
+    await page.goto('/admin/console#subscriptions');
     await page.locator('[data-panel="subscriptions"]').first().click();
 
     const search = page.getByTestId('subs-search-input');
@@ -151,7 +168,7 @@ test.describe('Admin → Subscriptions panel', { tag: '@admin' }, () => {
       await route.fallback();
     });
 
-    await page.goto('/admin#subscriptions');
+    await page.goto('/admin/console#subscriptions');
     await page.locator('[data-panel="subscriptions"]').first().click();
 
     await page.getByTestId('subs-search-input').fill('jasey');
@@ -218,7 +235,7 @@ test.describe('Admin → Subscriptions panel', { tag: '@admin' }, () => {
       await route.fallback();
     });
 
-    await page.goto('/admin#subscriptions');
+    await page.goto('/admin/console#subscriptions');
     await page.locator('[data-panel="subscriptions"]').first().click();
 
     await page.getByTestId('subs-search-input').fill('jasey');
