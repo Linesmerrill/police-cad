@@ -323,6 +323,8 @@
   useLastDashboard: true
 }) %>
 
+<%- include('partials/dd-modal') %>
+
 <div class="w-shell">
   <div class="w-header">
     <div class="w-header-icon"><i class="fa fa-wallet"></i></div>
@@ -753,13 +755,11 @@
 
   // Warn-then-confirm modal for the "clock in here will swap your active
   // civilian" case. Resolves to true on confirm, false on cancel/close.
+  // ddModal is provided by views/partials/dd-modal.ejs (included at the
+  // top of this page). Per policy we never fall back to browser confirm.
   function confirmActiveCivilianSwap() {
     return new Promise((resolve) => {
       const name = escapeHtml(CIVILIAN_NAME || 'this civilian');
-      if (!window.ddModal) {
-        resolve(confirm('Clocking in will set ' + (CIVILIAN_NAME || 'this civilian') + ' as your active civilian. Continue?'));
-        return;
-      }
       window.ddModal({
         type: 'warning',
         icon: 'fa-thumbtack',
@@ -809,11 +809,6 @@
     var msg = sameCiv
       ? 'You\'re already on the clock at <strong>' + escapeHtml(deptName) + '</strong> with this civilian. Clock out and start a new shift here?'
       : 'Another civilian on this account is currently on the clock at <strong>' + escapeHtml(deptName) + '</strong>. Clock them out and clock in here as <strong>' + escapeHtml(CIVILIAN_NAME || 'this civilian') + '</strong>?';
-    if (!window.ddModal) {
-      if (!confirm('You\'re already on the clock at ' + deptName + '. Clock out and clock in here?')) return;
-      await swapClockIn(deptId, existing);
-      return;
-    }
     window.ddModal({
       type: 'warning',
       icon: 'fa-triangle-exclamation',
