@@ -627,6 +627,14 @@
         $loading.hide();
         ddCivData = parseList(data);
         ddCivTotal = (data && data.totalCount != null) ? data.totalCount : (ddCivData.length < PAGE_SIZE ? (ddCivPage * PAGE_SIZE + ddCivData.length) : -1);
+        // Keep the Wallet/Inbox sidebar gate honest: this is the
+        // authoritative count for this user/community, so use it to flip
+        // the flag both ways (covers create *and* delete-to-zero).
+        if (ddCivTotal >= 0) {
+          var hasCiv = ddCivTotal > 0;
+          window.DD_HAS_CIVILIAN_IN_COMMUNITY = hasCiv;
+          window.CD_HAS_CIVILIAN_IN_COMMUNITY = hasCiv;
+        }
         renderGrid();
       },
       error: function () {
