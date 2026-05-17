@@ -107,6 +107,21 @@
         float:right; background:var(--ac-accent); color:#fff; font-size:0.625rem; font-weight:700;
         padding:0.125rem 0.5rem; border-radius:99px; min-width:20px; text-align:center; line-height:1.4;
       }
+      /* Tiny secondary line under an item label — used to mark owner-only
+         items so admins know at a glance which entries are gated. */
+      .ac-nav-sub {
+        display:block; margin-top:0.2rem; margin-left:1.6875rem;
+        font-size:0.55rem; font-weight:700; letter-spacing:0.08em;
+        text-transform:uppercase; color:var(--ac-text-dim);
+      }
+      .ac-nav-sub-pill {
+        display:inline-block; padding:1px 6px; border-radius:99px;
+        background:rgba(245,158,11,0.12); color:#f59e0b;
+        border:1px solid rgba(245,158,11,0.28);
+      }
+      .ac-nav-item.active .ac-nav-sub-pill {
+        background:rgba(245,158,11,0.18); color:#fbbf24;
+      }
       /* "Back to CAD" exit row — visually separated from panel-switching items */
       .ac-nav-exit { margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--ac-glass-border); }
       .ac-nav-exit .ac-nav-item i { color:var(--ac-accent); }
@@ -737,7 +752,7 @@
         </div>
 
         <div class="ac-nav-section">
-          <div class="ac-nav-section-label">Search</div>
+          <div class="ac-nav-section-label">Lookup</div>
           <div class="ac-nav-item" data-panel="users">
             <i class="fas fa-users"></i> Users
           </div>
@@ -750,28 +765,34 @@
         </div>
 
         <div class="ac-nav-section">
-          <div class="ac-nav-section-label">Management</div>
+          <div class="ac-nav-section-label">Operations</div>
           <div class="ac-nav-item" data-panel="cases">
             <i class="fas fa-briefcase"></i> Cases
           </div>
-          <div class="ac-nav-item" data-panel="wiki">
-            <i class="fas fa-book"></i> Wiki
+          <div class="ac-nav-item" data-panel="subscriptions">
+            <i class="fas fa-receipt"></i> Subscriptions
+          </div>
+          <div class="ac-nav-item" data-panel="metrics">
+            <i class="fas fa-chart-line"></i> Metrics
           </div>
           <div class="ac-nav-item" id="content-creators-tab" data-panel="content-creators" style="display: none;">
             <i class="fas fa-video"></i> Content Creators
             <span id="ccPendingBadge" class="ac-nav-badge" style="display: none;"></span>
           </div>
+          <div class="ac-nav-item" data-panel="wiki">
+            <i class="fas fa-book"></i> Wiki
+          </div>
+        </div>
+
+        <div class="ac-nav-section" id="ac-nav-section-elevated" style="display: none;">
+          <div class="ac-nav-section-label">Elevated</div>
           <div class="ac-nav-item" id="admin-management-tab" data-panel="admin-management" style="display: none;">
             <i class="fas fa-shield-alt"></i> Admin Management
+            <span class="ac-nav-sub"><span class="ac-nav-sub-pill">Owner only</span></span>
           </div>
           <div class="ac-nav-item" id="email-tab" data-panel="email" style="display: none;">
             <i class="fas fa-envelope"></i> Email
-          </div>
-          <div class="ac-nav-item" data-panel="metrics">
-            <i class="fas fa-chart-line"></i> Metrics
-          </div>
-          <div class="ac-nav-item" data-panel="subscriptions">
-            <i class="fas fa-receipt"></i> Subscriptions
+            <span class="ac-nav-sub"><span class="ac-nav-sub-pill">Owner only</span></span>
           </div>
         </div>
 
@@ -1217,6 +1238,13 @@
               <a class="aw-nav-link" href="#resuming-case">Resuming a Case</a>
               <a class="aw-nav-link" href="#cancelling-case">Cancelling a Case</a>
               <a class="aw-nav-link" href="#viewing-past-cases">Viewing Past Cases</a>
+
+              <div class="aw-nav-group-title">Subscriptions</div>
+              <a class="aw-nav-link" href="#subs-overview">How the Panel Works</a>
+              <a class="aw-nav-link" href="#subs-states">Reading the Banner</a>
+              <a class="aw-nav-link" href="#subs-fix-db">"Fix in DB" Button</a>
+              <a class="aw-nav-link" href="#subs-history">Payment History</a>
+              <a class="aw-nav-link" href="#subs-refunds">Refund Requests</a>
             </div>
 
             <!-- Main Content -->
@@ -1846,6 +1874,197 @@
                 </div>
               </section>
 
+              <!-- ════════════════════════════════════════════ -->
+              <!-- SUBSCRIPTIONS                                -->
+              <!-- ════════════════════════════════════════════ -->
+              <section class="aw-section">
+                <div class="aw-section-header">
+                  <div class="aw-section-icon"><i class="fas fa-receipt"></i></div>
+                  <div>
+                    <div class="aw-section-title">Subscriptions</div>
+                    <div style="font-size:0.8rem; color:var(--ac-text-muted);">Diagnosing user subscription state and handling refund requests</div>
+                  </div>
+                </div>
+
+                <!-- Overview -->
+                <div class="aw-subsection" id="subs-overview">
+                  <h3 class="aw-subsection-title">How the Panel Works</h3>
+                  <p class="aw-text">The Subscriptions panel reconciles three sources of truth into one view: what our database thinks the user is paying for, what RevenueCat reports (iOS / Android), and what Stripe reports (web). The most common support question is "Am I being charged for something I cancelled?" or "I cancelled but still have access" &mdash; this panel answers both at a glance.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Search by email, user ID, or transaction ID</div>
+                        <div class="aw-text">The search bar at the top accepts email, Mongo user ID, Stripe transaction id (<code>sub_...</code>), or Google Play order id (<code>GPA....</code>). Results appear in the left sidebar.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click a result to load the detail view</div>
+                        <div class="aw-text">The detail view has three regions: the status <strong>banner</strong> at the top, a <strong>comparison table</strong> (DB vs live RevenueCat/Stripe), and the <strong>Payment History</strong> timeline below.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Live data is fetched on demand</div>
+                        <div class="aw-text">When you open a user, we hit RevenueCat and Stripe APIs in real time &mdash; nothing is cached. If RevenueCat reports the subscription is active but our DB says otherwise, that mismatch surfaces in the comparison table.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">If the live source shows "No live data" or "User not found in RevenueCat", that just means RevenueCat has no subscriber record for them &mdash; usually the case for legacy Stripe-only or promo users. Not an error.</div>
+                  </div>
+                </div>
+
+                <!-- Banner States -->
+                <div class="aw-subsection" id="subs-states">
+                  <h3 class="aw-subsection-title">Reading the Banner</h3>
+                  <p class="aw-text">The banner is the fastest read on a user's subscription status. There are four states you will see:</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-check" style="color:var(--ac-green);"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Active</div>
+                        <div class="aw-text">User has a paid subscription that is renewing. Verify: <code>plan</code> is one of <code>base / premium / premium_plus</code>, <code>expirationDate</code> is in the future, and live RevenueCat/Stripe both agree the sub is active.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-clock" style="color:var(--subs-warn);"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Active &mdash; cancels in N days</div>
+                        <div class="aw-text">User cancelled but is still inside their paid period. They keep access until <code>expirationDate</code>. <strong>Do nothing</strong> &mdash; this is the expected state for a user mid-cancellation. The expiration handler will downgrade them automatically when the date passes.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-times" style="color:var(--ac-text-dim);"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Cancelled / Inactive</div>
+                        <div class="aw-text">User is on the free plan. Verify: live RevenueCat/Stripe agree the sub is cancelled or expired. If live shows active but DB shows inactive, that's a mismatch &mdash; see "Fix in DB" below.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-exclamation-triangle" style="color:var(--subs-warn);"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Mismatch detected</div>
+                        <div class="aw-text">DB and live data disagree on one or more fields (active, plan, source, transactionId, periodEnd, cancelAt). The mismatched fields are highlighted in the comparison table. A "Fix in DB" button appears in the banner.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Fix in DB -->
+                <div class="aw-subsection" id="subs-fix-db">
+                  <h3 class="aw-subsection-title">The "Fix in DB" Button</h3>
+                  <p class="aw-text">When our database disagrees with the live source of truth (RevenueCat or Stripe), the banner shows a <strong>Fix in DB</strong> button. Clicking it overwrites the user's <code>subscription</code> document with whatever the live source reports &mdash; active state, plan, source, transaction id, purchase/expiration dates &mdash; and writes an audit row to <code>subscription_events</code> with the prior snapshot.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Verify the live source before clicking</div>
+                        <div class="aw-text">Look at the comparison table. The "Live" column shows what RevenueCat / Stripe currently report. If the live source itself looks wrong (e.g. blank, "User not found", or stale), do NOT click Fix &mdash; surface the case in Slack instead. Fix is for cases where the live data is correct and our DB is the one that drifted.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click Fix in DB</div>
+                        <div class="aw-text">The button spins, the write happens, the sidebar and detail view refresh in parallel. After ~1 second the mismatch should be gone and the banner should be green (or "cancels in N days" if applicable).</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">If the mismatch comes back</div>
+                        <div class="aw-text">That means a webhook is overwriting your fix moments later. Stop clicking Fix and escalate &mdash; this signals a bug in webhook handling, not a one-off drift.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Every Fix is logged to <code>subscription_events</code> with <code>provider:"admin"</code> and a snapshot of the prior subscription doc. We can always see what changed, when, and roll it back manually if needed.</div>
+                  </div>
+                </div>
+
+                <!-- Payment History -->
+                <div class="aw-subsection" id="subs-history">
+                  <h3 class="aw-subsection-title">Payment History Timeline</h3>
+                  <p class="aw-text">The Payment History panel below the comparison table merges three sources into one timeline: RevenueCat purchase rows (latest period only per product), Stripe invoices (canonical for web subs), and <code>subscription_events</code> audit rows (every renewal, refund, or admin action). Each row shows the date, product, amount, and source.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Purchases vs renewals</div>
+                        <div class="aw-text">A green amount pill is a successful purchase or renewal. Multiple rows in a row for the same product means the user has been renewing on schedule &mdash; that is healthy.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Refunds</div>
+                        <div class="aw-text">An amber pill labeled "REFUND" indicates the charge was reversed. RevenueCat reports this via the <code>cancel_reason</code> field; Stripe reports it as a separate refund event. If a user says "I never got my refund" but the row shows REFUND, the money was returned to their card &mdash; tell them to check their bank statement (refunds typically take 5&ndash;10 business days to appear).</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Amount shows "$0.00" or "&mdash;"</div>
+                        <div class="aw-text">RevenueCat's v1 API doesn't return price for subscriptions, so we fall back to a hardcoded price table for known SKUs (base/premium/premium_plus). If an amount shows "&mdash;" the SKU isn't in our table &mdash; usually a legacy or promo product. Not necessarily wrong.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Refund Requests -->
+                <div class="aw-subsection" id="subs-refunds">
+                  <h3 class="aw-subsection-title">Handling Refund Requests</h3>
+                  <p class="aw-text">When a user emails or messages support asking for a refund, follow this process. Refunds are not issued automatically &mdash; every request is reviewed.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Acknowledge with the SLA</div>
+                        <div class="aw-text">Reply to the user with: <em>"Thanks for reaching out. Our team reviews refund requests within <strong>5 business days</strong> and will follow up with a decision. We usually respond sooner."</em> Setting the 5-day expectation up front prevents follow-up pings.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Look up the user in this panel</div>
+                        <div class="aw-text">Search by their email. Confirm the subscription exists in our DB and verify the charge they're requesting a refund for is in the Payment History timeline. Note the product, amount, transaction id, and purchase date &mdash; you'll need these for escalation.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Check for an existing refund</div>
+                        <div class="aw-text">Scan the timeline for an amber REFUND pill on that transaction. If one exists, the refund was already issued &mdash; let the user know and point them to their bank statement (5&ndash;10 business days to appear).</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">4</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Escalate to @merrill in Slack</div>
+                        <div class="aw-text">Post in the support channel: <em>"Refund request &mdash; @merrill please review."</em> Include the user email, transaction id, amount, product, purchase date, and the user's stated reason. Merrill will issue the refund through the store dashboard (App Store Connect / Play Console / Stripe) and, where the store doesn't auto-cancel, manually cancel the subscription too.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">5</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Follow up with the user</div>
+                        <div class="aw-text">Once Merrill confirms the refund was issued, reply to the user with the outcome. If it was denied (rare), include the reason. If approved, set expectations on bank-statement timing.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">We can't refund Google Play or App Store purchases through our admin tools &mdash; those must be issued via the store dashboards by Merrill. Stripe refunds can be issued from the Stripe dashboard. Either way, escalation is required.</div>
+                  </div>
+                </div>
+              </section>
+
             </div><!-- /.aw-content -->
           </div><!-- /.aw-layout -->
         </div>
@@ -2326,16 +2545,13 @@
               position: sticky;
               top: 0;
               z-index: 2;
-              padding: 0.25rem 0 0.5rem;
+              padding: 0 0 0.5rem;
               background: transparent;
-              transition: background 0.15s ease, box-shadow 0.15s ease;
             }
-            .subs-search.is-stuck {
-              background: rgba(8, 9, 12, 0.72);
-              backdrop-filter: blur(10px) saturate(140%);
-              -webkit-backdrop-filter: blur(10px) saturate(140%);
-              box-shadow: 0 6px 18px -12px rgba(0, 0, 0, 0.6);
-            }
+            /* No is-stuck visual chrome — the input's own glass background
+               carries the bar; a separate dark band on scroll just paints a
+               visible rectangle in the surrounding panel. Keep sticky
+               positioning, drop the bg/shadow. */
 
             .subs-search-bar {
               display: flex;
@@ -2368,6 +2584,28 @@
               letter-spacing: -0.005em;
             }
             .subs-search-input::placeholder { color: var(--ac-text-dim); }
+
+            .subs-search-clear {
+              display: none;
+              align-items: center;
+              justify-content: center;
+              width: 22px;
+              height: 22px;
+              padding: 0;
+              margin: 0;
+              border: 0;
+              border-radius: 50%;
+              background: rgba(255, 255, 255, 0.08);
+              color: var(--ac-text-dim);
+              font-size: 0.7rem;
+              cursor: pointer;
+              transition: background 0.12s ease, color 0.12s ease;
+            }
+            .subs-search-clear:hover {
+              background: rgba(255, 255, 255, 0.16);
+              color: #fff;
+            }
+            .subs-search-clear.is-visible { display: inline-flex; }
 
             .subs-search-kbd {
               font-family: var(--subs-mono);
@@ -3224,6 +3462,16 @@
                   spellcheck="false"
                   data-testid="subs-search-input"
                 />
+                <button
+                  type="button"
+                  id="subs-q-clear"
+                  class="subs-search-clear"
+                  title="Clear search"
+                  aria-label="Clear search"
+                  data-testid="subs-search-clear"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
                 <span class="subs-search-kbd">/ to focus</span>
               </label>
             </div>
@@ -3691,6 +3939,7 @@
         if (!currentUserEmail || !roles || roles.length === 0) {
           $('#admin-management-tab').hide();
           $('#content-creators-tab').hide();
+          $('#ac-nav-section-elevated').hide();
           $('#add-admin-section').hide();
           $('#adminResults').html('');
           $('#userResults').html('');
@@ -3710,12 +3959,14 @@
           $('#admin-management-tab').show();
           $('#add-admin-section').show();
           $('#email-tab').show();
+          $('#ac-nav-section-elevated').show();
         } else {
           $('#admin-management-tab').hide();
           $('#add-admin-section').hide();
           $('#panel-admin-management').hide();
           $('#email-tab').hide();
           $('#panel-email').hide();
+          $('#ac-nav-section-elevated').hide();
 
           // Clear any admin data that might be displayed
           $('#adminResults').html('');
@@ -9547,19 +9798,61 @@
 
           /* ------------------- public entry point ------------------- */
 
+          // Reset the right-hand detail pane back to its initial empty
+          // state. Called when the search input is cleared so a stale
+          // record doesn't linger while the user types a new name.
+          function resetDetail() {
+            const detail = document.getElementById('subs-detail');
+            if (!detail) return;
+            detail.innerHTML = `
+              <div class="subs-detail-state">
+                <div class="subs-empty-icon"><i class="fas fa-user"></i></div>
+                <div class="subs-empty-title">No customer selected</div>
+                <div class="subs-empty-body">
+                  Pick a result on the left to see their live subscription state,
+                  DB record, and full payment history.
+                </div>
+              </div>`;
+          }
+
           window.initSubscriptionsPanel = function () {
             const input = document.getElementById('subs-q');
+            const clearBtn = document.getElementById('subs-q-clear');
             if (!input || input.dataset.wired === '1') return;
             input.dataset.wired = '1';
 
+            function syncClearVisibility() {
+              if (!clearBtn) return;
+              clearBtn.classList.toggle('is-visible', input.value.length > 0);
+            }
+
             const debounced = debounce(() => runSearch(input.value.trim()), 220);
-            input.addEventListener('input', debounced);
+            input.addEventListener('input', () => {
+              syncClearVisibility();
+              if (!input.value.trim()) resetDetail();
+              debounced();
+            });
             input.addEventListener('keydown', e => {
               if (e.key === 'Enter') {
                 e.preventDefault();
                 runSearch(input.value.trim());
+              } else if (e.key === 'Escape' && input.value) {
+                input.value = '';
+                syncClearVisibility();
+                resetDetail();
+                runSearch('');
               }
             });
+            if (clearBtn) {
+              clearBtn.addEventListener('click', () => {
+                input.value = '';
+                syncClearVisibility();
+                resetDetail();
+                runSearch('');
+                input.focus();
+              });
+            }
+            syncClearVisibility();
 
             // Global "/" shortcut to focus search (only when panel visible)
             const panel = document.getElementById('panel-subscriptions');
@@ -9576,22 +9869,6 @@
             }
 
             setTimeout(() => input.focus(), 120);
-
-            // Toggle is-stuck on the sticky search wrapper only after it
-            // detaches from its anchor position. A 1px sentinel placed
-            // right above the bar tells us when we've scrolled past it —
-            // way cheaper than listening to scroll.
-            const search = panel && panel.querySelector('.subs-search');
-            if (search && !search.dataset.stickObs) {
-              search.dataset.stickObs = '1';
-              const sentinel = document.createElement('div');
-              sentinel.style.cssText = 'position:absolute;top:-1px;left:0;width:1px;height:1px;pointer-events:none;';
-              search.parentElement.insertBefore(sentinel, search);
-              const io = new IntersectionObserver(entries => {
-                search.classList.toggle('is-stuck', !entries[0].isIntersecting);
-              }, { threshold: [0] });
-              io.observe(sentinel);
-            }
           };
         })();
 
