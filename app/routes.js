@@ -1588,17 +1588,39 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   // ----- Economy: Wallet + Inbox (Phase 1) -----
   async function resolveEconomyContext(req) {
-    const communityIdPattern = /^[a-fA-F0-9]{24}$/;
+    const objectIdPattern = /^[a-fA-F0-9]{24}$/;
+
+    // 1. Resolve an explicit civilian target from the URL (?c=<encoded>) so
+    //    deep-links and the on-page civilian-switcher keep working.
     let civilianId = null;
     if (req.query.c) {
       try {
         const decoded = decodeId(req.query.c);
-        if (communityIdPattern.test(decoded)) civilianId = decoded;
+        if (objectIdPattern.test(decoded)) civilianId = decoded;
       } catch (e) {}
     }
-    if (!civilianId && req.query.civId && communityIdPattern.test(req.query.civId)) {
+    if (!civilianId && req.query.civId && objectIdPattern.test(req.query.civId)) {
       civilianId = req.query.civId;
     }
+
+    // 2. Resolve the active community: prefer the explicit ?community=<encoded>
+    //    param sent by dashboards, then fall back to session state. This is
+    //    the source of truth for which community's wallet/inbox we render,
+    //    and it scopes the civilian fallback below so we don't accidentally
+    //    pick a civilian from another community the user belongs to.
+    let communityId = "";
+    if (req.query.community) {
+      try {
+        const decoded = decodeId(req.query.community);
+        if (objectIdPattern.test(decoded)) communityId = decoded;
+      } catch (e) {}
+    }
+    if (!communityId) {
+      communityId = req.user?.user?.lastAccessedCommunity?.communityID
+                 || req.user?.user?.activeCommunity
+                 || "";
+    }
+
     const userId = (req.user && req.user._id) ? String(req.user._id) : null;
     let civilian = null;
     if (civilianId) {
@@ -1606,7 +1628,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
     if (!civilian && userId) {
       try {
-        civilian = await Civilian.findOne({ "civilian.userID": userId }).sort({ "civilian.updatedAt": -1 }).lean();
+        const query = { "civilian.userID": userId };
+        // Scope to the active community when known so we don't surface a
+        // civilian from a different community the user happens to have
+        // touched more recently.
+        if (communityId) query["civilian.activeCommunityID"] = communityId;
+        civilian = await Civilian.findOne(query).sort({ "civilian.updatedAt": -1 }).lean();
       } catch (e) {}
     }
     const resolvedCivId = civilian ? String(civilian._id) : "";
@@ -1616,10 +1643,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
       ? ([civilian.civilian?.firstName, civilian.civilian?.lastName].filter(Boolean).join(" ")
          || civilian.civilian?.name || "")
       : "";
-    const communityId = civilian?.civilian?.activeCommunityID
-                     || req.user?.user?.lastAccessedCommunity?.communityID
-                     || req.user?.user?.activeCommunity
-                     || "";
+    // If the URL pinned an explicit civilian but no community was provided,
+    // honor the civilian's own community so the page header matches.
+    if (!communityId && civilian?.civilian?.activeCommunityID) {
+      communityId = civilian.civilian.activeCommunityID;
+    }
     let communityName = null;
     if (communityId) {
       try {
@@ -2913,6 +2941,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
         context: null,
         departmentId: departmentId || req.session.departmentId || null,
         departmentName: departmentName,
+        communityId: communityId || null,
+        encodedCommunityId: communityId ? encodeId(communityId) : null,
         communityName: communityName,
         apiUrl: policeCadApiUrl,
       });

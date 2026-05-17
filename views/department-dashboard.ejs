@@ -2990,8 +2990,16 @@
   </button>
 
   <%
-    var communityId = user.user?.lastAccessedCommunity?.communityID || '';
-    var encodedCommunityId = communityId ? Buffer.from(communityId).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : '';
+    // Prefer the community resolved by the route (URL ?c=<encoded> wins over
+    // lastAccessedCommunity) so sidebar links stay consistent with the page
+    // the user is actually on — e.g. wallet/inbox shouldn't snap to a stale
+    // session community when ?c= is set.
+    var communityId = (typeof locals.communityId !== 'undefined' && locals.communityId)
+      ? locals.communityId
+      : (user.user?.lastAccessedCommunity?.communityID || '');
+    var encodedCommunityId = (typeof locals.encodedCommunityId !== 'undefined' && locals.encodedCommunityId)
+      ? locals.encodedCommunityId
+      : (communityId ? Buffer.from(communityId).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : '');
     var communityUrl = encodedCommunityId ? '/community/' + encodedCommunityId : '/communities';
     var username = user.user?.username || 'User';
     var userInitial = username.charAt(0).toUpperCase();
@@ -3077,11 +3085,11 @@
           <i class="fa fa-briefcase"></i>
           Court Cases
         </a>
-        <a class="dd-nav-item" href="/wallet">
+        <a class="dd-nav-item" href="/wallet<%= encodedCommunityId ? ('?community=' + encodedCommunityId) : '' %>">
           <i class="fa fa-wallet"></i>
           Wallet
         </a>
-        <a class="dd-nav-item" href="/inbox">
+        <a class="dd-nav-item" href="/inbox<%= encodedCommunityId ? ('?community=' + encodedCommunityId) : '' %>">
           <i class="fa fa-inbox"></i>
           Inbox
           <span class="dd-nav-badge" id="dd-inbox-count" style="display:none;">0</span>

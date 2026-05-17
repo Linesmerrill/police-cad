@@ -694,11 +694,11 @@
           <i class="fa fa-map"></i>
           Map
         </a>
-        <a class="cd-nav-item" href="/wallet">
+        <a class="cd-nav-item" href="/wallet<%= encodedCommunityId ? ('?community=' + encodedCommunityId) : '' %>">
           <i class="fa fa-wallet"></i>
           Wallet
         </a>
-        <a class="cd-nav-item" href="/inbox">
+        <a class="cd-nav-item" href="/inbox<%= encodedCommunityId ? ('?community=' + encodedCommunityId) : '' %>">
           <i class="fa fa-inbox"></i>
           Inbox
           <span class="dd-nav-badge" id="dd-inbox-count" style="display:none;">0</span>
