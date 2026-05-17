@@ -101,6 +101,12 @@ const MOCK_DETAIL = {
 };
 
 test.describe('Admin → Subscriptions panel', { tag: '@admin' }, () => {
+  // Pin all 3 tests to one worker. beforeAll seeds a console admin and
+  // afterAll removes it — under fullyParallel the 3 tests can split
+  // across workers and one worker's afterAll wipes the row mid-login
+  // for the other worker, producing "Invalid credentials" flakes.
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeAll(async () => {
     await seedConsoleAdmin();
   });
