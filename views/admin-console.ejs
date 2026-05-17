@@ -9128,10 +9128,16 @@
             const mm   = d.mismatch || { hasMismatch: false };
             const payments = d.payments || [];
 
+            // Inline styles below — the global cascade has been
+            // overpowering even !important-flagged rules on these
+            // children (likely a section/main-element collapse
+            // somewhere upstream). Inline styles win over every
+            // stylesheet rule short of inline !important, so the
+            // detail spacing is now locked in here at the template.
             return `
-              <div class="subs-detail-content">
+              <div class="subs-detail-content" style="display:flex;flex-direction:column;gap:14px;margin:0;padding:0;">
 
-                <header class="subs-user-head">
+                <header class="subs-user-head" style="margin:0;">
                   <div class="subs-user-identity">
                     <div class="subs-user-avatar">${escapeHtml(initial)}</div>
                     <div class="subs-user-meta">
@@ -9165,7 +9171,7 @@
             if (mm.hasMismatch) {
               const src = auth.source || 'authoritative source';
               return `
-                <div class="subs-banner subs-banner--warn">
+                <div class="subs-banner subs-banner--warn" style="margin:0 1.25rem;">
                   <div class="subs-banner-icon"><i class="fas fa-triangle-exclamation"></i></div>
                   <div class="subs-banner-body">
                     <div class="subs-banner-title">Database out of sync with ${escapeHtml(src)}</div>
@@ -9198,7 +9204,7 @@
             }
 
             return `
-              <div class="subs-banner subs-banner--ok">
+              <div class="subs-banner subs-banner--ok" style="margin:0 1.25rem;">
                 <div class="subs-banner-icon"><i class="fas fa-check"></i></div>
                 <div class="subs-banner-body">
                   <div class="subs-banner-title">${escapeHtml(title)}</div>
@@ -9257,7 +9263,7 @@
                 ? `<span class="subs-compare-soloflag subs-compare-soloflag--warn" title="${escapeHtml(live.note)}">${escapeHtml(rcLabel(rcStatus))} · ${escapeHtml(stripeLabel(stStatus))}</span>`
                 : `<span class="subs-compare-soloflag">No live record in RevenueCat or Stripe</span>`;
               return `
-                <section class="subs-section">
+                <section class="subs-section" style="margin:0 1.25rem;padding:0;">
                   <div class="subs-section-head">
                     <span class="subs-section-title">
                       <span class="subs-section-title-icon"><i class="fas fa-right-left"></i></span>
@@ -9285,7 +9291,7 @@
             }
 
             return `
-              <section class="subs-section">
+              <section class="subs-section" style="margin:0 1.25rem;padding:0;">
                 <div class="subs-section-head">
                   <span class="subs-section-title">
                     <span class="subs-section-title-icon"><i class="fas fa-right-left"></i></span>
@@ -9338,7 +9344,7 @@
 
             if (!payments.length) {
               return `
-                <section class="subs-section">
+                <section class="subs-section" style="margin:0 1.25rem;padding:0;">
                   <div class="subs-section-head">
                     ${titleEl}
                     <span class="subs-section-meta">no payments</span>
@@ -9370,7 +9376,7 @@
             const total = successful.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
 
             return `
-              <section class="subs-section">
+              <section class="subs-section" style="margin:0 1.25rem;padding:0;">
                 <div class="subs-section-head">
                   ${titleEl}
                   <span class="subs-section-meta">${payments.length} event${payments.length === 1 ? '' : 's'} · ${successful.length} paid · $${total.toFixed(2)} total</span>
