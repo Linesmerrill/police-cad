@@ -908,8 +908,8 @@
         type: 'warning',
         icon: 'fa-thumbtack',
         title: 'Change active civilian?',
-        message: 'Clocking in will set <strong>' + name + '</strong> as your active civilian. The wallet, inbox, and bot will default to <strong>' + name + '</strong> until you swap again.',
-        detail: 'You can change this any time with the Set-as-active button on a different civilian\'s wallet.',
+        message: 'This will make <strong>' + name + '</strong> your active civilian.',
+        detail: 'Wallet, inbox, and bot default here.',
         confirmText: 'Clock in & set active',
         confirmIcon: 'fa-play',
         onConfirm: () => resolve(true),
@@ -948,17 +948,18 @@
   }
 
   async function handleClockInConflict(deptId, existing) {
-    var deptName = existing.departmentName || 'another department';
+    var deptName = escapeHtml(existing.departmentName || 'another department');
     var sameCiv = existing.civilianId && existing.civilianId === CIVILIAN_ID;
+    var newName = escapeHtml(CIVILIAN_NAME || 'this civilian');
     var msg = sameCiv
-      ? 'You\'re already on the clock at <strong>' + escapeHtml(deptName) + '</strong> with this civilian. Clock out and start a new shift here?'
-      : 'Another civilian on this account is currently on the clock at <strong>' + escapeHtml(deptName) + '</strong>. Clock them out and clock in here as <strong>' + escapeHtml(CIVILIAN_NAME || 'this civilian') + '</strong>?';
+      ? 'Already on the clock at <strong>' + deptName + '</strong>. Clock out and start a new shift here?'
+      : 'Another civilian is on the clock at <strong>' + deptName + '</strong>. Clock them out and clock in as <strong>' + newName + '</strong>?';
     window.ddModal({
       type: 'warning',
       icon: 'fa-triangle-exclamation',
-      title: 'You\'re already on the clock',
+      title: 'Already on the clock',
       message: msg,
-      detail: 'Earnings from the running shift will be finalized before the new one starts.',
+      detail: 'Running shift earnings finalize first.',
       confirmText: 'Clock out & clock in here',
       confirmIcon: 'fa-arrows-rotate',
       onConfirm: function () { swapClockIn(deptId, existing); },
@@ -1266,10 +1267,8 @@
       type: 'warning',
       icon: 'fa-stopwatch',
       title: 'Clock out first',
-      message:
-        'A different civilian on this account is currently on the clock at <strong>' + deptName +
-        '</strong>. Clock them out before pinning <strong>' + newName + '</strong> as active — the active civilian has to match the one earning right now.',
-      detail: 'This keeps the wallet header, job cards, and clock-in modals in sync.',
+      message: 'Another civilian is on the clock at <strong>' + deptName + '</strong>. Clock them out before pinning <strong>' + newName + '</strong>.',
+      detail: 'Active civilian must match the running shift.',
       buttons: [
         { label: 'Got it', class: 'ddm-btn-secondary' },
         { label: 'Go to that wallet', class: 'ddm-btn-primary', icon: 'fa-arrow-right', href: otherWalletHref },
