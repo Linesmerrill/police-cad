@@ -702,6 +702,16 @@
   }
 
   async function clockIn(deptId) {
+    // If a different civilian is currently pinned as active, warn the user
+    // that this clock-in will swap the pin. The server auto-pins on
+    // first-ever clock-in (no active yet) and otherwise preserves the
+    // existing pick — so the swap is purely a client-driven, opt-in
+    // action. Skip the prompt when no pin exists or the pin already
+    // matches this civilian.
+    if (ACTIVE_CIVILIAN_ID && ACTIVE_CIVILIAN_ID !== CIVILIAN_ID) {
+      const ok = await confirmActiveCivilianSwap();
+      if (!ok) return;
+    }
     try {
       const res = await fetch(`${API_URL}/api/v2/economy/clock-in?userId=${encodeURIComponent(USER_ID)}`, {
         method: 'POST',
@@ -716,6 +726,9 @@
         const existing = await res.json().catch(() => null);
         if (existing && existing._id) {
           await handleClockInConflict(deptId, existing);
+          // After a successful swap-shift the active pin should follow
+          // the newly clocked-in civilian.
+          await syncActiveCivilianToCurrent();
           return;
         }
       }
@@ -723,11 +736,67 @@
         const txt = await res.text().catch(() => '');
         throw new Error(`clock-in failed: ${res.status}${txt ? ' — ' + txt.slice(0, 200) : ''}`);
       }
+      // Mirror server-side auto-pin: if this is a "first clock-in" the
+      // server already pinned this civ. If there was a different pin, we
+      // got here because the user confirmed the swap above, so update.
+      await syncActiveCivilianToCurrent();
       await Promise.all([refreshActiveSession(), refreshWallet(), refreshDepartments()]);
       startHeartbeat();
     } catch (err) {
       console.error(err);
       if (window.ddModal) window.ddModal({ type: 'danger', icon: 'fa-triangle-exclamation', title: 'Could not clock in', message: err.message });
+    }
+  }
+
+  // Warn-then-confirm modal for the "clock in here will swap your active
+  // civilian" case. Resolves to true on confirm, false on cancel/close.
+  function confirmActiveCivilianSwap() {
+    return new Promise((resolve) => {
+      const name = escapeHtml(CIVILIAN_NAME || 'this civilian');
+      if (!window.ddModal) {
+        resolve(confirm('Clocking in will set ' + (CIVILIAN_NAME || 'this civilian') + ' as your active civilian. Continue?'));
+        return;
+      }
+      window.ddModal({
+        type: 'warning',
+        icon: 'fa-thumbtack',
+        title: 'Change active civilian?',
+        message: 'Clocking in will set <strong>' + name + '</strong> as your active civilian. The wallet, inbox, and bot will default to <strong>' + name + '</strong> until you swap again.',
+        detail: 'You can change this any time with the Set-as-active button on a different civilian\'s wallet.',
+        confirmText: 'Clock in & set active',
+        confirmIcon: 'fa-play',
+        onConfirm: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+  }
+
+  // Push the current civilian as the active pick. Used after a clock-in
+  // succeeds (covers both the explicit-swap case the user confirmed
+  // above and the 409 swap-shift recovery). Idempotent and silent: if
+  // the pin already matches we skip the API call; if the call fails we
+  // log but don't pop a modal — the clock-in itself succeeded.
+  async function syncActiveCivilianToCurrent() {
+    if (!USER_ID || !COMMUNITY_ID || !CIVILIAN_ID) return;
+    if (ACTIVE_CIVILIAN_ID === CIVILIAN_ID) return;
+    try {
+      const r = await fetch(`${API_URL}/api/v2/user/active-civilian`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: USER_ID, communityId: COMMUNITY_ID, civilianId: CIVILIAN_ID }),
+      });
+      if (!r.ok) return;
+      ACTIVE_CIVILIAN_ID = CIVILIAN_ID;
+      const btn = document.getElementById('setActiveBtn');
+      if (btn) {
+        const pill = document.createElement('span');
+        pill.className = 'w-active-pill';
+        pill.title = 'This is the civilian the wallet, inbox, and bot default to.';
+        pill.innerHTML = '<i class="fa fa-check"></i> Active';
+        btn.replaceWith(pill);
+      }
+    } catch (err) {
+      console.warn('syncActiveCivilianToCurrent failed', err);
     }
   }
 
