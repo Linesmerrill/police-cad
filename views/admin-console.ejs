@@ -8723,9 +8723,16 @@
 
           /* ------------------- utilities ------------------- */
 
+          // Match the rest of the admin-console fetch pattern: no
+          // `credentials: 'include'`. Adding credentials forces a CORS
+          // preflight that requires the API to echo our exact origin in
+          // Access-Control-Allow-Origin AND set
+          // Access-Control-Allow-Credentials: true — which our admin CORS
+          // config doesn't currently do. The result is a browser-side
+          // "Failed to fetch" before the request even leaves.
           function api(path, opts) {
             return fetch(`${API_BASE}${path}`, Object.assign(
-              { credentials: 'include', headers: { 'Accept': 'application/json' } },
+              { headers: { 'Accept': 'application/json' } },
               opts || {}
             ));
           }
