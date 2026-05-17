@@ -1074,39 +1074,86 @@
   if (setActiveBtn) {
     setActiveBtn.addEventListener('click', async () => {
       if (!USER_ID || !COMMUNITY_ID || !CIVILIAN_ID) return;
-      setActiveBtn.disabled = true;
-      const originalHTML = setActiveBtn.innerHTML;
-      setActiveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving…';
+
+      // If a different civilian on this account is currently on the
+      // clock, warn the user before swapping the pin. The active pin
+      // and the running shift are technically independent (the shift
+      // keeps accruing earnings against whichever civilian started
+      // it), but in practice users will conflate them — so surface
+      // the discrepancy and let them proceed knowingly.
       try {
-        const res = await fetch(`${API_URL}/api/v2/user/active-civilian`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: USER_ID, communityId: COMMUNITY_ID, civilianId: CIVILIAN_ID }),
-        });
-        if (!res.ok) {
-          const txt = await res.text().catch(() => '');
-          throw new Error(`HTTP ${res.status}${txt ? ' — ' + txt.slice(0, 200) : ''}`);
+        const sessRes = await fetch(`${API_URL}/api/v2/economy/session/active?userId=${encodeURIComponent(USER_ID)}`);
+        if (sessRes.ok) {
+          const sessText = await sessRes.text();
+          const session = (!sessText || sessText === 'null') ? null : JSON.parse(sessText);
+          if (session && session._id && session.civilianId && session.civilianId !== CIVILIAN_ID) {
+            const proceed = await confirmSetActiveWhileClockedIn(session);
+            if (!proceed) return;
+          }
         }
-        ACTIVE_CIVILIAN_ID = CIVILIAN_ID;
-        // Swap the button out for the "Active" pill in place — no full
-        // page reload needed.
-        const pill = document.createElement('span');
-        pill.className = 'w-active-pill';
-        pill.title = 'This is the civilian the wallet, inbox, and bot default to.';
-        pill.innerHTML = '<i class="fa fa-check"></i> Active';
-        setActiveBtn.replaceWith(pill);
-      } catch (err) {
-        console.error('set-active-civilian failed', err);
-        setActiveBtn.disabled = false;
-        setActiveBtn.innerHTML = originalHTML;
-        if (window.ddModal) {
-          window.ddModal({
-            type: 'danger', icon: 'fa-triangle-exclamation',
-            title: 'Could not set active civilian', message: escapeHtml(err.message || ''),
-          });
-        }
+      } catch (e) {
+        // Don't block on a session lookup failure — fall through to the
+        // PUT below.
       }
+
+      await doSetActive();
     });
+  }
+
+  // Modal: another civilian is currently clocked in but the user is
+  // pinning a different one as active. Returns true on confirm,
+  // false on cancel/close.
+  function confirmSetActiveWhileClockedIn(session) {
+    return new Promise((resolve) => {
+      const deptName = escapeHtml(session.departmentName || 'a department');
+      const newName = escapeHtml(CIVILIAN_NAME || 'this civilian');
+      window.ddModal({
+        type: 'warning',
+        icon: 'fa-triangle-exclamation',
+        title: 'Another civilian is on the clock',
+        message:
+          'A different civilian on this account is currently on the clock at <strong>' + deptName +
+          '</strong>. Pinning <strong>' + newName + '</strong> as active won\'t end that shift — they\'ll keep earning until you clock them out.',
+        detail: 'You can clock out from that civilian\'s wallet at any time.',
+        confirmText: 'Pin anyway',
+        confirmIcon: 'fa-thumbtack',
+        onConfirm: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+  }
+
+  async function doSetActive() {
+    setActiveBtn.disabled = true;
+    const originalHTML = setActiveBtn.innerHTML;
+    setActiveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving…';
+    try {
+      const res = await fetch(`${API_URL}/api/v2/user/active-civilian`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: USER_ID, communityId: COMMUNITY_ID, civilianId: CIVILIAN_ID }),
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status}${txt ? ' — ' + txt.slice(0, 200) : ''}`);
+      }
+      ACTIVE_CIVILIAN_ID = CIVILIAN_ID;
+      // Swap the button out for the "Active" pill in place — no full
+      // page reload needed.
+      const pill = document.createElement('span');
+      pill.className = 'w-active-pill';
+      pill.title = 'This is the civilian the wallet, inbox, and bot default to.';
+      pill.innerHTML = '<i class="fa fa-check"></i> Active';
+      setActiveBtn.replaceWith(pill);
+    } catch (err) {
+      console.error('set-active-civilian failed', err);
+      setActiveBtn.disabled = false;
+      setActiveBtn.innerHTML = originalHTML;
+      window.ddModal({
+        type: 'danger', icon: 'fa-triangle-exclamation',
+        title: 'Could not set active civilian', message: escapeHtml(err.message || ''),
+      });
+    }
   }
   } // end if (CIVILIAN_ID)
 </script>
