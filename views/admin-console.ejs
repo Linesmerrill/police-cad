@@ -2929,6 +2929,26 @@
               word-break: break-all;
               letter-spacing: 0.01em;
             }
+            .subs-payment-period {
+              font-size: 0.6875rem;
+              color: var(--ac-text-muted);
+              margin-top: 2px;
+              font-variant-numeric: tabular-nums;
+              letter-spacing: 0.01em;
+            }
+            .subs-payment-active {
+              display: inline-flex;
+              align-items: center;
+              padding: 1px 7px;
+              border-radius: 999px;
+              font-size: 0.625rem;
+              font-weight: 700;
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+              color: var(--subs-ok);
+              background: rgba(16,185,129,0.12);
+              border: 1px solid rgba(16,185,129,0.35);
+            }
 
             .subs-payment-amount {
               font-variant-numeric: tabular-nums;
@@ -9014,6 +9034,14 @@
           }
 
           function renderBanner(mm, auth) {
+            const expiresAt = auth.expiresAt ? new Date(auth.expiresAt) : null;
+            const now = new Date();
+            const stillInPeriod = expiresAt && expiresAt.getTime() > now.getTime();
+            const cancelledButActive = auth.status === 'canceled' && stillInPeriod;
+            const daysLeft = expiresAt
+              ? Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / 86400000))
+              : null;
+
             if (mm.hasMismatch) {
               const src = auth.source || 'authoritative source';
               return `
@@ -9033,17 +9061,20 @@
             }
 
             let title, sub;
-            if (auth.status === 'active') {
+            if (cancelledButActive) {
+              title = `Active — cancels in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
+              sub   = `${auth.plan || 'subscription'} via ${auth.source || '—'} · ends ${formatDate(auth.expiresAt)} (auto-renew off)`;
+            } else if (auth.status === 'active') {
               title = `In sync — ${auth.plan || 'subscription'} active`;
               sub   = `Authoritative: ${auth.source || '—'}` +
-                      (auth.expiresAt ? ` · renews ${formatDate(auth.expiresAt)}` : '');
+                      (auth.expiresAt ? ` · renews ${formatDate(auth.expiresAt)} (${daysLeft}d)` : '');
             } else if (auth.status === 'none') {
               title = 'No active subscription';
               sub   = 'No record found in RevenueCat or Stripe for this user.';
             } else {
               title = `In sync — subscription ${auth.status}`;
               sub   = `Authoritative: ${auth.source || '—'}` +
-                      (auth.expiresAt ? ` · period ends ${formatDate(auth.expiresAt)}` : '');
+                      (auth.expiresAt ? ` · period ended ${formatDate(auth.expiresAt)}` : '');
             }
 
             return `
@@ -9202,6 +9233,14 @@
             const known  = ['paid','failed','refunded','purchase','void'].includes(status);
             const cls    = 'subs-status-pill--' + (known ? status : 'default');
 
+            const label    = p.productLabel || p.plan || '';
+            const periodTo = p.effectiveUntil ? ` → ${formatDate(p.effectiveUntil)}` : '';
+            const now      = Date.now();
+            const isActive = p.effectiveUntil && new Date(p.effectiveUntil).getTime() > now;
+            const activePill = isActive
+              ? `<span class="subs-payment-active" title="Currently entitled">active</span>`
+              : '';
+
             return `
               <div class="subs-payment">
                 <div class="subs-payment-date">
@@ -9212,8 +9251,10 @@
                   <div class="subs-payment-label">
                     ${sourceMark(p.source)}
                     <span class="subs-payment-sourcelabel">${escapeHtml(p.source || '')}</span>
-                    ${p.plan ? `<span class="subs-payment-plan">· ${escapeHtml(p.plan)}</span>` : ''}
+                    ${label ? `<span class="subs-payment-plan">· ${escapeHtml(label)}</span>` : ''}
+                    ${activePill}
                   </div>
+                  ${p.effectiveUntil ? `<div class="subs-payment-period">${escapeHtml(formatDate(p.date))}${escapeHtml(periodTo)}</div>` : ''}
                   ${p.reference ? `<div class="subs-payment-ref">${escapeHtml(p.reference)}</div>` : ''}
                 </div>
                 <div class="subs-payment-amount">
