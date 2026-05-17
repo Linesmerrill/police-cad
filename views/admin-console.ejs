@@ -2270,6 +2270,20 @@
           <!-- ===================== HTML BLOCK ===================== -->
         <style>
             /* ========== Subscriptions panel — financial-terminal aesthetic ========== */
+            /* styles.css ships landing-page rules that pad EVERY
+               <section> (padding:100px 0; min-height:600px @≥768px) and
+               <aside> (padding:50px 0) globally. That's what was
+               creating 100+px dead zones around our cards and the
+               sidebar. Override here so semantic elements rendered
+               inside the subscriptions panel start from zero — the
+               specific .subs-* classes can then apply real padding
+               where they want it. */
+            #panel-subscriptions section,
+            #panel-subscriptions aside {
+              min-height: 0 !important;
+              padding: 0 !important;
+            }
+
             #panel-subscriptions {
               --subs-warn: #f59e0b;
               --subs-warn-strong: #fbbf24;
@@ -9263,7 +9277,7 @@
                 ? `<span class="subs-compare-soloflag subs-compare-soloflag--warn" title="${escapeHtml(live.note)}">${escapeHtml(rcLabel(rcStatus))} · ${escapeHtml(stripeLabel(stStatus))}</span>`
                 : `<span class="subs-compare-soloflag">No live record in RevenueCat or Stripe</span>`;
               return `
-                <section class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
+                <div class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
                   <div class="subs-section-head" style="margin:0;padding:0;">
                     <span class="subs-section-title">
                       <span class="subs-section-title-icon"><i class="fas fa-right-left"></i></span>
@@ -9276,7 +9290,7 @@
                       <i class="fas fa-circle-info"></i>
                       <span>${escapeHtml(live.note)}</span>
                     </div>` : ''}
-                  <section class="subs-compare subs-compare--solo" style="margin:0;">
+                  <div class="subs-compare subs-compare--solo" style="margin:0;">
                     <div class="subs-compare-col">
                       <div class="subs-compare-head">
                         <span class="subs-section-label">Our database</span>
@@ -9286,12 +9300,12 @@
                         ${dbRows.map(r => renderField(r, false)).join('')}
                       </div>
                     </div>
-                  </section>
-                </section>`;
+                  </div>
+                </div>`;
             }
 
             return `
-              <section class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
+              <div class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
                 <div class="subs-section-head" style="margin:0;padding:0;">
                   <span class="subs-section-title">
                     <span class="subs-section-title-icon"><i class="fas fa-right-left"></i></span>
@@ -9299,7 +9313,7 @@
                   </span>
                   <span class="subs-section-meta">${escapeHtml(statusMeta)}</span>
                 </div>
-                <section class="subs-compare" style="margin:0;">
+                <div class="subs-compare" style="margin:0;">
                   <div class="subs-compare-col">
                     <div class="subs-compare-head">
                       <span class="subs-section-label">Our database</span>
@@ -9318,8 +9332,8 @@
                       ${authRows.map(r => renderField(r, mmFields.has(r.field))).join('')}
                     </div>
                   </div>
-                </section>
-              </section>`;
+                </div>
+              </div>`;
           }
 
           function renderField(r, isMismatch) {
@@ -9344,7 +9358,7 @@
 
             if (!payments.length) {
               return `
-                <section class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
+                <div class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
                   <div class="subs-section-head" style="margin:0;padding:0;">
                     ${titleEl}
                     <span class="subs-section-meta">no payments</span>
@@ -9352,7 +9366,7 @@
                   <div style="padding:1.75rem 0.5rem;text-align:center;color:var(--ac-text-dim);font-size:0.8125rem;border-top:1px solid var(--subs-rule);">
                     No payment history available for this user.
                   </div>
-                </section>`;
+                </div>`;
             }
 
             const SHOW = 10;
@@ -9376,7 +9390,7 @@
             const total = successful.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
 
             return `
-              <section class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
+              <div class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
                 <div class="subs-section-head" style="margin:0;padding:0;">
                   ${titleEl}
                   <span class="subs-section-meta">${payments.length} event${payments.length === 1 ? '' : 's'} · ${successful.length} paid · $${total.toFixed(2)} total</span>
@@ -9388,7 +9402,7 @@
                   `).join('')}
                   ${hidden > 0 ? `<button class="subs-show-more" data-expand>Show ${hidden} more payment${hidden === 1 ? '' : 's'}</button>` : ''}
                 </div>
-              </section>`;
+              </div>`;
           }
 
           function renderPayment(p) {
