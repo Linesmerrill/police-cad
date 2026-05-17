@@ -308,13 +308,39 @@
     <div>
       <div class="w-title" style="display:flex; align-items:center; gap:0.5rem;">Wallet<% if (new Date() < new Date('2026-05-26')) { %><span style="background:linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25)); color:#c4b5fd; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; border:1px solid rgba(139,92,246,0.3);">Beta</span><% } %></div>
       <div class="w-subtitle w-subtitle-row">
-        <span id="walletSubtitle">Loading civilian…</span>
+        <span id="walletSubtitle"><%= civilianId ? 'Loading civilian…' : (communityName || 'this community') %></span>
+        <% if (civilianId) { %>
         <button type="button" class="w-swap-btn" id="swapCivBtn" title="Switch civilian" aria-label="Switch civilian">
           <i class="fa fa-right-left"></i>
         </button>
+        <% } %>
       </div>
     </div>
   </div>
+
+  <% if (!civilianId) { %>
+  <!-- Empty state: user has no civilian in this community -->
+  <div class="w-card" style="text-align:center; padding:2.5rem 1.5rem;">
+    <div style="font-size:2.5rem; color:var(--w-text-muted); margin-bottom:0.75rem;">
+      <i class="fa fa-user-plus"></i>
+    </div>
+    <div style="font-size:1.1rem; font-weight:600; color:var(--w-text); margin-bottom:0.4rem;">
+      No civilian in <%= communityName || 'this community' %>
+    </div>
+    <div style="font-size:0.9rem; color:var(--w-text-muted); margin-bottom:1.25rem; max-width:36rem; margin-left:auto; margin-right:auto;">
+      The wallet, jobs, and inbox are tied to a civilian. Create one in this community to start earning, clocking in, and paying tickets.
+    </div>
+    <% if (encodedCommunityId) { %>
+    <a class="w-btn" href="/community/<%= encodedCommunityId %>#civilians-section" style="display:inline-flex; align-items:center; gap:0.4rem;">
+      <i class="fa fa-plus"></i> Create a civilian
+    </a>
+    <% } else { %>
+    <a class="w-btn" href="/communities" style="display:inline-flex; align-items:center; gap:0.4rem;">
+      <i class="fa fa-layer-group"></i> Pick a community
+    </a>
+    <% } %>
+  </div>
+  <% } else { %>
 
   <div class="w-swap-backdrop" id="swapBackdrop"></div>
   <div class="w-swap-modal" id="swapModal" role="dialog" aria-modal="true" aria-label="Switch civilian">
@@ -376,6 +402,7 @@
       <button class="w-shifts-page-btn" id="shiftsNext" disabled>Next <i class="fa fa-chevron-right"></i></button>
     </div>
   </div>
+  <% } %>
 </div>
 
 <script>
@@ -387,6 +414,10 @@
   const USER_ID = "<%- userId %>";
   const CIVILIAN_NAME = "<%- civilianName %>";
 
+  // When the user has no civilian in this community, the EJS renders an
+  // empty-state card instead of the wallet shell — none of the elements
+  // wired up below exist on the page, so bail out before touching them.
+  if (CIVILIAN_ID) {
   document.getElementById('walletSubtitle').textContent = CIVILIAN_NAME || 'Civilian';
 
   function fmtMoney(cents) {
@@ -858,6 +889,7 @@
       });
     });
   }
+  } // end if (CIVILIAN_ID)
 </script>
 </body>
 </html>
