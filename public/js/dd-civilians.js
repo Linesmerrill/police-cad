@@ -3125,6 +3125,11 @@
         $('#dd-civ-search').val('');
         loadCivilians();
         if (window.ddLimits) window.ddLimits.check('civilian');
+        // The Wallet/Inbox sidebar gate uses a server-rendered flag that
+        // would otherwise stay false until the user reloads. Flip it now
+        // so the next click goes straight through.
+        window.DD_HAS_CIVILIAN_IN_COMMUNITY = true;
+        window.CD_HAS_CIVILIAN_IN_COMMUNITY = true;
       },
       error: function () {
         toast('Failed to create civilian', 'error');
