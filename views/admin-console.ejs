@@ -9249,8 +9249,8 @@
               { key: 'Cycle',        value: dbSub.isAnnual ? 'annual' : 'monthly' },
               { key: 'Sub ID',       value: dbSub.id || '—',                      mono: true },
               { key: 'Stripe Cust',  value: dbSub.stripeCustomerId || '—',        mono: true },
-              { key: 'Period End',   value: formatDate(dbSub.currentPeriodEnd || dbSub.expirationDate) },
-              { key: 'Cancel At',    value: formatDate(dbSub.cancelAt) },
+              { key: 'Period End',   value: formatDate(dbSub.currentPeriodEnd || dbSub.expirationDate), field: 'periodEnd' },
+              { key: 'Cancel At',    value: formatDate(dbSub.cancelAt),                                field: 'cancelAt' },
               { key: 'Created',      value: formatDate(dbSub.createdAt) },
               { key: 'Updated',      value: formatDate(dbSub.updatedAt) },
             ];
@@ -9269,8 +9269,8 @@
                                         ? `$${Number(auth.priceUsd).toFixed(2)} ${auth.currency || ''}`.trim()
                                         : '—' },
                   { key: 'Purchased', value: formatDate(auth.purchasedAt) },
-                  { key: 'Expires',   value: formatDate(auth.expiresAt) },
-                  { key: 'Cancel At', value: formatDate(auth.cancelAt) },
+                  { key: 'Expires',   value: formatDate(auth.expiresAt), field: 'periodEnd' },
+                  { key: 'Cancel At', value: formatDate(auth.cancelAt), field: 'cancelAt' },
                 ];
 
             const sourceTag = (auth.source || 'live').toUpperCase();
