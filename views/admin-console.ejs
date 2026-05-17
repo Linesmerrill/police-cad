@@ -2487,9 +2487,12 @@
               background: var(--ac-glass);
               border: 1px solid var(--ac-glass-border);
               border-radius: var(--ac-radius, 12px);
-              min-height: 520px;
               position: relative;
             }
+            /* Only the empty / loading / error placeholders need the
+               520px tall pane — when real content renders, the card hugs
+               its content so we don't leave a giant dead zone below. */
+            .subs-detail:has(.subs-detail-state) { min-height: 520px; }
 
             .subs-detail-state {
               display: flex;
@@ -2757,6 +2760,30 @@
               background: var(--ac-text-dim);
               opacity: 0.6;
             }
+            .subs-compare-soloflag--warn {
+              color: var(--subs-warn-strong);
+              font-style: normal;
+              font-weight: 600;
+              cursor: help;
+            }
+            .subs-compare-soloflag--warn::before {
+              background: var(--subs-warn);
+              opacity: 1;
+            }
+            .subs-live-note {
+              display: flex;
+              align-items: flex-start;
+              gap: 0.5rem;
+              padding: 0.625rem 0.875rem;
+              margin-bottom: 0.625rem;
+              border-radius: 8px;
+              background: var(--subs-warn-bg);
+              border: 1px solid var(--subs-warn-border);
+              color: var(--subs-warn-strong);
+              font-size: 0.75rem;
+              line-height: 1.45;
+            }
+            .subs-live-note i { padding-top: 2px; opacity: 0.85; }
 
             .subs-compare-col {
               background: var(--ac-bg, #0a0a0a);
@@ -2786,9 +2813,9 @@
 
             .subs-field {
               display: grid;
-              grid-template-columns: 96px 1fr;
-              gap: 0.625rem;
-              padding: 0.5rem 0.5rem;
+              grid-template-columns: 88px 1fr;
+              gap: 0.5rem;
+              padding: 0.3125rem 0.5rem;
               margin: 0 -0.5rem;
               border-bottom: 1px dashed var(--subs-rule);
               font-size: 0.8125rem;
@@ -2797,6 +2824,14 @@
               transition: background 0.15s ease;
             }
             .subs-field:last-child { border-bottom: 0; }
+            /* In solo mode each row sits in its own grid cell, so the
+               per-field bottom border doubles up with the grid row-gap.
+               Drop it and let the grid spacing alone carry the rhythm. */
+            .subs-compare--solo .subs-field {
+              border-bottom: 0;
+              padding: 0.125rem 0;
+              margin: 0;
+            }
 
             .subs-field--mismatch {
               background: var(--subs-warn-bg);
@@ -8898,6 +8933,26 @@
             return '';
           }
 
+          function rcLabel(s) {
+            switch (s) {
+              case 'ok':              return 'RC ok';
+              case 'no_api_key':      return 'RC key missing';
+              case 'user_not_found':  return 'RC: user unknown';
+              case 'http_error':      return 'RC error';
+              case 'parse_error':     return 'RC parse error';
+              case 'no_user_id':      return 'RC: no user id';
+              default:                return 'RC: ' + s;
+            }
+          }
+          function stripeLabel(s) {
+            switch (s) {
+              case 'ok':              return 'Stripe ok';
+              case 'no_customer_id':  return 'no Stripe customer';
+              case 'http_error':      return 'Stripe error';
+              default:                return 'Stripe: ' + s;
+            }
+          }
+
           /* ------------------- search ------------------- */
 
           async function runSearch(q) {
@@ -9001,6 +9056,7 @@
               const body = await res.json();
               if (reqId !== _activeReq) return; // stale
               _lastDetail = body;
+              window._subsLastDetail = body;
               detail.innerHTML = renderDetail(body);
               wireDetailActions(body);
             } catch (err) {
@@ -9158,6 +9214,12 @@
             // "LIVE" column is just an empty placeholder. Collapse to a single
             // wide DB card with a 2-col field grid so 10 rows pack into 5.
             if (auth.status === 'none') {
+              const live = (window._subsLastDetail || {}).liveSources || {};
+              const rcStatus = live.revenuecat || '';
+              const stStatus = live.stripe || '';
+              const headerNote = live.note
+                ? `<span class="subs-compare-soloflag subs-compare-soloflag--warn" title="${escapeHtml(live.note)}">${escapeHtml(rcLabel(rcStatus))} · ${escapeHtml(stripeLabel(stStatus))}</span>`
+                : `<span class="subs-compare-soloflag">No live record in RevenueCat or Stripe</span>`;
               return `
                 <section class="subs-section">
                   <div class="subs-section-head">
@@ -9165,8 +9227,13 @@
                       <span class="subs-section-title-icon"><i class="fas fa-right-left"></i></span>
                       Subscription state
                     </span>
-                    <span class="subs-compare-soloflag">No live record in RevenueCat or Stripe</span>
+                    ${headerNote}
                   </div>
+                  ${live.note ? `
+                    <div class="subs-live-note">
+                      <i class="fas fa-circle-info"></i>
+                      <span>${escapeHtml(live.note)}</span>
+                    </div>` : ''}
                   <section class="subs-compare subs-compare--solo">
                     <div class="subs-compare-col">
                       <div class="subs-compare-head">
