@@ -2752,9 +2752,51 @@
      ─────────────────────────────────────────── */
 
   function deleteCivilian(civId) {
+    // Check for an active clock-in first — deleting a civilian while
+    // clocked in leaves the session running on the server (it keeps
+    // accruing time and money), and the user loses the unpaid earnings
+    // along with every record tied to this civilian. We surface that as
+    // a stronger warning and then clock out before the DELETE.
+    var c = cfg();
+    $.ajax({
+      url: c.API_URL + '/api/v2/economy/session/active?civilianId=' + encodeURIComponent(civId),
+      method: 'GET',
+      headers: {},
+      success: function (data) {
+        var activeSession = (data && data._id) ? data : null;
+        promptDelete(civId, activeSession);
+      },
+      error: function () {
+        // Don't block a destructive operation on a transient lookup
+        // failure — fall through to the regular prompt without the
+        // clock-out warning.
+        promptDelete(civId, null);
+      }
+    });
+  }
+
+  function promptDelete(civId, activeSession) {
     if (!window.ddModal) {
-      if (!confirm('Are you sure you want to delete this civilian? This cannot be undone.')) return;
-      doDelete(civId);
+      var msg = activeSession
+        ? 'You are currently on the clock for this civilian. Deleting will end your shift and any unpaid earnings + records tied to this civilian will be lost. Continue?'
+        : 'Are you sure you want to delete this civilian? This cannot be undone.';
+      if (!confirm(msg)) return;
+      doDelete(civId, activeSession);
+      return;
+    }
+
+    if (activeSession) {
+      var deptName = activeSession.departmentName || 'a department';
+      window.ddModal({
+        type: 'danger',
+        icon: 'fa-triangle-exclamation',
+        title: 'You\'re on the clock',
+        message: 'You\'re currently on the clock at <strong>' + esc(deptName) + '</strong>. Deleting this civilian will end the shift, and any unpaid earnings plus all records (vehicles, firearms, citations, etc.) tied to this civilian will be lost.',
+        detail: 'This cannot be undone.',
+        confirmText: 'Clock out & delete',
+        confirmIcon: 'fa-trash',
+        onConfirm: function () { doDelete(civId, activeSession); }
+      });
       return;
     }
 
@@ -2765,29 +2807,48 @@
       message: 'Are you sure you want to delete this civilian?',
       detail: 'This action cannot be undone.',
       confirmText: 'Delete',
-      onConfirm: function () { doDelete(civId); }
+      onConfirm: function () { doDelete(civId, null); }
     });
   }
 
-  function doDelete(civId) {
+  function doDelete(civId, activeSession) {
     var c = cfg();
-    $.ajax({
-      url: c.API_URL + '/api/v1/civilian/' + civId,
-      method: 'DELETE',
-      headers: {},
-      success: function () {
-        toast('Civilian deleted', 'success');
-        closeDetailModal();
-        if (ddCivSearchTerm) {
-          searchCivilians(ddCivSearchTerm);
-        } else {
-          loadCivilians();
+    function actuallyDelete() {
+      $.ajax({
+        url: c.API_URL + '/api/v1/civilian/' + civId,
+        method: 'DELETE',
+        headers: {},
+        success: function () {
+          toast(activeSession ? 'Shift ended and civilian deleted' : 'Civilian deleted', 'success');
+          closeDetailModal();
+          if (ddCivSearchTerm) {
+            searchCivilians(ddCivSearchTerm);
+          } else {
+            loadCivilians();
+          }
+          if (window.ddLimits) window.ddLimits.check('civilian');
+        },
+        error: function () {
+          toast('Failed to delete civilian', 'error');
         }
-        if (window.ddLimits) window.ddLimits.check('civilian');
-      },
-      error: function () {
-        toast('Failed to delete civilian', 'error');
-      }
+      });
+    }
+
+    if (!activeSession || !activeSession._id) {
+      actuallyDelete();
+      return;
+    }
+
+    // Best-effort clock-out before the delete. If the clock-out fails we
+    // still proceed with the delete — leaving the session orphaned is
+    // strictly worse than the API ignoring a stale session id later.
+    $.ajax({
+      url: c.API_URL + '/api/v2/economy/clock-out?userId=' + encodeURIComponent(c.userId || ''),
+      method: 'POST',
+      headers: {},
+      contentType: 'application/json',
+      data: JSON.stringify({ sessionId: activeSession._id }),
+      complete: actuallyDelete
     });
   }
 
