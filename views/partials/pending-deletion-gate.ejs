@@ -1,0 +1,19 @@
+<%
+  /*
+   * Drop-in partial that wires the global 410 pending_deletion interceptor.
+   *
+   * Any page that lets a member interact with a community (dashboards,
+   * map, dispatch, court session, etc.) should include this partial so
+   * a soft-delete by the owner immediately evicts the user with a clean
+   * "Community deleted" modal + redirect instead of leaving them stuck
+   * on a dead screen making 410 requests.
+   *
+   * Owner-side delete handlers can call window.suppressPendingDeletion(id)
+   * right after the delete API succeeds to mute the eviction modal for
+   * that community (the owner already saw a delete confirmation, no need
+   * for a second one).
+   *
+   * The script self-guards against being loaded twice.
+   */
+%>
+<script src="/static/js/pending-deletion-gate.js"></script>

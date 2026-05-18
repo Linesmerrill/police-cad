@@ -4452,6 +4452,14 @@ function confirmDeleteCommunity() {
   if (window.lpcShowDeleteCommunityLoading) window.lpcShowDeleteCommunityLoading();
   const MIN_OVERLAY_MS = 1500;
 
+  // Mute the global 410 eviction modal for this community — we already
+  // showed the owner a delete-confirm modal and a ceremonial loading
+  // overlay, no need for a second "Community deleted" prompt before the
+  // redirect lands.
+  if (typeof window.suppressPendingDeletion === 'function') {
+    window.suppressPendingDeletion(communityId);
+  }
+
   fetch(`${apiUrl}/api/v1/community/${communityId}`, {
     method: 'DELETE',
     headers: {

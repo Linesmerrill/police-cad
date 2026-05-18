@@ -247,6 +247,7 @@
     <script src="/static/js/ads.js"></script>
     <script>if (window.module) module = window.module;</script>
     <%- include('partials/last-dashboard-tracker') %>
+    <%- include('partials/pending-deletion-gate') %>
 </body>
 
 </html>
@@ -612,6 +613,12 @@ function showDeleteModal(communityId, communityName) {
   }
 
 function deleteCommunity(communityId, communityName) {
+    // Mute the global 410 eviction modal for this community before firing
+    // the DELETE — the owner already saw a delete-confirm modal and is
+    // about to see the "Scheduled" success message below.
+    if (typeof window.suppressPendingDeletion === 'function') {
+      window.suppressPendingDeletion(communityId);
+    }
     // Show the calm-ceremonial loading overlay so the user has something to
     // watch during the API round-trip. Enforce a minimum display window so
     // the animation isn't blink-and-you-miss-it on fast responses.
@@ -642,8 +649,12 @@ function deleteCommunity(communityId, communityName) {
           ? '<strong>Scheduled.</strong> "' + (communityName || 'Community') + '" deletes on ' + when + '. Contact support before then to restore.'
           : '<strong>Scheduled.</strong> Community will be permanently deleted in 30 days.';
         hideOverlay(function() {
-          $('#successCopyMessage').html(msg).show().delay(6000).fadeOut();
-          fetchCommunityData();
+          $('#successCopyMessage').html(msg).show();
+          // Don't refetch the community we just hid — it returns 410 and
+          // would either flash an error or trip the eviction modal. Bounce
+          // the owner to the communities list after a beat so they can see
+          // the scheduled-delete message land first.
+          setTimeout(function() { window.location.href = '/communities'; }, 1800);
         });
       },
       error: function(xhr, status, error) {
