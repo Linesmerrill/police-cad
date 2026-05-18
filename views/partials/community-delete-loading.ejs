@@ -8,13 +8,10 @@
   30-day restore window. Light Outfit primary paired with system monospace
   for the secondary "system status" line.
 
-  Usage:
-    1. Include ONCE per page (the JS is idempotent but two overlay nodes
-       would collide):
-         <%- include('partials/community-delete-loading') %>
-    2. From your delete handler:
-         window.lpcShowDeleteCommunityLoading();
-         api.delete(...).finally(window.lpcHideDeleteCommunityLoading);
+  Usage: include this partial ONCE per page (the JS is idempotent but two
+  overlay nodes would collide), then call window.lpcShowDeleteCommunityLoading()
+  from your delete handler and window.lpcHideDeleteCommunityLoading() in the
+  .finally() of the API call.
 
   No framework. Inline style + vanilla JS. Tokens (--rp-*) inherit from
   the host page; safe defaults provided.
