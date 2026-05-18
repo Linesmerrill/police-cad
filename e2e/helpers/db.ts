@@ -562,6 +562,10 @@ export async function ensurePendingDeletionTestCommunity(): Promise<void> {
   const now = new Date();
   const cID = new ObjectId(PENDING_DELETION_TEST_COMMUNITY_ID);
   await withDb(async (db) => {
+    // Set the whole `community` subdoc in one shot. This implicitly drops any
+    // pendingDeletionAt / scheduledDeletionAt / etc. that a previous test left
+    // behind, so we don't need a $unset clause (which would conflict with
+    // $set on the same parent path).
     await db.collection('communities').updateOne(
       { _id: cID },
       {
@@ -577,12 +581,6 @@ export async function ensurePendingDeletionTestCommunity(): Promise<void> {
             createdAt: now,
             updatedAt: now,
           },
-        },
-        $unset: {
-          'community.pendingDeletionAt': '',
-          'community.scheduledDeletionAt': '',
-          'community.pendingDeletionNotifiedAt': '',
-          'community.deletionRequestedBy': '',
         },
       },
       { upsert: true }
