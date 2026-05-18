@@ -397,7 +397,7 @@ export default function TermsAndConditions() {
                 color: 'rgba(255, 255, 255, 0.6)',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
               }}>
-                Last updated: January 28, 2026
+                Last updated: May 18, 2026
               </p>
             </div>
 
