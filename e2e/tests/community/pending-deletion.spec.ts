@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import {
   PENDING_DELETION_TEST_COMMUNITY_ID,
+  TEST_COMMUNITY_ID,
   ensurePendingDeletionTestCommunity,
   setPendingDeletionTestCommunityPending,
   clearPendingDeletionTestCommunity,
@@ -32,6 +33,8 @@ function encodeHash(hex: string): string {
 
 const pendingHash = () => encodeHash(PENDING_DELETION_TEST_COMMUNITY_ID);
 const pendingDetailsUrl = () => `/community/${pendingHash()}`;
+const seededHash = () => encodeHash(TEST_COMMUNITY_ID);
+const seededDetailsUrl = () => `/community/${seededHash()}`;
 
 test.describe('Pending-Deletion Eviction (server-rendered pages)', { tag: '@auth' }, () => {
   test.beforeAll(async () => {
@@ -109,18 +112,15 @@ test.describe('Pending-Deletion Eviction (server-rendered pages)', { tag: '@auth
  * ready to fire the moment a 410 comes back from any client-side fetch.
  */
 test.describe('Pending-Deletion Eviction (client-side gate)', { tag: '@auth' }, () => {
-  test.beforeAll(async () => {
-    await ensurePendingDeletionTestCommunity();
-  });
-
-  test.afterEach(async () => {
-    await clearPendingDeletionTestCommunity();
-  });
-
   test('pending-deletion-gate.js is loaded and self-guards against double-install', async ({ page }) => {
     // No pending state needed — the gate must be installed on every
     // community-scoped page so it's ready when the soft-delete flips.
-    await page.goto(`${pendingDetailsUrl()}/map`);
+    // Use the shared seeded community here (user is a member with a fully
+    // populated community doc) so the page actually renders the partials
+    // that include the gate script. The dedicated pending-deletion test
+    // community is intentionally bare and the test user is not in its
+    // members list, so it can't be used for a full-render assertion.
+    await page.goto(`${seededDetailsUrl()}/map`);
     await expect(page).not.toHaveURL(/\/login/);
 
     // The script sets window.__pendingDeletionGateInstalled to guard

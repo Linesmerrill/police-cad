@@ -187,7 +187,7 @@ export function uniqueTestEmail(prefix: string): string {
 // ---------------------------------------------------------------------------
 
 const TEST_USER_ID = 'aaaaaaaaaaaaaaaaaaaaaaaa';
-const TEST_COMMUNITY_ID = 'bbbbbbbbbbbbbbbbbbbbbbbb';
+export const TEST_COMMUNITY_ID = 'bbbbbbbbbbbbbbbbbbbbbbbb';
 
 export async function createTestCivilian(opts: {
   firstName: string;
@@ -555,8 +555,15 @@ export const PENDING_DELETION_TEST_COMMUNITY_ID = 'b0b0b0b0b0b0b0b0b0b0b0b0';
 /**
  * Seed (or reset) the dedicated pending-deletion test community. Idempotent.
  * Always starts in non-pending state — call setPendingDeletionTestCommunityPending
- * to flip it. Test user is added as an approved member + owner so authenticated
- * pages render normally during the baseline (non-pending) test.
+ * to flip it.
+ *
+ * IMPORTANT: This helper deliberately does NOT touch the shared TEST_USER's
+ * `user.communities` array. Other parallel workers run dashboards/wallet/etc.
+ * tests against TEST_USER and break if an extra community is injected. The
+ * pending-deletion 410 gate runs at the route middleware layer BEFORE any
+ * membership check, so the test user does not need to be a member for the
+ * pending tests to hit 410. The baseline (non-pending) test only asserts
+ * status != 410, not full page render, so membership isn't needed there either.
  */
 export async function ensurePendingDeletionTestCommunity(): Promise<void> {
   const now = new Date();
@@ -584,20 +591,6 @@ export async function ensurePendingDeletionTestCommunity(): Promise<void> {
         },
       },
       { upsert: true }
-    );
-
-    // Mirror the membership on the user doc so authCheck-gated routes
-    // (which read req.user.user.communities) treat the user as a member.
-    await db.collection('users').updateOne(
-      { _id: new ObjectId(TEST_USER_ID), 'user.communities.communityId': { $ne: PENDING_DELETION_TEST_COMMUNITY_ID } },
-      {
-        $push: {
-          'user.communities': {
-            communityId: PENDING_DELETION_TEST_COMMUNITY_ID,
-            status: 'approved',
-          },
-        },
-      }
     );
   });
 }
