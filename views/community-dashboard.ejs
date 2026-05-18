@@ -613,14 +613,22 @@ function showDeleteModal(communityId, communityName) {
 
 function deleteCommunity(communityId, communityName) {
     // Show the calm-ceremonial loading overlay so the user has something to
-    // watch during the API round-trip (1-4s in practice). Hidden in both
-    // success and error paths.
+    // watch during the API round-trip. Enforce a minimum display window so
+    // the animation isn't blink-and-you-miss-it on fast responses.
     if (window.lpcShowDeleteCommunityLoading) window.lpcShowDeleteCommunityLoading();
+    var overlayShownAt = Date.now();
+    var MIN_OVERLAY_MS = 1500;
+    function hideOverlay(after) {
+      var wait = Math.max(0, MIN_OVERLAY_MS - (Date.now() - overlayShownAt));
+      setTimeout(function() {
+        if (window.lpcHideDeleteCommunityLoading) window.lpcHideDeleteCommunityLoading();
+        if (typeof after === 'function') after();
+      }, wait);
+    }
     $.ajax({
       url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}`,
       method: 'DELETE',
       success: function(resp) {
-        if (window.lpcHideDeleteCommunityLoading) window.lpcHideDeleteCommunityLoading();
         var when = '';
         try {
           if (resp && resp.scheduledDeletionAt) {
@@ -633,13 +641,16 @@ function deleteCommunity(communityId, communityName) {
         var msg = when
           ? '<strong>Scheduled.</strong> "' + (communityName || 'Community') + '" deletes on ' + when + '. Contact support before then to restore.'
           : '<strong>Scheduled.</strong> Community will be permanently deleted in 30 days.';
-        $('#successCopyMessage').html(msg).show().delay(6000).fadeOut();
-        fetchCommunityData(); // Refresh — the community now disappears
+        hideOverlay(function() {
+          $('#successCopyMessage').html(msg).show().delay(6000).fadeOut();
+          fetchCommunityData();
+        });
       },
       error: function(xhr, status, error) {
-        if (window.lpcHideDeleteCommunityLoading) window.lpcHideDeleteCommunityLoading();
         console.error('Error deleting community:', { status: xhr.status, responseText: xhr.responseText, error });
-        $('#successCopyMessage').html('<strong>Error!</strong> Failed to schedule deletion: ' + (xhr.responseText || error) + '.').show().delay(2000).fadeOut();
+        hideOverlay(function() {
+          $('#successCopyMessage').html('<strong>Error!</strong> Failed to schedule deletion: ' + (xhr.responseText || error) + '.').show().delay(2000).fadeOut();
+        });
       }
     });
   }

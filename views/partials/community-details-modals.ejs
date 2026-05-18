@@ -4443,9 +4443,14 @@ function confirmDeleteCommunity() {
   const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
   // Close the confirm modal and show the ceremonial loading overlay so the
-  // user sees something is happening during the API round-trip.
+  // user sees something is happening during the API round-trip. We keep the
+  // overlay visible on success straight through the navigation so the
+  // animation actually plays — the API often responds in <300ms, which would
+  // otherwise flash the overlay too briefly to register.
   closeDeleteCommunityModal();
+  const overlayShownAt = Date.now();
   if (window.lpcShowDeleteCommunityLoading) window.lpcShowDeleteCommunityLoading();
+  const MIN_OVERLAY_MS = 1500;
 
   fetch(`${apiUrl}/api/v1/community/${communityId}`, {
     method: 'DELETE',
@@ -4454,24 +4459,13 @@ function confirmDeleteCommunity() {
     }
   })
   .then(res => res.json().catch(() => ({})).then(body => ({ ok: res.ok, body })))
-  .then(({ ok, body }) => {
+  .then(({ ok }) => {
     if (!ok) throw new Error('Failed to delete community');
-    // Format the scheduled deletion date if the new API returned one. Older
-    // versions of the API don't include it; in that case we fall back to a
-    // generic "permanently deleted in 30 days" line.
-    let msg = 'Scheduled. Community will be permanently deleted in 30 days. Contact support before then to restore.';
-    try {
-      if (body && body.scheduledDeletionAt) {
-        const d = new Date(body.scheduledDeletionAt);
-        if (!isNaN(d.getTime())) {
-          const when = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-          msg = 'Scheduled. Deletes on ' + when + '. Contact support before then to restore.';
-        }
-      }
-    } catch (e) { /* keep generic copy */ }
-    if (window.lpcHideDeleteCommunityLoading) window.lpcHideDeleteCommunityLoading();
-    showSettingsSuccess(msg);
-    setTimeout(() => { window.location.href = '/communities'; }, 2500);
+    const elapsed = Date.now() - overlayShownAt;
+    const wait = Math.max(0, MIN_OVERLAY_MS - elapsed);
+    // Leave the overlay up while we navigate — the redirect itself confirms
+    // the action worked, and the communities list page can show the followup.
+    setTimeout(() => { window.location.href = '/communities'; }, wait);
   })
   .catch(() => {
     if (window.lpcHideDeleteCommunityLoading) window.lpcHideDeleteCommunityLoading();
