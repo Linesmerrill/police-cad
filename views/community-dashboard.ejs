@@ -205,6 +205,7 @@
     <% include account-management %>
     <% include partials/notificationModal %>
     <%- include('partials/dd-modal') %>
+    <%- include('partials/community-delete-loading') %>
     <% include footer %>
 
     <!-- Tutorial Modal -->
@@ -611,10 +612,15 @@ function showDeleteModal(communityId, communityName) {
   }
 
 function deleteCommunity(communityId, communityName) {
+    // Show the calm-ceremonial loading overlay so the user has something to
+    // watch during the API round-trip (1-4s in practice). Hidden in both
+    // success and error paths.
+    if (window.lpcShowDeleteCommunityLoading) window.lpcShowDeleteCommunityLoading();
     $.ajax({
       url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}`,
       method: 'DELETE',
       success: function(resp) {
+        if (window.lpcHideDeleteCommunityLoading) window.lpcHideDeleteCommunityLoading();
         var when = '';
         try {
           if (resp && resp.scheduledDeletionAt) {
@@ -631,6 +637,7 @@ function deleteCommunity(communityId, communityName) {
         fetchCommunityData(); // Refresh — the community now disappears
       },
       error: function(xhr, status, error) {
+        if (window.lpcHideDeleteCommunityLoading) window.lpcHideDeleteCommunityLoading();
         console.error('Error deleting community:', { status: xhr.status, responseText: xhr.responseText, error });
         $('#successCopyMessage').html('<strong>Error!</strong> Failed to schedule deletion: ' + (xhr.responseText || error) + '.').show().delay(2000).fadeOut();
       }

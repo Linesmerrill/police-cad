@@ -1,0 +1,332 @@
+<%#
+  community-delete-loading.ejs — Calm ceremonial overlay shown after a user
+  confirms a community soft-delete and before the API returns.
+
+  Tone: this is a moment of consequence, not an emergency. Slow amber arc,
+  pulsing concentric rings (ripples of the action propagating through the
+  system), a drifting pip on an editorial rule that subtly mirrors the
+  30-day restore window. Light Outfit primary paired with system monospace
+  for the secondary "system status" line.
+
+  Usage:
+    1. Include ONCE per page (the JS is idempotent but two overlay nodes
+       would collide):
+         <%- include('partials/community-delete-loading') %>
+    2. From your delete handler:
+         window.lpcShowDeleteCommunityLoading();
+         api.delete(...).finally(window.lpcHideDeleteCommunityLoading);
+
+  No framework. Inline style + vanilla JS. Tokens (--rp-*) inherit from
+  the host page; safe defaults provided.
+%>
+
+<div id="lpc-cdl-overlay" role="status" aria-live="polite" aria-hidden="true">
+  <div class="lpc-cdl-vignette" aria-hidden="true"></div>
+
+  <div class="lpc-cdl-stage">
+    <div class="lpc-cdl-orbit" aria-hidden="true">
+      <div class="lpc-cdl-ring lpc-cdl-ring-1"></div>
+      <div class="lpc-cdl-ring lpc-cdl-ring-2"></div>
+      <div class="lpc-cdl-ring lpc-cdl-ring-3"></div>
+
+      <svg class="lpc-cdl-arc" viewBox="0 0 100 100" focusable="false">
+        <defs>
+          <linearGradient id="lpc-cdl-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#f59e0b" stop-opacity="0"/>
+            <stop offset="35%"  stop-color="#f59e0b" stop-opacity="0.95"/>
+            <stop offset="85%"  stop-color="#38bdf8" stop-opacity="0.85"/>
+            <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="42"
+                fill="none"
+                stroke="rgba(245,158,11,0.07)"
+                stroke-width="1"/>
+        <circle cx="50" cy="50" r="42"
+                fill="none"
+                stroke="url(#lpc-cdl-grad)"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-dasharray="178 264"
+                pathLength="264"/>
+      </svg>
+
+      <span class="lpc-cdl-core" aria-hidden="true"></span>
+    </div>
+
+    <div class="lpc-cdl-text">
+      <p class="lpc-cdl-primary">
+        <span class="lpc-cdl-primary-text">Setting community for deletion</span><span class="lpc-cdl-primary-dots" aria-hidden="true"></span>
+      </p>
+
+      <div class="lpc-cdl-rule" aria-hidden="true">
+        <span class="lpc-cdl-pip"></span>
+      </div>
+
+      <p class="lpc-cdl-secondary">
+        <span class="lpc-cdl-tag">Scheduled &middot; 30-day restore window</span>
+        Need to restore? Contact support within 30 days.
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+  #lpc-cdl-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--rp-text, #e2e8f0);
+
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 38%, rgba(245,158,11,0.055), transparent 60%),
+      radial-gradient(ellipse 80% 60% at 50% 80%, rgba(56,189,248,0.025), transparent 70%),
+      rgba(4, 5, 8, 0.74);
+    backdrop-filter: blur(14px) saturate(135%);
+    -webkit-backdrop-filter: blur(14px) saturate(135%);
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  #lpc-cdl-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.18;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='220' height='220' filter='url(%23n)'/></svg>");
+  }
+
+  #lpc-cdl-overlay.lpc-cdl-active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  #lpc-cdl-overlay .lpc-cdl-vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 38%, rgba(0,0,0,0.55) 100%);
+  }
+
+  #lpc-cdl-overlay .lpc-cdl-stage {
+    position: relative;
+    text-align: center;
+    transform: translateY(6px) scale(0.965);
+    opacity: 0;
+    transition:
+      transform 480ms cubic-bezier(0.22, 0.61, 0.36, 1) 40ms,
+      opacity 320ms ease 40ms;
+  }
+  #lpc-cdl-overlay.lpc-cdl-active .lpc-cdl-stage {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+  #lpc-cdl-overlay .lpc-cdl-orbit {
+    position: relative;
+    width: 138px;
+    height: 138px;
+    margin: 0 auto 2.5rem;
+  }
+
+  #lpc-cdl-overlay .lpc-cdl-ring {
+    position: absolute;
+    inset: 22%;
+    border-radius: 50%;
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    opacity: 0;
+    animation: lpc-cdl-ripple 4s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+  }
+  #lpc-cdl-overlay .lpc-cdl-ring-1 { animation-delay: 0s; }
+  #lpc-cdl-overlay .lpc-cdl-ring-2 { animation-delay: 1.33s; }
+  #lpc-cdl-overlay .lpc-cdl-ring-3 { animation-delay: 2.66s; }
+
+  @keyframes lpc-cdl-ripple {
+    0%   { transform: scale(0.62); opacity: 0;    border-color: rgba(245,158,11,0.55); }
+    14%  { opacity: 0.85; }
+    100% { transform: scale(2.4);  opacity: 0;    border-color: rgba(245,158,11,0); }
+  }
+
+  #lpc-cdl-overlay .lpc-cdl-arc {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    animation: lpc-cdl-rotate 3.6s linear infinite;
+    filter: drop-shadow(0 0 14px rgba(245, 158, 11, 0.35));
+  }
+  @keyframes lpc-cdl-rotate {
+    to { transform: rotate(360deg); }
+  }
+
+  #lpc-cdl-overlay .lpc-cdl-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    background: #fbbf24;
+    box-shadow:
+      0 0 0 5px rgba(245, 158, 11, 0.12),
+      0 0 22px rgba(251, 191, 36, 0.65),
+      inset 0 0 1px rgba(255, 255, 255, 0.5);
+    animation: lpc-cdl-core-pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  @keyframes lpc-cdl-core-pulse {
+    0%, 100% { transform: scale(1);    opacity: 0.92; }
+    45%      { transform: scale(1.35); opacity: 1; }
+  }
+
+  #lpc-cdl-overlay .lpc-cdl-text {
+    max-width: 380px;
+    margin: 0 auto;
+  }
+
+  #lpc-cdl-overlay .lpc-cdl-primary {
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.18rem;
+    font-weight: 300;
+    letter-spacing: 0.055em;
+    color: #f8fafc;
+    text-shadow: 0 1px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  #lpc-cdl-overlay .lpc-cdl-primary-dots {
+    display: inline-block;
+    width: 1.1em;
+    text-align: left;
+    color: rgba(252, 211, 77, 0.85);
+  }
+  #lpc-cdl-overlay .lpc-cdl-primary-dots::before {
+    content: '';
+    animation: lpc-cdl-dots 1.6s steps(4, end) infinite;
+  }
+  @keyframes lpc-cdl-dots {
+    0%   { content: '';    }
+    25%  { content: '.';   }
+    50%  { content: '..';  }
+    75%  { content: '...'; }
+    100% { content: '';    }
+  }
+
+  #lpc-cdl-overlay .lpc-cdl-rule {
+    position: relative;
+    width: 72px;
+    height: 1px;
+    margin: 1.6rem auto;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(245, 158, 11, 0.18) 20%,
+      rgba(245, 158, 11, 0.55) 50%,
+      rgba(245, 158, 11, 0.18) 80%,
+      transparent 100%);
+  }
+  #lpc-cdl-overlay .lpc-cdl-pip {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 6px;
+    height: 6px;
+    margin: -3px 0 0 -3px;
+    border-radius: 50%;
+    background: #fbbf24;
+    box-shadow: 0 0 9px rgba(251, 191, 36, 0.85);
+    opacity: 0;
+    animation: lpc-cdl-pip-drift 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  @keyframes lpc-cdl-pip-drift {
+    0%       { left: 0%;   opacity: 0; }
+    12%, 88% { opacity: 1; }
+    100%     { left: 100%; opacity: 0; }
+  }
+
+  #lpc-cdl-overlay .lpc-cdl-secondary {
+    margin: 0;
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono",
+                 "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    font-weight: 400;
+    line-height: 1.65;
+    letter-spacing: 0.012em;
+    color: rgba(226, 232, 240, 0.55);
+  }
+
+  #lpc-cdl-overlay .lpc-cdl-tag {
+    display: inline-block;
+    margin-bottom: 0.7rem;
+    padding: 0.22rem 0.7rem 0.2rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    color: #fcd34d;
+    background: rgba(245, 158, 11, 0.07);
+    border: 1px solid rgba(245, 158, 11, 0.22);
+    border-radius: 999px;
+    text-transform: uppercase;
+    box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.04);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #lpc-cdl-overlay .lpc-cdl-arc        { animation: none; opacity: 0.7; }
+    #lpc-cdl-overlay .lpc-cdl-core       { animation: lpc-cdl-core-fade 2.4s ease-in-out infinite; }
+    #lpc-cdl-overlay .lpc-cdl-ring       { animation: lpc-cdl-core-fade 4s ease-in-out infinite; opacity: 0.35; transform: none; }
+    #lpc-cdl-overlay .lpc-cdl-ring-2     { animation-delay: 1.33s; }
+    #lpc-cdl-overlay .lpc-cdl-ring-3     { animation-delay: 2.66s; }
+    #lpc-cdl-overlay .lpc-cdl-pip        { animation: lpc-cdl-core-fade 2.4s ease-in-out infinite; left: 50%; }
+    #lpc-cdl-overlay .lpc-cdl-primary-dots::before { animation: none; content: '...'; }
+    @keyframes lpc-cdl-core-fade {
+      0%, 100% { opacity: 0.45; }
+      50%      { opacity: 1; }
+    }
+  }
+</style>
+
+<script>
+  (function() {
+    if (window.lpcShowDeleteCommunityLoading) return;
+
+    function getOverlay() {
+      return document.getElementById('lpc-cdl-overlay');
+    }
+
+    var prevBodyOverflow = null;
+
+    window.lpcShowDeleteCommunityLoading = function() {
+      var el = getOverlay();
+      if (!el) return;
+      void el.offsetHeight;
+      el.classList.add('lpc-cdl-active');
+      el.setAttribute('aria-hidden', 'false');
+
+      if (prevBodyOverflow === null) {
+        prevBodyOverflow = document.body.style.overflow || '';
+        document.body.style.overflow = 'hidden';
+      }
+    };
+
+    window.lpcHideDeleteCommunityLoading = function() {
+      var el = getOverlay();
+      if (!el) return;
+      el.classList.remove('lpc-cdl-active');
+      el.setAttribute('aria-hidden', 'true');
+
+      if (prevBodyOverflow !== null) {
+        document.body.style.overflow = prevBodyOverflow;
+        prevBodyOverflow = null;
+      }
+    };
+  })();
+</script>

@@ -4442,6 +4442,11 @@ function confirmDeleteCommunity() {
   // Get the API URL with fallback
   const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
+  // Close the confirm modal and show the ceremonial loading overlay so the
+  // user sees something is happening during the API round-trip.
+  closeDeleteCommunityModal();
+  if (window.lpcShowDeleteCommunityLoading) window.lpcShowDeleteCommunityLoading();
+
   fetch(`${apiUrl}/api/v1/community/${communityId}`, {
     method: 'DELETE',
     headers: {
@@ -4464,10 +4469,12 @@ function confirmDeleteCommunity() {
         }
       }
     } catch (e) { /* keep generic copy */ }
+    if (window.lpcHideDeleteCommunityLoading) window.lpcHideDeleteCommunityLoading();
     showSettingsSuccess(msg);
     setTimeout(() => { window.location.href = '/communities'; }, 2500);
   })
   .catch(() => {
+    if (window.lpcHideDeleteCommunityLoading) window.lpcHideDeleteCommunityLoading();
     showSettingsError('Failed to schedule deletion. Please try again.');
   });
 }
