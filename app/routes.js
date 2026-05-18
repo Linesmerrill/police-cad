@@ -27,6 +27,7 @@ var handlebars = require("handlebars");
 var sanitize = require("mongo-sanitize");
 let randomstring = require("randomstring");
 var axios = require("axios");
+var discordAlerts = require("./discord-alerts");
 
 var policeCadApiUrl = process.env.POLICE_CAD_API_URL;
 var policeCadApiToken = process.env.POLICE_CAD_API_TOKEN;
@@ -10648,6 +10649,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
       "[LPS] [level=error] unhandled route error:",
       err && err.stack ? err.stack : err
     );
+    // Fire-and-forget Discord alert. Silently no-ops if the webhook env
+    // var isn't set (local dev). Dedup + 4xx filtering handled inside.
+    try {
+      discordAlerts.sendErrorAlert(err, req);
+    } catch (e) {
+      console.error("[LPS] [level=error] discord alert threw:", e && e.message ? e.message : e);
+    }
     if (res.headersSent) return next(err);
     var status = err && err.status ? err.status : 500;
     var isJsonRequest =
