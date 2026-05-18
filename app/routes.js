@@ -196,6 +196,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
         redirect: encodeURIComponent(redirect),
       });
     } catch (error) {
+      // The API returns 410 Gone with { error: "pending_deletion", scheduledDeletionAt }
+      // when a soft-deleted community is direct-linked. Render the friendly
+      // route-block page instead of a generic 404.
+      if (error.response && error.response.status === 410 && error.response.data && error.response.data.error === "pending_deletion") {
+        return res.status(410).render("community-pending-deletion", {
+          user: req.user,
+          communityName: error.response.data.communityName || "This community",
+          scheduledDeletionAt: error.response.data.scheduledDeletionAt || null,
+        });
+      }
       console.error("[LPS] [level=error] /community/:hash error:", error.message);
       return res.status(404).render("error", {
         message: "Community not found or an error occurred.",

@@ -1041,13 +1041,19 @@
             <div class="ac-card-body">
               <div class="row">
                 <div class="col-md-8">
-                  <input type="text" id="communitySearch" class="form-control ac-input" placeholder="Search communities by name..." />
+                  <input type="text" id="communitySearch" class="form-control ac-input" placeholder="Search by community name or owner email/username..." />
                 </div>
                 <div class="col-md-4">
                   <button type="button" id="searchCommunitiesBtn" class="ac-btn ac-btn-accent ac-btn-block">
                     <i class="fas fa-search"></i> Search Communities
                   </button>
                 </div>
+              </div>
+              <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                <label style="display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; user-select: none;">
+                  <input type="checkbox" id="communityPendingDeletionOnly" />
+                  <span><i class="fas fa-clock-rotate-left" style="margin-right: 0.25rem; opacity: 0.85;"></i> Show only pending-deletion communities</span>
+                </label>
               </div>
               <div class="recent-searches-section" id="recentSearchesSectionCommunities" style="display: none;">
                 <div class="recent-searches-header">
@@ -6267,17 +6273,20 @@
       
       function searchCommunities(query, page = 0) {
         $('#communityResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Searching communities...</div>');
-        
+
         // Track search activity
         trackAdminAction('community_search', `Searched for communities with query: "${query}"`);
-        
+
+        var pendingOnly = $('#communityPendingDeletionOnly').is(':checked');
+
         $.ajax({
           url: `${API_BASE}/api/v1/admin/search/communities`,
           method: 'POST',
-          data: JSON.stringify({ 
+          data: JSON.stringify({
             query: query,
             page: page,
-            limit: resultsPerPage
+            limit: resultsPerPage,
+            pendingDeletionOnly: pendingOnly
           }),
           contentType: 'application/json',
           success: function(data) {
@@ -6353,13 +6362,38 @@
             return date.toLocaleDateString() + ' ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
           })() : 'Unknown';
           
+          // Soft-delete state: when set, the API hides the community everywhere
+          // and the cron will hard-delete it after `scheduledDeletionAt`. Staff
+          // can $unset the fields via the restore button below.
+          var isPending = !!community.pendingDeletionAt;
+          var scheduledLabel = '';
+          if (isPending && community.scheduledDeletionAt) {
+            try {
+              var sd = new Date(community.scheduledDeletionAt);
+              if (!isNaN(sd.getTime())) {
+                scheduledLabel = sd.toLocaleDateString() + ' ' + sd.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+              }
+            } catch (e) { /* fall back to no label */ }
+          }
+          var pendingBanner = isPending ? `
+            <div style="margin-bottom: 0.75rem; padding: 0.6rem 0.85rem; border-radius: 8px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fas fa-clock-rotate-left"></i>
+              <span><strong>Pending deletion${scheduledLabel ? ' &middot; hard-deletes ' + scheduledLabel : ''}</strong></span>
+            </div>` : '';
+          var restoreButton = isPending ? `
+            <button class="btn btn-warning btn-sm" onclick="confirmRestoreCommunity('${community.id}', ${JSON.stringify(community.name || '').replace(/"/g, '&quot;')})">
+              <i class="fas fa-rotate-left"></i> Restore
+            </button>` : '';
+
           html += `
             <div class="result-card">
+              ${pendingBanner}
               <div class="result-header">
                 <div>
                   <h5 class="result-title">${community.name || 'Unnamed Community'}</h5>
                 </div>
                 <div class="action-buttons">
+                  ${restoreButton}
                   <button class="btn btn-secondary btn-sm" onclick="viewCommunityDetails('${community.id}')">
                     <i class="fas fa-eye"></i> View Details
                   </button>
@@ -7716,7 +7750,7 @@
         $('#communityModalTitle').text('Loading Community Details...');
         $('#communityModalBody').html('<div class="loading">Loading...</div>');
         $('#communityModal').modal('show');
-        
+
         $.ajax({
           url: `${API_BASE}/api/v1/admin/communities/${communityId}`,
           method: 'GET',
@@ -7727,6 +7761,51 @@
           error: function(xhr) {
             $('#communityModalBody').html('<div class="loading">Failed to load community details</div>');
             showInfoModal('Error', `Error loading community: ${xhr.responseJSON?.error || 'Unknown error'}`);
+          }
+        });
+      }
+
+      // Confirms then $unsets the soft-delete fields on a community. Reuses
+      // showConfirmModal because the rest of the admin console uses it; the
+      // user only deals with this surface, so a consistent confirm pattern
+      // matters more than aesthetic parity with the ddModal used on the
+      // customer dashboard.
+      function confirmRestoreCommunity(communityId, communityName) {
+        var safeName = $('<div>').text(communityName || 'this community').html();
+        showConfirmModal(
+          'Restore community?',
+          'This will clear the pending-deletion flag and make <strong>' + safeName + '</strong> available to its owner again. Run only if you have confirmation from the owner that they want to keep it.',
+          function() { restoreCommunityPendingDeletion(communityId, communityName); }
+        );
+      }
+
+      function restoreCommunityPendingDeletion(communityId, communityName) {
+        // Optimistically remove the result card so the staff member sees an
+        // immediate effect. If the request fails we re-run the search to
+        // resync state, matching the "UI updates must be immediate" rule
+        // elsewhere in the codebase.
+        var $card = $('#communityResults .result-card').filter(function() {
+          return $(this).find('code').first().text() === communityId;
+        });
+        $card.css('opacity', 0.5);
+
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/communities/${communityId}/restore-pending-deletion`,
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            currentUser: { email: currentUserEmail, roles: roles }
+          }),
+          success: function() {
+            trackAdminAction('community_restore', 'Restored community "' + (communityName || communityId) + '" (' + communityId + ') from pending deletion');
+            $card.slideUp(180, function() { $(this).remove(); });
+            if (typeof showToast === 'function') {
+              showToast('success', 'Community restored. Owner can use it again.');
+            }
+          },
+          error: function(xhr) {
+            $card.css('opacity', 1);
+            showInfoModal('Restore failed', `Could not restore community: ${xhr.responseJSON?.error || xhr.statusText || 'Unknown error'}`);
           }
         });
       }
