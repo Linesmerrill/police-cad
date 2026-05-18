@@ -538,6 +538,39 @@ module.exports = function (app, passport, server, nextApp, handle) {
   }
 
   // Placeholder Admin Console (guarded)
+  // Admin-only smoke test for the Discord error webhook. Sends a synthetic
+  // alert through the same code path the global error handler uses, so a
+  // staff member can confirm the channel is wired up without having to
+  // actually break a page. Bypasses dedup by stamping a unique signature
+  // every time it's called.
+  app.get("/admin/test-discord-alert", requireAdminSession, function (req, res) {
+    if (!process.env.DISCORD_WEBSITE_ERROR_WEBHOOK_URL) {
+      return res.status(200).json({
+        ok: false,
+        message: "DISCORD_WEBSITE_ERROR_WEBHOOK_URL is not set. Configure it in Heroku config vars and try again.",
+      });
+    }
+    var fakeErr = new Error(
+      "Test alert from /admin/test-discord-alert at " + new Date().toISOString()
+    );
+    fakeErr.stack =
+      "Error: synthetic test alert (no real error occurred)\n" +
+      "    at /admin/test-discord-alert (manual trigger)\n" +
+      "    triggered by " + (req.session && req.session.admin && req.session.admin.email ? req.session.admin.email : "admin");
+    try {
+      discordAlerts.sendErrorAlert(fakeErr, req);
+      return res.status(200).json({
+        ok: true,
+        message: "Synthetic alert dispatched. Check the Discord channel — it should arrive within a few seconds. If nothing shows up, double-check the webhook URL and channel permissions.",
+      });
+    } catch (e) {
+      return res.status(500).json({
+        ok: false,
+        message: "Failed to dispatch alert: " + (e && e.message ? e.message : String(e)),
+      });
+    }
+  });
+
   app.get("/admin/console", requireAdminSession, function (req, res) {
     const success = req.query.success || null;
     const error = req.query.error || null;
