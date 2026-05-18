@@ -23,11 +23,13 @@
   window.__pendingDeletionGateInstalled = true;
 
   var COMMUNITY_ID_FROM_URL = /\/community\/([0-9a-fA-F]{24})/;
-  var RECENT_TTL_MS = 30 * 1000;
   var SUPPRESS_TTL_MS = 60 * 1000;
   var REDIRECT_PATH = "/communities";
 
-  var recent = new Map(); // dedupe alerts per community for RECENT_TTL_MS
+  // Dedupe per-community for the lifetime of the page session — pollers
+  // will keep firing 410s until the redirect lands, and we don't want to
+  // re-pop the same modal every time a new TTL window expires.
+  var seen = new Set();
   var suppressed = new Map(); // owner-initiated deletes, mute alert + redirect
 
   window.suppressPendingDeletion = function (communityId, ttlMs) {
@@ -71,10 +73,8 @@
   function handlePendingDeletion(body, url) {
     var cid = communityIdFromUrl(url);
     var dedupeKey = cid || body.communityName || "unknown";
-    var last = recent.get(dedupeKey);
-    var now = Date.now();
-    if (last && now - last < RECENT_TTL_MS) return;
-    recent.set(dedupeKey, now);
+    if (seen.has(dedupeKey)) return;
+    seen.add(dedupeKey);
 
     if (isSuppressed(cid)) return;
 
