@@ -591,12 +591,18 @@ function showDeleteModal(communityId, communityName) {
       }
       return;
     }
+    // Show the actual hard-delete date in the confirmation so "30 days" isn't
+    // abstract. Computed client-side; the API will return the authoritative
+    // value in the response (used in the success toast).
+    var scheduledDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    var whenLabel = scheduledDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+    var safeName = (communityName || 'This community').replace(/</g, '&lt;');
     window.ddModal({
       type: 'danger',
       icon: 'fa-trash-alt',
       title: 'Delete this community?',
-      message: '<strong>' + (communityName || 'This community').replace(/</g, '&lt;') + '</strong> will be wiped in 30 days.',
-      detail: "Civilians, departments, calls — everything. Ping support before the deadline if you change your mind.",
+      message: '<strong>' + safeName + '</strong> will be permanently deleted on <strong>' + whenLabel + '</strong>.',
+      detail: "After that, all civilians, departments, calls, and settings are gone for good. Contact support before then if you change your mind.",
       confirmText: 'Delete community',
       onConfirm: function() {
         deleteCommunity(communityId, communityName);
