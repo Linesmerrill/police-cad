@@ -7593,6 +7593,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
     );
   });
 
+  // /delete-community is the legacy form-post path from views/communities-owned.ejs.
+  // Aligned with the API soft-delete contract: instead of removing the doc we set
+  // pendingDeletionAt / scheduledDeletionAt (+30d) and let the API's daily cron
+  // run the cascade once the grace window elapses. Staff can restore via the
+  // admin console if the owner asks within the window.
   app.post("/delete-community", auth, function (req, res) {
     req.app.locals.specialContext = null;
     User.updateMany(
@@ -7614,9 +7619,20 @@ module.exports = function (app, passport, server, nextApp, handle) {
           req.app.locals.specialContext = "invalidRequest";
           return res.redirect("back");
         }
-        Community.findByIdAndDelete(
+        var now = new Date();
+        var scheduled = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        var actor = req.user && req.user._doc && req.user._doc._id
+          ? String(req.user._doc._id)
+          : (req.user && req.user._id ? String(req.user._id) : "");
+        Community.findByIdAndUpdate(
+          { _id: ObjectId(req.body.communityID) },
           {
-            _id: ObjectId(req.body.communityID),
+            $set: {
+              "community.pendingDeletionAt": now,
+              "community.scheduledDeletionAt": scheduled,
+              "community.deletionRequestedBy": actor,
+              "community.updatedAt": now,
+            },
           },
           function (err) {
             if (err) return console.error(err);
