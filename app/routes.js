@@ -66,6 +66,26 @@ function decodeId(encoded) {
   return Buffer.from(base64, 'base64').toString('utf8');
 }
 
+// If an axios error from the API is the standard 410 pending_deletion shape,
+// render the friendly route-block page and return true. Callers should
+// short-circuit their catch block when this returns true, e.g.:
+//   if (renderPendingDeletionIfApplicable(req, res, error)) return;
+// Centralizes the check so every community-scoped server-rendered route
+// handles the soft-delete state the same way as the /community/:hash route.
+function renderPendingDeletionIfApplicable(req, res, error) {
+  const resp = error && error.response;
+  if (!resp || resp.status !== 410) return false;
+  const data = resp.data || {};
+  if (data.error !== "pending_deletion") return false;
+  res.status(410).render("community-pending-deletion", {
+    user: req.user,
+    communityName: data.communityName || "This community",
+    scheduledDeletionAt: data.scheduledDeletionAt || null,
+    communityHash: (req.params && req.params.hash) || "",
+  });
+  return true;
+}
+
 module.exports = function (app, passport, server, nextApp, handle) {
   // Root route - use Next.js if available, otherwise fall back to EJS
   app.get("/", function (req, res) {
@@ -197,20 +217,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         redirect: encodeURIComponent(redirect),
       });
     } catch (error) {
-      // The API returns 410 Gone with { error: "pending_deletion", scheduledDeletionAt }
-      // when a soft-deleted community is direct-linked. Render the friendly
-      // route-block page instead of a generic 404.
-      if (error.response && error.response.status === 410 && error.response.data && error.response.data.error === "pending_deletion") {
-        // The route param `hash` is scoped to the try block, so re-read it
-        // from req.params here. It's already the base64url-encoded community
-        // id, so we can pass it straight through as the breadcrumb link.
-        return res.status(410).render("community-pending-deletion", {
-          user: req.user,
-          communityName: error.response.data.communityName || "This community",
-          scheduledDeletionAt: error.response.data.scheduledDeletionAt || null,
-          communityHash: req.params.hash,
-        });
-      }
+      if (renderPendingDeletionIfApplicable(req, res, error)) return;
       console.error("[LPS] [level=error] /community/:hash error:", error.message);
       return res.status(404).render("error", {
         message: "Community not found or an error occurred.",
@@ -259,6 +266,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         encodedCommunityId: hash,
       });
     } catch (error) {
+      if (renderPendingDeletionIfApplicable(req, res, error)) return;
       console.error("[community-map] Error loading map page:", error.message);
       return res.status(404).render("error", {
         message: "Community not found or an error occurred.",
@@ -2097,6 +2105,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
       communityName = r.data?.community?.name || null;
     } catch (err) {
+      if (renderPendingDeletionIfApplicable(req, res, err)) return;
       console.error('Error fetching community for /forms:', err.message);
     }
 
