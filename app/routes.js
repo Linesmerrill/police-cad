@@ -200,14 +200,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
       // when a soft-deleted community is direct-linked. Render the friendly
       // route-block page instead of a generic 404.
       if (error.response && error.response.status === 410 && error.response.data && error.response.data.error === "pending_deletion") {
-        // `hash` is already the base64url-encoded community id (the route
-        // parameter we just received), so we can pass it straight through as
-        // the breadcrumb link without re-encoding.
+        // The route param `hash` is scoped to the try block, so re-read it
+        // from req.params here. It's already the base64url-encoded community
+        // id, so we can pass it straight through as the breadcrumb link.
         return res.status(410).render("community-pending-deletion", {
           user: req.user,
           communityName: error.response.data.communityName || "This community",
           scheduledDeletionAt: error.response.data.scheduledDeletionAt || null,
-          communityHash: hash,
+          communityHash: req.params.hash,
         });
       }
       console.error("[LPS] [level=error] /community/:hash error:", error.message);
