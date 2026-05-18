@@ -66,6 +66,22 @@ function decodeId(encoded) {
 }
 
 module.exports = function (app, passport, server, nextApp, handle) {
+  // TEMP: forced-error routes for verifying the global error handler renders
+  // the branded /views/error.ejs page. Remove these after testing.
+  app.get("/test-error", function (req, res, next) {
+    next(new Error("Forced test error — global error middleware"));
+  });
+  app.get("/test-error-throw", function (req, res, next) {
+    throw new Error("Forced sync throw — global error middleware");
+  });
+  app.get("/test-error-async", async function (req, res, next) {
+    try {
+      await Promise.reject(new Error("Forced async rejection"));
+    } catch (e) {
+      next(e);
+    }
+  });
+
   // Root route - use Next.js if available, otherwise fall back to EJS
   app.get("/", function (req, res) {
     if (nextApp && handle) {
