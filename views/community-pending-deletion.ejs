@@ -94,7 +94,14 @@
   </style>
 </head>
 <body>
-  <%- include('partials/standalone-utility', { user: locals.user, backHref: '/communities', backLabel: 'Back to Communities', pageLabel: 'Pending Deletion' }) %>
+  <%- include('partials/standalone-utility', {
+    user: locals.user,
+    backHref: '/communities',
+    backLabel: 'Back to Communities',
+    pageLabel: 'Pending Deletion',
+    communityName: locals.communityName,
+    communityHref: locals.communityHash ? ('/community/' + locals.communityHash) : ''
+  }) %>
 
   <div class="rp-shell">
     <div class="rp-card">

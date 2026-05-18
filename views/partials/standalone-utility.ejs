@@ -14,6 +14,8 @@
     backLabel        — short label, e.g. 'Back to Reports' (default 'Back')
     pageLabel        — short label for the current page (e.g. 'Reports')
     communityName    — community display name (optional, falls back to user's community)
+    communityHref    — if set, the community name in the breadcrumb becomes a
+                       link to this URL (typically '/community/<encodedId>')
 
   Markup convention: include this partial as the FIRST element inside
   <body>. Pages must add `body { padding-top: 36px; }` (or wrap content
@@ -64,6 +66,19 @@
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     max-width: 200px;
     color: rgba(148, 163, 184, 0.85);
+  }
+  /* When the community is rendered as a link, give it the same affordance
+     treatment as the back button — a subtle cyan tint with a hover lift. */
+  a.lpc-utility-community {
+    padding: 0.25rem 0.5rem;
+    margin: 0 -0.5rem;
+    border-radius: 6px;
+    color: rgba(148, 163, 184, 0.85);
+    transition: background 120ms ease, color 120ms ease;
+  }
+  a.lpc-utility-community:hover {
+    background: rgba(56, 189, 248, 0.08);
+    color: #38bdf8;
   }
   .lpc-utility-page {
     color: rgba(226, 232, 240, 0.95);
@@ -151,6 +166,7 @@
   var _utilCommunity = (typeof communityName !== 'undefined' && communityName)
     ? communityName
     : ((_utilInner && _utilInner.lastAccessedCommunity && _utilInner.lastAccessedCommunity.name) || '');
+  var _utilCommunityHref = (typeof communityHref !== 'undefined' && communityHref) ? communityHref : '';
   var _utilBackHref = (typeof backHref !== 'undefined' && backHref) ? backHref : '/communities';
   var _utilBackLabel = (typeof backLabel !== 'undefined' && backLabel) ? backLabel : 'Back';
   var _utilPageLabel = (typeof pageLabel !== 'undefined' && pageLabel) ? pageLabel : '';
@@ -167,7 +183,11 @@
     </a>
     <% if (_utilCommunity) { %>
       <span class="lpc-utility-divider">/</span>
-      <span class="lpc-utility-community" title="<%= _utilCommunity %>"><%= _utilCommunity %></span>
+      <% if (_utilCommunityHref) { %>
+        <a href="<%= _utilCommunityHref %>" class="lpc-utility-community" title="<%= _utilCommunity %>"><%= _utilCommunity %></a>
+      <% } else { %>
+        <span class="lpc-utility-community" title="<%= _utilCommunity %>"><%= _utilCommunity %></span>
+      <% } %>
     <% } %>
     <% if (_utilPageLabel) { %>
       <span class="lpc-utility-divider">/</span>
