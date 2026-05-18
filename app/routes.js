@@ -5007,7 +5007,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
       let url = `${policeCadApiUrl}/api/v2/feature-requests?page=${page}&limit=${limit}`;
       if (sort) url += `&sort=${encodeURIComponent(sort)}`;
       if (status) url += `&status=${encodeURIComponent(status)}`;
-      if (excludeStatus) url += `&excludeStatus=${encodeURIComponent(excludeStatus)}`;
+      if (excludeStatus) {
+        const excludeStatusValues = Array.isArray(excludeStatus) ? excludeStatus : [excludeStatus];
+        for (const s of excludeStatusValues) {
+          if (s) url += `&excludeStatus=${encodeURIComponent(s)}`;
+        }
+      }
       if (q) url += `&q=${encodeURIComponent(q)}`;
       if (userId) url += `&userId=${encodeURIComponent(userId)}`;
       if (authorId) url += `&authorId=${encodeURIComponent(authorId)}`;

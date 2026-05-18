@@ -17,6 +17,7 @@ const TEST_USER_ID = new ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa');
 export const TEST_FR_OPEN_ID = new ObjectId('a1a1a1a1a1a1a1a1a1a1a1a1');
 export const TEST_FR_RELEASED_ID = new ObjectId('a2a2a2a2a2a2a2a2a2a2a2a2');
 export const TEST_FR_BETA_ID = new ObjectId('a3a3a3a3a3a3a3a3a3a3a3a3');
+export const TEST_FR_DECLINED_ID = new ObjectId('a4a4a4a4a4a4a4a4a4a4a4a4');
 
 // Every seeded title starts with this prefix so cleanup can target only
 // our test fixtures and never collide with production-like data.
@@ -81,7 +82,7 @@ export async function cleanupSeededFeatureRequests(): Promise<void> {
     });
     // Also delete any stray votes against our seeded IDs.
     await db.collection('featureRequestVotes').deleteMany({
-      featureRequestId: { $in: [TEST_FR_OPEN_ID, TEST_FR_RELEASED_ID, TEST_FR_BETA_ID] },
+      featureRequestId: { $in: [TEST_FR_OPEN_ID, TEST_FR_RELEASED_ID, TEST_FR_BETA_ID, TEST_FR_DECLINED_ID] },
     });
   });
 }
