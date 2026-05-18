@@ -25,12 +25,19 @@
     return window.ddConfig || null;
   }
 
+  // Currency symbol comes from window.ddConfig (set by the dept-/command-
+  // dashboard EJS from community.penalCodes — community.fines is
+  // deprecated). Falls back to $ when ddConfig isn't wired yet or the
+  // community hasn't picked a currency.
+  function currencySymbol() {
+    return (window.ddConfig && window.ddConfig.currencySymbol) || '$';
+  }
   function fmtMoney(cents) {
     const sign = cents < 0 ? '-' : '';
     const abs = Math.abs(cents || 0);
     const dollars = Math.floor(abs / 100);
     const rem = abs % 100;
-    return sign + '$' + dollars.toLocaleString() + '.' + String(rem).padStart(2, '0');
+    return sign + currencySymbol() + dollars.toLocaleString() + '.' + String(rem).padStart(2, '0');
   }
 
   function fmtElapsed(seconds) {
@@ -291,10 +298,15 @@
     return joined || (inner.name || '').trim() || 'Civilian';
   }
 
-  async function fetchActiveSession(cfg, civId) {
-    if (!civId) return null;
+  async function fetchActiveSession(cfg) {
+    // Query by userId, not civilianId. The user can have at most one active
+    // session (enforced server-side), and we want to surface it regardless
+    // of which civilian it's tied to — otherwise swapping civilians in
+    // /wallet then coming back here would render an "off the clock" state
+    // while a session is still ticking against another civilian.
+    if (!cfg.userId) return null;
     try {
-      const res = await fetch(`${cfg.API_URL}/api/v2/economy/session/active?civilianId=${encodeURIComponent(civId)}`);
+      const res = await fetch(`${cfg.API_URL}/api/v2/economy/session/active?userId=${encodeURIComponent(cfg.userId)}`);
       if (!res.ok) return null;
       const data = await res.json();
       return data && data._id ? data : null;
@@ -523,7 +535,7 @@
           <div class="dd-econ-icon" style="position:relative;"><i class="fa fa-stopwatch"></i></div>
           <div class="dd-econ-body">
             <div class="dd-econ-title">On the clock <span style="color:#22c55e;">●</span></div>
-            <div class="dd-econ-sub">${escapeHtml(session.departmentName || 'this department')}</div>
+            <div class="dd-econ-sub">${state.civName ? `as <b style="color:var(--dd-text,#e2e8f0);">${escapeHtml(state.civName)}</b> · ` : ''}${escapeHtml(session.departmentName || 'this department')}</div>
             <div class="dd-econ-metrics">
               <div>
                 <div class="dd-econ-metric-label">Time</div>
@@ -570,7 +582,7 @@
         <div class="dd-econ-card is-other">
           <div class="dd-econ-icon"><i class="fa fa-triangle-exclamation"></i></div>
           <div class="dd-econ-body">
-            <div class="dd-econ-title">You're on the clock at ${escapeHtml(otherName)}</div>
+            <div class="dd-econ-title">You're on the clock at ${escapeHtml(otherName)}${state.civName ? ` as <span style="color:var(--dd-text,#e2e8f0);">${escapeHtml(state.civName)}</span>` : ''}</div>
             <div class="dd-econ-sub">Clock out first if you want to clock in here.</div>
           </div>
           <div class="dd-econ-actions">
@@ -626,6 +638,15 @@
           civilianId: state.civId,
         }),
       });
+      // 409 → user already has an active session somewhere. Offer to swap
+      // shifts rather than failing silently.
+      if (res.status === 409) {
+        const existing = await res.json().catch(() => null);
+        if (existing && existing._id) {
+          promptSwapClockIn(state, existing, btn);
+          return;
+        }
+      }
       if (!res.ok) throw new Error('clock-in failed: ' + res.status);
       // Auto-set the user's status to the community's on-duty code ("X-41")
       // so dispatch + MDT reflect the shift change without a second click.
@@ -644,6 +665,67 @@
     } catch (err) {
       console.error('[dd-economy] clock-in failed', err);
       if (window.showToast) window.showToast('Could not clock in', 2500, 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-play"></i> Clock in'; }
+    }
+  }
+
+  // 409 handler: the user is already on the clock somewhere else (different
+  // civilian or different department). Prompt to clock the other shift out
+  // before starting this one. We reuse ddModal when available so it
+  // matches the rest of the dashboard's confirmation UX.
+  function promptSwapClockIn(state, existing, btn) {
+    const cfg = state.cfg;
+    const deptName = existing.departmentName || 'another department';
+    if (!window.ddModal) {
+      if (!confirm('You\'re already on the clock at ' + deptName + '. Clock out and clock in here?')) {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-play"></i> Clock in'; }
+        return;
+      }
+      doSwapClockIn(state, existing, btn);
+      return;
+    }
+    window.ddModal({
+      type: 'warning',
+      icon: 'fa-triangle-exclamation',
+      title: 'You\'re already on the clock',
+      message: 'You\'re on the clock at <strong>' + escapeHtml(deptName) + '</strong>. Clock out there and start a shift here instead?',
+      detail: 'Earnings from the running shift will be finalized first.',
+      confirmText: 'Clock out & clock in here',
+      confirmIcon: 'fa-arrows-rotate',
+      onConfirm: function () { doSwapClockIn(state, existing, btn); },
+      onCancel: function () {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-play"></i> Clock in'; }
+      },
+    });
+  }
+
+  async function doSwapClockIn(state, existing, btn) {
+    const cfg = state.cfg;
+    try {
+      const outRes = await fetch(`${cfg.API_URL}/api/v2/economy/clock-out?userId=${encodeURIComponent(cfg.userId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: existing._id }),
+      });
+      if (!outRes.ok) throw new Error('clock-out failed: ' + outRes.status);
+      const inRes = await fetch(`${cfg.API_URL}/api/v2/economy/clock-in?userId=${encodeURIComponent(cfg.userId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          communityId: cfg.communityId,
+          departmentId: cfg.departmentId,
+          civilianId: state.civId,
+        }),
+      });
+      if (!inRes.ok) throw new Error('clock-in failed: ' + inRes.status);
+      // Replay the on-duty status side-effect so it stays in sync.
+      const eligible = deptUsesStatusCodes(state.dept);
+      const onDutyCode = eligible ? findCodeBySuffix(state.communityEcon.tenCodes, '41') : null;
+      if (onDutyCode) await setMemberTenCode(cfg, onDutyCode._id);
+      await refresh(state);
+    } catch (err) {
+      console.error('[dd-economy] shift swap failed', err);
+      if (window.showToast) window.showToast('Could not swap shifts', 2500, 'error');
       if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-play"></i> Clock in'; }
     }
   }
@@ -685,7 +767,7 @@
 
   async function refresh(state) {
     const cfg = state.cfg;
-    state.session = await fetchActiveSession(cfg, state.civId);
+    state.session = await fetchActiveSession(cfg);
     if (state.session) {
       if (state.session.departmentId === cfg.departmentId) {
         renderActiveHere(state);
@@ -744,13 +826,24 @@
     state.communityEcon = econ;
     state.dept = econ.dept;
 
-    if (!state.civId) {
-      // No civilian for this user in this community — nothing to do here.
+    // Fetch the user's active session first — independent of civId — so a
+    // session running against another civilian (or in another dept) still
+    // surfaces here. Only fall back to renderEmpty when there's no session
+    // *and* no civilian to clock in.
+    state.session = await fetchActiveSession(cfg);
+    if (!state.session && !state.civId) {
       renderEmpty();
       return;
     }
-
-    await refresh(state);
+    if (state.session) {
+      if (state.session.departmentId === cfg.departmentId) {
+        renderActiveHere(state);
+      } else {
+        renderActiveElsewhere(state);
+      }
+    } else {
+      await refresh(state);
+    }
 
     // Heartbeat for active sessions so the server-side AFK timers stay alive
     // while the user is on the dashboard.

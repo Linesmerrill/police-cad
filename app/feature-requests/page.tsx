@@ -1148,7 +1148,12 @@ function FeatureRequests() {
       // Hide Released items from the default list — they live in the
       // celebration carousel above. Surface them only when the user explicitly
       // filters to Released, picks any status, or runs a search.
-      if (!statusFilter && !debouncedQuery) params.set('excludeStatus', 'released');
+      if (!statusFilter && !debouncedQuery) params.append('excludeStatus', 'released');
+      // Hide Declined items from the default list too — they clutter trending/
+      // top/newest. Surface them only when the user runs a search, picks the
+      // Declined filter, or flips the Mine toggle (so authors still see their
+      // own declined submissions).
+      if (!statusFilter && !debouncedQuery && !mineOnly) params.append('excludeStatus', 'declined');
       if (currentUser) params.set('userId', currentUser._id);
       if (mineOnly && currentUser) params.set('authorId', currentUser._id);
 
@@ -1244,15 +1249,19 @@ function FeatureRequests() {
   };
 
   // Defensive client-side filter: even if the API server is on an older build
-  // that doesn't honor excludeStatus / authorId yet, never surface Released
-  // items in the default browse view, and always honor the Mine toggle.
+  // that doesn't honor excludeStatus / authorId yet, never surface Released or
+  // (in the default browse view) Declined items, and always honor the Mine toggle.
   const hideReleasedHere = !statusFilter && !debouncedQuery;
-  const releasedFiltered = hideReleasedHere
-    ? requests.filter(r => r.status !== 'released')
+  const hideDeclinedHere = !statusFilter && !debouncedQuery && !mineOnly;
+  const statusFiltered = (hideReleasedHere || hideDeclinedHere)
+    ? requests.filter(r =>
+        !(hideReleasedHere && r.status === 'released') &&
+        !(hideDeclinedHere && r.status === 'declined')
+      )
     : requests;
   const visibleRequests = mineOnly && currentUser
-    ? releasedFiltered.filter(r => r.author?._id === currentUser._id)
-    : releasedFiltered;
+    ? statusFiltered.filter(r => r.author?._id === currentUser._id)
+    : statusFiltered;
   // If we had to drop items the API gave us, the totalCount it returned is
   // also untrustworthy (older API ignored our filters) — fall back to the
   // visible count on the current page rather than reporting an inflated total.

@@ -8,7 +8,13 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // 2 workers in CI is a conservative speedup over the old 1-worker
+  // setup. Specs that mutate shared MongoDB documents (TEST_USER
+  // profile / email / deactivation; shared-ID admin_users seeds) must
+  // use distinct IDs per spec so their cleanups don't stomp each
+  // other across workers. See e2e/helpers/admin-users.ts for the
+  // pattern (TEST_LINKED_ADMIN_ID vs TEST_CONSOLE_ADMIN_ID).
+  workers: process.env.CI ? 2 : undefined,
   timeout: 30_000,
   expect: { timeout: 5_000 },
   reporter: process.env.CI

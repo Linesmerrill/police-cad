@@ -150,6 +150,26 @@
     .dd-nav-item.active { background: var(--cd-accent-glow); color: #fff; font-weight: 500; border-color: rgba(56, 189, 248, 0.2); }
     .dd-nav-item i { width: 1.125rem; text-align: center; font-size: 0.8125rem; }
 
+    /* Glass-style Beta pill, used inline next to nav labels. Time-gated
+       in markup — auto-disappears after the cutoff date. */
+    .cd-nav-beta {
+      margin-left: auto;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(168,85,247,0.18));
+      color: #c4b5fd;
+      border: 1px solid rgba(139,92,246,0.32);
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      line-height: 1.45;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .cd-nav-beta + .cd-nav-badge,
+    .cd-nav-beta + .dd-nav-badge { margin-left: 0.35rem; }
+
     /* Nav badge */
     .cd-nav-badge, .dd-nav-badge { margin-left: auto; background: var(--cd-accent); color: #fff; font-size: 0.625rem; font-weight: 700; padding: 0.125rem 0.5rem; border-radius: 99px; min-width: 20px; text-align: center; line-height: 1.4; animation: cd-badge-pulse 2s ease-in-out infinite; }
     @keyframes cd-badge-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
@@ -590,8 +610,14 @@
 
 
   <%
-    var communityId = user.user?.lastAccessedCommunity?.communityID || '';
-    var encodedCommunityId = communityId ? Buffer.from(communityId).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : '';
+    // Prefer route-resolved community (URL ?c=<encoded>) over session
+    // lastAccessedCommunity so sidebar links match the page the user is on.
+    var communityId = (typeof locals.communityId !== 'undefined' && locals.communityId)
+      ? locals.communityId
+      : (user.user?.lastAccessedCommunity?.communityID || '');
+    var encodedCommunityId = (typeof locals.encodedCommunityId !== 'undefined' && locals.encodedCommunityId)
+      ? locals.encodedCommunityId
+      : (communityId ? Buffer.from(communityId).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : '');
     var communityUrl = encodedCommunityId ? '/community/' + encodedCommunityId : '/communities';
     var username = user.user?.username || 'User';
     var userInitial = username.charAt(0).toUpperCase();
@@ -694,13 +720,15 @@
           <i class="fa fa-map"></i>
           Map
         </a>
-        <a class="cd-nav-item" href="/wallet">
+        <a class="cd-nav-item" href="/wallet<%= encodedCommunityId ? ('?community=' + encodedCommunityId) : '' %>" onclick="return cdRequireCivilian(event, 'wallet')">
           <i class="fa fa-wallet"></i>
           Wallet
+          <% if (new Date() < new Date('2026-05-31')) { %><span class="cd-nav-beta">Beta</span><% } %>
         </a>
-        <a class="cd-nav-item" href="/inbox">
+        <a class="cd-nav-item" href="/inbox<%= encodedCommunityId ? ('?community=' + encodedCommunityId) : '' %>" onclick="return cdRequireCivilian(event, 'inbox')">
           <i class="fa fa-inbox"></i>
           Inbox
+          <% if (new Date() < new Date('2026-05-31')) { %><span class="cd-nav-beta">Beta</span><% } %>
           <span class="dd-nav-badge" id="dd-inbox-count" style="display:none;">0</span>
         </a>
         <a class="cd-nav-item" href="/help">
@@ -882,10 +910,49 @@
       departmentId: _departmentId,
       dbUser: _dbUser,
       userName: _userName,
-      currentTemplateName: 'police'
+      currentTemplateName: 'police',
+      // Community-configured currency (sourced from community.penalCodes;
+      // community.fines is deprecated). Picked up by dd-economy.js's
+      // fmtMoney so wallet/inbox/on-the-clock amounts render with the
+      // community's chosen symbol.
+      currencyCode: <%- JSON.stringify(currencyCode || 'USD') %>,
+      currencySymbol: <%- JSON.stringify(currencySymbol || '$') %>
     };
     window.cdConfig = window.ddConfig;
     window.dbUser = _dbUser;
+
+    // Active-community / civilian flags for cdRequireCivilian (Wallet/Inbox
+    // sidebar gate). command-dashboard is never a civilian template, so the
+    // modal always links out to the community page for civilian creation.
+    window.CD_HAS_CIVILIAN_IN_COMMUNITY = <%= hasCivilianInCommunity ? 'true' : 'false' %>;
+    window.CD_COMMUNITY_NAME = <%- JSON.stringify(communityName || '') %>;
+    window.CD_ENCODED_COMMUNITY_ID = <%- JSON.stringify(encodedCommunityId || '') %>;
+
+    window.cdRequireCivilian = function(event, feature) {
+      if (window.CD_HAS_CIVILIAN_IN_COMMUNITY) return true;
+      if (event && event.preventDefault) event.preventDefault();
+      var featureLabel = feature === 'inbox' ? 'inbox' : 'wallet';
+      var communityLabel = window.CD_COMMUNITY_NAME || 'this community';
+      var buttons = [{ label: 'Not now', class: 'dd-modal-btn-secondary' }];
+      if (window.CD_ENCODED_COMMUNITY_ID) {
+        buttons.push({
+          label: 'Go to civilians', class: 'dd-modal-btn-primary', icon: 'fa-arrow-right',
+          href: '/community/' + window.CD_ENCODED_COMMUNITY_ID + '#civilians-section'
+        });
+      }
+      if (!window.ddModal) return true; // helper not ready yet — let the page render its empty state
+      window.ddModal({
+        type: 'info',
+        icon: 'fa-user-plus',
+        title: 'Create a civilian first',
+        message: 'The ' + featureLabel + ' is tied to a civilian, but you don\'t have one in <strong>' +
+                 String(communityLabel).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}) +
+                 '</strong> yet.',
+        detail: 'Add a civilian in this community to start using the ' + featureLabel + '.',
+        buttons: buttons,
+      });
+      return false;
+    };
 
     // Helpers needed by dd-components.js
     window.esc = function(str) {

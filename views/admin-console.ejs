@@ -45,6 +45,19 @@
         font-family:'Outfit',-apple-system,BlinkMacSystemFont,sans-serif;
         min-height:100vh; overflow-x:hidden;
       }
+      /* Text-selection — the browser default on dark backgrounds was
+         dark-blue-on-near-black, basically invisible. Use the panel's
+         accent purple at ~36% opacity so the highlight reads clearly
+         on every surface (bg, glass cards, input fields) without
+         changing the underlying text color. */
+      body.ac-body ::selection {
+        background: rgba(139, 92, 246, 0.36);
+        color: #ffffff;
+      }
+      body.ac-body ::-moz-selection {
+        background: rgba(139, 92, 246, 0.36);
+        color: #ffffff;
+      }
 
       /* ── Background mesh ── */
       .ac-bg-mesh {
@@ -68,7 +81,7 @@
         background:rgba(12,13,18,0.95); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
         border-right:1px solid var(--ac-glass-border); z-index:100;
         display:flex; flex-direction:column;
-        transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
+        transition:transform 0.3s cubic-bezier(0.4,0,0.2,1), width 0.25s cubic-bezier(0.4,0,0.2,1);
       }
       .ac-sidebar-header { padding:1rem 1.25rem 1rem; border-bottom:1px solid var(--ac-glass-border); }
       .ac-sidebar-brand { display:flex; align-items:center; gap:0.625rem; text-decoration:none; margin-bottom:1rem; }
@@ -78,7 +91,11 @@
       .ac-sidebar-status { font-size:0.75rem; color:var(--ac-text-muted); margin:0; display:flex; align-items:center; gap:0.375rem; }
       .ac-sidebar-status i { font-size:0.5rem; color:var(--ac-green); animation:ac-blink 3s ease-in-out infinite; }
       @keyframes ac-blink { 0%,90%,100%{opacity:1} 95%{opacity:0.3} }
-      .ac-sidebar-nav { flex:1; overflow-y:auto; padding:0.75rem 0; }
+      .ac-sidebar-nav { flex:1; overflow-y:auto; overflow-x:hidden; padding:0.75rem 0; }
+      .ac-sidebar-nav::-webkit-scrollbar { width:4px; }
+      .ac-sidebar-nav::-webkit-scrollbar-track { background:transparent; }
+      .ac-sidebar-nav::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:3px; }
+      .ac-sidebar-nav::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.16); }
       .ac-nav-section { padding:0 0.75rem; margin-bottom:0.5rem; }
       .ac-nav-section-label { font-size:0.625rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--ac-text-dim); padding:0.5rem 0.5rem 0.375rem; font-weight:600; }
       .ac-nav-item {
@@ -93,6 +110,21 @@
       .ac-nav-badge {
         float:right; background:var(--ac-accent); color:#fff; font-size:0.625rem; font-weight:700;
         padding:0.125rem 0.5rem; border-radius:99px; min-width:20px; text-align:center; line-height:1.4;
+      }
+      /* Tiny secondary line under an item label — used to mark owner-only
+         items so admins know at a glance which entries are gated. */
+      .ac-nav-sub {
+        display:block; margin-top:0.2rem; margin-left:1.6875rem;
+        font-size:0.55rem; font-weight:700; letter-spacing:0.08em;
+        text-transform:uppercase; color:var(--ac-text-dim);
+      }
+      .ac-nav-sub-pill {
+        display:inline-block; padding:1px 6px; border-radius:99px;
+        background:rgba(245,158,11,0.12); color:#f59e0b;
+        border:1px solid rgba(245,158,11,0.28);
+      }
+      .ac-nav-item.active .ac-nav-sub-pill {
+        background:rgba(245,158,11,0.18); color:#fbbf24;
       }
       /* "Back to CAD" exit row — visually separated from panel-switching items */
       .ac-nav-exit { margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--ac-glass-border); }
@@ -135,8 +167,57 @@
       }
       .ac-sidebar-close:hover { color:#fff; background:var(--ac-glass-hover); }
 
+      /* ── Sidebar collapse toggle (desktop only) ── */
+      .ac-sidebar-collapse {
+        display:none; width:28px; height:28px; border-radius:var(--ac-radius-sm);
+        background:var(--ac-glass); border:1px solid var(--ac-glass-border);
+        color:var(--ac-text-muted); font-size:0.7rem; cursor:pointer;
+        align-items:center; justify-content:center; flex-shrink:0;
+        transition:all 0.15s;
+      }
+      .ac-sidebar-collapse:hover { color:#fff; background:var(--ac-glass-hover); border-color:rgba(139,92,246,0.4); }
+      @media (min-width:769px) { .ac-sidebar-collapse { display:flex; } }
+
+      /* ── Collapsed sidebar (desktop only) ── */
+      @media (min-width:769px) {
+        body.ac-sidebar-collapsed { --ac-sidebar-w:68px; }
+        body.ac-sidebar-collapsed .ac-sidebar-brand span,
+        body.ac-sidebar-collapsed .ac-sidebar-dept,
+        body.ac-sidebar-collapsed .ac-sidebar-status,
+        body.ac-sidebar-collapsed .ac-nav-section-label,
+        body.ac-sidebar-collapsed .ac-nav-sub,
+        body.ac-sidebar-collapsed .ac-user-info { display:none; }
+        body.ac-sidebar-collapsed .ac-sidebar-header { padding:0.75rem 0.5rem; }
+        body.ac-sidebar-collapsed .ac-sidebar-header > div:first-child { flex-direction:column; gap:0.5rem; margin-bottom:0 !important; align-items:center; }
+        body.ac-sidebar-collapsed .ac-sidebar-brand { margin-bottom:0; justify-content:center; }
+        body.ac-sidebar-collapsed .ac-sidebar-brand img { height:28px; }
+        body.ac-sidebar-collapsed .ac-nav-section { padding:0 0.5rem; }
+        body.ac-sidebar-collapsed .ac-nav-item {
+          font-size:0; padding:0.625rem 0; text-align:center; white-space:nowrap;
+        }
+        body.ac-sidebar-collapsed .ac-nav-item i {
+          font-size:1rem; margin-right:0; width:100%; display:inline-block;
+        }
+        body.ac-sidebar-collapsed .ac-nav-badge {
+          float:none; position:absolute; top:2px; right:6px; min-width:14px;
+          padding:1px 4px; font-size:0.5rem; line-height:1.3;
+        }
+        body.ac-sidebar-collapsed .ac-nav-item[data-label]:hover::after {
+          content:attr(data-label);
+          position:absolute; left:calc(100% + 10px); top:50%; transform:translateY(-50%);
+          background:rgba(20,22,28,0.98); color:#fff; padding:0.375rem 0.625rem;
+          border-radius:var(--ac-radius-sm); border:1px solid var(--ac-glass-border);
+          box-shadow:0 4px 12px rgba(0,0,0,0.4);
+          font-size:0.75rem; font-weight:500; letter-spacing:0; white-space:nowrap; z-index:300;
+          pointer-events:none;
+        }
+        body.ac-sidebar-collapsed .ac-sidebar-footer { padding:0.75rem 0.5rem; }
+        body.ac-sidebar-collapsed .ac-sidebar-user { justify-content:center; padding:0.25rem; }
+        body.ac-sidebar-collapsed .ac-sidebar-actions { justify-content:center; padding:0.5rem 0 0; flex-wrap:wrap; }
+      }
+
       /* ── Main ── */
-      .ac-main { margin-left:var(--ac-sidebar-w); min-height:100vh; position:relative; z-index:1; }
+      .ac-main { margin-left:var(--ac-sidebar-w); min-height:100vh; position:relative; z-index:1; transition:margin-left 0.25s cubic-bezier(0.4,0,0.2,1); }
       .ac-topbar {
         position:sticky; top:0; z-index:50; padding:1rem 2rem;
         background:rgba(8,9,12,0.8); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
@@ -660,6 +741,7 @@
       .ac-footer {
         margin-left:var(--ac-sidebar-w); padding:1.5rem 2rem;
         border-top:1px solid var(--ac-glass-border);
+        transition:margin-left 0.25s cubic-bezier(0.4,0,0.2,1);
       }
       .ac-footer-inner {
         max-width:1200px; margin:0 auto;
@@ -701,13 +783,16 @@
       <i class="fas fa-bars"></i>
     </button>
 
-    <aside class="ac-sidebar">
+    <div class="ac-sidebar">
       <div class="ac-sidebar-header">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
           <a class="ac-sidebar-brand" href="/admin/console" style="margin-bottom:0;">
             <img src="/static/images/dispatch-logo-512.png" alt="LPC">
             <span>Lines Police CAD</span>
           </a>
+          <button class="ac-sidebar-collapse" id="ac-sidebar-collapse-btn" type="button" onclick="acToggleSidebarCollapse()" aria-label="Collapse sidebar" title="Collapse sidebar">
+            <i class="fas fa-angles-left"></i>
+          </button>
           <button class="ac-sidebar-close" onclick="document.querySelector('.ac-sidebar').classList.remove('open'); document.getElementById('ac-sidebar-open').style.display='';">
             <i class="fas fa-times"></i>
           </button>
@@ -724,7 +809,7 @@
         </div>
 
         <div class="ac-nav-section">
-          <div class="ac-nav-section-label">Search</div>
+          <div class="ac-nav-section-label">Lookup</div>
           <div class="ac-nav-item" data-panel="users">
             <i class="fas fa-users"></i> Users
           </div>
@@ -737,25 +822,34 @@
         </div>
 
         <div class="ac-nav-section">
-          <div class="ac-nav-section-label">Management</div>
+          <div class="ac-nav-section-label">Operations</div>
           <div class="ac-nav-item" data-panel="cases">
             <i class="fas fa-briefcase"></i> Cases
           </div>
-          <div class="ac-nav-item" data-panel="wiki">
-            <i class="fas fa-book"></i> Wiki
+          <div class="ac-nav-item" data-panel="subscriptions">
+            <i class="fas fa-receipt"></i> Subscriptions
+          </div>
+          <div class="ac-nav-item" data-panel="metrics">
+            <i class="fas fa-chart-line"></i> Metrics
           </div>
           <div class="ac-nav-item" id="content-creators-tab" data-panel="content-creators" style="display: none;">
             <i class="fas fa-video"></i> Content Creators
             <span id="ccPendingBadge" class="ac-nav-badge" style="display: none;"></span>
           </div>
+          <div class="ac-nav-item" data-panel="wiki">
+            <i class="fas fa-book"></i> Wiki
+          </div>
+        </div>
+
+        <div class="ac-nav-section" id="ac-nav-section-elevated" style="display: none;">
+          <div class="ac-nav-section-label">Elevated</div>
           <div class="ac-nav-item" id="admin-management-tab" data-panel="admin-management" style="display: none;">
             <i class="fas fa-shield-alt"></i> Admin Management
+            <span class="ac-nav-sub"><span class="ac-nav-sub-pill">Owner only</span></span>
           </div>
           <div class="ac-nav-item" id="email-tab" data-panel="email" style="display: none;">
             <i class="fas fa-envelope"></i> Email
-          </div>
-          <div class="ac-nav-item" data-panel="metrics">
-            <i class="fas fa-chart-line"></i> Metrics
+            <span class="ac-nav-sub"><span class="ac-nav-sub-pill">Owner only</span></span>
           </div>
         </div>
 
@@ -785,7 +879,7 @@
           <a href="#" onclick="adminLogout(); return false;" class="ac-sidebar-action ac-logout" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
         </div>
       </div>
-    </aside>
+    </div>
 
     <main class="ac-main">
       <header class="ac-topbar">
@@ -1201,6 +1295,13 @@
               <a class="aw-nav-link" href="#resuming-case">Resuming a Case</a>
               <a class="aw-nav-link" href="#cancelling-case">Cancelling a Case</a>
               <a class="aw-nav-link" href="#viewing-past-cases">Viewing Past Cases</a>
+
+              <div class="aw-nav-group-title">Subscriptions</div>
+              <a class="aw-nav-link" href="#subs-overview">How the Panel Works</a>
+              <a class="aw-nav-link" href="#subs-states">Reading the Banner</a>
+              <a class="aw-nav-link" href="#subs-fix-db">"Fix in DB" Button</a>
+              <a class="aw-nav-link" href="#subs-history">Payment History</a>
+              <a class="aw-nav-link" href="#subs-refunds">Refund Requests</a>
             </div>
 
             <!-- Main Content -->
@@ -1830,6 +1931,197 @@
                 </div>
               </section>
 
+              <!-- ════════════════════════════════════════════ -->
+              <!-- SUBSCRIPTIONS                                -->
+              <!-- ════════════════════════════════════════════ -->
+              <section class="aw-section">
+                <div class="aw-section-header">
+                  <div class="aw-section-icon"><i class="fas fa-receipt"></i></div>
+                  <div>
+                    <div class="aw-section-title">Subscriptions</div>
+                    <div style="font-size:0.8rem; color:var(--ac-text-muted);">Diagnosing user subscription state and handling refund requests</div>
+                  </div>
+                </div>
+
+                <!-- Overview -->
+                <div class="aw-subsection" id="subs-overview">
+                  <h3 class="aw-subsection-title">How the Panel Works</h3>
+                  <p class="aw-text">The Subscriptions panel reconciles three sources of truth into one view: what our database thinks the user is paying for, what RevenueCat reports (iOS / Android), and what Stripe reports (web). The most common support question is "Am I being charged for something I cancelled?" or "I cancelled but still have access" &mdash; this panel answers both at a glance.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Search by email, user ID, or transaction ID</div>
+                        <div class="aw-text">The search bar at the top accepts email, Mongo user ID, Stripe transaction id (<code>sub_...</code>), or Google Play order id (<code>GPA....</code>). Results appear in the left sidebar.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click a result to load the detail view</div>
+                        <div class="aw-text">The detail view has three regions: the status <strong>banner</strong> at the top, a <strong>comparison table</strong> (DB vs live RevenueCat/Stripe), and the <strong>Payment History</strong> timeline below.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Live data is fetched on demand</div>
+                        <div class="aw-text">When you open a user, we hit RevenueCat and Stripe APIs in real time &mdash; nothing is cached. If RevenueCat reports the subscription is active but our DB says otherwise, that mismatch surfaces in the comparison table.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">If the live source shows "No live data" or "User not found in RevenueCat", that just means RevenueCat has no subscriber record for them &mdash; usually the case for legacy Stripe-only or promo users. Not an error.</div>
+                  </div>
+                </div>
+
+                <!-- Banner States -->
+                <div class="aw-subsection" id="subs-states">
+                  <h3 class="aw-subsection-title">Reading the Banner</h3>
+                  <p class="aw-text">The banner is the fastest read on a user's subscription status. There are four states you will see:</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-check" style="color:var(--ac-green);"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Active</div>
+                        <div class="aw-text">User has a paid subscription that is renewing. Verify: <code>plan</code> is one of <code>base / premium / premium_plus</code>, <code>expirationDate</code> is in the future, and live RevenueCat/Stripe both agree the sub is active.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-clock" style="color:var(--subs-warn);"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Active &mdash; cancels in N days</div>
+                        <div class="aw-text">User cancelled but is still inside their paid period. They keep access until <code>expirationDate</code>. <strong>Do nothing</strong> &mdash; this is the expected state for a user mid-cancellation. The expiration handler will downgrade them automatically when the date passes.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-times" style="color:var(--ac-text-dim);"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Cancelled / Inactive</div>
+                        <div class="aw-text">User is on the free plan. Verify: live RevenueCat/Stripe agree the sub is cancelled or expired. If live shows active but DB shows inactive, that's a mismatch &mdash; see "Fix in DB" below.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-exclamation-triangle" style="color:var(--subs-warn);"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Mismatch detected</div>
+                        <div class="aw-text">DB and live data disagree on one or more fields (active, plan, source, transactionId, periodEnd, cancelAt). The mismatched fields are highlighted in the comparison table. A "Fix in DB" button appears in the banner.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Fix in DB -->
+                <div class="aw-subsection" id="subs-fix-db">
+                  <h3 class="aw-subsection-title">The "Fix in DB" Button</h3>
+                  <p class="aw-text">When our database disagrees with the live source of truth (RevenueCat or Stripe), the banner shows a <strong>Fix in DB</strong> button. Clicking it overwrites the user's <code>subscription</code> document with whatever the live source reports &mdash; active state, plan, source, transaction id, purchase/expiration dates &mdash; and writes an audit row to <code>subscription_events</code> with the prior snapshot.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Verify the live source before clicking</div>
+                        <div class="aw-text">Look at the comparison table. The "Live" column shows what RevenueCat / Stripe currently report. If the live source itself looks wrong (e.g. blank, "User not found", or stale), do NOT click Fix &mdash; surface the case in Slack instead. Fix is for cases where the live data is correct and our DB is the one that drifted.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click Fix in DB</div>
+                        <div class="aw-text">The button spins, the write happens, the sidebar and detail view refresh in parallel. After ~1 second the mismatch should be gone and the banner should be green (or "cancels in N days" if applicable).</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">If the mismatch comes back</div>
+                        <div class="aw-text">That means a webhook is overwriting your fix moments later. Stop clicking Fix and escalate &mdash; this signals a bug in webhook handling, not a one-off drift.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Every Fix is logged to <code>subscription_events</code> with <code>provider:"admin"</code> and a snapshot of the prior subscription doc. We can always see what changed, when, and roll it back manually if needed.</div>
+                  </div>
+                </div>
+
+                <!-- Payment History -->
+                <div class="aw-subsection" id="subs-history">
+                  <h3 class="aw-subsection-title">Payment History Timeline</h3>
+                  <p class="aw-text">The Payment History panel below the comparison table merges three sources into one timeline: RevenueCat purchase rows (latest period only per product), Stripe invoices (canonical for web subs), and <code>subscription_events</code> audit rows (every renewal, refund, or admin action). Each row shows the date, product, amount, and source.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Purchases vs renewals</div>
+                        <div class="aw-text">A green amount pill is a successful purchase or renewal. Multiple rows in a row for the same product means the user has been renewing on schedule &mdash; that is healthy.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Refunds</div>
+                        <div class="aw-text">An amber pill labeled "REFUND" indicates the charge was reversed. RevenueCat reports this via the <code>cancel_reason</code> field; Stripe reports it as a separate refund event. If a user says "I never got my refund" but the row shows REFUND, the money was returned to their card &mdash; tell them to check their bank statement (refunds typically take 5&ndash;10 business days to appear).</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Amount shows "$0.00" or "&mdash;"</div>
+                        <div class="aw-text">RevenueCat's v1 API doesn't return price for subscriptions, so we fall back to a hardcoded price table for known SKUs (base/premium/premium_plus). If an amount shows "&mdash;" the SKU isn't in our table &mdash; usually a legacy or promo product. Not necessarily wrong.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Refund Requests -->
+                <div class="aw-subsection" id="subs-refunds">
+                  <h3 class="aw-subsection-title">Handling Refund Requests</h3>
+                  <p class="aw-text">When a user emails or messages support asking for a refund, follow this process. Refunds are not issued automatically &mdash; every request is reviewed.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Acknowledge with the SLA</div>
+                        <div class="aw-text">Reply to the user with: <em>"Thanks for reaching out. Our team reviews refund requests within <strong>5 business days</strong> and will follow up with a decision. We usually respond sooner."</em> Setting the 5-day expectation up front prevents follow-up pings.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Look up the user in this panel</div>
+                        <div class="aw-text">Search by their email. Confirm the subscription exists in our DB and verify the charge they're requesting a refund for is in the Payment History timeline. Note the product, amount, transaction id, and purchase date &mdash; you'll need these for escalation.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Check for an existing refund</div>
+                        <div class="aw-text">Scan the timeline for an amber REFUND pill on that transaction. If one exists, the refund was already issued &mdash; let the user know and point them to their bank statement (5&ndash;10 business days to appear).</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">4</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Escalate to @merrill in Slack</div>
+                        <div class="aw-text">Post in the support channel: <em>"Refund request &mdash; @merrill please review."</em> Include the user email, transaction id, amount, product, purchase date, and the user's stated reason. Merrill will issue the refund through the store dashboard (App Store Connect / Play Console / Stripe) and, where the store doesn't auto-cancel, manually cancel the subscription too.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">5</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Follow up with the user</div>
+                        <div class="aw-text">Once Merrill confirms the refund was issued, reply to the user with the outcome. If it was denied (rare), include the reason. If approved, set expectations on bank-statement timing.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">We can't refund Google Play or App Store purchases through our admin tools &mdash; those must be issued via the store dashboards by Merrill. Stripe refunds can be issued from the Stripe dashboard. Either way, escalation is required.</div>
+                  </div>
+                </div>
+              </section>
+
             </div><!-- /.aw-content -->
           </div><!-- /.aw-layout -->
         </div>
@@ -2258,6 +2550,1031 @@
 
         </div>
 
+        <!-- Panel: Subscriptions (user-centric dashboard) -->
+        <style> goes inside (or just above) that panel; classes are subs-* scoped
+               - <script> replaces the existing initSubscriptionsPanel implementation
+               ======================================================================= -->
+
+
+          <!-- ===================== HTML BLOCK ===================== -->
+        <style>
+            /* ========== Subscriptions panel — financial-terminal aesthetic ========== */
+            /* styles.css ships landing-page rules that pad EVERY
+               <section> (padding:100px 0; min-height:600px @≥768px) and
+               <aside> (padding:50px 0) globally. That's what was
+               creating 100+px dead zones around our cards and the
+               sidebar. Override here so semantic elements rendered
+               inside the subscriptions panel start from zero — the
+               specific .subs-* classes can then apply real padding
+               where they want it. */
+            #panel-subscriptions section,
+            #panel-subscriptions aside {
+              min-height: 0 !important;
+              padding: 0 !important;
+            }
+
+            #panel-subscriptions {
+              --subs-warn: #f59e0b;
+              --subs-warn-strong: #fbbf24;
+              --subs-warn-bg: rgba(245, 158, 11, 0.08);
+              --subs-warn-border: rgba(245, 158, 11, 0.32);
+              --subs-ok: var(--ac-green, #10b981);
+              --subs-err: #f87171;
+              --subs-rule: rgba(255, 255, 255, 0.06);
+              --subs-rule-strong: rgba(255, 255, 255, 0.1);
+              --subs-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
+            }
+
+            .subs-shell {
+              display: flex;
+              flex-direction: column;
+              gap: 1rem;
+              min-height: 600px;
+            }
+
+            /* ----- Sticky search bar -----
+               Transparent by default so it doesn't paint a darker rectangle
+               around the rounded search input. We only paint a backdrop
+               when the bar has actually scrolled away from its anchor — a
+               tiny shadow + blur make text underneath legible without the
+               flat "dark square behind the bar" artifact.                  */
+            .subs-search {
+              position: sticky;
+              top: 0;
+              z-index: 2;
+              padding: 0 0 0.5rem;
+              background: transparent;
+            }
+            /* No is-stuck visual chrome — the input's own glass background
+               carries the bar; a separate dark band on scroll just paints a
+               visible rectangle in the surrounding panel. Keep sticky
+               positioning, drop the bg/shadow. */
+
+            .subs-search-bar {
+              display: flex;
+              align-items: center;
+              gap: 0.625rem;
+              background: var(--ac-glass);
+              border: 1px solid var(--ac-glass-border);
+              border-radius: 12px;
+              padding: 0 1rem;
+              height: 52px;
+              transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.2s ease;
+            }
+
+            .subs-search-bar:focus-within {
+              border-color: rgba(139, 92, 246, 0.5);
+              background: var(--ac-glass-hover);
+              box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.08);
+            }
+
+            .subs-search-icon { color: var(--ac-text-dim); font-size: 0.9rem; }
+
+            .subs-search-input {
+              flex: 1;
+              background: transparent;
+              border: 0;
+              outline: 0;
+              color: var(--ac-text);
+              font-size: 0.95rem;
+              font-family: inherit;
+              letter-spacing: -0.005em;
+            }
+            .subs-search-input::placeholder { color: var(--ac-text-dim); }
+
+            .subs-search-clear {
+              display: none;
+              align-items: center;
+              justify-content: center;
+              width: 22px;
+              height: 22px;
+              padding: 0;
+              margin: 0;
+              border: 0;
+              border-radius: 50%;
+              background: rgba(255, 255, 255, 0.08);
+              color: var(--ac-text-dim);
+              font-size: 0.7rem;
+              cursor: pointer;
+              transition: background 0.12s ease, color 0.12s ease;
+            }
+            .subs-search-clear:hover {
+              background: rgba(255, 255, 255, 0.16);
+              color: #fff;
+            }
+            .subs-search-clear.is-visible { display: inline-flex; }
+
+            .subs-search-kbd {
+              font-family: var(--subs-mono);
+              font-size: 0.6875rem;
+              color: var(--ac-text-dim);
+              padding: 2px 6px;
+              border: 1px solid var(--subs-rule-strong);
+              border-radius: 4px;
+              letter-spacing: 0.04em;
+            }
+
+            /* ----- Two-column layout ----- */
+            .subs-layout {
+              display: grid;
+              grid-template-columns: minmax(280px, 340px) 1fr;
+              gap: 1rem;
+              align-items: start;
+            }
+            @media (max-width: 1099px) {
+              .subs-layout { grid-template-columns: 1fr; }
+            }
+
+            /* ----- Results sidebar -----
+               align-self: start so the sidebar hugs its own content and
+               doesn't get stretched to match the (much taller) detail
+               pane's row track. max-height + internal scroll still kicks
+               in for long lists, but a single-row result no longer leaves
+               a half-screen of dead space underneath.                     */
+            .subs-sidebar {
+              align-self: start;
+              background: var(--ac-glass);
+              border: 1px solid var(--ac-glass-border);
+              border-radius: var(--ac-radius, 12px);
+              overflow: hidden;
+              position: sticky;
+              top: 76px;
+              max-height: calc(100vh - 100px);
+              display: flex;
+              flex-direction: column;
+            }
+
+            .subs-sidebar-head {
+              display: flex;
+              justify-content: space-between;
+              align-items: baseline;
+              padding: 0.875rem 1rem;
+              border-bottom: 1px solid var(--subs-rule);
+            }
+
+            .subs-section-label {
+              font-size: 0.6875rem;
+              font-weight: 700;
+              letter-spacing: 0.14em;
+              text-transform: uppercase;
+              color: var(--ac-text-muted);
+            }
+
+            .subs-section-count {
+              font-size: 0.6875rem;
+              color: var(--ac-text-dim);
+              font-variant-numeric: tabular-nums;
+              font-family: var(--subs-mono);
+            }
+
+            .subs-results {
+              overflow-y: auto;
+            }
+
+            .subs-result {
+              display: block;
+              padding: 0.75rem 1rem;
+              border-left: 2px solid transparent;
+              cursor: pointer;
+              transition: background 0.12s ease, border-color 0.12s ease;
+              position: relative;
+            }
+            .subs-result + .subs-result { border-top: 1px solid var(--subs-rule); }
+            .subs-result:hover { background: var(--ac-glass-hover); }
+            .subs-result.is-active {
+              background: var(--ac-glass-hover);
+              border-left-color: var(--ac-accent, #8b5cf6);
+            }
+
+            .subs-result-row1 {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              font-size: 0.875rem;
+            }
+            .subs-result-email {
+              font-weight: 500;
+              color: var(--ac-text);
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              flex: 1;
+              letter-spacing: -0.005em;
+            }
+            .subs-result-row2 {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              margin-top: 0.375rem;
+              font-size: 0.6875rem;
+              color: var(--ac-text-muted);
+            }
+            .subs-result-dot {
+              width: 3px; height: 3px; border-radius: 50%;
+              background: var(--ac-text-dim); display: inline-block;
+            }
+            .subs-result-ago {
+              margin-left: auto;
+              font-variant-numeric: tabular-nums;
+              font-family: var(--subs-mono);
+              color: var(--ac-text-dim);
+              letter-spacing: 0.02em;
+            }
+
+            /* ----- Reusable pills ----- */
+            .subs-pill {
+              display: inline-flex;
+              align-items: center;
+              gap: 0.3rem;
+              padding: 2px 7px;
+              border-radius: 4px;
+              font-size: 0.625rem;
+              font-weight: 700;
+              letter-spacing: 0.06em;
+              text-transform: uppercase;
+              background: rgba(255, 255, 255, 0.04);
+              color: var(--ac-text-muted);
+              border: 1px solid var(--subs-rule);
+              font-family: var(--subs-mono);
+            }
+            .subs-pill--active {
+              background: rgba(16, 185, 129, 0.12);
+              color: var(--subs-ok);
+              border-color: rgba(16, 185, 129, 0.3);
+            }
+            .subs-pill--inactive { color: var(--ac-text-dim); }
+            .subs-pill--free { color: var(--ac-text-dim); }
+            .subs-pill--premium {
+              color: #c084fc;
+              border-color: rgba(192, 132, 252, 0.3);
+              background: rgba(192, 132, 252, 0.08);
+            }
+            .subs-pill--premium_plus {
+              color: #e879f9;
+              border-color: rgba(232, 121, 249, 0.3);
+              background: rgba(232, 121, 249, 0.08);
+            }
+            .subs-pill--base {
+              color: #60a5fa;
+              border-color: rgba(96, 165, 250, 0.3);
+              background: rgba(96, 165, 250, 0.08);
+            }
+
+            /* ----- Detail pane shell ----- */
+            .subs-detail {
+              background: var(--ac-glass);
+              border: 1px solid var(--ac-glass-border);
+              border-radius: var(--ac-radius, 12px);
+              position: relative;
+            }
+            /* Only the empty / loading / error placeholders need the
+               520px tall pane — when real content renders, the card hugs
+               its content so we don't leave a giant dead zone below. */
+            .subs-detail:has(.subs-detail-state) { min-height: 520px; }
+
+            .subs-detail-state {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              padding: 4rem 2rem;
+              min-height: 520px;
+              text-align: center;
+            }
+
+            .subs-empty-icon {
+              width: 64px; height: 64px; border-radius: 50%;
+              display: grid; place-items: center;
+              background: var(--ac-glass-hover);
+              border: 1px solid var(--subs-rule);
+              color: var(--ac-text-dim);
+              font-size: 1.5rem;
+              margin-bottom: 1rem;
+            }
+            .subs-empty-icon--err { color: var(--subs-err); border-color: rgba(248, 113, 113, 0.3); }
+            .subs-empty-icon--load { color: var(--ac-accent, #8b5cf6); border-color: rgba(139, 92, 246, 0.3); }
+
+            .subs-empty-title {
+              font-size: 0.95rem;
+              font-weight: 600;
+              color: var(--ac-text);
+              margin-bottom: 0.375rem;
+              letter-spacing: -0.005em;
+            }
+            .subs-empty-body {
+              font-size: 0.8125rem;
+              color: var(--ac-text-muted);
+              max-width: 38ch;
+              line-height: 1.55;
+            }
+
+            .subs-results-state {
+              padding: 2.5rem 1.25rem;
+              text-align: center;
+              /* Flex column so the 64x64 icon block auto-centers
+                 horizontally alongside the text. Without this, the
+                 icon hugs the left edge while the text stays centered. */
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+            }
+
+            /* ----- Detail content (slides in) ----- */
+            /* Flex column + explicit gap so child spacing is 100%
+               predictable. Margin-collapsing across sections + headers
+               was producing ~100px dead zones in some browsers; with
+               flex gap, every child sits exactly 14px from the next. */
+            .subs-detail-content {
+              animation: subs-fade-in 0.28s cubic-bezier(0.2, 0, 0.2, 1);
+              display: flex;
+              flex-direction: column;
+              gap: 0.875rem;
+            }
+            .subs-detail-content > * { margin: 0 !important; }
+            .subs-detail-content > .subs-user-head { margin: 0 0 0.25rem !important; }
+            .subs-detail-content > .subs-banner,
+            .subs-detail-content > .subs-section { margin: 0 1.25rem !important; }
+            @keyframes subs-fade-in {
+              from { opacity: 0; transform: translateY(6px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+
+            .subs-user-head {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 1rem;
+              padding: 1.25rem 1.5rem;
+              border-bottom: 1px solid var(--subs-rule);
+              /* Atmospheric hero image with a strong dark gradient overlay
+                 for text contrast. Image matches the marketing site so the
+                 admin surface feels of-a-piece with the product. The
+                 explicit background here also overrides any bleed-through
+                 from semi-transparent parent panels. */
+              background:
+                linear-gradient(135deg, rgba(8,9,12,0.88) 0%, rgba(8,9,12,0.75) 100%),
+                url('/static/static/images/landing-bg.jpg') center/cover no-repeat;
+            }
+
+            .subs-user-identity {
+              display: flex;
+              align-items: center;
+              gap: 0.875rem;
+              min-width: 0;
+            }
+
+            .subs-user-avatar {
+              flex: 0 0 auto;
+              width: 38px; height: 38px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, rgba(139,92,246,0.18), rgba(59,130,246,0.18));
+              display: grid; place-items: center;
+              font-size: 0.95rem;
+              font-weight: 600;
+              color: var(--ac-text);
+              border: 1px solid var(--subs-rule-strong);
+            }
+
+            .subs-user-meta { min-width: 0; }
+
+            .subs-user-name {
+              font-size: 0.95rem;
+              font-weight: 600;
+              color: var(--ac-text);
+              letter-spacing: -0.01em;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              /* Slight edge against the photographic background — keeps
+                 the type crisp across bright + dark patches of the image. */
+              text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            }
+
+            .subs-user-id {
+              font-family: var(--subs-mono);
+              font-size: 0.6875rem;
+              color: var(--ac-text-dim);
+              margin-top: 3px;
+              letter-spacing: 0.02em;
+              text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            }
+
+            .subs-user-actions {
+              display: flex;
+              gap: 0.5rem;
+              align-items: center;
+              flex-shrink: 0;
+            }
+
+            .subs-icon-btn {
+              width: 32px; height: 32px;
+              border-radius: 6px;
+              background: var(--ac-glass-hover);
+              border: 1px solid var(--subs-rule);
+              color: var(--ac-text-muted);
+              cursor: pointer;
+              display: grid; place-items: center;
+              transition: all 0.15s ease;
+              font-size: 0.8125rem;
+            }
+            .subs-icon-btn:hover {
+              background: rgba(139, 92, 246, 0.15);
+              border-color: rgba(139, 92, 246, 0.3);
+              color: var(--ac-text);
+            }
+
+            /* ----- Status banner ----- */
+            .subs-banner {
+              margin: 0.875rem 1.25rem 0;
+              display: flex;
+              align-items: center;
+              gap: 1rem;
+              padding: 0.875rem 1rem 0.875rem 1.125rem;
+              border-radius: 10px;
+              border: 1px solid;
+              position: relative;
+            }
+
+            .subs-banner--ok {
+              background: rgba(16, 185, 129, 0.06);
+              border-color: rgba(16, 185, 129, 0.22);
+            }
+            .subs-banner--warn {
+              background: var(--subs-warn-bg);
+              border-color: var(--subs-warn-border);
+              box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.18);
+              animation: subs-banner-pulse 2.6s ease-in-out infinite;
+            }
+            @keyframes subs-banner-pulse {
+              0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.22); }
+              50%      { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+            }
+
+            .subs-banner-icon {
+              flex: 0 0 auto;
+              width: 36px; height: 36px;
+              border-radius: 50%;
+              display: grid; place-items: center;
+              font-size: 0.95rem;
+            }
+            .subs-banner--ok .subs-banner-icon {
+              background: rgba(16, 185, 129, 0.16);
+              color: var(--subs-ok);
+            }
+            .subs-banner--warn .subs-banner-icon {
+              background: rgba(245, 158, 11, 0.18);
+              color: var(--subs-warn);
+            }
+
+            .subs-banner-body { flex: 1; min-width: 0; }
+            .subs-banner-title {
+              font-size: 0.875rem;
+              font-weight: 600;
+              color: var(--ac-text);
+              letter-spacing: -0.01em;
+            }
+            .subs-banner--ok .subs-banner-title { color: var(--subs-ok); }
+            .subs-banner--warn .subs-banner-title { color: var(--subs-warn-strong); }
+            .subs-banner-sub {
+              font-size: 0.75rem;
+              color: var(--ac-text-muted);
+              margin-top: 3px;
+              font-variant-numeric: tabular-nums;
+              line-height: 1.4;
+            }
+
+            /* Hostile global cascade keeps stripping the button background
+               (Bootstrap-reboot interactions, button::-webkit-appearance,
+               etc.). Hex fallbacks + !important to defeat anything that
+               re-paints the button transparent or dark-on-dark. */
+            .subs-banner .subs-fix-btn,
+            .subs-fix-btn {
+              display: inline-flex !important;
+              align-items: center;
+              gap: 0.5rem;
+              padding: 0.55rem 0.9rem;
+              border-radius: 8px !important;
+              background: #f59e0b !important;
+              background-image: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%) !important;
+              color: #1a1206 !important;
+              border: 1px solid #d97706 !important;
+              font-size: 0.8125rem;
+              font-weight: 700;
+              letter-spacing: -0.005em;
+              cursor: pointer;
+              transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+              font-family: inherit;
+              white-space: nowrap;
+              text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+              box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 12px -4px rgba(245,158,11,0.45);
+            }
+            .subs-banner .subs-fix-btn:hover:not(:disabled),
+            .subs-fix-btn:hover:not(:disabled) {
+              filter: brightness(1.08);
+              transform: translateY(-1px);
+              box-shadow: 0 1px 0 rgba(255,255,255,0.22) inset, 0 8px 18px -4px rgba(245,158,11,0.6) !important;
+            }
+            .subs-fix-btn:disabled {
+              opacity: 0.7;
+              cursor: wait;
+              transform: none;
+            }
+            .subs-fix-btn .fa-spinner { animation: subs-spin 0.7s linear infinite; }
+            @keyframes subs-spin { to { transform: rotate(360deg); } }
+
+            /* ----- Side-by-side comparison ----- */
+            .subs-compare {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 1px;
+              margin: 0;
+              background: var(--subs-rule);
+              border-radius: 10px;
+              border: 1px solid var(--subs-rule);
+              overflow: hidden;
+            }
+            @media (max-width: 720px) {
+              .subs-compare { grid-template-columns: 1fr; }
+            }
+            /* Solo mode — when only one side has data, span full width
+               and pack the fields into a 2-col grid so 10 rows become 5. */
+            .subs-compare--solo { grid-template-columns: 1fr; }
+            .subs-compare--solo .subs-field-list {
+              display: grid;
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+              column-gap: 1.25rem;
+              row-gap: 0.5rem;
+            }
+            @media (max-width: 600px) {
+              .subs-compare--solo .subs-field-list { grid-template-columns: 1fr; }
+            }
+            .subs-compare-soloflag {
+              display: inline-flex;
+              align-items: center;
+              gap: 0.4rem;
+              font-size: 0.6875rem;
+              color: var(--ac-text-dim);
+              font-style: italic;
+            }
+            .subs-compare-soloflag::before {
+              content: '';
+              width: 5px;
+              height: 5px;
+              border-radius: 50%;
+              background: var(--ac-text-dim);
+              opacity: 0.6;
+            }
+            .subs-compare-soloflag--warn {
+              color: var(--subs-warn-strong);
+              font-style: normal;
+              font-weight: 600;
+              cursor: help;
+            }
+            .subs-compare-soloflag--warn::before {
+              background: var(--subs-warn);
+              opacity: 1;
+            }
+            .subs-live-note {
+              display: flex;
+              align-items: flex-start;
+              gap: 0.5rem;
+              padding: 0.625rem 0.875rem;
+              margin-bottom: 0.625rem;
+              border-radius: 8px;
+              background: var(--subs-warn-bg);
+              border: 1px solid var(--subs-warn-border);
+              color: var(--subs-warn-strong);
+              font-size: 0.75rem;
+              line-height: 1.45;
+            }
+            .subs-live-note i { padding-top: 2px; opacity: 0.85; }
+
+            .subs-compare-col {
+              background: var(--ac-bg, #0a0a0a);
+              padding: 1rem 1.125rem 1.125rem;
+            }
+
+            .subs-compare-head {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 0.625rem;
+              padding-bottom: 0.75rem;
+              border-bottom: 1px solid var(--subs-rule);
+            }
+            .subs-compare-tag {
+              font-family: var(--subs-mono);
+              font-size: 0.625rem;
+              padding: 2px 6px;
+              border-radius: 4px;
+              background: var(--ac-glass-hover);
+              color: var(--ac-text-dim);
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+            }
+
+            .subs-field-list { display: flex; flex-direction: column; }
+
+            .subs-field {
+              display: grid;
+              grid-template-columns: 88px 1fr;
+              gap: 0.5rem;
+              padding: 0.3125rem 0.5rem;
+              margin: 0 -0.5rem;
+              border-bottom: 1px dashed var(--subs-rule);
+              font-size: 0.8125rem;
+              border-radius: 0 4px 4px 0;
+              position: relative;
+              transition: background 0.15s ease;
+            }
+            .subs-field:last-child { border-bottom: 0; }
+            /* In solo mode each row sits in its own grid cell, so the
+               per-field bottom border doubles up with the grid row-gap.
+               Drop it and let the grid spacing alone carry the rhythm. */
+            .subs-compare--solo .subs-field {
+              border-bottom: 0;
+              padding: 0.125rem 0;
+              margin: 0;
+            }
+
+            .subs-field--mismatch {
+              background: var(--subs-warn-bg);
+              box-shadow: inset 2px 0 0 var(--subs-warn);
+            }
+
+            .subs-field-key {
+              font-size: 0.6875rem;
+              letter-spacing: 0.06em;
+              text-transform: uppercase;
+              color: var(--ac-text-dim);
+              font-weight: 600;
+              padding-top: 2px;
+            }
+            .subs-field-value {
+              font-size: 0.8125rem;
+              color: var(--ac-text);
+              font-variant-numeric: tabular-nums;
+              word-break: break-word;
+              line-height: 1.35;
+            }
+            .subs-field-value-dim { color: var(--ac-text-dim); font-style: italic; }
+            .subs-field-value-mono {
+              font-family: var(--subs-mono);
+              font-size: 0.75rem;
+              letter-spacing: 0.01em;
+            }
+            .subs-field--mismatch .subs-field-value {
+              color: var(--subs-warn-strong);
+              font-weight: 500;
+            }
+
+            /* ----- Payment timeline -----
+               Spacing now controlled by the flex gap on
+               .subs-detail-content; sections only contribute a top
+               hairline rule when they're not the first. */
+            .subs-section + .subs-section { border-top: 1px solid var(--subs-rule); padding-top: 0.875rem; }
+
+            .subs-section-head {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 0.75rem;
+              padding: 0 0 0.625rem;
+            }
+            /* Real section title — mixed case, prose-style, with a leading
+               icon. Distinct from the small uppercase tracked labels used for
+               sub-elements so the eye can tell "section" from "sub-label". */
+            .subs-section-title {
+              display: inline-flex;
+              align-items: center;
+              gap: 0.5rem;
+              font-size: 0.9375rem;
+              font-weight: 600;
+              color: var(--ac-text);
+              letter-spacing: -0.005em;
+            }
+            .subs-section-title-icon {
+              display: inline-grid;
+              place-items: center;
+              width: 22px;
+              height: 22px;
+              border-radius: 6px;
+              background: var(--ac-glass-hover);
+              border: 1px solid var(--subs-rule);
+              color: var(--ac-text-muted);
+              font-size: 0.6875rem;
+            }
+            .subs-section-meta {
+              font-size: 0.6875rem;
+              color: var(--ac-text-dim);
+              font-variant-numeric: tabular-nums;
+              font-family: var(--subs-mono);
+              letter-spacing: 0.02em;
+              text-align: right;
+            }
+
+            .subs-timeline {
+              border-top: 1px solid var(--subs-rule);
+            }
+
+            .subs-timeline-month {
+              display: flex;
+              align-items: center;
+              gap: 0.75rem;
+              padding: 0.875rem 0 0.375rem;
+              font-size: 0.6875rem;
+              font-weight: 700;
+              letter-spacing: 0.12em;
+              text-transform: uppercase;
+              color: var(--ac-text-dim);
+            }
+            .subs-timeline-month::after {
+              content: '';
+              flex: 1;
+              height: 1px;
+              background: var(--subs-rule);
+            }
+
+            .subs-payment {
+              display: grid;
+              grid-template-columns: 64px 1fr auto 80px;
+              align-items: center;
+              gap: 0.875rem;
+              padding: 0.625rem 0.5rem;
+              margin: 0 -0.5rem;
+              border-radius: 6px;
+              font-size: 0.8125rem;
+              transition: background 0.12s ease;
+              border-bottom: 1px solid var(--subs-rule);
+            }
+            .subs-payment:hover { background: var(--ac-glass-hover); }
+
+            .subs-payment-date { font-variant-numeric: tabular-nums; }
+            .subs-payment-date-day {
+              font-weight: 600;
+              font-size: 1.0625rem;
+              line-height: 1;
+              color: var(--ac-text);
+              font-family: var(--subs-mono);
+              letter-spacing: -0.01em;
+            }
+            .subs-payment-date-rest {
+              font-size: 0.625rem;
+              color: var(--ac-text-dim);
+              margin-top: 4px;
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+              font-weight: 600;
+            }
+
+            .subs-payment-main { display: flex; flex-direction: column; min-width: 0; }
+
+            .subs-payment-label {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              font-size: 0.8125rem;
+              color: var(--ac-text);
+            }
+            .subs-payment-sourcelabel {
+              font-family: var(--subs-mono);
+              font-size: 0.625rem;
+              font-weight: 700;
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+              color: var(--ac-text-muted);
+            }
+            .subs-payment-plan {
+              font-size: 0.75rem;
+              color: var(--ac-text-muted);
+            }
+            .subs-payment-ref {
+              font-family: var(--subs-mono);
+              font-size: 0.6875rem;
+              color: var(--ac-text-dim);
+              margin-top: 3px;
+              word-break: break-all;
+              letter-spacing: 0.01em;
+            }
+            .subs-payment-period {
+              font-size: 0.6875rem;
+              color: var(--ac-text-muted);
+              margin-top: 2px;
+              font-variant-numeric: tabular-nums;
+              letter-spacing: 0.01em;
+            }
+            .subs-payment-active {
+              display: inline-flex;
+              align-items: center;
+              padding: 1px 7px;
+              border-radius: 999px;
+              font-size: 0.625rem;
+              font-weight: 700;
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+              color: var(--subs-ok);
+              background: rgba(16,185,129,0.12);
+              border: 1px solid rgba(16,185,129,0.35);
+            }
+
+            .subs-payment-amount {
+              font-variant-numeric: tabular-nums;
+              font-feature-settings: 'tnum';
+              font-weight: 600;
+              font-size: 0.95rem;
+              color: var(--ac-text);
+              text-align: right;
+              letter-spacing: -0.01em;
+              font-family: var(--subs-mono);
+            }
+            .subs-payment-amount-cur {
+              font-size: 0.625rem;
+              color: var(--ac-text-dim);
+              font-weight: 600;
+              margin-left: 0.25rem;
+              letter-spacing: 0.08em;
+            }
+            .subs-payment-status { text-align: right; }
+
+            /* Source marks */
+            .subs-source-mark {
+              width: 16px; height: 16px;
+              border-radius: 4px;
+              display: inline-grid; place-items: center;
+              font-size: 0.625rem;
+              font-weight: 800;
+              color: white;
+              font-family: var(--subs-mono);
+              flex-shrink: 0;
+            }
+            .subs-source-mark--stripe { background: #635bff; }
+            .subs-source-mark--revenuecat { background: #db4d4d; }
+
+            /* Status pills */
+            .subs-status-pill {
+              display: inline-flex;
+              align-items: center;
+              padding: 2px 7px;
+              border-radius: 3px;
+              font-size: 0.625rem;
+              font-weight: 700;
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+              font-family: var(--subs-mono);
+            }
+            .subs-status-pill--paid     { background: rgba(16, 185, 129, 0.14); color: var(--subs-ok); }
+            .subs-status-pill--purchase { background: rgba(139, 92, 246, 0.14); color: #c4b5fd; }
+            .subs-status-pill--failed   { background: rgba(239, 68, 68, 0.14); color: var(--subs-err); }
+            .subs-status-pill--refunded {
+              background: rgba(245, 158, 11, 0.16);
+              color: var(--subs-warn-strong);
+              border: 1px solid rgba(245, 158, 11, 0.32);
+            }
+            .subs-status-pill--void     { background: rgba(255, 255, 255, 0.06); color: var(--ac-text-dim); }
+            .subs-status-pill--default  { background: rgba(255, 255, 255, 0.05); color: var(--ac-text-muted); }
+
+            /* Expand more */
+            .subs-show-more {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 0.5rem;
+              padding: 0.875rem;
+              background: transparent;
+              border: 0;
+              color: var(--ac-text-muted);
+              font-size: 0.75rem;
+              font-weight: 600;
+              letter-spacing: 0.06em;
+              text-transform: uppercase;
+              cursor: pointer;
+              width: 100%;
+              margin-top: 0.25rem;
+              border-top: 1px solid var(--subs-rule);
+              transition: color 0.15s ease, background 0.15s ease;
+            }
+            .subs-show-more:hover {
+              color: var(--ac-accent, #8b5cf6);
+              background: var(--ac-glass-hover);
+            }
+
+            /* Toast */
+            .subs-toast {
+              position: fixed;
+              bottom: 1.5rem;
+              right: 1.5rem;
+              background: var(--ac-bg, #0a0a0a);
+              border: 1px solid var(--subs-rule-strong);
+              border-radius: 10px;
+              padding: 0.875rem 1.125rem;
+              display: flex;
+              align-items: center;
+              gap: 0.625rem;
+              font-size: 0.8125rem;
+              color: var(--ac-text);
+              box-shadow: 0 16px 40px -8px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+              animation: subs-toast-in 0.28s cubic-bezier(0.2, 0, 0.2, 1);
+              z-index: 9999;
+              max-width: 360px;
+            }
+            .subs-toast--ok    { border-color: rgba(16, 185, 129, 0.4); }
+            .subs-toast--error { border-color: rgba(248, 113, 113, 0.4); }
+            .subs-toast-icon--ok    { color: var(--subs-ok); }
+            .subs-toast-icon--error { color: var(--subs-err); }
+            @keyframes subs-toast-in {
+              from { opacity: 0; transform: translateY(10px); }
+              to   { opacity: 1; transform: translateY(0); }
+            }
+
+            /* Loading skeletons */
+            .subs-skeleton {
+              background: linear-gradient(90deg, var(--ac-glass-hover) 25%, var(--ac-glass) 50%, var(--ac-glass-hover) 75%);
+              background-size: 200% 100%;
+              animation: subs-shimmer 1.5s linear infinite;
+              border-radius: 4px;
+            }
+            @keyframes subs-shimmer {
+              0%   { background-position: 200% 0; }
+              100% { background-position: -200% 0; }
+            }
+            .subs-results-skel { padding: 0.875rem; }
+            .subs-results-skel .subs-skeleton {
+              height: 44px;
+              margin-bottom: 0.5rem;
+            }
+        </style>
+        <div class="ac-panel" id="panel-subscriptions">
+          <div class="subs-shell">
+
+            <!-- Sticky search header -->
+            <div class="subs-search">
+              <label class="subs-search-bar" for="subs-q">
+                <i class="fas fa-search subs-search-icon"></i>
+                <input
+                  type="text"
+                  id="subs-q"
+                  class="subs-search-input"
+                  placeholder="Search a customer by email or username…"
+                  autocomplete="off"
+                  spellcheck="false"
+                  data-testid="subs-search-input"
+                />
+                <button
+                  type="button"
+                  id="subs-q-clear"
+                  class="subs-search-clear"
+                  title="Clear search"
+                  aria-label="Clear search"
+                  data-testid="subs-search-clear"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+                <span class="subs-search-kbd">/ to focus</span>
+              </label>
+            </div>
+
+            <!-- Two-column work surface -->
+            <div class="subs-layout">
+
+              <!-- Left: results list. <div> not <aside> on purpose —
+                   styles.css ships a global `aside { padding: 50px 0 }`
+                   landing-page rule that adds 100px of vertical padding
+                   to every aside, even when overridden via specific
+                   selectors (browser was ignoring our !important rule
+                   in some cascade orderings). Sidestep entirely. -->
+              <div class="subs-sidebar">
+                <div class="subs-sidebar-head">
+                  <span class="subs-section-label" id="subs-results-title">Search</span>
+                  <span class="subs-section-count" id="subs-results-count"></span>
+                </div>
+                <div class="subs-results" id="subs-results" data-testid="subs-results">
+                  <div class="subs-results-state">
+                    <div class="subs-empty-icon"><i class="fas fa-search"></i></div>
+                    <div class="subs-empty-title">Find a customer</div>
+                    <div class="subs-empty-body">
+                      Type at least 2 characters to search by email or username.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: detail pane (div not main — defensive against
+                   any global element-level rules in styles.css) -->
+              <div class="subs-detail" id="subs-detail" data-testid="subs-detail">
+                <div class="subs-detail-state">
+                  <div class="subs-empty-icon"><i class="fas fa-user"></i></div>
+                  <div class="subs-empty-title">No customer selected</div>
+                  <div class="subs-empty-body">
+                    Pick a result on the left to see their live subscription state,
+                    DB record, and full payment history.
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
       </div><!-- end ac-content -->
     </main>
 
@@ -2580,7 +3897,8 @@
         'admin-management': 'Admin Management',
         'email': 'Email',
         'metrics': 'Metrics',
-        'wiki': 'Wiki'
+        'wiki': 'Wiki',
+        'subscriptions': 'Subscriptions'
       };
 
       // Data-load callbacks for lazy-loaded panels
@@ -2589,6 +3907,7 @@
         'admin-management': function() { if (typeof loadAllAdmins === 'function') loadAllAdmins(); },
         'content-creators': function() { if (typeof loadCCApplications === 'function') { loadCCApplications(); loadCCStats(); } },
         'metrics': function() { loadMetricsPanel(); },
+        'subscriptions': function() { initSubscriptionsPanel(); },
         'cases': function() {
           var hash = window.location.hash.replace('#', '');
           // Handle cases/N deep link
@@ -2652,7 +3971,44 @@
             if (panel) acNavTo(panel);
           });
         });
+
+        // Seed data-label for tooltips when sidebar is collapsed.
+        // Clone the node and strip badges/sub-pills so the tooltip is just the item label.
+        document.querySelectorAll('.ac-sidebar-nav .ac-nav-item').forEach(function(item) {
+          if (item.hasAttribute('data-label')) return;
+          var clone = item.cloneNode(true);
+          clone.querySelectorAll('.ac-nav-badge, .ac-nav-sub').forEach(function(el) { el.remove(); });
+          var label = (clone.textContent || '').replace(/\s+/g, ' ').trim();
+          if (label) item.setAttribute('data-label', label);
+        });
+
+        // Restore collapsed state from localStorage (desktop only)
+        try {
+          if (window.innerWidth >= 769 && localStorage.getItem('ac-sidebar-collapsed') === '1') {
+            document.body.classList.add('ac-sidebar-collapsed');
+            acSyncCollapseBtn(true);
+          }
+        } catch (e) { /* localStorage may be disabled */ }
       });
+
+      function acSyncCollapseBtn(collapsed) {
+        var btn = document.getElementById('ac-sidebar-collapse-btn');
+        if (!btn) return;
+        var icon = btn.querySelector('i');
+        if (icon) {
+          icon.classList.toggle('fa-angles-left', !collapsed);
+          icon.classList.toggle('fa-angles-right', collapsed);
+        }
+        var label = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+        btn.setAttribute('aria-label', label);
+        btn.setAttribute('title', label);
+      }
+
+      function acToggleSidebarCollapse() {
+        var collapsed = document.body.classList.toggle('ac-sidebar-collapsed');
+        acSyncCollapseBtn(collapsed);
+        try { localStorage.setItem('ac-sidebar-collapsed', collapsed ? '1' : '0'); } catch (e) { /* noop */ }
+      }
 
       // Show success/error messages on page load
       $(document).ready(function() {
@@ -2677,6 +4033,7 @@
         if (!currentUserEmail || !roles || roles.length === 0) {
           $('#admin-management-tab').hide();
           $('#content-creators-tab').hide();
+          $('#ac-nav-section-elevated').hide();
           $('#add-admin-section').hide();
           $('#adminResults').html('');
           $('#userResults').html('');
@@ -2696,12 +4053,14 @@
           $('#admin-management-tab').show();
           $('#add-admin-section').show();
           $('#email-tab').show();
+          $('#ac-nav-section-elevated').show();
         } else {
           $('#admin-management-tab').hide();
           $('#add-admin-section').hide();
           $('#panel-admin-management').hide();
           $('#email-tab').hide();
           $('#panel-email').hide();
+          $('#ac-nav-section-elevated').hide();
 
           // Clear any admin data that might be displayed
           $('#adminResults').html('');
@@ -7888,6 +9247,724 @@
         });
       });
 
+
+      // =====================================================
+      // SUBSCRIPTIONS PANEL
+      // User-centric dashboard: search by email → live RC + Stripe
+      // snapshot → mismatch detection → 1-button DB sync.
+      // =====================================================
+        (function () {
+          /* ============================================================
+             Subscriptions panel — user-centric workflow.
+             Wired to:
+               GET  /api/v1/admin/subscription/users?q=...
+               GET  /api/v1/admin/subscription/users/{id}
+               POST /api/v1/admin/subscription/users/{id}/sync
+             ============================================================ */
+
+          let _debounceTimer = null;
+          let _activeUserId  = null;
+          let _activeReq     = 0;
+          let _lastDetail    = null;
+          let _paymentsExpanded = false;
+
+          /* ------------------- utilities ------------------- */
+
+          // Match the rest of the admin-console fetch pattern: no
+          // `credentials: 'include'`. Adding credentials forces a CORS
+          // preflight that requires the API to echo our exact origin in
+          // Access-Control-Allow-Origin AND set
+          // Access-Control-Allow-Credentials: true — which our admin CORS
+          // config doesn't currently do. The result is a browser-side
+          // "Failed to fetch" before the request even leaves.
+          function api(path, opts) {
+            return fetch(`${API_BASE}${path}`, Object.assign(
+              { headers: { 'Accept': 'application/json' } },
+              opts || {}
+            ));
+          }
+
+          function debounce(fn, wait) {
+            return function () {
+              const args = arguments, ctx = this;
+              clearTimeout(_debounceTimer);
+              _debounceTimer = setTimeout(() => fn.apply(ctx, args), wait);
+            };
+          }
+
+          function timeAgo(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            const s = Math.round((Date.now() - d.getTime()) / 1000);
+            if (s < 60)        return s + 's';
+            const m = Math.round(s / 60);
+            if (m < 60)        return m + 'm';
+            const h = Math.round(m / 60);
+            if (h < 24)        return h + 'h';
+            const days = Math.round(h / 24);
+            if (days < 30)     return days + 'd';
+            const months = Math.round(days / 30);
+            if (months < 12)   return months + 'mo';
+            return Math.round(months / 12) + 'y';
+          }
+
+          function formatDate(iso) {
+            if (!iso || iso === '0001-01-01T00:00:00Z') return '—';
+            try {
+              return new Date(iso).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric'
+              });
+            } catch (e) { return iso; }
+          }
+
+          function formatDateParts(iso) {
+            if (!iso) return { day: '—', rest: '' };
+            const d = new Date(iso);
+            return {
+              day: String(d.getDate()).padStart(2, '0'),
+              rest: d.toLocaleDateString('en-US', { month: 'short' }) + ' ' + d.getFullYear(),
+            };
+          }
+
+          function formatMonth(iso) {
+            if (!iso) return '';
+            return new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+          }
+
+          function formatMoney(amount, currency) {
+            if (amount == null) return '—';
+            const cur = (currency || '').toUpperCase();
+            const sym = cur === 'USD' || cur === '' ? '$' : '';
+            return sym + Number(amount).toFixed(2);
+          }
+
+          /* ------------------- pills / marks ------------------- */
+
+          function planPill(plan) {
+            const p = (plan || 'free').toLowerCase();
+            return `<span class="subs-pill subs-pill--${escapeHtml(p)}">${escapeHtml(p)}</span>`;
+          }
+
+          function activePill(active) {
+            return active
+              ? '<span class="subs-pill subs-pill--active"><i class="fas fa-circle" style="font-size:5px"></i>ACTIVE</span>'
+              : '<span class="subs-pill subs-pill--inactive">FREE</span>';
+          }
+
+          function sourceMark(source) {
+            if (source === 'stripe')     return '<span class="subs-source-mark subs-source-mark--stripe">S</span>';
+            if (source === 'revenuecat') return '<span class="subs-source-mark subs-source-mark--revenuecat">R</span>';
+            return '';
+          }
+
+          function rcLabel(s) {
+            switch (s) {
+              case 'ok':              return 'RC ok';
+              case 'no_api_key':      return 'RC key missing';
+              case 'user_not_found':  return 'RC: user unknown';
+              case 'http_error':      return 'RC error';
+              case 'parse_error':     return 'RC parse error';
+              case 'no_user_id':      return 'RC: no user id';
+              default:                return 'RC: ' + s;
+            }
+          }
+          function stripeLabel(s) {
+            switch (s) {
+              case 'ok':              return 'Stripe ok';
+              case 'no_customer_id':  return 'no Stripe customer';
+              case 'http_error':      return 'Stripe error';
+              default:                return 'Stripe: ' + s;
+            }
+          }
+
+          /* ------------------- search ------------------- */
+
+          async function runSearch(q) {
+            const container = document.getElementById('subs-results');
+            const titleEl   = document.getElementById('subs-results-title');
+            const countEl   = document.getElementById('subs-results-count');
+            if (!container) return;
+
+            if (!q || q.length < 2) {
+              titleEl.textContent = 'Search';
+              countEl.textContent = '';
+              container.innerHTML = `
+                <div class="subs-results-state">
+                  <div class="subs-empty-icon"><i class="fas fa-search"></i></div>
+                  <div class="subs-empty-title">Find a customer</div>
+                  <div class="subs-empty-body">Type at least 2 characters to search by email or username.</div>
+                </div>`;
+              return;
+            }
+
+            titleEl.textContent = 'Searching…';
+            countEl.textContent = '';
+            container.innerHTML = `
+              <div class="subs-results-skel">
+                ${'<div class="subs-skeleton"></div>'.repeat(5)}
+              </div>`;
+
+            try {
+              const res  = await api(`/api/v1/admin/subscription/users?q=${encodeURIComponent(q)}`);
+              if (!res.ok) throw new Error('HTTP ' + res.status);
+              const body = await res.json();
+              renderResults(body.data || [], q);
+            } catch (err) {
+              titleEl.textContent = 'Results';
+              countEl.textContent = '';
+              container.innerHTML = `
+                <div class="subs-results-state">
+                  <div class="subs-empty-icon subs-empty-icon--err"><i class="fas fa-exclamation"></i></div>
+                  <div class="subs-empty-title">Search failed</div>
+                  <div class="subs-empty-body">${escapeHtml(err.message || 'Unknown error')}</div>
+                </div>`;
+            }
+          }
+
+          function renderResults(items, q) {
+            const container = document.getElementById('subs-results');
+            const titleEl   = document.getElementById('subs-results-title');
+            const countEl   = document.getElementById('subs-results-count');
+
+            titleEl.textContent = q ? `“${q}”` : 'Results';
+            countEl.textContent = items.length ? items.length + ' found' : '';
+
+            if (!items.length) {
+              container.innerHTML = `
+                <div class="subs-results-state">
+                  <div class="subs-empty-icon"><i class="fas fa-user-slash"></i></div>
+                  <div class="subs-empty-title">No matches</div>
+                  <div class="subs-empty-body">Try a different email or username.</div>
+                </div>`;
+              return;
+            }
+
+            container.innerHTML = items.map(u => `
+              <div class="subs-result ${u.userId === _activeUserId ? 'is-active' : ''}"
+                   data-uid="${escapeHtml(u.userId)}"
+                   data-testid="subs-result">
+                <div class="subs-result-row1">
+                  <span class="subs-result-email" title="${escapeHtml(u.email || '')}">${escapeHtml(u.email || u.userId)}</span>
+                  ${activePill(u.dbActive)}
+                </div>
+                <div class="subs-result-row2">
+                  ${planPill(u.dbPlan)}
+                  ${u.dbSource ? `<span class="subs-result-dot"></span><span>via ${escapeHtml(u.dbSource)}</span>` : ''}
+                  ${u.lastEventAt ? `<span class="subs-result-ago">${escapeHtml(timeAgo(u.lastEventAt))}</span>` : ''}
+                </div>
+              </div>
+            `).join('');
+
+            container.querySelectorAll('.subs-result').forEach(el => {
+              el.addEventListener('click', () => loadDetail(el.dataset.uid));
+            });
+          }
+
+          /* ------------------- detail ------------------- */
+
+          async function loadDetail(userId) {
+            _activeUserId      = userId;
+            _paymentsExpanded  = false;
+            document.querySelectorAll('.subs-result').forEach(r => {
+              r.classList.toggle('is-active', r.dataset.uid === userId);
+            });
+
+            const detail = document.getElementById('subs-detail');
+            detail.innerHTML = renderDetailLoading();
+
+            const reqId = ++_activeReq;
+
+            try {
+              const res  = await api(`/api/v1/admin/subscription/users/${encodeURIComponent(userId)}`);
+              if (!res.ok) throw new Error('HTTP ' + res.status);
+              const body = await res.json();
+              if (reqId !== _activeReq) return; // stale
+              _lastDetail = body;
+              window._subsLastDetail = body;
+              detail.innerHTML = renderDetail(body);
+              wireDetailActions(body);
+            } catch (err) {
+              if (reqId !== _activeReq) return;
+              detail.innerHTML = renderDetailError(err);
+              const r = detail.querySelector('[data-retry]');
+              if (r) r.addEventListener('click', () => loadDetail(userId));
+            }
+          }
+
+          function renderDetailLoading() {
+            return `
+              <div class="subs-detail-state">
+                <div class="subs-empty-icon subs-empty-icon--load"><i class="fas fa-spinner fa-spin"></i></div>
+                <div class="subs-empty-title">Loading customer record…</div>
+                <div class="subs-empty-body">Pulling live state from RevenueCat and Stripe.</div>
+              </div>`;
+          }
+
+          function renderDetailError(err) {
+            return `
+              <div class="subs-detail-state">
+                <div class="subs-empty-icon subs-empty-icon--err"><i class="fas fa-triangle-exclamation"></i></div>
+                <div class="subs-empty-title">Failed to load</div>
+                <div class="subs-empty-body">${escapeHtml(err.message || 'Unknown error')}</div>
+                <button class="ac-btn" data-retry style="margin-top:1rem;">Retry</button>
+              </div>`;
+          }
+
+          function renderDetail(d) {
+            const initial = (d.user.email || d.user.id || '?').charAt(0).toUpperCase();
+            const auth = d.authoritative || { status: 'none' };
+            const mm   = d.mismatch || { hasMismatch: false };
+            const payments = d.payments || [];
+
+            // Inline styles below — the global cascade has been
+            // overpowering even !important-flagged rules on these
+            // children (likely a section/main-element collapse
+            // somewhere upstream). Inline styles win over every
+            // stylesheet rule short of inline !important, so the
+            // detail spacing is now locked in here at the template.
+            return `
+              <div class="subs-detail-content" style="display:flex;flex-direction:column;gap:14px;margin:0;padding:0;">
+
+                <header class="subs-user-head" style="margin:0;">
+                  <div class="subs-user-identity">
+                    <div class="subs-user-avatar">${escapeHtml(initial)}</div>
+                    <div class="subs-user-meta">
+                      <div class="subs-user-name">${escapeHtml(d.user.email || '(no email)')}</div>
+                      <div class="subs-user-id">${escapeHtml(d.user.id)}${d.user.username ? ' · @' + escapeHtml(d.user.username) : ''}</div>
+                    </div>
+                  </div>
+                  <div class="subs-user-actions">
+                    <button class="subs-icon-btn" data-refresh title="Refresh from RC + Stripe">
+                      <i class="fas fa-arrows-rotate"></i>
+                    </button>
+                  </div>
+                </header>
+
+                ${renderBanner(mm, auth)}
+                ${renderComparison(d.user.subscription || {}, auth, mm)}
+                ${renderTimeline(payments)}
+
+              </div>`;
+          }
+
+          function renderBanner(mm, auth) {
+            const expiresAt = auth.expiresAt ? new Date(auth.expiresAt) : null;
+            const now = new Date();
+            const stillInPeriod = expiresAt && expiresAt.getTime() > now.getTime();
+            const cancelledButActive = auth.status === 'canceled' && stillInPeriod;
+            const daysLeft = expiresAt
+              ? Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / 86400000))
+              : null;
+
+            if (mm.hasMismatch) {
+              const src = auth.source || 'authoritative source';
+              return `
+                <div class="subs-banner subs-banner--warn" style="margin:0 1.25rem;">
+                  <div class="subs-banner-icon"><i class="fas fa-triangle-exclamation"></i></div>
+                  <div class="subs-banner-body">
+                    <div class="subs-banner-title">Database out of sync with ${escapeHtml(src)}</div>
+                    <div class="subs-banner-sub">${escapeHtml(mm.summary || 'Apply the live state to MongoDB.')}</div>
+                  </div>
+                  <div>
+                    <button class="subs-fix-btn" data-fix data-testid="subs-fix-btn">
+                      <i class="fas fa-wand-magic-sparkles"></i>
+                      <span>Fix in DB</span>
+                    </button>
+                  </div>
+                </div>`;
+            }
+
+            let title, sub;
+            if (cancelledButActive) {
+              title = `Active — cancels in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
+              sub   = `${auth.plan || 'subscription'} via ${auth.source || '—'} · ends ${formatDate(auth.expiresAt)} (auto-renew off)`;
+            } else if (auth.status === 'active') {
+              title = `In sync — ${auth.plan || 'subscription'} active`;
+              sub   = `Authoritative: ${auth.source || '—'}` +
+                      (auth.expiresAt ? ` · renews ${formatDate(auth.expiresAt)} (${daysLeft}d)` : '');
+            } else if (auth.status === 'none') {
+              title = 'No active subscription';
+              sub   = 'No record found in RevenueCat or Stripe for this user.';
+            } else {
+              title = `In sync — subscription ${auth.status}`;
+              sub   = `Authoritative: ${auth.source || '—'}` +
+                      (auth.expiresAt ? ` · period ended ${formatDate(auth.expiresAt)}` : '');
+            }
+
+            return `
+              <div class="subs-banner subs-banner--ok" style="margin:0 1.25rem;">
+                <div class="subs-banner-icon"><i class="fas fa-check"></i></div>
+                <div class="subs-banner-body">
+                  <div class="subs-banner-title">${escapeHtml(title)}</div>
+                  <div class="subs-banner-sub">${escapeHtml(sub)}</div>
+                </div>
+              </div>`;
+          }
+
+          function renderComparison(dbSub, auth, mm) {
+            const mmFields = new Set((mm.fields || []).map(f => f.field));
+
+            const dbRows = [
+              { key: 'Plan',         value: dbSub.plan || 'free',                 field: 'plan' },
+              { key: 'Active',       value: dbSub.active ? 'true' : 'false',      field: 'active' },
+              { key: 'Source',       value: dbSub.source || '—',                  field: 'source' },
+              { key: 'Cycle',        value: dbSub.isAnnual ? 'annual' : 'monthly' },
+              { key: 'Sub ID',       value: dbSub.id || '—',                      mono: true },
+              { key: 'Stripe Cust',  value: dbSub.stripeCustomerId || '—',        mono: true },
+              { key: 'Period End',   value: formatDate(dbSub.currentPeriodEnd || dbSub.expirationDate), field: 'periodEnd' },
+              { key: 'Cancel At',    value: formatDate(dbSub.cancelAt),                                field: 'cancelAt' },
+              { key: 'Created',      value: formatDate(dbSub.createdAt) },
+              { key: 'Updated',      value: formatDate(dbSub.updatedAt) },
+            ];
+
+            const authRows = auth.status === 'none'
+              ? [{ key: 'Status', value: 'no record found', dim: true }]
+              : [
+                  { key: 'Status',    value: auth.status || '—',         field: 'active' },
+                  { key: 'Plan',      value: auth.plan || '—',           field: 'plan' },
+                  { key: 'Source',    value: auth.source || '—',         field: 'source' },
+                  { key: 'Store',     value: auth.store || '—' },
+                  { key: 'Cycle',     value: auth.isAnnual ? 'annual' : 'monthly' },
+                  { key: 'Product',   value: auth.productId || '—',      mono: true },
+                  { key: 'Sub ID',    value: auth.subscriptionId || '—', mono: true },
+                  { key: 'Price',     value: auth.priceUsd
+                                        ? `$${Number(auth.priceUsd).toFixed(2)} ${auth.currency || ''}`.trim()
+                                        : '—' },
+                  { key: 'Purchased', value: formatDate(auth.purchasedAt) },
+                  { key: 'Expires',   value: formatDate(auth.expiresAt), field: 'periodEnd' },
+                  { key: 'Cancel At', value: formatDate(auth.cancelAt), field: 'cancelAt' },
+                ];
+
+            const sourceTag = (auth.source || 'live').toUpperCase();
+            const statusMeta = auth.status === 'none'
+              ? 'No live record found'
+              : `${auth.status}${auth.source ? ' · ' + auth.source : ''}`;
+
+            // Solo mode: when there's no authoritative record, the right-hand
+            // "LIVE" column is just an empty placeholder. Collapse to a single
+            // wide DB card with a 2-col field grid so 10 rows pack into 5.
+            if (auth.status === 'none') {
+              const live = (window._subsLastDetail || {}).liveSources || {};
+              const rcStatus = live.revenuecat || '';
+              const stStatus = live.stripe || '';
+              const headerNote = live.note
+                ? `<span class="subs-compare-soloflag subs-compare-soloflag--warn" title="${escapeHtml(live.note)}">${escapeHtml(rcLabel(rcStatus))} · ${escapeHtml(stripeLabel(stStatus))}</span>`
+                : `<span class="subs-compare-soloflag">No live record in RevenueCat or Stripe</span>`;
+              return `
+                <div class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
+                  <div class="subs-section-head" style="margin:0;padding:0;">
+                    <span class="subs-section-title">
+                      <span class="subs-section-title-icon"><i class="fas fa-right-left"></i></span>
+                      Subscription state
+                    </span>
+                    ${headerNote}
+                  </div>
+                  ${live.note ? `
+                    <div class="subs-live-note">
+                      <i class="fas fa-circle-info"></i>
+                      <span>${escapeHtml(live.note)}</span>
+                    </div>` : ''}
+                  <div class="subs-compare subs-compare--solo" style="margin:0;">
+                    <div class="subs-compare-col">
+                      <div class="subs-compare-head">
+                        <span class="subs-section-label">Our database</span>
+                        <span class="subs-compare-tag">MONGO</span>
+                      </div>
+                      <div class="subs-field-list">
+                        ${dbRows.map(r => renderField(r, false)).join('')}
+                      </div>
+                    </div>
+                  </div>
+                </div>`;
+            }
+
+            return `
+              <div class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
+                <div class="subs-section-head" style="margin:0;padding:0;">
+                  <span class="subs-section-title">
+                    <span class="subs-section-title-icon"><i class="fas fa-right-left"></i></span>
+                    Subscription state
+                  </span>
+                  <span class="subs-section-meta">${escapeHtml(statusMeta)}</span>
+                </div>
+                <div class="subs-compare" style="margin:0;">
+                  <div class="subs-compare-col">
+                    <div class="subs-compare-head">
+                      <span class="subs-section-label">Our database</span>
+                      <span class="subs-compare-tag">MONGO</span>
+                    </div>
+                    <div class="subs-field-list">
+                      ${dbRows.map(r => renderField(r, mmFields.has(r.field))).join('')}
+                    </div>
+                  </div>
+                  <div class="subs-compare-col">
+                    <div class="subs-compare-head">
+                      <span class="subs-section-label">Live${auth.source ? ' — ' + auth.source : ''}</span>
+                      <span class="subs-compare-tag">${escapeHtml(sourceTag)}</span>
+                    </div>
+                    <div class="subs-field-list">
+                      ${authRows.map(r => renderField(r, mmFields.has(r.field))).join('')}
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+          }
+
+          function renderField(r, isMismatch) {
+            const fieldCls = ['subs-field'];
+            if (isMismatch) fieldCls.push('subs-field--mismatch');
+            const valCls = ['subs-field-value'];
+            if (r.dim)  valCls.push('subs-field-value-dim');
+            if (r.mono) valCls.push('subs-field-value-mono');
+            return `
+              <div class="${fieldCls.join(' ')}">
+                <div class="subs-field-key">${escapeHtml(r.key)}</div>
+                <div class="${valCls.join(' ')}">${escapeHtml(String(r.value))}</div>
+              </div>`;
+          }
+
+          function renderTimeline(payments) {
+            const titleEl = `
+              <span class="subs-section-title">
+                <span class="subs-section-title-icon"><i class="fas fa-clock-rotate-left"></i></span>
+                Payment history
+              </span>`;
+
+            if (!payments.length) {
+              return `
+                <div class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
+                  <div class="subs-section-head" style="margin:0;padding:0;">
+                    ${titleEl}
+                    <span class="subs-section-meta">no payments</span>
+                  </div>
+                  <div style="padding:1.75rem 0.5rem;text-align:center;color:var(--ac-text-dim);font-size:0.8125rem;border-top:1px solid var(--subs-rule);">
+                    No payment history available for this user.
+                  </div>
+                </div>`;
+            }
+
+            const SHOW = 10;
+            const visible = _paymentsExpanded ? payments : payments.slice(0, SHOW);
+            const hidden  = payments.length - visible.length;
+
+            // Group successive same-month rows
+            const groups = [];
+            let curMonth = null;
+            visible.forEach(p => {
+              const m = formatMonth(p.date);
+              if (m !== curMonth) {
+                curMonth = m;
+                groups.push({ month: m, items: [] });
+              }
+              groups[groups.length - 1].items.push(p);
+            });
+
+            // Summary stats — only sum successful payments
+            const successful = payments.filter(p => p.status === 'paid' || p.status === 'purchase');
+            const total = successful.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+
+            return `
+              <div class="subs-section" style="margin:0 1.25rem;padding:0;display:flex;flex-direction:column;gap:8px;">
+                <div class="subs-section-head" style="margin:0;padding:0;">
+                  ${titleEl}
+                  <span class="subs-section-meta">${payments.length} event${payments.length === 1 ? '' : 's'} · ${successful.length} paid · $${total.toFixed(2)} total</span>
+                </div>
+                <div class="subs-timeline" data-testid="subs-timeline" style="margin:0;">
+                  ${groups.map(g => `
+                    <div class="subs-timeline-month">${escapeHtml(g.month)}</div>
+                    ${g.items.map(renderPayment).join('')}
+                  `).join('')}
+                  ${hidden > 0 ? `<button class="subs-show-more" data-expand>Show ${hidden} more payment${hidden === 1 ? '' : 's'}</button>` : ''}
+                </div>
+              </div>`;
+          }
+
+          function renderPayment(p) {
+            const parts = formatDateParts(p.date);
+            const status = (p.status || 'default').toLowerCase();
+            const known  = ['paid','failed','refunded','purchase','void'].includes(status);
+            const cls    = 'subs-status-pill--' + (known ? status : 'default');
+
+            const label    = p.productLabel || p.plan || '';
+            const periodTo = p.effectiveUntil ? ` → ${formatDate(p.effectiveUntil)}` : '';
+            const now      = Date.now();
+            const isActive = p.effectiveUntil && new Date(p.effectiveUntil).getTime() > now;
+            const activePill = isActive
+              ? `<span class="subs-payment-active" title="Currently entitled">active</span>`
+              : '';
+
+            return `
+              <div class="subs-payment">
+                <div class="subs-payment-date">
+                  <div class="subs-payment-date-day">${escapeHtml(parts.day)}</div>
+                  <div class="subs-payment-date-rest">${escapeHtml(parts.rest)}</div>
+                </div>
+                <div class="subs-payment-main">
+                  <div class="subs-payment-label">
+                    ${sourceMark(p.source)}
+                    <span class="subs-payment-sourcelabel">${escapeHtml(p.source || '')}</span>
+                    ${label ? `<span class="subs-payment-plan">· ${escapeHtml(label)}</span>` : ''}
+                    ${activePill}
+                  </div>
+                  ${p.effectiveUntil ? `<div class="subs-payment-period">${escapeHtml(formatDate(p.date))}${escapeHtml(periodTo)}</div>` : ''}
+                  ${p.reference ? `<div class="subs-payment-ref">${escapeHtml(p.reference)}</div>` : ''}
+                </div>
+                <div class="subs-payment-amount">
+                  ${escapeHtml(formatMoney(p.amount, p.currency))}<span class="subs-payment-amount-cur">${escapeHtml((p.currency || '').toUpperCase())}</span>
+                </div>
+                <div class="subs-payment-status">
+                  <span class="subs-status-pill ${cls}">${escapeHtml(status)}</span>
+                </div>
+              </div>`;
+          }
+
+          /* ------------------- actions ------------------- */
+
+          function wireDetailActions(data) {
+            const detail = document.getElementById('subs-detail');
+
+            const fixBtn = detail.querySelector('[data-fix]');
+            if (fixBtn) fixBtn.addEventListener('click', () => runFix(data.user.id, fixBtn));
+
+            const refresh = detail.querySelector('[data-refresh]');
+            if (refresh) refresh.addEventListener('click', () => loadDetail(data.user.id));
+
+            const expand = detail.querySelector('[data-expand]');
+            if (expand) expand.addEventListener('click', () => {
+              _paymentsExpanded = true;
+              if (_lastDetail) {
+                detail.innerHTML = renderDetail(_lastDetail);
+                wireDetailActions(_lastDetail);
+              }
+            });
+          }
+
+          async function runFix(userId, btn) {
+            btn.disabled = true;
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner"></i><span>Syncing…</span>';
+
+            try {
+              const res = await api(`/api/v1/admin/subscription/users/${encodeURIComponent(userId)}/sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ source: 'auto' }),
+              });
+              if (!res.ok) {
+                let msg = 'HTTP ' + res.status;
+                try { msg = (await res.json()).error || msg; } catch (e) { /* ignore */ }
+                throw new Error(msg);
+              }
+              const body = await res.json();
+              showToast('Synced from ' + (body.syncedFrom || 'live source'), 'ok');
+              // Re-fetch the detail pane so the banner flips and fields
+              // update, AND re-run the current search so the sidebar
+              // result card (plan badge + active pill) reflects the new
+              // DB state instead of the pre-sync snapshot. Both run in
+              // parallel since neither depends on the other.
+              const q = (document.getElementById('subs-q') || {}).value || '';
+              await Promise.all([
+                loadDetail(userId),
+                q.trim() ? runSearch(q.trim()) : Promise.resolve(),
+              ]);
+            } catch (err) {
+              btn.disabled = false;
+              btn.innerHTML = original;
+              showToast('Sync failed: ' + (err.message || 'unknown'), 'error');
+            }
+          }
+
+          /* ------------------- toast ------------------- */
+
+          function showToast(msg, kind) {
+            const existing = document.querySelector('.subs-toast');
+            if (existing) existing.remove();
+            const icon = kind === 'error' ? 'fa-times-circle' : 'fa-check-circle';
+            const t = document.createElement('div');
+            t.className = 'subs-toast subs-toast--' + (kind || 'ok');
+            t.innerHTML = `
+              <span class="subs-toast-icon--${kind || 'ok'}"><i class="fas ${icon}"></i></span>
+              <span>${escapeHtml(msg)}</span>`;
+            document.body.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; }, 3200);
+            setTimeout(() => t.remove(), 3700);
+          }
+
+          /* ------------------- public entry point ------------------- */
+
+          // Reset the right-hand detail pane back to its initial empty
+          // state. Called when the search input is cleared so a stale
+          // record doesn't linger while the user types a new name.
+          function resetDetail() {
+            const detail = document.getElementById('subs-detail');
+            if (!detail) return;
+            detail.innerHTML = `
+              <div class="subs-detail-state">
+                <div class="subs-empty-icon"><i class="fas fa-user"></i></div>
+                <div class="subs-empty-title">No customer selected</div>
+                <div class="subs-empty-body">
+                  Pick a result on the left to see their live subscription state,
+                  DB record, and full payment history.
+                </div>
+              </div>`;
+          }
+
+          window.initSubscriptionsPanel = function () {
+            const input = document.getElementById('subs-q');
+            const clearBtn = document.getElementById('subs-q-clear');
+            if (!input || input.dataset.wired === '1') return;
+            input.dataset.wired = '1';
+
+            function syncClearVisibility() {
+              if (!clearBtn) return;
+              clearBtn.classList.toggle('is-visible', input.value.length > 0);
+            }
+
+            const debounced = debounce(() => runSearch(input.value.trim()), 220);
+            input.addEventListener('input', () => {
+              syncClearVisibility();
+              if (!input.value.trim()) resetDetail();
+              debounced();
+            });
+            input.addEventListener('keydown', e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                runSearch(input.value.trim());
+              } else if (e.key === 'Escape' && input.value) {
+                input.value = '';
+                syncClearVisibility();
+                resetDetail();
+                runSearch('');
+              }
+            });
+            if (clearBtn) {
+              clearBtn.addEventListener('click', () => {
+                input.value = '';
+                syncClearVisibility();
+                resetDetail();
+                runSearch('');
+                input.focus();
+              });
+            }
+            syncClearVisibility();
+
+            // Global "/" shortcut to focus search (only when panel visible)
+            const panel = document.getElementById('panel-subscriptions');
+            if (panel && !panel.dataset.kbWired) {
+              panel.dataset.kbWired = '1';
+              document.addEventListener('keydown', e => {
+                if (e.key !== '/') return;
+                if (!panel.classList.contains('active')) return;
+                const t = e.target;
+                if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+                e.preventDefault();
+                input.focus();
+              });
+            }
+
+            setTimeout(() => input.focus(), 120);
+          };
+        })();
 
       // =====================================================
       // METRICS PANEL
