@@ -10632,6 +10632,35 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // ===========================================
   // END ANNOUNCEMENT API ROUTES
   // ===========================================
+
+  // ─── Global error handler ────────────────────────────────────────────────
+  // Catches any error thrown from a route handler (sync or via .next(err))
+  // and renders the branded error page instead of Express's default HTML
+  // stack trace. Must be the LAST middleware registered; the 4-arg signature
+  // is what flags it as an error handler in Express.
+  //
+  // Note: async handlers that throw without .next(err) propagate as
+  // unhandled promise rejections at the Node level — they bypass this
+  // middleware. Those still need try/catch in the handler itself; this
+  // middleware is the safety net for everything Express can see.
+  app.use(function (err, req, res, next) {
+    console.error(
+      "[LPS] [level=error] unhandled route error:",
+      err && err.stack ? err.stack : err
+    );
+    if (res.headersSent) return next(err);
+    var status = err && err.status ? err.status : 500;
+    var isJsonRequest =
+      (req.xhr || (req.get('accept') || '').indexOf('json') !== -1 || (req.path || '').indexOf('/api/') === 0);
+    if (isJsonRequest) {
+      return res.status(status).json({ error: "internal_error" });
+    }
+    res.status(status).render("error", {
+      user: req.user,
+      message: "Looks like we had an issue. Try again, or head back home — we're on it.",
+      redirect: req.get('referer') || null,
+    });
+  });
 }; //end of routes
 
 function auth(req, res, next) {
