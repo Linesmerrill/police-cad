@@ -537,3 +537,111 @@ export function encodeIdForUrl(hexId: string): string {
     .replace(/\//g, '_')
     .replace(/=+$/, '');
 }
+
+// ---------------------------------------------------------------------------
+// Community soft-delete helpers — flip the seeded test community in and out
+// of pending-deletion state without going through the API. Lets us assert
+// that every server-rendered community page handles the 410 pending_deletion
+// response correctly (route-block page, not generic 404).
+// ---------------------------------------------------------------------------
+
+/**
+ * Dedicated community ID used by the pending-deletion test suite. Separate
+ * from TEST_COMMUNITY_ID so flipping pending state in these tests can't poison
+ * the seeded community that other tests run against in parallel workers.
+ */
+export const PENDING_DELETION_TEST_COMMUNITY_ID = 'b0b0b0b0b0b0b0b0b0b0b0b0';
+
+/**
+ * Seed (or reset) the dedicated pending-deletion test community. Idempotent.
+ * Always starts in non-pending state — call setPendingDeletionTestCommunityPending
+ * to flip it. Test user is added as an approved member + owner so authenticated
+ * pages render normally during the baseline (non-pending) test.
+ */
+export async function ensurePendingDeletionTestCommunity(): Promise<void> {
+  const now = new Date();
+  const cID = new ObjectId(PENDING_DELETION_TEST_COMMUNITY_ID);
+  await withDb(async (db) => {
+    await db.collection('communities').updateOne(
+      { _id: cID },
+      {
+        $set: {
+          _id: cID,
+          community: {
+            name: 'pending-deletion test community',
+            ownerID: TEST_USER_ID,
+            code: 'PDTEST1',
+            activeSignal100: false,
+            activeHoldTraffic: false,
+            departments: [],
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+        $unset: {
+          'community.pendingDeletionAt': '',
+          'community.scheduledDeletionAt': '',
+          'community.pendingDeletionNotifiedAt': '',
+          'community.deletionRequestedBy': '',
+        },
+      },
+      { upsert: true }
+    );
+
+    // Mirror the membership on the user doc so authCheck-gated routes
+    // (which read req.user.user.communities) treat the user as a member.
+    await db.collection('users').updateOne(
+      { _id: new ObjectId(TEST_USER_ID), 'user.communities.communityId': { $ne: PENDING_DELETION_TEST_COMMUNITY_ID } },
+      {
+        $push: {
+          'user.communities': {
+            communityId: PENDING_DELETION_TEST_COMMUNITY_ID,
+            status: 'approved',
+          },
+        },
+      }
+    );
+  });
+}
+
+/** Flip the dedicated pending-deletion test community into pending state. */
+export async function setPendingDeletionTestCommunityPending(opts?: {
+  scheduledInDays?: number;
+}): Promise<void> {
+  const days = opts?.scheduledInDays ?? 30;
+  const now = new Date();
+  const scheduled = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+  await withDb(async (db) => {
+    await db.collection('communities').updateOne(
+      { _id: new ObjectId(PENDING_DELETION_TEST_COMMUNITY_ID) },
+      {
+        $set: {
+          'community.pendingDeletionAt': now,
+          'community.scheduledDeletionAt': scheduled,
+          'community.deletionRequestedBy': TEST_USER_ID,
+          'community.updatedAt': now,
+        },
+      }
+    );
+  });
+}
+
+/** Restore the dedicated pending-deletion test community to its normal state. */
+export async function clearPendingDeletionTestCommunity(): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('communities').updateOne(
+      { _id: new ObjectId(PENDING_DELETION_TEST_COMMUNITY_ID) },
+      {
+        $unset: {
+          'community.pendingDeletionAt': '',
+          'community.scheduledDeletionAt': '',
+          'community.pendingDeletionNotifiedAt': '',
+          'community.deletionRequestedBy': '',
+        },
+        $set: {
+          'community.updatedAt': new Date(),
+        },
+      }
+    );
+  });
+}
