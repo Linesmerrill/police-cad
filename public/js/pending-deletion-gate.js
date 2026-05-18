@@ -6,9 +6,9 @@
  * scheduledDeletionAt } on every community-scoped request. This file monkey-
  * patches window.fetch so any page that polls the API automatically detects
  * that state, shows the user a single explanation modal (or alert as a
- * fallback), and routes them back to /communities-owned so the next screen
- * they see is a sane state instead of a half-broken page making request
- * after request to a dead community.
+ * fallback), and routes them back to /communities so the next screen they
+ * see is a sane state instead of a half-broken page making request after
+ * request to a dead community.
  *
  * Pair with window.suppressPendingDeletion(communityId) — call it from the
  * owner's own delete handler right after the DELETE returns. That mutes the
@@ -25,7 +25,7 @@
   var COMMUNITY_ID_FROM_URL = /\/community\/([0-9a-fA-F]{24})/;
   var RECENT_TTL_MS = 30 * 1000;
   var SUPPRESS_TTL_MS = 60 * 1000;
-  var REDIRECT_PATH = "/communities-owned";
+  var REDIRECT_PATH = "/communities";
 
   var recent = new Map(); // dedupe alerts per community for RECENT_TTL_MS
   var suppressed = new Map(); // owner-initiated deletes, mute alert + redirect
