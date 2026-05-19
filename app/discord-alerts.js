@@ -59,6 +59,7 @@ function resolveUserIdent(req) {
 
 function sendErrorAlert(err, req) {
   if (!WEBHOOK_URL) return;
+  if (!process.env.DYNO) return;
   if (shouldSkip(err)) return;
 
   const now = Date.now();
