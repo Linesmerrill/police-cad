@@ -1562,6 +1562,11 @@
                   <i class="fa-brands fa-discord"></i>
                   <span>Promote</span>
                 </button>
+              <% } else { %>
+                <button onclick="showPermissionDeniedToast('You do not have permission to promote this community. Contact your community admin if you think this is a mistake.')" class="action-btn disabled" style="color: #6b7280;">
+                  <i class="fa-brands fa-discord"></i>
+                  <span>Promote</span>
+                </button>
               <% } %>
 
               <button id="shareBtn" onclick="copyCommunityUrl()" class="action-btn" style="color: #60a5fa;">
