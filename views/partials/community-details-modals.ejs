@@ -1047,7 +1047,8 @@
             <div class="promo-field">
               <label class="promo-label">Platforms</label>
               <div class="promo-chk-row" id="promoPlatforms">
-                <% var promoPlatformOpts = ['PS5','PS4','Xbox Series X|S','Xbox One','PC / FiveM']; %>
+                <% /* Mirror the community-settings platform tags (PlayStation / Xbox / PC) so autofill maps 1:1. */ %>
+                <% var promoPlatformOpts = ['PlayStation','Xbox','PC']; %>
                 <% promoPlatformOpts.forEach(function(p){ %>
                   <label class="promo-chk"><input type="checkbox" value="<%= p %>" onchange="renderPromoPreview()"> <%= p %></label>
                 <% }); %>
@@ -2056,18 +2057,13 @@
       promo.depts = a.departments.slice(0, promo.maxDepartments).map(function (s) { return String(s).slice(0, 120); });
       renderPromoTags('dept');
     }
-    // Map the community's broad platform tags (Xbox / PlayStation / PC) onto
-    // the promotion's more granular console checkboxes — best effort.
+    // The promotion platforms mirror the community-settings platform tags
+    // (PlayStation / Xbox / PC), so this is a direct case-insensitive match.
     if (Array.isArray(a.tags) && !document.querySelector('#promoPlatforms input:checked')) {
-      var want = {};
-      a.tags.forEach(function (t) {
-        var s = String(t).toLowerCase();
-        if (s.indexOf('play') !== -1) want['PS5'] = true;
-        if (s.indexOf('xbox') !== -1) want['Xbox Series X|S'] = true;
-        if (s.indexOf('pc') !== -1 || s.indexOf('fivem') !== -1) want['PC / FiveM'] = true;
-      });
+      var tagSet = {};
+      a.tags.forEach(function (t) { tagSet[String(t).toLowerCase()] = true; });
       Array.prototype.forEach.call(document.querySelectorAll('#promoPlatforms input'), function (cb) {
-        if (want[cb.value]) cb.checked = true;
+        if (tagSet[cb.value.toLowerCase()]) cb.checked = true;
       });
     }
   }

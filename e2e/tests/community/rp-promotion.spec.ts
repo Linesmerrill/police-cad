@@ -33,7 +33,7 @@ test.describe('RP Server Promotion', { tag: '@auth' }, () => {
 
     // Fill the structured form.
     await page.locator('#promoServerName').fill('Playwright Roleplay Network');
-    await page.locator('#promoPlatforms input[value="PS5"]').check();
+    await page.locator('#promoPlatforms input[value="PlayStation"]').check();
     await page.locator('#promoGame').selectOption('GTA RP');
     await page.locator('#promoDescription').fill('An automated test promotion description.');
 
@@ -42,7 +42,7 @@ test.describe('RP Server Promotion', { tag: '@auth' }, () => {
     await expect(preview).toContainText('Playwright Roleplay Network');
     await expect(preview).toContainText('An automated test promotion description.');
     await expect(preview).toContainText('GTA RP');
-    await expect(preview).toContainText('PS5');
+    await expect(preview).toContainText('PlayStation');
 
     // Adding a feature tag shows up in both the list and the preview.
     await page.locator('#promoFeatInput').fill('Custom CAD/MDT');
