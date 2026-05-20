@@ -187,7 +187,7 @@ export function uniqueTestEmail(prefix: string): string {
 // ---------------------------------------------------------------------------
 
 const TEST_USER_ID = 'aaaaaaaaaaaaaaaaaaaaaaaa';
-const TEST_COMMUNITY_ID = 'bbbbbbbbbbbbbbbbbbbbbbbb';
+export const TEST_COMMUNITY_ID = 'bbbbbbbbbbbbbbbbbbbbbbbb';
 
 export async function createTestCivilian(opts: {
   firstName: string;
@@ -536,4 +536,103 @@ export function encodeIdForUrl(hexId: string): string {
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
+}
+
+// ---------------------------------------------------------------------------
+// Community soft-delete helpers — flip the seeded test community in and out
+// of pending-deletion state without going through the API. Lets us assert
+// that every server-rendered community page handles the 410 pending_deletion
+// response correctly (route-block page, not generic 404).
+// ---------------------------------------------------------------------------
+
+/**
+ * Dedicated community ID used by the pending-deletion test suite. Separate
+ * from TEST_COMMUNITY_ID so flipping pending state in these tests can't poison
+ * the seeded community that other tests run against in parallel workers.
+ */
+export const PENDING_DELETION_TEST_COMMUNITY_ID = 'b0b0b0b0b0b0b0b0b0b0b0b0';
+
+/**
+ * Seed (or reset) the dedicated pending-deletion test community. Idempotent.
+ * Always starts in non-pending state — call setPendingDeletionTestCommunityPending
+ * to flip it.
+ *
+ * IMPORTANT: This helper deliberately does NOT touch the shared TEST_USER's
+ * `user.communities` array. Other parallel workers run dashboards/wallet/etc.
+ * tests against TEST_USER and break if an extra community is injected. The
+ * pending-deletion 410 gate runs at the route middleware layer BEFORE any
+ * membership check, so the test user does not need to be a member for the
+ * pending tests to hit 410. The baseline (non-pending) test only asserts
+ * status != 410, not full page render, so membership isn't needed there either.
+ */
+export async function ensurePendingDeletionTestCommunity(): Promise<void> {
+  const now = new Date();
+  const cID = new ObjectId(PENDING_DELETION_TEST_COMMUNITY_ID);
+  await withDb(async (db) => {
+    // Set the whole `community` subdoc in one shot. This implicitly drops any
+    // pendingDeletionAt / scheduledDeletionAt / etc. that a previous test left
+    // behind, so we don't need a $unset clause (which would conflict with
+    // $set on the same parent path).
+    await db.collection('communities').updateOne(
+      { _id: cID },
+      {
+        $set: {
+          _id: cID,
+          community: {
+            name: 'pending-deletion test community',
+            ownerID: TEST_USER_ID,
+            code: 'PDTEST1',
+            activeSignal100: false,
+            activeHoldTraffic: false,
+            departments: [],
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+      },
+      { upsert: true }
+    );
+  });
+}
+
+/** Flip the dedicated pending-deletion test community into pending state. */
+export async function setPendingDeletionTestCommunityPending(opts?: {
+  scheduledInDays?: number;
+}): Promise<void> {
+  const days = opts?.scheduledInDays ?? 30;
+  const now = new Date();
+  const scheduled = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+  await withDb(async (db) => {
+    await db.collection('communities').updateOne(
+      { _id: new ObjectId(PENDING_DELETION_TEST_COMMUNITY_ID) },
+      {
+        $set: {
+          'community.pendingDeletionAt': now,
+          'community.scheduledDeletionAt': scheduled,
+          'community.deletionRequestedBy': TEST_USER_ID,
+          'community.updatedAt': now,
+        },
+      }
+    );
+  });
+}
+
+/** Restore the dedicated pending-deletion test community to its normal state. */
+export async function clearPendingDeletionTestCommunity(): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('communities').updateOne(
+      { _id: new ObjectId(PENDING_DELETION_TEST_COMMUNITY_ID) },
+      {
+        $unset: {
+          'community.pendingDeletionAt': '',
+          'community.scheduledDeletionAt': '',
+          'community.pendingDeletionNotifiedAt': '',
+          'community.deletionRequestedBy': '',
+        },
+        $set: {
+          'community.updatedAt': new Date(),
+        },
+      }
+    );
+  });
 }

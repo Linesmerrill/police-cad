@@ -3,352 +3,348 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Error - Lines Police CAD</title>
-  
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-  
-  <!-- HeroUI Pro CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@heroui/pro@1.0.0/dist/css/heroui-pro.min.css">
-  
-  <!-- Favicon -->
-  <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico">
-  
+  <title>Something went sideways · Lines Police CAD</title>
+  <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary-color: #667eea;
-      --primary-dark: #5a67d8;
-      --secondary-color: #764ba2;
-      --accent-color: #f093fb;
-      --success-color: #48bb78;
-      --warning-color: #ed8936;
-      --danger-color: #f56565;
-      --dark-bg: #1a202c;
-      --darker-bg: #171923;
-      --card-bg: #2d3748;
-      --text-primary: #f7fafc;
-      --text-secondary: #a0aec0;
-      --border-color: #4a5568;
+      --rp-bg: #08090c;
+      --rp-glass: rgba(255, 255, 255, 0.04);
+      --rp-glass-border: rgba(255, 255, 255, 0.06);
+      --rp-text: #e2e8f0;
+      --rp-text-muted: #64748b;
+      --rp-accent: #38bdf8;
+      --rp-amber: #f59e0b;
+      --rp-red: #ef4444;
+      --rp-radius: 14px;
     }
-    
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100vh;
+      background: var(--rp-bg);
+      color: var(--rp-text);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
     body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, var(--dark-bg) 0%, var(--darker-bg) 100%);
-      color: var(--text-primary);
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-    
-    .error-container {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
+      padding-top: 36px;
       position: relative;
-    }
-    
-    .error-container::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: 
-        radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(240, 147, 251, 0.05) 0%, transparent 50%);
-      pointer-events: none;
-    }
-    
-    .error-card {
-      background: rgba(45, 55, 72, 0.8);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(74, 85, 104, 0.3);
-      border-radius: 20px;
-      padding: 3rem;
-      max-width: 500px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 
-        0 25px 50px -12px rgba(0, 0, 0, 0.25),
-        0 0 0 1px rgba(255, 255, 255, 0.05);
-      position: relative;
-      z-index: 1;
-      animation: slideUp 0.6s ease-out;
-    }
-    
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    .error-icon {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 2rem;
-      box-shadow: 0 10px 30px rgba(245, 101, 101, 0.3);
-      animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-      0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 10px 30px rgba(245, 101, 101, 0.3);
-      }
-      50% {
-        transform: scale(1.05);
-        box-shadow: 0 15px 40px rgba(245, 101, 101, 0.4);
-      }
-    }
-    
-    .error-icon i {
-      font-size: 2rem;
-      color: white;
-    }
-    
-    .error-title {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .error-message {
-      font-size: 1.1rem;
-      color: var(--text-secondary);
-      margin-bottom: 2.5rem;
-      line-height: 1.6;
-    }
-    
-    .error-actions {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
-      align-items: center;
     }
-    
-    .btn-primary {
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-      color: white;
-      border: none;
-      padding: 1rem 2rem;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 36px 0 0 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 55% 42% at 16% 92%, rgba(245, 158, 11, 0.075), transparent 65%),
+        radial-gradient(ellipse 38% 32% at 86% 6%, rgba(56, 189, 248, 0.045), transparent 70%);
     }
-    
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 36px 0 0 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.12;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='220' height='220' filter='url(%23n)'/></svg>");
     }
-    
-    .btn-secondary {
-      background: rgba(74, 85, 104, 0.3);
-      color: var(--text-secondary);
-      border: 1px solid rgba(74, 85, 104, 0.5);
-      padding: 0.75rem 1.5rem;
-      border-radius: 10px;
-      font-weight: 500;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    
-    .btn-secondary:hover {
-      background: rgba(74, 85, 104, 0.5);
-      border-color: rgba(74, 85, 104, 0.7);
-      color: var(--text-primary);
-    }
-    
-    .error-code {
-      background: rgba(74, 85, 104, 0.2);
-      border: 1px solid rgba(74, 85, 104, 0.3);
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
-      font-family: 'Monaco', 'Menlo', monospace;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      margin-top: 1rem;
-      word-break: break-all;
-    }
-    
-    .logo {
-      position: absolute;
-      top: 2rem;
-      left: 2rem;
+
+    .rp-error-stage {
+      flex: 1;
+      position: relative;
+      z-index: 1;
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      color: var(--text-primary);
+      justify-content: center;
+      padding: 2rem 1.25rem 4rem;
+      min-height: calc(100vh - 36px);
+    }
+
+    .rp-error-card {
+      width: 100%;
+      max-width: 520px;
+      padding: 2.75rem 2.5rem 2rem;
+      background: var(--rp-glass);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius);
+      backdrop-filter: blur(14px) saturate(135%);
+      -webkit-backdrop-filter: blur(14px) saturate(135%);
+      box-shadow:
+        0 28px 64px -22px rgba(0, 0, 0, 0.58),
+        0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: rp-error-card-in 460ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+    }
+    @keyframes rp-error-card-in {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .rp-error-mark {
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 1.85rem;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.11), rgba(245, 158, 11, 0.035) 70%, transparent 100%);
+      border: 1px solid rgba(245, 158, 11, 0.20);
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.025);
+    }
+    .rp-error-mark svg { display: block; }
+
+    .rp-error-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      font-size: clamp(1.6rem, 4vw, 1.95rem);
+      letter-spacing: -0.012em;
+      color: #f1f5f9;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+
+    .rp-error-rule {
+      width: 58px;
+      height: 1px;
+      margin: 0 auto 1.55rem;
+      background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.7), transparent);
+      transform: scaleX(0);
+      transform-origin: center;
+      animation: rp-error-rule-in 620ms cubic-bezier(0.22, 0.61, 0.36, 1) 280ms forwards;
+    }
+    @keyframes rp-error-rule-in {
+      to { transform: scaleX(1); }
+    }
+
+    .rp-error-message {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 400;
+      font-size: 0.96rem;
+      line-height: 1.65;
+      color: rgba(226, 232, 240, 0.68);
+      max-width: 380px;
+      margin: 0 auto 2.1rem;
+    }
+
+    .rp-error-actions {
+      display: flex;
+      gap: 0.6rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 0.6rem;
+    }
+
+    .rp-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.72rem 1.15rem;
+      border-radius: 10px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      font-size: 0.92rem;
+      letter-spacing: 0.003em;
       text-decoration: none;
-      font-weight: 600;
-      font-size: 1.1rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: transform 140ms ease, background-color 160ms ease,
+                  border-color 160ms ease, color 160ms ease, box-shadow 220ms ease;
+      white-space: nowrap;
     }
-    
-    .logo img {
-      width: 32px;
-      height: 32px;
+
+    .rp-btn-primary {
+      background: var(--rp-accent);
+      color: #04101a;
+      box-shadow: 0 6px 22px -10px rgba(56, 189, 248, 0.55);
     }
-    
-    @media (max-width: 768px) {
-      .error-card {
-        padding: 2rem;
-        margin: 1rem;
-      }
-      
-      .error-title {
-        font-size: 1.5rem;
-      }
-      
-      .error-message {
-        font-size: 1rem;
-      }
-      
-      .logo {
-        position: relative;
-        top: auto;
-        left: auto;
-        margin-bottom: 2rem;
-        justify-content: center;
-      }
+    .rp-btn-primary:hover {
+      background: #7dd3fc;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 28px -10px rgba(56, 189, 248, 0.7);
+    }
+
+    .rp-btn-secondary {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--rp-glass-border);
+      color: var(--rp-text);
+    }
+    .rp-btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.13);
+      transform: translateY(-1px);
+    }
+
+    .rp-btn svg { flex-shrink: 0; opacity: 0.92; }
+
+    .rp-error-tertiary-wrap {
+      margin-top: 0.5rem;
+      min-height: 1.4rem;
+    }
+    .rp-error-tertiary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.42rem;
+      padding: 0.32rem 0.5rem;
+      border-radius: 6px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 400;
+      color: rgba(148, 163, 184, 0.85);
+      text-decoration: none;
+      transition: color 160ms ease, background-color 160ms ease;
+    }
+    .rp-error-tertiary:hover {
+      color: var(--rp-accent);
+      background: rgba(56, 189, 248, 0.05);
+    }
+    .rp-error-tertiary svg { transition: transform 220ms ease; }
+    .rp-error-tertiary:hover svg { transform: translateX(-3px); }
+
+    .rp-error-divider {
+      width: 78%;
+      height: 1px;
+      margin: 1.85rem auto 1rem;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+    }
+
+    .rp-error-status-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.4rem 0.7rem;
+      border-radius: 6px;
+      font-family: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono",
+                   Menlo, Consolas, monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(148, 163, 184, 0.78);
+      text-decoration: none;
+      transition: color 160ms ease, background-color 160ms ease;
+    }
+    .rp-error-status-link:hover {
+      color: rgba(56, 189, 248, 0.95);
+      background: rgba(56, 189, 248, 0.05);
+    }
+    .rp-error-status-link::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #84cc16;
+      box-shadow: 0 0 7px rgba(132, 204, 22, 0.55);
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .rp-error-card,
+      .rp-error-rule { animation: none; }
+      .rp-error-card { opacity: 1; transform: none; }
+      .rp-error-rule { transform: scaleX(1); }
+      .rp-btn:hover,
+      .rp-error-tertiary:hover svg { transform: none; }
+    }
+
+    @media (max-width: 480px) {
+      .rp-error-card { padding: 2.25rem 1.5rem 1.5rem; }
+      .rp-error-actions { flex-direction: column; align-items: stretch; }
+      .rp-btn { justify-content: center; }
     }
   </style>
 </head>
 <body>
-  <a href="/" class="logo">
-    <img src="/static/images/favicon-32x32.png" alt="LPC Logo">
-    Lines Police CAD
-  </a>
-  
-  <div class="error-container">
-    <div class="error-card">
-      <div class="error-icon">
-        <i class="fa fa-exclamation-triangle"></i>
+  <%- include('partials/standalone-utility', { user: locals.user, backHref: '/', backLabel: 'Back to Home', pageLabel: 'Something Went Wrong' }) %>
+
+  <main class="rp-error-stage">
+    <section class="rp-error-card" role="alert" aria-labelledby="rp-error-title">
+      <div class="rp-error-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64" width="46" height="46"
+             stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <path d="M 12 32 L 52 32"
+                stroke="rgba(245, 158, 11, 0.18)"
+                stroke-width="1.4"
+                stroke-dasharray="2.5 5" />
+          <path d="M 12 32 L 30 32"
+                stroke="rgba(245, 158, 11, 0.88)"
+                stroke-width="2.5" />
+          <path d="M 31.6 30.4 L 44 18"
+                stroke="rgba(245, 158, 11, 0.88)"
+                stroke-width="2.5" />
+          <circle cx="30" cy="32" r="2.6" fill="#f59e0b" />
+          <circle cx="44" cy="18" r="3.2"
+                  fill="none" stroke="#f59e0b" stroke-width="2" />
+        </svg>
       </div>
-      
-      <h1 class="error-title">Oops! Something went wrong</h1>
-      
-      <p class="error-message">
-        <%= message %>
+
+      <h1 id="rp-error-title" class="rp-error-title">Something went sideways</h1>
+      <div class="rp-error-rule" aria-hidden="true"></div>
+
+      <p class="rp-error-message">
+        <% if (typeof message !== 'undefined' && message) { %>
+          <%= message %>
+        <% } else { %>
+          Looks like we had an issue. Try again, or head back home &mdash; we&rsquo;re on it.
+        <% } %>
       </p>
-      
-      <div class="error-actions">
-        <a href="/" class="btn-primary">
-          <i class="fa fa-home"></i>
-          Return to Home
-        </a>
 
-        <a href="https://status.linespolice-cad.com" target="_blank" rel="noopener noreferrer" class="btn-secondary">
-          <i class="fa fa-signal"></i>
-          Check Service Status
+      <div class="rp-error-actions">
+        <button type="button" class="rp-btn rp-btn-primary" onclick="window.location.reload()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.4"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          Try again
+        </button>
+        <a href="/" class="rp-btn rp-btn-secondary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 9.5L12 3l9 6.5"></path>
+            <path d="M5 9v11h14V9"></path>
+          </svg>
+          Back to home
         </a>
+      </div>
 
+      <div class="rp-error-tertiary-wrap">
         <% if (typeof redirect !== 'undefined' && redirect) { %>
-          <a href="<%= redirect %>" class="btn-secondary">
-            <i class="fa fa-arrow-left"></i>
-            Go Back
+          <a href="<%= redirect %>" class="rp-error-tertiary">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.4"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Go back to where you were
           </a>
-
-          <div class="error-code">
-            Redirect: <%= redirect %>
-          </div>
         <% } %>
       </div>
-    </div>
-  </div>
-  
-  <script>
-    // Add some interactive effects
-    document.addEventListener('DOMContentLoaded', function() {
-      const card = document.querySelector('.error-card');
-      
-      // Add hover effect
-      card.addEventListener('mouseenter', function() {
-        this.style.transform = 'translateY(-5px)';
-        this.style.boxShadow = '0 30px 60px -12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)';
-      });
-      
-      card.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateY(0)';
-        this.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)';
-      });
-      
-      // Add click ripple effect to buttons
-      const buttons = document.querySelectorAll('.btn-primary, .btn-secondary');
-      buttons.forEach(button => {
-        button.addEventListener('click', function(e) {
-          const ripple = document.createElement('span');
-          const rect = this.getBoundingClientRect();
-          const size = Math.max(rect.width, rect.height);
-          const x = e.clientX - rect.left - size / 2;
-          const y = e.clientY - rect.top - size / 2;
-          
-          ripple.style.width = ripple.style.height = size + 'px';
-          ripple.style.left = x + 'px';
-          ripple.style.top = y + 'px';
-          ripple.classList.add('ripple');
-          
-          this.appendChild(ripple);
-          
-          setTimeout(() => {
-            ripple.remove();
-          }, 600);
-        });
-      });
-    });
-  </script>
-  
-  <style>
-    .ripple {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
-      transform: scale(0);
-      animation: ripple-animation 0.6s linear;
-      pointer-events: none;
-    }
-    
-    @keyframes ripple-animation {
-      to {
-        transform: scale(4);
-        opacity: 0;
-      }
-    }
-    
-    .btn-primary, .btn-secondary {
-      position: relative;
-      overflow: hidden;
-    }
-  </style>
+
+      <div class="rp-error-divider" aria-hidden="true"></div>
+
+      <a href="https://status.linespolice-cad.com"
+         target="_blank" rel="noopener noreferrer"
+         class="rp-error-status-link">
+        Check service status
+      </a>
+    </section>
+  </main>
 </body>
 </html>

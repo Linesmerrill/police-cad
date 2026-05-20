@@ -208,6 +208,32 @@ export default function TermsAndConditions() {
       )
     },
     {
+      id: 'community-deletion-and-restoration',
+      title: 'Community Deletion & Restoration',
+      content: (
+        <>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>When you delete a community &mdash; whether through the mobile app, the website, or any community management interface &mdash; the community is <strong style={{ fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)' }}>immediately hidden from all members and other users</strong> but retained in our systems for a 30-day grace period before being permanently and irrevocably deleted.</p>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>The 30-Day Grace Period</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>During the grace period:</p>
+          <ul style={{ margin: '1.25rem 0', paddingLeft: '2rem', listStyleType: 'disc', listStylePosition: 'outside' }}>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>The community and all of its associated data &mdash; including members, civilians, vehicles, firearms, calls, BOLOs, court records, warrants, audit logs, and any uploaded content &mdash; cannot be accessed, browsed, or interacted with by any user, including the owner.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>The community is removed from all search, discover, leaderboard, and your-communities surfaces.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>The deleted community does not count toward your subscription tier&apos;s community-creation cap. You may create a new community immediately if you wish.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>Active subscriptions tied to the community continue to bill on their normal cycle unless cancelled separately through your subscription management interface. Cancelling the subscription does not restore the community.</li>
+          </ul>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>Requesting Restoration</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>If you wish to restore a deleted community before the 30-day grace period elapses, you may submit a restoration request through our <Link href="/contact-us" style={{ color: '#fbbf24', textDecoration: 'underline' }}>Contact Us</Link> page. Restoration requests are reviewed and processed at Lines Police CAD&apos;s sole discretion; we make no guarantee that any individual restore request will be granted. We may decline restoration requests for any reason, including but not limited to suspected abuse, violations of these Terms, or operational considerations.</p>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>If you have created a new community after deleting your previous one, restoring the previous community may result in your account temporarily exceeding your subscription tier&apos;s community cap. In that case, you may be required to delete or transfer ownership of one of the communities to remain in compliance with the cap.</p>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>Permanent Deletion After 30 Days</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>After the 30-day grace period elapses, the community and all of its associated data are <strong style={{ fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)' }}>permanently deleted</strong> from our active systems and cannot be recovered by any means &mdash; including support intervention, backups, or any other mechanism. Permanent deletion is final and irreversible.</p>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>Immediate Permanent Deletion on Request</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>If you wish to permanently delete a community immediately and waive the 30-day grace period, you may submit a request through our <Link href="/contact-us" style={{ color: '#fbbf24', textDecoration: 'underline' }}>Contact Us</Link> page. Once an immediate permanent deletion has been executed by our staff, the community and all of its associated data are irretrievably destroyed and cannot be restored.</p>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>Subscription Implications</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>Deleting a community does not automatically cancel any subscriptions, boosts, or promotions tied to that community. You are responsible for cancelling any associated paid services separately to avoid further charges. Refunds for paid services on a deleted community are governed by the subscription, boost, and promotion sections of these Terms, and are not automatically issued upon deletion.</p>
+        </>
+      )
+    },
+    {
       id: 'admin-console-and-linked-accounts',
       title: 'Admin Console & Linked LPC Accounts',
       content: (
@@ -371,7 +397,7 @@ export default function TermsAndConditions() {
                 color: 'rgba(255, 255, 255, 0.6)',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
               }}>
-                Last updated: January 28, 2026
+                Last updated: May 18, 2026
               </p>
             </div>
 

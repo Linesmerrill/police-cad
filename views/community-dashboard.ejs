@@ -204,6 +204,8 @@
     </header>
     <% include account-management %>
     <% include partials/notificationModal %>
+    <%- include('partials/dd-modal') %>
+    <%- include('partials/community-delete-loading') %>
     <% include footer %>
 
     <!-- Tutorial Modal -->
@@ -245,6 +247,7 @@
     <script src="/static/js/ads.js"></script>
     <script>if (window.module) module = window.module;</script>
     <%- include('partials/last-dashboard-tracker') %>
+    <%- include('partials/pending-deletion-gate') %>
 </body>
 
 </html>
@@ -579,45 +582,86 @@ function renderActiveCommunity(activeCommunity) {
 }
 
 function showDeleteModal(communityId, communityName) {
-    const modal = `
-      <div id="deleteModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
-              <h4 class="modal-title">Delete Community</h4>
-            </div>
-            <div class="modal-body">
-              <p>Are you sure you want to delete "${communityName}"? This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-danger" onclick="deleteCommunity('${communityId}')">Delete</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    $('body').append(modal);
-    $('#deleteModal').modal('show');
-    $('#deleteModal').on('hidden.bs.modal', function() {
-      $(this).remove();
+    // Friendly heads-up: the community is hidden everywhere immediately, and
+    // hard-deleted in 30 days. There is no in-app restore — staff handle
+    // restores out-of-band if the owner reaches out within the window.
+    if (!window.ddModal) {
+      // Fallback path if dd-modal didn't load (e.g. partial omitted) — keep
+      // the destructive action behind a confirm rather than no UI at all.
+      if (confirm('Delete "' + communityName + '"? It will be permanently deleted in 30 days. Contact support before then to restore it.')) {
+        deleteCommunity(communityId, communityName);
+      }
+      return;
+    }
+    // Show the actual hard-delete date in the confirmation so "30 days" isn't
+    // abstract. Computed client-side; the API will return the authoritative
+    // value in the response (used in the success toast).
+    var scheduledDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    var whenLabel = scheduledDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+    var safeName = (communityName || 'This community').replace(/</g, '&lt;');
+    window.ddModal({
+      type: 'danger',
+      icon: 'fa-trash-alt',
+      title: 'Delete this community?',
+      message: '<strong>' + safeName + '</strong> will be permanently deleted on <strong>' + whenLabel + '</strong>.',
+      detail: "After that, all civilians, departments, calls, and settings are gone for good. Contact support before then if you change your mind.",
+      confirmText: 'Delete community',
+      onConfirm: function() {
+        deleteCommunity(communityId, communityName);
+      }
     });
   }
 
-function deleteCommunity(communityId) {
+function deleteCommunity(communityId, communityName) {
+    // Mute the global 410 eviction modal for this community before firing
+    // the DELETE — the owner already saw a delete-confirm modal and is
+    // about to see the "Scheduled" success message below.
+    if (typeof window.suppressPendingDeletion === 'function') {
+      window.suppressPendingDeletion(communityId);
+    }
+    // Show the calm-ceremonial loading overlay so the user has something to
+    // watch during the API round-trip. Enforce a minimum display window so
+    // the animation isn't blink-and-you-miss-it on fast responses.
+    if (window.lpcShowDeleteCommunityLoading) window.lpcShowDeleteCommunityLoading();
+    var overlayShownAt = Date.now();
+    var MIN_OVERLAY_MS = 1500;
+    function hideOverlay(after) {
+      var wait = Math.max(0, MIN_OVERLAY_MS - (Date.now() - overlayShownAt));
+      setTimeout(function() {
+        if (window.lpcHideDeleteCommunityLoading) window.lpcHideDeleteCommunityLoading();
+        if (typeof after === 'function') after();
+      }, wait);
+    }
     $.ajax({
       url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}`,
       method: 'DELETE',
-      success: function() {
-        $('#deleteModal').modal('hide');
-        $('#successCopyMessage').html('<strong>Success!</strong> Community deleted.').show().delay(2000).fadeOut();
-        fetchCommunityData(); // Refresh community list
+      success: function(resp) {
+        var when = '';
+        try {
+          if (resp && resp.scheduledDeletionAt) {
+            var d = new Date(resp.scheduledDeletionAt);
+            if (!isNaN(d.getTime())) {
+              when = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            }
+          }
+        } catch (e) { /* shape drift — fall back to generic copy */ }
+        var msg = when
+          ? '<strong>Scheduled.</strong> "' + (communityName || 'Community') + '" deletes on ' + when + '. Contact support before then to restore.'
+          : '<strong>Scheduled.</strong> Community will be permanently deleted in 30 days.';
+        hideOverlay(function() {
+          $('#successCopyMessage').html(msg).show();
+          // Don't refetch the community we just hid — it returns 410 and
+          // would either flash an error or trip the eviction modal. Bounce
+          // the owner to the communities list after a beat so they can see
+          // the scheduled-delete message land first.
+          setTimeout(function() { window.location.href = '/communities'; }, 1800);
+        });
       },
       error: function(xhr, status, error) {
         console.error('Error deleting community:', { status: xhr.status, responseText: xhr.responseText, error });
-        $('#deleteModal').modal('hide');
-        $('#successCopyMessage').html('<strong>Error!</strong> Failed to delete community: ' + (xhr.responseText || error) + '.').show().delay(2000).fadeOut();
+        hideOverlay(function() {
+          $('#successCopyMessage').html('<strong>Error!</strong> Failed to schedule deletion: ' + (xhr.responseText || error) + '.').show().delay(2000).fadeOut();
+        });
       }
     });
   }

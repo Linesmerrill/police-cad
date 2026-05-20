@@ -650,8 +650,8 @@
         </div>
         
         <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-          <p style="font-size:1.125rem; margin-bottom:1rem;">Are you sure you want to delete this community?</p>
-          <p style="font-size:1rem; color:#fca5a5;">This action is irreversible and will permanently remove all community data, including members, roles, and settings.</p>
+          <p style="font-size:1.125rem; margin-bottom:1rem;"><strong style="color:#fff;"><%- community && community.community && community.community.name ? community.community.name.replace(/</g, '&lt;') : 'This community' %></strong> will be permanently deleted on <strong style="color:#fff;" id="deleteCommunityScheduledDate">in 30 days</strong>.</p>
+          <p style="font-size:1rem; color:#fca5a5;">After that, all civilians, departments, calls, and settings are gone for good. Contact support before then if you change your mind.</p>
         </div>
         
         <div style="margin-top:2rem; display:flex; gap:1rem; justify-content:center;">
@@ -4419,6 +4419,16 @@ function openBansManagement() {
 }
 
 function openDeleteCommunityModal() {
+  // Populate the explicit hard-delete date so the user sees "deleted on
+  // Jun 17, 2026" instead of an abstract "in 30 days". Computed client-side;
+  // the API confirms the same date in the response.
+  try {
+    var el = document.getElementById('deleteCommunityScheduledDate');
+    if (el) {
+      var d = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      el.textContent = d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+  } catch (e) { /* fall back to the inline "in 30 days" string */ }
   document.getElementById('deleteCommunityModal').style.display = 'flex';
 }
 
@@ -4428,28 +4438,46 @@ function closeDeleteCommunityModal() {
 
 function confirmDeleteCommunity() {
   const communityId = '<%= community._id %>';
-  
+
   // Get the API URL with fallback
   const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
-  
+
+  // Close the confirm modal and show the ceremonial loading overlay so the
+  // user sees something is happening during the API round-trip. We keep the
+  // overlay visible on success straight through the navigation so the
+  // animation actually plays — the API often responds in <300ms, which would
+  // otherwise flash the overlay too briefly to register.
+  closeDeleteCommunityModal();
+  const overlayShownAt = Date.now();
+  if (window.lpcShowDeleteCommunityLoading) window.lpcShowDeleteCommunityLoading();
+  const MIN_OVERLAY_MS = 1500;
+
+  // Mute the global 410 eviction modal for this community — we already
+  // showed the owner a delete-confirm modal and a ceremonial loading
+  // overlay, no need for a second "Community deleted" prompt before the
+  // redirect lands.
+  if (typeof window.suppressPendingDeletion === 'function') {
+    window.suppressPendingDeletion(communityId);
+  }
+
   fetch(`${apiUrl}/api/v1/community/${communityId}`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
     }
   })
-  .then(res => {
-    if (res.ok) {
-      showSettingsSuccess('Community deleted successfully!');
-      setTimeout(() => {
-        window.location.href = '/communities';
-      }, 1500);
-    } else {
-      throw new Error('Failed to delete community');
-    }
+  .then(res => res.json().catch(() => ({})).then(body => ({ ok: res.ok, body })))
+  .then(({ ok }) => {
+    if (!ok) throw new Error('Failed to delete community');
+    const elapsed = Date.now() - overlayShownAt;
+    const wait = Math.max(0, MIN_OVERLAY_MS - elapsed);
+    // Leave the overlay up while we navigate — the redirect itself confirms
+    // the action worked, and the communities list page can show the followup.
+    setTimeout(() => { window.location.href = '/communities'; }, wait);
   })
-  .catch(error => {
-    showSettingsError('Failed to delete community. Please try again.');
+  .catch(() => {
+    if (window.lpcHideDeleteCommunityLoading) window.lpcHideDeleteCommunityLoading();
+    showSettingsError('Failed to schedule deletion. Please try again.');
   });
 }
 

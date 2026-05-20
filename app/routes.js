@@ -27,6 +27,7 @@ var handlebars = require("handlebars");
 var sanitize = require("mongo-sanitize");
 let randomstring = require("randomstring");
 var axios = require("axios");
+var discordAlerts = require("./discord-alerts");
 
 var policeCadApiUrl = process.env.POLICE_CAD_API_URL;
 var policeCadApiToken = process.env.POLICE_CAD_API_TOKEN;
@@ -63,6 +64,26 @@ function decodeId(encoded) {
   let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
   while (base64.length % 4) base64 += '=';
   return Buffer.from(base64, 'base64').toString('utf8');
+}
+
+// If an axios error from the API is the standard 410 pending_deletion shape,
+// render the friendly route-block page and return true. Callers should
+// short-circuit their catch block when this returns true, e.g.:
+//   if (renderPendingDeletionIfApplicable(req, res, error)) return;
+// Centralizes the check so every community-scoped server-rendered route
+// handles the soft-delete state the same way as the /community/:hash route.
+function renderPendingDeletionIfApplicable(req, res, error) {
+  const resp = error && error.response;
+  if (!resp || resp.status !== 410) return false;
+  const data = resp.data || {};
+  if (data.error !== "pending_deletion") return false;
+  res.status(410).render("community-pending-deletion", {
+    user: req.user,
+    communityName: data.communityName || "This community",
+    scheduledDeletionAt: data.scheduledDeletionAt || null,
+    communityHash: (req.params && req.params.hash) || "",
+  });
+  return true;
 }
 
 module.exports = function (app, passport, server, nextApp, handle) {
@@ -196,6 +217,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         redirect: encodeURIComponent(redirect),
       });
     } catch (error) {
+      if (renderPendingDeletionIfApplicable(req, res, error)) return;
       console.error("[LPS] [level=error] /community/:hash error:", error.message);
       return res.status(404).render("error", {
         message: "Community not found or an error occurred.",
@@ -244,6 +266,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         encodedCommunityId: hash,
       });
     } catch (error) {
+      if (renderPendingDeletionIfApplicable(req, res, error)) return;
       console.error("[community-map] Error loading map page:", error.message);
       return res.status(404).render("error", {
         message: "Community not found or an error occurred.",
@@ -523,6 +546,39 @@ module.exports = function (app, passport, server, nextApp, handle) {
   }
 
   // Placeholder Admin Console (guarded)
+  // Admin-only smoke test for the Discord error webhook. Sends a synthetic
+  // alert through the same code path the global error handler uses, so a
+  // staff member can confirm the channel is wired up without having to
+  // actually break a page. Bypasses dedup by stamping a unique signature
+  // every time it's called.
+  app.get("/admin/test-discord-alert", requireAdminSession, function (req, res) {
+    if (!process.env.DISCORD_WEBSITE_ERROR_WEBHOOK_URL) {
+      return res.status(200).json({
+        ok: false,
+        message: "DISCORD_WEBSITE_ERROR_WEBHOOK_URL is not set. Configure it in Heroku config vars and try again.",
+      });
+    }
+    var fakeErr = new Error(
+      "Test alert from /admin/test-discord-alert at " + new Date().toISOString()
+    );
+    fakeErr.stack =
+      "Error: synthetic test alert (no real error occurred)\n" +
+      "    at /admin/test-discord-alert (manual trigger)\n" +
+      "    triggered by " + (req.session && req.session.admin && req.session.admin.email ? req.session.admin.email : "admin");
+    try {
+      discordAlerts.sendErrorAlert(fakeErr, req);
+      return res.status(200).json({
+        ok: true,
+        message: "Synthetic alert dispatched. Check the Discord channel — it should arrive within a few seconds. If nothing shows up, double-check the webhook URL and channel permissions.",
+      });
+    } catch (e) {
+      return res.status(500).json({
+        ok: false,
+        message: "Failed to dispatch alert: " + (e && e.message ? e.message : String(e)),
+      });
+    }
+  });
+
   app.get("/admin/console", requireAdminSession, function (req, res) {
     const success = req.query.success || null;
     const error = req.query.error || null;
@@ -2049,6 +2105,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
       communityName = r.data?.community?.name || null;
     } catch (err) {
+      if (renderPendingDeletionIfApplicable(req, res, err)) return;
       console.error('Error fetching community for /forms:', err.message);
     }
 
@@ -7583,6 +7640,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
     );
   });
 
+  // /delete-community is the legacy form-post path from views/communities-owned.ejs.
+  // Aligned with the API soft-delete contract: instead of removing the doc we set
+  // pendingDeletionAt / scheduledDeletionAt (+30d) and let the API's daily cron
+  // run the cascade once the grace window elapses. Staff can restore via the
+  // admin console if the owner asks within the window.
   app.post("/delete-community", auth, function (req, res) {
     req.app.locals.specialContext = null;
     User.updateMany(
@@ -7604,9 +7666,20 @@ module.exports = function (app, passport, server, nextApp, handle) {
           req.app.locals.specialContext = "invalidRequest";
           return res.redirect("back");
         }
-        Community.findByIdAndDelete(
+        var now = new Date();
+        var scheduled = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        var actor = req.user && req.user._doc && req.user._doc._id
+          ? String(req.user._doc._id)
+          : (req.user && req.user._id ? String(req.user._id) : "");
+        Community.findByIdAndUpdate(
+          { _id: ObjectId(req.body.communityID) },
           {
-            _id: ObjectId(req.body.communityID),
+            $set: {
+              "community.pendingDeletionAt": now,
+              "community.scheduledDeletionAt": scheduled,
+              "community.deletionRequestedBy": actor,
+              "community.updatedAt": now,
+            },
           },
           function (err) {
             if (err) return console.error(err);
@@ -10602,6 +10675,42 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // ===========================================
   // END ANNOUNCEMENT API ROUTES
   // ===========================================
+
+  // ─── Global error handler ────────────────────────────────────────────────
+  // Catches any error thrown from a route handler (sync or via .next(err))
+  // and renders the branded error page instead of Express's default HTML
+  // stack trace. Must be the LAST middleware registered; the 4-arg signature
+  // is what flags it as an error handler in Express.
+  //
+  // Note: async handlers that throw without .next(err) propagate as
+  // unhandled promise rejections at the Node level — they bypass this
+  // middleware. Those still need try/catch in the handler itself; this
+  // middleware is the safety net for everything Express can see.
+  app.use(function (err, req, res, next) {
+    console.error(
+      "[LPS] [level=error] unhandled route error:",
+      err && err.stack ? err.stack : err
+    );
+    // Fire-and-forget Discord alert. Silently no-ops if the webhook env
+    // var isn't set (local dev). Dedup + 4xx filtering handled inside.
+    try {
+      discordAlerts.sendErrorAlert(err, req);
+    } catch (e) {
+      console.error("[LPS] [level=error] discord alert threw:", e && e.message ? e.message : e);
+    }
+    if (res.headersSent) return next(err);
+    var status = err && err.status ? err.status : 500;
+    var isJsonRequest =
+      (req.xhr || (req.get('accept') || '').indexOf('json') !== -1 || (req.path || '').indexOf('/api/') === 0);
+    if (isJsonRequest) {
+      return res.status(status).json({ error: "internal_error" });
+    }
+    res.status(status).render("error", {
+      user: req.user,
+      message: "Looks like we had an issue. Try again, or head back home — we're on it.",
+      redirect: req.get('referer') || null,
+    });
+  });
 }; //end of routes
 
 function auth(req, res, next) {

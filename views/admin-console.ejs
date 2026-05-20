@@ -1041,13 +1041,19 @@
             <div class="ac-card-body">
               <div class="row">
                 <div class="col-md-8">
-                  <input type="text" id="communitySearch" class="form-control ac-input" placeholder="Search communities by name..." />
+                  <input type="text" id="communitySearch" class="form-control ac-input" placeholder="Search by community name or owner email/username..." />
                 </div>
                 <div class="col-md-4">
                   <button type="button" id="searchCommunitiesBtn" class="ac-btn ac-btn-accent ac-btn-block">
                     <i class="fas fa-search"></i> Search Communities
                   </button>
                 </div>
+              </div>
+              <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                <label style="display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; user-select: none;">
+                  <input type="checkbox" id="communityPendingDeletionOnly" />
+                  <span><i class="fas fa-clock-rotate-left" style="margin-right: 0.25rem; opacity: 0.85;"></i> Show only pending-deletion communities</span>
+                </label>
               </div>
               <div class="recent-searches-section" id="recentSearchesSectionCommunities" style="display: none;">
                 <div class="recent-searches-header">
@@ -1286,6 +1292,10 @@
               <a class="aw-nav-link" href="#reset-owner">Reset Owner &amp; Roles</a>
               <a class="aw-nav-link" href="#remove-member">Remove a Member</a>
               <a class="aw-nav-link" href="#roles-permissions">Roles &amp; Permissions</a>
+              <a class="aw-nav-link" href="#pending-deletion">Pending Deletion</a>
+              <a class="aw-nav-link" href="#restore-community">Restore a Community</a>
+              <a class="aw-nav-link" href="#tier-cap-check">Owner Tier &amp; Cap Check</a>
+              <a class="aw-nav-link" href="#force-delete-community">Force Delete Now</a>
 
               <div class="aw-nav-group-title">Content Creators</div>
               <a class="aw-nav-link" href="#review-applications">Review Applications</a>
@@ -1748,6 +1758,156 @@
                   <div class="aw-tip">
                     <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
                     <div class="aw-tip-text">If a user asks "why can't I do X in my community?", the answer is almost always that their role does not have the required permission. Ask them to check with their community owner or Head Admin to adjust role permissions.</div>
+                  </div>
+                </div>
+
+                <!-- Pending Deletion (overview) -->
+                <div class="aw-subsection" id="pending-deletion">
+                  <h3 class="aw-subsection-title">Pending-Deletion Communities</h3>
+                  <p class="aw-text">When an owner deletes a community, it is <strong style="color:#fff;">not</strong> immediately destroyed. It enters a <strong style="color:#fff;">30-day pending-deletion state</strong>: hidden from every customer-facing surface (Discover, leaderboard, the owner's "Yours" list, direct links return 410), but retained in our systems so support can restore it if the owner reaches out. After 30 days a daily scheduler job (<code>processCommunityPendingDeletions</code> at 03:00 UTC) runs the full hard-delete cascade and the data is gone for good.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-clock-rotate-left" style="font-size:0.6rem;"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">How you'll notice one</div>
+                        <div class="aw-text">In the community detail modal a red banner says "Pending deletion · hard-deletes &lt;date&gt;". In search/list results the result card shows the same banner. The Restore and Force Delete Now buttons only render when the community is in this state.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-user-shield" style="font-size:0.6rem;"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Owners cannot self-restore</div>
+                        <div class="aw-text">There is no in-app restore button for owners. Restoration is a support action, surfaced only in the admin console. This is intentional &mdash; the soft-delete is a one-way action from the owner's side; coming back from it requires a staff member to acknowledge the request.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-plus" style="font-size:0.6rem;"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Doesn't count toward the owner's cap</div>
+                        <div class="aw-text">Pending-deletion communities are excluded from every owner-facing community count (CDB.Find / CountDocuments / Aggregate all wrap with <code>pendingDeletionAt: null</code>). A free user who soft-deletes their only community can immediately create another &mdash; this is why a restore can land them over their plan cap.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-info-circle"></i></div>
+                    <div class="aw-tip-text">Look up by ID even when pending: the admin "Look Up a Community" search returns pending entries (toggle "Pending only" to filter), but the consumer-facing search hides them.</div>
+                  </div>
+                </div>
+
+                <!-- Restore a Community -->
+                <div class="aw-subsection" id="restore-community">
+                  <h3 class="aw-subsection-title">Restore a Pending-Deletion Community</h3>
+                  <p class="aw-text">Use when the owner has contacted support (typically via the website Contact Us page) and asked to keep their community. Clears the soft-delete fields and makes the community visible to its members again.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Verify the request</div>
+                        <div class="aw-text">Confirm the asker actually owns the community (email match against the Owner field in the community detail modal). Don't restore based on a member's request &mdash; only the owner has standing.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Open the community details modal</div>
+                        <div class="aw-text">Search by community name, owner email/username, or ID, then click "View Details" on the result. The red "Pending deletion" banner confirms it's restorable.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Check the tier-cap banner first</div>
+                        <div class="aw-text">If the modal shows a <strong style="color:#fca5a5;">red "Restoring puts this owner OVER their tier limit"</strong> banner, see the Owner Tier &amp; Cap Check section below before clicking Restore.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">4</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click Restore and confirm</div>
+                        <div class="aw-text">The Restore button is in the action row at the bottom of the modal. A confirm dialog appears; click through. On success the community reappears for the owner immediately and an audit log entry (<code>community.pending_deletion_restored</code>) is written under your admin email.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">If the restore button is missing, the community isn't in pending-deletion state (or it's already been permanently deleted after the 30-day window). Check the banner; if there's no banner, there's nothing to restore.</div>
+                  </div>
+                </div>
+
+                <!-- Owner Tier & Cap Check -->
+                <div class="aw-subsection" id="tier-cap-check">
+                  <h3 class="aw-subsection-title">Owner Tier &amp; Cap Check</h3>
+                  <p class="aw-text">When a community is pending deletion the admin detail modal shows the owner's plan, their cap, how many other live communities they currently have, and a collapsible list of those other communities. This exists because a soft-deleted community doesn't count against the cap &mdash; so an owner who soft-deletes and then creates a fresh one will be at their cap with the pending one hidden in the wings. Restoring it would push them over.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-magnifying-glass" style="font-size:0.6rem;"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Read the banner</div>
+                        <div class="aw-text">Blue banner = restoring is safe; owner is under their cap. Red banner = restoring exceeds the cap. The banner shows their plan (free / base / premium / premium_plus) and the math: "<em>N other live / cap K. Restoring this would bring them to N+1.</em>"</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-list" style="font-size:0.6rem;"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Expand "Show N other communities" to see the list</div>
+                        <div class="aw-text">Lists the owner's other live communities with name, plan, and member count. Useful for spotting which ones the owner might be willing to retire instead.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number"><i class="fas fa-route" style="font-size:0.6rem;"></i></div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">If the banner is red, you have three options</div>
+                        <div class="aw-text">
+                          (a) Ask the owner to choose one community to give up &mdash; restore the requested one and let them soft-delete one of the others (they then have 30 days to walk that back if they change their mind);<br>
+                          (b) transfer one of the other communities to a new owner via the "Reset Owner &amp; Roles" workflow before restoring this one;<br>
+                          (c) decline the restore with a polite note pointing them at the upgrade flow. Restoration is at our discretion per the Terms of Service.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-info-circle"></i></div>
+                    <div class="aw-tip-text">Current tier caps live in <code>models/tiers.go</code> on the API: free = 1, base = 5, premium = 10, premium_plus = unlimited. If those numbers need to change, change them there; the admin console reads the cap from the API.</div>
+                  </div>
+                </div>
+
+                <!-- Force Delete Now -->
+                <div class="aw-subsection" id="force-delete-community">
+                  <h3 class="aw-subsection-title">Force Delete Now (Skip the 30 Days)</h3>
+                  <p class="aw-text">Use only when the owner has explicitly asked support to permanently destroy their community immediately and waive the 30-day grace period. Common scenario: a free-tier user who deleted their old community, can't wait 30 days for it to clear, and wants a clean slate now so they can be sure it can't be restored. This action is <strong style="color:#fca5a5;">irreversible</strong> &mdash; the same cascade the daily scheduler runs at end-of-grace fires immediately, wiping civilians, vehicles, calls, BOLOs, court records, audit logs, everything.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Re-verify with the owner</div>
+                        <div class="aw-text">This is the destructive option. Email confirmation from the owner (using the email on file) before clicking. A community force-deleted by mistake cannot be brought back &mdash; the data is gone, not soft-hidden.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Open the community detail modal</div>
+                        <div class="aw-text">Force Delete Now is shown next to Restore at the bottom of the modal &mdash; both only appear when the community is in pending-deletion state.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Type the community name to confirm</div>
+                        <div class="aw-text">A confirmation dialog appears requiring you to type the exact community name (case- and whitespace-sensitive). This guards against fat-finger clicks. If the typed name doesn't match, the API rejects the request.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">4</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Submit</div>
+                        <div class="aw-text">On success the community modal closes, the community is removed from the result list, and an audit log entry (<code>community.force_deleted</code>) is written under your admin email. The owner&apos;s cap slot is freed up immediately, so they can create a fresh community right away if they want.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip" style="border-color:rgba(239,68,68,0.32); background:rgba(239,68,68,0.06);">
+                    <div class="aw-tip-icon" style="color:#fca5a5;"><i class="fas fa-triangle-exclamation"></i></div>
+                    <div class="aw-tip-text">Treat this like a database <code>DROP</code>. Confirm with the owner, type the name exactly, and once it&apos;s done don&apos;t expect to undo it &mdash; not from a backup, not from anywhere.</div>
                   </div>
                 </div>
               </section>
@@ -6267,17 +6427,20 @@
       
       function searchCommunities(query, page = 0) {
         $('#communityResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Searching communities...</div>');
-        
+
         // Track search activity
         trackAdminAction('community_search', `Searched for communities with query: "${query}"`);
-        
+
+        var pendingOnly = $('#communityPendingDeletionOnly').is(':checked');
+
         $.ajax({
           url: `${API_BASE}/api/v1/admin/search/communities`,
           method: 'POST',
-          data: JSON.stringify({ 
+          data: JSON.stringify({
             query: query,
             page: page,
-            limit: resultsPerPage
+            limit: resultsPerPage,
+            pendingDeletionOnly: pendingOnly
           }),
           contentType: 'application/json',
           success: function(data) {
@@ -6353,13 +6516,38 @@
             return date.toLocaleDateString() + ' ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
           })() : 'Unknown';
           
+          // Soft-delete state: when set, the API hides the community everywhere
+          // and the cron will hard-delete it after `scheduledDeletionAt`. Staff
+          // can $unset the fields via the restore button below.
+          var isPending = !!community.pendingDeletionAt;
+          var scheduledLabel = '';
+          if (isPending && community.scheduledDeletionAt) {
+            try {
+              var sd = new Date(community.scheduledDeletionAt);
+              if (!isNaN(sd.getTime())) {
+                scheduledLabel = sd.toLocaleDateString() + ' ' + sd.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+              }
+            } catch (e) { /* fall back to no label */ }
+          }
+          var pendingBanner = isPending ? `
+            <div style="margin-bottom: 0.75rem; padding: 0.6rem 0.85rem; border-radius: 8px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fas fa-clock-rotate-left"></i>
+              <span><strong>Pending deletion${scheduledLabel ? ' &middot; hard-deletes ' + scheduledLabel : ''}</strong></span>
+            </div>` : '';
+          var restoreButton = isPending ? `
+            <button class="btn btn-warning btn-sm" onclick="confirmRestoreCommunity('${community.id}', ${JSON.stringify(community.name || '').replace(/"/g, '&quot;')})">
+              <i class="fas fa-rotate-left"></i> Restore
+            </button>` : '';
+
           html += `
             <div class="result-card">
+              ${pendingBanner}
               <div class="result-header">
                 <div>
                   <h5 class="result-title">${community.name || 'Unnamed Community'}</h5>
                 </div>
                 <div class="action-buttons">
+                  ${restoreButton}
                   <button class="btn btn-secondary btn-sm" onclick="viewCommunityDetails('${community.id}')">
                     <i class="fas fa-eye"></i> View Details
                   </button>
@@ -7716,7 +7904,7 @@
         $('#communityModalTitle').text('Loading Community Details...');
         $('#communityModalBody').html('<div class="loading">Loading...</div>');
         $('#communityModal').modal('show');
-        
+
         $.ajax({
           url: `${API_BASE}/api/v1/admin/communities/${communityId}`,
           method: 'GET',
@@ -7727,6 +7915,51 @@
           error: function(xhr) {
             $('#communityModalBody').html('<div class="loading">Failed to load community details</div>');
             showInfoModal('Error', `Error loading community: ${xhr.responseJSON?.error || 'Unknown error'}`);
+          }
+        });
+      }
+
+      // Confirms then $unsets the soft-delete fields on a community. Reuses
+      // showConfirmModal because the rest of the admin console uses it; the
+      // user only deals with this surface, so a consistent confirm pattern
+      // matters more than aesthetic parity with the ddModal used on the
+      // customer dashboard.
+      function confirmRestoreCommunity(communityId, communityName) {
+        var safeName = $('<div>').text(communityName || 'this community').html();
+        showConfirmModal(
+          'Restore community?',
+          'This will clear the pending-deletion flag and make <strong>' + safeName + '</strong> available to its owner again. Run only if you have confirmation from the owner that they want to keep it.',
+          function() { restoreCommunityPendingDeletion(communityId, communityName); }
+        );
+      }
+
+      function restoreCommunityPendingDeletion(communityId, communityName) {
+        // Optimistically remove the result card so the staff member sees an
+        // immediate effect. If the request fails we re-run the search to
+        // resync state, matching the "UI updates must be immediate" rule
+        // elsewhere in the codebase.
+        var $card = $('#communityResults .result-card').filter(function() {
+          return $(this).find('code').first().text() === communityId;
+        });
+        $card.css('opacity', 0.5);
+
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/communities/${communityId}/restore-pending-deletion`,
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            currentUser: { email: currentUserEmail, roles: roles }
+          }),
+          success: function() {
+            trackAdminAction('community_restore', 'Restored community "' + (communityName || communityId) + '" (' + communityId + ') from pending deletion');
+            $card.slideUp(180, function() { $(this).remove(); });
+            if (typeof showToast === 'function') {
+              showToast('success', 'Community restored. Owner can use it again.');
+            }
+          },
+          error: function(xhr) {
+            $card.css('opacity', 1);
+            showInfoModal('Restore failed', `Could not restore community: ${xhr.responseJSON?.error || xhr.statusText || 'Unknown error'}`);
           }
         });
       }
@@ -7866,6 +8099,8 @@
             </div>
           </div>
           
+          ${renderPendingDeletionTierContext(community)}
+
           <div style="margin-top: 2rem;">
             <h5>Departments (${community.departmentCount || 0})</h5>
             ${(() => {
@@ -7890,8 +8125,138 @@
             <button class="ac-btn" onclick="openRemoveMemberForm('${community.id}', '${(community.name || '').replace(/'/g, "\\'")}')">
               <i class="fas fa-user-slash"></i> Remove Member
             </button>
+            ${community.pendingDeletionAt ? `
+              <button class="ac-btn ac-btn-warning" onclick="confirmRestoreCommunity('${community.id}', ${JSON.stringify(community.name || '').replace(/"/g, '&quot;')})">
+                <i class="fas fa-rotate-left"></i> Restore
+              </button>
+              <button class="ac-btn ac-btn-danger" onclick="openForceDeleteForm('${community.id}', ${JSON.stringify(community.name || '').replace(/"/g, '&quot;')})">
+                <i class="fas fa-trash-can"></i> Force Delete Now
+              </button>
+            ` : ''}
           </div>
         `);
+      }
+
+      // Renders the owner-tier red-flag block shown when a community is
+      // pending deletion. The admin API populates ownerPlan, ownerCommunityCap,
+      // ownerActiveCount, and ownerOtherCommunities specifically for this UI
+      // so staff can see at a glance whether a restore would put the owner
+      // over their plan cap.
+      function renderPendingDeletionTierContext(community) {
+        if (!community || !community.pendingDeletionAt) return '';
+        var cap = Number(community.ownerCommunityCap || 0);
+        var active = Number(community.ownerActiveCount || 0);
+        var afterRestore = active + 1;
+        var plan = community.ownerPlan || 'free';
+        var unlimited = cap >= 1000000;
+        var overCap = !unlimited && afterRestore > cap;
+        var bannerStyle = overCap
+          ? 'background: rgba(239,68,68,0.10); border: 1px solid rgba(239,68,68,0.35); color: #fca5a5;'
+          : 'background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.32); color: #93c5fd;';
+        var headline = overCap
+          ? '⚠️ Restoring puts this owner OVER their <strong>' + escapeHtml(plan) + '</strong> tier limit'
+          : 'Owner is on the <strong>' + escapeHtml(plan) + '</strong> tier' + (unlimited ? ' (unlimited communities)' : ' (cap: ' + cap + ')');
+        var summary = unlimited
+          ? 'They currently have ' + active + ' other live communit' + (active === 1 ? 'y' : 'ies') + '.'
+          : 'They currently have ' + active + ' other live / ' + cap + ' allowed. Restoring this one would bring them to ' + afterRestore + '.';
+
+        var others = Array.isArray(community.ownerOtherCommunities) ? community.ownerOtherCommunities : [];
+        var rows = others.map(function(o) {
+          var planLabel = o.plan ? ' &middot; <span style="color: #cbd5e1;">' + escapeHtml(o.plan) + '</span>' : '';
+          return '<li style="padding: 0.35rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between; gap: 0.75rem;"><span><i class="fas fa-circle" style="font-size: 0.4em; vertical-align: middle; margin-right: 0.5em; color: #6b7280;"></i><strong>' + escapeHtml(o.name || 'Unnamed') + '</strong>' + planLabel + '</span><span style="color: #9aa0b4; font-size: 0.85em;">' + (o.membersCount || 0) + ' member' + ((o.membersCount || 0) === 1 ? '' : 's') + '</span></li>';
+        }).join('');
+        var othersBlock = others.length
+          ? '<details style="margin-top: 0.5rem;"><summary style="cursor: pointer; color: #cbd5e1; font-size: 0.9em;">Show ' + others.length + ' other community/ies</summary><ul style="list-style: none; padding: 0.5rem 0 0; margin: 0;">' + rows + '</ul></details>'
+          : '';
+
+        return ''
+          + '<div style="margin-top: 1.5rem; padding: 0.9rem 1rem; border-radius: 10px; ' + bannerStyle + '">'
+          + '  <div style="font-size: 0.95rem; margin-bottom: 0.25rem;"><i class="fas ' + (overCap ? 'fa-triangle-exclamation' : 'fa-circle-info') + '" style="margin-right: 0.4em;"></i>' + headline + '</div>'
+          + '  <div style="font-size: 0.85em; color: ' + (overCap ? '#fecaca' : '#bfdbfe') + ';">' + summary + '</div>'
+          + othersBlock
+          + '</div>';
+      }
+
+      function escapeHtml(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      // Force-delete: opens a modal that requires the staff member to type
+      // the exact community name before confirming. This is irreversible —
+      // bypasses the 30-day grace period and runs the full cascade
+      // immediately. Use only when the owner has explicitly requested it.
+      function openForceDeleteForm(communityId, communityName) {
+        var safeName = escapeHtml(communityName || '');
+        var modalHtml = ''
+          + '<div class="modal fade" id="forceDeleteCommunityModal" tabindex="-1" role="dialog" aria-hidden="true">'
+          + '  <div class="modal-dialog modal-dialog-centered" role="document">'
+          + '    <div class="modal-content" style="background: #1a202c; border: 1px solid rgba(239,68,68,0.4); border-radius: 12px;">'
+          + '      <div class="modal-header" style="border-bottom: 1px solid #4a5568;">'
+          + '        <h5 class="modal-title" style="color: #fff;"><i class="fas fa-triangle-exclamation" style="color: #ef4444; margin-right: 0.5rem;"></i>Force-delete community?</h5>'
+          + '        <button type="button" class="close" data-dismiss="modal" style="color: #fff;">&times;</button>'
+          + '      </div>'
+          + '      <div class="modal-body" style="padding: 1.25rem;">'
+          + '        <p style="color: #fca5a5; font-weight: 600; margin-bottom: 0.75rem;">This is irreversible.</p>'
+          + '        <p style="color: #cbd5e1; font-size: 0.9em; margin-bottom: 1rem;">Bypasses the 30-day grace period and runs the full hard-delete cascade right now — community doc, member references, civilians, vehicles, calls, BOLOs, court records, audit logs, everything. Use only when the owner has explicitly asked us to purge their community immediately.</p>'
+          + '        <p style="color: #cbd5e1; font-size: 0.9em;">Type the community name to confirm:</p>'
+          + '        <div style="background: rgba(255,255,255,0.04); padding: 0.5rem 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; color: #e2e8f0; font-family: ui-monospace, monospace; font-size: 0.9em;">' + safeName + '</div>'
+          + '        <input id="forceDeleteCommunityConfirm" type="text" autocomplete="off" placeholder="Type name to confirm" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #fff; border-radius: 8px; padding: 0.6rem 0.75rem;">'
+          + '        <div id="forceDeleteCommunityError" style="display: none; color: #ef4444; font-size: 0.85em; margin-top: 0.5rem;"></div>'
+          + '      </div>'
+          + '      <div class="modal-footer" style="border-top: 1px solid #4a5568;">'
+          + '        <button type="button" class="ac-btn" data-dismiss="modal">Cancel</button>'
+          + '        <button type="button" class="ac-btn ac-btn-danger" id="forceDeleteCommunitySubmit"><i class="fas fa-trash-can"></i> Permanently delete</button>'
+          + '      </div>'
+          + '    </div>'
+          + '  </div>'
+          + '</div>';
+        $('#forceDeleteCommunityModal').remove();
+        $('body').append(modalHtml);
+        $('#forceDeleteCommunityModal').modal('show');
+        $('#forceDeleteCommunityModal').on('hidden.bs.modal', function() { $(this).remove(); });
+        $('#forceDeleteCommunitySubmit').on('click', function() {
+          var typed = $('#forceDeleteCommunityConfirm').val();
+          if (typed !== communityName) {
+            $('#forceDeleteCommunityError').text('Name doesn\'t match. Type it exactly to confirm.').show();
+            return;
+          }
+          submitForceDeleteCommunity(communityId, communityName, typed);
+        });
+      }
+
+      function submitForceDeleteCommunity(communityId, communityName, typed) {
+        $('#forceDeleteCommunitySubmit').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Deleting...');
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/communities/${communityId}/force-delete`,
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            currentUser: { email: currentUserEmail, roles: roles },
+            confirmation: typed,
+          }),
+          success: function() {
+            trackAdminAction('community_force_delete', 'Force-deleted community "' + (communityName || communityId) + '" (' + communityId + ')');
+            $('#forceDeleteCommunityModal').modal('hide');
+            $('#communityModal').modal('hide');
+            if (typeof showToast === 'function') {
+              showToast('success', 'Community permanently deleted.');
+            }
+            // The result card (if any) needs to disappear too.
+            var $card = $('#communityResults .result-card').filter(function() {
+              return $(this).find('code').first().text() === communityId;
+            });
+            $card.slideUp(180, function() { $(this).remove(); });
+          },
+          error: function(xhr) {
+            $('#forceDeleteCommunityError').text(xhr.responseJSON?.error || xhr.statusText || 'Unknown error').show();
+            $('#forceDeleteCommunitySubmit').prop('disabled', false).html('<i class="fas fa-trash-can"></i> Permanently delete');
+          }
+        });
       }
 
       // ── Standalone Remove Member ──

@@ -6,23 +6,23 @@ test.describe('Invalid Parameter Handling', { tag: '@auth' }, () => {
     await page.goto('/community/not-a-valid-id');
 
     // Should render the styled error page (not a raw 500)
-    await expect(page.locator('.error-card, .error-container').first()).toBeVisible({
+    await expect(page.locator('.rp-error-card').first()).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.locator('.error-title')).toContainText('Something went wrong');
+    await expect(page.locator('.rp-error-title')).toContainText('Something went sideways');
   });
 
   test('error page shows descriptive message for invalid community', async ({ page }) => {
     await page.goto('/community/not-a-valid-id');
 
-    await expect(page.locator('.error-message')).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator('.error-message')).toContainText(/community not found|error occurred/i);
+    await expect(page.locator('.rp-error-message')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.rp-error-message')).toContainText(/community not found|error occurred/i);
   });
 
   test('error page has Return to Home button', async ({ page }) => {
     await page.goto('/community/not-a-valid-id');
 
-    const homeBtn = page.locator('a.btn-primary');
+    const homeBtn = page.locator('a.rp-btn[href="/"]');
     await expect(homeBtn).toBeVisible({ timeout: 10_000 });
     await expect(homeBtn).toHaveAttribute('href', '/');
   });

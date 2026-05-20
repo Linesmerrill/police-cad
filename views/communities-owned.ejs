@@ -125,12 +125,10 @@
     
                 <!-- Form Name -->
                 <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-                <h4>Delete Community</h4>
+                <h4>Delete this community?</h4>
                 <hr style="width: 88%;max-width: 100rem;">
-                <p>Warning: This will remove all members and then delete the community.
-                    This is non-reversible.
-                </p>
-                <p>Are you sure you want to delete this community?</p>
+                <p>It will be permanently deleted on <strong id="ownedDeleteScheduledDate">in 30 days</strong>.</p>
+                <p>After that, all civilians, departments, calls, and settings are gone for good. Contact support before then if you change your mind.</p>
                 <!-- Button-->
                 <div class="form-group">
                     <label class="col-md-4 control-label" for="deleteAccount"></label>
@@ -176,7 +174,20 @@
     <script src="/static/js/scripts.js"></script>
     <script src="/static/js/ads.js"></script>
     <script>if (window.module) module = window.module;</script>
+    <script>
+      // Replace the placeholder "in 30 days" in the delete-community modal
+      // with the actual hard-delete date so the user sees an explicit deadline.
+      (function() {
+        try {
+          var el = document.getElementById('ownedDeleteScheduledDate');
+          if (!el) return;
+          var d = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          el.textContent = d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+        } catch (e) { /* keep the inline fallback */ }
+      })();
+    </script>
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <%- include('partials/pending-deletion-gate') %>
 </body>
 
 </html>

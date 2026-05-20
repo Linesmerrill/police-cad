@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community Pending Deletion - Lines Police CAD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --rp-bg: #08090c;
+      --rp-glass: rgba(255,255,255,0.04);
+      --rp-glass-border: rgba(255,255,255,0.06);
+      --rp-text: #e2e8f0;
+      --rp-text-muted: #64748b;
+      --rp-accent: #38bdf8;
+      --rp-amber: #f59e0b;
+      --rp-red: #ef4444;
+      --rp-radius: 14px;
+    }
+    body {
+      background: var(--rp-bg); color: var(--rp-text);
+      font-family: 'Outfit', -apple-system, sans-serif;
+      min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased;
+      padding-top: 36px;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 700px 500px at 50% 0%, rgba(239,68,68,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 50% 100%, rgba(245,158,11,0.04) 0%, transparent 70%);
+    }
+    .rp-shell {
+      position: relative; z-index: 1;
+      max-width: 640px; margin: 0 auto;
+      padding: 4rem 1.25rem 2rem;
+      min-height: calc(100vh - 36px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .rp-card {
+      width: 100%;
+      background: var(--rp-glass);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius);
+      padding: 2.5rem 2rem;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
+    .rp-icon {
+      width: 64px; height: 64px;
+      margin: 0 auto 1.25rem;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--rp-red); font-size: 1.6rem;
+    }
+    .rp-title { font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+    .rp-subtitle { color: var(--rp-text-muted); font-size: 0.95rem; margin-bottom: 1.75rem; line-height: 1.6; }
+    .rp-name { color: #fff; font-weight: 600; }
+    .rp-deadline-box {
+      display: inline-block;
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      border-radius: 10px;
+      padding: 0.85rem 1.25rem;
+      margin-bottom: 1.75rem;
+    }
+    .rp-deadline-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--rp-amber); margin-bottom: 0.25rem;
+    }
+    .rp-deadline-date { font-size: 1.05rem; font-weight: 600; color: #fff; }
+    .rp-actions {
+      display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap;
+    }
+    .rp-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.7rem 1.2rem; border-radius: 10px;
+      font-family: inherit; font-weight: 600; font-size: 0.9rem;
+      border: 1px solid transparent; cursor: pointer; text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .rp-btn-primary { background: var(--rp-accent); color: #04101a; }
+    .rp-btn-primary:hover { background: #7dd3fc; }
+    .rp-btn-secondary {
+      background: rgba(255,255,255,0.04);
+      border-color: var(--rp-glass-border);
+      color: var(--rp-text);
+    }
+    .rp-btn-secondary:hover { background: rgba(255,255,255,0.07); }
+  </style>
+</head>
+<body>
+  <%- include('partials/standalone-utility', {
+    user: locals.user,
+    backHref: '/communities',
+    backLabel: 'Back to Communities',
+    pageLabel: 'Pending Deletion',
+    communityName: locals.communityName,
+    communityHref: locals.communityHash ? ('/community/' + locals.communityHash) : ''
+  }) %>
+
+  <div class="rp-shell">
+    <div class="rp-card">
+      <div class="rp-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+      <div class="rp-title">This community is pending deletion</div>
+      <p class="rp-subtitle">
+        <span class="rp-name"><%= communityName %></span> was scheduled for permanent deletion. It's hidden from members and locked from new joins until then.
+      </p>
+
+      <% if (locals.scheduledDeletionAt) { %>
+        <div class="rp-deadline-box">
+          <div class="rp-deadline-label">Permanent deletion on</div>
+          <div class="rp-deadline-date" id="rp-scheduled-date"><%= scheduledDeletionAt %></div>
+        </div>
+      <% } %>
+
+      <p class="rp-subtitle" style="margin-bottom: 1.25rem;">
+        If this was a mistake, contact support before the deadline and we can restore access. After that, all civilians, departments, and data are gone for good.
+      </p>
+
+      <div class="rp-actions">
+        <a class="rp-btn rp-btn-primary" href="/contact-us">
+          <i class="fa-solid fa-life-ring"></i> Contact support
+        </a>
+        <a class="rp-btn rp-btn-secondary" href="/communities">
+          <i class="fa-solid fa-arrow-left"></i> Back to communities
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <% if (locals.scheduledDeletionAt) { %>
+    <script>
+      // Best-effort: format the ISO date the API returned into the user's
+      // locale. Falls back to the raw string if Date parsing fails.
+      (function() {
+        try {
+          var el = document.getElementById('rp-scheduled-date');
+          if (!el) return;
+          var d = new Date(el.textContent.trim());
+          if (isNaN(d.getTime())) return;
+          el.textContent = d.toLocaleDateString(undefined, {
+            weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+          });
+        } catch (e) { /* keep raw string */ }
+      })();
+    </script>
+  <% } %>
+</body>
+</html>
