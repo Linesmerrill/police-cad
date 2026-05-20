@@ -1695,12 +1695,15 @@
         setPromoPostEnabled(promo.configured && promo.canPostNow);
 
         renderPromoHistory(data.history || []);
-        // Seed a fresh form from the community's existing settings — only
-        // once per modal session, and only while the form is still pristine.
-        if (!promo.autofilled && promoFormIsPristine()) autofillPromoForm();
+        maybeAutofillPromoForm();
         renderPromoPreview();
       })
       .catch(function () {
+        // The status request failed, but the form is plain HTML and the
+        // autofill source is inlined (not fetched) — seed it anyway so the
+        // modal is still useful, then surface the error.
+        maybeAutofillPromoForm();
+        renderPromoPreview();
         showToast('Could not load promotion status. Please try again.', 3000, 'error');
       });
   }
@@ -2036,6 +2039,11 @@
   };
 
   // ---- Autofill from the community's existing settings --------------
+  // Seed a fresh form once per modal session, while it is still pristine.
+  function maybeAutofillPromoForm() {
+    if (!promo.autofilled && promoFormIsPristine()) autofillPromoForm();
+  }
+
   function promoFormIsPristine() {
     return !(el('promoServerName') && el('promoServerName').value.trim())
       && !(el('promoDescription') && el('promoDescription').value.trim())
@@ -2059,9 +2067,12 @@
     }
     // The promotion platforms mirror the community-settings platform tags
     // (PlayStation / Xbox / PC), so this is a direct case-insensitive match.
-    if (Array.isArray(a.tags) && !document.querySelector('#promoPlatforms input:checked')) {
+    // Prefer window.selectedPlatforms — the settings modal keeps it live, so
+    // it reflects edits saved this session that the page-rendered tags miss.
+    var tags = Array.isArray(window.selectedPlatforms) ? window.selectedPlatforms : (a.tags || []);
+    if (tags.length && !document.querySelector('#promoPlatforms input:checked')) {
       var tagSet = {};
-      a.tags.forEach(function (t) { tagSet[String(t).toLowerCase()] = true; });
+      tags.forEach(function (t) { tagSet[String(t).toLowerCase()] = true; });
       Array.prototype.forEach.call(document.querySelectorAll('#promoPlatforms input'), function (cb) {
         if (tagSet[cb.value.toLowerCase()]) cb.checked = true;
       });
