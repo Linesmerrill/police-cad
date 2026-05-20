@@ -945,6 +945,12 @@
       .promo-embed-footer { color:#949ba4; font-size:0.7rem; margin-top:0.6rem; }
       .promo-grid { display:grid; grid-template-columns:1fr; gap:1.5rem; }
       .promo-thumb { width:54px; height:54px; border-radius:6px; object-fit:cover; border:1px solid #4a5568; }
+      @keyframes promoSpin { to { transform:rotate(360deg); } }
+      .promo-mini-spin {
+        width:13px; height:13px; border:2px solid #5b6172; border-top-color:#5865f2;
+        border-radius:50%; display:inline-block; animation:promoSpin 0.7s linear infinite;
+      }
+      .promo-uploading { color:#cbd5e1; }
       /* Tabs */
       .promo-tabs {
         display:flex; gap:0.3rem; padding:0.3rem; background:#16171d; border:1px solid #2c2f3a;
@@ -1106,8 +1112,9 @@
             <!-- Boosted-only banner -->
             <div class="promo-field" id="promoBannerField" style="display:none;">
               <label class="promo-label">Banner image <span style="color:#fbbf24; font-weight:600;">★ Boost perk</span></label>
-              <div style="display:flex; align-items:center; gap:0.75rem;">
+              <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
                 <img id="promoBannerThumb" class="promo-thumb" style="display:none;" alt="Banner">
+                <span id="promoBannerSpin" class="promo-tag promo-uploading" style="display:none; padding:0.4rem 0.65rem; gap:0.45rem;"><span class="promo-mini-spin"></span>Uploading…</span>
                 <input type="file" id="promoBannerInput" accept="image/*" style="color:#cbd5e1; font-size:0.8rem;">
                 <button type="button" id="promoBannerRemove" class="promo-add-btn" style="display:none; background:#5b3030;" onclick="removePromoBanner()">Remove</button>
               </div>
@@ -1168,10 +1175,10 @@
           </div>
         </div>
 
-        <!-- Loading overlay -->
-        <div id="promoteModalLoading" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(30,32,44,0.92); border-radius:16px; align-items:center; justify-content:center; z-index:20;">
+        <!-- Loading overlay — covers the whole modal, centered in the viewport -->
+        <div id="promoteModalLoading" style="display:none; position:fixed; inset:0; background:rgba(12,13,18,0.78); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); align-items:center; justify-content:center; z-index:30;">
           <div style="text-align:center;">
-            <div class="loading-spinner" style="width:54px; height:54px; border:4px solid #4a5568; border-top:4px solid #5865f2; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+            <div style="width:48px; height:48px; border:3px solid #3a3f56; border-top-color:#5865f2; border-radius:50%; animation:promoSpin 0.8s linear infinite; margin:0 auto 0.9rem;"></div>
             <p style="color:#fff; margin:0; font-size:0.95rem;" id="promoteModalLoadingText">Posting to Discord…</p>
           </div>
         </div>
@@ -1623,6 +1630,8 @@
     autofilled: false,    // true once a fresh form has been seeded from community settings
     autofillData: null,   // fresh-from-DB defaults returned by the status request
     userTouched: false,   // true once the admin actually edits the form (vs autofilled values)
+    uploadingImages: 0,   // in-flight image uploads, shown as inline spinners
+    uploadingBanner: false,
     depts: [],
     feats: [],
     images: [],   // uploaded image URLs
@@ -1647,10 +1656,15 @@
     // this open re-seeds from current community settings. A real draft stays.
     if (!promo.userTouched) clearPromoForm();
     modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // lock the page behind the modal
     var panel = modal.querySelector('.promo-modal-panel');
     if (panel) panel.scrollTop = 0;
     loadPromoStatus();
   };
+
+  // Restore page scroll when the modal closes. The generic close handlers
+  // (X / Cancel) only toggle display, so wire this alongside them.
+  function unlockPromoScroll() { document.body.style.overflow = ''; }
 
   // ---- Tabs ---------------------------------------------------------
   window.switchPromoTab = function (tab) {
@@ -1669,6 +1683,7 @@
     var modal = el('promoteModal');
     if (modal) modal.style.display = 'none';
     exitPromoConfirm();
+    unlockPromoScroll();
   }
 
   // ---- Load posting status + last post from the API -----------------
@@ -1888,6 +1903,12 @@
       });
     }
 
+    // Restore background scroll whenever the modal is dismissed.
+    ['promoteModalClose', 'promoteModalCancel'].forEach(function (id) {
+      var btn = el(id);
+      if (btn) btn.addEventListener('click', unlockPromoScroll);
+    });
+
     var imagesInput = el('promoImagesInput');
     if (imagesInput) {
       imagesInput.addEventListener('change', function (e) {
@@ -1900,16 +1921,21 @@
         }
         files = files.slice(0, room).filter(validateImageFile);
         if (!files.length) return;
-        setPromoBusy(true, 'Uploading image…');
+        // Inline spinner chips in the image list — no full-modal overlay for
+        // a quick upload.
+        promo.uploadingImages += files.length;
+        renderPromoImages();
         Promise.all(files.map(function (f) {
           return uploadToCloudinary(f, 'community-promotions', '');
         })).then(function (urls) {
           urls.forEach(function (u) { if (u) promo.images.push(u); });
-          renderPromoImages();
           renderPromoPreview();
         }).catch(function () {
           showToast('Image upload failed. Please try again.', 3000, 'error');
-        }).then(function () { setPromoBusy(false); });
+        }).then(function () {
+          promo.uploadingImages = Math.max(0, promo.uploadingImages - files.length);
+          renderPromoImages();
+        });
       });
     }
 
@@ -1919,14 +1945,17 @@
         var file = (e.target.files || [])[0];
         e.target.value = '';
         if (!file || !validateImageFile(file)) return;
-        setPromoBusy(true, 'Uploading banner…');
+        promo.uploadingBanner = true;
+        renderPromoBanner();
         uploadToCloudinary(file, 'community-promotions', '').then(function (url) {
           promo.banner = url || '';
-          renderPromoBanner();
           renderPromoPreview();
         }).catch(function () {
           showToast('Banner upload failed. Please try again.', 3000, 'error');
-        }).then(function () { setPromoBusy(false); });
+        }).then(function () {
+          promo.uploadingBanner = false;
+          renderPromoBanner();
+        });
       });
     }
   });
@@ -1940,11 +1969,16 @@
   function renderPromoImages() {
     var list = el('promoImagesList');
     if (!list) return;
-    list.innerHTML = promo.images.map(function (url, i) {
+    var html = promo.images.map(function (url, i) {
       return '<span class="promo-tag" style="padding:0.2rem 0.35rem;">' +
         '<img src="' + escPromo(url) + '" class="promo-thumb" style="width:32px;height:32px;" alt="">' +
         '<button type="button" onclick="removePromoImage(' + i + ')">&times;</button></span>';
     }).join('');
+    for (var j = 0; j < promo.uploadingImages; j++) {
+      html += '<span class="promo-tag promo-uploading" style="padding:0.4rem 0.65rem; gap:0.45rem;">'
+        + '<span class="promo-mini-spin"></span>Uploading…</span>';
+    }
+    list.innerHTML = html;
   }
 
   window.removePromoBanner = function () {
@@ -1956,6 +1990,14 @@
   function renderPromoBanner() {
     var thumb = el('promoBannerThumb');
     var removeBtn = el('promoBannerRemove');
+    var spin = el('promoBannerSpin');
+    if (promo.uploadingBanner) {
+      if (spin) spin.style.display = 'inline-flex';
+      if (thumb) thumb.style.display = 'none';
+      if (removeBtn) removeBtn.style.display = 'none';
+      return;
+    }
+    if (spin) spin.style.display = 'none';
     if (thumb) {
       if (promo.banner) { thumb.src = promo.banner; thumb.style.display = 'block'; }
       else { thumb.style.display = 'none'; }
