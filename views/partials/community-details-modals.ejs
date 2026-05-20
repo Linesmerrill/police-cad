@@ -1621,6 +1621,8 @@
     history: [],
     activeTab: 'create',
     autofilled: false,    // true once a fresh form has been seeded from community settings
+    autofillData: null,   // fresh-from-DB defaults returned by the status request
+    userTouched: false,   // true once the admin actually edits the form (vs autofilled values)
     depts: [],
     feats: [],
     images: [],   // uploaded image URLs
@@ -1641,6 +1643,9 @@
     exitPromoConfirm();
     switchPromoTab('create');
     promo.autofilled = false; // re-evaluate autofill against the form's current state
+    // If the admin never edited the form, drop the stale autofilled values so
+    // this open re-seeds from current community settings. A real draft stays.
+    if (!promo.userTouched) clearPromoForm();
     modal.style.display = 'flex';
     var panel = modal.querySelector('.promo-modal-panel');
     if (panel) panel.scrollTop = 0;
@@ -1676,6 +1681,7 @@
         promo.canPostNow = data.canPostNow !== false;
         promo.cooldownHours = data.cooldownHours || 24;
         promo.configured = data.configured !== false;
+        promo.autofillData = data.autofill || null;
         applyPromoTier();
 
         // Cooldown / configuration gating.
@@ -1872,6 +1878,16 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    // Mark the form "touched" on any real user edit. Programmatic value/checked
+    // changes (autofill, templates) don't fire input/change, so they're ignored
+    // here — which is exactly what we want: autofilled values aren't a draft.
+    var createTab = el('promoTabCreate');
+    if (createTab) {
+      ['input', 'change'].forEach(function (ev) {
+        createTab.addEventListener(ev, function () { promo.userTouched = true; });
+      });
+    }
+
     var imagesInput = el('promoImagesInput');
     if (imagesInput) {
       imagesInput.addEventListener('change', function (e) {
@@ -2054,7 +2070,9 @@
 
   function autofillPromoForm() {
     promo.autofilled = true;
-    var a = PROMO_AUTOFILL || {};
+    // promo.autofillData is fresh from the API (current DB state); fall back
+    // to the page-rendered PROMO_AUTOFILL if the status request failed.
+    var a = promo.autofillData || PROMO_AUTOFILL || {};
     if (a.serverName && el('promoServerName') && !el('promoServerName').value.trim()) {
       el('promoServerName').value = String(a.serverName).slice(0, 100);
     }
@@ -2066,17 +2084,36 @@
       renderPromoTags('dept');
     }
     // The promotion platforms mirror the community-settings platform tags
-    // (PlayStation / Xbox / PC), so this is a direct case-insensitive match.
-    // Prefer window.selectedPlatforms — the settings modal keeps it live, so
-    // it reflects edits saved this session that the page-rendered tags miss.
-    var tags = Array.isArray(window.selectedPlatforms) ? window.selectedPlatforms : (a.tags || []);
-    if (tags.length && !document.querySelector('#promoPlatforms input:checked')) {
+    // (PlayStation / Xbox / PC) — a direct case-insensitive match. The API
+    // sends `platforms`; the inlined fallback uses `tags`.
+    var tags = a.platforms || a.tags
+      || (Array.isArray(window.selectedPlatforms) ? window.selectedPlatforms : []);
+    if (Array.isArray(tags) && tags.length && !document.querySelector('#promoPlatforms input:checked')) {
       var tagSet = {};
       tags.forEach(function (t) { tagSet[String(t).toLowerCase()] = true; });
       Array.prototype.forEach.call(document.querySelectorAll('#promoPlatforms input'), function (cb) {
         if (tagSet[cb.value.toLowerCase()]) cb.checked = true;
       });
     }
+  }
+
+  // Reset the form to empty so the next autofill re-seeds it from current
+  // settings. Called on reopen when the admin hasn't edited anything.
+  function clearPromoForm() {
+    ['promoServerName', 'promoDescription', 'promoRequirements', 'promoInvite', 'promoGameOther'].forEach(function (id) {
+      if (el(id)) el(id).value = '';
+    });
+    if (el('promoGame')) el('promoGame').value = '';
+    if (el('promoGameOther')) el('promoGameOther').style.display = 'none';
+    Array.prototype.forEach.call(document.querySelectorAll('#promoPlatforms input'), function (cb) { cb.checked = false; });
+    promo.depts = [];
+    promo.feats = [];
+    promo.images = [];
+    promo.banner = '';
+    renderPromoTags('dept');
+    renderPromoTags('feat');
+    renderPromoImages();
+    renderPromoBanner();
   }
 
   // ---- History panel ------------------------------------------------
@@ -2157,7 +2194,8 @@
     }
     if (!entry) return;
     prefillPromoForm(entry.data || {});
-    promo.autofilled = true; // a deliberate template load — don't autofill over it
+    promo.autofilled = true;  // a deliberate template load — don't autofill over it
+    promo.userTouched = true; // ...and don't clear it on reopen either
     switchPromoTab('create');
     var panel = document.querySelector('#promoteModal .promo-modal-panel');
     if (panel) panel.scrollTop = 0;
