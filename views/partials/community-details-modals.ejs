@@ -904,31 +904,36 @@
       .promo-hint { color:#8b93a7; font-size:0.72rem; margin-top:0.3rem; }
       .promo-input, .promo-textarea, .promo-select {
         width:100%; padding:0.6rem 0.7rem; background:#2d3748; border:1px solid #4a5568;
-        border-radius:8px; color:#fff; font-size:0.9rem; box-sizing:border-box;
+        border-radius:8px; color:#fff; font-size:0.9rem; box-sizing:border-box; transition:border-color 0.15s ease;
       }
       .promo-input:focus, .promo-textarea:focus, .promo-select:focus { outline:none; border-color:#5865f2; }
       .promo-textarea { resize:vertical; min-height:88px; }
       .promo-chk-row { display:flex; flex-wrap:wrap; gap:0.5rem; }
       .promo-chk {
-        display:flex; align-items:center; gap:0.4rem; padding:0.4rem 0.7rem; background:#2d3748;
+        display:flex; align-items:center; gap:0.4rem; padding:0.5rem 0.8rem; background:#2d3748;
         border:1px solid #4a5568; border-radius:999px; color:#cbd5e1; font-size:0.8rem; cursor:pointer;
+        transition:all 0.15s ease; min-height:38px;
       }
+      .promo-chk:hover { border-color:#5865f2; }
+      .promo-chk:has(input:checked) { background:#5865f233; border-color:#5865f2; color:#fff; }
       .promo-chk input { accent-color:#5865f2; }
       .promo-tag-row { display:flex; gap:0.4rem; }
       .promo-tags { display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.5rem; }
       .promo-tag {
         display:inline-flex; align-items:center; gap:0.4rem; background:#3a3f56; color:#e2e8f0;
-        border-radius:6px; padding:0.25rem 0.55rem; font-size:0.78rem;
+        border-radius:6px; padding:0.3rem 0.55rem; font-size:0.78rem;
       }
-      .promo-tag button { background:none; border:none; color:#9aa3b8; cursor:pointer; padding:0; font-size:0.85rem; }
+      .promo-tag button { background:none; border:none; color:#9aa3b8; cursor:pointer; padding:0 0 0 0.1rem; font-size:0.95rem; line-height:1; }
+      .promo-tag button:hover { color:#ef4444; }
       .promo-add-btn {
         flex-shrink:0; background:#3a3f56; color:#fff; border:none; border-radius:8px;
-        padding:0 0.85rem; cursor:pointer; font-size:0.9rem;
+        padding:0 0.95rem; cursor:pointer; font-size:0.9rem; min-height:38px; transition:background 0.15s ease;
       }
+      .promo-add-btn:hover { background:#4b5168; }
       /* Discord-style live preview */
       .promo-embed {
         background:#2b2d31; border-radius:6px; border-left:4px solid #5865f2;
-        padding:0.85rem 1rem; color:#dbdee1; font-size:0.85rem; max-width:440px;
+        padding:0.85rem 1rem; color:#dbdee1; font-size:0.85rem;
       }
       .promo-embed-title { color:#fff; font-weight:700; font-size:1rem; margin:0 0 0.35rem; word-break:break-word; }
       .promo-embed-title a { color:#00a8fc; text-decoration:none; }
@@ -939,11 +944,60 @@
       .promo-embed-img { margin-top:0.6rem; border-radius:4px; max-width:100%; max-height:200px; object-fit:cover; }
       .promo-embed-footer { color:#949ba4; font-size:0.7rem; margin-top:0.6rem; }
       .promo-grid { display:grid; grid-template-columns:1fr; gap:1.5rem; }
-      @media (min-width:860px) { .promo-grid { grid-template-columns:1fr 1fr; } }
       .promo-thumb { width:54px; height:54px; border-radius:6px; object-fit:cover; border:1px solid #4a5568; }
+      /* Tabs */
+      .promo-tabs {
+        display:flex; gap:0.3rem; padding:0.3rem; background:#16171d; border:1px solid #2c2f3a;
+        border-radius:12px; margin-bottom:1.4rem;
+      }
+      .promo-tab {
+        flex:1; display:flex; align-items:center; justify-content:center; gap:0.45rem;
+        padding:0.6rem 0.5rem; background:none; border:none; border-radius:9px; cursor:pointer;
+        color:#8b93a7; font-size:0.86rem; font-weight:600; transition:all 0.15s ease; min-height:42px;
+      }
+      .promo-tab:hover { color:#cbd5e1; }
+      .promo-tab.active { background:#5865f2; color:#fff; box-shadow:0 2px 10px rgba(88,101,242,0.35); }
+      .promo-tab-count {
+        font-size:0.7rem; font-weight:700; padding:0.05rem 0.4rem; border-radius:999px;
+        background:rgba(255,255,255,0.16);
+      }
+      /* History */
+      .promo-hist-card {
+        border:1px solid #2c2f3a; border-left-width:4px; border-radius:10px; background:#23252f;
+        margin-bottom:0.7rem; overflow:hidden; transition:border-color 0.15s ease;
+        animation:promoFade 0.35s ease both;
+      }
+      .promo-hist-card:hover { border-color:#5865f2; }
+      .promo-hist-head {
+        display:flex; align-items:center; gap:0.8rem; padding:0.85rem 1rem; cursor:pointer;
+      }
+      .promo-hist-head .ph-name { color:#fff; font-weight:700; font-size:0.92rem; margin:0; word-break:break-word; }
+      .promo-hist-head .ph-meta { color:#8b93a7; font-size:0.74rem; margin:0.15rem 0 0; }
+      .promo-hist-chevron { color:#8b93a7; transition:transform 0.2s ease; flex-shrink:0; }
+      .promo-hist-card.open .promo-hist-chevron { transform:rotate(180deg); }
+      .promo-tier-chip {
+        flex-shrink:0; font-size:0.66rem; font-weight:700; padding:0.18rem 0.5rem; border-radius:999px;
+        text-transform:uppercase; letter-spacing:0.03em;
+      }
+      .promo-hist-body { display:none; padding:0 1rem 1rem; }
+      .promo-hist-card.open .promo-hist-body { display:block; }
+      .promo-empty { text-align:center; padding:2.5rem 1rem; color:#8b93a7; }
+      .promo-empty i { font-size:2.4rem; color:#3a3f56; margin-bottom:0.8rem; }
+      @keyframes promoFade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+      /* Desktop: two columns, preview sticks while the form scrolls */
+      @media (min-width:860px) {
+        .promo-grid { grid-template-columns:1.05fr 0.95fr; align-items:start; }
+        .promo-preview-col { position:sticky; top:0; }
+      }
+      /* Mobile tightening */
+      @media (max-width:560px) {
+        .promo-modal-panel { padding:1.15rem !important; }
+        .promo-footer-row { flex-direction:column-reverse; }
+        .promo-footer-row > button { width:100%; }
+      }
     </style>
     <div id="promoteModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(20,21,28,0.78); align-items:center; justify-content:center; overflow-y:auto; padding:1rem; box-sizing:border-box;">
-      <div style="background:#1e2028; border-radius:16px; padding:1.75rem; max-width:980px; width:96%; position:relative; border:1px solid #35385a; max-height:92vh; overflow-y:auto;">
+      <div class="promo-modal-panel" style="background:#1e2028; border-radius:16px; padding:1.75rem; max-width:980px; width:96%; position:relative; border:1px solid #35385a; max-height:92vh; overflow-y:auto;">
         <button id="promoteModalClose" aria-label="Close" style="position:absolute; top:1.1rem; right:1.1rem; background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
 
         <div style="text-align:center; margin-bottom:1.25rem;">
@@ -969,6 +1023,19 @@
           </p>
         </div>
 
+        <!-- Tab bar -->
+        <div class="promo-tabs" role="tablist">
+          <button type="button" id="promoTabBtnCreate" class="promo-tab active" role="tab" onclick="switchPromoTab('create')">
+            <i class="fa fa-pen-nib"></i><span class="promo-tab-label">New post</span>
+          </button>
+          <button type="button" id="promoTabBtnHistory" class="promo-tab" role="tab" onclick="switchPromoTab('history')">
+            <i class="fa fa-clock-rotate-left"></i><span class="promo-tab-label">History</span>
+            <span id="promoHistoryCount" class="promo-tab-count" style="display:none;">0</span>
+          </button>
+        </div>
+
+        <!-- ===== TAB: Create ===== -->
+        <div id="promoTabCreate">
         <div class="promo-grid">
           <!-- ---- LEFT: structured form ---- -->
           <div>
@@ -1056,7 +1123,7 @@
           </div>
 
           <!-- ---- RIGHT: live Discord preview ---- -->
-          <div>
+          <div class="promo-preview-col">
             <label class="promo-label" style="margin-bottom:0.6rem;">Live preview</label>
             <p class="promo-hint" style="margin-top:0; margin-bottom:0.8rem;">This is how your post will appear in Discord. Review it before posting.</p>
             <div id="promoPreview" class="promo-embed">
@@ -1065,9 +1132,21 @@
             </div>
           </div>
         </div>
+        </div><!-- /promoTabCreate -->
+
+        <!-- ===== TAB: History ===== -->
+        <div id="promoTabHistory" style="display:none;">
+          <p class="promo-hint" style="margin:0 0 1rem;">Your community's past promotions. Open one to review it or reuse it as a template for a new post.</p>
+          <div id="promoHistoryList"></div>
+          <div id="promoHistoryEmpty" class="promo-empty" style="display:none;">
+            <i class="fa fa-inbox" style="display:block;"></i>
+            <p style="margin:0; font-weight:600; color:#cbd5e1;">No promotions yet</p>
+            <p style="margin:0.3rem 0 0; font-size:0.82rem;">Posts you publish to Discord will show up here.</p>
+          </div>
+        </div>
 
         <!-- Footer: default state -->
-        <div id="promoFooterDefault" style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:flex-end; flex-wrap:wrap;">
+        <div id="promoFooterDefault" class="promo-footer-row" style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:flex-end; flex-wrap:wrap;">
           <button id="promoteModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.7rem 1.4rem; font-weight:500; cursor:pointer; font-size:1rem;">Cancel</button>
           <button id="promoPostBtn" type="button" onclick="enterPromoConfirm()" style="background:#5865f2; color:#fff; border:none; border-radius:8px; padding:0.7rem 1.4rem; font-weight:600; cursor:pointer; font-size:1rem;">
             <i class="fa-brands fa-discord" style="margin-right:0.45rem;"></i>Post to Discord
@@ -1080,7 +1159,7 @@
             <i class="fa fa-circle-info" style="color:#5865f2; margin-right:0.4rem;"></i>
             This posts <strong>publicly</strong> to the LPC Discord and locks promotion for this community for <span class="promoCooldownInline">24</span> hours.
           </p>
-          <div style="display:flex; gap:1rem; justify-content:flex-end; flex-wrap:wrap;">
+          <div class="promo-footer-row" style="display:flex; gap:1rem; justify-content:flex-end; flex-wrap:wrap;">
             <button type="button" onclick="exitPromoConfirm()" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.7rem 1.4rem; font-weight:500; cursor:pointer; font-size:1rem;">Back</button>
             <button id="promoConfirmBtn" type="button" onclick="submitPromotion()" style="background:#3ba55d; color:#fff; border:none; border-radius:8px; padding:0.7rem 1.4rem; font-weight:600; cursor:pointer; font-size:1rem;">
               <i class="fa fa-paper-plane" style="margin-right:0.45rem;"></i>Post now
@@ -1512,12 +1591,35 @@
     allowBanner: false, verified: false, featured: false
   };
 
+  // Tier display metadata for rendering history cards, whose stored tier may
+  // differ from the community's current tier.
+  var TIER_META = {
+    free:     { label: 'Free',     color: '#38bdf8' },
+    basic:    { label: 'Basic',    color: '#3b82f6' },
+    standard: { label: 'Standard', color: '#10b981' },
+    premium:  { label: 'Premium',  color: '#667eea' },
+    elite:    { label: 'Elite',    color: '#fbbf24' }
+  };
+
+  // Defaults pulled from the community's existing settings — used to
+  // pre-fill a fresh promotion so admins don't retype what we already know.
+  var PROMO_AUTOFILL = <%- JSON.stringify({
+    serverName: (community.community && community.community.name) || '',
+    description: (community.community && (community.community.promotionalDescription || community.community.description)) || '',
+    departments: ((community.community && community.community.departments) || [])
+      .map(function (d) { return d && d.name; }).filter(Boolean),
+    tags: (community.community && community.community.tags) || []
+  }) %>;
+
   var promo = {
     tier: FREE_TIER,
     maxDepartments: 12,
     canPostNow: true,
     cooldownHours: 24,
     configured: true,
+    history: [],
+    activeTab: 'create',
+    autofilled: false,    // true once a fresh form has been seeded from community settings
     depts: [],
     feats: [],
     images: [],   // uploaded image URLs
@@ -1536,8 +1638,25 @@
     var modal = el('promoteModal');
     if (!modal) return;
     exitPromoConfirm();
+    switchPromoTab('create');
+    promo.autofilled = false; // re-evaluate autofill against the form's current state
     modal.style.display = 'flex';
+    var panel = modal.querySelector('.promo-modal-panel');
+    if (panel) panel.scrollTop = 0;
     loadPromoStatus();
+  };
+
+  // ---- Tabs ---------------------------------------------------------
+  window.switchPromoTab = function (tab) {
+    promo.activeTab = tab;
+    var isCreate = tab === 'create';
+    if (el('promoTabCreate')) el('promoTabCreate').style.display = isCreate ? 'block' : 'none';
+    if (el('promoTabHistory')) el('promoTabHistory').style.display = isCreate ? 'none' : 'block';
+    if (el('promoTabBtnCreate')) el('promoTabBtnCreate').classList.toggle('active', isCreate);
+    if (el('promoTabBtnHistory')) el('promoTabBtnHistory').classList.toggle('active', !isCreate);
+    // The post/confirm footer belongs to the Create tab only.
+    if (!isCreate) exitPromoConfirm();
+    if (el('promoFooterDefault')) el('promoFooterDefault').style.display = isCreate ? 'flex' : 'none';
   };
 
   function closePromoteModal() {
@@ -1574,7 +1693,10 @@
         }
         setPromoPostEnabled(promo.configured && promo.canPostNow);
 
-        if (data.lastData) prefillPromoForm(data.lastData);
+        renderPromoHistory(data.history || []);
+        // Seed a fresh form from the community's existing settings — only
+        // once per modal session, and only while the form is still pristine.
+        if (!promo.autofilled && promoFormIsPristine()) autofillPromoForm();
         renderPromoPreview();
       })
       .catch(function () {
@@ -1861,24 +1983,18 @@
   }
 
   // ---- Live preview -------------------------------------------------
-  window.renderPromoPreview = function () {
-    var d = collectPromoData();
-    var cnt = el('promoDescCount');
-    if (cnt) cnt.textContent = d.description.length;
-
-    var box = el('promoPreview');
-    if (!box) return;
-    box.className = 'promo-embed';
-    box.style.borderLeftColor = promo.tier.color;
-
+  // Build the Discord-style embed HTML for a promotion data object. Shared by
+  // the live form preview and the read-only history cards.
+  function buildPromoEmbedHTML(d, tier) {
+    d = d || {};
     var html = '';
-    var marker = promo.tier.featured ? '⭐ ' : (promo.tier.verified ? '✅ ' : '');
-    var titleText = d.serverName || 'Your server name';
-    var shownTitle = (d.serverName ? marker : '') + titleText;
+    var marker = tier.featured ? '⭐ ' : (tier.verified ? '✅ ' : '');
+    var hasName = !!d.serverName;
+    var shownTitle = (hasName ? marker : '') + (d.serverName || 'Your server name');
     if (d.inviteUrl && /^https:\/\//i.test(d.inviteUrl)) {
       html += '<p class="promo-embed-title"><a href="' + escPromo(d.inviteUrl) + '" target="_blank" rel="noopener">' + escPromo(shownTitle) + '</a></p>';
     } else {
-      html += '<p class="promo-embed-title"' + (d.serverName ? '' : ' style="color:#8b93a7;"') + '>' + escPromo(shownTitle) + '</p>';
+      html += '<p class="promo-embed-title"' + (hasName ? '' : ' style="color:#8b93a7;"') + '>' + escPromo(shownTitle) + '</p>';
     }
     html += '<p class="promo-embed-desc"' + (d.description ? '' : ' style="color:#8b93a7;"') + '>'
       + escPromo(d.description || 'Fill out the form to see your promotion preview.') + '</p>';
@@ -1887,24 +2003,159 @@
       return '<div class="promo-embed-field"><div class="pf-name">' + name +
         '</div><div class="pf-val">' + val + '</div></div>';
     }
-    if (d.consoles.length) html += field('🎮 Platform', escPromo(d.consoles.join(' · ')));
+    var consoles = d.consoles || [], departments = d.departments || [], features = d.features || [], images = d.images || [];
+    if (consoles.length) html += field('🎮 Platform', escPromo(consoles.join(' · ')));
     if (d.game) html += field('🕹️ Game', escPromo(d.game));
-    if (d.departments.length) html += field('🚓 Departments', '• ' + d.departments.map(escPromo).join('<br>• '));
-    if (d.features.length) html += field('🌟 What We Offer', '• ' + d.features.map(escPromo).join('<br>• '));
+    if (departments.length) html += field('🚓 Departments', '• ' + departments.map(escPromo).join('<br>• '));
+    if (features.length) html += field('🌟 What We Offer', '• ' + features.map(escPromo).join('<br>• '));
     if (d.requirements) html += field('📋 Requirements', escPromo(d.requirements));
     if (d.inviteUrl) html += field('💬 Join', escPromo(d.inviteUrl));
 
-    var heroImg = (promo.tier.allowBanner && d.bannerImage) ? d.bannerImage : (d.images[0] || '');
+    var heroImg = (tier.allowBanner !== false && d.bannerImage) ? d.bannerImage : (images[0] || '');
     if (heroImg) html += '<img class="promo-embed-img" src="' + escPromo(heroImg) + '" alt="">';
 
     var footer;
-    if (promo.tier.featured) footer = '⭐ Featured community · ' + promo.tier.label + ' · Posted via Lines Police CAD';
-    else if (promo.tier.verified) footer = '✅ Verified community · ' + promo.tier.label + ' · Posted via Lines Police CAD';
-    else if (promo.tier.key !== 'free') footer = promo.tier.label + ' · Posted via Lines Police CAD';
+    if (tier.featured) footer = '⭐ Featured community · ' + tier.label + ' · Posted via Lines Police CAD';
+    else if (tier.verified) footer = '✅ Verified community · ' + tier.label + ' · Posted via Lines Police CAD';
+    else if (tier.key && tier.key !== 'free') footer = tier.label + ' · Posted via Lines Police CAD';
     else footer = 'Posted via Lines Police CAD';
     html += '<div class="promo-embed-footer">' + escPromo(footer) + '</div>';
+    return html;
+  }
 
-    box.innerHTML = html;
+  window.renderPromoPreview = function () {
+    var d = collectPromoData();
+    var cnt = el('promoDescCount');
+    if (cnt) cnt.textContent = d.description.length;
+    var box = el('promoPreview');
+    if (!box) return;
+    box.className = 'promo-embed';
+    box.style.borderLeftColor = promo.tier.color;
+    box.innerHTML = buildPromoEmbedHTML(d, promo.tier);
+  };
+
+  // ---- Autofill from the community's existing settings --------------
+  function promoFormIsPristine() {
+    return !(el('promoServerName') && el('promoServerName').value.trim())
+      && !(el('promoDescription') && el('promoDescription').value.trim())
+      && promo.depts.length === 0
+      && promo.feats.length === 0
+      && !document.querySelector('#promoPlatforms input:checked');
+  }
+
+  function autofillPromoForm() {
+    promo.autofilled = true;
+    var a = PROMO_AUTOFILL || {};
+    if (a.serverName && el('promoServerName') && !el('promoServerName').value.trim()) {
+      el('promoServerName').value = String(a.serverName).slice(0, 100);
+    }
+    if (a.description && el('promoDescription') && !el('promoDescription').value.trim()) {
+      el('promoDescription').value = String(a.description).slice(0, descMax());
+    }
+    if (Array.isArray(a.departments) && promo.depts.length === 0) {
+      promo.depts = a.departments.slice(0, promo.maxDepartments).map(function (s) { return String(s).slice(0, 120); });
+      renderPromoTags('dept');
+    }
+    // Map the community's broad platform tags (Xbox / PlayStation / PC) onto
+    // the promotion's more granular console checkboxes — best effort.
+    if (Array.isArray(a.tags) && !document.querySelector('#promoPlatforms input:checked')) {
+      var want = {};
+      a.tags.forEach(function (t) {
+        var s = String(t).toLowerCase();
+        if (s.indexOf('play') !== -1) want['PS5'] = true;
+        if (s.indexOf('xbox') !== -1) want['Xbox Series X|S'] = true;
+        if (s.indexOf('pc') !== -1 || s.indexOf('fivem') !== -1) want['PC / FiveM'] = true;
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('#promoPlatforms input'), function (cb) {
+        if (want[cb.value]) cb.checked = true;
+      });
+    }
+  }
+
+  // ---- History panel ------------------------------------------------
+  // History posts store the tier they were posted at, which may differ from
+  // the community's current tier — resolve display metadata from the key.
+  function historyTierMeta(tierKey) {
+    var m = TIER_META[tierKey] || TIER_META.free;
+    return {
+      key: tierKey || 'free',
+      label: m.label,
+      color: m.color,
+      verified: tierKey === 'standard' || tierKey === 'premium' || tierKey === 'elite',
+      featured: tierKey === 'elite',
+      allowBanner: true
+    };
+  }
+
+  function formatPromoDate(iso) {
+    var dt = new Date(iso);
+    if (isNaN(dt.getTime())) return '';
+    return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+      + ' · ' + dt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  }
+
+  function renderPromoHistory(history) {
+    promo.history = Array.isArray(history) ? history : [];
+    var countEl = el('promoHistoryCount');
+    if (countEl) {
+      countEl.textContent = promo.history.length;
+      countEl.style.display = promo.history.length ? 'inline-block' : 'none';
+    }
+    var list = el('promoHistoryList');
+    var empty = el('promoHistoryEmpty');
+    if (!list) return;
+    if (!promo.history.length) {
+      list.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    list.innerHTML = promo.history.map(function (entry, i) {
+      var t = historyTierMeta(entry.tier);
+      var d = entry.data || {};
+      var marker = t.featured ? '⭐ ' : (t.verified ? '✅ ' : '');
+      var metaBits = [formatPromoDate(entry.postedAt)];
+      if (d.game) metaBits.push(escPromo(d.game));
+      if (d.consoles && d.consoles.length) metaBits.push(escPromo(d.consoles.join(', ')));
+      var idAttr = escPromo(entry.id);
+      return ''
+        + '<div class="promo-hist-card" id="phc-' + idAttr + '" style="border-left-color:' + escPromo(t.color) + '; animation-delay:' + (i * 40) + 'ms;">'
+        +   '<div class="promo-hist-head" onclick="togglePromoHistoryCard(\'' + idAttr + '\')">'
+        +     '<span class="promo-tier-chip" style="color:' + escPromo(t.color) + '; background:' + escPromo(t.color) + '22;">' + marker + escPromo(t.label) + '</span>'
+        +     '<div style="flex:1; min-width:0;">'
+        +       '<p class="ph-name">' + escPromo(d.serverName || 'Untitled promotion') + '</p>'
+        +       '<p class="ph-meta">' + metaBits.filter(Boolean).join(' · ') + '</p>'
+        +     '</div>'
+        +     '<i class="fa fa-chevron-down promo-hist-chevron"></i>'
+        +   '</div>'
+        +   '<div class="promo-hist-body">'
+        +     '<div class="promo-embed" style="border-left-color:' + escPromo(t.color) + ';">' + buildPromoEmbedHTML(d, t) + '</div>'
+        +     '<button type="button" class="promo-add-btn" style="margin-top:0.85rem; background:#5865f2; padding:0.6rem 1.1rem;" onclick="usePromoTemplate(\'' + idAttr + '\')">'
+        +       '<i class="fa fa-rotate-right" style="margin-right:0.4rem;"></i>Use as template'
+        +     '</button>'
+        +   '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  window.togglePromoHistoryCard = function (id) {
+    var card = el('phc-' + id);
+    if (card) card.classList.toggle('open');
+  };
+
+  window.usePromoTemplate = function (id) {
+    var entry = null;
+    for (var i = 0; i < promo.history.length; i++) {
+      if (promo.history[i].id === id) { entry = promo.history[i]; break; }
+    }
+    if (!entry) return;
+    prefillPromoForm(entry.data || {});
+    promo.autofilled = true; // a deliberate template load — don't autofill over it
+    switchPromoTab('create');
+    var panel = document.querySelector('#promoteModal .promo-modal-panel');
+    if (panel) panel.scrollTop = 0;
+    renderPromoPreview();
+    showToast('Template loaded — review it and post when ready.', 3500, 'success');
   };
 
   // ---- Confirm + submit --------------------------------------------
@@ -1939,7 +2190,9 @@
       setPromoBusy(false);
       if (res.ok) {
         showToast('Your community was posted to Discord! 🎉', 4000, 'success');
-        closePromoteModal();
+        // Refresh status (cooldown + history) and reveal the new post.
+        loadPromoStatus();
+        switchPromoTab('history');
         return;
       }
       exitPromoConfirm();

@@ -54,6 +54,16 @@ test.describe('RP Server Promotion', { tag: '@auth' }, () => {
     await page.locator('#promoInvite').fill('https://discord.gg/playwright');
     await expect(preview).toContainText('discord.gg/playwright');
 
+    // History tab is reachable and swaps the panel.
+    await page.locator('#promoTabBtnHistory').click();
+    await expect(page.locator('#promoTabHistory')).toBeVisible();
+    await expect(page.locator('#promoTabCreate')).toBeHidden();
+
+    // Back to the create tab — the form state is preserved.
+    await page.locator('#promoTabBtnCreate').click();
+    await expect(page.locator('#promoTabCreate')).toBeVisible();
+    await expect(page.locator('#promoServerName')).toHaveValue('Playwright Roleplay Network');
+
     // Close the modal.
     await page.locator('#promoteModalCancel').click();
     await expect(modal).toBeHidden();
