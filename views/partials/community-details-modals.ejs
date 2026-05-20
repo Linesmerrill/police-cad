@@ -939,6 +939,8 @@
       .promo-embed-title a { color:#00a8fc; text-decoration:none; }
       .promo-embed-desc { white-space:pre-wrap; word-break:break-word; margin:0 0 0.6rem; color:#dbdee1; }
       .promo-embed-field { margin:0.5rem 0; }
+      .promo-embed-inline { display:flex; gap:1.6rem; flex-wrap:wrap; }
+      .promo-embed-field.pf-inline { flex:1 1 40%; min-width:110px; }
       .promo-embed-field .pf-name { color:#fff; font-weight:600; font-size:0.78rem; margin-bottom:0.15rem; }
       .promo-embed-field .pf-val { color:#c9cdd4; font-size:0.82rem; white-space:pre-wrap; word-break:break-word; }
       .promo-embed-img { margin-top:0.6rem; border-radius:4px; max-width:100%; max-height:200px; object-fit:cover; }
@@ -1641,7 +1643,12 @@
   function el(id) { return document.getElementById(id); }
   function descMax() { return promo.tier.descMax; }
   function featMax() { return promo.tier.featuresMax; }
-  function imagesMax() { return promo.tier.imagesMax; }
+  // Discord renders at most 4 images per post and the banner is one of them,
+  // so the usable gallery count drops by one once a banner is set.
+  function imagesMax() {
+    var renderCap = 4 - ((promo.tier.allowBanner && promo.banner) ? 1 : 0);
+    return Math.min(promo.tier.imagesMax, renderCap);
+  }
   function escPromo(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
@@ -1746,9 +1753,10 @@
     }
     if (el('promoBannerField')) el('promoBannerField').style.display = t.allowBanner ? 'block' : 'none';
     if (el('promoImagesHint')) {
-      el('promoImagesHint').textContent = (t.imagesMax === 1)
-        ? ('Add 1 image.' + (t.allowBanner ? '' : ' Boost your community for a gallery and a banner.'))
-        : ('Add up to ' + t.imagesMax + ' images' + (t.allowBanner ? ', plus a banner.' : '.'));
+      var imgHint = (t.imagesMax === 1) ? 'Add 1 image.' : ('Add up to ' + t.imagesMax + ' images.');
+      if (t.allowBanner) imgHint += ' Discord shows 4 images per post — the banner counts as one.';
+      else if (t.imagesMax < 4) imgHint += ' Boost your community for more images and a banner.';
+      el('promoImagesHint').textContent = imgHint;
     }
     if (el('promoImagesInput')) {
       if (t.imagesMax > 1) el('promoImagesInput').setAttribute('multiple', 'multiple');
@@ -1949,6 +1957,12 @@
         renderPromoBanner();
         uploadToCloudinary(file, 'community-promotions', '').then(function (url) {
           promo.banner = url || '';
+          // The banner now claims one of Discord's 4 image slots — drop any
+          // gallery images that would no longer render.
+          if (promo.images.length > imagesMax()) {
+            promo.images = promo.images.slice(0, imagesMax());
+            renderPromoImages();
+          }
           renderPromoPreview();
         }).catch(function () {
           showToast('Banner upload failed. Please try again.', 3000, 'error');
@@ -2061,13 +2075,17 @@
     html += '<p class="promo-embed-desc"' + (d.description ? '' : ' style="color:#8b93a7;"') + '>'
       + escPromo(d.description || 'Fill out the form to see your promotion preview.') + '</p>';
 
-    function field(name, val) {
-      return '<div class="promo-embed-field"><div class="pf-name">' + name +
+    function field(name, val, inline) {
+      return '<div class="promo-embed-field' + (inline ? ' pf-inline' : '') + '"><div class="pf-name">' + name +
         '</div><div class="pf-val">' + val + '</div></div>';
     }
     var consoles = d.consoles || [], departments = d.departments || [], features = d.features || [], images = d.images || [];
-    if (consoles.length) html += field('🎮 Platform', escPromo(consoles.join(' · ')));
-    if (d.game) html += field('🕹️ Game', escPromo(d.game));
+    // Platform + Game are inline fields in the Discord embed — render them
+    // side by side so the preview matches the real post.
+    var inlineRow = '';
+    if (consoles.length) inlineRow += field('🎮 Platform', escPromo(consoles.join(' · ')), true);
+    if (d.game) inlineRow += field('🕹️ Game', escPromo(d.game), true);
+    if (inlineRow) html += '<div class="promo-embed-inline">' + inlineRow + '</div>';
     if (departments.length) html += field('🚓 Departments', '• ' + departments.map(escPromo).join('<br>• '));
     if (features.length) html += field('🌟 What We Offer', '• ' + features.map(escPromo).join('<br>• '));
     if (d.requirements) html += field('📋 Requirements', escPromo(d.requirements));
