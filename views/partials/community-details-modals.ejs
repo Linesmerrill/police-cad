@@ -1048,7 +1048,7 @@
               <label class="promo-label">Platforms</label>
               <div class="promo-chk-row" id="promoPlatforms">
                 <% /* Mirror the community-settings platform tags (PlayStation / Xbox / PC) so autofill maps 1:1. */ %>
-                <% var promoPlatformOpts = ['PlayStation','Xbox','PC']; %>
+                <% var promoPlatformOpts = ['Xbox','PlayStation','PC']; %>
                 <% promoPlatformOpts.forEach(function(p){ %>
                   <label class="promo-chk"><input type="checkbox" value="<%= p %>" onchange="renderPromoPreview()"> <%= p %></label>
                 <% }); %>
