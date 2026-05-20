@@ -944,6 +944,8 @@
       .promo-embed-field .pf-name { color:#fff; font-weight:600; font-size:0.78rem; margin-bottom:0.15rem; }
       .promo-embed-field .pf-val { color:#c9cdd4; font-size:0.82rem; white-space:pre-wrap; word-break:break-word; }
       .promo-embed-img { margin-top:0.6rem; border-radius:4px; max-width:100%; max-height:200px; object-fit:cover; }
+      .promo-embed-gallery { display:grid; grid-template-columns:repeat(3, 1fr); gap:4px; margin-top:4px; }
+      .promo-embed-gallery img { width:100%; height:64px; object-fit:cover; border-radius:4px; }
       .promo-embed-footer { color:#949ba4; font-size:0.7rem; margin-top:0.6rem; }
       .promo-grid { display:grid; grid-template-columns:1fr; gap:1.5rem; }
       .promo-thumb { width:54px; height:54px; border-radius:6px; object-fit:cover; border:1px solid #4a5568; }
@@ -2132,8 +2134,23 @@
     if (d.requirements) html += field('📋 Requirements', escPromo(d.requirements));
     if (d.inviteUrl) html += field('💬 Join', escPromo(d.inviteUrl));
 
-    var heroImg = (tier.allowBanner !== false && d.bannerImage) ? d.bannerImage : (images[0] || '');
-    if (heroImg) html += '<img class="promo-embed-img" src="' + escPromo(heroImg) + '" alt="">';
+    // Mirror the real Discord post: the banner (or first image) is the hero,
+    // and any remaining images form a gallery grid below it. Discord renders
+    // at most 4 images per post, banner included.
+    var bannerUsed = tier.allowBanner !== false && !!d.bannerImage;
+    var heroImg = bannerUsed ? d.bannerImage : (images[0] || '');
+    var gallery = (bannerUsed ? images.slice(0) : images.slice(1)).filter(Boolean);
+    if (heroImg) {
+      gallery = gallery.slice(0, 4 - 1); // hero takes one of Discord's 4 slots
+      html += '<img class="promo-embed-img" src="' + escPromo(heroImg) + '" alt="">';
+      if (gallery.length) {
+        html += '<div class="promo-embed-gallery">'
+          + gallery.map(function (url) {
+              return '<img src="' + escPromo(url) + '" alt="">';
+            }).join('')
+          + '</div>';
+      }
+    }
 
     var footer;
     if (tier.featured) footer = '⭐ Featured community · ' + tier.label + ' · Posted via Lines Police CAD';
