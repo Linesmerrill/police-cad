@@ -99,16 +99,37 @@ module.exports = function (app, passport, server, nextApp, handle) {
     });
   });
 
-  app.get(
-    "/auth/discord",
-    auth,
-    passport.authenticate("discord", {
-      failureRedirect: "/",
-    }),
-    (req, res) => {
-      return res.redirect(req.query.state);
-    }
-  );
+  app.get("/auth/discord", auth, function (req, res, next) {
+    // This route both initiates the Discord OAuth flow and receives the
+    // callback (CLIENT_REDIRECT points back here). When Discord returns an
+    // invalid/expired/already-used `code` — e.g. the user refreshed the
+    // callback URL, hit back, or the code was reused — passport-oauth2
+    // raises a TokenError. With the plain middleware form that error
+    // bypasses `failureRedirect` and bubbles up as an unhandled 500. Use a
+    // custom callback so we can treat it as a benign auth failure instead.
+    passport.authenticate("discord", function (err, user, info) {
+      if (err) {
+        console.warn(
+          "[LPS] [level=warn] Discord OAuth failed:",
+          err && err.message ? err.message : err
+        );
+        return res.redirect("/");
+      }
+      if (!user) {
+        return res.redirect("/");
+      }
+      req.logIn(user, function (loginErr) {
+        if (loginErr) {
+          console.error(
+            "[LPS] [level=error] Discord OAuth login failed:",
+            loginErr
+          );
+          return res.redirect("/");
+        }
+        return res.redirect(req.query.state || "/");
+      });
+    })(req, res, next);
+  });
 
   // Discord Bot page is now handled by Next.js at app/discord-bot/page.tsx
   // app.get("/discord-bot", function (req, res) {
