@@ -2234,9 +2234,14 @@
         +   '</div>'
         +   '<div class="promo-hist-body">'
         +     '<div class="promo-embed" style="border-left-color:' + escPromo(t.color) + ';">' + buildPromoEmbedHTML(d, t) + '</div>'
-        +     '<button type="button" class="promo-add-btn" style="margin-top:0.85rem; background:#5865f2; padding:0.6rem 1.1rem;" onclick="usePromoTemplate(\'' + idAttr + '\')">'
-        +       '<i class="fa fa-rotate-right" style="margin-right:0.4rem;"></i>Use as template'
-        +     '</button>'
+        +     '<div style="display:flex; gap:0.6rem; flex-wrap:wrap; margin-top:0.85rem;">'
+        +       (entry.messageLink
+                  ? '<a href="' + escPromo(entry.messageLink) + '" target="_blank" rel="noopener" class="promo-add-btn" style="background:#404652; display:inline-flex; align-items:center; gap:0.4rem; text-decoration:none; padding:0.6rem 1.1rem;"><i class="fa-brands fa-discord"></i>View in Discord</a>'
+                  : '')
+        +       '<button type="button" class="promo-add-btn" style="background:#5865f2; padding:0.6rem 1.1rem;" onclick="usePromoTemplate(\'' + idAttr + '\')">'
+        +         '<i class="fa fa-rotate-right" style="margin-right:0.4rem;"></i>Use as template'
+        +       '</button>'
+        +     '</div>'
         +   '</div>'
         + '</div>';
     }).join('');
