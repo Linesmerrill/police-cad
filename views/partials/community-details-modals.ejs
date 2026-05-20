@@ -894,6 +894,210 @@
       </div>
     </div>
 
+    <!-- ============================================================= -->
+    <!-- RP Server Promotion modal — owner/admin posts a structured     -->
+    <!-- recruitment post to the shared LPC Discord rp-servers channel. -->
+    <!-- ============================================================= -->
+    <style>
+      .promo-field { margin-bottom:1.1rem; }
+      .promo-label { display:block; color:#fff; font-weight:600; font-size:0.85rem; margin-bottom:0.4rem; }
+      .promo-hint { color:#8b93a7; font-size:0.72rem; margin-top:0.3rem; }
+      .promo-input, .promo-textarea, .promo-select {
+        width:100%; padding:0.6rem 0.7rem; background:#2d3748; border:1px solid #4a5568;
+        border-radius:8px; color:#fff; font-size:0.9rem; box-sizing:border-box;
+      }
+      .promo-input:focus, .promo-textarea:focus, .promo-select:focus { outline:none; border-color:#5865f2; }
+      .promo-textarea { resize:vertical; min-height:88px; }
+      .promo-chk-row { display:flex; flex-wrap:wrap; gap:0.5rem; }
+      .promo-chk {
+        display:flex; align-items:center; gap:0.4rem; padding:0.4rem 0.7rem; background:#2d3748;
+        border:1px solid #4a5568; border-radius:999px; color:#cbd5e1; font-size:0.8rem; cursor:pointer;
+      }
+      .promo-chk input { accent-color:#5865f2; }
+      .promo-tag-row { display:flex; gap:0.4rem; }
+      .promo-tags { display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.5rem; }
+      .promo-tag {
+        display:inline-flex; align-items:center; gap:0.4rem; background:#3a3f56; color:#e2e8f0;
+        border-radius:6px; padding:0.25rem 0.55rem; font-size:0.78rem;
+      }
+      .promo-tag button { background:none; border:none; color:#9aa3b8; cursor:pointer; padding:0; font-size:0.85rem; }
+      .promo-add-btn {
+        flex-shrink:0; background:#3a3f56; color:#fff; border:none; border-radius:8px;
+        padding:0 0.85rem; cursor:pointer; font-size:0.9rem;
+      }
+      /* Discord-style live preview */
+      .promo-embed {
+        background:#2b2d31; border-radius:6px; border-left:4px solid #5865f2;
+        padding:0.85rem 1rem; color:#dbdee1; font-size:0.85rem; max-width:440px;
+      }
+      .promo-embed.boosted { border-left-color:#fbbf24; }
+      .promo-embed-title { color:#fff; font-weight:700; font-size:1rem; margin:0 0 0.35rem; word-break:break-word; }
+      .promo-embed-title a { color:#00a8fc; text-decoration:none; }
+      .promo-embed-desc { white-space:pre-wrap; word-break:break-word; margin:0 0 0.6rem; color:#dbdee1; }
+      .promo-embed-field { margin:0.5rem 0; }
+      .promo-embed-field .pf-name { color:#fff; font-weight:600; font-size:0.78rem; margin-bottom:0.15rem; }
+      .promo-embed-field .pf-val { color:#c9cdd4; font-size:0.82rem; white-space:pre-wrap; word-break:break-word; }
+      .promo-embed-img { margin-top:0.6rem; border-radius:4px; max-width:100%; max-height:200px; object-fit:cover; }
+      .promo-embed-footer { color:#949ba4; font-size:0.7rem; margin-top:0.6rem; }
+      .promo-grid { display:grid; grid-template-columns:1fr; gap:1.5rem; }
+      @media (min-width:860px) { .promo-grid { grid-template-columns:1fr 1fr; } }
+      .promo-thumb { width:54px; height:54px; border-radius:6px; object-fit:cover; border:1px solid #4a5568; }
+    </style>
+    <div id="promoteModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(20,21,28,0.78); align-items:center; justify-content:center; overflow-y:auto; padding:1rem; box-sizing:border-box;">
+      <div style="background:#1e2028; border-radius:16px; padding:1.75rem; max-width:980px; width:96%; position:relative; border:1px solid #35385a; max-height:92vh; overflow-y:auto;">
+        <button id="promoteModalClose" aria-label="Close" style="position:absolute; top:1.1rem; right:1.1rem; background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+
+        <div style="text-align:center; margin-bottom:1.25rem;">
+          <i class="fa-brands fa-discord" style="font-size:2.6rem; color:#5865f2;"></i>
+          <h3 style="color:#fff; margin:0.4rem 0 0; font-size:1.4rem; font-weight:700;">Promote Your Community</h3>
+          <p style="color:#a0aec0; margin:0.35rem 0 0; font-size:0.9rem;">Post a recruitment listing to the Lines Police CAD Discord. One post per community every <span id="promoCooldownLabel">24</span> hours.</p>
+        </div>
+
+        <!-- Cooldown / status banner -->
+        <div id="promoCooldownBanner" style="display:none; background:#3a2d12; border:1px solid #b45309; border-left:4px solid #f59e0b; border-radius:8px; padding:0.8rem 1rem; margin-bottom:1.25rem;">
+          <p style="margin:0; color:#fcd34d; font-size:0.85rem;">
+            <i class="fa fa-clock" style="margin-right:0.4rem;"></i>
+            <span id="promoCooldownText">This community already promoted recently.</span>
+          </p>
+        </div>
+
+        <!-- Not-configured banner -->
+        <div id="promoUnconfiguredBanner" style="display:none; background:#3a1d1d; border:1px solid #b91c1c; border-left:4px solid #ef4444; border-radius:8px; padding:0.8rem 1rem; margin-bottom:1.25rem;">
+          <p style="margin:0; color:#fca5a5; font-size:0.85rem;">
+            <i class="fa fa-triangle-exclamation" style="margin-right:0.4rem;"></i>
+            Discord promotion isn't available right now. Please try again later.
+          </p>
+        </div>
+
+        <div class="promo-grid">
+          <!-- ---- LEFT: structured form ---- -->
+          <div>
+            <div class="promo-field">
+              <label class="promo-label" for="promoServerName">Server name</label>
+              <input type="text" id="promoServerName" class="promo-input" maxlength="100" placeholder="e.g. Georgia State Roleplay Network" oninput="renderPromoPreview()">
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label">Platforms</label>
+              <div class="promo-chk-row" id="promoPlatforms">
+                <% var promoPlatformOpts = ['PS5','PS4','Xbox Series X|S','Xbox One','PC / FiveM']; %>
+                <% promoPlatformOpts.forEach(function(p){ %>
+                  <label class="promo-chk"><input type="checkbox" value="<%= p %>" onchange="renderPromoPreview()"> <%= p %></label>
+                <% }); %>
+              </div>
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label" for="promoGame">Game</label>
+              <select id="promoGame" class="promo-select" onchange="onPromoGameChange()">
+                <option value="">Select a game…</option>
+                <option value="GTA RP">GTA RP</option>
+                <option value="Roblox RP">Roblox RP</option>
+                <option value="Red Dead RP">Red Dead RP</option>
+                <option value="__other">Other…</option>
+              </select>
+              <input type="text" id="promoGameOther" class="promo-input" style="display:none; margin-top:0.5rem;" maxlength="60" placeholder="Game name" oninput="renderPromoPreview()">
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label" for="promoDescription">Description</label>
+              <textarea id="promoDescription" class="promo-textarea" placeholder="Describe your community, the vibe, what makes it worth joining…" oninput="renderPromoPreview()"></textarea>
+              <div class="promo-hint"><span id="promoDescCount">0</span> / <span id="promoDescMax">600</span> characters</div>
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label">Departments <span style="color:#8b93a7; font-weight:400;">(optional)</span></label>
+              <div class="promo-tag-row">
+                <input type="text" id="promoDeptInput" class="promo-input" maxlength="120" placeholder="e.g. State Patrol" onkeydown="if(event.key==='Enter'){event.preventDefault();addPromoTag('dept');}">
+                <button type="button" class="promo-add-btn" onclick="addPromoTag('dept')">Add</button>
+              </div>
+              <div class="promo-tags" id="promoDeptList"></div>
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label">Features <span style="color:#8b93a7; font-weight:400;">(optional)</span></label>
+              <div class="promo-tag-row">
+                <input type="text" id="promoFeatInput" class="promo-input" maxlength="120" placeholder="e.g. Custom CAD/MDT" onkeydown="if(event.key==='Enter'){event.preventDefault();addPromoTag('feat');}">
+                <button type="button" class="promo-add-btn" onclick="addPromoTag('feat')">Add</button>
+              </div>
+              <div class="promo-tags" id="promoFeatList"></div>
+              <div class="promo-hint" id="promoFeatHint">Up to 6 features. Boost your community to add more.</div>
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label" for="promoRequirements">Requirements <span style="color:#8b93a7; font-weight:400;">(optional)</span></label>
+              <input type="text" id="promoRequirements" class="promo-input" maxlength="480" placeholder="e.g. Working mic, mature players" oninput="renderPromoPreview()">
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label" for="promoInvite">Discord invite link</label>
+              <input type="url" id="promoInvite" class="promo-input" placeholder="https://discord.gg/…" oninput="renderPromoPreview()">
+              <div class="promo-hint">Must be an https Discord invite link.</div>
+            </div>
+
+            <!-- Boosted-only banner -->
+            <div class="promo-field" id="promoBannerField" style="display:none;">
+              <label class="promo-label">Banner image <span style="color:#fbbf24; font-weight:600;">★ Boost perk</span></label>
+              <div style="display:flex; align-items:center; gap:0.75rem;">
+                <img id="promoBannerThumb" class="promo-thumb" style="display:none;" alt="Banner">
+                <input type="file" id="promoBannerInput" accept="image/*" style="color:#cbd5e1; font-size:0.8rem;">
+                <button type="button" id="promoBannerRemove" class="promo-add-btn" style="display:none; background:#5b3030;" onclick="removePromoBanner()">Remove</button>
+              </div>
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label">Images</label>
+              <div style="display:flex; align-items:center; gap:0.75rem;">
+                <input type="file" id="promoImagesInput" accept="image/*" multiple style="color:#cbd5e1; font-size:0.8rem;">
+              </div>
+              <div class="promo-tags" id="promoImagesList"></div>
+              <div class="promo-hint" id="promoImagesHint">Free communities can add 1 image. Boost for up to 3 plus a banner.</div>
+            </div>
+          </div>
+
+          <!-- ---- RIGHT: live Discord preview ---- -->
+          <div>
+            <label class="promo-label" style="margin-bottom:0.6rem;">Live preview</label>
+            <p class="promo-hint" style="margin-top:0; margin-bottom:0.8rem;">This is how your post will appear in Discord. Review it before posting.</p>
+            <div id="promoPreview" class="promo-embed">
+              <p class="promo-embed-title" style="color:#8b93a7;">Your server name</p>
+              <p class="promo-embed-desc" style="color:#8b93a7;">Fill out the form to see your promotion preview.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer: default state -->
+        <div id="promoFooterDefault" style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:flex-end; flex-wrap:wrap;">
+          <button id="promoteModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.7rem 1.4rem; font-weight:500; cursor:pointer; font-size:1rem;">Cancel</button>
+          <button id="promoPostBtn" type="button" onclick="enterPromoConfirm()" style="background:#5865f2; color:#fff; border:none; border-radius:8px; padding:0.7rem 1.4rem; font-weight:600; cursor:pointer; font-size:1rem;">
+            <i class="fa-brands fa-discord" style="margin-right:0.45rem;"></i>Post to Discord
+          </button>
+        </div>
+
+        <!-- Footer: confirm state -->
+        <div id="promoFooterConfirm" style="display:none; margin-top:1.5rem; padding:1rem; background:#23252f; border:1px solid #35385a; border-radius:10px;">
+          <p style="margin:0 0 0.85rem; color:#e2e8f0; font-size:0.9rem;">
+            <i class="fa fa-circle-info" style="color:#5865f2; margin-right:0.4rem;"></i>
+            This posts <strong>publicly</strong> to the LPC Discord and locks promotion for this community for <span class="promoCooldownInline">24</span> hours.
+          </p>
+          <div style="display:flex; gap:1rem; justify-content:flex-end; flex-wrap:wrap;">
+            <button type="button" onclick="exitPromoConfirm()" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.7rem 1.4rem; font-weight:500; cursor:pointer; font-size:1rem;">Back</button>
+            <button id="promoConfirmBtn" type="button" onclick="submitPromotion()" style="background:#3ba55d; color:#fff; border:none; border-radius:8px; padding:0.7rem 1.4rem; font-weight:600; cursor:pointer; font-size:1rem;">
+              <i class="fa fa-paper-plane" style="margin-right:0.45rem;"></i>Post now
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading overlay -->
+        <div id="promoteModalLoading" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(30,32,44,0.92); border-radius:16px; align-items:center; justify-content:center; z-index:20;">
+          <div style="text-align:center;">
+            <div class="loading-spinner" style="width:54px; height:54px; border:4px solid #4a5568; border-top:4px solid #5865f2; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+            <p style="color:#fff; margin:0; font-size:0.95rem;" id="promoteModalLoadingText">Posting to Discord…</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
       // Modal Event Listeners
@@ -940,13 +1144,8 @@
       
       // Fill account details function (same as community dashboard)
       // Modal open functions
-      function openPromoteModal() {
-        document.getElementById('promoteModal').style.display = 'flex';
-      }
+      // openPromoteModal is defined in the RP promotion script block below.
 
-
-             
-      
       function openInviteModal() {
         document.getElementById('inviteModal').style.display = 'flex';
       }
@@ -1295,10 +1494,427 @@
     </script>
     <script>
     // Modal handlers for community actions
-function openPromoteModal() {
-  // TODO: Implement promote modal
-  alert('Promote modal will be implemented next');
-}
+// ===================================================================
+// RP Server Promotion — structured Discord recruitment post.
+// ===================================================================
+(function () {
+  var PROMO_API = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+  var PROMO_COMMUNITY_ID = '<%= community._id %>';
+
+  // Field caps — must mirror the API's sanitizeRpPromotionData limits.
+  var CAPS = {
+    descFree: 600, descBoosted: 3500,
+    featFree: 6, featBoosted: 15,
+    departments: 12,
+    imagesFree: 1, imagesBoosted: 3
+  };
+
+  var promo = {
+    boosted: false,
+    canPostNow: true,
+    cooldownHours: 24,
+    configured: true,
+    depts: [],
+    feats: [],
+    images: [],   // uploaded image URLs
+    banner: ''    // uploaded banner URL (boosted only)
+  };
+
+  function el(id) { return document.getElementById(id); }
+  function descMax() { return promo.boosted ? CAPS.descBoosted : CAPS.descFree; }
+  function featMax() { return promo.boosted ? CAPS.featBoosted : CAPS.featFree; }
+  function imagesMax() { return promo.boosted ? CAPS.imagesBoosted : CAPS.imagesFree; }
+  function escPromo(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  window.openPromoteModal = function openPromoteModal() {
+    var modal = el('promoteModal');
+    if (!modal) return;
+    exitPromoConfirm();
+    modal.style.display = 'flex';
+    loadPromoStatus();
+  };
+
+  function closePromoteModal() {
+    var modal = el('promoteModal');
+    if (modal) modal.style.display = 'none';
+    exitPromoConfirm();
+  }
+
+  // ---- Load posting status + last post from the API -----------------
+  function loadPromoStatus() {
+    fetch(PROMO_API + '/api/v2/community/' + PROMO_COMMUNITY_ID + '/rp-promotion?userId=' + encodeURIComponent((window.dbUser && window.dbUser._id) || ''))
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r); })
+      .then(function (data) {
+        promo.boosted = !!data.boosted;
+        promo.canPostNow = data.canPostNow !== false;
+        promo.cooldownHours = data.cooldownHours || 24;
+        promo.configured = data.configured !== false;
+        applyPromoTier();
+
+        // Cooldown / configuration gating.
+        var unconfigured = el('promoUnconfiguredBanner');
+        var cdBanner = el('promoCooldownBanner');
+        if (unconfigured) unconfigured.style.display = promo.configured ? 'none' : 'block';
+        if (cdBanner) cdBanner.style.display = (promo.configured && !promo.canPostNow) ? 'block' : 'none';
+        if (!promo.canPostNow && data.nextAvailableAt) {
+          var when = new Date(data.nextAvailableAt);
+          var txt = el('promoCooldownText');
+          if (txt && !isNaN(when.getTime())) {
+            txt.textContent = 'This community already promoted recently. You can post again on '
+              + when.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+              + ' at ' + when.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + '.';
+          }
+        }
+        setPromoPostEnabled(promo.configured && promo.canPostNow);
+
+        if (data.lastData) prefillPromoForm(data.lastData);
+        renderPromoPreview();
+      })
+      .catch(function () {
+        showToast('Could not load promotion status. Please try again.', 3000, 'error');
+      });
+  }
+
+  // Reflect the community's tier (free vs boosted) onto the form.
+  function applyPromoTier() {
+    var hrs = promo.cooldownHours;
+    if (el('promoCooldownLabel')) el('promoCooldownLabel').textContent = hrs;
+    Array.prototype.forEach.call(document.querySelectorAll('.promoCooldownInline'), function (n) { n.textContent = hrs; });
+    if (el('promoDescMax')) el('promoDescMax').textContent = descMax();
+    if (el('promoDescription')) el('promoDescription').setAttribute('maxlength', descMax());
+    if (el('promoFeatHint')) {
+      el('promoFeatHint').textContent = promo.boosted
+        ? ('Up to ' + CAPS.featBoosted + ' features.')
+        : ('Up to ' + CAPS.featFree + ' features. Boost your community to add more.');
+    }
+    if (el('promoBannerField')) el('promoBannerField').style.display = promo.boosted ? 'block' : 'none';
+    if (el('promoImagesHint')) {
+      el('promoImagesHint').textContent = promo.boosted
+        ? ('Add up to ' + CAPS.imagesBoosted + ' images, plus a banner.')
+        : 'Free communities can add 1 image. Boost for up to 3 plus a banner.';
+    }
+    if (el('promoImagesInput')) {
+      if (promo.boosted) el('promoImagesInput').setAttribute('multiple', 'multiple');
+      else el('promoImagesInput').removeAttribute('multiple');
+    }
+  }
+
+  function prefillPromoForm(d) {
+    if (el('promoServerName')) el('promoServerName').value = d.serverName || '';
+    Array.prototype.forEach.call(document.querySelectorAll('#promoPlatforms input'), function (cb) {
+      cb.checked = Array.isArray(d.consoles) && d.consoles.indexOf(cb.value) !== -1;
+    });
+    var gameSel = el('promoGame');
+    var known = ['GTA RP', 'Roblox RP', 'Red Dead RP'];
+    if (d.game && known.indexOf(d.game) !== -1) {
+      gameSel.value = d.game;
+      el('promoGameOther').style.display = 'none';
+    } else if (d.game) {
+      gameSel.value = '__other';
+      el('promoGameOther').style.display = 'block';
+      el('promoGameOther').value = d.game;
+    }
+    if (el('promoDescription')) el('promoDescription').value = d.description || '';
+    if (el('promoRequirements')) el('promoRequirements').value = d.requirements || '';
+    if (el('promoInvite')) el('promoInvite').value = d.inviteUrl || '';
+    promo.depts = Array.isArray(d.departments) ? d.departments.slice(0, CAPS.departments) : [];
+    promo.feats = Array.isArray(d.features) ? d.features.slice(0, featMax()) : [];
+    promo.images = Array.isArray(d.images) ? d.images.slice(0, imagesMax()) : [];
+    promo.banner = (promo.boosted && d.bannerImage) ? d.bannerImage : '';
+    renderPromoTags('dept');
+    renderPromoTags('feat');
+    renderPromoImages();
+    renderPromoBanner();
+  }
+
+  function setPromoPostEnabled(enabled) {
+    var btn = el('promoPostBtn');
+    if (!btn) return;
+    btn.disabled = !enabled;
+    btn.style.opacity = enabled ? '1' : '0.5';
+    btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+  }
+
+  // ---- Tag inputs (departments / features) --------------------------
+  window.addPromoTag = function (kind) {
+    var input = el(kind === 'dept' ? 'promoDeptInput' : 'promoFeatInput');
+    var arr = kind === 'dept' ? promo.depts : promo.feats;
+    var max = kind === 'dept' ? CAPS.departments : featMax();
+    var val = (input.value || '').trim();
+    if (!val) return;
+    if (arr.length >= max) {
+      showToast(kind === 'dept'
+        ? ('You can list up to ' + max + ' departments.')
+        : ('You can list up to ' + max + ' features.' + (promo.boosted ? '' : ' Boost to add more.')),
+        3500, 'error');
+      return;
+    }
+    arr.push(val.slice(0, 120));
+    input.value = '';
+    renderPromoTags(kind);
+    renderPromoPreview();
+  };
+
+  window.removePromoTag = function (kind, idx) {
+    var arr = kind === 'dept' ? promo.depts : promo.feats;
+    arr.splice(idx, 1);
+    renderPromoTags(kind);
+    renderPromoPreview();
+  };
+
+  function renderPromoTags(kind) {
+    var arr = kind === 'dept' ? promo.depts : promo.feats;
+    var list = el(kind === 'dept' ? 'promoDeptList' : 'promoFeatList');
+    if (!list) return;
+    list.innerHTML = arr.map(function (t, i) {
+      return '<span class="promo-tag">' + escPromo(t) +
+        '<button type="button" onclick="removePromoTag(\'' + kind + '\',' + i + ')">&times;</button></span>';
+    }).join('');
+  }
+
+  window.onPromoGameChange = function () {
+    var sel = el('promoGame');
+    var other = el('promoGameOther');
+    other.style.display = sel.value === '__other' ? 'block' : 'none';
+    renderPromoPreview();
+  };
+
+  // ---- Image uploads ------------------------------------------------
+  function validateImageFile(file) {
+    if (!file.type || file.type.indexOf('image/') !== 0) {
+      showToast('Please select an image file.', 3000, 'error');
+      return false;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Each image must be under 5MB.', 3000, 'error');
+      return false;
+    }
+    return true;
+  }
+
+  function setPromoBusy(busy, text) {
+    var overlay = el('promoteModalLoading');
+    if (overlay) {
+      overlay.style.display = busy ? 'flex' : 'none';
+      if (text) el('promoteModalLoadingText').textContent = text;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var imagesInput = el('promoImagesInput');
+    if (imagesInput) {
+      imagesInput.addEventListener('change', function (e) {
+        var files = Array.prototype.slice.call(e.target.files || []);
+        e.target.value = '';
+        var room = imagesMax() - promo.images.length;
+        if (room <= 0) {
+          showToast('You\'ve reached the image limit (' + imagesMax() + ').', 3000, 'error');
+          return;
+        }
+        files = files.slice(0, room).filter(validateImageFile);
+        if (!files.length) return;
+        setPromoBusy(true, 'Uploading image…');
+        Promise.all(files.map(function (f) {
+          return uploadToCloudinary(f, 'community-promotions', '');
+        })).then(function (urls) {
+          urls.forEach(function (u) { if (u) promo.images.push(u); });
+          renderPromoImages();
+          renderPromoPreview();
+        }).catch(function () {
+          showToast('Image upload failed. Please try again.', 3000, 'error');
+        }).then(function () { setPromoBusy(false); });
+      });
+    }
+
+    var bannerInput = el('promoBannerInput');
+    if (bannerInput) {
+      bannerInput.addEventListener('change', function (e) {
+        var file = (e.target.files || [])[0];
+        e.target.value = '';
+        if (!file || !validateImageFile(file)) return;
+        setPromoBusy(true, 'Uploading banner…');
+        uploadToCloudinary(file, 'community-promotions', '').then(function (url) {
+          promo.banner = url || '';
+          renderPromoBanner();
+          renderPromoPreview();
+        }).catch(function () {
+          showToast('Banner upload failed. Please try again.', 3000, 'error');
+        }).then(function () { setPromoBusy(false); });
+      });
+    }
+  });
+
+  window.removePromoImage = function (idx) {
+    promo.images.splice(idx, 1);
+    renderPromoImages();
+    renderPromoPreview();
+  };
+
+  function renderPromoImages() {
+    var list = el('promoImagesList');
+    if (!list) return;
+    list.innerHTML = promo.images.map(function (url, i) {
+      return '<span class="promo-tag" style="padding:0.2rem 0.35rem;">' +
+        '<img src="' + escPromo(url) + '" class="promo-thumb" style="width:32px;height:32px;" alt="">' +
+        '<button type="button" onclick="removePromoImage(' + i + ')">&times;</button></span>';
+    }).join('');
+  }
+
+  window.removePromoBanner = function () {
+    promo.banner = '';
+    renderPromoBanner();
+    renderPromoPreview();
+  };
+
+  function renderPromoBanner() {
+    var thumb = el('promoBannerThumb');
+    var removeBtn = el('promoBannerRemove');
+    if (thumb) {
+      if (promo.banner) { thumb.src = promo.banner; thumb.style.display = 'block'; }
+      else { thumb.style.display = 'none'; }
+    }
+    if (removeBtn) removeBtn.style.display = promo.banner ? 'inline-block' : 'none';
+  }
+
+  // ---- Collect + validate ------------------------------------------
+  function collectPromoData() {
+    var gameSel = el('promoGame');
+    var game = gameSel.value === '__other' ? (el('promoGameOther').value || '').trim() : gameSel.value;
+    var consoles = Array.prototype.slice.call(document.querySelectorAll('#promoPlatforms input:checked'))
+      .map(function (cb) { return cb.value; });
+    return {
+      serverName: (el('promoServerName').value || '').trim(),
+      consoles: consoles,
+      game: game,
+      description: (el('promoDescription').value || '').trim(),
+      departments: promo.depts.slice(),
+      features: promo.feats.slice(),
+      requirements: (el('promoRequirements').value || '').trim(),
+      inviteUrl: (el('promoInvite').value || '').trim(),
+      bannerImage: promo.boosted ? promo.banner : '',
+      images: promo.images.slice(0, imagesMax())
+    };
+  }
+
+  function validatePromo(d) {
+    if (!d.serverName) return 'Add a server name.';
+    if (!d.consoles.length) return 'Select at least one platform.';
+    if (!d.game) return 'Choose a game.';
+    if (!d.description) return 'Add a description.';
+    if (d.description.length > descMax()) {
+      return 'Description is too long (' + d.description.length + '/' + descMax() + ').'
+        + (promo.boosted ? '' : ' Boost your community for more room.');
+    }
+    if (d.features.length > featMax()) {
+      return 'Too many features — limit is ' + featMax() + '.';
+    }
+    var url = d.inviteUrl.toLowerCase();
+    if (url.indexOf('https://') !== 0 || url.indexOf('discord') === -1) {
+      return 'Enter a valid https Discord invite link.';
+    }
+    return null;
+  }
+
+  // ---- Live preview -------------------------------------------------
+  window.renderPromoPreview = function () {
+    var d = collectPromoData();
+    var cnt = el('promoDescCount');
+    if (cnt) cnt.textContent = d.description.length;
+
+    var box = el('promoPreview');
+    if (!box) return;
+    box.className = 'promo-embed' + (promo.boosted ? ' boosted' : '');
+
+    var html = '';
+    var titleText = d.serverName || 'Your server name';
+    if (d.inviteUrl && /^https:\/\//i.test(d.inviteUrl)) {
+      html += '<p class="promo-embed-title"><a href="' + escPromo(d.inviteUrl) + '" target="_blank" rel="noopener">' + escPromo(titleText) + '</a></p>';
+    } else {
+      html += '<p class="promo-embed-title"' + (d.serverName ? '' : ' style="color:#8b93a7;"') + '>' + escPromo(titleText) + '</p>';
+    }
+    html += '<p class="promo-embed-desc"' + (d.description ? '' : ' style="color:#8b93a7;"') + '>'
+      + escPromo(d.description || 'Fill out the form to see your promotion preview.') + '</p>';
+
+    function field(name, val) {
+      return '<div class="promo-embed-field"><div class="pf-name">' + name +
+        '</div><div class="pf-val">' + val + '</div></div>';
+    }
+    if (d.consoles.length) html += field('🎮 Platform', escPromo(d.consoles.join(' · ')));
+    if (d.game) html += field('🕹️ Game', escPromo(d.game));
+    if (d.departments.length) html += field('🚓 Departments', '• ' + d.departments.map(escPromo).join('<br>• '));
+    if (d.features.length) html += field('🌟 What We Offer', '• ' + d.features.map(escPromo).join('<br>• '));
+    if (d.requirements) html += field('📋 Requirements', escPromo(d.requirements));
+    if (d.inviteUrl) html += field('💬 Join', escPromo(d.inviteUrl));
+
+    var heroImg = (promo.boosted && d.bannerImage) ? d.bannerImage : (d.images[0] || '');
+    if (heroImg) html += '<img class="promo-embed-img" src="' + escPromo(heroImg) + '" alt="">';
+
+    html += '<div class="promo-embed-footer">'
+      + (promo.boosted ? '⭐ Boosted community · ' : '')
+      + 'Posted via Lines Police CAD</div>';
+
+    box.innerHTML = html;
+  };
+
+  // ---- Confirm + submit --------------------------------------------
+  window.enterPromoConfirm = function () {
+    if (!promo.configured) { showToast('Discord promotion is unavailable right now.', 3000, 'error'); return; }
+    if (!promo.canPostNow) { showToast('This community already promoted recently.', 3500, 'error'); return; }
+    var err = validatePromo(collectPromoData());
+    if (err) { showToast(err, 3500, 'error'); return; }
+    el('promoFooterDefault').style.display = 'none';
+    el('promoFooterConfirm').style.display = 'block';
+  };
+
+  window.exitPromoConfirm = function () {
+    var def = el('promoFooterDefault'), conf = el('promoFooterConfirm');
+    if (def) def.style.display = 'flex';
+    if (conf) conf.style.display = 'none';
+  };
+
+  window.submitPromotion = function () {
+    var d = collectPromoData();
+    var err = validatePromo(d);
+    if (err) { exitPromoConfirm(); showToast(err, 3500, 'error'); return; }
+
+    setPromoBusy(true, 'Posting to Discord…');
+    fetch(PROMO_API + '/api/v2/community/' + PROMO_COMMUNITY_ID + '/rp-promotion?userId=' + encodeURIComponent((window.dbUser && window.dbUser._id) || ''), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(d)
+    }).then(function (r) {
+      return r.json().then(function (body) { return { ok: r.ok, status: r.status, body: body }; });
+    }).then(function (res) {
+      setPromoBusy(false);
+      if (res.ok) {
+        showToast('Your community was posted to Discord! 🎉', 4000, 'success');
+        closePromoteModal();
+        return;
+      }
+      exitPromoConfirm();
+      if (res.status === 429 && res.body && res.body.nextAvailableAt) {
+        promo.canPostNow = false;
+        setPromoPostEnabled(false);
+        var when = new Date(res.body.nextAvailableAt);
+        el('promoCooldownBanner').style.display = 'block';
+        el('promoCooldownText').textContent = 'This community already promoted recently. You can post again on '
+          + when.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '.';
+        showToast('Already promoted recently — try again later.', 3500, 'error');
+      } else {
+        var msg = (res.body && res.body.response && res.body.response.message)
+          || (res.body && res.body.error)
+          || 'Failed to post promotion. Please try again.';
+        showToast(msg, 4000, 'error');
+      }
+    }).catch(function () {
+      setPromoBusy(false);
+      exitPromoConfirm();
+      showToast('Network error while posting. Please try again.', 4000, 'error');
+    });
+  };
+})();
 
 // Privacy and platform selection for community settings
 window.selectedPrivacy = '<%= (community && community.community && community.community.visibility) || "public" %>';

@@ -1511,6 +1511,21 @@
                     }
                   });
                 }
+
+                // RP server promotion is owner/administrator-only — it posts
+                // publicly to the shared LPC Discord on the community's behalf.
+                let canPromoteCommunity = isOwner;
+                if (!canPromoteCommunity && userId && community.community && Array.isArray(community.community.roles)) {
+                  community.community.roles.forEach(function(role) {
+                    if (Array.isArray(role.members) && role.members.includes(userId) && Array.isArray(role.permissions)) {
+                      role.permissions.forEach(function(perm) {
+                        if (perm.name === "administrator" && perm.enabled === true) {
+                          canPromoteCommunity = true;
+                        }
+                      });
+                    }
+                  });
+                }
               %>
 
               <% if (canManageSettings) { %>
@@ -1541,6 +1556,13 @@
                 <i class="fa fa-rocket"></i>
                 <span>Boost</span>
               </a>
+
+              <% if (canPromoteCommunity) { %>
+                <button onclick="openPromoteModal()" class="action-btn" style="color: #5865f2;">
+                  <i class="fa-brands fa-discord"></i>
+                  <span>Promote</span>
+                </button>
+              <% } %>
 
               <button id="shareBtn" onclick="copyCommunityUrl()" class="action-btn" style="color: #60a5fa;">
                 <i id="shareBtnIcon" class="fa fa-share-nodes"></i>
