@@ -981,6 +981,8 @@
       }
       .promo-hist-head .ph-name { color:#fff; font-weight:700; font-size:0.92rem; margin:0; word-break:break-word; }
       .promo-hist-head .ph-meta { color:#8b93a7; font-size:0.74rem; margin:0.15rem 0 0; }
+      .promo-hist-body .ph-posted-by { color:#8b93a7; font-size:0.78rem; margin:0.7rem 0 0; }
+      .promo-hist-body .ph-posted-by strong { color:#cbd5e1; font-weight:600; }
       .promo-hist-chevron { color:#8b93a7; transition:transform 0.2s ease; flex-shrink:0; }
       .promo-hist-card.open .promo-hist-chevron { transform:rotate(180deg); }
       .promo-tier-chip {
@@ -2234,6 +2236,10 @@
       if (d.game) metaBits.push(escPromo(d.game));
       if (d.consoles && d.consoles.length) metaBits.push(escPromo(d.consoles.join(', ')));
       var idAttr = escPromo(entry.id);
+      var postedBy = (entry.postedByName && String(entry.postedByName).trim()) || '';
+      var postedByLine = postedBy
+        ? '<p class="ph-posted-by"><i class="fa fa-user" style="margin-right:0.4rem; opacity:0.7;"></i>Posted by <strong>' + escPromo(postedBy) + '</strong></p>'
+        : '';
       return ''
         + '<div class="promo-hist-card" id="phc-' + idAttr + '" style="border-left-color:' + escPromo(t.color) + '; animation-delay:' + (i * 40) + 'ms;">'
         +   '<div class="promo-hist-head" onclick="togglePromoHistoryCard(\'' + idAttr + '\')">'
@@ -2246,6 +2252,7 @@
         +   '</div>'
         +   '<div class="promo-hist-body">'
         +     '<div class="promo-embed" style="border-left-color:' + escPromo(t.color) + ';">' + buildPromoEmbedHTML(d, t) + '</div>'
+        +     postedByLine
         +     '<div style="display:flex; gap:0.6rem; flex-wrap:wrap; margin-top:0.85rem;">'
         +       (entry.messageLink
                   ? '<a href="' + escPromo(entry.messageLink) + '" target="_blank" rel="noopener" class="promo-add-btn" style="background:#404652; display:inline-flex; align-items:center; gap:0.4rem; text-decoration:none; padding:0.6rem 1.1rem;"><i class="fa-brands fa-discord"></i>View in Discord</a>'
