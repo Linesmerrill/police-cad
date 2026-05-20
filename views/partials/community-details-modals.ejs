@@ -1760,6 +1760,26 @@
       });
   }
 
+  // Refresh the images hint to reflect the *currently usable* gallery count.
+  // Once a banner is uploaded it claims one of Discord's 4 image slots, so the
+  // allowance drops by one — the hint must follow imagesMax(), not the static
+  // tier cap, or it tells the admin "up to 4" while the input only takes 3.
+  function updatePromoImagesHint() {
+    var hintEl = el('promoImagesHint');
+    if (!hintEl) return;
+    var t = promo.tier;
+    var max = imagesMax();
+    var hint = (max === 1) ? 'Add 1 image.' : ('Add up to ' + max + ' images.');
+    if (t.allowBanner) {
+      hint += promo.banner
+        ? ' Your banner uses one of Discord’s 4 image slots.'
+        : ' Discord shows 4 images per post — the banner counts as one.';
+    } else if (t.imagesMax < 4) {
+      hint += ' Boost your community for more images and a banner.';
+    }
+    hintEl.textContent = hint;
+  }
+
   // Reflect the community's boost tier onto the form — caps, hints, the
   // tier badge, and which fields (banner) are unlocked.
   function applyPromoTier() {
@@ -1776,12 +1796,7 @@
         : ('Up to ' + t.featuresMax + ' features. Boost higher to add more.');
     }
     if (el('promoBannerField')) el('promoBannerField').style.display = t.allowBanner ? 'block' : 'none';
-    if (el('promoImagesHint')) {
-      var imgHint = (t.imagesMax === 1) ? 'Add 1 image.' : ('Add up to ' + t.imagesMax + ' images.');
-      if (t.allowBanner) imgHint += ' Discord shows 4 images per post — the banner counts as one.';
-      else if (t.imagesMax < 4) imgHint += ' Boost your community for more images and a banner.';
-      el('promoImagesHint').textContent = imgHint;
-    }
+    updatePromoImagesHint();
     if (el('promoImagesInput')) {
       if (t.imagesMax > 1) el('promoImagesInput').setAttribute('multiple', 'multiple');
       else el('promoImagesInput').removeAttribute('multiple');
@@ -2041,6 +2056,8 @@
       else { thumb.style.display = 'none'; }
     }
     if (removeBtn) removeBtn.style.display = promo.banner ? 'inline-block' : 'none';
+    // The banner just changed, so the usable gallery count did too.
+    updatePromoImagesHint();
   }
 
   // ---- Collect + validate ------------------------------------------
