@@ -113,10 +113,27 @@ module.exports = function (app, passport, server, nextApp, handle) {
           "[LPS] [level=warn] Discord OAuth failed:",
           err && err.message ? err.message : err
         );
-        return res.redirect("/");
+        // A TokenError ("Invalid code") means Discord's single-use, ~10min
+        // sign-in code expired or was already used. Nothing for the user to
+        // troubleshoot — they just need to start a fresh connect. Show a
+        // descriptive page whose primary action re-initiates the flow.
+        const retryState = req.query.state || "/profile";
+        return res.status(400).render("error", {
+          user: req.user,
+          message:
+            "We couldn't finish connecting your Discord account — the " +
+            "sign-in link expired or was already used. Reconnecting will " +
+            "start a fresh one.",
+          retryHref: "/auth/discord?state=" + encodeURIComponent(retryState),
+          retryLabel: "Reconnect Discord",
+          redirect: req.query.state || null,
+        });
       }
       if (!user) {
-        return res.redirect("/");
+        // No error but no user — the member declined authorization on
+        // Discord's consent screen. That's a deliberate choice, so just
+        // send them back without an alarming error page.
+        return res.redirect(req.query.state || "/");
       }
       req.logIn(user, function (loginErr) {
         if (loginErr) {
