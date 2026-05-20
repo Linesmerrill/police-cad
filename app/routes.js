@@ -218,7 +218,15 @@ module.exports = function (app, passport, server, nextApp, handle) {
       });
     } catch (error) {
       if (renderPendingDeletionIfApplicable(req, res, error)) return;
-      console.error("[LPS] [level=error] /community/:hash error:", error.message);
+      // Surface which upstream call failed — axios attaches the request URL
+      // and the response status, so log both instead of just the message.
+      const failedUrl = error.config && error.config.url;
+      const status = error.response && error.response.status;
+      console.error(
+        "[LPS] [level=error] /community/:hash error:",
+        error.message,
+        failedUrl ? `(${status || "no status"} from ${failedUrl})` : ""
+      );
       return res.status(404).render("error", {
         message: "Community not found or an error occurred.",
         redirect: "/communities",
