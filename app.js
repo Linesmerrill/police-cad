@@ -71,6 +71,11 @@ try {
   app.locals.buildDate = new Date().toISOString();
 }
 
+// Expose the API base URL to every view so partials like account-management.ejs
+// can reference `apiUrl` without each render() having to pass it. Route-level
+// `apiUrl` values still override this.
+app.locals.apiUrl = process.env.POLICE_CAD_API_URL || "";
+
 // Setup session storage.
 app.use(
   session({
