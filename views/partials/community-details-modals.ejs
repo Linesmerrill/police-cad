@@ -1652,8 +1652,18 @@
     var renderCap = 4 - ((promo.tier.allowBanner && promo.banner) ? 1 : 0);
     return Math.min(promo.tier.imagesMax, renderCap);
   }
+  // Escape for safe interpolation into HTML — both element text and quoted
+  // attribute values. Quotes must be escaped too: escPromo output is placed
+  // inside double-quoted attributes (src/href/style/id), so an unescaped " in
+  // user-controlled text (server name, description, etc.) would break out of
+  // the attribute and allow XSS.
   function escPromo(s) {
-    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   window.openPromoteModal = function openPromoteModal() {
