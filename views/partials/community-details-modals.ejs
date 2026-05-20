@@ -930,7 +930,6 @@
         background:#2b2d31; border-radius:6px; border-left:4px solid #5865f2;
         padding:0.85rem 1rem; color:#dbdee1; font-size:0.85rem; max-width:440px;
       }
-      .promo-embed.boosted { border-left-color:#fbbf24; }
       .promo-embed-title { color:#fff; font-weight:700; font-size:1rem; margin:0 0 0.35rem; word-break:break-word; }
       .promo-embed-title a { color:#00a8fc; text-decoration:none; }
       .promo-embed-desc { white-space:pre-wrap; word-break:break-word; margin:0 0 0.6rem; color:#dbdee1; }
@@ -951,6 +950,7 @@
           <i class="fa-brands fa-discord" style="font-size:2.6rem; color:#5865f2;"></i>
           <h3 style="color:#fff; margin:0.4rem 0 0; font-size:1.4rem; font-weight:700;">Promote Your Community</h3>
           <p style="color:#a0aec0; margin:0.35rem 0 0; font-size:0.9rem;">Post a recruitment listing to the Lines Police CAD Discord. One post per community every <span id="promoCooldownLabel">24</span> hours.</p>
+          <div id="promoTierBadge" style="margin-top:0.7rem;"></div>
         </div>
 
         <!-- Cooldown / status banner -->
@@ -1500,30 +1500,34 @@
 (function () {
   var PROMO_API = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
   var PROMO_COMMUNITY_ID = '<%= community._id %>';
+  var PROMO_PRICING_URL = '/community-pricing?c=' + encodeURIComponent('<%= Buffer.from(String(community._id)).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "") %>');
 
-  // Field caps — must mirror the API's sanitizeRpPromotionData limits.
-  var CAPS = {
-    descFree: 600, descBoosted: 3500,
-    featFree: 6, featBoosted: 15,
-    departments: 12,
-    imagesFree: 1, imagesBoosted: 3
+  // Boost-tier allowances are authoritative on the API; this is the fallback
+  // for the free tier (and before the status request resolves). The API's
+  // GET response sends the full tier config, which mirrors rpTiers in
+  // police-cad-api/api/handlers/rp_promotion.go.
+  var FREE_TIER = {
+    key: 'free', label: 'Free', color: '#38bdf8',
+    descMax: 600, featuresMax: 6, imagesMax: 1,
+    allowBanner: false, verified: false, featured: false
   };
 
   var promo = {
-    boosted: false,
+    tier: FREE_TIER,
+    maxDepartments: 12,
     canPostNow: true,
     cooldownHours: 24,
     configured: true,
     depts: [],
     feats: [],
     images: [],   // uploaded image URLs
-    banner: ''    // uploaded banner URL (boosted only)
+    banner: ''    // uploaded banner URL (banner-eligible tiers only)
   };
 
   function el(id) { return document.getElementById(id); }
-  function descMax() { return promo.boosted ? CAPS.descBoosted : CAPS.descFree; }
-  function featMax() { return promo.boosted ? CAPS.featBoosted : CAPS.featFree; }
-  function imagesMax() { return promo.boosted ? CAPS.imagesBoosted : CAPS.imagesFree; }
+  function descMax() { return promo.tier.descMax; }
+  function featMax() { return promo.tier.featuresMax; }
+  function imagesMax() { return promo.tier.imagesMax; }
   function escPromo(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
@@ -1547,7 +1551,8 @@
     fetch(PROMO_API + '/api/v2/community/' + PROMO_COMMUNITY_ID + '/rp-promotion?userId=' + encodeURIComponent((window.dbUser && window.dbUser._id) || ''))
       .then(function (r) { return r.ok ? r.json() : Promise.reject(r); })
       .then(function (data) {
-        promo.boosted = !!data.boosted;
+        promo.tier = data.tier || FREE_TIER;
+        promo.maxDepartments = data.maxDepartments || 12;
         promo.canPostNow = data.canPostNow !== false;
         promo.cooldownHours = data.cooldownHours || 24;
         promo.configured = data.configured !== false;
@@ -1577,28 +1582,66 @@
       });
   }
 
-  // Reflect the community's tier (free vs boosted) onto the form.
+  // Reflect the community's boost tier onto the form — caps, hints, the
+  // tier badge, and which fields (banner) are unlocked.
   function applyPromoTier() {
+    var t = promo.tier;
     var hrs = promo.cooldownHours;
     if (el('promoCooldownLabel')) el('promoCooldownLabel').textContent = hrs;
     Array.prototype.forEach.call(document.querySelectorAll('.promoCooldownInline'), function (n) { n.textContent = hrs; });
-    if (el('promoDescMax')) el('promoDescMax').textContent = descMax();
-    if (el('promoDescription')) el('promoDescription').setAttribute('maxlength', descMax());
+    if (el('promoDescMax')) el('promoDescMax').textContent = t.descMax;
+    if (el('promoDescription')) el('promoDescription').setAttribute('maxlength', t.descMax);
+
     if (el('promoFeatHint')) {
-      el('promoFeatHint').textContent = promo.boosted
-        ? ('Up to ' + CAPS.featBoosted + ' features.')
-        : ('Up to ' + CAPS.featFree + ' features. Boost your community to add more.');
+      el('promoFeatHint').textContent = (t.key === 'elite')
+        ? ('Up to ' + t.featuresMax + ' features.')
+        : ('Up to ' + t.featuresMax + ' features. Boost higher to add more.');
     }
-    if (el('promoBannerField')) el('promoBannerField').style.display = promo.boosted ? 'block' : 'none';
+    if (el('promoBannerField')) el('promoBannerField').style.display = t.allowBanner ? 'block' : 'none';
     if (el('promoImagesHint')) {
-      el('promoImagesHint').textContent = promo.boosted
-        ? ('Add up to ' + CAPS.imagesBoosted + ' images, plus a banner.')
-        : 'Free communities can add 1 image. Boost for up to 3 plus a banner.';
+      el('promoImagesHint').textContent = (t.imagesMax === 1)
+        ? ('Add 1 image.' + (t.allowBanner ? '' : ' Boost your community for a gallery and a banner.'))
+        : ('Add up to ' + t.imagesMax + ' images' + (t.allowBanner ? ', plus a banner.' : '.'));
     }
     if (el('promoImagesInput')) {
-      if (promo.boosted) el('promoImagesInput').setAttribute('multiple', 'multiple');
+      if (t.imagesMax > 1) el('promoImagesInput').setAttribute('multiple', 'multiple');
       else el('promoImagesInput').removeAttribute('multiple');
     }
+
+    renderPromoTierBadge();
+  }
+
+  // The tier badge tells the admin which boost tier their post will use and
+  // what the next tier would unlock.
+  function renderPromoTierBadge() {
+    var badge = el('promoTierBadge');
+    if (!badge) return;
+    var t = promo.tier;
+    var marker = t.featured ? '⭐ ' : (t.verified ? '✅ ' : '');
+    var perks = [];
+    if (t.verified) perks.push('verified badge');
+    if (t.allowBanner) perks.push('banner image');
+    if (t.imagesMax > 1) perks.push(t.imagesMax + '-image gallery');
+    if (t.featured) perks.push('featured marker');
+    var perkText = perks.length ? (' · ' + perks.join(' · ')) : '';
+
+    var nextHint = {
+      free: 'Boost your community to unlock a richer post, images and a verified badge.',
+      basic: 'Upgrade to Standard for a verified badge and a longer description.',
+      standard: 'Upgrade to Premium for a banner image and a 3-image gallery.',
+      premium: 'Upgrade to Elite for the featured marker and a 5-image gallery.',
+      elite: ''
+    }[t.key] || '';
+
+    badge.innerHTML =
+      '<span style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.3rem 0.75rem; border-radius:999px; '
+      + 'font-size:0.78rem; font-weight:700; color:' + escPromo(t.color) + '; '
+      + 'background:' + escPromo(t.color) + '1f; border:1px solid ' + escPromo(t.color) + '66;">'
+      + marker + escPromo(t.label) + ' tier' + escPromo(perkText) + '</span>'
+      + (nextHint
+        ? '<a href="' + escPromo(PROMO_PRICING_URL) + '" style="display:block; margin-top:0.4rem; color:#8b93a7; font-size:0.74rem; text-decoration:none;">'
+          + escPromo(nextHint) + ' <span style="color:#5865f2;">View boosts →</span></a>'
+        : '');
   }
 
   function prefillPromoForm(d) {
@@ -1619,10 +1662,10 @@
     if (el('promoDescription')) el('promoDescription').value = d.description || '';
     if (el('promoRequirements')) el('promoRequirements').value = d.requirements || '';
     if (el('promoInvite')) el('promoInvite').value = d.inviteUrl || '';
-    promo.depts = Array.isArray(d.departments) ? d.departments.slice(0, CAPS.departments) : [];
+    promo.depts = Array.isArray(d.departments) ? d.departments.slice(0, promo.maxDepartments) : [];
     promo.feats = Array.isArray(d.features) ? d.features.slice(0, featMax()) : [];
     promo.images = Array.isArray(d.images) ? d.images.slice(0, imagesMax()) : [];
-    promo.banner = (promo.boosted && d.bannerImage) ? d.bannerImage : '';
+    promo.banner = (promo.tier.allowBanner && d.bannerImage) ? d.bannerImage : '';
     renderPromoTags('dept');
     renderPromoTags('feat');
     renderPromoImages();
@@ -1641,13 +1684,13 @@
   window.addPromoTag = function (kind) {
     var input = el(kind === 'dept' ? 'promoDeptInput' : 'promoFeatInput');
     var arr = kind === 'dept' ? promo.depts : promo.feats;
-    var max = kind === 'dept' ? CAPS.departments : featMax();
+    var max = kind === 'dept' ? promo.maxDepartments : featMax();
     var val = (input.value || '').trim();
     if (!val) return;
     if (arr.length >= max) {
       showToast(kind === 'dept'
         ? ('You can list up to ' + max + ' departments.')
-        : ('You can list up to ' + max + ' features.' + (promo.boosted ? '' : ' Boost to add more.')),
+        : ('You can list up to ' + max + ' features.' + (promo.tier.key === 'elite' ? '' : ' Boost higher to add more.')),
         3500, 'error');
       return;
     }
@@ -1793,7 +1836,7 @@
       features: promo.feats.slice(),
       requirements: (el('promoRequirements').value || '').trim(),
       inviteUrl: (el('promoInvite').value || '').trim(),
-      bannerImage: promo.boosted ? promo.banner : '',
+      bannerImage: promo.tier.allowBanner ? promo.banner : '',
       images: promo.images.slice(0, imagesMax())
     };
   }
@@ -1805,7 +1848,7 @@
     if (!d.description) return 'Add a description.';
     if (d.description.length > descMax()) {
       return 'Description is too long (' + d.description.length + '/' + descMax() + ').'
-        + (promo.boosted ? '' : ' Boost your community for more room.');
+        + (promo.tier.key === 'elite' ? '' : ' Boost your community for more room.');
     }
     if (d.features.length > featMax()) {
       return 'Too many features — limit is ' + featMax() + '.';
@@ -1825,14 +1868,17 @@
 
     var box = el('promoPreview');
     if (!box) return;
-    box.className = 'promo-embed' + (promo.boosted ? ' boosted' : '');
+    box.className = 'promo-embed';
+    box.style.borderLeftColor = promo.tier.color;
 
     var html = '';
+    var marker = promo.tier.featured ? '⭐ ' : (promo.tier.verified ? '✅ ' : '');
     var titleText = d.serverName || 'Your server name';
+    var shownTitle = (d.serverName ? marker : '') + titleText;
     if (d.inviteUrl && /^https:\/\//i.test(d.inviteUrl)) {
-      html += '<p class="promo-embed-title"><a href="' + escPromo(d.inviteUrl) + '" target="_blank" rel="noopener">' + escPromo(titleText) + '</a></p>';
+      html += '<p class="promo-embed-title"><a href="' + escPromo(d.inviteUrl) + '" target="_blank" rel="noopener">' + escPromo(shownTitle) + '</a></p>';
     } else {
-      html += '<p class="promo-embed-title"' + (d.serverName ? '' : ' style="color:#8b93a7;"') + '>' + escPromo(titleText) + '</p>';
+      html += '<p class="promo-embed-title"' + (d.serverName ? '' : ' style="color:#8b93a7;"') + '>' + escPromo(shownTitle) + '</p>';
     }
     html += '<p class="promo-embed-desc"' + (d.description ? '' : ' style="color:#8b93a7;"') + '>'
       + escPromo(d.description || 'Fill out the form to see your promotion preview.') + '</p>';
@@ -1848,12 +1894,15 @@
     if (d.requirements) html += field('📋 Requirements', escPromo(d.requirements));
     if (d.inviteUrl) html += field('💬 Join', escPromo(d.inviteUrl));
 
-    var heroImg = (promo.boosted && d.bannerImage) ? d.bannerImage : (d.images[0] || '');
+    var heroImg = (promo.tier.allowBanner && d.bannerImage) ? d.bannerImage : (d.images[0] || '');
     if (heroImg) html += '<img class="promo-embed-img" src="' + escPromo(heroImg) + '" alt="">';
 
-    html += '<div class="promo-embed-footer">'
-      + (promo.boosted ? '⭐ Boosted community · ' : '')
-      + 'Posted via Lines Police CAD</div>';
+    var footer;
+    if (promo.tier.featured) footer = '⭐ Featured community · ' + promo.tier.label + ' · Posted via Lines Police CAD';
+    else if (promo.tier.verified) footer = '✅ Verified community · ' + promo.tier.label + ' · Posted via Lines Police CAD';
+    else if (promo.tier.key !== 'free') footer = promo.tier.label + ' · Posted via Lines Police CAD';
+    else footer = 'Posted via Lines Police CAD';
+    html += '<div class="promo-embed-footer">' + escPromo(footer) + '</div>';
 
     box.innerHTML = html;
   };
