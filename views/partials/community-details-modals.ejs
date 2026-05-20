@@ -1020,6 +1020,7 @@
           <p style="margin:0; color:#fcd34d; font-size:0.85rem;">
             <i class="fa fa-clock" style="margin-right:0.4rem;"></i>
             <span id="promoCooldownText">This community already promoted recently.</span>
+            <a id="promoCooldownLink" target="_blank" rel="noopener" style="display:none; margin-left:0.5rem; color:#fcd34d; font-weight:700; text-decoration:underline; white-space:nowrap;"><i class="fa-brands fa-discord" style="margin-right:0.3rem;"></i>View the post</a>
           </p>
         </div>
 
@@ -1673,6 +1674,16 @@
   // (X / Cancel) only toggle display, so wire this alongside them.
   function unlockPromoScroll() { document.body.style.overflow = ''; }
 
+  // Point the cooldown banner's "View the post" link at the most recent
+  // promotion, so an admin who can't repost yet can still open the live one.
+  function updatePromoCooldownLink() {
+    var link = el('promoCooldownLink');
+    if (!link) return;
+    var url = (promo.history[0] && promo.history[0].messageLink) || '';
+    if (url) { link.href = url; link.style.display = 'inline'; }
+    else { link.style.display = 'none'; }
+  }
+
   // ---- Tabs ---------------------------------------------------------
   window.switchPromoTab = function (tab) {
     promo.activeTab = tab;
@@ -1723,6 +1734,7 @@
         setPromoPostEnabled(promo.configured && promo.canPostNow);
 
         renderPromoHistory(data.history || []);
+        updatePromoCooldownLink();
         maybeAutofillPromoForm();
         renderPromoPreview();
       })
@@ -2272,6 +2284,12 @@
   window.enterPromoConfirm = function () {
     if (!promo.configured) { showToast('Discord promotion is unavailable right now.', 3000, 'error'); return; }
     if (!promo.canPostNow) { showToast('This community already promoted recently.', 3500, 'error'); return; }
+    // Don't let a post go out while an image is still uploading — it would
+    // post without that image.
+    if (promo.uploadingImages > 0 || promo.uploadingBanner) {
+      showToast('Hold on — your images are still uploading.', 3000, 'error');
+      return;
+    }
     var err = validatePromo(collectPromoData());
     if (err) { showToast(err, 3500, 'error'); return; }
     el('promoFooterDefault').style.display = 'none';
@@ -2313,6 +2331,7 @@
         el('promoCooldownBanner').style.display = 'block';
         el('promoCooldownText').textContent = 'This community already promoted recently. You can post again on '
           + when.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '.';
+        updatePromoCooldownLink();
         showToast('Already promoted recently — try again later.', 3500, 'error');
       } else {
         var msg = (res.body && res.body.response && res.body.response.message)
