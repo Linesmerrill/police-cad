@@ -894,6 +894,304 @@
       </div>
     </div>
 
+    <!-- ============================================================= -->
+    <!-- RP Server Promotion modal — owner/admin posts a structured     -->
+    <!-- recruitment post to the shared LPC Discord rp-servers channel. -->
+    <!-- ============================================================= -->
+    <style>
+      .promo-field { margin-bottom:1.1rem; }
+      .promo-label { display:block; color:#fff; font-weight:600; font-size:0.85rem; margin-bottom:0.4rem; }
+      .promo-hint { color:#8b93a7; font-size:0.72rem; margin-top:0.3rem; }
+      .promo-input, .promo-textarea, .promo-select {
+        width:100%; padding:0.6rem 0.7rem; background:#2d3748; border:1px solid #4a5568;
+        border-radius:8px; color:#fff; font-size:0.9rem; box-sizing:border-box; transition:border-color 0.15s ease;
+      }
+      .promo-input:focus, .promo-textarea:focus, .promo-select:focus { outline:none; border-color:#5865f2; }
+      .promo-textarea { resize:vertical; min-height:88px; }
+      .promo-chk-row { display:flex; flex-wrap:wrap; gap:0.5rem; }
+      .promo-chk {
+        display:flex; align-items:center; gap:0.4rem; padding:0.5rem 0.8rem; background:#2d3748;
+        border:1px solid #4a5568; border-radius:999px; color:#cbd5e1; font-size:0.8rem; cursor:pointer;
+        transition:all 0.15s ease; min-height:38px;
+      }
+      .promo-chk:hover { border-color:#5865f2; }
+      .promo-chk:has(input:checked) { background:#5865f233; border-color:#5865f2; color:#fff; }
+      .promo-chk input { accent-color:#5865f2; }
+      .promo-tag-row { display:flex; gap:0.4rem; }
+      .promo-tags { display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.5rem; }
+      .promo-tag {
+        display:inline-flex; align-items:center; gap:0.4rem; background:#3a3f56; color:#e2e8f0;
+        border-radius:6px; padding:0.3rem 0.55rem; font-size:0.78rem;
+      }
+      .promo-tag button { background:none; border:none; color:#9aa3b8; cursor:pointer; padding:0 0 0 0.1rem; font-size:0.95rem; line-height:1; }
+      .promo-tag button:hover { color:#ef4444; }
+      .promo-add-btn {
+        flex-shrink:0; background:#3a3f56; color:#fff; border:none; border-radius:8px;
+        padding:0 0.95rem; cursor:pointer; font-size:0.9rem; min-height:38px; transition:background 0.15s ease;
+      }
+      .promo-add-btn:hover { background:#4b5168; }
+      /* Discord-style live preview */
+      .promo-embed {
+        background:#2b2d31; border-radius:6px; border-left:4px solid #5865f2;
+        padding:0.85rem 1rem; color:#dbdee1; font-size:0.85rem;
+      }
+      .promo-embed-title { color:#fff; font-weight:700; font-size:1rem; margin:0 0 0.35rem; word-break:break-word; }
+      .promo-embed-title a { color:#00a8fc; text-decoration:none; }
+      .promo-embed-desc { white-space:pre-wrap; word-break:break-word; margin:0 0 0.6rem; color:#dbdee1; }
+      .promo-embed-field { margin:0.5rem 0; }
+      .promo-embed-inline { display:flex; gap:1.6rem; flex-wrap:wrap; }
+      .promo-embed-field.pf-inline { flex:1 1 40%; min-width:110px; }
+      .promo-embed-field .pf-name { color:#fff; font-weight:600; font-size:0.78rem; margin-bottom:0.15rem; }
+      .promo-embed-field .pf-val { color:#c9cdd4; font-size:0.82rem; white-space:pre-wrap; word-break:break-word; }
+      .promo-embed-img { margin-top:0.6rem; border-radius:4px; max-width:100%; max-height:200px; object-fit:cover; }
+      .promo-embed-gallery { display:grid; grid-template-columns:repeat(3, 1fr); gap:4px; margin-top:4px; }
+      .promo-embed-gallery img { width:100%; aspect-ratio:1 / 1; object-fit:cover; border-radius:4px; }
+      .promo-embed-footer { color:#949ba4; font-size:0.7rem; margin-top:0.6rem; }
+      .promo-grid { display:grid; grid-template-columns:1fr; gap:1.5rem; }
+      .promo-thumb { width:54px; height:54px; border-radius:6px; object-fit:cover; border:1px solid #4a5568; }
+      @keyframes promoSpin { to { transform:rotate(360deg); } }
+      .promo-mini-spin {
+        width:13px; height:13px; border:2px solid #5b6172; border-top-color:#5865f2;
+        border-radius:50%; display:inline-block; animation:promoSpin 0.7s linear infinite;
+      }
+      .promo-uploading { color:#cbd5e1; }
+      /* Tabs */
+      .promo-tabs {
+        display:flex; gap:0.3rem; padding:0.3rem; background:#16171d; border:1px solid #2c2f3a;
+        border-radius:12px; margin-bottom:1.4rem;
+      }
+      .promo-tab {
+        flex:1; display:flex; align-items:center; justify-content:center; gap:0.45rem;
+        padding:0.6rem 0.5rem; background:none; border:none; border-radius:9px; cursor:pointer;
+        color:#8b93a7; font-size:0.86rem; font-weight:600; transition:all 0.15s ease; min-height:42px;
+      }
+      .promo-tab:hover { color:#cbd5e1; }
+      .promo-tab.active { background:#5865f2; color:#fff; box-shadow:0 2px 10px rgba(88,101,242,0.35); }
+      .promo-tab-count {
+        font-size:0.7rem; font-weight:700; padding:0.05rem 0.4rem; border-radius:999px;
+        background:rgba(255,255,255,0.16);
+      }
+      /* History */
+      .promo-hist-card {
+        border:1px solid #2c2f3a; border-left-width:4px; border-radius:10px; background:#23252f;
+        margin-bottom:0.7rem; overflow:hidden; transition:border-color 0.15s ease;
+        animation:promoFade 0.35s ease both;
+      }
+      .promo-hist-card:hover { border-color:#5865f2; }
+      .promo-hist-head {
+        display:flex; align-items:center; gap:0.8rem; padding:0.85rem 1rem; cursor:pointer;
+      }
+      .promo-hist-head .ph-name { color:#fff; font-weight:700; font-size:0.92rem; margin:0; word-break:break-word; }
+      .promo-hist-head .ph-meta { color:#8b93a7; font-size:0.74rem; margin:0.15rem 0 0; }
+      .promo-hist-body .ph-posted-by { color:#8b93a7; font-size:0.78rem; margin:0.7rem 0 0; }
+      .promo-hist-body .ph-posted-by strong { color:#cbd5e1; font-weight:600; }
+      .promo-hist-chevron { color:#8b93a7; transition:transform 0.2s ease; flex-shrink:0; }
+      .promo-hist-card.open .promo-hist-chevron { transform:rotate(180deg); }
+      .promo-tier-chip {
+        flex-shrink:0; font-size:0.66rem; font-weight:700; padding:0.18rem 0.5rem; border-radius:999px;
+        text-transform:uppercase; letter-spacing:0.03em;
+      }
+      .promo-hist-body { display:none; padding:0 1rem 1rem; }
+      .promo-hist-card.open .promo-hist-body { display:block; }
+      .promo-empty { text-align:center; padding:2.5rem 1rem; color:#8b93a7; }
+      .promo-empty i { font-size:2.4rem; color:#3a3f56; margin-bottom:0.8rem; }
+      @keyframes promoFade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+      /* Desktop: two columns, preview sticks while the form scrolls */
+      @media (min-width:860px) {
+        .promo-grid { grid-template-columns:1.05fr 0.95fr; align-items:start; }
+        .promo-preview-col { position:sticky; top:0; }
+      }
+      /* Mobile tightening */
+      @media (max-width:560px) {
+        .promo-modal-panel { padding:1.15rem !important; }
+        .promo-footer-row { flex-direction:column-reverse; }
+        .promo-footer-row > button { width:100%; }
+      }
+    </style>
+    <div id="promoteModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(20,21,28,0.78); align-items:center; justify-content:center; overflow-y:auto; padding:1rem; box-sizing:border-box;">
+      <div class="promo-modal-panel" style="background:#1e2028; border-radius:16px; padding:1.75rem; max-width:980px; width:96%; position:relative; border:1px solid #35385a; max-height:92vh; overflow-y:auto;">
+        <button id="promoteModalClose" aria-label="Close" style="position:absolute; top:1.1rem; right:1.1rem; background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+
+        <div style="text-align:center; margin-bottom:1.25rem;">
+          <i class="fa-brands fa-discord" style="font-size:2.6rem; color:#5865f2;"></i>
+          <h3 style="color:#fff; margin:0.4rem 0 0; font-size:1.4rem; font-weight:700;">Promote Your Community</h3>
+          <p style="color:#a0aec0; margin:0.35rem 0 0; font-size:0.9rem;">Post a recruitment listing to the Lines Police CAD Discord. One post per community every <span id="promoCooldownLabel">24</span> hours.</p>
+          <div id="promoTierBadge" style="margin-top:0.7rem;"></div>
+        </div>
+
+        <!-- Cooldown / status banner -->
+        <div id="promoCooldownBanner" style="display:none; background:#3a2d12; border:1px solid #b45309; border-left:4px solid #f59e0b; border-radius:8px; padding:0.8rem 1rem; margin-bottom:1.25rem;">
+          <p style="margin:0; color:#fcd34d; font-size:0.85rem;">
+            <i class="fa fa-clock" style="margin-right:0.4rem;"></i>
+            <span id="promoCooldownText">This community already promoted recently.</span>
+            <a id="promoCooldownLink" target="_blank" rel="noopener" style="display:none; margin-left:0.5rem; color:#fcd34d; font-weight:700; text-decoration:underline; white-space:nowrap;"><i class="fa-brands fa-discord" style="margin-right:0.3rem;"></i>View the post</a>
+          </p>
+        </div>
+
+        <!-- Not-configured banner -->
+        <div id="promoUnconfiguredBanner" style="display:none; background:#3a1d1d; border:1px solid #b91c1c; border-left:4px solid #ef4444; border-radius:8px; padding:0.8rem 1rem; margin-bottom:1.25rem;">
+          <p style="margin:0; color:#fca5a5; font-size:0.85rem;">
+            <i class="fa fa-triangle-exclamation" style="margin-right:0.4rem;"></i>
+            Discord promotion isn't available right now. Please try again later.
+          </p>
+        </div>
+
+        <!-- Tab bar -->
+        <div class="promo-tabs" role="tablist">
+          <button type="button" id="promoTabBtnCreate" class="promo-tab active" role="tab" onclick="switchPromoTab('create')">
+            <i class="fa fa-pen-nib"></i><span class="promo-tab-label">New post</span>
+          </button>
+          <button type="button" id="promoTabBtnHistory" class="promo-tab" role="tab" onclick="switchPromoTab('history')">
+            <i class="fa fa-clock-rotate-left"></i><span class="promo-tab-label">History</span>
+            <span id="promoHistoryCount" class="promo-tab-count" style="display:none;">0</span>
+          </button>
+        </div>
+
+        <!-- ===== TAB: Create ===== -->
+        <div id="promoTabCreate">
+        <div class="promo-grid">
+          <!-- ---- LEFT: structured form ---- -->
+          <div>
+            <div class="promo-field">
+              <label class="promo-label" for="promoServerName">Server name</label>
+              <input type="text" id="promoServerName" class="promo-input" maxlength="100" placeholder="e.g. Georgia State Roleplay Network" oninput="renderPromoPreview()">
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label">Platforms</label>
+              <div class="promo-chk-row" id="promoPlatforms">
+                <% /* Mirror the community-settings platform tags (PlayStation / Xbox / PC) so autofill maps 1:1. */ %>
+                <% var promoPlatformOpts = ['Xbox','PlayStation','PC']; %>
+                <% promoPlatformOpts.forEach(function(p){ %>
+                  <label class="promo-chk"><input type="checkbox" value="<%= p %>" onchange="renderPromoPreview()"> <%= p %></label>
+                <% }); %>
+              </div>
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label" for="promoGame">Game</label>
+              <select id="promoGame" class="promo-select" onchange="onPromoGameChange()">
+                <option value="">Select a game…</option>
+                <option value="GTA RP">GTA RP</option>
+                <option value="Roblox RP">Roblox RP</option>
+                <option value="Red Dead RP">Red Dead RP</option>
+                <option value="__other">Other…</option>
+              </select>
+              <input type="text" id="promoGameOther" class="promo-input" style="display:none; margin-top:0.5rem;" maxlength="60" placeholder="Game name" oninput="renderPromoPreview()">
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label" for="promoDescription">Description</label>
+              <textarea id="promoDescription" class="promo-textarea" placeholder="Describe your community, the vibe, what makes it worth joining…" oninput="renderPromoPreview()"></textarea>
+              <div class="promo-hint"><span id="promoDescCount">0</span> / <span id="promoDescMax">600</span> characters</div>
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label">Departments <span style="color:#8b93a7; font-weight:400;">(optional)</span></label>
+              <div class="promo-tag-row">
+                <input type="text" id="promoDeptInput" class="promo-input" maxlength="120" placeholder="e.g. State Patrol" onkeydown="if(event.key==='Enter'){event.preventDefault();addPromoTag('dept');}">
+                <button type="button" class="promo-add-btn" onclick="addPromoTag('dept')">Add</button>
+              </div>
+              <div class="promo-tags" id="promoDeptList"></div>
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label">Features <span style="color:#8b93a7; font-weight:400;">(optional)</span></label>
+              <div class="promo-tag-row">
+                <input type="text" id="promoFeatInput" class="promo-input" maxlength="120" placeholder="e.g. Custom CAD/MDT" onkeydown="if(event.key==='Enter'){event.preventDefault();addPromoTag('feat');}">
+                <button type="button" class="promo-add-btn" onclick="addPromoTag('feat')">Add</button>
+              </div>
+              <div class="promo-tags" id="promoFeatList"></div>
+              <div class="promo-hint" id="promoFeatHint">Up to 6 features. Boost your community to add more.</div>
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label" for="promoRequirements">Requirements <span style="color:#8b93a7; font-weight:400;">(optional)</span></label>
+              <input type="text" id="promoRequirements" class="promo-input" maxlength="480" placeholder="e.g. Working mic, mature players" oninput="renderPromoPreview()">
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label" for="promoInvite">Discord invite link</label>
+              <input type="url" id="promoInvite" class="promo-input" placeholder="https://discord.gg/…" oninput="renderPromoPreview()">
+              <div class="promo-hint">Must be an https Discord invite link.</div>
+            </div>
+
+            <!-- Boosted-only banner -->
+            <div class="promo-field" id="promoBannerField" style="display:none;">
+              <label class="promo-label">Banner image <span style="color:#fbbf24; font-weight:600;">★ Boost perk</span></label>
+              <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                <img id="promoBannerThumb" class="promo-thumb" style="display:none;" alt="Banner">
+                <span id="promoBannerSpin" class="promo-tag promo-uploading" style="display:none; padding:0.4rem 0.65rem; gap:0.45rem;"><span class="promo-mini-spin"></span>Uploading…</span>
+                <input type="file" id="promoBannerInput" accept="image/*" style="color:#cbd5e1; font-size:0.8rem;">
+                <button type="button" id="promoBannerRemove" class="promo-add-btn" style="display:none; background:#5b3030;" onclick="removePromoBanner()">Remove</button>
+              </div>
+            </div>
+
+            <div class="promo-field">
+              <label class="promo-label">Images</label>
+              <div style="display:flex; align-items:center; gap:0.75rem;">
+                <input type="file" id="promoImagesInput" accept="image/*" multiple style="color:#cbd5e1; font-size:0.8rem;">
+              </div>
+              <div class="promo-tags" id="promoImagesList"></div>
+              <div class="promo-hint" id="promoImagesHint">Free communities can add 1 image. Boost for up to 3 plus a banner.</div>
+            </div>
+          </div>
+
+          <!-- ---- RIGHT: live Discord preview ---- -->
+          <div class="promo-preview-col">
+            <label class="promo-label" style="margin-bottom:0.6rem;">Live preview</label>
+            <p class="promo-hint" style="margin-top:0; margin-bottom:0.8rem;">This is how your post will appear in Discord. Review it before posting.</p>
+            <div id="promoPreview" class="promo-embed">
+              <p class="promo-embed-title" style="color:#8b93a7;">Your server name</p>
+              <p class="promo-embed-desc" style="color:#8b93a7;">Fill out the form to see your promotion preview.</p>
+            </div>
+          </div>
+        </div>
+        </div><!-- /promoTabCreate -->
+
+        <!-- ===== TAB: History ===== -->
+        <div id="promoTabHistory" style="display:none;">
+          <p class="promo-hint" style="margin:0 0 1rem;">Your community's past promotions. Open one to review it or reuse it as a template for a new post.</p>
+          <div id="promoHistoryList"></div>
+          <div id="promoHistoryEmpty" class="promo-empty" style="display:none;">
+            <i class="fa fa-inbox" style="display:block;"></i>
+            <p style="margin:0; font-weight:600; color:#cbd5e1;">No promotions yet</p>
+            <p style="margin:0.3rem 0 0; font-size:0.82rem;">Posts you publish to Discord will show up here.</p>
+          </div>
+        </div>
+
+        <!-- Footer: default state -->
+        <div id="promoFooterDefault" class="promo-footer-row" style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:flex-end; flex-wrap:wrap;">
+          <button id="promoteModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.7rem 1.4rem; font-weight:500; cursor:pointer; font-size:1rem;">Cancel</button>
+          <button id="promoPostBtn" type="button" onclick="enterPromoConfirm()" style="background:#5865f2; color:#fff; border:none; border-radius:8px; padding:0.7rem 1.4rem; font-weight:600; cursor:pointer; font-size:1rem;">
+            <i class="fa-brands fa-discord" style="margin-right:0.45rem;"></i>Post to Discord
+          </button>
+        </div>
+
+        <!-- Footer: confirm state -->
+        <div id="promoFooterConfirm" style="display:none; margin-top:1.5rem; padding:1rem; background:#23252f; border:1px solid #35385a; border-radius:10px;">
+          <p style="margin:0 0 0.85rem; color:#e2e8f0; font-size:0.9rem;">
+            <i class="fa fa-circle-info" style="color:#5865f2; margin-right:0.4rem;"></i>
+            This posts <strong>publicly</strong> to the LPC Discord and locks promotion for this community for <span class="promoCooldownInline">24</span> hours.
+          </p>
+          <div class="promo-footer-row" style="display:flex; gap:1rem; justify-content:flex-end; flex-wrap:wrap;">
+            <button type="button" onclick="exitPromoConfirm()" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.7rem 1.4rem; font-weight:500; cursor:pointer; font-size:1rem;">Back</button>
+            <button id="promoConfirmBtn" type="button" onclick="submitPromotion()" style="background:#3ba55d; color:#fff; border:none; border-radius:8px; padding:0.7rem 1.4rem; font-weight:600; cursor:pointer; font-size:1rem;">
+              <i class="fa fa-paper-plane" style="margin-right:0.45rem;"></i>Post now
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading overlay — covers the whole modal, centered in the viewport -->
+        <div id="promoteModalLoading" style="display:none; position:fixed; inset:0; background:rgba(12,13,18,0.78); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); align-items:center; justify-content:center; z-index:30;">
+          <div style="text-align:center;">
+            <div style="width:48px; height:48px; border:3px solid #3a3f56; border-top-color:#5865f2; border-radius:50%; animation:promoSpin 0.8s linear infinite; margin:0 auto 0.9rem;"></div>
+            <p style="color:#fff; margin:0; font-size:0.95rem;" id="promoteModalLoadingText">Posting to Discord…</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
       // Modal Event Listeners
@@ -940,13 +1238,8 @@
       
       // Fill account details function (same as community dashboard)
       // Modal open functions
-      function openPromoteModal() {
-        document.getElementById('promoteModal').style.display = 'flex';
-      }
+      // openPromoteModal is defined in the RP promotion script block below.
 
-
-             
-      
       function openInviteModal() {
         document.getElementById('inviteModal').style.display = 'flex';
       }
@@ -1295,10 +1588,815 @@
     </script>
     <script>
     // Modal handlers for community actions
-function openPromoteModal() {
-  // TODO: Implement promote modal
-  alert('Promote modal will be implemented next');
-}
+// ===================================================================
+// RP Server Promotion — structured Discord recruitment post.
+// ===================================================================
+(function () {
+  var PROMO_API = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+  var PROMO_COMMUNITY_ID = '<%= community._id %>';
+  var PROMO_PRICING_URL = '/community-pricing?c=' + encodeURIComponent('<%= Buffer.from(String(community._id)).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "") %>');
+
+  // Boost-tier allowances are authoritative on the API; this is the fallback
+  // for the free tier (and before the status request resolves). The API's
+  // GET response sends the full tier config, which mirrors rpTiers in
+  // police-cad-api/api/handlers/rp_promotion.go.
+  var FREE_TIER = {
+    key: 'free', label: 'Free', color: '#38bdf8',
+    descMax: 600, featuresMax: 6, imagesMax: 1,
+    allowBanner: false, verified: false, featured: false
+  };
+
+  // Tier display metadata for rendering history cards, whose stored tier may
+  // differ from the community's current tier.
+  var TIER_META = {
+    free:     { label: 'Free',     color: '#38bdf8' },
+    basic:    { label: 'Basic',    color: '#3b82f6' },
+    standard: { label: 'Standard', color: '#10b981' },
+    premium:  { label: 'Premium',  color: '#667eea' },
+    elite:    { label: 'Elite',    color: '#fbbf24' }
+  };
+
+  // Defaults pulled from the community's existing settings — used to
+  // pre-fill a fresh promotion so admins don't retype what we already know.
+  var PROMO_AUTOFILL = <%- JSON.stringify({
+    serverName: (community.community && community.community.name) || '',
+    description: (community.community && (community.community.promotionalDescription || community.community.description)) || '',
+    departments: ((community.community && community.community.departments) || [])
+      .map(function (d) { return d && d.name; }).filter(Boolean),
+    tags: (community.community && community.community.tags) || []
+  }) %>;
+
+  var promo = {
+    tier: FREE_TIER,
+    maxDepartments: 12,
+    canPostNow: true,
+    cooldownHours: 24,
+    configured: true,
+    history: [],
+    activeTab: 'create',
+    autofilled: false,    // true once a fresh form has been seeded from community settings
+    autofillData: null,   // fresh-from-DB defaults returned by the status request
+    userTouched: false,   // true once the admin actually edits the form (vs autofilled values)
+    uploadingImages: 0,   // in-flight image uploads, shown as inline spinners
+    uploadingBanner: false,
+    depts: [],
+    feats: [],
+    images: [],   // uploaded image URLs
+    banner: ''    // uploaded banner URL (banner-eligible tiers only)
+  };
+
+  function el(id) { return document.getElementById(id); }
+  function descMax() { return promo.tier.descMax; }
+  function featMax() { return promo.tier.featuresMax; }
+  // Discord renders at most 4 images per post and the banner is one of them,
+  // so the usable gallery count drops by one once a banner is set.
+  function imagesMax() {
+    var renderCap = 4 - ((promo.tier.allowBanner && promo.banner) ? 1 : 0);
+    return Math.min(promo.tier.imagesMax, renderCap);
+  }
+  // Escape for safe interpolation into HTML — both element text and quoted
+  // attribute values. Quotes must be escaped too: escPromo output is placed
+  // inside double-quoted attributes (src/href/style/id), so an unescaped " in
+  // user-controlled text (server name, description, etc.) would break out of
+  // the attribute and allow XSS.
+  function escPromo(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  window.openPromoteModal = function openPromoteModal() {
+    var modal = el('promoteModal');
+    if (!modal) return;
+    exitPromoConfirm();
+    switchPromoTab('create');
+    promo.autofilled = false; // re-evaluate autofill against the form's current state
+    // If the admin never edited the form, drop the stale autofilled values so
+    // this open re-seeds from current community settings. A real draft stays.
+    if (!promo.userTouched) clearPromoForm();
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // lock the page behind the modal
+    var panel = modal.querySelector('.promo-modal-panel');
+    if (panel) panel.scrollTop = 0;
+    loadPromoStatus();
+  };
+
+  // Restore page scroll when the modal closes. The generic close handlers
+  // (X / Cancel) only toggle display, so wire this alongside them.
+  function unlockPromoScroll() { document.body.style.overflow = ''; }
+
+  // Point the cooldown banner's "View the post" link at the most recent
+  // promotion, so an admin who can't repost yet can still open the live one.
+  function updatePromoCooldownLink() {
+    var link = el('promoCooldownLink');
+    if (!link) return;
+    var url = (promo.history[0] && promo.history[0].messageLink) || '';
+    if (url) { link.href = url; link.style.display = 'inline'; }
+    else { link.style.display = 'none'; }
+  }
+
+  // ---- Tabs ---------------------------------------------------------
+  window.switchPromoTab = function (tab) {
+    promo.activeTab = tab;
+    var isCreate = tab === 'create';
+    if (el('promoTabCreate')) el('promoTabCreate').style.display = isCreate ? 'block' : 'none';
+    if (el('promoTabHistory')) el('promoTabHistory').style.display = isCreate ? 'none' : 'block';
+    if (el('promoTabBtnCreate')) el('promoTabBtnCreate').classList.toggle('active', isCreate);
+    if (el('promoTabBtnHistory')) el('promoTabBtnHistory').classList.toggle('active', !isCreate);
+    // The post/confirm footer belongs to the Create tab only.
+    if (!isCreate) exitPromoConfirm();
+    if (el('promoFooterDefault')) el('promoFooterDefault').style.display = isCreate ? 'flex' : 'none';
+  };
+
+  function closePromoteModal() {
+    var modal = el('promoteModal');
+    if (modal) modal.style.display = 'none';
+    exitPromoConfirm();
+    unlockPromoScroll();
+  }
+
+  // ---- Load posting status + last post from the API -----------------
+  function loadPromoStatus() {
+    fetch(PROMO_API + '/api/v2/community/' + PROMO_COMMUNITY_ID + '/rp-promotion?userId=' + encodeURIComponent((window.dbUser && window.dbUser._id) || ''))
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r); })
+      .then(function (data) {
+        promo.tier = data.tier || FREE_TIER;
+        promo.maxDepartments = data.maxDepartments || 12;
+        promo.canPostNow = data.canPostNow !== false;
+        promo.cooldownHours = data.cooldownHours || 24;
+        promo.configured = data.configured !== false;
+        promo.autofillData = data.autofill || null;
+        applyPromoTier();
+
+        // Cooldown / configuration gating.
+        var unconfigured = el('promoUnconfiguredBanner');
+        var cdBanner = el('promoCooldownBanner');
+        if (unconfigured) unconfigured.style.display = promo.configured ? 'none' : 'block';
+        if (cdBanner) cdBanner.style.display = (promo.configured && !promo.canPostNow) ? 'block' : 'none';
+        if (!promo.canPostNow && data.nextAvailableAt) {
+          var when = new Date(data.nextAvailableAt);
+          var txt = el('promoCooldownText');
+          if (txt && !isNaN(when.getTime())) {
+            txt.textContent = 'This community already promoted recently. You can post again on '
+              + when.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+              + ' at ' + when.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + '.';
+          }
+        }
+        setPromoPostEnabled(promo.configured && promo.canPostNow);
+
+        renderPromoHistory(data.history || []);
+        updatePromoCooldownLink();
+        maybeAutofillPromoForm();
+        renderPromoPreview();
+      })
+      .catch(function () {
+        // The status request failed, but the form is plain HTML and the
+        // autofill source is inlined (not fetched) — seed it anyway so the
+        // modal is still useful, then surface the error.
+        maybeAutofillPromoForm();
+        renderPromoPreview();
+        showToast('Could not load promotion status. Please try again.', 3000, 'error');
+      });
+  }
+
+  // Refresh the images hint to reflect the *currently usable* gallery count.
+  // Once a banner is uploaded it claims one of Discord's 4 image slots, so the
+  // allowance drops by one — the hint must follow imagesMax(), not the static
+  // tier cap, or it tells the admin "up to 4" while the input only takes 3.
+  function updatePromoImagesHint() {
+    var hintEl = el('promoImagesHint');
+    if (!hintEl) return;
+    var t = promo.tier;
+    var max = imagesMax();
+    var hint = (max === 1) ? 'Add 1 image.' : ('Add up to ' + max + ' images.');
+    if (t.allowBanner) {
+      hint += promo.banner
+        ? ' Your banner uses one of Discord’s 4 image slots.'
+        : ' Discord shows 4 images per post — the banner counts as one.';
+    } else if (t.imagesMax < 4) {
+      hint += ' Boost your community for more images and a banner.';
+    }
+    hintEl.textContent = hint;
+  }
+
+  // Reflect the community's boost tier onto the form — caps, hints, the
+  // tier badge, and which fields (banner) are unlocked.
+  function applyPromoTier() {
+    var t = promo.tier;
+    var hrs = promo.cooldownHours;
+    if (el('promoCooldownLabel')) el('promoCooldownLabel').textContent = hrs;
+    Array.prototype.forEach.call(document.querySelectorAll('.promoCooldownInline'), function (n) { n.textContent = hrs; });
+    if (el('promoDescMax')) el('promoDescMax').textContent = t.descMax;
+    if (el('promoDescription')) el('promoDescription').setAttribute('maxlength', t.descMax);
+
+    if (el('promoFeatHint')) {
+      el('promoFeatHint').textContent = (t.key === 'elite')
+        ? ('Up to ' + t.featuresMax + ' features.')
+        : ('Up to ' + t.featuresMax + ' features. Boost higher to add more.');
+    }
+    if (el('promoBannerField')) el('promoBannerField').style.display = t.allowBanner ? 'block' : 'none';
+    updatePromoImagesHint();
+    if (el('promoImagesInput')) {
+      if (t.imagesMax > 1) el('promoImagesInput').setAttribute('multiple', 'multiple');
+      else el('promoImagesInput').removeAttribute('multiple');
+    }
+
+    renderPromoTierBadge();
+  }
+
+  // The tier badge tells the admin which boost tier their post will use and
+  // what the next tier would unlock.
+  function renderPromoTierBadge() {
+    var badge = el('promoTierBadge');
+    if (!badge) return;
+    var t = promo.tier;
+    var marker = t.featured ? '⭐ ' : (t.verified ? '✅ ' : '');
+    var perks = [];
+    if (t.verified) perks.push('verified badge');
+    if (t.allowBanner) perks.push('banner image');
+    if (t.imagesMax > 1) perks.push(t.imagesMax + '-image gallery');
+    if (t.featured) perks.push('featured marker');
+    var perkText = perks.length ? (' · ' + perks.join(' · ')) : '';
+
+    var nextHint = {
+      free: 'Boost your community to unlock a richer post, images and a verified badge.',
+      basic: 'Upgrade to Standard for a verified badge and a longer description.',
+      standard: 'Upgrade to Premium for a banner image and a 3-image gallery.',
+      premium: 'Upgrade to Elite for the featured marker and a 5-image gallery.',
+      elite: ''
+    }[t.key] || '';
+
+    badge.innerHTML =
+      '<span style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.3rem 0.75rem; border-radius:999px; '
+      + 'font-size:0.78rem; font-weight:700; color:' + escPromo(t.color) + '; '
+      + 'background:' + escPromo(t.color) + '1f; border:1px solid ' + escPromo(t.color) + '66;">'
+      + marker + escPromo(t.label) + ' tier' + escPromo(perkText) + '</span>'
+      + (nextHint
+        ? '<a href="' + escPromo(PROMO_PRICING_URL) + '" style="display:block; margin-top:0.4rem; color:#8b93a7; font-size:0.74rem; text-decoration:none;">'
+          + escPromo(nextHint) + ' <span style="color:#5865f2;">View boosts →</span></a>'
+        : '');
+  }
+
+  function prefillPromoForm(d) {
+    if (el('promoServerName')) el('promoServerName').value = d.serverName || '';
+    Array.prototype.forEach.call(document.querySelectorAll('#promoPlatforms input'), function (cb) {
+      cb.checked = Array.isArray(d.consoles) && d.consoles.indexOf(cb.value) !== -1;
+    });
+    var gameSel = el('promoGame');
+    var known = ['GTA RP', 'Roblox RP', 'Red Dead RP'];
+    if (d.game && known.indexOf(d.game) !== -1) {
+      gameSel.value = d.game;
+      el('promoGameOther').style.display = 'none';
+    } else if (d.game) {
+      gameSel.value = '__other';
+      el('promoGameOther').style.display = 'block';
+      el('promoGameOther').value = d.game;
+    }
+    if (el('promoDescription')) el('promoDescription').value = d.description || '';
+    if (el('promoRequirements')) el('promoRequirements').value = d.requirements || '';
+    if (el('promoInvite')) el('promoInvite').value = d.inviteUrl || '';
+    promo.depts = Array.isArray(d.departments) ? d.departments.slice(0, promo.maxDepartments) : [];
+    promo.feats = Array.isArray(d.features) ? d.features.slice(0, featMax()) : [];
+    promo.images = Array.isArray(d.images) ? d.images.slice(0, imagesMax()) : [];
+    promo.banner = (promo.tier.allowBanner && d.bannerImage) ? d.bannerImage : '';
+    renderPromoTags('dept');
+    renderPromoTags('feat');
+    renderPromoImages();
+    renderPromoBanner();
+  }
+
+  function setPromoPostEnabled(enabled) {
+    var btn = el('promoPostBtn');
+    if (!btn) return;
+    btn.disabled = !enabled;
+    btn.style.opacity = enabled ? '1' : '0.5';
+    btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+  }
+
+  // ---- Tag inputs (departments / features) --------------------------
+  window.addPromoTag = function (kind) {
+    var input = el(kind === 'dept' ? 'promoDeptInput' : 'promoFeatInput');
+    var arr = kind === 'dept' ? promo.depts : promo.feats;
+    var max = kind === 'dept' ? promo.maxDepartments : featMax();
+    var val = (input.value || '').trim();
+    if (!val) return;
+    if (arr.length >= max) {
+      showToast(kind === 'dept'
+        ? ('You can list up to ' + max + ' departments.')
+        : ('You can list up to ' + max + ' features.' + (promo.tier.key === 'elite' ? '' : ' Boost higher to add more.')),
+        3500, 'error');
+      return;
+    }
+    arr.push(val.slice(0, 120));
+    input.value = '';
+    renderPromoTags(kind);
+    renderPromoPreview();
+  };
+
+  window.removePromoTag = function (kind, idx) {
+    var arr = kind === 'dept' ? promo.depts : promo.feats;
+    arr.splice(idx, 1);
+    renderPromoTags(kind);
+    renderPromoPreview();
+  };
+
+  function renderPromoTags(kind) {
+    var arr = kind === 'dept' ? promo.depts : promo.feats;
+    var list = el(kind === 'dept' ? 'promoDeptList' : 'promoFeatList');
+    if (!list) return;
+    list.innerHTML = arr.map(function (t, i) {
+      return '<span class="promo-tag">' + escPromo(t) +
+        '<button type="button" onclick="removePromoTag(\'' + kind + '\',' + i + ')">&times;</button></span>';
+    }).join('');
+  }
+
+  window.onPromoGameChange = function () {
+    var sel = el('promoGame');
+    var other = el('promoGameOther');
+    other.style.display = sel.value === '__other' ? 'block' : 'none';
+    renderPromoPreview();
+  };
+
+  // ---- Image uploads ------------------------------------------------
+  function validateImageFile(file) {
+    if (!file.type || file.type.indexOf('image/') !== 0) {
+      showToast('Please select an image file.', 3000, 'error');
+      return false;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Each image must be under 5MB.', 3000, 'error');
+      return false;
+    }
+    return true;
+  }
+
+  function setPromoBusy(busy, text) {
+    var overlay = el('promoteModalLoading');
+    if (overlay) {
+      overlay.style.display = busy ? 'flex' : 'none';
+      if (text) el('promoteModalLoadingText').textContent = text;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    // Mark the form "touched" on any real user edit. Programmatic value/checked
+    // changes (autofill, templates) don't fire input/change, so they're ignored
+    // here — which is exactly what we want: autofilled values aren't a draft.
+    var createTab = el('promoTabCreate');
+    if (createTab) {
+      ['input', 'change'].forEach(function (ev) {
+        createTab.addEventListener(ev, function () { promo.userTouched = true; });
+      });
+    }
+
+    // Restore background scroll whenever the modal is dismissed.
+    ['promoteModalClose', 'promoteModalCancel'].forEach(function (id) {
+      var btn = el(id);
+      if (btn) btn.addEventListener('click', unlockPromoScroll);
+    });
+
+    var imagesInput = el('promoImagesInput');
+    if (imagesInput) {
+      imagesInput.addEventListener('change', function (e) {
+        var files = Array.prototype.slice.call(e.target.files || []);
+        e.target.value = '';
+        var room = imagesMax() - promo.images.length;
+        if (room <= 0) {
+          showToast('You\'ve reached the image limit (' + imagesMax() + ').', 3000, 'error');
+          return;
+        }
+        files = files.slice(0, room).filter(validateImageFile);
+        if (!files.length) return;
+        // Inline spinner chips in the image list — no full-modal overlay for
+        // a quick upload.
+        promo.uploadingImages += files.length;
+        renderPromoImages();
+        Promise.all(files.map(function (f) {
+          return uploadToCloudinary(f, 'community-promotions', '');
+        })).then(function (urls) {
+          urls.forEach(function (u) { if (u) promo.images.push(u); });
+          renderPromoPreview();
+        }).catch(function () {
+          showToast('Image upload failed. Please try again.', 3000, 'error');
+        }).then(function () {
+          promo.uploadingImages = Math.max(0, promo.uploadingImages - files.length);
+          renderPromoImages();
+        });
+      });
+    }
+
+    var bannerInput = el('promoBannerInput');
+    if (bannerInput) {
+      bannerInput.addEventListener('change', function (e) {
+        var file = (e.target.files || [])[0];
+        e.target.value = '';
+        if (!file || !validateImageFile(file)) return;
+        promo.uploadingBanner = true;
+        renderPromoBanner();
+        uploadToCloudinary(file, 'community-promotions', '').then(function (url) {
+          promo.banner = url || '';
+          // The banner now claims one of Discord's 4 image slots — drop any
+          // gallery images that would no longer render.
+          if (promo.images.length > imagesMax()) {
+            promo.images = promo.images.slice(0, imagesMax());
+            renderPromoImages();
+          }
+          renderPromoPreview();
+        }).catch(function () {
+          showToast('Banner upload failed. Please try again.', 3000, 'error');
+        }).then(function () {
+          promo.uploadingBanner = false;
+          renderPromoBanner();
+        });
+      });
+    }
+  });
+
+  window.removePromoImage = function (idx) {
+    promo.images.splice(idx, 1);
+    renderPromoImages();
+    renderPromoPreview();
+  };
+
+  function renderPromoImages() {
+    var list = el('promoImagesList');
+    if (!list) return;
+    var html = promo.images.map(function (url, i) {
+      return '<span class="promo-tag" style="padding:0.2rem 0.35rem;">' +
+        '<img src="' + escPromo(url) + '" class="promo-thumb" style="width:32px;height:32px;" alt="">' +
+        '<button type="button" onclick="removePromoImage(' + i + ')">&times;</button></span>';
+    }).join('');
+    for (var j = 0; j < promo.uploadingImages; j++) {
+      html += '<span class="promo-tag promo-uploading" style="padding:0.4rem 0.65rem; gap:0.45rem;">'
+        + '<span class="promo-mini-spin"></span>Uploading…</span>';
+    }
+    list.innerHTML = html;
+  }
+
+  window.removePromoBanner = function () {
+    promo.banner = '';
+    renderPromoBanner();
+    renderPromoPreview();
+  };
+
+  function renderPromoBanner() {
+    var thumb = el('promoBannerThumb');
+    var removeBtn = el('promoBannerRemove');
+    var spin = el('promoBannerSpin');
+    if (promo.uploadingBanner) {
+      if (spin) spin.style.display = 'inline-flex';
+      if (thumb) thumb.style.display = 'none';
+      if (removeBtn) removeBtn.style.display = 'none';
+      return;
+    }
+    if (spin) spin.style.display = 'none';
+    if (thumb) {
+      if (promo.banner) { thumb.src = promo.banner; thumb.style.display = 'block'; }
+      else { thumb.style.display = 'none'; }
+    }
+    if (removeBtn) removeBtn.style.display = promo.banner ? 'inline-block' : 'none';
+    // The banner just changed, so the usable gallery count did too.
+    updatePromoImagesHint();
+  }
+
+  // ---- Collect + validate ------------------------------------------
+  function collectPromoData() {
+    var gameSel = el('promoGame');
+    var game = gameSel.value === '__other' ? (el('promoGameOther').value || '').trim() : gameSel.value;
+    var consoles = Array.prototype.slice.call(document.querySelectorAll('#promoPlatforms input:checked'))
+      .map(function (cb) { return cb.value; });
+    return {
+      serverName: (el('promoServerName').value || '').trim(),
+      consoles: consoles,
+      game: game,
+      description: (el('promoDescription').value || '').trim(),
+      departments: promo.depts.slice(),
+      features: promo.feats.slice(),
+      requirements: (el('promoRequirements').value || '').trim(),
+      inviteUrl: (el('promoInvite').value || '').trim(),
+      bannerImage: promo.tier.allowBanner ? promo.banner : '',
+      images: promo.images.slice(0, imagesMax())
+    };
+  }
+
+  function validatePromo(d) {
+    if (!d.serverName) return 'Add a server name.';
+    if (!d.consoles.length) return 'Select at least one platform.';
+    if (!d.game) return 'Choose a game.';
+    if (!d.description) return 'Add a description.';
+    if (d.description.length > descMax()) {
+      return 'Description is too long (' + d.description.length + '/' + descMax() + ').'
+        + (promo.tier.key === 'elite' ? '' : ' Boost your community for more room.');
+    }
+    if (d.features.length > featMax()) {
+      return 'Too many features — limit is ' + featMax() + '.';
+    }
+    var url = d.inviteUrl.toLowerCase();
+    if (url.indexOf('https://') !== 0 || url.indexOf('discord') === -1) {
+      return 'Enter a valid https Discord invite link.';
+    }
+    return null;
+  }
+
+  // ---- Live preview -------------------------------------------------
+  // Build the Discord-style embed HTML for a promotion data object. Shared by
+  // the live form preview and the read-only history cards.
+  function buildPromoEmbedHTML(d, tier) {
+    d = d || {};
+    var html = '';
+    var marker = tier.featured ? '⭐ ' : (tier.verified ? '✅ ' : '');
+    var hasName = !!d.serverName;
+    var shownTitle = (hasName ? marker : '') + (d.serverName || 'Your server name');
+    if (d.inviteUrl && /^https:\/\//i.test(d.inviteUrl)) {
+      html += '<p class="promo-embed-title"><a href="' + escPromo(d.inviteUrl) + '" target="_blank" rel="noopener">' + escPromo(shownTitle) + '</a></p>';
+    } else {
+      html += '<p class="promo-embed-title"' + (hasName ? '' : ' style="color:#8b93a7;"') + '>' + escPromo(shownTitle) + '</p>';
+    }
+    html += '<p class="promo-embed-desc"' + (d.description ? '' : ' style="color:#8b93a7;"') + '>'
+      + escPromo(d.description || 'Fill out the form to see your promotion preview.') + '</p>';
+
+    function field(name, val, inline) {
+      return '<div class="promo-embed-field' + (inline ? ' pf-inline' : '') + '"><div class="pf-name">' + name +
+        '</div><div class="pf-val">' + val + '</div></div>';
+    }
+    var consoles = d.consoles || [], departments = d.departments || [], features = d.features || [], images = d.images || [];
+    // Platform + Game are inline fields in the Discord embed — render them
+    // side by side so the preview matches the real post.
+    var inlineRow = '';
+    if (consoles.length) inlineRow += field('🎮 Platform', escPromo(consoles.join(' · ')), true);
+    if (d.game) inlineRow += field('🕹️ Game', escPromo(d.game), true);
+    if (inlineRow) html += '<div class="promo-embed-inline">' + inlineRow + '</div>';
+    if (departments.length) html += field('🚓 Departments', '• ' + departments.map(escPromo).join('<br>• '));
+    if (features.length) html += field('🌟 What We Offer', '• ' + features.map(escPromo).join('<br>• '));
+    if (d.requirements) html += field('📋 Requirements', escPromo(d.requirements));
+    if (d.inviteUrl) html += field('💬 Join', escPromo(d.inviteUrl));
+
+    // Mirror the real Discord post: the banner (or first image) is the hero,
+    // and any remaining images form a gallery grid below it. Discord renders
+    // at most 4 images per post, banner included.
+    var bannerUsed = tier.allowBanner !== false && !!d.bannerImage;
+    var heroImg = bannerUsed ? d.bannerImage : (images[0] || '');
+    var gallery = (bannerUsed ? images.slice(0) : images.slice(1)).filter(Boolean);
+    if (heroImg) {
+      gallery = gallery.slice(0, 4 - 1); // hero takes one of Discord's 4 slots
+      html += '<img class="promo-embed-img" src="' + escPromo(heroImg) + '" alt="">';
+      if (gallery.length) {
+        html += '<div class="promo-embed-gallery">'
+          + gallery.map(function (url) {
+              return '<img src="' + escPromo(url) + '" alt="">';
+            }).join('')
+          + '</div>';
+      }
+    }
+
+    var footer;
+    if (tier.featured) footer = '⭐ Featured community · ' + tier.label + ' · Posted via Lines Police CAD';
+    else if (tier.verified) footer = '✅ Verified community · ' + tier.label + ' · Posted via Lines Police CAD';
+    else if (tier.key && tier.key !== 'free') footer = tier.label + ' · Posted via Lines Police CAD';
+    else footer = 'Posted via Lines Police CAD';
+    html += '<div class="promo-embed-footer">' + escPromo(footer) + '</div>';
+    return html;
+  }
+
+  window.renderPromoPreview = function () {
+    var d = collectPromoData();
+    var cnt = el('promoDescCount');
+    if (cnt) cnt.textContent = d.description.length;
+    var box = el('promoPreview');
+    if (!box) return;
+    box.className = 'promo-embed';
+    box.style.borderLeftColor = promo.tier.color;
+    box.innerHTML = buildPromoEmbedHTML(d, promo.tier);
+  };
+
+  // ---- Autofill from the community's existing settings --------------
+  // Seed a fresh form once per modal session, while it is still pristine.
+  function maybeAutofillPromoForm() {
+    if (!promo.autofilled && promoFormIsPristine()) autofillPromoForm();
+  }
+
+  function promoFormIsPristine() {
+    return !(el('promoServerName') && el('promoServerName').value.trim())
+      && !(el('promoDescription') && el('promoDescription').value.trim())
+      && promo.depts.length === 0
+      && promo.feats.length === 0
+      && !document.querySelector('#promoPlatforms input:checked');
+  }
+
+  function autofillPromoForm() {
+    promo.autofilled = true;
+    // promo.autofillData is fresh from the API (current DB state); fall back
+    // to the page-rendered PROMO_AUTOFILL if the status request failed.
+    var a = promo.autofillData || PROMO_AUTOFILL || {};
+    if (a.serverName && el('promoServerName') && !el('promoServerName').value.trim()) {
+      el('promoServerName').value = String(a.serverName).slice(0, 100);
+    }
+    if (a.description && el('promoDescription') && !el('promoDescription').value.trim()) {
+      el('promoDescription').value = String(a.description).slice(0, descMax());
+    }
+    if (Array.isArray(a.departments) && promo.depts.length === 0) {
+      promo.depts = a.departments.slice(0, promo.maxDepartments).map(function (s) { return String(s).slice(0, 120); });
+      renderPromoTags('dept');
+    }
+    // The promotion platforms mirror the community-settings platform tags
+    // (PlayStation / Xbox / PC) — a direct case-insensitive match. The API
+    // sends `platforms`; the inlined fallback uses `tags`.
+    var tags = a.platforms || a.tags
+      || (Array.isArray(window.selectedPlatforms) ? window.selectedPlatforms : []);
+    if (Array.isArray(tags) && tags.length && !document.querySelector('#promoPlatforms input:checked')) {
+      var tagSet = {};
+      tags.forEach(function (t) { tagSet[String(t).toLowerCase()] = true; });
+      Array.prototype.forEach.call(document.querySelectorAll('#promoPlatforms input'), function (cb) {
+        if (tagSet[cb.value.toLowerCase()]) cb.checked = true;
+      });
+    }
+  }
+
+  // Reset the form to empty so the next autofill re-seeds it from current
+  // settings. Called on reopen when the admin hasn't edited anything.
+  function clearPromoForm() {
+    ['promoServerName', 'promoDescription', 'promoRequirements', 'promoInvite', 'promoGameOther'].forEach(function (id) {
+      if (el(id)) el(id).value = '';
+    });
+    if (el('promoGame')) el('promoGame').value = '';
+    if (el('promoGameOther')) el('promoGameOther').style.display = 'none';
+    Array.prototype.forEach.call(document.querySelectorAll('#promoPlatforms input'), function (cb) { cb.checked = false; });
+    promo.depts = [];
+    promo.feats = [];
+    promo.images = [];
+    promo.banner = '';
+    renderPromoTags('dept');
+    renderPromoTags('feat');
+    renderPromoImages();
+    renderPromoBanner();
+  }
+
+  // ---- History panel ------------------------------------------------
+  // History posts store the tier they were posted at, which may differ from
+  // the community's current tier — resolve display metadata from the key.
+  function historyTierMeta(tierKey) {
+    var m = TIER_META[tierKey] || TIER_META.free;
+    return {
+      key: tierKey || 'free',
+      label: m.label,
+      color: m.color,
+      verified: tierKey === 'standard' || tierKey === 'premium' || tierKey === 'elite',
+      featured: tierKey === 'elite',
+      allowBanner: true
+    };
+  }
+
+  function formatPromoDate(iso) {
+    var dt = new Date(iso);
+    if (isNaN(dt.getTime())) return '';
+    return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+      + ' · ' + dt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  }
+
+  function renderPromoHistory(history) {
+    promo.history = Array.isArray(history) ? history : [];
+    var countEl = el('promoHistoryCount');
+    if (countEl) {
+      countEl.textContent = promo.history.length;
+      countEl.style.display = promo.history.length ? 'inline-block' : 'none';
+    }
+    var list = el('promoHistoryList');
+    var empty = el('promoHistoryEmpty');
+    if (!list) return;
+    if (!promo.history.length) {
+      list.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    list.innerHTML = promo.history.map(function (entry, i) {
+      var t = historyTierMeta(entry.tier);
+      var d = entry.data || {};
+      var marker = t.featured ? '⭐ ' : (t.verified ? '✅ ' : '');
+      var metaBits = [formatPromoDate(entry.postedAt)];
+      if (d.game) metaBits.push(escPromo(d.game));
+      if (d.consoles && d.consoles.length) metaBits.push(escPromo(d.consoles.join(', ')));
+      var idAttr = escPromo(entry.id);
+      var postedBy = (entry.postedByName && String(entry.postedByName).trim()) || '';
+      var postedByLine = postedBy
+        ? '<p class="ph-posted-by"><i class="fa fa-user" style="margin-right:0.4rem; opacity:0.7;"></i>Posted by <strong>' + escPromo(postedBy) + '</strong></p>'
+        : '';
+      return ''
+        + '<div class="promo-hist-card" id="phc-' + idAttr + '" style="border-left-color:' + escPromo(t.color) + '; animation-delay:' + (i * 40) + 'ms;">'
+        +   '<div class="promo-hist-head" onclick="togglePromoHistoryCard(\'' + idAttr + '\')">'
+        +     '<span class="promo-tier-chip" style="color:' + escPromo(t.color) + '; background:' + escPromo(t.color) + '22;">' + marker + escPromo(t.label) + '</span>'
+        +     '<div style="flex:1; min-width:0;">'
+        +       '<p class="ph-name">' + escPromo(d.serverName || 'Untitled promotion') + '</p>'
+        +       '<p class="ph-meta">' + metaBits.filter(Boolean).join(' · ') + '</p>'
+        +     '</div>'
+        +     '<i class="fa fa-chevron-down promo-hist-chevron"></i>'
+        +   '</div>'
+        +   '<div class="promo-hist-body">'
+        +     '<div class="promo-embed" style="border-left-color:' + escPromo(t.color) + ';">' + buildPromoEmbedHTML(d, t) + '</div>'
+        +     postedByLine
+        +     '<div style="display:flex; gap:0.6rem; flex-wrap:wrap; margin-top:0.85rem;">'
+        +       (entry.messageLink
+                  ? '<a href="' + escPromo(entry.messageLink) + '" target="_blank" rel="noopener" class="promo-add-btn" style="background:#404652; display:inline-flex; align-items:center; gap:0.4rem; text-decoration:none; padding:0.6rem 1.1rem;"><i class="fa-brands fa-discord"></i>View in Discord</a>'
+                  : '')
+        +       '<button type="button" class="promo-add-btn" style="background:#5865f2; padding:0.6rem 1.1rem;" onclick="usePromoTemplate(\'' + idAttr + '\')">'
+        +         '<i class="fa fa-rotate-right" style="margin-right:0.4rem;"></i>Use as template'
+        +       '</button>'
+        +     '</div>'
+        +   '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  window.togglePromoHistoryCard = function (id) {
+    var card = el('phc-' + id);
+    if (card) card.classList.toggle('open');
+  };
+
+  window.usePromoTemplate = function (id) {
+    var entry = null;
+    for (var i = 0; i < promo.history.length; i++) {
+      if (promo.history[i].id === id) { entry = promo.history[i]; break; }
+    }
+    if (!entry) return;
+    prefillPromoForm(entry.data || {});
+    promo.autofilled = true;  // a deliberate template load — don't autofill over it
+    promo.userTouched = true; // ...and don't clear it on reopen either
+    switchPromoTab('create');
+    var panel = document.querySelector('#promoteModal .promo-modal-panel');
+    if (panel) panel.scrollTop = 0;
+    renderPromoPreview();
+    showToast('Template loaded — review it and post when ready.', 3500, 'success');
+  };
+
+  // ---- Confirm + submit --------------------------------------------
+  window.enterPromoConfirm = function () {
+    if (!promo.configured) { showToast('Discord promotion is unavailable right now.', 3000, 'error'); return; }
+    if (!promo.canPostNow) { showToast('This community already promoted recently.', 3500, 'error'); return; }
+    // Don't let a post go out while an image is still uploading — it would
+    // post without that image.
+    if (promo.uploadingImages > 0 || promo.uploadingBanner) {
+      showToast('Hold on — your images are still uploading.', 3000, 'error');
+      return;
+    }
+    var err = validatePromo(collectPromoData());
+    if (err) { showToast(err, 3500, 'error'); return; }
+    el('promoFooterDefault').style.display = 'none';
+    el('promoFooterConfirm').style.display = 'block';
+  };
+
+  window.exitPromoConfirm = function () {
+    var def = el('promoFooterDefault'), conf = el('promoFooterConfirm');
+    if (def) def.style.display = 'flex';
+    if (conf) conf.style.display = 'none';
+  };
+
+  window.submitPromotion = function () {
+    var d = collectPromoData();
+    var err = validatePromo(d);
+    if (err) { exitPromoConfirm(); showToast(err, 3500, 'error'); return; }
+
+    setPromoBusy(true, 'Posting to Discord…');
+    fetch(PROMO_API + '/api/v2/community/' + PROMO_COMMUNITY_ID + '/rp-promotion?userId=' + encodeURIComponent((window.dbUser && window.dbUser._id) || ''), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(d)
+    }).then(function (r) {
+      return r.json().then(function (body) { return { ok: r.ok, status: r.status, body: body }; });
+    }).then(function (res) {
+      setPromoBusy(false);
+      if (res.ok) {
+        showToast('Your community was posted to Discord! 🎉', 4000, 'success');
+        // Refresh status (cooldown + history) and reveal the new post.
+        loadPromoStatus();
+        switchPromoTab('history');
+        return;
+      }
+      exitPromoConfirm();
+      if (res.status === 429 && res.body && res.body.nextAvailableAt) {
+        promo.canPostNow = false;
+        setPromoPostEnabled(false);
+        var when = new Date(res.body.nextAvailableAt);
+        el('promoCooldownBanner').style.display = 'block';
+        el('promoCooldownText').textContent = 'This community already promoted recently. You can post again on '
+          + when.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '.';
+        updatePromoCooldownLink();
+        showToast('Already promoted recently — try again later.', 3500, 'error');
+      } else {
+        var msg = (res.body && res.body.response && res.body.response.message)
+          || (res.body && res.body.error)
+          || 'Failed to post promotion. Please try again.';
+        showToast(msg, 4000, 'error');
+      }
+    }).catch(function () {
+      setPromoBusy(false);
+      exitPromoConfirm();
+      showToast('Network error while posting. Please try again.', 4000, 'error');
+    });
+  };
+})();
 
 // Privacy and platform selection for community settings
 window.selectedPrivacy = '<%= (community && community.community && community.community.visibility) || "public" %>';

@@ -9914,11 +9914,18 @@
 
           function renderBanner(mm, auth) {
             const expiresAt = auth.expiresAt ? new Date(auth.expiresAt) : null;
+            const cancelAt  = auth.cancelAt ? new Date(auth.cancelAt) : null;
             const now = new Date();
             const stillInPeriod = expiresAt && expiresAt.getTime() > now.getTime();
-            const cancelledButActive = auth.status === 'canceled' && stillInPeriod;
-            const daysLeft = expiresAt
-              ? Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / 86400000))
+            // A subscription is winding down if its status is already 'canceled',
+            // OR if it's still 'active' but has a pending cancellation. Stripe keeps
+            // the status 'active' and only sets cancel_at until the period actually
+            // ends, so cancelAt — not status — is the reliable "won't renew" signal.
+            const cancelledButActive = stillInPeriod && (auth.status === 'canceled' || !!cancelAt);
+            // Count down to the real end date: the cancel date when one is set.
+            const endDate = cancelAt || expiresAt;
+            const daysLeft = endDate
+              ? Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / 86400000))
               : null;
 
             if (mm.hasMismatch) {
@@ -9942,7 +9949,7 @@
             let title, sub;
             if (cancelledButActive) {
               title = `Active — cancels in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
-              sub   = `${auth.plan || 'subscription'} via ${auth.source || '—'} · ends ${formatDate(auth.expiresAt)} (auto-renew off)`;
+              sub   = `${auth.plan || 'subscription'} via ${auth.source || '—'} · ends ${formatDate(auth.cancelAt || auth.expiresAt)} (auto-renew off)`;
             } else if (auth.status === 'active') {
               title = `In sync — ${auth.plan || 'subscription'} active`;
               sub   = `Authoritative: ${auth.source || '—'}` +
