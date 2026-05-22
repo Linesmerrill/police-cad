@@ -48,9 +48,16 @@ function isValidObjectId(id) {
   return /^[a-fA-F0-9]{24}$/.test(id);
 }
 
-// Sanitize a redirect URL to prevent open redirects — only allow relative paths
+// Sanitize a redirect URL to prevent open redirects — only allow relative paths.
+// Rejects absolute URLs, protocol-relative (`//host`) and backslash-prefixed
+// (`/\host`, which browsers normalize to `//host`) targets.
 function sanitizeRedirect(url, fallback) {
-  if (typeof url !== "string" || !url.startsWith("/") || url.startsWith("//")) {
+  if (
+    typeof url !== "string" ||
+    !url.startsWith("/") ||
+    url.startsWith("//") ||
+    url.startsWith("/\\")
+  ) {
     return fallback;
   }
   return url;
@@ -117,7 +124,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         // sign-in code expired or was already used. Nothing for the user to
         // troubleshoot — they just need to start a fresh connect. Show a
         // descriptive page whose primary action re-initiates the flow.
-        const retryState = req.query.state || "/profile";
+        const retryState = sanitizeRedirect(req.query.state, "/profile");
         return res.status(400).render("error", {
           user: req.user,
           message:
@@ -126,14 +133,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "start a fresh one.",
           retryHref: "/auth/discord?state=" + encodeURIComponent(retryState),
           retryLabel: "Reconnect Discord",
-          redirect: req.query.state || null,
+          redirect: sanitizeRedirect(req.query.state, null),
         });
       }
       if (!user) {
         // No error but no user — the member declined authorization on
         // Discord's consent screen. That's a deliberate choice, so just
         // send them back without an alarming error page.
-        return res.redirect(req.query.state || "/");
+        return res.redirect(sanitizeRedirect(req.query.state, "/"));
       }
       req.logIn(user, function (loginErr) {
         if (loginErr) {
@@ -143,7 +150,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           );
           return res.redirect("/");
         }
-        return res.redirect(req.query.state || "/");
+        return res.redirect(sanitizeRedirect(req.query.state, "/"));
       });
     })(req, res, next);
   });
