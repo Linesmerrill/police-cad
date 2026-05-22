@@ -24,7 +24,14 @@ const app = express();
 gracefulFs.gracefulify(realFs);
 
 // Connect to MongoDB database.
-mongoose.connect(process.env.DB_URI || "mongodb://localhost/knoldus");
+// useUnifiedTopology enables the modern SDAM topology, which continuously
+// monitors the replica set and re-routes to a new primary after a failover.
+// Without it, the legacy topology pins to one host and surfaces
+// "not master and slaveOk=false" errors when the primary steps down.
+mongoose.connect(process.env.DB_URI || "mongodb://localhost/knoldus", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 mongoose.set("useFindAndModify", false);
 
 // Setup passport.
