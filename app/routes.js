@@ -1801,6 +1801,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
     // currency surface; community.fines is deprecated).
     let currencyCode = "USD";
     let currencySymbol = "$";
+    // Defaults to true when no community is in context — without a community
+    // we can't say economy is off, and falling through to the normal empty
+    // states is safer than wrongly showing the "disabled" banner.
+    let economyEnabled = true;
     if (communityId) {
       try {
         const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
@@ -1808,6 +1812,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         const cur = resolveCommunityCurrency(r.data);
         currencyCode = cur.code;
         currencySymbol = cur.symbol;
+        economyEnabled = resolveCommunityEconomyEnabled(r.data);
       } catch (e) {}
     }
     return {
@@ -1824,6 +1829,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       isActiveCivilian: !!(resolvedCivId && activeCivilianId && resolvedCivId === activeCivilianId),
       currencyCode,
       currencySymbol,
+      economyEnabled,
     };
   }
 
@@ -1849,6 +1855,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
       if (match && match.symbol) symbol = String(match.symbol);
     }
     return { code, symbol };
+  }
+
+  // True when at least one department in the community has economy enabled.
+  // The economy is a per-department toggle (basePay, payouts, etc.), but for
+  // surface-level gating — should the Wallet/Inbox nav items render? should
+  // the wallet/inbox pages show a "disabled" banner? — we treat the community
+  // as economy-on if any department has it on. Mirrors the wallet.ejs filter
+  // (`depts.filter(d => d.economyEnabled)`).
+  function resolveCommunityEconomyEnabled(communityResponseData) {
+    const depts = communityResponseData?.community?.departments;
+    if (!Array.isArray(depts) || !depts.length) return false;
+    return depts.some(d => d && d.economyEnabled === true);
   }
 
   app.get("/wallet", authCheck, async function (req, res) {
@@ -2776,6 +2794,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       let communityName = null;
       let currencyCode = "USD";
       let currencySymbol = "$";
+      // Defaults to true when we can't resolve the community — see
+      // resolveEconomyContext for the same reasoning.
+      let economyEnabled = true;
       if (communityId) {
         try {
           const communityResponse = await axios.get(
@@ -2786,6 +2807,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           const cur = resolveCommunityCurrency(communityResponse.data);
           currencyCode = cur.code;
           currencySymbol = cur.symbol;
+          economyEnabled = resolveCommunityEconomyEnabled(communityResponse.data);
         } catch (err) {
           console.error('Error fetching community:', err.message);
         }
@@ -2875,6 +2897,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         hasCivilianInCommunity,
         currencyCode,
         currencySymbol,
+        economyEnabled,
         apiUrl: policeCadApiUrl,
         canManageForms,
       });
@@ -3142,6 +3165,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       let communityName = null;
       let currencyCode = "USD";
       let currencySymbol = "$";
+      // Defaults to true when we can't resolve the community — see
+      // resolveEconomyContext for the same reasoning.
+      let economyEnabled = true;
       if (communityId) {
         try {
           const communityResponse = await axios.get(
@@ -3152,6 +3178,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           const cur = resolveCommunityCurrency(communityResponse.data);
           currencyCode = cur.code;
           currencySymbol = cur.symbol;
+          economyEnabled = resolveCommunityEconomyEnabled(communityResponse.data);
         } catch (err) {
           console.error('Error fetching community:', err.message);
         }
@@ -3186,6 +3213,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         hasCivilianInCommunity,
         currencyCode,
         currencySymbol,
+        economyEnabled,
         apiUrl: policeCadApiUrl,
       });
     } catch (error) {
