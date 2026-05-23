@@ -5244,13 +5244,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
-  // Delete feature request (requires auth)
+  // Delete feature request (requires auth). Admins (non-author) must include a
+  // reason — the API enforces this and writes an audit record.
   app.delete("/api/v1/feature-requests/:id", apiAuthCheck, async function (req, res) {
     try {
       if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
       const userId = req.user._id || req.user.id;
+      const reason = req.body && typeof req.body.reason === "string" ? req.body.reason.trim() : "";
+      const qs = `userId=${encodeURIComponent(userId)}` + (reason ? `&reason=${encodeURIComponent(reason)}` : "");
       const response = await axios.delete(
-        `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}?userId=${userId}`,
+        `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}?${qs}`,
         { headers: config.headers }
       );
       res.json(response.data);
