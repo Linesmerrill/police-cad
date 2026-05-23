@@ -1857,16 +1857,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
     return { code, symbol };
   }
 
-  // True when at least one department in the community has economy enabled.
-  // The economy is a per-department toggle (basePay, payouts, etc.), but for
-  // surface-level gating — should the Wallet/Inbox nav items render? should
-  // the wallet/inbox pages show a "disabled" banner? — we treat the community
-  // as economy-on if any department has it on. Mirrors the wallet.ejs filter
-  // (`depts.filter(d => d.economyEnabled)`).
+  // Community-level economy master toggle (community.economy.enabled).
+  // Per-department `economyEnabled` controls which departments offer jobs,
+  // but the master flag is what gates the Wallet/Inbox nav items and pages.
+  // Mirrors the settings UI: `!!econ.enabled` (views/economy-settings.ejs).
   function resolveCommunityEconomyEnabled(communityResponseData) {
-    const depts = communityResponseData?.community?.departments;
-    if (!Array.isArray(depts) || !depts.length) return false;
-    return depts.some(d => d && d.economyEnabled === true);
+    return communityResponseData?.community?.economy?.enabled === true;
   }
 
   app.get("/wallet", authCheck, async function (req, res) {
