@@ -992,7 +992,7 @@
             <div class="ac-card-body">
               <div class="row">
                 <div class="col-md-8">
-                  <input type="text" id="userSearch" class="form-control ac-input" placeholder="Search users by email or username..." />
+                  <input type="text" id="userSearch" class="form-control ac-input" placeholder="Search users by email, username, or user ID..." />
                 </div>
                 <div class="col-md-4">
                   <button type="button" id="searchUsersBtn" class="ac-btn ac-btn-accent ac-btn-block">
@@ -5992,17 +5992,49 @@
       
       function searchUsers(query, page = 0) {
         $('#userResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Searching users...</div>');
-        
+
         // Track search activity
         trackAdminAction('user_search', `Searched for users with query: "${query}"`);
-        
+
         // Normalize the query - trim and lowercase for email searches
         const normalizedQuery = query.trim().toLowerCase();
-        
+
+        // Direct lookup by MongoDB ObjectID. Usernames aren't unique, so when
+        // an admin pastes the author._id from a feature-request payload we
+        // want exactly one result — never a fuzzy text match.
+        if (/^[a-f0-9]{24}$/.test(normalizedQuery)) {
+          $.ajax({
+            url: `${API_BASE}/api/v1/admin/users/${normalizedQuery}`,
+            method: 'GET',
+            success: function(data) {
+              const u = data && data.user;
+              if (!u || !u.id) {
+                $('#userResults').html('<div class="loading">No user found with that ID.</div>');
+                return;
+              }
+              currentUserPage = 0;
+              totalUserPages = 1;
+              totalUserRecords = 1;
+              displayUserResultsPage([u], 0, 1, 1);
+              logAdminAction('user_search', 'User search performed', `Looked up user by ID: ${normalizedQuery}`);
+            },
+            error: function(xhr) {
+              if (xhr.status === 404) {
+                $('#userResults').html('<div class="loading">No user found with that ID.</div>');
+              } else {
+                $('#userResults').html('<div class="loading">No users found</div>');
+                showInfoModal('Lookup Error', `Error looking up user: ${xhr.responseJSON?.error || 'Unknown error'}`);
+              }
+            }
+          });
+          addToRecentSearches(query, 'users');
+          return;
+        }
+
         $.ajax({
           url: `${API_BASE}/api/v1/admin/search/users`,
           method: 'POST',
-          data: JSON.stringify({ 
+          data: JSON.stringify({
             query: normalizedQuery,
             page: page,
             limit: resultsPerPage
