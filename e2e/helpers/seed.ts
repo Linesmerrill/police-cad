@@ -88,7 +88,9 @@ export async function seedTestData(): Promise<void> {
       { upsert: true }
     );
 
-    // Seed test community
+    // Seed test community. Economy is enabled so Wallet and Inbox render their
+    // populated states (the disabled state shows only the gate message and no
+    // filter chips/balance, which breaks the wallet + inbox e2e tests).
     await db.collection('communities').updateOne(
       { _id: TEST_COMMUNITY_ID },
       {
@@ -100,6 +102,14 @@ export async function seedTestData(): Promise<void> {
             code: 'TESTCD1',
             activeSignal100: false,
             activeHoldTraffic: false,
+            economy: {
+              enabled: true,
+              defaultStartingBalance: 0,
+              fineMode: 'inbox',
+              allowNegativeBalance: false,
+              defaultDueDays: 14,
+              contestExtensionDays: 7,
+            },
             departments: [
               {
                 _id: TEST_DEPARTMENT_ID,

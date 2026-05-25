@@ -907,11 +907,17 @@
 
   window.ccOpenCaseSearch = function() {
     $('#caseSearchModal').addClass('open');
-    setTimeout(function() {
-      $('#caseSearchInput').trigger('focus').trigger('select');
-      // Re-render the empty/prompt state if no query is set
+    // Use native .focus() — jQuery's .trigger('focus') only fires the event
+    // and doesn't reliably move the actual focus across browsers, which made
+    // the case-search e2e test flake on a freshly-opened modal.
+    requestAnimationFrame(function() {
+      var input = document.getElementById('caseSearchInput');
+      if (input) {
+        input.focus();
+        input.select();
+      }
       if (!$('#caseSearchInput').val()) runCaseSearch('');
-    }, 50);
+    });
   };
 
   function isMyCase(c) {

@@ -10,6 +10,12 @@ function testVin(): string {
   return `1HGBH${Date.now().toString().slice(-12)}`;
 }
 
+// All three tests in this block share the P8V plate prefix and clean up via
+// deleteVehiclesByPrefix in afterEach. Under fullyParallel mode that cleanup
+// can nuke a sibling test's just-created vehicle mid-flight (race manifested
+// as "vehicle card never appears" on the edits-via-modal test). Force serial.
+test.describe.configure({ mode: 'serial' });
+
 test.describe('Vehicle CRUD', { tag: '@auth' }, () => {
   const PREFIX = 'P8V';
 
