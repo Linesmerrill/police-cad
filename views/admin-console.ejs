@@ -992,7 +992,7 @@
             <div class="ac-card-body">
               <div class="row">
                 <div class="col-md-8">
-                  <input type="text" id="userSearch" class="form-control ac-input" placeholder="Search users by email or username..." />
+                  <input type="text" id="userSearch" class="form-control ac-input" placeholder="Search users by email, username, or user ID..." />
                 </div>
                 <div class="col-md-4">
                   <button type="button" id="searchUsersBtn" class="ac-btn ac-btn-accent ac-btn-block">
@@ -5992,17 +5992,49 @@
       
       function searchUsers(query, page = 0) {
         $('#userResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Searching users...</div>');
-        
+
         // Track search activity
         trackAdminAction('user_search', `Searched for users with query: "${query}"`);
-        
+
         // Normalize the query - trim and lowercase for email searches
         const normalizedQuery = query.trim().toLowerCase();
-        
+
+        // Direct lookup by MongoDB ObjectID. Usernames aren't unique, so when
+        // an admin pastes the author._id from a feature-request payload we
+        // want exactly one result — never a fuzzy text match.
+        if (/^[a-f0-9]{24}$/.test(normalizedQuery)) {
+          $.ajax({
+            url: `${API_BASE}/api/v1/admin/users/${normalizedQuery}`,
+            method: 'GET',
+            success: function(data) {
+              const u = data && data.user;
+              if (!u || !u.id) {
+                $('#userResults').html('<div class="loading">No user found with that ID.</div>');
+                return;
+              }
+              currentUserPage = 0;
+              totalUserPages = 1;
+              totalUserRecords = 1;
+              displayUserResultsPage([u], 0, 1, 1);
+              logAdminAction('user_search', 'User search performed', `Looked up user by ID: ${normalizedQuery}`);
+            },
+            error: function(xhr) {
+              if (xhr.status === 404) {
+                $('#userResults').html('<div class="loading">No user found with that ID.</div>');
+              } else {
+                $('#userResults').html('<div class="loading">No users found</div>');
+                showInfoModal('Lookup Error', `Error looking up user: ${xhr.responseJSON?.error || 'Unknown error'}`);
+              }
+            }
+          });
+          addToRecentSearches(query, 'users');
+          return;
+        }
+
         $.ajax({
           url: `${API_BASE}/api/v1/admin/search/users`,
           method: 'POST',
-          data: JSON.stringify({ 
+          data: JSON.stringify({
             query: normalizedQuery,
             page: page,
             limit: resultsPerPage
@@ -6302,6 +6334,16 @@
           // The search API doesn't return resetPasswordExpires, so we'll fetch it separately
           // For now, show loading state - we'll fetch and update after rendering
           const resetStatus = formatPasswordResetStatus(null); // Start with null, will update
+          const deactivationBlock = user.isDeactivated ? `
+            <div style="margin: 0 0 0.75rem 0; padding: 0.6rem 0.8rem; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); border-radius: 6px; color: #fca5a5; font-size: 0.85rem; line-height: 1.45;">
+              <div style="font-weight: 600; margin-bottom: 0.25rem;">
+                <i class="fas fa-ban"></i> Account deactivated${user.deactivatedAt ? ` on ${escapeHtml(new Date(user.deactivatedAt).toLocaleString())}` : ''}
+              </div>
+              ${user.deactivatedByAdmin ? `<div><span style="color:#9aa0b4;">By admin:</span> ${escapeHtml(user.deactivatedByAdmin)}</div>` : ''}
+              <div><span style="color:#9aa0b4;">Reason:</span> ${user.deactivationReason ? escapeHtml(user.deactivationReason) : '<em style="color:#9aa0b4;">User self-deactivated — no admin reason recorded</em>'}</div>
+            </div>
+          ` : '';
+
           html += `
             <div class="result-card" data-user-id="${user.id}" data-user-index="${index}">
               <div class="result-header">
@@ -6318,9 +6360,12 @@
                   </button>
                   ${user.isDeactivated ? `<button class="btn btn-success btn-sm" onclick="reactivateUserAccount('${user.id}', '${user.email}')">
                     <i class="fas fa-user-check"></i> Reactivate Account
-                  </button>` : ''}
+                  </button>` : `<button class="btn btn-danger btn-sm" onclick="deactivateUserAccount('${user.id}', '${escapeHtml(user.email || '')}')">
+                    <i class="fas fa-user-slash"></i> Deactivate Account
+                  </button>`}
                 </div>
               </div>
+              ${deactivationBlock}
               <div class="info-grid">
                 <div class="info-item">
                   <div class="info-label">Status</div>
@@ -6711,8 +6756,19 @@
         const communities = user.communities || [];
         const communitiesCount = user.communitiesCount || 0;
         
+        const deactivationBanner = user.isDeactivated ? `
+          <div style="margin: 0 0 1rem 0; padding: 0.75rem 0.9rem; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); border-radius: 6px; color: #fca5a5; font-size: 0.9rem; line-height: 1.5;">
+            <div style="font-weight: 600; margin-bottom: 0.35rem;">
+              <i class="fas fa-ban"></i> Account deactivated${user.deactivatedAt ? ` on ${escapeHtml(new Date(user.deactivatedAt).toLocaleString())}` : ''}
+            </div>
+            ${user.deactivatedByAdmin ? `<div><span style="color:#9aa0b4;">By admin:</span> ${escapeHtml(user.deactivatedByAdmin)}</div>` : ''}
+            <div><span style="color:#9aa0b4;">Reason:</span> ${user.deactivationReason ? escapeHtml(user.deactivationReason) : '<em style="color:#9aa0b4;">User self-deactivated — no admin reason recorded</em>'}</div>
+          </div>
+        ` : '';
+
         $('#userModalTitle').text(`User: ${user.email || user.username}`);
         $('#userModalBody').html(`
+          ${deactivationBanner}
           <div class="info-grid">
             <div class="info-item">
               <div class="info-label">Email</div>
@@ -6800,6 +6856,63 @@
       }
       
       // Function to reactivate a user account
+      function deactivateUserAccount(userId, userEmail) {
+        // Admin-initiated deactivation requires a reason that gets stored alongside
+        // the user record so a future admin can see why the account was disabled.
+        const reasonInputId = `deactivateReason_${userId}_${Date.now()}`;
+        const errorId = `deactivateError_${userId}_${Date.now()}`;
+        const body = `
+          <p>Deactivate the account for <strong>${escapeHtml(userEmail)}</strong>?</p>
+          <p style="color: #fca5a5; font-size: 0.9rem; margin-bottom: 0.5rem;"><i class="fas fa-exclamation-triangle"></i> The user will no longer be able to log in. Their content stays intact.</p>
+          <label for="${reasonInputId}" style="display:block; font-weight: 600; margin-bottom: 0.35rem;">Reason <span style="color:#fca5a5;">*</span></label>
+          <textarea id="${reasonInputId}" rows="3" maxlength="1000" placeholder="e.g. Posted abusive content on feature request 6831…" style="width:100%; background:#15171f; border:1px solid #35385a; color:#e5e7eb; border-radius:6px; padding:0.5rem; font-family:inherit;"></textarea>
+          <div id="${errorId}" style="color:#fca5a5; font-size:0.85rem; margin-top:0.4rem; display:none;"></div>
+        `;
+        showConfirmModal('Deactivate User Account', body, function() {
+          const reason = ($('#' + reasonInputId).val() || '').trim();
+          if (reason.length < 3) {
+            // Re-open the modal with an error since showConfirmModal auto-hides.
+            // Easiest: alert and re-show.
+            showInfoModal('Reason required', 'Please provide a reason of at least 3 characters explaining why this account is being deactivated.');
+            return;
+          }
+          const deactivateButton = $(`button[onclick*="deactivateUserAccount('${userId}'"]`);
+          const originalText = deactivateButton.html();
+          deactivateButton.html('<i class="fas fa-spinner fa-spin"></i> Deactivating...');
+          deactivateButton.prop('disabled', true);
+
+          $.ajax({
+            url: `${API_BASE}/api/v1/admin/users/${userId}/deactivate`,
+            method: 'POST',
+            data: JSON.stringify({
+              reason: reason,
+              currentUser: { email: currentUserEmail, roles: roles }
+            }),
+            contentType: 'application/json',
+            timeout: 10000,
+            success: function() {
+              showInfoModal('Success', `Account deactivated for <strong>${escapeHtml(userEmail)}</strong>.`);
+              logAdminAction('account_deactivated', 'User account deactivated', `Deactivated account for user: ${userEmail} — reason: ${reason}`);
+              const currentQuery = $('#userSearch').val().trim();
+              if (currentQuery) searchUsers(currentQuery, currentUserPage);
+            },
+            error: function(xhr, status) {
+              let msg = 'Unknown error occurred';
+              if (status === 'timeout') msg = 'Request timed out.';
+              else if (xhr.status === 403) msg = xhr.responseJSON?.error || 'Permission denied — admin/owner accounts cannot be deactivated through this surface.';
+              else if (xhr.status === 400) msg = xhr.responseJSON?.error || 'Invalid request.';
+              else if (xhr.responseJSON?.error) msg = xhr.responseJSON.error;
+              else if (xhr.statusText) msg = `${xhr.status}: ${xhr.statusText}`;
+              showInfoModal('Deactivation Failed', `Failed to deactivate account: ${msg}`);
+            },
+            complete: function() {
+              deactivateButton.html(originalText);
+              deactivateButton.prop('disabled', false);
+            }
+          });
+        });
+      }
+
       function reactivateUserAccount(userId, userEmail) {
         showConfirmModal(
           'Reactivate User Account',

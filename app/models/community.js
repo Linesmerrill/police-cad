@@ -1,5 +1,11 @@
 var mongoose = require('mongoose');
 
+// Read-only Mongoose handle on the `communities` collection. The schema is
+// intentionally minimal — the canonical Go API owns the full community shape
+// (roles, tenCodes, fines, penalCodes, departments, etc.). The legacy
+// createCommunity / createPoliceCommunity / createEmsCommunity methods that
+// used to live here produced permission-less docs and have been removed;
+// website routes now proxy to POST /api/v1/community instead.
 var communitySchema = mongoose.Schema({
   community: {
     name: String,
@@ -13,61 +19,4 @@ var communitySchema = mongoose.Schema({
   }
 });
 
-communitySchema.methods.createCommunity = function (req, res) {
-  if (exists(req.body.communityName)) {
-    this.community.name = req.body.communityName.trim().toLowerCase();
-  }
-  if (exists(req.body.userID)) {
-    this.community.ownerID = req.body.userID;
-  }
-  this.community.code = makeID(7);
-  this.community.createdAt = new Date();
-
-  res.redirect('back');
-};
-
-communitySchema.methods.createPoliceCommunity = function (req, res) {
-  if (exists(req.body.communityName)) {
-    this.community.name = req.body.communityName.trim().toLowerCase();
-  }
-  if (exists(req.body.userID)) {
-    this.community.ownerID = req.body.userID;
-  }
-  this.community.code = makeID(7);
-  this.community.createdAt = new Date();
-
-  res.redirect('/' + req.body.route);
-};
-
-communitySchema.methods.createEmsCommunity = function (req, res) {
-  if (exists(req.body.communityName)) {
-    this.community.name = req.body.communityName.trim().toLowerCase();
-  }
-  if (exists(req.body.userID)) {
-    this.community.ownerID = req.body.userID;
-  }
-  this.community.code = makeID(7);
-  this.community.createdAt = new Date();
-
-  res.redirect('/ems-dashboard');
-};
-
 module.exports = mongoose.model('Community', communitySchema);
-
-function exists(v) {
-  if (v !== undefined) {
-    return true
-  } else {
-    return false
-  }
-}
-
-function makeID(length) {
-  var result = '';
-  var characters = 'ABCDEFGHJKMNPRSTUVWXYZ';
-  var charactersLength = characters.length;
-  for (var i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-}
