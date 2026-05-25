@@ -6855,106 +6855,90 @@ module.exports = function (app, passport, server, nextApp, handle) {
     );
   });
 
-  app.post("/createCommunity", auth, function (req, res) {
+  // createCommunityViaApi proxies the three legacy "Create Community" form
+  // posts to the API's POST /api/v1/community. The legacy Mongoose path used
+  // by these routes only seeded `name`, `ownerID`, `code`, `createdAt` —
+  // missing the Head Admin role + tenCodes/fines/penalCodes/etc., which left
+  // owners locked out of the permission-based UI. Routing through the
+  // canonical CreateCommunityHandler keeps a single source of truth.
+  async function createCommunityViaApi(req, res, redirectPath) {
     req.app.locals.specialContext = null;
-    var myCommunity = new Community();
-    myCommunity.createCommunity(req, res);
-    myCommunity.save(function (err, result) {
-      if (err) return console.error(err);
-      var isValid = isValidObjectIdLength(
-        req.body.userID,
-        "cannot lookup invalid length userID, route: /createCommunity"
-      );
-      if (!isValid) {
-        return (req.app.locals.specialContext = "invalidRequest");
-      }
-      User.findOneAndUpdate(
-        {
-          _id: ObjectId(req.body.userID),
+    var routeName = req.path;
+    var ownerID = req.body.userID;
+    var communityName = (req.body.communityName || "").trim();
+
+    if (!isValidObjectIdLength(ownerID, "cannot lookup invalid length userID, route: " + routeName)) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect(redirectPath);
+    }
+    if (!communityName) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect(redirectPath);
+    }
+
+    try {
+      const apiResp = await axios.post(`${policeCadApiUrl}/api/v1/community`, {
+        community: {
+          name: communityName.toLowerCase(),
+          ownerID: ownerID,
+          visibility: "public",
         },
+      });
+      const newCommunityId = apiResp.data && apiResp.data.community && apiResp.data.community.communityId;
+      if (!newCommunityId) {
+        console.error("createCommunityViaApi: API returned no communityId", { route: routeName, body: apiResp.data });
+        req.app.locals.specialContext = "createCommunityError";
+        return res.redirect(redirectPath);
+      }
+
+      // Mirror the legacy side-effect: point the user's activeCommunity /
+      // lastAccessedCommunity at the new community so the dashboard auto-loads
+      // it. The API already adds the community to user.communities.
+      await User.findOneAndUpdate(
+        { _id: ObjectId(ownerID) },
         {
           $set: {
-            "user.activeCommunity": result._id,
+            "user.activeCommunity": newCommunityId,
             "user.lastAccessedCommunity": {
-              communityID: String(result._id),
+              communityID: String(newCommunityId),
               createdAt: new Date(),
             },
           },
-        },
-        function (err) {
-          if (err) return console.error(err);
-          return (req.app.locals.specialContext = "createCommunitySuccess");
         }
       );
-    });
+
+      req.app.locals.specialContext = "createCommunitySuccess";
+      return res.redirect(redirectPath);
+    } catch (err) {
+      var status = err && err.response && err.response.status;
+      var apiErr = err && err.response && err.response.data;
+      if (status === 403 && apiErr && apiErr.error === "community_limit_reached") {
+        console.warn("createCommunityViaApi: cap reached", { route: routeName, ownerID, apiErr });
+        req.app.locals.specialContext = "communityLimitReached";
+        return res.redirect(redirectPath);
+      }
+      console.error("createCommunityViaApi: API call failed", {
+        route: routeName,
+        ownerID,
+        status,
+        err: apiErr || (err && err.message),
+      });
+      req.app.locals.specialContext = "createCommunityError";
+      return res.redirect(redirectPath);
+    }
+  }
+
+  app.post("/createCommunity", auth, function (req, res) {
+    createCommunityViaApi(req, res, req.get("Referrer") || "back");
   });
 
   app.post("/createPoliceCommunity", auth, function (req, res) {
-    req.app.locals.specialContext = null;
-    var myCommunity = new Community();
-    myCommunity.createPoliceCommunity(req, res);
-    myCommunity.save(function (err, result) {
-      if (err) return console.error(err);
-      var isValid = isValidObjectIdLength(
-        req.body.userID,
-        "cannot lookup invalid length userID, route: /createPoliceCommunity"
-      );
-      if (!isValid) {
-        return (req.app.locals.specialContext = "invalidRequest");
-      }
-      User.findOneAndUpdate(
-        {
-          _id: ObjectId(req.body.userID),
-        },
-        {
-          $set: {
-            "user.activeCommunity": result._id,
-            "user.lastAccessedCommunity": {
-              communityID: String(result._id),
-              createdAt: new Date(),
-            },
-          },
-        },
-        function (err) {
-          if (err) return console.error(err);
-          return (req.app.locals.specialContext = "createCommunitySuccess");
-        }
-      );
-    });
+    var dest = req.body.route ? "/" + req.body.route : "/police-dashboard";
+    createCommunityViaApi(req, res, dest);
   });
 
   app.post("/createEmsCommunity", auth, function (req, res) {
-    req.app.locals.specialContext = null;
-    var myCommunity = new Community();
-    myCommunity.createEmsCommunity(req, res);
-    myCommunity.save(function (err, result) {
-      if (err) return console.error(err);
-      var isValid = isValidObjectIdLength(
-        req.body.userID,
-        "cannot lookup invalid length userID, route: /createEmsCommunity"
-      );
-      if (!isValid) {
-        return (req.app.locals.specialContext = "invalidRequest");
-      }
-      User.findOneAndUpdate(
-        {
-          _id: ObjectId(req.body.userID),
-        },
-        {
-          $set: {
-            "user.activeCommunity": result._id,
-            "user.lastAccessedCommunity": {
-              communityID: String(result._id),
-              createdAt: new Date(),
-            },
-          },
-        },
-        function (err) {
-          if (err) return console.error(err);
-          return (req.app.locals.specialContext = "createCommunitySuccess");
-        }
-      );
-    });
+    createCommunityViaApi(req, res, "/ems-dashboard");
   });
 
   app.post("/manageAccount", auth, function (req, res) {
