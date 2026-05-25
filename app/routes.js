@@ -6855,91 +6855,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
     );
   });
 
-  // createCommunityViaApi proxies the three legacy "Create Community" form
-  // posts to the API's POST /api/v1/community. The legacy Mongoose path used
-  // by these routes only seeded `name`, `ownerID`, `code`, `createdAt` —
-  // missing the Head Admin role + tenCodes/fines/penalCodes/etc., which left
-  // owners locked out of the permission-based UI. Routing through the
-  // canonical CreateCommunityHandler keeps a single source of truth.
-  async function createCommunityViaApi(req, res, redirectPath) {
-    req.app.locals.specialContext = null;
-    var routeName = req.path;
-    var ownerID = req.body.userID;
-    var communityName = (req.body.communityName || "").trim();
-
-    if (!isValidObjectIdLength(ownerID, "cannot lookup invalid length userID, route: " + routeName)) {
-      req.app.locals.specialContext = "invalidRequest";
-      return res.redirect(redirectPath);
-    }
-    if (!communityName) {
-      req.app.locals.specialContext = "invalidRequest";
-      return res.redirect(redirectPath);
-    }
-
-    try {
-      const apiResp = await axios.post(`${policeCadApiUrl}/api/v1/community`, {
-        community: {
-          name: communityName.toLowerCase(),
-          ownerID: ownerID,
-          visibility: "public",
-        },
-      });
-      const newCommunityId = apiResp.data && apiResp.data.community && apiResp.data.community.communityId;
-      if (!newCommunityId) {
-        console.error("createCommunityViaApi: API returned no communityId", { route: routeName, body: apiResp.data });
-        req.app.locals.specialContext = "createCommunityError";
-        return res.redirect(redirectPath);
-      }
-
-      // Mirror the legacy side-effect: point the user's activeCommunity /
-      // lastAccessedCommunity at the new community so the dashboard auto-loads
-      // it. The API already adds the community to user.communities.
-      await User.findOneAndUpdate(
-        { _id: ObjectId(ownerID) },
-        {
-          $set: {
-            "user.activeCommunity": newCommunityId,
-            "user.lastAccessedCommunity": {
-              communityID: String(newCommunityId),
-              createdAt: new Date(),
-            },
-          },
-        }
-      );
-
-      req.app.locals.specialContext = "createCommunitySuccess";
-      return res.redirect(redirectPath);
-    } catch (err) {
-      var status = err && err.response && err.response.status;
-      var apiErr = err && err.response && err.response.data;
-      if (status === 403 && apiErr && apiErr.error === "community_limit_reached") {
-        console.warn("createCommunityViaApi: cap reached", { route: routeName, ownerID, apiErr });
-        req.app.locals.specialContext = "communityLimitReached";
-        return res.redirect(redirectPath);
-      }
-      console.error("createCommunityViaApi: API call failed", {
-        route: routeName,
-        ownerID,
-        status,
-        err: apiErr || (err && err.message),
-      });
-      req.app.locals.specialContext = "createCommunityError";
-      return res.redirect(redirectPath);
-    }
-  }
-
-  app.post("/createCommunity", auth, function (req, res) {
-    createCommunityViaApi(req, res, req.get("Referrer") || "back");
-  });
-
-  app.post("/createPoliceCommunity", auth, function (req, res) {
-    var dest = req.body.route ? "/" + req.body.route : "/police-dashboard";
-    createCommunityViaApi(req, res, dest);
-  });
-
-  app.post("/createEmsCommunity", auth, function (req, res) {
-    createCommunityViaApi(req, res, "/ems-dashboard");
-  });
+  // The legacy /createCommunity, /createPoliceCommunity, /createEmsCommunity
+  // routes were removed. Community creation lives on /communities (the React
+  // CreateCommunityModal in public/js/communities.js, which POSTs directly to
+  // the API's /api/v1/community). The legacy POST handlers had no UI triggers
+  // left on any dashboard and historically wrote permission-less docs.
 
   app.post("/manageAccount", auth, function (req, res) {
     req.app.locals.specialContext = null;

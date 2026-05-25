@@ -3118,43 +3118,6 @@
     </div>
   </div>
 
-  <div id="createCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form class="form-horizontal" action="/createEmsCommunity" method="post">
-            <fieldset>
-              <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                aria-hidden="true">X</button>
-              <h4>Create a New Community</h4>
-              <hr style="width: 88%;max-width: 100rem;">
-
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="communityName">Community Name:</label>
-                <div class="col-md-4">
-                  <input id="communityName" name="communityName" style="text-transform: capitalize;" type="text"
-                    placeholder="Community Name" class="form-control input-md" maxlength="25" required>
-                </div>
-              </div>
-
-              <!-- Button -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createCommunity"></label>
-                <div class="col-md-4 text-align-center">
-                  <input type="hidden" name="route" value="ems-dashboard">
-                  <button id="createCommunity" value="<%= user._id %>" name="userID"
-                    class="btn btn-primary">Create</button>
-                </div>
-              </div>
-            </fieldset>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- ══════════════════════════════════════════ -->
   <!-- Warrant Database Overlay System (Read-Only) -->
   <!-- ══════════════════════════════════════════ -->
