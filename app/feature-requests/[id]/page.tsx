@@ -585,8 +585,11 @@ export default function FeatureRequestDetail() {
   const [editDescription, setEditDescription] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
 
-  // Delete confirm
+  // Delete confirm. When an admin (non-author) deletes, a reason is required
+  // and forwarded to the API which stores an audit record.
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deleteReasonError, setDeleteReasonError] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [authReady, setAuthReady] = useState(false);
 
@@ -889,13 +892,23 @@ export default function FeatureRequestDetail() {
     }
   };
 
-  // Delete request
+  // Delete request. Admins (non-author) must supply a reason; the API rejects
+  // the call without one and writes an audit record on success.
   const handleDeleteRequest = async () => {
+    const adminDelete = isAdmin && !isAuthor;
+    const trimmedReason = deleteReason.trim();
+    if (adminDelete && trimmedReason.length < 3) {
+      setDeleteReasonError('Please provide a reason of at least 3 characters.');
+      return;
+    }
     setDeleting(true);
+    setDeleteReasonError('');
     try {
       const res = await fetch(`/api/v1/feature-requests/${id}`, {
         method: 'DELETE',
         credentials: 'include',
+        headers: adminDelete ? { 'Content-Type': 'application/json' } : undefined,
+        body: adminDelete ? JSON.stringify({ reason: trimmedReason }) : undefined,
       });
       if (!res.ok) throw new Error();
       router.push('/feature-requests');
@@ -1349,8 +1362,9 @@ export default function FeatureRequestDetail() {
                     </div>) : (
                       <StatusBadge status={request.status} />
                     )}
-                    {isAuthor && !editingRequest && !isLocked && (
+                    {(isAuthor || isAdmin) && !editingRequest && !isLocked && (
                       <div style={{ display: 'flex', gap: '0.4rem' }}>
+                        {isAuthor && (
                         <button
                           onClick={() => {
                             setEditTitle(request.title);
@@ -1383,8 +1397,13 @@ export default function FeatureRequestDetail() {
                           <PencilIcon style={{ width: '12px', height: '12px' }} />
                           Edit
                         </button>
+                        )}
                         <button
-                          onClick={() => setShowDeleteConfirm(true)}
+                          onClick={() => {
+                            setDeleteReason('');
+                            setDeleteReasonError('');
+                            setShowDeleteConfirm(true);
+                          }}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -1731,17 +1750,65 @@ export default function FeatureRequestDetail() {
                           fontFamily: FONT,
                           color: 'rgba(255,255,255,0.9)',
                         }}>
-                          Delete Feature Request?
+                          {isAdmin && !isAuthor ? 'Delete as Admin?' : 'Delete Feature Request?'}
                         </h3>
                         <p style={{
-                          margin: '0 0 1.25rem 0',
+                          margin: '0 0 1rem 0',
                           fontSize: '0.85rem',
                           fontFamily: FONT,
                           color: 'rgba(255,255,255,0.5)',
                           lineHeight: 1.5,
                         }}>
-                          This action cannot be undone. All votes and comments will also be deleted.
+                          {isAdmin && !isAuthor
+                            ? 'This will permanently remove the post, its votes and comments. The action is audited — please provide a reason.'
+                            : 'This action cannot be undone. All votes and comments will also be deleted.'}
                         </p>
+                        {isAdmin && !isAuthor && (
+                          <div style={{ marginBottom: '1rem' }}>
+                            <label style={{
+                              display: 'block',
+                              fontSize: '0.75rem',
+                              fontFamily: FONT,
+                              color: 'rgba(255,255,255,0.6)',
+                              marginBottom: '0.35rem',
+                              fontWeight: 600,
+                            }}>
+                              Reason <span style={{ color: 'rgba(239,68,68,0.8)' }}>*</span>
+                            </label>
+                            <textarea
+                              value={deleteReason}
+                              onChange={(e) => {
+                                setDeleteReason(e.target.value);
+                                if (deleteReasonError) setDeleteReasonError('');
+                              }}
+                              maxLength={1000}
+                              rows={3}
+                              placeholder="e.g. Abusive language in post body"
+                              style={{
+                                width: '100%',
+                                padding: '0.5rem 0.65rem',
+                                fontSize: '0.85rem',
+                                fontFamily: FONT,
+                                color: 'rgba(255,255,255,0.85)',
+                                backgroundColor: 'rgba(255,255,255,0.04)',
+                                border: `1px solid ${deleteReasonError ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                                borderRadius: '0.4rem',
+                                resize: 'vertical',
+                                outline: 'none',
+                              }}
+                            />
+                            {deleteReasonError && (
+                              <div style={{
+                                marginTop: '0.35rem',
+                                fontSize: '0.75rem',
+                                color: 'rgba(239,68,68,0.85)',
+                                fontFamily: FONT,
+                              }}>
+                                {deleteReasonError}
+                              </div>
+                            )}
+                          </div>
+                        )}
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                           <button
                             onClick={() => setShowDeleteConfirm(false)}

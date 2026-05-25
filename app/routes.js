@@ -48,9 +48,16 @@ function isValidObjectId(id) {
   return /^[a-fA-F0-9]{24}$/.test(id);
 }
 
-// Sanitize a redirect URL to prevent open redirects — only allow relative paths
+// Sanitize a redirect URL to prevent open redirects — only allow relative paths.
+// Rejects absolute URLs, protocol-relative (`//host`) and backslash-prefixed
+// (`/\host`, which browsers normalize to `//host`) targets.
 function sanitizeRedirect(url, fallback) {
-  if (typeof url !== "string" || !url.startsWith("/") || url.startsWith("//")) {
+  if (
+    typeof url !== "string" ||
+    !url.startsWith("/") ||
+    url.startsWith("//") ||
+    url.startsWith("/\\")
+  ) {
     return fallback;
   }
   return url;
@@ -99,16 +106,54 @@ module.exports = function (app, passport, server, nextApp, handle) {
     });
   });
 
-  app.get(
-    "/auth/discord",
-    auth,
-    passport.authenticate("discord", {
-      failureRedirect: "/",
-    }),
-    (req, res) => {
-      return res.redirect(req.query.state);
-    }
-  );
+  app.get("/auth/discord", auth, function (req, res, next) {
+    // This route both initiates the Discord OAuth flow and receives the
+    // callback (CLIENT_REDIRECT points back here). When Discord returns an
+    // invalid/expired/already-used `code` — e.g. the user refreshed the
+    // callback URL, hit back, or the code was reused — passport-oauth2
+    // raises a TokenError. With the plain middleware form that error
+    // bypasses `failureRedirect` and bubbles up as an unhandled 500. Use a
+    // custom callback so we can treat it as a benign auth failure instead.
+    passport.authenticate("discord", function (err, user, info) {
+      if (err) {
+        console.warn(
+          "[LPS] [level=warn] Discord OAuth failed:",
+          err && err.message ? err.message : err
+        );
+        // A TokenError ("Invalid code") means Discord's single-use, ~10min
+        // sign-in code expired or was already used. Nothing for the user to
+        // troubleshoot — they just need to start a fresh connect. Show a
+        // descriptive page whose primary action re-initiates the flow.
+        const retryState = sanitizeRedirect(req.query.state, "/profile");
+        return res.status(400).render("error", {
+          user: req.user,
+          message:
+            "We couldn't finish connecting your Discord account — the " +
+            "sign-in link expired or was already used. Reconnecting will " +
+            "start a fresh one.",
+          retryHref: "/auth/discord?state=" + encodeURIComponent(retryState),
+          retryLabel: "Reconnect Discord",
+          redirect: sanitizeRedirect(req.query.state, null),
+        });
+      }
+      if (!user) {
+        // No error but no user — the member declined authorization on
+        // Discord's consent screen. That's a deliberate choice, so just
+        // send them back without an alarming error page.
+        return res.redirect(sanitizeRedirect(req.query.state, "/"));
+      }
+      req.logIn(user, function (loginErr) {
+        if (loginErr) {
+          console.error(
+            "[LPS] [level=error] Discord OAuth login failed:",
+            loginErr
+          );
+          return res.redirect("/");
+        }
+        return res.redirect(sanitizeRedirect(req.query.state, "/"));
+      });
+    })(req, res, next);
+  });
 
   // Discord Bot page is now handled by Next.js at app/discord-bot/page.tsx
   // app.get("/discord-bot", function (req, res) {
@@ -218,7 +263,15 @@ module.exports = function (app, passport, server, nextApp, handle) {
       });
     } catch (error) {
       if (renderPendingDeletionIfApplicable(req, res, error)) return;
-      console.error("[LPS] [level=error] /community/:hash error:", error.message);
+      // Surface which upstream call failed — axios attaches the request URL
+      // and the response status, so log both instead of just the message.
+      const failedUrl = error.config && error.config.url;
+      const status = error.response && error.response.status;
+      console.error(
+        "[LPS] [level=error] /community/:hash error:",
+        error.message,
+        failedUrl ? `(${status || "no status"} from ${failedUrl})` : ""
+      );
       return res.status(404).render("error", {
         message: "Community not found or an error occurred.",
         redirect: "/communities",
@@ -1748,6 +1801,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
     // currency surface; community.fines is deprecated).
     let currencyCode = "USD";
     let currencySymbol = "$";
+    // Defaults to true when no community is in context — without a community
+    // we can't say economy is off, and falling through to the normal empty
+    // states is safer than wrongly showing the "disabled" banner.
+    let economyEnabled = true;
     if (communityId) {
       try {
         const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
@@ -1755,6 +1812,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         const cur = resolveCommunityCurrency(r.data);
         currencyCode = cur.code;
         currencySymbol = cur.symbol;
+        economyEnabled = resolveCommunityEconomyEnabled(r.data);
       } catch (e) {}
     }
     return {
@@ -1771,6 +1829,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       isActiveCivilian: !!(resolvedCivId && activeCivilianId && resolvedCivId === activeCivilianId),
       currencyCode,
       currencySymbol,
+      economyEnabled,
     };
   }
 
@@ -1796,6 +1855,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
       if (match && match.symbol) symbol = String(match.symbol);
     }
     return { code, symbol };
+  }
+
+  // Community-level economy master toggle (community.economy.enabled).
+  // Per-department `economyEnabled` controls which departments offer jobs,
+  // but the master flag is what gates the Wallet/Inbox nav items and pages.
+  // Mirrors the settings UI: `!!econ.enabled` (views/economy-settings.ejs).
+  function resolveCommunityEconomyEnabled(communityResponseData) {
+    return communityResponseData?.community?.economy?.enabled === true;
   }
 
   app.get("/wallet", authCheck, async function (req, res) {
@@ -2723,6 +2790,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       let communityName = null;
       let currencyCode = "USD";
       let currencySymbol = "$";
+      // Defaults to true when we can't resolve the community — see
+      // resolveEconomyContext for the same reasoning.
+      let economyEnabled = true;
       if (communityId) {
         try {
           const communityResponse = await axios.get(
@@ -2733,6 +2803,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           const cur = resolveCommunityCurrency(communityResponse.data);
           currencyCode = cur.code;
           currencySymbol = cur.symbol;
+          economyEnabled = resolveCommunityEconomyEnabled(communityResponse.data);
         } catch (err) {
           console.error('Error fetching community:', err.message);
         }
@@ -2822,6 +2893,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         hasCivilianInCommunity,
         currencyCode,
         currencySymbol,
+        economyEnabled,
         apiUrl: policeCadApiUrl,
         canManageForms,
       });
@@ -3089,6 +3161,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       let communityName = null;
       let currencyCode = "USD";
       let currencySymbol = "$";
+      // Defaults to true when we can't resolve the community — see
+      // resolveEconomyContext for the same reasoning.
+      let economyEnabled = true;
       if (communityId) {
         try {
           const communityResponse = await axios.get(
@@ -3099,6 +3174,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           const cur = resolveCommunityCurrency(communityResponse.data);
           currencyCode = cur.code;
           currencySymbol = cur.symbol;
+          economyEnabled = resolveCommunityEconomyEnabled(communityResponse.data);
         } catch (err) {
           console.error('Error fetching community:', err.message);
         }
@@ -3133,6 +3209,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         hasCivilianInCommunity,
         currencyCode,
         currencySymbol,
+        economyEnabled,
         apiUrl: policeCadApiUrl,
       });
     } catch (error) {
@@ -5167,13 +5244,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
-  // Delete feature request (requires auth)
+  // Delete feature request (requires auth). Admins (non-author) must include a
+  // reason — the API enforces this and writes an audit record.
   app.delete("/api/v1/feature-requests/:id", apiAuthCheck, async function (req, res) {
     try {
       if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
       const userId = req.user._id || req.user.id;
+      const reason = req.body && typeof req.body.reason === "string" ? req.body.reason.trim() : "";
+      const qs = `userId=${encodeURIComponent(userId)}` + (reason ? `&reason=${encodeURIComponent(reason)}` : "");
       const response = await axios.delete(
-        `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}?userId=${userId}`,
+        `${policeCadApiUrl}/api/v1/feature-requests/${req.params.id}?${qs}`,
         { headers: config.headers }
       );
       res.json(response.data);

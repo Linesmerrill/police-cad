@@ -424,7 +424,22 @@
     <% } %>
   </div>
 
-  <% if (civilianId) { %>
+  <% if (typeof economyEnabled !== 'undefined' && !economyEnabled) { %>
+  <!-- Disabled state: this community has no department with economy turned on.
+       The Wallet/Inbox nav items are hidden in that case, so this view only
+       surfaces when someone deep-links here directly. -->
+  <div class="in-card" style="text-align:center; padding:2.5rem 1.5rem; background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.25); border-radius:var(--in-radius);">
+    <div style="font-size:2.5rem; color:var(--in-amber); margin-bottom:0.75rem;">
+      <i class="fa fa-circle-pause"></i>
+    </div>
+    <div style="font-size:1.1rem; font-weight:600; color:var(--in-text); margin-bottom:0.4rem;">
+      Economy is disabled for <strong><%= communityName || 'this community' %></strong>
+    </div>
+    <div style="font-size:0.9rem; color:var(--in-text-muted); max-width:38rem; margin:0 auto;">
+      Contact a community admin if this seems incorrect.
+    </div>
+  </div>
+  <% } else if (civilianId) { %>
   <div class="in-swap-backdrop" id="swapBackdrop"></div>
   <div class="in-swap-modal" id="swapModal" role="dialog" aria-modal="true" aria-label="Switch civilian">
     <div class="in-swap-header">

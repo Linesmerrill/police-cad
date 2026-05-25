@@ -500,7 +500,22 @@
     </div>
   </div>
 
-  <% if (!civilianId) { %>
+  <% if (typeof economyEnabled !== 'undefined' && !economyEnabled) { %>
+  <!-- Disabled state: this community has no department with economy turned on.
+       The Wallet/Inbox nav items are hidden in that case, so this view only
+       surfaces when someone deep-links here directly. -->
+  <div class="w-card" style="text-align:center; padding:2.5rem 1.5rem; border:1px solid rgba(245,158,11,0.25); background:rgba(245,158,11,0.06);">
+    <div style="font-size:2.5rem; color:#f59e0b; margin-bottom:0.75rem;">
+      <i class="fa fa-circle-pause"></i>
+    </div>
+    <div style="font-size:1.1rem; font-weight:600; color:var(--w-text); margin-bottom:0.4rem;">
+      Economy is disabled for <strong><%= communityName || 'this community' %></strong>
+    </div>
+    <div style="font-size:0.9rem; color:var(--w-text-muted); max-width:38rem; margin:0 auto;">
+      Contact a community admin if this seems incorrect.
+    </div>
+  </div>
+  <% } else if (!civilianId) { %>
   <!-- Empty state: user has no civilian in this community -->
   <div class="w-card" style="text-align:center; padding:2.5rem 1.5rem;">
     <div style="font-size:2.5rem; color:var(--w-text-muted); margin-bottom:0.75rem;">
