@@ -436,9 +436,17 @@
       z-index: 10000;
       display: flex; align-items: center; justify-content: center;
       opacity: 0; visibility: hidden;
-      transition: opacity 0.25s, visibility 0.25s;
+      /* visibility flips after the opacity fade-out finishes (closing);
+         see .open below for the open-state override that flips it instantly */
+      transition: opacity 0.25s, visibility 0s 0.25s;
     }
-    .cc-modal-overlay.open { opacity: 1; visibility: visible; }
+    .cc-modal-overlay.open {
+      opacity: 1; visibility: visible;
+      /* When opening, drop the visibility delay so the input inside the
+         modal is focusable immediately — otherwise a programmatic focus
+         call during the 250ms fade is silently ignored. */
+      transition: opacity 0.25s, visibility 0s 0s;
+    }
     .cc-modal {
       background: #0f1019;
       border: 1px solid var(--cc-glass-border);
@@ -907,11 +915,17 @@
 
   window.ccOpenCaseSearch = function() {
     $('#caseSearchModal').addClass('open');
-    setTimeout(function() {
-      $('#caseSearchInput').trigger('focus').trigger('select');
-      // Re-render the empty/prompt state if no query is set
+    // Use native .focus() — jQuery's .trigger('focus') only fires the event
+    // and doesn't reliably move the actual focus across browsers, which made
+    // the case-search e2e test flake on a freshly-opened modal.
+    requestAnimationFrame(function() {
+      var input = document.getElementById('caseSearchInput');
+      if (input) {
+        input.focus();
+        input.select();
+      }
       if (!$('#caseSearchInput').val()) runCaseSearch('');
-    }, 50);
+    });
   };
 
   function isMyCase(c) {
