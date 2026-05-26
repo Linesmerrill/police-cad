@@ -474,7 +474,7 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
                   style={{ color: '#fbbf24' }}
                 >
                   <i className="fa fa-star mt-0.5 md:mt-1 flex-shrink-0" style={{ color: '#fbbf24' }}></i>
-                  <span className="line-clamp-1">{community.promotionalText}</span>
+                  <span className="line-clamp-1">{linkifyText(community.promotionalText)}</span>
                 </p>
               )}
 
