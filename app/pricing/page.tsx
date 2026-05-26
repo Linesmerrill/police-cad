@@ -69,7 +69,7 @@ export default function PricingPage() {
             key: 'base',
             monthlyPrice: 3,
             annualPrice: 32,
-            features: ['5 communities', 'Default departments', 'Full ads'],
+            features: ['Create up to 5 communities', 'Default departments', 'Full ads'],
             color: '#3b82f6',
           },
           {
@@ -77,7 +77,7 @@ export default function PricingPage() {
             key: 'premium',
             monthlyPrice: 8,
             annualPrice: 85,
-            features: ['10 communities', 'Verified badge', '50% fewer ads'],
+            features: ['Create up to 10 communities', 'Verified badge', '50% fewer ads'],
             color: '#667eea',
             popular: true,
           },
@@ -86,7 +86,7 @@ export default function PricingPage() {
             key: 'premium_plus',
             monthlyPrice: 19.99,
             annualPrice: 209,
-            features: ['Unlimited communities', 'No ads', 'Verified badge'],
+            features: ['Create unlimited communities', 'No ads', 'Verified badge'],
             color: '#fbbf24',
           },
         ]);

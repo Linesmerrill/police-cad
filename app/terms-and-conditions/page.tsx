@@ -44,13 +44,13 @@ export default function TermsAndConditions() {
           <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>These plans enhance your personal experience on the platform:</p>
           <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}><strong style={{ fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)', marginRight: '0.25rem' }}>Plans and Features:</strong></p>
           <ul style={{ margin: '1.25rem 0', paddingLeft: '2rem', listStyleType: 'disc', listStylePosition: 'outside' }}>
-            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}><strong style={{ fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)', marginRight: '0.25rem' }}>Base Plan</strong> ($3/month or $2.67/month annually): Allows you to create up to 5 communities, access default departments, and experience the app with full ads.</li>
-            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}><strong style={{ fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)', marginRight: '0.25rem' }}>Premium Plan</strong> ($8/month or $7.08/month annually): Includes a verified checkmark on your profile, the ability to create up to 10 communities, access to default departments, and a reduced ad experience with up to 50% fewer ads.</li>
-            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}><strong style={{ fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)', marginRight: '0.25rem' }}>Premium + Plan</strong> ($19.99/month or $17.49/month annually): Provides a verified checkmark, unlimited community creation, and an ad-free experience.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}><strong style={{ fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)', marginRight: '0.25rem' }}>Base Plan</strong> ($2/month or $1.67/month annually): Allows you to create up to 5 communities, access default departments, and experience the app with full ads.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}><strong style={{ fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)', marginRight: '0.25rem' }}>Premium Plan</strong> ($5/month or $4.17/month annually): Includes a verified checkmark on your profile, the ability to create up to 10 communities, access to default departments, and a reduced ad experience with up to 50% fewer ads.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}><strong style={{ fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)', marginRight: '0.25rem' }}>Premium + Plan</strong> ($9.99/month or $8.25/month annually): Provides a verified checkmark, unlimited community creation, and an ad-free experience.</li>
           </ul>
           <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}><strong style={{ fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)', marginRight: '0.25rem' }}>Billing and Payment:</strong></p>
           <ul style={{ margin: '1.25rem 0', paddingLeft: '2rem', listStyleType: 'disc', listStylePosition: 'outside' }}>
-            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>User Subscription Plans are available on a monthly or annual basis. Annual plans offer a discounted rate, saving you 12% compared to the monthly billing option.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>User Subscription Plans are available on a monthly or annual basis. Annual plans offer a discounted rate, saving you approximately 17% compared to the monthly billing option.</li>
             <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>You will be charged the full amount for the selected billing period (monthly or annual) at the time of subscription.</li>
             <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>Subscriptions auto-renew at the end of each billing period unless cancelled. You must cancel at least 24 hours prior to the next renewal to avoid additional charges.</li>
             <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>Payments are processed securely through Stripe. You agree to provide accurate payment information and authorize Lines Police CAD to charge the applicable subscription fees.</li>
@@ -408,7 +408,7 @@ export default function TermsAndConditions() {
                 color: 'rgba(255, 255, 255, 0.6)',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
               }}>
-                Last updated: May 20, 2026
+                Last updated: May 26, 2026
               </p>
             </div>
 
