@@ -384,14 +384,18 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
               }} />
             </div>
 
-            {/* Content — centered/stacked on mobile, left-aligned column on desktop */}
+            {/* Content — centered/stacked on mobile, left-aligned column on desktop.
+                Every text element below sets its own alignment explicitly rather
+                than relying on inherited text-align; line-clamp's display:
+                -webkit-box can break inheritance and was leaving the title
+                centered on desktop while siblings flipped to left. */}
             <div
-              className="text-center md:text-left md:flex-1 md:min-w-0 md:py-1"
+              className="md:flex-1 md:min-w-0 md:py-1"
               style={{ display: 'flex', flexDirection: 'column' }}
             >
               {/* Mobile keeps the existing tight rhythm; desktop relaxes type and lines */}
               <h3
-                className="font-bold text-white mb-2 line-clamp-1 text-xl md:text-3xl"
+                className="font-bold text-white mb-2 line-clamp-1 text-xl md:text-3xl text-center md:text-left"
                 style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.2)', minHeight: '28px' }}
               >
                 {community.name}
@@ -426,7 +430,7 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
                 style={{ minHeight: '48px', overflow: 'hidden' }}
               >
                 {community.promotionalDescription && (
-                  <p className="text-slate-400 text-sm md:text-base leading-relaxed line-clamp-2 md:line-clamp-4">
+                  <p className="text-slate-400 text-sm md:text-base leading-relaxed line-clamp-2 md:line-clamp-4 text-center md:text-left">
                     {community.promotionalDescription}
                   </p>
                 )}
