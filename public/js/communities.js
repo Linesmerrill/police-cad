@@ -2053,7 +2053,7 @@ const App = () => {
 
   // Fetch Elite Communities
   useEffect(() => {
-    axios.get(`${API_URL}/api/v2/communities/elite?limit=5&page=0`)
+    axios.get(`${API_URL}/api/v2/communities/elite?limit=20&page=0`)
       .then(response => {
         const communities = response.data.data.map(item => ({
           _id: item._id,
