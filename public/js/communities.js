@@ -11,6 +11,52 @@ function encodeCommunityId(communityId) {
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+// Turn raw text into a mix of strings and clickable <a> tags. Catches
+// http(s) URLs, discord.gg invites, and bare www.* hosts. Trailing
+// sentence punctuation gets stripped from the href and link text so
+// "join https://discord.gg/abc." doesn't render the period as part of
+// the link. URLs without a protocol get prefixed with https:// for the
+// href; the visible text stays as the user wrote it.
+function linkifyText(text) {
+  if (!text || typeof text !== "string") return text;
+  const urlRegex = /(https?:\/\/\S+|discord\.gg\/\S+|www\.\S+)/gi;
+  const result = [];
+  let lastIndex = 0;
+  let match;
+  while ((match = urlRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      result.push(text.slice(lastIndex, match.index));
+    }
+    let url = match[0];
+    const trailing = url.match(/[.,;:!?)\]}>]+$/);
+    let trail = "";
+    if (trailing) {
+      trail = trailing[0];
+      url = url.slice(0, -trail.length);
+    }
+    const href = /^https?:\/\//i.test(url) ? url : "https://" + url;
+    result.push(
+      <a
+        key={match.index}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline underline-offset-2 transition-colors hover:text-amber-300"
+        style={{ color: "#fbbf24" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {url}
+      </a>
+    );
+    if (trail) result.push(trail);
+    lastIndex = match.index + url.length + trail.length;
+  }
+  if (lastIndex < text.length) {
+    result.push(text.slice(lastIndex));
+  }
+  return result;
+}
+
 // ============================================================================
 // LOADING COMPONENTS
 // ============================================================================
@@ -384,74 +430,63 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
               }} />
             </div>
 
-            {/* Content — centered/stacked on mobile, left-aligned column on desktop.
-                Every text element below sets its own alignment explicitly rather
-                than relying on inherited text-align; line-clamp's display:
-                -webkit-box can break inheritance and was leaving the title
-                centered on desktop while siblings flipped to left. */}
-            <div
-              className="md:flex-1 md:min-w-0 md:py-1"
-              style={{ display: 'flex', flexDirection: 'column' }}
-            >
-              {/* Mobile keeps the existing tight rhythm; desktop relaxes type and lines */}
+            {/* Content column.
+                - Mobile: stacks naturally; everything is center-aligned.
+                - Desktop: vertically centered inside the image-height column so
+                  short cards (no description) don't leave a giant void.
+                - text-align is set explicitly on each text element rather than
+                  inherited, because line-clamp's display:-webkit-box breaks
+                  text-align inheritance.
+                - The platform tag is merged with the member count + status into
+                  a single metadata strip under the title, so the bottom of the
+                  card isn't a lonely stats row separated from the CTA. */}
+            <div className="md:flex-1 md:min-w-0 flex flex-col md:justify-center md:py-2">
               <h3
-                className="font-bold text-white mb-2 line-clamp-1 text-xl md:text-3xl text-center md:text-left"
-                style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.2)', minHeight: '28px' }}
+                className="font-bold text-white text-xl md:text-3xl text-center md:text-left line-clamp-2 mb-2 md:mb-3"
+                style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.2)' }}
               >
                 {community.name}
               </h3>
 
-              {/* Tags */}
-              <div
-                className="flex flex-wrap gap-2 mb-3 justify-center md:justify-start"
-                style={{ minHeight: '28px', overflow: 'hidden' }}
-              >
+              {/* Metadata strip: platform · members · status */}
+              <div className="flex items-center flex-wrap gap-x-3 gap-y-1.5 justify-center md:justify-start mb-3 md:mb-4 text-xs md:text-sm">
                 {community.tags?.length > 0 && community.tags.map((tag) => (
                   <Badge key={tag} variant="tag">{tag}</Badge>
                 ))}
-              </div>
-
-              {/* Promotional Text */}
-              <div style={{ minHeight: '24px', overflow: 'hidden' }} className="mb-1 md:mb-2">
-                {community.promotionalText && (
-                  <p
-                    className="text-sm md:text-base font-medium flex items-center gap-1.5 line-clamp-1 justify-center md:justify-start"
-                    style={{ color: '#fbbf24' }}
-                  >
-                    <i className="fa fa-star" style={{ color: '#fbbf24' }}></i>
-                    {community.promotionalText}
-                  </p>
+                {community.tags?.length > 0 && (
+                  <span className="text-slate-600 hidden md:inline">·</span>
                 )}
-              </div>
-
-              {/* Description — 2 lines on mobile, up to 4 on desktop where vertical room exists */}
-              <div
-                className="mb-2 md:mb-4 elite-desc"
-                style={{ minHeight: '48px', overflow: 'hidden' }}
-              >
-                {community.promotionalDescription && (
-                  <p className="text-slate-400 text-sm md:text-base leading-relaxed line-clamp-2 md:line-clamp-4 text-center md:text-left">
-                    {community.promotionalDescription}
-                  </p>
-                )}
-              </div>
-
-              {/* Spacer to push stats and button to bottom of the column */}
-              <div style={{ flex: 1, minHeight: '0' }} />
-
-              {/* Stats */}
-              <div className="flex items-center gap-4 mb-4 text-xs md:text-sm justify-center md:justify-start">
-                <div className="flex items-center gap-1.5 text-slate-400">
+                <span className="flex items-center gap-1.5 text-slate-400">
                   <i className="fa fa-users"></i>
                   <span>{community.membersCount || 0} members</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-emerald-400">
+                </span>
+                <span className="text-slate-600">·</span>
+                <span className="flex items-center gap-1.5 text-emerald-400">
                   <i className="fa fa-circle text-[6px]"></i>
                   <span>Active</span>
-                </div>
+                </span>
               </div>
 
-              {/* CTA Button */}
+              {/* Promotional one-liner */}
+              {community.promotionalText && (
+                <p
+                  className="text-sm md:text-base font-medium flex items-start gap-1.5 line-clamp-1 justify-center md:justify-start mb-2 md:mb-3"
+                  style={{ color: '#fbbf24' }}
+                >
+                  <i className="fa fa-star mt-0.5 md:mt-1 flex-shrink-0" style={{ color: '#fbbf24' }}></i>
+                  <span className="line-clamp-1">{community.promotionalText}</span>
+                </p>
+              )}
+
+              {/* Description — left-aligned on desktop for readability; URLs
+                  and discord.gg invites become real clickable links. */}
+              {community.promotionalDescription && (
+                <p className="text-slate-400 text-sm md:text-base leading-relaxed line-clamp-2 md:line-clamp-3 text-center md:text-left mb-4 md:mb-5">
+                  {linkifyText(community.promotionalDescription)}
+                </p>
+              )}
+
+              {/* CTA */}
               <Button
                 onClick={() => window.location.href = `/community/${encodeCommunityId(community._id)}`}
                 size="lg"
