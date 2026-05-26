@@ -343,12 +343,12 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
 
       {/* Carousel Card */}
       <div
-        className="max-w-sm mx-auto relative z-10"
+        className="max-w-sm md:max-w-3xl lg:max-w-4xl mx-auto relative z-10"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="relative rounded-3xl p-5 shadow-2xl" style={{
+        <div className="relative rounded-3xl p-5 md:p-7 shadow-2xl" style={{
           background: 'rgba(255, 255, 255, 0.05)',
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(251, 191, 36, 0.3)',
@@ -361,78 +361,102 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
             </Badge>
           </div>
 
-          {/* Image */}
-          <div className="relative aspect-square rounded-2xl overflow-hidden mt-2 mb-4" style={{ background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 100%)' }}>
-            <img
-              src={community.imageLink || "/static/images/default-logo.png"}
-              alt={community.name}
-              className="w-full h-full object-cover"
-              onError={(e) => { e.target.src = "/static/images/default-logo.png"; }}
-            />
-            {/* Purple breathing glow behind image */}
-            <div style={{
-              position: 'absolute',
-              inset: '-20%',
-              background: 'radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%)',
-              filter: 'blur(30px)',
-              animation: 'breathe 5s ease-in-out infinite',
-              zIndex: -1,
-              pointerEvents: 'none'
-            }} />
-          </div>
+          {/* Layout: stack on mobile, image-left + content-right on desktop */}
+          <div className="flex flex-col md:flex-row md:items-stretch md:gap-7">
 
-          {/* Content - Fixed height to prevent layout shift */}
-          <div className="text-center" style={{ height: '240px', display: 'flex', flexDirection: 'column' }}>
-            <h3 className="text-xl font-bold text-white mb-2 line-clamp-1" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.2)', minHeight: '28px' }}>{community.name}</h3>
-
-            {/* Tags */}
-            <div className="flex flex-wrap justify-center gap-2 mb-3" style={{ height: '28px', overflow: 'hidden' }}>
-              {community.tags?.length > 0 && community.tags.map((tag) => (
-                <Badge key={tag} variant="tag">{tag}</Badge>
-              ))}
+            {/* Image — fixed square, same physical size mobile & desktop */}
+            <div className="relative aspect-square rounded-2xl overflow-hidden mt-2 mb-4 md:mb-0 md:mt-0 md:flex-shrink-0 md:w-80 lg:w-[22rem]" style={{ background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 100%)' }}>
+              <img
+                src={community.imageLink || "/static/images/default-logo.png"}
+                alt={community.name}
+                className="w-full h-full object-cover"
+                onError={(e) => { e.target.src = "/static/images/default-logo.png"; }}
+              />
+              {/* Purple breathing glow behind image */}
+              <div style={{
+                position: 'absolute',
+                inset: '-20%',
+                background: 'radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%)',
+                filter: 'blur(30px)',
+                animation: 'breathe 5s ease-in-out infinite',
+                zIndex: -1,
+                pointerEvents: 'none'
+              }} />
             </div>
 
-            {/* Promotional Text */}
-            <div style={{ height: '24px', overflow: 'hidden' }}>
-              {community.promotionalText && (
-                <p className="text-sm font-medium flex items-center justify-center gap-1.5 line-clamp-1" style={{ color: '#fbbf24' }}>
-                  <i className="fa fa-star" style={{ color: '#fbbf24' }}></i>
-                  {community.promotionalText}
-                </p>
-              )}
-            </div>
-
-            {/* Description */}
-            <div style={{ height: '48px', overflow: 'hidden' }} className="mb-2">
-              {community.promotionalDescription && (
-                <p className="text-slate-400 text-sm line-clamp-2">{community.promotionalDescription}</p>
-              )}
-            </div>
-
-            {/* Spacer to push stats and button to bottom */}
-            <div style={{ flex: 1 }} />
-
-            {/* Stats */}
-            <div className="flex items-center justify-center gap-4 mb-4 text-xs">
-              <div className="flex items-center gap-1.5 text-slate-400">
-                <i className="fa fa-users"></i>
-                <span>{community.membersCount || 0} members</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-emerald-400">
-                <i className="fa fa-circle text-[6px]"></i>
-                <span>Active</span>
-              </div>
-            </div>
-
-            {/* CTA Button */}
-            <Button
-              onClick={() => window.location.href = `/community/${encodeCommunityId(community._id)}`}
-              size="lg"
-              className="w-full"
+            {/* Content — centered/stacked on mobile, left-aligned column on desktop */}
+            <div
+              className="text-center md:text-left md:flex-1 md:min-w-0 md:py-1"
+              style={{ display: 'flex', flexDirection: 'column' }}
             >
-              <span>Explore Community</span>
-              <i className="fa fa-arrow-right ml-2"></i>
-            </Button>
+              {/* Mobile keeps the existing tight rhythm; desktop relaxes type and lines */}
+              <h3
+                className="font-bold text-white mb-2 line-clamp-1 text-xl md:text-3xl"
+                style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.2)', minHeight: '28px' }}
+              >
+                {community.name}
+              </h3>
+
+              {/* Tags */}
+              <div
+                className="flex flex-wrap gap-2 mb-3 justify-center md:justify-start"
+                style={{ minHeight: '28px', overflow: 'hidden' }}
+              >
+                {community.tags?.length > 0 && community.tags.map((tag) => (
+                  <Badge key={tag} variant="tag">{tag}</Badge>
+                ))}
+              </div>
+
+              {/* Promotional Text */}
+              <div style={{ minHeight: '24px', overflow: 'hidden' }} className="mb-1 md:mb-2">
+                {community.promotionalText && (
+                  <p
+                    className="text-sm md:text-base font-medium flex items-center gap-1.5 line-clamp-1 justify-center md:justify-start"
+                    style={{ color: '#fbbf24' }}
+                  >
+                    <i className="fa fa-star" style={{ color: '#fbbf24' }}></i>
+                    {community.promotionalText}
+                  </p>
+                )}
+              </div>
+
+              {/* Description — 2 lines on mobile, up to 4 on desktop where vertical room exists */}
+              <div
+                className="mb-2 md:mb-4 elite-desc"
+                style={{ minHeight: '48px', overflow: 'hidden' }}
+              >
+                {community.promotionalDescription && (
+                  <p className="text-slate-400 text-sm md:text-base leading-relaxed line-clamp-2 md:line-clamp-4">
+                    {community.promotionalDescription}
+                  </p>
+                )}
+              </div>
+
+              {/* Spacer to push stats and button to bottom of the column */}
+              <div style={{ flex: 1, minHeight: '0' }} />
+
+              {/* Stats */}
+              <div className="flex items-center gap-4 mb-4 text-xs md:text-sm justify-center md:justify-start">
+                <div className="flex items-center gap-1.5 text-slate-400">
+                  <i className="fa fa-users"></i>
+                  <span>{community.membersCount || 0} members</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-emerald-400">
+                  <i className="fa fa-circle text-[6px]"></i>
+                  <span>Active</span>
+                </div>
+              </div>
+
+              {/* CTA Button */}
+              <Button
+                onClick={() => window.location.href = `/community/${encodeCommunityId(community._id)}`}
+                size="lg"
+                className="w-full md:w-auto md:self-start md:px-8"
+              >
+                <span>Explore Community</span>
+                <i className="fa fa-arrow-right ml-2"></i>
+              </Button>
+            </div>
           </div>
 
           {/* Navigation Arrows */}
@@ -440,16 +464,16 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
             <>
               <button
                 onClick={goPrev}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white rounded-full transition-all duration-300"
-                style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)' }}
+                className="absolute left-2 md:-left-5 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-white rounded-full transition-all duration-300 hover:bg-white/20"
+                style={{ background: 'rgba(15, 15, 25, 0.7)', border: '1px solid rgba(251, 191, 36, 0.3)', backdropFilter: 'blur(8px)' }}
                 aria-label="Previous"
               >
                 <i className="fa fa-chevron-left"></i>
               </button>
               <button
                 onClick={goNext}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white rounded-full transition-all duration-300"
-                style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)' }}
+                className="absolute right-2 md:-right-5 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-white rounded-full transition-all duration-300 hover:bg-white/20"
+                style={{ background: 'rgba(15, 15, 25, 0.7)', border: '1px solid rgba(251, 191, 36, 0.3)', backdropFilter: 'blur(8px)' }}
                 aria-label="Next"
               >
                 <i className="fa fa-chevron-right"></i>
@@ -478,7 +502,7 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-3 mt-8 max-w-md mx-auto relative z-10">
+      <div className="grid grid-cols-3 gap-3 md:gap-4 mt-8 max-w-md md:max-w-3xl lg:max-w-4xl mx-auto relative z-10">
         <div className="rounded-xl p-3 text-center" style={{
           background: 'rgba(255, 255, 255, 0.05)',
           border: '1px solid rgba(59, 130, 246, 0.2)'
