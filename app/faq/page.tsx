@@ -88,10 +88,10 @@ const faqData = [
         question: 'How do I upgrade my account to create more communities?',
         answer: (<>You can upgrade your account through our mobile app while we set up web access for purchases. The subscription tiers are:
           <ul style={{ marginTop: '0.75rem', marginBottom: '0.5rem', paddingLeft: '1.5rem', listStyleType: 'disc' }}>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Free</strong> — 1 community</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Base</strong> — Up to 5 communities</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Premium</strong> — Up to 10 communities, verified checkmark, 50% fewer ads</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Premium+</strong> — Unlimited communities, verified checkmark, no ads</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Free</strong> — Create 1 community</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Base</strong> ($2/month) — Create up to 5 communities</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Premium</strong> ($5/month) — Create up to 10 communities, verified checkmark, 50% fewer ads</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Premium+</strong> ($9.99/month) — Create unlimited communities, verified checkmark, no ads</li>
           </ul>
         </>)
       },

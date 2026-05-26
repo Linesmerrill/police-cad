@@ -12,6 +12,9 @@ interface SubscriptionTier {
   key: string;
   monthlyPrice: number;
   annualPrice: number;
+  originalMonthlyPrice?: number;
+  originalAnnualPrice?: number;
+  onSale?: boolean;
   features: string[];
   color: string;
   popular?: boolean;
@@ -66,7 +69,7 @@ export default function PricingPage() {
             key: 'base',
             monthlyPrice: 3,
             annualPrice: 32,
-            features: ['5 communities', 'Default departments', 'Full ads'],
+            features: ['Create up to 5 communities', 'Default departments', 'Full ads'],
             color: '#3b82f6',
           },
           {
@@ -74,7 +77,7 @@ export default function PricingPage() {
             key: 'premium',
             monthlyPrice: 8,
             annualPrice: 85,
-            features: ['10 communities', 'Verified badge', '50% fewer ads'],
+            features: ['Create up to 10 communities', 'Verified badge', '50% fewer ads'],
             color: '#667eea',
             popular: true,
           },
@@ -83,7 +86,7 @@ export default function PricingPage() {
             key: 'premium_plus',
             monthlyPrice: 19.99,
             annualPrice: 209,
-            features: ['Unlimited communities', 'No ads', 'Verified badge'],
+            features: ['Create unlimited communities', 'No ads', 'Verified badge'],
             color: '#fbbf24',
           },
         ]);
@@ -344,6 +347,8 @@ export default function PricingPage() {
             {tiers.map((tier) => {
               const isCurrentPlan = currentPlan === tier.key;
               const price = isAnnual ? tier.annualPrice : tier.monthlyPrice;
+              const originalPrice = isAnnual ? tier.originalAnnualPrice : tier.originalMonthlyPrice;
+              const showSale = !!tier.onSale && typeof originalPrice === 'number' && originalPrice > price;
               const isPopular = tier.popular;
 
               return (
@@ -400,6 +405,34 @@ export default function PricingPage() {
 
                   {/* Price */}
                   <div style={{ marginBottom: '24px' }}>
+                    {showSale && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '4px'
+                      }}>
+                        <span style={{
+                          background: tier.color,
+                          color: '#000',
+                          padding: '2px 8px',
+                          borderRadius: '9999px',
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.05em',
+                          textTransform: 'uppercase'
+                        }}>
+                          Sale
+                        </span>
+                        <span style={{
+                          fontSize: '1rem',
+                          color: 'rgba(255, 255, 255, 0.4)',
+                          textDecoration: 'line-through'
+                        }}>
+                          ${originalPrice}
+                        </span>
+                      </div>
+                    )}
                     <span style={{
                       fontSize: '2.5rem',
                       fontWeight: 700,

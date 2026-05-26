@@ -147,6 +147,22 @@ export default function ManageSubscriptionPage() {
   const source = subscription?.source || '';
   const planColor = getPlanColor(plan);
 
+  // Kickback banner: show while the credit's banner window is still open.
+  // expirationDate on the user reflects the post-kickback renewal date.
+  const kickback = subscription?.kickbackBanner;
+  const kickbackActive = (() => {
+    if (!kickback || !kickback.months || !kickback.expiresAt) return false;
+    const expiresAt = new Date(kickback.expiresAt).getTime();
+    return Number.isFinite(expiresAt) && expiresAt > Date.now();
+  })();
+  const newRenewalDisplay = (() => {
+    const raw = subscription?.expirationDate || subscription?.currentPeriodEnd;
+    if (!raw) return null;
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return null;
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  })();
+
   return (
     <main style={{
       minHeight: '100vh',
@@ -209,6 +225,43 @@ export default function ManageSubscriptionPage() {
               color: '#ef4444'
             }}>
               {error}
+            </div>
+          )}
+
+          {/* Kickback Banner — visible while the price-drop credit is still recent */}
+          {kickbackActive && (
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(56, 189, 248, 0.06))',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
+              borderRadius: '16px',
+              padding: '20px 24px',
+              marginBottom: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              color: '#fff'
+            }}>
+              <div style={{
+                fontSize: '2rem',
+                lineHeight: 1
+              }} aria-hidden="true">🎁</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, marginBottom: '4px' }}>
+                  Thanks for your recent purchase — we&rsquo;ve added{' '}
+                  <strong style={{ color: '#38bdf8' }}>
+                    {kickback.months} {kickback.months === 1 ? 'month' : 'months'}
+                  </strong>
+                  {' '}of free time.
+                </div>
+                {newRenewalDisplay && (
+                  <div style={{
+                    fontSize: '0.9rem',
+                    color: 'rgba(255, 255, 255, 0.7)'
+                  }}>
+                    Your new renewal date is <strong style={{ color: '#fff' }}>{newRenewalDisplay}</strong>.
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
