@@ -247,7 +247,7 @@ export default function ManageSubscriptionPage() {
               }} aria-hidden="true">🎁</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-                  Thanks for your recent purchase — we've added{' '}
+                  Thanks for your recent purchase — we&rsquo;ve added{' '}
                   <strong style={{ color: '#38bdf8' }}>
                     {kickback.months} {kickback.months === 1 ? 'month' : 'months'}
                   </strong>
