@@ -387,7 +387,7 @@
             <div class="es-dept-grid">
               <div class="es-field">
                 <label class="es-label">Base pay ($/hr)</label>
-                <input type="number" min="0" step="0.01" class="es-input" data-field="basePayPerHour" value="${basePay}">
+                <input type="number" min="0" max="10000000" step="0.01" class="es-input" data-field="basePayPerHour" value="${basePay}">
               </div>
               <div class="es-field">
                 <label class="es-label">Payout mode</label>
@@ -398,15 +398,15 @@
               </div>
               <div class="es-field">
                 <label class="es-label">Max session (minutes)</label>
-                <input type="number" min="1" step="1" class="es-input" data-field="maxSessionMinutes" value="${maxSess}">
+                <input type="number" min="1" max="10080" step="1" class="es-input" data-field="maxSessionMinutes" value="${maxSess}">
               </div>
               <div class="es-field">
                 <label class="es-label">AFK prompt every (seconds)</label>
-                <input type="number" min="30" step="1" class="es-input" data-field="afkPromptIntervalSeconds" value="${afkPrompt}">
+                <input type="number" min="30" max="86400" step="1" class="es-input" data-field="afkPromptIntervalSeconds" value="${afkPrompt}">
               </div>
               <div class="es-field">
                 <label class="es-label">AFK grace (seconds)</label>
-                <input type="number" min="10" step="1" class="es-input" data-field="afkGraceSeconds" value="${afkGrace}">
+                <input type="number" min="10" max="86400" step="1" class="es-input" data-field="afkGraceSeconds" value="${afkGrace}">
               </div>
             </div>
             <div class="es-dept-actions">
@@ -425,6 +425,21 @@
       saveBtn.addEventListener('click', (e) => { e.stopPropagation(); saveDepartment(deptEl); });
       // Stop input clicks from collapsing the panel
       deptEl.querySelector('.es-dept-body').addEventListener('click', (e) => e.stopPropagation());
+
+      // Snap each numeric input back into its [min, max] range on blur so the
+      // user sees the value that will actually be persisted. Without this, a
+      // huge typo (e.g. AFK prompt = 600000000000000000) is silently clamped
+      // server-side and the input still displays the original junk value.
+      deptEl.querySelectorAll('input[type="number"][min][max]').forEach(input => {
+        input.addEventListener('blur', () => {
+          const v = parseFloat(input.value);
+          if (!isFinite(v)) return;
+          const lo = parseFloat(input.min);
+          const hi = parseFloat(input.max);
+          if (v < lo) input.value = lo;
+          else if (v > hi) input.value = hi;
+        });
+      });
     });
 
     // Re-apply any active filter so a re-render doesn't expose hidden rows.

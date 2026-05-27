@@ -508,7 +508,7 @@
     html += '<div id="dds-economy-fields" style="' + (economyEnabled ? '' : 'display:none;') + '">' +
       '<div class="dds-field">' +
         '<label class="dds-field-label">Base pay ($/hour)</label>' +
-        '<input type="number" class="dds-input" id="dds-economy-base-pay" min="0" step="0.01" value="' + basePayDollars.toFixed(2) + '"' + disAttr + ' />' +
+        '<input type="number" class="dds-input" id="dds-economy-base-pay" min="0" max="10000000" step="0.01" value="' + basePayDollars.toFixed(2) + '"' + disAttr + ' />' +
       '</div>' +
       '<div class="dds-field">' +
         '<label class="dds-field-label">Payout mode</label>' +
@@ -519,15 +519,15 @@
       '</div>' +
       '<div class="dds-field">' +
         '<label class="dds-field-label">Max session (minutes)</label>' +
-        '<input type="number" class="dds-input" id="dds-economy-max-session" min="1" step="1" value="' + maxSessionMinutes + '"' + disAttr + ' />' +
+        '<input type="number" class="dds-input" id="dds-economy-max-session" min="1" max="10080" step="1" value="' + maxSessionMinutes + '"' + disAttr + ' />' +
       '</div>' +
       '<div class="dds-field">' +
         '<label class="dds-field-label">AFK prompt interval (seconds)</label>' +
-        '<input type="number" class="dds-input" id="dds-economy-afk-prompt" min="30" step="1" value="' + afkPromptSec + '"' + disAttr + ' />' +
+        '<input type="number" class="dds-input" id="dds-economy-afk-prompt" min="30" max="86400" step="1" value="' + afkPromptSec + '"' + disAttr + ' />' +
       '</div>' +
       '<div class="dds-field">' +
         '<label class="dds-field-label">AFK grace (seconds)</label>' +
-        '<input type="number" class="dds-input" id="dds-economy-afk-grace" min="10" step="1" value="' + afkGraceSec + '"' + disAttr + ' />' +
+        '<input type="number" class="dds-input" id="dds-economy-afk-grace" min="10" max="86400" step="1" value="' + afkGraceSec + '"' + disAttr + ' />' +
       '</div>' +
     '</div>';
     html += '</div>';
@@ -669,6 +669,18 @@
       });
       $body.find('#dds-economy-base-pay, #dds-economy-max-session, #dds-economy-afk-prompt, #dds-economy-afk-grace').on('input', function () {
         debounceSave('economy', autoSaveEconomy, DEBOUNCE_MS);
+      });
+      // Snap each numeric input into [min, max] on blur so the user sees the
+      // value that will actually be persisted. Without this, a huge typo
+      // (e.g. AFK prompt = 600000000000000000) is silently clamped server-side
+      // and the input still shows the original junk value.
+      $body.find('#dds-economy-base-pay, #dds-economy-max-session, #dds-economy-afk-prompt, #dds-economy-afk-grace').on('blur', function () {
+        var v = parseFloat(this.value);
+        if (!isFinite(v)) return;
+        var lo = parseFloat(this.min);
+        var hi = parseFloat(this.max);
+        if (v < lo) this.value = lo;
+        else if (v > hi) this.value = hi;
       });
       $body.find('#dds-economy-payout-mode').on('change', function () {
         autoSaveEconomy();
