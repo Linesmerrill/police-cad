@@ -30,9 +30,16 @@
   var _confettiFrame = null;
 
   function getApi() {
-    return (typeof API_URL !== 'undefined' && API_URL)
-      ? API_URL
-      : 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+    // community-details.ejs sets `window.API_URL` directly. department- and
+    // command-dashboard wrap their script in an IIFE, so `API_URL` is local
+    // to that closure and not visible here — fall through to `ddConfig` in
+    // that case before resorting to the hardcoded prod URL.
+    if (typeof API_URL !== 'undefined' && API_URL) return API_URL;
+    if (typeof window !== 'undefined') {
+      if (window.API_URL) return window.API_URL;
+      if (window.ddConfig && window.ddConfig.API_URL) return window.ddConfig.API_URL;
+    }
+    return 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
   }
 
   function escapeRankHtml(str) {
