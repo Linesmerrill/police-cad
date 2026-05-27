@@ -683,13 +683,17 @@
     var enabled = $('#dds-economy-enabled').is(':checked');
     var basePayDollars = parseFloat($('#dds-economy-base-pay').val());
     if (!isFinite(basePayDollars) || basePayDollars < 0) basePayDollars = 0;
+    if (basePayDollars > 10000000) basePayDollars = 10000000; // $10M/hr dollar cap
     var basePayCents = Math.round(basePayDollars * 100);
     var maxSession = parseInt($('#dds-economy-max-session').val(), 10);
     if (!isFinite(maxSession) || maxSession < 1) maxSession = 120;
+    if (maxSession > 24 * 60 * 7) maxSession = 24 * 60 * 7;
     var afkPrompt = parseInt($('#dds-economy-afk-prompt').val(), 10);
     if (!isFinite(afkPrompt) || afkPrompt < 30) afkPrompt = 600;
+    if (afkPrompt > 86400) afkPrompt = 86400;
     var afkGrace = parseInt($('#dds-economy-afk-grace').val(), 10);
     if (!isFinite(afkGrace) || afkGrace < 10) afkGrace = 60;
+    if (afkGrace > 86400) afkGrace = 86400;
     var payoutMode = $('#dds-economy-payout-mode').val() === 'on_clockout' ? 'on_clockout' : 'on_heartbeat';
 
     showSaveStatus('#dds-economy-status', 'saving');

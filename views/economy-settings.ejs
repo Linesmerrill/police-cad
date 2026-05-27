@@ -461,12 +461,16 @@
     const enabled = get('economyEnabled').checked;
     let basePay = parseFloat(get('basePayPerHour').value);
     if (!isFinite(basePay) || basePay < 0) basePay = 0;
+    if (basePay > 10_000_000) basePay = 10_000_000; // $10M/hr dollar cap (server stores cents)
     let maxSess = parseInt(get('maxSessionMinutes').value, 10);
     if (!isFinite(maxSess) || maxSess < 1) maxSess = 120;
+    if (maxSess > 24 * 60 * 7) maxSess = 24 * 60 * 7;
     let afkPrompt = parseInt(get('afkPromptIntervalSeconds').value, 10);
     if (!isFinite(afkPrompt) || afkPrompt < 30) afkPrompt = 600;
+    if (afkPrompt > 86400) afkPrompt = 86400;
     let afkGrace = parseInt(get('afkGraceSeconds').value, 10);
     if (!isFinite(afkGrace) || afkGrace < 10) afkGrace = 60;
+    if (afkGrace > 86400) afkGrace = 86400;
     const payoutMode = get('payoutMode').value === 'on_clockout' ? 'on_clockout' : 'on_heartbeat';
 
     setRowStatus('saving', 'Saving…');
