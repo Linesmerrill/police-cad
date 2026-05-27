@@ -68,6 +68,17 @@
     }
     .es-field.has-error .es-field-hint { display: none; }
     .es-field.has-error .es-field-error { display: block; }
+    .es-label-row { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.4rem; }
+    .es-label-row .es-label { margin-bottom: 0; }
+    .es-help-btn {
+      width: 18px; height: 18px; padding: 0; border: 0; cursor: pointer;
+      background: transparent; color: var(--es-text-dim);
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 50%; transition: color 120ms ease, background 120ms ease;
+    }
+    .es-help-btn:hover { color: var(--es-accent); background: var(--es-accent-dim); }
+    .es-help-btn:focus { outline: none; color: var(--es-accent); background: var(--es-accent-dim); }
+    .es-help-btn i { font-size: 0.78rem; }
     .es-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
     .es-toggle-desc { font-size: 0.78rem; color: var(--es-text-dim); margin-top: 0.15rem; }
     .es-switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
@@ -423,7 +434,12 @@
                 <div class="es-field-error">Must be a whole number between 30 and 86,400</div>
               </div>
               <div class="es-field">
-                <label class="es-label">AFK grace (seconds)</label>
+                <div class="es-label-row">
+                  <label class="es-label">AFK grace (seconds)</label>
+                  <button type="button" class="es-help-btn" data-help="afkGrace" aria-label="What is AFK grace?">
+                    <i class="fa-regular fa-circle-question"></i>
+                  </button>
+                </div>
                 <input type="number" min="10" max="86400" step="1" class="es-input" data-field="afkGraceSeconds" value="${afkGrace}">
                 <div class="es-field-hint">Range: 10 – 86,400 (1 day)</div>
                 <div class="es-field-error">Must be a whole number between 10 and 86,400</div>
@@ -445,6 +461,15 @@
       saveBtn.addEventListener('click', (e) => { e.stopPropagation(); saveDepartment(deptEl); });
       // Stop input clicks from collapsing the panel
       deptEl.querySelector('.es-dept-body').addEventListener('click', (e) => e.stopPropagation());
+
+      // Field-help icons → ddModal explainer (uses the shared standalone modal
+      // injected by partials/dd-modal at the bottom of this view).
+      deptEl.querySelectorAll('[data-help]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          showFieldHelp(btn.dataset.help);
+        });
+      });
 
       // Real-time validation: red border + error text under any out-of-range
       // numeric input. Save is blocked while anything is invalid so a typo
@@ -479,6 +504,29 @@
     saveBtn.style.opacity = anyInvalid ? '0.45' : '';
     saveBtn.style.cursor = anyInvalid ? 'not-allowed' : '';
     saveBtn.title = anyInvalid ? 'Fix the highlighted fields first' : '';
+  }
+
+  // Plain-language explainers shown when the user clicks a help (?) icon
+  // next to a field label. Add an entry here + data-help="key" on the
+  // <button> to wire up a new one.
+  const FIELD_HELP = {
+    afkGrace: {
+      title: 'What is AFK grace?',
+      message: 'After the AFK prompt appears, members have this many seconds to confirm they\'re still active. If they don\'t respond in time, they\'re automatically clocked out and stop earning pay.',
+      detail: 'Example: with AFK prompt every 600s and AFK grace 60s, members are pinged every 10 minutes and have 1 minute to confirm. Otherwise their session ends.',
+    },
+  };
+  function showFieldHelp(key) {
+    const help = FIELD_HELP[key];
+    if (!help || typeof window.ddModal !== 'function') return;
+    window.ddModal({
+      type: 'info',
+      icon: 'fa-circle-question',
+      title: help.title,
+      message: help.message,
+      detail: help.detail,
+      buttons: [{ label: 'Got it', class: 'dd-modal-btn-primary' }],
+    });
   }
 
   function applyDeptFilter() {
@@ -558,6 +606,7 @@
 
   loadDepartments();
 </script>
+<%- include('partials/dd-modal') %>
 <%- include('partials/pending-deletion-gate') %>
 </body>
 </html>

@@ -172,6 +172,11 @@
       '.dds-input.is-invalid:focus{border-color:#ef4444;box-shadow:0 0 0 2px rgba(239,68,68,0.18);}' +
       '.dds-field.has-error .dds-field-hint{display:none;}' +
       '.dds-field.has-error .dds-field-error{display:block;}' +
+      '.dds-label-row{display:flex;align-items:center;gap:0.35rem;margin-bottom:0.35rem;}' +
+      '.dds-label-row .dds-field-label{margin-bottom:0;}' +
+      '.dds-help-btn{width:18px;height:18px;padding:0;border:0;cursor:pointer;background:transparent;color:var(--dd-text-muted);display:inline-flex;align-items:center;justify-content:center;border-radius:50%;transition:color 120ms ease,background 120ms ease;}' +
+      '.dds-help-btn:hover,.dds-help-btn:focus{outline:none;color:var(--dd-accent);background:rgba(255,255,255,0.05);}' +
+      '.dds-help-btn i{font-size:0.7rem;}' +
       '.dds-textarea{width:100%;padding:0.5rem 0.65rem;background:var(--dd-glass);border:1px solid var(--dd-glass-border);border-radius:8px;color:var(--dd-text);font-size:0.8125rem;outline:none;font-family:"Outfit",sans-serif;transition:border-color 0.2s;box-sizing:border-box;resize:vertical;min-height:60px;}' +
       '.dds-textarea:focus{border-color:var(--dd-accent);}' +
       '.dds-textarea:disabled{opacity:0.5;cursor:not-allowed;}' +
@@ -538,7 +543,12 @@
         '<div class="dds-field-error">Must be a whole number between 30 and 86,400</div>' +
       '</div>' +
       '<div class="dds-field">' +
-        '<label class="dds-field-label">AFK grace (seconds)</label>' +
+        '<div class="dds-label-row">' +
+          '<label class="dds-field-label">AFK grace (seconds)</label>' +
+          '<button type="button" class="dds-help-btn" data-help="afkGrace" aria-label="What is AFK grace?">' +
+            '<i class="fa-regular fa-circle-question"></i>' +
+          '</button>' +
+        '</div>' +
         '<input type="number" class="dds-input" id="dds-economy-afk-grace" min="10" max="86400" step="1" value="' + afkGraceSec + '"' + disAttr + ' />' +
         '<div class="dds-field-hint">Range: 10 – 86,400 (1 day)</div>' +
         '<div class="dds-field-error">Must be a whole number between 10 and 86,400</div>' +
@@ -699,7 +709,36 @@
       $body.find('#dds-economy-payout-mode').on('change', function () {
         autoSaveEconomy();
       });
+      // Field-help (?) icons → ddModal explainer
+      $body.find('[data-help]').on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showDdsFieldHelp(this.getAttribute('data-help'));
+      });
     }
+  }
+
+  // Plain-language explainers shown when the user clicks a help (?) icon
+  // next to a field label. Add an entry here + data-help="key" on the
+  // <button> to wire up a new one.
+  var DDS_FIELD_HELP = {
+    afkGrace: {
+      title: 'What is AFK grace?',
+      message: 'After the AFK prompt appears, members have this many seconds to confirm they\'re still active. If they don\'t respond in time, they\'re automatically clocked out and stop earning pay.',
+      detail: 'Example: with AFK prompt every 600s and AFK grace 60s, members are pinged every 10 minutes and have 1 minute to confirm. Otherwise their session ends.',
+    },
+  };
+  function showDdsFieldHelp(key) {
+    var help = DDS_FIELD_HELP[key];
+    if (!help || typeof window.ddModal !== 'function') return;
+    window.ddModal({
+      type: 'info',
+      icon: 'fa-circle-question',
+      title: help.title,
+      message: help.message,
+      detail: help.detail,
+      buttons: [{ label: 'Got it', class: 'dd-modal-btn-primary' }],
+    });
   }
 
   /** Save per-department economy settings. Money entered as dollars; persisted as cents. */
