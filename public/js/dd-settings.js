@@ -166,6 +166,17 @@
       '.dds-input{width:100%;padding:0.5rem 0.65rem;background:var(--dd-glass);border:1px solid var(--dd-glass-border);border-radius:8px;color:var(--dd-text);font-size:0.8125rem;outline:none;font-family:"Outfit",sans-serif;transition:border-color 0.2s;box-sizing:border-box;}' +
       '.dds-input:focus{border-color:var(--dd-accent);}' +
       '.dds-input:disabled{opacity:0.5;cursor:not-allowed;}' +
+      '.dds-field-hint{font-size:0.6875rem;color:var(--dd-text-muted);margin-top:0.3rem;}' +
+      '.dds-field-error{font-size:0.6875rem;color:#ef4444;margin-top:0.3rem;display:none;}' +
+      '.dds-input.is-invalid{border-color:#ef4444;}' +
+      '.dds-input.is-invalid:focus{border-color:#ef4444;box-shadow:0 0 0 2px rgba(239,68,68,0.18);}' +
+      '.dds-field.has-error .dds-field-hint{display:none;}' +
+      '.dds-field.has-error .dds-field-error{display:block;}' +
+      '.dds-label-row{display:flex;align-items:center;gap:0.35rem;margin-bottom:0.35rem;}' +
+      '.dds-label-row .dds-field-label{margin-bottom:0;}' +
+      '.dds-help-btn{width:18px;height:18px;padding:0;border:0;cursor:pointer;background:transparent;color:var(--dd-text-muted);display:inline-flex;align-items:center;justify-content:center;border-radius:50%;transition:color 120ms ease,background 120ms ease;}' +
+      '.dds-help-btn:hover,.dds-help-btn:focus{outline:none;color:var(--dd-accent);background:rgba(255,255,255,0.05);}' +
+      '.dds-help-btn i{font-size:0.7rem;}' +
       '.dds-textarea{width:100%;padding:0.5rem 0.65rem;background:var(--dd-glass);border:1px solid var(--dd-glass-border);border-radius:8px;color:var(--dd-text);font-size:0.8125rem;outline:none;font-family:"Outfit",sans-serif;transition:border-color 0.2s;box-sizing:border-box;resize:vertical;min-height:60px;}' +
       '.dds-textarea:focus{border-color:var(--dd-accent);}' +
       '.dds-textarea:disabled{opacity:0.5;cursor:not-allowed;}' +
@@ -508,7 +519,9 @@
     html += '<div id="dds-economy-fields" style="' + (economyEnabled ? '' : 'display:none;') + '">' +
       '<div class="dds-field">' +
         '<label class="dds-field-label">Base pay ($/hour)</label>' +
-        '<input type="number" class="dds-input" id="dds-economy-base-pay" min="0" step="0.01" value="' + basePayDollars.toFixed(2) + '"' + disAttr + ' />' +
+        '<input type="number" class="dds-input" id="dds-economy-base-pay" min="0" max="10000000" step="0.01" value="' + basePayDollars.toFixed(2) + '"' + disAttr + ' />' +
+        '<div class="dds-field-hint">Range: $0 – $10,000,000</div>' +
+        '<div class="dds-field-error">Must be between $0 and $10,000,000</div>' +
       '</div>' +
       '<div class="dds-field">' +
         '<label class="dds-field-label">Payout mode</label>' +
@@ -519,15 +532,26 @@
       '</div>' +
       '<div class="dds-field">' +
         '<label class="dds-field-label">Max session (minutes)</label>' +
-        '<input type="number" class="dds-input" id="dds-economy-max-session" min="1" step="1" value="' + maxSessionMinutes + '"' + disAttr + ' />' +
+        '<input type="number" class="dds-input" id="dds-economy-max-session" min="1" max="10080" step="1" value="' + maxSessionMinutes + '"' + disAttr + ' />' +
+        '<div class="dds-field-hint">Range: 1 – 10,080 (1 week)</div>' +
+        '<div class="dds-field-error">Must be a whole number between 1 and 10,080</div>' +
       '</div>' +
       '<div class="dds-field">' +
         '<label class="dds-field-label">AFK prompt interval (seconds)</label>' +
-        '<input type="number" class="dds-input" id="dds-economy-afk-prompt" min="30" step="1" value="' + afkPromptSec + '"' + disAttr + ' />' +
+        '<input type="number" class="dds-input" id="dds-economy-afk-prompt" min="30" max="86400" step="1" value="' + afkPromptSec + '"' + disAttr + ' />' +
+        '<div class="dds-field-hint">Range: 30 – 86,400 (1 day)</div>' +
+        '<div class="dds-field-error">Must be a whole number between 30 and 86,400</div>' +
       '</div>' +
       '<div class="dds-field">' +
-        '<label class="dds-field-label">AFK grace (seconds)</label>' +
-        '<input type="number" class="dds-input" id="dds-economy-afk-grace" min="10" step="1" value="' + afkGraceSec + '"' + disAttr + ' />' +
+        '<div class="dds-label-row">' +
+          '<label class="dds-field-label">AFK grace (seconds)</label>' +
+          '<button type="button" class="dds-help-btn" data-help="afkGrace" aria-label="What is AFK grace?">' +
+            '<i class="fa-regular fa-circle-question"></i>' +
+          '</button>' +
+        '</div>' +
+        '<input type="number" class="dds-input" id="dds-economy-afk-grace" min="10" max="86400" step="1" value="' + afkGraceSec + '"' + disAttr + ' />' +
+        '<div class="dds-field-hint">Range: 10 – 86,400 (1 day)</div>' +
+        '<div class="dds-field-error">Must be a whole number between 10 and 86,400</div>' +
       '</div>' +
     '</div>';
     html += '</div>';
@@ -667,13 +691,54 @@
         $('#dds-economy-enabled-desc').text(on ? 'Members can clock in and earn pay' : 'Clock-in is disabled');
         autoSaveEconomy();
       });
-      $body.find('#dds-economy-base-pay, #dds-economy-max-session, #dds-economy-afk-prompt, #dds-economy-afk-grace').on('input', function () {
-        debounceSave('economy', autoSaveEconomy, DEBOUNCE_MS);
+      // Real-time validation: paint the input red and show the inline error
+      // when the value is out of [min, max], and SKIP the autosave debounce so
+      // a typo never silently makes it to the server clamp.
+      $body.find('#dds-economy-base-pay, #dds-economy-max-session, #dds-economy-afk-prompt, #dds-economy-afk-grace').on('input blur', function () {
+        var v = parseFloat(this.value);
+        var lo = parseFloat(this.min);
+        var hi = parseFloat(this.max);
+        var invalid = this.value === '' || !isFinite(v) || v < lo || v > hi;
+        var $field = $(this).closest('.dds-field');
+        $(this).toggleClass('is-invalid', invalid);
+        $field.toggleClass('has-error', invalid);
+        if (!invalid) {
+          debounceSave('economy', autoSaveEconomy, DEBOUNCE_MS);
+        }
       });
       $body.find('#dds-economy-payout-mode').on('change', function () {
         autoSaveEconomy();
       });
+      // Field-help (?) icons → ddModal explainer
+      $body.find('[data-help]').on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showDdsFieldHelp(this.getAttribute('data-help'));
+      });
     }
+  }
+
+  // Plain-language explainers shown when the user clicks a help (?) icon
+  // next to a field label. Add an entry here + data-help="key" on the
+  // <button> to wire up a new one.
+  var DDS_FIELD_HELP = {
+    afkGrace: {
+      title: 'What is AFK grace?',
+      message: 'After the AFK prompt appears, members have this many seconds to confirm they\'re still active. If they don\'t respond in time, they\'re automatically clocked out and stop earning pay.',
+      detail: 'Example: with AFK prompt every 600s and AFK grace 60s, members are pinged every 10 minutes and have 1 minute to confirm. Otherwise their session ends.',
+    },
+  };
+  function showDdsFieldHelp(key) {
+    var help = DDS_FIELD_HELP[key];
+    if (!help || typeof window.ddModal !== 'function') return;
+    window.ddModal({
+      type: 'info',
+      icon: 'fa-circle-question',
+      title: help.title,
+      message: help.message,
+      detail: help.detail,
+      buttons: [{ label: 'Got it', class: 'dd-modal-btn-primary' }],
+    });
   }
 
   /** Save per-department economy settings. Money entered as dollars; persisted as cents. */
