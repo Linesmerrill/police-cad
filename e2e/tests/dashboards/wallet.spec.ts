@@ -26,11 +26,14 @@ test.describe('Wallet', () => {
       test.skip(true, 'Test user has no civilian; Send Money is gated on having an active civilian.');
     }
     const sendBtn = page.locator('#sendMoneyBtn');
-    // The button is hidden when the user isn't viewing their active civilian's
-    // wallet. Skip in that case — we only want to exercise the modal when the
-    // CTA is reachable.
-    if (!(await sendBtn.isVisible().catch(() => false))) {
-      test.skip(true, 'Send Money CTA not available on this wallet view (likely viewing another civilian).');
+    await expect(sendBtn).toBeVisible();
+    // When the test account is viewing a non-active civilian, clicking the
+    // muted button surfaces a ddModal confirm asking to switch active — a
+    // distinct flow worth its own test. This test exercises the direct-open
+    // path only, so skip when muted.
+    const isInactive = await sendBtn.evaluate((el) => el.classList.contains('is-inactive'));
+    if (isInactive) {
+      test.skip(true, 'Send Money CTA is in the switch-active confirm path; tested separately.');
     }
     await sendBtn.click();
     const modal = page.locator('#sendModal');

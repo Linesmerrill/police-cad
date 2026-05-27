@@ -1926,8 +1926,11 @@
     // confirm).
     function syncSendButtonState() {
       const isActive = !!ACTIVE_CIVILIAN_ID && ACTIVE_CIVILIAN_ID === CIVILIAN_ID;
+      // is-inactive is *visual only* — the button stays fully interactive
+      // because the click routes to the switch-active confirm. Don't add
+      // aria-disabled here; it would (a) mislead screen readers (the button
+      // is interactive) and (b) make Playwright/automation refuse to click.
       openBtn.classList.toggle('is-inactive', !isActive);
-      openBtn.setAttribute('aria-disabled', isActive ? 'false' : 'true');
     }
     syncSendButtonState();
     // Re-sync after the existing set-active flow finishes (it mutates
