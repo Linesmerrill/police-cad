@@ -696,6 +696,36 @@
     /* Transfer-row hint on transaction list */
     .w-tx-icon.transfer-sent { background: rgba(56,189,248,0.16); color: var(--w-accent); }
     .w-tx-icon.transfer-received { background: rgba(52,211,153,0.16); color: var(--w-green); }
+
+    /* Step 4 — success state */
+    .w-sent-hero {
+      text-align: center;
+      padding: 1.2rem 0 0.6rem;
+    }
+    .w-sent-check {
+      width: 78px; height: 78px; border-radius: 999px;
+      background: rgba(52,211,153,0.10);
+      border: 1px solid rgba(52,211,153,0.30);
+      display: grid; place-items: center;
+      margin: 0 auto 0.9rem;
+      animation: w-sent-pop 320ms cubic-bezier(.2,1.2,.4,1) both;
+    }
+    .w-sent-check i {
+      font-size: 2.1rem; color: var(--w-green);
+    }
+    @keyframes w-sent-pop {
+      0%   { transform: scale(0.6); opacity: 0; }
+      60%  { transform: scale(1.08); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .w-sent-headline {
+      font-size: 1.5rem; font-weight: 600; color: var(--w-text);
+      letter-spacing: -0.015em; font-variant-numeric: tabular-nums;
+    }
+    .w-sent-subline {
+      font-size: 0.86rem; color: var(--w-text-muted); margin-top: 0.2rem;
+    }
+    .w-sent-subline b { color: var(--w-text); font-weight: 600; }
   </style>
 </head>
 <body>
@@ -1877,22 +1907,33 @@
       openBtn.style.display = 'none';
     }
 
-    let step = 0; // 0 picker · 1 amount · 2 memo · 3 review
+    let step = 0; // 0 picker · 1 amount · 2 memo · 3 review · 4 sent
     let recipient = null;
     let amountCents = 0;
     let memo = '';
     let civilians = []; // community-wide civilians, loaded on first open
     let civsLoading = false;
     let sending = false;
-    const TITLES = ['Send to', 'How much?', 'Add a note?', 'Review'];
+    // Snapshot of the completed transfer — held separately so "Send another"
+    // can wipe recipient/amount/memo without disrupting the success screen.
+    let sentSnapshot = null;
+    const TITLES = ['Send to', 'How much?', 'Add a note?', 'Review', 'Sent'];
 
     function open() {
-      step = 0; recipient = null; amountCents = 0; memo = '';
+      step = 0; recipient = null; amountCents = 0; memo = ''; sentSnapshot = null;
       errorEl.style.display = 'none'; errorEl.textContent = '';
       backdrop.classList.add('is-open');
       modal.classList.add('is-open');
       render();
       ensureCivilians();
+    }
+    function sendAnother() {
+      step = 0; recipient = null; amountCents = 0; memo = '';
+      errorEl.style.display = 'none'; errorEl.textContent = '';
+      // Keep sentSnapshot until we re-enter step 4; clearing now avoids
+      // stale references but isn't strictly required.
+      sentSnapshot = null;
+      render();
     }
     function close() {
       if (sending) return;
@@ -1951,7 +1992,9 @@
     function render() {
       stepTitle.textContent = TITLES[step];
       setDots();
-      const recPill = (recipient && step > 0)
+      // Hide the live recipient pill on the success step — the success
+      // headline already names the recipient. Otherwise show it on steps 1-3.
+      const recPill = (recipient && step > 0 && step < 4)
         ? `<div class="w-recipient-pill" id="recPill" role="button" tabindex="0">
              <div class="w-recipient-avatar">${
                civImage(recipient)
@@ -1970,7 +2013,8 @@
       if (step === 0) content = renderPicker();
       else if (step === 1) content = renderAmount();
       else if (step === 2) content = renderMemo();
-      else content = renderReview();
+      else if (step === 3) content = renderReview();
+      else content = renderSent();
 
       body.innerHTML = recPill + content;
       wireStepHandlers();
@@ -1978,8 +2022,18 @@
       // Footer visibility + button states
       if (step === 0) {
         footer.style.display = 'none';
+      } else if (step === 4) {
+        // Success state — swap the footer to "Send another" + "Done" so the
+        // user can immediately initiate another transfer without re-opening
+        // the modal.
+        footer.style.display = 'flex';
+        backBtn.innerHTML = '<i class="fa fa-paper-plane"></i> Send another';
+        backBtn.disabled = false;
+        nextBtn.innerHTML = '<i class="fa fa-check"></i> Done';
+        nextBtn.disabled = false;
       } else {
         footer.style.display = 'flex';
+        backBtn.innerHTML = '<i class="fa fa-arrow-left"></i> Back';
         if (step < 3) {
           nextBtn.innerHTML = 'Continue <i class="fa fa-chevron-right"></i>';
           nextBtn.disabled = step === 1 ? !validAmount() : false;
@@ -2070,6 +2124,27 @@
         <div class="w-memo-footer">
           <span class="w-memo-hint">Shows up on their receipt — keep it short.</span>
           <span class="w-memo-count ${cls}" id="memoCount">${memo.length}/${SEND_MAX_MSG}</span>
+        </div>
+      `;
+    }
+    function renderSent() {
+      const s = sentSnapshot || { amountCents: 0, recipientName: '', message: '', balanceAfter: 0 };
+      return `
+        <div class="w-sent-hero">
+          <div class="w-sent-check"><i class="fa fa-circle-check"></i></div>
+          <div class="w-sent-headline">Sent ${escapeHtml(fmtMoney(s.amountCents))}</div>
+          <div class="w-sent-subline">to <b>${escapeHtml(s.recipientName)}</b></div>
+        </div>
+        <div class="w-receipt" style="margin-top:0.4rem;">
+          ${s.message ? `
+          <div class="w-receipt-row">
+            <span class="w-receipt-k">Note</span>
+            <span class="w-receipt-v memo">&ldquo;${escapeHtml(s.message)}&rdquo;</span>
+          </div>` : ''}
+          <div class="w-receipt-row">
+            <span class="w-receipt-k">New balance</span>
+            <span class="w-receipt-v" style="color:var(--w-green);">${escapeHtml(fmtMoney(s.balanceAfter))}</span>
+          </div>
         </div>
       `;
     }
@@ -2223,11 +2298,13 @@
 
     backBtn.addEventListener('click', () => {
       if (sending) return;
+      if (step === 4) { sendAnother(); return; }
       step = Math.max(0, step - 1);
       render();
     });
     nextBtn.addEventListener('click', async () => {
       if (sending) return;
+      if (step === 4) { close(); return; }
       if (step < 3) {
         if (step === 1 && !validAmount()) return;
         step += 1;
@@ -2259,15 +2336,17 @@
           const balEl = document.getElementById('balanceValue');
           if (balEl) balEl.textContent = fmtMoney(payload.fromBalanceAfter);
         }
-        close();
-        if (window.ddModal) {
-          window.ddModal({
-            type: 'success', icon: 'fa-circle-check',
-            title: 'Sent',
-            message: `${escapeHtml(fmtMoney(amountCents))} sent to <b>${escapeHtml(payload?.recipientName || civName(recipient))}</b>.`,
-            buttons: [{ label: 'OK', class: 'ddm-btn-success' }],
-          });
-        }
+        // Capture a stable snapshot, then morph into the success step
+        // in-place instead of closing + showing a ddModal toast.
+        sentSnapshot = {
+          amountCents,
+          message: memo.trim(),
+          recipientName: payload?.recipientName || civName(recipient),
+          balanceAfter: typeof payload?.fromBalanceAfter === 'number'
+            ? payload.fromBalanceAfter
+            : Math.max(currentBalanceCents() - amountCents, 0),
+        };
+        step = 4;
         if (typeof refreshTransactions === 'function') refreshTransactions();
         if (typeof refreshWallet === 'function') refreshWallet();
       } catch (err) {
