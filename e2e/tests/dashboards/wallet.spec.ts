@@ -19,4 +19,27 @@ test.describe('Wallet', () => {
     await expect(page.locator('text=Current Balance').first()).toBeVisible();
     await expect(page.locator('text=Jobs').first()).toBeVisible();
   });
+
+  test('opens and closes the Send Money modal', { tag: '@auth' }, async ({ page }) => {
+    await page.goto('/wallet');
+    if (/\/civ-dashboard/.test(page.url())) {
+      test.skip(true, 'Test user has no civilian; Send Money is gated on having an active civilian.');
+    }
+    const sendBtn = page.locator('#sendMoneyBtn');
+    // The button is hidden when the user isn't viewing their active civilian's
+    // wallet. Skip in that case — we only want to exercise the modal when the
+    // CTA is reachable.
+    if (!(await sendBtn.isVisible().catch(() => false))) {
+      test.skip(true, 'Send Money CTA not available on this wallet view (likely viewing another civilian).');
+    }
+    await sendBtn.click();
+    const modal = page.locator('#sendModal');
+    await expect(modal).toHaveClass(/is-open/);
+    await expect(modal.locator('#sendStepTitle')).toHaveText('Send to');
+    // Search input renders once civilians load (or in the empty state).
+    await expect(modal.locator('#sendBody')).toBeVisible();
+    // Close via the X button
+    await modal.locator('#sendCloseBtn').click();
+    await expect(modal).not.toHaveClass(/is-open/);
+  });
 });
