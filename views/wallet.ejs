@@ -1442,8 +1442,11 @@
   function txIconClass(tx) {
     if (tx.type === 'shift') return 'fa fa-briefcase';
     if (tx.type === 'payroll') return 'fa fa-money-bill-trend-up';
-    if (tx.type === 'transfer-sent') return 'fa fa-arrow-up-right-from-square';
-    if (tx.type === 'transfer-received') return 'fa fa-arrow-down-to-bracket';
+    // Peer transfers — paper plane for sent (matches the Send CTA), hand-
+    // holding-dollar for received. (Previously used fa-arrow-down-to-bracket
+    // which is a Font Awesome Pro glyph and renders blank in the free build.)
+    if (tx.type === 'transfer-sent') return 'fa fa-paper-plane';
+    if (tx.type === 'transfer-received') return 'fa fa-hand-holding-dollar';
     const src = (tx.subtitle || '').toLowerCase();
     if (src === 'citation') return 'fa fa-gavel';
     if (src === 'judicial' || tx.type === 'verdict') return 'fa fa-gavel';
