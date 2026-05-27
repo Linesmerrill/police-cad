@@ -1,0 +1,586 @@
+<%#
+  Manage Ranks — shared partial.
+  Renders the rank management UI as a self-contained card. Consumed by:
+    * community-details-modals.ejs — wrapped in an `.rkm-overlay` modal
+    * department-dashboard.ejs (Ranks tab in dd-settings) — embedded via `.rkm-card--embedded`
+  Behavior is driven by /static/js/manage-ranks.js.
+%>
+<style>
+  .rkm-overlay {
+    display: none; position: fixed; z-index: 3200; inset: 0;
+    background: rgba(10,11,18,0.8); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+    padding: 1rem; box-sizing: border-box;
+    animation: rkmFadeIn 0.2s ease;
+  }
+  .rkm-overlay.is-open { display: flex; }
+  @keyframes rkmFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes rkmSlideUp { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+  .rkm-card {
+    background: #13141b; border-radius: 16px; width: 95%; max-width: 920px;
+    max-height: calc(100vh - 2rem); display: flex; flex-direction: column;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 32px 80px -16px rgba(0,0,0,0.65), 0 0 1px rgba(255,255,255,0.05) inset;
+    animation: rkmSlideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+    overflow: hidden; position: relative;
+  }
+
+  /* Embedded mode (e.g. inside a tab pane): fill the container, no entry animation, no shadow. */
+  .rkm-card--embedded {
+    width: 100%; max-width: none;
+    max-height: none; height: 100%; min-height: 540px;
+    border-radius: 12px;
+    animation: none;
+    box-shadow: none;
+  }
+
+  /* Header */
+  .rkm-header {
+    display: flex; align-items: center; gap: 0.875rem;
+    padding: 1.125rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
+  }
+  .rkm-header-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 0.95rem; flex-shrink: 0;
+  }
+  .rkm-header-text h3 { color: #f1f5f9; margin: 0; font-size: 1.05rem; font-weight: 600; }
+  .rkm-header-text p { color: #64748b; margin: 0.1rem 0 0; font-size: 0.775rem; }
+  .rkm-close {
+    margin-left: auto; background: none; border: none; color: #4a5568;
+    cursor: pointer; font-size: 1.1rem; padding: 0.3rem; border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .rkm-close:hover { color: #94a3b8; background: rgba(255,255,255,0.05); }
+  .rkm-card--embedded .rkm-close { display: none; }
+  .rkm-card--embedded .rkm-header { padding: 0.875rem 1rem; }
+
+  /* Body — 2-column on desktop */
+  .rkm-body {
+    display: grid; grid-template-columns: 1fr 1fr;
+    flex: 1; min-height: 0; overflow: hidden;
+  }
+
+  /* Left panel — ranks list */
+  .rkm-panel-ranks {
+    display: flex; flex-direction: column; min-height: 0;
+    border-right: 1px solid rgba(255,255,255,0.05);
+  }
+  .rkm-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.75rem 1.125rem; flex-shrink: 0;
+  }
+  .rkm-panel-title {
+    color: #94a3b8; font-size: 0.675rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .rkm-btn-add {
+    background: rgba(124,58,237,0.12); border: none; border-radius: 6px;
+    color: #a78bfa; font-size: 0.7rem; font-weight: 500; padding: 0.3rem 0.6rem;
+    cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.3rem;
+  }
+  .rkm-btn-add:hover { background: rgba(124,58,237,0.25); }
+
+  .rkm-ranks-scroll {
+    flex: 1; overflow-y: auto; padding: 0 0.75rem 0.75rem;
+    display: flex; flex-direction: column; gap: 0.375rem;
+  }
+  .rkm-ranks-scroll::-webkit-scrollbar { width: 4px; }
+  .rkm-ranks-scroll::-webkit-scrollbar-track { background: transparent; }
+  .rkm-ranks-scroll::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 4px; }
+
+  /* Rank row */
+  .rkm-rank {
+    display: flex; align-items: center; gap: 0.625rem;
+    padding: 0.6rem 0.75rem; border-radius: 9px;
+    background: rgba(255,255,255,0.025); border: 1px solid transparent;
+    cursor: pointer; transition: all 0.15s; position: relative;
+  }
+  .rkm-rank:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.06); }
+  .rkm-rank.is-active { background: rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.25); }
+
+  .rkm-rank-order {
+    width: 24px; display: flex; flex-direction: column; align-items: center;
+    flex-shrink: 0; position: relative;
+  }
+  .rkm-rank-order-icon {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center;
+    color: #4a5568; font-size: 0.6rem; position: relative; z-index: 1;
+  }
+  .rkm-rank-order-icon.is-top { background: rgba(251,191,36,0.12); color: #fbbf24; }
+  .rkm-rank-order-icon.is-bottom { background: rgba(99,102,241,0.1); color: #818cf8; }
+  .rkm-rank-order-line {
+    position: absolute; top: 24px; bottom: -12px; width: 2px;
+    background: linear-gradient(to bottom, rgba(100,116,139,0.2), rgba(100,116,139,0.05));
+  }
+  .rkm-rank:last-child .rkm-rank-order-line { display: none; }
+
+  .rkm-rank-info { flex: 1; min-width: 0; }
+  .rkm-rank-name { color: #e2e8f0; font-size: 0.8125rem; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rkm-rank-meta { display: flex; align-items: center; gap: 0.375rem; margin-top: 0.15rem; flex-wrap: wrap; }
+  .rkm-rank-tag {
+    font-size: 0.6rem; font-weight: 600; padding: 0.1rem 0.35rem;
+    border-radius: 3px; text-transform: uppercase; letter-spacing: 0.03em;
+    line-height: 1.4;
+  }
+  .rkm-tag-prefix { background: rgba(124,58,237,0.15); color: #a78bfa; }
+  .rkm-tag-default { background: rgba(251,191,36,0.12); color: #fbbf24; }
+  .rkm-tag-auto { background: rgba(16,185,129,0.12); color: #34d399; }
+  .rkm-tag-req { background: rgba(255,255,255,0.04); color: #64748b; font-weight: 500; }
+  .rkm-tag-pay { background: rgba(56,189,248,0.12); color: #38bdf8; font-variant-numeric: tabular-nums; }
+
+  .rkm-rank-actions {
+    display: flex; gap: 0.2rem; flex-shrink: 0; opacity: 0; transition: opacity 0.15s;
+  }
+  .rkm-rank:hover .rkm-rank-actions { opacity: 1; }
+  .rkm-rank-btn {
+    width: 26px; height: 26px; border: none; border-radius: 5px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; transition: all 0.12s; background: rgba(255,255,255,0.04);
+  }
+  .rkm-rank-btn-move { color: #64748b; }
+  .rkm-rank-btn-move:hover { color: #a78bfa; background: rgba(124,58,237,0.12); }
+  .rkm-rank-btn-edit { color: #94a3b8; }
+  .rkm-rank-btn-edit:hover { color: #a78bfa; background: rgba(124,58,237,0.12); }
+  .rkm-rank-btn-del { color: #6b7280; }
+  .rkm-rank-btn-del:hover { color: #f87171; background: rgba(239,68,68,0.1); }
+
+  .rkm-empty {
+    text-align: center; padding: 2.5rem 1rem; color: #4a5568;
+  }
+  .rkm-empty i { font-size: 1.75rem; margin-bottom: 0.5rem; display: block; color: #374151; }
+  .rkm-empty p { margin: 0; font-size: 0.775rem; }
+
+  /* Right panel — members */
+  .rkm-panel-members {
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  .rkm-search {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: #1a1c24; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px; padding: 0.4rem 0.625rem;
+    transition: border-color 0.15s;
+  }
+  .rkm-search:focus-within { border-color: rgba(124,58,237,0.4); }
+  .rkm-search i { color: #4a5568; font-size: 0.7rem; flex-shrink: 0; }
+  .rkm-search input {
+    flex: 1; background: none; border: none; color: #e2e8f0;
+    font-size: 0.775rem; outline: none; min-width: 0;
+  }
+  .rkm-search input::placeholder { color: #4a5568; }
+  .rkm-members-scroll {
+    flex: 1; overflow-y: auto; padding: 0 0.75rem 0.75rem;
+    display: flex; flex-direction: column; gap: 0.3rem;
+  }
+  .rkm-members-scroll::-webkit-scrollbar { width: 4px; }
+  .rkm-members-scroll::-webkit-scrollbar-track { background: transparent; }
+  .rkm-members-scroll::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 4px; }
+
+  /* Member row */
+  .rkm-member {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.425rem 0.625rem; border-radius: 8px;
+    transition: background 0.12s;
+  }
+  .rkm-member:hover { background: rgba(255,255,255,0.03); }
+  .rkm-member-avatar {
+    width: 26px; height: 26px; border-radius: 50%; object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
+  }
+  .rkm-member-initial {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #1e2028; border: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: center;
+    color: #64748b; font-size: 0.625rem; font-weight: 600; flex-shrink: 0;
+  }
+  .rkm-member-name {
+    flex: 1; min-width: 0; color: #cbd5e1; font-size: 0.775rem; font-weight: 450;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .rkm-member select {
+    background: #1a1c24; color: #c4cad4; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px; padding: 0.275rem 0.5rem; font-size: 0.7rem;
+    min-width: 110px; cursor: pointer; transition: border-color 0.15s;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a5568'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center;
+    padding-right: 22px;
+  }
+  .rkm-member select:focus { border-color: #7c3aed; outline: none; }
+
+  .rkm-members-pagination {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.625rem; padding: 0.5rem 0.75rem; flex-shrink: 0;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .rkm-page-btn {
+    background: rgba(255,255,255,0.04); border: none; border-radius: 5px;
+    color: #64748b; padding: 0.3rem 0.5rem; font-size: 0.7rem;
+    cursor: pointer; transition: all 0.12s;
+  }
+  .rkm-page-btn:hover:not(:disabled) { color: #a78bfa; background: rgba(124,58,237,0.1); }
+  .rkm-page-btn:disabled { opacity: 0.3; cursor: default; }
+  .rkm-page-info { color: #4a5568; font-size: 0.675rem; }
+
+  /* Rank form — slide-over panel */
+  .rkm-form-backdrop {
+    position: absolute; inset: 0; z-index: 20;
+    background: rgba(10,11,18,0.6); backdrop-filter: blur(2px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .rkm-form-backdrop.is-open { opacity: 1; pointer-events: auto; }
+  .rkm-form {
+    position: absolute; top: 0; right: 0; bottom: 0; z-index: 21;
+    width: 380px; max-width: 100%;
+    display: flex; flex-direction: column; gap: 0.75rem;
+    padding: 1.25rem; background: #13141b;
+    border-left: 1px solid rgba(124,58,237,0.15);
+    box-shadow: -16px 0 48px rgba(0,0,0,0.4);
+    overflow-y: auto;
+    transform: translateX(100%); opacity: 0;
+    transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease;
+  }
+  .rkm-form.is-open { transform: translateX(0); opacity: 1; }
+  .rkm-form-title {
+    color: #e2e8f0; font-size: 0.85rem; font-weight: 600; margin: 0;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .rkm-form-title i { color: #a78bfa; font-size: 0.75rem; }
+  .rkm-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem; }
+  .rkm-field label {
+    display: block; color: #64748b; font-size: 0.65rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;
+  }
+  .rkm-field input[type="text"], .rkm-field input[type="number"] {
+    width: 100%; background: #1a1c24; color: #e2e8f0;
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 7px;
+    padding: 0.45rem 0.625rem; font-size: 0.8rem; transition: border-color 0.15s;
+    box-sizing: border-box;
+  }
+  .rkm-field input:focus { border-color: #7c3aed; outline: none; }
+  .rkm-checks {
+    display: flex; gap: 1rem;
+  }
+  .rkm-check {
+    display: flex; align-items: center; gap: 0.35rem;
+    color: #94a3b8; font-size: 0.75rem; cursor: pointer;
+  }
+  .rkm-check input { accent-color: #7c3aed; }
+  .rkm-reqs-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .rkm-reqs-label { color: #64748b; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .rkm-btn-add-req {
+    background: none; border: 1px solid rgba(255,255,255,0.06); border-radius: 5px;
+    color: #a78bfa; font-size: 0.625rem; padding: 0.2rem 0.45rem; cursor: pointer;
+    transition: all 0.12s;
+  }
+  .rkm-btn-add-req:hover { border-color: #7c3aed; background: rgba(124,58,237,0.08); }
+  .rkm-req-row {
+    display: flex; gap: 0.35rem; align-items: center;
+  }
+  .rkm-req-row select {
+    flex: 1; background: #1a1c24; color: #c4cad4;
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 5px;
+    padding: 0.325rem 0.5rem; font-size: 0.725rem;
+  }
+  .rkm-req-row select:focus { border-color: #7c3aed; outline: none; }
+  .rkm-req-row input[type="number"] {
+    width: 70px; background: #1a1c24; color: #c4cad4;
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 5px;
+    padding: 0.325rem 0.5rem; font-size: 0.725rem; box-sizing: border-box;
+  }
+  .rkm-req-row input[type="text"] {
+    flex: 1; background: #1a1c24; color: #c4cad4;
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 5px;
+    padding: 0.325rem 0.5rem; font-size: 0.725rem; box-sizing: border-box;
+    font-style: italic;
+  }
+  .rkm-req-row input:focus { border-color: #7c3aed; outline: none; }
+  .rkm-req-del {
+    background: none; border: none; color: #4a5568; cursor: pointer;
+    padding: 0.2rem; font-size: 0.7rem; transition: color 0.12s;
+  }
+  .rkm-req-del:hover { color: #f87171; }
+  .rkm-form-actions {
+    display: flex; justify-content: flex-end; gap: 0.5rem;
+  }
+  .rkm-btn-cancel {
+    background: rgba(255,255,255,0.04); color: #94a3b8; border: none;
+    border-radius: 7px; padding: 0.45rem 0.875rem; font-size: 0.75rem;
+    font-weight: 500; cursor: pointer; transition: all 0.12s;
+  }
+  .rkm-btn-cancel:hover { background: rgba(255,255,255,0.08); }
+  .rkm-btn-save {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; border: none;
+    border-radius: 7px; padding: 0.45rem 1rem; font-size: 0.75rem;
+    font-weight: 600; cursor: pointer; transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.3);
+  }
+  .rkm-btn-save:hover { box-shadow: 0 4px 16px rgba(124,58,237,0.4); transform: translateY(-1px); }
+
+  /* Promotions banner */
+  .rkm-promo-banner {
+    display: none; align-items: center; gap: 0.625rem;
+    padding: 0.6rem 1.25rem; flex-shrink: 0;
+    background: linear-gradient(90deg, rgba(251,191,36,0.06) 0%, rgba(251,191,36,0.02) 100%);
+    border-bottom: 1px solid rgba(251,191,36,0.1);
+    cursor: pointer; transition: background 0.15s;
+  }
+  .rkm-promo-banner:hover { background: linear-gradient(90deg, rgba(251,191,36,0.1) 0%, rgba(251,191,36,0.04) 100%); }
+  .rkm-promo-banner.has-pending { display: flex; }
+  .rkm-promo-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 22px; height: 22px; border-radius: 11px; padding: 0 6px;
+    background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;
+    font-size: 0.65rem; font-weight: 700; flex-shrink: 0;
+  }
+  .rkm-promo-banner-text { flex: 1; min-width: 0; }
+  .rkm-promo-banner-text strong { color: #fbbf24; font-size: 0.775rem; font-weight: 600; }
+  .rkm-promo-banner-text span { color: #94a3b8; font-size: 0.7rem; margin-left: 0.35rem; }
+  .rkm-promo-arrow { color: #fbbf24; font-size: 0.7rem; flex-shrink: 0; transition: transform 0.15s; }
+  .rkm-promo-banner:hover .rkm-promo-arrow { transform: translateX(3px); }
+
+  /* Promotions review slide-over */
+  .rkm-promo-backdrop {
+    position: absolute; inset: 0; z-index: 22;
+    background: rgba(10,11,18,0.65); backdrop-filter: blur(3px);
+    opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+  }
+  .rkm-promo-backdrop.is-open { opacity: 1; pointer-events: auto; }
+  .rkm-promo-panel {
+    position: absolute; top: 0; right: 0; bottom: 0; z-index: 23;
+    width: 440px; max-width: 100%;
+    display: flex; flex-direction: column;
+    background: #13141b;
+    border-left: 1px solid rgba(251,191,36,0.12);
+    box-shadow: -20px 0 60px rgba(0,0,0,0.5);
+    transform: translateX(100%); opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease;
+  }
+  .rkm-promo-panel.is-open { transform: translateX(0); opacity: 1; }
+  .rkm-promo-panel-header {
+    display: flex; align-items: center; gap: 0.625rem;
+    padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;
+  }
+  .rkm-promo-panel-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(217,119,6,0.1));
+    display: flex; align-items: center; justify-content: center;
+    color: #fbbf24; font-size: 0.8rem; flex-shrink: 0;
+  }
+  .rkm-promo-panel-title { color: #f1f5f9; font-size: 0.9rem; font-weight: 600; margin: 0; flex: 1; }
+  .rkm-promo-panel-close {
+    background: none; border: none; color: #4a5568; cursor: pointer;
+    font-size: 1rem; padding: 0.25rem; border-radius: 5px; transition: all 0.12s;
+  }
+  .rkm-promo-panel-close:hover { color: #94a3b8; background: rgba(255,255,255,0.05); }
+  .rkm-promo-scroll {
+    flex: 1; overflow-y: auto; padding: 0.75rem;
+    display: flex; flex-direction: column; gap: 0.625rem;
+  }
+  .rkm-promo-scroll::-webkit-scrollbar { width: 4px; }
+  .rkm-promo-scroll::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 4px; }
+
+  /* Promotion candidate card */
+  .rkm-promo-card {
+    background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px; padding: 0.875rem; transition: border-color 0.15s;
+  }
+  .rkm-promo-card:hover { border-color: rgba(251,191,36,0.15); }
+  .rkm-promo-card-header {
+    display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.625rem;
+  }
+  .rkm-promo-card-avatar {
+    width: 32px; height: 32px; border-radius: 50%; object-fit: cover;
+    border: 2px solid rgba(251,191,36,0.2); flex-shrink: 0;
+  }
+  .rkm-promo-card-initial {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(251,191,36,0.1); border: 2px solid rgba(251,191,36,0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #fbbf24; font-size: 0.7rem; font-weight: 600; flex-shrink: 0;
+  }
+  .rkm-promo-card-info { flex: 1; min-width: 0; }
+  .rkm-promo-card-name {
+    color: #e2e8f0; font-size: 0.8rem; font-weight: 550;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .rkm-promo-card-ranks {
+    display: flex; align-items: center; gap: 0.3rem; margin-top: 0.1rem;
+    font-size: 0.65rem; color: #64748b;
+  }
+  .rkm-promo-card-ranks .from { color: #94a3b8; }
+  .rkm-promo-card-ranks .arrow { color: #fbbf24; }
+  .rkm-promo-card-ranks .to { color: #fbbf24; font-weight: 600; }
+
+  /* Progress bars in promo card */
+  .rkm-promo-metrics { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.625rem; }
+  .rkm-promo-metric { display: flex; flex-direction: column; gap: 0.15rem; }
+  .rkm-promo-metric-header {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.625rem;
+  }
+  .rkm-promo-metric-name { color: #94a3b8; }
+  .rkm-promo-metric-val { color: #34d399; font-weight: 600; }
+  .rkm-promo-bar {
+    height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;
+  }
+  .rkm-promo-bar-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    transition: width 0.4s ease;
+  }
+
+  /* Promote button */
+  .rkm-btn-promote {
+    width: 100%; padding: 0.5rem; border: none; border-radius: 8px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff; font-size: 0.75rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+    box-shadow: 0 2px 8px rgba(245,158,11,0.25);
+  }
+  .rkm-btn-promote:hover {
+    box-shadow: 0 4px 16px rgba(245,158,11,0.35);
+    transform: translateY(-1px);
+  }
+  .rkm-btn-promote:active { transform: translateY(0); }
+  .rkm-btn-promote:disabled {
+    opacity: 0.5; cursor: default; transform: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Confetti canvas */
+  .rkm-confetti-canvas {
+    position: absolute; inset: 0; z-index: 30; pointer-events: none;
+  }
+
+  /* Mobile: stack panels vertically */
+  @media (max-width: 700px) {
+    .rkm-card { max-width: 100%; width: 100%; max-height: 100vh; border-radius: 12px; }
+    .rkm-body { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+    .rkm-panel-ranks { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .rkm-rank-actions { opacity: 1; }
+    .rkm-form { width: 100%; }
+    .rkm-promo-panel { width: 100%; }
+    .rkm-form-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .rkm-card { border-radius: 0; max-height: 100vh; height: 100vh; }
+    .rkm-card--embedded { border-radius: 12px; max-height: none; height: 100%; }
+    .rkm-header { padding: 0.875rem 1rem; }
+    .rkm-member select { min-width: 90px; font-size: 0.65rem; }
+  }
+</style>
+
+<div class="rkm-card<%= (typeof rkmEmbedded !== 'undefined' && rkmEmbedded) ? ' rkm-card--embedded' : '' %>" data-rkm-root>
+  <!-- Header -->
+  <div class="rkm-header">
+    <div class="rkm-header-icon"><i class="fa fa-ranking-star"></i></div>
+    <div class="rkm-header-text">
+      <h3>Manage Ranks</h3>
+      <p id="rankMgmtDeptName"></p>
+    </div>
+    <button class="rkm-close" onclick="closeRankManagementModal()" aria-label="Close"><i class="fa fa-times"></i></button>
+  </div>
+
+  <!-- Promotions Banner -->
+  <div class="rkm-promo-banner" id="rkmPromoBanner" onclick="openPromotionsPanel()">
+    <div class="rkm-promo-badge" id="rkmPromoCount">0</div>
+    <div class="rkm-promo-banner-text">
+      <strong>Pending Promotions</strong>
+      <span id="rkmPromoBannerSubtext">Members ready for review</span>
+    </div>
+    <i class="fa fa-chevron-right rkm-promo-arrow"></i>
+  </div>
+
+  <!-- Body -->
+  <div class="rkm-body">
+    <!-- Left: Ranks -->
+    <div class="rkm-panel-ranks">
+      <div class="rkm-panel-header">
+        <span class="rkm-panel-title"><i class="fa fa-crown" style="color:#fbbf24; margin-right:4px; font-size:0.6rem;"></i> Highest &rarr; Lowest</span>
+        <button class="rkm-btn-add" id="addRankBtn" onclick="showRankForm()"><i class="fa fa-plus"></i> Add</button>
+      </div>
+      <div class="rkm-ranks-scroll" id="ranksList">
+        <div class="rkm-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading ranks...</p></div>
+      </div>
+    </div>
+
+    <!-- Right: Members -->
+    <div class="rkm-panel-members">
+      <div class="rkm-panel-header">
+        <span class="rkm-panel-title">Members &amp; Assignments</span>
+      </div>
+      <div style="padding:0 0.75rem 0.5rem; flex-shrink:0;">
+        <div class="rkm-search">
+          <i class="fa fa-search"></i>
+          <input type="text" id="rankMembersSearch" placeholder="Search members..." oninput="filterRankMembers(this.value)">
+        </div>
+      </div>
+      <div class="rkm-members-scroll" id="rankMembersList">
+        <div class="rkm-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading members...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Promotions Review Slide-Over -->
+  <div class="rkm-promo-backdrop" id="rkmPromoBackdrop" onclick="closePromotionsPanel()"></div>
+  <div class="rkm-promo-panel" id="rkmPromoPanel">
+    <div class="rkm-promo-panel-header">
+      <div class="rkm-promo-panel-icon"><i class="fa fa-arrow-up"></i></div>
+      <h4 class="rkm-promo-panel-title">Pending Promotions</h4>
+      <button class="rkm-promo-panel-close" onclick="closePromotionsPanel()"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="rkm-promo-scroll" id="rkmPromoList">
+      <div class="rkm-empty"><i class="fa fa-spinner fa-spin"></i><p>Loading...</p></div>
+    </div>
+  </div>
+  <canvas class="rkm-confetti-canvas" id="rkmConfettiCanvas"></canvas>
+
+  <!-- Rank Form Slide-Over -->
+  <div class="rkm-form-backdrop" id="rankFormBackdrop" onclick="hideRankForm()"></div>
+  <div class="rkm-form" id="rankFormContainer">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.25rem;">
+      <h4 id="rankFormTitle" class="rkm-form-title"><i class="fa fa-plus"></i> <span>New Rank</span></h4>
+      <button type="button" onclick="hideRankForm()" style="background:none; border:none; color:#4a5568; cursor:pointer; font-size:1rem; padding:0.2rem; border-radius:5px; transition:all 0.12s;" onmouseenter="this.style.color='#94a3b8'" onmouseleave="this.style.color='#4a5568'"><i class="fa fa-times"></i></button>
+    </div>
+    <input type="hidden" id="rankFormId" value="">
+    <div class="rkm-form-grid">
+      <div class="rkm-field">
+        <label>Name *</label>
+        <input type="text" id="rankFormName" placeholder="e.g. Sergeant">
+      </div>
+      <div class="rkm-field">
+        <label>Prefix</label>
+        <input type="text" id="rankFormPrefix" placeholder="e.g. SGT">
+      </div>
+      <div class="rkm-field" style="grid-column: 1 / -1;">
+        <label>Pay rate ($/hr) <span style="color:#64748b; font-weight:400;">&mdash; optional, overrides department base pay</span></label>
+        <input type="number" id="rankFormPayRate" min="0" step="0.01" placeholder="e.g. 25.00">
+      </div>
+    </div>
+    <div class="rkm-checks">
+      <label class="rkm-check"><input type="checkbox" id="rankFormAutoPromote"> Auto Promote</label>
+      <label class="rkm-check"><input type="checkbox" id="rankFormIsDefault"> Default Rank</label>
+    </div>
+    <div>
+      <div class="rkm-reqs-header">
+        <span class="rkm-reqs-label"><i class="fa fa-chart-bar" style="margin-right:0.25rem;"></i> Requirements</span>
+        <button type="button" class="rkm-btn-add-req" onclick="addRequirementRow()"><i class="fa fa-plus"></i> Add</button>
+      </div>
+      <div id="rankRequirementsList" style="display:flex; flex-direction:column; gap:0.35rem; margin-top:0.4rem;"></div>
+    </div>
+    <div style="flex:1;"></div>
+    <div class="rkm-form-actions">
+      <button type="button" class="rkm-btn-cancel" onclick="hideRankForm()">Cancel</button>
+      <button type="button" class="rkm-btn-save" onclick="saveRank()">Save Rank</button>
+    </div>
+  </div>
+</div>

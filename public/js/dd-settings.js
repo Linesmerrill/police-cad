@@ -150,6 +150,8 @@
       '.dds-tab:hover{color:var(--dd-text);}' +
       '.dds-tab.active{color:var(--dd-accent);border-bottom-color:var(--dd-accent);}' +
       '.dds-tab .dds-tab-icon{margin-right:0.35rem;}' +
+      '.dds-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:0.4rem;border-radius:9px;background:var(--dd-accent);color:#fff;font-size:0.625rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;}' +
+      '.dds-tab.active .dds-tab-badge{background:var(--dd-accent-glow,var(--dd-accent));color:var(--dd-accent);}' +
 
       /* Tab body */
       '.dds-tab-body{min-height:200px;}' +
@@ -365,6 +367,16 @@
     if (perms.manageMembers) {
       tabs.push({ key: 'members', label: 'Members', icon: 'fa-users' });
     }
+    if (perms.manageDepartments && document.getElementById('manage-ranks-tpl')) {
+      // Pending promotions badge — count read from manageRanks at render time.
+      var pendingCount = (window.ddRanksPendingCount && window.ddRanksPendingCount[getDept()._id]) || 0;
+      tabs.push({
+        key: 'ranks',
+        label: 'Ranks',
+        icon: 'fa-medal',
+        badgeCount: pendingCount
+      });
+    }
     tabs.push({ key: 'danger', label: 'Options', icon: 'fa-ellipsis' });
 
     var tabKeys = tabs.map(function(t) { return t.key; });
@@ -372,8 +384,14 @@
 
     html += '<div class="dds-tabs">';
     tabs.forEach(function (t) {
+      var badgeHtml = '';
+      if (t.badgeCount && t.badgeCount > 0) {
+        badgeHtml = '<span class="dds-tab-badge" data-tab-badge="' + t.key + '">' + (t.badgeCount > 99 ? '99+' : t.badgeCount) + '</span>';
+      } else {
+        badgeHtml = '<span class="dds-tab-badge" data-tab-badge="' + t.key + '" style="display:none;">0</span>';
+      }
       html += '<button class="dds-tab' + (activeTab === t.key ? ' active' : '') + '" data-tab="' + t.key + '">' +
-        '<i class="fa ' + t.icon + ' dds-tab-icon"></i>' + t.label + '</button>';
+        '<i class="fa ' + t.icon + ' dds-tab-icon"></i>' + t.label + badgeHtml + '</button>';
     });
     html += '</div>';
 
@@ -385,6 +403,9 @@
     $root.on('click', '.dds-tab', function () {
       var tab = $(this).data('tab');
       if (tab === activeTab) return;
+      // Leaving the ranks tab — tear the shared module down so its IDs are free
+      // for the next mount and any polling/state is cleaned up.
+      if (activeTab === 'ranks' && window.manageRanks) window.manageRanks.destroy();
       activeTab = tab;
       $root.find('.dds-tab').removeClass('active');
       $(this).addClass('active');
@@ -404,8 +425,45 @@
       case 'settings':   renderSettingsTab($body); break;
       case 'components': renderComponentsTab($body); break;
       case 'members':    renderMembersTab($body); break;
+      case 'ranks':      renderRanksTab($body); break;
       case 'danger':     renderDangerTab($body); break;
     }
+  }
+
+  /* ═══════════════════════════════════════════
+     TAB 5: Ranks (shared partial)
+     ═══════════════════════════════════════════ */
+
+  function renderRanksTab($body) {
+    var perms = getUserPermissions();
+    if (!perms.manageDepartments) {
+      $body.html('<div class="dds-info"><i class="fa fa-info-circle"></i><span>You need the <strong>Manage Departments</strong> permission to manage ranks.</span></div>');
+      return;
+    }
+    var tpl = document.getElementById('manage-ranks-tpl');
+    if (!tpl || !tpl.content || !window.manageRanks) {
+      $body.html('<div class="dds-warn"><i class="fa fa-exclamation-triangle"></i><span>Ranks management is unavailable. Reload the page and try again.</span></div>');
+      return;
+    }
+
+    var c = cfg();
+    var community = c.communityData || {};
+    var dept = getDept();
+
+    // Mount a fresh clone of the partial markup. Cloning from a <template>
+    // means the original IDs aren't in the live document, so this is safe.
+    $body.empty();
+    $body[0].appendChild(tpl.content.cloneNode(true));
+
+    // Configure module (idempotent) then init for this department.
+    window.manageRanks.configure({
+      communityId: community._id,
+      userId: c.userId
+    });
+    window.manageRanks.init({
+      deptId: dept._id,
+      deptName: dept.name || ''
+    });
   }
 
   /* ═══════════════════════════════════════════
