@@ -166,6 +166,12 @@
       '.dds-input{width:100%;padding:0.5rem 0.65rem;background:var(--dd-glass);border:1px solid var(--dd-glass-border);border-radius:8px;color:var(--dd-text);font-size:0.8125rem;outline:none;font-family:"Outfit",sans-serif;transition:border-color 0.2s;box-sizing:border-box;}' +
       '.dds-input:focus{border-color:var(--dd-accent);}' +
       '.dds-input:disabled{opacity:0.5;cursor:not-allowed;}' +
+      '.dds-field-hint{font-size:0.6875rem;color:var(--dd-text-muted);margin-top:0.3rem;}' +
+      '.dds-field-error{font-size:0.6875rem;color:#ef4444;margin-top:0.3rem;display:none;}' +
+      '.dds-input.is-invalid{border-color:#ef4444;}' +
+      '.dds-input.is-invalid:focus{border-color:#ef4444;box-shadow:0 0 0 2px rgba(239,68,68,0.18);}' +
+      '.dds-field.has-error .dds-field-hint{display:none;}' +
+      '.dds-field.has-error .dds-field-error{display:block;}' +
       '.dds-textarea{width:100%;padding:0.5rem 0.65rem;background:var(--dd-glass);border:1px solid var(--dd-glass-border);border-radius:8px;color:var(--dd-text);font-size:0.8125rem;outline:none;font-family:"Outfit",sans-serif;transition:border-color 0.2s;box-sizing:border-box;resize:vertical;min-height:60px;}' +
       '.dds-textarea:focus{border-color:var(--dd-accent);}' +
       '.dds-textarea:disabled{opacity:0.5;cursor:not-allowed;}' +
@@ -509,6 +515,8 @@
       '<div class="dds-field">' +
         '<label class="dds-field-label">Base pay ($/hour)</label>' +
         '<input type="number" class="dds-input" id="dds-economy-base-pay" min="0" max="10000000" step="0.01" value="' + basePayDollars.toFixed(2) + '"' + disAttr + ' />' +
+        '<div class="dds-field-hint">Range: $0 – $10,000,000</div>' +
+        '<div class="dds-field-error">Must be between $0 and $10,000,000</div>' +
       '</div>' +
       '<div class="dds-field">' +
         '<label class="dds-field-label">Payout mode</label>' +
@@ -520,14 +528,20 @@
       '<div class="dds-field">' +
         '<label class="dds-field-label">Max session (minutes)</label>' +
         '<input type="number" class="dds-input" id="dds-economy-max-session" min="1" max="10080" step="1" value="' + maxSessionMinutes + '"' + disAttr + ' />' +
+        '<div class="dds-field-hint">Range: 1 – 10,080 (1 week)</div>' +
+        '<div class="dds-field-error">Must be a whole number between 1 and 10,080</div>' +
       '</div>' +
       '<div class="dds-field">' +
         '<label class="dds-field-label">AFK prompt interval (seconds)</label>' +
         '<input type="number" class="dds-input" id="dds-economy-afk-prompt" min="30" max="86400" step="1" value="' + afkPromptSec + '"' + disAttr + ' />' +
+        '<div class="dds-field-hint">Range: 30 – 86,400 (1 day)</div>' +
+        '<div class="dds-field-error">Must be a whole number between 30 and 86,400</div>' +
       '</div>' +
       '<div class="dds-field">' +
         '<label class="dds-field-label">AFK grace (seconds)</label>' +
         '<input type="number" class="dds-input" id="dds-economy-afk-grace" min="10" max="86400" step="1" value="' + afkGraceSec + '"' + disAttr + ' />' +
+        '<div class="dds-field-hint">Range: 10 – 86,400 (1 day)</div>' +
+        '<div class="dds-field-error">Must be a whole number between 10 and 86,400</div>' +
       '</div>' +
     '</div>';
     html += '</div>';
@@ -667,20 +681,20 @@
         $('#dds-economy-enabled-desc').text(on ? 'Members can clock in and earn pay' : 'Clock-in is disabled');
         autoSaveEconomy();
       });
-      $body.find('#dds-economy-base-pay, #dds-economy-max-session, #dds-economy-afk-prompt, #dds-economy-afk-grace').on('input', function () {
-        debounceSave('economy', autoSaveEconomy, DEBOUNCE_MS);
-      });
-      // Snap each numeric input into [min, max] on blur so the user sees the
-      // value that will actually be persisted. Without this, a huge typo
-      // (e.g. AFK prompt = 600000000000000000) is silently clamped server-side
-      // and the input still shows the original junk value.
-      $body.find('#dds-economy-base-pay, #dds-economy-max-session, #dds-economy-afk-prompt, #dds-economy-afk-grace').on('blur', function () {
+      // Real-time validation: paint the input red and show the inline error
+      // when the value is out of [min, max], and SKIP the autosave debounce so
+      // a typo never silently makes it to the server clamp.
+      $body.find('#dds-economy-base-pay, #dds-economy-max-session, #dds-economy-afk-prompt, #dds-economy-afk-grace').on('input blur', function () {
         var v = parseFloat(this.value);
-        if (!isFinite(v)) return;
         var lo = parseFloat(this.min);
         var hi = parseFloat(this.max);
-        if (v < lo) this.value = lo;
-        else if (v > hi) this.value = hi;
+        var invalid = this.value === '' || !isFinite(v) || v < lo || v > hi;
+        var $field = $(this).closest('.dds-field');
+        $(this).toggleClass('is-invalid', invalid);
+        $field.toggleClass('has-error', invalid);
+        if (!invalid) {
+          debounceSave('economy', autoSaveEconomy, DEBOUNCE_MS);
+        }
       });
       $body.find('#dds-economy-payout-mode').on('change', function () {
         autoSaveEconomy();
