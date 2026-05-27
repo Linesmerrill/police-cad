@@ -2008,10 +2008,12 @@
       // Otherwise prompt to switch active first. Reuses ddModal for the
       // confirm — the multi-step send modal opens once they accept.
       const civName = (CIVILIAN_NAME || 'this civilian').trim() || 'this civilian';
+      // ddModal escapes the title but renders message as raw HTML — bold
+      // the entity in the message, keep title plain.
       window.ddModal({
         type: 'confirm',
         icon: 'fa-paper-plane',
-        title: 'Switch to <b>' + escapeHtml(civName) + '</b>?',
+        title: 'Switch to ' + civName + '?',
         message: 'Payments send from your active civilian. Set <b>' + escapeHtml(civName) + '</b> active and continue?',
         confirmText: 'Set active & send',
         confirmIcon: 'fa-arrow-right',
