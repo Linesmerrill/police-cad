@@ -7435,6 +7435,7 @@
         url: API_BASE + '/api/v1/admin/search/users',
         method: 'POST',
         contentType: 'application/json',
+        timeout: 15000,
         data: JSON.stringify({ query: email, page: 0, limit: 1 }),
         success: function(data) {
           var users = data.users || [];
@@ -7452,8 +7453,11 @@
           $('#caseNewOwnerPreview').html(previewHtml).show();
           $('#caseStep1Btn').prop('disabled', false).html('<i class="fas fa-exchange-alt"></i> Transfer Ownership').off('click').on('click', caseConfirmTransfer);
         },
-        error: function() {
-          $('#caseNewOwnerError').text('Failed to search for user.').show();
+        error: function(xhr, status) {
+          var msg = status === 'timeout'
+            ? 'Lookup timed out. The user may have a very large account record. Please try again.'
+            : 'Failed to search for user.';
+          $('#caseNewOwnerError').text(msg).show();
           $('#caseStep1Btn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
         }
       });
@@ -7679,6 +7683,7 @@
         url: API_BASE + '/api/v1/admin/search/users',
         method: 'POST',
         contentType: 'application/json',
+        timeout: 15000,
         data: JSON.stringify({ query: email, page: 0, limit: 1 }),
         success: function(data) {
           var users = data.users || [];
@@ -7703,8 +7708,11 @@
           $('#caseBadActorPreview').html(previewHtml).show();
           $('#caseStep4Btn').prop('disabled', false).html('<i class="fas fa-user-slash"></i> Remove User').off('click').on('click', caseConfirmRemoval);
         },
-        error: function() {
-          $('#caseBadActorError').text('Failed to search for user.').show();
+        error: function(xhr, status) {
+          var msg = status === 'timeout'
+            ? 'Lookup timed out. The user may have a very large account record. Please try again.'
+            : 'Failed to search for user.';
+          $('#caseBadActorError').text(msg).show();
           $('#caseStep4Btn').prop('disabled', false).html('<i class="fas fa-search"></i> Look Up User');
         }
       });
