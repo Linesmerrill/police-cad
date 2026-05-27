@@ -475,6 +475,21 @@
       opacity: 0.55; cursor: not-allowed; transform: none;
       box-shadow: 0 6px 16px rgba(56,189,248,0.12);
     }
+    /* Muted state for the Send Money CTA — shown when the user is viewing
+       a civilian who isn't their active one. Clickable (intercepted by JS)
+       so they can promote-and-send in one confirm. */
+    .w-btn.primary.is-inactive {
+      background: rgba(255,255,255,0.05);
+      color: var(--w-text-muted);
+      border-color: rgba(255,255,255,0.10);
+      box-shadow: none;
+      font-weight: 500;
+    }
+    .w-btn.primary.is-inactive:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--w-text); transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
 
     .w-send-backdrop {
       position: fixed; inset: 0; background: rgba(2,6,12,0.6);
@@ -1318,6 +1333,7 @@
       });
       if (!r.ok) return;
       ACTIVE_CIVILIAN_ID = CIVILIAN_ID;
+      document.dispatchEvent(new CustomEvent('wallet:active-civilian-changed'));
       const btn = document.getElementById('setActiveBtn');
       if (btn) {
         const pill = document.createElement('span');
@@ -1865,6 +1881,7 @@
         throw new Error(`HTTP ${res.status}${txt ? ' — ' + txt.slice(0, 200) : ''}`);
       }
       ACTIVE_CIVILIAN_ID = CIVILIAN_ID;
+      document.dispatchEvent(new CustomEvent('wallet:active-civilian-changed'));
       // Swap the button out for the "Active" pill in place — no full
       // page reload needed.
       const pill = document.createElement('span');
@@ -1903,11 +1920,53 @@
     const errorEl = document.getElementById('sendError');
     if (!openBtn || !modal) return;
 
-    // The user can browse another civ's wallet — only their OWN active
-    // civilian can be the sender. If they're on someone else's wallet, the
-    // button is hidden.
-    if (!ACTIVE_CIVILIAN_ID || ACTIVE_CIVILIAN_ID !== CIVILIAN_ID) {
-      openBtn.style.display = 'none';
+    // Always show the Send button. When viewing a civilian who isn't the
+    // user's active civilian, mute it visually and intercept clicks to
+    // prompt the user to switch active first (set-active + open in one
+    // confirm).
+    function syncSendButtonState() {
+      const isActive = !!ACTIVE_CIVILIAN_ID && ACTIVE_CIVILIAN_ID === CIVILIAN_ID;
+      openBtn.classList.toggle('is-inactive', !isActive);
+      openBtn.setAttribute('aria-disabled', isActive ? 'false' : 'true');
+    }
+    syncSendButtonState();
+    // Re-sync after the existing set-active flow finishes (it mutates
+    // ACTIVE_CIVILIAN_ID in-place). Tied to a generic event so this stays
+    // decoupled from the other handler's internals.
+    document.addEventListener('wallet:active-civilian-changed', syncSendButtonState);
+
+    async function promoteCivilianToActive() {
+      // Bridge to the existing PUT — surfaces the same "clock out first"
+      // 409 modal as the Set-as-Active button, then re-uses our own
+      // ACTIVE_CIVILIAN_ID + button refresh.
+      const res = await fetch(`${API_URL}/api/v2/user/active-civilian`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: USER_ID, communityId: COMMUNITY_ID, civilianId: CIVILIAN_ID }),
+      });
+      if (res.status === 409) {
+        const body = await res.json().catch(() => null);
+        const session = body && body.session;
+        if (session && session._id && typeof showSetActiveBlockedByShift === 'function') {
+          showSetActiveBlockedByShift(session);
+          return false;
+        }
+        throw new Error('You have an active shift on another civilian. Clock out first.');
+      }
+      if (!res.ok) throw new Error('Could not set as active (' + res.status + ')');
+      ACTIVE_CIVILIAN_ID = CIVILIAN_ID;
+      document.dispatchEvent(new CustomEvent('wallet:active-civilian-changed'));
+      // Replace the Set-as-Active button (if rendered) with the Active pill,
+      // mirroring the existing inline flow.
+      const setBtn = document.getElementById('setActiveBtn');
+      if (setBtn) {
+        const pill = document.createElement('span');
+        pill.className = 'w-active-pill';
+        pill.title = 'This is the civilian the wallet, inbox, and bot default to.';
+        pill.innerHTML = '<i class="fa fa-check"></i> Active';
+        setBtn.replaceWith(pill);
+      }
+      return true;
     }
 
     let step = 0; // 0 picker · 1 amount · 2 memo · 3 review · 4 sent
@@ -1943,7 +2002,33 @@
       backdrop.classList.remove('is-open');
       modal.classList.remove('is-open');
     }
-    openBtn.addEventListener('click', open);
+    openBtn.addEventListener('click', () => {
+      // Hot path — caller is already on their active civilian.
+      if (ACTIVE_CIVILIAN_ID === CIVILIAN_ID) { open(); return; }
+      // Otherwise prompt to switch active first. Reuses ddModal for the
+      // confirm — the multi-step send modal opens once they accept.
+      const civName = (CIVILIAN_NAME || 'this civilian').trim() || 'this civilian';
+      window.ddModal({
+        type: 'confirm',
+        icon: 'fa-paper-plane',
+        title: 'Switch to <b>' + escapeHtml(civName) + '</b>?',
+        message: 'Payments send from your active civilian. Set <b>' + escapeHtml(civName) + '</b> active and continue?',
+        confirmText: 'Set active & send',
+        confirmIcon: 'fa-arrow-right',
+        onConfirm: async () => {
+          try {
+            const ok = await promoteCivilianToActive();
+            if (ok) open();
+          } catch (err) {
+            window.ddModal({
+              type: 'danger', icon: 'fa-triangle-exclamation',
+              title: 'Could not switch active civilian',
+              message: escapeHtml(err.message || ''),
+            });
+          }
+        },
+      });
+    });
     closeBtn.addEventListener('click', close);
     backdrop.addEventListener('click', close);
     document.addEventListener('keydown', (e) => {
