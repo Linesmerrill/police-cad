@@ -98,6 +98,9 @@
       z-index: 60;
     }
     .w-swap-backdrop.is-open { opacity: 1; pointer-events: auto; }
+    /* Lock background scroll while any wallet modal is open — the modals
+       themselves still scroll internally. Toggled from JS on open/close. */
+    body.modal-open { overflow: hidden !important; }
     .w-swap-modal {
       position: fixed; top: 50%; left: 50%;
       transform: translate(-50%, -48%) scale(0.97);
@@ -1686,6 +1689,7 @@
   function openSwapModal() {
     swapBackdrop.classList.add('is-open');
     swapModal.classList.add('is-open');
+    document.body.classList.add('modal-open');
     swapSearch.value = '';
     setTimeout(() => swapSearch.focus(), 80);
     if (!swapCivilians) loadSwapCivilians();
@@ -1694,6 +1698,7 @@
   function closeSwapModal() {
     swapBackdrop.classList.remove('is-open');
     swapModal.classList.remove('is-open');
+    document.body.classList.remove('modal-open');
   }
   document.getElementById('swapCivBtn').addEventListener('click', openSwapModal);
   document.getElementById('swapCloseBtn').addEventListener('click', closeSwapModal);
@@ -1989,6 +1994,7 @@
       errorEl.style.display = 'none'; errorEl.textContent = '';
       backdrop.classList.add('is-open');
       modal.classList.add('is-open');
+      document.body.classList.add('modal-open');
       render();
       ensureCivilians();
     }
@@ -2004,6 +2010,7 @@
       if (sending) return;
       backdrop.classList.remove('is-open');
       modal.classList.remove('is-open');
+      document.body.classList.remove('modal-open');
     }
     openBtn.addEventListener('click', () => {
       // Hot path — caller is already on their active civilian.
@@ -2213,7 +2220,7 @@
       const left = SEND_MAX_MSG - memo.length;
       const cls = left <= 0 ? 'danger' : left <= 20 ? 'warn' : '';
       return `
-        <textarea id="sendMemoInput" class="w-memo-input" maxlength="${SEND_MAX_MSG}" placeholder="e.g. thx for the tow">${escapeHtml(memo)}</textarea>
+        <textarea id="sendMemoInput" class="w-memo-input" maxlength="${SEND_MAX_MSG}" placeholder="Optional — e.g. thx for the tow">${escapeHtml(memo)}</textarea>
         <div class="w-memo-footer">
           <span class="w-memo-hint">Shows up on their receipt — keep it short.</span>
           <span class="w-memo-count ${cls}" id="memoCount">${memo.length}/${SEND_MAX_MSG}</span>
