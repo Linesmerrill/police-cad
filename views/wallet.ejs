@@ -2421,7 +2421,9 @@
         });
         const payload = await res.json().catch(() => null);
         if (!res.ok) {
-          const msg = payload?.Response?.Message || payload?.message || `Transfer failed (${res.status})`;
+          // API error envelope is lowercase `{ response: { message, error } }`
+          // — PascalCase here silently swallows the real reason.
+          const msg = payload?.response?.message || payload?.message || `Transfer failed (${res.status})`;
           throw new Error(msg);
         }
         // Optimistic balance patch — the user's send should reflect immediately.
