@@ -150,7 +150,7 @@
       '.dds-tab:hover{color:var(--dd-text);}' +
       '.dds-tab.active{color:var(--dd-accent);border-bottom-color:var(--dd-accent);}' +
       '.dds-tab .dds-tab-icon{margin-right:0.35rem;}' +
-      '.dds-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:0.4rem;border-radius:9px;background:var(--dd-accent);color:#fff;font-size:0.625rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;}' +
+      '.dds-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:0.4rem;border-radius:9px;background:var(--dd-accent);color:#fff;font-size:0.625rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;vertical-align:middle;}' +
       '.dds-tab.active .dds-tab-badge{background:var(--dd-accent-glow,var(--dd-accent));color:var(--dd-accent);}' +
 
       /* Tab body */
