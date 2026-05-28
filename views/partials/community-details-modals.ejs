@@ -907,6 +907,11 @@
         border-radius:8px; color:#fff; font-size:0.9rem; box-sizing:border-box; transition:border-color 0.15s ease;
       }
       .promo-input:focus, .promo-textarea:focus, .promo-select:focus { outline:none; border-color:#5865f2; }
+      .promo-input.is-invalid, .promo-textarea.is-invalid { border-color:#ef4444; }
+      .promo-input.is-invalid:focus, .promo-textarea.is-invalid:focus { border-color:#ef4444; }
+      .promo-error { color:#fca5a5; font-size:0.72rem; margin-top:0.3rem; display:flex; align-items:flex-start; gap:0.35rem; }
+      .promo-error i { margin-top:1px; }
+      .promo-error[hidden] { display:none; }
       .promo-textarea { resize:vertical; min-height:88px; }
       .promo-chk-row { display:flex; flex-wrap:wrap; gap:0.5rem; }
       .promo-chk {
@@ -943,6 +948,17 @@
       .promo-embed-field.pf-inline { flex:1 1 40%; min-width:110px; }
       .promo-embed-field .pf-name { color:#fff; font-weight:600; font-size:0.78rem; margin-bottom:0.15rem; }
       .promo-embed-field .pf-val { color:#c9cdd4; font-size:0.82rem; white-space:pre-wrap; word-break:break-word; }
+      /* Mimics Discord's "#unknown" channel-mention pill, tinted red so it
+         reads as an error — rendered in the preview when the user pastes a
+         channel deep-link instead of an invite, so they see the broken state
+         Discord will show. */
+      .promo-channel-pill {
+        display:inline-flex; align-items:baseline; gap:0.25rem;
+        padding:0.05rem 0.35rem; border-radius:4px;
+        background:rgba(239,68,68,0.18); color:#fca5a5;
+        font-size:0.82rem; font-family:inherit;
+      }
+      .promo-channel-pill em { font-style:italic; color:#fca5a5; opacity:0.85; }
       .promo-embed-img { margin-top:0.6rem; border-radius:4px; max-width:100%; max-height:200px; object-fit:cover; }
       .promo-embed-gallery { display:grid; grid-template-columns:repeat(3, 1fr); gap:4px; margin-top:4px; }
       .promo-embed-gallery img { width:100%; aspect-ratio:1 / 1; object-fit:cover; border-radius:4px; }
@@ -1112,8 +1128,9 @@
 
             <div class="promo-field">
               <label class="promo-label" for="promoInvite">Discord invite link</label>
-              <input type="url" id="promoInvite" class="promo-input" placeholder="https://discord.gg/…" oninput="renderPromoPreview()">
-              <div class="promo-hint">Paste your server <strong>invite</strong> link (discord.gg/… or discord.com/invite/…). Channel links won’t work.</div>
+              <input type="url" id="promoInvite" class="promo-input" placeholder="https://discord.gg/…" oninput="renderPromoPreview()" aria-describedby="promoInviteHint promoInviteError">
+              <div class="promo-hint" id="promoInviteHint">Paste your server <strong>invite</strong> link (discord.gg/… or discord.com/invite/…). Channel links won’t work.</div>
+              <div class="promo-error" id="promoInviteError" role="alert" hidden><i class="fa fa-circle-exclamation"></i><span id="promoInviteErrorText"></span></div>
             </div>
 
             <!-- Boosted-only banner -->
@@ -1671,6 +1688,10 @@
   window.openPromoteModal = function openPromoteModal() {
     var modal = el('promoteModal');
     if (!modal) return;
+    // Clear the action-grid "you can post now" pulse — the user is acting on
+    // it. Next page load re-evaluates against the server's canPostNow.
+    var promoteDot = document.getElementById('promoteActionDot');
+    if (promoteDot) promoteDot.classList.remove('show');
     exitPromoConfirm();
     switchPromoTab('create');
     promo.autofilled = false; // re-evaluate autofill against the form's current state
@@ -1958,6 +1979,24 @@
       if (btn) btn.addEventListener('click', unlockPromoScroll);
     });
 
+    // Live invite-link validation: surface the same error as submit-time, but
+    // on blur — so a pasted channel link reads as invalid immediately instead
+    // of after the user clicks Post. Clears on input so the red state doesn't
+    // linger while they're fixing it.
+    var inviteInput = el('promoInvite');
+    if (inviteInput) {
+      inviteInput.addEventListener('blur', function () {
+        var v = (inviteInput.value || '').trim();
+        if (!v) { setPromoInviteError(''); return; } // empty handled at submit
+        if (!isDiscordInviteURL(v)) {
+          setPromoInviteError('That looks like a channel link, not an invite. Use discord.gg/… or discord.com/invite/….');
+        } else {
+          setPromoInviteError('');
+        }
+      });
+      inviteInput.addEventListener('input', function () { setPromoInviteError(''); });
+    }
+
     var imagesInput = el('promoImagesInput');
     if (imagesInput) {
       imagesInput.addEventListener('change', function (e) {
@@ -2100,6 +2139,41 @@
     return null;
   }
 
+  // setPromoInviteError shows/clears the inline error under the invite input.
+  // An empty msg clears the red state. Used by the blur listener (live) and
+  // submit-time validation can also call this for parity.
+  function setPromoInviteError(msg) {
+    var input = el('promoInvite');
+    var err = el('promoInviteError');
+    var txt = el('promoInviteErrorText');
+    if (!input || !err) return;
+    if (msg) {
+      input.classList.add('is-invalid');
+      input.setAttribute('aria-invalid', 'true');
+      if (txt) txt.textContent = msg;
+      err.hidden = false;
+    } else {
+      input.classList.remove('is-invalid');
+      input.removeAttribute('aria-invalid');
+      err.hidden = true;
+    }
+  }
+
+  // isDiscordChannelLink returns true for discord.com/channels/<guild>/<channel>
+  // URLs — the most common "wrong link" submitters paste. Used to render the
+  // preview's Join field as Discord's "#unknown" channel pill, since that's
+  // exactly how Discord renders a channel link to a non-member.
+  function isDiscordChannelLink(s) {
+    if (typeof s !== 'string') return false;
+    var u;
+    try { u = new URL(s.trim()); } catch (e) { return false; }
+    if (u.protocol !== 'https:') return false;
+    var host = u.host.toLowerCase()
+      .replace(/^www\./, '').replace(/^ptb\./, '').replace(/^canary\./, '');
+    if (host !== 'discord.com' && host !== 'discordapp.com') return false;
+    return u.pathname.replace(/^\/+/, '').indexOf('channels/') === 0;
+  }
+
   // Mirrors isDiscordInviteURL in police-cad-api/api/handlers/rp_promotion.go.
   // Accepts discord.gg/<code> and (www|ptb|canary).discord(app).com/invite/<code>;
   // rejects channel deep-links, profile URLs, settings pages, etc.
@@ -2153,7 +2227,16 @@
     if (departments.length) html += field('🚓 Departments', '• ' + departments.map(escPromo).join('<br>• '));
     if (features.length) html += field('🌟 What We Offer', '• ' + features.map(escPromo).join('<br>• '));
     if (d.requirements) html += field('📋 Requirements', escPromo(d.requirements));
-    if (d.inviteUrl) html += field('💬 Join', escPromo(d.inviteUrl));
+    if (d.inviteUrl) {
+      // If the user pasted a Discord channel deep-link, show how Discord
+      // actually renders it: an "#unknown" channel pill. A real Discord
+      // invite URL renders as plain text (which Discord then unfurls into
+      // an invite card on the actual post).
+      var joinVal = isDiscordChannelLink(d.inviteUrl)
+        ? '<span class="promo-channel-pill" title="Discord can\'t resolve a channel link for non-members — this is what your post will look like."># <em>unknown</em></span>'
+        : escPromo(d.inviteUrl);
+      html += field('💬 Join', joinVal);
+    }
 
     // Mirror the real Discord post: the banner (or first image) is the hero,
     // and any remaining images form a gallery grid below it. Discord renders
@@ -2242,6 +2325,7 @@
     ['promoServerName', 'promoDescription', 'promoRequirements', 'promoInvite', 'promoGameOther'].forEach(function (id) {
       if (el(id)) el(id).value = '';
     });
+    setPromoInviteError('');
     if (el('promoGame')) el('promoGame').value = '';
     if (el('promoGameOther')) el('promoGameOther').style.display = 'none';
     Array.prototype.forEach.call(document.querySelectorAll('#promoPlatforms input'), function (cb) { cb.checked = false; });
