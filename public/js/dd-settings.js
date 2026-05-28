@@ -331,7 +331,28 @@
 
   /* ─── Render Full View ───────────────────── */
 
-  var activeTab = 'settings';
+  // Persisted in the URL via `?tab=<key>` so a refresh stays on the same
+  // sub-tab (useful for the Ranks tab in particular, but applies to all).
+  function readTabFromUrl() {
+    try {
+      var t = new URLSearchParams(window.location.search).get('tab');
+      return t || '';
+    } catch (e) { return ''; }
+  }
+  function writeTabToUrl(tab) {
+    try {
+      var url = new URL(window.location.href);
+      if (tab && tab !== 'settings') {
+        url.searchParams.set('tab', tab);
+      } else {
+        // 'settings' is the default; keep URLs clean by dropping the param.
+        url.searchParams.delete('tab');
+      }
+      window.history.replaceState(null, '', url.toString());
+    } catch (e) { /* noop */ }
+  }
+
+  var activeTab = readTabFromUrl() || 'settings';
 
   function renderFull() {
     var $root = $('#dds-root');
@@ -380,7 +401,12 @@
     tabs.push({ key: 'danger', label: 'Options', icon: 'fa-ellipsis' });
 
     var tabKeys = tabs.map(function(t) { return t.key; });
-    if (tabKeys.indexOf(activeTab) === -1) activeTab = 'settings';
+    if (tabKeys.indexOf(activeTab) === -1) {
+      // URL pointed at a tab that doesn't exist for this user (e.g. lacked
+      // permission, or template wasn't loaded) — fall back and clean the URL.
+      activeTab = 'settings';
+      writeTabToUrl(activeTab);
+    }
 
     html += '<div class="dds-tabs">';
     tabs.forEach(function (t) {
@@ -407,6 +433,7 @@
       // for the next mount and any polling/state is cleaned up.
       if (activeTab === 'ranks' && window.manageRanks) window.manageRanks.destroy();
       activeTab = tab;
+      writeTabToUrl(tab);
       $root.find('.dds-tab').removeClass('active');
       $(this).addClass('active');
       renderTab();
