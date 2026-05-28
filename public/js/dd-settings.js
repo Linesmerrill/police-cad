@@ -447,7 +447,6 @@
     }
 
     var c = cfg();
-    var community = c.communityData || {};
     var dept = getDept();
 
     // Mount a fresh clone of the partial markup. Cloning from a <template>
@@ -456,8 +455,11 @@
     $body[0].appendChild(tpl.content.cloneNode(true));
 
     // Configure module (idempotent) then init for this department.
+    // c.communityId is the URL-derived primitive string set at page boot;
+    // c.communityData is the AJAX response whose embedded `community` object
+    // doesn't carry an `_id`, so don't rely on community._id here.
     window.manageRanks.configure({
-      communityId: community._id,
+      communityId: c.communityId,
       userId: c.userId
     });
     window.manageRanks.init({

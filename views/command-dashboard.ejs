@@ -2484,10 +2484,9 @@
     window.ddRefreshRanksPendingBadge = function () {
       if (!window.manageRanks) return;
       var c = window.ddConfig || {};
-      var community = c.communityData || {};
       var deptId = (c.departmentData && c.departmentData._id) || '';
       window.manageRanks.configure({
-        communityId: community._id,
+        communityId: c.communityId,
         userId: c.userId
       });
       if (!deptId) return;
