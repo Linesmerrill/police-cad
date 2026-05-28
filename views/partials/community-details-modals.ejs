@@ -1113,7 +1113,7 @@
             <div class="promo-field">
               <label class="promo-label" for="promoInvite">Discord invite link</label>
               <input type="url" id="promoInvite" class="promo-input" placeholder="https://discord.gg/…" oninput="renderPromoPreview()">
-              <div class="promo-hint">Must be an https Discord invite link.</div>
+              <div class="promo-hint">Paste your server <strong>invite</strong> link (discord.gg/… or discord.com/invite/…). Channel links won’t work.</div>
             </div>
 
             <!-- Boosted-only banner -->
@@ -2094,11 +2094,32 @@
     if (d.features.length > featMax()) {
       return 'Too many features — limit is ' + featMax() + '.';
     }
-    var url = d.inviteUrl.toLowerCase();
-    if (url.indexOf('https://') !== 0 || url.indexOf('discord') === -1) {
-      return 'Enter a valid https Discord invite link.';
+    if (!isDiscordInviteURL(d.inviteUrl)) {
+      return 'Enter a Discord invite link (discord.gg/… or discord.com/invite/…). Channel links like discord.com/channels/… can’t be used to join.';
     }
     return null;
+  }
+
+  // Mirrors isDiscordInviteURL in police-cad-api/api/handlers/rp_promotion.go.
+  // Accepts discord.gg/<code> and (www|ptb|canary).discord(app).com/invite/<code>;
+  // rejects channel deep-links, profile URLs, settings pages, etc.
+  function isDiscordInviteURL(s) {
+    if (typeof s !== 'string') return false;
+    var u;
+    try { u = new URL(s.trim()); } catch (e) { return false; }
+    if (u.protocol !== 'https:') return false;
+    var host = u.host.toLowerCase()
+      .replace(/^www\./, '').replace(/^ptb\./, '').replace(/^canary\./, '');
+    var path = u.pathname.replace(/^\/+|\/+$/g, '');
+    if (host === 'discord.gg') {
+      return path !== '' && path.indexOf('/') === -1;
+    }
+    if (host === 'discord.com' || host === 'discordapp.com') {
+      if (path.indexOf('invite/') !== 0) return false;
+      var code = path.slice('invite/'.length);
+      return code !== '' && code.indexOf('/') === -1;
+    }
+    return false;
   }
 
   // ---- Live preview -------------------------------------------------
