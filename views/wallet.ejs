@@ -2291,6 +2291,9 @@
             if (amountCents < 0) amountCents = 0;
             updateAmountUI();
           });
+          // <input type="number"> increments/decrements on wheel while focused.
+          // Blur so a page scroll doesn't silently mutate the amount.
+          input.addEventListener('wheel', () => input.blur());
         }
         body.querySelectorAll('[data-quick]').forEach(b => {
           b.addEventListener('click', () => {
