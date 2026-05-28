@@ -401,11 +401,16 @@
     tabs.push({ key: 'danger', label: 'Options', icon: 'fa-ellipsis' });
 
     var tabKeys = tabs.map(function(t) { return t.key; });
-    if (tabKeys.indexOf(activeTab) === -1) {
-      // URL pointed at a tab that doesn't exist for this user (e.g. lacked
-      // permission, or template wasn't loaded) — fall back and clean the URL.
+    // Prefer the URL on every render. The dashboards call ddSettingsRender
+    // twice — once before community/permissions load (when the Ranks tab
+    // isn't built yet) and once after — so we re-resolve from the URL each
+    // pass to honor ?tab=ranks once permissions arrive. Don't strip the
+    // param if it's currently unrenderable; the second render will pick it up.
+    var urlTab = readTabFromUrl();
+    if (urlTab && tabKeys.indexOf(urlTab) !== -1) {
+      activeTab = urlTab;
+    } else if (tabKeys.indexOf(activeTab) === -1) {
       activeTab = 'settings';
-      writeTabToUrl(activeTab);
     }
 
     html += '<div class="dds-tabs">';
