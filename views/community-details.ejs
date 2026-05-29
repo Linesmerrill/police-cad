@@ -364,6 +364,7 @@
       }
       /* Action Button - responsive */
       .action-btn {
+        position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -375,6 +376,33 @@
         transition: all 0.3s ease;
         min-width: 72px;
         flex-shrink: 0;
+      }
+      /* "You can promote again" pulse dot on the Promote action button.
+         Driven by /api/v2/community/{id}/rp-promotion.canPostNow at page
+         load; hidden as soon as the user opens the modal. */
+      .action-btn-dot {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #06b6d4;
+        box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7);
+        display: none;
+        pointer-events: none;
+      }
+      .action-btn-dot.show {
+        display: block;
+        animation: actionBtnDotPulse 1.8s ease-out infinite;
+      }
+      @keyframes actionBtnDotPulse {
+        0%   { box-shadow: 0 0 0 0   rgba(6, 182, 212, 0.55); }
+        70%  { box-shadow: 0 0 0 8px rgba(6, 182, 212, 0);    }
+        100% { box-shadow: 0 0 0 0   rgba(6, 182, 212, 0);    }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .action-btn-dot.show { animation: none; }
       }
       @media (min-width: 640px) {
         .action-btn { padding: 1rem 1.25rem; min-width: 90px; }
@@ -1558,7 +1586,8 @@
               </a>
 
               <% if (canPromoteCommunity) { %>
-                <button onclick="openPromoteModal()" class="action-btn" style="color: #5865f2;">
+                <button id="promoteActionBtn" onclick="openPromoteModal()" class="action-btn" style="color: #5865f2;">
+                  <span id="promoteActionDot" class="action-btn-dot" aria-hidden="true"></span>
                   <i class="fa-brands fa-discord"></i>
                   <span>Promote</span>
                 </button>
@@ -2156,7 +2185,32 @@
         if (dbUser && dbUser._id) {
           fetchNotificationCount();
         }
+
+        initPromoteBadge();
       });
+
+      // Pulse dot on the Promote action button when the community is eligible
+      // to post a new RP promotion. Drives engagement by surfacing the daily
+      // posting window without being naggy — the badge hides as soon as the
+      // user opens the modal (see openPromoteModal in community-details-modals.ejs).
+      function initPromoteBadge() {
+        var dot = document.getElementById('promoteActionDot');
+        if (!dot) return; // user lacks promote permission — no enabled button
+        if (!dbUser || !dbUser._id) return;
+        var communityId = '<%= community._id %>';
+        if (!communityId) return;
+        fetch(window.API_URL + '/api/v2/community/' + communityId + '/rp-promotion?userId=' + encodeURIComponent(dbUser._id))
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (!data) return;
+            // Only nudge when the user can actually act on it: webhook
+            // configured server-side AND no active cooldown.
+            if (data.configured !== false && data.canPostNow !== false) {
+              dot.classList.add('show');
+            }
+          })
+          .catch(function () { /* silent — engagement nudge, not critical */ });
+      }
 
       (function() {
         try {

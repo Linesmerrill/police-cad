@@ -98,6 +98,9 @@
       z-index: 60;
     }
     .w-swap-backdrop.is-open { opacity: 1; pointer-events: auto; }
+    /* Lock background scroll while any wallet modal is open — the modals
+       themselves still scroll internally. Toggled from JS on open/close. */
+    body.modal-open { overflow: hidden !important; }
     .w-swap-modal {
       position: fixed; top: 50%; left: 50%;
       transform: translate(-50%, -48%) scale(0.97);
@@ -458,6 +461,289 @@
       border-radius: 50%; animation: w-spin 0.8s linear infinite;
     }
     @keyframes w-spin { to { transform: rotate(360deg); } }
+
+    /* ---------- Send Money modal — multi-step bottom sheet ---------- */
+    .w-btn.primary {
+      background: var(--w-accent);
+      color: #0b1220;
+      border-color: var(--w-accent);
+      font-weight: 600;
+      box-shadow: 0 6px 16px rgba(56,189,248,0.25);
+    }
+    .w-btn.primary:hover {
+      background: #67d2fa; color: #0b1220; transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(56,189,248,0.35);
+    }
+    .w-btn.primary:disabled, .w-btn.primary[disabled] {
+      opacity: 0.55; cursor: not-allowed; transform: none;
+      box-shadow: 0 6px 16px rgba(56,189,248,0.12);
+    }
+    /* Muted state for the Send Money CTA — shown when the user is viewing
+       a civilian who isn't their active one. Clickable (intercepted by JS)
+       so they can promote-and-send in one confirm. */
+    .w-btn.primary.is-inactive {
+      background: rgba(255,255,255,0.05);
+      color: var(--w-text-muted);
+      border-color: rgba(255,255,255,0.10);
+      box-shadow: none;
+      font-weight: 500;
+    }
+    .w-btn.primary.is-inactive:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--w-text); transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+
+    .w-send-backdrop {
+      position: fixed; inset: 0; background: rgba(2,6,12,0.6);
+      backdrop-filter: blur(6px);
+      opacity: 0; pointer-events: none;
+      transition: opacity 160ms ease;
+      z-index: 70;
+    }
+    .w-send-backdrop.is-open { opacity: 1; pointer-events: auto; }
+    .w-send-modal {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -48%) scale(0.97);
+      width: min(520px, calc(100vw - 2rem));
+      max-height: min(86vh, 720px);
+      display: flex; flex-direction: column;
+      background: #0b1220;
+      border: 1px solid rgba(56,189,248,0.22);
+      border-radius: 16px;
+      box-shadow: 0 30px 70px rgba(0,0,0,0.6);
+      opacity: 0; pointer-events: none;
+      transition: opacity 160ms ease, transform 160ms ease;
+      z-index: 71;
+      overflow: hidden;
+    }
+    .w-send-modal.is-open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+    .w-send-header {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.9rem 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .w-send-kicker {
+      font-size: 0.62rem; font-weight: 800; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--w-accent);
+    }
+    .w-send-title {
+      font-size: 1.05rem; font-weight: 600; color: var(--w-text);
+      margin-top: 0.1rem; letter-spacing: -0.005em;
+    }
+    .w-send-dots { display: inline-flex; gap: 5px; align-items: center; }
+    .w-send-dot {
+      width: 6px; height: 6px; border-radius: 999px;
+      background: rgba(255,255,255,0.18);
+      transition: width 160ms ease, background 160ms ease;
+    }
+    .w-send-dot.is-active { width: 18px; background: var(--w-accent); }
+    .w-send-dot.is-done { background: rgba(56,189,248,0.5); }
+    .w-send-close {
+      width: 28px; height: 28px; border-radius: 999px; border: 0;
+      background: rgba(255,255,255,0.06); color: var(--w-text);
+      cursor: pointer; display: grid; place-items: center;
+    }
+    .w-send-close:hover { background: rgba(255,255,255,0.12); }
+
+    .w-send-body { padding: 1rem 1.1rem 1.1rem; overflow-y: auto; }
+
+    .w-recipient-pill {
+      display: flex; align-items: center; gap: 0.7rem;
+      background: rgba(56,189,248,0.08);
+      border: 1px solid rgba(56,189,248,0.25);
+      border-radius: 12px; padding: 0.55rem 0.7rem;
+      cursor: pointer; margin-bottom: 0.9rem;
+      transition: background 120ms ease;
+    }
+    .w-recipient-pill:hover { background: rgba(56,189,248,0.12); }
+    .w-recipient-avatar {
+      width: 32px; height: 32px; border-radius: 999px; overflow: hidden;
+      background: rgba(56,189,248,0.16); color: var(--w-accent);
+      display: grid; place-items: center; font-weight: 700; font-size: 0.72rem;
+      flex-shrink: 0;
+    }
+    .w-recipient-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .w-recipient-cap {
+      font-size: 0.6rem; font-weight: 800; letter-spacing: 0.14em;
+      color: var(--w-text-muted); text-transform: uppercase;
+    }
+    .w-recipient-name { font-size: 0.92rem; font-weight: 600; color: var(--w-text); margin-top: 0.1rem; }
+    .w-recipient-change { font-size: 0.74rem; color: var(--w-accent); font-weight: 600; }
+
+    /* Step 0 — recipient list */
+    .w-send-search {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px; padding: 0.55rem 0.75rem;
+      margin-bottom: 0.7rem;
+    }
+    .w-send-search i { color: var(--w-text-muted); font-size: 0.78rem; }
+    .w-send-search input {
+      background: transparent; border: 0; outline: 0; color: var(--w-text);
+      flex: 1; font-size: 0.88rem; font-family: inherit;
+    }
+    .w-recipient-list { display: flex; flex-direction: column; gap: 0.35rem; max-height: 320px; overflow-y: auto; }
+    .w-recipient-row {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 0.55rem 0.65rem; border-radius: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer; transition: background 120ms ease;
+    }
+    .w-recipient-row:hover { background: rgba(56,189,248,0.07); border-color: rgba(56,189,248,0.20); }
+    .w-recipient-row .who { flex: 1; min-width: 0; font-size: 0.9rem; color: var(--w-text); }
+    .w-recipient-row .who small { display: block; font-size: 0.7rem; color: var(--w-text-dim); margin-top: 0.1rem; }
+    .w-recipient-row .chev { color: var(--w-text-dim); font-size: 0.7rem; }
+
+    /* Step 1 — amount */
+    .w-amount-display {
+      text-align: center; padding: 1.25rem 0 0.4rem;
+      font-size: 3.1rem; font-weight: 600; letter-spacing: -0.03em;
+      color: var(--w-text); font-variant-numeric: tabular-nums;
+    }
+    .w-amount-display.neg { color: var(--w-red); }
+    .w-amount-balance {
+      text-align: center; color: var(--w-text-muted);
+      font-size: 0.82rem; margin-bottom: 0.9rem;
+    }
+    .w-amount-balance b { color: var(--w-text); font-weight: 600; }
+    .w-amount-input {
+      width: 100%; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px; padding: 0.7rem 0.85rem;
+      color: var(--w-text); font: inherit; font-size: 1rem;
+      text-align: center; letter-spacing: 0.02em;
+      margin-bottom: 0.7rem;
+    }
+    .w-amount-input:focus { outline: 0; border-color: rgba(56,189,248,0.5); }
+    .w-quick-row { display: flex; gap: 0.4rem; margin-bottom: 0.9rem; }
+    .w-quick-chip {
+      flex: 1; padding: 0.5rem 0; border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--w-text); font: inherit; font-size: 0.78rem; font-weight: 600;
+      cursor: pointer; transition: background 120ms;
+    }
+    .w-quick-chip:hover { background: rgba(56,189,248,0.10); border-color: rgba(56,189,248,0.30); }
+    .w-quick-chip.accent { color: var(--w-accent); border-color: rgba(56,189,248,0.30); background: rgba(56,189,248,0.08); }
+    .w-quick-chip.accent:hover { background: rgba(56,189,248,0.16); }
+
+    .w-insufficient {
+      display: flex; gap: 0.6rem; align-items: flex-start;
+      background: rgba(239,68,68,0.10);
+      border: 1px solid rgba(239,68,68,0.30);
+      border-radius: 10px; padding: 0.7rem 0.85rem;
+      margin: 0.4rem 0 0.2rem;
+    }
+    .w-insufficient i { color: var(--w-red); font-size: 0.95rem; margin-top: 0.1rem; }
+    .w-insufficient-title { color: var(--w-red); font-weight: 700; font-size: 0.86rem; }
+    .w-insufficient-body { color: var(--w-text-muted); font-size: 0.78rem; margin-top: 0.15rem; line-height: 1.4; }
+    .w-insufficient-body b { color: var(--w-accent); font-weight: 600; cursor: pointer; }
+
+    /* Step 2 — memo */
+    .w-memo-input {
+      width: 100%; min-height: 110px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 0.85rem 1rem;
+      color: var(--w-text); font: inherit; font-size: 0.95rem; line-height: 1.5;
+      resize: vertical;
+    }
+    .w-memo-input:focus { outline: 0; border-color: rgba(56,189,248,0.5); }
+    .w-memo-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 0.4rem; padding: 0 0.2rem;
+    }
+    .w-memo-hint { font-size: 0.72rem; color: var(--w-text-dim); }
+    .w-memo-count { font-size: 0.72rem; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--w-text-dim); }
+    .w-memo-count.warn { color: var(--w-amber); }
+    .w-memo-count.danger { color: var(--w-red); }
+
+    /* Step 3 — receipt */
+    .w-receipt {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px; padding: 1.2rem 1.4rem;
+      position: relative;
+    }
+    .w-receipt::before, .w-receipt::after {
+      content: ''; position: absolute; left: 0; right: 0;
+      height: 1px; background: rgba(255,255,255,0.10);
+    }
+    .w-receipt::before { top: 18px; }
+    .w-receipt::after { bottom: 18px; }
+    .w-receipt-kicker {
+      text-align: center; color: var(--w-accent);
+      font-size: 0.65rem; letter-spacing: 0.18em; font-weight: 800;
+      text-transform: uppercase; padding-top: 0.4rem;
+    }
+    .w-receipt-amount {
+      text-align: center; color: var(--w-text);
+      font-size: 2.6rem; font-weight: 600; letter-spacing: -0.025em;
+      font-variant-numeric: tabular-nums; margin-top: 0.1rem; margin-bottom: 0.65rem;
+    }
+    .w-receipt-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0.4rem 0 0.5rem; }
+    .w-receipt-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 0.45rem 0; gap: 0.7rem;
+    }
+    .w-receipt-k {
+      color: var(--w-text-muted); font-size: 0.7rem;
+      letter-spacing: 0.10em; text-transform: uppercase; font-weight: 700;
+    }
+    .w-receipt-v {
+      color: var(--w-text); font-size: 0.92rem; font-weight: 600;
+      text-align: right; font-variant-numeric: tabular-nums; flex: 1;
+    }
+    .w-receipt-v.memo { font-weight: 400; font-style: italic; color: var(--w-text-muted); }
+
+    .w-send-footer {
+      display: flex; gap: 0.5rem; padding: 0.85rem 1.1rem 1.1rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .w-send-footer .grow { flex: 1; justify-content: center; }
+    .w-send-error {
+      margin: 0.6rem 1.1rem 0.2rem; padding: 0.6rem 0.85rem;
+      background: rgba(239,68,68,0.10);
+      border: 1px solid rgba(239,68,68,0.30);
+      border-radius: 8px; color: var(--w-red);
+      font-size: 0.84rem;
+    }
+
+    /* Transfer-row hint on transaction list */
+    .w-tx-icon.transfer-sent { background: rgba(56,189,248,0.16); color: var(--w-accent); }
+    .w-tx-icon.transfer-received { background: rgba(52,211,153,0.16); color: var(--w-green); }
+
+    /* Step 4 — success state */
+    .w-sent-hero {
+      text-align: center;
+      padding: 1.2rem 0 0.6rem;
+    }
+    .w-sent-check {
+      width: 78px; height: 78px; border-radius: 999px;
+      background: rgba(52,211,153,0.10);
+      border: 1px solid rgba(52,211,153,0.30);
+      display: grid; place-items: center;
+      margin: 0 auto 0.9rem;
+      animation: w-sent-pop 320ms cubic-bezier(.2,1.2,.4,1) both;
+    }
+    .w-sent-check i {
+      font-size: 2.1rem; color: var(--w-green);
+    }
+    @keyframes w-sent-pop {
+      0%   { transform: scale(0.6); opacity: 0; }
+      60%  { transform: scale(1.08); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .w-sent-headline {
+      font-size: 1.5rem; font-weight: 600; color: var(--w-text);
+      letter-spacing: -0.015em; font-variant-numeric: tabular-nums;
+    }
+    .w-sent-subline {
+      font-size: 0.86rem; color: var(--w-text-muted); margin-top: 0.2rem;
+    }
+    .w-sent-subline b { color: var(--w-text); font-weight: 600; }
   </style>
 </head>
 <body>
@@ -568,7 +854,32 @@
       <div class="w-balance-value" id="balanceValue">—</div>
     </div>
     <div class="w-balance-actions">
+      <button type="button" class="w-btn primary" id="sendMoneyBtn"><i class="fa fa-paper-plane"></i> Send money</button>
       <a class="w-btn ghost" href="/inbox?c=<%= encodedCivId || '' %>"><i class="fa fa-inbox"></i> Inbox</a>
+    </div>
+  </div>
+
+  <!-- Send Money modal — multi-step bottom sheet (recipient → amount → memo → review) -->
+  <div class="w-send-backdrop" id="sendBackdrop"></div>
+  <div class="w-send-modal" id="sendModal" role="dialog" aria-modal="true" aria-label="Send money">
+    <div class="w-send-header">
+      <div style="flex:1;">
+        <div class="w-send-kicker">Send money</div>
+        <div class="w-send-title" id="sendStepTitle">Send to</div>
+      </div>
+      <div class="w-send-dots" id="sendDots">
+        <span class="w-send-dot is-active"></span>
+        <span class="w-send-dot"></span>
+        <span class="w-send-dot"></span>
+        <span class="w-send-dot"></span>
+      </div>
+      <button type="button" class="w-send-close" id="sendCloseBtn" aria-label="Close"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="w-send-error" id="sendError" style="display:none;"></div>
+    <div class="w-send-body" id="sendBody"></div>
+    <div class="w-send-footer" id="sendFooter" style="display:none;">
+      <button type="button" class="w-btn ghost" id="sendBackBtn"><i class="fa fa-arrow-left"></i> Back</button>
+      <button type="button" class="w-btn primary grow" id="sendNextBtn">Continue <i class="fa fa-chevron-right"></i></button>
     </div>
   </div>
 
@@ -665,7 +976,20 @@
     if (!items.length) { host.innerHTML = '<div class="w-empty">No items in your inbox.</div>'; return; }
     const civParam = ENCODED_CIV_ID ? '?c=' + encodeURIComponent(ENCODED_CIV_ID) : '';
     host.innerHTML = items.slice(0, 5).map(it => {
-      const cls = it.status === 'paid' ? 'paid' : (it.status === 'delinquent' ? 'delinquent' : '');
+      const isTransferRcvd = it.type === 'transfer-received';
+      const isTransferSent = it.type === 'transfer-sent';
+      // Transfer items store signed amounts (negative = credit). Render them
+      // with explicit +/- so a received transfer reads as a gain.
+      const absAmt = Math.abs(it.amount || 0);
+      const amtText = isTransferRcvd ? '+' + fmtMoney(absAmt)
+                    : isTransferSent ? '-' + fmtMoney(absAmt)
+                    : fmtMoney(it.amount || 0);
+      const cls = isTransferRcvd ? 'paid'
+                : isTransferSent ? 'delinquent'
+                : (it.status === 'paid' ? 'paid' : (it.status === 'delinquent' ? 'delinquent' : ''));
+      const meta = (isTransferRcvd || isTransferSent)
+        ? (it.memo ? '“' + it.memo + '”' : 'Peer transfer')
+        : (it.source || '') + ' · ' + (it.status || '');
       // Link each row to the corresponding item in /inbox. Hash is read by the
       // inbox page to scroll + highlight after the list loads.
       const href = '/inbox' + civParam + '#item-' + encodeURIComponent(it._id || '');
@@ -673,9 +997,9 @@
         <a class="w-inbox-row w-inbox-row-link" href="${href}">
           <div>
             <div class="w-inbox-title">${escapeHtml(it.title || it.type || 'Item')}</div>
-            <div class="w-inbox-meta">${escapeHtml(it.source || '')} · ${escapeHtml(it.status || '')}</div>
+            <div class="w-inbox-meta">${escapeHtml(meta)}</div>
           </div>
-          <div class="w-inbox-amount ${cls}">${fmtMoney(it.amount || 0)}</div>
+          <div class="w-inbox-amount ${cls}">${escapeHtml(amtText)}</div>
         </a>
       `;
     }).join('');
@@ -1012,6 +1336,7 @@
       });
       if (!r.ok) return;
       ACTIVE_CIVILIAN_ID = CIVILIAN_ID;
+      document.dispatchEvent(new CustomEvent('wallet:active-civilian-changed'));
       const btn = document.getElementById('setActiveBtn');
       if (btn) {
         const pill = document.createElement('span');
@@ -1136,6 +1461,11 @@
   function txIconClass(tx) {
     if (tx.type === 'shift') return 'fa fa-briefcase';
     if (tx.type === 'payroll') return 'fa fa-money-bill-trend-up';
+    // Peer transfers — paper plane for sent (matches the Send CTA), hand-
+    // holding-dollar for received. (Previously used fa-arrow-down-to-bracket
+    // which is a Font Awesome Pro glyph and renders blank in the free build.)
+    if (tx.type === 'transfer-sent') return 'fa fa-paper-plane';
+    if (tx.type === 'transfer-received') return 'fa fa-hand-holding-dollar';
     const src = (tx.subtitle || '').toLowerCase();
     if (src === 'citation') return 'fa fa-gavel';
     if (src === 'judicial' || tx.type === 'verdict') return 'fa fa-gavel';
@@ -1359,6 +1689,7 @@
   function openSwapModal() {
     swapBackdrop.classList.add('is-open');
     swapModal.classList.add('is-open');
+    document.body.classList.add('modal-open');
     swapSearch.value = '';
     setTimeout(() => swapSearch.focus(), 80);
     if (!swapCivilians) loadSwapCivilians();
@@ -1367,6 +1698,7 @@
   function closeSwapModal() {
     swapBackdrop.classList.remove('is-open');
     swapModal.classList.remove('is-open');
+    document.body.classList.remove('modal-open');
   }
   document.getElementById('swapCivBtn').addEventListener('click', openSwapModal);
   document.getElementById('swapCloseBtn').addEventListener('click', closeSwapModal);
@@ -1554,6 +1886,7 @@
         throw new Error(`HTTP ${res.status}${txt ? ' — ' + txt.slice(0, 200) : ''}`);
       }
       ACTIVE_CIVILIAN_ID = CIVILIAN_ID;
+      document.dispatchEvent(new CustomEvent('wallet:active-civilian-changed'));
       // Swap the button out for the "Active" pill in place — no full
       // page reload needed.
       const pill = document.createElement('span');
@@ -1571,6 +1904,566 @@
       });
     }
   }
+  // ---------- Send Money flow ----------
+  // Multi-step bottom-sheet: recipient → amount → memo → review → submit.
+  // Hard-blocks insufficient balance inline (red banner) so the user
+  // understands why send is disabled — explicit per UX requirement.
+  (function initSendMoney() {
+    const SEND_MAX_CENTS = 10_000_00; // $10,000, also enforced server-side
+    const SEND_MAX_MSG = 140;
+
+    const openBtn = document.getElementById('sendMoneyBtn');
+    const backdrop = document.getElementById('sendBackdrop');
+    const modal = document.getElementById('sendModal');
+    const closeBtn = document.getElementById('sendCloseBtn');
+    const body = document.getElementById('sendBody');
+    const footer = document.getElementById('sendFooter');
+    const backBtn = document.getElementById('sendBackBtn');
+    const nextBtn = document.getElementById('sendNextBtn');
+    const stepTitle = document.getElementById('sendStepTitle');
+    const dots = document.getElementById('sendDots');
+    const errorEl = document.getElementById('sendError');
+    if (!openBtn || !modal) return;
+
+    // Always show the Send button. When viewing a civilian who isn't the
+    // user's active civilian, mute it visually and intercept clicks to
+    // prompt the user to switch active first (set-active + open in one
+    // confirm).
+    function syncSendButtonState() {
+      const isActive = !!ACTIVE_CIVILIAN_ID && ACTIVE_CIVILIAN_ID === CIVILIAN_ID;
+      // is-inactive is *visual only* — the button stays fully interactive
+      // because the click routes to the switch-active confirm. Don't add
+      // aria-disabled here; it would (a) mislead screen readers (the button
+      // is interactive) and (b) make Playwright/automation refuse to click.
+      openBtn.classList.toggle('is-inactive', !isActive);
+    }
+    syncSendButtonState();
+    // Re-sync after the existing set-active flow finishes (it mutates
+    // ACTIVE_CIVILIAN_ID in-place). Tied to a generic event so this stays
+    // decoupled from the other handler's internals.
+    document.addEventListener('wallet:active-civilian-changed', syncSendButtonState);
+
+    async function promoteCivilianToActive() {
+      // Bridge to the existing PUT — surfaces the same "clock out first"
+      // 409 modal as the Set-as-Active button, then re-uses our own
+      // ACTIVE_CIVILIAN_ID + button refresh.
+      const res = await fetch(`${API_URL}/api/v2/user/active-civilian`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: USER_ID, communityId: COMMUNITY_ID, civilianId: CIVILIAN_ID }),
+      });
+      if (res.status === 409) {
+        const body = await res.json().catch(() => null);
+        const session = body && body.session;
+        if (session && session._id && typeof showSetActiveBlockedByShift === 'function') {
+          showSetActiveBlockedByShift(session);
+          return false;
+        }
+        throw new Error('You have an active shift on another civilian. Clock out first.');
+      }
+      if (!res.ok) throw new Error('Could not set as active (' + res.status + ')');
+      ACTIVE_CIVILIAN_ID = CIVILIAN_ID;
+      document.dispatchEvent(new CustomEvent('wallet:active-civilian-changed'));
+      // Replace the Set-as-Active button (if rendered) with the Active pill,
+      // mirroring the existing inline flow.
+      const setBtn = document.getElementById('setActiveBtn');
+      if (setBtn) {
+        const pill = document.createElement('span');
+        pill.className = 'w-active-pill';
+        pill.title = 'This is the civilian the wallet, inbox, and bot default to.';
+        pill.innerHTML = '<i class="fa fa-check"></i> Active';
+        setBtn.replaceWith(pill);
+      }
+      return true;
+    }
+
+    let step = 0; // 0 picker · 1 amount · 2 memo · 3 review · 4 sent
+    let recipient = null;
+    let amountCents = 0;
+    let memo = '';
+    let civilians = []; // community-wide civilians, loaded on first open
+    let civsLoading = false;
+    let sending = false;
+    // Snapshot of the completed transfer — held separately so "Send another"
+    // can wipe recipient/amount/memo without disrupting the success screen.
+    let sentSnapshot = null;
+    const TITLES = ['Send to', 'How much?', 'Add a note?', 'Review', 'Sent'];
+
+    function open() {
+      step = 0; recipient = null; amountCents = 0; memo = ''; sentSnapshot = null;
+      errorEl.style.display = 'none'; errorEl.textContent = '';
+      backdrop.classList.add('is-open');
+      modal.classList.add('is-open');
+      document.body.classList.add('modal-open');
+      render();
+      ensureCivilians();
+    }
+    function sendAnother() {
+      step = 0; recipient = null; amountCents = 0; memo = '';
+      errorEl.style.display = 'none'; errorEl.textContent = '';
+      // Keep sentSnapshot until we re-enter step 4; clearing now avoids
+      // stale references but isn't strictly required.
+      sentSnapshot = null;
+      render();
+    }
+    function close() {
+      if (sending) return;
+      backdrop.classList.remove('is-open');
+      modal.classList.remove('is-open');
+      document.body.classList.remove('modal-open');
+    }
+    openBtn.addEventListener('click', () => {
+      // Hot path — caller is already on their active civilian.
+      if (ACTIVE_CIVILIAN_ID === CIVILIAN_ID) { open(); return; }
+      // Otherwise prompt to switch active first. Reuses ddModal for the
+      // confirm — the multi-step send modal opens once they accept.
+      const civName = (CIVILIAN_NAME || 'this civilian').trim() || 'this civilian';
+      // ddModal escapes the title but renders message as raw HTML — bold
+      // the entity in the message, keep title plain.
+      window.ddModal({
+        type: 'confirm',
+        icon: 'fa-paper-plane',
+        title: 'Switch to ' + civName + '?',
+        message: 'Payments send from your active civilian. Set <b>' + escapeHtml(civName) + '</b> active and continue?',
+        confirmText: 'Set active & send',
+        confirmIcon: 'fa-arrow-right',
+        onConfirm: async () => {
+          try {
+            const ok = await promoteCivilianToActive();
+            if (ok) open();
+          } catch (err) {
+            window.ddModal({
+              type: 'danger', icon: 'fa-triangle-exclamation',
+              title: 'Could not switch active civilian',
+              message: escapeHtml(err.message || ''),
+            });
+          }
+        },
+      });
+    });
+    closeBtn.addEventListener('click', close);
+    backdrop.addEventListener('click', close);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('is-open')) close();
+    });
+
+    async function ensureCivilians() {
+      if (civilians.length > 0 || civsLoading) { render(); return; }
+      if (!COMMUNITY_ID) return;
+      civsLoading = true;
+      try {
+        const res = await fetch(`${API_URL}/api/v2/community/${encodeURIComponent(COMMUNITY_ID)}/civilians?page=1&limit=100`);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const list = Array.isArray(data?.civilians) ? data.civilians : [];
+        civilians = list.filter(c => c._id !== CIVILIAN_ID);
+      } catch (err) {
+        console.warn('community civilians load failed', err);
+      } finally {
+        civsLoading = false;
+        if (step === 0) render();
+      }
+    }
+
+    function civName(c) {
+      const d = c?.civilian || {};
+      const fn = (d.firstName || '').trim();
+      const ln = (d.lastName || '').trim();
+      const name = [fn, ln].filter(Boolean).join(' ') || (d.name || '').trim() || 'Unnamed';
+      return name;
+    }
+    function civImage(c) {
+      const d = c?.civilian || {};
+      return d.image || '';
+    }
+    function civInitials(c) {
+      const parts = civName(c).split(/\s+/);
+      return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?';
+    }
+
+    function setDots() {
+      const ds = dots.querySelectorAll('.w-send-dot');
+      ds.forEach((d, i) => {
+        d.classList.toggle('is-active', i === step);
+        d.classList.toggle('is-done', i < step);
+      });
+    }
+
+    function render() {
+      stepTitle.textContent = TITLES[step];
+      setDots();
+      // Hide the live recipient pill on the success step — the success
+      // headline already names the recipient. Otherwise show it on steps 1-3.
+      const recPill = (recipient && step > 0 && step < 4)
+        ? `<div class="w-recipient-pill" id="recPill" role="button" tabindex="0">
+             <div class="w-recipient-avatar">${
+               civImage(recipient)
+                 ? `<img src="${escapeHtml(civImage(recipient))}" alt="">`
+                 : escapeHtml(civInitials(recipient))
+             }</div>
+             <div style="flex:1; min-width:0;">
+               <div class="w-recipient-cap">To</div>
+               <div class="w-recipient-name">${escapeHtml(civName(recipient))}</div>
+             </div>
+             <span class="w-recipient-change">change</span>
+           </div>`
+        : '';
+
+      let content = '';
+      if (step === 0) content = renderPicker();
+      else if (step === 1) content = renderAmount();
+      else if (step === 2) content = renderMemo();
+      else if (step === 3) content = renderReview();
+      else content = renderSent();
+
+      body.innerHTML = recPill + content;
+      wireStepHandlers();
+
+      // Footer visibility + button states
+      if (step === 0) {
+        footer.style.display = 'none';
+      } else if (step === 4) {
+        // Success state — swap the footer to "Send another" + "Done" so the
+        // user can immediately initiate another transfer without re-opening
+        // the modal.
+        footer.style.display = 'flex';
+        backBtn.innerHTML = '<i class="fa fa-paper-plane"></i> Send another';
+        backBtn.disabled = false;
+        nextBtn.innerHTML = '<i class="fa fa-check"></i> Done';
+        nextBtn.disabled = false;
+      } else {
+        footer.style.display = 'flex';
+        backBtn.innerHTML = '<i class="fa fa-arrow-left"></i> Back';
+        if (step < 3) {
+          nextBtn.innerHTML = 'Continue <i class="fa fa-chevron-right"></i>';
+          nextBtn.disabled = step === 1 ? !validAmount() : false;
+        } else {
+          nextBtn.innerHTML = sending
+            ? '<i class="fa fa-spinner fa-spin"></i> Sending…'
+            : `<i class="fa fa-paper-plane"></i> Send ${escapeHtml(fmtMoney(amountCents))}`;
+          nextBtn.disabled = sending;
+        }
+        backBtn.disabled = sending;
+      }
+    }
+
+    function renderPicker() {
+      if (civsLoading) {
+        return `<div class="w-empty" style="text-align:center; padding:1.5rem;">
+                  <i class="w-spinner"></i> Loading civilians…
+                </div>`;
+      }
+      return `
+        <div class="w-send-search">
+          <i class="fa fa-search"></i>
+          <input id="sendQuery" type="search" placeholder="Search ${civilians.length} ${civilians.length === 1 ? 'civilian' : 'civilians'}" autocomplete="off">
+        </div>
+        <div class="w-recipient-list" id="recipientList">
+          ${renderRecipientRows('')}
+        </div>
+      `;
+    }
+    function renderRecipientRows(q) {
+      const query = (q || '').toLowerCase();
+      const rows = civilians.filter(c => !query || civName(c).toLowerCase().includes(query));
+      if (rows.length === 0) {
+        return `<div class="w-empty" style="text-align:center; padding:1.5rem;">
+                  ${civilians.length === 0 ? "No one to send to yet." : `Nothing matches &ldquo;${escapeHtml(q)}&rdquo;.`}
+                </div>`;
+      }
+      return rows.map(c => `
+        <div class="w-recipient-row" data-civ-id="${escapeHtml(c._id)}">
+          <div class="w-recipient-avatar">${
+            civImage(c)
+              ? `<img src="${escapeHtml(civImage(c))}" alt="">`
+              : escapeHtml(civInitials(c))
+          }</div>
+          <div class="who">${escapeHtml(civName(c))}<small>${escapeHtml(c.user?.username || 'civilian')}</small></div>
+          <i class="fa fa-chevron-right chev"></i>
+        </div>
+      `).join('');
+    }
+    function renderAmount() {
+      const dollars = (amountCents / 100).toFixed(2);
+      const balance = currentBalanceCents();
+      const insufficient = amountCents > 0 && amountCents > balance;
+      const overMax = amountCents > SEND_MAX_CENTS;
+      return `
+        <div class="w-amount-display ${insufficient ? 'neg' : ''}">$${dollars}</div>
+        <div class="w-amount-balance">Wallet balance: <b>${escapeHtml(fmtMoney(balance))}</b></div>
+        <input id="sendAmountInput" type="number" min="0" step="0.01" max="${SEND_MAX_CENTS / 100}" inputmode="decimal"
+               class="w-amount-input" placeholder="0.00" value="${amountCents > 0 ? dollars : ''}">
+        <div class="w-quick-row">
+          ${[500, 1000, 2500, 5000].map(c =>
+            `<button type="button" class="w-quick-chip" data-quick="${c}">$${c / 100}</button>`
+          ).join('')}
+          <button type="button" class="w-quick-chip accent" data-quick="max">Max</button>
+        </div>
+        ${insufficient ? `
+          <div class="w-insufficient">
+            <i class="fa fa-circle-xmark"></i>
+            <div>
+              <div class="w-insufficient-title">Not enough in your wallet</div>
+              <div class="w-insufficient-body">You have ${escapeHtml(fmtMoney(balance))} — try a smaller amount or tap <b data-action="use-max">Max</b>.</div>
+            </div>
+          </div>` : ''}
+        ${overMax && !insufficient ? `
+          <div class="w-insufficient" style="background:rgba(245,158,11,0.08); border-color:rgba(245,158,11,0.30);">
+            <i class="fa fa-circle-exclamation" style="color:var(--w-amber);"></i>
+            <div>
+              <div class="w-insufficient-title" style="color:var(--w-amber);">Single transfer max is ${escapeHtml(fmtMoney(SEND_MAX_CENTS))}</div>
+            </div>
+          </div>` : ''}
+      `;
+    }
+    function renderMemo() {
+      const left = SEND_MAX_MSG - memo.length;
+      const cls = left <= 0 ? 'danger' : left <= 20 ? 'warn' : '';
+      return `
+        <textarea id="sendMemoInput" class="w-memo-input" maxlength="${SEND_MAX_MSG}" placeholder="Optional — e.g. thx for the tow">${escapeHtml(memo)}</textarea>
+        <div class="w-memo-footer">
+          <span class="w-memo-hint">Shows up on their receipt — keep it short.</span>
+          <span class="w-memo-count ${cls}" id="memoCount">${memo.length}/${SEND_MAX_MSG}</span>
+        </div>
+      `;
+    }
+    function renderSent() {
+      const s = sentSnapshot || { amountCents: 0, recipientName: '', message: '', balanceAfter: 0 };
+      return `
+        <div class="w-sent-hero">
+          <div class="w-sent-check"><i class="fa fa-circle-check"></i></div>
+          <div class="w-sent-headline">Sent ${escapeHtml(fmtMoney(s.amountCents))}</div>
+          <div class="w-sent-subline">to <b>${escapeHtml(s.recipientName)}</b></div>
+        </div>
+        <div class="w-receipt" style="margin-top:0.4rem;">
+          ${s.message ? `
+          <div class="w-receipt-row">
+            <span class="w-receipt-k">Note</span>
+            <span class="w-receipt-v memo">&ldquo;${escapeHtml(s.message)}&rdquo;</span>
+          </div>` : ''}
+          <div class="w-receipt-row">
+            <span class="w-receipt-k">New balance</span>
+            <span class="w-receipt-v" style="color:var(--w-green);">${escapeHtml(fmtMoney(s.balanceAfter))}</span>
+          </div>
+        </div>
+      `;
+    }
+    function renderReview() {
+      const balance = currentBalanceCents();
+      return `
+        <div class="w-receipt">
+          <div class="w-receipt-kicker">You're sending</div>
+          <div class="w-receipt-amount">${escapeHtml(fmtMoney(amountCents))}</div>
+          <div class="w-receipt-divider"></div>
+          <div class="w-receipt-row">
+            <span class="w-receipt-k">To</span>
+            <span class="w-receipt-v">${escapeHtml(civName(recipient))}</span>
+          </div>
+          ${memo.trim() ? `
+          <div class="w-receipt-row">
+            <span class="w-receipt-k">Note</span>
+            <span class="w-receipt-v memo">&ldquo;${escapeHtml(memo.trim())}&rdquo;</span>
+          </div>` : ''}
+          <div class="w-receipt-row">
+            <span class="w-receipt-k">Balance after</span>
+            <span class="w-receipt-v">${escapeHtml(fmtMoney(balance - amountCents))}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function wireStepHandlers() {
+      const recPill = document.getElementById('recPill');
+      if (recPill) {
+        recPill.addEventListener('click', () => { step = 0; render(); });
+      }
+      if (step === 0) {
+        const q = document.getElementById('sendQuery');
+        const list = document.getElementById('recipientList');
+        if (q && list) {
+          q.addEventListener('input', () => {
+            list.innerHTML = renderRecipientRows(q.value);
+            bindRowClicks();
+          });
+        }
+        bindRowClicks();
+      }
+      if (step === 1) {
+        const input = document.getElementById('sendAmountInput');
+        if (input) {
+          input.focus();
+          input.addEventListener('input', () => {
+            const v = parseFloat(input.value);
+            amountCents = isNaN(v) ? 0 : Math.round(v * 100);
+            if (amountCents < 0) amountCents = 0;
+            updateAmountUI();
+          });
+          // <input type="number"> increments/decrements on wheel while focused.
+          // Blur so a page scroll doesn't silently mutate the amount.
+          input.addEventListener('wheel', () => input.blur());
+        }
+        body.querySelectorAll('[data-quick]').forEach(b => {
+          b.addEventListener('click', () => {
+            const v = b.dataset.quick;
+            amountCents = v === 'max'
+              ? Math.min(currentBalanceCents(), SEND_MAX_CENTS)
+              : parseInt(v, 10);
+            render();
+          });
+        });
+        const maxLink = body.querySelector('[data-action="use-max"]');
+        if (maxLink) {
+          maxLink.addEventListener('click', () => {
+            amountCents = Math.min(currentBalanceCents(), SEND_MAX_CENTS);
+            render();
+          });
+        }
+      }
+      if (step === 2) {
+        const t = document.getElementById('sendMemoInput');
+        const c = document.getElementById('memoCount');
+        if (t) {
+          t.focus();
+          t.addEventListener('input', () => {
+            memo = t.value.slice(0, SEND_MAX_MSG);
+            const left = SEND_MAX_MSG - memo.length;
+            c.textContent = `${memo.length}/${SEND_MAX_MSG}`;
+            c.classList.toggle('warn', left <= 20 && left > 0);
+            c.classList.toggle('danger', left <= 0);
+          });
+        }
+      }
+    }
+    function bindRowClicks() {
+      document.querySelectorAll('.w-recipient-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const id = row.dataset.civId;
+          recipient = civilians.find(c => c._id === id);
+          if (!recipient) return;
+          step = 1;
+          render();
+        });
+      });
+    }
+
+    function updateAmountUI() {
+      // Cheap surgical refresh so we don't lose input focus on every keystroke.
+      const display = body.querySelector('.w-amount-display');
+      if (display) {
+        display.textContent = '$' + (amountCents / 100).toFixed(2);
+        display.classList.toggle('neg', amountCents > 0 && amountCents > currentBalanceCents());
+      }
+      nextBtn.disabled = !validAmount();
+      // Pop the insufficient banner in/out as the user types.
+      const old = body.querySelector('.w-insufficient');
+      const balance = currentBalanceCents();
+      const insufficient = amountCents > 0 && amountCents > balance;
+      const overMax = amountCents > SEND_MAX_CENTS;
+      if (old) old.remove();
+      if (insufficient) {
+        const div = document.createElement('div');
+        div.className = 'w-insufficient';
+        div.innerHTML = `<i class="fa fa-circle-xmark"></i>
+          <div>
+            <div class="w-insufficient-title">Not enough in your wallet</div>
+            <div class="w-insufficient-body">You have ${escapeHtml(fmtMoney(balance))} — try a smaller amount or tap <b data-action="use-max">Max</b>.</div>
+          </div>`;
+        body.appendChild(div);
+        div.querySelector('[data-action="use-max"]').addEventListener('click', () => {
+          amountCents = Math.min(balance, SEND_MAX_CENTS);
+          render();
+        });
+      } else if (overMax) {
+        const div = document.createElement('div');
+        div.className = 'w-insufficient';
+        div.style.background = 'rgba(245,158,11,0.08)';
+        div.style.borderColor = 'rgba(245,158,11,0.30)';
+        div.innerHTML = `<i class="fa fa-circle-exclamation" style="color:var(--w-amber);"></i>
+          <div><div class="w-insufficient-title" style="color:var(--w-amber);">Single transfer max is ${escapeHtml(fmtMoney(SEND_MAX_CENTS))}</div></div>`;
+        body.appendChild(div);
+      }
+    }
+
+    function currentBalanceCents() {
+      // Read from the DOM since we don't keep a JS source-of-truth for it.
+      const el = document.getElementById('balanceValue');
+      if (!el) return 0;
+      const txt = (el.textContent || '').replace(/[^\d.-]/g, '');
+      const n = parseFloat(txt);
+      return isNaN(n) ? 0 : Math.round(n * 100);
+    }
+    function validAmount() {
+      if (amountCents <= 0) return false;
+      if (amountCents > SEND_MAX_CENTS) return false;
+      if (amountCents > currentBalanceCents()) return false;
+      return true;
+    }
+
+    backBtn.addEventListener('click', () => {
+      if (sending) return;
+      if (step === 4) { sendAnother(); return; }
+      step = Math.max(0, step - 1);
+      render();
+    });
+    nextBtn.addEventListener('click', async () => {
+      if (sending) return;
+      if (step === 4) { close(); return; }
+      if (step < 3) {
+        if (step === 1 && !validAmount()) return;
+        step += 1;
+        render();
+        return;
+      }
+      // Submit
+      sending = true;
+      errorEl.style.display = 'none';
+      render();
+      try {
+        const res = await fetch(`${API_URL}/api/v2/economy/transfer?userId=${encodeURIComponent(USER_ID)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fromCivilianId: CIVILIAN_ID,
+            toCivilianId: recipient._id,
+            amountCents,
+            message: memo.trim(),
+          }),
+        });
+        const payload = await res.json().catch(() => null);
+        if (!res.ok) {
+          // API error envelope is lowercase `{ response: { message, error } }`
+          // — PascalCase here silently swallows the real reason.
+          const msg = payload?.response?.message || payload?.message || `Transfer failed (${res.status})`;
+          throw new Error(msg);
+        }
+        // Optimistic balance patch — the user's send should reflect immediately.
+        if (typeof payload?.fromBalanceAfter === 'number') {
+          const balEl = document.getElementById('balanceValue');
+          if (balEl) balEl.textContent = fmtMoney(payload.fromBalanceAfter);
+        }
+        // Capture a stable snapshot, then morph into the success step
+        // in-place instead of closing + showing a ddModal toast.
+        sentSnapshot = {
+          amountCents,
+          message: memo.trim(),
+          recipientName: payload?.recipientName || civName(recipient),
+          balanceAfter: typeof payload?.fromBalanceAfter === 'number'
+            ? payload.fromBalanceAfter
+            : Math.max(currentBalanceCents() - amountCents, 0),
+        };
+        step = 4;
+        if (typeof refreshTransactions === 'function') refreshTransactions();
+        if (typeof refreshWallet === 'function') refreshWallet();
+      } catch (err) {
+        errorEl.textContent = err.message || 'Transfer failed';
+        errorEl.style.display = '';
+      } finally {
+        sending = false;
+        render();
+      }
+    });
+  })();
+
   } // end if (CIVILIAN_ID)
 </script>
 <%- include('partials/pending-deletion-gate') %>

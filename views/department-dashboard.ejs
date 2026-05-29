@@ -3077,6 +3077,7 @@
         <a class="dd-nav-item" id="dd-nav-settings" data-panel="departmentSettings" onclick="window.ddNavTo && window.ddNavTo('departmentSettings')" style="cursor:pointer;">
           <i class="fa fa-gear"></i>
           Settings
+          <span class="dd-nav-badge" id="dd-settings-badge" style="display:none;">0</span>
         </a>
       </div>
 
@@ -3582,6 +3583,7 @@
       checkWarrantApprovalMode();
       applyDeptTypeIndicator();
       loadRecordsStats();
+      if (typeof window.ddRefreshRanksPendingBadge === 'function') window.ddRefreshRanksPendingBadge();
 
       // Show "Switch to Classic" button for civilian template departments
       if (currentTemplateName === 'civilian') {
@@ -7413,6 +7415,70 @@ $('#dd-loading').hide();
   <script src="/static/js/dd-911.js"></script>
   <script src="/static/js/dd-notifications.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+  <!-- Manage Ranks (shared partial + module) — used by dd-settings.js Ranks tab -->
+  <template id="manage-ranks-tpl"><%- include('partials/manage-ranks', { rkmEmbedded: true }) %></template>
+  <script src="/static/js/manage-ranks.js"></script>
+  <script>
+    // Refresh the sidebar Settings badge + Ranks tab pill with the current
+    // pending-promotions count for the active department. Exposed as a
+    // function so buildDashboard() can call it once department data has loaded.
+    window.ddRanksPendingCount = window.ddRanksPendingCount || {};
+    window.ddRefreshRanksPendingBadge = function () {
+      if (!window.manageRanks) return;
+      var c = window.ddConfig || {};
+      var deptId = (c.departmentData && c.departmentData._id) || '';
+      window.manageRanks.configure({
+        communityId: c.communityId,
+        userId: c.userId
+      });
+      if (!deptId) return;
+      window.manageRanks.fetchPendingCount(deptId).then(function (count) {
+        window.ddRanksPendingCount[deptId] = count;
+        var sidebar = document.getElementById('dd-settings-badge');
+        if (sidebar) {
+          if (count > 0) {
+            sidebar.textContent = count > 99 ? '99+' : count;
+            sidebar.style.display = '';
+          } else {
+            sidebar.style.display = 'none';
+          }
+        }
+        var tabBadge = document.querySelector('[data-tab-badge="ranks"]');
+        if (tabBadge) {
+          if (count > 0) {
+            tabBadge.textContent = count > 99 ? '99+' : count;
+            tabBadge.style.display = '';
+          } else {
+            tabBadge.style.display = 'none';
+          }
+        }
+      });
+    };
+    // Keep the badges in sync when the ranks module observes a count change
+    // (promotion processed, manual requirement toggled, etc.) — fires from
+    // manage-ranks.js syncExternalBadges().
+    window.onPendingPromotionsCountChange = function (deptId, count) {
+      window.ddRanksPendingCount[deptId] = count;
+      var sidebar = document.getElementById('dd-settings-badge');
+      if (sidebar) {
+        if (count > 0) {
+          sidebar.textContent = count > 99 ? '99+' : count;
+          sidebar.style.display = '';
+        } else {
+          sidebar.style.display = 'none';
+        }
+      }
+      var tabBadge = document.querySelector('[data-tab-badge="ranks"]');
+      if (tabBadge) {
+        if (count > 0) {
+          tabBadge.textContent = count > 99 ? '99+' : count;
+          tabBadge.style.display = '';
+        } else {
+          tabBadge.style.display = 'none';
+        }
+      }
+    };
+  </script>
   <script src="/static/js/dd-settings.js"></script>
   <script src="/static/js/dd-economy.js"></script>
   <script src="/static/js/rank-progress.js"></script>

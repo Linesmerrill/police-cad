@@ -19,4 +19,30 @@ test.describe('Wallet', () => {
     await expect(page.locator('text=Current Balance').first()).toBeVisible();
     await expect(page.locator('text=Jobs').first()).toBeVisible();
   });
+
+  test('opens and closes the Send Money modal', { tag: '@auth' }, async ({ page }) => {
+    await page.goto('/wallet');
+    if (/\/civ-dashboard/.test(page.url())) {
+      test.skip(true, 'Test user has no civilian; Send Money is gated on having an active civilian.');
+    }
+    const sendBtn = page.locator('#sendMoneyBtn');
+    await expect(sendBtn).toBeVisible();
+    // When the test account is viewing a non-active civilian, clicking the
+    // muted button surfaces a ddModal confirm asking to switch active — a
+    // distinct flow worth its own test. This test exercises the direct-open
+    // path only, so skip when muted.
+    const isInactive = await sendBtn.evaluate((el) => el.classList.contains('is-inactive'));
+    if (isInactive) {
+      test.skip(true, 'Send Money CTA is in the switch-active confirm path; tested separately.');
+    }
+    await sendBtn.click();
+    const modal = page.locator('#sendModal');
+    await expect(modal).toHaveClass(/is-open/);
+    await expect(modal.locator('#sendStepTitle')).toHaveText('Send to');
+    // Search input renders once civilians load (or in the empty state).
+    await expect(modal.locator('#sendBody')).toBeVisible();
+    // Close via the X button
+    await modal.locator('#sendCloseBtn').click();
+    await expect(modal).not.toHaveClass(/is-open/);
+  });
 });
