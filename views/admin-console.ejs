@@ -7284,27 +7284,42 @@
           if (caseState.caseNumber) {
             history.replaceState(null, null, '#cases/' + caseState.caseNumber);
           }
-          // Also load community and roles data for the workflow
-          Promise.all([
-            $.ajax({ url: API_BASE + '/api/v1/admin/communities/' + caseState.communityId, method: 'GET' }),
-            $.ajax({ url: API_BASE + '/api/v1/admin/communities/' + caseState.communityId + '/roles', method: 'GET' }),
-          ]).then(function(results) {
-            caseState._community = results[0].community;
-            caseState._roles = results[1].roles || [];
-            caseState._dangerousRoles = caseState._roles.filter(function(r) { return r.hasAdminPermission && !r.isHeadAdmin; });
-            // Set old owner from community data if not already in step 1
-            if (caseState._community.owner && !caseState.steps.transferOwnership.oldOwner) {
-              caseState._oldOwner = {
-                id: caseState._community.owner.id,
-                email: caseState._community.owner.email,
-                username: caseState._community.owner.username
-              };
-            } else if (caseState.steps.transferOwnership.oldOwner) {
-              caseState._oldOwner = caseState.steps.transferOwnership.oldOwner;
-            }
-            renderCaseStep();
-          }).catch(function() {
-            $('#case-detail-content').html('<div style="color: var(--ac-red); padding: 2rem; text-align: center;">Failed to load community data. <button class="ac-btn" onclick="viewCase(\'' + caseId + '\')">Retry</button></div>');
+          // Heal legacy pre-permissions communities BEFORE loading roles/details
+          // so the workflow operates on the repaired schema (e.g. a community
+          // created before roles existed has no Head Admin role, locking the
+          // owner out). Idempotent server-side; non-blocking if it fails.
+          function loadCaseCommunityData() {
+            Promise.all([
+              $.ajax({ url: API_BASE + '/api/v1/admin/communities/' + caseState.communityId, method: 'GET' }),
+              $.ajax({ url: API_BASE + '/api/v1/admin/communities/' + caseState.communityId + '/roles', method: 'GET' }),
+            ]).then(function(results) {
+              caseState._community = results[0].community;
+              caseState._roles = results[1].roles || [];
+              caseState._dangerousRoles = caseState._roles.filter(function(r) { return r.hasAdminPermission && !r.isHeadAdmin; });
+              // Set old owner from community data if not already in step 1
+              if (caseState._community.owner && !caseState.steps.transferOwnership.oldOwner) {
+                caseState._oldOwner = {
+                  id: caseState._community.owner.id,
+                  email: caseState._community.owner.email,
+                  username: caseState._community.owner.username
+                };
+              } else if (caseState.steps.transferOwnership.oldOwner) {
+                caseState._oldOwner = caseState.steps.transferOwnership.oldOwner;
+              }
+              renderCaseStep();
+            }).catch(function() {
+              $('#case-detail-content').html('<div style="color: var(--ac-red); padding: 2rem; text-align: center;">Failed to load community data. <button class="ac-btn" onclick="viewCase(\'' + caseId + '\')">Retry</button></div>');
+            });
+          }
+          $.ajax({
+            url: API_BASE + '/api/v1/admin/communities/' + caseState.communityId + '/sync-schema',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ currentUser: { email: currentUserEmail, roles: roles } })
+          }).done(function(syncRes) {
+            caseState._syncedActions = (syncRes && syncRes.actions) ? syncRes.actions : [];
+          }).always(function() {
+            loadCaseCommunityData();
           });
         },
         error: function() {
@@ -7341,15 +7356,29 @@
       }
     }
 
+    // renderCaseSyncNote surfaces a subtle, informational banner when the
+    // community was auto-repaired on load (legacy pre-permissions community
+    // brought up to the current schema). Returns '' when nothing was repaired.
+    function renderCaseSyncNote() {
+      var actions = (caseState && caseState._syncedActions) || [];
+      if (!actions.length) return '';
+      var shown = actions.slice(0, 3).join(', ');
+      var more = actions.length > 3 ? ' +' + (actions.length - 3) + ' more' : '';
+      return '<div style="display: flex; align-items: flex-start; gap: 0.5rem; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 8px; padding: 0.6rem 0.85rem; margin-bottom: 1rem; font-size: 0.8rem; color: var(--ac-text);">'
+        + '<i class="fas fa-wrench" style="color: var(--ac-amber); margin-top: 0.15rem;"></i>'
+        + '<div><strong style="color: #fff;">Repaired this legacy community.</strong> It pre-dated the permissions system (owner was locked out). Applied: ' + shown + more + '.</div>'
+        + '</div>';
+    }
+
     function renderCaseStepper(currentStep) {
       var steps = ['Owner', 'Head Admin', 'Role Audit', 'Remove User', 'Summary'];
       var stepKeys = ['transferOwnership', 'headAdmin', 'roleAudit', 'removeBadActor', 'summary'];
       var isCancelled = caseState && caseState.status === 'cancelled';
       var isMobile = window.innerWidth < 768;
       if (isMobile) {
-        return '<div style="text-align: center; color: var(--ac-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Step ' + currentStep + ' of 5: ' + steps[currentStep - 1] + '</div>';
+        return renderCaseSyncNote() + '<div style="text-align: center; color: var(--ac-text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Step ' + currentStep + ' of 5: ' + steps[currentStep - 1] + '</div>';
       }
-      var html = '<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; gap: 0.25rem;">';
+      var html = renderCaseSyncNote() + '<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; gap: 0.25rem;">';
       steps.forEach(function(step, i) {
         var stepNum = i + 1;
         var isActive = stepNum === currentStep;
@@ -7390,7 +7419,8 @@
             _dangerousRoles: caseState._dangerousRoles,
             _oldOwner: caseState._oldOwner,
             _newOwner: caseState._newOwner,
-            _badActor: caseState._badActor
+            _badActor: caseState._badActor,
+            _syncedActions: caseState._syncedActions
           };
           caseState = res['case'];
           for (var key in transient) {
