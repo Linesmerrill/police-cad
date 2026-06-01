@@ -7308,7 +7308,11 @@
               }
               renderCaseStep();
             }).catch(function() {
-              $('#case-detail-content').html('<div style="color: var(--ac-red); padding: 2rem; text-align: center;">Failed to load community data. <button class="ac-btn" onclick="viewCase(\'' + caseId + '\')">Retry</button></div>');
+              // Bind the retry via jQuery rather than interpolating caseId into
+              // an inline onclick (the value can originate from the URL hash —
+              // keeping it out of the HTML sink avoids a DOM-XSS vector).
+              $('#case-detail-content').html('<div style="color: var(--ac-red); padding: 2rem; text-align: center;">Failed to load community data. <button class="ac-btn" id="caseLoadRetryBtn">Retry</button></div>');
+              $('#caseLoadRetryBtn').on('click', function() { viewCase(caseId); });
             });
           }
           $.ajax({
