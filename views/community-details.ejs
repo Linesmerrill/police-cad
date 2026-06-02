@@ -600,7 +600,7 @@
           </div>
         <% } else { %>
           <!-- User is not logged in - show login button -->
-          <a href="/login-civ?redirect=<%= encodeURIComponent('/community/' + community._id) %>" class="inline-flex items-center px-4 py-2 text-black font-semibold rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);">
+          <a href="/login-civ?redirect=<%= encodeURIComponent('/community/' + hash) %>" class="inline-flex items-center px-4 py-2 text-black font-semibold rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);">
             <i class="fa fa-sign-in-alt mr-2"></i>
             Login
           </a>
@@ -1649,7 +1649,7 @@
               <h3 class="text-lg font-bold text-white mb-2">Departments Locked</h3>
               <p class="text-slate-400 text-sm mb-4">Join the community to access departments</p>
               <% if (!user) { %>
-                <a href="/login-civ?redirect=<%= encodeURIComponent('/community/' + community._id) %>" class="btn-primary inline-block">
+                <a href="/login-civ?redirect=<%= encodeURIComponent('/community/' + hash) %>" class="btn-primary inline-block">
                   Sign In to Join
                 </a>
               <% } else if (!isMemberPending) { %>
