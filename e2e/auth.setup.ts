@@ -2,6 +2,17 @@ import { test as setup, expect } from '@playwright/test';
 import path from 'path';
 
 const userFile = path.join(__dirname, '.auth/user.json');
+const baseURL = process.env.BASE_URL || 'http://localhost:8080';
+
+// First-run feature spotlights (the "LPC Feature Tutorial System") auto-show a
+// full-screen modal ~800ms after a community page loads when the user hasn't
+// dismissed them. Because the E2E database is ephemeral the test user has never
+// dismissed them, so the modal races every interaction and intermittently
+// overlays/intercepts clicks (e.g. the community "Promote" action). The tutorial
+// system treats an `lpc_tutorial_<key>` cookie as "already dismissed", so we
+// seed those cookies into the shared auth state to keep tests deterministic.
+// Add a new key here whenever a new auto-registered tutorial is introduced.
+const dismissedTutorialKeys = ['rank_system'];
 
 setup('authenticate as user', async ({ page }) => {
   const email = process.env.TEST_USER_EMAIL;
@@ -25,6 +36,15 @@ setup('authenticate as user', async ({ page }) => {
   // On success, it redirects to /communities (or the stored redirect).
   await page.waitForURL('**/communities**', { timeout: 15_000 });
   await expect(page).not.toHaveURL(/error/);
+
+  // Suppress first-run onboarding spotlights so they don't overlay pages mid-test.
+  await page.context().addCookies(
+    dismissedTutorialKeys.map((key) => ({
+      name: `lpc_tutorial_${key}`,
+      value: '1',
+      url: baseURL,
+    }))
+  );
 
   await page.context().storageState({ path: userFile });
 });
