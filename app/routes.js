@@ -258,6 +258,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         departmentTemplateTypes,
         boosterUsername,
         query: req.query,
+        hash,
         referer: encodeURIComponent(`/community/${hash}`),
         redirect: encodeURIComponent(redirect),
       });

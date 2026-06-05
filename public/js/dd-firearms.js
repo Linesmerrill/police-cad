@@ -45,15 +45,19 @@
 
   /* ──────────────────────── helper — boolean normalize ────────────────── */
 
-  /** Normalize API boolean (1, "1", "true", true → true; else false). */
+  /** Normalize API boolean. Canonical firearm value is "true"/"false";
+      legacy 1/"1" is tolerated for older records. */
   function toBool(v) {
     if (v === true || v === 1 || v === '1' || v === 'true') return true;
     return false;
   }
 
-  /** Convert boolean to the string value the API expects. */
+  /** Convert boolean to the string the API stores. Firearms use the canonical
+      "true"/"false" strings — the same values the mobile app and every other
+      civ/LEO surface read. (Previously this wrote "1"/"2", whose "2" = not
+      stolen collided with legacy readers that treat "2" as stolen.) */
   function boolToApi(v) {
-    return v ? '1' : '2';
+    return v ? 'true' : 'false';
   }
 
   /* ──────────────────────── helper — flatten firearm ──────────────────── */

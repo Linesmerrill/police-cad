@@ -517,6 +517,54 @@ export async function addDispatchDepartment(opts: {
   return deptId.toHexString();
 }
 
+/**
+ * Push a law-enforcement (police) department onto the seeded test community
+ * with the firearm-management component enabled, so the department dashboard
+ * renders the Firearms tab (dd-firearms.js). Mirrors addDispatchDepartment —
+ * the dashboard derives enabledComponents from `template.components`, so we
+ * seed them explicitly rather than relying on backend template defaults.
+ */
+export async function addPoliceDepartment(opts: {
+  name?: string;
+  firearmsEnabled?: boolean;
+} = {}): Promise<string> {
+  const deptId = new ObjectId();
+  const now = new Date();
+  await withDb(async (db) => {
+    await db.collection('communities').updateOne(
+      { _id: new ObjectId(TEST_COMMUNITY_ID) },
+      {
+        $push: {
+          'community.departments': {
+            _id: deptId,
+            name: opts.name ?? 'E2E Police',
+            description: 'E2E police department',
+            image: '',
+            approvalRequired: false,
+            members: [{ id: TEST_USER_ID, status: 'active' }],
+            ranks: [],
+            template: {
+              _id: new ObjectId(),
+              name: 'Police',
+              category: 'law-enforcement',
+              description: 'E2E police template',
+              components: [
+                { _id: new ObjectId(), name: 'createCivilians', enabled: true },
+                { _id: new ObjectId(), name: 'createVehicles', enabled: true },
+                { _id: new ObjectId(), name: 'createFirearms', enabled: opts.firearmsEnabled ?? true },
+              ],
+            },
+            createdAt: now,
+            updatedAt: now,
+            onlineMemberCount: 0,
+          },
+        },
+      }
+    );
+  });
+  return deptId.toHexString();
+}
+
 export async function removeDepartmentById(deptId: string): Promise<void> {
   await withDb(async (db) => {
     await db.collection('communities').updateOne(
