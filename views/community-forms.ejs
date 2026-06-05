@@ -102,6 +102,17 @@
     .rp-pill-archived { background: rgba(239,68,68,0.1); color: var(--rp-red); border-color: rgba(239,68,68,0.25); }
 
     /* List view */
+    /* Filter tabs (Forms / Archived / All). Horizontally scrollable so labels + counts survive small screens. */
+    .rp-tabs { display: flex; gap: 0.4rem; margin-bottom: 1rem; overflow-x: auto; flex-grow: 0; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
+    .rp-tab {
+      flex: 0 0 auto; white-space: nowrap; cursor: pointer; font-family: inherit;
+      padding: 0.4rem 0.85rem; border-radius: 999px;
+      background: var(--rp-glass); border: 1px solid var(--rp-glass-border);
+      color: var(--rp-text-muted); font-size: 0.82rem; font-weight: 600;
+    }
+    .rp-tab:hover { color: var(--rp-text); background: var(--rp-glass-hover); }
+    .rp-tab.is-active { background: var(--rp-accent-glow); border-color: rgba(56,189,248,0.35); color: var(--rp-accent); }
+    .rp-tab-count { opacity: 0.65; font-weight: 500; margin-left: 0.15rem; }
     .rp-list { display: flex; flex-direction: column; gap: 0.6rem; }
     .rp-card {
       background: var(--rp-surface);
@@ -130,6 +141,8 @@
       padding: 0.5rem 0.65rem; font-size: 0.88rem; font-family: inherit; width: 100%;
     }
     .rp-input:focus, .rp-textarea:focus, .rp-select:focus { outline: none; border-color: var(--rp-accent); }
+    /* Field-level validation highlight: red border + soft glow on invalid/required fields. */
+    .rp-invalid, .rp-invalid:focus { border-color: var(--rp-red) !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.18); }
     .rp-textarea { min-height: 64px; resize: vertical; }
     .rp-label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--rp-text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
 
@@ -469,10 +482,21 @@
         try { sessionStorage.setItem('reports.returnUrl', ref); } catch (e) {}
       })();
 
+      // List filter tab from the ?tab= URL param; defaults to active forms so
+      // archived templates stay out of the way unless explicitly requested.
+      function initialFilter() {
+        try {
+          var v = new URL(window.location.href).searchParams.get('tab');
+          if (v === 'archived' || v === 'all' || v === 'forms') return v;
+        } catch (e) { /* no URL/searchParams support — fall through */ }
+        return 'forms';
+      }
+
       var state = {
         templates: [],
         editing: null, // template being edited (or null in list view)
         isNew: false,
+        filter: initialFilter(), // 'forms' | 'archived' | 'all'
       };
 
       function toast(msg, kind) {
@@ -563,6 +587,46 @@
       }
 
       // --- List view ---
+      // Filter tabs: 'forms' = active (non-archived), 'archived' = archived only, 'all' = everything.
+      function filteredTemplates() {
+        if (state.filter === 'archived') return state.templates.filter(function (t) { return t.isArchived; });
+        if (state.filter === 'all') return state.templates.slice();
+        return state.templates.filter(function (t) { return !t.isArchived; });
+      }
+
+      function tabsHTML() {
+        var archivedCount = state.templates.filter(function (t) { return t.isArchived; }).length;
+        var activeCount = state.templates.length - archivedCount;
+        var defs = [
+          { key: 'forms', label: 'Forms', count: activeCount },
+          { key: 'archived', label: 'Archived', count: archivedCount },
+          { key: 'all', label: 'All', count: state.templates.length },
+        ];
+        return '<div class="rp-tabs" role="tablist">' + defs.map(function (d) {
+          return '<button type="button" class="rp-tab' + (state.filter === d.key ? ' is-active' : '') + '"' +
+            ' data-tab="' + d.key + '" role="tab" aria-selected="' + (state.filter === d.key) + '">' +
+            d.label + ' <span class="rp-tab-count">' + d.count + '</span></button>';
+        }).join('') + '</div>';
+      }
+
+      function setFilter(tab) {
+        if (['forms', 'archived', 'all'].indexOf(tab) === -1) tab = 'forms';
+        state.filter = tab;
+        // Reflect the active tab in the URL so it survives refresh / share / back.
+        try {
+          var u = new URL(window.location.href);
+          u.searchParams.set('tab', tab);
+          window.history.replaceState({}, '', u);
+        } catch (e) { /* no history/URL support — filter still works in-memory */ }
+        renderList();
+      }
+
+      function wireTabs(view) {
+        Array.from(view.querySelectorAll('[data-tab]')).forEach(function (btn) {
+          btn.addEventListener('click', function () { setFilter(btn.getAttribute('data-tab')); });
+        });
+      }
+
       function renderList() {
         var view = document.getElementById('rp-list-view');
         document.getElementById('rp-builder-view').style.display = 'none';
@@ -579,8 +643,20 @@
           return;
         }
 
-        var html = permBannerHTML() + '<div class="rp-list">';
-        state.templates.forEach(function (t) {
+        var list = filteredTemplates();
+        var html = permBannerHTML() + tabsHTML();
+        if (!list.length) {
+          var filterEmpty = state.filter === 'archived'
+            ? 'No archived forms.'
+            : 'Nothing to show in this view.';
+          html += '<div class="rp-empty"><div class="rp-empty-icon"><i class="fa-regular fa-folder-open"></i></div>' + filterEmpty + '</div>';
+          view.innerHTML = html;
+          wireTabs(view);
+          return;
+        }
+
+        html += '<div class="rp-list">';
+        list.forEach(function (t) {
           var pills = '';
           if (t.isDefault) pills += '<span class="rp-pill rp-pill-default"><i class="fa-solid fa-star"></i> Default</span> ';
           if (t.isHidden) pills += '<span class="rp-pill rp-pill-hidden"><i class="fa-solid fa-eye-slash"></i> Hidden</span> ';
@@ -621,6 +697,7 @@
         html += '</div>';
         view.innerHTML = html;
 
+        wireTabs(view);
         Array.from(view.querySelectorAll('[data-action]')).forEach(function (btn) {
           btn.addEventListener('click', function () {
             var action = btn.getAttribute('data-action');
@@ -1155,13 +1232,14 @@
 
       function bindBuilderEvents() {
         document.getElementById('bf-name').addEventListener('input', function (e) {
+          e.target.classList.remove('rp-invalid');
           state.editing.name = e.target.value;
           if (state.isNew && (!state.editing.slug || state.editing.slug.indexOf('form-') === 0)) {
             state.editing.slug = slugify(e.target.value);
             document.getElementById('bf-slug').value = state.editing.slug;
           }
         });
-        document.getElementById('bf-slug').addEventListener('input', function (e) { state.editing.slug = slugify(e.target.value); e.target.value = state.editing.slug; });
+        document.getElementById('bf-slug').addEventListener('input', function (e) { e.target.classList.remove('rp-invalid'); state.editing.slug = slugify(e.target.value); e.target.value = state.editing.slug; });
         document.getElementById('bf-numfmt').addEventListener('input', function (e) { state.editing.numberFormat = e.target.value; });
         document.getElementById('bf-desc').addEventListener('input', function (e) { state.editing.description = e.target.value; });
 
@@ -1205,6 +1283,7 @@
         }
 
         document.getElementById('bf-add-section').addEventListener('click', function () {
+          this.classList.remove('rp-invalid');
           var idx = state.editing.sections.length + 1;
           state.editing.sections.push({ id: 'section' + idx + '_' + Date.now(), title: 'Section ' + idx, repeatable: false, fields: [] });
           renderSections();
@@ -1212,10 +1291,32 @@
       }
 
       // --- Save ---
+      // Field-level validation highlight: flag the offending input/control in red
+      // so the user sees exactly what to fix, not just a transient toast.
+      function flagInvalid(el) { if (el) el.classList.add('rp-invalid'); }
+      function clearFieldErrors() {
+        Array.from(document.querySelectorAll('.rp-invalid')).forEach(function (el) { el.classList.remove('rp-invalid'); });
+      }
+
       function saveTemplate() {
         var t = state.editing;
-        if (!t.name || !t.slug) return toast('Name and slug are required', 'error');
-        if (!(t.sections || []).length) return toast('Add at least one section', 'error');
+        clearFieldErrors();
+
+        var nameEl = document.getElementById('bf-name');
+        var slugEl = document.getElementById('bf-slug');
+        var firstBad = null;
+        if (!t.name) { flagInvalid(nameEl); firstBad = firstBad || nameEl; }
+        if (!t.slug) { flagInvalid(slugEl); firstBad = firstBad || slugEl; }
+        if (firstBad) {
+          firstBad.focus();
+          return toast('Name and slug are required', 'error');
+        }
+        if (!(t.sections || []).length) {
+          var addBtn = document.getElementById('bf-add-section');
+          flagInvalid(addBtn);
+          if (addBtn && addBtn.scrollIntoView) addBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return toast('Add at least one section', 'error');
+        }
 
         // Sanitize: ensure every section + field has an id
         t.sections.forEach(function (s, i) {
@@ -1275,7 +1376,27 @@
           body: JSON.stringify(body),
         })
           .then(function (r) {
-            if (!r.ok) return r.text().then(function (txt) { throw new Error('HTTP ' + r.status + ' ' + txt); });
+            if (!r.ok) {
+              return r.text().then(function (txt) {
+                // Surface only the API's human-readable message — never the raw
+                // body, which can carry internal DB/collection/index details.
+                var msg = 'Save failed';
+                try {
+                  var payload = JSON.parse(txt);
+                  if (payload && payload.response && payload.response.message) {
+                    msg = payload.response.message;
+                  }
+                } catch (e) { /* non-JSON body — keep the generic message */ }
+                // 409 means a duplicate slug for this community — point the user
+                // straight at the slug field instead of just toasting.
+                if (r.status === 409) {
+                  var slugEl = document.getElementById('bf-slug');
+                  flagInvalid(slugEl);
+                  if (slugEl) slugEl.focus();
+                }
+                throw new Error(msg);
+              });
+            }
             return r.json();
           })
           .then(function () {
