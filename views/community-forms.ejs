@@ -1275,7 +1275,20 @@
           body: JSON.stringify(body),
         })
           .then(function (r) {
-            if (!r.ok) return r.text().then(function (txt) { throw new Error('HTTP ' + r.status + ' ' + txt); });
+            if (!r.ok) {
+              return r.text().then(function (txt) {
+                // Surface only the API's human-readable message — never the raw
+                // body, which can carry internal DB/collection/index details.
+                var msg = 'Save failed';
+                try {
+                  var payload = JSON.parse(txt);
+                  if (payload && payload.response && payload.response.message) {
+                    msg = payload.response.message;
+                  }
+                } catch (e) { /* non-JSON body — keep the generic message */ }
+                throw new Error(msg);
+              });
+            }
             return r.json();
           })
           .then(function () {
