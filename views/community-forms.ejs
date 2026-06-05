@@ -130,6 +130,8 @@
       padding: 0.5rem 0.65rem; font-size: 0.88rem; font-family: inherit; width: 100%;
     }
     .rp-input:focus, .rp-textarea:focus, .rp-select:focus { outline: none; border-color: var(--rp-accent); }
+    /* Field-level validation highlight: red border + soft glow on invalid/required fields. */
+    .rp-invalid, .rp-invalid:focus { border-color: var(--rp-red) !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.18); }
     .rp-textarea { min-height: 64px; resize: vertical; }
     .rp-label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--rp-text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
 
@@ -1155,13 +1157,14 @@
 
       function bindBuilderEvents() {
         document.getElementById('bf-name').addEventListener('input', function (e) {
+          e.target.classList.remove('rp-invalid');
           state.editing.name = e.target.value;
           if (state.isNew && (!state.editing.slug || state.editing.slug.indexOf('form-') === 0)) {
             state.editing.slug = slugify(e.target.value);
             document.getElementById('bf-slug').value = state.editing.slug;
           }
         });
-        document.getElementById('bf-slug').addEventListener('input', function (e) { state.editing.slug = slugify(e.target.value); e.target.value = state.editing.slug; });
+        document.getElementById('bf-slug').addEventListener('input', function (e) { e.target.classList.remove('rp-invalid'); state.editing.slug = slugify(e.target.value); e.target.value = state.editing.slug; });
         document.getElementById('bf-numfmt').addEventListener('input', function (e) { state.editing.numberFormat = e.target.value; });
         document.getElementById('bf-desc').addEventListener('input', function (e) { state.editing.description = e.target.value; });
 
@@ -1205,6 +1208,7 @@
         }
 
         document.getElementById('bf-add-section').addEventListener('click', function () {
+          this.classList.remove('rp-invalid');
           var idx = state.editing.sections.length + 1;
           state.editing.sections.push({ id: 'section' + idx + '_' + Date.now(), title: 'Section ' + idx, repeatable: false, fields: [] });
           renderSections();
@@ -1212,10 +1216,32 @@
       }
 
       // --- Save ---
+      // Field-level validation highlight: flag the offending input/control in red
+      // so the user sees exactly what to fix, not just a transient toast.
+      function flagInvalid(el) { if (el) el.classList.add('rp-invalid'); }
+      function clearFieldErrors() {
+        Array.from(document.querySelectorAll('.rp-invalid')).forEach(function (el) { el.classList.remove('rp-invalid'); });
+      }
+
       function saveTemplate() {
         var t = state.editing;
-        if (!t.name || !t.slug) return toast('Name and slug are required', 'error');
-        if (!(t.sections || []).length) return toast('Add at least one section', 'error');
+        clearFieldErrors();
+
+        var nameEl = document.getElementById('bf-name');
+        var slugEl = document.getElementById('bf-slug');
+        var firstBad = null;
+        if (!t.name) { flagInvalid(nameEl); firstBad = firstBad || nameEl; }
+        if (!t.slug) { flagInvalid(slugEl); firstBad = firstBad || slugEl; }
+        if (firstBad) {
+          firstBad.focus();
+          return toast('Name and slug are required', 'error');
+        }
+        if (!(t.sections || []).length) {
+          var addBtn = document.getElementById('bf-add-section');
+          flagInvalid(addBtn);
+          if (addBtn && addBtn.scrollIntoView) addBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return toast('Add at least one section', 'error');
+        }
 
         // Sanitize: ensure every section + field has an id
         t.sections.forEach(function (s, i) {
@@ -1286,6 +1312,13 @@
                     msg = payload.response.message;
                   }
                 } catch (e) { /* non-JSON body — keep the generic message */ }
+                // 409 means a duplicate slug for this community — point the user
+                // straight at the slug field instead of just toasting.
+                if (r.status === 409) {
+                  var slugEl = document.getElementById('bf-slug');
+                  flagInvalid(slugEl);
+                  if (slugEl) slugEl.focus();
+                }
                 throw new Error(msg);
               });
             }
