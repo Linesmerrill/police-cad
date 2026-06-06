@@ -69,9 +69,13 @@ test.describe('Admin → Server Promos panel', { tag: '@admin' }, () => {
     });
 
     await page.goto('/admin/console#rp-promos');
+    // The panel is lazy-loaded by acNavTo's callback. Click the nav tab to
+    // trigger it (matches the Subscriptions panel test) rather than relying on
+    // hash routing alone.
+    await page.locator('[data-panel="rp-promos"]').first().click();
 
-    const results = page.locator('#rpPromosResults');
-    await expect(results).toContainText('Vice City Rejects');
+    const results = page.getByTestId('rp-promos-results');
+    await expect(results).toContainText('Vice City Rejects', { timeout: 15_000 });
     await expect(results).toContainText('ViceCity Rejects');
     await expect(results).toContainText('rhiley03');
     // Advisory duplicate badges are rendered.
@@ -105,7 +109,8 @@ test.describe('Admin → Server Promos panel', { tag: '@admin' }, () => {
     });
 
     await page.goto('/admin/console#rp-promos');
-    await expect(page.locator('#rpPromosResults')).toContainText('rhiley03');
+    await page.locator('[data-panel="rp-promos"]').first().click();
+    await expect(page.getByTestId('rp-promos-results')).toContainText('rhiley03', { timeout: 15_000 });
 
     // Open the ban dialog for the owner.
     await page.locator('.rp-ban-btn').first().click();
