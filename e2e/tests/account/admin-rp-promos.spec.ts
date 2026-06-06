@@ -1,22 +1,21 @@
 import { test, expect, Page } from '@playwright/test';
 import {
-  seedConsoleOwner,
-  removeConsoleOwner,
-  TEST_CONSOLE_OWNER_EMAIL,
-  TEST_CONSOLE_OWNER_PASSWORD,
+  seedConsoleStaff,
+  removeConsoleStaff,
+  TEST_CONSOLE_STAFF_EMAIL,
+  TEST_CONSOLE_STAFF_PASSWORD,
 } from '../../helpers/admin-users';
 
-// The Server Promos panel is owner-only (revealed only when the admin's roles
-// include "owner"), so we seed an owner console admin and log in as them.
-// API endpoints are mocked with page.route — the test exercises the panel UI
-// (duplicate flags, ban dialog with computed penalty + email preview), not the
-// Go API.
+// The Server Promos panel is staff-accessible (any admin OR owner). We log in
+// as a non-owner `admin` to prove staff-but-not-owner access. API endpoints are
+// mocked with page.route — the test exercises the panel UI (duplicate grouping,
+// ban dialog with computed penalty + email preview), not the Go API.
 test.use({ storageState: { cookies: [], origins: [] } });
 
-async function loginAsConsoleOwner(page: Page) {
+async function loginAsConsoleStaff(page: Page) {
   await page.goto('/admin');
-  await page.locator('input[name="email"]').fill(TEST_CONSOLE_OWNER_EMAIL);
-  await page.locator('input[name="password"]').fill(TEST_CONSOLE_OWNER_PASSWORD);
+  await page.locator('input[name="email"]').fill(TEST_CONSOLE_STAFF_EMAIL);
+  await page.locator('input[name="password"]').fill(TEST_CONSOLE_STAFF_PASSWORD);
   await Promise.all([
     page.waitForURL('**/admin/console**', { timeout: 15_000 }),
     page.locator('button[type="submit"]').click(),
@@ -50,15 +49,15 @@ test.describe('Admin → Server Promos panel', { tag: '@admin' }, () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeAll(async () => {
-    await seedConsoleOwner();
+    await seedConsoleStaff();
   });
 
   test.afterAll(async () => {
-    await removeConsoleOwner();
+    await removeConsoleStaff();
   });
 
   test.beforeEach(async ({ page }) => {
-    await loginAsConsoleOwner(page);
+    await loginAsConsoleStaff(page);
   });
 
   test('lists promos with possible-duplicate flags', async ({ page }) => {

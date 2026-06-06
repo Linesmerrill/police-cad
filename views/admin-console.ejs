@@ -860,6 +860,9 @@
             <i class="fas fa-video"></i> Content Creators
             <span id="ccPendingBadge" class="ac-nav-badge" style="display: none;"></span>
           </div>
+          <div class="ac-nav-item" id="rp-promos-tab" data-panel="rp-promos" style="display: none;">
+            <i class="fas fa-bullhorn"></i> Server Promos
+          </div>
           <div class="ac-nav-item" data-panel="wiki">
             <i class="fas fa-book"></i> Wiki
           </div>
@@ -873,10 +876,6 @@
           </div>
           <div class="ac-nav-item" id="email-tab" data-panel="email" style="display: none;">
             <i class="fas fa-envelope"></i> Email
-            <span class="ac-nav-sub"><span class="ac-nav-sub-pill">Owner only</span></span>
-          </div>
-          <div class="ac-nav-item" id="rp-promos-tab" data-panel="rp-promos" style="display: none;">
-            <i class="fas fa-bullhorn"></i> Server Promos
             <span class="ac-nav-sub"><span class="ac-nav-sub-pill">Owner only</span></span>
           </div>
         </div>
@@ -4380,20 +4379,22 @@
           return;
         }
 
-        // Show content creators tab for admin and owner roles
+        // Show content creators + server promos tabs for any staff (admin or owner)
         if (roles.includes('owner') || roles.includes('admin')) {
           $('#content-creators-tab').show();
           $('#dash-qa-cc').show();
+          $('#rp-promos-tab').show();
         } else {
           $('#content-creators-tab').hide();
           $('#dash-qa-cc').hide();
+          $('#rp-promos-tab').hide();
+          $('#panel-rp-promos').hide();
         }
 
         if (roles.includes('owner')) {
           $('#admin-management-tab').show();
           $('#add-admin-section').show();
           $('#email-tab').show();
-          $('#rp-promos-tab').show();
           $('#ac-nav-section-elevated').show();
         } else {
           $('#admin-management-tab').hide();
@@ -4401,8 +4402,6 @@
           $('#panel-admin-management').hide();
           $('#email-tab').hide();
           $('#panel-email').hide();
-          $('#rp-promos-tab').hide();
-          $('#panel-rp-promos').hide();
           $('#ac-nav-section-elevated').hide();
 
           // Clear any admin data that might be displayed

@@ -133,26 +133,27 @@ export async function removeConsoleAdmin(): Promise<void> {
   });
 }
 
-// A console admin with the `owner` role, needed to exercise owner-only panels
-// (e.g. Server Promos moderation). Kept distinct from seedConsoleAdmin so tests
-// that rely on a non-owner admin keep their existing behavior.
-export const TEST_CONSOLE_OWNER_ID = new ObjectId('a4a4a4a4a4a4a4a4a4a4a4a4');
-export const TEST_CONSOLE_OWNER_EMAIL = 'console-owner@test.com';
-export const TEST_CONSOLE_OWNER_PASSWORD = 'console-owner-pw-1';
+// A console staff member with the (non-owner) `admin` role on its own dedicated
+// row. Used to prove staff-but-not-owner access to staff panels (e.g. Server
+// Promos moderation). Kept distinct from seedConsoleAdmin's row so parallel
+// test files don't wipe each other's session mid-run.
+export const TEST_CONSOLE_STAFF_ID = new ObjectId('a4a4a4a4a4a4a4a4a4a4a4a4');
+export const TEST_CONSOLE_STAFF_EMAIL = 'console-staff@test.com';
+export const TEST_CONSOLE_STAFF_PASSWORD = 'console-staff-pw-1';
 
-export async function seedConsoleOwner(): Promise<void> {
-  const hash = bcrypt.hashSync(TEST_CONSOLE_OWNER_PASSWORD);
+export async function seedConsoleStaff(): Promise<void> {
+  const hash = bcrypt.hashSync(TEST_CONSOLE_STAFF_PASSWORD);
   await withDb(async (db) => {
     await db.collection('admin_users').replaceOne(
-      { _id: TEST_CONSOLE_OWNER_ID },
+      { _id: TEST_CONSOLE_STAFF_ID },
       {
-        _id: TEST_CONSOLE_OWNER_ID,
-        email: TEST_CONSOLE_OWNER_EMAIL,
+        _id: TEST_CONSOLE_STAFF_ID,
+        email: TEST_CONSOLE_STAFF_EMAIL,
         password: hash,
         firstName: 'Console',
-        lastName: 'Owner',
-        role: 'owner',
-        roles: ['owner'],
+        lastName: 'Staff',
+        role: 'admin',
+        roles: ['admin'],
         createdAt: new Date(),
       },
       { upsert: true }
@@ -160,8 +161,8 @@ export async function seedConsoleOwner(): Promise<void> {
   });
 }
 
-export async function removeConsoleOwner(): Promise<void> {
+export async function removeConsoleStaff(): Promise<void> {
   await withDb(async (db) => {
-    await db.collection('admin_users').deleteOne({ _id: TEST_CONSOLE_OWNER_ID });
+    await db.collection('admin_users').deleteOne({ _id: TEST_CONSOLE_STAFF_ID });
   });
 }
