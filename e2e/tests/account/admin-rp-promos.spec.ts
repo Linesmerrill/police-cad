@@ -30,17 +30,19 @@ const OWNER_ID = '6a235c11f1989cdf6a483c3b';
 const PROMOS = [
   {
     communityId: 'c1', communityName: 'Vice City Rejects', ownerId: OWNER_ID, ownerName: 'rhiley03',
-    postId: 'p1', postedBy: OWNER_ID, postedByName: 'rhiley03', postedAt: '2026-06-06T13:57:38Z',
+    postId: 'p1', postedBy: OWNER_ID, postedByName: 'rhiley03', postedAt: '2026-06-06T14:03:06Z',
     tier: 'free', serverName: 'Vice City Rejects', game: 'GTA RP', consoles: ['Xbox'],
     inviteUrl: 'https://discord.gg/kHh96mwUf', messageId: 'm1', messageLink: '', removed: false,
-    ownerDup: true, nameDup: true, inviteDup: false, ownerBanned: false,
+    ownerBanned: false,
+    dupGroupId: 'name:vicecityrejects', dupGroupType: 'name', dupGroupValue: 'Vice City Rejects', dupCommunityCount: 2,
   },
   {
     communityId: 'c2', communityName: 'ViceCity Rejects', ownerId: OWNER_ID, ownerName: 'rhiley03',
-    postId: 'p2', postedBy: OWNER_ID, postedByName: 'rhiley03', postedAt: '2026-06-06T14:03:06Z',
+    postId: 'p2', postedBy: OWNER_ID, postedByName: 'rhiley03', postedAt: '2026-06-06T13:57:38Z',
     tier: 'free', serverName: 'ViceCity Rejects', game: 'GTA RP', consoles: ['Xbox'],
     inviteUrl: 'https://discord.gg/dzDt8bAUD', messageId: 'm2', messageLink: '', removed: false,
-    ownerDup: true, nameDup: true, inviteDup: false, ownerBanned: false,
+    ownerBanned: false,
+    dupGroupId: 'name:vicecityrejects', dupGroupType: 'name', dupGroupValue: 'ViceCity Rejects', dupCommunityCount: 2,
   },
 ];
 
@@ -78,9 +80,15 @@ test.describe('Admin → Server Promos panel', { tag: '@admin' }, () => {
     await expect(results).toContainText('Vice City Rejects', { timeout: 15_000 });
     await expect(results).toContainText('ViceCity Rejects');
     await expect(results).toContainText('rhiley03');
-    // Advisory duplicate flags are rendered (one hue per dup type).
-    await expect(results.locator('.rp-flag-owner').first()).toBeVisible();
-    await expect(results.locator('.rp-flag-name').first()).toBeVisible();
+    // The two communities are paired under one duplicate-set header describing
+    // what they share (same name across 2 communities).
+    const header = results.locator('.rp-group-head.rp-group-name');
+    await expect(header).toBeVisible();
+    await expect(header).toContainText('Possible duplicate');
+    await expect(header).toContainText('same name');
+    await expect(header).toContainText('2 communities');
+    // Both promos render as members of the set.
+    await expect(results.locator('tr.rp-member-name')).toHaveCount(2);
   });
 
   test('ban dialog shows computed penalty + email preview', async ({ page }) => {
