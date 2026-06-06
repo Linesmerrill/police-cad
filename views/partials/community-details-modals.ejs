@@ -5275,27 +5275,16 @@ async function saveRolePermissions() {
 // Role Members Functions
 function openRoleMembersModal() {
   if (!currentRole) return;
-  
-  // Check if this is a head admin role
-  const isHeadAdmin = (currentRole.permissions || []).some(p => 
-    p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
-  );
-  
+
   document.getElementById('roleMembersTitle').textContent = `Members of ${currentRole.name}`;
+
+  // Reset the add-member picker for a fresh open
+  roleAddMemberPage = 1;
+  const searchInput = document.getElementById('roleAddMemberSearch');
+  if (searchInput) searchInput.value = '';
+
   loadRoleMembers();
-  
-  // Disable add member button for Head Admin role
-  const addBtn = document.getElementById('addMemberBtn');
-  if (isHeadAdmin) {
-    addBtn.style.background = '#6b7280';
-    addBtn.style.cursor = 'not-allowed';
-    addBtn.onclick = () => showHeadAdminInfoModal('Cannot Add Members', 'There can only be a single Head Admin. If you want to add someone else, you need to transfer ownership of the community or create a new role with admin permissions.');
-  } else {
-    addBtn.style.background = '#10b981';
-    addBtn.style.cursor = 'pointer';
-    addBtn.onclick = () => addMemberToRole();
-  }
-  
+
   document.getElementById('roleMembersModal').style.display = 'flex';
 }
 
@@ -5320,13 +5309,13 @@ async function loadRoleMembers() {
     currentRole.pagination = data.pagination || {};
     
     renderRoleMembersList();
-    populateAddMemberSelect();
-    
+    refreshRoleAddPicker();
+
   } catch (error) {
     showToast(`Failed to load role members: ${error.message}`, 3000, 'error');
     // Fallback to showing just IDs if API fails
     renderRoleMembersList();
-    populateAddMemberSelect();
+    refreshRoleAddPicker();
   }
 }
 
@@ -5391,83 +5380,157 @@ function renderRoleMembersList() {
   }).join('');
 }
 
-async function populateAddMemberSelect() {
-  const select = document.getElementById('addMemberSelect');
-  
-  try {
-    const communityId = '<%= community._id %>';
-    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
-    
-    // Fetch community members to populate the dropdown
-    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/members?page=1&limit=100`);
-    
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to fetch community members: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    const communityMembers = data.members || [];
-    
-    // Filter out members who are already in this role
-    const currentMemberIds = (currentRole.membersData || currentRole.members || []).map(m => m.id || m);
-    const availableMembers = communityMembers.filter(member => 
-      !currentMemberIds.includes(member._id)
-    );
-    
-    // Populate dropdown
-    select.innerHTML = `
-      <option value="">Select a member to add...</option>
-      ${availableMembers.map(member => `
-        <option value="${member._id}">${member.user?.username || member.user?.email || member._id}</option>
-      `).join('')}
-    `;
-    
-  } catch (error) {
-    console.error('Failed to populate member select:', error);
-    select.innerHTML = '<option value="">Failed to load members</option>';
+// ===== Add-Member picker (searchable + paginated over ALL approved members) =====
+var roleAddMemberPage = 1;
+var roleAddMemberLimit = 10;
+var roleAddMemberTotalPages = 1;
+var roleAddMemberSearchTimer = null;
+var roleAddMemberData = [];
+
+// Show the picker (or the Head Admin note) and load the current page.
+function refreshRoleAddPicker() {
+  if (!currentRole) return;
+  const isHeadAdmin = (currentRole.permissions || []).some(p =>
+    p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
+  );
+  const panel = document.getElementById('roleAddMemberPanel');
+  const note = document.getElementById('roleAddMemberHeadAdminNote');
+  if (isHeadAdmin) {
+    if (panel) panel.style.display = 'none';
+    if (note) note.style.display = 'block';
+    return;
   }
+  if (panel) panel.style.display = 'block';
+  if (note) note.style.display = 'none';
+  loadRoleAddMemberPage(roleAddMemberPage || 1);
 }
 
-async function addMemberToRole() {
-  const select = document.getElementById('addMemberSelect');
-  const memberId = select.value;
-  
+function loadRoleAddMemberPage(page) {
+  page = page || 1;
+  if (page < 1) page = 1;
+  roleAddMemberPage = page;
+
+  const communityId = '<%= community._id %>';
+  const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+  const listEl = document.getElementById('roleAddMemberList');
+  if (!listEl) return;
+  listEl.innerHTML = '<div class="ram-loading"><i class="fa fa-spinner fa-spin"></i> Loading…</div>';
+
+  const query = (document.getElementById('roleAddMemberSearch').value || '').trim();
+  let url;
+  if (query.length > 0) {
+    // Server-side search across every approved member (paginated).
+    url = apiUrl + '/api/v1/community/' + communityId + '/members/search?q=' + encodeURIComponent(query) + '&page=' + page + '&limit=' + roleAddMemberLimit;
+  } else {
+    // Browse every approved member (paginated).
+    url = apiUrl + '/api/v2/community/' + communityId + '/members?page=' + page + '&limit=' + roleAddMemberLimit;
+  }
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const members = (data.members || []).map(m => ({
+        userId: m.id || m._id,
+        username: m.username || (m.user && (m.user.username || m.user.email)) || 'Unknown',
+        profilePicture: m.profilePicture || (m.user && m.user.profilePicture) || '',
+        callSign: m.callSign || (m.user && m.user.callSign) || ''
+      }));
+
+      // Hide members already in this role.
+      const existingIds = {};
+      (currentRole.membersData || currentRole.members || []).forEach(m => { existingIds[m.id || m] = true; });
+      roleAddMemberData = members.filter(m => !existingIds[m.userId]);
+
+      const pagination = data.pagination || {};
+      const totalCount = pagination.totalCount != null ? pagination.totalCount
+        : (data.totalUsers != null ? data.totalUsers : members.length);
+      roleAddMemberTotalPages = pagination.totalPages || Math.ceil(totalCount / roleAddMemberLimit) || 1;
+
+      renderRoleAddMemberRows();
+      renderRoleAddMemberPagination();
+    })
+    .catch(err => {
+      console.error('Failed to load community members:', err);
+      listEl.innerHTML = '<div class="ram-empty" style="color:#f87171;"><i class="fa fa-exclamation-circle"></i> Failed to load members</div>';
+    });
+}
+
+function renderRoleAddMemberRows() {
+  const listEl = document.getElementById('roleAddMemberList');
+  if (!listEl) return;
+  if (roleAddMemberData.length === 0) {
+    const query = (document.getElementById('roleAddMemberSearch').value || '').trim();
+    listEl.innerHTML = '<div class="ram-empty"><i class="fa fa-user-slash"></i> ' + (query ? 'No matching members' : 'No members to add on this page') + '</div>';
+    return;
+  }
+  listEl.innerHTML = roleAddMemberData.map((m, i) => {
+    const avatar = m.profilePicture
+      ? '<img src="' + m.profilePicture + '" alt="">'
+      : '<i class="fa fa-user"></i>';
+    const escId = String(m.userId).replace(/'/g, "\\'");
+    const name = (m.username || 'Unknown');
+    return '<div class="ram-row" style="animation-delay:' + (i * 0.03) + 's;">'
+      + '<div class="ram-row-info">'
+      + '<div class="ram-avatar">' + avatar + '</div>'
+      + '<div style="min-width:0;"><div class="ram-name">' + name + '</div>'
+      + (m.callSign ? '<div class="ram-callsign">' + m.callSign + '</div>' : '')
+      + '</div></div>'
+      + '<button type="button" class="ram-add-btn" onclick="addMemberToRole(\'' + escId + '\')"><i class="fa fa-plus"></i> Add</button>'
+      + '</div>';
+  }).join('');
+}
+
+function renderRoleAddMemberPagination() {
+  const paginationEl = document.getElementById('roleAddMemberPagination');
+  if (!paginationEl) return;
+  if (roleAddMemberTotalPages <= 1) {
+    paginationEl.style.display = 'none';
+    return;
+  }
+  paginationEl.style.display = 'flex';
+  document.getElementById('roleAddMemberPageInfo').textContent = 'Page ' + roleAddMemberPage + ' of ' + roleAddMemberTotalPages;
+  document.getElementById('roleAddMemberPrev').disabled = roleAddMemberPage <= 1;
+  document.getElementById('roleAddMemberNext').disabled = roleAddMemberPage >= roleAddMemberTotalPages;
+}
+
+function searchRoleAddMemberList() {
+  clearTimeout(roleAddMemberSearchTimer);
+  roleAddMemberSearchTimer = setTimeout(function() { loadRoleAddMemberPage(1); }, 300);
+}
+
+async function addMemberToRole(memberId) {
   if (!memberId) {
     showToast('Please select a member to add', 3000, 'error');
     return;
   }
-  
+
   try {
     const communityId = '<%= community._id %>';
     const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
-    
-    // Get current members and add the new one
-    const currentMembers = (currentRole.membersData || currentRole.members || []).map(m => m.id || m);
-    const updatedMembers = [...currentMembers, memberId];
-    
+
+    // Backend appends via $addToSet, so we only send the new member ID.
+    // (No need to round-trip the full — possibly paginated — current member list.)
     const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${currentRole._id}/members?userId=${window.dbUser?._id || ''}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updatedMembers), // Send array directly, not wrapped in object
+      body: JSON.stringify([memberId]), // Array of IDs to add; server dedupes existing members
     });
-    
+
     if (!response.ok) {
       const data = await response.json();
       throw new Error(data.message || `Failed to add member: ${response.status}`);
     }
-    
+
     showToast('Member added to role successfully!', 3000, 'success');
-    select.value = '';
-    
+
     // Refresh the roles modal to update member counts
     refreshRolesModal();
-    
-    // Refresh the members list
+
+    // Refresh the members list (also re-renders + re-filters the add picker)
     await loadRoleMembers();
-    
+
   } catch (error) {
     showToast(`Failed to add member: ${error.message}`, 3000, 'error');
   }
@@ -5503,10 +5566,9 @@ async function performRemoveMemberFromRole(memberId) {
     // Refresh the roles modal to update member counts
     refreshRolesModal();
     
-    // Refresh the members list and dropdown
+    // Refresh the members list (also re-renders + re-filters the add picker)
     await loadRoleMembers();
-    await populateAddMemberSelect();
-    
+
   } catch (error) {
     showToast(`Failed to remove member: ${error.message}`, 3000, 'error');
   }
@@ -6854,6 +6916,50 @@ async function deleteInviteCode() {
 </div>
 
 <!-- Role Members Modal -->
+<style>
+  /* ===== Role "Add Member" picker ===== */
+  .ram-card { margin-bottom:2rem; padding:1.5rem; background:linear-gradient(180deg, #2a323f 0%, #262d39 100%); border-radius:12px; border:1px solid #3a4252; }
+  .ram-heading { color:#fff; margin:0 0 1rem 0; font-size:1.05rem; font-weight:600; letter-spacing:0.01em; }
+
+  .ram-search-wrap { position:relative; margin-bottom:1rem; }
+  .ram-search-icon { position:absolute; left:0.95rem; top:50%; transform:translateY(-50%); color:#6b7689; font-size:0.9rem; pointer-events:none; transition:color 0.2s ease; }
+  .ram-search-input { width:100%; padding:0.7rem 0.85rem 0.7rem 2.45rem; background:#1a1d24; border:1px solid #3a4252; border-radius:10px; color:#fff; font-size:0.95rem; box-sizing:border-box; transition:border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; }
+  .ram-search-input::placeholder { color:#5b6678; }
+  .ram-search-input:focus { outline:none; border-color:#10b981; background:#171a20; box-shadow:0 0 0 3px rgba(16,185,129,0.16); }
+  .ram-search-wrap:focus-within .ram-search-icon { color:#10b981; }
+
+  .ram-list { max-height:18rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.5rem; padding-right:0.3rem; scrollbar-width:thin; scrollbar-color:#3a4252 transparent; }
+  .ram-list::-webkit-scrollbar { width:8px; }
+  .ram-list::-webkit-scrollbar-thumb { background:#3a4252; border-radius:8px; }
+  .ram-list::-webkit-scrollbar-track { background:transparent; }
+
+  .ram-row { display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.75rem; background:#1a1d24; border:1px solid #2c333f; border-radius:10px; transition:border-color 0.18s ease, background 0.18s ease, transform 0.18s ease; animation:ramFadeIn 0.26s ease both; }
+  .ram-row:hover { border-color:rgba(16,185,129,0.55); background:#1d2129; transform:translateX(2px); }
+  .ram-row-info { display:flex; align-items:center; gap:0.75rem; min-width:0; }
+  .ram-avatar { width:38px; height:38px; border-radius:50%; background:#2d3748; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; border:1px solid #3a4252; }
+  .ram-avatar img { width:100%; height:100%; object-fit:cover; }
+  .ram-avatar i { color:#8b95a7; }
+  .ram-name { color:#fff; font-weight:600; font-size:0.92rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ram-callsign { color:#8b95a7; font-size:0.78rem; margin-top:1px; }
+
+  .ram-add-btn { display:inline-flex; align-items:center; gap:0.4rem; background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.4); padding:0.45rem 0.85rem; border-radius:8px; font-weight:600; font-size:0.82rem; cursor:pointer; flex-shrink:0; transition:background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.1s ease; }
+  .ram-add-btn:hover { background:#10b981; color:#fff; box-shadow:0 4px 14px rgba(16,185,129,0.32); }
+  .ram-add-btn:active { transform:scale(0.95); }
+
+  .ram-empty, .ram-loading { text-align:center; padding:1.75rem 1rem; color:#8b95a7; font-size:0.9rem; }
+  .ram-empty i, .ram-loading i { margin-right:0.4rem; }
+
+  .ram-pagination { display:flex; align-items:center; justify-content:space-between; margin-top:1rem; }
+  .ram-page-btn { display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; background:#1a1d24; color:#cbd5e1; border:1px solid #3a4252; border-radius:8px; cursor:pointer; transition:border-color 0.18s ease, color 0.18s ease, background 0.18s ease; }
+  .ram-page-btn:hover:not(:disabled) { border-color:#10b981; color:#10b981; background:#1d2129; }
+  .ram-page-btn:disabled { opacity:0.35; cursor:not-allowed; }
+  .ram-page-info { color:#a0aec0; font-size:0.85rem; font-weight:500; letter-spacing:0.02em; }
+
+  .ram-head-admin-note { color:#a0aec0; font-size:0.9rem; line-height:1.55; padding:0.25rem 0; }
+
+  @keyframes ramFadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+</style>
+
 <div id="roleMembersModal" class="heroui-modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
   <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:800px; width:95%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
     <button onclick="closeRoleMembersModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
@@ -6865,13 +6971,27 @@ async function deleteInviteCode() {
     </div>
 
     <!-- Add Member Section -->
-    <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:8px; border:1px solid #4a5568;">
-      <h4 style="color:#fff; margin:0 0 1rem 0; font-size:1.125rem; font-weight:600;">Add Member</h4>
-      <div style="display:flex; gap:1rem; align-items:center;">
-        <select id="addMemberSelect" style="flex:1; padding:0.75rem; background:#1e2028; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
-          <option value="">Select a member to add...</option>
-        </select>
-        <button id="addMemberBtn" onclick="addMemberToRole()" style="background:#10b981; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer;">Add</button>
+    <div class="ram-card">
+      <h4 class="ram-heading">Add Member</h4>
+
+      <!-- Shown instead of the picker for the Head Admin role -->
+      <div id="roleAddMemberHeadAdminNote" class="ram-head-admin-note" style="display:none;">
+        <i class="fa fa-shield-alt" style="color:#10b981; margin-right:0.4rem;"></i>
+        There can only be a single Head Admin. To change who holds it, transfer ownership of the community or create a new role with admin permissions.
+      </div>
+
+      <!-- Searchable, paginated member picker (searches every approved community member) -->
+      <div id="roleAddMemberPanel">
+        <div class="ram-search-wrap">
+          <i class="fa fa-search ram-search-icon"></i>
+          <input id="roleAddMemberSearch" class="ram-search-input" type="text" placeholder="Search all members by name or call sign…" oninput="searchRoleAddMemberList()" autocomplete="off">
+        </div>
+        <div id="roleAddMemberList" class="ram-list"></div>
+        <div id="roleAddMemberPagination" class="ram-pagination" style="display:none;">
+          <button type="button" id="roleAddMemberPrev" class="ram-page-btn" onclick="loadRoleAddMemberPage(roleAddMemberPage - 1)" aria-label="Previous page"><i class="fa fa-chevron-left"></i></button>
+          <span id="roleAddMemberPageInfo" class="ram-page-info"></span>
+          <button type="button" id="roleAddMemberNext" class="ram-page-btn" onclick="loadRoleAddMemberPage(roleAddMemberPage + 1)" aria-label="Next page"><i class="fa fa-chevron-right"></i></button>
+        </div>
       </div>
     </div>
 
