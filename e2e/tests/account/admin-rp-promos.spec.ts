@@ -90,7 +90,7 @@ test.describe('Admin → Server Promos panel', { tag: '@admin' }, () => {
     await expect(results.locator('tr.rp-member-name')).toHaveCount(2);
   });
 
-  test('ban dialog shows computed penalty + email preview', async ({ page }) => {
+  test('ban dialog supports user + community scopes with penalty + email preview', async ({ page }) => {
     await page.route('**/api/v1/admin/rp-promos', async (route) => {
       await route.fulfill({
         status: 200,
@@ -103,13 +103,17 @@ test.describe('Admin → Server Promos panel', { tag: '@admin' }, () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          offenseNumber: 1,
-          penaltyLabel: '7-day',
-          expiresAt: '2026-06-13T14:03:06Z',
-          recipientEmail: 'rhiley03@example.com',
-          username: 'rhiley03',
-          emailText: 'Hello rhiley03,\n\nOffense #1. Your ability to post server promotions has been restricted for 7-day.',
-          emailHtml: '<p>preview</p>',
+          user: {
+            offenseNumber: 1, penaltyLabel: '7-day', expiresAt: '2026-06-13T14:03:06Z',
+            email: 'rhiley03@example.com', username: 'rhiley03',
+          },
+          community: {
+            offenseNumber: 1, penaltyLabel: '7-day', expiresAt: '2026-06-13T14:03:06Z',
+            communityName: 'Vice City Rejects', ownerEmail: 'rhiley03@example.com', ownerUsername: 'rhiley03',
+          },
+          notifications: [
+            { email: 'rhiley03@example.com', username: 'rhiley03', emailText: 'Hello rhiley03,\n\nOffense #1 — your account is restricted...' },
+          ],
         }),
       });
     });
@@ -118,16 +122,22 @@ test.describe('Admin → Server Promos panel', { tag: '@admin' }, () => {
     await page.locator('[data-panel="rp-promos"]').first().click();
     await expect(page.getByTestId('rp-promos-results')).toContainText('rhiley03', { timeout: 15_000 });
 
-    // Open the ban dialog for the owner.
+    // Open the ban dialog.
     await page.locator('.rp-ban-btn').first().click();
 
     const modal = page.locator('#rpBanModal');
     await expect(modal).toBeVisible();
-    await expect(page.locator('#rpBanPenalty')).toContainText('Offense #1');
+    // Both scope checkboxes present and checked by default.
+    await expect(page.locator('#rpBanScopeUser')).toBeChecked();
+    await expect(page.locator('#rpBanScopeCommunity')).toBeChecked();
+    // Penalty shows both the user and community restrictions.
+    await expect(page.locator('#rpBanPenalty')).toContainText('User');
+    await expect(page.locator('#rpBanPenalty')).toContainText('Community');
     await expect(page.locator('#rpBanPenalty')).toContainText('7-day');
-    await expect(page.locator('#rpBanRecipient')).toContainText('rhiley03@example.com');
-    await expect(page.locator('#rpBanEmailPreview')).toContainText('Offense #1');
-    // Evidence rows are pre-populated from the owner's loaded promos.
+    // Email preview lists the recipient + body, and the test-email button exists.
+    await expect(page.locator('#rpBanEmailPreview')).toContainText('rhiley03@example.com');
+    await expect(page.locator('#rpBanTestBtn')).toBeVisible();
+    // Evidence rows are pre-populated.
     await expect(page.locator('#rpBanEvidence .rp-evidence-check')).toHaveCount(2);
   });
 });
