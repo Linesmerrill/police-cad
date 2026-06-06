@@ -5458,26 +5458,67 @@ function loadRoleAddMemberPage(page) {
 function renderRoleAddMemberRows() {
   const listEl = document.getElementById('roleAddMemberList');
   if (!listEl) return;
+  listEl.innerHTML = '';
+
   if (roleAddMemberData.length === 0) {
     const query = (document.getElementById('roleAddMemberSearch').value || '').trim();
-    listEl.innerHTML = '<div class="ram-empty"><i class="fa fa-user-slash"></i> ' + (query ? 'No matching members' : 'No members to add on this page') + '</div>';
+    const empty = document.createElement('div');
+    empty.className = 'ram-empty';
+    empty.innerHTML = '<i class="fa fa-user-slash"></i> ';
+    empty.appendChild(document.createTextNode(query ? 'No matching members' : 'No members to add on this page'));
+    listEl.appendChild(empty);
     return;
   }
-  listEl.innerHTML = roleAddMemberData.map((m, i) => {
-    const avatar = m.profilePicture
-      ? '<img src="' + m.profilePicture + '" alt="">'
-      : '<i class="fa fa-user"></i>';
-    const escId = String(m.userId).replace(/'/g, "\\'");
-    const name = (m.username || 'Unknown');
-    return '<div class="ram-row" style="animation-delay:' + (i * 0.03) + 's;">'
-      + '<div class="ram-row-info">'
-      + '<div class="ram-avatar">' + avatar + '</div>'
-      + '<div style="min-width:0;"><div class="ram-name">' + name + '</div>'
-      + (m.callSign ? '<div class="ram-callsign">' + m.callSign + '</div>' : '')
-      + '</div></div>'
-      + '<button type="button" class="ram-add-btn" onclick="addMemberToRole(\'' + escId + '\')"><i class="fa fa-plus"></i> Add</button>'
-      + '</div>';
-  }).join('');
+
+  // Build rows with DOM APIs (textContent) so member-controlled values
+  // (username, call sign, id) can never be interpreted as HTML.
+  roleAddMemberData.forEach((m, i) => {
+    const row = document.createElement('div');
+    row.className = 'ram-row';
+    row.style.animationDelay = (i * 0.03) + 's';
+
+    const info = document.createElement('div');
+    info.className = 'ram-row-info';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'ram-avatar';
+    if (m.profilePicture) {
+      const img = document.createElement('img');
+      img.src = m.profilePicture;
+      img.alt = '';
+      avatar.appendChild(img);
+    } else {
+      const icon = document.createElement('i');
+      icon.className = 'fa fa-user';
+      avatar.appendChild(icon);
+    }
+
+    const text = document.createElement('div');
+    text.style.minWidth = '0';
+    const nameEl = document.createElement('div');
+    nameEl.className = 'ram-name';
+    nameEl.textContent = m.username || 'Unknown';
+    text.appendChild(nameEl);
+    if (m.callSign) {
+      const csEl = document.createElement('div');
+      csEl.className = 'ram-callsign';
+      csEl.textContent = m.callSign;
+      text.appendChild(csEl);
+    }
+
+    info.appendChild(avatar);
+    info.appendChild(text);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'ram-add-btn';
+    btn.innerHTML = '<i class="fa fa-plus"></i> Add';
+    btn.addEventListener('click', function() { addMemberToRole(m.userId); });
+
+    row.appendChild(info);
+    row.appendChild(btn);
+    listEl.appendChild(row);
+  });
 }
 
 function renderRoleAddMemberPagination() {
