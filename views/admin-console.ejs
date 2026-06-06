@@ -866,6 +866,7 @@
           </div>
           <div class="ac-nav-item" id="rp-promos-tab" data-panel="rp-promos" style="display: none;">
             <i class="fas fa-bullhorn"></i> Server Promos
+            <span id="rpPromosBadge" class="ac-nav-badge" style="display: none;"></span>
           </div>
           <div class="ac-nav-item" data-panel="wiki">
             <i class="fas fa-book"></i> Wiki
@@ -4437,7 +4438,9 @@
       var rpLastItems = [];        // promos from the last load (evidence source)
       var rpSearchTimer = null;
       var rpPreviewTimer = null;
-      var rpBanTarget = null;      // { userId, username }
+      var rpBanTarget = null;      // { userId, username, communityId, communityName }
+      // Pre-filled "what happened" blurb; admins can edit before issuing.
+      var RP_BAN_DEFAULT_REASON = 'We continually review our communities and server promotions to keep posting fair for everyone. It has come to our attention that you and/or your community violated our promotion policy by posting duplicate or evasive promotions. As a result, the restriction below has been applied.';
 
       function rpCurrentUser() {
         return { email: currentUserEmail, roles: roles };
@@ -4449,6 +4452,20 @@
           type: 'POST',
           contentType: 'application/json',
           data: JSON.stringify(Object.assign({ currentUser: rpCurrentUser() }, body || {}))
+        });
+      }
+
+      // Sidebar review badge: count of flagged (possible-duplicate) promo sets.
+      function loadRpPromosFlaggedCount() {
+        if (!(roles.includes('owner') || roles.includes('admin'))) return;
+        rpAjax('/api/v1/admin/rp-promos/flagged-count', {}).done(function(res) {
+          var n = (res && res.flaggedSets) || 0;
+          var badge = $('#rpPromosBadge');
+          if (n > 0) {
+            badge.text(n).attr('title', n + ' possible-duplicate set' + (n === 1 ? '' : 's') + ' to review').show();
+          } else {
+            badge.hide();
+          }
         });
       }
 
@@ -4525,6 +4542,7 @@
           rpLastItems = (res && res.data) || [];
           renderRpPromos(rpLastItems);
           renderRpPager((res && res.totalCount) || 0);
+          loadRpPromosFlaggedCount();
         }).fail(function(xhr) {
           $('#rpPromosResults').html('<div class="loading">Failed to load promotions' +
             (xhr.responseJSON && xhr.responseJSON.response ? ': ' + escapeHtml(xhr.responseJSON.response.message || '') : '') + '</div>');
@@ -4668,13 +4686,16 @@
 
         var evidence = rpEvidenceFor(target.userId, target.communityId);
         var html = evidence.length ? evidence.map(function(e, i) {
+          var when = e.postedAt ? new Date(e.postedAt).toLocaleString() : '';
           var meta = escapeHtml(e.serverName || e.communityName) + ' · ' + escapeHtml(e.communityName) +
             (e._removed ? ' <span class="rp-badge rp-badge-muted">already removed</span>' : '');
-          return '<label style="display:flex; gap:8px; align-items:flex-start; padding:4px 0; cursor:pointer;">' +
-            '<input type="checkbox" class="rp-evidence-check" data-idx="' + i + '" checked /> <span>' + meta + '</span></label>';
+          var sub = '<div style="color:#9aa0b4; font-size:12px;">' + escapeHtml(when) +
+            (e.inviteUrl ? ' · ' + escapeHtml(e.inviteUrl) : '') + '</div>';
+          return '<label style="display:flex; gap:8px; align-items:flex-start; padding:5px 0; cursor:pointer;">' +
+            '<input type="checkbox" class="rp-evidence-check" data-idx="' + i + '" checked style="margin-top:3px;" /> <span>' + meta + sub + '</span></label>';
         }).join('') : '<div style="color:#9aa0b4;">No loaded promotions for this user/community.</div>';
         $('#rpBanEvidence').html(html).data('evidence', evidence);
-        $('#rpBanReason').val('');
+        $('#rpBanReason').val(RP_BAN_DEFAULT_REASON);
         $('#rpBanRemovePosts').prop('checked', true);
         $('#rpBanSendEmail').prop('checked', true);
         $('#rpBanPenalty').html('<i class="fas fa-spinner fa-spin"></i> Computing penalty…');
@@ -5166,6 +5187,7 @@
         // Load pending content creator applications count for badge
         if (roles.includes('owner') || roles.includes('admin')) {
           loadCCPendingCount();
+          loadRpPromosFlaggedCount();
         }
 
         // Load dashboard stats on page load (dashboard is default panel)
