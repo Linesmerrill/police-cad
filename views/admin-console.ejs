@@ -11069,45 +11069,63 @@
         });
       }
 
+      // Tracks the last applied adoption payload + whether the content has been
+      // revealed, so repeated socket pushes that carry identical numbers don't
+      // re-toggle visibility or re-animate the progress bars (the flicker).
+      var lastBetaMetricsSig = null;
+      var betaMetricsContentShown = false;
+
       function applyBetaAdoptionMetrics(data) {
         var optedIn = data.optedIn || 0;
         var classic = data.classic || 0;
         var total = data.total || 0;
-        var pct = total > 0 ? Math.round((optedIn / total) * 100) : 0;
+        var cmdOptedIn = data.cmdOptedIn || 0;
+        var cmdClassic = data.cmdClassic || 0;
+        var cmdDispatchOptedIn = data.cmdDispatchOptedIn || 0;
+        var cmdDispatchClassic = data.cmdDispatchClassic || 0;
 
+        // Skip entirely when nothing changed — the Go API broadcasts on every
+        // relevant write, so identical repeats are common and would otherwise
+        // re-animate the bars on each push.
+        var sig = [optedIn, classic, total, cmdOptedIn, cmdClassic, cmdDispatchOptedIn, cmdDispatchClassic].join('|');
+        if (sig === lastBetaMetricsSig && betaMetricsContentShown) {
+          return;
+        }
+        lastBetaMetricsSig = sig;
+
+        var pct = total > 0 ? Math.round((optedIn / total) * 100) : 0;
         $('#metrics-beta-opted').text(optedIn.toLocaleString());
         $('#metrics-beta-classic').text(classic.toLocaleString());
         $('#metrics-beta-total').text(total.toLocaleString());
         $('#metrics-beta-pct').text(pct + '%');
         $('#metrics-beta-bar').css('width', pct + '%');
-        $('#metrics-beta-loading').hide();
-        $('#metrics-beta-content').show();
 
         // Command dashboard (police) metrics
-        var cmdOptedIn = data.cmdOptedIn || 0;
-        var cmdClassic = data.cmdClassic || 0;
         var cmdPct = total > 0 ? Math.round((cmdOptedIn / total) * 100) : 0;
-
         $('#metrics-cmd-opted').text(cmdOptedIn.toLocaleString());
         $('#metrics-cmd-classic').text(cmdClassic.toLocaleString());
         $('#metrics-cmd-total').text(total.toLocaleString());
         $('#metrics-cmd-pct').text(cmdPct + '%');
         $('#metrics-cmd-bar').css('width', cmdPct + '%');
-        $('#metrics-cmd-loading').hide();
-        $('#metrics-cmd-content').show();
 
         // Command Bridge (dispatch) metrics — tracked independently.
-        var cmdDispatchOptedIn = data.cmdDispatchOptedIn || 0;
-        var cmdDispatchClassic = data.cmdDispatchClassic || 0;
         var cmdDispatchPct = total > 0 ? Math.round((cmdDispatchOptedIn / total) * 100) : 0;
-
         $('#metrics-cmd-dispatch-opted').text(cmdDispatchOptedIn.toLocaleString());
         $('#metrics-cmd-dispatch-classic').text(cmdDispatchClassic.toLocaleString());
         $('#metrics-cmd-dispatch-total').text(total.toLocaleString());
         $('#metrics-cmd-dispatch-pct').text(cmdDispatchPct + '%');
         $('#metrics-cmd-dispatch-bar').css('width', cmdDispatchPct + '%');
-        $('#metrics-cmd-dispatch-loading').hide();
-        $('#metrics-cmd-dispatch-content').show();
+
+        // Reveal content once; after that we only update values in place.
+        if (!betaMetricsContentShown) {
+          betaMetricsContentShown = true;
+          $('#metrics-beta-loading').hide();
+          $('#metrics-beta-content').show();
+          $('#metrics-cmd-loading').hide();
+          $('#metrics-cmd-content').show();
+          $('#metrics-cmd-dispatch-loading').hide();
+          $('#metrics-cmd-dispatch-content').show();
+        }
       }
 
       // -- Daily Trend Charts --
@@ -11665,10 +11683,24 @@
           $('#metrics-live-label').text('Reconnecting...');
         });
 
+        // Coalesce bursts: the API can broadcast several updates in quick
+        // succession. Apply at most once every 2s, always using the latest
+        // payload, so the panel never thrashes.
         metricsSocket.on('beta_metrics_updated', function(data) {
-          applyBetaAdoptionMetrics(data);
+          pendingBetaMetrics = data;
+          if (betaMetricsThrottle) return;
+          betaMetricsThrottle = setTimeout(function() {
+            betaMetricsThrottle = null;
+            if (pendingBetaMetrics) {
+              var d = pendingBetaMetrics;
+              pendingBetaMetrics = null;
+              applyBetaAdoptionMetrics(d);
+            }
+          }, 2000);
         });
       }
+      var pendingBetaMetrics = null;
+      var betaMetricsThrottle = null;
 
       // -- Visibility API Auto-Refresh --
 
