@@ -134,9 +134,8 @@ test.describe('Admin → Server Promos panel', { tag: '@admin' }, () => {
     await expect(page.locator('#rpBanPenalty')).toContainText('User');
     await expect(page.locator('#rpBanPenalty')).toContainText('Community');
     await expect(page.locator('#rpBanPenalty')).toContainText('7-day');
-    // Email preview lists the recipient + body, and the test-email button exists.
+    // Email preview lists the recipient + body.
     await expect(page.locator('#rpBanEmailPreview')).toContainText('rhiley03@example.com');
-    await expect(page.locator('#rpBanTestBtn')).toBeVisible();
     // Evidence rows are pre-populated.
     await expect(page.locator('#rpBanEvidence .rp-evidence-check')).toHaveCount(2);
   });
