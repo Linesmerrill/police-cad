@@ -78,10 +78,9 @@ test.describe('Admin → Server Promos panel', { tag: '@admin' }, () => {
     await expect(results).toContainText('Vice City Rejects', { timeout: 15_000 });
     await expect(results).toContainText('ViceCity Rejects');
     await expect(results).toContainText('rhiley03');
-    // Advisory duplicate badges are rendered.
-    await expect(results.locator('.rp-badge-warn').first()).toBeVisible();
-    await expect(results).toContainText('Owner dup');
-    await expect(results).toContainText('Name dup');
+    // Advisory duplicate flags are rendered (one hue per dup type).
+    await expect(results.locator('.rp-flag-owner').first()).toBeVisible();
+    await expect(results.locator('.rp-flag-name').first()).toBeVisible();
   });
 
   test('ban dialog shows computed penalty + email preview', async ({ page }) => {

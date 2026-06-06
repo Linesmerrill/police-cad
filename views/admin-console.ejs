@@ -235,11 +235,20 @@
       .rp-table th { text-align:left; padding:10px 12px; color:#9aa0b4; font-weight:600; font-size:13px; border-bottom:1px solid #2a2d45; white-space:nowrap; }
       .rp-table td { padding:10px 12px; border-bottom:1px solid #23263a; vertical-align:top; font-size:14px; }
       .rp-table tbody tr:hover { background:rgba(56,189,248,0.05); }
-      .rp-badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; line-height:1.6; margin-right:4px; }
-      .rp-badge-ok { background:rgba(16,185,129,0.15); color:#34d399; }
-      .rp-badge-muted { background:rgba(148,163,184,0.15); color:#94a3b8; }
-      .rp-badge-warn { background:rgba(251,191,36,0.15); color:#fbbf24; }
-      .rp-badge-danger { background:rgba(248,113,113,0.15); color:#f87171; }
+      /* Status badge — solid status dot + label, never wraps. */
+      .rp-badge { display:inline-flex; align-items:center; gap:6px; padding:3px 9px; border-radius:6px; font-size:11px; font-weight:600; line-height:1.5; white-space:nowrap; border:1px solid transparent; }
+      .rp-badge::before { content:""; width:6px; height:6px; border-radius:999px; flex:0 0 auto; background:currentColor; }
+      .rp-badge-ok { background:rgba(16,185,129,0.12); color:#34d399; border-color:rgba(16,185,129,0.30); }
+      .rp-badge-muted { background:rgba(148,163,184,0.12); color:#94a3b8; border-color:rgba(148,163,184,0.28); }
+      .rp-badge-danger { background:rgba(248,113,113,0.12); color:#f87171; border-color:rgba(248,113,113,0.32); }
+      /* Possible-duplicate flags — compact uppercase tags with a diamond marker,
+         one hue per dup type. Sit in a wrapping row beneath the status. */
+      .rp-flags { display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
+      .rp-flag { display:inline-flex; align-items:center; gap:5px; padding:2px 8px 2px 7px; border-radius:5px; font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; line-height:1.6; white-space:nowrap; border:1px solid transparent; cursor:default; }
+      .rp-flag::before { content:""; width:5px; height:5px; flex:0 0 auto; transform:rotate(45deg); background:currentColor; }
+      .rp-flag-owner  { color:#fcd34d; background:rgba(251,191,36,0.10); border-color:rgba(251,191,36,0.28); }
+      .rp-flag-name   { color:#c4b5fd; background:rgba(167,139,250,0.10); border-color:rgba(167,139,250,0.28); }
+      .rp-flag-invite { color:#fda4af; background:rgba(251,113,133,0.10); border-color:rgba(251,113,133,0.28); }
 
       /* ── Dashboard overview ── */
       .ac-dashboard-welcome {
@@ -4494,11 +4503,11 @@
       }
 
       function rpDupBadges(it) {
-        var b = '';
-        if (it.ownerDup) b += '<span class="rp-badge rp-badge-warn" title="Same owner has more than one promotion">Owner dup</span>';
-        if (it.nameDup) b += '<span class="rp-badge rp-badge-warn" title="Same server name across different communities">Name dup</span>';
-        if (it.inviteDup) b += '<span class="rp-badge rp-badge-warn" title="Same invite link used more than once">Invite dup</span>';
-        return b;
+        var f = '';
+        if (it.ownerDup) f += '<span class="rp-flag rp-flag-owner" title="Possible duplicate: same owner has more than one promotion">Owner</span>';
+        if (it.nameDup) f += '<span class="rp-flag rp-flag-name" title="Possible duplicate: same server name across different communities">Name</span>';
+        if (it.inviteDup) f += '<span class="rp-flag rp-flag-invite" title="Possible duplicate: same invite link used more than once">Invite</span>';
+        return f ? '<div class="rp-flags">' + f + '</div>' : '';
       }
 
       function renderRpPromos(items) {
@@ -4521,7 +4530,7 @@
             '<td>' + escapeHtml(it.ownerName || it.ownerId || '—') + ' ' + bannedTag + '</td>' +
             '<td>' + (it.inviteUrl ? '<a href="' + escapeHtml(it.inviteUrl) + '" target="_blank" rel="noopener" style="color:#38bdf8;">' + escapeHtml(it.inviteUrl) + '</a>' : '—') + '</td>' +
             '<td style="white-space:nowrap;">' + escapeHtml(posted) + '</td>' +
-            '<td>' + status + ' ' + rpDupBadges(it) + '</td>' +
+            '<td>' + status + rpDupBadges(it) + '</td>' +
             '<td style="white-space:nowrap;">' + jump + '</td>' +
             '<td style="white-space:nowrap;">' + removeBtn +
               ' <button type="button" class="ac-btn rp-ban-btn" data-owner="' + escapeHtml(it.ownerId) + '" data-ownername="' + escapeHtml(it.ownerName || '') + '" style="padding:4px 8px; color:#fecaca;"><i class="fas fa-gavel"></i> Ban</button></td>' +
