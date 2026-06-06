@@ -132,3 +132,36 @@ export async function removeConsoleAdmin(): Promise<void> {
     await db.collection('admin_users').deleteOne({ _id: TEST_CONSOLE_ADMIN_ID });
   });
 }
+
+// A console admin with the `owner` role, needed to exercise owner-only panels
+// (e.g. Server Promos moderation). Kept distinct from seedConsoleAdmin so tests
+// that rely on a non-owner admin keep their existing behavior.
+export const TEST_CONSOLE_OWNER_ID = new ObjectId('a4a4a4a4a4a4a4a4a4a4a4a4');
+export const TEST_CONSOLE_OWNER_EMAIL = 'console-owner@test.com';
+export const TEST_CONSOLE_OWNER_PASSWORD = 'console-owner-pw-1';
+
+export async function seedConsoleOwner(): Promise<void> {
+  const hash = bcrypt.hashSync(TEST_CONSOLE_OWNER_PASSWORD);
+  await withDb(async (db) => {
+    await db.collection('admin_users').replaceOne(
+      { _id: TEST_CONSOLE_OWNER_ID },
+      {
+        _id: TEST_CONSOLE_OWNER_ID,
+        email: TEST_CONSOLE_OWNER_EMAIL,
+        password: hash,
+        firstName: 'Console',
+        lastName: 'Owner',
+        role: 'owner',
+        roles: ['owner'],
+        createdAt: new Date(),
+      },
+      { upsert: true }
+    );
+  });
+}
+
+export async function removeConsoleOwner(): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('admin_users').deleteOne({ _id: TEST_CONSOLE_OWNER_ID });
+  });
+}
