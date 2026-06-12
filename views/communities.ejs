@@ -470,7 +470,7 @@
     <script>
       var dbUser = <%- JSON.stringify(user || {}) %>;
       // Global API_URL for notifications.js
-      window.API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+      window.API_URL = '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
       // Build version for footer
       window.buildVersion = '<%= typeof buildVersion !== "undefined" ? buildVersion : "unknown" %>';
