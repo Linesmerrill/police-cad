@@ -2,6 +2,10 @@ var dotenv = require("dotenv");
 // Load environment variables file into process FIRST
 dotenv.config();
 
+// Register the axios interceptor that attaches the API gateway secret to
+// server-side calls to police-cad-api. Required after dotenv so the key is set.
+require("./app/api-key-interceptor");
+
 var express = require("express");
 var cookieParser = require("cookie-parser");
 var session = require("express-session");
