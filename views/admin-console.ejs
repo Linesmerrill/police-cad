@@ -230,6 +230,34 @@
       .ac-panel { display:none; }
       .ac-panel.active { display:block; }
 
+      /* ── Server Promos moderation ── */
+      .rp-subtab.active { background:#38bdf8; color:#0a0a0f; border-color:#38bdf8; }
+      .rp-table th { text-align:left; padding:10px 12px; color:#9aa0b4; font-weight:600; font-size:13px; border-bottom:1px solid #2a2d45; white-space:nowrap; }
+      .rp-table td { padding:10px 12px; border-bottom:1px solid #23263a; vertical-align:top; font-size:14px; }
+      .rp-table tbody tr:hover { background:rgba(56,189,248,0.05); }
+      /* Status badge — solid status dot + label, never wraps. */
+      .rp-badge { display:inline-flex; align-items:center; gap:6px; padding:3px 9px; border-radius:6px; font-size:11px; font-weight:600; line-height:1.5; white-space:nowrap; border:1px solid transparent; }
+      .rp-badge::before { content:""; width:6px; height:6px; border-radius:999px; flex:0 0 auto; background:currentColor; }
+      .rp-badge-ok { background:rgba(16,185,129,0.12); color:#34d399; border-color:rgba(16,185,129,0.30); }
+      .rp-badge-muted { background:rgba(148,163,184,0.12); color:#94a3b8; border-color:rgba(148,163,184,0.28); }
+      .rp-badge-danger { background:rgba(248,113,113,0.12); color:#f87171; border-color:rgba(248,113,113,0.32); }
+      /* Duplicate-set grouping — a header row introduces each set of related
+         promos (same invite or name across 2+ communities); members get a
+         matching left accent so the pairing reads at a glance. */
+      .rp-group-head td { padding:8px 12px; font-size:12px; font-weight:600; letter-spacing:0.01em; border-top:2px solid rgba(255,255,255,0.10); }
+      .rp-group-head i { margin-right:7px; }
+      .rp-group-head code { background:rgba(0,0,0,0.25); padding:1px 6px; border-radius:4px; font-size:11px; }
+      .rp-group-count { color:#9aa0b4; font-weight:500; margin-left:4px; }
+      .rp-group-invite td { background:rgba(251,191,36,0.07); color:#fcd34d; border-top-color:rgba(251,191,36,0.30); }
+      .rp-group-name td { background:rgba(167,139,250,0.07); color:#c4b5fd; border-top-color:rgba(167,139,250,0.30); }
+      .rp-group-other td { background:transparent; color:#6b7280; font-weight:500; text-transform:uppercase; letter-spacing:0.08em; font-size:10.5px; border-top-color:rgba(255,255,255,0.07); }
+      .rp-member-invite td:first-child { box-shadow:inset 3px 0 0 rgba(251,191,36,0.55); }
+      .rp-member-name td:first-child { box-shadow:inset 3px 0 0 rgba(167,139,250,0.55); }
+      /* Small scope tags reused in the offenses table. */
+      .rp-flag { display:inline-flex; align-items:center; padding:2px 8px; border-radius:5px; font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; line-height:1.6; white-space:nowrap; border:1px solid transparent; }
+      .rp-flag-owner { color:#fcd34d; background:rgba(251,191,36,0.10); border-color:rgba(251,191,36,0.28); }
+      .rp-flag-name  { color:#c4b5fd; background:rgba(167,139,250,0.10); border-color:rgba(167,139,250,0.28); }
+
       /* ── Dashboard overview ── */
       .ac-dashboard-welcome {
         margin-bottom:1.5rem;
@@ -836,6 +864,10 @@
             <i class="fas fa-video"></i> Content Creators
             <span id="ccPendingBadge" class="ac-nav-badge" style="display: none;"></span>
           </div>
+          <div class="ac-nav-item" id="rp-promos-tab" data-panel="rp-promos" style="display: none;">
+            <i class="fas fa-bullhorn"></i> Server Promos
+            <span id="rpPromosBadge" class="ac-nav-badge" style="display: none;"></span>
+          </div>
           <div class="ac-nav-item" data-panel="wiki">
             <i class="fas fa-book"></i> Wiki
           </div>
@@ -1312,6 +1344,14 @@
               <a class="aw-nav-link" href="#subs-fix-db">"Fix in DB" Button</a>
               <a class="aw-nav-link" href="#subs-history">Payment History</a>
               <a class="aw-nav-link" href="#subs-refunds">Refund Requests</a>
+
+              <div class="aw-nav-group-title">Server Promos</div>
+              <a class="aw-nav-link" href="#rp-overview">How the Panel Works</a>
+              <a class="aw-nav-link" href="#rp-components">Badges &amp; Flags Reference</a>
+              <a class="aw-nav-link" href="#rp-review-duplicates">Reviewing Duplicates</a>
+              <a class="aw-nav-link" href="#rp-remove-post">Removing a Post</a>
+              <a class="aw-nav-link" href="#rp-issue-ban">Issuing a Ban</a>
+              <a class="aw-nav-link" href="#rp-reverse">Reversing an Offense</a>
             </div>
 
             <!-- Main Content -->
@@ -2282,6 +2322,286 @@
                 </div>
               </section>
 
+              <!-- ════════════════════════════════════════════ -->
+              <!-- SERVER PROMOS                                -->
+              <!-- ════════════════════════════════════════════ -->
+              <section class="aw-section">
+                <div class="aw-section-header">
+                  <div class="aw-section-icon"><i class="fas fa-bullhorn"></i></div>
+                  <div>
+                    <div class="aw-section-title">Server Promos</div>
+                    <div style="font-size:0.8rem; color:var(--ac-text-muted);">Reviewing Discord server promotions, removing posts, and issuing escalating bans</div>
+                  </div>
+                </div>
+
+                <!-- How the Panel Works -->
+                <div class="aw-subsection" id="rp-overview">
+                  <h3 class="aw-subsection-title">How the Panel Works</h3>
+                  <p class="aw-text">Every time a community owner promotes their server, we post it to the public Discord promo channel. Our terms allow <strong style="color:#fff;">one promotion per community per posting window</strong>. Some users evade that by spinning up several communities and posting near-identical promos minutes apart &mdash; allowed by the system, but a Terms of Service violation. The <strong>Server Promos</strong> panel is where staff catch and action that.</p>
+                  <p class="aw-text">The panel has two sub-tabs:</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Promotions</div>
+                        <div class="aw-text">Every promo ever posted, newest first. Possible-duplicate sets are grouped at the top under a colored header. From each row you can <strong>Remove</strong> the Discord post or <strong>Ban</strong> the poster/community.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Offenses</div>
+                        <div class="aw-text">Every ban issued, with its scope (user or community), offense number, in-force status, and the evidence attached. This is where you <strong>reverse</strong> a ban if an appeal succeeds.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">The <strong>Server Promos</strong> sidebar item shows a red badge with the number of flagged duplicate sets still live. It clears on its own once you remove the duplicates in a set &mdash; so a non-zero badge always means there's real work waiting.</div>
+                  </div>
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: sidebar item with review badge</div>
+                    <div class="aw-sample-content">
+                      <div style="display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.9rem; background:var(--ac-glass); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius-sm); max-width:280px;">
+                        <i class="fas fa-bullhorn" style="color:var(--ac-text-muted); width:1rem; text-align:center;"></i>
+                        <span style="color:#fff; font-size:0.85rem; flex:1;">Server Promos</span>
+                        <span class="ac-nav-badge">3</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Badges & Flags Reference -->
+                <div class="aw-subsection" id="rp-components">
+                  <h3 class="aw-subsection-title">Badges &amp; Flags Reference</h3>
+                  <p class="aw-text">The panel leans on a small set of colored tags. Learn these once and the tables read at a glance.</p>
+
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-tags"></i> Promotion status badges</div>
+                    <div class="aw-sample-content">
+                      <div style="display:flex; flex-wrap:wrap; gap:1.5rem; align-items:center;">
+                        <div style="display:flex; align-items:center; gap:0.6rem;"><span class="rp-badge rp-badge-ok">Live</span><span class="aw-text">post is still up in Discord</span></div>
+                        <div style="display:flex; align-items:center; gap:0.6rem;"><span class="rp-badge rp-badge-muted">Removed</span><span class="aw-text">post was deleted by staff</span></div>
+                        <div style="display:flex; align-items:center; gap:0.6rem;"><span class="rp-badge rp-badge-danger">Banned</span><span class="aw-text">owner / community is restricted</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-clone"></i> Possible-duplicate flags</div>
+                    <div class="aw-sample-content">
+                      <div style="display:flex; flex-wrap:wrap; gap:1.5rem; align-items:center;">
+                        <div style="display:flex; align-items:center; gap:0.6rem;"><span class="rp-flag rp-flag-owner">Invite</span><span class="aw-text">same Discord invite reused across communities</span></div>
+                        <div style="display:flex; align-items:center; gap:0.6rem;"><span class="rp-flag rp-flag-name">Name</span><span class="aw-text">same server name under a different community (same owner)</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-gavel"></i> Offense status badges (Offenses tab)</div>
+                    <div class="aw-sample-content">
+                      <div style="display:flex; flex-wrap:wrap; gap:1.5rem; align-items:center;">
+                        <div style="display:flex; align-items:center; gap:0.6rem;"><span class="rp-badge rp-badge-danger">In force</span><span class="aw-text">ban is currently blocking posting</span></div>
+                        <div style="display:flex; align-items:center; gap:0.6rem;"><span class="rp-badge rp-badge-ok">Expired</span><span class="aw-text">duration has elapsed (still counts toward escalation)</span></div>
+                        <div style="display:flex; align-items:center; gap:0.6rem;"><span class="rp-badge rp-badge-muted">Reversed</span><span class="aw-text">overturned on appeal (does <em>not</em> count)</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">An <strong>Expired</strong> offense still counts toward the next penalty &mdash; escalation is cumulative and permanent. Only a <strong>Reversed</strong> offense drops out of the count.</div>
+                  </div>
+                </div>
+
+                <!-- Reviewing Duplicates -->
+                <div class="aw-subsection" id="rp-review-duplicates">
+                  <h3 class="aw-subsection-title">Reviewing Duplicates</h3>
+                  <p class="aw-text">Possible-duplicate sets are grouped together at the top of the Promotions list under a colored header that states <em>what</em> is shared. The flags are <strong>advisory</strong> &mdash; multiple posts on different days, or two owners who happened to pick the same generic name, are allowed. Read the header, open the invites, and confirm it's genuine evasion before you act.</p>
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: a flagged duplicate set</div>
+                    <div class="aw-sample-content">
+                      <table class="rp-table" style="width:100%; border-collapse:collapse;">
+                        <thead><tr><th>Server</th><th>Community</th><th>Owner</th><th>Posted</th><th>Status</th></tr></thead>
+                        <tbody>
+                          <tr class="rp-group-head rp-group-invite"><td colspan="5"><i class="fas fa-clone"></i> Possible duplicate · same invite <code style="color:#fcd34d;">discord.gg/kHh96mwUf</code> <span class="rp-group-count">across 2 communities</span></td></tr>
+                          <tr><td>Vice City Rejects</td><td>Vice City Rejects</td><td>rhiley03</td><td>6:57 AM</td><td><span class="rp-badge rp-badge-ok">Live</span></td></tr>
+                          <tr><td>ViceCity Rejects</td><td>ViceCity Rejects</td><td>rhiley03</td><td>7:03 AM</td><td><span class="rp-badge rp-badge-ok">Live</span></td></tr>
+                          <tr class="rp-group-head rp-group-other"><td colspan="5">Not flagged</td></tr>
+                          <tr><td>Los Santos RP</td><td>Los Santos RP</td><td>jdoe</td><td>Yesterday</td><td><span class="rp-badge rp-badge-ok">Live</span></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Filter to just the flagged sets</div>
+                        <div class="aw-text">Tick <strong>"Possible duplicates only"</strong> in the toolbar to hide everything that isn't grouped.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Read the group header</div>
+                        <div class="aw-text">An <span class="rp-flag rp-flag-owner">Invite</span> header (amber) means the same invite link was reused. A <span class="rp-flag rp-flag-name">Name</span> header (violet) means the same server name was posted under a different community by the same owner.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Confirm it's genuine</div>
+                        <div class="aw-text">Open the invite links and compare timestamps. Same invite within the same window = evasion. Posts days apart, or a coincidental generic name across two unrelated owners, are fine &mdash; leave them.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Our internal test accounts (<code>TheCandyMan</code>, <code>LPSWebsite</code>) are excluded from duplicate flagging, so you'll never see them grouped here.</div>
+                  </div>
+                </div>
+
+                <!-- Removing a Post -->
+                <div class="aw-subsection" id="rp-remove-post">
+                  <h3 class="aw-subsection-title">Removing a Post</h3>
+                  <p class="aw-text">Removing a post deletes it from the Discord promo channel and marks it removed in our records (it's kept as evidence, not erased). This is a <strong>separate action from banning</strong> &mdash; use it to clean up a duplicate without necessarily restricting the user.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click the trash icon on the row</div>
+                        <div class="aw-text">Each Live promo has a <i class="fas fa-trash"></i> action. Removed promos don't &mdash; they're already gone.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Give a reason and confirm</div>
+                        <div class="aw-text">A confirmation dialog asks for a short reason (stored on the audit trail). Confirm to delete it from Discord.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Row flips to Removed</div>
+                        <div class="aw-text">The status badge updates to <span class="rp-badge rp-badge-muted">Removed</span> immediately. A duplicate set needs two or more <em>live</em> posts to stay flagged &mdash; once you remove down to one, the set leaves the "possible duplicates" grouping and the sidebar badge clears. So a set never lingers as flagged after you've actioned it.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Removing a post that Discord already deleted still succeeds &mdash; we treat "already gone" as done. You won't get a spurious error.</div>
+                  </div>
+                </div>
+
+                <!-- Issuing a Ban -->
+                <div class="aw-subsection" id="rp-issue-ban">
+                  <h3 class="aw-subsection-title">Issuing a Ban</h3>
+                  <p class="aw-text">A ban restricts <strong>posting promotions</strong> (it does not touch their account otherwise). It's escalating and cumulative: each upheld offense pushes the next one further up the ladder.</p>
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-layer-group"></i> The escalation ladder</div>
+                    <div class="aw-sample-content">
+                      <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                        <div style="display:flex; align-items:center; gap:0.75rem;"><span class="rp-flag rp-flag-owner" style="min-width:90px; justify-content:center;">1st offense</span><span class="aw-text">7-day restriction</span></div>
+                        <div style="display:flex; align-items:center; gap:0.75rem;"><span class="rp-flag rp-flag-owner" style="min-width:90px; justify-content:center;">2nd offense</span><span class="aw-text">30-day restriction</span></div>
+                        <div style="display:flex; align-items:center; gap:0.75rem;"><span class="rp-flag rp-flag-owner" style="min-width:90px; justify-content:center;">3rd offense</span><span class="aw-text">1-year restriction</span></div>
+                        <div style="display:flex; align-items:center; gap:0.75rem;"><span class="rp-flag rp-flag-name" style="min-width:90px; justify-content:center;">4th offense</span><span class="aw-text">permanent restriction (appealable)</span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-text">The ban dialog lets you pick <strong>who</strong> to restrict, attach <strong>evidence</strong>, and preview the <strong>exact email(s)</strong> before anything is sent.</div>
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: ban dialog essentials</div>
+                    <div class="aw-sample-content">
+                      <div class="aw-form-group">
+                        <div class="aw-form-label" style="margin-bottom:0.4rem;">Who to restrict</div>
+                        <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem; color:var(--ac-text);"><input type="checkbox" checked> The user <strong style="color:#fff;">rhiley03</strong></label>
+                        <label style="display:flex; align-items:center; gap:0.5rem; color:var(--ac-text);"><input type="checkbox" checked> The community <strong style="color:#fff;">Vice City Rejects</strong></label>
+                      </div>
+                      <div id="" style="background: rgba(248,113,113,0.10); border:1px solid rgba(248,113,113,0.35); border-radius:8px; padding:12px 14px; margin:0.75rem 0; color:#fecaca; font-size:0.85rem;">
+                        <div><strong>User</strong> rhiley03 — offense #1 → <strong>7-day</strong> restriction (lifts Jun 13, 2026)</div>
+                        <div><strong>Community</strong> Vice City Rejects — offense #1 → <strong>7-day</strong> restriction (lifts Jun 13, 2026)</div>
+                      </div>
+                      <div class="aw-form-label" style="margin-bottom:0.4rem;">Evidence (each shows date &amp; time)</div>
+                      <label style="display:flex; align-items:flex-start; gap:0.5rem; margin-bottom:0.3rem; color:var(--ac-text); font-size:0.82rem;"><input type="checkbox" checked> Vice City Rejects · 6:57 AM · <span style="color:#38bdf8;">discord.gg/kHh96mwUf</span></label>
+                      <label style="display:flex; align-items:flex-start; gap:0.5rem; color:var(--ac-text); font-size:0.82rem;"><input type="checkbox" checked> ViceCity Rejects · 7:03 AM · <span style="color:#38bdf8;">discord.gg/dzDt8bAUD</span></label>
+                    </div>
+                  </div>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click <i class="fas fa-gavel"></i> Ban on the row</div>
+                        <div class="aw-text">The dialog opens pre-filled with that user, their community, and their promos as evidence.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Choose the scope</div>
+                        <div class="aw-text">Tick the <strong>user</strong>, the <strong>community</strong>, or both. If the community's owner is a different person, each gets their own email. The red box updates to show the exact penalty for each.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Check the evidence &amp; reason</div>
+                        <div class="aw-text">Each evidence row shows the date, time, and invite so you can pick the right promos. The reason is pre-filled with a standard explanation &mdash; edit it if you want; it appears in the email under "What happened."</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">4</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Preview the email, then confirm</div>
+                        <div class="aw-text">The preview pane shows the rendered email(s) &mdash; penalty, evidence table, escalation ladder, ToS link, and the appeal instructions. Click <strong>"Issue ban &amp; send email"</strong> to apply the restriction(s) and notify the recipient(s).</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="aw-tip-text">This <strong>emails a real person</strong> and blocks them from promoting. Confirm the duplication is genuine first. Once a ban is in force, the user gets a clear error (with the lift date and appeal link) if they try to post again.</div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lock"></i></div>
+                    <div class="aw-tip-text">You <strong>can't re-ban a scope that's already restricted</strong> &mdash; that checkbox locks and shows "already restricted until …", and the dialog reads <em>Already restricted</em> instead of letting you issue a second offense (which would over-escalate them). To extend or change it, reverse the existing offense first, then issue a fresh one.</div>
+                  </div>
+                </div>
+
+                <!-- Reversing an Offense -->
+                <div class="aw-subsection" id="rp-reverse">
+                  <h3 class="aw-subsection-title">Reversing an Offense</h3>
+                  <p class="aw-text">If a user appeals (via a Discord assistance ticket) and the appeal holds up, reverse the offense. Reversing lifts the restriction immediately <em>and</em> removes it from their escalation count, so their next genuine offense starts lower on the ladder.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Open the Offenses tab</div>
+                        <div class="aw-text">Find the offense by username or community. Its status shows <span class="rp-badge rp-badge-danger">In force</span>, <span class="rp-badge rp-badge-ok">Expired</span>, or <span class="rp-badge rp-badge-muted">Reversed</span>.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click Reverse and give a reason</div>
+                        <div class="aw-text">A confirmation dialog asks why (e.g., "appeal upheld — communities are unrelated"). The reason is stored on the audit trail.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Status flips to Reversed</div>
+                        <div class="aw-text">The restriction lifts right away. The offense no longer counts toward future escalation.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Reversing is the only thing that drops an offense from the count. An expired ban is still "served" and counts &mdash; reverse only when the ban was genuinely a mistake or the appeal succeeded.</div>
+                  </div>
+                </div>
+              </section>
+
             </div><!-- /.aw-content -->
           </div><!-- /.aw-layout -->
         </div>
@@ -2391,6 +2711,67 @@
               <button type="button" id="sendEmailBtn" class="ac-btn ac-btn-accent ac-btn-block">
                 <i class="fas fa-paper-plane"></i> Send Email
               </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel: Server Promos (RP promotion moderation) -->
+        <div class="ac-panel" id="panel-rp-promos">
+          <p style="color:#9aa0b4; font-size:14px; margin:0 0 16px; max-width:760px;">
+            Review every server promotion posted to Discord. Possible-duplicate flags are advisory (same owner, server name, or invite) — confirm before acting. Remove a post to delete it from Discord, or restrict a user with an escalating, appealable ban (7 days → 30 days → 1 year → permanent).
+          </p>
+          <div class="rp-subtabs" style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+            <button type="button" class="ac-btn rp-subtab active" data-rp-view="promos">
+              <i class="fas fa-list"></i> Promotions
+            </button>
+            <button type="button" class="ac-btn rp-subtab" data-rp-view="offenses">
+              <i class="fas fa-gavel"></i> Offenses &amp; Bans
+            </button>
+          </div>
+
+          <!-- Promotions view -->
+          <div id="rp-view-promos">
+            <div class="ac-card">
+              <div class="ac-card-body">
+                <div class="rp-toolbar" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                  <div style="flex:1 1 240px; min-width:200px;">
+                    <input type="text" id="rpSearch" class="form-control ac-input" placeholder="Search community, server, owner, invite…" />
+                  </div>
+                  <label class="rp-check" style="display:flex; align-items:center; gap:6px; white-space:nowrap; cursor:pointer;">
+                    <input type="checkbox" id="rpDuplicatesOnly" /> Possible duplicates only
+                  </label>
+                  <button type="button" id="rpRefreshBtn" class="ac-btn">
+                    <i class="fas fa-sync"></i> Refresh
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="ac-card" style="margin-top:16px;">
+              <div class="ac-card-body">
+                <div id="rpPromosResults" data-testid="rp-promos-results"><div class="loading">Loading promotions…</div></div>
+                <div id="rpPromosPager" style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Offenses view -->
+          <div id="rp-view-offenses" style="display:none;">
+            <div class="ac-card">
+              <div class="ac-card-body">
+                <div class="rp-toolbar" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                  <label class="rp-check" style="display:flex; align-items:center; gap:6px; white-space:nowrap; cursor:pointer;">
+                    <input type="checkbox" id="rpActiveOnly" /> In-force bans only
+                  </label>
+                  <button type="button" id="rpOffensesRefreshBtn" class="ac-btn">
+                    <i class="fas fa-sync"></i> Refresh
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="ac-card" style="margin-top:16px;">
+              <div class="ac-card-body">
+                <div id="rpOffensesResults"><div class="loading">Loading offenses…</div></div>
+              </div>
             </div>
           </div>
         </div>
@@ -3820,6 +4201,107 @@
       </div>
     </div>
 
+    <!-- RP Promo: Remove promotion modal -->
+    <div class="modal fade" id="rpRemoveModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
+          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;"><span>&times;</span></button>
+            <h4 class="modal-title">Remove promotion</h4>
+          </div>
+          <div class="modal-body">
+            <p id="rpRemoveSummary" style="margin-bottom:14px;"></p>
+            <div class="form-group">
+              <label for="rpRemoveReason" class="ac-label">Reason (optional, for the audit log)</label>
+              <textarea id="rpRemoveReason" class="form-control ac-input" rows="3" placeholder="Why is this being removed?"></textarea>
+            </div>
+            <p style="color:#9aa0b4; font-size:13px;">This deletes the message from the Discord channel and marks the promotion removed. It does not ban the poster.</p>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #2a2d45;">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" id="rpRemoveConfirmBtn" class="btn btn-danger">Remove from Discord</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RP Promo: Reverse offense modal -->
+    <div class="modal fade" id="rpReverseModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
+          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;"><span>&times;</span></button>
+            <h4 class="modal-title">Reverse offense</h4>
+          </div>
+          <div class="modal-body">
+            <p id="rpReverseSummary" style="margin-bottom:14px;"></p>
+            <div class="form-group">
+              <label for="rpReverseReason" class="ac-label">Reason for reversal</label>
+              <textarea id="rpReverseReason" class="form-control ac-input" rows="3" placeholder="e.g. Appeal upheld — communities are genuinely separate."></textarea>
+            </div>
+            <p style="color:#9aa0b4; font-size:13px;">Reversing lifts the ban and stops this offense from counting toward future escalation.</p>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #2a2d45;">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" id="rpReverseConfirmBtn" class="btn btn-gradient">Reverse offense</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RP Promo: Ban modal -->
+    <div class="modal fade" id="rpBanModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
+          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;"><span>&times;</span></button>
+            <h4 class="modal-title">Restrict user from promoting</h4>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="ac-label">What to restrict</label>
+              <div style="border:1px solid #2a2d45; border-radius:8px; padding:10px 12px;">
+                <label class="rp-check" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:8px;">
+                  <input type="checkbox" id="rpBanScopeUser" checked /> Ban the user&nbsp;<strong id="rpBanScopeUserName"></strong>&nbsp;<span style="color:#9aa0b4;">(the poster)</span>
+                </label>
+                <label class="rp-check" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0;">
+                  <input type="checkbox" id="rpBanScopeCommunity" checked /> Ban the community&nbsp;<strong id="rpBanScopeCommunityName"></strong>
+                </label>
+              </div>
+            </div>
+
+            <div id="rpBanPenalty" style="background: rgba(248,113,113,0.10); border:1px solid rgba(248,113,113,0.35); border-radius:8px; padding:12px 14px; margin-bottom:16px; color:#fecaca;"></div>
+
+            <div class="form-group">
+              <label class="ac-label">Evidence (promotions included in the email)</label>
+              <div id="rpBanEvidence" style="max-height:200px; overflow:auto; border:1px solid #2a2d45; border-radius:8px; padding:8px;"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="rpBanReason" class="ac-label">What happened (shown to the recipient)</label>
+              <textarea id="rpBanReason" class="form-control ac-input" rows="3" placeholder="e.g. Created multiple communities to post the same recruitment listing several times in minutes."></textarea>
+            </div>
+
+            <label class="rp-check" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:8px;">
+              <input type="checkbox" id="rpBanRemovePosts" checked /> Also remove the selected live posts from Discord
+            </label>
+            <label class="rp-check" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:16px;">
+              <input type="checkbox" id="rpBanSendEmail" checked /> Send the evidence email
+            </label>
+
+            <div class="form-group">
+              <label class="ac-label">Email preview <span id="rpBanRecipientSummary" style="color:#9aa0b4; font-weight:normal;"></span></label>
+              <div id="rpBanEmailPreview"></div>
+            </div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #2a2d45; display:flex; justify-content:flex-end; align-items:center;">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" id="rpBanConfirmBtn" class="btn btn-danger">Issue ban &amp; send email</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Content Creator Application Modal -->
     <div class="modal fade" id="ccApplicationModal" tabindex="-1" role="dialog">
       <div class="modal-dialog modal-lg">
@@ -4058,7 +4540,8 @@
         'email': 'Email',
         'metrics': 'Metrics',
         'wiki': 'Wiki',
-        'subscriptions': 'Subscriptions'
+        'subscriptions': 'Subscriptions',
+        'rp-promos': 'Server Promos'
       };
 
       // Data-load callbacks for lazy-loaded panels
@@ -4080,7 +4563,8 @@
           var status = statusMatch ? statusMatch[1] : '';
           loadCases(status);
         },
-        'wiki': function() { initAdminWiki(); }
+        'wiki': function() { initAdminWiki(); },
+        'rp-promos': function() { if (typeof initRpPromosPanel === 'function') initRpPromosPanel(); }
       };
 
       // Track which panels have been loaded
@@ -4200,13 +4684,16 @@
           return;
         }
 
-        // Show content creators tab for admin and owner roles
+        // Show content creators + server promos tabs for any staff (admin or owner)
         if (roles.includes('owner') || roles.includes('admin')) {
           $('#content-creators-tab').show();
           $('#dash-qa-cc').show();
+          $('#rp-promos-tab').show();
         } else {
           $('#content-creators-tab').hide();
           $('#dash-qa-cc').hide();
+          $('#rp-promos-tab').hide();
+          $('#panel-rp-promos').hide();
         }
 
         if (roles.includes('owner')) {
@@ -4228,6 +4715,485 @@
         }
       }
       
+      // ============================================================
+      // Server Promos (RP promotion moderation) panel
+      // ============================================================
+      var rpPromosInited = false;
+      var rpState = { page: 1, limit: 25, search: '', duplicatesOnly: false };
+      var rpLastItems = [];        // promos from the last load (evidence source)
+      var rpSearchTimer = null;
+      var rpPreviewTimer = null;
+      var rpBanTarget = null;      // { userId, username, communityId, communityName }
+      // Pre-filled "what happened" blurb; admins can edit before issuing.
+      var RP_BAN_DEFAULT_REASON = 'We continually review our communities and server promotions to keep posting fair for everyone. It has come to our attention that you and/or your community violated our promotion policy by posting duplicate or evasive promotions. As a result, the restriction below has been applied.';
+
+      function rpCurrentUser() {
+        return { email: currentUserEmail, roles: roles };
+      }
+
+      function rpAjax(path, body) {
+        return $.ajax({
+          url: API_BASE + path,
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(Object.assign({ currentUser: rpCurrentUser() }, body || {}))
+        });
+      }
+
+      // Sidebar review badge: count of flagged (possible-duplicate) promo sets.
+      function loadRpPromosFlaggedCount() {
+        if (!(roles.includes('owner') || roles.includes('admin'))) return;
+        rpAjax('/api/v1/admin/rp-promos/flagged-count', {}).done(function(res) {
+          var n = (res && res.flaggedSets) || 0;
+          var badge = $('#rpPromosBadge');
+          if (n > 0) {
+            badge.text(n).attr('title', n + ' possible-duplicate set' + (n === 1 ? '' : 's') + ' to review').show();
+          } else {
+            badge.hide();
+          }
+        });
+      }
+
+      function initRpPromosPanel() {
+        if (!rpPromosInited) {
+          rpPromosInited = true;
+
+          // Sub-tab switching
+          $('.rp-subtab').on('click', function() {
+            var view = $(this).data('rp-view');
+            $('.rp-subtab').removeClass('active');
+            $(this).addClass('active');
+            $('#rp-view-promos').toggle(view === 'promos');
+            $('#rp-view-offenses').toggle(view === 'offenses');
+            if (view === 'offenses') loadRpOffenses();
+          });
+
+          $('#rpRefreshBtn').on('click', function() { rpState.page = 1; loadRpPromos(); });
+          $('#rpDuplicatesOnly').on('change', function() {
+            rpState.duplicatesOnly = this.checked; rpState.page = 1; loadRpPromos();
+          });
+          $('#rpSearch').on('input', function() {
+            var val = this.value;
+            clearTimeout(rpSearchTimer);
+            rpSearchTimer = setTimeout(function() {
+              rpState.search = val; rpState.page = 1; loadRpPromos();
+            }, 350);
+          });
+          $('#rpOffensesRefreshBtn').on('click', loadRpOffenses);
+          $('#rpActiveOnly').on('change', loadRpOffenses);
+
+          // Delegated row actions
+          $('#rpPromosResults').on('click', '.rp-remove-btn', function() {
+            openRpRemoveModal($(this).data('community'), $(this).data('post'), $(this).data('label'));
+          });
+          $('#rpPromosResults').on('click', '.rp-ban-btn', function() {
+            openRpBanModal({
+              userId: $(this).data('userid'),
+              username: $(this).data('username'),
+              communityId: $(this).data('community'),
+              communityName: $(this).data('communityname')
+            });
+          });
+          $('#rpPromosPager').on('click', '.rp-page-btn', function() {
+            rpState.page = parseInt($(this).data('page'), 10) || 1; loadRpPromos();
+          });
+          $('#rpOffensesResults').on('click', '.rp-reverse-btn', function() {
+            openRpReverseModal($(this).data('offense'), $(this).data('label'));
+          });
+
+          // Ban modal: re-render preview when reason / evidence / scope change
+          $('#rpBanReason').on('input', function() {
+            clearTimeout(rpPreviewTimer);
+            rpPreviewTimer = setTimeout(refreshRpBanPreview, 500);
+          });
+          $('#rpBanEvidence').on('change', '.rp-evidence-check', refreshRpBanPreview);
+          $('#rpBanScopeUser, #rpBanScopeCommunity').on('change', refreshRpBanPreview);
+          $('#rpBanConfirmBtn').on('click', submitRpBan);
+          $('#rpRemoveConfirmBtn').on('click', submitRpRemove);
+          $('#rpReverseConfirmBtn').on('click', submitRpReverse);
+        }
+        loadRpPromos();
+      }
+
+      function loadRpPromos() {
+        $('#rpPromosResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading promotions…</div>');
+        rpAjax('/api/v1/admin/rp-promos', {
+          search: rpState.search,
+          duplicatesOnly: rpState.duplicatesOnly,
+          page: rpState.page,
+          limit: rpState.limit
+        }).done(function(res) {
+          rpLastItems = (res && res.data) || [];
+          renderRpPromos(rpLastItems);
+          renderRpPager((res && res.totalCount) || 0);
+          loadRpPromosFlaggedCount();
+        }).fail(function(xhr) {
+          $('#rpPromosResults').html('<div class="loading">Failed to load promotions' +
+            (xhr.responseJSON && xhr.responseJSON.response ? ': ' + escapeHtml(xhr.responseJSON.response.message || '') : '') + '</div>');
+        });
+      }
+
+      // Header row that introduces a duplicate set. The backend groups members
+      // (same invite OR same name across 2+ communities) so they arrive
+      // adjacent; we render one header per set describing what is shared.
+      function rpGroupHeaderRow(it) {
+        var hue = it.dupGroupType === 'invite' ? 'rp-group-invite' : 'rp-group-name';
+        var shared;
+        if (it.dupGroupType === 'invite') {
+          shared = 'same invite <code style="color:#fcd34d;">' + escapeHtml(it.dupGroupValue || '') + '</code>';
+          if (it.dupAlsoName) shared += ' &amp; name';
+        } else {
+          shared = 'same name “' + escapeHtml(it.dupGroupValue || '') + '”';
+        }
+        var n = it.dupCommunityCount || 2;
+        return '<tr class="rp-group-head ' + hue + '"><td colspan="8">' +
+          '<i class="fas fa-clone"></i> Possible duplicate · ' + shared +
+          ' <span class="rp-group-count">across ' + n + ' communities</span></td></tr>';
+      }
+
+      function rpPromoRow(it, memberClass) {
+        var posted = it.postedAt ? new Date(it.postedAt).toLocaleString() : '';
+        var jump = it.messageLink ? '<a href="' + escapeHtml(it.messageLink) + '" target="_blank" rel="noopener" style="color:#38bdf8;">Jump</a>' : '<span style="color:#6b7280;">—</span>';
+        var status = it.removed
+          ? '<span class="rp-badge rp-badge-muted">Removed</span>'
+          : '<span class="rp-badge rp-badge-ok">Live</span>';
+        var bannedTag = it.ownerBanned ? ' <span class="rp-badge rp-badge-danger" title="Owner is currently restricted">Banned</span>' : '';
+        var commBannedTag = it.communityBanned ? ' <span class="rp-badge rp-badge-danger" title="Community is currently restricted">Banned</span>' : '';
+        var removeBtn = it.removed ? '' :
+          '<button type="button" class="ac-btn rp-remove-btn" data-community="' + escapeHtml(it.communityId) + '" data-post="' + escapeHtml(it.postId) + '" data-label="' + escapeHtml(it.serverName || it.communityName) + '" style="padding:4px 8px;"><i class="fas fa-trash"></i></button>';
+        return '<tr class="' + (memberClass || '') + '">' +
+          '<td>' + escapeHtml(it.serverName || '—') + '<div style="color:#9aa0b4; font-size:12px;">' + escapeHtml(it.game || '') + (it.consoles && it.consoles.length ? ' · ' + escapeHtml(it.consoles.join(', ')) : '') + '</div></td>' +
+          '<td>' + escapeHtml(it.communityName || '—') + commBannedTag + '</td>' +
+          '<td>' + escapeHtml(it.ownerName || it.ownerId || '—') + bannedTag + '</td>' +
+          '<td>' + (it.inviteUrl ? '<a href="' + escapeHtml(it.inviteUrl) + '" target="_blank" rel="noopener" style="color:#38bdf8;">' + escapeHtml(it.inviteUrl) + '</a>' : '—') + '</td>' +
+          '<td style="white-space:nowrap;">' + escapeHtml(posted) + '</td>' +
+          '<td>' + status + '</td>' +
+          '<td style="white-space:nowrap;">' + jump + '</td>' +
+          '<td style="white-space:nowrap;">' + removeBtn +
+            ' <button type="button" class="ac-btn rp-ban-btn" data-userid="' + escapeHtml(it.postedBy || it.ownerId) + '" data-username="' + escapeHtml(it.postedByName || it.ownerName || '') + '" data-community="' + escapeHtml(it.communityId) + '" data-communityname="' + escapeHtml(it.communityName || '') + '" style="padding:4px 8px; color:#fecaca;"><i class="fas fa-gavel"></i> Ban</button></td>' +
+          '</tr>';
+      }
+
+      function renderRpPromos(items) {
+        if (!items.length) {
+          $('#rpPromosResults').html('<div class="loading">No promotions found.</div>');
+          return;
+        }
+        var html = '';
+        var curGroup = null;
+        var emittedOtherHeader = false;
+        var hadGroup = false;
+        items.forEach(function(it) {
+          if (it.dupGroupId) {
+            hadGroup = true;
+            if (it.dupGroupId !== curGroup) {
+              curGroup = it.dupGroupId;
+              html += rpGroupHeaderRow(it);
+            }
+            var member = it.dupGroupType === 'invite' ? 'rp-group-member rp-member-invite' : 'rp-group-member rp-member-name';
+            html += rpPromoRow(it, member);
+          } else {
+            // First non-duplicate after a run of groups gets a soft divider so
+            // the flagged sets read as a distinct block above the rest.
+            if (hadGroup && !emittedOtherHeader) {
+              emittedOtherHeader = true;
+              html += '<tr class="rp-group-head rp-group-other"><td colspan="8">Not flagged</td></tr>';
+            }
+            curGroup = null;
+            html += rpPromoRow(it, '');
+          }
+        });
+        $('#rpPromosResults').html(
+          '<div style="overflow-x:auto;"><table class="rp-table" style="width:100%; border-collapse:collapse;">' +
+          '<thead><tr>' +
+            '<th>Server</th><th>Community</th><th>Owner</th><th>Invite</th><th>Posted</th><th>Status</th><th>Discord</th><th>Actions</th>' +
+          '</tr></thead><tbody>' + html + '</tbody></table></div>');
+      }
+
+      function renderRpPager(total) {
+        var pages = Math.max(1, Math.ceil(total / rpState.limit));
+        var p = rpState.page;
+        var info = '<span style="color:#9aa0b4; font-size:13px;">' + total + ' promotion' + (total === 1 ? '' : 's') + ' · page ' + p + ' of ' + pages + '</span>';
+        var btns = '';
+        if (p > 1) btns += '<button type="button" class="ac-btn rp-page-btn" data-page="' + (p - 1) + '">Prev</button> ';
+        if (p < pages) btns += '<button type="button" class="ac-btn rp-page-btn" data-page="' + (p + 1) + '">Next</button>';
+        $('#rpPromosPager').html(info + '<span>' + btns + '</span>');
+      }
+
+      // ---- Remove promotion ----
+      function openRpRemoveModal(communityId, postId, label) {
+        $('#rpRemoveSummary').html('Remove <strong>' + escapeHtml(label || 'this promotion') + '</strong> from the Discord channel?');
+        $('#rpRemoveReason').val('');
+        $('#rpRemoveConfirmBtn').data('community', communityId).data('post', postId);
+        $('#rpRemoveModal').modal('show');
+      }
+
+      function submitRpRemove() {
+        var btn = $('#rpRemoveConfirmBtn');
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Removing…');
+        rpAjax('/api/v1/admin/rp-promos/delete', {
+          communityId: btn.data('community'),
+          postId: btn.data('post'),
+          reason: $('#rpRemoveReason').val()
+        }).done(function() {
+          $('#rpRemoveModal').modal('hide');
+          showToast('success', 'Promotion removed from Discord.');
+          loadRpPromos();
+        }).fail(function(xhr) {
+          showToast('error', (xhr.responseJSON && xhr.responseJSON.response && xhr.responseJSON.response.message) || 'Failed to remove promotion.');
+        }).always(function() {
+          btn.prop('disabled', false).text('Remove from Discord');
+        });
+      }
+
+      // ---- Ban user / community ----
+      // Evidence candidates = promos posted by this user OR in this community.
+      function rpEvidenceFor(userId, communityId) {
+        return rpLastItems.filter(function(it) {
+          return (userId && it.postedBy === userId) || (communityId && it.communityId === communityId);
+        }).map(function(it) {
+          return {
+            communityId: it.communityId, communityName: it.communityName,
+            serverName: it.serverName, inviteUrl: it.inviteUrl,
+            messageId: it.messageId, postId: it.postId, postedAt: it.postedAt,
+            _removed: it.removed
+          };
+        });
+      }
+
+      function openRpBanModal(target) {
+        rpBanTarget = target; // { userId, username, communityId, communityName }
+        $('#rpBanScopeUserName').text(target.username || target.userId || 'this user');
+        $('#rpBanScopeCommunityName').text(target.communityName || 'this community');
+        $('#rpBanScopeUser').prop('checked', true).prop('disabled', !target.userId);
+        $('#rpBanScopeCommunity').prop('checked', true).prop('disabled', !target.communityId);
+
+        var evidence = rpEvidenceFor(target.userId, target.communityId);
+        var html = evidence.length ? evidence.map(function(e, i) {
+          var when = e.postedAt ? new Date(e.postedAt).toLocaleString() : '';
+          var meta = escapeHtml(e.serverName || e.communityName) + ' · ' + escapeHtml(e.communityName) +
+            (e._removed ? ' <span class="rp-badge rp-badge-muted">already removed</span>' : '');
+          var sub = '<div style="color:#9aa0b4; font-size:12px;">' + escapeHtml(when) +
+            (e.inviteUrl ? ' · ' + escapeHtml(e.inviteUrl) : '') + '</div>';
+          return '<label style="display:flex; gap:8px; align-items:flex-start; padding:5px 0; cursor:pointer;">' +
+            '<input type="checkbox" class="rp-evidence-check" data-idx="' + i + '" checked style="margin-top:3px;" /> <span>' + meta + sub + '</span></label>';
+        }).join('') : '<div style="color:#9aa0b4;">No loaded promotions for this user/community.</div>';
+        $('#rpBanEvidence').html(html).data('evidence', evidence);
+        $('#rpBanReason').val(RP_BAN_DEFAULT_REASON);
+        $('#rpBanRemovePosts').prop('checked', true);
+        $('#rpBanSendEmail').prop('checked', true);
+        $('#rpBanPenalty').html('<i class="fas fa-spinner fa-spin"></i> Computing penalty…');
+        $('#rpBanEmailPreview').empty();
+        $('#rpBanRecipientSummary').text('');
+        $('#rpBanConfirmBtn').prop('disabled', false).html('Issue ban &amp; send email');
+        $('#rpBanModal').modal('show');
+        refreshRpBanPreview();
+      }
+
+      function rpSelectedEvidence() {
+        var all = $('#rpBanEvidence').data('evidence') || [];
+        var selected = [];
+        $('#rpBanEvidence .rp-evidence-check:checked').each(function() {
+          var e = all[parseInt($(this).data('idx'), 10)];
+          if (e) selected.push(e);
+        });
+        return selected;
+      }
+
+      // Shared request body for preview / ban / test.
+      function rpBanPayload() {
+        var banUser = $('#rpBanScopeUser').is(':checked') && !!rpBanTarget.userId;
+        var banCommunity = $('#rpBanScopeCommunity').is(':checked') && !!rpBanTarget.communityId;
+        return {
+          banUser: banUser,
+          banCommunity: banCommunity,
+          userId: rpBanTarget.userId || '',
+          communityId: rpBanTarget.communityId || '',
+          communityName: rpBanTarget.communityName || '',
+          reason: $('#rpBanReason').val(),
+          evidence: rpSelectedEvidence()
+        };
+      }
+
+      function rpPenaltyLine(label, info) {
+        var when = info.expiresAt && info.expiresAt !== 'permanent'
+          ? ('until ' + new Date(info.expiresAt).toLocaleDateString())
+          : 'permanently';
+        return '<div><strong>' + escapeHtml(label) + ':</strong> offense #' + info.offenseNumber +
+          ' — ' + escapeHtml(info.penaltyLabel) + ' restriction (' + escapeHtml(when) + ')</div>';
+      }
+
+      // Notice shown for a scope that already has an in-force ban (not re-issued).
+      function rpInForceLine(label, until) {
+        var when = (until && until !== 'permanent')
+          ? ('until ' + new Date(until).toLocaleDateString())
+          : 'permanently';
+        return '<div style="color:#fcd34d;"><i class="fas fa-lock"></i> <strong>' + escapeHtml(label) +
+          ':</strong> already restricted ' + escapeHtml(when) + ' — re-ban skipped.</div>';
+      }
+
+      // Lock (keep checked + disabled) a scope that's already restricted so it
+      // can't be toggled into a re-ban; otherwise enable it when the target has it.
+      function rpLockScope(sel, hasTarget, locked) {
+        var cb = $(sel);
+        if (locked) cb.prop('checked', true);
+        cb.prop('disabled', !!locked || !hasTarget);
+      }
+
+      function refreshRpBanPreview() {
+        if (!rpBanTarget) return;
+        var payload = rpBanPayload();
+        if (!payload.banUser && !payload.banCommunity) {
+          $('#rpBanPenalty').html('<span style="color:#fecaca;">Select the user and/or the community to ban.</span>');
+          $('#rpBanEmailPreview').empty();
+          $('#rpBanRecipientSummary').text('');
+          return;
+        }
+        rpAjax('/api/v1/admin/rp-promos/ban/preview', payload).done(function(res) {
+          var penalty = '';
+          if (res.user) penalty += rpPenaltyLine('User ' + (res.user.username || ''), res.user);
+          if (res.userAlreadyInForce) penalty += rpInForceLine('User ' + ($('#rpBanScopeUserName').text() || ''), res.userInForceUntil);
+          if (res.community) penalty += rpPenaltyLine('Community “' + (res.community.communityName || '') + '”', res.community);
+          if (res.communityAlreadyInForce) penalty += rpInForceLine('Community “' + ($('#rpBanScopeCommunityName').text() || '') + '”', res.communityInForceUntil);
+          $('#rpBanPenalty').html(penalty || '—');
+
+          // Lock any scope already under an in-force ban — re-banning would
+          // over-escalate, so it can't be re-issued until the ban is reversed.
+          rpLockScope('#rpBanScopeUser', !!rpBanTarget.userId, res.userAlreadyInForce);
+          rpLockScope('#rpBanScopeCommunity', !!rpBanTarget.communityId, res.communityAlreadyInForce);
+          // Nothing new to issue when every selected scope is already restricted.
+          var willIssue = !!res.user || !!res.community;
+          $('#rpBanConfirmBtn').prop('disabled', !willIssue)
+            .html(willIssue ? 'Issue ban &amp; send email' : '<i class="fas fa-lock"></i> Already restricted');
+
+          var notifs = res.notifications || [];
+          $('#rpBanRecipientSummary').text(notifs.length === 1 ? '· 1 email' : '· ' + notifs.length + ' emails');
+          if (!notifs.length) {
+            $('#rpBanEmailPreview').html('<div style="color:#9aa0b4;">No recipients have an email on file.</div>');
+          } else {
+            $('#rpBanEmailPreview').html(notifs.map(function(n) {
+              return '<div style="margin-bottom:10px;">' +
+                '<div style="color:#9aa0b4; font-size:12px; margin-bottom:4px;">To: ' + escapeHtml(n.email || '(no email)') + '</div>' +
+                '<pre style="white-space:pre-wrap; background:#15161d; border:1px solid #2a2d45; border-radius:8px; padding:12px; max-height:220px; overflow:auto; font-size:12px; color:#cbd5e1; margin:0;">' +
+                escapeHtml(n.emailText || '') + '</pre></div>';
+            }).join(''));
+          }
+        }).fail(function(xhr) {
+          $('#rpBanPenalty').html('<span style="color:#fecaca;">Failed to compute penalty: ' +
+            escapeHtml((xhr.responseJSON && xhr.responseJSON.response && xhr.responseJSON.response.message) || '') + '</span>');
+        });
+      }
+
+      function submitRpBan() {
+        if (!rpBanTarget) return;
+        var payload = rpBanPayload();
+        if (!payload.banUser && !payload.banCommunity) {
+          showToast('error', 'Select the user and/or the community to ban.');
+          return;
+        }
+        payload.removeLivePosts = $('#rpBanRemovePosts').is(':checked');
+        payload.sendEmail = $('#rpBanSendEmail').is(':checked');
+        var btn = $('#rpBanConfirmBtn');
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Issuing…');
+        rpAjax('/api/v1/admin/rp-promos/ban', payload).done(function(res) {
+          $('#rpBanModal').modal('hide');
+          var parts = [];
+          if (res.user) parts.push('user (offense #' + res.user.offenseNumber + ')');
+          if (res.community) parts.push('community (offense #' + res.community.offenseNumber + ')');
+          var msg;
+          if (parts.length) {
+            msg = 'Banned ' + parts.join(' + ') + '.';
+          } else {
+            msg = 'Already restricted — no new offense issued.';
+          }
+          if (res.userAlreadyInForce && res.user === undefined && parts.length) msg += ' User was already restricted.';
+          if (res.communityAlreadyInForce && res.community === undefined && parts.length) msg += ' Community was already restricted.';
+          if (res.emailsSent) msg += ' Sent ' + res.emailsSent + ' email' + (res.emailsSent === 1 ? '' : 's') + '.';
+          if (res.removedPosts) msg += ' Removed ' + res.removedPosts + ' post' + (res.removedPosts === 1 ? '' : 's') + '.';
+          showToast('success', msg);
+          loadRpPromos();
+        }).fail(function(xhr) {
+          showToast('error', (xhr.responseJSON && xhr.responseJSON.response && xhr.responseJSON.response.message) || 'Failed to issue ban.');
+        }).always(function() {
+          btn.prop('disabled', false).html('Issue ban &amp; send email');
+        });
+      }
+
+      // ---- Offenses / banned users ----
+      function loadRpOffenses() {
+        $('#rpOffensesResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading offenses…</div>');
+        rpAjax('/api/v1/admin/rp-promos/offenses', {
+          activeOnly: $('#rpActiveOnly').is(':checked')
+        }).done(function(res) {
+          renderRpOffenses((res && res.data) || []);
+        }).fail(function() {
+          $('#rpOffensesResults').html('<div class="loading">Failed to load offenses.</div>');
+        });
+      }
+
+      function renderRpOffenses(items) {
+        if (!items.length) {
+          $('#rpOffensesResults').html('<div class="loading">No offenses recorded.</div>');
+          return;
+        }
+        var rows = items.map(function(o) {
+          var statusBadge;
+          if (o.status === 'reversed') statusBadge = '<span class="rp-badge rp-badge-muted">Reversed</span>';
+          else if (o.inForce) statusBadge = '<span class="rp-badge rp-badge-danger">In force</span>';
+          else statusBadge = '<span class="rp-badge rp-badge-ok">Expired</span>';
+          var until = (o.expiresAt === 'permanent') ? 'Permanent' : (o.expiresAt ? new Date(o.expiresAt).toLocaleDateString() : '—');
+          var issued = o.issuedAt ? new Date(o.issuedAt).toLocaleDateString() : '';
+          // Subject: a community ban shows the community; a user ban shows the user.
+          var isCommunity = o.scope === 'community';
+          var scopeTag = isCommunity
+            ? '<span class="rp-flag rp-flag-name" style="display:inline-block;">Community</span>'
+            : '<span class="rp-flag rp-flag-owner" style="display:inline-block;">User</span>';
+          var subjectMain = isCommunity ? (o.communityName || o.communityId || '—') : (o.username || o.userId || '—');
+          var subjectSub = isCommunity ? ('owner: ' + (o.username || '—')) : (o.email || '');
+          var label = (isCommunity ? ('community “' + subjectMain + '”') : subjectMain) + ' (offense #' + o.offenseNumber + ')';
+          var reverseBtn = (o.status === 'reversed') ? '' :
+            '<button type="button" class="ac-btn rp-reverse-btn" data-offense="' + escapeHtml(o.id) + '" data-label="' + escapeHtml(label) + '" style="padding:4px 8px;"><i class="fas fa-undo"></i> Reverse</button>';
+          return '<tr>' +
+            '<td>' + scopeTag + '</td>' +
+            '<td>' + escapeHtml(subjectMain) + '<div style="color:#9aa0b4; font-size:12px;">' + escapeHtml(subjectSub) + '</div></td>' +
+            '<td>#' + o.offenseNumber + '</td>' +
+            '<td>' + statusBadge + '</td>' +
+            '<td>' + escapeHtml(until) + '</td>' +
+            '<td style="white-space:nowrap;">' + escapeHtml(issued) + '</td>' +
+            '<td>' + escapeHtml(o.reason || '') + (o.reversalReason ? '<div style="color:#9aa0b4; font-size:12px;">Reversed: ' + escapeHtml(o.reversalReason) + '</div>' : '') + '</td>' +
+            '<td style="white-space:nowrap;">' + reverseBtn + '</td>' +
+            '</tr>';
+        }).join('');
+        $('#rpOffensesResults').html(
+          '<div style="overflow-x:auto;"><table class="rp-table" style="width:100%; border-collapse:collapse;">' +
+          '<thead><tr><th>Type</th><th>Subject</th><th>Offense</th><th>Status</th><th>Until</th><th>Issued</th><th>Reason</th><th></th></tr></thead>' +
+          '<tbody>' + rows + '</tbody></table></div>');
+      }
+
+      function openRpReverseModal(offenseId, label) {
+        $('#rpReverseSummary').html('Reverse the ban for <strong>' + escapeHtml(label || 'this user') + '</strong>?');
+        $('#rpReverseReason').val('');
+        $('#rpReverseConfirmBtn').data('offense', offenseId);
+        $('#rpReverseModal').modal('show');
+      }
+
+      function submitRpReverse() {
+        var btn = $('#rpReverseConfirmBtn');
+        var id = btn.data('offense');
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Reversing…');
+        rpAjax('/api/v1/admin/rp-promos/offenses/' + id + '/reverse', {
+          reason: $('#rpReverseReason').val()
+        }).done(function() {
+          $('#rpReverseModal').modal('hide');
+          showToast('success', 'Offense reversed.');
+          loadRpOffenses();
+        }).fail(function(xhr) {
+          showToast('error', (xhr.responseJSON && xhr.responseJSON.response && xhr.responseJSON.response.message) || 'Failed to reverse offense.');
+        }).always(function() {
+          btn.prop('disabled', false).text('Reverse offense');
+        });
+      }
+
       // Dashboard stats loader
       var lastKnownSubmittedCount = null;
       var ccPollInterval = null;
@@ -4522,6 +5488,7 @@
         // Load pending content creator applications count for badge
         if (roles.includes('owner') || roles.includes('admin')) {
           loadCCPendingCount();
+          loadRpPromosFlaggedCount();
         }
 
         // Load dashboard stats on page load (dashboard is default panel)
@@ -10530,45 +11497,63 @@
         });
       }
 
+      // Tracks the last applied adoption payload + whether the content has been
+      // revealed, so repeated socket pushes that carry identical numbers don't
+      // re-toggle visibility or re-animate the progress bars (the flicker).
+      var lastBetaMetricsSig = null;
+      var betaMetricsContentShown = false;
+
       function applyBetaAdoptionMetrics(data) {
         var optedIn = data.optedIn || 0;
         var classic = data.classic || 0;
         var total = data.total || 0;
-        var pct = total > 0 ? Math.round((optedIn / total) * 100) : 0;
+        var cmdOptedIn = data.cmdOptedIn || 0;
+        var cmdClassic = data.cmdClassic || 0;
+        var cmdDispatchOptedIn = data.cmdDispatchOptedIn || 0;
+        var cmdDispatchClassic = data.cmdDispatchClassic || 0;
 
+        // Skip entirely when nothing changed — the Go API broadcasts on every
+        // relevant write, so identical repeats are common and would otherwise
+        // re-animate the bars on each push.
+        var sig = [optedIn, classic, total, cmdOptedIn, cmdClassic, cmdDispatchOptedIn, cmdDispatchClassic].join('|');
+        if (sig === lastBetaMetricsSig && betaMetricsContentShown) {
+          return;
+        }
+        lastBetaMetricsSig = sig;
+
+        var pct = total > 0 ? Math.round((optedIn / total) * 100) : 0;
         $('#metrics-beta-opted').text(optedIn.toLocaleString());
         $('#metrics-beta-classic').text(classic.toLocaleString());
         $('#metrics-beta-total').text(total.toLocaleString());
         $('#metrics-beta-pct').text(pct + '%');
         $('#metrics-beta-bar').css('width', pct + '%');
-        $('#metrics-beta-loading').hide();
-        $('#metrics-beta-content').show();
 
         // Command dashboard (police) metrics
-        var cmdOptedIn = data.cmdOptedIn || 0;
-        var cmdClassic = data.cmdClassic || 0;
         var cmdPct = total > 0 ? Math.round((cmdOptedIn / total) * 100) : 0;
-
         $('#metrics-cmd-opted').text(cmdOptedIn.toLocaleString());
         $('#metrics-cmd-classic').text(cmdClassic.toLocaleString());
         $('#metrics-cmd-total').text(total.toLocaleString());
         $('#metrics-cmd-pct').text(cmdPct + '%');
         $('#metrics-cmd-bar').css('width', cmdPct + '%');
-        $('#metrics-cmd-loading').hide();
-        $('#metrics-cmd-content').show();
 
         // Command Bridge (dispatch) metrics — tracked independently.
-        var cmdDispatchOptedIn = data.cmdDispatchOptedIn || 0;
-        var cmdDispatchClassic = data.cmdDispatchClassic || 0;
         var cmdDispatchPct = total > 0 ? Math.round((cmdDispatchOptedIn / total) * 100) : 0;
-
         $('#metrics-cmd-dispatch-opted').text(cmdDispatchOptedIn.toLocaleString());
         $('#metrics-cmd-dispatch-classic').text(cmdDispatchClassic.toLocaleString());
         $('#metrics-cmd-dispatch-total').text(total.toLocaleString());
         $('#metrics-cmd-dispatch-pct').text(cmdDispatchPct + '%');
         $('#metrics-cmd-dispatch-bar').css('width', cmdDispatchPct + '%');
-        $('#metrics-cmd-dispatch-loading').hide();
-        $('#metrics-cmd-dispatch-content').show();
+
+        // Reveal content once; after that we only update values in place.
+        if (!betaMetricsContentShown) {
+          betaMetricsContentShown = true;
+          $('#metrics-beta-loading').hide();
+          $('#metrics-beta-content').show();
+          $('#metrics-cmd-loading').hide();
+          $('#metrics-cmd-content').show();
+          $('#metrics-cmd-dispatch-loading').hide();
+          $('#metrics-cmd-dispatch-content').show();
+        }
       }
 
       // -- Daily Trend Charts --
@@ -11126,10 +12111,24 @@
           $('#metrics-live-label').text('Reconnecting...');
         });
 
+        // Coalesce bursts: the API can broadcast several updates in quick
+        // succession. Apply at most once every 2s, always using the latest
+        // payload, so the panel never thrashes.
         metricsSocket.on('beta_metrics_updated', function(data) {
-          applyBetaAdoptionMetrics(data);
+          pendingBetaMetrics = data;
+          if (betaMetricsThrottle) return;
+          betaMetricsThrottle = setTimeout(function() {
+            betaMetricsThrottle = null;
+            if (pendingBetaMetrics) {
+              var d = pendingBetaMetrics;
+              pendingBetaMetrics = null;
+              applyBetaAdoptionMetrics(d);
+            }
+          }, 2000);
         });
       }
+      var pendingBetaMetrics = null;
+      var betaMetricsThrottle = null;
 
       // -- Visibility API Auto-Refresh --
 
