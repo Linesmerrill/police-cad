@@ -1,6 +1,6 @@
 const { useState, useEffect, useRef, useCallback } = React;
 
-const API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+const API_URL = window.API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
 
 // ============================================================================
 // UTILITY FUNCTIONS

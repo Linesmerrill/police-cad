@@ -132,3 +132,37 @@ export async function removeConsoleAdmin(): Promise<void> {
     await db.collection('admin_users').deleteOne({ _id: TEST_CONSOLE_ADMIN_ID });
   });
 }
+
+// A console staff member with the (non-owner) `admin` role on its own dedicated
+// row. Used to prove staff-but-not-owner access to staff panels (e.g. Server
+// Promos moderation). Kept distinct from seedConsoleAdmin's row so parallel
+// test files don't wipe each other's session mid-run.
+export const TEST_CONSOLE_STAFF_ID = new ObjectId('a4a4a4a4a4a4a4a4a4a4a4a4');
+export const TEST_CONSOLE_STAFF_EMAIL = 'console-staff@test.com';
+export const TEST_CONSOLE_STAFF_PASSWORD = 'console-staff-pw-1';
+
+export async function seedConsoleStaff(): Promise<void> {
+  const hash = bcrypt.hashSync(TEST_CONSOLE_STAFF_PASSWORD);
+  await withDb(async (db) => {
+    await db.collection('admin_users').replaceOne(
+      { _id: TEST_CONSOLE_STAFF_ID },
+      {
+        _id: TEST_CONSOLE_STAFF_ID,
+        email: TEST_CONSOLE_STAFF_EMAIL,
+        password: hash,
+        firstName: 'Console',
+        lastName: 'Staff',
+        role: 'admin',
+        roles: ['admin'],
+        createdAt: new Date(),
+      },
+      { upsert: true }
+    );
+  });
+}
+
+export async function removeConsoleStaff(): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('admin_users').deleteOne({ _id: TEST_CONSOLE_STAFF_ID });
+  });
+}
