@@ -1497,7 +1497,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
               <span className="text-white text-sm font-medium">Contact Us</span>
               <span className="text-slate-500 text-xs text-center">Get in touch</span>
             </a>
-            <a href="https://discord.gg/3ECFhqe" target="_blank" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
+            <a href="https://discord.gg/fVFAA6UcUQ" target="_blank" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
               background: 'rgba(255, 255, 255, 0.05)',
               border: '1px solid rgba(59, 130, 246, 0.2)'
             }}>
@@ -2011,7 +2011,7 @@ const Footer = () => (
 
       {/* Social Links */}
       <div className="flex justify-center gap-4 mb-6">
-        <a href="https://discord.gg/3ECFhqe" target="_blank" className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300" style={{
+        <a href="https://discord.gg/fVFAA6UcUQ" target="_blank" className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300" style={{
           background: 'rgba(255, 255, 255, 0.05)',
           border: '1px solid rgba(59, 130, 246, 0.2)'
         }}>

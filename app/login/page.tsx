@@ -348,7 +348,7 @@ function LoginForm() {
                   <p style={{ margin: '0.5rem 0', lineHeight: '1.6', color: 'rgba(252, 165, 165, 0.9)' }}>
                     To reactivate your account, please contact us by creating an assistance ticket in our{' '}
                     <a
-                      href="https://discord.gg/linespolice"
+                      href="https://discord.gg/fVFAA6UcUQ"
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{

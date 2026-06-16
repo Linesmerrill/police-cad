@@ -203,7 +203,7 @@ const faqData = [
     questions: [
       {
         question: 'How do I contact support?',
-        answer: (<>The best way to reach us is through our <a href="https://discord.gg/3ECFhqe" target="_blank" rel="noopener noreferrer" style={linkStyle}>Discord server</a>. Open an Assistance Ticket and our team will respond as soon as possible. You can also submit feature requests on our <a href="/feature-requests" style={linkStyle}>Feature Requests board</a> or report bugs through our <a href="https://github.com/linesmerrill/police-cad" target="_blank" rel="noopener noreferrer" style={linkStyle}>GitHub page</a>.</>)
+        answer: (<>The best way to reach us is through our <a href="https://discord.gg/fVFAA6UcUQ" target="_blank" rel="noopener noreferrer" style={linkStyle}>Discord server</a>. Open an Assistance Ticket and our team will respond as soon as possible. You can also submit feature requests on our <a href="/feature-requests" style={linkStyle}>Feature Requests board</a> or report bugs through our <a href="https://github.com/linesmerrill/police-cad" target="_blank" rel="noopener noreferrer" style={linkStyle}>GitHub page</a>.</>)
       },
       {
         question: 'How long does it take to get a response?',
@@ -215,7 +215,7 @@ const faqData = [
       },
       {
         question: 'How can I contribute to Lines Police CAD?',
-        answer: (<>There are several ways to contribute: use the service and provide feedback, contribute code on our <a href="https://github.com/linesmerrill/police-cad" target="_blank" rel="noopener noreferrer" style={linkStyle}>GitHub repository</a>, support us on <a href="https://www.patreon.com/linespolicecad" target="_blank" rel="noopener noreferrer" style={linkStyle}>Patreon</a>, or help other users in our <a href="https://discord.gg/3ECFhqe" target="_blank" rel="noopener noreferrer" style={linkStyle}>Discord community</a>.</>)
+        answer: (<>There are several ways to contribute: use the service and provide feedback, contribute code on our <a href="https://github.com/linesmerrill/police-cad" target="_blank" rel="noopener noreferrer" style={linkStyle}>GitHub repository</a>, support us on <a href="https://www.patreon.com/linespolicecad" target="_blank" rel="noopener noreferrer" style={linkStyle}>Patreon</a>, or help other users in our <a href="https://discord.gg/fVFAA6UcUQ" target="_blank" rel="noopener noreferrer" style={linkStyle}>Discord community</a>.</>)
       }
     ]
   },
@@ -860,7 +860,7 @@ export default function FAQ() {
                   Contact Us
                 </Link>
                 <a
-                  href="https://discord.gg/3ECFhqe"
+                  href="https://discord.gg/fVFAA6UcUQ"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{

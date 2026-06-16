@@ -4,12 +4,12 @@
  */
 
 // Contact/Support Discord server
-export const DISCORD_CONTACT = 'https://discord.gg/Y9ytW2ZMp4';
+export const DISCORD_CONTACT = 'https://discord.gg/fVFAA6UcUQ';
 
 // General/Community Discord server (for main join buttons)
-export const DISCORD_COMMUNITY = 'https://discord.gg/UQw2TvcE';
+export const DISCORD_COMMUNITY = 'https://discord.gg/fVFAA6UcUQ';
 
 // Discord Bot information page
-export const DISCORD_BOT = 'https://discord.gg/PT5b9mgvpD';
+export const DISCORD_BOT = 'https://discord.gg/fVFAA6UcUQ';
 
 
