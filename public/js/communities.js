@@ -1,6 +1,7 @@
 const { useState, useEffect, useRef, useCallback } = React;
 
 const API_URL = window.API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+console.log("[communities] boot — API_URL =", API_URL, "| React?", typeof React, "| axios?", typeof axios);
 
 // Safely pull the community array out of a v2 list response. The API may return
 // `{ data: [...] }` or a bare array; never throw on an unexpected shape.
@@ -2155,6 +2156,7 @@ const App = () => {
           .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         setEliteCommunities(communities);
         setEliteTotalCount(response.data.totalCount || 0);
+        console.log("[communities] elite ok — parsed", communities.length, "| body type:", typeof response.data, "| keys:", response.data && typeof response.data === "object" ? Object.keys(response.data) : "(not object)");
       })
       .catch((err) => { console.error("[communities] elite fetch failed:", err); setEliteCommunities([]); setEliteTotalCount(0); })
       .finally(() => setIsEliteLoading(false));
@@ -2193,6 +2195,7 @@ const App = () => {
           const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
           setAllCommunities(communities);
           setAllCommunitiesTotalCount(response.data.totalCount || 0);
+          console.log("[communities] all ok — parsed", communities.length, "| body type:", typeof response.data, "| keys:", response.data && typeof response.data === "object" ? Object.keys(response.data) : "(not object)");
         })
         .catch((err) => { console.error("[communities] all-communities fetch failed:", err); setAllCommunities([]); setAllCommunitiesTotalCount(0); })
         .finally(() => setIsAllCommunitiesLoading(false));
@@ -2422,4 +2425,17 @@ const App = () => {
   );
 };
 
-ReactDOM.render(<App />, document.getElementById("root"));
+try {
+  ReactDOM.render(<App />, document.getElementById("root"));
+  console.log("[communities] mounted");
+} catch (e) {
+  console.error("[communities] mount failed:", e);
+  const root = document.getElementById("root");
+  if (root) {
+    root.innerHTML =
+      '<pre style="color:#fca5a5;background:#1a1a2e;white-space:pre-wrap;word-break:break-word;padding:16px;border-radius:8px;margin:16px;font-size:13px;">' +
+      "[communities] mount failed:\n" +
+      ((e && e.message) || String(e)) + "\n\n" + ((e && e.stack) || "") +
+      "</pre>";
+  }
+}
