@@ -19,7 +19,7 @@ function mapPromoCommunity(item) {
   const img = item.imageLink;
   return {
     _id: item._id,
-    name: item.name || "",
+    name: item.name == null ? "" : String(item.name),
     promotionalText: item.promotionalText,
     promotionalDescription: item.promotionalDescription,
     tags: Array.isArray(item.tags) ? item.tags : [],
