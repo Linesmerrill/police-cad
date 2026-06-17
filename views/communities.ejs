@@ -463,12 +463,13 @@
         }
         el.textContent = '[diag]\n' + lines.join('\n');
       }
-      function add(m) { lines.push(m); try { render(); } catch (e) {} }
+      function add(m) { lines.push(m); try { console.warn('[diag]', m); } catch (e) {} }
       window.addEventListener('error', function (e) {
         add('JS ERROR: ' + (e && e.message ? e.message : e) + (e && e.filename ? ' @ ' + e.filename + ':' + (e.lineno || '') : ''));
+        scanScripts(); render();
       });
       window.addEventListener('unhandledrejection', function (e) {
-        add('PROMISE REJECT: ' + (e && e.reason ? (e.reason.message || e.reason) : e));
+        add('PROMISE REJECT: ' + (e && e.reason ? (e.reason.message || e.reason) : e)); render();
       });
       function snapshot(tag) {
         var root = document.getElementById('root');
@@ -488,8 +489,12 @@
       }
       window.addEventListener('load', function () {
         snapshot('onload:');
-        scanScripts();
-        setTimeout(function () { snapshot('+4s:'); scanScripts(); }, 4000);
+        setTimeout(function () {
+          snapshot('+4s:');
+          var root = document.getElementById('root');
+          // Only surface the on-page box if the app still failed to mount.
+          if (!root || root.childElementCount === 0) { scanScripts(); render(); }
+        }, 4000);
       });
     })();
     </script>
@@ -502,7 +507,7 @@
       defer
     ></script>
     <script
-      src="https://unpkg.com/@babel/standalone/babel.min.js"
+      src="https://unpkg.com/@babel/standalone@7/babel.min.js"
       defer
     ></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js" defer></script>
