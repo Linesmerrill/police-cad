@@ -2,6 +2,35 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 const API_URL = window.API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
 
+// Safely pull the community array out of a v2 list response. The API may return
+// `{ data: [...] }` or a bare array; never throw on an unexpected shape.
+function communityArrayFrom(response) {
+  const d = response && response.data;
+  if (Array.isArray(d)) return d;
+  if (d && Array.isArray(d.data)) return d.data;
+  return [];
+}
+
+// Map a raw community into the shape the promo cards expect. Returns null for
+// junk so a single malformed community gets filtered out instead of throwing
+// and blanking the entire list.
+function mapPromoCommunity(item) {
+  if (!item || typeof item !== "object") return null;
+  const img = item.imageLink;
+  return {
+    _id: item._id,
+    name: item.name || "",
+    promotionalText: item.promotionalText,
+    promotionalDescription: item.promotionalDescription,
+    tags: Array.isArray(item.tags) ? item.tags : [],
+    imageLink: (typeof img === "string" && img.includes("file:///"))
+      ? "/static/images/default-logo.png"
+      : (img || "/static/images/default-logo.png"),
+    membersCount: item.membersCount,
+    subscription: item.subscription,
+  };
+}
+
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
@@ -1189,7 +1218,8 @@ const SearchBar = ({ onCreateCommunity }) => {
         setShowDropdown(true);
         setLoading(false);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("[communities] search failed:", err);
         setOptions([]);
         setShowDropdown(true);
         setLoading(false);
@@ -1702,7 +1732,8 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
           setOwnedCount(newFormatCommunities.length);
           setUserPlan(dbUser?.user?.subscription?.plan || "free");
         })
-        .catch(() => {
+        .catch((err) => {
+          console.error("[communities] owned-count fetch failed:", err);
           setOwnedCount(0);
           setUserPlan("free");
         });
@@ -2118,19 +2149,14 @@ const App = () => {
   useEffect(() => {
     axios.get(`${API_URL}/api/v2/communities/elite?limit=20&page=0`)
       .then(response => {
-        const communities = response.data.data.map(item => ({
-          _id: item._id,
-          name: item.name,
-          promotionalText: item.promotionalText,
-          promotionalDescription: item.promotionalDescription,
-          tags: item.tags || [],
-          imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
-          membersCount: item.membersCount
-        })).sort((a, b) => a.name.localeCompare(b.name));
+        const communities = communityArrayFrom(response)
+          .map(mapPromoCommunity)
+          .filter(Boolean)
+          .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         setEliteCommunities(communities);
         setEliteTotalCount(response.data.totalCount || 0);
       })
-      .catch(() => { setEliteCommunities([]); setEliteTotalCount(0); })
+      .catch((err) => { console.error("[communities] elite fetch failed:", err); setEliteCommunities([]); setEliteTotalCount(0); })
       .finally(() => setIsEliteLoading(false));
   }, []);
 
@@ -2149,20 +2175,11 @@ const App = () => {
     const timer = setTimeout(() => {
       axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=6&page=0`)
         .then(response => {
-          const communities = response.data.data.map(item => ({
-            _id: item._id,
-            name: item.name,
-            promotionalText: item.promotionalText,
-            promotionalDescription: item.promotionalDescription,
-            tags: item.tags || [],
-            imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
-            membersCount: item.membersCount,
-            subscription: item.subscription
-          }));
+          const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
           setRecommendedCommunities(communities);
           setRecommendedTotalCount(response.data.totalCount || 0);
         })
-        .catch(() => { setRecommendedCommunities([]); setRecommendedTotalCount(0); })
+        .catch((err) => { console.error("[communities] recommended fetch failed:", err); setRecommendedCommunities([]); setRecommendedTotalCount(0); })
         .finally(() => setIsRecommendedLoading(false));
     }, 600);
     return () => clearTimeout(timer);
@@ -2173,20 +2190,11 @@ const App = () => {
     const timer = setTimeout(() => {
       axios.get(`${API_URL}/api/v2/communities/tag/all?limit=6&page=0`)
         .then(response => {
-          const communities = response.data.data.map(item => ({
-            _id: item._id,
-            name: item.name,
-            promotionalText: item.promotionalText,
-            promotionalDescription: item.promotionalDescription,
-            tags: item.tags || [],
-            imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
-            membersCount: item.membersCount,
-            subscription: item.subscription
-          }));
+          const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
           setAllCommunities(communities);
           setAllCommunitiesTotalCount(response.data.totalCount || 0);
         })
-        .catch(() => { setAllCommunities([]); setAllCommunitiesTotalCount(0); })
+        .catch((err) => { console.error("[communities] all-communities fetch failed:", err); setAllCommunities([]); setAllCommunitiesTotalCount(0); })
         .finally(() => setIsAllCommunitiesLoading(false));
     }, 900);
     return () => clearTimeout(timer);
@@ -2239,6 +2247,7 @@ const App = () => {
       setUserPage(page);
       setUserFilter(filter);
     } catch (error) {
+      console.error("[communities] user-communities fetch failed:", error);
       setUserCommunities([]);
       setUserTotalCount(0);
     } finally {
@@ -2250,19 +2259,11 @@ const App = () => {
     setIsRecommendedLoading(true);
     try {
       const response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=6&page=${page}`);
-      const communities = response.data.data.map(item => ({
-        _id: item._id,
-        name: item.name,
-        promotionalText: item.promotionalText,
-        promotionalDescription: item.promotionalDescription,
-        tags: item.tags || [],
-        imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
-        membersCount: item.membersCount,
-        subscription: item.subscription
-      }));
+      const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
       setRecommendedCommunities(communities);
       setRecommendedPage(page);
     } catch (error) {
+      console.error("[communities] recommended page fetch failed:", error);
       setRecommendedCommunities([]);
     } finally {
       setIsRecommendedLoading(false);
@@ -2273,20 +2274,12 @@ const App = () => {
     setIsAllCommunitiesLoading(true);
     try {
       const response = await axios.get(`${API_URL}/api/v2/communities/tag/${tag}?limit=6&page=${page}`);
-      const communities = response.data.data.map(item => ({
-        _id: item._id,
-        name: item.name,
-        promotionalText: item.promotionalText,
-        promotionalDescription: item.promotionalDescription,
-        tags: item.tags || [],
-        imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
-        membersCount: item.membersCount,
-        subscription: item.subscription
-      }));
+      const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
       setAllCommunities(communities);
       setAllCommunitiesTotalCount(response.data.totalCount || 0);
       setAllCommunitiesPage(page);
     } catch (error) {
+      console.error("[communities] all-communities page fetch failed:", error);
       setAllCommunities([]);
     } finally {
       setIsAllCommunitiesLoading(false);
