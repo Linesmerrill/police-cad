@@ -474,7 +474,23 @@
         var root = document.getElementById('root');
         add(tag + ' React=' + (typeof React) + ' ReactDOM=' + (typeof ReactDOM) + ' axios=' + (typeof axios) + ' Babel=' + (typeof Babel) + ' | #root children=' + (root ? root.childElementCount : 'NO #root'));
       }
-      window.addEventListener('load', function () { snapshot('onload:'); setTimeout(function () { snapshot('+4s:'); }, 4000); });
+      function scanScripts() {
+        var ss = document.getElementsByTagName('script');
+        for (var i = 0; i < ss.length; i++) {
+          var body = ss[i].textContent || '';
+          var m = body.match(/\bimport\s*[\{(]/);
+          if (m) {
+            var idx = body.indexOf(m[0]);
+            add('IMPORT FOUND in script#' + i + ' type=' + (ss[i].type || 'classic') + ' src=' + (ss[i].src || '(inline ' + body.length + 'ch)'));
+            add('  snippet: ' + body.slice(Math.max(0, idx - 30), idx + 90).replace(/\n/g, ' '));
+          }
+        }
+      }
+      window.addEventListener('load', function () {
+        snapshot('onload:');
+        scanScripts();
+        setTimeout(function () { snapshot('+4s:'); scanScripts(); }, 4000);
+      });
     })();
     </script>
     <script
