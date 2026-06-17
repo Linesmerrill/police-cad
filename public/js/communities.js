@@ -1,7 +1,30 @@
 const { useState, useEffect, useRef, useCallback } = React;
 
 const API_URL = window.API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
-console.log("[communities] boot — API_URL =", API_URL, "| React?", typeof React, "| axios?", typeof axios);
+// TEMP diagnostic: surface state both in console (warn level, since mobile
+// consoles often hide console.log) and in an on-page overlay so it's readable
+// without devtools. Remove once the communities load issue is resolved.
+function dbg(msg) {
+  try {
+    console.warn("[communities-dbg]", msg);
+    var el = document.getElementById("__comm_dbg__");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "__comm_dbg__";
+      el.style.cssText =
+        "position:fixed;top:0;left:0;right:0;z-index:99999;background:#0b0b12;color:#7CFC00;" +
+        "font:12px/1.45 monospace;padding:6px 10px;max-height:45vh;overflow:auto;white-space:pre-wrap;border-bottom:2px solid #7CFC00;";
+      (document.body || document.documentElement).appendChild(el);
+    }
+    el.textContent += msg + "\n";
+  } catch (e) {}
+}
+dbg(
+  "boot | API_URL=" + API_URL +
+  " | axios=" + typeof axios +
+  " | React=" + typeof React +
+  " | dbUser._id=" + (typeof dbUser !== "undefined" && dbUser ? dbUser._id : "(no dbUser)")
+);
 
 // Safely pull the community array out of a v2 list response. The API may return
 // `{ data: [...] }` or a bare array; never throw on an unexpected shape.
@@ -2156,9 +2179,9 @@ const App = () => {
           .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         setEliteCommunities(communities);
         setEliteTotalCount(response.data.totalCount || 0);
-        console.log("[communities] elite ok — parsed", communities.length, "| body type:", typeof response.data, "| keys:", response.data && typeof response.data === "object" ? Object.keys(response.data) : "(not object)");
+        dbg("elite OK | parsed=" + communities.length + " | bodyType=" + typeof response.data + " | keys=" + (response.data && typeof response.data === "object" ? Object.keys(response.data).join(",") : "(not object)") + " | totalCount=" + (response.data && response.data.totalCount));
       })
-      .catch((err) => { console.error("[communities] elite fetch failed:", err); setEliteCommunities([]); setEliteTotalCount(0); })
+      .catch((err) => { dbg("elite FAIL | status=" + (err && err.response && err.response.status) + " | " + (err && (err.message || err))); console.error("[communities] elite fetch failed:", err); setEliteCommunities([]); setEliteTotalCount(0); })
       .finally(() => setIsEliteLoading(false));
   }, []);
 
@@ -2180,8 +2203,9 @@ const App = () => {
           const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
           setRecommendedCommunities(communities);
           setRecommendedTotalCount(response.data.totalCount || 0);
+          dbg("discover OK | parsed=" + communities.length + " | totalCount=" + (response.data && response.data.totalCount));
         })
-        .catch((err) => { console.error("[communities] recommended fetch failed:", err); setRecommendedCommunities([]); setRecommendedTotalCount(0); })
+        .catch((err) => { dbg("discover FAIL | status=" + (err && err.response && err.response.status) + " | " + (err && (err.message || err))); console.error("[communities] recommended fetch failed:", err); setRecommendedCommunities([]); setRecommendedTotalCount(0); })
         .finally(() => setIsRecommendedLoading(false));
     }, 600);
     return () => clearTimeout(timer);
@@ -2195,9 +2219,9 @@ const App = () => {
           const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
           setAllCommunities(communities);
           setAllCommunitiesTotalCount(response.data.totalCount || 0);
-          console.log("[communities] all ok — parsed", communities.length, "| body type:", typeof response.data, "| keys:", response.data && typeof response.data === "object" ? Object.keys(response.data) : "(not object)");
+          dbg("all OK | parsed=" + communities.length + " | bodyType=" + typeof response.data + " | keys=" + (response.data && typeof response.data === "object" ? Object.keys(response.data).join(",") : "(not object)") + " | totalCount=" + (response.data && response.data.totalCount));
         })
-        .catch((err) => { console.error("[communities] all-communities fetch failed:", err); setAllCommunities([]); setAllCommunitiesTotalCount(0); })
+        .catch((err) => { dbg("all FAIL | status=" + (err && err.response && err.response.status) + " | " + (err && (err.message || err))); console.error("[communities] all-communities fetch failed:", err); setAllCommunities([]); setAllCommunitiesTotalCount(0); })
         .finally(() => setIsAllCommunitiesLoading(false));
     }, 900);
     return () => clearTimeout(timer);
@@ -2247,9 +2271,11 @@ const App = () => {
         setUserCommunities(communities);
         setUserTotalCount(response.data.totalCount || 0);
       }
+      dbg("your-communities OK | filter=" + filter);
       setUserPage(page);
       setUserFilter(filter);
     } catch (error) {
+      dbg("your-communities FAIL | status=" + (error && error.response && error.response.status) + " | " + (error && (error.message || error)));
       console.error("[communities] user-communities fetch failed:", error);
       setUserCommunities([]);
       setUserTotalCount(0);
