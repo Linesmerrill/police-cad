@@ -457,7 +457,7 @@
       defer
     ></script>
     <script
-      src="https://unpkg.com/@babel/standalone/babel.min.js"
+      src="https://unpkg.com/@babel/standalone@7/babel.min.js"
       defer
     ></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js" defer></script>
@@ -483,7 +483,7 @@
     <script
       data-cfasync="false"
       type="text/babel"
-      src="/static/js/communities.js"
+      src="/static/js/communities.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"
       defer
     ></script>
     <script
