@@ -1,5 +1,27 @@
 const { useState, useEffect, useRef, useCallback } = React;
 
+// ErrorBoundary isolates a section: if any child throws during render, we hide
+// just that section instead of letting the error blank the entire page. This
+// keeps the known-good sections (Featured, Your Communities, Browse) visible
+// even if one section's data/render misbehaves.
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error, info) {
+    console.error("[communities] section crashed:", this.props.name, error, info);
+  }
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
+
 const API_URL = window.API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
 
 // ============================================================================
@@ -2360,13 +2382,15 @@ const App = () => {
       <QuickNav />
 
       {/* Elite Communities */}
-      <div id="elite-communities">
-        <EliteCarousel
-          communities={eliteCommunities}
-          totalCount={eliteTotalCount}
-          isLoading={isEliteLoading}
-        />
-      </div>
+      <ErrorBoundary name="elite">
+        <div id="elite-communities">
+          <EliteCarousel
+            communities={eliteCommunities}
+            totalCount={eliteTotalCount}
+            isLoading={isEliteLoading}
+          />
+        </div>
+      </ErrorBoundary>
 
       {/* Divider */}
       <div className="px-4 py-2">
@@ -2374,53 +2398,44 @@ const App = () => {
       </div>
 
       {/* Your Communities */}
-      <div id="your-communities">
-        <YourCommunities
-          communities={userCommunities}
-          totalCount={userTotalCount}
-          currentFilter={userFilter}
-          onFilterChange={(filter, page) => fetchUserPage(filter, page)}
-          onPrevPage={() => userPage > 1 && fetchUserPage(userFilter, userPage - 1)}
-          onNextPage={() => userPage * 6 < userTotalCount && fetchUserPage(userFilter, userPage + 1)}
-          currentPage={userPage}
-          isLoading={isUserLoading}
-          showLoginPrompt={!dbUser?._id}
-          dbUser={dbUser}
-        />
-      </div>
+      <ErrorBoundary name="your-communities">
+        <div id="your-communities">
+          <YourCommunities
+            communities={userCommunities}
+            totalCount={userTotalCount}
+            currentFilter={userFilter}
+            onFilterChange={(filter, page) => fetchUserPage(filter, page)}
+            onPrevPage={() => userPage > 1 && fetchUserPage(userFilter, userPage - 1)}
+            onNextPage={() => userPage * 6 < userTotalCount && fetchUserPage(userFilter, userPage + 1)}
+            currentPage={userPage}
+            isLoading={isUserLoading}
+            showLoginPrompt={!dbUser?._id}
+            dbUser={dbUser}
+          />
+        </div>
+      </ErrorBoundary>
 
-      {/* Discover Communities */}
-      <div id="discover-communities">
-        <CommunitySection
-          title="Discover"
-          icon="fa fa-compass"
-          communities={recommendedCommunities}
-          actionText="Explore"
-          onPrevPage={() => recommendedPage > 0 && fetchRecommendedPage(recommendedPage - 1)}
-          onNextPage={() => (recommendedPage + 1) * 6 < recommendedTotalCount && fetchRecommendedPage(recommendedPage + 1)}
-          currentPage={recommendedPage + 1}
-          totalCount={recommendedTotalCount}
-          isLoading={isRecommendedLoading}
-          showLoginPrompt={!dbUser?._id}
-          emptyMessage="Sign in for personalized recommendations"
-          emptyIcon="fa fa-compass"
-        />
-      </div>
+      {/* Discover Communities — TEMPORARILY HIDDEN.
+          Hidden as a stopgap while the communities load issue is investigated.
+          Restore this block (the #discover-communities CommunitySection) once
+          the root cause is fixed. */}
 
       {/* Browse Communities */}
-      <div id="browse-communities">
-        <BrowseCommunities
-          communities={allCommunities}
-          totalCount={allCommunitiesTotalCount}
-          currentTag={currentTag}
-          setCurrentTag={setCurrentTag}
-          onPrevPage={() => allCommunitiesPage > 0 && fetchAllCommunitiesPage(currentTag, allCommunitiesPage - 1)}
-          onNextPage={() => (allCommunitiesPage + 1) * 6 < allCommunitiesTotalCount && fetchAllCommunitiesPage(currentTag, allCommunitiesPage + 1)}
-          currentPage={allCommunitiesPage}
-          fetchAllCommunitiesPage={fetchAllCommunitiesPage}
-          isLoading={isAllCommunitiesLoading}
-        />
-      </div>
+      <ErrorBoundary name="browse">
+        <div id="browse-communities">
+          <BrowseCommunities
+            communities={allCommunities}
+            totalCount={allCommunitiesTotalCount}
+            currentTag={currentTag}
+            setCurrentTag={setCurrentTag}
+            onPrevPage={() => allCommunitiesPage > 0 && fetchAllCommunitiesPage(currentTag, allCommunitiesPage - 1)}
+            onNextPage={() => (allCommunitiesPage + 1) * 6 < allCommunitiesTotalCount && fetchAllCommunitiesPage(currentTag, allCommunitiesPage + 1)}
+            currentPage={allCommunitiesPage}
+            fetchAllCommunitiesPage={fetchAllCommunitiesPage}
+            isLoading={isAllCommunitiesLoading}
+          />
+        </div>
+      </ErrorBoundary>
 
       {/* Footer */}
       <Footer />
