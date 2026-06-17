@@ -448,6 +448,35 @@
       });
     </script>
     <div id="root"></div>
+    <!-- TEMP diagnostic (vanilla JS, no React/Babel dependency): reports why the
+         React communities app may not be mounting. Remove once resolved. -->
+    <script>
+    (function () {
+      var lines = [];
+      function render() {
+        var el = document.getElementById('__diag__');
+        if (!el) {
+          el = document.createElement('div');
+          el.id = '__diag__';
+          el.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:2147483647;background:#0b0b12;color:#7CFC00;font:12px/1.45 monospace;padding:8px 10px;max-height:45vh;overflow:auto;white-space:pre-wrap;border-top:2px solid #7CFC00;';
+          (document.body || document.documentElement).appendChild(el);
+        }
+        el.textContent = '[diag]\n' + lines.join('\n');
+      }
+      function add(m) { lines.push(m); try { render(); } catch (e) {} }
+      window.addEventListener('error', function (e) {
+        add('JS ERROR: ' + (e && e.message ? e.message : e) + (e && e.filename ? ' @ ' + e.filename + ':' + (e.lineno || '') : ''));
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        add('PROMISE REJECT: ' + (e && e.reason ? (e.reason.message || e.reason) : e));
+      });
+      function snapshot(tag) {
+        var root = document.getElementById('root');
+        add(tag + ' React=' + (typeof React) + ' ReactDOM=' + (typeof ReactDOM) + ' axios=' + (typeof axios) + ' Babel=' + (typeof Babel) + ' | #root children=' + (root ? root.childElementCount : 'NO #root'));
+      }
+      window.addEventListener('load', function () { snapshot('onload:'); setTimeout(function () { snapshot('+4s:'); }, 4000); });
+    })();
+    </script>
     <script
       src="https://unpkg.com/react@18/umd/react.production.min.js"
       defer
@@ -483,7 +512,7 @@
     <script
       data-cfasync="false"
       type="text/babel"
-      src="/static/js/communities.js"
+      src="/static/js/communities.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"
       defer
     ></script>
     <script
