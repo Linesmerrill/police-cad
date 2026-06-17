@@ -2351,51 +2351,9 @@ const App = () => {
 
       {/* Content */}
       <div className="relative z-10">
-      {/* Modals */}
-      <CreateCommunityModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        setToast={setToast}
-        onSuccess={() => {
-          // Refresh user communities list without full page reload
-          // Switch to "owned" filter to show the newly created community
-          if (dbUser?._id) {
-            fetchUserPage("owned", 1);
-          }
-        }}
-      />
-      <WelcomeModal
-        isOpen={showWelcomeModal}
-        onClose={() => setShowWelcomeModal(false)}
-      />
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
-      />
-
-      {/* Search Bar */}
-      <SearchBar onCreateCommunity={() => setShowCreateModal(true)} />
-
-      {/* Quick Navigation */}
-      <QuickNav />
-
-      {/* Elite Communities */}
-      <ErrorBoundary name="elite">
-        <div id="elite-communities">
-          <EliteCarousel
-            communities={eliteCommunities}
-            totalCount={eliteTotalCount}
-            isLoading={isEliteLoading}
-          />
-        </div>
-      </ErrorBoundary>
-
-      {/* Divider */}
-      <div className="px-4 py-2">
-        <div className="h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
-      </div>
+      {/* STOPGAP: only the Your Communities section is rendered. Modals,
+          search, quick-nav, Featured (Elite) and Browse are temporarily
+          removed while the communities load issue is being fixed. */}
 
       {/* Your Communities */}
       <ErrorBoundary name="your-communities">
@@ -2415,30 +2373,6 @@ const App = () => {
         </div>
       </ErrorBoundary>
 
-      {/* Discover Communities — TEMPORARILY HIDDEN.
-          Hidden as a stopgap while the communities load issue is investigated.
-          Restore this block (the #discover-communities CommunitySection) once
-          the root cause is fixed. */}
-
-      {/* Browse Communities */}
-      <ErrorBoundary name="browse">
-        <div id="browse-communities">
-          <BrowseCommunities
-            communities={allCommunities}
-            totalCount={allCommunitiesTotalCount}
-            currentTag={currentTag}
-            setCurrentTag={setCurrentTag}
-            onPrevPage={() => allCommunitiesPage > 0 && fetchAllCommunitiesPage(currentTag, allCommunitiesPage - 1)}
-            onNextPage={() => (allCommunitiesPage + 1) * 6 < allCommunitiesTotalCount && fetchAllCommunitiesPage(currentTag, allCommunitiesPage + 1)}
-            currentPage={allCommunitiesPage}
-            fetchAllCommunitiesPage={fetchAllCommunitiesPage}
-            isLoading={isAllCommunitiesLoading}
-          />
-        </div>
-      </ErrorBoundary>
-
-      {/* Footer */}
-      <Footer />
       </div>
     </div>
   );
