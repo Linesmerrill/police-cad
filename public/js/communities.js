@@ -2214,31 +2214,37 @@ const App = () => {
         // Fetch communities owned by the user
         // API returns raw array: [{ _id, community: { name, ownerID, imageLink, membersCount, subscription: { active } } }]
         response = await axios.get(`${API_URL}/api/v1/communities/${dbUser._id}?limit=6&page=${page}`);
-        const rawData = Array.isArray(response.data) ? response.data : (response.data.data || []);
-        const communities = rawData.map(item => ({
-          _id: item._id,
-          name: item.community?.name || item.name,
-          membersCount: item.community?.membersCount || item.membersCount || 0,
-          isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
-          imageLink: (item.community?.imageLink || item.imageLink)?.includes("file:///") ? "/static/images/default-logo.png" : (item.community?.imageLink || item.imageLink || "/static/images/default-logo.png"),
-          subscription: item.community?.subscription?.active || item.subscription,
-          isOwned: true
-        }));
+        const rawData = (Array.isArray(response.data) ? response.data : (response.data.data || [])).filter(it => it && typeof it === "object");
+        const communities = rawData.map(item => {
+          const img = item.community?.imageLink || item.imageLink;
+          return {
+            _id: item._id,
+            name: String((item.community?.name ?? item.name) ?? ""),
+            membersCount: item.community?.membersCount || item.membersCount || 0,
+            isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
+            imageLink: (typeof img === "string" && img.includes("file:///")) ? "/static/images/default-logo.png" : (img || "/static/images/default-logo.png"),
+            subscription: item.community?.subscription?.active || item.subscription,
+            isOwned: true
+          };
+        });
         setUserCommunities(communities);
         setUserTotalCount(communities.length);
       } else {
         // Fetch joined or pending communities
         const statusFilter = filter === "pending" ? "pending" : "approved";
         response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:${statusFilter}&limit=6&page=${page}`);
-        const communities = (response.data.data || []).map(item => ({
-          _id: item._id,
-          name: item.name,
-          membersCount: item.membersCount,
-          isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
-          imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
-          subscription: item.subscription,
-          isPending: filter === "pending"
-        }));
+        const communities = (response.data.data || []).filter(it => it && typeof it === "object").map(item => {
+          const img = item.imageLink;
+          return {
+            _id: item._id,
+            name: String(item.name ?? ""),
+            membersCount: item.membersCount,
+            isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
+            imageLink: (typeof img === "string" && img.includes("file:///")) ? "/static/images/default-logo.png" : (img || "/static/images/default-logo.png"),
+            subscription: item.subscription,
+            isPending: filter === "pending"
+          };
+        });
         setUserCommunities(communities);
         setUserTotalCount(response.data.totalCount || 0);
       }
