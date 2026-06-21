@@ -2,6 +2,35 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 const API_URL = window.API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
 
+// Safely pull the community array out of a v2 list response. The API may return
+// `{ data: [...] }` or a bare array; never throw on an unexpected shape.
+function communityArrayFrom(response) {
+  const d = response && response.data;
+  if (Array.isArray(d)) return d;
+  if (d && Array.isArray(d.data)) return d.data;
+  return [];
+}
+
+// Map a raw community into the shape the promo cards expect. Returns null for
+// junk so a single malformed community gets filtered out instead of throwing
+// and blanking the entire list.
+function mapPromoCommunity(item) {
+  if (!item || typeof item !== "object") return null;
+  const img = item.imageLink;
+  return {
+    _id: item._id,
+    name: item.name == null ? "" : String(item.name),
+    promotionalText: item.promotionalText,
+    promotionalDescription: item.promotionalDescription,
+    tags: Array.isArray(item.tags) ? item.tags : [],
+    imageLink: (typeof img === "string" && img.includes("file:///"))
+      ? "/static/images/default-logo.png"
+      : (img || "/static/images/default-logo.png"),
+    membersCount: item.membersCount,
+    subscription: item.subscription,
+  };
+}
+
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
@@ -1497,7 +1526,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
               <span className="text-white text-sm font-medium">Contact Us</span>
               <span className="text-slate-500 text-xs text-center">Get in touch</span>
             </a>
-            <a href="https://discord.gg/3ECFhqe" target="_blank" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
+            <a href="https://discord.gg/fVFAA6UcUQ" target="_blank" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
               background: 'rgba(255, 255, 255, 0.05)',
               border: '1px solid rgba(59, 130, 246, 0.2)'
             }}>
@@ -2011,7 +2040,7 @@ const Footer = () => (
 
       {/* Social Links */}
       <div className="flex justify-center gap-4 mb-6">
-        <a href="https://discord.gg/3ECFhqe" target="_blank" className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300" style={{
+        <a href="https://discord.gg/fVFAA6UcUQ" target="_blank" className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300" style={{
           background: 'rgba(255, 255, 255, 0.05)',
           border: '1px solid rgba(59, 130, 246, 0.2)'
         }}>
@@ -2118,15 +2147,10 @@ const App = () => {
   useEffect(() => {
     axios.get(`${API_URL}/api/v2/communities/elite?limit=20&page=0`)
       .then(response => {
-        const communities = response.data.data.map(item => ({
-          _id: item._id,
-          name: item.name,
-          promotionalText: item.promotionalText,
-          promotionalDescription: item.promotionalDescription,
-          tags: item.tags || [],
-          imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
-          membersCount: item.membersCount
-        })).sort((a, b) => a.name.localeCompare(b.name));
+        const communities = communityArrayFrom(response)
+          .map(mapPromoCommunity)
+          .filter(Boolean)
+          .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         setEliteCommunities(communities);
         setEliteTotalCount(response.data.totalCount || 0);
       })
@@ -2149,16 +2173,7 @@ const App = () => {
     const timer = setTimeout(() => {
       axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=6&page=0`)
         .then(response => {
-          const communities = response.data.data.map(item => ({
-            _id: item._id,
-            name: item.name,
-            promotionalText: item.promotionalText,
-            promotionalDescription: item.promotionalDescription,
-            tags: item.tags || [],
-            imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
-            membersCount: item.membersCount,
-            subscription: item.subscription
-          }));
+          const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
           setRecommendedCommunities(communities);
           setRecommendedTotalCount(response.data.totalCount || 0);
         })
@@ -2173,16 +2188,7 @@ const App = () => {
     const timer = setTimeout(() => {
       axios.get(`${API_URL}/api/v2/communities/tag/all?limit=6&page=0`)
         .then(response => {
-          const communities = response.data.data.map(item => ({
-            _id: item._id,
-            name: item.name,
-            promotionalText: item.promotionalText,
-            promotionalDescription: item.promotionalDescription,
-            tags: item.tags || [],
-            imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
-            membersCount: item.membersCount,
-            subscription: item.subscription
-          }));
+          const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
           setAllCommunities(communities);
           setAllCommunitiesTotalCount(response.data.totalCount || 0);
         })
@@ -2208,31 +2214,37 @@ const App = () => {
         // Fetch communities owned by the user
         // API returns raw array: [{ _id, community: { name, ownerID, imageLink, membersCount, subscription: { active } } }]
         response = await axios.get(`${API_URL}/api/v1/communities/${dbUser._id}?limit=6&page=${page}`);
-        const rawData = Array.isArray(response.data) ? response.data : (response.data.data || []);
-        const communities = rawData.map(item => ({
-          _id: item._id,
-          name: item.community?.name || item.name,
-          membersCount: item.community?.membersCount || item.membersCount || 0,
-          isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
-          imageLink: (item.community?.imageLink || item.imageLink)?.includes("file:///") ? "/static/images/default-logo.png" : (item.community?.imageLink || item.imageLink || "/static/images/default-logo.png"),
-          subscription: item.community?.subscription?.active || item.subscription,
-          isOwned: true
-        }));
+        const rawData = (Array.isArray(response.data) ? response.data : (response.data.data || [])).filter(it => it && typeof it === "object");
+        const communities = rawData.map(item => {
+          const img = item.community?.imageLink || item.imageLink;
+          return {
+            _id: item._id,
+            name: String((item.community?.name ?? item.name) ?? ""),
+            membersCount: item.community?.membersCount || item.membersCount || 0,
+            isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
+            imageLink: (typeof img === "string" && img.includes("file:///")) ? "/static/images/default-logo.png" : (img || "/static/images/default-logo.png"),
+            subscription: item.community?.subscription?.active || item.subscription,
+            isOwned: true
+          };
+        });
         setUserCommunities(communities);
         setUserTotalCount(communities.length);
       } else {
         // Fetch joined or pending communities
         const statusFilter = filter === "pending" ? "pending" : "approved";
         response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:${statusFilter}&limit=6&page=${page}`);
-        const communities = (response.data.data || []).map(item => ({
-          _id: item._id,
-          name: item.name,
-          membersCount: item.membersCount,
-          isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
-          imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
-          subscription: item.subscription,
-          isPending: filter === "pending"
-        }));
+        const communities = (response.data.data || []).filter(it => it && typeof it === "object").map(item => {
+          const img = item.imageLink;
+          return {
+            _id: item._id,
+            name: String(item.name ?? ""),
+            membersCount: item.membersCount,
+            isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
+            imageLink: (typeof img === "string" && img.includes("file:///")) ? "/static/images/default-logo.png" : (img || "/static/images/default-logo.png"),
+            subscription: item.subscription,
+            isPending: filter === "pending"
+          };
+        });
         setUserCommunities(communities);
         setUserTotalCount(response.data.totalCount || 0);
       }
@@ -2250,16 +2262,7 @@ const App = () => {
     setIsRecommendedLoading(true);
     try {
       const response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=6&page=${page}`);
-      const communities = response.data.data.map(item => ({
-        _id: item._id,
-        name: item.name,
-        promotionalText: item.promotionalText,
-        promotionalDescription: item.promotionalDescription,
-        tags: item.tags || [],
-        imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
-        membersCount: item.membersCount,
-        subscription: item.subscription
-      }));
+      const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
       setRecommendedCommunities(communities);
       setRecommendedPage(page);
     } catch (error) {
@@ -2273,16 +2276,7 @@ const App = () => {
     setIsAllCommunitiesLoading(true);
     try {
       const response = await axios.get(`${API_URL}/api/v2/communities/tag/${tag}?limit=6&page=${page}`);
-      const communities = response.data.data.map(item => ({
-        _id: item._id,
-        name: item.name,
-        promotionalText: item.promotionalText,
-        promotionalDescription: item.promotionalDescription,
-        tags: item.tags || [],
-        imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
-        membersCount: item.membersCount,
-        subscription: item.subscription
-      }));
+      const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
       setAllCommunities(communities);
       setAllCommunitiesTotalCount(response.data.totalCount || 0);
       setAllCommunitiesPage(page);

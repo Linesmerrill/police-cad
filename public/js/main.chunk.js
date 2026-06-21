@@ -3706,7 +3706,7 @@
                 childWrapper: {
                   children: [
                     {
-                      href: "https://discord.gg/3ECFhqe",
+                      href: "https://discord.gg/fVFAA6UcUQ",
                       name: "link0",
                       children:
                         /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
@@ -4948,7 +4948,7 @@
             children: {
               a: {
                 className: "button",
-                href: "https://discord.gg/Y9ytW2ZMp4",
+                href: "https://discord.gg/fVFAA6UcUQ",
                 children:
                   /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                     "span",
@@ -10296,7 +10296,7 @@
                             /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                               "a",
                               {
-                                href: "https://discord.gg/3ECFhqe",
+                                href: "https://discord.gg/fVFAA6UcUQ",
                                 target: "_blank",
                                 rel: "noopener noreferrer",
                                 __self: undefined,
