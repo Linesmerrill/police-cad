@@ -832,6 +832,30 @@
         </div>
 
 
+        <!-- Rank Promotions Section -->
+        <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+            <i class="fa fa-crown" style="font-size:1.5rem; color:#fbbf24;"></i>
+            <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">Rank Promotions</h4>
+          </div>
+          <p style="color:#a0aec0; margin-bottom:1rem; font-size:0.875rem;">Control how rank requirement progress is counted across all departments</p>
+
+          <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
+              <input type="checkbox" id="enableResetStatsOnPromotion" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;">
+              Reset stats on promotion
+            </label>
+          </div>
+
+          <div id="resetStatsOnPromotionInfo" style="display:none; background:#1e3a8a; padding:1rem; border-radius:8px; margin:1rem 0; border-left:4px solid #3b82f6;">
+            <p style="margin:0; color:#93c5fd; font-size:0.875rem;">
+              <i class="fa fa-info-circle" style="color:#3b82f6; margin-right:0.5rem;"></i>
+              When enabled, requirement progress (arrests, citations, etc.) is counted since each member's last promotion instead of all-time, so every rank must be earned fresh. Lifetime totals are still shown alongside. When off, progress counts all-time.
+            </p>
+          </div>
+        </div>
+
+
         <!-- Warrant Approval Mode Section -->
         <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
           <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
@@ -11225,13 +11249,21 @@ async function saveEditEvent() {
         
         // Set civilian approval system - use the actual field names from community JSON
         const enableApproval = communityData.community?.civilianApprovalSystemEnabled || false;
-        
+
         const enableApprovalElement = document.getElementById('enableCivilianApproval');
         if (enableApprovalElement) {
           enableApprovalElement.checked = enableApproval;
         }
-        
+
         toggleCivilianApprovalInfo(enableApproval);
+
+        // Set reset-stats-on-promotion (community-wide rank setting)
+        const enableResetStats = communityData.community?.rankSettings?.resetStatsOnPromotion || false;
+        const enableResetStatsElement = document.getElementById('enableResetStatsOnPromotion');
+        if (enableResetStatsElement) {
+          enableResetStatsElement.checked = enableResetStats;
+        }
+        toggleResetStatsOnPromotionInfo(enableResetStats);
 
         // Set vehicle creation limits - use the actual field names from community JSON
         const enableVehicleLimits = communityData.community?.vehicleCreationLimitsEnabled || false;
@@ -11338,13 +11370,21 @@ async function saveEditEvent() {
         
         // Set civilian approval system - use the actual field names from community JSON
         const enableApproval = communityData?.civilianApprovalSystemEnabled || false;
-        
+
         const enableApprovalElement = document.getElementById('enableCivilianApproval');
         if (enableApprovalElement) {
           enableApprovalElement.checked = enableApproval;
         }
-        
+
         toggleCivilianApprovalInfo(enableApproval);
+
+        // Set reset-stats-on-promotion (community-wide rank setting)
+        const enableResetStats = communityData?.rankSettings?.resetStatsOnPromotion || false;
+        const enableResetStatsElement = document.getElementById('enableResetStatsOnPromotion');
+        if (enableResetStatsElement) {
+          enableResetStatsElement.checked = enableResetStats;
+        }
+        toggleResetStatsOnPromotionInfo(enableResetStats);
 
         // Set vehicle creation limits - use the actual field names from community JSON
         const enableVehicleLimits = communityData?.vehicleCreationLimitsEnabled || false;
@@ -11414,7 +11454,15 @@ async function saveEditEvent() {
         enableApprovalCheckbox.addEventListener('change', function() {
           toggleCivilianApprovalInfo(this.checked);
         });
-        
+
+        // Reset-stats-on-promotion toggle
+        const enableResetStatsCheckbox = document.getElementById('enableResetStatsOnPromotion');
+        if (enableResetStatsCheckbox) {
+          enableResetStatsCheckbox.addEventListener('change', function() {
+            toggleResetStatsOnPromotionInfo(this.checked);
+          });
+        }
+
         // Vehicle limits toggle
         const enableVehicleLimitsCheckbox = document.getElementById('enableVehicleLimits');
         enableVehicleLimitsCheckbox.addEventListener('change', function() {
@@ -11464,10 +11512,18 @@ async function saveEditEvent() {
         }
       }
 
+      function toggleResetStatsOnPromotionInfo(show) {
+        const infoDiv = document.getElementById('resetStatsOnPromotionInfo');
+        if (!infoDiv) return;
+        infoDiv.style.display = show ? 'block' : 'none';
+      }
+
       function saveGeneralSettings() {
         const enableLimits = document.getElementById('enableCivilianLimits').checked;
         const maxCivilians = enableLimits ? parseInt(document.getElementById('maxCiviliansPerDept').value) : 5;
         const enableApproval = document.getElementById('enableCivilianApproval').checked;
+        const resetStatsEl = document.getElementById('enableResetStatsOnPromotion');
+        const enableResetStats = resetStatsEl ? resetStatsEl.checked : false;
 
         // Get vehicle limits
         const enableVehicleLimits = document.getElementById('enableVehicleLimits').checked;
@@ -11522,7 +11578,8 @@ async function saveEditEvent() {
           firearmCreationLimitsEnabled: enableFirearmLimits,
           firearmCreationLimit: maxFirearms,
           warrantApprovalMode: warrantApprovalMode,
-          warrantRandomApprovalRate: warrantRandomApprovalRate
+          warrantRandomApprovalRate: warrantRandomApprovalRate,
+          'rankSettings.resetStatsOnPromotion': enableResetStats
         };
 
         // Save to server - use the same route as saveCommunityProfile

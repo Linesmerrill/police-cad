@@ -20,6 +20,7 @@
   var _metricTypes = [];
   var _members = [];
   var _pendingPromotions = [];
+  var _resetStatsOnPromotion = false;
 
   var _membersPage = 1;
   var _membersTotalPages = 1;
@@ -78,10 +79,60 @@
     closePromotionsPanel();
 
     if (!_deptId) return;
+    loadRankSettings();
     loadMetricTypes();
     loadRanks();
     loadDeptMembers();
     loadPendingPromotions();
+  }
+
+  // ---------- Rank Settings (community-wide) ----------
+
+  // loadRankSettings reads the community-wide resetStatsOnPromotion flag so the panel
+  // toggle reflects the current value and progress labels read "since promotion".
+  function loadRankSettings() {
+    fetch(getApi() + '/api/v1/community/' + _communityId)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var community = (data && data.community) || data || {};
+        var rs = community.rankSettings || {};
+        _resetStatsOnPromotion = !!rs.resetStatsOnPromotion;
+        syncResetStatsToggle();
+      })
+      .catch(function () { /* leave default (all-time) */ });
+  }
+
+  function syncResetStatsToggle() {
+    var el = document.getElementById('rkmResetStatsToggle');
+    if (el) el.checked = _resetStatsOnPromotion;
+  }
+
+  // setResetStatsOnPromotion persists the community-wide flag. Updates optimistically
+  // so the toggle and progress labels reflect the change immediately.
+  function setResetStatsOnPromotion(enabled) {
+    var previous = _resetStatsOnPromotion;
+    _resetStatsOnPromotion = !!enabled;
+    syncResetStatsToggle();
+
+    fetch(getApi() + '/api/v1/community/' + _communityId + '?userId=' + encodeURIComponent(_userId), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 'rankSettings.resetStatsOnPromotion': _resetStatsOnPromotion })
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error('Failed to update setting');
+        if (typeof showToast === 'function') {
+          showToast(_resetStatsOnPromotion ? 'Stats now reset on promotion' : 'Stats now count all-time', 2500, 'success');
+        }
+        // Refresh progress so bars reflect since-promotion vs all-time.
+        loadPendingPromotions().then(renderPendingPromotions).catch(function () {});
+      })
+      .catch(function (err) {
+        console.error('Error updating rank settings:', err);
+        _resetStatsOnPromotion = previous;
+        syncResetStatsToggle();
+        if (typeof showToast === 'function') showToast('Failed to update setting', 3000, 'error');
+      });
   }
 
   function destroy() {
@@ -736,6 +787,10 @@
       var metricsHtml = '';
       if (p.progress && p.progress.length > 0) {
         metricsHtml = '<div class="rkm-promo-metrics">';
+        if (_resetStatsOnPromotion) {
+          metricsHtml += '<div class="rkm-promo-since-note" style="font-size:0.6rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">' +
+            '<i class="fa fa-rotate-left" style="margin-right:4px;"></i>Progress since last promotion</div>';
+        }
         p.progress.forEach(function (prog) {
           if (prog.isCustom) {
             var toggleId = 'customReqToggle_' + escapeRankHtml(p.userId) + '_' + escapeRankHtml(prog.requirementId || '');
@@ -752,11 +807,16 @@
               '</div>';
           } else {
             var pct = Math.min(Math.round((prog.percentage || 0) * 100), 100);
+            // In reset mode, show the lifetime total alongside the since-promotion count.
+            var allTimeSuffix = '';
+            if (_resetStatsOnPromotion && typeof prog.allTimeValue === 'number') {
+              allTimeSuffix = '<span class="rkm-promo-metric-alltime" style="color:#64748b; font-weight:400;"> · ' + prog.allTimeValue + ' all-time</span>';
+            }
             metricsHtml +=
               '<div class="rkm-promo-metric">' +
                 '<div class="rkm-promo-metric-header">' +
                   '<span class="rkm-promo-metric-name">' + escapeRankHtml(prog.displayName || prog.metricType) + '</span>' +
-                  '<span class="rkm-promo-metric-val">' + prog.currentValue + ' / ' + prog.threshold + ' <i class="fa fa-check" style="font-size:0.55rem;"></i></span>' +
+                  '<span class="rkm-promo-metric-val">' + prog.currentValue + ' / ' + prog.threshold + ' <i class="fa fa-check" style="font-size:0.55rem;"></i>' + allTimeSuffix + '</span>' +
                 '</div>' +
                 '<div class="rkm-promo-bar"><div class="rkm-promo-bar-fill" style="width:' + pct + '%"></div></div>' +
               '</div>';
@@ -1009,4 +1069,5 @@
   window.closePromotionsPanel = closePromotionsPanel;
   window.promoteOfficer = promoteOfficer;
   window.toggleCustomReq = toggleCustomReq;
+  window.setResetStatsOnPromotion = setResetStatsOnPromotion;
 })();
