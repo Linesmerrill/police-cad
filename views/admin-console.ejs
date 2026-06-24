@@ -2785,6 +2785,18 @@
             <span class="ac-metrics-live-label" id="metrics-live-label">Connecting...</span>
           </div>
 
+          <!-- Full API performance dashboard (route latency, slow queries, charts).
+               Served + proxied through /admin/metrics so it stays behind the admin
+               session and the API gateway lockdown. -->
+          <div style="margin-bottom:1.25rem;">
+            <a href="/admin/metrics" target="_blank" rel="noopener"
+               style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.55rem 0.9rem;border:1px solid var(--ac-accent);border-radius:8px;color:var(--ac-accent);font-size:0.8125rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,0.03);">
+              <i class="fas fa-gauge-high"></i>
+              <span>Open Performance Dashboard</span>
+              <i class="fas fa-up-right-from-square" style="font-size:0.7rem;opacity:0.65;"></i>
+            </a>
+          </div>
+
           <!-- Section: Beta Civilian Dashboard Adoption -->
           <div class="ac-metrics-section" id="metrics-section-beta">
             <div class="ac-metrics-section-header" onclick="toggleMetricsSection('beta')">
