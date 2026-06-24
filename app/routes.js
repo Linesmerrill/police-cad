@@ -689,6 +689,67 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Performance metrics dashboard.
+  //
+  // The standalone dashboard HTML lives in the police-cad-api repo (served at
+  // `/metrics-dashboard`), but the API gateway lockdown 403s top-level browser
+  // navigations to it — a browser nav carries a Mozilla UA, no X-API-Key, and
+  // no allowed Origin, so the gateway rejects it. We surface it through the
+  // admin console instead: the page and its data are served from our own origin,
+  // gated by `requireAdminSession`, and the API gateway secret stays server-side
+  // (attached automatically by the axios api-key interceptor — see app.js).
+  //
+  // The dashboard's client JS fetches from a relative `/api/v2/metrics` base, so
+  // we rewrite that base to `/admin/metrics/api` before serving the HTML; those
+  // calls then hit the admin-gated proxy routes below instead of the API
+  // directly (which the browser couldn't reach through the gateway anyway).
+  app.get("/admin/metrics", requireAdminSession, async function (req, res) {
+    const apiUrl = process.env.POLICE_CAD_API_URL;
+    try {
+      const response = await axios.get(`${apiUrl}/metrics-dashboard`, {
+        timeout: 8000,
+        responseType: "text",
+        headers: { Accept: "text/html" },
+      });
+      const html = String(response.data || "").split("/api/v2/metrics").join("/admin/metrics/api");
+      res.set("Content-Type", "text/html; charset=utf-8");
+      return res.send(html);
+    } catch (err) {
+      const status = (err.response && err.response.status) || 502;
+      return res
+        .status(status)
+        .send("Unable to load the metrics dashboard right now. Please try again shortly.");
+    }
+  });
+
+  // Server-side proxy for the metrics dashboard's data calls. Guarded by
+  // `requireAdminSession` so the metrics JSON is only reachable by a logged-in
+  // admin via our origin. The query string (since/limit/offset/minDuration/
+  // buckets/topN/etc.) is forwarded verbatim.
+  function proxyAdminMetrics(apiPath) {
+    return async function (req, res) {
+      const apiUrl = process.env.POLICE_CAD_API_URL;
+      const qIndex = req.originalUrl.indexOf("?");
+      const qs = qIndex >= 0 ? req.originalUrl.slice(qIndex) : "";
+      try {
+        const response = await axios.get(`${apiUrl}${apiPath}${qs}`, {
+          timeout: 8000,
+          validateStatus: function (status) {
+            return status < 600;
+          },
+        });
+        return res.status(response.status).json(response.data);
+      } catch (err) {
+        const status = (err.response && err.response.status) || 502;
+        return res.status(status).json({ error: "metrics_proxy_failed" });
+      }
+    };
+  }
+
+  app.get("/admin/metrics/api", requireAdminSession, proxyAdminMetrics("/api/v2/metrics"));
+  app.get("/admin/metrics/api/slow-queries", requireAdminSession, proxyAdminMetrics("/api/v2/metrics/slow-queries"));
+  app.get("/admin/metrics/api/charts", requireAdminSession, proxyAdminMetrics("/api/v2/metrics/charts"));
+
   // Admin Profile page
   app.get("/admin/profile", requireAdminSession, async function (req, res) {
     const setup = req.query.setup === 'true';
