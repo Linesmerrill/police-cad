@@ -1091,6 +1091,16 @@
           if (pending <= 0) {
             state.loading = false;
             renderResults();
+            // Audible warrant alert (opt-in via CAD Alert Sounds): sound once
+            // if any person in the current results has an active warrant.
+            var anyWarrants = false;
+            for (var key in state.warrantCache) {
+              if (state.warrantCache.hasOwnProperty(key) && state.warrantCache[key] && state.warrantCache[key].length > 0) {
+                anyWarrants = true;
+                break;
+              }
+            }
+            if (anyWarrants && window.AlertSounds) AlertSounds.playAlert('warrantAlert');
           }
         });
       })(ids[j]);

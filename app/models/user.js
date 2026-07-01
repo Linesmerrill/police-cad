@@ -38,6 +38,13 @@ var userSchema = mongoose.Schema({
     profilePicture: String,
     panicButtonSound: { type: Boolean, default: true },
     alertVolumeLevel: String,
+    // Master switch for the CAD alert sounds (new-call / warrant / attach
+    // tones). Separate from panicButtonSound and defaults OFF — users opt in.
+    alertSoundsEnabled: { type: Boolean, default: false },
+    // IDs of platform "What's New" changelog posts the user has dismissed, so
+    // each post surfaces at most once. Persisted here (not on-device) so it
+    // survives an app reinstall.
+    seenAnnouncements: [String],
     subscription: {
       plan: String,
       active: Boolean,

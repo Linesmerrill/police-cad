@@ -5518,6 +5518,8 @@
         const callType = data.call?.callType || 'New Call';
         const location = data.call?.location || '';
         showRealTimeToast('call', `New Call: ${callType}`, 'info', location);
+        // Audible new-911-call tone (opt-in via CAD Alert Sounds setting).
+        if (window.AlertSounds) AlertSounds.playAlert('newCall');
       });
 
       // Listen for call updates
