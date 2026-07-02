@@ -87,13 +87,24 @@ try {
 // `apiUrl` values still override this.
 app.locals.apiUrl = process.env.POLICE_CAD_API_URL || "";
 
+// Serve static assets BEFORE the session middleware. The session store is
+// Mongo-backed (connect-mongo), so if Mongo is slow every request that passes
+// through session() blocks on it — including static file requests, which don't
+// need a session at all. Serving /static first keeps CSS/JS/images fast even
+// when Mongo is degraded (this was a real incident amplifier: static assets
+// hung for ~120s during a DB slowdown).
+app.use("/static", express.static(path.join(__dirname, "public")));
+
 // Setup session storage.
 app.use(
   session({
     store: new MongoStore({ mongooseConnection: mongoose.connection }),
     secret: "knoldus",
     resave: false,
-    saveUninitialized: true,
+    // Don't persist empty sessions to Mongo on every anonymous request — that's
+    // a write to the sessions collection per new visitor/path for no benefit.
+    // A session is created as soon as something is actually stored (e.g. login).
+    saveUninitialized: false,
     //expires: 1000 * 60 * 60 * 24 * 30, // 1 Month (30 days) see: https://www.npmjs.com/package/connect-mongodb-session
     cookie: {
       path: "/",
@@ -108,9 +119,6 @@ app.use(passport.session());
 
 // Use the flash.
 app.use(flash());
-
-// Static serving of public files.
-app.use("/static", express.static(path.join(__dirname, "public")));
 
 app.use(function forceLiveDomain(req, res, next) {
   var host = req.get("Host");
