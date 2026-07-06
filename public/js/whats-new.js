@@ -89,6 +89,12 @@
       ".wn-body li{position:relative;padding-left:22px}",
       ".wn-body li::before{content:'';position:absolute;left:2px;top:.6em;width:7px;height:7px;border-radius:50%;",
       "background:#38bdf8;box-shadow:0 0 9px rgba(56,189,248,.75)}",
+      /* icon-led bullets: a leading FontAwesome icon becomes a cyan chip marker */
+      ".wn-body li:has(> i[class*='fa']){display:flex;gap:13px;align-items:flex-start;padding-left:0}",
+      ".wn-body li:has(> i[class*='fa'])::before{display:none}",
+      ".wn-body li>i[class*='fa']{flex:0 0 auto;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;",
+      "font-size:13px;color:#7dd3fc;background:rgba(56,189,248,.10);border:1px solid rgba(56,189,248,.24);border-radius:8px;margin-top:1px}",
+      ".wn-body li>i[class*='fa']+span{flex:1 1 auto;min-width:0}",
       ".wn-fade{position:absolute;left:0;right:0;bottom:0;height:46px;pointer-events:none;opacity:0;transition:opacity .2s;",
       "background:linear-gradient(to top,#080e1a,rgba(8,14,26,0))}",
       ".wn-bodywrap.scrollable .wn-fade{opacity:1}",
@@ -108,13 +114,16 @@
       /* ── mobile: dock as a bottom sheet ── */
       "@media (max-width:520px){",
       ".wn-overlay{align-items:flex-end;padding:0}",
-      ".wn-card{max-width:none;width:100%;max-height:90vh;border-radius:24px 24px 0 0;border-bottom:none;",
+      /* opacity:1 is REQUIRED: the base card is opacity:0 + wn-rise; the sheet */
+      /* animation below only moves transform, so without this the card stays */
+      /* invisible on mobile (backdrop shows, card doesn't). */
+      ".wn-card{max-width:none;width:100%;max-height:90vh;border-radius:24px 24px 0 0;border-bottom:none;opacity:1;",
       "transform:translateY(100%);animation:wn-sheet .42s cubic-bezier(.2,.85,.25,1) forwards}",
       ".wn-grab{display:block}",
       ".wn-title{font-size:20px}",
       ".wn-foot{padding-bottom:calc(20px + env(safe-area-inset-bottom))}",
       "}",
-      "@keyframes wn-sheet{to{transform:none}}",
+      "@keyframes wn-sheet{from{transform:translateY(100%)}to{transform:none}}",
       "@media (prefers-reduced-motion:reduce){.wn-overlay,.wn-card{animation-duration:.01ms}.wn-card::before{animation:none}}"
     ].join('');
     var style = document.createElement('style');
