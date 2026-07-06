@@ -74,6 +74,7 @@
     injectStyles();
 
     var idx = 0;
+    var prevBodyOverflow = '';
     var overlay = document.createElement('div');
     overlay.className = 'wn-overlay';
     var card = document.createElement('div');
@@ -92,23 +93,31 @@
       card.querySelector('.wn-title').textContent = post.title || '';
       // Body is staff-authored trusted HTML.
       card.querySelector('.wn-body').innerHTML = post.body || '';
-      card.querySelector('.wn-count').textContent = more > 0 ? ('1 of ' + (posts.length - idx) + ' updates') : '';
+      card.querySelector('.wn-count').textContent = posts.length > 1 ? ((idx + 1) + ' of ' + posts.length + ' updates') : '';
       var btn = card.querySelector('.wn-btn');
       btn.textContent = more > 0 ? 'Next' : 'Got it';
       btn.addEventListener('click', next);
+    }
+
+    function close() {
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      // Restore background scroll (repo convention: modals must lock it).
+      document.body.style.overflow = prevBodyOverflow;
     }
 
     function next() {
       markSeen(posts[idx]._id);
       idx++;
       if (idx >= posts.length) {
-        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        close();
         return;
       }
       render();
     }
 
     render();
+    prevBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden'; // lock background scroll while the modal is open
     document.body.appendChild(overlay);
   }
 

@@ -15996,7 +15996,11 @@ async function saveEditEvent() {
         if (!container) return;
         var html = '';
 
-        ['panic', 'signal100', 'newCall', 'warrantAlert', 'attach'].forEach(function(alertType) {
+        // 'attach' is intentionally omitted until its playback trigger is wired
+        // (self-dispatch socket work). The backend slot + built-in stay defined
+        // so re-adding it here is all that's needed once the trigger ships —
+        // meanwhile we don't offer config for a sound that can't fire yet.
+        ['panic', 'signal100', 'newCall', 'warrantAlert'].forEach(function(alertType) {
           var label = ALERT_LABELS[alertType];
           var currentKey = toneSettingsData.defaults[alertType] || '';
           var currentName = BUILTIN_ALERTS[alertType].name;
