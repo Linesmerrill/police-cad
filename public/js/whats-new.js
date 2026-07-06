@@ -33,26 +33,90 @@
 
   function injectStyles() {
     if (document.getElementById('whats-new-styles')) return;
-    var css = '' +
-      '.wn-overlay{position:fixed;inset:0;background:rgba(3,6,14,.72);backdrop-filter:blur(4px);' +
-      'display:flex;align-items:center;justify-content:center;z-index:100000;padding:20px;}' +
-      '.wn-card{background:#0b1220;border:1px solid rgba(56,189,248,.25);border-radius:16px;' +
-      'max-width:440px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.5);overflow:hidden;' +
-      'font-family:inherit;animation:wn-pop .18s ease-out;}' +
-      '@keyframes wn-pop{from{transform:translateY(8px) scale(.98);opacity:0}to{transform:none;opacity:1}}' +
-      '.wn-head{padding:18px 20px 0;display:flex;align-items:center;gap:10px;}' +
-      '.wn-badge{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;' +
-      'color:#38bdf8;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);' +
-      'padding:3px 8px;border-radius:999px;}' +
-      '.wn-title{color:#f1f5f9;font-size:19px;font-weight:700;padding:10px 20px 0;margin:0;}' +
-      '.wn-body{color:#cbd5e1;font-size:14px;line-height:1.55;padding:10px 20px 18px;max-height:52vh;overflow:auto;}' +
-      '.wn-body a{color:#38bdf8;}' +
-      '.wn-body img{max-width:100%;border-radius:10px;margin:8px 0;}' +
-      '.wn-foot{padding:0 20px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}' +
-      '.wn-count{color:#64748b;font-size:12px;}' +
-      '.wn-btn{background:#38bdf8;color:#04121f;border:none;border-radius:10px;padding:9px 18px;' +
-      'font-size:14px;font-weight:600;cursor:pointer;}' +
-      '.wn-btn:hover{background:#5cc6fa;}';
+    var css = [
+      /* ── overlay: dim + cyan-tinted vignette, blurred backdrop ── */
+      ".wn-overlay{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px;",
+      "background:radial-gradient(130% 120% at 50% -10%,rgba(56,189,248,.12),rgba(3,7,15,.68) 58%);",
+      "backdrop-filter:blur(7px) saturate(120%);-webkit-backdrop-filter:blur(7px) saturate(120%);",
+      "opacity:0;animation:wn-fade .28s ease forwards;",
+      "font-family:'Outfit','Segoe UI',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}",
+      "@keyframes wn-fade{to{opacity:1}}",
+
+      /* ── card: layered dark glass, cyan edge, ambient glow ── */
+      ".wn-card{position:relative;width:100%;max-width:456px;max-height:min(86vh,660px);display:flex;flex-direction:column;",
+      "background:linear-gradient(180deg,#101c31 0%,#0a1120 62%,#080e1a 100%);",
+      "border:1px solid rgba(56,189,248,.22);border-radius:24px;overflow:hidden;",
+      "box-shadow:0 34px 90px -24px rgba(0,0,0,.75),0 1px 0 rgba(255,255,255,.04) inset,0 0 70px -26px rgba(56,189,248,.4);",
+      "transform:translateY(16px) scale(.98);opacity:0;animation:wn-rise .44s cubic-bezier(.2,.85,.25,1) .05s forwards;}",
+      "@keyframes wn-rise{to{transform:none;opacity:1}}",
+      /* animated top accent line */
+      ".wn-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;z-index:2;",
+      "background:linear-gradient(90deg,transparent,#38bdf8 28%,#a5e8ff 50%,#38bdf8 72%,transparent);",
+      "background-size:200% 100%;animation:wn-shimmer 4.5s linear infinite;}",
+      "@keyframes wn-shimmer{to{background-position:200% 0}}",
+      /* ambient corner glow */
+      ".wn-card::after{content:'';position:absolute;top:-45%;right:-35%;width:80%;height:80%;pointer-events:none;z-index:0;",
+      "background:radial-gradient(circle,rgba(56,189,248,.16),transparent 68%);}",
+      ".wn-card>*{position:relative;z-index:1;}",
+
+      /* mobile grab handle (hidden on desktop) */
+      ".wn-grab{display:none;flex:0 0 auto;width:38px;height:4px;border-radius:99px;background:rgba(255,255,255,.2);margin:10px auto 0;}",
+
+      /* ── header ── */
+      ".wn-head{flex:0 0 auto;padding:22px 24px 2px;}",
+      ".wn-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#7dd3fc;}",
+      ".wn-eyebrow i{width:6px;height:6px;border-radius:50%;background:#38bdf8;animation:wn-pulse 2s infinite;}",
+      "@keyframes wn-pulse{0%{box-shadow:0 0 0 0 rgba(56,189,248,.55)}70%{box-shadow:0 0 0 7px rgba(56,189,248,0)}100%{box-shadow:0 0 0 0 rgba(56,189,248,0)}}",
+      ".wn-close{position:absolute;top:16px;right:16px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;",
+      "border:none;border-radius:9px;background:rgba(255,255,255,.05);color:#8296b0;cursor:pointer;font-size:16px;line-height:1;transition:.15s;}",
+      ".wn-close:hover{background:rgba(255,255,255,.11);color:#eaf2fb;}",
+      ".wn-title{margin:12px 24px 0;color:#f2f7fd;font-size:22px;font-weight:700;line-height:1.22;letter-spacing:-.01em;}",
+
+      /* ── scrollable body + bottom fade affordance ── */
+      ".wn-bodywrap{position:relative;flex:1 1 auto;min-height:0;margin-top:12px;}",
+      ".wn-body{height:100%;overflow-y:auto;padding:0 24px 22px;color:#b4c2d6;font-size:14.5px;line-height:1.62;",
+      "scrollbar-width:thin;scrollbar-color:rgba(56,189,248,.32) transparent;}",
+      ".wn-body::-webkit-scrollbar{width:9px}",
+      ".wn-body::-webkit-scrollbar-thumb{background:rgba(56,189,248,.28);border-radius:99px;border:3px solid transparent;background-clip:content-box}",
+      ".wn-body::-webkit-scrollbar-thumb:hover{background:rgba(56,189,248,.5);background-clip:content-box}",
+      ".wn-body>*:first-child{margin-top:0}",
+      ".wn-body p{margin:0 0 11px}",
+      ".wn-body b,.wn-body strong{color:#eaf2fb;font-weight:600}",
+      ".wn-body a{color:#5cc6fa;text-decoration:none;border-bottom:1px solid rgba(92,198,250,.35);transition:.15s}",
+      ".wn-body a:hover{border-bottom-color:#5cc6fa}",
+      ".wn-body img{max-width:100%;border-radius:12px;margin:12px 0;border:1px solid rgba(255,255,255,.07);display:block}",
+      ".wn-body ul,.wn-body ol{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}",
+      ".wn-body li{position:relative;padding-left:22px}",
+      ".wn-body li::before{content:'';position:absolute;left:2px;top:.6em;width:7px;height:7px;border-radius:50%;",
+      "background:#38bdf8;box-shadow:0 0 9px rgba(56,189,248,.75)}",
+      ".wn-fade{position:absolute;left:0;right:0;bottom:0;height:46px;pointer-events:none;opacity:0;transition:opacity .2s;",
+      "background:linear-gradient(to top,#080e1a,rgba(8,14,26,0))}",
+      ".wn-bodywrap.scrollable .wn-fade{opacity:1}",
+
+      /* ── footer: progress dots + button ── */
+      ".wn-foot{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px;",
+      "padding:14px 24px 20px;border-top:1px solid rgba(255,255,255,.05)}",
+      ".wn-dots{display:flex;gap:6px}",
+      ".wn-dots span{width:6px;height:6px;border-radius:99px;background:rgba(255,255,255,.18);transition:width .28s,background .28s}",
+      ".wn-dots span.on{width:20px;background:linear-gradient(90deg,#38bdf8,#a5e8ff)}",
+      ".wn-btn{appearance:none;border:none;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;color:#04121f;",
+      "padding:10px 22px;border-radius:12px;background:linear-gradient(180deg,#8ad9ff,#38bdf8);",
+      "box-shadow:0 10px 22px -10px rgba(56,189,248,.85);transition:filter .16s,transform .16s;white-space:nowrap}",
+      ".wn-btn:hover{filter:brightness(1.07);transform:translateY(-1px)}",
+      ".wn-btn:active{transform:translateY(0)}",
+
+      /* ── mobile: dock as a bottom sheet ── */
+      "@media (max-width:520px){",
+      ".wn-overlay{align-items:flex-end;padding:0}",
+      ".wn-card{max-width:none;width:100%;max-height:90vh;border-radius:24px 24px 0 0;border-bottom:none;",
+      "transform:translateY(100%);animation:wn-sheet .42s cubic-bezier(.2,.85,.25,1) forwards}",
+      ".wn-grab{display:block}",
+      ".wn-title{font-size:20px}",
+      ".wn-foot{padding-bottom:calc(20px + env(safe-area-inset-bottom))}",
+      "}",
+      "@keyframes wn-sheet{to{transform:none}}",
+      "@media (prefers-reduced-motion:reduce){.wn-overlay,.wn-card{animation-duration:.01ms}.wn-card::before{animation:none}}"
+    ].join('');
     var style = document.createElement('style');
     style.id = 'whats-new-styles';
     style.textContent = css;
@@ -75,50 +139,97 @@
 
     var idx = 0;
     var prevBodyOverflow = '';
+
     var overlay = document.createElement('div');
     overlay.className = 'wn-overlay';
-    var card = document.createElement('div');
-    card.className = 'wn-card';
-    overlay.appendChild(card);
+    overlay.innerHTML =
+      '<div class="wn-card" role="dialog" aria-modal="true" aria-labelledby="wn-title">' +
+        '<div class="wn-grab"></div>' +
+        '<div class="wn-head">' +
+          '<span class="wn-eyebrow"><i></i>What’s New</span>' +
+          '<button type="button" class="wn-close" aria-label="Close">×</button>' +
+        '</div>' +
+        '<h3 class="wn-title" id="wn-title"></h3>' +
+        '<div class="wn-bodywrap"><div class="wn-body"></div><div class="wn-fade"></div></div>' +
+        '<div class="wn-foot"><div class="wn-dots"></div>' +
+          '<button type="button" class="wn-btn"></button></div>' +
+      '</div>';
+
+    var card = overlay.querySelector('.wn-card');
+    var titleEl = overlay.querySelector('.wn-title');
+    var bodyWrap = overlay.querySelector('.wn-bodywrap');
+    var bodyEl = overlay.querySelector('.wn-body');
+    var dotsEl = overlay.querySelector('.wn-dots');
+    var btn = overlay.querySelector('.wn-btn');
+    var closeBtn = overlay.querySelector('.wn-close');
+
+    function updateFade() {
+      // Show the bottom fade only while there's more to scroll to.
+      var more = bodyEl.scrollHeight - bodyEl.clientHeight - bodyEl.scrollTop > 4;
+      bodyWrap.classList.toggle('scrollable', more);
+    }
 
     function render() {
       var post = posts[idx];
-      var more = posts.length - idx - 1;
-      card.innerHTML = '' +
-        '<div class="wn-head"><span class="wn-badge">What’s New</span></div>' +
-        '<h3 class="wn-title"></h3>' +
-        '<div class="wn-body"></div>' +
-        '<div class="wn-foot"><span class="wn-count"></span>' +
-        '<button type="button" class="wn-btn"></button></div>';
-      card.querySelector('.wn-title').textContent = post.title || '';
+      titleEl.textContent = post.title || '';
       // Body is staff-authored trusted HTML.
-      card.querySelector('.wn-body').innerHTML = post.body || '';
-      card.querySelector('.wn-count').textContent = posts.length > 1 ? ((idx + 1) + ' of ' + posts.length + ' updates') : '';
-      var btn = card.querySelector('.wn-btn');
-      btn.textContent = more > 0 ? 'Next' : 'Got it';
-      btn.addEventListener('click', next);
+      bodyEl.innerHTML = post.body || '';
+      bodyEl.scrollTop = 0;
+
+      // Progress dots — only meaningful with multiple posts.
+      if (posts.length > 1) {
+        var dots = '';
+        for (var i = 0; i < posts.length; i++) {
+          dots += '<span class="' + (i === idx ? 'on' : '') + '"></span>';
+        }
+        dotsEl.innerHTML = dots;
+      } else {
+        dotsEl.innerHTML = '';
+      }
+
+      btn.textContent = (idx < posts.length - 1) ? 'Next' : 'Got it';
+      updateFade();
+      btn.focus();
     }
 
     function close() {
+      document.removeEventListener('keydown', onKey);
       if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-      // Restore background scroll (repo convention: modals must lock it).
-      document.body.style.overflow = prevBodyOverflow;
+      document.body.style.overflow = prevBodyOverflow; // restore background scroll
     }
 
+    // Advance to the next post; mark the current one seen so it won't return.
     function next() {
       markSeen(posts[idx]._id);
       idx++;
-      if (idx >= posts.length) {
-        close();
-        return;
-      }
+      if (idx >= posts.length) { close(); return; }
       render();
     }
 
+    // Dismiss (X / Esc / backdrop): mark the current post seen and close;
+    // any remaining posts surface on the next visit.
+    function dismiss() {
+      markSeen(posts[idx]._id);
+      close();
+    }
+
+    function onKey(e) {
+      if (e.key === 'Escape') dismiss();
+    }
+
+    btn.addEventListener('click', next);
+    closeBtn.addEventListener('click', dismiss);
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) dismiss(); });
+    bodyEl.addEventListener('scroll', updateFade);
+    window.addEventListener('resize', updateFade);
+    document.addEventListener('keydown', onKey);
+
     render();
     prevBodyOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden'; // lock background scroll while the modal is open
+    document.body.style.overflow = 'hidden'; // lock background scroll while open
     document.body.appendChild(overlay);
+    // Recompute the fade once layout has settled (fonts/images can change height).
+    setTimeout(updateFade, 60);
   }
 
   function load() {
