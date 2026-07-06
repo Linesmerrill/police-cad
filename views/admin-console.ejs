@@ -4756,7 +4756,7 @@
           url: API_BASE + '/api/v1/admin/changelog',
           type: 'POST',
           contentType: 'application/json',
-          data: JSON.stringify({ title: title, body: body, surfaces: surfaces })
+          data: JSON.stringify({ title: title, body: body, surfaces: surfaces, currentUser: rpCurrentUser() })
         }).done(function() {
           document.getElementById('changelogTitle').value = '';
           document.getElementById('changelogBody').value = '';
