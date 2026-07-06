@@ -298,6 +298,25 @@
       '  font-size: 20px; font-weight: 700;',
       '  color: var(--cd-accent, #38bdf8);',
       '}',
+      /* Arrest sentence summary (total fine + total jail time + mode) */
+      '.cd-af-arr-totals {',
+      '  margin-top: 12px; padding: 8px 16px;',
+      '  background: rgba(56,189,248,0.06);',
+      '  border: 1px solid rgba(56,189,248,0.15);',
+      '  border-radius: var(--cd-radius-sm, 8px);',
+      '}',
+      '.cd-af-arr-total-row {',
+      '  display: flex; align-items: center; justify-content: space-between;',
+      '  padding: 6px 0;',
+      '}',
+      '.cd-af-arr-mode-row {',
+      '  display: flex; align-items: center; justify-content: space-between;',
+      '  margin-top: 6px; padding-top: 10px;',
+      '  border-top: 1px solid var(--cd-glass-border, rgba(255,255,255,0.06));',
+      '}',
+      '.cd-af-arr-mode-label {',
+      '  font-size: 13px; font-weight: 500; color: var(--cd-text-muted, #64748b);',
+      '}',
 
       /* Violations / Checkboxes */
       '.cd-af-violations-loading {',
@@ -600,7 +619,7 @@
    *
    * @param {string}   containerId  ID of the container element
    * @param {object}   [opts]       { showFines: true, onChange: fn }
-   * @returns {function} getSelected => [{ name, fine, category }]
+   * @returns {function} getSelected => [{ name, fine, jailTime, category }]
    */
   function renderViolations(containerId, opts) {
     opts = opts || {};
@@ -634,7 +653,7 @@
           var fineStr = (opts.showFines !== false && v.fine)
             ? formatCurrency(v.fine, currency)
             : '';
-          listHtml += '<div class="cd-af-cb-item" data-uid="' + uid + '" data-name="' + esc(v.name) + '" data-fine="' + (v.fine || 0) + '" data-cat="' + esc(cat.name) + '">';
+          listHtml += '<div class="cd-af-cb-item" data-uid="' + uid + '" data-name="' + esc(v.name) + '" data-fine="' + (v.fine || 0) + '" data-jail="' + esc(v.jailTime || '') + '" data-cat="' + esc(cat.name) + '">';
           listHtml += '  <div class="cd-af-cb-box"><i class="fa fa-check cd-af-cb-check"></i></div>';
           listHtml += '  <span class="cd-af-cb-label">' + esc(v.name) + '</span>';
           if (fineStr) listHtml += '  <span class="cd-af-cb-fine">' + esc(fineStr) + '</span>';
@@ -741,6 +760,7 @@
             selected[uid] = {
               name: this.getAttribute('data-name'),
               fine: parseFloat(this.getAttribute('data-fine')) || 0,
+              jailTime: this.getAttribute('data-jail') || '',
               category: this.getAttribute('data-cat')
             };
             this.classList.add('cd-af-cb-checked');
@@ -767,6 +787,65 @@
     } catch (e) {
       return '$' + Number(amount).toFixed(2);
     }
+  }
+
+  /* ──────────── Sentence calculator (mirrors API models/arrest_sentence.go) ──────────── */
+
+  var JAIL_UNIT_SECONDS = {
+    second: 1, seconds: 1, sec: 1, secs: 1,
+    minute: 60, minutes: 60, min: 60, mins: 60,
+    hour: 3600, hours: 3600, hr: 3600, hrs: 3600,
+    day: 86400, days: 86400,
+    week: 604800, weeks: 604800, wk: 604800, wks: 604800,
+    month: 2592000, months: 2592000, mo: 2592000, mos: 2592000,
+    year: 31536000, years: 31536000, yr: 31536000, yrs: 31536000
+  };
+  var JAIL_LIFE_RE = /\b(life|perp|perpetual|death|permanent)\b/i;
+  var JAIL_SEGMENT_RE = /(\d+(?:\.\d+)?)\s*([a-zA-Z]+)/g;
+
+  /* Parse a free-form jail-time string into { seconds, isLife }. */
+  function parseJailTime(raw) {
+    var s = (raw == null ? '' : String(raw)).toLowerCase().trim();
+    if (!s || s === 'n/a' || s === 'na' || s === 'none' || s === '0') return { seconds: 0, isLife: false };
+    if (JAIL_LIFE_RE.test(s)) return { seconds: 0, isLife: true };
+    var total = 0, m;
+    JAIL_SEGMENT_RE.lastIndex = 0;
+    while ((m = JAIL_SEGMENT_RE.exec(s)) !== null) {
+      var unit = JAIL_UNIT_SECONDS[m[2].toLowerCase()];
+      if (!unit) continue;
+      var val = parseFloat(m[1]);
+      if (!isNaN(val)) total += Math.round(val * unit);
+    }
+    return { seconds: total, isLife: false };
+  }
+
+  /* Render seconds as up to the two most-significant non-zero units. */
+  function formatDuration(seconds) {
+    if (!seconds || seconds <= 0) return 'None';
+    var units = [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 3600], ['minute', 60], ['second', 1]];
+    var parts = [], remaining = seconds;
+    for (var i = 0; i < units.length && parts.length < 2; i++) {
+      var lbl = units[i][0], sz = units[i][1];
+      if (remaining < sz) continue;
+      var n = Math.floor(remaining / sz);
+      remaining = remaining % sz;
+      parts.push(n + ' ' + lbl + (n !== 1 ? 's' : ''));
+    }
+    return parts.join(' ');
+  }
+
+  /* Total jail time across charges. mode 'consecutive' (sum, default) | 'concurrent' (max). */
+  function totalJailTime(charges, mode) {
+    var sum = 0, longest = 0, anyLife = false;
+    for (var i = 0; i < charges.length; i++) {
+      var p = parseJailTime(charges[i].jailTime);
+      if (p.isLife) anyLife = true;
+      sum += p.seconds;
+      if (p.seconds > longest) longest = p.seconds;
+    }
+    if (anyLife) return { seconds: -1, isLife: true, label: 'Life' };
+    var secs = (mode === 'concurrent') ? longest : sum;
+    return { seconds: secs, isLife: false, label: formatDuration(secs) };
   }
 
   /* ───────────────────────── Character Counter ───────────────────────── */
@@ -974,6 +1053,24 @@
       '<div class="cd-af-section">Charges</div>' +
       '<div id="cd-af-arr-violations"></div>' +
 
+      '<div class="cd-af-arr-totals" id="cd-af-arr-totals">' +
+        '<div class="cd-af-arr-total-row">' +
+          '<span class="cd-af-total-fine-label">Total Fine</span>' +
+          '<span class="cd-af-total-fine-amount" id="cd-af-arr-total-fine">$0.00</span>' +
+        '</div>' +
+        '<div class="cd-af-arr-total-row">' +
+          '<span class="cd-af-total-fine-label">Total Jail Time</span>' +
+          '<span class="cd-af-total-fine-amount" id="cd-af-arr-total-time">None</span>' +
+        '</div>' +
+        '<div class="cd-af-arr-mode-row">' +
+          '<span class="cd-af-arr-mode-label">Sentences run</span>' +
+          '<div class="cd-af-toggle-wrap" id="cd-af-arr-mode-wrap">' +
+            '<button type="button" class="cd-af-toggle-btn" data-mode="consecutive">Consecutive</button>' +
+            '<button type="button" class="cd-af-toggle-btn" data-mode="concurrent">Concurrent</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
       '<div class="cd-af-section">Force Used?</div>' +
       '<div class="cd-af-field">' +
         '<div class="cd-af-toggle-wrap" id="cd-af-arr-force-wrap">' +
@@ -1001,8 +1098,37 @@
 
     openPanel('fa-gavel', 'Create Arrest Report', civName, body, footer);
 
-    /* Violations */
-    var getSelected = renderViolations('cd-af-arr-violations', { showFines: false });
+    /* Violations + live sentence totals */
+    var sentenceMode = 'consecutive';
+    function updateArrTotals(sel) {
+      sel = sel || getSelected();
+      var totalFine = 0;
+      for (var i = 0; i < sel.length; i++) totalFine += (sel[i].fine || 0);
+      var fineEl = document.getElementById('cd-af-arr-total-fine');
+      if (fineEl) fineEl.textContent = formatCurrency(totalFine, (penalCodesCache && penalCodesCache.currency) || 'USD');
+      var timeEl = document.getElementById('cd-af-arr-total-time');
+      if (timeEl) timeEl.textContent = totalJailTime(sel, sentenceMode).label;
+    }
+    var getSelected = renderViolations('cd-af-arr-violations', {
+      showFines: true,
+      onChange: updateArrTotals
+    });
+
+    /* Consecutive / concurrent toggle */
+    var modeWrap = document.getElementById('cd-af-arr-mode-wrap');
+    if (modeWrap) {
+      modeWrap.querySelector('[data-mode="consecutive"]').classList.add('cd-af-toggle-active');
+      var modeBtns = modeWrap.querySelectorAll('.cd-af-toggle-btn');
+      for (var mi = 0; mi < modeBtns.length; mi++) {
+        modeBtns[mi].addEventListener('click', function () {
+          sentenceMode = this.getAttribute('data-mode');
+          var btns = modeWrap.querySelectorAll('.cd-af-toggle-btn');
+          for (var mj = 0; mj < btns.length; mj++) btns[mj].classList.remove('cd-af-toggle-active');
+          this.classList.add('cd-af-toggle-active');
+          updateArrTotals();
+        });
+      }
+    }
 
     /* Character counters */
     bindCharCounter('cd-af-arr-narrative', 'cd-af-arr-narrative-count', 500);
@@ -1080,6 +1206,10 @@
             badgeNumber: dbUser.callSign || ''
           },
           charges: chargeNames.join(', '),
+          chargesList: sel.map(function (s) {
+            return { name: s.name, amount: s.fine || 0, category: s.category || '', jailTime: s.jailTime || '' };
+          }),
+          sentenceMode: sentenceMode,
           narrative: narrative,
           witnesses: witnesses,
           forceUsed: forceUsed,
@@ -1226,5 +1356,9 @@
   window.cdShowArrestForm = showArrestForm;
   window.cdShowWarrantForm = showWarrantForm;
   window.cdCloseActionForm = closePanel;
+  /* Sentence calculator — exposed for reuse + testing (mirrors API models/arrest_sentence.go) */
+  window.cdParseJailTime = parseJailTime;
+  window.cdFormatDuration = formatDuration;
+  window.cdTotalJailTime = totalJailTime;
 
 })();

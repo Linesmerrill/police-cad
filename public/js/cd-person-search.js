@@ -1342,6 +1342,17 @@
           sectionHead('Charges') +
           '<div style="font-size:0.875rem;color:#f1f5f9;font-weight:500;line-height:1.5;margin-bottom:0.75rem;">' + esc(ar.charges || 'None') + '</div>' +
 
+          // Sentence totals (stored on newer records; older ones omit them)
+          ((ar.totalFine > 0 || (ar.totalJailTimeLabel && ar.totalJailTimeLabel !== 'None')) ?
+            '<div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">' +
+              (ar.totalFine > 0 ?
+                '<div><div style="font-size:0.625rem;text-transform:uppercase;letter-spacing:0.08em;color:#475569;font-weight:600;">Total Fine</div>' +
+                '<div style="font-size:0.875rem;font-weight:700;color:var(--cd-amber);">$' + Number(ar.totalFine).toFixed(2) + '</div></div>' : '') +
+              (ar.totalJailTimeLabel && ar.totalJailTimeLabel !== 'None' ?
+                '<div><div style="font-size:0.625rem;text-transform:uppercase;letter-spacing:0.08em;color:#475569;font-weight:600;">Total Jail Time</div>' +
+                '<div style="font-size:0.875rem;font-weight:700;color:var(--cd-accent,#38bdf8);">' + esc(ar.totalJailTimeLabel) + '</div></div>' : '') +
+            '</div>' : '') +
+
           // Narrative
           sectionHead('Narrative') +
           '<div style="font-size:0.8125rem;color:#cbd5e1;line-height:1.6;white-space:pre-wrap;background:rgba(0,0,0,0.2);border-radius:8px;padding:0.75rem;border:1px solid rgba(255,255,255,0.03);margin-bottom:0.75rem;">' + esc(ar.narrative || 'No narrative provided.') + '</div>' +
