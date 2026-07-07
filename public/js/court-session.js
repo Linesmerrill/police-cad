@@ -1240,13 +1240,27 @@
           '<span class="jd-docket-item-type ' + typeClass + '">' + escHtml(item.itemType || '') + '</span>' +
           '<span class="jd-docket-item-summary">' + escHtml(item.summary || 'No description') + '</span>';
 
-        // Top-level verdict badge (upheld | dismissed | partial)
-        if (res && res.verdict) {
-          var v = res.verdict;
-          var badgeClass = v === 'dismissed' ? 'jd-verdict-dismissed'
-                         : v === 'partial'   ? 'jd-verdict-partial'
+        // Verdict badge — reflect adjustments (reduced/amended) rather than
+        // collapsing them to "upheld". Derived from the per-charge dispositions.
+        var badge = res && res.verdict;
+        if (hasChargeRulings) {
+          var dsp = res.chargeResolutions.map(function(cr){ return cr.disposition || cr.verdict || 'upheld'; });
+          var anyDismissed = dsp.indexOf('dismissed') !== -1;
+          var anyReduced = dsp.indexOf('reduced') !== -1;
+          var anyAmended = dsp.indexOf('amended') !== -1;
+          if (dsp.every(function(d){ return d === 'dismissed'; })) badge = 'dismissed';
+          else if (anyDismissed) badge = 'partial';
+          else if (anyReduced && !anyAmended) badge = 'reduced';
+          else if (anyAmended && !anyReduced) badge = 'amended';
+          else if (anyReduced || anyAmended) badge = 'adjusted';
+          else badge = 'upheld';
+        }
+        if (badge) {
+          var badgeClass = badge === 'dismissed' ? 'jd-verdict-dismissed'
+                         : badge === 'partial'   ? 'jd-verdict-partial'
+                         : (badge === 'reduced' || badge === 'amended' || badge === 'adjusted') ? 'jd-verdict-adjusted'
                          : 'jd-verdict-upheld';
-          row += '<span class="jd-verdict-badge ' + badgeClass + '">' + escHtml(v) + '</span>';
+          row += '<span class="jd-verdict-badge ' + badgeClass + '">' + escHtml(badge) + '</span>';
         }
 
         row += '</div>';
@@ -1666,6 +1680,9 @@
           charges.push({
             fineIndex: k,
             disposition: canonical,
+            // Back-compat: the pre-court-totals API only reads `verdict`
+            // (upheld|dismissed) per charge for its source-record write-back.
+            verdict: canonical === 'dismissed' ? 'dismissed' : 'upheld',
             name: meta.name || '',
             category: meta.category || '',
             originalAmount: meta.originalAmount || 0,
@@ -1714,6 +1731,9 @@
         caseSentenceMode = 'consecutive';
         itemChargeCounts = {};
         resolvedCaseIds[caseId] = true;
+        // Drop any cached (pre-resolution) copy so the docket detail re-fetches
+        // the resolved case with its verdicts + totals.
+        delete docketCaseCache[caseId];
 
         // Mark the current docket entry as completed locally
         if (currentSession && currentSession.docket) {
