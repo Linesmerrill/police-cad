@@ -133,12 +133,25 @@
     });
 
     // Editable final fine / jail for reduced / amended charges
+    // Final fine — reduced can only lower the original, amended can only raise
+    // it. Compute totals from the clamped value on every keystroke; correct the
+    // displayed field on blur so typing stays smooth.
     $(document).on('input', '.jd-final-fine', function() {
       var idx = String($(this).data('item-index'));
       var c = parseInt($(this).data('charge-index'), 10);
       chargeFinals[idx] = chargeFinals[idx] || {};
       chargeFinals[idx][c] = chargeFinals[idx][c] || {};
-      chargeFinals[idx][c].amount = this.value === '' ? 0 : (parseFloat(this.value) || 0);
+      chargeFinals[idx][c].amount = clampFinalFine(idx, c, this.value);
+      recomputeCaseTotals();
+    });
+    $(document).on('change', '.jd-final-fine', function() {
+      var idx = String($(this).data('item-index'));
+      var c = parseInt($(this).data('charge-index'), 10);
+      var clamped = clampFinalFine(idx, c, this.value);
+      this.value = String(clamped);
+      chargeFinals[idx] = chargeFinals[idx] || {};
+      chargeFinals[idx][c] = chargeFinals[idx][c] || {};
+      chargeFinals[idx][c].amount = clamped;
       recomputeCaseTotals();
     });
     $(document).on('input', '.jd-final-jail', function() {
@@ -816,8 +829,10 @@
         var fin = (chargeFinals[itemIndex] || {})[c] || {};
         var finAmt = fin.amount != null ? fin.amount : ch.amount;
         var finJail = fin.jailTime != null ? fin.jailTime : ch.jailTime;
+        var fineHint = disp === 'amended' ? 'Final fine (≥ $' + ch.amount + ')' : 'Final fine (≤ $' + ch.amount + ')';
+        var fineBound = disp === 'amended' ? ' min="' + ch.amount + '"' : ' min="0" max="' + ch.amount + '"';
         html += '<div class="jd-final-row" data-item-index="' + itemIndex + '" data-charge-index="' + c + '"' + (showFinals ? '' : ' style="display:none;"') + '>';
-        html += '<label class="jd-final-field"><span>Final fine</span><input type="number" min="0" class="jd-final-fine" data-item-index="' + itemIndex + '" data-charge-index="' + c + '" value="' + escHtml(String(finAmt)) + '" /></label>';
+        html += '<label class="jd-final-field"><span class="jd-final-fine-hint">' + fineHint + '</span><input type="number"' + fineBound + ' class="jd-final-fine" data-item-index="' + itemIndex + '" data-charge-index="' + c + '" value="' + escHtml(String(finAmt)) + '" /></label>';
         if (ch.hasJail) {
           html += '<label class="jd-final-field"><span>Final jail</span><input type="text" class="jd-final-jail" data-item-index="' + itemIndex + '" data-charge-index="' + c + '" placeholder="e.g. 30 seconds" value="' + escHtml(String(finJail)) + '" /></label>';
         }
@@ -833,6 +848,19 @@
     }
     html += '</div>';
     return html;
+  }
+
+  // Clamp a judge-entered final fine to its disposition: reduced never exceeds
+  // the original; amended never falls below it. Negatives floor at 0.
+  function clampFinalFine(itemIndex, chargeIndex, raw) {
+    var meta = (chargeMeta[itemIndex] || {})[chargeIndex] || {};
+    var orig = meta.originalAmount || 0;
+    var disp = (chargeResolutions[itemIndex] || {})[chargeIndex] || '';
+    var v = raw === '' ? 0 : (parseFloat(raw) || 0);
+    if (v < 0) v = 0;
+    if (disp === 'reduced' && v > orig) v = orig;
+    if (disp === 'amended' && v < orig) v = orig;
+    return v;
   }
 
   // The charge as it counts toward totals, per its disposition.
@@ -951,6 +979,20 @@
     var $row = $('.jd-charge-row[data-item-index="' + itemIndex + '"][data-charge-index="' + chargeIndex + '"]');
     $row.find('.jd-item-fine-label').toggleClass('jd-fine-status-strike', disp === 'dismissed');
     $row.find('.jd-final-row').toggle(disp === 'reduced' || disp === 'amended');
+
+    // Update the fine hint + bound + re-clamp when switching reduced <-> amended.
+    if (disp === 'reduced' || disp === 'amended') {
+      var orig = ((chargeMeta[itemIndex] || {})[chargeIndex] || {}).originalAmount || 0;
+      $row.find('.jd-final-fine-hint').text((disp === 'amended' ? 'Final fine (≥ $' : 'Final fine (≤ $') + orig + ')');
+      var $fine = $row.find('.jd-final-fine');
+      if (disp === 'amended') { $fine.attr('min', orig).removeAttr('max'); }
+      else { $fine.attr('min', 0).attr('max', orig); }
+      var clamped = clampFinalFine(itemIndex, chargeIndex, $fine.val());
+      $fine.val(String(clamped));
+      chargeFinals[itemIndex] = chargeFinals[itemIndex] || {};
+      chargeFinals[itemIndex][chargeIndex] = chargeFinals[itemIndex][chargeIndex] || {};
+      chargeFinals[itemIndex][chargeIndex].amount = clamped;
+    }
   }
 
   function refreshTopToggleClasses(itemIndex) {
