@@ -14,6 +14,10 @@
   var sessionId = '';
   var currentSession = null;
   var currentRole = 'spectator'; // judge, defendant, spectator
+  // A community owner/admin (who isn't the presiding judge) may force-end a
+  // stuck session. Resolved lazily from the community once, for non-judges.
+  var canManageSession = false;
+  var managePermChecked = false;
   var activeCaseData = null;
   var chatMessages = [];
   var resolutions = {}; // { itemIndex: 'dismissed' | 'upheld' | 'partial' (derived) }
@@ -77,12 +81,16 @@
 
     // End session
     $('#endSessionBtn').on('click', function() {
+      var forceEnd = currentRole !== 'judge' && canManageSession;
+      var judgeName = (currentSession && currentSession.judgeName) || 'the presiding judge';
       jdConfirm({
         icon: 'fa-stop',
         iconClass: 'icon-danger',
-        title: 'End Court Session',
-        message: 'Are you sure you want to end this court session? This action cannot be undone.',
-        confirmLabel: 'End Session',
+        title: forceEnd ? 'Force-End Session' : 'End Court Session',
+        message: forceEnd
+          ? 'End <strong>' + escHtml(judgeName) + '\'s</strong> court session? Any unresolved cases return to the docket. This cannot be undone.'
+          : 'Are you sure you want to end this court session? This action cannot be undone.',
+        confirmLabel: forceEnd ? 'Force-End' : 'End Session',
         onConfirm: function() { endSession(); }
       });
     });
@@ -187,6 +195,7 @@
         determineRole();
         joinSession(); // Join after role is determined
         renderAll();
+        maybeCheckManagePermission(); // reveals the End control for owner/admin
         $('#mainLoading').hide();
         $('#sessionLayout').show();
       },
@@ -327,6 +336,40 @@
     currentRole = 'spectator';
   }
 
+  // Owner/admin of the session's community may force-end another judge's stuck
+  // session. The session page carries no permission data, so fetch the community
+  // once (only when the viewer isn't the presiding judge) and re-render the
+  // header controls if they turn out to have permission. The server is the real
+  // gate — this only decides whether to surface the button.
+  function maybeCheckManagePermission() {
+    if (managePermChecked || canManageSession || currentRole === 'judge') return;
+    if (!currentSession || !currentSession.communityID || !userId) return;
+    managePermChecked = true;
+    $.ajax({
+      url: API_URL + '/api/v1/community/' + encodeURIComponent(currentSession.communityID),
+      method: 'GET',
+      success: function(res) {
+        var community = (res && (res.community || res)) || {};
+        var can = (community.ownerID || '') === userId;
+        if (!can) {
+          var roles = community.roles || [];
+          for (var i = 0; i < roles.length && !can; i++) {
+            var role = roles[i] || {};
+            if ((role.members || []).indexOf(userId) === -1) continue;
+            var perms = role.permissions || [];
+            for (var j = 0; j < perms.length; j++) {
+              if (perms[j] && perms[j].enabled && perms[j].name === 'administrator') { can = true; break; }
+            }
+          }
+        }
+        if (can) {
+          canManageSession = true;
+          renderSessionHeader(currentSession); // reveal the End control
+        }
+      }
+    });
+  }
+
   // --- Render All ---
 
   function renderAll() {
@@ -372,6 +415,10 @@
       $('#startSessionBtn').show();
       $('#endSessionBtn').hide();
     } else if (isJudge && status === 'in_progress') {
+      $('#startSessionBtn').hide();
+      $('#endSessionBtn').show();
+    } else if (canManageSession && (status === 'in_progress' || status === 'scheduled')) {
+      // Community owner/admin force-ending another judge's stuck session.
       $('#startSessionBtn').hide();
       $('#endSessionBtn').show();
     } else {
@@ -1163,12 +1210,19 @@
     // Proactively fetch court case details for all docket entries
     docket.forEach(function(entry) {
       var caseId = entry.courtCaseID || entry.caseID || '';
-      if (!caseId || docketCaseCache[caseId]) return;
+      if (!caseId) return;
+      // Re-fetch when uncached, or when the docket entry's status changed since
+      // we cached it (e.g. pending/active -> completed once the judge rules).
+      // Without this, spectators/defendants keep a stale pre-ruling snapshot and
+      // never see the Final Judgment until a hard refresh.
+      var cachedEntry = docketCaseCache[caseId];
+      if (cachedEntry && cachedEntry.__docketStatus === entry.status) return;
       $.ajax({
         url: API_URL + '/api/v2/court-cases/' + caseId,
         method: 'GET',
         success: function(resp) {
           var d = resp.courtCase || resp.data || resp;
+          d.__docketStatus = entry.status;
           docketCaseCache[caseId] = d;
           var $entry = $list.find('[data-case-id="' + caseId + '"]');
           if ($entry.length) {
@@ -1552,7 +1606,7 @@
     $('#endSessionBtn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Ending...');
 
     $.ajax({
-      url: API_URL + '/api/v2/court-sessions/' + sessionId + '/end',
+      url: API_URL + '/api/v2/court-sessions/' + sessionId + '/end?userId=' + encodeURIComponent(userId),
       method: 'PUT',
       contentType: 'application/json',
       data: JSON.stringify({ judgeID: userId }),
