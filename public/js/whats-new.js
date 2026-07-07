@@ -21,7 +21,9 @@
   window.__whatsNewInit = true;
 
   var dbUser = window.dbUser;
-  var userId = dbUser && dbUser._id;
+  // dbUser may be either the flat user doc ({_id, ...}) or a wrapper
+  // ({user: {_id, ...}}) depending on the host page — accept both.
+  var userId = dbUser && (dbUser._id || (dbUser.user && dbUser.user._id));
   if (!userId) return; // unauthenticated / no session — nothing to show
 
   function apiBase() {
