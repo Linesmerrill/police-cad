@@ -367,6 +367,15 @@
     .cc-verdict.dismissed { color: #6ee7b7; }
     .cc-verdict.upheld { color: #fca5a5; }
     .cc-verdict.partial { color: #c4b5fd; }
+    .cc-verdict.adjusted { color: #fbbf24; }
+    .cc-charge-final { color: var(--cc-text-muted); font-weight: 500; }
+    .cc-final-judgment {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+      margin-bottom: 0.6rem; padding: 0.5rem 0.7rem;
+      background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.22); border-radius: 7px;
+    }
+    .cc-fj-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #fbbf24; }
+    .cc-fj-vals { font-size: 0.9rem; font-weight: 700; color: #fbbf24; }
 
     /* Per-charge breakdown — indented list under a docket / resolution row */
     .cc-charges {
@@ -1480,13 +1489,19 @@
     if (!res || !Array.isArray(res.chargeResolutions) || res.chargeResolutions.length === 0) return '';
     var labels = ((item && item.summary) || '').split(',').map(function(s) { return s.trim(); });
     var rows = res.chargeResolutions.map(function(cr) {
-      var label = labels[cr.fineIndex] || ('Charge ' + ((cr.fineIndex || 0) + 1));
-      var v = cr.verdict || '';
-      var icon = v === 'dismissed' ? 'fa-ban' : 'fa-gavel';
-      return '<div class="cc-charge-row ' + esc(v) + '">' +
+      var disp = cr.disposition || cr.verdict || 'upheld';
+      var label = cr.name || labels[cr.fineIndex] || ('Charge ' + ((cr.fineIndex || 0) + 1));
+      var rowCls = disp === 'dismissed' ? 'dismissed' : 'upheld';
+      var icon = disp === 'dismissed' ? 'fa-ban' : 'fa-gavel';
+      var detail = '';
+      if (disp === 'reduced' || disp === 'amended') {
+        detail = ' <span class="cc-charge-final">($' + Number(cr.finalAmount || 0).toLocaleString() +
+          (cr.finalJailTime ? ' &middot; ' + esc(cr.finalJailTime) : '') + ')</span>';
+      }
+      return '<div class="cc-charge-row ' + rowCls + '">' +
                '<i class="fa ' + icon + '"></i>' +
                '<span class="cc-charge-label">' + esc(label) + '</span>' +
-               '<span class="cc-charge-verdict">' + esc(v) + '</span>' +
+               '<span class="cc-charge-verdict">' + esc(disp) + detail + '</span>' +
              '</div>';
     }).join('');
     return '<div class="cc-charges">' + rows + '</div>';
@@ -1508,8 +1523,23 @@
 
     var html = contestedItems.map(function(item) {
       var res = resMap[item.itemID];
+      // Reflect adjustments (reduced/amended) instead of collapsing to "upheld".
+      var badge = res && res.verdict;
+      if (res && Array.isArray(res.chargeResolutions) && res.chargeResolutions.length > 0) {
+        var dsp = res.chargeResolutions.map(function(cr){ return cr.disposition || cr.verdict || 'upheld'; });
+        var anyDismissed = dsp.indexOf('dismissed') !== -1;
+        var anyReduced = dsp.indexOf('reduced') !== -1;
+        var anyAmended = dsp.indexOf('amended') !== -1;
+        if (dsp.every(function(d){ return d === 'dismissed'; })) badge = 'dismissed';
+        else if (anyDismissed) badge = 'partial';
+        else if (anyReduced && !anyAmended) badge = 'reduced';
+        else if (anyAmended && !anyReduced) badge = 'amended';
+        else if (anyReduced || anyAmended) badge = 'adjusted';
+        else badge = 'upheld';
+      }
+      var badgeClass = (badge === 'reduced' || badge === 'amended' || badge === 'adjusted') ? 'adjusted' : (badge || '');
       var verdictHtml = res
-        ? '<span class="cc-verdict ' + (res.verdict || '') + '">' + esc(res.verdict || '') + '</span>'
+        ? '<span class="cc-verdict ' + badgeClass + '">' + esc(badge || '') + '</span>'
         : '<span style="font-size:0.72rem;color:var(--cc-text-dim);">pending</span>';
       var typeClass = (item.itemType || '').toLowerCase();
 
@@ -1531,7 +1561,16 @@
       }
     }
 
-    $container.html(html + notesHtml);
+    var totalsHtml = '';
+    if (caseData.totalFine > 0 || (caseData.totalJailTimeLabel && caseData.totalJailTimeLabel !== 'None')) {
+      totalsHtml = '<div class="cc-final-judgment">' +
+        '<span class="cc-fj-title"><i class="fa fa-scale-balanced"></i> Final Judgment</span>' +
+        '<span class="cc-fj-vals">$' + Number(caseData.totalFine || 0).toLocaleString() +
+        ((caseData.totalJailTimeLabel && caseData.totalJailTimeLabel !== 'None') ? '  &middot;  ' + esc(caseData.totalJailTimeLabel) : '') +
+        '</span></div>';
+    }
+
+    $container.html(totalsHtml + html + notesHtml);
   }
 
   // --- View Case Detail ---
