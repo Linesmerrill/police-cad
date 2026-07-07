@@ -650,6 +650,7 @@
 
     // Sound settings
     var soundEnabled = window.dbUser && window.dbUser.user && window.dbUser.user.panicButtonSound;
+    var cadAlertEnabled = !!(window.dbUser && window.dbUser.user && window.dbUser.user.alertSoundsEnabled === true);
     var volumeLevel = (window.dbUser && window.dbUser.user && window.dbUser.user.alertVolumeLevel != null) ? window.dbUser.user.alertVolumeLevel : 50;
 
     html += '<div class="dds-section">';
@@ -661,6 +662,18 @@
       '</div>' +
       '<label class="dds-switch">' +
         '<input type="checkbox" id="dds-sound-toggle"' + (soundEnabled ? ' checked' : '') + ' />' +
+        '<span class="dds-switch-track"></span>' +
+      '</label>' +
+    '</div>';
+    // CAD alert sounds — the newer opt-in tones (new 911 calls / warrant hits /
+    // unit attach). Separate field + toggle from the panic/emergency sound above.
+    html += '<div class="dds-toggle-row" style="padding:14px 16px;border-radius:12px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.04);margin-bottom:1rem;">' +
+      '<div class="dds-toggle-info">' +
+        '<span class="dds-toggle-label">CAD Alert Sounds</span>' +
+        '<span class="dds-toggle-desc">New 911 calls, warrant hits &amp; unit attach tones</span>' +
+      '</div>' +
+      '<label class="dds-switch">' +
+        '<input type="checkbox" id="dds-cad-alert-toggle"' + (cadAlertEnabled ? ' checked' : '') + ' />' +
         '<span class="dds-switch-track"></span>' +
       '</label>' +
     '</div>';
@@ -721,6 +734,30 @@
         $('#dds-sound-toggle').prop('checked', newVal);
         $('#panic-button-check-sound').prop('checked', newVal);
         showSaveStatus('#dds-sound-status', 'saved');
+      });
+    });
+
+    // CAD alert sounds toggle — persists straight to the user API (the single
+    // source of truth shared with mobile), unlike the socket-based panic toggle.
+    $body.find('#dds-cad-alert-toggle').on('change', function () {
+      var enabled = this.checked;
+      var userId = window.dbUser && window.dbUser._id;
+      if (!userId) return;
+      showSaveStatus('#dds-sound-status', 'saving');
+      var base = (window.resolveAlertApiBase && window.resolveAlertApiBase())
+        || (window.ddConfig && window.ddConfig.API_URL) || '';
+      fetch(base + '/api/v1/user/' + encodeURIComponent(userId) + '/alert-sounds-enabled', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: enabled })
+      }).then(function (res) {
+        if (!res.ok) throw new Error('request failed');
+        window.dbUser.user.alertSoundsEnabled = enabled;
+        $('#alert-sounds-check').prop('checked', enabled); // keep legacy checkbox in sync if present
+        showSaveStatus('#dds-sound-status', 'saved');
+      }).catch(function () {
+        $('#dds-cad-alert-toggle').prop('checked', !enabled); // revert on failure
+        showSaveStatus('#dds-sound-status', 'error', 'Could not save');
       });
     });
 
