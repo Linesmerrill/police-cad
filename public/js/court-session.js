@@ -1210,12 +1210,19 @@
     // Proactively fetch court case details for all docket entries
     docket.forEach(function(entry) {
       var caseId = entry.courtCaseID || entry.caseID || '';
-      if (!caseId || docketCaseCache[caseId]) return;
+      if (!caseId) return;
+      // Re-fetch when uncached, or when the docket entry's status changed since
+      // we cached it (e.g. pending/active -> completed once the judge rules).
+      // Without this, spectators/defendants keep a stale pre-ruling snapshot and
+      // never see the Final Judgment until a hard refresh.
+      var cachedEntry = docketCaseCache[caseId];
+      if (cachedEntry && cachedEntry.__docketStatus === entry.status) return;
       $.ajax({
         url: API_URL + '/api/v2/court-cases/' + caseId,
         method: 'GET',
         success: function(resp) {
           var d = resp.courtCase || resp.data || resp;
+          d.__docketStatus = entry.status;
           docketCaseCache[caseId] = d;
           var $entry = $list.find('[data-case-id="' + caseId + '"]');
           if ($entry.length) {
