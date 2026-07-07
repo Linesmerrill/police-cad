@@ -7599,12 +7599,15 @@
               currentCommunityPage = data.pagination.currentPage || 0;
               totalCommunityPages = data.pagination.totalPages || 1;
               totalCommunityRecords = data.pagination.totalRecords || 0;
-              
+
               displayCommunityResultsPage(data.communities, currentCommunityPage, totalCommunityRecords, totalCommunityPages);
             } else {
               // Fallback for old backend response
               displayCommunityResults(data.communities || []);
             }
+            // Surface any communities the backend matched but couldn't decode
+            // (data error), so they can be diagnosed + fixed from here.
+            renderCommunitySkipped(data.skipped);
           },
           error: function(xhr) {
             $('#communityResults').html('<div class="loading">No communities found</div>');
@@ -7616,6 +7619,31 @@
         addToRecentSearches(query, 'communities');
       }
       
+      // Show communities that matched the search but failed to decode on the
+      // backend (e.g. a legacy field with an out-of-range value). Surfacing the
+      // exact error lets an admin fix the data without digging through logs.
+      function renderCommunitySkipped(skipped) {
+        if (!Array.isArray(skipped) || skipped.length === 0) return;
+        function esc(s) {
+          return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+        var html = '<div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.35); border-radius:10px; padding:12px 14px; margin-bottom:14px;">'
+          + '<div style="color:#f59e0b; font-weight:600; font-size:14px; margin-bottom:6px;">'
+          + '<i class="fas fa-triangle-exclamation"></i> ' + skipped.length
+          + ' communit' + (skipped.length === 1 ? 'y' : 'ies') + ' matched but could not be loaded (data error) and ' + (skipped.length === 1 ? 'was' : 'were') + ' skipped:</div>';
+        skipped.forEach(function(s) {
+          html += '<div style="border-top:1px solid rgba(245,158,11,0.18); padding:8px 0;">'
+            + '<div style="color:#e8ecf4; font-size:13px;"><strong>' + esc(s.name || '(no name)') + '</strong> '
+            + '<span style="color:#6b7280; font-family:monospace;">' + esc(s.id) + '</span></div>'
+            + '<code style="display:block; margin-top:4px; color:#fca5a5; font-size:12px; white-space:pre-wrap; word-break:break-word;">' + esc(s.error) + '</code>'
+            + '</div>';
+        });
+        html += '</div>';
+        $('#communityResults').prepend(html);
+      }
+
       function displayCommunityResults(communities) {
         // Fallback function for old backend responses
         if (communities.length === 0) {
