@@ -2845,6 +2845,22 @@
     }
     .dd-cc-verdict.dismissed { color: #6ee7b7; }
     .dd-cc-verdict.upheld { color: #fca5a5; }
+    .dd-cc-verdict.partial { color: #c4b5fd; }
+    .dd-cc-verdict.adjusted { color: #fbbf24; }
+    .dd-cc-final-judgment {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+      margin-bottom: 0.55rem; padding: 0.5rem 0.7rem;
+      background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.22); border-radius: 7px;
+    }
+    .dd-cc-fj-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #fbbf24; }
+    .dd-cc-fj-vals { font-size: 0.9rem; font-weight: 700; color: #fbbf24; }
+    .dd-cc-charges { margin: 0.3rem 0 0.2rem 0.5rem; display: flex; flex-direction: column; gap: 0.2rem; }
+    .dd-cc-charge-row { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--dd-text-muted); }
+    .dd-cc-charge-row i { font-size: 0.6rem; flex-shrink: 0; }
+    .dd-cc-charge-row.dismissed .dd-cc-charge-label { text-decoration: line-through; color: var(--dd-text-dim); }
+    .dd-cc-charge-label { flex: 1; }
+    .dd-cc-charge-verdict { text-transform: capitalize; font-weight: 600; }
+    .dd-cc-charge-final { color: var(--dd-text-dim); font-weight: 500; }
     .dd-cc-participant-chips {
       display: flex;
       flex-wrap: wrap;
@@ -5568,8 +5584,39 @@ $('#dd-loading').hide();
 
       var html = contestedItems.map(function(item) {
         var res = resMap[item.itemID];
+        // Derive a disposition-aware badge + a per-charge breakdown.
+        var badge = res && res.verdict;
+        var chargesHtml = '';
+        if (res && Array.isArray(res.chargeResolutions) && res.chargeResolutions.length > 0) {
+          var dsp = res.chargeResolutions.map(function(cr){ return cr.disposition || cr.verdict || 'upheld'; });
+          var anyDismissed = dsp.indexOf('dismissed') !== -1;
+          var anyReduced = dsp.indexOf('reduced') !== -1;
+          var anyAmended = dsp.indexOf('amended') !== -1;
+          if (dsp.every(function(d){ return d === 'dismissed'; })) badge = 'dismissed';
+          else if (anyDismissed) badge = 'partial';
+          else if (anyReduced && !anyAmended) badge = 'reduced';
+          else if (anyAmended && !anyReduced) badge = 'amended';
+          else if (anyReduced || anyAmended) badge = 'adjusted';
+          else badge = 'upheld';
+          var labels = ((item && item.summary) || '').split(',').map(function(s){ return s.trim(); });
+          chargesHtml = '<div class="dd-cc-charges">' + res.chargeResolutions.map(function(cr){
+            var disp = cr.disposition || cr.verdict || 'upheld';
+            var label = cr.name || labels[cr.fineIndex] || ('Charge ' + ((cr.fineIndex || 0) + 1));
+            var rowCls = disp === 'dismissed' ? 'dismissed' : 'upheld';
+            var icon = disp === 'dismissed' ? 'fa-ban' : 'fa-gavel';
+            var detail = '';
+            if (disp === 'reduced' || disp === 'amended') {
+              detail = ' <span class="dd-cc-charge-final">($' + Number(cr.finalAmount || 0).toLocaleString() +
+                (cr.finalJailTime ? ' &middot; ' + esc(cr.finalJailTime) : '') + ')</span>';
+            }
+            return '<div class="dd-cc-charge-row ' + rowCls + '"><i class="fa ' + icon + '"></i>' +
+                     '<span class="dd-cc-charge-label">' + esc(label) + '</span>' +
+                     '<span class="dd-cc-charge-verdict">' + esc(disp) + detail + '</span></div>';
+          }).join('') + '</div>';
+        }
+        var badgeClass = (badge === 'reduced' || badge === 'amended' || badge === 'adjusted') ? 'adjusted' : (badge || '');
         var verdictHtml = res
-          ? '<span class="dd-cc-verdict ' + (res.verdict || '') + '">' + esc(res.verdict || '') + '</span>'
+          ? '<span class="dd-cc-verdict ' + badgeClass + '">' + esc(badge || '') + '</span>'
           : '<span style="font-size:0.72rem;color:var(--dd-text-dim);">pending</span>';
         var typeClass = (item.itemType || '').toLowerCase();
 
@@ -5577,7 +5624,7 @@ $('#dd-loading').hide();
           '<span class="dd-cc-resolution-type ' + typeClass + '">' + esc(item.itemType || '') + '</span>' +
           '<span class="dd-cc-resolution-summary">' + esc(item.summary || 'No description') + '</span>' +
           verdictHtml +
-        '</div>';
+        '</div>' + chargesHtml;
       }).join('');
 
       // If there are resolutions with judgeNotes, show them
@@ -5591,7 +5638,17 @@ $('#dd-loading').hide();
         }
       }
 
-      $container.html(html + notesHtml);
+      // Final judgment totals (stored on resolved cases).
+      var totalsHtml = '';
+      if (caseData.totalFine > 0 || (caseData.totalJailTimeLabel && caseData.totalJailTimeLabel !== 'None')) {
+        totalsHtml = '<div class="dd-cc-final-judgment">' +
+          '<span class="dd-cc-fj-title"><i class="fa fa-scale-balanced"></i> Final Judgment</span>' +
+          '<span class="dd-cc-fj-vals">$' + Number(caseData.totalFine || 0).toLocaleString() +
+          ((caseData.totalJailTimeLabel && caseData.totalJailTimeLabel !== 'None') ? '  &middot;  ' + esc(caseData.totalJailTimeLabel) : '') +
+          '</span></div>';
+      }
+
+      $container.html(totalsHtml + html + notesHtml);
     }
 
     // ── Enrich contested items with record details ──
