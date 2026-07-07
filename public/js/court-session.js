@@ -133,25 +133,15 @@
     });
 
     // Editable final fine / jail for reduced / amended charges
-    // Final fine — reduced can only lower the original, amended can only raise
-    // it. Compute totals from the clamped value on every keystroke; correct the
-    // displayed field on blur so typing stays smooth.
+    // Adjusted final fine — any value; the derived label (reduced/amended/
+    // upheld) updates live and totals recompute from the entered value.
     $(document).on('input', '.jd-final-fine', function() {
       var idx = String($(this).data('item-index'));
       var c = parseInt($(this).data('charge-index'), 10);
       chargeFinals[idx] = chargeFinals[idx] || {};
       chargeFinals[idx][c] = chargeFinals[idx][c] || {};
-      chargeFinals[idx][c].amount = clampFinalFine(idx, c, this.value);
-      recomputeCaseTotals();
-    });
-    $(document).on('change', '.jd-final-fine', function() {
-      var idx = String($(this).data('item-index'));
-      var c = parseInt($(this).data('charge-index'), 10);
-      var clamped = clampFinalFine(idx, c, this.value);
-      this.value = String(clamped);
-      chargeFinals[idx] = chargeFinals[idx] || {};
-      chargeFinals[idx][c] = chargeFinals[idx][c] || {};
-      chargeFinals[idx][c].amount = clamped;
+      chargeFinals[idx][c].amount = this.value === '' ? 0 : (parseFloat(this.value) || 0);
+      updateAdjHint(idx, c);
       recomputeCaseTotals();
     });
     $(document).on('input', '.jd-final-jail', function() {
@@ -773,7 +763,78 @@
 
   // --- Per-charge dispositions (Upheld / Dismissed / Reduced / Amended) ---
 
-  var DISPOSITIONS = ['upheld', 'dismissed', 'reduced', 'amended'];
+  // The judge picks one of three: Upheld (keep original), Adjusted (enter a new
+  // final amount), or Dismissed (zeroed). "Adjusted" is resolved to a canonical
+  // disposition at submit time: a lower amount => reduced, higher => amended,
+  // same => upheld. This keeps the UI simple; the API stores the canonical one.
+  var DISPOSITIONS = ['upheld', 'adjusted', 'dismissed'];
+
+  // Resolve an adjusted charge to its canonical disposition by comparing the
+  // judge's final fine to the original.
+  function deriveAdjusted(originalAmount, finalAmount) {
+    var f = Number(finalAmount) || 0;
+    var o = Number(originalAmount) || 0;
+    if (f < o) return 'reduced';
+    if (f > o) return 'amended';
+    return 'upheld';
+  }
+
+  // --- Self-contained sentence calculator ---
+  // The court-session page does not load cd-action-forms.js, so we inline the
+  // same jail-time math here (mirrors models/arrest_sentence.go).
+  var JD_JAIL_UNITS = {
+    second: 1, seconds: 1, sec: 1, secs: 1,
+    minute: 60, minutes: 60, min: 60, mins: 60,
+    hour: 3600, hours: 3600, hr: 3600, hrs: 3600,
+    day: 86400, days: 86400,
+    week: 604800, weeks: 604800, wk: 604800, wks: 604800,
+    month: 2592000, months: 2592000, mo: 2592000, mos: 2592000,
+    year: 31536000, years: 31536000, yr: 31536000, yrs: 31536000
+  };
+  var JD_LIFE_RE = /\b(life|perp|perpetual|death|permanent)\b/i;
+  var JD_SEG_RE = /(\d+(?:\.\d+)?)\s*([a-zA-Z]+)/g;
+
+  function jdParseJailTime(raw) {
+    var s = (raw == null ? '' : String(raw)).toLowerCase().trim();
+    if (!s || s === 'n/a' || s === 'na' || s === 'none' || s === '0') return { seconds: 0, isLife: false };
+    if (JD_LIFE_RE.test(s)) return { seconds: 0, isLife: true };
+    var total = 0, m;
+    JD_SEG_RE.lastIndex = 0;
+    while ((m = JD_SEG_RE.exec(s)) !== null) {
+      var unit = JD_JAIL_UNITS[m[2].toLowerCase()];
+      if (!unit) continue;
+      var v = parseFloat(m[1]);
+      if (!isNaN(v)) total += Math.round(v * unit);
+    }
+    return { seconds: total, isLife: false };
+  }
+
+  function jdFormatDuration(seconds) {
+    if (!seconds || seconds <= 0) return 'None';
+    var units = [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 3600], ['minute', 60], ['second', 1]];
+    var parts = [], remaining = seconds;
+    for (var i = 0; i < units.length && parts.length < 2; i++) {
+      var lbl = units[i][0], sz = units[i][1];
+      if (remaining < sz) continue;
+      var n = Math.floor(remaining / sz);
+      remaining = remaining % sz;
+      parts.push(n + ' ' + lbl + (n !== 1 ? 's' : ''));
+    }
+    return parts.join(' ');
+  }
+
+  function jdTotalJailTime(charges, mode) {
+    var sum = 0, longest = 0, anyLife = false;
+    for (var i = 0; i < charges.length; i++) {
+      var p = jdParseJailTime(charges[i].jailTime);
+      if (p.isLife) anyLife = true;
+      sum += p.seconds;
+      if (p.seconds > longest) longest = p.seconds;
+    }
+    if (anyLife) return { seconds: -1, isLife: true, label: 'Life' };
+    var secs = (mode === 'concurrent') ? longest : sum;
+    return { seconds: secs, isLife: false, label: jdFormatDuration(secs) };
+  }
 
   // Normalize an item's charges to { name, category, amount, jailTime, hasJail }.
   // Citations/warnings come from CriminalHistory.fines (fine only, no jail);
@@ -825,17 +886,17 @@
           html += '<button type="button" class="jd-disp-btn' + act + '" data-item-index="' + itemIndex + '" data-charge-index="' + c + '" data-disp="' + dv + '">' + dv.charAt(0).toUpperCase() + dv.slice(1) + '</button>';
         }
         html += '</div>';
-        var showFinals = disp === 'reduced' || disp === 'amended';
+        var showFinals = disp === 'adjusted';
         var fin = (chargeFinals[itemIndex] || {})[c] || {};
         var finAmt = fin.amount != null ? fin.amount : ch.amount;
         var finJail = fin.jailTime != null ? fin.jailTime : ch.jailTime;
-        var fineHint = disp === 'amended' ? 'Final fine (≥ $' + ch.amount + ')' : 'Final fine (≤ $' + ch.amount + ')';
-        var fineBound = disp === 'amended' ? ' min="' + ch.amount + '"' : ' min="0" max="' + ch.amount + '"';
+        var derived = deriveAdjusted(ch.amount, finAmt);
         html += '<div class="jd-final-row" data-item-index="' + itemIndex + '" data-charge-index="' + c + '"' + (showFinals ? '' : ' style="display:none;"') + '>';
-        html += '<label class="jd-final-field"><span class="jd-final-fine-hint">' + fineHint + '</span><input type="number"' + fineBound + ' class="jd-final-fine" data-item-index="' + itemIndex + '" data-charge-index="' + c + '" value="' + escHtml(String(finAmt)) + '" /></label>';
+        html += '<label class="jd-final-field"><span>Final fine</span><input type="number" min="0" class="jd-final-fine" data-item-index="' + itemIndex + '" data-charge-index="' + c + '" value="' + escHtml(String(finAmt)) + '" /></label>';
         if (ch.hasJail) {
           html += '<label class="jd-final-field"><span>Final jail</span><input type="text" class="jd-final-jail" data-item-index="' + itemIndex + '" data-charge-index="' + c + '" placeholder="e.g. 30 seconds" value="' + escHtml(String(finJail)) + '" /></label>';
         }
+        html += '<span class="jd-adj-hint jd-adj-' + derived + '" data-item-index="' + itemIndex + '" data-charge-index="' + c + '">' + adjHintText(derived) + '</span>';
         html += '</div>';
       }
       html += '</div>';
@@ -850,17 +911,23 @@
     return html;
   }
 
-  // Clamp a judge-entered final fine to its disposition: reduced never exceeds
-  // the original; amended never falls below it. Negatives floor at 0.
-  function clampFinalFine(itemIndex, chargeIndex, raw) {
+  // Live-hint text for an adjusted charge's derived disposition.
+  function adjHintText(derived) {
+    if (derived === 'reduced') return '↓ Reduced';
+    if (derived === 'amended') return '↑ Amended';
+    return '= Upheld';
+  }
+
+  // Refresh the derived-disposition hint next to an adjusted charge's input.
+  function updateAdjHint(itemIndex, chargeIndex) {
     var meta = (chargeMeta[itemIndex] || {})[chargeIndex] || {};
-    var orig = meta.originalAmount || 0;
-    var disp = (chargeResolutions[itemIndex] || {})[chargeIndex] || '';
-    var v = raw === '' ? 0 : (parseFloat(raw) || 0);
-    if (v < 0) v = 0;
-    if (disp === 'reduced' && v > orig) v = orig;
-    if (disp === 'amended' && v < orig) v = orig;
-    return v;
+    var fin = (chargeFinals[itemIndex] || {})[chargeIndex] || {};
+    var finAmt = fin.amount != null ? fin.amount : meta.originalAmount;
+    var derived = deriveAdjusted(meta.originalAmount, finAmt);
+    $('.jd-adj-hint[data-item-index="' + itemIndex + '"][data-charge-index="' + chargeIndex + '"]')
+      .removeClass('jd-adj-reduced jd-adj-amended jd-adj-upheld')
+      .addClass('jd-adj-' + derived)
+      .text(adjHintText(derived));
   }
 
   // The charge as it counts toward totals, per its disposition.
@@ -868,7 +935,7 @@
     var meta = (chargeMeta[itemIndex] || {})[chargeIndex] || {};
     var disp = (chargeResolutions[itemIndex] || {})[chargeIndex] || '';
     if (disp === 'dismissed') return { amount: 0, jailTime: '' };
-    if (disp === 'reduced' || disp === 'amended') {
+    if (disp === 'adjusted') {
       var fin = (chargeFinals[itemIndex] || {})[chargeIndex] || {};
       return {
         amount: fin.amount != null ? Number(fin.amount) || 0 : (meta.originalAmount || 0),
@@ -881,7 +948,6 @@
 
   // Recompute + render the per-item totals and the case-wide totals card.
   function recomputeCaseTotals() {
-    if (!window.cdTotalJailTime) return;
     var allEffective = [];
     var keys = Object.keys(chargeMeta);
     for (var k = 0; k < keys.length; k++) {
@@ -895,7 +961,7 @@
       }
       var itemFine = 0;
       for (var i = 0; i < itemCharges.length; i++) itemFine += itemCharges[i].amount;
-      var itemJail = window.cdTotalJailTime(itemCharges, caseSentenceMode);
+      var itemJail = jdTotalJailTime(itemCharges, caseSentenceMode);
       var $it = $('#jd-item-totals-' + itemIndex);
       if ($it.length) {
         $it.html('<span class="jd-tot-label">Item total</span><span class="jd-tot-val">$' + itemFine.toLocaleString() +
@@ -904,7 +970,7 @@
     }
     var caseFine = 0;
     for (var j = 0; j < allEffective.length; j++) caseFine += allEffective[j].amount;
-    var caseJail = window.cdTotalJailTime(allEffective, caseSentenceMode);
+    var caseJail = jdTotalJailTime(allEffective, caseSentenceMode);
     $('#jd-case-total-fine').text('$' + caseFine.toLocaleString());
     $('#jd-case-total-jail').text(caseJail.label || 'None');
   }
@@ -915,7 +981,7 @@
       delete chargeResolutions[itemIndex][chargeIndex]; // toggle off
     } else {
       chargeResolutions[itemIndex][chargeIndex] = disposition;
-      if (disposition === 'reduced' || disposition === 'amended') {
+      if (disposition === 'adjusted') {
         chargeFinals[itemIndex] = chargeFinals[itemIndex] || {};
         if (!chargeFinals[itemIndex][chargeIndex]) {
           var meta = (chargeMeta[itemIndex] || {})[chargeIndex] || {};
@@ -963,7 +1029,7 @@
     for (var i = 0; i < n; i++) {
       var v = bucket[i];
       if (v === 'dismissed') { dismissed++; set++; }
-      else if (v === 'upheld' || v === 'reduced' || v === 'amended') { stand++; set++; }
+      else if (v === 'upheld' || v === 'adjusted') { stand++; set++; }
     }
     if (set < n) { delete resolutions[itemIndex]; return; }
     if (dismissed === n) resolutions[itemIndex] = 'dismissed';
@@ -974,25 +1040,12 @@
   function refreshChargeDispClasses(itemIndex, chargeIndex) {
     var disp = (chargeResolutions[itemIndex] || {})[chargeIndex] || '';
     var $btns = $('.jd-disp-btn[data-item-index="' + itemIndex + '"][data-charge-index="' + chargeIndex + '"]');
-    $btns.removeClass('jd-disp-active jd-disp-upheld jd-disp-dismissed jd-disp-reduced jd-disp-amended');
+    $btns.removeClass('jd-disp-active jd-disp-upheld jd-disp-dismissed jd-disp-adjusted');
     if (disp) $btns.filter('[data-disp="' + disp + '"]').addClass('jd-disp-active jd-disp-' + disp);
     var $row = $('.jd-charge-row[data-item-index="' + itemIndex + '"][data-charge-index="' + chargeIndex + '"]');
     $row.find('.jd-item-fine-label').toggleClass('jd-fine-status-strike', disp === 'dismissed');
-    $row.find('.jd-final-row').toggle(disp === 'reduced' || disp === 'amended');
-
-    // Update the fine hint + bound + re-clamp when switching reduced <-> amended.
-    if (disp === 'reduced' || disp === 'amended') {
-      var orig = ((chargeMeta[itemIndex] || {})[chargeIndex] || {}).originalAmount || 0;
-      $row.find('.jd-final-fine-hint').text((disp === 'amended' ? 'Final fine (≥ $' : 'Final fine (≤ $') + orig + ')');
-      var $fine = $row.find('.jd-final-fine');
-      if (disp === 'amended') { $fine.attr('min', orig).removeAttr('max'); }
-      else { $fine.attr('min', 0).attr('max', orig); }
-      var clamped = clampFinalFine(itemIndex, chargeIndex, $fine.val());
-      $fine.val(String(clamped));
-      chargeFinals[itemIndex] = chargeFinals[itemIndex] || {};
-      chargeFinals[itemIndex][chargeIndex] = chargeFinals[itemIndex][chargeIndex] || {};
-      chargeFinals[itemIndex][chargeIndex].amount = clamped;
-    }
+    $row.find('.jd-final-row').toggle(disp === 'adjusted');
+    if (disp === 'adjusted') updateAdjHint(itemIndex, chargeIndex);
   }
 
   function refreshTopToggleClasses(itemIndex) {
@@ -1598,9 +1651,21 @@
           }
           var meta = (chargeMeta[i] || {})[k] || {};
           var eff = effectiveCharge(i, k);
+          // Resolve "adjusted" to the canonical disposition the API stores:
+          // lower fine => reduced, higher (or a jail-only change) => amended,
+          // no change => upheld. reduced/amended both make the API use the
+          // final values; upheld/dismissed use original/zero.
+          var canonical = bucket[k];
+          if (canonical === 'adjusted') {
+            var fineChanged = (Number(eff.amount) || 0) !== (Number(meta.originalAmount) || 0);
+            var jailChanged = (eff.jailTime || '') !== (meta.originalJailTime || '');
+            if (!fineChanged && !jailChanged) canonical = 'upheld';
+            else if ((Number(eff.amount) || 0) < (Number(meta.originalAmount) || 0)) canonical = 'reduced';
+            else canonical = 'amended';
+          }
           charges.push({
             fineIndex: k,
-            disposition: bucket[k],
+            disposition: canonical,
             name: meta.name || '',
             category: meta.category || '',
             originalAmount: meta.originalAmount || 0,

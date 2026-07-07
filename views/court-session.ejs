@@ -361,9 +361,13 @@
     .jd-disp-btn:hover { border-color: rgba(255,255,255,0.18); color: var(--text-secondary); }
     .jd-disp-btn.jd-disp-upheld { background: rgba(252,165,165,0.16); color: #fca5a5; border-color: rgba(252,165,165,0.35); }
     .jd-disp-btn.jd-disp-dismissed { background: rgba(110,231,183,0.16); color: #6ee7b7; border-color: rgba(110,231,183,0.35); }
-    .jd-disp-btn.jd-disp-reduced { background: rgba(251,191,36,0.16); color: #fbbf24; border-color: rgba(251,191,36,0.35); }
-    .jd-disp-btn.jd-disp-amended { background: rgba(125,211,252,0.16); color: #7dd3fc; border-color: rgba(125,211,252,0.35); }
-    .jd-final-row { display: flex; gap: 0.6rem; margin-top: 0.45rem; flex-wrap: wrap; }
+    .jd-disp-btn.jd-disp-adjusted { background: rgba(251,191,36,0.16); color: #fbbf24; border-color: rgba(251,191,36,0.35); }
+    /* Live derived-disposition hint next to the Adjusted input. */
+    .jd-adj-hint { align-self: flex-end; font-size: 0.7rem; font-weight: 700; padding-bottom: 0.35rem; }
+    .jd-adj-reduced { color: #fbbf24; }
+    .jd-adj-amended { color: #7dd3fc; }
+    .jd-adj-upheld { color: var(--text-muted); }
+    .jd-final-row { display: flex; gap: 0.6rem; align-items: center; margin-top: 0.45rem; flex-wrap: wrap; }
     .jd-final-field { display: flex; flex-direction: column; gap: 0.15rem; font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
     .jd-final-field input {
       padding: 0.3rem 0.5rem; font-size: 0.8rem; width: 8.5rem; max-width: 42vw;
