@@ -17,9 +17,17 @@
   var activeCaseData = null;
   var chatMessages = [];
   var resolutions = {}; // { itemIndex: 'dismissed' | 'upheld' | 'partial' (derived) }
-  // Per-charge rulings for citations/warnings with multiple fines:
-  // { itemIndex: { fineIndex: 'dismissed' | 'upheld', ... } }
+  // Per-charge dispositions, keyed by charge index within the item:
+  // { itemIndex: { chargeIndex: 'upheld'|'dismissed'|'reduced'|'amended' } }
   var chargeResolutions = {};
+  // Snapshot of each charge so totals + the resolve payload are self-contained:
+  // { itemIndex: { chargeIndex: { name, category, originalAmount, originalJailTime, hasJail } } }
+  var chargeMeta = {};
+  // Judge-entered final values for reduced/amended charges:
+  // { itemIndex: { chargeIndex: { amount, jailTime } } }
+  var chargeFinals = {};
+  // Case-level sentence mode for combining jail time across all charges.
+  var caseSentenceMode = 'consecutive';
   // Track how many charges each item carries so we can validate the
   // resolution is complete on submit. Populated by renderItemDetails.
   var itemChargeCounts = {};
@@ -102,26 +110,54 @@
       toggleResolution(idx, 'upheld');
     });
 
-    // Per-charge dismiss / uphold toggles
-    $(document).on('click', '.jd-fine-toggle', function() {
+    // Per-charge disposition (Upheld / Dismissed / Reduced / Amended)
+    $(document).on('click', '.jd-disp-btn', function() {
       var idx = $(this).data('item-index');
-      var fineIdx = $(this).data('fine-index');
-      var verdict = $(this).data('verdict');
-      if (idx == null || fineIdx == null || !verdict) return;
-      toggleChargeResolution(parseInt(idx, 10), parseInt(fineIdx, 10), verdict);
+      var chargeIdx = $(this).data('charge-index');
+      var disp = $(this).data('disp');
+      if (idx == null || chargeIdx == null || !disp) return;
+      setDisposition(String(idx), parseInt(chargeIdx, 10), disp);
     });
 
     // Apply-to-all shortcut inside the charges block
-    $(document).on('click', '.jd-charges-applyall-btn', function() {
+    $(document).on('click', '.jd-disp-all-btn', function() {
       var idx = $(this).data('item-index');
-      var verdict = $(this).data('verdict');
-      if (idx == null || !verdict) return;
-      idx = parseInt(idx, 10);
-      if (allChargesMatch(idx, verdict)) {
+      var disp = $(this).data('disp');
+      if (idx == null || !disp) return;
+      idx = String(idx);
+      if (allChargesMatch(idx, disp)) {
         clearChargeResolutions(idx);
       } else {
-        setAllChargeResolutions(idx, verdict);
+        setAllChargeResolutions(idx, disp);
       }
+    });
+
+    // Editable final fine / jail for reduced / amended charges
+    $(document).on('input', '.jd-final-fine', function() {
+      var idx = String($(this).data('item-index'));
+      var c = parseInt($(this).data('charge-index'), 10);
+      chargeFinals[idx] = chargeFinals[idx] || {};
+      chargeFinals[idx][c] = chargeFinals[idx][c] || {};
+      chargeFinals[idx][c].amount = this.value === '' ? 0 : (parseFloat(this.value) || 0);
+      recomputeCaseTotals();
+    });
+    $(document).on('input', '.jd-final-jail', function() {
+      var idx = String($(this).data('item-index'));
+      var c = parseInt($(this).data('charge-index'), 10);
+      chargeFinals[idx] = chargeFinals[idx] || {};
+      chargeFinals[idx][c] = chargeFinals[idx][c] || {};
+      chargeFinals[idx][c].jailTime = this.value;
+      recomputeCaseTotals();
+    });
+
+    // Case-level consecutive / concurrent sentence mode
+    $(document).on('click', '.jd-mode-btn', function() {
+      var mode = $(this).data('mode');
+      if (mode !== 'consecutive' && mode !== 'concurrent') return;
+      caseSentenceMode = mode;
+      $('.jd-mode-btn').removeClass('jd-mode-active');
+      $('.jd-mode-btn[data-mode="' + mode + '"]').addClass('jd-mode-active');
+      recomputeCaseTotals();
     });
 
     // Submit resolution
@@ -433,6 +469,9 @@
         }
         resolutions = {}; // Reset resolutions for new case
         chargeResolutions = {};
+        chargeMeta = {};
+        chargeFinals = {};
+        caseSentenceMode = 'consecutive';
         itemChargeCounts = {};
         var html = renderCaseDetails(activeCaseData, caseId);
         $('#activeCaseBody').html(html);
@@ -497,6 +536,19 @@
         html += '</div>'; // close jd-contested-item
       }
       html += '</div>';
+    }
+
+    // Sentencing summary (judge only) — live final-judgment totals.
+    if (currentRole === 'judge' && items.length > 0) {
+      html += '<div class="jd-case-totals">' +
+        '<div class="jd-case-totals-row"><span class="jd-tot-label">Total Fine</span><span class="jd-tot-amount" id="jd-case-total-fine">$0</span></div>' +
+        '<div class="jd-case-totals-row"><span class="jd-tot-label">Total Jail Time</span><span class="jd-tot-amount" id="jd-case-total-jail">None</span></div>' +
+        '<div class="jd-case-mode-row"><span class="jd-tot-label">Sentences run</span>' +
+          '<div class="jd-mode-group">' +
+            '<button type="button" class="jd-mode-btn jd-mode-active" data-mode="consecutive">Consecutive</button>' +
+            '<button type="button" class="jd-mode-btn" data-mode="concurrent">Concurrent</button>' +
+          '</div></div>' +
+        '</div>';
     }
 
     // Actions (judge only)
@@ -628,55 +680,12 @@
       }
       html += '</div>';
 
-      // Fines — per-charge Dismiss / Uphold for judges.
-      if (fines.length > 0) {
-        // Remember how many charges this item has so submitResolution can
-        // validate every one was ruled on, and so the top-level shortcut
-        // knows how many to fan out to.
-        var itemIndexForCharges = (typeof window.__jdCurrentItemIndex === 'number') ? window.__jdCurrentItemIndex : null;
-        if (itemIndexForCharges != null) {
-          itemChargeCounts[itemIndexForCharges] = fines.length;
-          // Hide the top-level Dismiss / Uphold toggles — they're confusing
-          // alongside per-charge buttons. The "Apply to all" link inside
-          // the charges block provides the bulk shortcut.
-          $('.jd-contested-item[data-item-index="' + itemIndexForCharges + '"] .jd-resolution-toggles').hide();
-        }
-
-        html += '<div class="jd-item-fines">';
-        html += '<div class="jd-item-detail-label" style="margin-bottom:0.2rem;">Charges / Fines</div>';
-        for (var f = 0; f < fines.length; f++) {
-          var fine = fines[f];
-          var catClass = (fine.category || '').toLowerCase();
-          var ruling = (itemIndexForCharges != null && chargeResolutions[itemIndexForCharges]) ? chargeResolutions[itemIndexForCharges][f] : '';
-          var strikeCls = ruling === 'dismissed' ? ' jd-fine-status-strike' : '';
-          html += '<div class="jd-item-fine-row">';
-          html += '<span class="jd-item-detail-value jd-item-fine-label' + strikeCls + '">' + escHtml(fine.fineType || 'Unknown Charge') + '</span>';
-          if (fine.fineAmount) {
-            html += ' <span class="jd-item-fine-amount">$' + fine.fineAmount + '</span>';
-          }
-          if (fine.category) {
-            html += ' <span class="jd-item-fine-category ' + escHtml(catClass) + '">' + escHtml(fine.category) + '</span>';
-          }
-          if (currentRole === 'judge' && itemIndexForCharges != null) {
-            var dCls = ruling === 'dismissed' ? ' dismiss-active' : '';
-            var uCls = ruling === 'upheld' ? ' uphold-active' : '';
-            html +=
-              '<span class="jd-fine-toggles">' +
-                '<button class="jd-fine-toggle' + dCls + '" data-item-index="' + itemIndexForCharges + '" data-fine-index="' + f + '" data-verdict="dismissed">Dismiss</button>' +
-                '<button class="jd-fine-toggle' + uCls + '" data-item-index="' + itemIndexForCharges + '" data-fine-index="' + f + '" data-verdict="upheld">Uphold</button>' +
-              '</span>';
-          }
-          html += '</div>';
-        }
-        if (currentRole === 'judge') {
-          html +=
-            '<div class="jd-charges-applyall">' +
-              '<span class="jd-charges-applyall-label">Apply to all:</span>' +
-              '<button class="jd-charges-applyall-btn" data-item-index="' + itemIndexForCharges + '" data-verdict="dismissed">Dismiss</button>' +
-              '<button class="jd-charges-applyall-btn" data-item-index="' + itemIndexForCharges + '" data-verdict="upheld">Uphold</button>' +
-            '</div>';
-        }
-        html += '</div>';
+      // Charges — per-charge dispositions (Upheld / Dismissed / Reduced / Amended).
+      var citCharges = getItemCharges(itemType, record);
+      if (citCharges.length > 0) {
+        html += renderChargeDispositionsHtml(itemIndex, citCharges);
+        // Hide the item-level toggle — dispositions are per-charge now.
+        $('.jd-contested-item[data-item-index="' + itemIndex + '"] .jd-resolution-toggles').hide();
       }
 
       // Notes
@@ -703,8 +712,13 @@
       }
       html += '</div>';
 
-      // Charges
-      if (d.charges) {
+      // Charges — per-charge dispositions from the structured chargesList;
+      // fall back to the legacy free-text summary for older reports.
+      var arrCharges = getItemCharges('arrest', record);
+      if (arrCharges.length > 0) {
+        html += renderChargeDispositionsHtml(itemIndex, arrCharges);
+        $('.jd-contested-item[data-item-index="' + itemIndex + '"] .jd-resolution-toggles').hide();
+      } else if (d.charges) {
         html += '<div style="margin-top:0.35rem;"><span class="jd-item-detail-label">Charges</span>';
         html += '<div class="jd-item-detail-value" style="margin-top:0.1rem;">' + escHtml(d.charges) + '</div></div>';
       }
@@ -717,6 +731,9 @@
     }
 
     $slot.html(html || '<div class="jd-item-detail-loading">No additional details</div>');
+
+    // Refresh live totals now that this item's charges are in the DOM.
+    recomputeCaseTotals();
   }
 
   function toggleResolution(itemIndex, verdict) {
@@ -741,71 +758,199 @@
     }
   }
 
-  function toggleChargeResolution(itemIndex, fineIndex, verdict) {
-    chargeResolutions[itemIndex] = chargeResolutions[itemIndex] || {};
-    if (chargeResolutions[itemIndex][fineIndex] === verdict) {
-      delete chargeResolutions[itemIndex][fineIndex]; // toggle off
-    } else {
-      chargeResolutions[itemIndex][fineIndex] = verdict;
+  // --- Per-charge dispositions (Upheld / Dismissed / Reduced / Amended) ---
+
+  var DISPOSITIONS = ['upheld', 'dismissed', 'reduced', 'amended'];
+
+  // Normalize an item's charges to { name, category, amount, jailTime, hasJail }.
+  // Citations/warnings come from CriminalHistory.fines (fine only, no jail);
+  // arrests come from arrestReport.chargesList (fine + jail time).
+  function getItemCharges(itemType, record) {
+    if (!record) return [];
+    if (itemType === 'arrest') {
+      return (record.chargesList || []).map(function (c) {
+        return { name: c.name || 'Charge', category: c.category || '', amount: Number(c.amount) || 0, jailTime: c.jailTime || '', hasJail: true };
+      });
     }
-    refreshChargeToggleClasses(itemIndex, fineIndex);
-    recomputeTopVerdict(itemIndex);
-    refreshTopToggleClasses(itemIndex);
+    return (record.fines || []).map(function (f) {
+      return { name: f.fineType || 'Charge', category: f.category || '', amount: Number(f.fineAmount) || 0, jailTime: '', hasJail: false };
+    });
   }
 
-  function allChargesMatch(itemIndex, verdict) {
+  function fmtCharge(amount, jailTime, hasJail) {
+    var parts = [];
+    if (amount > 0) parts.push('$' + Number(amount).toLocaleString());
+    if (hasJail && jailTime) parts.push(escHtml(jailTime));
+    return parts.join(' &middot; ') || '&mdash;';
+  }
+
+  // Build the per-charge disposition UI for an item and snapshot its charges.
+  // Side effects: populates chargeMeta[itemIndex] + itemChargeCounts[itemIndex].
+  function renderChargeDispositionsHtml(itemIndex, charges) {
+    chargeMeta[itemIndex] = {};
+    itemChargeCounts[itemIndex] = charges.length;
+    var isJudge = currentRole === 'judge';
+    var html = '<div class="jd-item-fines"><div class="jd-item-detail-label" style="margin-bottom:0.25rem;">Charges</div>';
+    for (var c = 0; c < charges.length; c++) {
+      var ch = charges[c];
+      chargeMeta[itemIndex][c] = { name: ch.name, category: ch.category, originalAmount: ch.amount, originalJailTime: ch.jailTime, hasJail: ch.hasJail };
+      // Default each charge to Upheld so totals show immediately; the judge
+      // adjusts from there. Matches the mobile behavior.
+      chargeResolutions[itemIndex] = chargeResolutions[itemIndex] || {};
+      if (!chargeResolutions[itemIndex][c]) chargeResolutions[itemIndex][c] = 'upheld';
+      var disp = chargeResolutions[itemIndex][c];
+      var strikeCls = disp === 'dismissed' ? ' jd-fine-status-strike' : '';
+      html += '<div class="jd-charge-row" data-item-index="' + itemIndex + '" data-charge-index="' + c + '">';
+      html += '<div class="jd-charge-head">' +
+        '<span class="jd-item-fine-label' + strikeCls + '">' + escHtml(ch.name) + '</span>' +
+        '<span class="jd-charge-orig">' + fmtCharge(ch.amount, ch.jailTime, ch.hasJail) + '</span></div>';
+      if (isJudge) {
+        html += '<div class="jd-disp-group">';
+        for (var d = 0; d < DISPOSITIONS.length; d++) {
+          var dv = DISPOSITIONS[d];
+          var act = disp === dv ? ' jd-disp-active jd-disp-' + dv : '';
+          html += '<button type="button" class="jd-disp-btn' + act + '" data-item-index="' + itemIndex + '" data-charge-index="' + c + '" data-disp="' + dv + '">' + dv.charAt(0).toUpperCase() + dv.slice(1) + '</button>';
+        }
+        html += '</div>';
+        var showFinals = disp === 'reduced' || disp === 'amended';
+        var fin = (chargeFinals[itemIndex] || {})[c] || {};
+        var finAmt = fin.amount != null ? fin.amount : ch.amount;
+        var finJail = fin.jailTime != null ? fin.jailTime : ch.jailTime;
+        html += '<div class="jd-final-row" data-item-index="' + itemIndex + '" data-charge-index="' + c + '"' + (showFinals ? '' : ' style="display:none;"') + '>';
+        html += '<label class="jd-final-field"><span>Final fine</span><input type="number" min="0" class="jd-final-fine" data-item-index="' + itemIndex + '" data-charge-index="' + c + '" value="' + escHtml(String(finAmt)) + '" /></label>';
+        if (ch.hasJail) {
+          html += '<label class="jd-final-field"><span>Final jail</span><input type="text" class="jd-final-jail" data-item-index="' + itemIndex + '" data-charge-index="' + c + '" placeholder="e.g. 30 seconds" value="' + escHtml(String(finJail)) + '" /></label>';
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+    if (isJudge) {
+      html += '<div class="jd-charges-applyall"><span class="jd-charges-applyall-label">Apply to all:</span>' +
+        '<button type="button" class="jd-disp-all-btn" data-item-index="' + itemIndex + '" data-disp="upheld">Uphold</button>' +
+        '<button type="button" class="jd-disp-all-btn" data-item-index="' + itemIndex + '" data-disp="dismissed">Dismiss</button></div>' +
+        '<div class="jd-item-totals" id="jd-item-totals-' + itemIndex + '"></div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  // The charge as it counts toward totals, per its disposition.
+  function effectiveCharge(itemIndex, chargeIndex) {
+    var meta = (chargeMeta[itemIndex] || {})[chargeIndex] || {};
+    var disp = (chargeResolutions[itemIndex] || {})[chargeIndex] || '';
+    if (disp === 'dismissed') return { amount: 0, jailTime: '' };
+    if (disp === 'reduced' || disp === 'amended') {
+      var fin = (chargeFinals[itemIndex] || {})[chargeIndex] || {};
+      return {
+        amount: fin.amount != null ? Number(fin.amount) || 0 : (meta.originalAmount || 0),
+        jailTime: fin.jailTime != null ? fin.jailTime : (meta.originalJailTime || '')
+      };
+    }
+    // upheld, or not yet ruled — preview at the original values.
+    return { amount: meta.originalAmount || 0, jailTime: meta.originalJailTime || '' };
+  }
+
+  // Recompute + render the per-item totals and the case-wide totals card.
+  function recomputeCaseTotals() {
+    if (!window.cdTotalJailTime) return;
+    var allEffective = [];
+    var keys = Object.keys(chargeMeta);
+    for (var k = 0; k < keys.length; k++) {
+      var itemIndex = keys[k];
+      var n = itemChargeCounts[itemIndex] || 0;
+      var itemCharges = [];
+      for (var c = 0; c < n; c++) {
+        var ec = effectiveCharge(itemIndex, c);
+        itemCharges.push(ec);
+        allEffective.push(ec);
+      }
+      var itemFine = 0;
+      for (var i = 0; i < itemCharges.length; i++) itemFine += itemCharges[i].amount;
+      var itemJail = window.cdTotalJailTime(itemCharges, caseSentenceMode);
+      var $it = $('#jd-item-totals-' + itemIndex);
+      if ($it.length) {
+        $it.html('<span class="jd-tot-label">Item total</span><span class="jd-tot-val">$' + itemFine.toLocaleString() +
+          (itemJail.label && itemJail.label !== 'None' ? ' &middot; ' + escHtml(itemJail.label) : '') + '</span>');
+      }
+    }
+    var caseFine = 0;
+    for (var j = 0; j < allEffective.length; j++) caseFine += allEffective[j].amount;
+    var caseJail = window.cdTotalJailTime(allEffective, caseSentenceMode);
+    $('#jd-case-total-fine').text('$' + caseFine.toLocaleString());
+    $('#jd-case-total-jail').text(caseJail.label || 'None');
+  }
+
+  function setDisposition(itemIndex, chargeIndex, disposition) {
+    chargeResolutions[itemIndex] = chargeResolutions[itemIndex] || {};
+    if (chargeResolutions[itemIndex][chargeIndex] === disposition) {
+      delete chargeResolutions[itemIndex][chargeIndex]; // toggle off
+    } else {
+      chargeResolutions[itemIndex][chargeIndex] = disposition;
+      if (disposition === 'reduced' || disposition === 'amended') {
+        chargeFinals[itemIndex] = chargeFinals[itemIndex] || {};
+        if (!chargeFinals[itemIndex][chargeIndex]) {
+          var meta = (chargeMeta[itemIndex] || {})[chargeIndex] || {};
+          chargeFinals[itemIndex][chargeIndex] = { amount: meta.originalAmount || 0, jailTime: meta.originalJailTime || '' };
+        }
+      }
+    }
+    refreshChargeDispClasses(itemIndex, chargeIndex);
+    recomputeTopVerdict(itemIndex);
+    refreshTopToggleClasses(itemIndex);
+    recomputeCaseTotals();
+  }
+
+  function allChargesMatch(itemIndex, disposition) {
     var n = itemChargeCounts[itemIndex] || 0;
     if (n === 0) return false;
     var bucket = chargeResolutions[itemIndex] || {};
-    for (var i = 0; i < n; i++) {
-      if (bucket[i] !== verdict) return false;
-    }
+    for (var i = 0; i < n; i++) if (bucket[i] !== disposition) return false;
     return true;
   }
 
-  function setAllChargeResolutions(itemIndex, verdict) {
+  function setAllChargeResolutions(itemIndex, disposition) {
     var n = itemChargeCounts[itemIndex] || 0;
     chargeResolutions[itemIndex] = {};
-    for (var i = 0; i < n; i++) chargeResolutions[itemIndex][i] = verdict;
-    for (var j = 0; j < n; j++) refreshChargeToggleClasses(itemIndex, j);
+    for (var i = 0; i < n; i++) chargeResolutions[itemIndex][i] = disposition;
+    for (var j = 0; j < n; j++) refreshChargeDispClasses(itemIndex, j);
     recomputeTopVerdict(itemIndex);
     refreshTopToggleClasses(itemIndex);
+    recomputeCaseTotals();
   }
 
   function clearChargeResolutions(itemIndex) {
     var n = itemChargeCounts[itemIndex] || 0;
     chargeResolutions[itemIndex] = {};
-    for (var i = 0; i < n; i++) refreshChargeToggleClasses(itemIndex, i);
+    for (var i = 0; i < n; i++) refreshChargeDispClasses(itemIndex, i);
     delete resolutions[itemIndex];
     refreshTopToggleClasses(itemIndex);
+    recomputeCaseTotals();
   }
 
   function recomputeTopVerdict(itemIndex) {
     var n = itemChargeCounts[itemIndex] || 0;
     var bucket = chargeResolutions[itemIndex] || {};
-    var upheld = 0, dismissed = 0, set = 0;
+    var stand = 0, dismissed = 0, set = 0;
     for (var i = 0; i < n; i++) {
       var v = bucket[i];
-      if (v === 'upheld') { upheld++; set++; }
-      else if (v === 'dismissed') { dismissed++; set++; }
+      if (v === 'dismissed') { dismissed++; set++; }
+      else if (v === 'upheld' || v === 'reduced' || v === 'amended') { stand++; set++; }
     }
     if (set < n) { delete resolutions[itemIndex]; return; }
-    if (upheld === n) resolutions[itemIndex] = 'upheld';
-    else if (dismissed === n) resolutions[itemIndex] = 'dismissed';
+    if (dismissed === n) resolutions[itemIndex] = 'dismissed';
+    else if (stand === n) resolutions[itemIndex] = 'upheld';
     else resolutions[itemIndex] = 'partial';
   }
 
-  function refreshChargeToggleClasses(itemIndex, fineIndex) {
-    var bucket = chargeResolutions[itemIndex] || {};
-    var current = bucket[fineIndex];
-    var $row = $('.jd-fine-toggle[data-item-index="' + itemIndex + '"][data-fine-index="' + fineIndex + '"]');
-    $row.removeClass('dismiss-active uphold-active');
-    if (current) {
-      $row.filter('[data-verdict="' + current + '"]').addClass(current === 'dismissed' ? 'dismiss-active' : 'uphold-active');
-    }
-    // Strike-through the fine label when dismissed.
-    var $fineRow = $('.jd-fine-toggle[data-item-index="' + itemIndex + '"][data-fine-index="' + fineIndex + '"]').first().closest('.jd-item-fine-row');
-    $fineRow.find('.jd-item-fine-label').toggleClass('jd-fine-status-strike', current === 'dismissed');
+  function refreshChargeDispClasses(itemIndex, chargeIndex) {
+    var disp = (chargeResolutions[itemIndex] || {})[chargeIndex] || '';
+    var $btns = $('.jd-disp-btn[data-item-index="' + itemIndex + '"][data-charge-index="' + chargeIndex + '"]');
+    $btns.removeClass('jd-disp-active jd-disp-upheld jd-disp-dismissed jd-disp-reduced jd-disp-amended');
+    if (disp) $btns.filter('[data-disp="' + disp + '"]').addClass('jd-disp-active jd-disp-' + disp);
+    var $row = $('.jd-charge-row[data-item-index="' + itemIndex + '"][data-charge-index="' + chargeIndex + '"]');
+    $row.find('.jd-item-fine-label').toggleClass('jd-fine-status-strike', disp === 'dismissed');
+    $row.find('.jd-final-row').toggle(disp === 'reduced' || disp === 'amended');
   }
 
   function refreshTopToggleClasses(itemIndex) {
@@ -979,6 +1124,15 @@
       if (r.itemID) resolutionMap[r.itemID] = r;
     });
 
+    // Final judgment totals (stored on resolved cases; older cases omit them).
+    if (caseData.totalFine > 0 || (caseData.totalJailTimeLabel && caseData.totalJailTimeLabel !== 'None')) {
+      html += '<div class="jd-final-judgment">' +
+        '<span class="jd-final-judgment-title"><i class="fa fa-scale-balanced"></i> Final Judgment</span>' +
+        '<span class="jd-final-judgment-vals">$' + Number(caseData.totalFine || 0).toLocaleString() +
+        ((caseData.totalJailTimeLabel && caseData.totalJailTimeLabel !== 'None') ? '  &middot;  ' + escHtml(caseData.totalJailTimeLabel) : '') +
+        '</span></div>';
+    }
+
     // Contested items with inline verdict badges
     if (items.length > 0) {
       html += '<div class="jd-docket-detail-label">Contested Items</div>';
@@ -1009,13 +1163,19 @@
           var labels = (item.summary || '').split(',').map(function(s) { return s.trim(); });
           row += '<div class="jd-docket-charges">';
           row += res.chargeResolutions.map(function(cr) {
-            var label = labels[cr.fineIndex] || ('Charge ' + ((cr.fineIndex || 0) + 1));
-            var cls = cr.verdict === 'dismissed' ? 'jd-charge-dismissed' : 'jd-charge-upheld';
-            var icon = cr.verdict === 'dismissed' ? 'fa-ban' : 'fa-gavel';
+            var disp = cr.disposition || cr.verdict || 'upheld';
+            var label = cr.name || labels[cr.fineIndex] || ('Charge ' + ((cr.fineIndex || 0) + 1));
+            var cls = disp === 'dismissed' ? 'jd-charge-dismissed' : 'jd-charge-upheld';
+            var icon = disp === 'dismissed' ? 'fa-ban' : 'fa-gavel';
+            var detail = '';
+            if (disp === 'reduced' || disp === 'amended') {
+              detail = ' <span class="jd-docket-charge-final">($' + Number(cr.finalAmount || 0).toLocaleString() +
+                (cr.finalJailTime ? ' &middot; ' + escHtml(cr.finalJailTime) : '') + ')</span>';
+            }
             return '<div class="jd-docket-charge-row ' + cls + '">' +
                      '<i class="fa ' + icon + '"></i>' +
                      '<span class="jd-docket-charge-label">' + escHtml(label) + '</span>' +
-                     '<span class="jd-docket-charge-verdict">' + escHtml(cr.verdict) + '</span>' +
+                     '<span class="jd-docket-charge-verdict">' + escHtml(disp) + detail + '</span>' +
                    '</div>';
           }).join('');
           row += '</div>';
@@ -1390,15 +1550,26 @@
         var bucket = chargeResolutions[i] || {};
         var charges = [];
         for (var k = 0; k < chargeCount; k++) {
-          if (bucket[k] !== 'dismissed' && bucket[k] !== 'upheld') {
+          if (DISPOSITIONS.indexOf(bucket[k]) === -1) {
             incompleteIdx = i;
             break;
           }
-          charges.push({ fineIndex: k, verdict: bucket[k] });
+          var meta = (chargeMeta[i] || {})[k] || {};
+          var eff = effectiveCharge(i, k);
+          charges.push({
+            fineIndex: k,
+            disposition: bucket[k],
+            name: meta.name || '',
+            category: meta.category || '',
+            originalAmount: meta.originalAmount || 0,
+            originalJailTime: meta.originalJailTime || '',
+            finalAmount: eff.amount,
+            finalJailTime: eff.jailTime
+          });
         }
         if (incompleteIdx === i) break;
         entry.chargeResolutions = charges;
-        entry.verdict = resolutions[i] || '';
+        entry.verdict = resolutions[i] || 'upheld';
       } else {
         if (!resolutions[i]) { incompleteIdx = i; break; }
         entry.verdict = resolutions[i];
@@ -1424,12 +1595,16 @@
       data: JSON.stringify({
         resolutions: resolutionsArr,
         judgeID: userId,
-        judgeName: userName
+        judgeName: userName,
+        sentenceMode: caseSentenceMode
       }),
       success: function() {
         activeCaseData = null;
         resolutions = {};
         chargeResolutions = {};
+        chargeMeta = {};
+        chargeFinals = {};
+        caseSentenceMode = 'consecutive';
         itemChargeCounts = {};
         resolvedCaseIds[caseId] = true;
 

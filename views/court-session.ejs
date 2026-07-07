@@ -345,6 +345,66 @@
     .jd-item-fine-row {
       flex-wrap: wrap;
     }
+
+    /* Per-charge dispositions (Upheld / Dismissed / Reduced / Amended) */
+    .jd-charge-row { padding: 0.45rem 0; border-bottom: 1px solid var(--border-subtle); }
+    .jd-charge-row:last-of-type { border-bottom: none; }
+    .jd-charge-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.82rem; color: var(--text-primary); }
+    .jd-charge-orig { color: var(--text-secondary); font-size: 0.76rem; white-space: nowrap; }
+    .jd-disp-group { display: flex; gap: 0.3rem; margin-top: 0.4rem; flex-wrap: wrap; }
+    .jd-disp-btn {
+      padding: 0.2rem 0.6rem; font-size: 0.68rem; font-weight: 600;
+      border: 1px solid var(--border-subtle); border-radius: 5px;
+      background: transparent; color: var(--text-muted); cursor: pointer;
+      transition: var(--transition); font-family: var(--font-body); letter-spacing: 0.02em;
+    }
+    .jd-disp-btn:hover { border-color: rgba(255,255,255,0.18); color: var(--text-secondary); }
+    .jd-disp-btn.jd-disp-upheld { background: rgba(252,165,165,0.16); color: #fca5a5; border-color: rgba(252,165,165,0.35); }
+    .jd-disp-btn.jd-disp-dismissed { background: rgba(110,231,183,0.16); color: #6ee7b7; border-color: rgba(110,231,183,0.35); }
+    .jd-disp-btn.jd-disp-reduced { background: rgba(251,191,36,0.16); color: #fbbf24; border-color: rgba(251,191,36,0.35); }
+    .jd-disp-btn.jd-disp-amended { background: rgba(125,211,252,0.16); color: #7dd3fc; border-color: rgba(125,211,252,0.35); }
+    .jd-final-row { display: flex; gap: 0.6rem; margin-top: 0.45rem; flex-wrap: wrap; }
+    .jd-final-field { display: flex; flex-direction: column; gap: 0.15rem; font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+    .jd-final-field input {
+      padding: 0.3rem 0.5rem; font-size: 0.8rem; width: 8.5rem; max-width: 42vw;
+      background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 5px;
+      color: var(--text-primary); font-family: var(--font-body); text-transform: none; letter-spacing: normal;
+    }
+    .jd-final-field input:focus { outline: none; border-color: var(--border-focus); }
+    .jd-disp-all-btn {
+      padding: 0.15rem 0.5rem; font-size: 0.66rem; font-weight: 600;
+      border: 1px solid var(--border-subtle); border-radius: 4px;
+      background: transparent; color: var(--text-secondary); cursor: pointer;
+      transition: var(--transition); font-family: var(--font-body);
+    }
+    .jd-disp-all-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text-primary); }
+    .jd-item-totals { display: flex; align-items: center; justify-content: space-between; margin-top: 0.55rem; padding-top: 0.5rem; border-top: 1px dashed var(--border-subtle); font-size: 0.76rem; }
+    .jd-item-totals:empty { display: none; }
+    .jd-tot-label { color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; font-size: 0.68rem; }
+    .jd-tot-val { color: var(--accent-gold); font-weight: 600; }
+
+    /* Case-level sentencing summary */
+    .jd-case-totals {
+      margin: 0.75rem 0; padding: 0.75rem 0.9rem;
+      background: var(--accent-gold-glow); border: 1px solid rgba(212,175,55,0.2);
+      border-radius: 8px;
+    }
+    .jd-case-totals-row { display: flex; align-items: center; justify-content: space-between; padding: 0.2rem 0; }
+    .jd-tot-amount { font-size: 1.05rem; font-weight: 700; color: var(--accent-gold); }
+    .jd-case-mode-row { display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem; padding-top: 0.6rem; border-top: 1px solid var(--border-subtle); }
+    .jd-mode-group { display: inline-flex; background: var(--bg-input); border-radius: 6px; overflow: hidden; border: 1px solid var(--border-subtle); }
+    .jd-mode-btn { padding: 0.25rem 0.7rem; font-size: 0.72rem; font-weight: 600; background: transparent; color: var(--text-muted); border: none; cursor: pointer; font-family: var(--font-body); }
+    .jd-mode-btn.jd-mode-active { background: var(--accent-gold); color: #1a1200; }
+
+    /* Read-only final judgment (resolved docket detail) */
+    .jd-final-judgment {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+      margin-bottom: 0.6rem; padding: 0.55rem 0.75rem;
+      background: var(--accent-gold-glow); border: 1px solid rgba(212,175,55,0.25); border-radius: 7px;
+    }
+    .jd-final-judgment-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent-gold); }
+    .jd-final-judgment-vals { font-size: 0.92rem; font-weight: 700; color: var(--accent-gold); }
+    .jd-docket-charge-final { color: var(--text-secondary); font-weight: 500; }
     .jd-charges-applyall {
       display: flex; align-items: center; gap: 0.4rem;
       margin-top: 0.55rem; padding-top: 0.5rem;
