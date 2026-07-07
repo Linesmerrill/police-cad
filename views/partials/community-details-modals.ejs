@@ -15896,7 +15896,7 @@ async function saveEditEvent() {
 
     <script>
     (function() {
-      var toneSettingsData = { sounds: [], defaults: { leo: '', fd: '', ems: '', panic: '', signal100: '' } };
+      var toneSettingsData = { sounds: [], defaults: { leo: '', fd: '', ems: '', panic: '', signal100: '', newCall: '', warrantAlert: '', attach: '' } };
       var tonePreviewAudio = null;
       var pendingDeleteKey = null;
       var pendingDeleteName = null;
@@ -15951,7 +15951,7 @@ async function saveEditEvent() {
           success: function(res) {
             if (res.success) {
               toneSettingsData.sounds = res.sounds || [];
-              toneSettingsData.defaults = res.defaults || { leo: '', fd: '', ems: '', panic: '', signal100: '' };
+              toneSettingsData.defaults = res.defaults || { leo: '', fd: '', ems: '', panic: '', signal100: '', newCall: '', warrantAlert: '', attach: '' };
               renderAlertSounds();
               renderTemplateDefaults();
               renderCustomTones();
@@ -15971,12 +15971,18 @@ async function saveEditEvent() {
 
       var BUILTIN_ALERTS = {
         panic: { name: 'Built-in Panic Sound', url: '/static/audio/Police_panic_button_sound_adj.mp3' },
-        signal100: { name: 'Built-in Signal 100 Sound', url: '/static/audio/Dispatch_signal_100_beep_adj.mp3' }
+        signal100: { name: 'Built-in Signal 100 Sound', url: '/static/audio/Dispatch_signal_100_beep_adj.mp3' },
+        newCall: { name: 'Built-in New Call Tone', url: '/static/audio/Dispatch_signal_100_beep_adj.mp3' },
+        warrantAlert: { name: 'Built-in Warrant Alert', url: '/static/audio/Hold_traffic_sound_adj.mp3' },
+        attach: { name: 'Built-in Attach Tone', url: '/static/audio/Tone_leo_alert_adj.mp3' }
       };
 
       var ALERT_LABELS = {
         panic: { name: 'Panic Button', color: '#ef4444', icon: 'fa-triangle-exclamation' },
-        signal100: { name: 'Signal 100', color: '#f59e0b', icon: 'fa-tower-broadcast' }
+        signal100: { name: 'Signal 100', color: '#f59e0b', icon: 'fa-tower-broadcast' },
+        newCall: { name: 'New 911 Call', color: '#38bdf8', icon: 'fa-phone-volume' },
+        warrantAlert: { name: 'Warrant Alert', color: '#a855f7', icon: 'fa-gavel' },
+        attach: { name: 'Call Attach', color: '#22c55e', icon: 'fa-link' }
       };
 
       var TEMPLATE_LABELS = {
@@ -15990,7 +15996,11 @@ async function saveEditEvent() {
         if (!container) return;
         var html = '';
 
-        ['panic', 'signal100'].forEach(function(alertType) {
+        // 'attach' is intentionally omitted until its playback trigger is wired
+        // (self-dispatch socket work). The backend slot + built-in stay defined
+        // so re-adding it here is all that's needed once the trigger ships —
+        // meanwhile we don't offer config for a sound that can't fire yet.
+        ['panic', 'signal100', 'newCall', 'warrantAlert'].forEach(function(alertType) {
           var label = ALERT_LABELS[alertType];
           var currentKey = toneSettingsData.defaults[alertType] || '';
           var currentName = BUILTIN_ALERTS[alertType].name;
@@ -16200,7 +16210,7 @@ async function saveEditEvent() {
           success: function(res) {
             if (res.success) {
               toneSettingsData.sounds = toneSettingsData.sounds.filter(function(s) { return s.key !== key; });
-              ['leo', 'fd', 'ems', 'panic', 'signal100'].forEach(function(tmpl) {
+              ['leo', 'fd', 'ems', 'panic', 'signal100', 'newCall', 'warrantAlert', 'attach'].forEach(function(tmpl) {
                 if (toneSettingsData.defaults[tmpl] === key) toneSettingsData.defaults[tmpl] = '';
               });
               renderCustomTones();

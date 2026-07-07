@@ -12,7 +12,13 @@ window.AlertSounds = (function() {
     holdTraffic: '/static/audio/Hold_traffic_sound_adj.mp3',
     toneLeo: '/static/audio/Tone_leo_alert_adj.mp3',
     toneFd: '/static/audio/Tone_fd_alert_adj.mp3',
-    toneEms: '/static/audio/Tone_ems_alert_adj.mp3'
+    toneEms: '/static/audio/Tone_ems_alert_adj.mp3',
+    // Built-in defaults for the CAD alert sounds. Distinct audible cues reused
+    // from the existing library; admins can override any of them with a custom
+    // upload via the community Sound Settings modal.
+    newCall: '/static/audio/Dispatch_signal_100_beep_adj.mp3',
+    warrantAlert: '/static/audio/Hold_traffic_sound_adj.mp3',
+    attach: '/static/audio/Tone_leo_alert_adj.mp3'
   };
 
   var overrides = {};
@@ -93,6 +99,13 @@ window.AlertSounds = (function() {
     return true;
   }
 
+  // The CAD alert sounds (new-call / warrant / attach) are gated by a separate
+  // master switch that defaults OFF — users must opt in. Distinct from the
+  // panic/signal100 gate above so those keep their default-on behavior.
+  function isAlertSoundEnabled() {
+    return window.dbUser?.user?.alertSoundsEnabled === true;
+  }
+
   // Custom/uploaded tones are typically mastered at full volume (~0 dB).
   // Our built-in _adj files are normalized to ~-22 dB. This multiplier
   // brings custom uploads roughly in line with the built-in sounds.
@@ -138,6 +151,22 @@ window.AlertSounds = (function() {
       var src = resolveUrl(soundKey);
       if (!src) return;
       queue.push(src);
+      if (!isPlaying) playNext();
+    },
+
+    /**
+     * Play a CAD alert sound (new-call / warrant / attach). Gated by the
+     * separate opt-in master switch (alertSoundsEnabled) rather than the
+     * panic-sound preference. Custom overrides get the same loudness
+     * normalization as uploaded tones.
+     * @param {string} soundKey - One of: 'newCall', 'warrantAlert', 'attach'
+     */
+    playAlert: function(soundKey) {
+      if (!isAlertSoundEnabled()) return;
+      var src = resolveUrl(soundKey);
+      if (!src) return;
+      var isCustom = overrides.hasOwnProperty(soundKey);
+      queue.push(isCustom ? { src: src, custom: true } : src);
       if (!isPlaying) playNext();
     },
 
@@ -261,6 +290,15 @@ window.AlertSounds = (function() {
         if (defaults.ems && soundsByKey[defaults.ems]) {
           overrideMap.toneEms = soundsByKey[defaults.ems];
         }
+        if (defaults.newCall && soundsByKey[defaults.newCall]) {
+          overrideMap.newCall = soundsByKey[defaults.newCall];
+        }
+        if (defaults.warrantAlert && soundsByKey[defaults.warrantAlert]) {
+          overrideMap.warrantAlert = soundsByKey[defaults.warrantAlert];
+        }
+        if (defaults.attach && soundsByKey[defaults.attach]) {
+          overrideMap.attach = soundsByKey[defaults.attach];
+        }
 
         if (Object.keys(overrideMap).length > 0) {
           window.AlertSounds.configure(overrideMap);
@@ -290,6 +328,44 @@ window.initSoundSettings = function() {
   // Default to enabled if never set (undefined)
   $('#panic-button-check-sound').prop('checked', pref !== false);
   $('#alert-volume-slider').val(window.dbUser?.user?.alertVolumeLevel || 50);
+  // CAD alert sounds default OFF — only checked when explicitly enabled.
+  $('#alert-sounds-check').prop('checked', window.dbUser?.user?.alertSoundsEnabled === true);
+};
+
+/**
+ * Resolve the police-cad API base URL from whichever global the host page set.
+ * Mirrors the resolution used by the custom-sound auto-config above.
+ */
+window.resolveAlertApiBase = function() {
+  return (window.ddConfig && window.ddConfig.API_URL)
+    || window.POLICE_CAD_API_URL
+    || window.API_URL
+    || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+};
+
+/**
+ * Toggle the CAD alert-sounds master switch and persist it on the user.
+ * Off by default; governs new-call / warrant / attach tones. Unlike the panic
+ * toggle (socket-based), this writes straight to the API user endpoint so the
+ * same field is the single source of truth for web and mobile.
+ */
+window.toggleAlertSounds = function() {
+  var userId = window.dbUser && window.dbUser._id;
+  if (!userId) return;
+  var newVal = !(window.dbUser.user.alertSoundsEnabled === true);
+  fetch(window.resolveAlertApiBase() + '/api/v1/user/' + encodeURIComponent(userId) + '/alert-sounds-enabled', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enabled: newVal })
+  }).then(function(res) {
+    if (!res.ok) throw new Error('request failed');
+    window.dbUser.user.alertSoundsEnabled = newVal;
+    $('#alert-sounds-check').prop('checked', newVal);
+    $('#successfully-updated-alert').show().delay(2000).fadeOut(1000);
+  }).catch(function() {
+    // Revert the checkbox to the last-known value on failure.
+    $('#alert-sounds-check').prop('checked', window.dbUser.user.alertSoundsEnabled === true);
+  });
 };
 
 /**

@@ -883,6 +883,10 @@
             <i class="fas fa-envelope"></i> Email
             <span class="ac-nav-sub"><span class="ac-nav-sub-pill">Owner only</span></span>
           </div>
+          <div class="ac-nav-item" id="changelog-tab" data-panel="changelog" style="display: none;">
+            <i class="fas fa-bullhorn"></i> What's New
+            <span class="ac-nav-sub"><span class="ac-nav-sub-pill">Owner only</span></span>
+          </div>
         </div>
 
         <div class="ac-nav-section ac-nav-exit">
@@ -2712,6 +2716,43 @@
                 <i class="fas fa-paper-plane"></i> Send Email
               </button>
             </div>
+          </div>
+        </div>
+
+        <!-- Panel: What's New (platform changelog authoring) -->
+        <div class="ac-panel" id="panel-changelog">
+          <p style="color:#9aa0b4; font-size:14px; margin:0 0 16px; max-width:760px;">
+            Publish a platform-wide update. It appears in a one-time "What's New" modal for every
+            existing user on the selected surfaces the next time they open the app or website. New
+            accounts don't see posts published before they signed up.
+          </p>
+          <div class="ac-card" style="margin-bottom:20px;">
+            <div class="ac-card-body">
+              <div class="form-group">
+                <label for="changelogTitle" class="ac-label">Title</label>
+                <input type="text" id="changelogTitle" class="form-control ac-input" maxlength="200" placeholder="e.g. Alert sounds are here" />
+              </div>
+              <div class="form-group">
+                <label for="changelogBody" class="ac-label">Body (HTML allowed)</label>
+                <textarea id="changelogBody" class="form-control ac-input" rows="6" placeholder="Describe the update. You can use basic HTML: &lt;p&gt;, &lt;b&gt;, &lt;ul&gt;&lt;li&gt;, &lt;a href&gt;, &lt;img src&gt;."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="ac-label">Surfaces</label>
+                <div style="display:flex; gap:18px; align-items:center; color:#c7ccdd; font-size:14px;">
+                  <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="changelogSurfaceWeb" checked /> Website</label>
+                  <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="changelogSurfaceMobile" checked /> Mobile</label>
+                  <span style="color:#6b7280; font-size:12px;">Leave both checked to target everyone.</span>
+                </div>
+              </div>
+              <div id="changelogFormError" style="color:#ef4444; font-size:13px; margin:6px 0 10px; display:none;"></div>
+              <button type="button" id="changelogPublishBtn" class="ac-btn ac-btn-primary" onclick="publishChangelogPost()">
+                <i class="fas fa-paper-plane"></i> Publish update
+              </button>
+            </div>
+          </div>
+          <h3 style="color:#e8ecf4; font-size:15px; font-weight:600; margin:0 0 10px;">Published posts</h3>
+          <div id="changelogList" style="display:flex; flex-direction:column; gap:10px;">
+            <div style="color:#6b7280; font-size:14px;">Loading…</div>
           </div>
         </div>
 
@@ -4553,7 +4594,8 @@
         'metrics': 'Metrics',
         'wiki': 'Wiki',
         'subscriptions': 'Subscriptions',
-        'rp-promos': 'Server Promos'
+        'rp-promos': 'Server Promos',
+        'changelog': "What's New"
       };
 
       // Data-load callbacks for lazy-loaded panels
@@ -4563,6 +4605,7 @@
         'content-creators': function() { if (typeof loadCCApplications === 'function') { loadCCApplications(); loadCCStats(); } },
         'metrics': function() { loadMetricsPanel(); },
         'subscriptions': function() { initSubscriptionsPanel(); },
+        'changelog': function() { if (typeof loadChangelogPosts === 'function') loadChangelogPosts(); },
         'cases': function() {
           var hash = window.location.hash.replace('#', '');
           // Handle cases/N deep link
@@ -4647,6 +4690,86 @@
         } catch (e) { /* localStorage may be disabled */ }
       });
 
+      // ============================================================
+      // What's New (platform changelog authoring) panel
+      // ============================================================
+      function clEsc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      function loadChangelogPosts() {
+        var list = document.getElementById('changelogList');
+        if (!list) return;
+        $.ajax({
+          url: API_BASE + '/api/v1/admin/changelog',
+          type: 'GET'
+        }).done(function(res) {
+          var posts = (res && res.data) || [];
+          if (!posts.length) {
+            list.innerHTML = '<div style="color:#6b7280; font-size:14px;">No posts published yet.</div>';
+            return;
+          }
+          var html = '';
+          posts.forEach(function(p) {
+            var surfaces = (p.surfaces && p.surfaces.length) ? p.surfaces.join(', ') : 'all surfaces';
+            var when = p.publishedAt ? new Date(p.publishedAt).toLocaleDateString() : '';
+            var status = p.active ? '<span style="color:#22c55e;">Active</span>' : '<span style="color:#6b7280;">Inactive</span>';
+            html += '<div style="background:var(--ac-glass, #161a24); border:1px solid rgba(148,163,184,0.12); border-radius:10px; padding:12px 14px;">'
+              + '<div style="display:flex; justify-content:space-between; gap:12px; align-items:baseline;">'
+              + '<div style="color:#e8ecf4; font-weight:600; font-size:14px;">' + clEsc(p.title) + '</div>'
+              + '<div style="color:#6b7280; font-size:12px; white-space:nowrap;">' + status + ' &middot; ' + clEsc(surfaces) + ' &middot; ' + clEsc(when) + '</div>'
+              + '</div></div>';
+          });
+          list.innerHTML = html;
+        }).fail(function() {
+          list.innerHTML = '<div style="color:#ef4444; font-size:14px;">Failed to load posts.</div>';
+        });
+      }
+
+      function publishChangelogPost() {
+        var errEl = document.getElementById('changelogFormError');
+        var btn = document.getElementById('changelogPublishBtn');
+        var title = (document.getElementById('changelogTitle').value || '').trim();
+        var body = (document.getElementById('changelogBody').value || '').trim();
+        var surfaces = [];
+        if (document.getElementById('changelogSurfaceWeb').checked) surfaces.push('web');
+        if (document.getElementById('changelogSurfaceMobile').checked) surfaces.push('mobile');
+
+        errEl.style.display = 'none';
+        if (!title || !body) {
+          errEl.textContent = 'Title and body are required.';
+          errEl.style.display = 'block';
+          return;
+        }
+        if (!surfaces.length) {
+          errEl.textContent = 'Select at least one surface.';
+          errEl.style.display = 'block';
+          return;
+        }
+
+        btn.disabled = true;
+        var origHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing…';
+        $.ajax({
+          url: API_BASE + '/api/v1/admin/changelog',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ title: title, body: body, surfaces: surfaces, currentUser: rpCurrentUser() })
+        }).done(function() {
+          document.getElementById('changelogTitle').value = '';
+          document.getElementById('changelogBody').value = '';
+          loadChangelogPosts();
+        }).fail(function() {
+          errEl.textContent = 'Failed to publish. Please try again.';
+          errEl.style.display = 'block';
+        }).always(function() {
+          btn.disabled = false;
+          btn.innerHTML = origHtml;
+        });
+      }
+
       function acSyncCollapseBtn(collapsed) {
         var btn = document.getElementById('ac-sidebar-collapse-btn');
         if (!btn) return;
@@ -4712,6 +4835,7 @@
           $('#admin-management-tab').show();
           $('#add-admin-section').show();
           $('#email-tab').show();
+          $('#changelog-tab').show();
           $('#ac-nav-section-elevated').show();
         } else {
           $('#admin-management-tab').hide();
@@ -4719,6 +4843,8 @@
           $('#panel-admin-management').hide();
           $('#email-tab').hide();
           $('#panel-email').hide();
+          $('#changelog-tab').hide();
+          $('#panel-changelog').hide();
           $('#ac-nav-section-elevated').hide();
 
           // Clear any admin data that might be displayed

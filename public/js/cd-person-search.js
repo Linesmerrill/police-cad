@@ -1056,8 +1056,12 @@
     }
 
     if (ids.length === 0) {
+      // Every result's warrants are already cached this session — still evaluate
+      // the tone, otherwise re-searching a person who has an active warrant is
+      // silent (the tone check used to live only inside the fetch callback).
       state.loading = false;
       renderResults();
+      maybePlayWarrantTone();
       return;
     }
 
@@ -1091,9 +1095,27 @@
           if (pending <= 0) {
             state.loading = false;
             renderResults();
+            maybePlayWarrantTone();
           }
         });
       })(ids[j]);
+    }
+  }
+
+  // Audible warrant alert (opt-in via CAD Alert Sounds): sound once if any
+  // person in the CURRENT results has an active warrant. Called on every search
+  // completion — including when all results were already cached this session —
+  // so re-searching a wanted person still alerts. Scoped to state.results (not
+  // the whole warrantCache): the cache accumulates every civilian searched this
+  // session, so scanning it would fire the tone on a later clean search.
+  // state.results is replaced per page, so it reflects only what's on screen now.
+  function maybePlayWarrantTone() {
+    for (var r = 0; r < state.results.length; r++) {
+      var rid = state.results[r] && state.results[r]._id;
+      if (rid && state.warrantCache[rid] && state.warrantCache[rid].length > 0) {
+        if (window.AlertSounds) AlertSounds.playAlert('warrantAlert');
+        return;
+      }
     }
   }
 
@@ -1325,6 +1347,17 @@
           // Charges
           sectionHead('Charges') +
           '<div style="font-size:0.875rem;color:#f1f5f9;font-weight:500;line-height:1.5;margin-bottom:0.75rem;">' + esc(ar.charges || 'None') + '</div>' +
+
+          // Sentence totals (stored on newer records; older ones omit them)
+          ((ar.totalFine > 0 || (ar.totalJailTimeLabel && ar.totalJailTimeLabel !== 'None')) ?
+            '<div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">' +
+              (ar.totalFine > 0 ?
+                '<div><div style="font-size:0.625rem;text-transform:uppercase;letter-spacing:0.08em;color:#475569;font-weight:600;">Total Fine</div>' +
+                '<div style="font-size:0.875rem;font-weight:700;color:var(--cd-amber);">$' + Number(ar.totalFine).toFixed(2) + '</div></div>' : '') +
+              (ar.totalJailTimeLabel && ar.totalJailTimeLabel !== 'None' ?
+                '<div><div style="font-size:0.625rem;text-transform:uppercase;letter-spacing:0.08em;color:#475569;font-weight:600;">Total Jail Time</div>' +
+                '<div style="font-size:0.875rem;font-weight:700;color:var(--cd-accent,#38bdf8);">' + esc(ar.totalJailTimeLabel) + '</div></div>' : '') +
+            '</div>' : '') +
 
           // Narrative
           sectionHead('Narrative') +
