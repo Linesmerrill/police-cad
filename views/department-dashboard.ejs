@@ -3316,6 +3316,7 @@
     var API_URL = '<%= apiUrl || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     var departmentId = '<%= departmentId || "" %>';
     var dbUser = <%- JSON.stringify(user) %>;
+    window.dbUser = dbUser; // expose for whats-new.js (platform What's New modal)
     var communityId = dbUser.user?.lastAccessedCommunity?.communityID || '';
     var userId = dbUser._id || dbUser.user?._id || '';
     var userName = dbUser.user?.username || 'Judge';
