@@ -3578,7 +3578,46 @@ function updateDepartmentJoinButton(departmentId, status) {
     'event.created': 'Created event',
     'event.updated': 'Updated event',
     'event.deleted': 'Deleted event',
+    'role.reordered': 'Reordered roles',
+    'most_wanted.created': 'Added to Most Wanted',
+    'most_wanted.updated': 'Updated Most Wanted',
+    'most_wanted.status_changed': 'Changed Most Wanted status',
+    'most_wanted.deleted': 'Removed from Most Wanted',
+    'most_wanted.reordered': 'Reordered Most Wanted',
+    'rank.created': 'Created rank',
+    'rank.updated': 'Updated rank',
+    'rank.deleted': 'Deleted rank',
+    'rank.assigned': 'Assigned rank',
+    'rank.auto_promoted': 'Auto-promoted member',
+    'rank.reordered': 'Reordered ranks',
+    'tone.sent': 'Sent tone',
+    'tone_default.updated': 'Updated default tone',
+    'tone_group.created': 'Created tone group',
+    'tone_group.deleted': 'Deleted tone group',
+    'tone_sound.created': 'Created tone sound',
+    'tone_sound.updated': 'Updated tone sound',
+    'tone_sound.deleted': 'Deleted tone sound',
+    'rp_promotion.posted': 'Posted server promotion',
+    'rp_promotion.removed': 'Removed server promotion',
+    'rp_promotion.banned': 'Banned from promotions',
+    'rp_promotion.ban_reversed': 'Reversed promotion ban',
+    'community.pending_deletion_scheduled': 'Scheduled community deletion',
+    'community.pending_deletion_restored': 'Restored community',
+    'community.force_deleted': 'Force-deleted community',
   };
+
+  // Fallback for any action not explicitly mapped above: turn
+  // "some_category.some_verb" into "Some verb some category" so the log never
+  // shows a raw dotted string.
+  function humanizeAuditAction(action) {
+    if (!action) return 'Unknown action';
+    if (AUDIT_ACTION_LABELS[action]) return AUDIT_ACTION_LABELS[action];
+    const dot = action.lastIndexOf('.');
+    if (dot === -1) return action;
+    const verb = action.slice(dot + 1).replace(/_/g, ' ');
+    const subject = action.slice(0, dot).replace(/_/g, ' ');
+    return verb.charAt(0).toUpperCase() + verb.slice(1) + (subject ? ' ' + subject : '');
+  }
 
   const AUDIT_CATEGORY_COLORS = {
     role: '#8b5cf6',
@@ -3590,6 +3629,10 @@ function updateDepartmentJoinButton(departmentId, status) {
     fines: '#eab308',
     ten_codes: '#06b6d4',
     event: '#ec4899',
+    most_wanted: '#f43f5e',
+    rank: '#14b8a6',
+    tone: '#0ea5e9',
+    community: '#64748b',
   };
 
   const AUDIT_CATEGORY_ICONS = {
@@ -3602,6 +3645,10 @@ function updateDepartmentJoinButton(departmentId, status) {
     fines: 'fa-money-bill',
     ten_codes: 'fa-broadcast-tower',
     event: 'fa-calendar',
+    most_wanted: 'fa-user-secret',
+    rank: 'fa-ranking-star',
+    tone: 'fa-bell',
+    community: 'fa-city',
   };
 
   let auditLogsPage = 1;
@@ -3711,7 +3758,7 @@ function updateDepartmentJoinButton(departmentId, status) {
       list.innerHTML = logs.map(function(log) {
         const color = AUDIT_CATEGORY_COLORS[log.category] || '#6b7280';
         const icon = AUDIT_CATEGORY_ICONS[log.category] || 'fa-clipboard-list';
-        const label = AUDIT_ACTION_LABELS[log.action] || log.action;
+        const label = humanizeAuditAction(log.action);
         const target = log.targetName ? ` "${log.targetName}"` : '';
         const actor = log.actorName || 'Unknown';
         const time = formatAuditRelativeTime(log.createdAt);
