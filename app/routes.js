@@ -2507,6 +2507,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
         console.error('Error fetching community for most-wanted:', err.message);
       }
 
+      // If the community couldn't be loaded, don't render a page that assumes it exists
+      if (!community || !community.community) {
+        return res.redirect('/communities');
+      }
+
       // Check if user is owner
       const isOwner = community?.community?.ownerID === String(req.user._id);
 
