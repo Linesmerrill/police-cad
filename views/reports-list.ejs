@@ -824,7 +824,9 @@
 
       function loadTemplates() {
         if (!communityId) return Promise.resolve([]);
-        return fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId), { headers: authHeaders() })
+        // Pass userId so the API hides rank-gated forms this user can't see.
+        var uidQ = (currentUser && currentUser.id) ? '?userId=' + encodeURIComponent(currentUser.id) : '';
+        return fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId) + uidQ, { headers: authHeaders() })
           .then(function (r) { return r.ok ? r.json() : { data: [] }; })
           .then(function (j) {
             templates = ((j && j.data) || []).filter(function (t) { return !t.isArchived && !t.isHidden; });

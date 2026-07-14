@@ -1316,8 +1316,11 @@
               .then(function (r) { return r.ok ? r.json() : null; })
           : Promise.resolve(null);
 
+        // Pass userId so the API applies rank-based visibility (gated forms
+        // the user can't see are omitted) and returns per-user canEdit.
+        var uidQ = (currentUser && currentUser.id) ? '&userId=' + encodeURIComponent(currentUser.id) : '';
         return Promise.all([
-          fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId) + '?includeHidden=true&includeArchived=true', { headers: authHeaders() })
+          fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId) + '?includeHidden=true&includeArchived=true' + uidQ, { headers: authHeaders() })
             .then(function (r) { return r.ok ? r.json() : { data: [] }; }),
           subPromise
         ]).then(function (results) {
@@ -1330,6 +1333,9 @@
           if (!tpl) throw new Error('Template "' + resolveSlug + '" not found for this community');
 
           state.template = tpl;
+          // Honor server-computed rank-based edit gating: a user whose rank
+          // can't edit this form views it read-only regardless of status.
+          if (tpl.canEdit === false) readOnly = true;
           initSectionState(tpl);
           if (sub && sub.formSubmission) {
             state.existing = sub;

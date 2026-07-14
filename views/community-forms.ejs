@@ -739,9 +739,9 @@
           numberFormat: 'RR-{YYYY}-{NNNNNN}',
           visibleToRoles: ['police', 'dispatch', 'fire', 'ems', 'judicial'],
           editableByRoles: ['police', 'dispatch', 'fire', 'ems'],
-          visibleToRankRule: null, // { mode, anchorRankIDs }
-          editableByRankRule: null,
-          departmentId: '',
+          // Per-department rank gates: [{ departmentId, visibleToRankRule, editableByRankRule }].
+          // Each rule is { mode, anchorRankIDs } or null.
+          rankGates: [],
           linkableEntities: ['civilian', 'vehicle', 'firearm', 'call', 'arrestReport'],
           sections: [{ id: 'section1', title: 'Section 1', repeatable: false, fields: [] }],
         };
@@ -783,6 +783,30 @@
         };
       }
 
+      // Normalize a template's rank gating into the per-department shape the
+      // builder edits. Prefers the new `rankGates` array; falls back to the
+      // legacy single-department fields (departmentId + the two rules) that
+      // older API responses may still carry.
+      function normalizeRankGates(src) {
+        if (Array.isArray(src.rankGates) && src.rankGates.length) {
+          return src.rankGates.map(function (g) {
+            return {
+              departmentId: String(g.departmentId || ''),
+              visibleToRankRule: g.visibleToRankRule || null,
+              editableByRankRule: g.editableByRankRule || null,
+            };
+          }).filter(function (g) { return g.departmentId; });
+        }
+        if (src.departmentId && (src.visibleToRankRule || src.editableByRankRule)) {
+          return [{
+            departmentId: String(src.departmentId),
+            visibleToRankRule: src.visibleToRankRule || null,
+            editableByRankRule: src.editableByRankRule || null,
+          }];
+        }
+        return [];
+      }
+
       function openEditor(template, isClone) {
         if (!template) {
           state.editing = blankTemplate();
@@ -798,9 +822,7 @@
             numberFormat: src.numberFormat || 'RR-{YYYY}-{NNNNNN}',
             visibleToRoles: src.visibleToRoles || [],
             editableByRoles: src.editableByRoles || [],
-            visibleToRankRule: src.visibleToRankRule || null,
-            editableByRankRule: src.editableByRankRule || null,
-            departmentId: src.departmentId || '',
+            rankGates: normalizeRankGates(src),
             linkableEntities: src.linkableEntities || [],
             sections: (src.sections || []).map(cloneSection),
           };
@@ -816,9 +838,7 @@
             numberFormat: src2.numberFormat || 'RR-{YYYY}-{NNNNNN}',
             visibleToRoles: src2.visibleToRoles || [],
             editableByRoles: src2.editableByRoles || [],
-            visibleToRankRule: src2.visibleToRankRule || null,
-            editableByRankRule: src2.editableByRankRule || null,
-            departmentId: src2.departmentId || '',
+            rankGates: normalizeRankGates(src2),
             linkableEntities: src2.linkableEntities || [],
             sections: (src2.sections || []).map(cloneSection),
           };
@@ -890,21 +910,12 @@
               return '<label class="rp-checkbox-row" style="margin-right:0.6rem;"><input type="checkbox" data-edit="' + r + '"' + (checked ? ' checked' : '') + '/> ' + r + '</label>';
             }).join('') + '</div>' +
           '</div>' +
-          // Rank-based gating (optional, ANDed with the role checkboxes above).
-          // The department picker scopes both rules to one department's ranks.
+          // Per-department rank gating (optional, ANDed with the role
+          // checkboxes above). Add a card per department; each scopes its
+          // visible/editable rank rules to that department's own ranks.
           '<div style="margin-top:1rem;border-top:1px solid var(--rp-glass-border);padding-top:0.85rem;">' +
-            '<div class="rp-label" style="margin-bottom:0.45rem;">Restrict to ranks <span style="font-weight:400;color:var(--rp-text-muted);">(optional — combines with role gates above)</span></div>' +
-            '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end;">' +
-              '<div><label class="rp-label" style="font-size:0.7rem;">Department</label>' +
-                '<select id="bf-dept" class="rp-select">' +
-                  '<option value="">— none (no rank gate) —</option>' +
-                  (communityDepartments || []).map(function (d) {
-                    return '<option value="' + escapeHTML(d.id) + '"' + ((t.departmentId || '') === d.id ? ' selected' : '') + '>' + escapeHTML(d.name) + '</option>';
-                  }).join('') +
-                '</select>' +
-              '</div>' +
-            '</div>' +
-            '<div id="bf-rank-rules" style="margin-top:0.75rem;"></div>' +
+            '<div class="rp-label" style="margin-bottom:0.45rem;">Restrict to ranks by department <span style="font-weight:400;color:var(--rp-text-muted);">(optional — combines with role gates above)</span></div>' +
+            '<div id="bf-rank-gates"></div>' +
           '</div>' +
           '<div style="margin-top:0.75rem;"><div class="rp-label">Linkable entities</div>' + ENTITIES.map(function (en) {
             var checked = (t.linkableEntities || []).indexOf(en) !== -1;
@@ -923,89 +934,142 @@
         view.innerHTML = html;
 
         renderSections();
-        renderRankRules();
+        renderRankGates();
         bindBuilderEvents();
       }
 
       function rankRuleScopeLabel(scope) { return scope === 'visible' ? 'Visible to (rank)' : 'Editable by (rank)'; }
 
-      // Renders both rank-rule widgets (visible / editable). Re-rendered
-      // whenever the department changes so the rank multi-selects stay in
-      // sync with the department's actual rank list.
-      function renderRankRules() {
-        var wrap = document.getElementById('bf-rank-rules');
+      var RANK_MODE_OPTS = [
+        { value: '', label: 'No rank gate' },
+        { value: 'exact', label: 'Specific ranks' },
+        { value: 'atOrAbove', label: 'This rank and above' },
+        { value: 'atOrBelow', label: 'This rank and below' },
+      ];
+
+      // Renders one card per department rank gate, plus an "Add department"
+      // picker for departments not yet gated. Re-rendered on every gate
+      // mutation (add / remove / rule change) so the cards stay in sync.
+      function renderRankGates() {
+        var wrap = document.getElementById('bf-rank-gates');
         if (!wrap) return;
         var t = state.editing;
-        var dept = (communityDepartments || []).find(function (d) { return d.id === (t.departmentId || ''); });
-        if (!t.departmentId || !dept) {
-          wrap.innerHTML = '<div style="color:var(--rp-text-muted);font-size:0.82rem;">Pick a department above to enable rank-based gating.</div>';
-          return;
-        }
-        var ranks = dept.ranks || [];
-        if (ranks.length === 0) {
-          wrap.innerHTML = '<div style="color:var(--rp-text-muted);font-size:0.82rem;">This department has no ranks configured.</div>';
-          return;
-        }
+        var gates = t.rankGates || (t.rankGates = []);
+        var depts = communityDepartments || [];
 
-        var modeOpts = [
-          { value: '', label: 'No rank gate' },
-          { value: 'exact', label: 'Specific ranks' },
-          { value: 'atOrAbove', label: 'This rank and above' },
-          { value: 'atOrBelow', label: 'This rank and below' },
-        ];
+        var html = '';
+        if (!gates.length) {
+          html += '<div style="color:var(--rp-text-muted);font-size:0.82rem;margin-bottom:0.5rem;">No rank gate — anyone passing the role gate can view/edit. Add a department below to restrict by rank.</div>';
+        }
+        gates.forEach(function (gate, gi) { html += rankGateCardHtml(gate, gi, depts); });
 
-        function widgetHtml(scope) {
-          var rule = scope === 'visible' ? t.visibleToRankRule : t.editableByRankRule;
-          var mode = (rule && rule.mode) || '';
-          var anchorIDs = (rule && rule.anchorRankIDs) || [];
-          var modeSelect = '<select class="rp-select" data-rank-mode="' + scope + '">' +
-            modeOpts.map(function (o) { return '<option value="' + o.value + '"' + (o.value === mode ? ' selected' : '') + '>' + o.label + '</option>'; }).join('') +
-            '</select>';
-          var rankBoxes = ranks.map(function (rk) {
-            var checked = anchorIDs.indexOf(rk.id) !== -1;
-            return '<label class="rp-checkbox-row" style="margin-right:0.6rem;"><input type="checkbox" data-rank-anchor="' + scope + '" data-rank-id="' + escapeHTML(rk.id) + '"' + (checked ? ' checked' : '') + '/> ' + escapeHTML(rk.name) + '</label>';
-          }).join('');
-          return '<div style="border:1px solid var(--rp-glass-border);border-radius:var(--rp-radius-sm);padding:0.65rem 0.75rem;flex:1;min-width:280px;">' +
-            '<div class="rp-label" style="font-size:0.78rem;">' + rankRuleScopeLabel(scope) + '</div>' +
-            '<div style="margin-top:0.35rem;">' + modeSelect + '</div>' +
-            '<div style="margin-top:0.45rem;font-size:0.75rem;color:var(--rp-text-muted);">Anchor rank(s):</div>' +
-            '<div style="margin-top:0.25rem;">' + rankBoxes + '</div>' +
-            '<div class="rp-label" style="margin-top:0.55rem;font-size:0.72rem;color:var(--rp-text-muted);">Available to:</div>' +
-            '<div data-rank-preview="' + scope + '" style="margin-top:0.25rem;display:flex;flex-wrap:wrap;gap:0.3rem;font-size:0.78rem;">' +
-              '<span style="color:var(--rp-text-dim);">…</span>' +
-            '</div>' +
-          '</div>';
+        var usedIds = gates.map(function (g) { return g.departmentId; });
+        var available = depts.filter(function (d) { return usedIds.indexOf(d.id) === -1; });
+        if (available.length) {
+          html += '<div style="margin-top:0.55rem;"><label class="rp-label" style="font-size:0.7rem;">Add department</label>' +
+            '<select id="bf-add-dept" class="rp-select" style="max-width:280px;">' +
+              '<option value="">+ Add a department…</option>' +
+              available.map(function (d) { return '<option value="' + escapeHTML(d.id) + '">' + escapeHTML(d.name) + '</option>'; }).join('') +
+            '</select></div>';
+        } else if (depts.length) {
+          html += '<div style="margin-top:0.5rem;color:var(--rp-text-dim);font-size:0.78rem;">Every department has a rank gate.</div>';
         }
 
-        wrap.innerHTML = '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;">' + widgetHtml('visible') + widgetHtml('editable') + '</div>';
+        wrap.innerHTML = html;
+        wireRankGateEvents();
+        gates.forEach(function (gate, gi) {
+          refreshRankPreview(gi, 'visible');
+          refreshRankPreview(gi, 'editable');
+        });
+      }
 
-        // Wire events on the new widget
+      function rankGateCardHtml(gate, gi, depts) {
+        var dept = depts.find(function (d) { return d.id === gate.departmentId; });
+        var deptName = dept ? dept.name : '(unknown department)';
+        var ranks = (dept && dept.ranks) || [];
+        var header = '<div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">' +
+          '<div class="rp-label" style="font-size:0.82rem;margin:0;"><i class="fa-solid fa-building-shield" style="opacity:.7;margin-right:.35rem;"></i>' + escapeHTML(deptName) + '</div>' +
+          '<button type="button" class="rp-btn rp-btn-outline" data-remove-gate="' + gi + '" style="padding:0.2rem 0.5rem;font-size:0.72rem;"><i class="fa-solid fa-xmark"></i> Remove</button>' +
+        '</div>';
+        var bodyHtml;
+        if (!dept) {
+          bodyHtml = '<div style="color:var(--rp-amber);font-size:0.8rem;">This department no longer exists. Remove this gate.</div>';
+        } else if (!ranks.length) {
+          bodyHtml = '<div style="color:var(--rp-text-muted);font-size:0.8rem;">This department has no ranks configured. Members can view/edit; add ranks to restrict.</div>';
+        } else {
+          bodyHtml = '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;">' + rankWidgetHtml(gate, gi, 'visible', ranks) + rankWidgetHtml(gate, gi, 'editable', ranks) + '</div>';
+        }
+        return '<div data-gate-card="' + gi + '" style="border:1px solid var(--rp-glass-border);border-radius:var(--rp-radius-sm);padding:0.7rem 0.8rem;margin-bottom:0.6rem;background:var(--rp-glass);">' + header + bodyHtml + '</div>';
+      }
+
+      function rankWidgetHtml(gate, gi, scope, ranks) {
+        var rule = scope === 'visible' ? gate.visibleToRankRule : gate.editableByRankRule;
+        var mode = (rule && rule.mode) || '';
+        var anchorIDs = (rule && rule.anchorRankIDs) || [];
+        var modeSelect = '<select class="rp-select" data-gate="' + gi + '" data-rank-mode="' + scope + '">' +
+          RANK_MODE_OPTS.map(function (o) { return '<option value="' + o.value + '"' + (o.value === mode ? ' selected' : '') + '>' + o.label + '</option>'; }).join('') +
+          '</select>';
+        var rankBoxes = ranks.map(function (rk) {
+          var checked = anchorIDs.indexOf(rk.id) !== -1;
+          return '<label class="rp-checkbox-row" style="margin-right:0.6rem;"><input type="checkbox" data-gate="' + gi + '" data-rank-anchor="' + scope + '" data-rank-id="' + escapeHTML(rk.id) + '"' + (checked ? ' checked' : '') + '/> ' + escapeHTML(rk.name) + '</label>';
+        }).join('');
+        return '<div style="border:1px solid var(--rp-glass-border);border-radius:var(--rp-radius-sm);padding:0.65rem 0.75rem;flex:1;min-width:260px;">' +
+          '<div class="rp-label" style="font-size:0.78rem;">' + rankRuleScopeLabel(scope) + '</div>' +
+          '<div style="margin-top:0.35rem;">' + modeSelect + '</div>' +
+          '<div style="margin-top:0.45rem;font-size:0.75rem;color:var(--rp-text-muted);">Anchor rank(s):</div>' +
+          '<div style="margin-top:0.25rem;">' + rankBoxes + '</div>' +
+          '<div class="rp-label" style="margin-top:0.55rem;font-size:0.72rem;color:var(--rp-text-muted);">Available to:</div>' +
+          '<div data-rank-preview="' + gi + '-' + scope + '" style="margin-top:0.25rem;display:flex;flex-wrap:wrap;gap:0.3rem;font-size:0.78rem;">' +
+            '<span style="color:var(--rp-text-dim);">…</span>' +
+          '</div>' +
+        '</div>';
+      }
+
+      function wireRankGateEvents() {
+        var wrap = document.getElementById('bf-rank-gates');
+        if (!wrap) return;
         Array.from(wrap.querySelectorAll('[data-rank-mode]')).forEach(function (sel) {
           sel.addEventListener('change', function () {
+            var gi = parseInt(sel.getAttribute('data-gate'), 10);
             var scope = sel.getAttribute('data-rank-mode');
-            applyRankRuleEdit(scope, sel.value, null, null);
-            refreshRankPreview(scope);
+            applyRankRuleEdit(gi, scope, sel.value, null, null);
+            refreshRankPreview(gi, scope);
           });
         });
         Array.from(wrap.querySelectorAll('[data-rank-anchor]')).forEach(function (cb) {
           cb.addEventListener('change', function () {
+            var gi = parseInt(cb.getAttribute('data-gate'), 10);
             var scope = cb.getAttribute('data-rank-anchor');
             var id = cb.getAttribute('data-rank-id');
-            applyRankRuleEdit(scope, null, id, cb.checked);
-            refreshRankPreview(scope);
+            applyRankRuleEdit(gi, scope, null, id, cb.checked);
+            refreshRankPreview(gi, scope);
           });
         });
-
-        refreshRankPreview('visible');
-        refreshRankPreview('editable');
+        Array.from(wrap.querySelectorAll('[data-remove-gate]')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var gi = parseInt(btn.getAttribute('data-remove-gate'), 10);
+            state.editing.rankGates.splice(gi, 1);
+            renderRankGates();
+          });
+        });
+        var addSel = document.getElementById('bf-add-dept');
+        if (addSel) {
+          addSel.addEventListener('change', function () {
+            var deptId = addSel.value;
+            if (!deptId) return;
+            state.editing.rankGates.push({ departmentId: deptId, visibleToRankRule: null, editableByRankRule: null });
+            renderRankGates();
+          });
+        }
       }
 
-      function applyRankRuleEdit(scope, mode, toggleId, checked) {
+      function applyRankRuleEdit(gi, scope, mode, toggleId, checked) {
+        var gate = (state.editing.rankGates || [])[gi];
+        if (!gate) return;
         var key = scope === 'visible' ? 'visibleToRankRule' : 'editableByRankRule';
-        var t = state.editing;
-        var rule = t[key];
+        var rule = gate[key];
         if (mode !== null && mode !== undefined) {
-          if (!mode) { t[key] = null; return; }
+          if (!mode) { gate[key] = null; return; }
           if (!rule) rule = { mode: mode, anchorRankIDs: [] };
           rule.mode = mode;
         }
@@ -1015,27 +1079,28 @@
           if (checked && idx === -1) rule.anchorRankIDs.push(toggleId);
           if (!checked && idx !== -1) rule.anchorRankIDs.splice(idx, 1);
         }
-        t[key] = rule;
+        gate[key] = rule;
       }
 
       var rankPreviewTimers = {};
-      function refreshRankPreview(scope) {
-        clearTimeout(rankPreviewTimers[scope]);
-        rankPreviewTimers[scope] = setTimeout(function () { doRankPreview(scope); }, 180);
+      function refreshRankPreview(gi, scope) {
+        var key = gi + '-' + scope;
+        clearTimeout(rankPreviewTimers[key]);
+        rankPreviewTimers[key] = setTimeout(function () { doRankPreview(gi, scope); }, 180);
       }
-      function doRankPreview(scope) {
-        var t = state.editing;
-        var rule = scope === 'visible' ? t.visibleToRankRule : t.editableByRankRule;
-        var box = document.querySelector('[data-rank-preview="' + scope + '"]');
+      function doRankPreview(gi, scope) {
+        var gate = (state.editing.rankGates || [])[gi];
+        var box = document.querySelector('[data-rank-preview="' + gi + '-' + scope + '"]');
         if (!box) return;
-        if (!rule || !rule.mode || !(rule.anchorRankIDs || []).length || !t.departmentId) {
-          box.innerHTML = '<span style="color:var(--rp-text-dim);">No rank gate — anyone passing the role gate can ' + (scope === 'visible' ? 'view' : 'edit') + '.</span>';
+        var rule = gate && (scope === 'visible' ? gate.visibleToRankRule : gate.editableByRankRule);
+        if (!gate || !rule || !rule.mode || !(rule.anchorRankIDs || []).length || !gate.departmentId) {
+          box.innerHTML = '<span style="color:var(--rp-text-dim);">No rank gate — any member of this department can ' + (scope === 'visible' ? 'view' : 'edit') + '.</span>';
           return;
         }
         fetch(apiUrl + '/api/v2/form-templates/community/' + encodeURIComponent(communityId) + '/preview-rank-rule', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ departmentId: t.departmentId, mode: rule.mode, anchorRankIDs: rule.anchorRankIDs }),
+          body: JSON.stringify({ departmentId: gate.departmentId, mode: rule.mode, anchorRankIDs: rule.anchorRankIDs }),
         }).then(function (r) { return r.ok ? r.json() : null; })
           .then(function (j) {
             if (!j) { box.innerHTML = '<span style="color:var(--rp-red);">preview failed</span>'; return; }
@@ -1271,16 +1336,8 @@
           });
         });
 
-        var deptSel = document.getElementById('bf-dept');
-        if (deptSel) {
-          deptSel.addEventListener('change', function () {
-            state.editing.departmentId = deptSel.value;
-            // Clear existing rank rules — they reference the old department's rank IDs.
-            state.editing.visibleToRankRule = null;
-            state.editing.editableByRankRule = null;
-            renderRankRules();
-          });
-        }
+        // Rank-gate controls (add/remove department, per-gate rules) are wired
+        // in wireRankGateEvents() on each renderRankGates() pass.
 
         document.getElementById('bf-add-section').addEventListener('click', function () {
           this.classList.remove('rp-invalid');
@@ -1329,6 +1386,9 @@
         var saveBtn = document.getElementById('rp-save-btn');
         if (saveBtn) saveBtn.disabled = true;
 
+        // Per-department rank gates — drop any gate that lost its department.
+        var rankGates = (t.rankGates || []).filter(function (g) { return g.departmentId; });
+
         var url, method;
         var body;
         if (state.isNew) {
@@ -1336,7 +1396,6 @@
           method = 'POST';
           body = {
             communityID: communityId,
-            departmentId: t.departmentId || '',
             name: t.name,
             slug: t.slug,
             description: t.description,
@@ -1344,8 +1403,7 @@
             numberFormat: t.numberFormat,
             visibleToRoles: t.visibleToRoles,
             editableByRoles: t.editableByRoles,
-            visibleToRankRule: t.visibleToRankRule || null,
-            editableByRankRule: t.editableByRankRule || null,
+            rankGates: rankGates,
             linkableEntities: t.linkableEntities,
             sections: t.sections,
           };
@@ -1359,15 +1417,11 @@
             numberFormat: t.numberFormat,
             visibleToRoles: t.visibleToRoles,
             editableByRoles: t.editableByRoles,
+            // Full replace of the per-department gates on every save.
+            rankGates: rankGates,
             linkableEntities: t.linkableEntities,
             sections: t.sections,
           };
-          // Rank rules are sent as set/clear pairs so the server knows the
-          // difference between "untouched" and "explicitly removed".
-          if (t.visibleToRankRule) body.visibleToRankRule = t.visibleToRankRule;
-          else body.clearVisibleRankRule = true;
-          if (t.editableByRankRule) body.editableByRankRule = t.editableByRankRule;
-          else body.clearEditableRankRule = true;
         }
 
         fetch(url, {
