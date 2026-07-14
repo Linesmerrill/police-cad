@@ -27,7 +27,10 @@ test.describe('Community Forms — per-department rank gates', { tag: '@auth' },
 
   test.beforeEach(async ({ page }) => {
     forms = new CommunityFormsPage(page);
-    await forms.stubTemplates([]);
+    // At least one existing template so the list chrome (tabs) renders — the
+    // empty state short-circuits before .rp-tabs. These tests create a brand
+    // new form, so the seed content itself is irrelevant.
+    await forms.stubTemplates([{ _id: 'seed0001', name: 'Existing Form', slug: 'existing-form' }]);
     await forms.stubCommunityDepartments([POLICE, FIRE]);
   });
 
