@@ -42,6 +42,10 @@ function renderRankProgress(data, allRanks) {
   var nextRank = data.nextRank;
   var metrics = data.metrics || [];
   var progress = data.progress || [];
+  // When the community resets stats on promotion, currentValue counts from the
+  // member's last promotion rather than all-time — label it and show the
+  // lifetime figure for context (mirrors the admin Manage Ranks panel).
+  var resetStatsOnPromotion = !!data.resetStatsOnPromotion;
   allRanks = allRanks || [];
 
   if (!currentRank) return; // No rank system configured
@@ -105,10 +109,15 @@ function renderRankProgress(data, allRanks) {
         var barBg = pct >= 100 ? 'linear-gradient(90deg, #059669, #10b981)' : 'linear-gradient(90deg, #6d28d9, #8b5cf6)';
         var valColor = pct >= 100 ? '#34d399' : '#c4b5fd';
         var checkmark = pct >= 100 ? ' <i class="fa fa-check-circle" style="color:#34d399; font-size:13px; margin-left:4px;"></i>' : '';
+        // Lifetime total alongside the since-promotion count, when they differ.
+        var allTimeSuffix = '';
+        if (resetStatsOnPromotion && typeof p.allTimeValue === 'number' && p.allTimeValue !== p.currentValue) {
+          allTimeSuffix = ' <span style="color:#7c7f96; font-size:11px; font-weight:500;">· ' + p.allTimeValue + ' all-time</span>';
+        }
         barsHtml += '<div style="padding:0;">' +
           '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">' +
             '<span style="color:#c8c6d8; font-size:14px; font-weight:500;">' + escapeHtmlRank(p.displayName || p.metricType) + checkmark + '</span>' +
-            '<span style="color:' + valColor + '; font-size:14px; font-weight:700; font-variant-numeric:tabular-nums;">' + p.currentValue + ' / ' + p.threshold + '</span>' +
+            '<span style="color:' + valColor + '; font-size:14px; font-weight:700; font-variant-numeric:tabular-nums;">' + p.currentValue + ' / ' + p.threshold + allTimeSuffix + '</span>' +
           '</div>' +
           '<div style="width:100%; height:8px; background:rgba(55,65,81,0.6); border-radius:4px; overflow:hidden;">' +
             '<div style="width:' + pct + '%; height:100%; background:' + barBg + '; border-radius:4px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1);"></div>' +
@@ -163,12 +172,37 @@ function renderRankProgress(data, allRanks) {
     if (statsSection) statsSection.style.display = 'block';
     var gridHtml = '';
     metrics.forEach(function(m) {
+      // Lifetime figure under the tile so "since promotion" numbers don't look
+      // like lost progress.
+      var allTimeLine = '';
+      if (resetStatsOnPromotion && typeof m.allTimeValue === 'number' && m.allTimeValue !== m.currentValue) {
+        allTimeLine = '<div style="color:#5b5e73; font-size:10px; font-weight:500; margin-top:4px; line-height:1.2;">' + m.allTimeValue + ' all-time</div>';
+      }
       gridHtml += '<div style="background:rgba(30,32,40,0.7); border:1px solid rgba(53,56,90,0.5); border-radius:10px; padding:14px 12px; text-align:center;">' +
         '<div style="color:#fff; font-size:24px; font-weight:700; line-height:1.1; font-variant-numeric:tabular-nums;">' + (m.currentValue || 0) + '</div>' +
         '<div style="color:#7c7f96; font-size:11px; text-transform:uppercase; letter-spacing:0.8px; font-weight:500; margin-top:6px; line-height:1.3;">' + escapeHtmlRank(m.displayName || m.metricType) + '</div>' +
+        allTimeLine +
       '</div>';
     });
     gridContainer.innerHTML = gridHtml;
+
+    // Caption the grid so officers know which window these numbers cover.
+    // Created on the fly — this script is shared by several dashboards and
+    // none of them declare the element.
+    var statsCaption = document.getElementById('rankStatsCaption');
+    if (!statsCaption && gridContainer && gridContainer.parentNode) {
+      statsCaption = document.createElement('div');
+      statsCaption.id = 'rankStatsCaption';
+      statsCaption.style.cssText =
+        'color:#7c7f96; font-size:11px; font-weight:500; letter-spacing:0.3px; margin-bottom:8px;';
+      gridContainer.parentNode.insertBefore(statsCaption, gridContainer);
+    }
+    if (statsCaption) {
+      statsCaption.textContent = resetStatsOnPromotion
+        ? 'Since your last promotion'
+        : '';
+      statsCaption.style.display = resetStatsOnPromotion ? 'block' : 'none';
+    }
   } else {
     if (statsSection) statsSection.style.display = 'none';
     gridContainer.innerHTML = '';
