@@ -1689,6 +1689,15 @@
   var cachedArrests = null;
   var recordsFilter = 'all';
 
+  // The arrestee endpoint is paginated (10 per page by default), so a bare call
+  // silently caps the records list at one page. Walk every page — the filter
+  // counts and contest selection both need the complete history. Mirrors
+  // fetchArrests() in cd-person-search.js.
+  var ARREST_PAGE_LIMIT = 25;
+  // Runaway guard: only trips if the API stops honouring `page`, and sits far
+  // above any realistic arrest history.
+  var ARREST_MAX_PAGES = 40;
+
   function renderRecordsTab($body) {
     var c = currentCiv;
     if (!c) return;
@@ -1699,23 +1708,56 @@
 
     // Fetch arrest reports for this civilian
     var conf = cfg();
-    $.ajax({
-      url: conf.API_URL + '/api/v1/arrest-report/arrestee/' + c._id,
-      method: 'GET',
-      success: function (data) {
-        var raw = data.data || [];
-        cachedArrests = raw.map(function (r) {
-          var ar = r.arrestReport ? $.extend({ _id: r._id }, r.arrestReport) : r;
-          ar._recordSource = 'arrest';
-          return ar;
-        });
-        renderRecordsContent($body);
-      },
-      error: function () {
-        cachedArrests = [];
-        renderRecordsContent($body);
-      }
-    });
+    var civId = c._id;
+    var collected = [];
+    var totalCount = 0;
+
+    function stale() {
+      // The walk spans several requests; bail if the panel moved on to another
+      // civilian so we never render one civilian's records under another's.
+      return !currentCiv || currentCiv._id !== civId;
+    }
+
+    function finish() {
+      if (stale()) return;
+      cachedArrests = collected.map(function (r) {
+        var ar = r.arrestReport ? $.extend({ _id: r._id }, r.arrestReport) : r;
+        ar._recordSource = 'arrest';
+        return ar;
+      });
+      renderRecordsContent($body);
+    }
+
+    function fetchPage(page) {
+      $.ajax({
+        url: conf.API_URL + '/api/v1/arrest-report/arrestee/' + encodeURIComponent(civId) +
+          '?limit=' + ARREST_PAGE_LIMIT + '&page=' + page,
+        method: 'GET',
+        success: function (data) {
+          if (stale()) return;
+          var batch = data.data || [];
+          collected = collected.concat(batch);
+          if (typeof data.totalCount === 'number') totalCount = data.totalCount;
+
+          // A short page means we hit the end; the count check stops us as soon
+          // as we have everything even when the last page happens to be full.
+          var done = batch.length < ARREST_PAGE_LIMIT ||
+            collected.length >= totalCount ||
+            page + 1 >= ARREST_MAX_PAGES;
+          if (!done) {
+            fetchPage(page + 1);
+            return;
+          }
+          finish();
+        },
+        error: function () {
+          // Keep whatever pages already landed rather than dropping the lot.
+          finish();
+        }
+      });
+    }
+
+    fetchPage(0);
   }
 
   function renderRecordsContent($body) {

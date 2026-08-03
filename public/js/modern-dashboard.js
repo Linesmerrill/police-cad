@@ -5716,21 +5716,58 @@ $(document).on('click', '.criminal-toggle-btn', function() {
   }
 });
 
+// The arrestee endpoint is paginated (10 per page by default) and returns the
+// full history size in `totalCount`, so a bare call renders one page of rows
+// beside a much larger metric. Walk every page so the count, the list and
+// contest selection all see the same complete set. Mirrors fetchArrests() in
+// cd-person-search.js.
+const ARREST_REPORT_PAGE_LIMIT = 25;
+// Runaway guard: only trips if the API stops honouring `page`, and sits far
+// above any realistic arrest history.
+const ARREST_REPORT_MAX_PAGES = 40;
+
 function fetchArrestReportsForCiv(civId, cb) {
-  $.ajax({
-    url: `${API_URL}/api/v1/arrest-report/arrestee/${civId}`,
-    method: 'GET',
-    success: function(data) {
-      cachedArrestReports = (data.data || []).map(r => r.arrestReport ? { _id: r._id, ...r.arrestReport } : r);
-      cachedArrestReportsCount = data.totalCount || cachedArrestReports.length;
-      if (typeof cb === 'function') cb();
-    },
-    error: function() {
-      cachedArrestReports = [];
-      cachedArrestReportsCount = 0;
-      if (typeof cb === 'function') cb();
-    }
-  });
+  const collected = [];
+  let totalCount = 0;
+
+  const flatten = r => (r.arrestReport ? { _id: r._id, ...r.arrestReport } : r);
+
+  function finish(count) {
+    cachedArrestReports = collected.map(flatten);
+    cachedArrestReportsCount = count;
+    if (typeof cb === 'function') cb();
+  }
+
+  function fetchPage(page) {
+    $.ajax({
+      url: `${API_URL}/api/v1/arrest-report/arrestee/${civId}?limit=${ARREST_REPORT_PAGE_LIMIT}&page=${page}`,
+      method: 'GET',
+      success: function(data) {
+        const batch = data.data || [];
+        collected.push(...batch);
+        if (typeof data.totalCount === 'number') totalCount = data.totalCount;
+
+        // A short page means we hit the end; the count check stops us as soon
+        // as we have everything even when the last page happens to be full.
+        const done = batch.length < ARREST_REPORT_PAGE_LIMIT ||
+          collected.length >= totalCount ||
+          page + 1 >= ARREST_REPORT_MAX_PAGES;
+        if (!done) {
+          fetchPage(page + 1);
+          return;
+        }
+        finish(Math.max(totalCount, collected.length));
+      },
+      error: function() {
+        // Keep whatever pages already landed, but report the count we can
+        // actually render rather than the full total, so the metric never
+        // disagrees with the list.
+        finish(collected.length);
+      }
+    });
+  }
+
+  fetchPage(0);
 }
 
 // --- Medical Tab Functions ---
