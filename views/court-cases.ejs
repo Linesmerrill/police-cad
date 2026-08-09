@@ -1725,6 +1725,29 @@
                   '<i class="fa fa-quote-left" style="font-size:0.6rem;margin-right:0.25rem;color:var(--cc-text-dim);"></i>' +
                   esc(entry.notes) + '</div>';
               }
+              // Ticket-format details (optional) — surface the extra fields so a
+              // judge has the full context on a contested ticket.
+              var ticketRows = [];
+              var addRow = function(label, value) {
+                if (value) ticketRows.push(
+                  '<div style="display:flex;justify-content:space-between;gap:0.5rem;font-size:0.75rem;padding:0.1rem 0;">' +
+                    '<span style="color:var(--cc-text-dim);">' + label + '</span>' +
+                    '<span style="color:var(--cc-text);text-align:right;">' + esc(value) + '</span></div>');
+              };
+              addRow('Location', entry.stopLocation);
+              addRow('Time', entry.incidentTime);
+              addRow('Phone', entry.phone);
+              addRow('Officer', entry.officerBadge);
+              if (entry.vehicle) {
+                var v = entry.vehicle;
+                var vparts = [v.color, v.make, v.model].filter(Boolean).join(' ');
+                var vlabel = (vparts + (v.plate ? ' (' + v.plate + ')' : '')).trim();
+                addRow('Vehicle', vlabel);
+              }
+              if (ticketRows.length) {
+                detailHtml += '<div style="margin-top:0.4rem;padding-top:0.4rem;border-top:1px solid var(--cc-border,rgba(148,163,184,0.15));">' +
+                  ticketRows.join('') + '</div>';
+              }
               if (detailHtml) {
                 $details.html(detailHtml).show();
               }

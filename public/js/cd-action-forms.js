@@ -255,6 +255,50 @@
       '.cd-af-field { margin-bottom: 16px; }',
       '.cd-af-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }',
 
+      /* Collapsible "advanced/optional" section (native <details>) */
+      '.cd-af-advanced {',
+      '  border: 1px solid var(--cd-glass-border, rgba(148,163,184,0.15));',
+      '  border-radius: 10px; background: var(--cd-glass, rgba(255,255,255,0.02));',
+      '  padding: 0 14px;',
+      '}',
+      '.cd-af-advanced[open] { padding-bottom: 6px; }',
+      '.cd-af-advanced-summary {',
+      '  cursor: pointer; list-style: none; padding: 12px 0;',
+      '  font-size: 13px; font-weight: 600; color: var(--cd-text-dim, #94a3b8);',
+      '  user-select: none;',
+      '}',
+      '.cd-af-advanced-summary::-webkit-details-marker { display: none; }',
+      '.cd-af-advanced-summary::before { content: "\\25B8 "; color: var(--cd-accent, #38bdf8); }',
+      '.cd-af-advanced[open] .cd-af-advanced-summary::before { content: "\\25BE "; }',
+      '.cd-af-sublabel {',
+      '  font-size: 12px; font-weight: 600; text-transform: uppercase;',
+      '  letter-spacing: 0.04em; color: var(--cd-text-dim, #64748b); margin: 4px 0 10px;',
+      '}',
+
+      /* Assisting-officers type-ahead picker */
+      '.cd-af-officer-picker { position: relative; }',
+      '.cd-af-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }',
+      '.cd-af-chip {',
+      '  display: inline-flex; align-items: center; gap: 6px;',
+      '  background: rgba(56,189,248,0.12); color: var(--cd-accent, #38bdf8);',
+      '  border: 1px solid rgba(56,189,248,0.3); border-radius: 999px;',
+      '  padding: 3px 6px 3px 10px; font-size: 12px; font-weight: 600;',
+      '}',
+      '.cd-af-chip-x {',
+      '  background: none; border: none; color: inherit; cursor: pointer;',
+      '  font-size: 15px; line-height: 1; padding: 0 2px;',
+      '}',
+      '.cd-af-officer-results {',
+      '  position: absolute; left: 0; right: 0; z-index: 20; margin-top: 4px;',
+      '  background: var(--cd-bg, #0b1220); border: 1px solid var(--cd-glass-border, rgba(148,163,184,0.2));',
+      '  border-radius: 8px; overflow: hidden; max-height: 200px; overflow-y: auto;',
+      '  box-shadow: 0 8px 24px rgba(0,0,0,0.4);',
+      '}',
+      '.cd-af-officer-result {',
+      '  padding: 9px 12px; font-size: 13px; color: var(--cd-text, #e2e8f0); cursor: pointer;',
+      '}',
+      '.cd-af-officer-result:hover { background: var(--cd-glass-hover, rgba(56,189,248,0.1)); }',
+
       /* Character counter */
       '.cd-af-char-count {',
       '  text-align: right; font-size: 11px;',
@@ -877,6 +921,58 @@
         '<span class="cd-af-total-fine-label">Total Fine</span>' +
         '<span class="cd-af-total-fine-amount" id="cd-af-cit-total">$0.00</span>' +
       '</div>' +
+      // Optional "ticket format" details — collapsed by default to keep the
+      // common case fast. Native <details> so no extra JS wiring is needed.
+      '<details class="cd-af-advanced" style="margin-top:16px">' +
+        '<summary class="cd-af-advanced-summary">Ticket details (optional)</summary>' +
+        '<div class="cd-af-advanced-body">' +
+          '<div class="cd-af-field">' +
+            '<label class="cd-af-label" for="cd-af-cit-loc">Location of stop</label>' +
+            '<input id="cd-af-cit-loc" class="cd-af-input" type="text" placeholder="e.g. Highway 101 &amp; 5th Ave" />' +
+          '</div>' +
+          '<div class="cd-af-grid">' +
+            '<div class="cd-af-field">' +
+              '<label class="cd-af-label" for="cd-af-cit-time">Time</label>' +
+              '<input id="cd-af-cit-time" class="cd-af-input" type="time" value="' + nowTimeStr() + '" />' +
+            '</div>' +
+            '<div class="cd-af-field">' +
+              '<label class="cd-af-label" for="cd-af-cit-phone">Violator phone</label>' +
+              '<input id="cd-af-cit-phone" class="cd-af-input" type="tel" placeholder="For follow-ups" />' +
+            '</div>' +
+          '</div>' +
+          '<div class="cd-af-field">' +
+            '<label class="cd-af-label" for="cd-af-cit-badge">Officer badge / callsign</label>' +
+            '<input id="cd-af-cit-badge" class="cd-af-input" type="text" placeholder="e.g. 3C-29" />' +
+          '</div>' +
+          '<div class="cd-af-field cd-af-officer-picker">' +
+            '<label class="cd-af-label" for="cd-af-cit-officer-search">Assisting officers</label>' +
+            '<div id="cd-af-cit-officer-chips" class="cd-af-chips"></div>' +
+            '<input id="cd-af-cit-officer-search" class="cd-af-input" type="text" placeholder="Search officers to add..." autocomplete="off" />' +
+            '<div id="cd-af-cit-officer-results" class="cd-af-officer-results" style="display:none"></div>' +
+          '</div>' +
+          '<div class="cd-af-sublabel">Vehicle</div>' +
+          '<div class="cd-af-grid">' +
+            '<div class="cd-af-field">' +
+              '<label class="cd-af-label" for="cd-af-cit-veh-plate">Plate</label>' +
+              '<input id="cd-af-cit-veh-plate" class="cd-af-input" type="text" />' +
+            '</div>' +
+            '<div class="cd-af-field">' +
+              '<label class="cd-af-label" for="cd-af-cit-veh-color">Color</label>' +
+              '<input id="cd-af-cit-veh-color" class="cd-af-input" type="text" />' +
+            '</div>' +
+          '</div>' +
+          '<div class="cd-af-grid">' +
+            '<div class="cd-af-field">' +
+              '<label class="cd-af-label" for="cd-af-cit-veh-make">Make</label>' +
+              '<input id="cd-af-cit-veh-make" class="cd-af-input" type="text" />' +
+            '</div>' +
+            '<div class="cd-af-field">' +
+              '<label class="cd-af-label" for="cd-af-cit-veh-model">Model</label>' +
+              '<input id="cd-af-cit-veh-model" class="cd-af-input" type="text" />' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</details>' +
       '<div class="cd-af-field" style="margin-top:16px">' +
         '<label class="cd-af-label" for="cd-af-cit-notes">Notes (optional)</label>' +
         '<textarea id="cd-af-cit-notes" class="cd-af-textarea" placeholder="Additional notes..."></textarea>' +
@@ -897,6 +993,80 @@
         if (el) el.textContent = formatCurrency(total, (penalCodesCache && penalCodesCache.currency) || 'USD');
       }
     });
+
+    /* Ticket-format extras: phone autofill + assisting-officers type-ahead */
+    var assistingOfficers = []; // [{ id, label }]
+    var citCfg = cfg();
+
+    // Autofill violator phone from the civilian record (best-effort, editable).
+    $.ajax({
+      url: apiUrl() + '/api/v1/civilian/' + encodeURIComponent(civId),
+      method: 'GET',
+      success: function (civ) {
+        var d = (civ && (civ.civilian || civ)) || {};
+        var phoneEl = document.getElementById('cd-af-cit-phone');
+        if (phoneEl && !phoneEl.value && d.phone) phoneEl.value = d.phone;
+      }
+    });
+
+    (function setupOfficerPicker() {
+      var searchEl = document.getElementById('cd-af-cit-officer-search');
+      var resultsEl = document.getElementById('cd-af-cit-officer-results');
+      var chipsEl = document.getElementById('cd-af-cit-officer-chips');
+      if (!searchEl || !resultsEl || !chipsEl) return;
+      var timer = null;
+
+      function renderChips() {
+        chipsEl.innerHTML = assistingOfficers.map(function (o, i) {
+          return '<span class="cd-af-chip">' + esc(o.label) +
+            '<button type="button" class="cd-af-chip-x" data-i="' + i + '">&times;</button></span>';
+        }).join('');
+      }
+      function hideResults() { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; }
+
+      chipsEl.addEventListener('click', function (e) {
+        var btn = e.target.closest ? e.target.closest('.cd-af-chip-x') : null;
+        if (!btn) return;
+        assistingOfficers.splice(parseInt(btn.getAttribute('data-i'), 10), 1);
+        renderChips();
+      });
+      resultsEl.addEventListener('click', function (e) {
+        var row = e.target.closest ? e.target.closest('.cd-af-officer-result') : null;
+        if (!row) return;
+        assistingOfficers.push({ id: row.getAttribute('data-id'), label: row.getAttribute('data-label') });
+        renderChips();
+        searchEl.value = '';
+        hideResults();
+      });
+      searchEl.addEventListener('input', function () {
+        var q = (searchEl.value || '').trim();
+        if (timer) clearTimeout(timer);
+        if (q.length < 2) { hideResults(); return; }
+        timer = setTimeout(function () {
+          $.ajax({
+            url: apiUrl() + '/api/v1/community/' + encodeURIComponent(citCfg.communityId) + '/members/search',
+            method: 'GET',
+            data: { q: q, limit: 8 },
+            success: function (res) {
+              var rows = ((res && res.members) || []).filter(function (m) {
+                var id = String(m.id || '');
+                return id && id !== String(citCfg.userId) &&
+                  !assistingOfficers.some(function (o) { return o.id === id; });
+              });
+              if (!rows.length) { hideResults(); return; }
+              resultsEl.innerHTML = rows.map(function (m) {
+                var label = m.username + (m.callSign ? ' (' + m.callSign + ')' : '');
+                return '<div class="cd-af-officer-result" data-id="' + esc(String(m.id)) +
+                  '" data-label="' + esc(label) + '">' + esc(label) + '</div>';
+              }).join('');
+              resultsEl.style.display = 'block';
+            },
+            error: hideResults
+          });
+        }, 250);
+      });
+      searchEl.addEventListener('blur', function () { setTimeout(hideResults, 150); });
+    })();
 
     /* Button handlers */
     var panel = document.getElementById('cd-af-panel');
@@ -921,6 +1091,27 @@
         date: todayStr(),
         departmentId: c.departmentId
       };
+
+      // Optional ticket-format fields — only send the ones actually filled in.
+      var fv = function (id) { var el = document.getElementById(id); return el ? (el.value || '').trim() : ''; };
+      var stopLocation = fv('cd-af-cit-loc');
+      var incidentTime = fv('cd-af-cit-time');
+      var phone = fv('cd-af-cit-phone');
+      var officerBadge = fv('cd-af-cit-badge');
+      if (stopLocation) payload.stopLocation = stopLocation;
+      if (incidentTime) payload.incidentTime = incidentTime;
+      if (phone) payload.phone = phone;
+      if (officerBadge) payload.officerBadge = officerBadge;
+      var veh = {
+        plate: fv('cd-af-cit-veh-plate'),
+        make: fv('cd-af-cit-veh-make'),
+        model: fv('cd-af-cit-veh-model'),
+        color: fv('cd-af-cit-veh-color')
+      };
+      if (veh.plate || veh.make || veh.model || veh.color) payload.vehicle = veh;
+      if (assistingOfficers.length) {
+        payload.assistingOfficerIDs = assistingOfficers.map(function (o) { return o.id; });
+      }
 
       setSubmitting(true);
       $.ajax({
@@ -1082,14 +1273,14 @@
       '<div class="cd-af-section">Narrative</div>' +
       '<div class="cd-af-field">' +
         '<label class="cd-af-label" for="cd-af-arr-narrative">Narrative <span style="color:var(--cd-red,#ef4444)">*</span></label>' +
-        '<textarea id="cd-af-arr-narrative" class="cd-af-textarea" maxlength="500" placeholder="Describe the events leading to the arrest..." style="min-height:100px"></textarea>' +
-        '<div id="cd-af-arr-narrative-count" class="cd-af-char-count">0 / 500</div>' +
+        '<textarea id="cd-af-arr-narrative" class="cd-af-textarea" maxlength="1000" placeholder="Describe the events leading to the arrest..." style="min-height:100px"></textarea>' +
+        '<div id="cd-af-arr-narrative-count" class="cd-af-char-count">0 / 1000</div>' +
       '</div>' +
 
       '<div class="cd-af-field">' +
         '<label class="cd-af-label" for="cd-af-arr-witnesses">Actions Taken / Witnesses</label>' +
-        '<textarea id="cd-af-arr-witnesses" class="cd-af-textarea" maxlength="500" placeholder="List any witnesses or additional actions taken..."></textarea>' +
-        '<div id="cd-af-arr-witnesses-count" class="cd-af-char-count">0 / 500</div>' +
+        '<textarea id="cd-af-arr-witnesses" class="cd-af-textarea" maxlength="1000" placeholder="List any witnesses or additional actions taken..."></textarea>' +
+        '<div id="cd-af-arr-witnesses-count" class="cd-af-char-count">0 / 1000</div>' +
       '</div>';
 
     var footer =
@@ -1131,8 +1322,8 @@
     }
 
     /* Character counters */
-    bindCharCounter('cd-af-arr-narrative', 'cd-af-arr-narrative-count', 500);
-    bindCharCounter('cd-af-arr-witnesses', 'cd-af-arr-witnesses-count', 500);
+    bindCharCounter('cd-af-arr-narrative', 'cd-af-arr-narrative-count', 1000);
+    bindCharCounter('cd-af-arr-witnesses', 'cd-af-arr-witnesses-count', 1000);
 
     /* Force toggle */
     var forceUsed = false;
