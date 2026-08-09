@@ -1488,6 +1488,13 @@
         }, 200);
       }
 
+      // The arrestee endpoint is paginated (10 per page by default), so a single
+      // call quietly caps the picker at one page and hides older reports.
+      var ARREST_DRILL_PAGE_LIMIT = 25;
+      // Runaway guard: only trips if the API stops honouring `page`, and sits
+      // far above any realistic arrest history.
+      var ARREST_DRILL_MAX_PAGES = 40;
+
       // Step-2 fetch: load citations or arrest reports for a picked civilian.
       function loadDrillItems(tab, civilian) {
         var d = callPicker.drill[tab];
@@ -1516,18 +1523,45 @@
             })
             .catch(function () { d.loading = false; renderCallPicker(); });
         } else if (tab === 'arrestReport') {
-          fetch(apiUrl + '/api/v1/arrest-report/arrestee/' + encodeURIComponent(civilian._id) + '?limit=50&page=0', { headers: authHeaders() })
-            .then(function (r) { return r.ok ? r.json() : { data: [] }; })
-            .then(function (j) {
-              var rows = (j && j.data) || [];
-              rows.sort(function (a, b) {
-                var aT = (a.arrestReport && a.arrestReport.createdAt) ? new Date(a.arrestReport.createdAt).getTime() : 0;
-                var bT = (b.arrestReport && b.arrestReport.createdAt) ? new Date(b.arrestReport.createdAt).getTime() : 0;
-                return bT - aT;
-              });
-              d.items = rows; d.loading = false; renderCallPicker();
-            })
-            .catch(function () { d.loading = false; renderCallPicker(); });
+          // Walk every page so the picker offers the civilian's full history.
+          var rows = [];
+          var totalCount = 0;
+
+          var finishArrests = function () {
+            if (d.civilian !== civilian) return; // a newer pick has superseded this
+            rows.sort(function (a, b) {
+              var aT = (a.arrestReport && a.arrestReport.createdAt) ? new Date(a.arrestReport.createdAt).getTime() : 0;
+              var bT = (b.arrestReport && b.arrestReport.createdAt) ? new Date(b.arrestReport.createdAt).getTime() : 0;
+              return bT - aT;
+            });
+            d.items = rows; d.loading = false; renderCallPicker();
+          };
+
+          var fetchArrestPage = function (page) {
+            fetch(apiUrl + '/api/v1/arrest-report/arrestee/' + encodeURIComponent(civilian._id) +
+              '?limit=' + ARREST_DRILL_PAGE_LIMIT + '&page=' + page, { headers: authHeaders() })
+              .then(function (r) { return r.ok ? r.json() : null; })
+              .then(function (j) {
+                if (d.civilian !== civilian) return;
+                var batch = (j && j.data) || [];
+                rows = rows.concat(batch);
+                if (j && typeof j.totalCount === 'number') totalCount = j.totalCount;
+
+                // A short page means we hit the end; the count check stops us as
+                // soon as we have everything even when the last page is full.
+                if (!j || batch.length < ARREST_DRILL_PAGE_LIMIT ||
+                    rows.length >= totalCount ||
+                    page + 1 >= ARREST_DRILL_MAX_PAGES) {
+                  finishArrests();
+                  return;
+                }
+                fetchArrestPage(page + 1);
+              })
+              // Keep whatever pages already landed rather than dropping the lot.
+              .catch(function () { finishArrests(); });
+          };
+
+          fetchArrestPage(0);
         }
       }
 
