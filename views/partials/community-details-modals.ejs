@@ -5108,10 +5108,21 @@ async function confirmTransferOwnership(newOwnerId) {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to transfer ownership: ${response.status}`);
+      // The API error envelope is { response: { message, error } }. Reading a
+      // bare data.message found nothing, so the real reason was dropped and the
+      // toast fell back to the bare status code — and because the fallback
+      // already carried the "Failed to transfer ownership" prefix that the
+      // catch below adds, users saw it twice. Throw only the reason here.
+      let reason = '';
+      try {
+        const data = await response.json();
+        reason = (data && data.response && data.response.message) || (data && data.message) || '';
+      } catch (parseError) {
+        // Non-JSON body (gateway or proxy error page) — fall back to the status.
+      }
+      throw new Error(reason || `HTTP ${response.status}`);
     }
-    
+
     // Hide loading overlay
     hideTransferOwnershipLoading();
     
