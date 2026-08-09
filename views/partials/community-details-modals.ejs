@@ -1235,6 +1235,30 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+      // Extracts the reason a request failed, for any endpoint this page talks to.
+      //
+      // The police-cad API (Go) wraps errors as { response: { message, error } },
+      // while this site's own Express routes answer with a top-level { message }
+      // or { error }. Reading a bare data.message therefore found nothing on
+      // every Go API failure: the real explanation was dropped and callers fell
+      // back to showing just an HTTP status code.
+      //
+      // Returns a bare reason carrying no prefix of its own, so callers add
+      // their own "Failed to X: " context exactly once. Never throws — a
+      // non-JSON body (gateway or proxy error page) degrades to the status
+      // instead of leaking "Unexpected token '<'" into a toast.
+      async function apiErrorReason(response) {
+        try {
+          const data = await response.json();
+          return (data && data.response && data.response.message)
+            || (data && data.message)
+            || (data && data.error)
+            || `HTTP ${response.status}`;
+        } catch (parseError) {
+          return `HTTP ${response.status}`;
+        }
+      }
+
       // Modal Event Listeners
       document.addEventListener('DOMContentLoaded', function() {
         // Notification button click handler
@@ -1345,8 +1369,7 @@
           });
 
           if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.message || 'Failed to send request');
+            throw new Error(await apiErrorReason(response));
           }
 
           // Step 2: Send notifications to admins/managers
@@ -1471,8 +1494,7 @@
           });
 
           if (!response.ok) {
-            const data = await response.json();
-            throw new Error(`Failed to send pending community request. Message: ${data.message}. Code: ${response.status}`);
+            throw new Error(await apiErrorReason(response));
           }
 
           const data = await response.json();
@@ -1606,10 +1628,7 @@
         })
           .then(async (response) => {
             if (!response.ok) {
-              const data = await response.json();
-              throw new Error(
-                `Failed to remove user from community.\n\nMessage: ${data.message}.\nCode: ${response.status}`
-              );
+              throw new Error(await apiErrorReason(response));
             }
             return response.json();
           })
@@ -2919,8 +2938,7 @@ async function loadRoles() {
     const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles`);
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to fetch roles: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     const data = await response.json();
@@ -3079,8 +3097,7 @@ async function saveRolesOrder() {
     });
 
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || 'Failed to reorder roles');
+      throw new Error(await apiErrorReason(response));
     }
 
     isRolesEditMode = false;
@@ -3195,8 +3212,7 @@ async function createRole() {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to create role: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     const data = await response.json();
@@ -3243,8 +3259,7 @@ async function goToStep2() {
     });
     
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to create role');
+      throw new Error(await apiErrorReason(response));
     }
     
     const createdRole = await response.json();
@@ -3299,8 +3314,7 @@ async function loadCreateRoleMembers() {
     const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/members?page=${createRoleCurrentPage}&limit=20`);
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to fetch members: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     const data = await response.json();
@@ -3505,8 +3519,7 @@ async function finishCreateRole() {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to add members: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     showToast('Role created successfully with members!', 3000, 'success');
@@ -3573,8 +3586,7 @@ async function updateRoleName(roleId, newName) {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to update role name: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     showToast('Role name updated successfully!', 3000, 'success');
@@ -3621,8 +3633,7 @@ async function deleteRole(roleId) {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to delete role: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     showToast('Role deleted successfully!', 3000, 'success');
@@ -3977,8 +3988,7 @@ async function loadBans() {
     const response = await fetch(`${apiUrl}/api/v2/community/${communityId}/banned-users`);
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to fetch banned users: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     const data = await response.json();
@@ -4195,8 +4205,7 @@ async function submitRequireEdits() {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || 'Failed to submit require edits');
+      throw new Error(await apiErrorReason(response));
     }
     
     showToast('Edits required successfully', 3000, 'success');
@@ -4225,8 +4234,7 @@ async function approveCivilian(civilianId) {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || 'Failed to approve civilian');
+      throw new Error(await apiErrorReason(response));
     }
     
     showToast('Civilian approved successfully', 3000, 'success');
@@ -4253,8 +4261,7 @@ async function denyCivilian(civilianId) {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || 'Failed to deny civilian');
+      throw new Error(await apiErrorReason(response));
     }
     
     showToast('Civilian denied successfully', 3000, 'success');
@@ -4273,8 +4280,7 @@ async function loadCivilianApprovals(page = 0) {
     const response = await fetch(`${apiUrl}/api/v1/civilian/pending-approvals?communityId=${communityId}&page=${page}&limit=10`);
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to fetch pending approvals: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     const data = await response.json();
@@ -4853,8 +4859,7 @@ async function saveCivilianDetails() {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || 'Failed to update civilian');
+      throw new Error(await apiErrorReason(response));
     }
     
     showToast('Civilian details updated successfully!', 3000, 'success');
@@ -4891,8 +4896,7 @@ async function approveCivilian(civId) {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to approve civilian: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     showToast('Civilian approved successfully!', 3000, 'success');
@@ -4926,8 +4930,7 @@ async function denyCivilian(civId) {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to deny civilian: ${error.message}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     showToast('Civilian denied successfully!', 3000, 'success');
@@ -4961,8 +4964,7 @@ async function requireEditsCivilian(civId) {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to require edits: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     showToast('Edit request sent successfully!', 3000, 'success');
@@ -5108,19 +5110,7 @@ async function confirmTransferOwnership(newOwnerId) {
     });
     
     if (!response.ok) {
-      // The API error envelope is { response: { message, error } }. Reading a
-      // bare data.message found nothing, so the real reason was dropped and the
-      // toast fell back to the bare status code — and because the fallback
-      // already carried the "Failed to transfer ownership" prefix that the
-      // catch below adds, users saw it twice. Throw only the reason here.
-      let reason = '';
-      try {
-        const data = await response.json();
-        reason = (data && data.response && data.response.message) || (data && data.message) || '';
-      } catch (parseError) {
-        // Non-JSON body (gateway or proxy error page) — fall back to the status.
-      }
-      throw new Error(reason || `HTTP ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
 
     // Hide loading overlay
@@ -5200,8 +5190,7 @@ async function confirmUnbanUser(userId) {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to unban user: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     showToast('User unbanned successfully!', 3000, 'success');
@@ -5295,8 +5284,7 @@ async function saveRolePermissions() {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to update permissions: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     showToast('Permissions updated successfully!', 3000, 'success');
@@ -5335,8 +5323,7 @@ async function loadRoleMembers() {
     const response = await fetch(`${apiUrl}/api/v2/community/${communityId}/roles/${currentRole._id}/members?page=1&limit=100`);
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.Response?.Message || data.message || `Failed to fetch role members: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     const data = await response.json();
@@ -5595,8 +5582,7 @@ async function addMemberToRole(memberId) {
     });
 
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to add member: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
 
     showToast('Member added to role successfully!', 3000, 'success');
@@ -5633,8 +5619,7 @@ async function performRemoveMemberFromRole(memberId) {
     });
     
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || `Failed to remove member: ${response.status}`);
+      throw new Error(await apiErrorReason(response));
     }
     
     showToast('Member removed from role successfully!', 3000, 'success');
@@ -6265,14 +6250,13 @@ async function createInviteCode() {
     });
 
     if (!response.ok) {
-      const data = await response.json();
       // Handle duplicate invite code - auto-regenerate and notify user
       if (response.status === 409) {
         generateInviteCode();
         showToast('Code already exists. A new code has been generated.', 3000, 'error');
         return;
       }
-      throw new Error(data.message || 'Failed to create invite code');
+      throw new Error(await apiErrorReason(response));
     }
 
     // Show success modal
@@ -6291,7 +6275,7 @@ async function createInviteCode() {
     showToast('Invite code created successfully!', 3000, 'success');
   } catch (error) {
     console.error('Error creating invite code:', error);
-    showToast(error.message || 'Failed to create invite code', 3000, 'error');
+    showToast(`Failed to create invite code: ${error.message}`, 3000, 'error');
   }
 }
 
@@ -10915,8 +10899,7 @@ async function saveEditEvent() {
       body: JSON.stringify(payload)
     });
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to update event');
+      throw new Error(await apiErrorReason(res));
     }
     const data = await res.json();
     // Store the event ID before closing the modal (which sets currentEditEvent to null)
@@ -12745,7 +12728,12 @@ async function saveEditEvent() {
             // Close modal after successful save
             closeFineSettingsModal();
           } else {
-            throw new Error(data.message || 'Failed to update fine settings');
+            // This chain parses the body without checking response.ok, so a
+            // failure lands here with the API's error envelope in `data`. Only
+            // the else branch reads it — the success test above is untouched.
+            throw new Error(
+              (data.response && data.response.message) || data.message || 'Failed to update fine settings'
+            );
           }
         })
         .catch(err => {
@@ -13680,8 +13668,7 @@ async function saveEditEvent() {
           });
 
           if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.message || `Failed to kick member: ${response.status}`);
+            throw new Error(await apiErrorReason(response));
           }
 
           const data = await response.json();
@@ -13746,8 +13733,7 @@ async function saveEditEvent() {
           });
 
           if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.message || `Failed to ban member: ${response.status}`);
+            throw new Error(await apiErrorReason(response));
           }
 
           const data = await response.json();
