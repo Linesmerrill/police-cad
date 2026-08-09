@@ -684,3 +684,58 @@ export async function clearPendingDeletionTestCommunity(): Promise<void> {
     );
   });
 }
+
+// ---------------------------------------------------------------------------
+// Arrest reports
+// ---------------------------------------------------------------------------
+
+/**
+ * Seed `count` arrest reports against one arrestee.
+ *
+ * GET /api/v1/arrest-report/arrestee/{id} is paginated and defaults to 10 per
+ * page, so any surface that renders a civilian's full history needs more than
+ * one page of fixtures to prove it walks them all.
+ */
+export async function createTestArrestReports(opts: {
+  civilianId: string;
+  civilianName?: string;
+  count: number;
+  departmentId?: string;
+  reportPrefix?: string;
+}): Promise<string[]> {
+  const now = new Date();
+  const prefix = opts.reportPrefix ?? 'AR-PAGE';
+  const docs = Array.from({ length: opts.count }, (_, i) => ({
+    _id: new ObjectId(),
+    arrestReport: {
+      reportNumber: `${prefix}-${String(i + 1).padStart(3, '0')}`,
+      arrestDate: '01/15/2026',
+      arrestLocation: 'Test Highway',
+      arrestee: { id: opts.civilianId, name: opts.civilianName ?? 'E2E Arrestee' },
+      officer: { name: 'Test User', badgeNumber: 'T-1' },
+      officerID: TEST_USER_ID,
+      activeCommunityID: TEST_COMMUNITY_ID,
+      departmentId: opts.departmentId ?? '',
+      charges: `E2E Charge ${i + 1}`,
+      narrative: `E2E arrest report #${i + 1} for pagination coverage.`,
+      createdAt: new Date(now.getTime() + i * 1000),
+      updatedAt: new Date(now.getTime() + i * 1000),
+    },
+    __v: 0,
+  }));
+
+  await withDb(async (db) => {
+    await db.collection('arrestreports').insertMany(docs);
+  });
+
+  return docs.map((d) => d._id.toHexString());
+}
+
+/** Remove every arrest report seeded against an arrestee. */
+export async function deleteArrestReportsByArresteeId(civilianId: string): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('arrestreports').deleteMany({
+      'arrestReport.arrestee.id': civilianId,
+    });
+  });
+}
