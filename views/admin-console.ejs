@@ -12138,16 +12138,46 @@
           });
       }
 
-      function fetchBetaFeedback(flag, status) {
+      // opts.silent reconciles with the server WITHOUT tearing the panel down.
+      // The loading state swaps the whole section out, which after a card action
+      // reads as the page reloading itself several seconds after the click — so
+      // only the initial load and tab switches are allowed to show it.
+      function fetchBetaFeedback(flag, status, opts) {
+        var silent = !!(opts && opts.silent);
         var apiUrl = '<%= POLICE_CAD_API_URL %>' + '/api/v1/admin/beta-feedback?flag=' + encodeURIComponent(flag) +
           '&status=' + encodeURIComponent(status || 'open') + '&limit=100';
-        $('#bfb-loading').show();
-        $('#bfb-content').hide();
+        if (!silent) {
+          $('#bfb-loading').show();
+          $('#bfb-content').hide();
+        }
         $.ajax({ url: apiUrl, method: 'GET' })
           .done(function(resp) { renderBetaFeedback(resp || {}); })
           .fail(function() {
+            // A silent refresh is only ever reconciling an update the user has
+            // already seen applied, so a failure must not blank the panel out
+            // from under them. Their optimistic view stays; the next load fixes it.
+            if (silent) return;
             $('#bfb-loading').html('<i class="fas fa-triangle-exclamation"></i> Failed to load feedback.');
           });
+      }
+
+      // Nudges the Open/Resolved pill counts without waiting for a round trip.
+      function bfbAdjustStatusCounts(openDelta, resolvedDelta) {
+        [['open', openDelta], ['resolved', resolvedDelta]].forEach(function(pair) {
+          if (!pair[1]) return;
+          var $el = $('[data-status-count="' + pair[0] + '"]');
+          var next = (parseInt($el.text(), 10) || 0) + pair[1];
+          $el.text(next < 0 ? 0 : next);
+        });
+      }
+
+      // Keeps the "N comments" label and the empty state honest after a card
+      // is added or pulled from the list.
+      function bfbSyncListChrome() {
+        var n = $('#bfb-entries .bfb-card').length;
+        $('#bfb-count').text(n + (n === 1 ? ' comment' : ' comments'));
+        if (n) $('#bfb-empty').hide();
+        else $('#bfb-empty').show();
       }
 
       function renderBetaFeedback(resp) {
@@ -12242,15 +12272,66 @@
         );
       }
 
+      // Resolve/reopen applies to the DOM immediately. The round trip behind this
+      // is two hops (here -> our Express route -> the API), so waiting for it left
+      // the click looking dead for seconds and then blanking the panel — which
+      // read as an unprompted page refresh that ate the comment.
       function resolveBetaFeedback(id, resolved) {
+        var $card = $('#bfb-entries .bfb-card[data-id="' + id + '"]');
+        // Remember exactly where the card sat so a failed request can put it back.
+        var $anchor = $card.prev();
+        var $list = $card.parent();
+        // Resolving drops the card out of the Open list (and reopening out of
+        // Resolved); under "All" it stays put and just changes state.
+        var leavesList = (currentFeedbackStatus === 'open' && resolved) ||
+                         (currentFeedbackStatus === 'resolved' && !resolved);
+        var openDelta = resolved ? -1 : 1;
+        var resolvedDelta = resolved ? 1 : -1;
+
+        // Block repeat clicks during the in-flight window.
+        $card.find('.bfb-action').prop('disabled', true).css('pointer-events', 'none');
+
+        if (leavesList) {
+          $card.detach();
+        } else {
+          // Repaint in place so the pill, dimming and button flip are immediate.
+          $card.css('opacity', resolved ? '0.55' : '1');
+          var $btn = $card.find('.bfb-action[data-action="resolve"], .bfb-action[data-action="reopen"]');
+          $btn.attr({
+            'data-action': resolved ? 'reopen' : 'resolve',
+            title: resolved ? 'Reopen' : 'Mark resolved',
+            'aria-label': resolved ? 'Reopen' : 'Mark resolved',
+          }).data('action', resolved ? 'reopen' : 'resolve');
+          $btn.find('i').attr('class', 'fas ' + (resolved ? 'fa-rotate-left' : 'fa-check') );
+        }
+        bfbAdjustStatusCounts(openDelta, resolvedDelta);
+        bfbSyncListChrome();
+
         $.ajax({
           url: '/admin/beta-feedback/' + encodeURIComponent(id),
           method: 'PATCH',
           contentType: 'application/json',
           data: JSON.stringify({ resolved: !!resolved }),
         })
-          .done(function() { fetchBetaFeedback(currentFeedbackFlag, currentFeedbackStatus); })
-          .fail(function() { showBfbErrorToast('Failed to update feedback'); });
+          .done(function() {
+            // Reconcile quietly; the user already sees the result.
+            fetchBetaFeedback(currentFeedbackFlag, currentFeedbackStatus, { silent: true });
+          })
+          .fail(function() {
+            // Put the optimistic change back rather than leaving a lie on screen.
+            if (leavesList) {
+              if ($anchor.length) $anchor.after($card);
+              else $list.prepend($card);
+            }
+            bfbAdjustStatusCounts(-openDelta, -resolvedDelta);
+            bfbSyncListChrome();
+            $card.find('.bfb-action').prop('disabled', false).css('pointer-events', '');
+            if (!leavesList) {
+              // Re-render from the server so the repainted card cannot drift.
+              fetchBetaFeedback(currentFeedbackFlag, currentFeedbackStatus, { silent: true });
+            }
+            showBfbErrorToast('Failed to update feedback');
+          });
       }
 
       function confirmDeleteBetaFeedback(id) {
@@ -12276,9 +12357,11 @@
           .done(function() {
             // Optimistically pull the card out of view so the list shrinks immediately.
             $('#bfb-entries .bfb-card[data-id="' + id + '"]').remove();
+            bfbSyncListChrome();
             showBfbUndoToast(id);
-            // Refresh counts in the background.
-            fetchBetaFeedback(currentFeedbackFlag, currentFeedbackStatus);
+            // Refresh counts in the background — silently, so the panel does not
+            // blank out seconds after the delete already appeared to succeed.
+            fetchBetaFeedback(currentFeedbackFlag, currentFeedbackStatus, { silent: true });
           })
           .fail(function() { showBfbErrorToast('Failed to delete feedback'); });
       }
@@ -12290,7 +12373,9 @@
         })
           .done(function() {
             hideBfbToast();
-            fetchBetaFeedback(currentFeedbackFlag, currentFeedbackStatus);
+            // Undo has to restore the card, so this refresh is the thing that
+            // renders it — but it still should not tear the panel down.
+            fetchBetaFeedback(currentFeedbackFlag, currentFeedbackStatus, { silent: true });
           })
           .fail(function() { showBfbErrorToast('Undo failed'); });
       }
