@@ -842,7 +842,7 @@
             <i class="fas fa-users"></i> Users
           </div>
           <div class="ac-nav-item" data-panel="pending-users">
-            <i class="fas fa-user-clock"></i> Pending Users
+            <i class="fas fa-user-clock"></i> Unverified Emails
           </div>
           <div class="ac-nav-item" data-panel="communities">
             <i class="fas fa-building"></i> Communities
@@ -978,8 +978,8 @@
                 <i class="fas fa-user-clock"></i>
               </div>
               <div class="ac-quick-action-text">
-                <strong>Pending Users</strong>
-                <span>Review verification requests</span>
+                <strong>Unverified Emails</strong>
+                <span>Find accounts locked out by email verification</span>
               </div>
             </a>
             <a class="ac-quick-action" href="#" onclick="acNavTo('communities'); return false;">
@@ -1048,17 +1048,17 @@
           </div>
         </div>
 
-        <!-- Panel: Pending Users -->
+        <!-- Panel: Unverified Emails (internal keys stay "pending-users") -->
         <div class="ac-panel" id="panel-pending-users">
           <div class="ac-card">
             <div class="ac-card-body">
               <div class="row">
                 <div class="col-md-8">
-                  <input type="text" id="pendingUserSearch" class="form-control ac-input" placeholder="Search pending users by email address..." />
+                  <input type="text" id="pendingUserSearch" class="form-control ac-input" placeholder="Search unverified accounts by email address..." />
                 </div>
                 <div class="col-md-4">
                   <button type="button" id="searchPendingUsersBtn" class="ac-btn ac-btn-accent ac-btn-block">
-                    <i class="fas fa-search"></i> Search Pending Users
+                    <i class="fas fa-search"></i> Search Unverified
                   </button>
                 </div>
               </div>
@@ -1322,6 +1322,10 @@
               <a class="aw-nav-link" href="#lookup-user">Look Up a User</a>
               <a class="aw-nav-link" href="#reset-password">Reset Password</a>
               <a class="aw-nav-link" href="#reactivate-account">Reactivate Account</a>
+              <!-- The hidden span keeps the old name searchable: filterAdminWiki matches
+                   link.textContent, which includes display:none text, so anyone who still
+                   types "pending users" is led to the renamed article instead of nothing. -->
+              <a class="aw-nav-link" href="#unverified-emails">Unverified Emails<span style="display:none;"> pending users</span></a>
 
               <div class="aw-nav-group-title">Community Management</div>
               <a class="aw-nav-link" href="#lookup-community">Look Up a Community</a>
@@ -1395,7 +1399,7 @@
                       <div class="aw-step-number">3</div>
                       <div>
                         <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Navigate using the sidebar</div>
-                        <div class="aw-text">The left sidebar groups panels into Lookup (Users, Pending Users, Communities) and Management (Cases, Wiki, Content Creators, etc.). Click any item to switch panels. The header title updates to reflect the active panel.</div>
+                        <div class="aw-text">The left sidebar groups panels into Lookup (Users, Unverified Emails, Communities) and Management (Cases, Wiki, Content Creators, etc.). Click any item to switch panels. The header title updates to reflect the active panel.</div>
                       </div>
                     </div>
                   </div>
@@ -1559,6 +1563,78 @@
                           <div style="display:flex; align-items:center; gap:0.5rem;">
                             <span class="aw-badge aw-badge-deactivated">Deactivated</span>
                             <div class="aw-btn aw-btn-green" style="font-size:0.75rem; padding:0.35rem 0.75rem;"><i class="fas fa-user-check"></i> Reactivate</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Unverified Emails -->
+                <div class="aw-subsection" id="unverified-emails">
+                  <h3 class="aw-subsection-title">Unverified Emails</h3>
+                  <p class="aw-text">This panel lists people who created an account but never clicked the verification link in their signup email. <strong>They cannot log in</strong> until that email is verified, so every account here is someone locked out of an account they already registered. It was previously labelled "Pending Users", which led people to think it was about the old six-digit signup codes. It is not — those are gone, and this panel has always been about email verification.</p>
+                  <p class="aw-text">Signup creates the account immediately with its email marked unverified. Clicking the link in the email flips it to verified; until then the login page turns them away. Searching here matches the email address, is case-insensitive, and matches partial strings, so "gmail" returns every unverified gmail address.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Open Unverified Emails</div>
+                        <div class="aw-text">Click "Unverified Emails" in the sidebar under the Lookup section.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Search the address they gave you</div>
+                        <div class="aw-text">Enter the email address and click Search. If nothing comes back, the account either does not exist or is already verified &mdash; use the "Check Registered Users" button on the empty state to look in the Users panel instead.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Confirm it is the right person</div>
+                        <div class="aw-text">Check the email on the result card against the address the user contacted you from. Verifying the wrong account hands someone access to an account that is not theirs.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">4</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click "Verify"</div>
+                        <div class="aw-text">This marks the email verified straight away and clears the pending verification token. The user can log in immediately &mdash; no further email is sent, so tell them to go ahead and sign in.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Reach for this when a user says <em>"I signed up but it won't let me log in"</em> or <em>"I never got the verification email"</em>. Ask them to check spam first &mdash; a delivered email they simply missed is the common case, and letting them click the link keeps the normal proof of ownership intact.</div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-shield-alt"></i></div>
+                    <div class="aw-tip-text">Clicking Verify <strong>skips the proof that they own that inbox</strong> &mdash; that is the whole point of the check you are bypassing. Only do it once you are satisfied the person asking is the account holder. If they typed their address wrong at signup, verifying does <strong>not</strong> fix it: they would end up verified on an address they cannot receive mail at, and future password resets would go nowhere. Correct the address on the account instead.</div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-info-circle"></i></div>
+                    <div class="aw-tip-text">Accounts created before email verification existed have no verified flag at all, and are treated as verified. They will never show up in this panel, which is expected &mdash; an older account that cannot log in is a different problem, so look at Reset Password or Reactivate Account.</div>
+                  </div>
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: Unverified Account Result</div>
+                    <div class="aw-sample-content">
+                      <div class="aw-form-group">
+                        <div style="display:flex; gap:0.5rem;">
+                          <div style="flex:1;"><input class="aw-form-input" value="john_doe@email.com" readonly></div>
+                          <div class="aw-btn aw-btn-accent"><i class="fas fa-search"></i> Search Unverified</div>
+                        </div>
+                      </div>
+                      <div style="background:var(--ac-glass); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius-sm); padding:0.875rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <div>
+                            <div style="font-weight:600; color:#fff; font-size:0.85rem;">john_doe@email.com</div>
+                            <div style="font-size:0.75rem; color:var(--ac-text-muted);">Registered 3 days ago</div>
+                          </div>
+                          <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <span class="aw-badge aw-badge-deactivated">Unverified</span>
+                            <div class="aw-btn aw-btn-outline" style="font-size:0.75rem; padding:0.35rem 0.75rem;">Verify</div>
                           </div>
                         </div>
                       </div>
@@ -4585,7 +4661,7 @@
       const panelTitleMap = {
         'dashboard': 'Dashboard',
         'users': 'Users',
-        'pending-users': 'Pending Users',
+        'pending-users': 'Unverified Emails',
         'communities': 'Communities',
         'cases': 'Cases',
         'content-creators': 'Content Creators',
@@ -6822,7 +6898,7 @@
       $('#searchPendingUsersBtn').click(function() {
         const query = $('#pendingUserSearch').val().trim();
         if (!query) {
-          showInfoModal('Search Required', 'Please enter an email address to search for pending users.');
+          showInfoModal('Search Required', 'Please enter an email address to search for unverified accounts.');
           return;
         }
         // Reset pagination for new search
@@ -7167,11 +7243,11 @@
                     <div class="no-users-suggestion">
                       <p style="color: #a0aec0; font-size: 0.9rem; margin-bottom: 1rem;">
                         <i class="fas fa-info-circle" style="margin-right: 0.5rem; color: #667eea;"></i>
-                        If this user is still pending verification, you can check the Pending Users tab.
+                        If this user never verified their email, you can check the Unverified Emails tab.
                       </p>
                       <button class="btn btn-gradient btn-sm" onclick="switchToPendingUsers('${escapeHtml(query)}')">
                         <i class="fas fa-user-clock" style="margin-right: 0.5rem;"></i>
-                        Check Pending Users
+                        Check Unverified Emails
                       </button>
                     </div>
                   </div>
@@ -7296,7 +7372,7 @@
         searches.forEach(search => {
           const safeQuery = escapeHtml(search.query);
           const safeType = escapeHtml(search.type);
-          const typeLabel = search.type === 'users' ? 'Users' : search.type === 'pending_users' ? 'Pending Users' : 'Communities';
+          const typeLabel = search.type === 'users' ? 'Users' : search.type === 'pending_users' ? 'Unverified Emails' : 'Communities';
           html += `
             <div class="recent-search-item" onclick="performRecentSearch('${safeQuery}', '${safeType}')">
               <span class="search-text">${safeQuery}</span>
