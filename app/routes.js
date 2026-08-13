@@ -1,3 +1,4 @@
+var rateLimit = require("express-rate-limit");
 var User = require("../app/models/user");
 var Civilian = require("../app/models/civilian");
 var Vehicle = require("../app/models/vehicle");
@@ -4826,9 +4827,23 @@ module.exports = function (app, passport, server, nextApp, handle) {
   //
   // The index identifies which platform entry on their application, so it is
   // validated here rather than passed through blind.
+  // Tighter than the global 500/5min limiter on purpose. verify-check makes an
+  // outbound call to YouTube or Twitch every time, so an unthrottled caller
+  // could burn the daily API quota — which stalls verification for everyone,
+  // not just themselves. A real applicant needs a handful of attempts while
+  // they edit their channel, nowhere near this.
+  const verificationLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many verification attempts. Please wait a few minutes and try again." },
+  });
+
   ["verify-start", "verify-check"].forEach(function (action) {
     app.post(
       `/api/v1/content-creator-applications/me/platforms/:index/${action}`,
+      verificationLimiter,
       apiAuthCheck,
       async function (req, res) {
         const index = String(req.params.index || "");

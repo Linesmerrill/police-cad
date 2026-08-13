@@ -120,7 +120,11 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Subresource integrity: if the CDN copy is ever tampered with, the browser
+       refuses it rather than executing it on an admin-authenticated page. -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+          integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+          crossorigin="anonymous"></script>
   <script>
     const API_BASE = '<%= POLICE_CAD_API_URL %>';
     const APPLICATION_ID = '<%= applicationId %>';
