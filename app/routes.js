@@ -648,6 +648,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       });
     }
     res.render("admin-creator-application", {
+      // standalone-utility reads `user` for the avatar. Admin sessions are
+      // separate from passport, so this may be absent; the partial copes.
+      user: req.user || null,
       admin: req.session.admin,
       applicationId: id,
       POLICE_CAD_API_URL: process.env.POLICE_CAD_API_URL,

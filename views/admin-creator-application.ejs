@@ -114,7 +114,12 @@
   </style>
 </head>
 <body>
-  <%- include('partials/standalone-utility') %>
+  <%- include('partials/standalone-utility', {
+        backHref: '/admin/console',
+        backLabel: 'Back to Admin Console',
+        brandHref: '/admin/console',
+        pageLabel: 'Creator Application'
+      }) %>
 
   <div class="wrap">
     <a class="back" href="/admin/console"><i class="fas fa-arrow-left"></i> Back to Admin Console</a>
