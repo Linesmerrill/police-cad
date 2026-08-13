@@ -26,6 +26,10 @@
     body {
       margin: 0; background: var(--ac-bg); color: var(--ac-text);
       font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      /* standalone-utility is position:fixed at 36px tall; its own docs require
+         pages to clear it. Without this the strip covered the page heading. */
+      padding-top: 36px;
+      -webkit-text-size-adjust: 100%;
     }
     .wrap { max-width: 1000px; margin: 0 auto; padding: 24px 20px 80px; }
     a { color: var(--ac-accent); text-decoration: none; }
@@ -79,6 +83,25 @@
     .banner { border-radius: 10px; padding: 13px 16px; font-size: 0.9rem; margin-bottom: 18px; }
     .banner-ready { color: var(--ac-green); background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.28); }
     .banner-block { color: var(--ac-amber); background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.28); }
+
+    /* Phones. The action clusters cannot sit beside their text without
+       squeezing both, so every row stacks and buttons go full width -- they are
+       destructive-ish controls and deserve a real tap target. */
+    @media (max-width: 640px) {
+      .wrap { padding: 16px 14px 64px; }
+      h1 { font-size: 1.35rem; }
+      .card { padding: 16px; border-radius: 12px; }
+      .grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .row { flex-direction: column; align-items: stretch; gap: 10px; }
+      .row-main { min-width: 0; }
+      .actions { width: 100%; }
+      .actions .btn { flex: 1; text-align: center; min-height: 38px; }
+      .sub { font-size: 0.85rem; }
+      code { overflow-wrap: anywhere; }
+    }
+    @media (max-width: 380px) {
+      .grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>

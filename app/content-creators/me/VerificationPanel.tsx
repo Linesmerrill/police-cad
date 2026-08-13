@@ -5,11 +5,11 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
-  UserGroupIcon,
   ClipboardDocumentIcon,
   ArrowPathIcon,
   ChevronDownIcon,
   ArrowTopRightOnSquareIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 
 // Mirrors models.ApplicationCheck. Reason is written for the applicant by the
@@ -38,14 +38,23 @@ export interface VerifiablePlatform {
 interface Props {
   platforms: VerifiablePlatform[];
   checks?: ApplicationCheck[];
+  minFollowers?: number;
   onRefresh: () => void;
 }
 
-const CHECK_LABELS: Record<string, string> = {
-  channel_resolves: 'Channel found',
-  ownership: 'Channel ownership',
-  followers: 'Follower requirement',
-};
+// Result of the last Check press, kept as three independent answers rather than
+// one verdict. A single "could not verify" left people unable to tell a wrong
+// handle from an unsaved description from a channel that is simply too small.
+interface CheckResult {
+  channelFound?: boolean;
+  followersOk?: boolean;
+  codeFound?: boolean;
+  channelMessage?: string;
+  followerMessage?: string;
+  codeMessage?: string;
+}
+
+const DEFAULT_MIN_FOLLOWERS = 500;
 
 // Platforms with no public API. Their Check button would always come back
 // "waiting for a human", so we say that instead of offering a button that does
@@ -57,25 +66,23 @@ const MANUAL_PLATFORMS = ['tiktok', 'other'];
 // verify-start response to read them from. Keep the two in step.
 const INSTRUCTIONS: Record<string, string> = {
   youtube:
-    'Add this code anywhere in your YouTube channel description (YouTube Studio → Customization → Profile → Description), save, then click Check. You can remove it once verified.',
+    'Add this code anywhere in your YouTube channel description (YouTube Studio → Customization → Profile → Description), save, then press Check.',
   twitch:
-    'Add this code anywhere in your Twitch About panel / bio (Settings → Channel → About), save, then click Check. You can remove it once verified.',
+    'Add this code anywhere in your Twitch About panel / bio (Settings → Channel → About), save, then press Check.',
   tiktok:
-    'Add this code anywhere in your TikTok bio and leave it there. TikTok has no public API, so a member of our team confirms it by eye during review.',
+    'Add this code anywhere in your TikTok bio and leave it there. TikTok has no public API, so our team confirms it by eye.',
 };
 
 function instructionFor(type: string) {
   return (
     INSTRUCTIONS[(type || '').toLowerCase()] ||
-    'Add this code to your channel or profile bio and leave it there. A member of our team confirms it during review.'
+    'Add this code to your channel or profile bio and leave it there. Our team confirms it during review.'
   );
 }
 
-// The click path per platform. The one-line instruction above assumes you
-// already know where these settings live; most people don't, and a failed check
-// they can't diagnose is the thing that makes someone give up.
-//
-// Bold marks the exact label to look for on screen.
+// The click path per platform. The one-line instruction assumes you already know
+// where these settings live; most people don't, and a failed check they can't
+// diagnose is what makes someone give up.
 const STEPS: Record<string, { text: string; bold?: boolean }[][]> = {
   youtube: [
     [{ text: 'Open ' }, { text: 'studio.youtube.com', bold: true }, { text: ', signed in as the channel you listed.' }],
@@ -98,7 +105,7 @@ const STEPS: Record<string, { text: string; bold?: boolean }[][]> = {
     [{ text: 'Go to ' }, { text: 'Profile', bold: true }, { text: ', then ' }, { text: 'Edit profile', bold: true }, { text: '.' }],
     [{ text: 'Paste the code into your ' }, { text: 'Bio', bold: true }, { text: '.' }],
     [{ text: 'Save.' }],
-    [{ text: 'Leave the code in place. TikTok has no public API, so our team confirms it by eye during review — there is no Check button for TikTok.' }],
+    [{ text: 'Leave the code in place. TikTok has no public API, so our team confirms it by eye — there is no Check button for TikTok.' }],
   ],
 };
 
@@ -113,9 +120,8 @@ function stepsFor(type: string) {
   );
 }
 
-// Mirrors NormalizeHandle in the API's platforms package. People paste full
-// URLs, @names and bare names into the handle field, and the API strips all of
-// that before looking the channel up.
+// Mirrors NormalizeHandle in the API's platforms package, so the link resolves
+// the same way the lookup does.
 function normalizeHandle(raw: string): string {
   let h = (raw || '').trim();
   if (!h) return '';
@@ -124,7 +130,6 @@ function normalizeHandle(raw: string): string {
   const q = h.search(/[?#]/);
   if (q >= 0) h = h.slice(0, q);
   h = h.replace(/^\/+|\/+$/g, '');
-  // A first segment containing a dot is a hostname, not a handle.
   const slash = h.indexOf('/');
   if (slash > 0 && h.slice(0, slash).includes('.')) h = h.slice(slash + 1);
   for (const prefix of ['channel/', 'c/', 'user/', '@']) {
@@ -138,16 +143,14 @@ function normalizeHandle(raw: string): string {
   return h.replace(/^@/, '').trim();
 }
 
-// The URL we actually scan. Built from the handle rather than from whatever the
-// applicant typed into the url field, because the handle is what the API looks
-// up — so if this link opens the wrong channel, that IS the bug, which is the
-// point of showing it.
+// The URL we actually scan. Built from the handle rather than the url field,
+// because the handle is what the API looks up — so if this opens the wrong
+// channel, that IS the bug.
 function scannedUrlFor(p: VerifiablePlatform): string {
   const h = normalizeHandle(p.handle || p.url || '');
   if (!h) return p.url || '';
   switch ((p.type || '').toLowerCase()) {
     case 'youtube':
-      // A raw UC... id is a channel id, not a handle.
       return /^UC[\w-]{22}$/.test(h)
         ? `https://www.youtube.com/channel/${h}`
         : `https://www.youtube.com/@${h}`;
@@ -160,34 +163,100 @@ function scannedUrlFor(p: VerifiablePlatform): string {
   }
 }
 
-const STATUS_STYLE: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  passed: { color: '#4ade80', bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.3)', label: 'Passed' },
-  failed: { color: '#f87171', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', label: 'Action needed' },
-  pending: { color: '#fbbf24', bg: 'rgba(251,191,36,0.12)', border: 'rgba(251,191,36,0.3)', label: 'Checking' },
-  manual: { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.3)', label: 'Team review' },
-};
-
-function isVerified(p: VerifiablePlatform) {
+function ownershipProven(p: VerifiablePlatform) {
   return p.verificationStatus === 'verified' || p.verifiedByAdmin === true;
 }
 
-export default function VerificationPanel({ platforms, checks = [], onRefresh }: Props) {
+function meetsFollowerBar(p: VerifiablePlatform, min: number) {
+  return (p.followerCount ?? 0) >= min;
+}
+
+function titleCase(s: string) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+// The panel header used to say the same thing forever: "we confirm you own the
+// channels, add the code, hit Check". Once a channel is verified that sentence
+// is noise, and once one has failed it is actively misleading. The heading now
+// reports the state the applicant is actually in.
+function derivePanelState(
+  platforms: VerifiablePlatform[],
+  checks: ApplicationCheck[],
+  min: number
+): { tone: 'neutral' | 'good' | 'warn' | 'bad'; headline: string; sub: string } {
+  const failedCheck = checks.find((c) => c.status === 'failed');
+  const allOwned = platforms.length > 0 && platforms.every(ownershipProven);
+  const someOwned = platforms.some(ownershipProven);
+  const ownedButSmall = platforms.filter((p) => ownershipProven(p) && !meetsFollowerBar(p, min));
+
+  if (failedCheck) {
+    return {
+      tone: 'bad',
+      headline: 'Something needs your attention',
+      sub: failedCheck.reason || 'One of our checks did not pass. See the details below.',
+    };
+  }
+
+  if (allOwned && ownedButSmall.length > 0) {
+    return {
+      tone: 'warn',
+      headline: 'Channels verified, but below our follower minimum',
+      sub: `You have proved these channels are yours. They are under the ${min.toLocaleString()} follower minimum, so a member of our team will take a look and decide.`,
+    };
+  }
+
+  if (allOwned) {
+    return {
+      tone: 'good',
+      headline: 'All channels verified',
+      sub: 'Nothing left for you to do. Your application is with our team, and you can remove the codes from your channels.',
+    };
+  }
+
+  if (someOwned) {
+    const left = platforms.filter((p) => !ownershipProven(p)).length;
+    return {
+      tone: 'neutral',
+      headline: `${left} channel${left === 1 ? '' : 's'} left to verify`,
+      sub: 'Add the code to the remaining channel and press Check. You can remove codes from channels that already show as verified.',
+    };
+  }
+
+  return {
+    tone: 'neutral',
+    headline: 'Verify your channels',
+    sub: 'We confirm you own the channels on your application before it goes to review. Add the code below to your channel description, then press Check.',
+  };
+}
+
+const TONE: Record<string, { color: string; bg: string; border: string }> = {
+  neutral: { color: '#fbbf24', bg: 'rgba(251,191,36,0.07)', border: 'rgba(251,191,36,0.22)' },
+  good: { color: '#4ade80', bg: 'rgba(34,197,94,0.07)', border: 'rgba(34,197,94,0.22)' },
+  warn: { color: '#fbbf24', bg: 'rgba(251,191,36,0.09)', border: 'rgba(251,191,36,0.3)' },
+  bad: { color: '#f87171', bg: 'rgba(239,68,68,0.07)', border: 'rgba(239,68,68,0.26)' },
+};
+
+export default function VerificationPanel({
+  platforms,
+  checks = [],
+  minFollowers = DEFAULT_MIN_FOLLOWERS,
+  onRefresh,
+}: Props) {
   const [busyIndex, setBusyIndex] = useState<number | null>(null);
   const [codes, setCodes] = useState<Record<number, string>>({});
   const [instructions, setInstructions] = useState<Record<number, string>>({});
-  const [messages, setMessages] = useState<Record<number, { text: string; ok: boolean }>>({});
-  // Per-platform outcome of the last Check, split into the two questions an
-  // applicant actually needs answered.
-  const [results, setResults] = useState<
-    Record<number, { channelFound?: boolean; codeFound?: boolean; channelMessage?: string; codeMessage?: string }>
-  >({});
+  const [errors, setErrors] = useState<Record<number, string>>({});
+  const [results, setResults] = useState<Record<number, CheckResult>>({});
   const [copied, setCopied] = useState<number | null>(null);
   const [openSteps, setOpenSteps] = useState<Record<number, boolean>>({});
 
+  const state = derivePanelState(platforms, checks, minFollowers);
+  const tone = TONE[state.tone];
+
   const call = async (index: number, action: 'verify-start' | 'verify-check') => {
     setBusyIndex(index);
-    setMessages((m) => ({ ...m, [index]: { text: '', ok: true } }));
-    setResults((r) => ({ ...r, [index]: {} }));
+    setErrors((e) => ({ ...e, [index]: '' }));
+    if (action === 'verify-check') setResults((r) => ({ ...r, [index]: {} }));
     try {
       const res = await fetch(
         `/api/v1/content-creator-applications/me/platforms/${index}/${action}`,
@@ -196,10 +265,9 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        // The API writes these for the applicant; show it rather than a status code.
         const reason =
           (data && data.response && data.response.message) || data.message || data.error || `HTTP ${res.status}`;
-        setMessages((m) => ({ ...m, [index]: { text: reason, ok: false } }));
+        setErrors((e) => ({ ...e, [index]: reason }));
         return;
       }
 
@@ -209,27 +277,20 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
         return;
       }
 
-      // Two separate results, not one verdict. "Could not verify" left people
-      // unable to tell a wrong handle from an unsaved description, which is the
-      // ambiguity that turns into a support message.
       setResults((r) => ({
         ...r,
         [index]: {
           channelFound: data.channelFound,
+          followersOk: data.followersOk,
           codeFound: data.codeFound,
           channelMessage: data.channelMessage,
+          followerMessage: data.followerMessage,
           codeMessage: data.codeMessage,
         },
       }));
-
-      if (data.verified) {
-        onRefresh();
-      }
+      if (data.verified) onRefresh();
     } catch {
-      setMessages((m) => ({
-        ...m,
-        [index]: { text: 'Could not reach us just now. Try again in a moment.', ok: false },
-      }));
+      setErrors((e) => ({ ...e, [index]: 'Could not reach us just now. Try again in a moment.' }));
     } finally {
       setBusyIndex(null);
     }
@@ -245,62 +306,133 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
     }
   };
 
-  const checksFor = (p: VerifiablePlatform) =>
-    checks.filter((c) => c.platform === p.type && (!c.handle || c.handle === p.handle || c.handle === p.url));
-  const followerCheck = checks.find((c) => c.key === 'followers');
-
   return (
-    <div
-      style={{
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: '16px',
-        padding: '24px',
-        marginBottom: '24px',
-      }}
-    >
-      <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>
-        Verify your channels
-      </h3>
-      <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)', margin: '0 0 20px', lineHeight: 1.6 }}>
-        We confirm you own the channels on your application before it goes to review. Add the code
-        we give you to your channel description, then hit Check. You can remove it once verified.
-      </p>
+    <div className="vp-root">
+      {/* Real CSS rather than inline styles for anything that needs a media
+          query. The header and action rows have to stack on a phone, and inline
+          styles cannot express that. */}
+      <style>{`
+        .vp-root {
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px;
+          padding: 24px;
+          margin-bottom: 24px;
+        }
+        .vp-head { margin-bottom: 18px; }
+        .vp-head h3 {
+          font-size: 18px; font-weight: 700; color: #fff;
+          margin: 0 0 6px; line-height: 1.3;
+        }
+        .vp-head p { font-size: 14px; margin: 0; line-height: 1.6; }
+        .vp-card {
+          background: rgba(0,0,0,0.25);
+          border: 1px solid rgba(255,255,255,0.06);
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 12px;
+        }
+        .vp-card-top {
+          display: flex; justify-content: space-between;
+          align-items: flex-start; gap: 12px;
+        }
+        .vp-ident { min-width: 0; flex: 1; }
+        .vp-actions { display: flex; gap: 8px; flex-shrink: 0; }
+        .vp-btn {
+          border-radius: 8px; padding: 8px 14px; font-size: 13px;
+          font-weight: 600; cursor: pointer; font-family: inherit;
+          white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .vp-btn:disabled { opacity: 0.55; cursor: default; }
+        .vp-btn-primary { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35); color: #fbbf24; }
+        .vp-btn-ghost { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; }
+        .vp-code-row {
+          display: flex; align-items: center; gap: 10px;
+          background: rgba(251,191,36,0.08);
+          border: 1px dashed rgba(251,191,36,0.4);
+          border-radius: 10px; padding: 12px 14px;
+        }
+        .vp-code {
+          font-size: 15px; font-weight: 700; color: #fbbf24;
+          letter-spacing: 0.06em; flex: 1; min-width: 0;
+          overflow-wrap: anywhere;
+        }
+        .vp-steps {
+          margin: 10px 0 0; padding: 14px 16px 14px 32px;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 10px;
+          color: rgba(255,255,255,0.75); font-size: 13px; line-height: 1.9;
+        }
+        /* Phones: the platform name and its buttons cannot share a row without
+           squeezing the handle to nothing, so they stack. */
+        @media (max-width: 560px) {
+          .vp-root { padding: 16px; border-radius: 14px; }
+          .vp-card { padding: 14px; }
+          .vp-card-top { flex-direction: column; align-items: stretch; gap: 10px; }
+          .vp-actions { width: 100%; }
+          .vp-actions .vp-btn { flex: 1; justify-content: center; }
+          .vp-code-row { flex-direction: column; align-items: stretch; gap: 8px; }
+          .vp-code-row .vp-btn { justify-content: center; }
+          .vp-steps { padding-left: 28px; }
+        }
+      `}</style>
+
+      <div className="vp-head">
+        <h3>{state.headline}</h3>
+        <p style={{ color: state.tone === 'neutral' ? 'rgba(255,255,255,0.55)' : tone.color }}>{state.sub}</p>
+      </div>
 
       {platforms.map((p, index) => {
-        const verified = isVerified(p);
+        const owned = ownershipProven(p);
+        const bigEnough = meetsFollowerBar(p, minFollowers);
         const manual = MANUAL_PLATFORMS.includes((p.type || '').toLowerCase());
-        // Prefer a code just issued, but fall back to one already stored on the
-        // application. Without this, reloading the page hid a live code and the
-        // applicant had no way to see it again short of generating a new one.
         const code = codes[index] || p.verificationCode || '';
         const instruction = instructions[index] || (code ? instructionFor(p.type) : '');
-        const msg = messages[index];
         const result = results[index];
+        const err = errors[index];
         const label = p.handle || p.url || p.type;
+        const href = scannedUrlFor(p);
+
+        // Three answers, from the live check if there is one, otherwise from
+        // what is stored on the application.
+        const lines = [
+          {
+            ok: result?.channelFound ?? (owned ? true : undefined),
+            text: result?.channelMessage ?? (owned ? 'We reached your channel.' : undefined),
+            fallback: 'Channel reachable',
+          },
+          {
+            ok: result?.followersOk ?? (p.followerCount != null ? bigEnough : undefined),
+            text:
+              result?.followerMessage ??
+              (p.followerCount != null
+                ? bigEnough
+                  ? `${p.followerCount.toLocaleString()} followers, above the ${minFollowers.toLocaleString()} minimum.`
+                  : `${p.followerCount.toLocaleString()} followers. The program needs at least ${minFollowers.toLocaleString()}, so this channel does not qualify on its own yet.`
+                : undefined),
+            fallback: 'Follower minimum',
+          },
+          {
+            ok: result?.codeFound ?? (owned ? true : undefined),
+            text: result?.codeMessage ?? (owned ? 'You have proved this channel is yours.' : undefined),
+            fallback: 'Channel ownership',
+          },
+        ].filter((l) => l.ok !== undefined);
+
+        // Green only when every answer is yes. Ownership alone used to show a
+        // plain "Verified", which read as a pass on a channel that had failed
+        // the follower bar.
+        const allGood = owned && bigEnough;
 
         return (
-          <div
-            key={`${p.type}-${index}`}
-            style={{
-              background: 'rgba(0,0,0,0.25)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: '12px',
-              padding: '16px',
-              marginBottom: '12px',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              <div>
-                <div style={{ fontWeight: 700, color: '#fff', fontSize: '15px', textTransform: 'capitalize' }}>
-                  {p.type}
-                </div>
-                {/* Links to the channel we scan, so "we couldn't find the code"
-                    is debuggable: if this opens the wrong channel, that is the
-                    problem, not the code. */}
-                {scannedUrlFor(p) ? (
+          <div className="vp-card" key={`${p.type}-${index}`}>
+            <div className="vp-card-top">
+              <div className="vp-ident">
+                <div style={{ fontWeight: 700, color: '#fff', fontSize: '15px' }}>{titleCase(p.type)}</div>
+                {href ? (
                   <a
-                    href={scannedUrlFor(p)}
+                    href={href}
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Opens the channel we check for your code"
@@ -308,6 +440,7 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
                       fontSize: '13px', color: '#7dd3fc',
                       textDecoration: 'underline', textUnderlineOffset: '2px',
                       display: 'inline-flex', alignItems: 'center', gap: '5px',
+                      overflowWrap: 'anywhere',
                     }}
                   >
                     {label}
@@ -318,46 +451,26 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
                 )}
               </div>
 
-              {verified ? (
+              {allGood ? (
                 <span
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: '6px',
                     color: '#4ade80', background: 'rgba(34,197,94,0.12)',
                     border: '1px solid rgba(34,197,94,0.3)', borderRadius: '999px',
-                    padding: '4px 12px', fontSize: '12px', fontWeight: 700,
+                    padding: '5px 12px', fontSize: '12px', fontWeight: 700,
+                    flexShrink: 0, alignSelf: 'flex-start',
                   }}
                 >
-                  <CheckCircleIcon style={{ width: 14, height: 14 }} />
+                  <ShieldCheckIcon style={{ width: 14, height: 14 }} />
                   Verified
                 </span>
               ) : (
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    onClick={() => call(index, 'verify-start')}
-                    disabled={busyIndex === index}
-                    style={{
-                      background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.35)',
-                      color: '#fbbf24', borderRadius: '8px', padding: '8px 14px',
-                      fontSize: '13px', fontWeight: 600,
-                      cursor: busyIndex === index ? 'default' : 'pointer',
-                      opacity: busyIndex === index ? 0.6 : 1,
-                    }}
-                  >
+                <div className="vp-actions">
+                  <button className="vp-btn vp-btn-primary" onClick={() => call(index, 'verify-start')} disabled={busyIndex === index}>
                     {code ? 'New code' : 'Get code'}
                   </button>
                   {!manual && (
-                    <button
-                      onClick={() => call(index, 'verify-check')}
-                      disabled={busyIndex === index}
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '6px',
-                        background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)',
-                        color: '#fff', borderRadius: '8px', padding: '8px 14px',
-                        fontSize: '13px', fontWeight: 600,
-                        cursor: busyIndex === index ? 'default' : 'pointer',
-                        opacity: busyIndex === index ? 0.6 : 1,
-                      }}
-                    >
+                    <button className="vp-btn vp-btn-ghost" onClick={() => call(index, 'verify-check')} disabled={busyIndex === index}>
                       <ArrowPathIcon style={{ width: 14, height: 14 }} />
                       Check
                     </button>
@@ -366,27 +479,13 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
               )}
             </div>
 
-            {code && !verified && (
+            {/* Ownership done but the channel is too small: the code is no longer
+                the thing standing in their way, so stop showing it. */}
+            {code && !owned && (
               <div style={{ marginTop: '14px' }}>
-                <div
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '10px',
-                    background: 'rgba(251,191,36,0.08)', border: '1px dashed rgba(251,191,36,0.4)',
-                    borderRadius: '10px', padding: '12px 14px',
-                  }}
-                >
-                  <code style={{ fontSize: '15px', fontWeight: 700, color: '#fbbf24', letterSpacing: '0.06em', flex: 1, wordBreak: 'break-all' }}>
-                    {code}
-                  </code>
-                  <button
-                    onClick={() => copy(index, code)}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '6px',
-                      background: 'transparent', border: '1px solid rgba(251,191,36,0.4)',
-                      color: '#fbbf24', borderRadius: '8px', padding: '6px 10px',
-                      fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-                    }}
-                  >
+                <div className="vp-code-row">
+                  <code className="vp-code">{code}</code>
+                  <button className="vp-btn" style={{ background: 'transparent', border: '1px solid rgba(251,191,36,0.4)', color: '#fbbf24' }} onClick={() => copy(index, code)}>
                     <ClipboardDocumentIcon style={{ width: 14, height: 14 }} />
                     {copied === index ? 'Copied' : 'Copy'}
                   </button>
@@ -396,7 +495,6 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
                     {instruction}
                   </p>
                 )}
-
                 <button
                   onClick={() => setOpenSteps((o) => ({ ...o, [index]: !o[index] }))}
                   aria-expanded={!!openSteps[index]}
@@ -404,31 +502,20 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
                     display: 'inline-flex', alignItems: 'center', gap: '6px',
                     background: 'transparent', border: 'none', padding: '8px 0 0',
                     color: '#fbbf24', fontSize: '13px', fontWeight: 600,
-                    cursor: 'pointer', fontFamily: 'inherit',
+                    cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
                   }}
                 >
                   <ChevronDownIcon
                     style={{
-                      width: 14, height: 14,
+                      width: 14, height: 14, flexShrink: 0,
                       transform: openSteps[index] ? 'rotate(180deg)' : 'none',
                       transition: 'transform 0.15s ease',
                     }}
                   />
-                  {openSteps[index]
-                    ? 'Hide step-by-step'
-                    : `Show me exactly where on ${p.type.charAt(0).toUpperCase() + p.type.slice(1)}`}
+                  {openSteps[index] ? 'Hide step-by-step' : `Show me exactly where on ${titleCase(p.type)}`}
                 </button>
-
                 {openSteps[index] && (
-                  <ol
-                    style={{
-                      margin: '10px 0 0', padding: '14px 16px 14px 34px',
-                      background: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(255,255,255,0.07)',
-                      borderRadius: '10px',
-                      color: 'rgba(255,255,255,0.75)', fontSize: '13px', lineHeight: 1.9,
-                    }}
-                  >
+                  <ol className="vp-steps">
                     {stepsFor(p.type).map((parts, si) => (
                       <li key={si}>
                         {parts.map((part, pi) =>
@@ -445,19 +532,16 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
               </div>
             )}
 
-            {(result?.channelFound !== undefined || result?.codeFound !== undefined) && (
+            {lines.length > 0 && (
               <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                {[
-                  { ok: result.channelFound, text: result.channelMessage, fallback: 'Channel' },
-                  { ok: result.codeFound, text: result.codeMessage, fallback: 'Verification code' },
-                ].map((line, li) => (
+                {lines.map((line, li) => (
                   <div key={li} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                     {line.ok ? (
                       <CheckCircleIcon style={{ width: 16, height: 16, color: '#4ade80', flexShrink: 0, marginTop: 1 }} />
                     ) : (
                       <XCircleIcon style={{ width: 16, height: 16, color: '#f87171', flexShrink: 0, marginTop: 1 }} />
                     )}
-                    <span style={{ fontSize: '13px', color: line.ok ? 'rgba(255,255,255,0.75)' : '#fca5a5', lineHeight: 1.5 }}>
+                    <span style={{ fontSize: '13px', color: line.ok ? 'rgba(255,255,255,0.72)' : '#fca5a5', lineHeight: 1.5 }}>
                       {line.text || line.fallback}
                     </span>
                   </div>
@@ -465,63 +549,15 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
               </div>
             )}
 
-            {msg?.text && (
-              <p style={{ fontSize: '13px', margin: '10px 0 0', color: msg.ok ? '#4ade80' : '#f87171' }}>
-                {msg.text}
+            {err && (
+              <p style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '13px', margin: '12px 0 0', color: '#fbbf24', lineHeight: 1.5 }}>
+                <ClockIcon style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }} />
+                {err}
               </p>
             )}
-
-            {checksFor(p).map((c) => {
-              const s = STATUS_STYLE[c.status] || STATUS_STYLE.pending;
-              return (
-                <div key={c.key} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '10px' }}>
-                  {c.status === 'passed' ? (
-                    <CheckCircleIcon style={{ width: 16, height: 16, color: s.color, flexShrink: 0, marginTop: 2 }} />
-                  ) : c.status === 'failed' ? (
-                    <XCircleIcon style={{ width: 16, height: 16, color: s.color, flexShrink: 0, marginTop: 2 }} />
-                  ) : (
-                    <ClockIcon style={{ width: 16, height: 16, color: s.color, flexShrink: 0, marginTop: 2 }} />
-                  )}
-                  <div>
-                    <span style={{ fontSize: '13px', color: '#fff', fontWeight: 600 }}>
-                      {CHECK_LABELS[c.key] || c.key}
-                    </span>
-                    {c.reason && (
-                      <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}> — {c.reason}</span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
           </div>
         );
       })}
-
-      {followerCheck && (
-        <div
-          style={{
-            display: 'flex', gap: '10px', alignItems: 'flex-start',
-            background: (STATUS_STYLE[followerCheck.status] || STATUS_STYLE.pending).bg,
-            border: `1px solid ${(STATUS_STYLE[followerCheck.status] || STATUS_STYLE.pending).border}`,
-            borderRadius: '12px', padding: '14px 16px', marginTop: '4px',
-          }}
-        >
-          <UserGroupIcon
-            style={{
-              width: 18, height: 18, flexShrink: 0, marginTop: 1,
-              color: (STATUS_STYLE[followerCheck.status] || STATUS_STYLE.pending).color,
-            }}
-          />
-          <div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Follower requirement</div>
-            {followerCheck.reason && (
-              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginTop: '2px' }}>
-                {followerCheck.reason}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
