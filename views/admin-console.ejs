@@ -10398,6 +10398,22 @@
             }
           }
 
+          // Automated screening state, so the list answers "which of these
+          // actually need me?" without opening each one. Approval is blocked
+          // until checks pass, so an admin clicking Approve on a card without
+          // this badge would just get refused.
+          let checksBadgeHtml = '';
+          if (status === 'submitted' || status === 'under_review') {
+            if (app.checksPassed) {
+              checksBadgeHtml = `<span style="background: rgba(34,197,94,0.18); color: #4ade80; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 10px; margin-left: 6px; font-weight: 700;" title="Automated checks passed - ready for review"><i class="fas fa-shield-halved" style="margin-right: 4px;"></i>CHECKS PASSED</span>`;
+            } else {
+              const failed = (app.checks || []).filter(c => c.status === 'failed').length;
+              checksBadgeHtml = failed
+                ? `<span style="background: rgba(239,68,68,0.18); color: #f87171; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 10px; margin-left: 6px; font-weight: 700;" title="Automated checks failed - open Review to see why"><i class="fas fa-circle-exclamation" style="margin-right: 4px;"></i>${failed} CHECK${failed === 1 ? '' : 'S'} FAILED</span>`
+                : `<span style="background: rgba(251,191,36,0.18); color: #fbbf24; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 10px; margin-left: 6px; font-weight: 700;" title="Automated checks still running"><i class="fas fa-hourglass-half" style="margin-right: 4px;"></i>CHECKS PENDING</span>`;
+            }
+          }
+
           // Build first approval info line
           let firstApprovalInfoHtml = '';
           if (app.firstApprovalBy && (status === 'under_review' || status === 'submitted')) {
@@ -10414,11 +10430,15 @@
                       ${displayName}
                       <span class="status-badge" style="background: ${statusStyle.bg}; color: #fff; font-size: 0.7rem; padding: 0.2rem 0.6rem;">${statusStyle.label}</span>
                       ${approvalBadgeHtml}
+                      ${checksBadgeHtml}
                     </h5>
                     <p class="result-subtitle">Applied: ${createdAt} | Platform: ${primaryPlatform} | Followers: ${totalFollowers.toLocaleString()}${firstApprovalInfoHtml}</p>
                   </div>
                 </div>
                 <div class="action-buttons">
+                  <a class="btn btn-primary btn-sm" href="/admin/creator-application/${appId}" style="text-decoration: none;" title="Open the full review page for this application">
+                    <i class="fas fa-clipboard-check"></i> Review
+                  </a>
                   <button class="btn btn-secondary btn-sm" onclick="viewCCApplication('${appId}')">
                     <i class="fas fa-eye"></i> View Details
                   </button>
