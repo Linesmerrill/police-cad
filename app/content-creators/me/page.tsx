@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import VerificationPanel from './VerificationPanel';
 import {
   ArrowLeftIcon,
   ClockIcon,
@@ -84,6 +85,11 @@ interface ContentCreatorPlatform {
   handle: string;
   followerCount: number;
   verifiedByAdmin?: boolean;
+  // Channel ownership verification, written by the API.
+  verificationStatus?: string;
+  verificationCode?: string;
+  verificationMethod?: string;
+  reportedFollowerCount?: number;
 }
 
 interface Application {
@@ -97,6 +103,17 @@ interface Application {
   platforms: ContentCreatorPlatform[];
   primaryPlatform: string;
   description: string;
+  // Automated screening: what the scheduled checks found, and whether the
+  // application is now waiting on a human rather than on the applicant.
+  checks?: {
+    key: string;
+    platform?: string;
+    handle?: string;
+    status: 'pending' | 'passed' | 'failed' | 'manual';
+    reason?: string;
+    checkedAt?: string;
+  }[];
+  checksPassed?: boolean;
 }
 
 interface CreatorProfile {
@@ -330,6 +347,21 @@ export default function CreatorStatusPage() {
     };
 
     fetchUserAndCreatorData();
+  }, []);
+
+  // Re-pull the application after a verification succeeds, so the panel shows
+  // the new status without a page reload.
+  const refreshApplication = useCallback(async () => {
+    try {
+      const res = await fetch('/api/v1/content-creator-applications/me', { credentials: 'include' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.success && data.application) {
+        setApplication(data.application);
+      }
+    } catch {
+      // Leave what is on screen; the next load corrects it.
+    }
   }, []);
 
   const handleRemovalRequest = async () => {
@@ -1803,6 +1835,17 @@ export default function CreatorStatusPage() {
                   Apply Again
                 </Link>
               )}
+
+              {/* Channel ownership verification. Only while the application is
+                  still open — once it is decided there is nothing to act on. */}
+              {(application.status === 'submitted' || application.status === 'under_review') &&
+                application.platforms?.length > 0 && (
+                  <VerificationPanel
+                    platforms={application.platforms}
+                    checks={application.checks}
+                    onRefresh={refreshApplication}
+                  />
+                )}
 
               {/* Withdraw option for pending applications */}
               {(application.status === 'submitted' || application.status === 'under_review') && (

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Creator Application Review - Lines Police CAD</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --ac-bg: #0a0a0f;
+      --ac-surface: #12121f;
+      --ac-glass: rgba(255,255,255,0.04);
+      --ac-glass-border: rgba(255,255,255,0.08);
+      --ac-text: #e5e7eb;
+      --ac-text-muted: rgba(255,255,255,0.55);
+      --ac-text-dim: rgba(255,255,255,0.35);
+      --ac-accent: #8b5cf6;
+      --ac-green: #4ade80;
+      --ac-red: #f87171;
+      --ac-amber: #fbbf24;
+      --ac-purple: #a78bfa;
+      --ac-radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--ac-bg); color: var(--ac-text);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 24px 20px 80px; }
+    a { color: var(--ac-accent); text-decoration: none; }
+    .back { display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--ac-text-muted); margin-bottom: 18px; }
+    .back:hover { color: #fff; }
+    h1 { font-size: 1.6rem; font-weight: 800; margin: 0 0 4px; color: #fff; }
+    .sub { color: var(--ac-text-muted); font-size: 0.9rem; margin-bottom: 22px; }
+    .card {
+      background: var(--ac-surface); border: 1px solid var(--ac-glass-border);
+      border-radius: var(--ac-radius); padding: 20px; margin-bottom: 18px;
+    }
+    .card h2 { font-size: 1rem; font-weight: 700; margin: 0 0 14px; color: #fff; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+    .kv-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ac-text-dim); }
+    .kv-value { font-size: 0.95rem; color: #fff; font-weight: 600; margin-top: 3px; word-break: break-word; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px; border-radius: 999px;
+      padding: 3px 11px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .pill-passed  { color: var(--ac-green);  background: rgba(34,197,94,0.12);  border: 1px solid rgba(34,197,94,0.3); }
+    .pill-failed  { color: var(--ac-red);    background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.3); }
+    .pill-pending { color: var(--ac-amber);  background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.3); }
+    .pill-manual  { color: var(--ac-purple); background: rgba(167,139,250,0.12);border: 1px solid rgba(167,139,250,0.3); }
+    .row {
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 14px;
+      background: var(--ac-glass); border: 1px solid var(--ac-glass-border);
+      border-radius: 10px; padding: 14px; margin-bottom: 10px; flex-wrap: wrap;
+    }
+    .row-main { flex: 1; min-width: 220px; }
+    .row-title { font-weight: 700; color: #fff; font-size: 0.92rem; }
+    .row-reason { color: var(--ac-text-muted); font-size: 0.85rem; margin-top: 3px; line-height: 1.5; }
+    .row-meta { color: var(--ac-text-dim); font-size: 0.75rem; margin-top: 5px; }
+    .btn {
+      border-radius: 8px; padding: 7px 13px; font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--ac-glass-border);
+      background: var(--ac-glass); color: #fff; font-family: inherit;
+    }
+    .btn:hover { background: rgba(255,255,255,0.09); }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .btn-pass { color: var(--ac-green); border-color: rgba(34,197,94,0.35); background: rgba(34,197,94,0.1); }
+    .btn-fail { color: var(--ac-red);   border-color: rgba(239,68,68,0.35); background: rgba(239,68,68,0.1); }
+    .btn-primary { background: var(--ac-accent); border-color: var(--ac-accent); }
+    .actions { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+    .mismatch { color: var(--ac-amber); font-size: 0.8rem; margin-top: 4px; }
+    .empty { color: var(--ac-text-dim); font-size: 0.9rem; }
+    .toast {
+      position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+      background: var(--ac-surface); border: 1px solid var(--ac-glass-border);
+      border-radius: 10px; padding: 12px 18px; font-size: 0.88rem; display: none; z-index: 50;
+    }
+    .banner { border-radius: 10px; padding: 13px 16px; font-size: 0.9rem; margin-bottom: 18px; }
+    .banner-ready { color: var(--ac-green); background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.28); }
+    .banner-block { color: var(--ac-amber); background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.28); }
+  </style>
+</head>
+<body>
+  <%- include('partials/standalone-utility') %>
+
+  <div class="wrap">
+    <a class="back" href="/admin/console"><i class="fas fa-arrow-left"></i> Back to Admin Console</a>
+
+    <h1 id="app-title">Creator Application</h1>
+    <div class="sub">
+      Application <code id="app-id"><%= applicationId %></code>
+      &middot; <span id="copy-link" style="cursor:pointer; color:var(--ac-accent);">copy link</span>
+    </div>
+
+    <div id="banner" class="banner" style="display:none;"></div>
+
+    <div class="card">
+      <h2>Applicant</h2>
+      <div class="grid" id="summary"><div class="empty">Loading...</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Automated checks</h2>
+      <p class="sub" style="margin:-8px 0 14px;">
+        Re-run a check to pick up a change immediately instead of waiting for the 4-hourly sweep.
+        Overriding records who did it and why, in the admin audit log.
+      </p>
+      <div id="checks"><div class="empty">Loading...</div></div>
+      <div class="actions" style="margin-top:12px;">
+        <button class="btn btn-primary" id="rescreen-all"><i class="fas fa-rotate"></i> Re-run all checks</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Channels</h2>
+      <div id="platforms"><div class="empty">Loading...</div></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    const API_BASE = '<%= POLICE_CAD_API_URL %>';
+    const APPLICATION_ID = '<%= applicationId %>';
+    const ADMIN_ID = '<%= admin && admin.id ? admin.id : "" %>';
+
+    const CHECK_LABELS = {
+      channel_resolves: 'Channel found',
+      ownership: 'Channel ownership',
+      followers: 'Follower requirement',
+    };
+
+    function esc(s) { return $('<div>').text(s == null ? '' : s).html(); }
+
+    function toast(msg) {
+      const $t = $('#toast').text(msg).fadeIn(120);
+      setTimeout(() => $t.fadeOut(200), 2600);
+    }
+
+    function pill(status) {
+      const cls = { passed: 'pill-passed', failed: 'pill-failed', manual: 'pill-manual' }[status] || 'pill-pending';
+      return '<span class="pill ' + cls + '">' + esc(status || 'pending') + '</span>';
+    }
+
+    function fmtDate(v) {
+      if (!v) return '';
+      try { return new Date(v).toLocaleString(); } catch (e) { return ''; }
+    }
+
+    function load() {
+      $.ajax({
+        url: API_BASE + '/api/v1/admin/content-creator-applications/' + encodeURIComponent(APPLICATION_ID),
+        headers: { 'X-User-ID': ADMIN_ID },
+      })
+        .done(function (resp) { render(resp.application || resp.data || resp); })
+        .fail(function () {
+          $('#summary,#checks,#platforms').html('<div class="empty">Could not load this application.</div>');
+        });
+    }
+
+    function render(app) {
+      if (!app) return;
+      $('#app-title').text(app.displayName || 'Creator Application');
+
+      const kv = function (label, value) {
+        return '<div><div class="kv-label">' + esc(label) + '</div><div class="kv-value">' + value + '</div></div>';
+      };
+      $('#summary').html(
+        kv('Display name', esc(app.displayName)) +
+        kv('Status', esc(app.status)) +
+        kv('Primary platform', esc(app.primaryPlatform)) +
+        kv('Submitted', esc(fmtDate(app.createdAt))) +
+        kv('Checks last run', esc(fmtDate(app.checksLastRunAt)) || '<span class="kv-label">never</span>') +
+        kv('Check attempts', esc(String(app.checkAttempts || 0))) +
+        kv('Admin notified', app.adminNotifiedAt ? esc(fmtDate(app.adminNotifiedAt)) : '<span class="kv-label">not yet</span>')
+      );
+
+      // The banner answers the only question a reviewer opens this page with:
+      // can I approve this yet?
+      const $banner = $('#banner');
+      if (app.checksPassed) {
+        $banner.attr('class', 'banner banner-ready')
+          .html('<i class="fas fa-circle-check"></i> All automated checks passed. This application is ready for human review.')
+          .show();
+      } else {
+        $banner.attr('class', 'banner banner-block')
+          .html('<i class="fas fa-hourglass-half"></i> Automated checks are not complete. Approval is blocked until every check passes or is overridden.')
+          .show();
+      }
+
+      const checks = app.checks || [];
+      if (!checks.length) {
+        $('#checks').html('<div class="empty">No checks have run yet. Use Re-run all checks below.</div>');
+      } else {
+        $('#checks').html(checks.map(function (c) {
+          const label = CHECK_LABELS[c.key] || c.key;
+          const who = c.platform ? ' &middot; ' + esc(c.platform) + (c.handle ? ' / ' + esc(c.handle) : '') : '';
+          return '' +
+            '<div class="row">' +
+              '<div class="row-main">' +
+                '<div class="row-title">' + esc(label) + ' ' + pill(c.status) + '</div>' +
+                (c.reason ? '<div class="row-reason">' + esc(c.reason) + '</div>' : '') +
+                '<div class="row-meta">' + esc(fmtDate(c.checkedAt)) + who + '</div>' +
+              '</div>' +
+              '<div class="actions">' +
+                '<button class="btn js-retry" data-key="' + esc(c.key) + '"><i class="fas fa-rotate"></i> Retry</button>' +
+                '<button class="btn btn-pass js-override" data-key="' + esc(c.key) + '" data-platform="' + esc(c.platform || '') + '" data-handle="' + esc(c.handle || '') + '" data-status="passed">Pass</button>' +
+                '<button class="btn btn-fail js-override" data-key="' + esc(c.key) + '" data-platform="' + esc(c.platform || '') + '" data-handle="' + esc(c.handle || '') + '" data-status="failed">Fail</button>' +
+              '</div>' +
+            '</div>';
+        }).join(''));
+      }
+
+      const platforms = app.platforms || [];
+      $('#platforms').html(!platforms.length
+        ? '<div class="empty">No platforms on this application.</div>'
+        : platforms.map(function (p, i) {
+            const verified = p.verificationStatus === 'verified' || p.verifiedByAdmin;
+            // A big gap between the claim and reality is the tell for a
+            // fabricated application, so it is called out rather than buried.
+            const claimed = p.reportedFollowerCount;
+            const actual = p.followerCount;
+            const mismatch = claimed && actual && Math.abs(claimed - actual) > Math.max(50, actual * 0.25)
+              ? '<div class="mismatch"><i class="fas fa-triangle-exclamation"></i> Claimed ' +
+                esc(String(claimed)) + ', actual ' + esc(String(actual)) + '</div>'
+              : '';
+            return '' +
+              '<div class="row">' +
+                '<div class="row-main">' +
+                  '<div class="row-title" style="text-transform:capitalize;">' + esc(p.type) +
+                    ' ' + (verified ? pill('passed') : pill(p.verificationStatus || 'pending')) + '</div>' +
+                  '<div class="row-reason">' +
+                    (p.url ? '<a href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer">' + esc(p.handle || p.url) + '</a>' : esc(p.handle || '')) +
+                  '</div>' +
+                  '<div class="row-meta">' +
+                    esc(String(actual || 0)) + ' followers' +
+                    (p.verificationMethod ? ' &middot; verified by ' + esc(p.verificationMethod) : '') +
+                  '</div>' +
+                  mismatch +
+                '</div>' +
+                '<div class="actions">' +
+                  (verified ? '' : '<button class="btn btn-pass js-vouch" data-index="' + i + '">Mark verified</button>') +
+                '</div>' +
+              '</div>';
+          }).join(''));
+    }
+
+    function post(url, body, okMsg) {
+      return $.ajax({
+        url: url, method: 'POST', contentType: 'application/json',
+        headers: { 'X-User-ID': ADMIN_ID },
+        data: JSON.stringify(body || {}),
+      })
+        .done(function () { toast(okMsg); load(); })
+        .fail(function (xhr) {
+          const b = xhr.responseJSON || {};
+          toast((b.response && b.response.message) || b.message || b.error || ('Failed (' + xhr.status + ')'));
+        });
+    }
+
+    $('#rescreen-all').on('click', function () {
+      $(this).prop('disabled', true);
+      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/rescreen', {}, 'Checks re-run.')
+        .always(() => $('#rescreen-all').prop('disabled', false));
+    });
+
+    $('#checks').on('click', '.js-retry', function () {
+      const key = $(this).data('key');
+      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/rescreen?key=' + encodeURIComponent(key),
+        {}, 'Re-ran ' + key + '.');
+    });
+
+    $('#checks').on('click', '.js-override', function () {
+      const $b = $(this);
+      const status = $b.data('status');
+      // A reason is mandatory: this ends up in the audit log, and "why" is the
+      // whole point of recording it.
+      const reason = window.prompt('Reason for marking this check ' + status + '? (recorded in the audit log)');
+      if (reason === null) return;
+      if (!reason.trim()) { toast('A reason is required.'); return; }
+      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/checks/override', {
+        key: $b.data('key'),
+        platform: String($b.data('platform') || ''),
+        handle: String($b.data('handle') || ''),
+        status: status,
+        reason: reason.trim(),
+      }, 'Check marked ' + status + '.');
+    });
+
+    $('#platforms').on('click', '.js-vouch', function () {
+      const index = $(this).data('index');
+      if (!window.confirm('Confirm you have checked this channel belongs to the applicant?')) return;
+      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/platforms/' + index + '/verify',
+        {}, 'Platform marked verified.');
+    });
+
+    $('#copy-link').on('click', function () {
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => toast('Link copied.'))
+        .catch(() => toast('Copy failed, select the URL instead.'));
+    });
+
+    load();
+  </script>
+</body>
+</html>
