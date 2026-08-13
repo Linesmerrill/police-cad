@@ -9,6 +9,7 @@ import {
   ClipboardDocumentIcon,
   ArrowPathIcon,
   ChevronDownIcon,
+  ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
 
 // Mirrors models.ApplicationCheck. Reason is written for the applicant by the
@@ -110,6 +111,53 @@ function stepsFor(type: string) {
       [{ text: 'Leave it in place — our team confirms it during review.' }],
     ]
   );
+}
+
+// Mirrors NormalizeHandle in the API's platforms package. People paste full
+// URLs, @names and bare names into the handle field, and the API strips all of
+// that before looking the channel up.
+function normalizeHandle(raw: string): string {
+  let h = (raw || '').trim();
+  if (!h) return '';
+  const scheme = h.indexOf('://');
+  if (scheme >= 0) h = h.slice(scheme + 3);
+  const q = h.search(/[?#]/);
+  if (q >= 0) h = h.slice(0, q);
+  h = h.replace(/^\/+|\/+$/g, '');
+  // A first segment containing a dot is a hostname, not a handle.
+  const slash = h.indexOf('/');
+  if (slash > 0 && h.slice(0, slash).includes('.')) h = h.slice(slash + 1);
+  for (const prefix of ['channel/', 'c/', 'user/', '@']) {
+    if (h.toLowerCase().startsWith(prefix)) {
+      h = h.slice(prefix.length);
+      break;
+    }
+  }
+  const trailing = h.indexOf('/');
+  if (trailing >= 0) h = h.slice(0, trailing);
+  return h.replace(/^@/, '').trim();
+}
+
+// The URL we actually scan. Built from the handle rather than from whatever the
+// applicant typed into the url field, because the handle is what the API looks
+// up — so if this link opens the wrong channel, that IS the bug, which is the
+// point of showing it.
+function scannedUrlFor(p: VerifiablePlatform): string {
+  const h = normalizeHandle(p.handle || p.url || '');
+  if (!h) return p.url || '';
+  switch ((p.type || '').toLowerCase()) {
+    case 'youtube':
+      // A raw UC... id is a channel id, not a handle.
+      return /^UC[\w-]{22}$/.test(h)
+        ? `https://www.youtube.com/channel/${h}`
+        : `https://www.youtube.com/@${h}`;
+    case 'twitch':
+      return `https://twitch.tv/${h}`;
+    case 'tiktok':
+      return `https://tiktok.com/@${h}`;
+    default:
+      return p.url || '';
+  }
 }
 
 const STATUS_STYLE: Record<string, { color: string; bg: string; border: string; label: string }> = {
@@ -233,7 +281,27 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
                 <div style={{ fontWeight: 700, color: '#fff', fontSize: '15px', textTransform: 'capitalize' }}>
                   {p.type}
                 </div>
-                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>{label}</div>
+                {/* Links to the channel we scan, so "we couldn't find the code"
+                    is debuggable: if this opens the wrong channel, that is the
+                    problem, not the code. */}
+                {scannedUrlFor(p) ? (
+                  <a
+                    href={scannedUrlFor(p)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Opens the channel we check for your code"
+                    style={{
+                      fontSize: '13px', color: '#7dd3fc',
+                      textDecoration: 'underline', textUnderlineOffset: '2px',
+                      display: 'inline-flex', alignItems: 'center', gap: '5px',
+                    }}
+                  >
+                    {label}
+                    <ArrowTopRightOnSquareIcon style={{ width: 12, height: 12, flexShrink: 0 }} />
+                  </a>
+                ) : (
+                  <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>{label}</div>
+                )}
               </div>
 
               {verified ? (
