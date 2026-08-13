@@ -57,7 +57,7 @@ const MANUAL_PLATFORMS = ['tiktok', 'other'];
 // verify-start response to read them from. Keep the two in step.
 const INSTRUCTIONS: Record<string, string> = {
   youtube:
-    'Add this code anywhere in your YouTube channel description (YouTube Studio → Customization → Basic info → Description), save, then click Check. You can remove it once verified.',
+    'Add this code anywhere in your YouTube channel description (YouTube Studio → Customization → Profile → Description), save, then click Check. You can remove it once verified.',
   twitch:
     'Add this code anywhere in your Twitch About panel / bio (Settings → Channel → About), save, then click Check. You can remove it once verified.',
   tiktok:
@@ -80,7 +80,7 @@ const STEPS: Record<string, { text: string; bold?: boolean }[][]> = {
   youtube: [
     [{ text: 'Open ' }, { text: 'studio.youtube.com', bold: true }, { text: ', signed in as the channel you listed.' }],
     [{ text: 'In the left sidebar click ' }, { text: 'Customization', bold: true }, { text: '.' }],
-    [{ text: 'Open the ' }, { text: 'Basic info', bold: true }, { text: ' tab.' }],
+    [{ text: 'Open the ' }, { text: 'Profile', bold: true }, { text: ' tab (next to Home tab).' }],
     [{ text: 'Paste the code anywhere in the ' }, { text: 'Description', bold: true }, { text: ' box. It can sit alongside your existing text.' }],
     [{ text: 'Click ' }, { text: 'Publish', bold: true }, { text: ' at the top right.' }],
     [{ text: 'Come back here and press ' }, { text: 'Check', bold: true }, { text: '.' }],
