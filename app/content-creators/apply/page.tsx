@@ -38,6 +38,17 @@ const platformOptions: { value: PlatformType; label: string; color: string; base
   { value: 'other', label: 'Other', color: '#6366f1', baseUrl: '', placeholder: 'https://yourplatform.com/profile', handlePlaceholder: '' }
 ];
 
+// Platforms we read through an official API during screening. Asking for a
+// follower count we are about to measure ourselves is a field that can only be
+// wrong: the applicant guesses, we overwrite it, and a low guess scares people
+// off a program they qualify for. TikTok and "other" have no public API, so
+// their number is the only one we have.
+const SCANNED_PLATFORMS: PlatformType[] = ['youtube', 'twitch'];
+
+function isScanned(type: PlatformType): boolean {
+  return SCANNED_PLATFORMS.includes(type);
+}
+
 function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
@@ -221,8 +232,13 @@ export default function ApplyPage() {
     }));
   };
 
-  const getMaxFollowers = (): number => {
-    return Math.max(...platforms.map(p => parseInt(p.followerCount) || 0), 0);
+  // One filled-in platform that could carry the application. A YouTube or Twitch
+  // entry counts on the strength of the channel we are going to read; anywhere
+  // we cannot read, the applicant's own number has to clear the bar.
+  const qualifyingPlatform = (p: PlatformEntry): boolean => {
+    const identified = p.type === 'other' ? !!p.url.trim() : !!(p.url.trim() && p.handle.trim());
+    if (!identified) return false;
+    return isScanned(p.type) || parseInt(p.followerCount) >= 500;
   };
 
   const isFormValid = (): boolean => {
@@ -230,18 +246,8 @@ export default function ApplyPage() {
     if (!description.trim() || description.length < 50) return false;
     if (!bio.trim() || bio.length < 20 || bio.length > 500) return false;
     if (!agreedToTerms) return false;
-    if (getMaxFollowers() < 500) return false;
 
-    // Check at least one platform has valid data
-    // For 'other' platforms, only URL and follower count required (no handle)
-    const hasValidPlatform = platforms.some(p => {
-      const hasValidFollowers = parseInt(p.followerCount) >= 500;
-      if (p.type === 'other') {
-        return p.url.trim() && hasValidFollowers;
-      }
-      return p.url.trim() && p.handle.trim() && hasValidFollowers;
-    });
-    return hasValidPlatform;
+    return platforms.some(qualifyingPlatform);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -264,12 +270,16 @@ export default function ApplyPage() {
     try {
       // Format platforms for API - strip leading @ from handles before submission
       const formattedPlatforms = platforms
-        .filter(p => p.url && p.handle)
+        // "Other" has no handle field at all, so requiring one here dropped
+        // those entries silently on submit.
+        .filter(p => p.url && (p.handle || p.type === 'other'))
         .map(p => ({
           type: p.type,
           url: p.url,
           handle: p.handle.replace(/^@+/, ''),
-          followerCount: parseInt(p.followerCount) || 0
+          // Zero for the platforms we scan: screening fills in the real number,
+          // and a stale guess would only sit in the record contradicting it.
+          followerCount: isScanned(p.type) ? 0 : parseInt(p.followerCount) || 0
         }));
 
       const response = await fetch('/api/v1/content-creator-applications', {
@@ -351,7 +361,7 @@ export default function ApplyPage() {
               marginBottom: '32px'
             }}>
               Thank you for applying to the Content Creator Program. We&apos;ll review your
-              application and get back to you within 5-7 business days. You can track
+              application and get back to you within 3-5 business days. You can track
               your application status anytime.
             </p>
 
@@ -564,7 +574,7 @@ export default function ApplyPage() {
             opacity: isLoaded ? 1 : 0
           }}>
             Complete the form below to apply for the Lines Police CAD Content Creator Program.
-            Applications are typically reviewed within 5-7 business days.
+            Applications are typically reviewed within 3-5 business days.
           </p>
         </div>
       </section>
@@ -689,7 +699,7 @@ export default function ApplyPage() {
                   gap: '8px'
                 }}>
                   {[
-                    { text: '500+ followers on at least one platform', met: getMaxFollowers() >= 500 },
+                    { text: '500+ followers on at least one platform', met: platforms.some(qualifyingPlatform) },
                     { text: 'Active LPC content (streams or videos)', met: true },
                     { text: 'Agree to program terms', met: agreedToTerms }
                   ].map((req, i) => (
@@ -942,7 +952,13 @@ export default function ApplyPage() {
 
                         <div style={{
                           display: 'grid',
-                          gridTemplateColumns: isMobile ? '1fr' : (platform.type === 'other' ? '1fr 120px' : '1fr 1fr 120px'),
+                          gridTemplateColumns: isMobile
+                            ? '1fr'
+                            : isScanned(platform.type)
+                              ? '1fr 1fr'
+                              : platform.type === 'other'
+                                ? '1fr 120px'
+                                : '1fr 1fr 120px',
                           gap: '12px'
                         }}>
                           <input
@@ -977,25 +993,39 @@ export default function ApplyPage() {
                               }}
                             />
                           )}
-                          <input
-                            type="number"
-                            value={platform.followerCount}
-                            onChange={(e) => updatePlatform(platform.id, 'followerCount', e.target.value)}
-                            placeholder="Followers"
-                            min="0"
-                            style={{
-                              padding: '12px 14px',
-                              fontSize: '14px',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              border: parseInt(platform.followerCount) >= 500
-                                ? '1px solid rgba(34, 197, 94, 0.4)'
-                                : '1px solid rgba(255, 255, 255, 0.1)',
-                              borderRadius: '8px',
-                              color: parseInt(platform.followerCount) >= 500 ? '#22c55e' : '#fff',
-                              outline: 'none'
-                            }}
-                          />
+                          {!isScanned(platform.type) && (
+                            <input
+                              type="number"
+                              value={platform.followerCount}
+                              onChange={(e) => updatePlatform(platform.id, 'followerCount', e.target.value)}
+                              placeholder="Followers"
+                              min="0"
+                              style={{
+                                padding: '12px 14px',
+                                fontSize: '14px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: parseInt(platform.followerCount) >= 500
+                                  ? '1px solid rgba(34, 197, 94, 0.4)'
+                                  : '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '8px',
+                                color: parseInt(platform.followerCount) >= 500 ? '#22c55e' : '#fff',
+                                outline: 'none'
+                              }}
+                            />
+                          )}
                         </div>
+
+                        {isScanned(platform.type) && (
+                          <p style={{
+                            margin: '8px 0 0',
+                            fontSize: '12px',
+                            color: 'rgba(255, 255, 255, 0.45)',
+                            lineHeight: 1.6
+                          }}>
+                            We read your follower count straight from {platformOption?.label} during
+                            verification, so there is no need to type it in.
+                          </p>
+                        )}
 
                         {/* Preview Link */}
                         {previewUrl && (
@@ -1352,9 +1382,9 @@ export default function ApplyPage() {
                   <li>Hit <strong style={{ color: '#fff' }}>Check</strong>. Once verified you can remove the code.</li>
                 </ol>
                 <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, margin: '12px 0 0' }}>
-                  Your follower count is read from the channel at the same time, so don&rsquo;t worry about
-                  getting the number above exactly right. TikTok has no public API, so our team confirms
-                  those by eye.
+                  Your follower count is read from YouTube and Twitch at the same time, which is why we
+                  do not ask you for it. TikTok and other platforms have no public API, so we go by the
+                  number you enter and our team confirms it by eye.
                 </p>
               </div>
 

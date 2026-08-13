@@ -158,9 +158,9 @@
       <div id="platforms"><div class="empty">Loading...</div></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="checklist-card">
       <h2>Reviewer checklist</h2>
-      <p class="sub" style="margin:-8px 0 14px;">
+      <p class="sub" id="checklist-intro" style="margin:-8px 0 14px;">
         The automated checks answer whether the channel is real and theirs. These are the
         judgement calls only a person can make. Each tick is saved and written to the audit
         log with your name against it.
@@ -186,6 +186,8 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <%- include('partials/dd-modal') %>
 
   <!-- Subresource integrity: if the CDN copy is ever tampered with, the browser
        refuses it rather than executing it on an admin-authenticated page. -->
@@ -252,6 +254,42 @@
       setTimeout(() => $t.fadeOut(200), 2600);
     }
 
+    // Every decision on this page is one somebody else lives with, so they all
+    // go through the shared modal rather than a browser dialog.
+    function confirmThen(opts, onYes) {
+      window.ddModal({
+        type: opts.type || 'confirm',
+        icon: opts.icon || 'fa-circle-question',
+        title: opts.title,
+        message: opts.message,
+        detail: opts.detail,
+        confirmText: opts.confirmText || 'Confirm',
+        onConfirm: onYes,
+      });
+    }
+
+    // Reason prompt. The text is audited or sent to the applicant, so it is
+    // required — an empty one stops here rather than filing a blank record.
+    function askReason(opts, onReason) {
+      window.ddModal({
+        type: opts.type || 'confirm',
+        icon: opts.icon || 'fa-pen',
+        title: opts.title,
+        message: opts.message +
+          '<textarea id="ddm-reason" rows="3" style="width:100%;margin-top:10px;padding:10px 12px;' +
+          'border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.35);' +
+          'color:#fff;font-family:inherit;font-size:14px;resize:vertical;" placeholder="' +
+          esc(opts.placeholder || 'Reason') + '"></textarea>',
+        confirmText: opts.confirmText || 'Save',
+        onConfirm: function () {
+          const reason = ($('#ddm-reason').val() || '').trim();
+          if (!reason) { toast('A reason is required.'); return; }
+          onReason(reason);
+        },
+      });
+      setTimeout(function () { $('#ddm-reason').trigger('focus'); }, 60);
+    }
+
     function pill(status) {
       const cls = { passed: 'pill-passed', failed: 'pill-failed', manual: 'pill-manual' }[status] || 'pill-pending';
       return '<span class="pill ' + cls + '">' + esc(status || 'pending') + '</span>';
@@ -273,8 +311,13 @@
         });
     }
 
+    // The last application we rendered, so the confirmation dialogs can name who
+    // they are about instead of saying "this application".
+    let currentApp = {};
+
     function render(app) {
       if (!app) return;
+      currentApp = app;
       $('#app-title').text(app.displayName || 'Creator Application');
 
       const kv = function (label, value) {
@@ -375,6 +418,26 @@
       const iApprovedAlready = firstApprovalBy && firstApprovalBy === ADMIN_ID;
       const someoneApproved = !!firstApprovalBy;
 
+      // Once you have approved, the checklist is settled for you. Leaving three
+      // boxes on screen just invites a second look at something already decided,
+      // and it comes back if you remove your approval.
+      if (iApprovedAlready) {
+        const doneCount = REVIEW_CHECKLIST.filter(function (c) { return ticked[c.key]; }).length;
+        $('#checklist-intro').html(
+          doneCount === REVIEW_CHECKLIST.length
+            ? 'You confirmed all ' + REVIEW_CHECKLIST.length + ' items and approved. Remove your approval below to change them.'
+            // Do not claim they confirmed things they did not. Approvals given
+            // before this checklist existed have nothing recorded against them.
+            : '<span style="color:var(--ac-amber);"><i class="fas fa-triangle-exclamation"></i> ' +
+              doneCount + ' of ' + REVIEW_CHECKLIST.length + ' items confirmed against this approval.' +
+              (doneCount === 0 ? ' This approval predates the checklist.' : '') + '</span>'
+        );
+        $('#checklist').hide();
+        $('#checklist-card').append(
+          '<button class="btn" id="checklist-show" style="margin-top:4px;">Show checklist</button>'
+        );
+      }
+
       if (iApprovedAlready) {
         $('#approve-btn')
           .prop('disabled', true)
@@ -472,23 +535,36 @@
       const status = $b.data('status');
       // A reason is mandatory: this ends up in the audit log, and "why" is the
       // whole point of recording it.
-      const reason = window.prompt('Reason for marking this check ' + status + '? (recorded in the audit log)');
-      if (reason === null) return;
-      if (!reason.trim()) { toast('A reason is required.'); return; }
-      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/checks/override', {
-        key: $b.data('key'),
-        platform: String($b.data('platform') || ''),
-        handle: String($b.data('handle') || ''),
-        status: status,
-        reason: reason.trim(),
-      }, 'Check marked ' + status + '.');
+      askReason({
+        type: status === 'passed' ? 'confirm' : 'danger',
+        icon: 'fa-pen-to-square',
+        title: 'Override this check',
+        message: 'Marking it <strong>' + esc(status) + '</strong> by hand. Your name and reason go to the audit log.',
+        placeholder: 'What did you check, and what did you find?',
+        confirmText: 'Mark ' + status,
+      }, function (reason) {
+        post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/checks/override', {
+          key: $b.data('key'),
+          platform: String($b.data('platform') || ''),
+          handle: String($b.data('handle') || ''),
+          status: status,
+          reason: reason,
+        }, 'Check marked ' + status + '.');
+      });
     });
 
     $('#platforms').on('click', '.js-vouch', function () {
       const index = $(this).data('index');
-      if (!window.confirm('Confirm you have checked this channel belongs to the applicant?')) return;
-      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/platforms/' + index + '/verify',
-        {}, 'Platform marked verified.');
+      confirmThen({
+        icon: 'fa-user-check',
+        title: 'Vouch for this channel',
+        message: 'You are confirming this channel belongs to <strong>the applicant</strong>.',
+        detail: 'Use this when you have seen the code yourself, or on a platform we cannot read.',
+        confirmText: 'Mark verified',
+      }, function () {
+        post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/platforms/' + index + '/verify',
+          {}, 'Platform marked verified.');
+      });
     });
 
     $('#checklist').on('change', '.js-check', function () {
@@ -500,29 +576,62 @@
     });
 
     $('#approve-btn').on('click', function () {
-      if (!window.confirm('Approve this application? This grants their creator benefits and emails them.')) return;
-      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/approve',
-        {}, 'Approval recorded.');
+      confirmThen({
+        icon: 'fa-circle-check',
+        title: 'Approve this application',
+        message: 'Records your approval for <strong>' + esc(currentApp.displayName || 'this creator') + '</strong>.',
+        detail: 'On the second approval they get their benefits and an email.',
+        confirmText: 'Approve',
+      }, function () {
+        post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/approve',
+          {}, 'Approval recorded.');
+      });
+    });
+
+    $('#checklist-card').on('click', '#checklist-show', function () {
+      $('#checklist').show();
+      $(this).remove();
     });
 
     $('#withdraw-btn').on('click', function () {
-      if (!window.confirm('Remove this approval? The application goes back to awaiting review.')) return;
-      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/withdraw-approval',
-        {}, 'Approval removed.');
+      confirmThen({
+        type: 'danger',
+        icon: 'fa-rotate-left',
+        title: 'Remove this approval',
+        message: 'The application goes back to <strong>awaiting review</strong>.',
+        confirmText: 'Remove approval',
+      }, function () {
+        post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/withdraw-approval',
+          {}, 'Approval removed.');
+      });
     });
 
     $('#override-btn').on('click', function () {
-      if (!window.confirm('Approve this on your own, without a second admin? This is recorded as an owner override.')) return;
-      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/approve',
-        { ownerOverride: true }, 'Approved via owner override.');
+      confirmThen({
+        type: 'danger',
+        icon: 'fa-bolt',
+        title: 'Approve on your own',
+        message: 'Completes this <strong>without a second admin</strong>.',
+        detail: 'Recorded in the audit log as an owner override, with your name against it.',
+        confirmText: 'Override and approve',
+      }, function () {
+        post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/approve',
+          { ownerOverride: true }, 'Approved via owner override.');
+      });
     });
 
     $('#reject-btn').on('click', function () {
-      const reason = window.prompt('Reason for rejecting? This is sent to the applicant.');
-      if (reason === null) return;
-      if (!reason.trim()) { toast('A reason is required.'); return; }
-      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/reject',
-        { rejectionReason: reason.trim() }, 'Rejection recorded.');
+      askReason({
+        type: 'danger',
+        icon: 'fa-circle-xmark',
+        title: 'Reject this application',
+        message: 'Your reason is <strong>emailed to the applicant</strong>, so write it for them.',
+        placeholder: 'e.g. We could not find LPC content on the channels you listed.',
+        confirmText: 'Reject',
+      }, function (reason) {
+        post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/reject',
+          { rejectionReason: reason }, 'Rejection recorded.');
+      });
     });
 
     $('#copy-link').on('click', function () {

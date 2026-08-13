@@ -54,7 +54,9 @@ interface CheckResult {
   codeMessage?: string;
 }
 
-const DEFAULT_MIN_FOLLOWERS = 500;
+// Mirrors models.MinFollowers in the API. Exported so the progress timeline
+// reads the same number rather than repeating the literal a third time.
+export const DEFAULT_MIN_FOLLOWERS = 500;
 
 // Platforms with no public API. Their Check button would always come back
 // "waiting for a human", so we say that instead of offering a button that does
@@ -171,8 +173,53 @@ function meetsFollowerBar(p: VerifiablePlatform, min: number) {
   return (p.followerCount ?? 0) >= min;
 }
 
-function titleCase(s: string) {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+// The API measures the largest channel, not every channel — see the follower
+// check in screenApplication. A small second channel alongside a big one costs
+// nothing, so it must not be drawn as a failure here either.
+function applicationQualifies(platforms: VerifiablePlatform[], min: number) {
+  return platforms.some((p) => meetsFollowerBar(p, min));
+}
+
+// Platforms we read through an API. Once we have found the code in the
+// description it has done its job and can come straight back out. TikTok is
+// excluded on purpose: a human confirms that one by eye during review, so the
+// code has to stay put until a decision is made.
+const REMOVABLE_CODE_PLATFORMS = ['youtube', 'twitch'];
+
+function codeRemovable(p: VerifiablePlatform) {
+  return (
+    ownershipProven(p) &&
+    p.verifiedByAdmin !== true &&
+    REMOVABLE_CODE_PLATFORMS.includes((p.type || '').toLowerCase())
+  );
+}
+
+const PLATFORM_LABELS: Record<string, string> = {
+  youtube: 'YouTube',
+  twitch: 'Twitch',
+  tiktok: 'TikTok',
+};
+
+function platformLabel(type: string) {
+  const t = (type || '').toLowerCase();
+  return PLATFORM_LABELS[t] || (type ? type.charAt(0).toUpperCase() + type.slice(1) : type);
+}
+
+function joinList(items: string[]) {
+  if (items.length <= 1) return items[0] || '';
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
+// "You can take the code out of your YouTube description now." Empty when there
+// is nothing to take out, so the caller can leave the sentence off entirely
+// rather than telling a TikTok-only applicant to undo work they still need.
+export function codeRemovalSentence(platforms: VerifiablePlatform[]) {
+  const names = platforms.filter(codeRemovable).map((p) => platformLabel(p.type));
+  if (names.length === 0) return '';
+  return `You can take the code back out of your ${joinList(names)} description${
+    names.length > 1 ? 's' : ''
+  } now.`;
 }
 
 // The panel header used to say the same thing forever: "we confirm you own the
@@ -187,7 +234,8 @@ function derivePanelState(
   const failedCheck = checks.find((c) => c.status === 'failed');
   const allOwned = platforms.length > 0 && platforms.every(ownershipProven);
   const someOwned = platforms.some(ownershipProven);
-  const ownedButSmall = platforms.filter((p) => ownershipProven(p) && !meetsFollowerBar(p, min));
+  const qualifies = applicationQualifies(platforms, min);
+  const counted = platforms.some((p) => p.followerCount != null);
 
   if (failedCheck) {
     return {
@@ -197,28 +245,40 @@ function derivePanelState(
     };
   }
 
-  if (allOwned && ownedButSmall.length > 0) {
+  // Ownership proven and still short of the bar. That is a program requirement
+  // measured off the channel itself, so it is settled — the API rejects it on
+  // the next screening pass. Saying "our team will decide" here would be a
+  // false hope, and pointing at the Check button would be worse.
+  if (allOwned && counted && !qualifies) {
     return {
-      tone: 'warn',
-      headline: 'Channels verified, but below our follower minimum',
-      sub: `You have proved these channels are yours. They are under the ${min.toLocaleString()} follower minimum, so a member of our team will take a look and decide.`,
+      tone: 'bad',
+      headline: `Below our ${min.toLocaleString()} follower minimum`,
+      sub: `You have proved ${
+        platforms.length === 1 ? 'this channel is yours' : 'these channels are yours'
+      }, but the program needs at least ${min.toLocaleString()} followers on one of them. That is a requirement we cannot waive, so this application will not be approved. You are very welcome to apply again once you are over ${min.toLocaleString()}.`,
     };
   }
 
   if (allOwned) {
+    const removal = codeRemovalSentence(platforms);
     return {
       tone: 'good',
-      headline: 'All channels verified',
-      sub: 'Nothing left for you to do. Your application is with our team, and you can remove the codes from your channels.',
+      headline: platforms.length === 1 ? 'Channel verified' : 'All channels verified',
+      sub: `Nothing left for you to do. Your application is with our team.${
+        removal ? ` ${removal}` : ''
+      }`,
     };
   }
 
   if (someOwned) {
     const left = platforms.filter((p) => !ownershipProven(p)).length;
+    const removal = codeRemovalSentence(platforms);
     return {
       tone: 'neutral',
       headline: `${left} channel${left === 1 ? '' : 's'} left to verify`,
-      sub: 'Add the code to the remaining channel and press Check. You can remove codes from channels that already show as verified.',
+      sub: `Add the code to the remaining channel${left === 1 ? '' : 's'} and press Check.${
+        removal ? ` ${removal}` : ''
+      }`,
     };
   }
 
@@ -256,9 +316,9 @@ export default function VerificationPanel({
 
   const state = derivePanelState(platforms, checks, minFollowers);
   const tone = TONE[state.tone];
+  const qualifies = applicationQualifies(platforms, minFollowers);
   const allSettled =
-    platforms.length > 0 &&
-    platforms.every((p) => ownershipProven(p) && meetsFollowerBar(p, minFollowers));
+    platforms.length > 0 && platforms.every(ownershipProven) && qualifies;
   const collapsed = allSettled && !expanded;
 
   const call = async (index: number, action: 'verify-start' | 'verify-check') => {
@@ -425,7 +485,7 @@ export default function VerificationPanel({
                 : `All ${platforms.length} channels verified`}
             </strong>
             <span>
-              {platforms.map((p) => titleCase(p.type)).join(', ')} — nothing left for you to do here.
+              {platforms.map((p) => platformLabel(p.type)).join(', ')} — nothing left for you to do here.
             </span>
           </span>
           <span className="vp-collapsed-more">
@@ -463,13 +523,17 @@ export default function VerificationPanel({
             fallback: 'Channel reachable',
           },
           {
-            ok: result?.followersOk ?? (p.followerCount != null ? bigEnough : undefined),
+            // Judged the way the API judges it: the largest channel carries the
+            // application, so a small second channel is a fact, not a failure.
+            ok: result?.followersOk ?? (p.followerCount != null ? bigEnough || qualifies : undefined),
             text:
               result?.followerMessage ??
               (p.followerCount != null
                 ? bigEnough
                   ? `${p.followerCount.toLocaleString()} followers, above the ${minFollowers.toLocaleString()} minimum.`
-                  : `${p.followerCount.toLocaleString()} followers. The program needs at least ${minFollowers.toLocaleString()}, so this channel does not qualify on its own yet.`
+                  : qualifies
+                    ? `${p.followerCount.toLocaleString()} followers. We measure your largest channel, so this one does not need to reach ${minFollowers.toLocaleString()}.`
+                    : `${p.followerCount.toLocaleString()} followers, under the ${minFollowers.toLocaleString()} minimum.`
                 : undefined),
             fallback: 'Follower minimum',
           },
@@ -480,16 +544,16 @@ export default function VerificationPanel({
           },
         ].filter((l) => l.ok !== undefined);
 
-        // Green only when every answer is yes. Ownership alone used to show a
-        // plain "Verified", which read as a pass on a channel that had failed
-        // the follower bar.
-        const allGood = owned && bigEnough;
+        // Green only when this channel is both ours and carried by a channel
+        // that clears the bar. Ownership alone used to show a plain "Verified",
+        // which read as a pass on a channel that had failed the follower bar.
+        const allGood = owned && (bigEnough || qualifies);
 
         return (
           <div className="vp-card" key={`${p.type}-${index}`}>
             <div className="vp-card-top">
               <div className="vp-ident">
-                <div style={{ fontWeight: 700, color: '#fff', fontSize: '15px' }}>{titleCase(p.type)}</div>
+                <div style={{ fontWeight: 700, color: '#fff', fontSize: '15px' }}>{platformLabel(p.type)}</div>
                 {href ? (
                   <a
                     href={href}
@@ -511,18 +575,29 @@ export default function VerificationPanel({
                 )}
               </div>
 
-              {allGood ? (
+              {/* Once we have found the channel and the code, both buttons are
+                  spent: there is nothing left to fetch a code for, and pressing
+                  Check again cannot move a follower count that was measured at
+                  submission. Leaving them there invites people to hammer a
+                  button that will never change their answer. */}
+              {owned ? (
                 <span
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: '6px',
-                    color: '#4ade80', background: 'rgba(34,197,94,0.12)',
-                    border: '1px solid rgba(34,197,94,0.3)', borderRadius: '999px',
+                    color: allGood ? '#4ade80' : '#f87171',
+                    background: allGood ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
+                    border: `1px solid ${allGood ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                    borderRadius: '999px',
                     padding: '5px 12px', fontSize: '12px', fontWeight: 700,
                     flexShrink: 0, alignSelf: 'flex-start',
                   }}
                 >
-                  <ShieldCheckIcon style={{ width: 14, height: 14 }} />
-                  Verified
+                  {allGood ? (
+                    <ShieldCheckIcon style={{ width: 14, height: 14 }} />
+                  ) : (
+                    <XCircleIcon style={{ width: 14, height: 14 }} />
+                  )}
+                  {allGood ? 'Verified' : 'Below minimum'}
                 </span>
               ) : (
                 <div className="vp-actions">
@@ -572,7 +647,7 @@ export default function VerificationPanel({
                       transition: 'transform 0.15s ease',
                     }}
                   />
-                  {openSteps[index] ? 'Hide step-by-step' : `Show me exactly where on ${titleCase(p.type)}`}
+                  {openSteps[index] ? 'Hide step-by-step' : `Show me exactly where on ${platformLabel(p.type)}`}
                 </button>
                 {openSteps[index] && (
                   <ol className="vp-steps">

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import VerificationPanel from './VerificationPanel';
+import VerificationPanel, { codeRemovalSentence, DEFAULT_MIN_FOLLOWERS } from './VerificationPanel';
 import ApplicationProgress, { Stage } from './ApplicationProgress';
 import {
   ArrowLeftIcon,
@@ -243,6 +243,13 @@ function buildStages(app: Application): Stage[] {
   ).length;
   const allVerified = platforms.length > 0 && verified === platforms.length;
   const failed = checks.find((c) => c.status === 'failed');
+  // Ownership proven and still short of the bar. The API rejects this on its
+  // next screening pass, so the timeline must not walk them toward a human
+  // review that is never going to happen.
+  const belowMinimum =
+    allVerified &&
+    platforms.some((p) => p.followerCount != null) &&
+    !platforms.some((p) => (p.followerCount ?? 0) >= DEFAULT_MIN_FOLLOWERS);
 
   const submittedOn = app.createdAt
     ? new Date(app.createdAt).toLocaleDateString(undefined, {
@@ -267,6 +274,16 @@ function buildStages(app: Application): Stage[] {
       detail: failed.reason || 'One of our checks did not pass. See below for what to fix.',
       state: 'attention',
     });
+  } else if (belowMinimum) {
+    stages.push({
+      title: 'Channel verification',
+      detail: `${
+        platforms.length === 1 ? 'Your channel is verified as yours' : 'Your channels are verified as yours'
+      }, but ${
+        platforms.length === 1 ? 'it is' : 'the largest is'
+      } under the ${DEFAULT_MIN_FOLLOWERS.toLocaleString()} follower minimum the program requires.`,
+      state: 'attention',
+    });
   } else if (allVerified) {
     stages.push({
       title: 'Channel verification',
@@ -287,19 +304,31 @@ function buildStages(app: Application): Stage[] {
     });
   }
 
-  const inReview = allVerified && !failed;
-  stages.push({
-    title: 'Review by our team',
-    detail: inReview
-      ? 'A member of our team is reviewing your application. This usually takes 5 to 7 business days, and there is nothing for you to do in the meantime.'
-      : 'Once your channels are verified, a member of our team reviews your application. This usually takes 5 to 7 business days.',
-    state: inReview ? 'active' : 'upcoming',
-  });
+  // A shortfall is settled by the follower bar itself, so no human review stage
+  // is coming — showing one would just be a countdown to a foregone answer.
+  if (!belowMinimum) {
+    const inReview = allVerified && !failed;
+    // "Nothing for you to do" is true but wasted: the one thing they can now do
+    // is undo the edit we asked them to make. Only ever say it about a platform
+    // we read through an API — a TikTok code stays until a human has seen it.
+    const removal = codeRemovalSentence(platforms);
+    stages.push({
+      title: 'Review by our team',
+      detail: inReview
+        ? `A member of our team is reviewing your application. This usually takes 3 to 5 business days.${
+            removal ? ` ${removal} We already have what we need.` : ' There is nothing for you to do in the meantime.'
+          }`
+        : 'Once your channels are verified, a member of our team reviews your application. This usually takes 3 to 5 business days.',
+      state: inReview ? 'active' : 'upcoming',
+    });
+  }
 
   stages.push({
     title: 'Decision',
-    detail: 'We will email you either way, and this page will update.',
-    state: 'upcoming',
+    detail: belowMinimum
+      ? `We will email you shortly. Apply again any time once you are over ${DEFAULT_MIN_FOLLOWERS.toLocaleString()} followers — we would be glad to have you.`
+      : 'We will email you either way, and this page will update.',
+    state: belowMinimum ? 'attention' : 'upcoming',
   });
 
   return stages;
