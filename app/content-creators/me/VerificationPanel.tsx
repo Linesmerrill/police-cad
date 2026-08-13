@@ -8,6 +8,7 @@ import {
   UserGroupIcon,
   ClipboardDocumentIcon,
   ArrowPathIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 
 // Mirrors models.ApplicationCheck. Reason is written for the applicant by the
@@ -69,6 +70,48 @@ function instructionFor(type: string) {
   );
 }
 
+// The click path per platform. The one-line instruction above assumes you
+// already know where these settings live; most people don't, and a failed check
+// they can't diagnose is the thing that makes someone give up.
+//
+// Bold marks the exact label to look for on screen.
+const STEPS: Record<string, { text: string; bold?: boolean }[][]> = {
+  youtube: [
+    [{ text: 'Open ' }, { text: 'studio.youtube.com', bold: true }, { text: ', signed in as the channel you listed.' }],
+    [{ text: 'In the left sidebar click ' }, { text: 'Customization', bold: true }, { text: '.' }],
+    [{ text: 'Open the ' }, { text: 'Basic info', bold: true }, { text: ' tab.' }],
+    [{ text: 'Paste the code anywhere in the ' }, { text: 'Description', bold: true }, { text: ' box. It can sit alongside your existing text.' }],
+    [{ text: 'Click ' }, { text: 'Publish', bold: true }, { text: ' at the top right.' }],
+    [{ text: 'Come back here and press ' }, { text: 'Check', bold: true }, { text: '.' }],
+  ],
+  twitch: [
+    [{ text: 'Open ' }, { text: 'twitch.tv', bold: true }, { text: ' and sign in as the channel you listed.' }],
+    [{ text: 'Click your avatar at the top right, then ' }, { text: 'Settings', bold: true }, { text: '.' }],
+    [{ text: 'Go to the ' }, { text: 'Channel', bold: true }, { text: ' tab.' }],
+    [{ text: 'Paste the code into your ' }, { text: 'Bio', bold: true }, { text: ' / About panel.' }],
+    [{ text: 'Click ' }, { text: 'Save Changes', bold: true }, { text: '.' }],
+    [{ text: 'Come back here and press ' }, { text: 'Check', bold: true }, { text: '.' }],
+  ],
+  tiktok: [
+    [{ text: 'Open the TikTok app, or ' }, { text: 'tiktok.com', bold: true }, { text: ', signed in as the account you listed.' }],
+    [{ text: 'Go to ' }, { text: 'Profile', bold: true }, { text: ', then ' }, { text: 'Edit profile', bold: true }, { text: '.' }],
+    [{ text: 'Paste the code into your ' }, { text: 'Bio', bold: true }, { text: '.' }],
+    [{ text: 'Save.' }],
+    [{ text: 'Leave the code in place. TikTok has no public API, so our team confirms it by eye during review — there is no Check button for TikTok.' }],
+  ],
+};
+
+function stepsFor(type: string) {
+  return (
+    STEPS[(type || '').toLowerCase()] || [
+      [{ text: 'Open your channel or profile settings on that platform.' }],
+      [{ text: 'Find the ' }, { text: 'bio', bold: true }, { text: ' or ' }, { text: 'description', bold: true }, { text: ' field.' }],
+      [{ text: 'Paste the code in and save.' }],
+      [{ text: 'Leave it in place — our team confirms it during review.' }],
+    ]
+  );
+}
+
 const STATUS_STYLE: Record<string, { color: string; bg: string; border: string; label: string }> = {
   passed: { color: '#4ade80', bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.3)', label: 'Passed' },
   failed: { color: '#f87171', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', label: 'Action needed' },
@@ -86,6 +129,7 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
   const [instructions, setInstructions] = useState<Record<number, string>>({});
   const [messages, setMessages] = useState<Record<number, { text: string; ok: boolean }>>({});
   const [copied, setCopied] = useState<number | null>(null);
+  const [openSteps, setOpenSteps] = useState<Record<number, boolean>>({});
 
   const call = async (index: number, action: 'verify-start' | 'verify-check') => {
     setBusyIndex(index);
@@ -269,6 +313,52 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
                   <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', margin: '10px 0 0', lineHeight: 1.6 }}>
                     {instruction}
                   </p>
+                )}
+
+                <button
+                  onClick={() => setOpenSteps((o) => ({ ...o, [index]: !o[index] }))}
+                  aria-expanded={!!openSteps[index]}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    background: 'transparent', border: 'none', padding: '8px 0 0',
+                    color: '#fbbf24', fontSize: '13px', fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  <ChevronDownIcon
+                    style={{
+                      width: 14, height: 14,
+                      transform: openSteps[index] ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.15s ease',
+                    }}
+                  />
+                  {openSteps[index]
+                    ? 'Hide step-by-step'
+                    : `Show me exactly where on ${p.type.charAt(0).toUpperCase() + p.type.slice(1)}`}
+                </button>
+
+                {openSteps[index] && (
+                  <ol
+                    style={{
+                      margin: '10px 0 0', padding: '14px 16px 14px 34px',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.07)',
+                      borderRadius: '10px',
+                      color: 'rgba(255,255,255,0.75)', fontSize: '13px', lineHeight: 1.9,
+                    }}
+                  >
+                    {stepsFor(p.type).map((parts, si) => (
+                      <li key={si}>
+                        {parts.map((part, pi) =>
+                          part.bold ? (
+                            <strong key={pi} style={{ color: '#fff' }}>{part.text}</strong>
+                          ) : (
+                            <span key={pi}>{part.text}</span>
+                          )
+                        )}
+                      </li>
+                    ))}
+                  </ol>
                 )}
               </div>
             )}
