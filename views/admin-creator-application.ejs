@@ -275,7 +275,10 @@
         kv('Submitted', esc(fmtDate(app.createdAt))) +
         kv('Checks last run', esc(fmtDate(app.checksLastRunAt)) || '<span class="kv-label">never</span>') +
         kv('Check attempts', esc(String(app.checkAttempts || 0))) +
-        kv('Admin notified', app.adminNotifiedAt ? esc(fmtDate(app.adminNotifiedAt)) : '<span class="kv-label">not yet</span>')
+        kv('Admin notified', app.adminNotifiedAt ? esc(fmtDate(app.adminNotifiedAt)) : '<span class="kv-label">not yet</span>') +
+        kv('Approvals', app.firstApprovalBy
+          ? '1 of 2' + (app.firstApprovalAt ? ' &middot; <span class="kv-label">' + esc(fmtDate(app.firstApprovalAt)) + '</span>' : '')
+          : '<span class="kv-label">none yet</span>')
       );
 
       // The banner answers the only question a reviewer opens this page with:
@@ -348,15 +351,34 @@
             : 'Approval is blocked until you have confirmed every item on the reviewer checklist.'
       );
 
+      // Approvals are dual: one admin, then a different one. Reflect where this
+      // application actually is, otherwise you press Approve a second time and
+      // get a 409 telling you what the screen should have said.
+      const firstApprovalBy = app.firstApprovalBy ? String(app.firstApprovalBy) : '';
+      const iApprovedAlready = firstApprovalBy && firstApprovalBy === ADMIN_ID;
+      const someoneApproved = !!firstApprovalBy;
+
+      if (iApprovedAlready) {
+        $('#approve-btn')
+          .prop('disabled', true)
+          .html('<i class="fas fa-check"></i> You approved (1 of 2)');
+      } else if (someoneApproved) {
+        $('#approve-btn')
+          .prop('disabled', !canApprove)
+          .html('<i class="fas fa-check"></i> Give the second approval');
+      }
+
       // Owner override skips the SECOND ADMIN, not the diligence. The checklist
       // and the automated checks still apply — bypassing those would reintroduce
       // exactly what this flow was built to stop.
       if (IS_OWNER && (app.status === 'submitted' || app.status === 'under_review')) {
         $('#override-btn').show().prop('disabled', !canApprove);
         $('#override-hint').show().text(
-          canApprove
-            ? 'Override approves on your own, without waiting for a second admin. Recorded as an owner override in the audit log.'
-            : 'Override skips the second admin, not the checks or the checklist. Clear those above first.'
+          !canApprove
+            ? 'Override skips the second admin, not the checks or the checklist. Clear those above first.'
+            : iApprovedAlready
+              ? 'Nobody has given the second approval. Override completes it on your own, recorded as an owner override.'
+              : 'Override approves on your own, without waiting for a second admin. Recorded as an owner override in the audit log.'
         );
       } else {
         $('#override-btn').hide();
