@@ -83,6 +83,10 @@
     .btn-primary { background: var(--ac-accent); border-color: var(--ac-accent); }
     .actions { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
     .mismatch { color: var(--ac-amber); font-size: 0.8rem; margin-top: 4px; }
+    /* The confirmed-by line appears only once a box is ticked. Reserving its
+       height means the row cannot grow under the cursor and shove the next
+       checkbox out from under a click already on its way. */
+    .checklist-meta { min-height: 1.05rem; }
     .empty { color: var(--ac-text-dim); font-size: 0.9rem; }
     .toast {
       position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
@@ -172,6 +176,9 @@
         <button class="btn btn-fail" id="reject-btn"><i class="fas fa-xmark"></i> Reject application</button>
         <button class="btn" id="override-btn" style="display:none; background:linear-gradient(135deg,#667eea,#764ba2); border:none; color:#fff;">
           <i class="fas fa-shield-halved"></i> Override approve
+        </button>
+        <button class="btn" id="withdraw-btn" style="display:none;">
+          <i class="fas fa-rotate-left"></i> Remove my approval
         </button>
       </div>
       <p class="sub" id="override-hint" style="display:none; margin:12px 0 0;"></p>
@@ -282,7 +289,8 @@
         kv('Check attempts', esc(String(app.checkAttempts || 0))) +
         kv('Admin notified', app.adminNotifiedAt ? esc(fmtDate(app.adminNotifiedAt)) : '<span class="kv-label">not yet</span>') +
         kv('Approvals', app.firstApprovalBy
-          ? '1 of 2' + (app.firstApprovalAt ? ' &middot; <span class="kv-label">' + esc(fmtDate(app.firstApprovalAt)) + '</span>' : '')
+          ? '1 of 2 &middot; ' + esc(app.firstApprovalByName || 'Unknown admin') +
+            (app.firstApprovalAt ? '<div class="kv-label" style="margin-top:2px;">' + esc(fmtDate(app.firstApprovalAt)) + '</div>' : '')
           : '<span class="kv-label">none yet</span>')
       );
 
@@ -329,7 +337,11 @@
 
       $('#checklist').html(REVIEW_CHECKLIST.map(function (c) {
         const on = !!ticked[c.key];
-        const who = on && ticked[c.key].checkedAt ? 'Confirmed ' + fmtDate(ticked[c.key].checkedAt) : '';
+        const names = app.checkedByNames || {};
+        const by = on && ticked[c.key].checkedBy ? names[String(ticked[c.key].checkedBy)] : '';
+        const who = on && ticked[c.key].checkedAt
+          ? 'Confirmed by ' + (by || 'an admin') + ' &middot; ' + fmtDate(ticked[c.key].checkedAt)
+          : '';
         return '' +
           '<label class="row" style="cursor:pointer; align-items:center;">' +
             '<input type="checkbox" class="js-check" data-key="' + esc(c.key) + '"' + (on ? ' checked' : '') +
@@ -337,7 +349,7 @@
             '<div class="row-main">' +
               '<div class="row-title">' + esc(c.label) + '</div>' +
               '<div class="row-reason">' + esc(c.hint) + '</div>' +
-              (who ? '<div class="row-meta">' + esc(who) + '</div>' : '') +
+              '<div class="row-meta checklist-meta">' + (who || '&nbsp;') + '</div>' +
             '</div>' +
           '</label>';
       }).join(''));
@@ -367,7 +379,13 @@
         $('#approve-btn')
           .prop('disabled', true)
           .html('<i class="fas fa-check"></i> You approved (1 of 2)');
+        $('#withdraw-btn').show();
       } else if (someoneApproved) {
+        // An owner can also take back somebody else's, which is the only way to
+        // unstick an application whose first approver has gone quiet.
+        if (IS_OWNER) {
+          $('#withdraw-btn').show().html('<i class="fas fa-rotate-left"></i> Remove this approval');
+        }
         $('#approve-btn')
           .prop('disabled', !canApprove)
           .html('<i class="fas fa-check"></i> Give the second approval');
@@ -485,6 +503,12 @@
       if (!window.confirm('Approve this application? This grants their creator benefits and emails them.')) return;
       post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/approve',
         {}, 'Approval recorded.');
+    });
+
+    $('#withdraw-btn').on('click', function () {
+      if (!window.confirm('Remove this approval? The application goes back to awaiting review.')) return;
+      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/withdraw-approval',
+        {}, 'Approval removed.');
     });
 
     $('#override-btn').on('click', function () {
