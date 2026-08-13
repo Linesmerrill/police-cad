@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import VerificationPanel from './VerificationPanel';
+import ApplicationProgress, { Stage } from './ApplicationProgress';
 import {
   ArrowLeftIcon,
   ClockIcon,
@@ -226,6 +227,82 @@ function formatFollowerCount(count: number): string {
   if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
   if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
   return count.toString();
+}
+
+// Turns an application into the four stages the applicant sees.
+//
+// Deliberately does not expose the two-admin approval mechanic — how many
+// reviewers we use is an internal detail. What matters to the applicant is
+// whether a person is looking, roughly how long, and how they will hear.
+function buildStages(app: Application): Stage[] {
+  const platforms = app.platforms || [];
+  const checks = app.checks || [];
+
+  const verified = platforms.filter(
+    (p) => p.verificationStatus === 'verified' || p.verifiedByAdmin === true
+  ).length;
+  const allVerified = platforms.length > 0 && verified === platforms.length;
+  const failed = checks.find((c) => c.status === 'failed');
+
+  const submittedOn = app.createdAt
+    ? new Date(app.createdAt).toLocaleDateString(undefined, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '';
+
+  const stages: Stage[] = [
+    {
+      title: 'Application submitted',
+      detail: 'We have everything you sent us.',
+      state: 'done',
+      meta: submittedOn ? `Submitted ${submittedOn}` : undefined,
+    },
+  ];
+
+  if (failed) {
+    stages.push({
+      title: 'Channel verification',
+      detail: failed.reason || 'One of our checks did not pass. See below for what to fix.',
+      state: 'attention',
+    });
+  } else if (allVerified) {
+    stages.push({
+      title: 'Channel verification',
+      detail:
+        platforms.length === 1
+          ? 'Your channel is verified.'
+          : `All ${platforms.length} channels are verified.`,
+      state: 'done',
+    });
+  } else {
+    stages.push({
+      title: 'Channel verification',
+      detail:
+        platforms.length > 1 && verified > 0
+          ? `${verified} of ${platforms.length} channels verified. Add the code to the rest below.`
+          : 'Add the code below to your channel description, then press Check.',
+      state: 'active',
+    });
+  }
+
+  const inReview = allVerified && !failed;
+  stages.push({
+    title: 'Review by our team',
+    detail: inReview
+      ? 'A member of our team is reviewing your application. This usually takes 5 to 7 business days, and there is nothing for you to do in the meantime.'
+      : 'Once your channels are verified, a member of our team reviews your application. This usually takes 5 to 7 business days.',
+    state: inReview ? 'active' : 'upcoming',
+  });
+
+  stages.push({
+    title: 'Decision',
+    detail: 'We will email you either way, and this page will update.',
+    state: 'upcoming',
+  });
+
+  return stages;
 }
 
 export default function CreatorStatusPage() {
@@ -1834,6 +1911,12 @@ export default function CreatorStatusPage() {
                   <PencilSquareIcon style={{ width: '18px', height: '18px' }} />
                   Apply Again
                 </Link>
+              )}
+
+              {/* Where this application actually is. "Submitted" on its own told
+                  the applicant nothing about what happens next or when. */}
+              {(application.status === 'submitted' || application.status === 'under_review') && (
+                <ApplicationProgress stages={buildStages(application)} />
               )}
 
               {/* Channel ownership verification. Only while the application is

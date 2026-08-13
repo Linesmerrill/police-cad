@@ -249,9 +249,17 @@ export default function VerificationPanel({
   const [results, setResults] = useState<Record<number, CheckResult>>({});
   const [copied, setCopied] = useState<number | null>(null);
   const [openSteps, setOpenSteps] = useState<Record<number, boolean>>({});
+  // Once every channel is verified and clears the bar there is nothing left to
+  // do here, so the section folds itself away to a single line and lets the
+  // progress timeline carry the page.
+  const [expanded, setExpanded] = useState(false);
 
   const state = derivePanelState(platforms, checks, minFollowers);
   const tone = TONE[state.tone];
+  const allSettled =
+    platforms.length > 0 &&
+    platforms.every((p) => ownershipProven(p) && meetsFollowerBar(p, minFollowers));
+  const collapsed = allSettled && !expanded;
 
   const call = async (index: number, action: 'verify-start' | 'verify-check') => {
     setBusyIndex(index);
@@ -320,6 +328,32 @@ export default function VerificationPanel({
           margin-bottom: 24px;
         }
         .vp-head { margin-bottom: 18px; }
+        .vp-hide {
+          margin-top: 10px; background: transparent; border: none; padding: 0;
+          color: rgba(255,255,255,0.45); font-size: 13px; font-weight: 600;
+          cursor: pointer; font-family: inherit;
+        }
+        .vp-hide:hover { color: #fff; }
+        /* Collapsed: one row that says "done", and gets out of the way. */
+        .vp-collapsed {
+          display: flex; align-items: center; gap: 14px; width: 100%;
+          background: transparent; border: none; padding: 0;
+          font-family: inherit; text-align: left; cursor: pointer;
+        }
+        .vp-collapsed-badge {
+          width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          color: #4ade80; background: rgba(34,197,94,0.14);
+          border: 1px solid rgba(34,197,94,0.32);
+        }
+        .vp-collapsed-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+        .vp-collapsed-text strong { color: #fff; font-size: 15px; font-weight: 700; }
+        .vp-collapsed-text span { color: rgba(255,255,255,0.5); font-size: 13px; line-height: 1.5; }
+        .vp-collapsed-more {
+          display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+          color: rgba(255,255,255,0.45); font-size: 13px; font-weight: 600;
+        }
+        .vp-collapsed:hover .vp-collapsed-more { color: #fff; }
         .vp-head h3 {
           font-size: 18px; font-weight: 700; color: #fff;
           margin: 0 0 6px; line-height: 1.3;
@@ -375,15 +409,41 @@ export default function VerificationPanel({
           .vp-code-row { flex-direction: column; align-items: stretch; gap: 8px; }
           .vp-code-row .vp-btn { justify-content: center; }
           .vp-steps { padding-left: 28px; }
+          .vp-collapsed-more { display: none; }
         }
       `}</style>
 
-      <div className="vp-head">
-        <h3>{state.headline}</h3>
-        <p style={{ color: state.tone === 'neutral' ? 'rgba(255,255,255,0.55)' : tone.color }}>{state.sub}</p>
-      </div>
+      {collapsed ? (
+        <button className="vp-collapsed" onClick={() => setExpanded(true)}>
+          <span className="vp-collapsed-badge">
+            <ShieldCheckIcon style={{ width: 16, height: 16 }} />
+          </span>
+          <span className="vp-collapsed-text">
+            <strong>
+              {platforms.length === 1
+                ? 'Channel verified'
+                : `All ${platforms.length} channels verified`}
+            </strong>
+            <span>
+              {platforms.map((p) => titleCase(p.type)).join(', ')} — nothing left for you to do here.
+            </span>
+          </span>
+          <span className="vp-collapsed-more">
+            Details
+            <ChevronDownIcon style={{ width: 14, height: 14 }} />
+          </span>
+        </button>
+      ) : (
+        <div className="vp-head">
+          <h3>{state.headline}</h3>
+          <p style={{ color: state.tone === 'neutral' ? 'rgba(255,255,255,0.55)' : tone.color }}>{state.sub}</p>
+          {allSettled && (
+            <button className="vp-hide" onClick={() => setExpanded(false)}>Hide details</button>
+          )}
+        </div>
+      )}
 
-      {platforms.map((p, index) => {
+      {!collapsed && platforms.map((p, index) => {
         const owned = ownershipProven(p);
         const bigEnough = meetsFollowerBar(p, minFollowers);
         const manual = MANUAL_PLATFORMS.includes((p.type || '').toLowerCase());
