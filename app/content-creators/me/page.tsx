@@ -1375,7 +1375,7 @@ export default function CreatorStatusPage() {
                     }}>
                       {creatorProfile.entitlements.personalPlanFallback
                         ? `${creatorProfile.entitlements.currentUserPlan?.charAt(0).toUpperCase()}${creatorProfile.entitlements.currentUserPlan?.slice(1).replace('_', ' ')} Plan`
-                        : 'Base Plan'}
+                        : 'Premium Plus'}
                     </div>
                     <div style={{
                       fontSize: '13px',
@@ -1383,8 +1383,8 @@ export default function CreatorStatusPage() {
                       marginTop: '4px'
                     }}>
                       {creatorProfile.entitlements.personalPlanFallback
-                        ? 'Base Plan activates if you cancel'
-                        : '$36/year value'}
+                        ? 'Premium Plus activates if you cancel'
+                        : '$99/year value'}
                     </div>
                   </div>
 
@@ -1435,14 +1435,14 @@ export default function CreatorStatusPage() {
                           fontWeight: '700',
                           color: '#fff'
                         }}>
-                          {creatorProfile.entitlements.communityPlan.communityName || 'Base Plan'}
+                          {creatorProfile.entitlements.communityPlan.communityName || 'Premium boost'}
                         </div>
                         <div style={{
                           fontSize: '13px',
                           color: 'rgba(255, 255, 255, 0.5)',
                           marginTop: '4px'
                         }}>
-                          $36/year value
+                          $96/year value
                         </div>
                       </>
                     ) : (
@@ -1453,7 +1453,7 @@ export default function CreatorStatusPage() {
                           color: 'rgba(255, 255, 255, 0.7)',
                           marginBottom: '12px'
                         }}>
-                          Base Plan Available
+                          Premium Boost Available
                         </div>
                         <button
                           onClick={handleClaimCommunityBenefit}
@@ -1503,7 +1503,7 @@ export default function CreatorStatusPage() {
                       fontWeight: '800',
                       color: '#fbbf24'
                     }}>
-                      $72/year
+                      $195/year
                     </div>
                   </div>
                   <SparklesIcon style={{ width: '32px', height: '32px', color: 'rgba(251, 191, 36, 0.3)' }} />
@@ -1639,7 +1639,7 @@ export default function CreatorStatusPage() {
                 maxWidth: '450px',
                 margin: '0 auto 16px'
               }}>
-                You have been removed from the Content Creator Program. Your Base Plan benefits for your personal account and community have been revoked.
+                You have been removed from the Content Creator Program. Your Premium Plus and community boost benefits have been revoked.
               </p>
               <p style={{
                 fontSize: '0.9rem',
@@ -1948,7 +1948,7 @@ export default function CreatorStatusPage() {
               textAlign: 'center',
               marginBottom: '24px'
             }}>
-              This will remove you from the Creator Program and revoke your Base Plan benefits
+              This will remove you from the Creator Program and revoke your Premium Plus and community boost benefits
               for both your personal account and community. This action cannot be easily undone.
             </p>
 
@@ -2183,7 +2183,7 @@ export default function CreatorStatusPage() {
               textAlign: 'center',
               marginBottom: '24px'
             }}>
-              Select a community you own to apply your free Base Plan benefit.
+              Select a community you own to apply your free Premium boost.
               You can only apply this to one community.
             </p>
 
@@ -2256,7 +2256,7 @@ export default function CreatorStatusPage() {
                 marginBottom: '16px'
               }}>
                 {ownedCommunities.map((community) => {
-                  // Check if community has an existing paid subscription (equal or higher tier than Base Plan)
+                  // Check if community has an existing paid boost we must not overwrite
                   const hasExistingSubscription = community.currentPlan &&
                     ['basic', 'elite', 'base'].includes(community.currentPlan.toLowerCase());
                   const isDisabled = community.isPromotionApplied || hasExistingSubscription || applyingPromotion;
@@ -3110,7 +3110,7 @@ export default function CreatorStatusPage() {
               textAlign: 'center',
               marginBottom: '16px'
             }}>
-              You are about to apply your free Base Plan benefit to:
+              You are about to apply your free Premium boost to:
             </p>
 
             <div style={{

@@ -718,7 +718,7 @@ export default function ContentCreatorsPage() {
                   : '...',
                 label: 'Combined Reach'
               },
-              { value: '$72', label: 'Yearly Value' }
+              { value: '$195', label: 'Yearly Value' }
             ].map((stat, i) => (
               <div key={i} style={{ textAlign: 'center', minWidth: '120px' }}>
                 <div style={{
@@ -949,7 +949,7 @@ export default function ContentCreatorsPage() {
               position: 'relative',
               zIndex: 1
             }}>
-              {/* Left - Free Base Plan */}
+              {/* Left - Free Premium Plus */}
               <div>
                 <div style={{
                   display: 'flex',
@@ -970,10 +970,10 @@ export default function ContentCreatorsPage() {
                   </div>
                   <div>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#fff' }}>
-                      Free Base Plan
+                      Free Premium Plus
                     </h3>
                     <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.5)' }}>
-                      For you + one community
+                      Our highest tier, for you + one community
                     </p>
                   </div>
                 </div>
@@ -987,8 +987,9 @@ export default function ContentCreatorsPage() {
                   gap: '12px'
                 }}>
                   {[
-                    'Base Plan for your personal account',
-                    'Base Plan for ONE community you manage',
+                    'Premium Plus on your personal account, our highest tier',
+                    'Unlimited communities, no ads, verified badge',
+                    'Premium community boost for ONE community you manage',
                     'Featured profile on our creators directory',
                     'Prestige of being an exclusive Creator Program member'
                   ].map((benefit, i) => (
@@ -1044,7 +1045,7 @@ export default function ContentCreatorsPage() {
                     fontWeight: '800',
                     color: '#fbbf24'
                   }}>
-                    $72
+                    $195
                   </span>
                   <span style={{
                     fontSize: '1.25rem',
@@ -1063,18 +1064,18 @@ export default function ContentCreatorsPage() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.875rem' }}>
-                      Personal Base Plan
+                      Personal Premium Plus
                     </span>
                     <span style={{ color: '#fff', fontWeight: '600', fontSize: '0.875rem' }}>
-                      $36/yr
+                      $99/yr
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.875rem' }}>
-                      Community Base Plan
+                      Premium community boost
                     </span>
                     <span style={{ color: '#fff', fontWeight: '600', fontSize: '0.875rem' }}>
-                      $36/yr
+                      $96/yr
                     </span>
                   </div>
                 </div>

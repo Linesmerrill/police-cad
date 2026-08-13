@@ -1258,8 +1258,8 @@ export default function ApplyPage() {
                   gap: '8px'
                 }}>
                   {[
-                    'Free Base Plan for your account ($36/year value)',
-                    'Free Base Plan for one community you manage ($36/year value)',
+                    'Free Premium Plus on your account, our highest tier ($99/year value)',
+                    'Free Premium boost for one community you manage ($96/year value)',
                     'Featured profile on our creators directory',
                     'Prestige of being an exclusive Creator Program member'
                   ].map((benefit, i) => (
