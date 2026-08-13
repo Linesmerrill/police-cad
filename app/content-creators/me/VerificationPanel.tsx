@@ -176,12 +176,18 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
   const [codes, setCodes] = useState<Record<number, string>>({});
   const [instructions, setInstructions] = useState<Record<number, string>>({});
   const [messages, setMessages] = useState<Record<number, { text: string; ok: boolean }>>({});
+  // Per-platform outcome of the last Check, split into the two questions an
+  // applicant actually needs answered.
+  const [results, setResults] = useState<
+    Record<number, { channelFound?: boolean; codeFound?: boolean; channelMessage?: string; codeMessage?: string }>
+  >({});
   const [copied, setCopied] = useState<number | null>(null);
   const [openSteps, setOpenSteps] = useState<Record<number, boolean>>({});
 
   const call = async (index: number, action: 'verify-start' | 'verify-check') => {
     setBusyIndex(index);
     setMessages((m) => ({ ...m, [index]: { text: '', ok: true } }));
+    setResults((r) => ({ ...r, [index]: {} }));
     try {
       const res = await fetch(
         `/api/v1/content-creator-applications/me/platforms/${index}/${action}`,
@@ -203,15 +209,22 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
         return;
       }
 
-      if (data.verified) {
-        setMessages((m) => ({ ...m, [index]: { text: 'Verified. Thanks!', ok: true } }));
-        onRefresh();
-        return;
-      }
-      setMessages((m) => ({
-        ...m,
-        [index]: { text: data.message || 'Not found yet, try again shortly.', ok: false },
+      // Two separate results, not one verdict. "Could not verify" left people
+      // unable to tell a wrong handle from an unsaved description, which is the
+      // ambiguity that turns into a support message.
+      setResults((r) => ({
+        ...r,
+        [index]: {
+          channelFound: data.channelFound,
+          codeFound: data.codeFound,
+          channelMessage: data.channelMessage,
+          codeMessage: data.codeMessage,
+        },
       }));
+
+      if (data.verified) {
+        onRefresh();
+      }
     } catch {
       setMessages((m) => ({
         ...m,
@@ -263,6 +276,7 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
         const code = codes[index] || p.verificationCode || '';
         const instruction = instructions[index] || (code ? instructionFor(p.type) : '');
         const msg = messages[index];
+        const result = results[index];
         const label = p.handle || p.url || p.type;
 
         return (
@@ -428,6 +442,26 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
                     ))}
                   </ol>
                 )}
+              </div>
+            )}
+
+            {(result?.channelFound !== undefined || result?.codeFound !== undefined) && (
+              <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
+                {[
+                  { ok: result.channelFound, text: result.channelMessage, fallback: 'Channel' },
+                  { ok: result.codeFound, text: result.codeMessage, fallback: 'Verification code' },
+                ].map((line, li) => (
+                  <div key={li} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                    {line.ok ? (
+                      <CheckCircleIcon style={{ width: 16, height: 16, color: '#4ade80', flexShrink: 0, marginTop: 1 }} />
+                    ) : (
+                      <XCircleIcon style={{ width: 16, height: 16, color: '#f87171', flexShrink: 0, marginTop: 1 }} />
+                    )}
+                    <span style={{ fontSize: '13px', color: line.ok ? 'rgba(255,255,255,0.75)' : '#fca5a5', lineHeight: 1.5 }}>
+                      {line.text || line.fallback}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
 
