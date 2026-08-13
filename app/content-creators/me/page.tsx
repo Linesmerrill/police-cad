@@ -1890,8 +1890,11 @@ export default function CreatorStatusPage() {
                 </div>
               </div>
 
-              {/* Rejection feedback */}
-              {application.status === 'rejected' && application.feedback && (
+              {/* Why it was declined. rejectionReason is the decision itself and
+                  is always set — feedback is the optional extra a reviewer types.
+                  Showing only feedback left an automatic rejection explaining
+                  nothing at all. */}
+              {application.status === 'rejected' && (application.rejectionReason || application.feedback) && (
                 <div style={{
                   background: 'rgba(239, 68, 68, 0.1)',
                   border: '1px solid rgba(239, 68, 68, 0.3)',
@@ -1915,8 +1918,18 @@ export default function CreatorStatusPage() {
                     lineHeight: '1.6',
                     color: 'rgba(255, 255, 255, 0.8)'
                   }}>
-                    {application.feedback}
+                    {application.rejectionReason || application.feedback}
                   </p>
+                  {application.rejectionReason && application.feedback && (
+                    <p style={{
+                      fontSize: '14px',
+                      lineHeight: '1.6',
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      marginTop: '10px'
+                    }}>
+                      {application.feedback}
+                    </p>
+                  )}
                 </div>
               )}
 
