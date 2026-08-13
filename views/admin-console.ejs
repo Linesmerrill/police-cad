@@ -10404,24 +10404,6 @@
             approvalBadgeHtml = `<span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; font-size: 0.85rem; padding: 0.2rem 0.6rem; border-radius: 10px; margin-left: 6px; font-weight: 600;"><i class="fas fa-user-check" style="margin-right: 3px;"></i>1/2</span>`;
           }
 
-          // Build approve button based on whether current admin already approved
-          let approveButtonHtml = '';
-          if (status === 'submitted' || status === 'under_review') {
-            if (currentAdminAlreadyApproved) {
-              approveButtonHtml = `
-                <button class="btn btn-success btn-sm" disabled style="opacity: 0.5; cursor: not-allowed;">
-                  <i class="fas fa-check"></i> Approved
-                </button>
-              `;
-            } else {
-              approveButtonHtml = `
-                <button class="btn btn-success btn-sm" onclick="approveCCApplication('${appId}')">
-                  <i class="fas fa-check"></i> Approve
-                </button>
-              `;
-            }
-          }
-
           // Automated screening state, so the list answers "which of these
           // actually need me?" without opening each one. Approval is blocked
           // until checks pass, so an admin clicking Approve on a card without
@@ -10460,18 +10442,13 @@
                   </div>
                 </div>
                 <div class="action-buttons">
+                  <!-- Review is the only way in. Approving from a list row meant
+                       deciding without seeing the verification state, the
+                       follower reality or the reviewer checklist — all of which
+                       live on the review page. -->
                   <a class="btn btn-primary btn-sm" href="/admin/creator-application/${appId}" style="text-decoration: none;" title="Open the full review page for this application">
                     <i class="fas fa-clipboard-check"></i> Review
                   </a>
-                  <button class="btn btn-secondary btn-sm" onclick="viewCCApplication('${appId}')">
-                    <i class="fas fa-eye"></i> View Details
-                  </button>
-                  ${approveButtonHtml}
-                  ${status === 'submitted' || status === 'under_review' ? `
-                    <button class="btn btn-danger btn-sm" onclick="showRejectModal('${appId}')">
-                      <i class="fas fa-times"></i> Reject
-                    </button>
-                  ` : ''}
                   ${status === 'approved' && app.creatorId ? (
                     app.creatorStatus === 'removed' ? `
                     <button class="btn btn-danger btn-sm" disabled style="opacity: 0.5; cursor: not-allowed;">

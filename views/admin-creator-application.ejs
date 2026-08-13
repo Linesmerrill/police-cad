@@ -148,6 +148,25 @@
       <h2>Channels</h2>
       <div id="platforms"><div class="empty">Loading...</div></div>
     </div>
+
+    <div class="card">
+      <h2>Reviewer checklist</h2>
+      <p class="sub" style="margin:-8px 0 14px;">
+        The automated checks answer whether the channel is real and theirs. These are the
+        judgement calls only a person can make. Each tick is saved and written to the audit
+        log with your name against it.
+      </p>
+      <div id="checklist"><div class="empty">Loading...</div></div>
+    </div>
+
+    <div class="card" id="decision-card">
+      <h2>Decision</h2>
+      <p class="sub" style="margin:-8px 0 14px;" id="decision-hint"></p>
+      <div class="actions">
+        <button class="btn btn-pass" id="approve-btn"><i class="fas fa-check"></i> Approve application</button>
+        <button class="btn btn-fail" id="reject-btn"><i class="fas fa-xmark"></i> Reject application</button>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -161,6 +180,43 @@
     const API_BASE = '<%= POLICE_CAD_API_URL %>';
     const APPLICATION_ID = '<%= applicationId %>';
     const ADMIN_ID = '<%= admin && admin.id ? admin.id : "" %>';
+
+    // Backend state names are not English. "under_review" is a database value,
+    // not something to show a person.
+    const STATUS_LABELS = {
+      submitted: 'Awaiting review',
+      under_review: 'Under review',
+      approved: 'Approved',
+      rejected: 'Rejected',
+      withdrawn: 'Withdrawn by applicant',
+    };
+    const PLATFORM_LABELS = {
+      youtube: 'YouTube', twitch: 'Twitch', tiktok: 'TikTok', other: 'Other',
+    };
+    function humanStatus(v) { return STATUS_LABELS[v] || titleCase(v || ''); }
+    function humanPlatform(v) { return PLATFORM_LABELS[(v || '').toLowerCase()] || titleCase(v || ''); }
+    function titleCase(v) { return v ? v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ') : ''; }
+    function num(n) { return (Number(n) || 0).toLocaleString(); }
+
+    // Wording lives here rather than in the database, so it can be reworded
+    // without migrating what reviewers already ticked.
+    const REVIEW_CHECKLIST = [
+      {
+        key: 'automated_passed',
+        label: 'Channel is legitimate and the automated checks have passed',
+        hint: 'Ownership proved, follower count read from the platform, nothing outstanding above.',
+      },
+      {
+        key: 'rp_content',
+        label: 'Makes GTA RP or Lines Police CAD roleplay content',
+        hint: 'LPC content is what we are really after, but other roleplay content is usually fine.',
+      },
+      {
+        key: 'genuine_content',
+        label: 'Genuine content that fits our terms and reflects us well',
+        hint: 'Would we be comfortable pointing players at this channel?',
+      },
+    ];
 
     const CHECK_LABELS = {
       channel_resolves: 'Channel found',
@@ -205,8 +261,8 @@
       };
       $('#summary').html(
         kv('Display name', esc(app.displayName)) +
-        kv('Status', esc(app.status)) +
-        kv('Primary platform', esc(app.primaryPlatform)) +
+        kv('Status', esc(humanStatus(app.status))) +
+        kv('Primary platform', esc(humanPlatform(app.primaryPlatform))) +
         kv('Submitted', esc(fmtDate(app.createdAt))) +
         kv('Checks last run', esc(fmtDate(app.checksLastRunAt)) || '<span class="kv-label">never</span>') +
         kv('Check attempts', esc(String(app.checkAttempts || 0))) +
@@ -249,6 +305,40 @@
         }).join(''));
       }
 
+      // Reviewer checklist
+      const ticked = {};
+      (app.reviewChecklist || []).forEach(function (it) { if (it.checked) ticked[it.key] = it; });
+      const allTicked = REVIEW_CHECKLIST.every(function (c) { return ticked[c.key]; });
+
+      $('#checklist').html(REVIEW_CHECKLIST.map(function (c) {
+        const on = !!ticked[c.key];
+        const who = on && ticked[c.key].checkedAt ? 'Confirmed ' + fmtDate(ticked[c.key].checkedAt) : '';
+        return '' +
+          '<label class="row" style="cursor:pointer; align-items:center;">' +
+            '<input type="checkbox" class="js-check" data-key="' + esc(c.key) + '"' + (on ? ' checked' : '') +
+              ' style="width:18px; height:18px; accent-color:#4ade80; flex-shrink:0; cursor:pointer;">' +
+            '<div class="row-main">' +
+              '<div class="row-title">' + esc(c.label) + '</div>' +
+              '<div class="row-reason">' + esc(c.hint) + '</div>' +
+              (who ? '<div class="row-meta">' + esc(who) + '</div>' : '') +
+            '</div>' +
+          '</label>';
+      }).join(''));
+
+      // Decision. Approving is gated on the same two things a reviewer would
+      // otherwise have to hold in their head: the machine checks and their own
+      // confirmations. Rejecting is always available — you do not need a
+      // complete checklist to turn something down.
+      const canApprove = app.checksPassed && allTicked;
+      $('#approve-btn').prop('disabled', !canApprove);
+      $('#decision-hint').text(
+        canApprove
+          ? 'Checks passed and the checklist is complete. Approving grants their creator benefits and emails them.'
+          : !app.checksPassed
+            ? 'Approval is blocked until every automated check passes or is overridden above.'
+            : 'Approval is blocked until you have confirmed every item on the reviewer checklist.'
+      );
+
       const platforms = app.platforms || [];
       $('#platforms').html(!platforms.length
         ? '<div class="empty">No platforms on this application.</div>'
@@ -260,18 +350,18 @@
             const actual = p.followerCount;
             const mismatch = claimed && actual && Math.abs(claimed - actual) > Math.max(50, actual * 0.25)
               ? '<div class="mismatch"><i class="fas fa-triangle-exclamation"></i> Claimed ' +
-                esc(String(claimed)) + ', actual ' + esc(String(actual)) + '</div>'
+                esc(num(claimed)) + ', actual ' + esc(num(actual)) + '</div>'
               : '';
             return '' +
               '<div class="row">' +
                 '<div class="row-main">' +
-                  '<div class="row-title" style="text-transform:capitalize;">' + esc(p.type) +
+                  '<div class="row-title">' + esc(humanPlatform(p.type)) +
                     ' ' + (verified ? pill('passed') : pill(p.verificationStatus || 'pending')) + '</div>' +
                   '<div class="row-reason">' +
                     (p.url ? '<a href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer">' + esc(p.handle || p.url) + '</a>' : esc(p.handle || '')) +
                   '</div>' +
                   '<div class="row-meta">' +
-                    esc(String(actual || 0)) + ' followers' +
+                    esc(num(actual)) + ' followers' +
                     (p.verificationMethod ? ' &middot; verified by ' + esc(p.verificationMethod) : '') +
                   '</div>' +
                   mismatch +
@@ -330,6 +420,28 @@
       if (!window.confirm('Confirm you have checked this channel belongs to the applicant?')) return;
       post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/platforms/' + index + '/verify',
         {}, 'Platform marked verified.');
+    });
+
+    $('#checklist').on('change', '.js-check', function () {
+      const $b = $(this);
+      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/review-checklist', {
+        key: $b.data('key'),
+        checked: $b.is(':checked'),
+      }, $b.is(':checked') ? 'Confirmed.' : 'Un-confirmed.');
+    });
+
+    $('#approve-btn').on('click', function () {
+      if (!window.confirm('Approve this application? This grants their creator benefits and emails them.')) return;
+      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/approve',
+        {}, 'Approval recorded.');
+    });
+
+    $('#reject-btn').on('click', function () {
+      const reason = window.prompt('Reason for rejecting? This is sent to the applicant.');
+      if (reason === null) return;
+      if (!reason.trim()) { toast('A reason is required.'); return; }
+      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/reject',
+        { rejectionReason: reason.trim() }, 'Rejection recorded.');
     });
 
     $('#copy-link').on('click', function () {
