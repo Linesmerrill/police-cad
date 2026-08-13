@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import VerificationPanel, { codeRemovalSentence, DEFAULT_MIN_FOLLOWERS } from './VerificationPanel';
+import ProfileSetupChecklist from './ProfileSetupChecklist';
 import ApplicationProgress, { Stage } from './ApplicationProgress';
 import {
   ArrowLeftIcon,
@@ -1149,6 +1150,15 @@ export default function CreatorStatusPage() {
           {/* If user is an approved creator */}
           {creatorProfile && creatorProfile.status !== 'removed' && (
             <>
+              {/* Setup checklist. The application no longer asks for public
+                  profile copy — most applications are declined, so writing it
+                  up front was work for nothing. This is where we ask, once it
+                  is worth their time. Disappears when there is nothing left. */}
+              <ProfileSetupChecklist
+                profile={creatorProfile}
+                onEditProfile={handleOpenEditModal}
+              />
+
               {/* Creator Status Card */}
               <div style={{
                 background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%)',

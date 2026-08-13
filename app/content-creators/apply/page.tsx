@@ -17,8 +17,7 @@ import {
   XMarkIcon,
   DocumentCheckIcon,
   GiftIcon,
-  StarIcon,
-  ShieldCheckIcon
+  StarIcon
 } from '@heroicons/react/24/outline';
 
 type PlatformType = 'twitch' | 'youtube' | 'tiktok' | 'other';
@@ -31,11 +30,13 @@ interface PlatformEntry {
   followerCount: string;
 }
 
-const platformOptions: { value: PlatformType; label: string; color: string; baseUrl: string; placeholder: string; handlePlaceholder: string }[] = [
-  { value: 'twitch', label: 'Twitch', color: '#9146FF', baseUrl: 'https://twitch.tv/', placeholder: 'https://twitch.tv/', handlePlaceholder: 'e.g. yourname' },
-  { value: 'youtube', label: 'YouTube', color: '#FF0000', baseUrl: 'https://youtube.com/@', placeholder: 'https://youtube.com/@', handlePlaceholder: 'e.g. yourname' },
-  { value: 'tiktok', label: 'TikTok', color: '#00F2EA', baseUrl: 'https://tiktok.com/@', placeholder: 'https://tiktok.com/@', handlePlaceholder: 'e.g. yourname' },
-  { value: 'other', label: 'Other', color: '#6366f1', baseUrl: '', placeholder: 'https://yourplatform.com/profile', handlePlaceholder: '' }
+// icon is a Font Awesome brand class. FA is loaded globally in app/layout.tsx,
+// and this is the same icon set the admin console labels these platforms with.
+const platformOptions: { value: PlatformType; label: string; color: string; icon: string; baseUrl: string; placeholder: string; handlePlaceholder: string }[] = [
+  { value: 'twitch', label: 'Twitch', color: '#9146FF', icon: 'fab fa-twitch', baseUrl: 'https://twitch.tv/', placeholder: 'https://twitch.tv/', handlePlaceholder: 'e.g. yourname' },
+  { value: 'youtube', label: 'YouTube', color: '#FF0000', icon: 'fab fa-youtube', baseUrl: 'https://youtube.com/@', placeholder: 'https://youtube.com/@', handlePlaceholder: 'e.g. yourname' },
+  { value: 'tiktok', label: 'TikTok', color: '#00F2EA', icon: 'fab fa-tiktok', baseUrl: 'https://tiktok.com/@', placeholder: 'https://tiktok.com/@', handlePlaceholder: 'e.g. yourname' },
+  { value: 'other', label: 'Other', color: '#6366f1', icon: 'fas fa-globe', baseUrl: '', placeholder: 'https://yourplatform.com/profile', handlePlaceholder: '' }
 ];
 
 // Platforms we read through an official API during screening. Asking for a
@@ -47,6 +48,52 @@ const SCANNED_PLATFORMS: PlatformType[] = ['youtube', 'twitch'];
 
 function isScanned(type: PlatformType): boolean {
   return SCANNED_PLATFORMS.includes(type);
+}
+
+// Strips the decoration people paste: full URLs, @, query strings, trailing
+// paths. Mirrors NormalizeHandle in the API's platforms package, which is what
+// makes one input enough — someone who pastes their whole channel URL into the
+// handle box gets the same answer as someone who types their name.
+function normalizeHandle(raw: string): string {
+  let h = (raw || '').trim();
+  if (!h) return '';
+  const scheme = h.indexOf('://');
+  if (scheme >= 0) h = h.slice(scheme + 3);
+  const q = h.search(/[?#]/);
+  if (q >= 0) h = h.slice(0, q);
+  h = h.replace(/^\/+|\/+$/g, '');
+  const slash = h.indexOf('/');
+  if (slash > 0 && h.slice(0, slash).includes('.')) h = h.slice(slash + 1);
+  for (const prefix of ['channel/', 'c/', 'user/', '@']) {
+    if (h.toLowerCase().startsWith(prefix)) {
+      h = h.slice(prefix.length);
+      break;
+    }
+  }
+  const trailing = h.indexOf('/');
+  if (trailing >= 0) h = h.slice(0, trailing);
+  return h.replace(/^@/, '').trim();
+}
+
+// The canonical URL for a handle. These are fixed patterns, which is why asking
+// for the URL and the handle separately was two questions with one answer — and
+// let the two disagree.
+function buildPlatformUrl(type: PlatformType, rawHandle: string): string {
+  const h = normalizeHandle(rawHandle);
+  if (!h) return '';
+  switch (type) {
+    case 'youtube':
+      // A raw channel id is not an @handle and does not resolve as one.
+      return /^UC[\w-]{22}$/.test(h)
+        ? `https://www.youtube.com/channel/${h}`
+        : `https://www.youtube.com/@${h}`;
+    case 'twitch':
+      return `https://twitch.tv/${h}`;
+    case 'tiktok':
+      return `https://tiktok.com/@${h}`;
+    default:
+      return '';
+  }
 }
 
 function generateId(): string {
@@ -71,7 +118,6 @@ export default function ApplyPage() {
     { id: generateId(), type: 'twitch', url: 'https://twitch.tv/', handle: '', followerCount: '' }
   ]);
   const [description, setDescription] = useState('');
-  const [bio, setBio] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Slug availability checking
@@ -84,6 +130,22 @@ export default function ApplyPage() {
 
   // Honeypot field (anti-spam)
   const [honeypot, setHoneypot] = useState('');
+
+  // Setting a primary changes one word on one card, which is easy to miss. The
+  // toast is the acknowledgement that something happened.
+  const [toast, setToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 2600);
+    return () => clearTimeout(id);
+  }, [toast]);
+
+  const choosePrimary = (type: PlatformType) => {
+    if (type === primaryPlatform) return;
+    setPrimaryPlatform(type);
+    const label = platformOptions.find(o => o.value === type)?.label || type;
+    setToast(`Primary set to ${label}`);
+  };
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -142,6 +204,18 @@ export default function ApplyPage() {
 
     checkUserAndApplication();
   }, [router]);
+
+  // Primary follows the platforms actually entered. Most people list one, and
+  // there is nothing to ask them about in that case — it is their primary by
+  // arithmetic. This also repairs the choice when the platform it pointed at is
+  // removed or switched to a different type.
+  useEffect(() => {
+    if (platforms.length === 0) return;
+    const types = platforms.map(p => p.type);
+    if (!types.includes(primaryPlatform)) {
+      setPrimaryPlatform(types[0]);
+    }
+  }, [platforms, primaryPlatform]);
 
   // Debounced slug availability check
   useEffect(() => {
@@ -236,7 +310,8 @@ export default function ApplyPage() {
   // entry counts on the strength of the channel we are going to read; anywhere
   // we cannot read, the applicant's own number has to clear the bar.
   const qualifyingPlatform = (p: PlatformEntry): boolean => {
-    const identified = p.type === 'other' ? !!p.url.trim() : !!(p.url.trim() && p.handle.trim());
+    // The handle is the whole answer now; the URL is derived from it.
+    const identified = p.type === 'other' ? !!p.url.trim() : !!normalizeHandle(p.handle);
     if (!identified) return false;
     return isScanned(p.type) || parseInt(p.followerCount) >= 500;
   };
@@ -244,7 +319,6 @@ export default function ApplyPage() {
   const isFormValid = (): boolean => {
     if (!displayName.trim()) return false;
     if (!description.trim() || description.length < 50) return false;
-    if (!bio.trim() || bio.length < 20 || bio.length > 500) return false;
     if (!agreedToTerms) return false;
 
     return platforms.some(qualifyingPlatform);
@@ -270,13 +344,16 @@ export default function ApplyPage() {
     try {
       // Format platforms for API - strip leading @ from handles before submission
       const formattedPlatforms = platforms
-        // "Other" has no handle field at all, so requiring one here dropped
-        // those entries silently on submit.
-        .filter(p => p.url && (p.handle || p.type === 'other'))
+        // "Other" is identified by its URL; everything else by its handle, from
+        // which the URL is derived. Requiring both dropped "other" entries
+        // silently, since that type has no handle field at all.
+        .filter(p => (p.type === 'other' ? p.url.trim() : normalizeHandle(p.handle)))
         .map(p => ({
           type: p.type,
-          url: p.url,
-          handle: p.handle.replace(/^@+/, ''),
+          // Built from the handle rather than stored separately, so the link and
+          // the handle cannot disagree about which channel this is.
+          url: p.type === 'other' ? p.url.trim() : buildPlatformUrl(p.type, p.handle),
+          handle: p.type === 'other' ? '' : normalizeHandle(p.handle),
           // Zero for the platforms we scan: screening fills in the real number,
           // and a stale guess would only sit in the record contradicting it.
           followerCount: isScanned(p.type) ? 0 : parseInt(p.followerCount) || 0
@@ -290,8 +367,7 @@ export default function ApplyPage() {
           displayName,
           primaryPlatform,
           platforms: formattedPlatforms,
-          description,
-          bio
+          description
         })
       });
 
@@ -429,6 +505,14 @@ export default function ApplyPage() {
       flexDirection: 'column'
     }}>
       <style jsx global>{`
+        @keyframes toastIn {
+          from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          @keyframes toastIn { from { opacity: 0; } to { opacity: 1; } }
+        }
+
         @keyframes fadeSlideUp {
           from {
             opacity: 0;
@@ -456,6 +540,38 @@ export default function ApplyPage() {
       `}</style>
 
       <Navbar />
+
+      {/* Clear of the fixed navbar, and pointer-events:none so it can never
+          swallow a click on whatever it floats over. */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            top: '86px',
+            right: '20px',
+            zIndex: 10002,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: 'rgba(20, 20, 32, 0.97)',
+            border: '1px solid rgba(251, 191, 36, 0.35)',
+            borderRadius: '10px',
+            padding: '12px 16px',
+            fontSize: '14px',
+            fontWeight: 600,
+            color: '#fbbf24',
+            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5)',
+            pointerEvents: 'none',
+            animation: 'toastIn 0.22s cubic-bezier(0.22, 1, 0.36, 1)',
+            maxWidth: 'calc(100vw - 40px)'
+          }}
+        >
+          <StarIcon style={{ width: '16px', height: '16px', flexShrink: 0 }} />
+          {toast}
+        </div>
+      )}
 
       {/* Header */}
       <section style={{
@@ -851,25 +967,16 @@ export default function ApplyPage() {
                   {platforms.map((platform, index) => {
                     const platformOption = platformOptions.find(p => p.value === platform.type);
 
-                    // Build preview URL from handle (or just URL for 'other')
-                    const cleanHandle = platform.handle.replace(/^@+/, '');
-                    let previewUrl = '';
-                    if (platform.type === 'other') {
-                      // For 'other' platforms, just use the URL directly
-                      if (platform.url.trim()) {
-                        previewUrl = platform.url;
-                      }
-                    } else if (cleanHandle) {
-                      if (platform.type === 'twitch') {
-                        previewUrl = `https://twitch.tv/${cleanHandle}`;
-                      } else if (platform.type === 'youtube') {
-                        previewUrl = `https://youtube.com/@${cleanHandle}`;
-                      } else if (platform.type === 'tiktok') {
-                        previewUrl = `https://tiktok.com/@${cleanHandle}`;
-                      }
-                    }
+                    // One source of truth: the URL is derived from the handle,
+                    // except on 'other' where there is no pattern to derive from.
+                    const previewUrl = platform.type === 'other'
+                      ? platform.url.trim()
+                      : buildPlatformUrl(platform.type, platform.handle);
 
                     const isPrimary = platform.type === primaryPlatform;
+                    // With one platform there is nothing to choose between, so
+                    // the button states the fact instead of offering a choice.
+                    const canChoosePrimary = platforms.length > 1;
 
                     return (
                       <div
@@ -890,6 +997,27 @@ export default function ApplyPage() {
                           marginBottom: '16px'
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            {/* A select cannot hold an icon, so the mark sits
+                                beside it — the platform is recognisable before
+                                anyone reads the word. */}
+                            <span
+                              aria-hidden="true"
+                              style={{
+                                width: '34px',
+                                height: '34px',
+                                flexShrink: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                borderRadius: '8px',
+                                fontSize: '16px',
+                                color: platformOption?.color || '#6366f1',
+                                background: `${platformOption?.color || '#6366f1'}1f`,
+                                border: `1px solid ${platformOption?.color || '#6366f1'}40`
+                              }}
+                            >
+                              <i className={platformOption?.icon || 'fas fa-globe'} />
+                            </span>
                             <select
                               value={platform.type}
                               onChange={(e) => updatePlatform(platform.id, 'type', e.target.value)}
@@ -913,23 +1041,52 @@ export default function ApplyPage() {
                                   </option>
                                 ))}
                             </select>
-                            {isPrimary && (
-                              <div style={{
+                            {/* Primary is picked here, on the card it applies to.
+                                A separate dropdown listing platform names made
+                                you hold two lists in your head and let you pick
+                                a primary you had not even entered. */}
+                            <button
+                              type="button"
+                              onClick={() => canChoosePrimary && choosePrimary(platform.type)}
+                              disabled={!canChoosePrimary}
+                              title={
+                                canChoosePrimary
+                                  ? (isPrimary
+                                      ? 'This is where most of your LPC content is published'
+                                      : `Make ${platformOption?.label || 'this'} your primary platform`)
+                                  : 'Your only platform, so this is your primary'
+                              }
+                              style={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '4px',
-                                background: 'rgba(251, 191, 36, 0.15)',
-                                border: '1px solid rgba(251, 191, 36, 0.3)',
+                                background: isPrimary ? 'rgba(251, 191, 36, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                                border: isPrimary
+                                  ? '1px solid rgba(251, 191, 36, 0.3)'
+                                  : '1px solid rgba(255, 255, 255, 0.12)',
                                 borderRadius: '6px',
                                 padding: '4px 8px',
                                 fontSize: '12px',
                                 fontWeight: '600',
-                                color: '#fbbf24'
-                              }}>
-                                <StarIcon style={{ width: '14px', height: '14px' }} />
-                                Primary
-                              </div>
-                            )}
+                                fontFamily: 'inherit',
+                                color: isPrimary ? '#fbbf24' : 'rgba(255, 255, 255, 0.45)',
+                                cursor: canChoosePrimary && !isPrimary ? 'pointer' : 'default',
+                                transition: 'all 0.15s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!canChoosePrimary || isPrimary) return;
+                                e.currentTarget.style.color = '#fbbf24';
+                                e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.3)';
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!canChoosePrimary || isPrimary) return;
+                                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.45)';
+                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                              }}
+                            >
+                              <StarIcon style={{ width: '14px', height: '14px' }} />
+                              {isPrimary ? 'Primary' : 'Set as primary'}
+                            </button>
                           </div>
 
                           {platforms.length > 1 && (
@@ -952,36 +1109,38 @@ export default function ApplyPage() {
 
                         <div style={{
                           display: 'grid',
-                          gridTemplateColumns: isMobile
+                          // 'other' has no URL pattern to derive, so it is the
+                          // one place we still ask for the link itself.
+                          gridTemplateColumns: isMobile || isScanned(platform.type) || platform.type === 'tiktok'
                             ? '1fr'
-                            : isScanned(platform.type)
-                              ? '1fr 1fr'
-                              : platform.type === 'other'
-                                ? '1fr 120px'
-                                : '1fr 1fr 120px',
+                            : '1fr 120px',
                           gap: '12px'
                         }}>
-                          <input
-                            type="url"
-                            value={platform.url}
-                            onChange={(e) => updatePlatform(platform.id, 'url', e.target.value)}
-                            placeholder={platformOption?.placeholder || 'Channel URL'}
-                            style={{
-                              padding: '12px 14px',
-                              fontSize: '14px',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
-                              borderRadius: '8px',
-                              color: '#fff',
-                              outline: 'none'
-                            }}
-                          />
-                          {platform.type !== 'other' && (
+                          {platform.type === 'other' ? (
+                            <input
+                              type="url"
+                              value={platform.url}
+                              onChange={(e) => updatePlatform(platform.id, 'url', e.target.value)}
+                              placeholder={platformOption?.placeholder || 'Link to your profile'}
+                              style={{
+                                padding: '12px 14px',
+                                fontSize: '14px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '8px',
+                                color: '#fff',
+                                outline: 'none'
+                              }}
+                            />
+                          ) : (
                             <input
                               type="text"
                               value={platform.handle}
                               onChange={(e) => updatePlatform(platform.id, 'handle', e.target.value)}
-                              placeholder={platformOption?.handlePlaceholder || 'Handle'}
+                              placeholder={platformOption?.handlePlaceholder || 'Your username'}
+                              autoCapitalize="none"
+                              autoCorrect="off"
+                              spellCheck={false}
                               style={{
                                 padding: '12px 14px',
                                 fontSize: '14px',
@@ -1092,47 +1251,6 @@ export default function ApplyPage() {
                 </div>
               </div>
 
-              {/* Primary Platform */}
-              <div style={{ marginBottom: '28px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: '#fff',
-                  marginBottom: '8px'
-                }}>
-                  Primary Platform *
-                </label>
-                <select
-                  value={primaryPlatform}
-                  onChange={(e) => setPrimaryPlatform(e.target.value as PlatformType)}
-                  style={{
-                    width: '100%',
-                    padding: '14px 16px',
-                    fontSize: '15px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '10px',
-                    color: '#fff',
-                    outline: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {platformOptions.map(opt => (
-                    <option key={opt.value} value={opt.value} style={{ background: '#1a1a2e' }}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <p style={{
-                  fontSize: '13px',
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  marginTop: '6px'
-                }}>
-                  This is where most of your LPC content is published
-                </p>
-              </div>
-
               {/* Description - for admin evaluation */}
               <div style={{ marginBottom: '28px' }}>
                 <label style={{
@@ -1195,69 +1313,6 @@ export default function ApplyPage() {
                   textAlign: 'right'
                 }}>
                   {description.length}/50 characters minimum
-                </p>
-              </div>
-
-              {/* Bio - for public profile */}
-              <div style={{ marginBottom: '28px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: '#fff',
-                  marginBottom: '8px'
-                }}>
-                  Profile Bio * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(20-500 characters)</span>
-                </label>
-
-                <div style={{
-                  background: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
-                  borderRadius: '10px',
-                  padding: '14px 16px',
-                  marginBottom: '16px',
-                  fontSize: '13px',
-                  lineHeight: '1.6',
-                  color: 'rgba(255, 255, 255, 0.6)'
-                }}>
-                  <p style={{ margin: 0 }}>
-                    ✨ This will be displayed on your public creator profile page. Tell viewers about yourself and your content!
-                  </p>
-                </div>
-
-                <textarea
-                  value={bio}
-                  onChange={(e) => {
-                    if (e.target.value.length <= 500) {
-                      setBio(e.target.value);
-                    }
-                  }}
-                  placeholder="Write a short bio about yourself and your content..."
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '14px 16px',
-                    fontSize: '15px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '10px',
-                    color: '#fff',
-                    outline: 'none',
-                    resize: 'vertical',
-                    minHeight: '90px',
-                    fontFamily: 'inherit',
-                    lineHeight: '1.6'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = 'rgba(251, 191, 36, 0.5)'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
-                />
-                <p style={{
-                  fontSize: '13px',
-                  color: bio.length >= 20 && bio.length <= 500 ? '#22c55e' : 'rgba(255, 255, 255, 0.5)',
-                  marginTop: '6px',
-                  textAlign: 'right'
-                }}>
-                  {bio.length}/500 characters
                 </p>
               </div>
 
@@ -1346,46 +1401,15 @@ export default function ApplyPage() {
                     <Link href="/terms-and-conditions" style={{ color: '#fbbf24', textDecoration: 'underline' }}>
                       Terms &amp; Conditions
                     </Link>{' '}
-                    and grant Lines Police CAD permission to use my content for promotional purposes.
-                    I understand that my follower count may be verified and that benefits can be
-                    revoked if I fall below the minimum threshold.
+                    and give Lines Police CAD permission to name me as a Content Creator for the
+                    platform and to link to my channels when promoting the program.
+                    <br /><br />
+                    I understand that Lines Police CAD will check that the channels I listed are
+                    mine, that at least one of them meets the follower minimum, and that what I
+                    publish is a fit for the program. I understand that benefits can be revoked if
+                    my channels later fall below the minimum.
                   </span>
                 </label>
-              </div>
-
-              {/* What happens after submitting.
-                  The verification code cannot be shown here — there is no
-                  application to attach one to until this form is submitted — so
-                  this sets the expectation instead of letting someone submit and
-                  wonder why nothing progresses. */}
-              <div style={{
-                background: 'rgba(251, 191, 36, 0.06)',
-                border: '1px solid rgba(251, 191, 36, 0.25)',
-                borderRadius: '12px',
-                padding: '18px 20px',
-                marginBottom: '24px'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                  <ShieldCheckIcon style={{ width: '20px', height: '20px', color: '#fbbf24' }} />
-                  <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>
-                    Next: verifying your channels
-                  </span>
-                </div>
-                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, margin: '0 0 12px' }}>
-                  We confirm you own the channels you listed before your application goes to review.
-                  It takes about a minute:
-                </p>
-                <ol style={{ margin: 0, paddingLeft: '20px', color: 'rgba(255,255,255,0.7)', fontSize: '14px', lineHeight: 1.8 }}>
-                  <li>Submit this form, then go to your <strong style={{ color: '#fff' }}>Creator Dashboard</strong>.</li>
-                  <li>Each channel gets its own <strong style={{ color: '#fff' }}>verification code</strong> there.</li>
-                  <li>Paste the code into that channel&rsquo;s description or bio and save.</li>
-                  <li>Hit <strong style={{ color: '#fff' }}>Check</strong>. Once verified you can remove the code.</li>
-                </ol>
-                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, margin: '12px 0 0' }}>
-                  Your follower count is read from YouTube and Twitch at the same time, which is why we
-                  do not ask you for it. TikTok and other platforms have no public API, so we go by the
-                  number you enter and our team confirms it by eye.
-                </p>
               </div>
 
               {/* Error Message */}
@@ -1446,10 +1470,25 @@ export default function ApplyPage() {
                 ) : (
                   <>
                     <VideoCameraIcon style={{ width: '20px', height: '20px' }} />
-                    Submit Application
+                    Submit and verify my channels
                   </>
                 )}
               </button>
+
+              {/* "Submit Application" read like the end of the job. It is not:
+                  nothing moves until they put our code in their channel, and
+                  someone who thinks they are done waits for an email that is
+                  waiting on them. */}
+              <p style={{
+                fontSize: '13px',
+                color: 'rgba(255, 255, 255, 0.5)',
+                lineHeight: 1.6,
+                textAlign: 'center',
+                margin: '14px 0 0'
+              }}>
+                One short step after this: add a code to your channel so we can confirm it is yours.
+                We will walk you through it on the next page.
+              </p>
             </form>
           )}
         </div>
