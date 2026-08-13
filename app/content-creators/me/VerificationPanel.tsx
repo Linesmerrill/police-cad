@@ -50,6 +50,25 @@ const CHECK_LABELS: Record<string, string> = {
 // nothing useful.
 const MANUAL_PLATFORMS = ['tiktok', 'other'];
 
+// Mirrors channelInstruction() in the API. Duplicated so a code that is already
+// issued still comes with instructions after a page reload, when there is no
+// verify-start response to read them from. Keep the two in step.
+const INSTRUCTIONS: Record<string, string> = {
+  youtube:
+    'Add this code anywhere in your YouTube channel description (YouTube Studio → Customization → Basic info → Description), save, then click Check. You can remove it once verified.',
+  twitch:
+    'Add this code anywhere in your Twitch About panel / bio (Settings → Channel → About), save, then click Check. You can remove it once verified.',
+  tiktok:
+    'Add this code anywhere in your TikTok bio and leave it there. TikTok has no public API, so a member of our team confirms it by eye during review.',
+};
+
+function instructionFor(type: string) {
+  return (
+    INSTRUCTIONS[(type || '').toLowerCase()] ||
+    'Add this code to your channel or profile bio and leave it there. A member of our team confirms it during review.'
+  );
+}
+
 const STATUS_STYLE: Record<string, { color: string; bg: string; border: string; label: string }> = {
   passed: { color: '#4ade80', bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.3)', label: 'Passed' },
   failed: { color: '#f87171', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', label: 'Action needed' },
@@ -146,7 +165,11 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
       {platforms.map((p, index) => {
         const verified = isVerified(p);
         const manual = MANUAL_PLATFORMS.includes((p.type || '').toLowerCase());
-        const code = codes[index];
+        // Prefer a code just issued, but fall back to one already stored on the
+        // application. Without this, reloading the page hid a live code and the
+        // applicant had no way to see it again short of generating a new one.
+        const code = codes[index] || p.verificationCode || '';
+        const instruction = instructions[index] || (code ? instructionFor(p.type) : '');
         const msg = messages[index];
         const label = p.handle || p.url || p.type;
 
@@ -242,9 +265,9 @@ export default function VerificationPanel({ platforms, checks = [], onRefresh }:
                     {copied === index ? 'Copied' : 'Copy'}
                   </button>
                 </div>
-                {instructions[index] && (
+                {instruction && (
                   <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', margin: '10px 0 0', lineHeight: 1.6 }}>
-                    {instructions[index]}
+                    {instruction}
                   </p>
                 )}
               </div>

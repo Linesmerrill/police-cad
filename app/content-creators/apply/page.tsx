@@ -17,7 +17,8 @@ import {
   XMarkIcon,
   DocumentCheckIcon,
   GiftIcon,
-  StarIcon
+  StarIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 
 type PlatformType = 'twitch' | 'youtube' | 'tiktok' | 'other';
@@ -1320,6 +1321,41 @@ export default function ApplyPage() {
                     revoked if I fall below the minimum threshold.
                   </span>
                 </label>
+              </div>
+
+              {/* What happens after submitting.
+                  The verification code cannot be shown here — there is no
+                  application to attach one to until this form is submitted — so
+                  this sets the expectation instead of letting someone submit and
+                  wonder why nothing progresses. */}
+              <div style={{
+                background: 'rgba(251, 191, 36, 0.06)',
+                border: '1px solid rgba(251, 191, 36, 0.25)',
+                borderRadius: '12px',
+                padding: '18px 20px',
+                marginBottom: '24px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <ShieldCheckIcon style={{ width: '20px', height: '20px', color: '#fbbf24' }} />
+                  <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>
+                    Next: verifying your channels
+                  </span>
+                </div>
+                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, margin: '0 0 12px' }}>
+                  We confirm you own the channels you listed before your application goes to review.
+                  It takes about a minute:
+                </p>
+                <ol style={{ margin: 0, paddingLeft: '20px', color: 'rgba(255,255,255,0.7)', fontSize: '14px', lineHeight: 1.8 }}>
+                  <li>Submit this form, then go to your <strong style={{ color: '#fff' }}>Creator Dashboard</strong>.</li>
+                  <li>Each channel gets its own <strong style={{ color: '#fff' }}>verification code</strong> there.</li>
+                  <li>Paste the code into that channel&rsquo;s description or bio and save.</li>
+                  <li>Hit <strong style={{ color: '#fff' }}>Check</strong>. Once verified you can remove the code.</li>
+                </ol>
+                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, margin: '12px 0 0' }}>
+                  Your follower count is read from the channel at the same time, so don&rsquo;t worry about
+                  getting the number above exactly right. TikTok has no public API, so our team confirms
+                  those by eye.
+                </p>
               </div>
 
               {/* Error Message */}

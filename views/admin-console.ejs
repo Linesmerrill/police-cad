@@ -939,27 +939,37 @@
           </div>
 
           <div class="ac-section-label">Overview</div>
+          <!-- These read as buttons, so they behave like them: each jumps to the
+               list behind the number rather than being decoration. -->
           <div class="ac-stats">
-            <div class="ac-stat" style="--stat-accent:var(--ac-accent); animation-delay:0.02s;">
+            <a class="ac-stat" href="#" onclick="acNavTo('admin-management'); return false;"
+               style="--stat-accent:var(--ac-accent); animation-delay:0.02s; cursor:pointer; text-decoration:none;"
+               title="View admin management">
               <i class="fas fa-shield-alt ac-stat-icon"></i>
               <div class="ac-stat-value" id="dash-stat-admins">&mdash;</div>
               <div class="ac-stat-label">Total Admins</div>
-            </div>
-            <div class="ac-stat" style="--stat-accent:#ef4444; animation-delay:0.06s;">
+            </a>
+            <a class="ac-stat" href="#" onclick="acNavToCC('submitted'); return false;"
+               style="--stat-accent:#ef4444; animation-delay:0.06s; cursor:pointer; text-decoration:none;"
+               title="View submitted creator applications">
               <i class="fas fa-inbox ac-stat-icon"></i>
               <div class="ac-stat-value" id="dash-stat-submitted">&mdash;</div>
               <div class="ac-stat-label">CC Submitted</div>
-            </div>
-            <div class="ac-stat" style="--stat-accent:#f59e0b; animation-delay:0.10s;">
+            </a>
+            <a class="ac-stat" href="#" onclick="acNavToCC('under_review'); return false;"
+               style="--stat-accent:#f59e0b; animation-delay:0.10s; cursor:pointer; text-decoration:none;"
+               title="View creator applications under review">
               <i class="fas fa-search ac-stat-icon"></i>
               <div class="ac-stat-value" id="dash-stat-review">&mdash;</div>
               <div class="ac-stat-label">CC Under Review</div>
-            </div>
-            <div class="ac-stat" style="--stat-accent:var(--ac-green); animation-delay:0.14s;">
+            </a>
+            <a class="ac-stat" href="#" onclick="acNavToCC('approved'); return false;"
+               style="--stat-accent:var(--ac-green); animation-delay:0.14s; cursor:pointer; text-decoration:none;"
+               title="View approved creators">
               <i class="fas fa-star ac-stat-icon"></i>
               <div class="ac-stat-value" id="dash-stat-active-cc">&mdash;</div>
               <div class="ac-stat-label">Active Creators</div>
-            </div>
+            </a>
           </div>
 
           <div class="ac-section-label">Quick Actions</div>
@@ -10148,6 +10158,20 @@
       let currentCCPage = 1;
       let currentCCStatus = '';
       let ccPageSize = 10;
+
+      // Jump from a dashboard stat straight to the matching filtered list.
+      //
+      // The filter is set BEFORE navigating so the panel's own load callback
+      // picks it up; clicking the tab afterwards would fetch twice. Exposed on
+      // window because currentCCStatus is block-scoped to this script and the
+      // dashboard markup lives in another one.
+      window.acNavToCC = function(status) {
+        currentCCStatus = status || '';
+        currentCCPage = 1;
+        $('.cc-status-btn').removeClass('active');
+        $('.cc-status-btn[data-status="' + currentCCStatus + '"]').addClass('active');
+        acNavTo('content-creators');
+      };
 
       // Content creator applications are now loaded by acNavTo() via panelLoadCallbacks
 
