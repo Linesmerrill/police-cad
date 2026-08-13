@@ -165,7 +165,11 @@
       <div class="actions">
         <button class="btn btn-pass" id="approve-btn"><i class="fas fa-check"></i> Approve application</button>
         <button class="btn btn-fail" id="reject-btn"><i class="fas fa-xmark"></i> Reject application</button>
+        <button class="btn" id="override-btn" style="display:none; background:linear-gradient(135deg,#667eea,#764ba2); border:none; color:#fff;">
+          <i class="fas fa-shield-halved"></i> Override approve
+        </button>
       </div>
+      <p class="sub" id="override-hint" style="display:none; margin:12px 0 0;"></p>
     </div>
   </div>
 
@@ -180,6 +184,11 @@
     const API_BASE = '<%= POLICE_CAD_API_URL %>';
     const APPLICATION_ID = '<%= applicationId %>';
     const ADMIN_ID = '<%= admin && admin.id ? admin.id : "" %>';
+    // Owners can bypass the second approval. Needed in practice: other admins
+    // can be offline for weeks and applications should not rot waiting.
+    const IS_OWNER = <%- JSON.stringify(
+      !!(admin && (admin.role === 'owner' || (Array.isArray(admin.roles) && admin.roles.indexOf('owner') !== -1)))
+    ) %>;
 
     // Backend state names are not English. "under_review" is a database value,
     // not something to show a person.
@@ -339,6 +348,21 @@
             : 'Approval is blocked until you have confirmed every item on the reviewer checklist.'
       );
 
+      // Owner override skips the SECOND ADMIN, not the diligence. The checklist
+      // and the automated checks still apply — bypassing those would reintroduce
+      // exactly what this flow was built to stop.
+      if (IS_OWNER && (app.status === 'submitted' || app.status === 'under_review')) {
+        $('#override-btn').show().prop('disabled', !canApprove);
+        $('#override-hint').show().text(
+          canApprove
+            ? 'Override approves on your own, without waiting for a second admin. Recorded as an owner override in the audit log.'
+            : 'Override skips the second admin, not the checks or the checklist. Clear those above first.'
+        );
+      } else {
+        $('#override-btn').hide();
+        $('#override-hint').hide();
+      }
+
       const platforms = app.platforms || [];
       $('#platforms').html(!platforms.length
         ? '<div class="empty">No platforms on this application.</div>'
@@ -434,6 +458,12 @@
       if (!window.confirm('Approve this application? This grants their creator benefits and emails them.')) return;
       post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/approve',
         {}, 'Approval recorded.');
+    });
+
+    $('#override-btn').on('click', function () {
+      if (!window.confirm('Approve this on your own, without a second admin? This is recorded as an owner override.')) return;
+      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/approve',
+        { ownerOverride: true }, 'Approved via owner override.');
     });
 
     $('#reject-btn').on('click', function () {
