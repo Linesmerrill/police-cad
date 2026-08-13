@@ -96,6 +96,8 @@
     .banner { border-radius: 10px; padding: 13px 16px; font-size: 0.9rem; margin-bottom: 18px; }
     .banner-ready { color: var(--ac-green); background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.28); }
     .banner-block { color: var(--ac-amber); background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.28); }
+    /* Closed applications: a record, not a task. Nothing urgent about it. */
+    .banner-closed { color: rgba(255,255,255,0.62); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); }
 
     /* Phones. The action clusters cannot sit beside their text without
        squeezing both, so every row stacks and buttons go full width -- they are
@@ -217,6 +219,20 @@
       youtube: 'YouTube', twitch: 'Twitch', tiktok: 'TikTok', other: 'Other',
     };
     function humanStatus(v) { return STATUS_LABELS[v] || titleCase(v || ''); }
+
+    // Only these two are still live. Everything else — approved, rejected,
+    // withdrawn — is a closed record: the page shows what happened and offers
+    // nothing to press. Re-running checks or approving a withdrawn application
+    // would write to something the applicant has already walked away from.
+    const OPEN_STATUSES = ['submitted', 'under_review'];
+    function isOpen(app) { return OPEN_STATUSES.indexOf((app && app.status) || '') !== -1; }
+
+    // What the page says instead of the approval banner once it is closed.
+    const CLOSED_BANNER = {
+      withdrawn: 'The applicant withdrew this application. It is kept for the record; there is nothing to action.',
+      approved: 'This application was approved. It is kept for the record; there is nothing left to action.',
+      rejected: 'This application was rejected. It is kept for the record; there is nothing left to action.',
+    };
     function humanPlatform(v) { return PLATFORM_LABELS[(v || '').toLowerCase()] || titleCase(v || ''); }
     function titleCase(v) { return v ? v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ') : ''; }
     function num(n) { return (Number(n) || 0).toLocaleString(); }
@@ -315,9 +331,33 @@
     // they are about instead of saying "this application".
     let currentApp = {};
 
+    // The markup as authored, captured once. render() runs again after every
+    // action, so whatever it rewrites has to be restorable.
+    const DEFAULT_HTML = {
+      approve: $('#approve-btn').html(),
+      withdraw: $('#withdraw-btn').html(),
+      checklistIntro: $('#checklist-intro').html(),
+    };
+
+    // Put every element render() mutates back to its authored state before
+    // deciding what this application needs. Anything driven by an `if` with no
+    // `else` survives into the next render otherwise — which is how removing an
+    // approval left "You approved (1 of 2)", the withdraw button, and a hidden
+    // checklist on screen for an application nobody had approved.
+    function resetDecisionUI() {
+      $('#approve-btn').prop('disabled', false).html(DEFAULT_HTML.approve);
+      $('#withdraw-btn').hide().html(DEFAULT_HTML.withdraw);
+      $('#override-btn').hide();
+      $('#override-hint').hide().text('');
+      $('#checklist-intro').html(DEFAULT_HTML.checklistIntro);
+      $('#checklist').show();
+      $('#checklist-show').remove();
+    }
+
     function render(app) {
       if (!app) return;
       currentApp = app;
+      resetDecisionUI();
       $('#app-title').text(app.displayName || 'Creator Application');
 
       const kv = function (label, value) {
@@ -339,8 +379,14 @@
 
       // The banner answers the only question a reviewer opens this page with:
       // can I approve this yet?
+      const open = isOpen(app);
       const $banner = $('#banner');
-      if (app.checksPassed) {
+      if (!open) {
+        $banner.attr('class', 'banner banner-closed')
+          .html('<i class="fas fa-lock"></i> ' +
+            esc(CLOSED_BANNER[app.status] || 'This application is closed (' + humanStatus(app.status) + '). It is kept for the record.'))
+          .show();
+      } else if (app.checksPassed) {
         $banner.attr('class', 'banner banner-ready')
           .html('<i class="fas fa-circle-check"></i> All automated checks passed. This application is ready for human review.')
           .show();
@@ -364,14 +410,47 @@
                 (c.reason ? '<div class="row-reason">' + esc(c.reason) + '</div>' : '') +
                 '<div class="row-meta">' + esc(fmtDate(c.checkedAt)) + who + '</div>' +
               '</div>' +
-              '<div class="actions">' +
+              (open ? '<div class="actions">' +
                 '<button class="btn js-retry" data-key="' + esc(c.key) + '"><i class="fas fa-rotate"></i> Retry</button>' +
                 '<button class="btn btn-pass js-override" data-key="' + esc(c.key) + '" data-platform="' + esc(c.platform || '') + '" data-handle="' + esc(c.handle || '') + '" data-status="passed">Pass</button>' +
                 '<button class="btn btn-fail js-override" data-key="' + esc(c.key) + '" data-platform="' + esc(c.platform || '') + '" data-handle="' + esc(c.handle || '') + '" data-status="failed">Fail</button>' +
-              '</div>' +
+              '</div>' : '') +
             '</div>';
         }).join(''));
       }
+
+      const platforms = app.platforms || [];
+      $('#platforms').html(!platforms.length
+        ? '<div class="empty">No platforms on this application.</div>'
+        : platforms.map(function (p, i) {
+            const verified = p.verificationStatus === 'verified' || p.verifiedByAdmin;
+            // A big gap between the claim and reality is the tell for a
+            // fabricated application, so it is called out rather than buried.
+            const claimed = p.reportedFollowerCount;
+            const actual = p.followerCount;
+            const mismatch = claimed && actual && Math.abs(claimed - actual) > Math.max(50, actual * 0.25)
+              ? '<div class="mismatch"><i class="fas fa-triangle-exclamation"></i> Claimed ' +
+                esc(num(claimed)) + ', actual ' + esc(num(actual)) + '</div>'
+              : '';
+            return '' +
+              '<div class="row">' +
+                '<div class="row-main">' +
+                  '<div class="row-title">' + esc(humanPlatform(p.type)) +
+                    ' ' + (verified ? pill('passed') : pill(p.verificationStatus || 'pending')) + '</div>' +
+                  '<div class="row-reason">' +
+                    (p.url ? '<a href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer">' + esc(p.handle || p.url) + '</a>' : esc(p.handle || '')) +
+                  '</div>' +
+                  '<div class="row-meta">' +
+                    esc(num(actual)) + ' followers' +
+                    (p.verificationMethod ? ' &middot; verified by ' + esc(p.verificationMethod) : '') +
+                  '</div>' +
+                  mismatch +
+                '</div>' +
+                '<div class="actions">' +
+                  (verified || !open ? '' : '<button class="btn btn-pass js-vouch" data-index="' + i + '">Mark verified</button>') +
+                '</div>' +
+              '</div>';
+          }).join(''));
 
       // Reviewer checklist
       const ticked = {};
@@ -386,9 +465,14 @@
           ? 'Confirmed by ' + (by || 'an admin') + ' &middot; ' + fmtDate(ticked[c.key].checkedAt)
           : '';
         return '' +
-          '<label class="row" style="cursor:pointer; align-items:center;">' +
+          '<label class="row" style="cursor:' + (open ? 'pointer' : 'default') + '; align-items:center;' +
+            (open ? '' : ' opacity:0.75;') + '">' +
+            // Closed applications keep the ticks visible as part of the record,
+            // but nothing here can be changed after the fact.
             '<input type="checkbox" class="js-check" data-key="' + esc(c.key) + '"' + (on ? ' checked' : '') +
-              ' style="width:18px; height:18px; accent-color:#4ade80; flex-shrink:0; cursor:pointer;">' +
+              (open ? '' : ' disabled') +
+              ' style="width:18px; height:18px; accent-color:#4ade80; flex-shrink:0; cursor:' +
+              (open ? 'pointer' : 'default') + ';">' +
             '<div class="row-main">' +
               '<div class="row-title">' + esc(c.label) + '</div>' +
               '<div class="row-reason">' + esc(c.hint) + '</div>' +
@@ -396,6 +480,17 @@
             '</div>' +
           '</label>';
       }).join(''));
+
+      // A closed application has no decision left to take. Everything below
+      // this point is about acting on it, so it comes off entirely rather than
+      // being disabled — a greyed Approve on a withdrawn application still
+      // reads as something you could get to work.
+      $('#rescreen-all').toggle(open);
+      if (!open) {
+        $('#decision-card').hide();
+        return;
+      }
+      $('#decision-card').show();
 
       // Decision. Approving is gated on the same two things a reviewer would
       // otherwise have to hold in their head: the machine checks and their own
@@ -418,10 +513,10 @@
       const iApprovedAlready = firstApprovalBy && firstApprovalBy === ADMIN_ID;
       const someoneApproved = !!firstApprovalBy;
 
-      // Once you have approved, the checklist is settled for you. Leaving three
-      // boxes on screen just invites a second look at something already decided,
-      // and it comes back if you remove your approval.
       if (iApprovedAlready) {
+        // Once you have approved, the checklist is settled for you. Leaving
+        // three boxes on screen just invites a second look at something already
+        // decided. resetDecisionUI puts it back if the approval is removed.
         const doneCount = REVIEW_CHECKLIST.filter(function (c) { return ticked[c.key]; }).length;
         $('#checklist-intro').html(
           doneCount === REVIEW_CHECKLIST.length
@@ -436,9 +531,7 @@
         $('#checklist-card').append(
           '<button class="btn" id="checklist-show" style="margin-top:4px;">Show checklist</button>'
         );
-      }
 
-      if (iApprovedAlready) {
         $('#approve-btn')
           .prop('disabled', true)
           .html('<i class="fas fa-check"></i> You approved (1 of 2)');
@@ -471,38 +564,6 @@
         $('#override-hint').hide();
       }
 
-      const platforms = app.platforms || [];
-      $('#platforms').html(!platforms.length
-        ? '<div class="empty">No platforms on this application.</div>'
-        : platforms.map(function (p, i) {
-            const verified = p.verificationStatus === 'verified' || p.verifiedByAdmin;
-            // A big gap between the claim and reality is the tell for a
-            // fabricated application, so it is called out rather than buried.
-            const claimed = p.reportedFollowerCount;
-            const actual = p.followerCount;
-            const mismatch = claimed && actual && Math.abs(claimed - actual) > Math.max(50, actual * 0.25)
-              ? '<div class="mismatch"><i class="fas fa-triangle-exclamation"></i> Claimed ' +
-                esc(num(claimed)) + ', actual ' + esc(num(actual)) + '</div>'
-              : '';
-            return '' +
-              '<div class="row">' +
-                '<div class="row-main">' +
-                  '<div class="row-title">' + esc(humanPlatform(p.type)) +
-                    ' ' + (verified ? pill('passed') : pill(p.verificationStatus || 'pending')) + '</div>' +
-                  '<div class="row-reason">' +
-                    (p.url ? '<a href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer">' + esc(p.handle || p.url) + '</a>' : esc(p.handle || '')) +
-                  '</div>' +
-                  '<div class="row-meta">' +
-                    esc(num(actual)) + ' followers' +
-                    (p.verificationMethod ? ' &middot; verified by ' + esc(p.verificationMethod) : '') +
-                  '</div>' +
-                  mismatch +
-                '</div>' +
-                '<div class="actions">' +
-                  (verified ? '' : '<button class="btn btn-pass js-vouch" data-index="' + i + '">Mark verified</button>') +
-                '</div>' +
-              '</div>';
-          }).join(''));
     }
 
     function post(url, body, okMsg) {
