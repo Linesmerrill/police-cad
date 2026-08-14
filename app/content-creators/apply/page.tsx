@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
@@ -96,6 +96,40 @@ function buildPlatformUrl(type: PlatformType, rawHandle: string): string {
   }
 }
 
+// The published minimum, in one place rather than sprinkled through the copy.
+const MIN_FOLLOWERS = 500;
+
+// One filled-in platform that could carry the application. A YouTube or Twitch
+// entry counts on the strength of the channel we are going to read; anywhere we
+// cannot read, the applicant's own number has to clear the bar.
+function qualifyingPlatform(p: PlatformEntry): boolean {
+  const identified = p.type === 'other' ? !!p.url.trim() : !!normalizeHandle(p.handle);
+  if (!identified) return false;
+  return isScanned(p.type) || parseInt(p.followerCount) >= MIN_FOLLOWERS;
+}
+
+// One shape for every field error on this form, so they cannot drift apart.
+function FieldError({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <p
+      role="alert"
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '6px',
+        margin: '8px 0 0',
+        fontSize: '13px',
+        lineHeight: 1.5,
+        color: '#fca5a5',
+      }}
+    >
+      <ExclamationTriangleIcon style={{ width: '15px', height: '15px', flexShrink: 0, marginTop: '1px' }} />
+      {message}
+    </p>
+  );
+}
+
 function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
@@ -139,6 +173,75 @@ export default function ApplyPage() {
     const id = setTimeout(() => setToast(null), 2600);
     return () => clearTimeout(id);
   }, [toast]);
+
+  // Validation the applicant can see. A disabled button that does nothing when
+  // pressed is the least helpful thing a form can do: you have no idea which of
+  // six fields it is unhappy about. Errors surface on blur for the field you
+  // just left, and all at once when you press submit.
+  const [showErrors, setShowErrors] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const markTouched = (key: string) => setTouched((t) => ({ ...t, [key]: true }));
+
+  const displayNameRef = useRef<HTMLInputElement>(null);
+  const platformsRef = useRef<HTMLDivElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const termsRef = useRef<HTMLDivElement>(null);
+
+  const errors = useMemo(() => {
+    const e: Record<string, string> = {};
+    if (!displayName.trim()) {
+      e.displayName = 'Enter the name you want on your creator profile.';
+    } else if (displayName.trim().length < 2) {
+      e.displayName = 'Use at least 2 characters.';
+    }
+    if (!platforms.some(qualifyingPlatform)) {
+      const anyNamed = platforms.some(p => (p.type === 'other' ? p.url.trim() : normalizeHandle(p.handle)));
+      e.platforms = anyNamed
+        ? `Add at least one platform with ${MIN_FOLLOWERS.toLocaleString()}+ followers. We read YouTube and Twitch counts for you; for anything else, enter the number.`
+        : 'Add the username of at least one channel where you make LPC content.';
+    }
+    if (description.trim().length < 50) {
+      e.description = `Tell us a little more about your LPC content. ${description.trim().length} of 50 characters so far.`;
+    }
+    if (!agreedToTerms) {
+      e.terms = 'Tick this box to continue.';
+    }
+    return e;
+  }, [displayName, platforms, description, agreedToTerms]);
+
+  // Show a field's error once they have left it, or once they have tried to
+  // submit. Never while they are still typing their first characters into it.
+  const errorFor = (key: string): string | null =>
+    (showErrors || touched[key]) && errors[key] ? errors[key] : null;
+
+  // Ordered top to bottom, so "the first problem" is the one nearest the top of
+  // the page rather than the first one this object happens to list.
+  const focusFirstError = () => {
+    const order: [string, React.RefObject<HTMLElement>][] = [
+      ['displayName', displayNameRef as React.RefObject<HTMLElement>],
+      ['platforms', platformsRef as React.RefObject<HTMLElement>],
+      ['description', descriptionRef as React.RefObject<HTMLElement>],
+      ['terms', termsRef as React.RefObject<HTMLElement>],
+    ];
+    for (const [key, ref] of order) {
+      if (errors[key] && ref.current) {
+        ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (typeof (ref.current as HTMLInputElement).focus === 'function') {
+          setTimeout(() => (ref.current as HTMLInputElement).focus({ preventScroll: true }), 220);
+        }
+        return;
+      }
+    }
+  };
+
+  // What they have actually named, so an empty second card does not pluralise
+  // the button. Floors at one: with nothing entered, "my channel" reads better
+  // than "my channels" and the button cannot submit anyway.
+  const namedChannelCount = Math.max(
+    1,
+    platforms.filter(p => (p.type === 'other' ? p.url.trim() : normalizeHandle(p.handle))).length
+  );
+  const channelWord = namedChannelCount === 1 ? 'channel' : 'channels';
 
   const choosePrimary = (type: PlatformType) => {
     if (type === primaryPlatform) return;
@@ -306,16 +409,6 @@ export default function ApplyPage() {
     }));
   };
 
-  // One filled-in platform that could carry the application. A YouTube or Twitch
-  // entry counts on the strength of the channel we are going to read; anywhere
-  // we cannot read, the applicant's own number has to clear the bar.
-  const qualifyingPlatform = (p: PlatformEntry): boolean => {
-    // The handle is the whole answer now; the URL is derived from it.
-    const identified = p.type === 'other' ? !!p.url.trim() : !!normalizeHandle(p.handle);
-    if (!identified) return false;
-    return isScanned(p.type) || parseInt(p.followerCount) >= 500;
-  };
-
   const isFormValid = (): boolean => {
     if (!displayName.trim()) return false;
     if (!description.trim() || description.length < 50) return false;
@@ -334,7 +427,12 @@ export default function ApplyPage() {
     }
 
     if (!isFormValid()) {
-      setSubmitError('Please fill in all required fields and ensure you meet the minimum requirements.');
+      // Reveal every outstanding problem at once and take them to the first
+      // one. "Please fill in all required fields" on its own leaves them
+      // hunting for which field that is.
+      setShowErrors(true);
+      setSubmitError(null);
+      focusFirstError();
       return;
     }
 
@@ -863,24 +961,32 @@ export default function ApplyPage() {
                   Display Name *
                 </label>
                 <input
+                  ref={displayNameRef}
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Your creator name"
+                  aria-invalid={!!errorFor('displayName')}
                   style={{
                     width: '100%',
                     padding: '14px 16px',
                     fontSize: '15px',
                     background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: errorFor('displayName')
+                      ? '1px solid rgba(239, 68, 68, 0.65)'
+                      : '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '10px',
                     color: '#fff',
                     outline: 'none',
                     transition: 'border-color 0.2s'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = 'rgba(251, 191, 36, 0.5)'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
+                  onFocus={(e) => { if (!errorFor('displayName')) e.target.style.borderColor = 'rgba(251, 191, 36, 0.5)'; }}
+                  onBlur={(e) => {
+                    markTouched('displayName');
+                    e.target.style.borderColor = '';
+                  }}
                 />
+                <FieldError message={errorFor('displayName')} />
                 {/* Slug availability status */}
                 {displayName.trim().length >= 2 && (
                   <div style={{
@@ -926,8 +1032,9 @@ export default function ApplyPage() {
                   color: '#fff',
                   marginBottom: '8px'
                 }}>
-                  Platforms * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(at least one with 500+ followers)</span>
+                  Platforms * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(at least one with {MIN_FOLLOWERS.toLocaleString()}+ followers)</span>
                 </label>
+                <div ref={platformsRef} />
 
                 <div style={{
                   background: 'rgba(255, 255, 255, 0.02)',
@@ -1249,6 +1356,7 @@ export default function ApplyPage() {
                     </button>
                   )}
                 </div>
+                <FieldError message={errorFor('platforms')} />
               </div>
 
               {/* Description - for admin evaluation */}
@@ -1287,14 +1395,18 @@ export default function ApplyPage() {
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  ref={descriptionRef}
                   placeholder="Tell us about your content and how you use LPC. Feel free to include direct links to specific videos or VODs that showcase your LPC content..."
                   rows={4}
+                  aria-invalid={!!errorFor('description')}
                   style={{
                     width: '100%',
                     padding: '14px 16px',
                     fontSize: '15px',
                     background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: errorFor('description')
+                      ? '1px solid rgba(239, 68, 68, 0.65)'
+                      : '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '10px',
                     color: '#fff',
                     outline: 'none',
@@ -1303,8 +1415,11 @@ export default function ApplyPage() {
                     fontFamily: 'inherit',
                     lineHeight: '1.6'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = 'rgba(251, 191, 36, 0.5)'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
+                  onFocus={(e) => { if (!errorFor('description')) e.target.style.borderColor = 'rgba(251, 191, 36, 0.5)'; }}
+                  onBlur={(e) => {
+                    markTouched('description');
+                    e.target.style.borderColor = '';
+                  }}
                 />
                 <p style={{
                   fontSize: '13px',
@@ -1314,6 +1429,7 @@ export default function ApplyPage() {
                 }}>
                   {description.length}/50 characters minimum
                 </p>
+                <FieldError message={errorFor('description')} />
               </div>
 
               {/* Benefits Preview */}
@@ -1373,7 +1489,22 @@ export default function ApplyPage() {
               </div>
 
               {/* Terms Agreement */}
-              <div style={{ marginBottom: '32px' }}>
+              <div
+                ref={termsRef}
+                style={{
+                  marginBottom: '32px',
+                  // An unticked box is easy to scroll past, so when it is the
+                  // thing holding up the form it gets an outline of its own.
+                  ...(errorFor('terms')
+                    ? {
+                        border: '1px solid rgba(239, 68, 68, 0.45)',
+                        borderRadius: '12px',
+                        padding: '14px 16px',
+                        background: 'rgba(239, 68, 68, 0.05)',
+                      }
+                    : {}),
+                }}
+              >
                 <label style={{
                   display: 'flex',
                   alignItems: 'flex-start',
@@ -1410,6 +1541,7 @@ export default function ApplyPage() {
                     my channels later fall below the minimum.
                   </span>
                 </label>
+                <FieldError message={errorFor('terms')} />
               </div>
 
               {/* Error Message */}
@@ -1430,9 +1562,15 @@ export default function ApplyPage() {
               )}
 
               {/* Submit Button */}
+              {/* Not disabled when the form is incomplete, only when it is
+                  already submitting. A disabled button eats the click, so the
+                  one moment someone asks "why can I not send this?" is the one
+                  moment we say nothing. It looks inert and, pressed, points at
+                  what is missing. */}
               <button
                 type="submit"
-                disabled={isSubmitting || !isFormValid()}
+                disabled={isSubmitting}
+                aria-describedby={showErrors && !isFormValid() ? 'submit-blocked' : undefined}
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -1448,7 +1586,7 @@ export default function ApplyPage() {
                   padding: '18px 32px',
                   borderRadius: '12px',
                   border: 'none',
-                  cursor: isFormValid() ? 'pointer' : 'not-allowed',
+                  cursor: isSubmitting ? 'default' : 'pointer',
                   transition: 'all 0.3s ease',
                   boxShadow: isFormValid() ? '0 10px 30px rgba(251, 191, 36, 0.3)' : 'none',
                   textTransform: 'uppercase',
@@ -1470,10 +1608,32 @@ export default function ApplyPage() {
                 ) : (
                   <>
                     <VideoCameraIcon style={{ width: '20px', height: '20px' }} />
-                    Submit and verify my channels
+                    Submit and verify my {channelWord}
                   </>
                 )}
               </button>
+
+              {showErrors && !isFormValid() && (
+                <p
+                  id="submit-blocked"
+                  role="alert"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '7px',
+                    margin: '12px 0 0',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#fca5a5',
+                  }}
+                >
+                  <ExclamationTriangleIcon style={{ width: '15px', height: '15px', flexShrink: 0 }} />
+                  {Object.keys(errors).length === 1
+                    ? 'One thing left to fix, highlighted above.'
+                    : `${Object.keys(errors).length} things left to fix, highlighted above.`}
+                </p>
+              )}
 
               {/* "Submit Application" read like the end of the job. It is not:
                   nothing moves until they put our code in their channel, and
@@ -1486,7 +1646,9 @@ export default function ApplyPage() {
                 textAlign: 'center',
                 margin: '14px 0 0'
               }}>
-                One short step after this: add a code to your channel so we can confirm it is yours.
+                One short step after this: add a code to {namedChannelCount === 1
+                  ? 'your channel so we can confirm it is yours'
+                  : 'each channel so we can confirm they are yours'}.
                 We will walk you through it on the next page.
               </p>
             </form>
