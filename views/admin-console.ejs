@@ -5561,7 +5561,7 @@
                     ${displayName}
                     <span style="display:inline-block; margin-left:6px; padding:2px 8px; border-radius:999px; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; vertical-align:middle; color:${state.color}; background:${state.bg}; border:1px solid ${state.color}33;">${state.text}</span>
                   </strong>
-                  <span>${escapeHtml(platform)} &middot; ${totalFollowers.toLocaleString()} followers &middot; ${escapeHtml(createdAt)}</span>
+                  <span>${escapeHtml(platform)} &middot; ${totalFollowers === 1 ? '1 follower' : totalFollowers.toLocaleString() + ' followers'} &middot; ${escapeHtml(createdAt)}</span>
                 </div>
               </div>
               <div class="dash-pending-cc-item-actions">
@@ -10631,7 +10631,7 @@
                   ${profileLink}
                 </div>
                 <div style="color: #e5e7eb; font-size: 1rem; font-weight: 500;">
-                  ${(p.followerCount || 0).toLocaleString()} followers
+                  ${(p.followerCount || 0) === 1 ? '1 follower' : (p.followerCount || 0).toLocaleString() + ' followers'}
                 </div>
               </div>
             `;

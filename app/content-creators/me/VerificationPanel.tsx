@@ -169,6 +169,12 @@ function ownershipProven(p: VerifiablePlatform) {
   return p.verificationStatus === 'verified' || p.verifiedByAdmin === true;
 }
 
+// "1 followers" is small, but it is read at the moment someone is told their
+// channel is too small, which is the worst moment to look unfinished.
+function followersLabel(n: number) {
+  return n === 1 ? '1 follower' : `${n.toLocaleString()} followers`;
+}
+
 function meetsFollowerBar(p: VerifiablePlatform, min: number) {
   return (p.followerCount ?? 0) >= min;
 }
@@ -530,10 +536,10 @@ export default function VerificationPanel({
               result?.followerMessage ??
               (p.followerCount != null
                 ? bigEnough
-                  ? `${p.followerCount.toLocaleString()} followers, above the ${minFollowers.toLocaleString()} minimum.`
+                  ? `${followersLabel(p.followerCount)}, above the ${minFollowers.toLocaleString()} minimum.`
                   : qualifies
-                    ? `${p.followerCount.toLocaleString()} followers. We measure your largest channel, so this one does not need to reach ${minFollowers.toLocaleString()}.`
-                    : `${p.followerCount.toLocaleString()} followers, under the ${minFollowers.toLocaleString()} minimum.`
+                    ? `${followersLabel(p.followerCount)}. We measure your largest channel, so this one does not need to reach ${minFollowers.toLocaleString()}.`
+                    : `${followersLabel(p.followerCount)}, under the ${minFollowers.toLocaleString()} minimum.`
                 : undefined),
             fallback: 'Follower minimum',
           },

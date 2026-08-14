@@ -230,6 +230,11 @@ function formatFollowerCount(count: number): string {
   return count.toString();
 }
 
+// Count and noun together, so the two cannot be rendered out of agreement.
+function followersLabel(count: number): string {
+  return count === 1 ? '1 follower' : `${formatFollowerCount(count)} followers`;
+}
+
 // Turns an application into the four stages the applicant sees.
 //
 // Deliberately does not expose the two-admin approval mechanic — how many
@@ -1717,7 +1722,7 @@ export default function CreatorStatusPage() {
                         fontWeight: '600',
                         color: '#fff'
                       }}>
-                        {formatFollowerCount(platform.followerCount)} followers
+                        {followersLabel(platform.followerCount)}
                       </span>
                     </div>
                   ))}

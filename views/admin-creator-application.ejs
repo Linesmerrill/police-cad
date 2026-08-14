@@ -236,6 +236,8 @@
     function humanPlatform(v) { return PLATFORM_LABELS[(v || '').toLowerCase()] || titleCase(v || ''); }
     function titleCase(v) { return v ? v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ') : ''; }
     function num(n) { return (Number(n) || 0).toLocaleString(); }
+    // Count and noun in one place, so "1 followers" cannot happen.
+    function followers(n) { return Number(n) === 1 ? '1 follower' : num(n) + ' followers'; }
 
     // Wording lives here rather than in the database, so it can be reworded
     // without migrating what reviewers already ticked.
@@ -441,7 +443,7 @@
                     (p.url ? '<a href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer">' + esc(p.handle || p.url) + '</a>' : esc(p.handle || '')) +
                   '</div>' +
                   '<div class="row-meta">' +
-                    esc(num(actual)) + ' followers' +
+                    esc(followers(actual)) +
                     (p.verificationMethod ? ' &middot; verified by ' + esc(p.verificationMethod) : '') +
                   '</div>' +
                   mismatch +
