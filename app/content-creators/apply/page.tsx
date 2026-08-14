@@ -130,6 +130,37 @@ function FieldError({ message }: { message: string | null }) {
   );
 }
 
+// What is wrong with one platform card, or null. Identity is always required —
+// a half-filled card is silently dropped on submit otherwise, which looks like
+// the form losing your work.
+function platformIdentityError(p: PlatformEntry, canRemove = false): string | null {
+  const escape = canRemove ? ' If you did not mean to add this one, remove it with the X.' : '';
+  if (p.type === 'other') {
+    return p.url.trim() ? null : `Add the link to your profile on this platform.${escape}`;
+  }
+  if (!normalizeHandle(p.handle)) {
+    const label = platformOptions.find(o => o.value === p.type)?.label || 'this platform';
+    return `Add your ${label} username, or paste your channel link.${escape}`;
+  }
+  return null;
+}
+
+// Only for platforms we cannot read. Their number is the only one we will ever
+// have, so a blank is a hole in the application. A low number is not an error
+// on its own: the largest channel carries the application, same as the API.
+function platformFollowerError(p: PlatformEntry): string | null {
+  if (isScanned(p.type)) return null;
+  const raw = p.followerCount.trim();
+  if (!raw) {
+    const label = platformOptions.find(o => o.value === p.type)?.label || 'this platform';
+    return `We cannot read ${label} automatically, so enter your follower count.`;
+  }
+  if (!Number.isFinite(parseInt(raw)) || parseInt(raw) < 0) {
+    return 'Enter your follower count as a number.';
+  }
+  return null;
+}
+
 function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
@@ -194,11 +225,25 @@ export default function ApplyPage() {
     } else if (displayName.trim().length < 2) {
       e.displayName = 'Use at least 2 characters.';
     }
-    if (!platforms.some(qualifyingPlatform)) {
-      const anyNamed = platforms.some(p => (p.type === 'other' ? p.url.trim() : normalizeHandle(p.handle)));
-      e.platforms = anyNamed
-        ? `Add at least one platform with ${MIN_FOLLOWERS.toLocaleString()}+ followers. We read YouTube and Twitch counts for you; for anything else, enter the number.`
-        : 'Add the username of at least one channel where you make LPC content.';
+    let anyCardBroken = false;
+    platforms.forEach((p) => {
+      const identity = platformIdentityError(p, platforms.length > 1);
+      if (identity) {
+        e[`handle:${p.id}`] = identity;
+        anyCardBroken = true;
+      }
+      const followers = platformFollowerError(p);
+      if (followers) {
+        e[`followers:${p.id}`] = followers;
+        anyCardBroken = true;
+      }
+    });
+    // Separate from the per-card rules: every card can be filled in correctly
+    // and the application still not clear the bar. Suppressed while a card is
+    // individually broken, so an empty card does not draw two red lines saying
+    // much the same thing.
+    if (!anyCardBroken && !platforms.some(qualifyingPlatform)) {
+      e.platforms = `At least one channel needs ${MIN_FOLLOWERS.toLocaleString()}+ followers. We read YouTube and Twitch counts for you; anywhere else, the number you enter is what we go on.`;
     }
     if (description.trim().length < 50) {
       e.description = `Tell us a little more about your LPC content. ${description.trim().length} of 50 characters so far.`;
@@ -217,14 +262,17 @@ export default function ApplyPage() {
   // Ordered top to bottom, so "the first problem" is the one nearest the top of
   // the page rather than the first one this object happens to list.
   const focusFirstError = () => {
+    const anyPlatformError = Object.keys(errors).some(
+      k => k.startsWith('handle:') || k.startsWith('followers:')
+    );
     const order: [string, React.RefObject<HTMLElement>][] = [
       ['displayName', displayNameRef as React.RefObject<HTMLElement>],
-      ['platforms', platformsRef as React.RefObject<HTMLElement>],
+      [anyPlatformError ? '__platformCard' : 'platforms', platformsRef as React.RefObject<HTMLElement>],
       ['description', descriptionRef as React.RefObject<HTMLElement>],
       ['terms', termsRef as React.RefObject<HTMLElement>],
     ];
     for (const [key, ref] of order) {
-      if (errors[key] && ref.current) {
+      if ((key === '__platformCard' || errors[key]) && ref.current) {
         ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
         if (typeof (ref.current as HTMLInputElement).focus === 'function') {
           setTimeout(() => (ref.current as HTMLInputElement).focus({ preventScroll: true }), 220);
@@ -409,13 +457,9 @@ export default function ApplyPage() {
     }));
   };
 
-  const isFormValid = (): boolean => {
-    if (!displayName.trim()) return false;
-    if (!description.trim() || description.length < 50) return false;
-    if (!agreedToTerms) return false;
-
-    return platforms.some(qualifyingPlatform);
-  };
+  // One source of truth. When this and the messages were computed separately,
+  // the button could refuse a form with nothing visibly wrong on it.
+  const isFormValid = (): boolean => Object.keys(errors).length === 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1228,12 +1272,16 @@ export default function ApplyPage() {
                               type="url"
                               value={platform.url}
                               onChange={(e) => updatePlatform(platform.id, 'url', e.target.value)}
+                              onBlur={() => markTouched(`handle:${platform.id}`)}
                               placeholder={platformOption?.placeholder || 'Link to your profile'}
+                              aria-invalid={!!errorFor(`handle:${platform.id}`)}
                               style={{
                                 padding: '12px 14px',
                                 fontSize: '14px',
                                 background: 'rgba(255, 255, 255, 0.05)',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                border: errorFor(`handle:${platform.id}`)
+                                  ? '1px solid rgba(239, 68, 68, 0.65)'
+                                  : '1px solid rgba(255, 255, 255, 0.1)',
                                 borderRadius: '8px',
                                 color: '#fff',
                                 outline: 'none'
@@ -1244,15 +1292,19 @@ export default function ApplyPage() {
                               type="text"
                               value={platform.handle}
                               onChange={(e) => updatePlatform(platform.id, 'handle', e.target.value)}
+                              onBlur={() => markTouched(`handle:${platform.id}`)}
                               placeholder={platformOption?.handlePlaceholder || 'Your username'}
                               autoCapitalize="none"
                               autoCorrect="off"
                               spellCheck={false}
+                              aria-invalid={!!errorFor(`handle:${platform.id}`)}
                               style={{
                                 padding: '12px 14px',
                                 fontSize: '14px',
                                 background: 'rgba(255, 255, 255, 0.05)',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                border: errorFor(`handle:${platform.id}`)
+                                  ? '1px solid rgba(239, 68, 68, 0.65)'
+                                  : '1px solid rgba(255, 255, 255, 0.1)',
                                 borderRadius: '8px',
                                 color: '#fff',
                                 outline: 'none'
@@ -1264,17 +1316,21 @@ export default function ApplyPage() {
                               type="number"
                               value={platform.followerCount}
                               onChange={(e) => updatePlatform(platform.id, 'followerCount', e.target.value)}
+                              onBlur={() => markTouched(`followers:${platform.id}`)}
                               placeholder="Followers"
                               min="0"
+                              aria-invalid={!!errorFor(`followers:${platform.id}`)}
                               style={{
                                 padding: '12px 14px',
                                 fontSize: '14px',
                                 background: 'rgba(255, 255, 255, 0.05)',
-                                border: parseInt(platform.followerCount) >= 500
-                                  ? '1px solid rgba(34, 197, 94, 0.4)'
-                                  : '1px solid rgba(255, 255, 255, 0.1)',
+                                border: errorFor(`followers:${platform.id}`)
+                                  ? '1px solid rgba(239, 68, 68, 0.65)'
+                                  : parseInt(platform.followerCount) >= MIN_FOLLOWERS
+                                    ? '1px solid rgba(34, 197, 94, 0.4)'
+                                    : '1px solid rgba(255, 255, 255, 0.1)',
                                 borderRadius: '8px',
-                                color: parseInt(platform.followerCount) >= 500 ? '#22c55e' : '#fff',
+                                color: parseInt(platform.followerCount) >= MIN_FOLLOWERS ? '#22c55e' : '#fff',
                                 outline: 'none'
                               }}
                             />
@@ -1292,6 +1348,9 @@ export default function ApplyPage() {
                             verification, so there is no need to type it in.
                           </p>
                         )}
+
+                        <FieldError message={errorFor(`handle:${platform.id}`)} />
+                        <FieldError message={errorFor(`followers:${platform.id}`)} />
 
                         {/* Preview Link */}
                         {previewUrl && (
