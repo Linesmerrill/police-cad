@@ -3220,9 +3220,11 @@
 
         </div>
 
-        <!-- Panel: Subscriptions (user-centric dashboard) -->
-        <style> goes inside (or just above) that panel; classes are subs-* scoped
-               - <script> replaces the existing initSubscriptionsPanel implementation
+        <!-- Panel: Subscriptions (user-centric dashboard)
+               - the <style> below goes inside (or just above) that panel;
+                 classes are subs-* scoped
+               - the <script> further down replaces the existing
+                 initSubscriptionsPanel implementation
                ======================================================================= -->
 
 
@@ -4206,12 +4208,17 @@
             <!-- Two-column work surface -->
             <div class="subs-layout">
 
-              <!-- Left: results list. <div> not <aside> on purpose —
-                   styles.css ships a global `aside { padding: 50px 0 }`
-                   landing-page rule that adds 100px of vertical padding
-                   to every aside, even when overridden via specific
-                   selectors (browser was ignoring our !important rule
-                   in some cascade orderings). Sidestep entirely. -->
+              <!-- Left: results list. <div> not <aside>, which sidesteps the
+                   global `aside { padding: 50px 0 }` landing-page rule in
+                   styles.css.
+
+                   The original note here blamed "cascade orderings" for our
+                   !important override being ignored. That was a misdiagnosis:
+                   a malformed comment above the panel's <style> opened a stray
+                   element, and CSS error recovery ate the first rule in the
+                   block — which was exactly the section/aside padding reset.
+                   The comment is fixed and the reset applies now, so <aside>
+                   would work. Left as <div> because it costs nothing. -->
               <div class="subs-sidebar">
                 <div class="subs-sidebar-head">
                   <span class="subs-section-label" id="subs-results-title">Search</span>
