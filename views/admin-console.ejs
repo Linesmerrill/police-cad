@@ -939,27 +939,37 @@
           </div>
 
           <div class="ac-section-label">Overview</div>
+          <!-- These read as buttons, so they behave like them: each jumps to the
+               list behind the number rather than being decoration. -->
           <div class="ac-stats">
-            <div class="ac-stat" style="--stat-accent:var(--ac-accent); animation-delay:0.02s;">
+            <a class="ac-stat" href="#" onclick="acNavTo('admin-management'); return false;"
+               style="--stat-accent:var(--ac-accent); animation-delay:0.02s; cursor:pointer; text-decoration:none;"
+               title="View admin management">
               <i class="fas fa-shield-alt ac-stat-icon"></i>
               <div class="ac-stat-value" id="dash-stat-admins">&mdash;</div>
               <div class="ac-stat-label">Total Admins</div>
-            </div>
-            <div class="ac-stat" style="--stat-accent:#ef4444; animation-delay:0.06s;">
+            </a>
+            <a class="ac-stat" href="#" onclick="acNavToCC('submitted'); return false;"
+               style="--stat-accent:#ef4444; animation-delay:0.06s; cursor:pointer; text-decoration:none;"
+               title="View submitted creator applications">
               <i class="fas fa-inbox ac-stat-icon"></i>
               <div class="ac-stat-value" id="dash-stat-submitted">&mdash;</div>
               <div class="ac-stat-label">CC Submitted</div>
-            </div>
-            <div class="ac-stat" style="--stat-accent:#f59e0b; animation-delay:0.10s;">
+            </a>
+            <a class="ac-stat" href="#" onclick="acNavToCC('under_review'); return false;"
+               style="--stat-accent:#f59e0b; animation-delay:0.10s; cursor:pointer; text-decoration:none;"
+               title="View creator applications under review">
               <i class="fas fa-search ac-stat-icon"></i>
               <div class="ac-stat-value" id="dash-stat-review">&mdash;</div>
               <div class="ac-stat-label">CC Under Review</div>
-            </div>
-            <div class="ac-stat" style="--stat-accent:var(--ac-green); animation-delay:0.14s;">
+            </a>
+            <a class="ac-stat" href="#" onclick="acNavToCC('approved'); return false;"
+               style="--stat-accent:var(--ac-green); animation-delay:0.14s; cursor:pointer; text-decoration:none;"
+               title="View approved creators">
               <i class="fas fa-star ac-stat-icon"></i>
               <div class="ac-stat-value" id="dash-stat-active-cc">&mdash;</div>
               <div class="ac-stat-label">Active Creators</div>
-            </div>
+            </a>
           </div>
 
           <div class="ac-section-label">Quick Actions</div>
@@ -2705,9 +2715,6 @@
                   <button type="button" class="btn btn-secondary cc-status-btn" data-status="rejected">
                     <i class="fas fa-times-circle" style="margin-right: 4px;"></i>Rejected
                   </button>
-                  <button type="button" class="btn btn-secondary cc-status-btn" data-status="withdrawn">
-                    <i class="fas fa-undo" style="margin-right: 4px;"></i>Withdrawn <span id="ccWithdrawnCount" class="badge" style="background: #6b7280; margin-left: 4px; display: none;"></span>
-                  </button>
                 </div>
               </div>
               <div class="row">
@@ -4432,72 +4439,7 @@
     </div>
 
     <!-- Content Creator Application Modal -->
-    <div class="modal fade" id="ccApplicationModal" tabindex="-1" role="dialog">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
-          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
-            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;">
-              <span>&times;</span>
-            </button>
-            <h4 class="modal-title" id="ccApplicationModalTitle">Application Details</h4>
-          </div>
-          <div class="modal-body" id="ccApplicationModalBody">
-            <!-- Application details will be loaded here -->
-          </div>
-          <div class="modal-footer" style="border-top: 1px solid #2a2d45;" id="ccApplicationModalFooter">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Reject Application Modal -->
-    <div class="modal fade" id="ccRejectModal" tabindex="-1" role="dialog">
-      <div class="modal-dialog">
-        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
-          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
-            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;">
-              <span>&times;</span>
-            </button>
-            <h4 class="modal-title">Reject Application</h4>
-          </div>
-          <div class="modal-body">
-            <input type="hidden" id="rejectApplicationId" />
-            <div class="form-group">
-              <label for="rejectionReason" style="color: #e5e7eb; margin-bottom: 0.5rem;">Rejection Reason</label>
-              <select id="rejectionReason" class="form-control">
-                <option value="">Select a reason...</option>
-                <option value="insufficient_followers">Insufficient followers</option>
-                <option value="content_quality">Content quality concerns</option>
-                <option value="platform_mismatch">Platform requirements not met</option>
-                <option value="incomplete_info">Incomplete information</option>
-                <option value="policy_violation">Policy violation</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="rejectionFeedback" style="color: #e5e7eb; margin-bottom: 0.5rem;">Feedback for Applicant</label>
-              <textarea id="rejectionFeedback" class="form-control" rows="3"
-                        placeholder="Provide constructive feedback..."
-                        style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;"></textarea>
-            </div>
-            <div class="form-group">
-              <label for="rejectionAdminNotes" style="color: #e5e7eb; margin-bottom: 0.5rem;">Admin Notes (Internal)</label>
-              <textarea id="rejectionAdminNotes" class="form-control" rows="2"
-                        placeholder="Internal notes..."
-                        style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;"></textarea>
-            </div>
-          </div>
-          <div class="modal-footer" style="border-top: 1px solid #2a2d45;">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-danger" id="confirmRejectBtn">
-              <i class="fas fa-times-circle" style="margin-right: 8px;"></i>Reject Application
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Content Creator Removal Modal -->
     <div class="modal fade" id="ccRemoveModal" tabindex="-1" role="dialog">
       <div class="modal-dialog">
@@ -5470,7 +5412,10 @@
         $('#dash-pending-cc-container').show();
 
         $.ajax({
-          url: API_BASE + '/api/v1/admin/content-creator-applications?status=submitted&limit=5',
+          // Both open statuses. under_review means somebody has started on it,
+          // not that it is handled — leaving those out made a queue look empty
+          // while applications sat in it.
+          url: API_BASE + '/api/v1/admin/content-creator-applications?status=submitted,under_review&limit=5',
           method: 'GET',
           success: function(data) {
             var apps = (data && data.applications) ? data.applications : [];
@@ -5510,12 +5455,27 @@
           other: { icon: 'fas fa-globe', bg: 'rgba(99,102,241,0.12)', color: 'var(--ac-accent)' }
         };
 
+        // Where each application actually stands. The row used to say only who
+        // applied, so two applications one approval apart looked identical and
+        // you had to open both to find out which needed you.
+        function ccStateBadge(app) {
+          if (app.firstApprovalBy) {
+            var by = app.firstApprovalByName ? ' &middot; ' + escapeHtml(app.firstApprovalByName) : '';
+            return { text: '1 of 2 approvals' + by, color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' };
+          }
+          if (app.checksPassed) {
+            return { text: 'Ready for review', color: '#4ade80', bg: 'rgba(34,197,94,0.12)' };
+          }
+          return { text: 'Checks pending', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)' };
+        }
+
         var html = '';
         apps.forEach(function(app) {
           var appId = app._id || app.id || '';
           var displayName = escapeHtml(app.displayName || 'Unknown');
           var platform = app.primaryPlatform || 'other';
           var pIcon = platformIcons[platform] || platformIcons.other;
+          var state = ccStateBadge(app);
           var totalFollowers = 0;
           if (app.platforms && app.platforms.length) {
             app.platforms.forEach(function(p) { totalFollowers += (p.followerCount || 0); });
@@ -5529,14 +5489,21 @@
                   <i class="${pIcon.icon}"></i>
                 </div>
                 <div class="dash-pending-cc-item-text">
-                  <strong>${displayName}</strong>
-                  <span>${escapeHtml(platform)} &middot; ${totalFollowers.toLocaleString()} followers &middot; ${escapeHtml(createdAt)}</span>
+                  <strong>
+                    ${displayName}
+                    <span style="display:inline-block; margin-left:6px; padding:2px 8px; border-radius:999px; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; vertical-align:middle; color:${state.color}; background:${state.bg}; border:1px solid ${state.color}33;">${state.text}</span>
+                  </strong>
+                  <span>${escapeHtml(platform)} &middot; ${totalFollowers === 1 ? '1 follower' : totalFollowers.toLocaleString() + ' followers'} &middot; ${escapeHtml(createdAt)}</span>
                 </div>
               </div>
               <div class="dash-pending-cc-item-actions">
-                <button class="btn btn-secondary btn-sm" onclick="acNavTo('content-creators'); setTimeout(function(){ viewCCApplication('${escapeHtml(appId)}'); }, 300);" style="font-size:0.75rem; padding:0.3rem 0.75rem;">
+                <!-- Straight to the review page, same as the applications
+                     list. This used to hop to the content-creators panel and
+                     open the old modal on a timer, which showed none of the
+                     verification state the decision depends on. -->
+                <a class="btn btn-secondary btn-sm" href="/admin/creator-application/${escapeHtml(appId)}" style="font-size:0.75rem; padding:0.3rem 0.75rem; text-decoration:none;" title="Open the full review page for this application">
                   Review
-                </button>
+                </a>
               </div>
             </div>
           `;
@@ -10149,6 +10116,20 @@
       let currentCCStatus = '';
       let ccPageSize = 10;
 
+      // Jump from a dashboard stat straight to the matching filtered list.
+      //
+      // The filter is set BEFORE navigating so the panel's own load callback
+      // picks it up; clicking the tab afterwards would fetch twice. Exposed on
+      // window because currentCCStatus is block-scoped to this script and the
+      // dashboard markup lives in another one.
+      window.acNavToCC = function(status) {
+        currentCCStatus = status || '';
+        currentCCPage = 1;
+        $('.cc-status-btn').removeClass('active');
+        $('.cc-status-btn[data-status="' + currentCCStatus + '"]').addClass('active');
+        acNavTo('content-creators');
+      };
+
       // Content creator applications are now loaded by acNavTo() via panelLoadCallbacks
 
       // Status filter buttons
@@ -10233,19 +10214,6 @@
           }
         });
 
-        // Load withdrawn count for the filter badge
-        $.ajax({
-          url: `${API_BASE}/api/v1/admin/content-creator-applications?status=withdrawn&limit=1`,
-          method: 'GET',
-          success: function(data) {
-            const count = data.pagination?.totalItems || 0;
-            if (count > 0) {
-              $('#ccWithdrawnCount').text(count).show();
-            } else {
-              $('#ccWithdrawnCount').hide();
-            }
-          }
-        });
       }
 
       function loadCCPendingCount() {
@@ -10311,7 +10279,9 @@
         if (currentCCStatus) {
           url += `&status=${currentCCStatus}`;
         } else {
-          // "All" excludes withdrawn - show only active applications
+          // Withdrawn means they changed their mind before we did anything.
+          // There is no decision to make and nothing to learn from a queue full
+          // of them, so they stay in the database and out of this panel.
           url += `&exclude_status=withdrawn`;
         }
 
@@ -10380,21 +10350,19 @@
             approvalBadgeHtml = `<span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; font-size: 0.85rem; padding: 0.2rem 0.6rem; border-radius: 10px; margin-left: 6px; font-weight: 600;"><i class="fas fa-user-check" style="margin-right: 3px;"></i>1/2</span>`;
           }
 
-          // Build approve button based on whether current admin already approved
-          let approveButtonHtml = '';
+          // Automated screening state, so the list answers "which of these
+          // actually need me?" without opening each one. Approval is blocked
+          // until checks pass, so an admin clicking Approve on a card without
+          // this badge would just get refused.
+          let checksBadgeHtml = '';
           if (status === 'submitted' || status === 'under_review') {
-            if (currentAdminAlreadyApproved) {
-              approveButtonHtml = `
-                <button class="btn btn-success btn-sm" disabled style="opacity: 0.5; cursor: not-allowed;">
-                  <i class="fas fa-check"></i> Approved
-                </button>
-              `;
+            if (app.checksPassed) {
+              checksBadgeHtml = `<span style="background: rgba(34,197,94,0.18); color: #4ade80; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 10px; margin-left: 6px; font-weight: 700;" title="Automated checks passed - ready for review"><i class="fas fa-shield-halved" style="margin-right: 4px;"></i>CHECKS PASSED</span>`;
             } else {
-              approveButtonHtml = `
-                <button class="btn btn-success btn-sm" onclick="approveCCApplication('${appId}')">
-                  <i class="fas fa-check"></i> Approve
-                </button>
-              `;
+              const failed = (app.checks || []).filter(c => c.status === 'failed').length;
+              checksBadgeHtml = failed
+                ? `<span style="background: rgba(239,68,68,0.18); color: #f87171; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 10px; margin-left: 6px; font-weight: 700;" title="Automated checks failed - open Review to see why"><i class="fas fa-circle-exclamation" style="margin-right: 4px;"></i>${failed} CHECK${failed === 1 ? '' : 'S'} FAILED</span>`
+                : `<span style="background: rgba(251,191,36,0.18); color: #fbbf24; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 10px; margin-left: 6px; font-weight: 700;" title="Automated checks still running"><i class="fas fa-hourglass-half" style="margin-right: 4px;"></i>CHECKS PENDING</span>`;
             }
           }
 
@@ -10414,20 +10382,19 @@
                       ${displayName}
                       <span class="status-badge" style="background: ${statusStyle.bg}; color: #fff; font-size: 0.7rem; padding: 0.2rem 0.6rem;">${statusStyle.label}</span>
                       ${approvalBadgeHtml}
+                      ${checksBadgeHtml}
                     </h5>
                     <p class="result-subtitle">Applied: ${createdAt} | Platform: ${primaryPlatform} | Followers: ${totalFollowers.toLocaleString()}${firstApprovalInfoHtml}</p>
                   </div>
                 </div>
                 <div class="action-buttons">
-                  <button class="btn btn-secondary btn-sm" onclick="viewCCApplication('${appId}')">
-                    <i class="fas fa-eye"></i> View Details
-                  </button>
-                  ${approveButtonHtml}
-                  ${status === 'submitted' || status === 'under_review' ? `
-                    <button class="btn btn-danger btn-sm" onclick="showRejectModal('${appId}')">
-                      <i class="fas fa-times"></i> Reject
-                    </button>
-                  ` : ''}
+                  <!-- Review is the only way in. Approving from a list row meant
+                       deciding without seeing the verification state, the
+                       follower reality or the reviewer checklist — all of which
+                       live on the review page. -->
+                  <a class="btn btn-primary btn-sm" href="/admin/creator-application/${appId}" style="text-decoration: none;" title="Open the full review page for this application">
+                    <i class="fas fa-clipboard-check"></i> Review
+                  </a>
                   ${status === 'approved' && app.creatorId ? (
                     app.creatorStatus === 'removed' ? `
                     <button class="btn btn-danger btn-sm" disabled style="opacity: 0.5; cursor: not-allowed;">
@@ -10501,421 +10468,6 @@
         currentCCPage = page;
         loadCCApplications();
       }
-
-      function viewCCApplication(appId) {
-        $('#ccApplicationModalTitle').text('Loading Application...');
-        $('#ccApplicationModalBody').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>');
-        $('#ccApplicationModalFooter').html('<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>');
-        $('#ccApplicationModal').modal('show');
-
-        $.ajax({
-          url: `${API_BASE}/api/v1/admin/content-creator-applications/${appId}`,
-          method: 'GET',
-          success: function(app) {
-            displayCCApplicationDetails(app);
-          },
-          error: function(xhr) {
-            $('#ccApplicationModalBody').html('<div class="loading">Failed to load application details</div>');
-          }
-        });
-      }
-
-      function displayCCApplicationDetails(app) {
-        const appId = app._id || app.id;
-        const displayName = app.displayName || 'Unknown';
-        const status = app.status || 'unknown';
-        const createdAt = app.createdAt ? new Date(app.createdAt).toLocaleString() : 'Unknown';
-        const reviewedAt = app.reviewedAt ? new Date(app.reviewedAt).toLocaleString() : 'N/A';
-        const primaryPlatform = app.primaryPlatform || 'Unknown';
-
-        // Status badge styling
-        const statusColors = {
-          'submitted': { bg: '#3b82f6', label: 'Submitted' },
-          'under_review': { bg: '#f59e0b', label: 'Under Review' },
-          'approved': { bg: '#10b981', label: 'Approved' },
-          'rejected': { bg: '#ef4444', label: 'Rejected' },
-          'withdrawn': { bg: '#6b7280', label: 'Withdrawn' }
-        };
-        const statusStyle = statusColors[status] || { bg: '#6b7280', label: status };
-
-        // Build platforms HTML
-        let platformsHtml = '';
-        if (app.platforms && Array.isArray(app.platforms)) {
-          app.platforms.forEach(p => {
-            const platformIcons = {
-              'youtube': 'fab fa-youtube',
-              'twitch': 'fab fa-twitch',
-              'tiktok': 'fab fa-tiktok',
-              'instagram': 'fab fa-instagram',
-              'twitter': 'fab fa-twitter',
-              'facebook': 'fab fa-facebook',
-              'other': 'fas fa-globe'
-            };
-            const icon = platformIcons[p.type] || 'fas fa-globe';
-
-            const cleanHandle = p.handle ? p.handle.replace(/^@+/, '') : '';
-            const safeHandle = escapeHtml(cleanHandle);
-
-            // Build the actual profile URL from platform type + handle
-            const platformBaseUrls = {
-              twitch: 'https://twitch.tv/',
-              youtube: 'https://youtube.com/@',
-              tiktok: 'https://tiktok.com/@',
-              instagram: 'https://instagram.com/',
-              twitter: 'https://twitter.com/',
-              facebook: 'https://facebook.com/'
-            };
-            // Always prefer building URL from platform type + handle when both are known
-            // p.url from the database is unreliable (can contain wrong domains)
-            let profileUrl = '';
-            if (cleanHandle && platformBaseUrls[p.type]) {
-              profileUrl = platformBaseUrls[p.type] + cleanHandle;
-            } else if (p.url) {
-              profileUrl = p.url;
-            }
-            const safeProfileUrl = escapeHtml(profileUrl);
-
-            const profileLink = (safeProfileUrl && safeHandle)
-              ? `<a href="${safeProfileUrl}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-size: 1rem;">@${safeHandle} <i class="fas fa-external-link-alt" style="font-size: 0.625rem; margin-left: 4px; opacity: 0.7;"></i></a>`
-              : safeProfileUrl
-                ? `<a href="${safeProfileUrl}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-size: 1rem; word-break: break-all;">${safeProfileUrl} <i class="fas fa-external-link-alt" style="font-size: 0.625rem; margin-left: 4px; opacity: 0.7;"></i></a>`
-                : (safeHandle ? `<span style="color: #9aa0b4; font-size: 1rem;">@${safeHandle}</span>` : '');
-
-            platformsHtml += `
-              <div class="info-item" style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
-                  <i class="${icon}" style="color: #667eea; font-size: 1.25rem;"></i>
-                  <span style="color: #e5e7eb; font-weight: 600; text-transform: capitalize; font-size: 1.1rem;">${escapeHtml(p.type)}</span>
-                  ${profileLink}
-                </div>
-                <div style="color: #e5e7eb; font-size: 1rem; font-weight: 500;">
-                  ${(p.followerCount || 0).toLocaleString()} followers
-                </div>
-              </div>
-            `;
-          });
-        }
-
-        // Check if current admin already approved
-        const currentAdminId = getCurrentAdminId();
-        const currentAdminAlreadyApproved = app.firstApprovalBy && app.firstApprovalBy === currentAdminId;
-
-        // Build approval progress badge
-        let approvalProgressHtml = '';
-        if (status === 'under_review' && app.firstApprovalBy) {
-          approvalProgressHtml = `
-            <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; margin-left: 0.5rem;">
-              <i class="fas fa-user-check" style="margin-right: 4px;"></i>1/2 Approvals
-            </span>
-          `;
-        } else if (status === 'approved') {
-          approvalProgressHtml = `
-            <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; margin-left: 0.5rem;">
-              <i class="fas fa-check-double" style="margin-right: 4px;"></i>2/2 Approvals
-            </span>
-          `;
-        }
-
-        $('#ccApplicationModalTitle').text(`Application: ${displayName}`);
-        $('#ccApplicationModalBody').html(`
-          <div style="margin-bottom: 1rem; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-            <span class="status-badge" style="background: ${statusStyle.bg};">${statusStyle.label}</span>
-            ${approvalProgressHtml}
-          </div>
-
-          <div class="info-grid">
-            <div class="info-item">
-              <div class="info-label">Display Name</div>
-              <div class="info-value">${displayName}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Primary Platform</div>
-              <div class="info-value">${primaryPlatform}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Applied At</div>
-              <div class="info-value">${createdAt}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Reviewed At</div>
-              <div class="info-value">${reviewedAt}</div>
-            </div>
-          </div>
-
-          <div style="margin-top: 1.5rem;">
-            <h5 style="color: #e5e7eb; margin-bottom: 1rem;">
-              <i class="fas fa-share-alt" style="margin-right: 8px; color: #667eea;"></i>Platforms
-            </h5>
-            <div style="background: #11131a; border-radius: 8px; padding: 1rem;">
-              ${platformsHtml || '<p style="color: #9aa0b4;">No platforms listed</p>'}
-            </div>
-          </div>
-
-          <div style="margin-top: 1.5rem;">
-            <h5 style="color: #e5e7eb; margin-bottom: 1rem;">
-              <i class="fas fa-align-left" style="margin-right: 8px; color: #667eea;"></i>Description
-            </h5>
-            <div style="background: #11131a; border-radius: 8px; padding: 1rem; color: #e5e7eb; white-space: pre-wrap;">
-              ${app.description || 'No description provided'}
-            </div>
-          </div>
-
-          ${app.firstApprovalBy ? `
-            <div style="margin-top: 1.5rem;">
-              <h5 style="color: ${status === 'approved' ? '#10b981' : '#f59e0b'}; margin-bottom: 1rem;">
-                <i class="fas fa-user-check" style="margin-right: 8px;"></i>First Approval${app.firstApprovalByName ? ' (' + app.firstApprovalByName + ')' : ''}
-              </h5>
-              <div style="background: rgba(${status === 'approved' ? '16, 185, 129' : '245, 158, 11'}, 0.1); border: 1px solid rgba(${status === 'approved' ? '16, 185, 129' : '245, 158, 11'}, 0.3); border-radius: 8px; padding: 1rem;">
-                <p style="margin-bottom: 0; color: #e5e7eb;">
-                  <i class="fas fa-check" style="color: #10b981; margin-right: 8px;"></i>
-                  First approval received${app.firstApprovalAt ? ' on ' + new Date(app.firstApprovalAt).toLocaleString([], { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}.
-                  ${status !== 'approved' ? '<strong style="color: #f59e0b;">Awaiting second approval from a different admin.</strong>' : ''}
-                </p>
-              </div>
-            </div>
-          ` : ''}
-
-          ${status === 'approved' && app.reviewedAt ? `
-            <div style="margin-top: 1rem;">
-              <h5 style="color: #10b981; margin-bottom: 1rem;">
-                <i class="fas fa-check-double" style="margin-right: 8px;"></i>Second Approval${app.reviewedByName ? ' (' + app.reviewedByName + ')' : ''}
-              </h5>
-              <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 1rem;">
-                <p style="margin-bottom: 0; color: #e5e7eb;">
-                  <i class="fas fa-check" style="color: #10b981; margin-right: 8px;"></i>
-                  Second approval received on ${new Date(app.reviewedAt).toLocaleString([], { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}.
-                </p>
-              </div>
-            </div>
-          ` : ''}
-
-          ${app.rejectionReason ? `
-            <div style="margin-top: 1.5rem;">
-              <h5 style="color: #ef4444; margin-bottom: 1rem;">
-                <i class="fas fa-times-circle" style="margin-right: 8px;"></i>Rejection Details
-              </h5>
-              <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 1rem;">
-                <p style="margin-bottom: 0.5rem;"><strong>Reason:</strong> ${app.rejectionReason}</p>
-                ${app.feedback ? `<p style="margin-bottom: 0.5rem;"><strong>Feedback:</strong> ${app.feedback}</p>` : ''}
-                ${app.adminNotes ? `<p style="margin-bottom: 0; color: #9aa0b4;"><strong>Admin Notes:</strong> ${app.adminNotes}</p>` : ''}
-              </div>
-            </div>
-          ` : ''}
-        `);
-
-        // Update footer with action buttons if status allows
-        if (status === 'submitted' || status === 'under_review') {
-          const approveLabel = app.firstApprovalBy ? 'Second Approve' : 'First Approve';
-          const approveIcon = app.firstApprovalBy ? 'fa-check-double' : 'fa-check-circle';
-
-          // Check if current admin already gave first approval
-          let approveButtonHtml = '';
-          if (currentAdminAlreadyApproved) {
-            // Disable button and show message
-            approveButtonHtml = `
-              <button type="button" class="btn btn-success" disabled style="opacity: 0.6; cursor: not-allowed;">
-                <i class="fas fa-check" style="margin-right: 8px;"></i>You Already Approved
-              </button>
-            `;
-          } else {
-            approveButtonHtml = `
-              <button type="button" class="btn btn-success" onclick="approveCCApplication('${appId}')">
-                <i class="fas ${approveIcon}" style="margin-right: 8px;"></i>${approveLabel}
-              </button>
-            `;
-          }
-
-          // Check if current admin is an owner (can use override)
-          // Use the globally parsed 'roles' variable instead of re-parsing currentUserRoles
-          const isOwner = roles.includes('owner');
-
-          // Owner override button (shown to owners for any pending application - allows bypassing dual-approval entirely)
-          let ownerOverrideHtml = '';
-          if (isOwner && (status === 'submitted' || status === 'under_review')) {
-            ownerOverrideHtml = `
-              <button type="button" class="btn" onclick="approveCCApplication('${appId}', true)" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white;">
-                <i class="fas fa-shield-alt" style="margin-right: 8px;"></i>Override Approve
-              </button>
-            `;
-          }
-
-          $('#ccApplicationModalFooter').html(`
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-danger" onclick="$('#ccApplicationModal').modal('hide'); showRejectModal('${appId}');">
-              <i class="fas fa-times-circle" style="margin-right: 8px;"></i>Reject
-            </button>
-            ${approveButtonHtml}
-            ${ownerOverrideHtml}
-          `);
-
-          // Add a note if current admin already approved
-          if (currentAdminAlreadyApproved) {
-            $('#ccApplicationModalFooter').append('<div style="width: 100%; margin-top: 0.75rem; text-align: center; color: #f59e0b; font-size: 0.85rem;"><i class="fas fa-info-circle" style="margin-right: 4px;"></i>A different admin must provide the second approval</div>');
-          }
-        } else if (status === 'approved' && app.creatorId) {
-          // For approved creators, show a Remove from Program button (or disabled if already removed)
-          const creatorId = app.creatorId;
-          const safeDisplayName = displayName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-          const isRemoved = app.creatorStatus === 'removed';
-          $('#ccApplicationModalFooter').html(`
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            ${isRemoved ? `
-              <button type="button" class="btn btn-danger" disabled style="opacity: 0.5; cursor: not-allowed;">
-                <i class="fas fa-user-slash" style="margin-right: 8px;"></i>Removed
-              </button>
-            ` : `
-              <button type="button" class="btn btn-danger" onclick="$('#ccApplicationModal').modal('hide'); showRemoveModal('${creatorId}', '${safeDisplayName}');">
-                <i class="fas fa-user-slash" style="margin-right: 8px;"></i>Remove from Program
-              </button>
-            `}
-          `);
-        } else {
-          $('#ccApplicationModalFooter').html('<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>');
-        }
-      }
-
-      function approveCCApplication(appId, ownerOverride = false) {
-        const processingMessage = ownerOverride
-          ? '<i class="fas fa-spinner fa-spin"></i> Processing approval with owner override...'
-          : '<i class="fas fa-spinner fa-spin"></i> Processing approval...';
-        showInfoModal('Processing', processingMessage);
-
-        $.ajax({
-          url: `${API_BASE}/api/v1/admin/content-creator-applications/${appId}/approve`,
-          method: 'POST',
-          contentType: 'application/json',
-          headers: {
-            'X-User-ID': getCurrentAdminId()
-          },
-          data: JSON.stringify({ ownerOverride: ownerOverride }),
-          success: function(data) {
-            $('#infoModal').modal('hide');
-            $('#ccApplicationModal').modal('hide');
-
-            if (data.ownerOverride) {
-              // Approved via owner override
-              showInfoModal('Success', `
-                <i class="fas fa-shield-alt" style="color: #667eea; margin-right: 8px;"></i>
-                Application approved via <strong>owner override</strong>! A content creator profile has been created.
-              `);
-            } else if (data.needsSecond) {
-              // First approval recorded, needs second
-              showInfoModal('First Approval Recorded', `
-                <i class="fas fa-user-check" style="color: #f59e0b; margin-right: 8px;"></i>
-                Your approval has been recorded. This application now requires a <strong>second approval</strong> from a different admin before the creator profile is created.
-              `);
-            } else {
-              // Fully approved
-              showInfoModal('Success', '<i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>Application approved successfully! A content creator profile has been created.');
-            }
-
-            loadCCApplications();
-            loadCCStats();
-            loadCCPendingCount(); // Update badge
-          },
-          error: function(xhr) {
-            $('#infoModal').modal('hide');
-
-            // Handle specific error cases
-            if (xhr.status === 403) {
-              // Forbidden - not an owner trying to use override
-              showInfoModal('Not Authorized', `
-                <i class="fas fa-lock" style="color: #ef4444; margin-right: 8px;"></i>
-                Only <strong>owners</strong> can use the override option.
-              `);
-            } else if (xhr.status === 409) {
-              // Conflict - either already approved by this admin or already processed
-              const errorMsg = xhr.responseJSON?.error || '';
-              if (errorMsg.includes('already approved')) {
-                showInfoModal('Already Approved', `
-                  <i class="fas fa-info-circle" style="color: #f59e0b; margin-right: 8px;"></i>
-                  You have already approved this application. A <strong>different admin</strong> must provide the second approval.
-                `);
-              } else {
-                showInfoModal('Already Processed', `
-                  <i class="fas fa-info-circle" style="color: #f59e0b; margin-right: 8px;"></i>
-                  This application has already been processed.
-                `);
-              }
-              // Refresh the list to show updated status
-              loadCCApplications();
-              loadCCStats();
-              loadCCPendingCount();
-            } else {
-              const errorMsg = xhr.responseJSON?.error || xhr.statusText || 'Unknown error';
-              showInfoModal('Error', `<i class="fas fa-exclamation-circle" style="color: #ef4444; margin-right: 8px;"></i>Failed to approve application: ${errorMsg}`);
-            }
-          },
-          complete: function() {
-            // Ensure modal backdrop is always cleaned up
-            setTimeout(function() {
-              if (!$('.modal.show').length) {
-                $('.modal-backdrop').remove();
-                $('body').removeClass('modal-open').css('padding-right', '');
-              }
-            }, 300);
-          }
-        });
-      }
-
-      function showRejectModal(appId) {
-        $('#rejectApplicationId').val(appId);
-        $('#rejectionReason').val('');
-        $('#rejectionFeedback').val('');
-        $('#rejectionAdminNotes').val('');
-        $('#ccRejectModal').modal('show');
-      }
-
-      $('#confirmRejectBtn').click(function() {
-        const appId = $('#rejectApplicationId').val();
-        const reason = $('#rejectionReason').val();
-        const feedback = $('#rejectionFeedback').val();
-        const adminNotes = $('#rejectionAdminNotes').val();
-
-        if (!reason) {
-          alert('Please select a rejection reason');
-          return;
-        }
-
-        const button = $(this);
-        button.prop('disabled', true);
-        button.html('<i class="fas fa-spinner fa-spin"></i> Rejecting...');
-
-        $.ajax({
-          url: `${API_BASE}/api/v1/admin/content-creator-applications/${appId}/reject`,
-          method: 'POST',
-          contentType: 'application/json',
-          headers: {
-            'X-User-ID': getCurrentAdminId()
-          },
-          data: JSON.stringify({
-            rejectionReason: reason,
-            feedback: feedback,
-            adminNotes: adminNotes
-          }),
-          success: function(data) {
-            $('#ccRejectModal').modal('hide');
-            showInfoModal('Success', '<i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>Application rejected successfully.');
-            loadCCApplications();
-            loadCCStats();
-            loadCCPendingCount(); // Update badge
-          },
-          error: function(xhr) {
-            showInfoModal('Error', `<i class="fas fa-exclamation-circle" style="color: #ef4444; margin-right: 8px;"></i>Failed to reject application: ${xhr.responseJSON?.error || 'Unknown error'}`);
-          },
-          complete: function() {
-            button.prop('disabled', false);
-            button.html('<i class="fas fa-times-circle" style="margin-right: 8px;"></i>Reject Application');
-            // Ensure modal backdrop is always cleaned up
-            setTimeout(function() {
-              if (!$('.modal.show').length) {
-                $('.modal-backdrop').remove();
-                $('body').removeClass('modal-open').css('padding-right', '');
-              }
-            }, 300);
-          }
-        });
-      });
 
       // Content Creator Removal Functions
       function showRemoveModal(creatorId, displayName) {
