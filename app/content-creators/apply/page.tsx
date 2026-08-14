@@ -291,6 +291,21 @@ export default function ApplyPage() {
   );
   const channelWord = namedChannelCount === 1 ? 'channel' : 'channels';
 
+  // The platforms they actually submitted, by name. The page after submit has
+  // to say which channel needs the code, not "your channel" in the abstract.
+  const submittedPlatformNames = platforms
+    .filter(p => (p.type === 'other' ? p.url.trim() : normalizeHandle(p.handle)))
+    .map(p => platformOptions.find(o => o.value === p.type)?.label || p.type);
+  const submittedNamesList =
+    submittedPlatformNames.length <= 1
+      ? submittedPlatformNames[0] || 'your channel'
+      : submittedPlatformNames.length === 2
+        ? `${submittedPlatformNames[0]} and ${submittedPlatformNames[1]}`
+        : `${submittedPlatformNames.slice(0, -1).join(', ')} and ${submittedPlatformNames[submittedPlatformNames.length - 1]}`;
+  // Everyone places a code; only these can press Check and get an answer in
+  // seconds. On the others our team confirms it by eye during review.
+  const hasSelfServePlatform = platforms.some(p => isScanned(p.type) && normalizeHandle(p.handle));
+
   const choosePrimary = (type: PlatformType) => {
     if (type === primaryPlatform) return;
     setPrimaryPlatform(type);
@@ -569,19 +584,46 @@ export default function ApplyPage() {
               color: '#fff',
               marginBottom: '16px'
             }}>
-              Application Submitted!
+              Application submitted, one step to go
             </h1>
 
             <p style={{
               fontSize: '1rem',
               lineHeight: '1.7',
               color: 'rgba(255, 255, 255, 0.7)',
-              marginBottom: '32px'
+              marginBottom: '24px'
             }}>
-              Thank you for applying to the Content Creator Program. We&apos;ll review your
-              application and get back to you within 3-5 business days. You can track
-              your application status anytime.
+              Thank you for applying to the Content Creator Program. Before it goes to our
+              team, we need to confirm {submittedPlatformNames.length > 1 ? 'those channels are' : 'that channel is'} really
+              yours.
             </p>
+
+            {/* The old copy said we would get back to them in 3-5 days, which
+                read as "you are finished". They are not: nothing moves until
+                the code is in their channel, and someone who thinks they are
+                done waits for an email that is waiting on them. */}
+            <div style={{
+              background: 'rgba(251, 191, 36, 0.07)',
+              border: '1px solid rgba(251, 191, 36, 0.28)',
+              borderRadius: '12px',
+              padding: '18px 20px',
+              marginBottom: '28px',
+              textAlign: 'left'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginBottom: '8px' }}>
+                <SparklesIcon style={{ width: '18px', height: '18px', color: '#fbbf24', flexShrink: 0 }} />
+                <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>
+                  Next: verify {submittedNamesList}
+                </span>
+              </div>
+              <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, margin: 0 }}>
+                Your dashboard has a short code for {submittedPlatformNames.length > 1 ? 'each channel' : 'your channel'}.
+                Paste it into the {submittedPlatformNames.length > 1 ? 'descriptions' : 'description'} and
+                {hasSelfServePlatform
+                  ? ' press Check. It takes about a minute, and your application goes to our team the moment it passes.'
+                  : ' leave it there. Our team confirms it by eye during review.'}
+              </p>
+            </div>
 
             <div style={{
               display: 'flex',
@@ -607,7 +649,7 @@ export default function ApplyPage() {
                 }}
               >
                 <DocumentCheckIcon style={{ width: '18px', height: '18px' }} />
-                View Application Status
+                {hasSelfServePlatform ? `Verify my ${channelWord}` : 'Go to my dashboard'}
               </Link>
 
               <Link
