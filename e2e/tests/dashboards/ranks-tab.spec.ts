@@ -67,4 +67,63 @@ test.describe('Department Dashboard — Ranks tab', { tag: '@auth' }, () => {
     await expect(page.locator('#dds-tab-body #ranksList')).toBeVisible();
     await expect(page.locator('#dds-tab-body #rankMembersList')).toBeVisible();
   });
+
+  /**
+   * Regression: on a laptop-width window the dashboard sidebar leaves the card
+   * around 490px wide, but the responsive rules used to key off the VIEWPORT,
+   * which was still 768px and above the 700px breakpoint. So the Add panel
+   * stayed a fixed 380px and covered all but ~107px of the ranks list, which
+   * reads as the whole page lurching sideways when you press Add.
+   *
+   * The card is a container query context now, so the panel becomes a
+   * full-width sheet whenever the CARD is narrow, whatever the window is doing.
+   */
+  test('the Add panel does not crush the ranks list on a narrow card', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 700 });
+    await page.goto(deptDashboardUrl());
+    await expect(page).not.toHaveURL(/\/login/);
+
+    const settingsBtn = page.locator('#dd-nav-settings');
+    if (!(await settingsBtn.isVisible().catch(() => false))) {
+      test.skip(true, 'Dept dashboard settings nav not reachable — API may be offline');
+      return;
+    }
+    await settingsBtn.click();
+
+    const ranksTab = page.locator('.dds-tab[data-tab="ranks"]');
+    await expect(ranksTab).toBeVisible({ timeout: 5_000 });
+    await ranksTab.click();
+
+    const card = page.locator('#dds-tab-body .rkm-card');
+    await expect(card).toBeVisible();
+
+    const cardWidth = await card.evaluate((el) => el.getBoundingClientRect().width);
+    // Guard the premise: this only proves anything while the card is narrower
+    // than the 700px breakpoint.
+    expect(cardWidth).toBeLessThan(700);
+
+    await page.locator('#dds-tab-body .rkm-btn-add').click();
+
+    const form = page.locator('#dds-tab-body .rkm-form');
+    await expect(form).toHaveClass(/is-open/);
+    // Let the slide-in settle before measuring.
+    await page.waitForTimeout(400);
+
+    const { formWidth, cardRight, formLeft } = await page.evaluate(() => {
+      const c = document.querySelector('#dds-tab-body .rkm-card')!.getBoundingClientRect();
+      const f = document.querySelector('#dds-tab-body .rkm-form')!.getBoundingClientRect();
+      return { formWidth: f.width, cardRight: c.right, formLeft: f.left };
+    });
+
+    // A sheet across the whole card, not a 380px panel pinned to the right.
+    expect(formWidth).toBeGreaterThan(cardWidth - 8);
+    // And it must not hang off the card, which is what pushed the layout over.
+    expect(formLeft).toBeGreaterThan(cardRight - cardWidth - 8);
+
+    // Nothing should have introduced a horizontal scrollbar.
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
 });

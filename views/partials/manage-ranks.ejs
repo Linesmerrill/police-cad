@@ -24,6 +24,12 @@
     box-shadow: 0 32px 80px -16px rgba(0,0,0,0.65), 0 0 1px rgba(255,255,255,0.05) inset;
     animation: rkmSlideUp 0.3s cubic-bezier(0.16,1,0.3,1);
     overflow: hidden; position: relative;
+    /* The card's width comes from its container, not the viewport: embedded in
+       the department dashboard it is the content column, which is the window
+       minus a ~240px sidebar and padding. Sizing its internals off @media
+       therefore measures the wrong box — see the @container block below. */
+    container-type: inline-size;
+    container-name: rkm;
   }
 
   /* Embedded mode (e.g. inside a tab pane): fill the container, no entry animation, no shadow. */
@@ -462,11 +468,31 @@
   }
 
   /* Mobile: stack panels vertically */
-  @media (max-width: 700px) {
-    .rkm-card { max-width: 100%; width: 100%; max-height: 100vh; border-radius: 12px; }
+  /* Narrow CARD: stack the two panels and let the slide-over sheets take the
+     full width. Below roughly 700px there is not room for a 380px panel beside
+     a usable ranks list — at a 488px card (a 768px window with the dashboard
+     sidebar) the list was left with 107px, which reads as the page lurching
+     sideways when you press Add.
+
+     Kept as a container query, not @media, because the card is routinely much
+     narrower than the window. The @media block below repeats these rules so
+     browsers without container query support keep today's behaviour. */
+  @container rkm (max-width: 700px) {
     .rkm-body { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
     .rkm-panel-ranks { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .rkm-form { width: 100%; }
+    .rkm-promo-panel { width: 100%; }
+    .rkm-form-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 700px) {
+    /* Viewport-scoped: how the modal shell itself sits on a small screen, and
+       the touch affordance for row actions that otherwise appear on hover. */
+    .rkm-card { max-width: 100%; width: 100%; max-height: 100vh; border-radius: 12px; }
     .rkm-rank-actions { opacity: 1; }
+    /* Fallback copies of the card-internal rules above. */
+    .rkm-body { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+    .rkm-panel-ranks { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .rkm-form { width: 100%; }
     .rkm-promo-panel { width: 100%; }
     .rkm-form-grid { grid-template-columns: 1fr; }
