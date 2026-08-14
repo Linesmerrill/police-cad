@@ -2715,9 +2715,6 @@
                   <button type="button" class="btn btn-secondary cc-status-btn" data-status="rejected">
                     <i class="fas fa-times-circle" style="margin-right: 4px;"></i>Rejected
                   </button>
-                  <button type="button" class="btn btn-secondary cc-status-btn" data-status="withdrawn">
-                    <i class="fas fa-undo" style="margin-right: 4px;"></i>Withdrawn <span id="ccWithdrawnCount" class="badge" style="background: #6b7280; margin-left: 4px; display: none;"></span>
-                  </button>
                 </div>
               </div>
               <div class="row">
@@ -5565,9 +5562,13 @@
                 </div>
               </div>
               <div class="dash-pending-cc-item-actions">
-                <button class="btn btn-secondary btn-sm" onclick="acNavTo('content-creators'); setTimeout(function(){ viewCCApplication('${escapeHtml(appId)}'); }, 300);" style="font-size:0.75rem; padding:0.3rem 0.75rem;">
+                <!-- Straight to the review page, same as the applications
+                     list. This used to hop to the content-creators panel and
+                     open the old modal on a timer, which showed none of the
+                     verification state the decision depends on. -->
+                <a class="btn btn-secondary btn-sm" href="/admin/creator-application/${escapeHtml(appId)}" style="font-size:0.75rem; padding:0.3rem 0.75rem; text-decoration:none;" title="Open the full review page for this application">
                   Review
-                </button>
+                </a>
               </div>
             </div>
           `;
@@ -10278,19 +10279,6 @@
           }
         });
 
-        // Load withdrawn count for the filter badge
-        $.ajax({
-          url: `${API_BASE}/api/v1/admin/content-creator-applications?status=withdrawn&limit=1`,
-          method: 'GET',
-          success: function(data) {
-            const count = data.pagination?.totalItems || 0;
-            if (count > 0) {
-              $('#ccWithdrawnCount').text(count).show();
-            } else {
-              $('#ccWithdrawnCount').hide();
-            }
-          }
-        });
       }
 
       function loadCCPendingCount() {
@@ -10356,7 +10344,9 @@
         if (currentCCStatus) {
           url += `&status=${currentCCStatus}`;
         } else {
-          // "All" excludes withdrawn - show only active applications
+          // Withdrawn means they changed their mind before we did anything.
+          // There is no decision to make and nothing to learn from a queue full
+          // of them, so they stay in the database and out of this panel.
           url += `&exclude_status=withdrawn`;
         }
 
