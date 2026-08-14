@@ -412,10 +412,16 @@
                 (c.reason ? '<div class="row-reason">' + esc(c.reason) + '</div>' : '') +
                 '<div class="row-meta">' + esc(fmtDate(c.checkedAt)) + who + '</div>' +
               '</div>' +
+              // Only the overrides that would change something. Passing an
+              // already-passed check writes the same state back and files an
+              // audit entry saying an admin overrode it — to what it already
+              // was. The remaining button is the one that reverses the call.
               (open ? '<div class="actions">' +
                 '<button class="btn js-retry" data-key="' + esc(c.key) + '"><i class="fas fa-rotate"></i> Retry</button>' +
-                '<button class="btn btn-pass js-override" data-key="' + esc(c.key) + '" data-platform="' + esc(c.platform || '') + '" data-handle="' + esc(c.handle || '') + '" data-status="passed">Pass</button>' +
-                '<button class="btn btn-fail js-override" data-key="' + esc(c.key) + '" data-platform="' + esc(c.platform || '') + '" data-handle="' + esc(c.handle || '') + '" data-status="failed">Fail</button>' +
+                (c.status === 'passed' ? '' :
+                  '<button class="btn btn-pass js-override" data-key="' + esc(c.key) + '" data-platform="' + esc(c.platform || '') + '" data-handle="' + esc(c.handle || '') + '" data-status="passed">Pass</button>') +
+                (c.status === 'failed' ? '' :
+                  '<button class="btn btn-fail js-override" data-key="' + esc(c.key) + '" data-platform="' + esc(c.platform || '') + '" data-handle="' + esc(c.handle || '') + '" data-status="failed">Fail</button>') +
               '</div>' : '') +
             '</div>';
         }).join(''));
