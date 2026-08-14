@@ -12,6 +12,7 @@
     user             — req.user (passport user)  (REQUIRED)
     backHref         — string URL for the breadcrumb (default '/communities')
     backLabel        — short label, e.g. 'Back to Reports' (default 'Back')
+    brandHref        — where the LPC mark links (default '/communities')
     pageLabel        — short label for the current page (e.g. 'Reports')
     communityName    — community display name (optional, falls back to user's community)
     communityHref    — if set, the community name in the breadcrumb becomes a
@@ -171,6 +172,10 @@
   var _utilBackLabel = (typeof backLabel !== 'undefined' && backLabel) ? backLabel : 'Back';
   var _utilPageLabel = (typeof pageLabel !== 'undefined' && pageLabel) ? pageLabel : '';
   var _utilUseLastDashboard = (typeof useLastDashboard !== 'undefined' && useLastDashboard) ? '1' : '';
+  // Where the LPC mark points. Defaults to /communities, which is right for
+  // player-facing standalone pages but wrong for admin ones, where it drops a
+  // staff member into the player site.
+  var _utilBrandHref = (typeof brandHref !== 'undefined' && brandHref) ? brandHref : '/communities';
 %>
 <header class="lpc-utility-strip" role="banner">
   <div class="lpc-utility-left">
@@ -178,7 +183,7 @@
       <i class="fa-solid fa-arrow-left"></i><span><%= _utilBackLabel %></span>
     </a>
     <span class="lpc-utility-divider">/</span>
-    <a href="/communities" class="lpc-utility-brand" aria-label="Lines Police CAD home">
+    <a href="<%= _utilBrandHref %>" class="lpc-utility-brand" aria-label="Lines Police CAD home">
       <img src="/static/images/lines-police-cad-discord-logo-2024-github-profile.png" alt="Lines Police CAD" />
     </a>
     <% if (_utilCommunity) { %>

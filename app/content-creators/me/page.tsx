@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import VerificationPanel, { codeRemovalSentence, DEFAULT_MIN_FOLLOWERS } from './VerificationPanel';
+import ProfileSetupChecklist from './ProfileSetupChecklist';
+import ApplicationProgress, { Stage } from './ApplicationProgress';
 import {
   ArrowLeftIcon,
   ClockIcon,
@@ -84,6 +87,11 @@ interface ContentCreatorPlatform {
   handle: string;
   followerCount: number;
   verifiedByAdmin?: boolean;
+  // Channel ownership verification, written by the API.
+  verificationStatus?: string;
+  verificationCode?: string;
+  verificationMethod?: string;
+  reportedFollowerCount?: number;
 }
 
 interface Application {
@@ -97,6 +105,17 @@ interface Application {
   platforms: ContentCreatorPlatform[];
   primaryPlatform: string;
   description: string;
+  // Automated screening: what the scheduled checks found, and whether the
+  // application is now waiting on a human rather than on the applicant.
+  checks?: {
+    key: string;
+    platform?: string;
+    handle?: string;
+    status: 'pending' | 'passed' | 'failed' | 'manual';
+    reason?: string;
+    checkedAt?: string;
+  }[];
+  checksPassed?: boolean;
 }
 
 interface CreatorProfile {
@@ -209,6 +228,116 @@ function formatFollowerCount(count: number): string {
   if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
   if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
   return count.toString();
+}
+
+// Count and noun together, so the two cannot be rendered out of agreement.
+function followersLabel(count: number): string {
+  return count === 1 ? '1 follower' : `${formatFollowerCount(count)} followers`;
+}
+
+// Turns an application into the four stages the applicant sees.
+//
+// Deliberately does not expose the two-admin approval mechanic — how many
+// reviewers we use is an internal detail. What matters to the applicant is
+// whether a person is looking, roughly how long, and how they will hear.
+function buildStages(app: Application): Stage[] {
+  const platforms = app.platforms || [];
+  const checks = app.checks || [];
+
+  const verified = platforms.filter(
+    (p) => p.verificationStatus === 'verified' || p.verifiedByAdmin === true
+  ).length;
+  const allVerified = platforms.length > 0 && verified === platforms.length;
+  const failed = checks.find((c) => c.status === 'failed');
+  // Ownership proven and still short of the bar. The API rejects this on its
+  // next screening pass, so the timeline must not walk them toward a human
+  // review that is never going to happen.
+  const belowMinimum =
+    allVerified &&
+    platforms.some((p) => p.followerCount != null) &&
+    !platforms.some((p) => (p.followerCount ?? 0) >= DEFAULT_MIN_FOLLOWERS);
+
+  const submittedOn = app.createdAt
+    ? new Date(app.createdAt).toLocaleDateString(undefined, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '';
+
+  const stages: Stage[] = [
+    {
+      title: 'Application submitted',
+      detail: 'We have everything you sent us.',
+      state: 'done',
+      meta: submittedOn ? `Submitted ${submittedOn}` : undefined,
+    },
+  ];
+
+  if (failed) {
+    stages.push({
+      title: 'Channel verification',
+      detail: failed.reason || 'One of our checks did not pass. See below for what to fix.',
+      state: 'attention',
+    });
+  } else if (belowMinimum) {
+    stages.push({
+      title: 'Channel verification',
+      detail: `${
+        platforms.length === 1 ? 'Your channel is verified as yours' : 'Your channels are verified as yours'
+      }, but ${
+        platforms.length === 1 ? 'it is' : 'the largest is'
+      } under the ${DEFAULT_MIN_FOLLOWERS.toLocaleString()} follower minimum the program requires.`,
+      state: 'attention',
+    });
+  } else if (allVerified) {
+    stages.push({
+      title: 'Channel verification',
+      detail:
+        platforms.length === 1
+          ? 'Your channel is verified.'
+          : `All ${platforms.length} channels are verified.`,
+      state: 'done',
+    });
+  } else {
+    stages.push({
+      title: 'Channel verification',
+      detail:
+        platforms.length > 1 && verified > 0
+          ? `${verified} of ${platforms.length} channels verified. Add the code to the rest below.`
+          : 'Add the code below to your channel description, then press Check.',
+      state: 'active',
+    });
+  }
+
+  // A shortfall is settled by the follower bar itself, so no human review stage
+  // is coming — showing one would just be a countdown to a foregone answer.
+  if (!belowMinimum) {
+    const inReview = allVerified && !failed;
+    // "Nothing for you to do" is true but wasted: the one thing they can now do
+    // is undo the edit we asked them to make. Only ever say it about a platform
+    // we read through an API — a TikTok code stays until a human has seen it.
+    const removal = codeRemovalSentence(platforms);
+    stages.push({
+      title: 'Review by our team',
+      detail: inReview
+        ? `A member of our team is reviewing your application. This usually takes 3 to 5 business days.${
+            removal ? ` ${removal} We already have what we need.` : ' There is nothing for you to do in the meantime.'
+          }`
+        : 'Once your channels are verified, a member of our team reviews your application. This usually takes 3 to 5 business days.',
+      state: inReview ? 'active' : 'upcoming',
+    });
+  }
+
+  stages.push({
+    title: 'Decision',
+    detail: belowMinimum
+      ? `We will email you shortly. Apply again any time once you are over ${DEFAULT_MIN_FOLLOWERS.toLocaleString()} followers — we would be glad to have you.`
+      : 'We will email you either way, and this page will update.',
+    state: belowMinimum ? 'attention' : 'upcoming',
+  });
+
+  return stages;
 }
 
 export default function CreatorStatusPage() {
@@ -330,6 +459,21 @@ export default function CreatorStatusPage() {
     };
 
     fetchUserAndCreatorData();
+  }, []);
+
+  // Re-pull the application after a verification succeeds, so the panel shows
+  // the new status without a page reload.
+  const refreshApplication = useCallback(async () => {
+    try {
+      const res = await fetch('/api/v1/content-creator-applications/me', { credentials: 'include' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.success && data.application) {
+        setApplication(data.application);
+      }
+    } catch {
+      // Leave what is on screen; the next load corrects it.
+    }
   }, []);
 
   const handleRemovalRequest = async () => {
@@ -1011,6 +1155,15 @@ export default function CreatorStatusPage() {
           {/* If user is an approved creator */}
           {creatorProfile && creatorProfile.status !== 'removed' && (
             <>
+              {/* Setup checklist. The application no longer asks for public
+                  profile copy — most applications are declined, so writing it
+                  up front was work for nothing. This is where we ask, once it
+                  is worth their time. Disappears when there is nothing left. */}
+              <ProfileSetupChecklist
+                profile={creatorProfile}
+                onEditProfile={handleOpenEditModal}
+              />
+
               {/* Creator Status Card */}
               <div style={{
                 background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%)',
@@ -1569,7 +1722,7 @@ export default function CreatorStatusPage() {
                         fontWeight: '600',
                         color: '#fff'
                       }}>
-                        {formatFollowerCount(platform.followerCount)} followers
+                        {followersLabel(platform.followerCount)}
                       </span>
                     </div>
                   ))}
@@ -1752,8 +1905,11 @@ export default function CreatorStatusPage() {
                 </div>
               </div>
 
-              {/* Rejection feedback */}
-              {application.status === 'rejected' && application.feedback && (
+              {/* Why it was declined. rejectionReason is the decision itself and
+                  is always set — feedback is the optional extra a reviewer types.
+                  Showing only feedback left an automatic rejection explaining
+                  nothing at all. */}
+              {application.status === 'rejected' && (application.rejectionReason || application.feedback) && (
                 <div style={{
                   background: 'rgba(239, 68, 68, 0.1)',
                   border: '1px solid rgba(239, 68, 68, 0.3)',
@@ -1777,8 +1933,18 @@ export default function CreatorStatusPage() {
                     lineHeight: '1.6',
                     color: 'rgba(255, 255, 255, 0.8)'
                   }}>
-                    {application.feedback}
+                    {application.rejectionReason || application.feedback}
                   </p>
+                  {application.rejectionReason && application.feedback && (
+                    <p style={{
+                      fontSize: '14px',
+                      lineHeight: '1.6',
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      marginTop: '10px'
+                    }}>
+                      {application.feedback}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -1803,6 +1969,23 @@ export default function CreatorStatusPage() {
                   Apply Again
                 </Link>
               )}
+
+              {/* Where this application actually is. "Submitted" on its own told
+                  the applicant nothing about what happens next or when. */}
+              {(application.status === 'submitted' || application.status === 'under_review') && (
+                <ApplicationProgress stages={buildStages(application)} />
+              )}
+
+              {/* Channel ownership verification. Only while the application is
+                  still open — once it is decided there is nothing to act on. */}
+              {(application.status === 'submitted' || application.status === 'under_review') &&
+                application.platforms?.length > 0 && (
+                  <VerificationPanel
+                    platforms={application.platforms}
+                    checks={application.checks}
+                    onRefresh={refreshApplication}
+                  />
+                )}
 
               {/* Withdraw option for pending applications */}
               {(application.status === 'submitted' || application.status === 'under_review') && (

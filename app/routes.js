@@ -1,3 +1,4 @@
+var rateLimit = require("express-rate-limit");
 var User = require("../app/models/user");
 var Civilian = require("../app/models/civilian");
 var Vehicle = require("../app/models/vehicle");
@@ -631,6 +632,29 @@ module.exports = function (app, passport, server, nextApp, handle) {
         message: "Failed to dispatch alert: " + (e && e.message ? e.message : String(e)),
       });
     }
+  });
+
+  // Dedicated review page for one creator application.
+  //
+  // A real URL per application rather than a panel inside the console, so the
+  // admin crew can link a specific application to each other and its history
+  // stays addressable.
+  app.get("/admin/creator-application/:id", requireAdminSession, function (req, res) {
+    const id = String(req.params.id || "");
+    if (!/^[a-f0-9]{24}$/i.test(id)) {
+      return res.status(400).render("error", {
+        message: "That is not a valid application id.",
+        error: { status: 400 },
+      });
+    }
+    res.render("admin-creator-application", {
+      // standalone-utility reads `user` for the avatar. Admin sessions are
+      // separate from passport, so this may be absent; the partial copes.
+      user: req.user || null,
+      admin: req.session.admin,
+      applicationId: id,
+      POLICE_CAD_API_URL: process.env.POLICE_CAD_API_URL,
+    });
   });
 
   app.get("/admin/console", requireAdminSession, function (req, res) {
@@ -4798,6 +4822,55 @@ module.exports = function (app, passport, server, nextApp, handle) {
         res.status(500).json({ error: "Failed to fetch creator status" });
       }
     }
+  });
+
+  // Channel ownership verification, driven by the applicant from their own
+  // dashboard. verify-start issues a code to put in the channel description;
+  // verify-check reads the public channel and looks for it.
+  //
+  // The index identifies which platform entry on their application, so it is
+  // validated here rather than passed through blind.
+  // Tighter than the global 500/5min limiter on purpose. verify-check makes an
+  // outbound call to YouTube or Twitch every time, so an unthrottled caller
+  // could burn the daily API quota — which stalls verification for everyone,
+  // not just themselves. A real applicant needs a handful of attempts while
+  // they edit their channel, nowhere near this.
+  const verificationLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many verification attempts. Please wait a few minutes and try again." },
+  });
+
+  ["verify-start", "verify-check"].forEach(function (action) {
+    app.post(
+      `/api/v1/content-creator-applications/me/platforms/:index/${action}`,
+      verificationLimiter,
+      apiAuthCheck,
+      async function (req, res) {
+        const index = String(req.params.index || "");
+        if (!/^\d+$/.test(index)) {
+          return res.status(400).json({ error: "invalid platform index" });
+        }
+        try {
+          const userId = req.user._id || req.user.id;
+          const response = await axios.post(
+            `${policeCadApiUrl}/api/v1/content-creator-applications/me/platforms/${index}/${action}`,
+            {},
+            { headers: { ...config.headers, "X-User-ID": userId.toString() } }
+          );
+          res.json(response.data);
+        } catch (error) {
+          console.error(`[ContentCreator ${action}] error:`, error.message);
+          if (error.response) {
+            res.status(error.response.status).json(error.response.data);
+          } else {
+            res.status(500).json({ error: "Verification is unavailable right now" });
+          }
+        }
+      }
+    );
   });
 
   // Submit content creator application

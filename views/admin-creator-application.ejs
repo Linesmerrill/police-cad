@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Creator Application Review - Lines Police CAD</title>
+  <!-- Standalone page, so it does not inherit the favicon from the legacy
+       header partial. Same set the admin console declares. -->
+  <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/images/android-chrome-192x192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/static/images/android-chrome-512x512.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
+  <link rel="manifest" href="/static/images/site.webmanifest">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --ac-bg: #0a0a0f;
+      --ac-surface: #12121f;
+      --ac-glass: rgba(255,255,255,0.04);
+      --ac-glass-border: rgba(255,255,255,0.08);
+      --ac-text: #e5e7eb;
+      --ac-text-muted: rgba(255,255,255,0.55);
+      --ac-text-dim: rgba(255,255,255,0.35);
+      --ac-accent: #8b5cf6;
+      --ac-green: #4ade80;
+      --ac-red: #f87171;
+      --ac-amber: #fbbf24;
+      --ac-purple: #a78bfa;
+      --ac-radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--ac-bg); color: var(--ac-text);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      /* standalone-utility is position:fixed at 36px tall; its own docs require
+         pages to clear it. Without this the strip covered the page heading. */
+      padding-top: 36px;
+      -webkit-text-size-adjust: 100%;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 24px 20px 80px; }
+    a { color: var(--ac-accent); text-decoration: none; }
+    .back { display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--ac-text-muted); margin-bottom: 18px; }
+    .back:hover { color: #fff; }
+    h1 { font-size: 1.6rem; font-weight: 800; margin: 0 0 4px; color: #fff; }
+    .sub { color: var(--ac-text-muted); font-size: 0.9rem; margin-bottom: 22px; }
+    .card {
+      background: var(--ac-surface); border: 1px solid var(--ac-glass-border);
+      border-radius: var(--ac-radius); padding: 20px; margin-bottom: 18px;
+    }
+    .card h2 { font-size: 1rem; font-weight: 700; margin: 0 0 14px; color: #fff; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+    .kv-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ac-text-dim); }
+    .kv-value { font-size: 0.95rem; color: #fff; font-weight: 600; margin-top: 3px; word-break: break-word; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px; border-radius: 999px;
+      padding: 3px 11px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .pill-passed  { color: var(--ac-green);  background: rgba(34,197,94,0.12);  border: 1px solid rgba(34,197,94,0.3); }
+    .pill-failed  { color: var(--ac-red);    background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.3); }
+    .pill-pending { color: var(--ac-amber);  background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.3); }
+    .pill-manual  { color: var(--ac-purple); background: rgba(167,139,250,0.12);border: 1px solid rgba(167,139,250,0.3); }
+    .row {
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 14px;
+      background: var(--ac-glass); border: 1px solid var(--ac-glass-border);
+      border-radius: 10px; padding: 14px; margin-bottom: 10px; flex-wrap: wrap;
+    }
+    .row-main { flex: 1; min-width: 220px; }
+    .row-title { font-weight: 700; color: #fff; font-size: 0.92rem; }
+    .row-reason { color: var(--ac-text-muted); font-size: 0.85rem; margin-top: 3px; line-height: 1.5; }
+    .row-meta { color: var(--ac-text-dim); font-size: 0.75rem; margin-top: 5px; }
+    .btn {
+      border-radius: 8px; padding: 7px 13px; font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--ac-glass-border);
+      background: var(--ac-glass); color: #fff; font-family: inherit;
+    }
+    .btn:hover { background: rgba(255,255,255,0.09); }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .btn-pass { color: var(--ac-green); border-color: rgba(34,197,94,0.35); background: rgba(34,197,94,0.1); }
+    .btn-fail { color: var(--ac-red);   border-color: rgba(239,68,68,0.35); background: rgba(239,68,68,0.1); }
+    .btn-primary { background: var(--ac-accent); border-color: var(--ac-accent); }
+    .actions { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+    .mismatch { color: var(--ac-amber); font-size: 0.8rem; margin-top: 4px; }
+    /* The confirmed-by line appears only once a box is ticked. Reserving its
+       height means the row cannot grow under the cursor and shove the next
+       checkbox out from under a click already on its way. */
+    .checklist-meta { min-height: 1.05rem; }
+    .empty { color: var(--ac-text-dim); font-size: 0.9rem; }
+    .toast {
+      position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+      background: var(--ac-surface); border: 1px solid var(--ac-glass-border);
+      border-radius: 10px; padding: 12px 18px; font-size: 0.88rem; display: none; z-index: 50;
+    }
+    .banner { border-radius: 10px; padding: 13px 16px; font-size: 0.9rem; margin-bottom: 18px; }
+    .banner-ready { color: var(--ac-green); background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.28); }
+    .banner-block { color: var(--ac-amber); background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.28); }
+    /* Closed applications: a record, not a task. Nothing urgent about it. */
+    .banner-closed { color: rgba(255,255,255,0.62); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); }
+
+    /* Phones. The action clusters cannot sit beside their text without
+       squeezing both, so every row stacks and buttons go full width -- they are
+       destructive-ish controls and deserve a real tap target. */
+    @media (max-width: 640px) {
+      .wrap { padding: 16px 14px 64px; }
+      h1 { font-size: 1.35rem; }
+      .card { padding: 16px; border-radius: 12px; }
+      .grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .row { flex-direction: column; align-items: stretch; gap: 10px; }
+      .row-main { min-width: 0; }
+      .actions { width: 100%; }
+      .actions .btn { flex: 1; text-align: center; min-height: 38px; }
+      .sub { font-size: 0.85rem; }
+      code { overflow-wrap: anywhere; }
+    }
+    @media (max-width: 380px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/standalone-utility', {
+        backHref: '/admin/console',
+        backLabel: 'Back to Admin Console',
+        brandHref: '/admin/console',
+        pageLabel: 'Creator Application'
+      }) %>
+
+  <div class="wrap">
+    <a class="back" href="/admin/console"><i class="fas fa-arrow-left"></i> Back to Admin Console</a>
+
+    <h1 id="app-title">Creator Application</h1>
+    <div class="sub">
+      Application <code id="app-id"><%= applicationId %></code>
+      &middot; <span id="copy-link" style="cursor:pointer; color:var(--ac-accent);">copy link</span>
+    </div>
+
+    <div id="banner" class="banner" style="display:none;"></div>
+
+    <div class="card">
+      <h2>Applicant</h2>
+      <div class="grid" id="summary"><div class="empty">Loading...</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Automated checks</h2>
+      <p class="sub" style="margin:-8px 0 14px;">
+        Re-run a check to pick up a change immediately instead of waiting for the 4-hourly sweep.
+        Overriding records who did it and why, in the admin audit log.
+      </p>
+      <div id="checks"><div class="empty">Loading...</div></div>
+      <div class="actions" style="margin-top:12px;">
+        <button class="btn btn-primary" id="rescreen-all"><i class="fas fa-rotate"></i> Re-run all checks</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Channels</h2>
+      <div id="platforms"><div class="empty">Loading...</div></div>
+    </div>
+
+    <div class="card" id="checklist-card">
+      <h2>Reviewer checklist</h2>
+      <p class="sub" id="checklist-intro" style="margin:-8px 0 14px;">
+        The automated checks answer whether the channel is real and theirs. These are the
+        judgement calls only a person can make. Each tick is saved and written to the audit
+        log with your name against it.
+      </p>
+      <div id="checklist"><div class="empty">Loading...</div></div>
+    </div>
+
+    <div class="card" id="decision-card">
+      <h2>Decision</h2>
+      <p class="sub" style="margin:-8px 0 14px;" id="decision-hint"></p>
+      <div class="actions">
+        <button class="btn btn-pass" id="approve-btn"><i class="fas fa-check"></i> Approve application</button>
+        <button class="btn btn-fail" id="reject-btn"><i class="fas fa-xmark"></i> Reject application</button>
+        <button class="btn" id="override-btn" style="display:none; background:linear-gradient(135deg,#667eea,#764ba2); border:none; color:#fff;">
+          <i class="fas fa-shield-halved"></i> Override approve
+        </button>
+        <button class="btn" id="withdraw-btn" style="display:none;">
+          <i class="fas fa-rotate-left"></i> Remove my approval
+        </button>
+      </div>
+      <p class="sub" id="override-hint" style="display:none; margin:12px 0 0;"></p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <%- include('partials/dd-modal') %>
+
+  <!-- Subresource integrity: if the CDN copy is ever tampered with, the browser
+       refuses it rather than executing it on an admin-authenticated page. -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+          integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+          crossorigin="anonymous"></script>
+  <script>
+    const API_BASE = '<%= POLICE_CAD_API_URL %>';
+    const APPLICATION_ID = '<%= applicationId %>';
+    const ADMIN_ID = '<%= admin && admin.id ? admin.id : "" %>';
+    // Owners can bypass the second approval. Needed in practice: other admins
+    // can be offline for weeks and applications should not rot waiting.
+    const IS_OWNER = <%- JSON.stringify(
+      !!(admin && (admin.role === 'owner' || (Array.isArray(admin.roles) && admin.roles.indexOf('owner') !== -1)))
+    ) %>;
+
+    // Backend state names are not English. "under_review" is a database value,
+    // not something to show a person.
+    const STATUS_LABELS = {
+      submitted: 'Awaiting review',
+      under_review: 'Under review',
+      approved: 'Approved',
+      rejected: 'Rejected',
+      withdrawn: 'Withdrawn by applicant',
+    };
+    const PLATFORM_LABELS = {
+      youtube: 'YouTube', twitch: 'Twitch', tiktok: 'TikTok', other: 'Other',
+    };
+    function humanStatus(v) { return STATUS_LABELS[v] || titleCase(v || ''); }
+
+    // Only these two are still live. Everything else — approved, rejected,
+    // withdrawn — is a closed record: the page shows what happened and offers
+    // nothing to press. Re-running checks or approving a withdrawn application
+    // would write to something the applicant has already walked away from.
+    const OPEN_STATUSES = ['submitted', 'under_review'];
+    function isOpen(app) { return OPEN_STATUSES.indexOf((app && app.status) || '') !== -1; }
+
+    // What the page says instead of the approval banner once it is closed.
+    const CLOSED_BANNER = {
+      withdrawn: 'The applicant withdrew this application. It is kept for the record; there is nothing to action.',
+      approved: 'This application was approved. It is kept for the record; there is nothing left to action.',
+      rejected: 'This application was rejected. It is kept for the record; there is nothing left to action.',
+    };
+    function humanPlatform(v) { return PLATFORM_LABELS[(v || '').toLowerCase()] || titleCase(v || ''); }
+    function titleCase(v) { return v ? v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ') : ''; }
+    function num(n) { return (Number(n) || 0).toLocaleString(); }
+    // Count and noun in one place, so "1 followers" cannot happen.
+    function followers(n) { return Number(n) === 1 ? '1 follower' : num(n) + ' followers'; }
+
+    // Wording lives here rather than in the database, so it can be reworded
+    // without migrating what reviewers already ticked.
+    const REVIEW_CHECKLIST = [
+      {
+        key: 'automated_passed',
+        label: 'Channel is legitimate and the automated checks have passed',
+        hint: 'Ownership proved, follower count read from the platform, nothing outstanding above.',
+      },
+      {
+        key: 'rp_content',
+        label: 'Makes GTA RP or Lines Police CAD roleplay content',
+        hint: 'LPC content is what we are really after, but other roleplay content is usually fine.',
+      },
+      {
+        key: 'genuine_content',
+        label: 'Genuine content that fits our terms and reflects us well',
+        hint: 'Would we be comfortable pointing players at this channel?',
+      },
+    ];
+
+    const CHECK_LABELS = {
+      channel_resolves: 'Channel found',
+      ownership: 'Channel ownership',
+      followers: 'Follower requirement',
+    };
+
+    function esc(s) { return $('<div>').text(s == null ? '' : s).html(); }
+
+    function toast(msg) {
+      const $t = $('#toast').text(msg).fadeIn(120);
+      setTimeout(() => $t.fadeOut(200), 2600);
+    }
+
+    // Every decision on this page is one somebody else lives with, so they all
+    // go through the shared modal rather than a browser dialog.
+    function confirmThen(opts, onYes) {
+      window.ddModal({
+        type: opts.type || 'confirm',
+        icon: opts.icon || 'fa-circle-question',
+        title: opts.title,
+        message: opts.message,
+        detail: opts.detail,
+        confirmText: opts.confirmText || 'Confirm',
+        onConfirm: onYes,
+      });
+    }
+
+    // Reason prompt. The text is audited or sent to the applicant, so it is
+    // required — an empty one stops here rather than filing a blank record.
+    function askReason(opts, onReason) {
+      window.ddModal({
+        type: opts.type || 'confirm',
+        icon: opts.icon || 'fa-pen',
+        title: opts.title,
+        message: opts.message +
+          '<textarea id="ddm-reason" rows="3" style="width:100%;margin-top:10px;padding:10px 12px;' +
+          'border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.35);' +
+          'color:#fff;font-family:inherit;font-size:14px;resize:vertical;" placeholder="' +
+          esc(opts.placeholder || 'Reason') + '"></textarea>',
+        confirmText: opts.confirmText || 'Save',
+        onConfirm: function () {
+          const reason = ($('#ddm-reason').val() || '').trim();
+          if (!reason) { toast('A reason is required.'); return; }
+          onReason(reason);
+        },
+      });
+      setTimeout(function () { $('#ddm-reason').trigger('focus'); }, 60);
+    }
+
+    function pill(status) {
+      const cls = { passed: 'pill-passed', failed: 'pill-failed', manual: 'pill-manual' }[status] || 'pill-pending';
+      return '<span class="pill ' + cls + '">' + esc(status || 'pending') + '</span>';
+    }
+
+    function fmtDate(v) {
+      if (!v) return '';
+      try { return new Date(v).toLocaleString(); } catch (e) { return ''; }
+    }
+
+    function load() {
+      $.ajax({
+        url: API_BASE + '/api/v1/admin/content-creator-applications/' + encodeURIComponent(APPLICATION_ID),
+        headers: { 'X-User-ID': ADMIN_ID },
+      })
+        .done(function (resp) { render(resp.application || resp.data || resp); })
+        .fail(function () {
+          $('#summary,#checks,#platforms').html('<div class="empty">Could not load this application.</div>');
+        });
+    }
+
+    // The last application we rendered, so the confirmation dialogs can name who
+    // they are about instead of saying "this application".
+    let currentApp = {};
+
+    // The markup as authored, captured once. render() runs again after every
+    // action, so whatever it rewrites has to be restorable.
+    const DEFAULT_HTML = {
+      approve: $('#approve-btn').html(),
+      withdraw: $('#withdraw-btn').html(),
+      checklistIntro: $('#checklist-intro').html(),
+    };
+
+    // Put every element render() mutates back to its authored state before
+    // deciding what this application needs. Anything driven by an `if` with no
+    // `else` survives into the next render otherwise — which is how removing an
+    // approval left "You approved (1 of 2)", the withdraw button, and a hidden
+    // checklist on screen for an application nobody had approved.
+    function resetDecisionUI() {
+      $('#approve-btn').prop('disabled', false).html(DEFAULT_HTML.approve);
+      $('#withdraw-btn').hide().html(DEFAULT_HTML.withdraw);
+      $('#override-btn').hide();
+      $('#override-hint').hide().text('');
+      $('#checklist-intro').html(DEFAULT_HTML.checklistIntro);
+      $('#checklist').show();
+      $('#checklist-show').remove();
+    }
+
+    function render(app) {
+      if (!app) return;
+      currentApp = app;
+      resetDecisionUI();
+      $('#app-title').text(app.displayName || 'Creator Application');
+
+      const kv = function (label, value) {
+        return '<div><div class="kv-label">' + esc(label) + '</div><div class="kv-value">' + value + '</div></div>';
+      };
+      $('#summary').html(
+        kv('Display name', esc(app.displayName)) +
+        kv('Status', esc(humanStatus(app.status))) +
+        kv('Primary platform', esc(humanPlatform(app.primaryPlatform))) +
+        kv('Submitted', esc(fmtDate(app.createdAt))) +
+        kv('Checks last run', esc(fmtDate(app.checksLastRunAt)) || '<span class="kv-label">never</span>') +
+        kv('Check attempts', esc(String(app.checkAttempts || 0))) +
+        kv('Admin notified', app.adminNotifiedAt ? esc(fmtDate(app.adminNotifiedAt)) : '<span class="kv-label">not yet</span>') +
+        kv('Approvals', app.firstApprovalBy
+          ? '1 of 2 &middot; ' + esc(app.firstApprovalByName || 'Unknown admin') +
+            (app.firstApprovalAt ? '<div class="kv-label" style="margin-top:2px;">' + esc(fmtDate(app.firstApprovalAt)) + '</div>' : '')
+          : '<span class="kv-label">none yet</span>')
+      );
+
+      // The banner answers the only question a reviewer opens this page with:
+      // can I approve this yet?
+      const open = isOpen(app);
+      const $banner = $('#banner');
+      if (!open) {
+        $banner.attr('class', 'banner banner-closed')
+          .html('<i class="fas fa-lock"></i> ' +
+            esc(CLOSED_BANNER[app.status] || 'This application is closed (' + humanStatus(app.status) + '). It is kept for the record.'))
+          .show();
+      } else if (app.checksPassed) {
+        $banner.attr('class', 'banner banner-ready')
+          .html('<i class="fas fa-circle-check"></i> All automated checks passed. This application is ready for human review.')
+          .show();
+      } else {
+        $banner.attr('class', 'banner banner-block')
+          .html('<i class="fas fa-hourglass-half"></i> Automated checks are not complete. Approval is blocked until every check passes or is overridden.')
+          .show();
+      }
+
+      const checks = app.checks || [];
+      if (!checks.length) {
+        $('#checks').html('<div class="empty">No checks have run yet. Use Re-run all checks below.</div>');
+      } else {
+        $('#checks').html(checks.map(function (c) {
+          const label = CHECK_LABELS[c.key] || c.key;
+          const who = c.platform ? ' &middot; ' + esc(c.platform) + (c.handle ? ' / ' + esc(c.handle) : '') : '';
+          return '' +
+            '<div class="row">' +
+              '<div class="row-main">' +
+                '<div class="row-title">' + esc(label) + ' ' + pill(c.status) + '</div>' +
+                (c.reason ? '<div class="row-reason">' + esc(c.reason) + '</div>' : '') +
+                '<div class="row-meta">' + esc(fmtDate(c.checkedAt)) + who + '</div>' +
+              '</div>' +
+              // Only the overrides that would change something. Passing an
+              // already-passed check writes the same state back and files an
+              // audit entry saying an admin overrode it — to what it already
+              // was. The remaining button is the one that reverses the call.
+              (open ? '<div class="actions">' +
+                '<button class="btn js-retry" data-key="' + esc(c.key) + '"><i class="fas fa-rotate"></i> Retry</button>' +
+                (c.status === 'passed' ? '' :
+                  '<button class="btn btn-pass js-override" data-key="' + esc(c.key) + '" data-platform="' + esc(c.platform || '') + '" data-handle="' + esc(c.handle || '') + '" data-status="passed">Pass</button>') +
+                (c.status === 'failed' ? '' :
+                  '<button class="btn btn-fail js-override" data-key="' + esc(c.key) + '" data-platform="' + esc(c.platform || '') + '" data-handle="' + esc(c.handle || '') + '" data-status="failed">Fail</button>') +
+              '</div>' : '') +
+            '</div>';
+        }).join(''));
+      }
+
+      const platforms = app.platforms || [];
+      $('#platforms').html(!platforms.length
+        ? '<div class="empty">No platforms on this application.</div>'
+        : platforms.map(function (p, i) {
+            const verified = p.verificationStatus === 'verified' || p.verifiedByAdmin;
+            // A big gap between the claim and reality is the tell for a
+            // fabricated application, so it is called out rather than buried.
+            const claimed = p.reportedFollowerCount;
+            const actual = p.followerCount;
+            const mismatch = claimed && actual && Math.abs(claimed - actual) > Math.max(50, actual * 0.25)
+              ? '<div class="mismatch"><i class="fas fa-triangle-exclamation"></i> Claimed ' +
+                esc(num(claimed)) + ', actual ' + esc(num(actual)) + '</div>'
+              : '';
+            return '' +
+              '<div class="row">' +
+                '<div class="row-main">' +
+                  '<div class="row-title">' + esc(humanPlatform(p.type)) +
+                    ' ' + (verified ? pill('passed') : pill(p.verificationStatus || 'pending')) + '</div>' +
+                  '<div class="row-reason">' +
+                    (p.url ? '<a href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer">' + esc(p.handle || p.url) + '</a>' : esc(p.handle || '')) +
+                  '</div>' +
+                  '<div class="row-meta">' +
+                    esc(followers(actual)) +
+                    (p.verificationMethod ? ' &middot; verified by ' + esc(p.verificationMethod) : '') +
+                  '</div>' +
+                  mismatch +
+                '</div>' +
+                '<div class="actions">' +
+                  (verified || !open ? '' : '<button class="btn btn-pass js-vouch" data-index="' + i + '">Mark verified</button>') +
+                '</div>' +
+              '</div>';
+          }).join(''));
+
+      // Reviewer checklist
+      const ticked = {};
+      (app.reviewChecklist || []).forEach(function (it) { if (it.checked) ticked[it.key] = it; });
+      const allTicked = REVIEW_CHECKLIST.every(function (c) { return ticked[c.key]; });
+
+      $('#checklist').html(REVIEW_CHECKLIST.map(function (c) {
+        const on = !!ticked[c.key];
+        const names = app.checkedByNames || {};
+        const by = on && ticked[c.key].checkedBy ? names[String(ticked[c.key].checkedBy)] : '';
+        const who = on && ticked[c.key].checkedAt
+          ? 'Confirmed by ' + (by || 'an admin') + ' &middot; ' + fmtDate(ticked[c.key].checkedAt)
+          : '';
+        return '' +
+          '<label class="row" style="cursor:' + (open ? 'pointer' : 'default') + '; align-items:center;' +
+            (open ? '' : ' opacity:0.75;') + '">' +
+            // Closed applications keep the ticks visible as part of the record,
+            // but nothing here can be changed after the fact.
+            '<input type="checkbox" class="js-check" data-key="' + esc(c.key) + '"' + (on ? ' checked' : '') +
+              (open ? '' : ' disabled') +
+              ' style="width:18px; height:18px; accent-color:#4ade80; flex-shrink:0; cursor:' +
+              (open ? 'pointer' : 'default') + ';">' +
+            '<div class="row-main">' +
+              '<div class="row-title">' + esc(c.label) + '</div>' +
+              '<div class="row-reason">' + esc(c.hint) + '</div>' +
+              '<div class="row-meta checklist-meta">' + (who || '&nbsp;') + '</div>' +
+            '</div>' +
+          '</label>';
+      }).join(''));
+
+      // A closed application has no decision left to take. Everything below
+      // this point is about acting on it, so it comes off entirely rather than
+      // being disabled — a greyed Approve on a withdrawn application still
+      // reads as something you could get to work.
+      $('#rescreen-all').toggle(open);
+      if (!open) {
+        $('#decision-card').hide();
+        return;
+      }
+      $('#decision-card').show();
+
+      // Decision. Approving is gated on the same two things a reviewer would
+      // otherwise have to hold in their head: the machine checks and their own
+      // confirmations. Rejecting is always available — you do not need a
+      // complete checklist to turn something down.
+      const canApprove = app.checksPassed && allTicked;
+      $('#approve-btn').prop('disabled', !canApprove);
+      $('#decision-hint').text(
+        canApprove
+          ? 'Checks passed and the checklist is complete. Approving grants their creator benefits and emails them.'
+          : !app.checksPassed
+            ? 'Approval is blocked until every automated check passes or is overridden above.'
+            : 'Approval is blocked until you have confirmed every item on the reviewer checklist.'
+      );
+
+      // Approvals are dual: one admin, then a different one. Reflect where this
+      // application actually is, otherwise you press Approve a second time and
+      // get a 409 telling you what the screen should have said.
+      const firstApprovalBy = app.firstApprovalBy ? String(app.firstApprovalBy) : '';
+      const iApprovedAlready = firstApprovalBy && firstApprovalBy === ADMIN_ID;
+      const someoneApproved = !!firstApprovalBy;
+
+      if (iApprovedAlready) {
+        // Once you have approved, the checklist is settled for you. Leaving
+        // three boxes on screen just invites a second look at something already
+        // decided. resetDecisionUI puts it back if the approval is removed.
+        const doneCount = REVIEW_CHECKLIST.filter(function (c) { return ticked[c.key]; }).length;
+        $('#checklist-intro').html(
+          doneCount === REVIEW_CHECKLIST.length
+            ? 'You confirmed all ' + REVIEW_CHECKLIST.length + ' items and approved. Remove your approval below to change them.'
+            // Do not claim they confirmed things they did not. Approvals given
+            // before this checklist existed have nothing recorded against them.
+            : '<span style="color:var(--ac-amber);"><i class="fas fa-triangle-exclamation"></i> ' +
+              doneCount + ' of ' + REVIEW_CHECKLIST.length + ' items confirmed against this approval.' +
+              (doneCount === 0 ? ' This approval predates the checklist.' : '') + '</span>'
+        );
+        $('#checklist').hide();
+        $('#checklist-card').append(
+          '<button class="btn" id="checklist-show" style="margin-top:4px;">Show checklist</button>'
+        );
+
+        $('#approve-btn')
+          .prop('disabled', true)
+          .html('<i class="fas fa-check"></i> You approved (1 of 2)');
+        $('#withdraw-btn').show();
+      } else if (someoneApproved) {
+        // An owner can also take back somebody else's, which is the only way to
+        // unstick an application whose first approver has gone quiet.
+        if (IS_OWNER) {
+          $('#withdraw-btn').show().html('<i class="fas fa-rotate-left"></i> Remove this approval');
+        }
+        $('#approve-btn')
+          .prop('disabled', !canApprove)
+          .html('<i class="fas fa-check"></i> Give the second approval');
+      }
+
+      // Owner override skips the SECOND ADMIN, not the diligence. The checklist
+      // and the automated checks still apply — bypassing those would reintroduce
+      // exactly what this flow was built to stop.
+      if (IS_OWNER && (app.status === 'submitted' || app.status === 'under_review')) {
+        $('#override-btn').show().prop('disabled', !canApprove);
+        $('#override-hint').show().text(
+          !canApprove
+            ? 'Override skips the second admin, not the checks or the checklist. Clear those above first.'
+            : iApprovedAlready
+              ? 'Nobody has given the second approval. Override completes it on your own, recorded as an owner override.'
+              : 'Override approves on your own, without waiting for a second admin. Recorded as an owner override in the audit log.'
+        );
+      } else {
+        $('#override-btn').hide();
+        $('#override-hint').hide();
+      }
+
+    }
+
+    function post(url, body, okMsg) {
+      return $.ajax({
+        url: url, method: 'POST', contentType: 'application/json',
+        headers: { 'X-User-ID': ADMIN_ID },
+        data: JSON.stringify(body || {}),
+      })
+        .done(function () { toast(okMsg); load(); })
+        .fail(function (xhr) {
+          const b = xhr.responseJSON || {};
+          toast((b.response && b.response.message) || b.message || b.error || ('Failed (' + xhr.status + ')'));
+        });
+    }
+
+    $('#rescreen-all').on('click', function () {
+      $(this).prop('disabled', true);
+      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/rescreen', {}, 'Checks re-run.')
+        .always(() => $('#rescreen-all').prop('disabled', false));
+    });
+
+    $('#checks').on('click', '.js-retry', function () {
+      const key = $(this).data('key');
+      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/rescreen?key=' + encodeURIComponent(key),
+        {}, 'Re-ran ' + key + '.');
+    });
+
+    $('#checks').on('click', '.js-override', function () {
+      const $b = $(this);
+      const status = $b.data('status');
+      // A reason is mandatory: this ends up in the audit log, and "why" is the
+      // whole point of recording it.
+      askReason({
+        type: status === 'passed' ? 'confirm' : 'danger',
+        icon: 'fa-pen-to-square',
+        title: 'Override this check',
+        message: 'Marking it <strong>' + esc(status) + '</strong> by hand. Your name and reason go to the audit log.',
+        placeholder: 'What did you check, and what did you find?',
+        confirmText: 'Mark ' + status,
+      }, function (reason) {
+        post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/checks/override', {
+          key: $b.data('key'),
+          platform: String($b.data('platform') || ''),
+          handle: String($b.data('handle') || ''),
+          status: status,
+          reason: reason,
+        }, 'Check marked ' + status + '.');
+      });
+    });
+
+    $('#platforms').on('click', '.js-vouch', function () {
+      const index = $(this).data('index');
+      confirmThen({
+        icon: 'fa-user-check',
+        title: 'Vouch for this channel',
+        message: 'You are confirming this channel belongs to <strong>the applicant</strong>.',
+        detail: 'Use this when you have seen the code yourself, or on a platform we cannot read.',
+        confirmText: 'Mark verified',
+      }, function () {
+        post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/platforms/' + index + '/verify',
+          {}, 'Platform marked verified.');
+      });
+    });
+
+    $('#checklist').on('change', '.js-check', function () {
+      const $b = $(this);
+      post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/review-checklist', {
+        key: $b.data('key'),
+        checked: $b.is(':checked'),
+      }, $b.is(':checked') ? 'Confirmed.' : 'Un-confirmed.');
+    });
+
+    $('#approve-btn').on('click', function () {
+      confirmThen({
+        icon: 'fa-circle-check',
+        title: 'Approve this application',
+        message: 'Records your approval for <strong>' + esc(currentApp.displayName || 'this creator') + '</strong>.',
+        detail: 'On the second approval they get their benefits and an email.',
+        confirmText: 'Approve',
+      }, function () {
+        post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/approve',
+          {}, 'Approval recorded.');
+      });
+    });
+
+    $('#checklist-card').on('click', '#checklist-show', function () {
+      $('#checklist').show();
+      $(this).remove();
+    });
+
+    $('#withdraw-btn').on('click', function () {
+      confirmThen({
+        type: 'danger',
+        icon: 'fa-rotate-left',
+        title: 'Remove this approval',
+        message: 'The application goes back to <strong>awaiting review</strong>.',
+        confirmText: 'Remove approval',
+      }, function () {
+        post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/withdraw-approval',
+          {}, 'Approval removed.');
+      });
+    });
+
+    $('#override-btn').on('click', function () {
+      confirmThen({
+        type: 'danger',
+        icon: 'fa-bolt',
+        title: 'Approve on your own',
+        message: 'Completes this <strong>without a second admin</strong>.',
+        detail: 'Recorded in the audit log as an owner override, with your name against it.',
+        confirmText: 'Override and approve',
+      }, function () {
+        post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/approve',
+          { ownerOverride: true }, 'Approved via owner override.');
+      });
+    });
+
+    $('#reject-btn').on('click', function () {
+      askReason({
+        type: 'danger',
+        icon: 'fa-circle-xmark',
+        title: 'Reject this application',
+        message: 'Your reason is <strong>emailed to the applicant</strong>, so write it for them.',
+        placeholder: 'e.g. We could not find LPC content on the channels you listed.',
+        confirmText: 'Reject',
+      }, function (reason) {
+        post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/reject',
+          { rejectionReason: reason }, 'Rejection recorded.');
+      });
+    });
+
+    $('#copy-link').on('click', function () {
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => toast('Link copied.'))
+        .catch(() => toast('Copy failed, select the URL instead.'));
+    });
+
+    load();
+  </script>
+</body>
+</html>
