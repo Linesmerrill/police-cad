@@ -69,17 +69,18 @@ test.describe('Department Dashboard — Ranks tab', { tag: '@auth' }, () => {
   });
 
   /**
-   * Regression: on a laptop-width window the dashboard sidebar leaves the card
+   * Regression: on a laptop-width window the dashboard sidebar leaves this card
    * around 490px wide, but the responsive rules used to key off the VIEWPORT,
    * which was still 768px and above the 700px breakpoint. So the Add panel
    * stayed a fixed 380px and covered all but ~107px of the ranks list, which
    * reads as the whole page lurching sideways when you press Add.
    *
-   * The card is a container query context now, so the panel becomes a
-   * full-width sheet whenever the CARD is narrow, whatever the window is doing.
+   * Asserted against the CARD's width rather than the window's, because that is
+   * the thing the layout actually depends on — and it keeps this test away from
+   * the dashboard's own chrome at narrow viewports, which is not what is under
+   * test here.
    */
-  test('the Add panel does not crush the ranks list on a narrow card', async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 700 });
+  test('the Add panel becomes a full-width sheet when the card is narrow', async ({ page }) => {
     await page.goto(deptDashboardUrl());
     await expect(page).not.toHaveURL(/\/login/);
 
@@ -97,30 +98,33 @@ test.describe('Department Dashboard — Ranks tab', { tag: '@auth' }, () => {
     const card = page.locator('#dds-tab-body .rkm-card');
     await expect(card).toBeVisible();
 
+    // Squeeze the card to the width the dashboard gives it on a 768px window.
+    await page.evaluate(() => {
+      const el = document.querySelector('#dds-tab-body .rkm-card') as HTMLElement;
+      el.style.maxWidth = '488px';
+      el.style.width = '488px';
+    });
+
     const cardWidth = await card.evaluate((el) => el.getBoundingClientRect().width);
-    // Guard the premise: this only proves anything while the card is narrower
-    // than the 700px breakpoint.
-    expect(cardWidth).toBeLessThan(700);
+    expect(cardWidth).toBeLessThan(700); // guard the premise
 
     await page.locator('#dds-tab-body .rkm-btn-add').click();
 
     const form = page.locator('#dds-tab-body .rkm-form');
     await expect(form).toHaveClass(/is-open/);
-    // Let the slide-in settle before measuring.
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(400); // let the slide-in settle before measuring
 
-    const { formWidth, cardRight, formLeft } = await page.evaluate(() => {
+    const { formWidth, formLeft, cardLeft } = await page.evaluate(() => {
       const c = document.querySelector('#dds-tab-body .rkm-card')!.getBoundingClientRect();
       const f = document.querySelector('#dds-tab-body .rkm-form')!.getBoundingClientRect();
-      return { formWidth: f.width, cardRight: c.right, formLeft: f.left };
+      return { formWidth: f.width, formLeft: f.left, cardLeft: c.left };
     });
 
-    // A sheet across the whole card, not a 380px panel pinned to the right.
+    // A sheet across the whole card, not a 380px panel pinned to its right.
     expect(formWidth).toBeGreaterThan(cardWidth - 8);
-    // And it must not hang off the card, which is what pushed the layout over.
-    expect(formLeft).toBeGreaterThan(cardRight - cardWidth - 8);
+    expect(formLeft).toBeLessThanOrEqual(cardLeft + 8);
 
-    // Nothing should have introduced a horizontal scrollbar.
+    // And nothing gained a horizontal scrollbar along the way.
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth
     );
