@@ -27,12 +27,21 @@
     transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .ddm-overlay.visible { opacity: 1; pointer-events: auto; }
+  /* Site-wide class name, so a page that already defines this rule keeps its
+     own and nothing double-applies. !important matches the existing usage —
+     dashboards set overflow on body themselves. */
+  body.modal-open { overflow: hidden !important; }
   .ddm-modal {
     background: rgba(16, 17, 24, 0.97);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     width: 90%; max-width: 420px;
     overflow: hidden;
+    /* With the page locked behind it, the modal is the only thing that can
+       scroll — so a tall one (long detail text, a reason field, a short phone)
+       has to scroll its own body rather than push the buttons off screen. */
+    max-height: calc(100vh - 2rem);
+    display: flex; flex-direction: column;
     transform: scale(0.92) translateY(12px);
     transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.05) inset;
@@ -60,7 +69,13 @@
     transition: background 0.15s, color 0.15s;
   }
   .ddm-close:hover { color: #fff; background: rgba(255,255,255,0.06); }
-  .ddm-body { padding: 1.25rem 1.25rem 1.1rem; text-align: center; }
+  .ddm-body {
+    padding: 1.25rem 1.25rem 1.1rem; text-align: center;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  /* Header and footer hold their size so the buttons stay reachable no matter
+     how long the message is. */
+  .ddm-header, .ddm-footer { flex-shrink: 0; }
   .ddm-icon {
     width: 52px; height: 52px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
@@ -133,10 +148,39 @@
     var closeBtn = document.getElementById('ddm-close');
     var modalEl = overlay.querySelector('.ddm-modal');
     var currentOnCancel = null;
+    // What body.paddingRight was before we locked, so we can put it back exactly
+    // as we found it rather than assuming it was empty.
+    var priorPaddingRight = null;
+    var lockWasOurs = false;
+
+    // Scrolling the page behind a modal makes the decision feel optional and, on
+    // a phone, scrolls the thing you are being asked about out of view. Locking
+    // the body is the site-wide convention (body.modal-open).
+    function lockScroll() {
+      if (priorPaddingRight !== null) return; // already locked; do not re-measure
+      // Pages like /wallet drive body.modal-open for their own modals. If one is
+      // already open behind us, the lock is theirs to release — we only put back
+      // what we changed.
+      lockWasOurs = !document.body.classList.contains('modal-open');
+      priorPaddingRight = document.body.style.paddingRight;
+      // Removing the scrollbar widens the page by its width, which shifts the
+      // whole layout under the overlay. Hold the space it occupied.
+      var barWidth = window.innerWidth - document.documentElement.clientWidth;
+      if (barWidth > 0) document.body.style.paddingRight = barWidth + 'px';
+      document.body.classList.add('modal-open');
+    }
+
+    function unlockScroll() {
+      if (priorPaddingRight === null) return;
+      if (lockWasOurs) document.body.classList.remove('modal-open');
+      document.body.style.paddingRight = priorPaddingRight;
+      priorPaddingRight = null;
+    }
 
     function closeModal() {
       overlay.classList.remove('visible');
       overlay.setAttribute('aria-hidden', 'true');
+      unlockScroll();
       currentOnCancel = null;
     }
 
@@ -220,6 +264,7 @@
       }
 
       currentOnCancel = opts.onCancel || null;
+      lockScroll();
       overlay.classList.add('visible');
       overlay.setAttribute('aria-hidden', 'false');
     };
