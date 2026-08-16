@@ -70,9 +70,13 @@
     flex: 1; min-height: 0; overflow: hidden;
   }
 
-  /* Left panel — ranks list */
+  /* Left panel — ranks list.
+     min-width: 0 because a grid track defaults to min-width: auto, which means
+     it refuses to shrink below its content. One long rank name was enough to
+     push the grid 172px wider than the card, and the card's overflow:hidden
+     then clipped the right-hand panel out of reach. */
   .rkm-panel-ranks {
-    display: flex; flex-direction: column; min-height: 0;
+    display: flex; flex-direction: column; min-height: 0; min-width: 0;
     border-right: 1px solid rgba(255,255,255,0.05);
   }
   .rkm-panel-header {
@@ -163,7 +167,7 @@
 
   /* Right panel — members */
   .rkm-panel-members {
-    display: flex; flex-direction: column; min-height: 0;
+    display: flex; flex-direction: column; min-height: 0; min-width: 0;
   }
   .rkm-search {
     display: flex; align-items: center; gap: 0.5rem;
