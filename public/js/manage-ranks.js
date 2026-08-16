@@ -515,10 +515,15 @@
       });
     }
 
+    // The panel slides in over 250ms. Focusing at 100ms put the caret in a
+    // field that was still outside the card, and the browser scrolled the card
+    // sideways to reveal it — 440px of it, with overflow:hidden leaving no
+    // scrollbar to get back. That is the "everything shifted left" report.
+    // Focus once it has arrived, and never let focus scroll anything.
     setTimeout(function () {
       var nameEl = document.getElementById('rankFormName');
-      if (nameEl) nameEl.focus();
-    }, 100);
+      if (nameEl) nameEl.focus({ preventScroll: true });
+    }, 280);
   }
 
   function hideRankForm() {
@@ -566,7 +571,7 @@
     if (selectEl.value === 'custom') {
       thresholdInput.style.display = 'none';
       customInput.style.display = 'block';
-      customInput.focus();
+      customInput.focus({ preventScroll: true });
     } else {
       thresholdInput.style.display = 'block';
       customInput.style.display = 'none';

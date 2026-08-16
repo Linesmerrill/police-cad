@@ -130,4 +130,51 @@ test.describe('Department Dashboard — Ranks tab', { tag: '@auth' }, () => {
     );
     expect(overflow).toBeLessThanOrEqual(0);
   });
+
+  /**
+   * Regression, reported from a Chromebook: pressing Add shifted the whole
+   * editor sideways — the right panel jumped into the middle of the screen and
+   * the left panel went off the edge entirely, with no way to scroll back.
+   *
+   * The panel slides in over 250ms; the name field was focused at 100ms, while
+   * it was still outside the card. The browser scrolls the nearest scroll
+   * container to reveal a focused element, and overflow:hidden is still a
+   * scroll container — so the card scrolled 440px sideways and, having no
+   * scrollbar, stayed there.
+   */
+  test('pressing Add does not scroll the card sideways', async ({ page }) => {
+    await page.goto(deptDashboardUrl());
+    await expect(page).not.toHaveURL(/\/login/);
+
+    const settingsBtn = page.locator('#dd-nav-settings');
+    if (!(await settingsBtn.isVisible().catch(() => false))) {
+      test.skip(true, 'Dept dashboard settings nav not reachable — API may be offline');
+      return;
+    }
+    await settingsBtn.click();
+
+    const ranksTab = page.locator('.dds-tab[data-tab="ranks"]');
+    await expect(ranksTab).toBeVisible({ timeout: 5_000 });
+    await ranksTab.click();
+
+    const card = page.locator('#dds-tab-body .rkm-card');
+    await expect(card).toBeVisible();
+
+    await page.locator('#dds-tab-body .rkm-btn-add').click();
+    // Long enough to cover the slide-in and the focus that follows it.
+    await page.waitForTimeout(600);
+
+    // The card must not have scrolled, and the name field should have focus.
+    const state = await page.evaluate(() => {
+      const el = document.querySelector('#dds-tab-body .rkm-card') as HTMLElement;
+      return {
+        scrollLeft: el.scrollLeft,
+        scrollTop: el.scrollTop,
+        focusedId: document.activeElement ? document.activeElement.id : null,
+      };
+    });
+    expect(state.scrollLeft).toBe(0);
+    expect(state.scrollTop).toBe(0);
+    expect(state.focusedId).toBe('rankFormName');
+  });
 });

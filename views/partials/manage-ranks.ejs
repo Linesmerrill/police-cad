@@ -23,7 +23,14 @@
     border: 1px solid rgba(255,255,255,0.06);
     box-shadow: 0 32px 80px -16px rgba(0,0,0,0.65), 0 0 1px rgba(255,255,255,0.05) inset;
     animation: rkmSlideUp 0.3s cubic-bezier(0.16,1,0.3,1);
-    overflow: hidden; position: relative;
+    position: relative;
+    /* clip, not hidden: an overflow:hidden box is still a scroll container, so
+       the browser will happily scroll it to reveal a focused descendant that is
+       outside it — and with no scrollbar there is no way back. overflow:clip
+       creates no scroll container at all. hidden stays first as the fallback
+       for browsers that do not know clip. */
+    overflow: hidden;
+    overflow: clip;
     /* The card's width comes from its container, not the viewport: embedded in
        the department dashboard it is the content column, which is the window
        minus a ~240px sidebar and padding. Sizing its internals off @media
