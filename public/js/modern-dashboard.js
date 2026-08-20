@@ -908,10 +908,10 @@ function renderVehicles(vehicles) {
                     <p><strong>Make:</strong> ${vehData.make || 'N/A'}</p>
                     <p><strong>Model:</strong> ${vehData.model || 'N/A'}</p>
                     <p><strong>Year:</strong> ${vehData.year || 'N/A'}</p>
-                    ${(vehData.isStolen === 'true' || vehData.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
-                    ${(vehData.isExempt === 'true') ? '<p style="color:#3b82f6; font-weight:bold;"><i class="fa fa-shield"></i> EXEMPT</p>' : ''}
-                    ${(vehData.validRegistration === 'false' || vehData.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID REGISTRATION</p>' : ''}
-                    ${(vehData.validInsurance === 'false' || vehData.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID INSURANCE</p>' : ''}
+                    ${window.VehicleFlags.stolen(vehData) ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                    ${window.VehicleFlags.exempt(vehData) ? '<p style="color:#3b82f6; font-weight:bold;"><i class="fa fa-shield"></i> EXEMPT</p>' : ''}
+                    ${!window.VehicleFlags.registrationValid(vehData) ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID REGISTRATION</p>' : ''}
+                    ${!window.VehicleFlags.insuranceValid(vehData) ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID INSURANCE</p>' : ''}
                 </div>
             </div>
         `;
@@ -3823,10 +3823,10 @@ function renderLinkedVehicles(vehicles, civilianId) {
                 <div class="card-content">
                     <p>Type: ${vehicle?.vehicle?.type || 'Unknown'}</p>
                     <p>Year: ${vehicle?.vehicle?.year || 'Unknown'}</p>
-                    ${(vehicle?.vehicle?.isStolen === 'true' || vehicle?.vehicle?.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
-                    ${(vehicle?.vehicle?.isExempt === 'true') ? '<p style="color:#3b82f6; font-weight:bold;"><i class="fa fa-shield"></i> EXEMPT</p>' : ''}
-                    ${(vehicle?.vehicle?.validRegistration === 'false' || vehicle?.vehicle?.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID REGISTRATION</p>' : ''}
-                    ${(vehicle?.vehicle?.validInsurance === 'false' || vehicle?.vehicle?.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID INSURANCE</p>' : ''}
+                    ${window.VehicleFlags.stolen(vehicle?.vehicle) ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                    ${window.VehicleFlags.exempt(vehicle?.vehicle) ? '<p style="color:#3b82f6; font-weight:bold;"><i class="fa fa-shield"></i> EXEMPT</p>' : ''}
+                    ${!window.VehicleFlags.registrationValid(vehicle?.vehicle) ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID REGISTRATION</p>' : ''}
+                    ${!window.VehicleFlags.insuranceValid(vehicle?.vehicle) ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID INSURANCE</p>' : ''}
                     ${linkedInfo}
                     ${buttonHtml}
                 </div>

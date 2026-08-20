@@ -1347,7 +1347,7 @@
           var metaStr = meta.length ? meta.join(' &middot; ') : 'No details';
 
           // Stolen indicator changes icon color
-          var isStolen = v.isStolen === true || v.isStolen === 'true';
+          var isStolen = window.VehicleFlags.stolen(v);
           var iconColor = isStolen ? 'var(--dd-red)' : 'var(--dd-green)';
           var stolenBadge = isStolen ? ' <span style="color:var(--dd-red);font-size:0.6rem;font-weight:700;text-transform:uppercase;margin-left:0.3rem;">STOLEN</span>' : '';
 
@@ -1378,7 +1378,9 @@
   }
 
   function buildVehicleCard(v, mode) {
-    var isStolen = v.isStolen === true || v.isStolen === 'true';
+    // Flags go through the shared helper: most records still use the legacy
+    // encoding, where each field has its own polarity. /static/js/vehicle-flags.js
+    var isStolen = window.VehicleFlags.stolen(v);
     var iconClass = isStolen ? 'veh-stolen' : 'veh-ok';
     var sep = '<span class="dd-veh-sep">&middot;</span>';
 
@@ -1394,9 +1396,9 @@
     // Status badges
     var badges = '';
     if (isStolen) badges += '<span class="dd-veh-badge badge-stolen"><i class="fa fa-exclamation-triangle"></i> Stolen</span>';
-    if (v.isExempt === true || v.isExempt === 'true') badges += '<span class="dd-veh-badge badge-exempt"><i class="fa fa-shield"></i> Exempt</span>';
-    if (v.validRegistration === false || v.validRegistration === 'false') badges += '<span class="dd-veh-badge badge-reg"><i class="fa fa-file-circle-xmark"></i> Invalid Reg</span>';
-    if (v.validInsurance === false || v.validInsurance === 'false') badges += '<span class="dd-veh-badge badge-ins"><i class="fa fa-file-shield"></i> No Insurance</span>';
+    if (window.VehicleFlags.exempt(v)) badges += '<span class="dd-veh-badge badge-exempt"><i class="fa fa-shield"></i> Exempt</span>';
+    if (!window.VehicleFlags.registrationValid(v)) badges += '<span class="dd-veh-badge badge-reg"><i class="fa fa-file-circle-xmark"></i> Invalid Reg</span>';
+    if (!window.VehicleFlags.insuranceValid(v)) badges += '<span class="dd-veh-badge badge-ins"><i class="fa fa-file-shield"></i> No Insurance</span>';
 
     // Action button
     var action = '';

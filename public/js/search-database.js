@@ -421,7 +421,7 @@ $(document).ready(function () {
       owner = item.vehicle?.linkedCivilianID
         ? `Owner: ${ownerCache[item.vehicle.linkedCivilianID] || "Unknown"}`
         : "";
-      isStolen = item.vehicle?.isStolen === 'true' || item.vehicle?.isStolen === '2';
+      isStolen = window.VehicleFlags.stolen(item.vehicle);
       // Store the full vehicle info in recent searches for display purposes
       recentSearchQuery =
         item.vehicle?.make || item.vehicle?.plate || searchQuery;
@@ -720,14 +720,14 @@ $(document).ready(function () {
     $("#modelVeh").val(item.vehicle?.model || "");
     $("#colorView").val(item.vehicle?.color || "");
     // Convert to string "true"/"false" system for registration
-    const isValidRegistration = item.vehicle?.validRegistration === "1" || item.vehicle?.validRegistration === "true";
+    const isValidRegistration = window.VehicleFlags.registrationValid(item.vehicle);
     $("#validRegView").val(isValidRegistration ? "true" : "false");
     
     // Convert to string "true"/"false" system for insurance
-    const isValidInsurance = item.vehicle?.validInsurance === "1" || item.vehicle?.validInsurance === "true";
+    const isValidInsurance = window.VehicleFlags.insuranceValid(item.vehicle);
     $("#validInsView").val(isValidInsurance ? "true" : "false");
     // Convert to string "true"/"false" system
-    const isStolen = item.vehicle?.isStolen === "2" || item.vehicle?.isStolen === "true";
+    const isStolen = window.VehicleFlags.stolen(item.vehicle);
     $("#stolenView").val(isStolen ? "true" : "false");
     $("#vehicleID").val(item._id);
   }

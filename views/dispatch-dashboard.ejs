@@ -4637,6 +4637,7 @@
 <script src="/static/js/popper.js"></script>
 <script src="/static/js/main.js"></script>
 <script src="/static/js/name-database.js"></script>
+<script src="/static/js/vehicle-flags.js"></script>
 <script src="/static/js/plate-database.js"></script>
 <script src="/static/js/dispatch-dashboard.js"></script>
 <script src="/static/js/departments.js"></script>
@@ -6720,7 +6721,7 @@
             )
           }
           //check if vehicle is stolen and append result
-          if (res[i].vehicle.isStolen === "true" || res[i].vehicle.isStolen === "2") {
+          if (window.VehicleFlags.stolen(res[i].vehicle)) {
             $('#registered-cars-panel-body-'+index).append(
               `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
               `<strong>Danger!</strong> Vehicle reported as stolen.`+
@@ -6734,7 +6735,7 @@
             `Model: ${res[i].vehicle.model}<br/>`
           )
           //check for valid/invalid insurance and append result
-          const isValidInsurance = res[i].vehicle.validInsurance === "1" || res[i].vehicle.validInsurance === "true";
+          const isValidInsurance = window.VehicleFlags.insuranceValid(res[i].vehicle);
           if (isValidInsurance) {
             $('#registered-cars-panel-body-'+index).append(
               `<p class="plate-body-text">Insurance: <span style="color: #10b981;">true</span> <i class="ion-checkmark-circled color-green"></i></p>`
@@ -6745,7 +6746,7 @@
             )
           }
           //check for valid/invalid registration and append result
-          const isValidRegistration = res[i].vehicle.validRegistration === "1" || res[i].vehicle.validRegistration === "true";
+          const isValidRegistration = window.VehicleFlags.registrationValid(res[i].vehicle);
           if (isValidRegistration) {
             $('#registered-cars-panel-body-'+index).append(
               `<p class="plate-body-text">Registration: <span style="color: #10b981;">true</span> <i class="ion-checkmark-circled color-green"></i></p>`
