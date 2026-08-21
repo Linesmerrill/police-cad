@@ -37,10 +37,12 @@
   function esc(s) { return window.esc ? window.esc(s) : String(s || '').replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function toast(msg, type) { if (window.ddToast) window.ddToast(msg, type); }
 
-  /** Normalize boolean-ish API values. */
-  function toBool(val) {
-    return val === true || val === 1 || val === '1' || val === 'true';
-  }
+  /**
+   * Vehicle flag helpers. A single local toBool() used to serve all four
+   * flags, which inverted isStolen — the legacy numeric encoding is a select
+   * index, not a boolean. See /static/js/vehicle-flags.js.
+   */
+  var Flags = window.VehicleFlags;
 
   /** Flatten { _id, vehicle: {...} } → merged object */
   function flatten(item) {
@@ -173,9 +175,9 @@
     var model = esc(veh.model || '');
     var desc = [color, model].filter(Boolean).join(' ');
     var ownerName = esc(veh._resolvedOwner || veh.registeredOwner || '');
-    var isStolen = toBool(veh.isStolen);
-    var invalidReg = !toBool(veh.validRegistration);
-    var invalidIns = !toBool(veh.validInsurance);
+    var isStolen = Flags.stolen(veh);
+    var invalidReg = !Flags.registrationValid(veh);
+    var invalidIns = !Flags.insuranceValid(veh);
     var isExpanded = state.expandedId === veh._id;
 
     var sub = [];
@@ -210,7 +212,7 @@
   /* ───────────────────────── Build detail HTML ───────────────────────── */
 
   function buildDetailHTML(veh) {
-    var isStolen = toBool(veh.isStolen);
+    var isStolen = Flags.stolen(veh);
     return (
       '<div class="cd-vs-detail-inner">' +
         '<div class="cd-vs-detail-grid">' +
@@ -224,9 +226,9 @@
           detailField('Plate State', veh.licensePlateState) +
           '<div class="cd-vs-detail-field"><div class="cd-vs-detail-label">Owner</div><div class="cd-vs-detail-value" id="cd-vs-owner-' + esc(veh._id) + '">' + (veh.registeredOwner ? '<a href="#" onclick="event.preventDefault();event.stopPropagation();cdVsSearchOwner(\'' + esc(veh.registeredOwner.replace(/'/g, "\\'")) + '\')" style="color:var(--cd-accent);text-decoration:none;">' + esc(veh.registeredOwner) + '</a>' : '') + (veh.linkedCivilianID && !veh.registeredOwner ? '<i class="fa fa-circle-notch fa-spin" style="font-size:0.625rem;color:var(--cd-text-dim);"></i>' : (!veh.registeredOwner && !veh.linkedCivilianID ? 'N/A' : '')) + '</div></div>' +
           detailField('Stolen', isStolen ? 'Yes' : 'No', isStolen ? 'var(--cd-red)' : 'var(--cd-green)') +
-          detailField('Exempt', toBool(veh.isExempt) ? 'Yes' : 'No', toBool(veh.isExempt) ? 'var(--cd-accent)' : '') +
-          detailField('Registration', toBool(veh.validRegistration) ? 'Valid' : 'Invalid', toBool(veh.validRegistration) ? 'var(--cd-green)' : 'var(--cd-amber)') +
-          detailField('Insurance', toBool(veh.validInsurance) ? 'Valid' : 'Invalid', toBool(veh.validInsurance) ? 'var(--cd-green)' : 'var(--cd-amber)') +
+          detailField('Exempt', Flags.exempt(veh) ? 'Yes' : 'No', Flags.exempt(veh) ? 'var(--cd-accent)' : '') +
+          detailField('Registration', Flags.registrationValid(veh) ? 'Valid' : 'Invalid', Flags.registrationValid(veh) ? 'var(--cd-green)' : 'var(--cd-amber)') +
+          detailField('Insurance', Flags.insuranceValid(veh) ? 'Valid' : 'Invalid', Flags.insuranceValid(veh) ? 'var(--cd-green)' : 'var(--cd-amber)') +
         '</div>' +
         '<div style="margin-top:0.75rem;padding-top:0.625rem;border-top:1px solid var(--cd-glass-border);">' +
           '<button style="display:inline-flex;align-items:center;gap:0.375rem;padding:0.4rem 0.75rem;border-radius:var(--cd-radius-sm);font-family:Outfit,sans-serif;font-size:0.6875rem;font-weight:600;border:1px solid;cursor:pointer;transition:all 0.15s;' +

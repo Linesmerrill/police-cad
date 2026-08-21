@@ -62,6 +62,14 @@
   }
 
   /** Normalize boolean-ish API values. */
+  /**
+   * Vehicle flags have per-field polarity in the legacy encoding, so they go
+   * through the shared helper rather than the local toBool() below, which is
+   * only safe for the plain booleans (probation/parole).
+   * See /static/js/vehicle-flags.js.
+   */
+  var Flags = window.VehicleFlags;
+
   function toBool(val) {
     return val === true || val === 1 || val === '1' || val === 'true';
   }
@@ -468,9 +476,9 @@
         var plate = v.plate || 'N/A';
         var vMakeModel = [v.year, v.make, v.model].filter(Boolean).join(' ');
         var vIdx = 'veh-' + pid + '-' + j;
-        var vRegOk = toBool(v.validRegistration);
-        var vInsOk = toBool(v.validInsurance);
-        var vStolen = toBool(v.isStolen);
+        var vRegOk = Flags.registrationValid(v);
+        var vInsOk = Flags.insuranceValid(v);
+        var vStolen = Flags.stolen(v);
         html += '<div class="cd-ps-sub-item" onclick="cdPsToggleSub(\'' + vIdx + '\')">' +
           '<div class="cd-ps-sub-item-header" style="gap:0.625rem;">' +
             (v.image
@@ -500,7 +508,7 @@
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Registration</div><div class="cd-ps-detail-value" style="color:' + (vRegOk ? 'var(--cd-green)' : 'var(--cd-amber)') + ';font-weight:600;">' + (vRegOk ? 'Valid' : 'Invalid') + '</div></div>' +
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Insurance</div><div class="cd-ps-detail-value" style="color:' + (vInsOk ? 'var(--cd-green)' : 'var(--cd-amber)') + ';font-weight:600;">' + (vInsOk ? 'Valid' : 'Invalid') + '</div></div>' +
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Stolen</div><div class="cd-ps-detail-value" style="color:' + (vStolen ? 'var(--cd-red)' : 'var(--cd-green)') + ';font-weight:600;">' + (vStolen ? 'Yes' : 'No') + '</div></div>' +
-              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Exempt</div><div class="cd-ps-detail-value" style="' + (toBool(v.isExempt) ? 'color:var(--cd-accent);font-weight:600;' : '') + '">' + (toBool(v.isExempt) ? 'Yes' : 'No') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Exempt</div><div class="cd-ps-detail-value" style="' + (Flags.exempt(v) ? 'color:var(--cd-accent);font-weight:600;' : '') + '">' + (Flags.exempt(v) ? 'Yes' : 'No') + '</div></div>' +
             '</div>' +
           '</div>' +
         '</div>';

@@ -39,21 +39,16 @@
   }
 
   /**
-   * Normalize boolean-ish API values.
-   * The backend stores some booleans as strings ("1"/"2", "true"/"false")
-   * or numbers (1/2). Normalize to a real boolean.
+   * Vehicle flag helpers. These used to be a single local toBool() applied to
+   * all four flags, which silently inverted isStolen/isExempt — the legacy
+   * numeric encoding is a select index, not a boolean, so its polarity differs
+   * per field. See /static/js/vehicle-flags.js.
    */
-  function toBool(val) {
-    if (val === true || val === 1 || val === '1' || val === 'true') return true;
-    return false;
-  }
+  var Flags = window.VehicleFlags;
 
-  /**
-   * Convert a boolean back to the string the API expects.
-   * "1" = true, "2" = false  (matches existing data convention).
-   */
+  /** Writes now use "true"/"false"; the numeric encoding is read-only legacy. */
   function boolToApi(val) {
-    return val ? '1' : '2';
+    return Flags.toApi(val);
   }
 
   function generateVin() {
@@ -412,16 +407,16 @@
 
       // Badges
       var badges = '';
-      if (toBool(d.isStolen)) {
+      if (Flags.stolen(d)) {
         badges += '<span class="dd-veh-badge dd-veh-badge-red">Stolen</span>';
       }
-      if (toBool(d.isExempt)) {
+      if (Flags.exempt(d)) {
         badges += '<span class="dd-veh-badge dd-veh-badge-blue">Exempt</span>';
       }
-      if (!toBool(d.validRegistration)) {
+      if (!Flags.registrationValid(d)) {
         badges += '<span class="dd-veh-badge dd-veh-badge-red">Invalid Registration</span>';
       }
-      if (!toBool(d.validInsurance)) {
+      if (!Flags.insuranceValid(d)) {
         badges += '<span class="dd-veh-badge dd-veh-badge-red">Invalid Insurance</span>';
       }
 
@@ -604,10 +599,10 @@
       $('#dd-veh-d-photo-img').hide();
       $('#dd-veh-d-photo-icon').attr('class', 'fa fa-car dd-veh-photo-icon').show();
     }
-    $('#dd-veh-d-validReg').prop('checked', toBool(d.validRegistration));
-    $('#dd-veh-d-validIns').prop('checked', toBool(d.validInsurance));
-    $('#dd-veh-d-stolen').prop('checked', toBool(d.isStolen));
-    $('#dd-veh-d-exempt').prop('checked', toBool(d.isExempt));
+    $('#dd-veh-d-validReg').prop('checked', Flags.registrationValid(d));
+    $('#dd-veh-d-validIns').prop('checked', Flags.insuranceValid(d));
+    $('#dd-veh-d-stolen').prop('checked', Flags.stolen(d));
+    $('#dd-veh-d-exempt').prop('checked', Flags.exempt(d));
 
     $('#dd-veh-detail-overlay').addClass('dd-civ-visible');
   }

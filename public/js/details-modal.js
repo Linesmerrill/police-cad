@@ -510,16 +510,16 @@ $(document).ready(function () {
           data.year || "N/A"
         }</div>
         <div class="mb-2"><span class="text-gray">Registration:</span> ${
-          (data.validRegistration === 'true' || data.validRegistration === '1') ? '<span class="badge-stolen" style="background-color: #10b981; color: white;">Valid</span>' : '<span class="badge-stolen" style="background-color: #ef4444; color: white;">Invalid</span>'
+          window.VehicleFlags.registrationValid(data) ? '<span class="badge-stolen" style="background-color: #10b981; color: white;">Valid</span>' : '<span class="badge-stolen" style="background-color: #ef4444; color: white;">Invalid</span>'
         }</div>
         <div class="mb-2"><span class="text-gray">Insurance:</span> ${
-          (data.validInsurance === 'true' || data.validInsurance === '1') ? '<span class="badge-stolen" style="background-color: #10b981; color: white;">Valid</span>' : '<span class="badge-stolen" style="background-color: #ef4444; color: white;">Invalid</span>'
+          window.VehicleFlags.insuranceValid(data) ? '<span class="badge-stolen" style="background-color: #10b981; color: white;">Valid</span>' : '<span class="badge-stolen" style="background-color: #ef4444; color: white;">Invalid</span>'
         }</div>
         <div class="mb-2"><span class="text-gray">Stolen:</span> ${
-          (data.isStolen === 'true' || data.isStolen === '2') ? '<span class="badge-stolen">Yes</span>' : '<span class="badge-stolen" style="background-color: #10b981; color: white;">No</span>'
+          window.VehicleFlags.stolen(data) ? '<span class="badge-stolen">Yes</span>' : '<span class="badge-stolen" style="background-color: #10b981; color: white;">No</span>'
         }</div>
         <div class="mb-2"><span class="text-gray">Exempt:</span> ${
-          (data.isExempt === 'true') ? '<span class="badge-stolen" style="background-color: #3b82f6; color: white;">Yes</span>' : '<span class="badge-stolen" style="background-color: #6b7280; color: white;">No</span>'
+          window.VehicleFlags.exempt(data) ? '<span class="badge-stolen" style="background-color: #3b82f6; color: white;">Yes</span>' : '<span class="badge-stolen" style="background-color: #6b7280; color: white;">No</span>'
         }</div>
         <div class="mb-2"><span class="text-gray">Registered Owner:</span> ${
           owner
@@ -737,7 +737,7 @@ $(document).ready(function () {
     if (currentType === "Vehicle" || currentType === "Firearm") {
       actionsHtml += `
         <button class="btn btn-warning btn-block mb-2 action-button" data-action="Report Stolen" data-stolen="${data.isStolen || 'false'}">
-          ${(data.isStolen === 'true' || data.isStolen === '2') ? "Mark as Not Stolen" : "Report Stolen"}
+          ${/* firearms only ever used "true"/"false", which this helper handles first */ window.VehicleFlags.stolen(data) ? "Mark as Not Stolen" : "Report Stolen"}
         </button>
       `;
     } else if (currentType === "License") {
@@ -794,7 +794,7 @@ $(document).ready(function () {
 
   // Handle report stolen
   function handleReportStolen(itemId, isStolen) {
-    const isCurrentlyStolen = isStolen === true || isStolen === 'true' || isStolen === '2';
+    const isCurrentlyStolen = window.VehicleFlags.stolen({ isStolen: isStolen });
     const newStolenStatus = isCurrentlyStolen ? "false" : "true"; // Use string "true"/"false" system
     const actionText = isCurrentlyStolen ? "mark as not stolen" : "report as stolen";
     const successText = isCurrentlyStolen ? "marked as not stolen" : "reported as stolen";
@@ -1801,9 +1801,9 @@ $(document).ready(function () {
             <p class="text-gray mb-0">Make: ${vehicle.make || 'N/A'}</p>
             <p class="text-gray mb-0">Year: ${vehicle.year || 'N/A'}</p>
             <p class="text-gray mb-0">VIN: ${vehicle.vin || 'N/A'}</p>
-            ${(vehicle.isStolen === 'true' || vehicle.isStolen === '2') ? '<span class="badge badge-stolen">STOLEN</span>' : ''}
-            ${(vehicle.validRegistration === 'false' || vehicle.validRegistration === '2') ? '<span class="badge badge-stolen" style="background-color: #ef4444; color: white;">INVALID REG</span>' : ''}
-            ${(vehicle.validInsurance === 'false' || vehicle.validInsurance === '2') ? '<span class="badge badge-stolen" style="background-color: #ef4444; color: white;">INVALID INS</span>' : ''}
+            ${window.VehicleFlags.stolen(vehicle) ? '<span class="badge badge-stolen">STOLEN</span>' : ''}
+            ${!window.VehicleFlags.registrationValid(vehicle) ? '<span class="badge badge-stolen" style="background-color: #ef4444; color: white;">INVALID REG</span>' : ''}
+            ${!window.VehicleFlags.insuranceValid(vehicle) ? '<span class="badge badge-stolen" style="background-color: #ef4444; color: white;">INVALID INS</span>' : ''}
           </div>
         `;
       });

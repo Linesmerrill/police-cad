@@ -2264,9 +2264,11 @@ function updateDepartmentJoinButton(departmentId, status) {
       const plate = v.plate || 'N/A';
       const username = user.username ? `@${user.username}` : '';
       const createdAt = v.createdAt ? new Date(v.createdAt).toLocaleDateString() : '';
-      const isStolen = v.isStolen === 'true' || v.isStolen === true;
-      const validReg = v.validRegistration === 'true' || v.validRegistration === true;
-      const validIns = v.validInsurance === 'true' || v.validInsurance === true;
+      // Most vehicles still use the legacy encoding, where each flag has its
+      // own polarity. See /static/js/vehicle-flags.js.
+      const isStolen = window.VehicleFlags.stolen(v);
+      const validReg = window.VehicleFlags.registrationValid(v);
+      const validIns = window.VehicleFlags.insuranceValid(v);
 
       return `
         <div style="background:#1e2028; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; margin-bottom:1rem; transition:all 0.2s; cursor:pointer;" onclick="editVehicle('${item._id}')">
@@ -2385,9 +2387,9 @@ function updateDepartmentJoinButton(departmentId, status) {
       document.getElementById('editVehicleModel').value = v.model || '';
       document.getElementById('editVehicleYear').value = v.year || '';
       document.getElementById('editVehicleColor').value = v.color || '';
-      document.getElementById('editVehicleValidRegistration').checked = v.validRegistration === 'true' || v.validRegistration === true;
-      document.getElementById('editVehicleValidInsurance').checked = v.validInsurance === 'true' || v.validInsurance === true;
-      document.getElementById('editVehicleIsStolen').checked = v.isStolen === 'true' || v.isStolen === true;
+      document.getElementById('editVehicleValidRegistration').checked = window.VehicleFlags.registrationValid(v);
+      document.getElementById('editVehicleValidInsurance').checked = window.VehicleFlags.insuranceValid(v);
+      document.getElementById('editVehicleIsStolen').checked = window.VehicleFlags.stolen(v);
 
       document.getElementById('editVehicleModal').style.display = 'flex';
 
