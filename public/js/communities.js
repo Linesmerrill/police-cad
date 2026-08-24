@@ -1435,155 +1435,155 @@ function getWelcomeModalStorageKey() {
   return userId ? `${WELCOME_MODAL_STORAGE_KEY_PREFIX}_${userId}` : WELCOME_MODAL_STORAGE_KEY_PREFIX;
 }
 
-const WelcomeModal = ({ isOpen, onClose }) => {
-  const [currentStep, setCurrentStep] = useState(0);
+/**
+ * Persistent "you are not in a server yet" prompt.
+ *
+ * The wizard is a one-time modal: it can be skipped, dismissed, or never seen at
+ * all if a script fails. Without a standing prompt those people land back
+ * exactly where the funnel already loses them. This stays until they actually
+ * belong somewhere, and can reopen the wizard.
+ */
+const NoCommunityBanner = ({ dbUser, onStart, onCreate }) => {
+  if (!dbUser || !dbUser._id) return null;
+  const memberships = (dbUser.user && dbUser.user.communities) || [];
+  const approved = Array.isArray(memberships) && memberships.some((c) => c && c.status === 'approved');
+  if (approved) return null;
+  const pending = Array.isArray(memberships) && memberships.some((c) => c && c.status === 'pending');
 
-  const steps = [
-    {
-      title: "Welcome to Lines Police CAD!",
-      subtitle: "The world's leading free-to-use service for role-play communities",
-      icon: "fa-hand-wave",
-      content: (
-        <div className="space-y-4">
-          <p className="text-slate-300 text-sm leading-relaxed">
-            Ready to dive into role-play? Here's how to get started:
-          </p>
-          <ul className="space-y-3">
-            <li className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' }}>
-                <i className="fa fa-crown text-xs text-black"></i>
-              </div>
-              <span className="text-slate-300 text-sm"><strong className="text-white">Elite Communities</strong> - Check out our featured communities looking for new members</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)' }}>
-                <i className="fa fa-compass text-xs text-white"></i>
-              </div>
-              <span className="text-slate-300 text-sm"><strong className="text-white">Discover</strong> - Browse trending communities and find your perfect match</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
-                <i className="fa fa-gamepad text-xs text-white"></i>
-              </div>
-              <span className="text-slate-300 text-sm"><strong className="text-white">Filter by Platform</strong> - Find communities for Xbox, PlayStation, PC, and more</span>
-            </li>
-          </ul>
-        </div>
-      )
-    },
-    {
-      title: "Join or Create",
-      subtitle: "Multiple ways to get into the action",
-      icon: "fa-rocket",
-      content: (
-        <div className="space-y-4">
-          <ul className="space-y-3">
-            <li className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>
-                <i className="fa fa-ticket text-xs text-white"></i>
-              </div>
-              <span className="text-slate-300 text-sm"><strong className="text-white">Have an invite code?</strong> - Enter it to jump straight into a community</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)' }}>
-                <i className="fa fa-search text-xs text-white"></i>
-              </div>
-              <span className="text-slate-300 text-sm"><strong className="text-white">Search by name</strong> - Find a specific community and request to join</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
-                <i className="fa fa-plus text-xs text-white"></i>
-              </div>
-              <span className="text-slate-300 text-sm"><strong className="text-white">Create your own</strong> - Start a community for FREE and invite your friends</span>
-            </li>
-          </ul>
-        </div>
-      )
-    },
-    {
-      title: "Need Help?",
-      subtitle: "We're here for you",
-      icon: "fa-circle-question",
-      content: (
-        <div className="space-y-4">
-          <p className="text-slate-300 text-sm leading-relaxed">
-            Have questions or need assistance? We've got you covered:
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <a href="/faq" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(59, 130, 246, 0.2)'
-            }}>
-              <i className="fa fa-book text-xl text-blue-400"></i>
-              <span className="text-white text-sm font-medium">FAQ</span>
-              <span className="text-slate-500 text-xs text-center">Common questions</span>
-            </a>
-            <a href="/contact-us" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(59, 130, 246, 0.2)'
-            }}>
-              <i className="fa fa-envelope text-xl text-green-400"></i>
-              <span className="text-white text-sm font-medium">Contact Us</span>
-              <span className="text-slate-500 text-xs text-center">Get in touch</span>
-            </a>
-            <a href="https://discord.gg/fVFAA6UcUQ" target="_blank" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(59, 130, 246, 0.2)'
-            }}>
-              <i className="fab fa-discord text-xl text-indigo-400"></i>
-              <span className="text-white text-sm font-medium">Discord</span>
-              <span className="text-slate-500 text-xs text-center">Join our server</span>
-            </a>
-            <a href="/about-us" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(59, 130, 246, 0.2)'
-            }}>
-              <i className="fa fa-info-circle text-xl text-amber-400"></i>
-              <span className="text-white text-sm font-medium">About</span>
-              <span className="text-slate-500 text-xs text-center">Learn more</span>
-            </a>
+  return (
+    <div className="px-4 pt-4">
+      <div
+        className="rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3"
+        style={{ background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.25)' }}
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+               style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)' }}>
+            <i className="fa fa-compass text-white"></i>
+          </div>
+          <div className="min-w-0">
+            <p className="text-white font-semibold text-sm">
+              {pending ? "You're waiting on a server to approve you" : "You're not in a server yet"}
+            </p>
+            <p className="text-slate-400 text-xs mt-0.5">
+              {pending
+                ? 'You can join more than one while you wait.'
+                : 'Find one to play in - it only takes a moment.'}
+            </p>
           </div>
         </div>
-      )
+        <div className="flex gap-2 flex-shrink-0">
+          <button
+            onClick={onStart}
+            className="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap"
+            style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', color: '#000' }}
+          >
+            Find a server
+          </button>
+          <button
+            onClick={onCreate}
+            className="px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(59,130,246,0.3)', color: '#fff' }}
+          >
+            Start my own
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const WELCOME_WIZARD_TUTORIAL_KEY = 'welcome_wizard';
+
+// Platform choices. These are the only values community.tags holds in
+// production, and both the create form and the browse filters already use them,
+// so the wizard's question maps straight onto existing data with no new field.
+const WIZARD_PLATFORMS = [
+  { tag: 'Xbox',        label: 'Xbox',        icon: 'fab fa-xbox',        color: '#107c10' },
+  { tag: 'PlayStation', label: 'PlayStation', icon: 'fab fa-playstation', color: '#0070d1' },
+  { tag: 'PC',          label: 'PC',          icon: 'fa fa-desktop',      color: '#a855f7' },
+];
+
+/**
+ * First-run wizard.
+ *
+ * This replaces a three-step tour that *described* Elite Communities, Discover
+ * and Filter by Platform and then closed, leaving the reader to go find them.
+ * Roughly 28.5% of new accounts never join any community, and the drop is at the
+ * very top of the funnel, so the wizard asks two questions and puts real
+ * communities on screen rather than explaining where to look for them.
+ *
+ * Two questions, not three: the audience skews 10-15 and every extra step costs
+ * people. Every screen can be escaped.
+ */
+const WelcomeModal = ({ isOpen, onClose, onCreateCommunity }) => {
+  const [stage, setStage] = useState('intent');
+  const [platform, setPlatform] = useState(null);
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const markSeen = () => {
+    try { localStorage.setItem(getWelcomeModalStorageKey(), 'true'); } catch (e) { /* private mode */ }
+    // Also persist server-side so the wizard does not reappear on another
+    // browser or after a cache clear. Same endpoint the dashboard tutorial uses.
+    const userId = window.dbUser && window.dbUser._id;
+    if (userId) {
+      fetch(`${API_URL}/api/v1/user/${userId}/dismiss-tutorial`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tutorialKey: WELCOME_WIZARD_TUTORIAL_KEY }),
+      }).catch(() => { /* localStorage already covers this session */ });
     }
-  ];
-
-  const handleClose = () => {
-    localStorage.setItem(getWelcomeModalStorageKey(), 'true');
-    onClose();
   };
 
-  const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      handleClose();
-    }
+  const handleClose = () => { markSeen(); onClose(); };
+
+  const loadRecommendations = (tag) => {
+    setPlatform(tag);
+    setStage('results');
+    setLoading(true);
+    setFailed(false);
+    const userId = window.dbUser && window.dbUser._id;
+    const params = new URLSearchParams({ tag: tag || 'all', limit: '5', page: '0' });
+    if (userId) params.set('userId', userId);
+    fetch(`${API_URL}/api/v2/communities/recommended?${params.toString()}`)
+      .then((res) => { if (!res.ok) throw new Error('failed'); return res.json(); })
+      .then((body) => { setResults((body && body.data) || []); })
+      .catch(() => { setFailed(true); })
+      .finally(() => { setLoading(false); });
   };
 
-  const handlePrev = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleSkip = () => {
-    handleClose();
-  };
+  const handleCreate = () => { markSeen(); onClose(); if (onCreateCommunity) onCreateCommunity(); };
 
   useEffect(() => {
+    // Reset on open. The component only returns null while closed, so without
+    // this, reopening from the standing banner drops the user back onto the
+    // results of whatever they picked last time.
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+      setStage('intent');
+      setPlatform(null);
+      setResults([]);
+      setFailed(false);
     }
+    document.body.style.overflow = isOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const currentStepData = steps[currentStep];
-  const isLastStep = currentStep === steps.length - 1;
+  const tile = {
+    background: 'rgba(255, 255, 255, 0.05)',
+    border: '1px solid rgba(59, 130, 246, 0.2)',
+    borderRadius: '0.875rem',
+  };
+
+  const HEADINGS = {
+    intent:   { title: 'Welcome to Lines Police CAD', subtitle: 'What would you like to do?' },
+    platform: { title: 'What do you play on?', subtitle: "We'll show you servers for it" },
+    results:  { title: 'Servers to join', subtitle: platform ? `Popular on ${platform}` : 'Popular right now' },
+  };
+  const heading = HEADINGS[stage];
 
   return (
     <div
@@ -1592,110 +1592,186 @@ const WelcomeModal = ({ isOpen, onClose }) => {
       onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
     >
       <div
+        data-testid="welcome-wizard"
         className="w-full max-w-md rounded-2xl shadow-2xl relative"
         style={{
           background: 'rgba(15, 15, 20, 0.98)',
           border: '1px solid rgba(59, 130, 246, 0.2)',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close Button */}
         <button
           onClick={handleClose}
+          aria-label="Close"
           className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white transition-colors z-10"
           style={{ background: 'rgba(255, 255, 255, 0.05)', borderRadius: '50%' }}
         >
           <i className="fa fa-times text-sm"></i>
         </button>
 
-        {/* Header with Logo */}
-        <div className="pt-8 pb-4 px-6 text-center">
-          <div className="relative inline-block mx-auto mb-4">
-            {/* Glow effect behind logo */}
-            <div style={{
-              position: 'absolute',
-              top: '-30%',
-              left: '-30%',
-              right: '-30%',
-              bottom: '-30%',
-              background: 'radial-gradient(circle, rgba(251, 191, 36, 0.5) 0%, rgba(245, 158, 11, 0.3) 40%, transparent 70%)',
-              filter: 'blur(20px)',
-              borderRadius: '50%'
-            }} />
-            <img
-              src="/static/images/lines-police-cad-discord-logo-2024-github-profile.png"
-              alt="Lines Police CAD"
-              style={{
-                height: '60px',
-                width: 'auto',
-                position: 'relative',
-                zIndex: 1
-              }}
-            />
-          </div>
-          <h2 className="text-xl font-bold text-white mb-1">{currentStepData.title}</h2>
-          <p className="text-slate-400 text-sm">{currentStepData.subtitle}</p>
+        <div className="pt-8 pb-4 px-6 text-center flex-shrink-0">
+          <h2 className="text-xl font-bold text-white mb-1">{heading.title}</h2>
+          <p className="text-slate-400 text-sm">{heading.subtitle}</p>
         </div>
 
-        {/* Content */}
-        <div className="px-6 pb-4">
-          {currentStepData.content}
+        <div className="px-6 pb-2" style={{ overflowY: 'auto' }}>
+          {stage === 'intent' && (
+            <div className="space-y-3">
+              <button
+                onClick={() => setStage('platform')}
+                className="w-full flex items-center gap-4 p-4 text-left transition-all duration-200 hover:brightness-125"
+                style={tile}
+              >
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                     style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)' }}>
+                  <i className="fa fa-users text-white"></i>
+                </div>
+                <span>
+                  <span className="block text-white font-semibold">Join a server</span>
+                  <span className="block text-slate-400 text-xs mt-0.5">Play with people already running one</span>
+                </span>
+              </button>
+
+              <button
+                onClick={handleCreate}
+                className="w-full flex items-center gap-4 p-4 text-left transition-all duration-200 hover:brightness-125"
+                style={tile}
+              >
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                     style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' }}>
+                  <i className="fa fa-plus text-black"></i>
+                </div>
+                <span>
+                  <span className="block text-white font-semibold">Start my own</span>
+                  <span className="block text-slate-400 text-xs mt-0.5">Run a server for your own group</span>
+                </span>
+              </button>
+            </div>
+          )}
+
+          {stage === 'platform' && (
+            <div className="space-y-3">
+              {WIZARD_PLATFORMS.map((p) => (
+                <button
+                  key={p.tag}
+                  data-testid={`wizard-platform-${p.tag}`}
+                  onClick={() => loadRecommendations(p.tag)}
+                  className="w-full flex items-center gap-4 p-4 text-left transition-all duration-200 hover:brightness-125"
+                  style={tile}
+                >
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                       style={{ background: `${p.color}22`, border: `1px solid ${p.color}55` }}>
+                    <i className={`${p.icon} text-lg`} style={{ color: p.color }}></i>
+                  </div>
+                  <span className="text-white font-semibold">{p.label}</span>
+                </button>
+              ))}
+              <button
+                onClick={() => loadRecommendations(null)}
+                className="w-full text-center text-slate-400 hover:text-white text-sm py-2 transition-colors"
+              >
+                Not sure - show me everything
+              </button>
+            </div>
+          )}
+
+          {stage === 'results' && (
+            <div>
+              {loading && (
+                <div className="py-10 text-center text-slate-400 text-sm">
+                  <i className="fa fa-circle-notch fa-spin mr-2"></i>Finding servers...
+                </div>
+              )}
+
+              {!loading && failed && (
+                <div className="py-8 text-center">
+                  <i className="fa fa-triangle-exclamation text-2xl text-amber-400 mb-3"></i>
+                  <p className="text-slate-300 text-sm mb-4">We could not load servers just now.</p>
+                  <button
+                    onClick={() => loadRecommendations(platform)}
+                    className="px-4 py-2 rounded-lg text-sm font-semibold"
+                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(59,130,246,0.3)', color: '#fff' }}
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+
+              {!loading && !failed && results.length === 0 && (
+                <div className="py-8 text-center">
+                  <p className="text-slate-300 text-sm mb-4">
+                    No open servers for {platform || 'that'} right now.
+                  </p>
+                  <button
+                    onClick={() => loadRecommendations(null)}
+                    className="px-4 py-2 rounded-lg text-sm font-semibold"
+                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(59,130,246,0.3)', color: '#fff' }}
+                  >
+                    Show every platform
+                  </button>
+                </div>
+              )}
+
+              {!loading && !failed && results.length > 0 && (
+                <div className="space-y-2">
+                  {results.map((c) => {
+                    const details = c.community || c;
+                    const boosted = details.subscription && details.subscription.active;
+                    return (
+                      <button
+                        key={c._id}
+                        onClick={() => { markSeen(); window.location.href = `/community/${encodeCommunityId(c._id)}`; }}
+                        className="w-full flex items-center gap-3 p-3 text-left transition-all duration-200 hover:brightness-125"
+                        style={tile}
+                      >
+                        <img
+                          src={details.imageLink || '/static/images/default-logo.png'}
+                          alt=""
+                          className="w-11 h-11 rounded-lg flex-shrink-0"
+                          style={{ objectFit: 'cover', background: 'rgba(255,255,255,0.05)' }}
+                          onError={(e) => { e.target.src = '/static/images/default-logo.png'; }}
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center gap-1.5">
+                            <span className="text-white font-semibold text-sm truncate">{details.name}</span>
+                            {boosted && (
+                              <i className="fa fa-circle-check text-xs flex-shrink-0" style={{ color: '#fbbf24' }} title="Featured"></i>
+                            )}
+                          </span>
+                          <span className="block text-slate-400 text-xs mt-0.5">
+                            <i className="fa fa-user-group mr-1"></i>{details.membersCount || 0} members
+                          </span>
+                        </span>
+                        <i className="fa fa-chevron-right text-slate-500 text-xs flex-shrink-0"></i>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Progress Dots */}
-        <div className="flex justify-center gap-2 py-4">
-          {steps.map((_, index) => (
+        {/* A wizard nobody can get out of is worse than no wizard. */}
+        <div className="px-6 pb-6 pt-3 flex items-center justify-between gap-3 flex-shrink-0">
+          {stage !== 'intent' ? (
             <button
-              key={index}
-              onClick={() => setCurrentStep(index)}
-              className="w-2 h-2 rounded-full transition-all duration-300"
-              style={{
-                background: index === currentStep
-                  ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'
-                  : 'rgba(255, 255, 255, 0.2)',
-                transform: index === currentStep ? 'scale(1.2)' : 'scale(1)'
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Footer Buttons */}
-        <div className="px-6 pb-6 flex items-center justify-between gap-3">
+              onClick={() => setStage(stage === 'results' ? 'platform' : 'intent')}
+              className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+            >
+              <i className="fa fa-arrow-left mr-2"></i>Back
+            </button>
+          ) : <span />}
           <button
-            onClick={handleSkip}
+            onClick={handleClose}
             className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
           >
-            Skip
+            Just let me look around
           </button>
-
-          <div className="flex gap-2">
-            {currentStep > 0 && (
-              <button
-                onClick={handlePrev}
-                className="px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(59, 130, 246, 0.2)',
-                  color: 'white'
-                }}
-              >
-                <i className="fa fa-arrow-left mr-2"></i>Back
-              </button>
-            )}
-            <button
-              onClick={handleNext}
-              className="px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300"
-              style={{
-                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                color: '#000',
-                boxShadow: '0 4px 15px rgba(251, 191, 36, 0.3)'
-              }}
-            >
-              {isLastStep ? "Let's Go!" : "Next"}
-              {!isLastStep && <i className="fa fa-arrow-right ml-2"></i>}
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -2160,10 +2236,18 @@ const App = () => {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "success", isVisible: false });
 
-  // Check if first-time visitor for welcome modal
+  // Show the first-run wizard to anyone who has not dismissed it.
+  //
+  // Checks the server-side flag as well as localStorage: localStorage alone
+  // re-fires the wizard on every new browser and forgets it on a cache clear,
+  // which for a 10-15 year old on a shared machine means seeing it repeatedly.
+  // Same dismissedTutorials array the community dashboard tutorial uses.
   useEffect(() => {
-    const hasSeenWelcome = localStorage.getItem(getWelcomeModalStorageKey());
-    if (!hasSeenWelcome) {
+    let hasSeenWelcome = null;
+    try { hasSeenWelcome = localStorage.getItem(getWelcomeModalStorageKey()); } catch (e) { /* private mode */ }
+    const dismissed = window.dbUser && window.dbUser.user && window.dbUser.user.dismissedTutorials;
+    const dismissedOnServer = Array.isArray(dismissed) && dismissed.indexOf(WELCOME_WIZARD_TUTORIAL_KEY) !== -1;
+    if (!hasSeenWelcome && !dismissedOnServer) {
       // Small delay to let the page load first
       const timer = setTimeout(() => {
         setShowWelcomeModal(true);
@@ -2368,6 +2452,7 @@ const App = () => {
       <WelcomeModal
         isOpen={showWelcomeModal}
         onClose={() => setShowWelcomeModal(false)}
+        onCreateCommunity={() => setShowCreateModal(true)}
       />
       <Toast
         message={toast.message}
@@ -2378,6 +2463,13 @@ const App = () => {
 
       {/* Search Bar */}
       <SearchBar onCreateCommunity={() => setShowCreateModal(true)} />
+
+      {/* Standing prompt for anyone not in a server yet */}
+      <NoCommunityBanner
+        dbUser={dbUser}
+        onStart={() => setShowWelcomeModal(true)}
+        onCreate={() => setShowCreateModal(true)}
+      />
 
       {/* Quick Navigation */}
       <QuickNav />

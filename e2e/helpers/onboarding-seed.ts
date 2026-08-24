@@ -147,3 +147,24 @@ export async function cleanupOnboardingCommunities(): Promise<void> {
     await client.close();
   }
 }
+
+// The welcome wizard is dismissed server-side, on the user document, so a test
+// that closes it would otherwise hide the wizard from every test that runs
+// afterwards. Reset it before each test that depends on the wizard appearing.
+export const WELCOME_WIZARD_TUTORIAL_KEY = 'welcome_wizard';
+
+export async function clearWelcomeWizardDismissal(): Promise<void> {
+  const client = new MongoClient(DB_URI, { serverSelectionTimeoutMS: 3000 });
+  try {
+    await client.connect();
+    await client
+      .db(DB_NAME)
+      .collection('users')
+      .updateOne(
+        { _id: TEST_USER_ID },
+        { $pull: { 'user.dismissedTutorials': WELCOME_WIZARD_TUTORIAL_KEY } } as never
+      );
+  } finally {
+    await client.close();
+  }
+}
