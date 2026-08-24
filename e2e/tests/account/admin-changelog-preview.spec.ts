@@ -44,6 +44,31 @@ async function fillDraft(page: Page) {
   await page.locator('#changelogBody').fill(DRAFT_BODY);
 }
 
+// Posts the audience simulation is evaluated against. Deliberately mixed:
+// an inactive post, a mobile-only post and an all-surfaces post, so the filters
+// are actually exercised rather than every post counting.
+const SEEDED_POSTS = [
+  { _id: 'p1', title: 'Web one', body: '<p>1</p>', active: true, surfaces: ['web'], publishedAt: '2026-07-01T00:00:00Z' },
+  { _id: 'p2', title: 'Web two', body: '<p>2</p>', active: true, surfaces: ['web'], publishedAt: '2026-07-05T00:00:00Z' },
+  { _id: 'p3', title: 'Everyone', body: '<p>3</p>', active: true, surfaces: [], publishedAt: '2026-07-03T00:00:00Z' },
+  { _id: 'p4', title: 'Mobile only', body: '<p>4</p>', active: true, surfaces: ['mobile'], publishedAt: '2026-07-04T00:00:00Z' },
+  { _id: 'p5', title: 'Switched off', body: '<p>5</p>', active: false, surfaces: ['web'], publishedAt: '2026-07-06T00:00:00Z' },
+];
+
+async function mockChangelogList(page: Page, posts = SEEDED_POSTS) {
+  await page.route('**/api/v1/admin/changelog', async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: posts }) });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '{"data":[]}' });
+  });
+}
+
+function audienceBtn(page: Page, key: string) {
+  return page.locator('#changelogAudienceBtns button[data-audience="' + key + '"]');
+}
+
 test.describe("Admin console — What's New preview", { tag: '@auth' }, () => {
   test.beforeAll(async () => {
     await seedConsoleOwner();
@@ -137,5 +162,95 @@ test.describe("Admin console — What's New preview", { tag: '@auth' }, () => {
 
     await expect(page.locator('#changelogFormError')).toBeVisible();
     await expect(page.locator('.wn-overlay')).toHaveCount(0);
+  });
+
+  test.describe('audience preview', () => {
+    test('an existing user sees every active post for the surface', async ({ page }) => {
+      await mockChangelogList(page);
+      await openChangelogPanel(page);
+
+      // web + all-surfaces, excluding the mobile-only and the inactive one.
+      await expect(audienceBtn(page, 'existing')).toContainText('(3)');
+    });
+
+    test('a brand-new user sees nothing, and is told why', async ({ page }) => {
+      await mockChangelogList(page);
+      await openChangelogPanel(page);
+
+      await expect(audienceBtn(page, 'new')).toContainText('(0)');
+      await audienceBtn(page, 'new').click();
+
+      await expect(page.locator('.wn-overlay')).toHaveCount(0);
+      await expect(page.locator('#changelogFormError')).toContainText(/nothing would be shown/i);
+    });
+
+    test('the draft counts toward existing and caught-up, never new', async ({ page }) => {
+      await mockChangelogList(page);
+      await openChangelogPanel(page);
+
+      await expect(audienceBtn(page, 'caught-up')).toContainText('(0)');
+      await fillDraft(page);
+
+      await expect(audienceBtn(page, 'existing')).toContainText('(4)');
+      await expect(audienceBtn(page, 'caught-up')).toContainText('(1)');
+      // A new account postdates the draft, so it still reaches nobody.
+      await expect(audienceBtn(page, 'new')).toContainText('(0)');
+    });
+
+    test('unchecking Website recounts for mobile', async ({ page }) => {
+      await mockChangelogList(page);
+      await openChangelogPanel(page);
+
+      await page.locator('#changelogSurfaceWeb').uncheck();
+      // mobile-only + all-surfaces
+      await expect(audienceBtn(page, 'existing')).toContainText('(2)');
+    });
+
+    test('an existing user replays the whole queue, newest first', async ({ page }) => {
+      await mockChangelogList(page);
+      await openChangelogPanel(page);
+
+      await audienceBtn(page, 'existing').click();
+      await expect(page.locator('.wn-card')).toBeVisible();
+
+      // Sorted by publishedAt desc: Web two (7/5), Everyone (7/3), Web one (7/1).
+      await expect(page.locator('.wn-title')).toHaveText('Web two');
+      await expect(page.locator('.wn-dots span')).toHaveCount(3);
+      await expect(page.locator('.wn-btn')).toHaveText('Next');
+
+      await page.locator('.wn-btn').click();
+      await expect(page.locator('.wn-title')).toHaveText('Everyone');
+      await page.locator('.wn-btn').click();
+      await expect(page.locator('.wn-title')).toHaveText('Web one');
+      await expect(page.locator('.wn-btn')).toHaveText('Got it');
+    });
+
+    test('a large backlog is flagged before it ships', async ({ page }) => {
+      const many = Array.from({ length: 6 }, (_, i) => ({
+        _id: 'm' + i, title: 'Post ' + i, body: '<p>x</p>',
+        active: true, surfaces: ['web'], publishedAt: '2026-07-0' + (i + 1) + 'T00:00:00Z',
+      }));
+      await mockChangelogList(page, many);
+      await openChangelogPanel(page);
+
+      await expect(audienceBtn(page, 'existing')).toContainText('(6)');
+      await expect(page.locator('#changelogAudienceNote')).toContainText(/in a row is a lot/i);
+    });
+
+    test('previewing an audience never publishes', async ({ page }) => {
+      let posted = 0;
+      await page.route('**/api/v1/admin/changelog', async (route) => {
+        if (route.request().method() === 'POST') { posted++; await route.fulfill({ status: 200, body: '{}' }); return; }
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: SEEDED_POSTS }) });
+      });
+      await openChangelogPanel(page);
+      await fillDraft(page);
+
+      await audienceBtn(page, 'existing').click();
+      await expect(page.locator('.wn-card')).toBeVisible();
+      // No publish affordance on an audience preview — it is a rehearsal.
+      await expect(page.locator('.wn-adminbar')).toHaveCount(0);
+      expect(posted).toBe(0);
+    });
   });
 });

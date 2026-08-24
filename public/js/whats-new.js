@@ -320,8 +320,20 @@
    * Used by the admin console so a post can be checked before it goes out to
    * everyone — a changelog post cannot be un-shown once someone has seen it.
    */
-  window.whatsNewPreview = function (post, actions) {
-    show([post], { preview: true, actions: actions || {} });
+  /**
+   * Accepts a single post or a queue of them. A queue replays exactly what a
+   * given audience would sit through -- paging, progress dots and all -- which
+   * is the only way to feel how a long back-catalog actually lands.
+   *
+   * Returns false when there is nothing to show, so the caller can say "this
+   * audience sees nothing" rather than appearing to do nothing.
+   */
+  window.whatsNewPreview = function (postOrPosts, actions) {
+    var posts = Array.isArray(postOrPosts) ? postOrPosts : [postOrPosts];
+    posts = posts.filter(Boolean);
+    if (!posts.length) return false;
+    show(posts, { preview: true, actions: actions || {} });
+    return true;
   };
 
   if (alreadyInitialized) return; // another copy already armed the auto-load
