@@ -603,6 +603,12 @@ async function cancelJoinRequest() {
       btn.setAttribute('onclick', 'openRequestJoinModal()');
       btn.innerHTML = 'Request to Join';
     });
+
+    // Then re-render from the server. Swapping the buttons alone leaves the
+    // "Pending Approval" badge and the server-rendered next-steps panel on
+    // screen, so a cancelled request still told the member to go join a Discord
+    // and wait to be approved.
+    setTimeout(() => { window.location.reload(); }, 800);
   } catch (err) {
     alert('Error: ' + (err.message || 'Failed to cancel request.'));
   } finally {

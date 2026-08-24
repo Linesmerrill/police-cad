@@ -1559,9 +1559,19 @@
           showToast('Join request submitted successfully!', 2500, 'success');
           closeRequestJoinModal();
 
-          // Update UI without page reload
+          // Patch what we can immediately so the click feels instant, then
+          // re-render from the server.
+          //
+          // The reload is not laziness: the next-steps panel is server-rendered
+          // and branches on the community's Discord invite, the owner's own
+          // joining steps, and whether either exists. Rebuilding that in JS would
+          // duplicate the logic in two places and drift. Since the panel *is* the
+          // point of requesting to join, showing a stale page without it is worse
+          // than an 800ms refresh. The "already joined" path above navigates for
+          // the same reason.
           updateUIAfterJoinRequest();
-          
+          setTimeout(() => { window.location.reload(); }, 800);
+
         } catch (error) {
           console.error('Error submitting join request:', error);
           showToast('Error submitting join request: ' + error.message, 3000, 'error');
