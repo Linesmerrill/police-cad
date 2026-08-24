@@ -16,4 +16,4 @@
    * The script self-guards against being loaded twice.
    */
 %>
-<script src="/static/js/pending-deletion-gate.js"></script>
+<script src="/static/js/pending-deletion-gate.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>

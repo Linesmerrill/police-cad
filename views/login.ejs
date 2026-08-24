@@ -13013,10 +13013,10 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
-    <script src="/static/js/bundle.js"></script>
-    <script src="/static/js/0.chunk.js"></script>
-    <script src="/static/js/main.chunk.js"></script>
+    <script src="/static/js/bundle.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+    <script src="/static/js/0.chunk.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+    <script src="/static/js/main.chunk.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <script src="/main.bf516b5b71358a67eef9.hot-update.js"></script>
-    <script src="/static/js/ads.js"></script>
+    <script src="/static/js/ads.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   </body>
 </html>

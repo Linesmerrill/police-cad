@@ -161,6 +161,38 @@ export async function seedConsoleStaff(): Promise<void> {
   });
 }
 
+// The What's New panel is owner-only (admin-console.ejs gates #changelog-tab on
+// roles.includes('owner')), so the staff fixture above cannot reach it.
+export const TEST_CONSOLE_OWNER_ID = new ObjectId('a5a5a5a5a5a5a5a5a5a5a5a5');
+export const TEST_CONSOLE_OWNER_EMAIL = 'console-owner@test.com';
+export const TEST_CONSOLE_OWNER_PASSWORD = 'console-owner-pw-1';
+
+export async function seedConsoleOwner(): Promise<void> {
+  const hash = bcrypt.hashSync(TEST_CONSOLE_OWNER_PASSWORD);
+  await withDb(async (db) => {
+    await db.collection('admin_users').replaceOne(
+      { _id: TEST_CONSOLE_OWNER_ID },
+      {
+        _id: TEST_CONSOLE_OWNER_ID,
+        email: TEST_CONSOLE_OWNER_EMAIL,
+        password: hash,
+        firstName: 'Console',
+        lastName: 'Owner',
+        role: 'owner',
+        roles: ['owner'],
+        createdAt: new Date(),
+      },
+      { upsert: true }
+    );
+  });
+}
+
+export async function removeConsoleOwner(): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('admin_users').deleteOne({ _id: TEST_CONSOLE_OWNER_ID });
+  });
+}
+
 export async function removeConsoleStaff(): Promise<void> {
   await withDb(async (db) => {
     await db.collection('admin_users').deleteOne({ _id: TEST_CONSOLE_STAFF_ID });
