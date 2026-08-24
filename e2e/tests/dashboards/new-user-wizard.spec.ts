@@ -28,10 +28,25 @@ const RECOMMENDED = {
   totalCount: 2, page: 0, limit: 5,
 };
 
+// Everything is scoped to the wizard panel. /communities renders its own
+// PC / Xbox / PlayStation filter chips behind the modal, so a bare
+// getByRole('button', { name: 'PC' }) resolves to the chip the overlay is
+// covering and the click times out -- which is exactly what happened.
+const wizard = (page: Page) => page.getByTestId('welcome-wizard');
+
 // The wizard opens 500ms after load; wait for it rather than sleeping.
 async function openWizard(page: Page) {
   await page.goto('/communities');
-  await expect(page.getByText('What would you like to do?')).toBeVisible({ timeout: 15_000 });
+  await expect(wizard(page).getByText('What would you like to do?')).toBeVisible({ timeout: 15_000 });
+}
+
+async function chooseJoin(page: Page) {
+  await wizard(page).getByRole('button', { name: /join a server/i }).click();
+  await expect(wizard(page).getByText('What do you play on?')).toBeVisible();
+}
+
+async function choosePlatform(page: Page, tag: string) {
+  await wizard(page).getByTestId(`wizard-platform-${tag}`).click();
 }
 
 async function mockRecommended(page: Page, body: unknown = RECOMMENDED, status = 200) {
@@ -48,33 +63,32 @@ test.describe('New-user wizard', { tag: '@auth' }, () => {
   test('opens on the intent question with an escape hatch', async ({ page }) => {
     await openWizard(page);
 
-    await expect(page.getByRole('button', { name: /join a server/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /start my own/i })).toBeVisible();
+    await expect(wizard(page).getByRole('button', { name: /join a server/i })).toBeVisible();
+    await expect(wizard(page).getByRole('button', { name: /start my own/i })).toBeVisible();
     // A wizard nobody can get out of is worse than no wizard.
-    await expect(page.getByRole('button', { name: /just let me look around/i })).toBeVisible();
+    await expect(wizard(page).getByRole('button', { name: /just let me look around/i })).toBeVisible();
   });
 
   test('asks which platform, and offers a way past it', async ({ page }) => {
     await openWizard(page);
-    await page.getByRole('button', { name: /join a server/i }).click();
+    await chooseJoin(page);
 
-    await expect(page.getByText('What do you play on?')).toBeVisible();
     for (const platform of ['Xbox', 'PlayStation', 'PC']) {
-      await expect(page.getByRole('button', { name: platform, exact: true })).toBeVisible();
+      await expect(wizard(page).getByTestId(`wizard-platform-${platform}`)).toBeVisible();
     }
-    await expect(page.getByRole('button', { name: /show me everything/i })).toBeVisible();
+    await expect(wizard(page).getByRole('button', { name: /show me everything/i })).toBeVisible();
   });
 
   test('shows real servers for the chosen platform', async ({ page }) => {
     await mockRecommended(page);
     await openWizard(page);
-    await page.getByRole('button', { name: /join a server/i }).click();
-    await page.getByRole('button', { name: 'PC', exact: true }).click();
+    await chooseJoin(page);
+    await choosePlatform(page, 'PC');
 
-    await expect(page.getByText('Florida State Role Play')).toBeVisible();
-    await expect(page.getByText('Oregon RP')).toBeVisible();
+    await expect(wizard(page).getByText('Florida State Role Play')).toBeVisible();
+    await expect(wizard(page).getByText('Oregon RP')).toBeVisible();
     // Member counts are the signal a new player actually cares about.
-    await expect(page.getByText(/244 members/)).toBeVisible();
+    await expect(wizard(page).getByText(/244 members/)).toBeVisible();
   });
 
   test('asks the endpoint for the chosen tag and excludes the caller', async ({ page }) => {
@@ -85,8 +99,8 @@ test.describe('New-user wizard', { tag: '@auth' }, () => {
     });
 
     await openWizard(page);
-    await page.getByRole('button', { name: /join a server/i }).click();
-    await page.getByRole('button', { name: 'Xbox', exact: true }).click();
+    await chooseJoin(page);
+    await choosePlatform(page, 'Xbox');
 
     await expect.poll(() => urls.length).toBeGreaterThan(0);
     expect(urls[0]).toContain('tag=Xbox');
@@ -97,21 +111,21 @@ test.describe('New-user wizard', { tag: '@auth' }, () => {
   test('an empty result offers a way forward rather than a dead end', async ({ page }) => {
     await mockRecommended(page, { data: [], totalCount: 0, page: 0, limit: 5 });
     await openWizard(page);
-    await page.getByRole('button', { name: /join a server/i }).click();
-    await page.getByRole('button', { name: 'PC', exact: true }).click();
+    await chooseJoin(page);
+    await choosePlatform(page, 'PC');
 
-    await expect(page.getByText(/no open servers/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /show every platform/i })).toBeVisible();
+    await expect(wizard(page).getByText(/no open servers/i)).toBeVisible();
+    await expect(wizard(page).getByRole('button', { name: /show every platform/i })).toBeVisible();
   });
 
   test('a failed lookup can be retried', async ({ page }) => {
     await mockRecommended(page, { error: 'nope' }, 500);
     await openWizard(page);
-    await page.getByRole('button', { name: /join a server/i }).click();
-    await page.getByRole('button', { name: 'PC', exact: true }).click();
+    await chooseJoin(page);
+    await choosePlatform(page, 'PC');
 
-    await expect(page.getByText(/could not load servers/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /try again/i })).toBeVisible();
+    await expect(wizard(page).getByText(/could not load servers/i)).toBeVisible();
+    await expect(wizard(page).getByRole('button', { name: /try again/i })).toBeVisible();
   });
 
   test('dismissal is recorded server-side, not just in localStorage', async ({ page }) => {
@@ -122,9 +136,9 @@ test.describe('New-user wizard', { tag: '@auth' }, () => {
     });
 
     await openWizard(page);
-    await page.getByRole('button', { name: /just let me look around/i }).click();
+    await wizard(page).getByRole('button', { name: /just let me look around/i }).click();
 
-    await expect(page.getByText('What would you like to do?')).toHaveCount(0);
+    await expect(page.getByTestId('welcome-wizard')).toHaveCount(0);
     await expect.poll(() => dismissals.length).toBeGreaterThan(0);
     // localStorage alone re-fires the wizard on every new browser and forgets it
     // on a cache clear, which on a shared machine means seeing it repeatedly.
@@ -133,18 +147,18 @@ test.describe('New-user wizard', { tag: '@auth' }, () => {
 
   test('does not reappear after being dismissed', async ({ page }) => {
     await openWizard(page);
-    await page.getByRole('button', { name: /just let me look around/i }).click();
-    await expect(page.getByText('What would you like to do?')).toHaveCount(0);
+    await wizard(page).getByRole('button', { name: /just let me look around/i }).click();
+    await expect(page.getByTestId('welcome-wizard')).toHaveCount(0);
 
     await page.goto('/communities');
     // Give it well past the 500ms it waits before opening.
     await page.waitForTimeout(2_000);
-    await expect(page.getByText('What would you like to do?')).toHaveCount(0);
+    await expect(page.getByTestId('welcome-wizard')).toHaveCount(0);
   });
 
   test('the standing banner stays hidden for someone already in a server', async ({ page }) => {
     await openWizard(page);
-    await page.getByRole('button', { name: /just let me look around/i }).click();
+    await wizard(page).getByRole('button', { name: /just let me look around/i }).click();
 
     // The seeded test user is an approved member, so the prompt must not show.
     await expect(page.getByText(/not in a server yet/i)).toHaveCount(0);

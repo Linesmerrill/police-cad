@@ -1592,6 +1592,7 @@ const WelcomeModal = ({ isOpen, onClose, onCreateCommunity }) => {
       onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
     >
       <div
+        data-testid="welcome-wizard"
         className="w-full max-w-md rounded-2xl shadow-2xl relative"
         style={{
           background: 'rgba(15, 15, 20, 0.98)',
@@ -1657,6 +1658,7 @@ const WelcomeModal = ({ isOpen, onClose, onCreateCommunity }) => {
               {WIZARD_PLATFORMS.map((p) => (
                 <button
                   key={p.tag}
+                  data-testid={`wizard-platform-${p.tag}`}
                   onClick={() => loadRecommendations(p.tag)}
                   className="w-full flex items-center gap-4 p-4 text-left transition-all duration-200 hover:brightness-125"
                   style={tile}
