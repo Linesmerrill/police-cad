@@ -694,8 +694,8 @@
     window.CLOUDINARY_API_KEY = '<%= process.env.CLOUDINARY_API_KEY || "" %>';
     window.CLOUDINARY_UPLOAD_PRESET = '<%= process.env.CLOUDINARY_UPLOAD_PRESET || "" %>';
   </script>
-  <script src="/static/js/image-compress.js"></script>
-  <script src="/static/js/cloudinary-upload.js"></script>
+  <script src="/static/js/image-compress.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cloudinary-upload.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
 
   <script>
     // ===== Map Pan/Zoom =====

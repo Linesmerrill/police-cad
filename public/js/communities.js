@@ -1712,7 +1712,8 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
     description: "",
     visibility: "public",
     tags: [],
-    imageLink: ""
+    imageLink: "",
+    discordInviteUrl: ""
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -1781,6 +1782,7 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
             imageLink: formData.imageLink || "/static/images/default-logo.png",
             visibility: formData.visibility,
             tags: formData.tags,
+            discordInviteUrl: formData.discordInviteUrl.trim(),
             promotionalText: "",
             promotionalDescription: ""
           }
@@ -1790,7 +1792,7 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
       if (!response.ok) throw new Error("Failed");
 
       setToast({ message: `"${formData.name}" created!`, type: "success", isVisible: true });
-      setFormData({ name: "", description: "", visibility: "public", tags: [], imageLink: "" });
+      setFormData({ name: "", description: "", visibility: "public", tags: [], imageLink: "", discordInviteUrl: "" });
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
@@ -1891,6 +1893,33 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
                   rows="3"
                   placeholder="Describe your community"
                 />
+              </div>
+
+              {/*
+                Discord invite. This lives on the CREATE form on purpose: across
+                live public communities, fields on this form are filled 78-89% of
+                the time while fields that exist only in settings sit at 0.4-4.7%.
+                A new member who requests to join is shown this link as their next
+                step, which is the whole reason the field exists.
+              */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Discord invite <span className="text-slate-500 font-normal">(recommended)</span>
+                </label>
+                <input
+                  type="url"
+                  value={formData.discordInviteUrl}
+                  onChange={(e) => { setFormData(p => ({ ...p, discordInviteUrl: e.target.value })); setError(""); }}
+                  className="w-full px-4 py-3 rounded-lg text-white placeholder-slate-500 focus:outline-none"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(59, 130, 246, 0.2)'
+                  }}
+                  placeholder="https://discord.gg/your-invite"
+                />
+                <p className="text-xs text-slate-500 mt-1.5">
+                  New members are pointed here after they request to join, so they know where to go next.
+                </p>
               </div>
 
               {/* Privacy */}

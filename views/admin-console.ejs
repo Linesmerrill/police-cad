@@ -2828,9 +2828,28 @@
                 </div>
               </div>
               <div id="changelogFormError" style="color:#ef4444; font-size:13px; margin:6px 0 10px; display:none;"></div>
-              <button type="button" id="changelogPublishBtn" class="ac-btn ac-btn-primary" onclick="publishChangelogPost()">
-                <i class="fas fa-paper-plane"></i> Publish update
-              </button>
+              <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <button type="button" id="changelogPublishBtn" class="ac-btn ac-btn-primary" onclick="previewChangelogPost(true)">
+                  <i class="fas fa-eye"></i> Preview &amp; Publish
+                </button>
+                <button type="button" id="changelogPreviewBtn" class="ac-btn" onclick="previewChangelogPost(false)">
+                  <i class="fas fa-magnifying-glass"></i> Preview only
+                </button>
+                <span style="color:#6b7280; font-size:12px;">
+                  Preview renders the real modal, so what you approve is what users get.
+                </span>
+              </div>
+
+              <!-- Audience preview. What matters is not how one post looks but
+                   how many land at once: a reader who has never opened the modal
+                   gets the entire back-catalog in a row. -->
+              <div style="margin-top:18px; padding-top:16px; border-top:1px solid rgba(148,163,184,0.12);">
+                <label class="ac-label" style="display:block; margin-bottom:8px;">Preview as</label>
+                <div id="changelogAudienceBtns" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                  <div style="color:#6b7280; font-size:13px;">Loading…</div>
+                </div>
+                <p id="changelogAudienceNote" style="color:#6b7280; font-size:12px; margin:10px 0 0;"></p>
+              </div>
             </div>
           </div>
           <h3 style="color:#e8ecf4; font-size:15px; font-weight:600; margin:0 0 10px;">Published posts</h3>
@@ -4584,8 +4603,13 @@
       </div>
     </div>
 
-    <script src="/static/js/jquery.min.js"></script>
-    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/jquery.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+    <script src="/static/js/bootstrap.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+    <!-- Exports window.whatsNewPreview so the What's New panel can render a
+         draft through the same modal users get. This page defines no
+         window.dbUser, so the script's own auto-show is inert here — an admin
+         does not want the changelog popping up while authoring one. -->
+    <script src="/static/js/whats-new.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
       if (typeof io === 'undefined') {
@@ -4732,6 +4756,8 @@
           type: 'GET'
         }).done(function(res) {
           var posts = (res && res.data) || [];
+          changelogAllPosts = posts;
+          renderChangelogAudiences();
           if (!posts.length) {
             list.innerHTML = '<div style="color:#6b7280; font-size:14px;">No posts published yet.</div>';
             return;
@@ -4753,9 +4779,178 @@
         });
       }
 
-      function publishChangelogPost() {
+      // ── Audience preview ────────────────────────────────────────────────
+      // Mirrors GetUserAnnouncementsHandler exactly: active posts only, surface
+      // matches when the post targets it OR targets nothing, newest first, and a
+      // post is suppressed unless publishedAt is strictly after the account's
+      // createdAt. Getting any of that wrong would make the preview lie, which is
+      // worse than not having one.
+      var changelogAllPosts = [];
+
+      function changelogSelectedSurfaces() {
+        var surfaces = [];
+        if (document.getElementById('changelogSurfaceWeb').checked) surfaces.push('web');
+        if (document.getElementById('changelogSurfaceMobile').checked) surfaces.push('mobile');
+        return surfaces;
+      }
+
+      // A post with no surfaces targets everyone, matching the API's
+      // {surfaces: surface} OR {surfaces: []} OR absent OR null.
+      function changelogPostTargets(post, surface) {
+        if (!surface) return true;
+        var s = post.surfaces;
+        if (!s || !s.length) return true;
+        return s.indexOf(surface) !== -1;
+      }
+
+      function changelogActiveFor(surface) {
+        return changelogAllPosts
+          .filter(function (p) { return p.active && changelogPostTargets(p, surface); })
+          .slice()
+          .sort(function (a, b) {
+            return new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0);
+          });
+      }
+
+      // The draft, shaped like a post, so it can sit at the front of a queue.
+      function changelogDraftAsPost() {
+        var title = (document.getElementById('changelogTitle').value || '').trim();
+        var body = (document.getElementById('changelogBody').value || '').trim();
+        if (!title || !body) return null;
+        return {
+          _id: 'draft',
+          title: title,
+          body: body,
+          active: true,
+          surfaces: changelogSelectedSurfaces(),
+          publishedAt: new Date().toISOString(),
+          __draft: true
+        };
+      }
+
+      var CHANGELOG_AUDIENCES = [
+        {
+          key: 'new',
+          label: 'New user',
+          // Back-catalog is suppressed for accounts created after a post was
+          // published, and a brand-new account postdates everything already out.
+          queue: function () { return []; },
+          note: 'Someone signing up today sees nothing: a post only shows to accounts that existed before it was published. Even this draft will not reach them.'
+        },
+        {
+          key: 'existing',
+          label: 'Existing user',
+          // Never opened the modal, so the whole active back-catalog lands at
+          // once. This is the number worth watching.
+          queue: function (surface, draft) {
+            var q = changelogActiveFor(surface);
+            return draft ? [draft].concat(q) : q;
+          },
+          note: 'A long-standing member who has never opened the modal gets all of these back to back, newest first.'
+        },
+        {
+          key: 'caught-up',
+          label: 'Caught-up user',
+          // Has seen everything published so far; only the draft is new.
+          queue: function (surface, draft) { return draft ? [draft] : []; },
+          note: 'Someone already up to date sees only what you publish next.'
+        }
+      ];
+
+      // Keep the counts honest as the draft and surfaces change, so the number
+      // on the button always describes what would ship right now.
+      function wireChangelogAudienceInputs() {
+        ['changelogTitle', 'changelogBody', 'changelogSurfaceWeb', 'changelogSurfaceMobile']
+          .forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', renderChangelogAudiences);
+            el.addEventListener('change', renderChangelogAudiences);
+          });
+      }
+      document.addEventListener('DOMContentLoaded', wireChangelogAudienceInputs);
+
+      function renderChangelogAudiences() {
+        var wrap = document.getElementById('changelogAudienceBtns');
+        var noteEl = document.getElementById('changelogAudienceNote');
+        if (!wrap) return;
+
+        var surfaces = changelogSelectedSurfaces();
+        // Preview the surface the modal actually runs on; mobile renders the
+        // body as plain text through a different component.
+        var surface = surfaces.indexOf('web') !== -1 ? 'web' : (surfaces[0] || '');
+        var draft = changelogDraftAsPost();
+
+        // Build once, then only update the counts. This runs on every keystroke
+        // in the title and body, and rebuilding the buttons each time detaches
+        // the node mid-interaction -- a click can land on an element that has
+        // already been replaced and do nothing.
+        if (!wrap.getAttribute('data-built')) {
+          wrap.innerHTML = '';
+          CHANGELOG_AUDIENCES.forEach(function (aud) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ac-btn';
+            btn.setAttribute('data-audience', aud.key);
+            btn.innerHTML = '<i class="fas fa-user"></i> ' + aud.label +
+              ' <span class="changelog-aud-count" style="opacity:.75;"></span>';
+            btn.addEventListener('click', function () { previewChangelogAudience(aud.key); });
+            wrap.appendChild(btn);
+          });
+          wrap.setAttribute('data-built', '1');
+        }
+
+        CHANGELOG_AUDIENCES.forEach(function (aud) {
+          var btn = wrap.querySelector('button[data-audience="' + aud.key + '"]');
+          if (!btn) return;
+          var count = aud.queue(surface, draft).length;
+          btn.querySelector('.changelog-aud-count').textContent = '(' + count + ')';
+          btn.style.opacity = count ? '' : '0.55';
+          btn.title = count ? '' : aud.label + ' would see nothing right now.';
+        });
+
+        var existing = CHANGELOG_AUDIENCES[1].queue(surface, draft).length;
+        var parts = [];
+        if (surface) parts.push('Counts are for the <b>' + surface + '</b> surface.');
+        if (draft) parts.push('The draft above is included.');
+        // Flag the pile-up before it ships rather than after.
+        if (existing >= 5) {
+          parts.push('<b style="color:#fbbf24;">' + existing + ' in a row is a lot</b> — consider deactivating older posts.');
+        }
+        noteEl.innerHTML = parts.join(' ');
+      }
+
+      function previewChangelogAudience(key) {
         var errEl = document.getElementById('changelogFormError');
-        var btn = document.getElementById('changelogPublishBtn');
+        var aud = CHANGELOG_AUDIENCES.filter(function (a) { return a.key === key; })[0];
+        if (!aud) return;
+
+        var surfaces = changelogSelectedSurfaces();
+        var surface = surfaces.indexOf('web') !== -1 ? 'web' : (surfaces[0] || '');
+        var queue = aud.queue(surface, changelogDraftAsPost());
+
+        ensureWhatsNewPreview(function (ready) {
+          if (!ready) {
+            errEl.style.color = '#ef4444';
+            errEl.textContent = 'Preview could not load. Hard-refresh the page (Ctrl/Cmd + Shift + R) and try again.';
+            errEl.style.display = 'block';
+            return;
+          }
+          // whatsNewPreview returns false for an empty queue, which is a real
+          // answer here rather than a failure.
+          if (!window.whatsNewPreview(queue, {})) {
+            errEl.style.color = '#9aa0b4';
+            errEl.textContent = aud.label + ': nothing would be shown. ' + aud.note;
+            errEl.style.display = 'block';
+          }
+        });
+      }
+
+      // Reads and validates the form once for both the preview and the publish
+      // path, so the thing previewed is exactly the thing posted. Returns null
+      // and surfaces the error when the draft is not publishable.
+      function readChangelogDraft() {
+        var errEl = document.getElementById('changelogFormError');
         var title = (document.getElementById('changelogTitle').value || '').trim();
         var body = (document.getElementById('changelogBody').value || '').trim();
         var surfaces = [];
@@ -4766,14 +4961,94 @@
         if (!title || !body) {
           errEl.textContent = 'Title and body are required.';
           errEl.style.display = 'block';
-          return;
+          return null;
         }
         if (!surfaces.length) {
           errEl.textContent = 'Select at least one surface.';
           errEl.style.display = 'block';
-          return;
+          return null;
         }
+        return { title: title, body: body, surfaces: surfaces };
+      }
 
+      /**
+       * Show the draft in the real What's New modal before it goes anywhere.
+       *
+       * A changelog post cannot be un-shown: seen-state is per user, so a broken
+       * layout or a typo is permanent for everyone who opened it before it was
+       * fixed. Previewing through the shipped modal (window.whatsNewPreview,
+       * exported by whats-new.js) means malformed HTML, an unclosed tag or an
+       * icon that does not exist shows up here rather than in production.
+       *
+       * withPublish=false previews only; true adds a Publish button to the
+       * preview's action bar.
+       */
+      // Recover from a stale cached copy of whats-new.js rather than dead-ending.
+      // That file is pulled in by the footer on nearly every page, so a browser
+      // can be holding a build that predates the preview export. Refetch once,
+      // cache-busted, before giving up.
+      function ensureWhatsNewPreview(done) {
+        if (typeof window.whatsNewPreview === 'function') { done(true); return; }
+        var s = document.createElement('script');
+        s.src = '/static/js/whats-new.js?reload=' + Date.now();
+        s.onload = function () { done(typeof window.whatsNewPreview === 'function'); };
+        s.onerror = function () { done(false); };
+        document.head.appendChild(s);
+      }
+
+      function previewChangelogPost(withPublish) {
+        var draft = readChangelogDraft();
+        if (!draft) return;
+        var errEl = document.getElementById('changelogFormError');
+
+        ensureWhatsNewPreview(function (ready) {
+          if (!ready) {
+            // Never silently fall through to publishing something unpreviewed:
+            // a changelog post cannot be un-shown.
+            errEl.textContent = 'Preview could not load. Hard-refresh the page (Ctrl/Cmd + Shift + R) and try again.';
+            errEl.style.display = 'block';
+            return;
+          }
+          showChangelogPreview(draft, withPublish);
+        });
+      }
+
+      function showChangelogPreview(draft, withPublish) {
+        var errEl = document.getElementById('changelogFormError');
+
+        var surfaceNote = draft.surfaces.indexOf('mobile') !== -1
+          ? ' Mobile renders the body as plain text, so check it reads without the HTML.'
+          : '';
+
+        window.whatsNewPreview(
+          { _id: 'preview', title: draft.title, body: draft.body },
+          withPublish ? {
+            confirmLabel: 'Publish to ' + draft.surfaces.join(' + '),
+            onConfirm: function () { publishChangelogPost(draft); },
+            onCancel: function () {
+              if (surfaceNote) {
+                errEl.textContent = 'Not published.' + surfaceNote;
+                errEl.style.color = '#9aa0b4';
+                errEl.style.display = 'block';
+              }
+            }
+          } : {}
+        );
+      }
+
+      function publishChangelogPost(draft) {
+        var errEl = document.getElementById('changelogFormError');
+        var btn = document.getElementById('changelogPublishBtn');
+        // Re-read if called without a validated draft, so the function stays
+        // usable on its own.
+        draft = draft || readChangelogDraft();
+        if (!draft) return;
+        var title = draft.title;
+        var body = draft.body;
+        var surfaces = draft.surfaces;
+
+        errEl.style.color = '#ef4444';
+        errEl.style.display = 'none';
         btn.disabled = true;
         var origHtml = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing…';

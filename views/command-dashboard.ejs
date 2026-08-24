@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/dd-components.css">
   <link rel="stylesheet" href="/static/css/cd-dispatch.css">
-  <script src="/static/js/jquery.min.js"></script>
+  <script src="/static/js/jquery.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <style>
     /* ===================================================
        COMMAND DASHBOARD — Tactical Command Center
@@ -1226,7 +1226,7 @@
   </script>
 
   <!-- Shared component implementations (warrants, notepad, 10-codes, penal codes, court cases) -->
-  <script src="/static/js/dd-components.js"></script>
+  <script src="/static/js/dd-components.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <!-- dd-components.js serves: renderWarrantsPanel, loadPendingWarrants, renderCodesPanel, loadTenCodes, etc. -->
 
   <script>
@@ -2470,14 +2470,14 @@
       document.head.appendChild(script);
     }
   </script>
-  <script src="/static/js/alert-sounds.js"></script>
-  <script src="/static/js/dd-limits.js"></script>
-  <script src="/static/js/dd-911.js"></script>
-  <script src="/static/js/dd-notifications.js"></script>
+  <script src="/static/js/alert-sounds.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/dd-limits.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/dd-911.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/dd-notifications.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
   <!-- Manage Ranks (shared partial + module) — used by dd-settings.js Ranks tab -->
   <template id="manage-ranks-tpl"><%- include('partials/manage-ranks', { rkmEmbedded: true }) %></template>
-  <script src="/static/js/manage-ranks.js"></script>
+  <script src="/static/js/manage-ranks.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script>
     // Pending-promotions badge wiring (mirrors department-dashboard.ejs).
     window.ddRanksPendingCount = window.ddRanksPendingCount || {};
@@ -2534,33 +2534,33 @@
       }
     };
   </script>
-  <script src="/static/js/dd-settings.js"></script>
-  <script src="/static/js/cd-beta-feedback.js"></script>
+  <script src="/static/js/dd-settings.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-beta-feedback.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <!-- Police command components -->
-  <script src="/static/js/vehicle-flags.js"></script>
-  <script src="/static/js/cd-person-search.js"></script>
-  <script src="/static/js/cd-vehicle-search.js"></script>
-  <script src="/static/js/cd-firearm-search.js"></script>
-  <script src="/static/js/cd-bolos.js"></script>
-  <script src="/static/js/cd-bolos-warrants.js"></script>
-  <script src="/static/js/cd-alerts.js"></script>
-  <script src="/static/js/cd-action-forms.js"></script>
-  <script src="/static/js/cd-warrant-database.js"></script>
-  <script src="/static/js/cd-status-panel.js"></script>
-  <script src="/static/js/cd-calls.js"></script>
+  <script src="/static/js/vehicle-flags.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-person-search.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-vehicle-search.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-firearm-search.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-bolos.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-bolos-warrants.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-alerts.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-action-forms.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-warrant-database.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-status-panel.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-calls.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <!-- Dispatch control layout (activates when template.name === 'dispatch') -->
-  <script src="/static/js/cd-dispatch-roster.js"></script>
-  <script src="/static/js/cd-dispatch-board.js"></script>
-  <script src="/static/js/cd-dispatch-detail.js"></script>
-  <script src="/static/js/cd-dispatch-intake.js"></script>
-  <script src="/static/js/cd-dispatch-dnd.js"></script>
-  <script src="/static/js/cd-dispatch-tones.js"></script>
-  <script src="/static/js/cd-dispatch-unit-console.js"></script>
-  <script src="/static/js/cd-dispatch-realtime.js"></script>
-  <script src="/static/js/cd-dispatch-layout.js"></script>
-  <script src="/static/js/rank-progress.js"></script>
+  <script src="/static/js/cd-dispatch-roster.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-dispatch-board.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-dispatch-detail.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-dispatch-intake.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-dispatch-dnd.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-dispatch-tones.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-dispatch-unit-console.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-dispatch-realtime.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/cd-dispatch-layout.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/rank-progress.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script>if (typeof loadMyRankProgress === 'function') loadMyRankProgress();</script>
-  <script src="/static/js/dd-economy.js"></script>
+  <script src="/static/js/dd-economy.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <%- include('partials/last-dashboard-tracker') %>
   <%- include('partials/pending-deletion-gate') %>
 </body>

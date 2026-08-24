@@ -1859,18 +1859,18 @@ a:not([href]):not([tabindex]):not(.pager a) {
   <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
   <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>
-  <script src="/static/js/bootstrap.min.js"></script>
-  <script src="/static/js/jquery.easing.min.js"></script>
-  <script src="/static/js/wow.js"></script>
-  <script src="/static/js/popper.js"></script>
-  <script src="/static/js/main.js"></script>
-  <script src="/static/js/scripts.js"></script>
-  <script src="/static/js/faker.js"></script>
-  <script src="/static/js/moment.js"></script>
-  <script src="/static/js/civ-dashboard.js"></script>
-  <script src="/static/js/departments.js"></script>
-  <script src="/static/js/notifications.js"></script>
-  <script src="/static/js/ads.js"></script>
+  <script src="/static/js/bootstrap.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/jquery.easing.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/wow.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/popper.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/main.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/scripts.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/faker.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/moment.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/civ-dashboard.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/departments.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/notifications.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/ads.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
   <script type="module" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule="" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"></script>

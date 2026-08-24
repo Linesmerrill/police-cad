@@ -17,14 +17,22 @@
  * across devices/reinstalls.
  */
 (function () {
-  if (window.__whatsNewInit) return;
+  // Note this does NOT return early. This file is pulled in by footer.ejs and
+  // last-dashboard-tracker.ejs on nearly every page, so a browser almost always
+  // holds a cached copy. If an older copy runs first it sets this flag and
+  // returns before exporting anything; a newer copy loaded afterwards would then
+  // no-op and leave window.whatsNewPreview undefined forever. The flag now
+  // guards only the one thing that must not happen twice: the auto-load.
+  var alreadyInitialized = window.__whatsNewInit;
   window.__whatsNewInit = true;
 
   var dbUser = window.dbUser;
   // dbUser may be either the flat user doc ({_id, ...}) or a wrapper
   // ({user: {_id, ...}}) depending on the host page — accept both.
   var userId = dbUser && (dbUser._id || (dbUser.user && dbUser.user._id));
-  if (!userId) return; // unauthenticated / no session — nothing to show
+  // No early return on a missing userId: only the auto-load below needs a
+  // session. The preview export must still exist so the admin console can call
+  // it, and bailing here would leave window.whatsNewPreview undefined.
 
   function apiBase() {
     return (window.ddConfig && window.ddConfig.API_URL) ||
@@ -97,6 +105,24 @@
       ".wn-body li>i[class*='fa']{flex:0 0 auto;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;",
       "font-size:13px;color:#7dd3fc;background:rgba(56,189,248,.10);border:1px solid rgba(56,189,248,.24);border-radius:8px;margin-top:1px}",
       ".wn-body li>i[class*='fa']+span{flex:1 1 auto;min-width:0}",
+      /* ── admin preview bar (preview mode only) ──
+         Sits below the card as a sibling, never inside it, so the previewed
+         card is byte-for-byte what ships. */
+      ".wn-adminbar{position:absolute;left:50%;transform:translateX(-50%);bottom:22px;z-index:3;",
+      "display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;",
+      "padding:11px 16px;border-radius:14px;background:rgba(8,14,26,.92);",
+      "border:1px solid rgba(255,255,255,.10);box-shadow:0 12px 34px -10px rgba(0,0,0,.7);",
+      "font-family:'Outfit','Segoe UI',system-ui,sans-serif;}",
+      ".wn-adminbar-note{color:#8296b0;font-size:12.5px;}",
+      ".wn-adminbar-btns{display:flex;gap:8px;}",
+      ".wn-adminbar-btn{appearance:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;",
+      "padding:8px 14px;border-radius:9px;transition:.15s;}",
+      ".wn-adminbar-ghost{background:transparent;border:1px solid rgba(255,255,255,.14);color:#c7ccdd;}",
+      ".wn-adminbar-ghost:hover{background:rgba(255,255,255,.07);color:#eaf2fb;}",
+      ".wn-adminbar-go{border:none;background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:#04121f;}",
+      ".wn-adminbar-go:hover{filter:brightness(1.08);}",
+      "@media (max-width:560px){.wn-adminbar{left:16px;right:16px;transform:none;bottom:14px;}}",
+
       ".wn-fade{position:absolute;left:0;right:0;bottom:0;height:46px;pointer-events:none;opacity:0;transition:opacity .2s;",
       "background:linear-gradient(to top,#080e1a,rgba(8,14,26,0))}",
       ".wn-bodywrap.scrollable .wn-fade{opacity:1}",
@@ -144,8 +170,19 @@
     } catch (e) {}
   }
 
-  function show(posts) {
+  /**
+   * @param posts   the changelog posts to page through
+   * @param opts    {preview:boolean, actions:{confirmLabel, onConfirm, onCancel}}
+   *
+   * Preview mode reuses this function rather than rendering a lookalike, so what
+   * an admin approves is the same DOM and the same stylesheet users get. The
+   * only differences are that nothing is marked seen (a draft has no id yet) and
+   * an action bar is appended to the overlay OUTSIDE the card, so the card stays
+   * pixel-accurate.
+   */
+  function show(posts, opts) {
     if (!posts || !posts.length) return;
+    opts = opts || {};
     injectStyles();
 
     var idx = 0;
@@ -211,7 +248,7 @@
 
     // Advance to the next post; mark the current one seen so it won't return.
     function next() {
-      markSeen(posts[idx]._id);
+      if (!opts.preview) markSeen(posts[idx]._id);
       idx++;
       if (idx >= posts.length) { close(); return; }
       render();
@@ -220,8 +257,9 @@
     // Dismiss (X / Esc / backdrop): mark the current post seen and close;
     // any remaining posts surface on the next visit.
     function dismiss() {
-      markSeen(posts[idx]._id);
+      if (!opts.preview) markSeen(posts[idx]._id);
       close();
+      if (opts.actions && opts.actions.onCancel) opts.actions.onCancel();
     }
 
     function onKey(e) {
@@ -234,6 +272,28 @@
     bodyEl.addEventListener('scroll', updateFade);
     window.addEventListener('resize', updateFade);
     document.addEventListener('keydown', onKey);
+
+    // Admin action bar. Deliberately a sibling of the card, not inside it, so
+    // the previewed card is exactly what ships.
+    if (opts.actions && opts.actions.onConfirm) {
+      var bar = document.createElement('div');
+      bar.className = 'wn-adminbar';
+      bar.innerHTML =
+        '<span class="wn-adminbar-note">Preview — this is exactly what users will see.</span>' +
+        '<div class="wn-adminbar-btns">' +
+          '<button type="button" class="wn-adminbar-btn wn-adminbar-ghost">Keep editing</button>' +
+          '<button type="button" class="wn-adminbar-btn wn-adminbar-go">' +
+            (opts.actions.confirmLabel || 'Publish') +
+          '</button>' +
+        '</div>';
+      bar.addEventListener('click', function (e) { e.stopPropagation(); });
+      bar.querySelector('.wn-adminbar-ghost').addEventListener('click', dismiss);
+      bar.querySelector('.wn-adminbar-go').addEventListener('click', function () {
+        close();
+        opts.actions.onConfirm();
+      });
+      overlay.appendChild(bar);
+    }
 
     render();
     prevBodyOverflow = document.body.style.overflow;
@@ -254,6 +314,30 @@
         .catch(function () {});
     } catch (e) {}
   }
+
+  /**
+   * Render a draft post exactly as users will see it, with an approve/cancel bar.
+   * Used by the admin console so a post can be checked before it goes out to
+   * everyone — a changelog post cannot be un-shown once someone has seen it.
+   */
+  /**
+   * Accepts a single post or a queue of them. A queue replays exactly what a
+   * given audience would sit through -- paging, progress dots and all -- which
+   * is the only way to feel how a long back-catalog actually lands.
+   *
+   * Returns false when there is nothing to show, so the caller can say "this
+   * audience sees nothing" rather than appearing to do nothing.
+   */
+  window.whatsNewPreview = function (postOrPosts, actions) {
+    var posts = Array.isArray(postOrPosts) ? postOrPosts : [postOrPosts];
+    posts = posts.filter(Boolean);
+    if (!posts.length) return false;
+    show(posts, { preview: true, actions: actions || {} });
+    return true;
+  };
+
+  if (alreadyInitialized) return; // another copy already armed the auto-load
+  if (!userId) return; // unauthenticated — nothing to auto-show
 
   // Small delay so dbUser and the page have settled before we overlay anything.
   if (document.readyState === 'loading') {

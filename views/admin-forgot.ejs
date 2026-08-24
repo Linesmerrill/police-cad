@@ -72,8 +72,8 @@
     </section>
 
     <% include footer %>
-    <script src="/static/js/jquery.min.js"></script>
-    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/jquery.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+    <script src="/static/js/bootstrap.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <script>
       document.getElementById('forgotForm').addEventListener('submit', function() {
         const submitBtn = document.getElementById('submitBtn');

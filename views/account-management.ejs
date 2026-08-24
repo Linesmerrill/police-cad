@@ -1,7 +1,7 @@
 <!-- Shared beta-feedback modal module — used by the Settings toggles below
      AND by the Command Dashboard's Classic button, so both paths capture
      opt-out feedback with the same UX and POST to the same endpoint. -->
-<script src="/static/js/cd-beta-feedback.js"></script>
+<script src="/static/js/cd-beta-feedback.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
 <style>
   /* Sound Settings Modal — all sizes in px to avoid Bootstrap/root font-size issues */
   .ss-backdrop {
