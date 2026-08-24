@@ -2828,9 +2828,17 @@
                 </div>
               </div>
               <div id="changelogFormError" style="color:#ef4444; font-size:13px; margin:6px 0 10px; display:none;"></div>
-              <button type="button" id="changelogPublishBtn" class="ac-btn ac-btn-primary" onclick="publishChangelogPost()">
-                <i class="fas fa-paper-plane"></i> Publish update
-              </button>
+              <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <button type="button" id="changelogPublishBtn" class="ac-btn ac-btn-primary" onclick="previewChangelogPost(true)">
+                  <i class="fas fa-eye"></i> Preview &amp; Publish
+                </button>
+                <button type="button" id="changelogPreviewBtn" class="ac-btn" onclick="previewChangelogPost(false)">
+                  <i class="fas fa-magnifying-glass"></i> Preview only
+                </button>
+                <span style="color:#6b7280; font-size:12px;">
+                  Preview renders the real modal, so what you approve is what users get.
+                </span>
+              </div>
             </div>
           </div>
           <h3 style="color:#e8ecf4; font-size:15px; font-weight:600; margin:0 0 10px;">Published posts</h3>
@@ -4586,6 +4594,11 @@
 
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
+    <!-- Exports window.whatsNewPreview so the What's New panel can render a
+         draft through the same modal users get. This page defines no
+         window.dbUser, so the script's own auto-show is inert here — an admin
+         does not want the changelog popping up while authoring one. -->
+    <script src="/static/js/whats-new.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
       if (typeof io === 'undefined') {
@@ -4753,9 +4766,11 @@
         });
       }
 
-      function publishChangelogPost() {
+      // Reads and validates the form once for both the preview and the publish
+      // path, so the thing previewed is exactly the thing posted. Returns null
+      // and surfaces the error when the draft is not publishable.
+      function readChangelogDraft() {
         var errEl = document.getElementById('changelogFormError');
-        var btn = document.getElementById('changelogPublishBtn');
         var title = (document.getElementById('changelogTitle').value || '').trim();
         var body = (document.getElementById('changelogBody').value || '').trim();
         var surfaces = [];
@@ -4766,14 +4781,73 @@
         if (!title || !body) {
           errEl.textContent = 'Title and body are required.';
           errEl.style.display = 'block';
-          return;
+          return null;
         }
         if (!surfaces.length) {
           errEl.textContent = 'Select at least one surface.';
           errEl.style.display = 'block';
+          return null;
+        }
+        return { title: title, body: body, surfaces: surfaces };
+      }
+
+      /**
+       * Show the draft in the real What's New modal before it goes anywhere.
+       *
+       * A changelog post cannot be un-shown: seen-state is per user, so a broken
+       * layout or a typo is permanent for everyone who opened it before it was
+       * fixed. Previewing through the shipped modal (window.whatsNewPreview,
+       * exported by whats-new.js) means malformed HTML, an unclosed tag or an
+       * icon that does not exist shows up here rather than in production.
+       *
+       * withPublish=false previews only; true adds a Publish button to the
+       * preview's action bar.
+       */
+      function previewChangelogPost(withPublish) {
+        var draft = readChangelogDraft();
+        if (!draft) return;
+
+        var errEl = document.getElementById('changelogFormError');
+        if (typeof window.whatsNewPreview !== 'function') {
+          // Never silently fall through to publishing something unpreviewed.
+          errEl.textContent = 'Preview is unavailable (whats-new.js failed to load). Reload the page and try again.';
+          errEl.style.display = 'block';
           return;
         }
 
+        var surfaceNote = draft.surfaces.indexOf('mobile') !== -1
+          ? ' Mobile renders the body as plain text, so check it reads without the HTML.'
+          : '';
+
+        window.whatsNewPreview(
+          { _id: 'preview', title: draft.title, body: draft.body },
+          withPublish ? {
+            confirmLabel: 'Publish to ' + draft.surfaces.join(' + '),
+            onConfirm: function () { publishChangelogPost(draft); },
+            onCancel: function () {
+              if (surfaceNote) {
+                errEl.textContent = 'Not published.' + surfaceNote;
+                errEl.style.color = '#9aa0b4';
+                errEl.style.display = 'block';
+              }
+            }
+          } : {}
+        );
+      }
+
+      function publishChangelogPost(draft) {
+        var errEl = document.getElementById('changelogFormError');
+        var btn = document.getElementById('changelogPublishBtn');
+        // Re-read if called without a validated draft, so the function stays
+        // usable on its own.
+        draft = draft || readChangelogDraft();
+        if (!draft) return;
+        var title = draft.title;
+        var body = draft.body;
+        var surfaces = draft.surfaces;
+
+        errEl.style.color = '#ef4444';
+        errEl.style.display = 'none';
         btn.disabled = true;
         var origHtml = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing…';
