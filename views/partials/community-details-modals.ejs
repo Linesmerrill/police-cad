@@ -59,6 +59,51 @@
           <textarea id="communityDescription" placeholder="Community description..." 
                     style="width:100%; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:8px; padding:0.75rem; font-size:1rem; min-height:80px; resize:vertical;"><%= community.community.description || '' %></textarea>
           
+          <!-- New Member Onboarding -->
+          <%
+            // discordInviteSource is resolved by the API: "owner" when the owner
+            // set it, "promotion"/"description" when we derived it from an RP
+            // promotion or their description. An inherited link is shown as a
+            // suggestion, never presented as something they already saved.
+            var onbInviteVal = community.community.discordInviteUrl || '';
+            var onbInviteSrc = community.community.discordInviteSource || '';
+            var onbInherited = onbInviteVal && onbInviteSrc && onbInviteSrc !== 'owner';
+            var onbStepsVal = Array.isArray(community.community.onboardingSteps) ? community.community.onboardingSteps : [];
+          %>
+          <div style="margin-top:1.5rem;">
+            <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem;">
+              <i class="fab fa-discord" style="color:#5865f2;"></i>
+              Discord Invite
+              <span style="color:#a0aec0; font-size:0.75rem; font-weight:400;">(shown to new members)</span>
+            </label>
+            <input type="url" id="communityDiscordInvite" placeholder="https://discord.gg/your-invite"
+                   value="<%= onbInviteVal %>"
+                   style="width:100%; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:8px; padding:0.75rem; font-size:1rem;">
+            <% if (onbInherited) { %>
+              <p style="color:#fbbf24; font-size:0.75rem; margin-top:0.4rem;">
+                <i class="fa fa-circle-info"></i>
+                We found this in your <%= onbInviteSrc === 'promotion' ? 'RP server promotion' : 'community description' %>. Save to confirm it.
+              </p>
+            <% } else { %>
+              <p style="color:#a0aec0; font-size:0.75rem; margin-top:0.4rem;">
+                Members who request to join are pointed here, so they know where to go next.
+              </p>
+            <% } %>
+          </div>
+
+          <div style="margin-top:1.5rem;">
+            <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem;">
+              <i class="fa fa-list-check" style="color:#3b82f6;"></i>
+              Joining Steps
+              <span style="color:#a0aec0; font-size:0.75rem; font-weight:400;">(optional, up to 5)</span>
+            </label>
+            <textarea id="communityOnboardingSteps" placeholder="Join our Discord&#10;Open the #applications channel&#10;Post your application and wait for a trainer"
+                      style="width:100%; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:8px; padding:0.75rem; font-size:0.9375rem; min-height:88px; resize:vertical;"><%= onbStepsVal.join('\n') %></textarea>
+            <p style="color:#a0aec0; font-size:0.75rem; margin-top:0.4rem;">
+              One step per line. These replace our generic instructions on the "request sent" screen.
+            </p>
+          </div>
+
           <!-- Privacy Settings -->
           <div style="margin-top:1.5rem;">
             <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem;">
@@ -2660,6 +2705,14 @@ function saveCommunityProfile() {
   const description = document.getElementById('communityDescription').value;
   const promotionalText = document.getElementById('communityPromotionalText').value;
   const promotionalDescription = document.getElementById('communityPromotionalDescription').value;
+  const discordInviteEl = document.getElementById('communityDiscordInvite');
+  const onboardingStepsEl = document.getElementById('communityOnboardingSteps');
+  const discordInviteUrl = discordInviteEl ? discordInviteEl.value.trim() : '';
+  // One step per line; the API trims, drops blanks and caps the count, so the
+  // only job here is to stop sending obvious whitespace.
+  const onboardingSteps = onboardingStepsEl
+    ? onboardingStepsEl.value.split('\n').map(function (line) { return line.trim(); }).filter(Boolean)
+    : [];
 
   if (!name.trim()) {
     showToast('Community name is required.', 3000, 'error');
@@ -2686,7 +2739,9 @@ function saveCommunityProfile() {
       visibility: window.selectedPrivacy || '<%= (community && community.community && community.community.visibility) || "public" %>',
       tags: window.selectedPlatforms || [],
       promotionalText: promotionalText.trim(),
-      promotionalDescription: promotionalDescription.trim()
+      promotionalDescription: promotionalDescription.trim(),
+      discordInviteUrl: discordInviteUrl,
+      onboardingSteps: onboardingSteps
     })
   })
   .then(res => {
@@ -2786,11 +2841,31 @@ function saveCommunityProfile() {
         }
       }
     } else {
-      throw new Error('Failed to update community profile');
+      // Surface what the API actually objected to. The onboarding fields are
+      // validated server-side, so a mistyped invite comes back as a 400 with a
+      // fixable reason; a bare "please try again" leaves the owner retrying the
+      // same bad value forever.
+      return apiErrorReason(res).then(function (reason) { throw new Error(reason); });
     }
   })
   .catch(error => {
-    showToast('Failed to update community profile. Please try again.', 3000, 'error');
+    const reason = (error && error.message) || '';
+    // Point at the field that caused it rather than only toasting.
+    let culprit = null;
+    if (/discordInviteUrl/i.test(reason)) culprit = discordInviteEl;
+    else if (/onboardingSteps/i.test(reason)) culprit = onboardingStepsEl;
+    if (culprit) {
+      culprit.style.border = '1px solid #ef4444';
+      culprit.addEventListener('input', function clearInvalid() {
+        culprit.style.border = '1px solid #4a5568';
+        culprit.removeEventListener('input', clearInvalid);
+      });
+      culprit.focus();
+    }
+    const friendly = culprit === discordInviteEl
+      ? 'That does not look like a Discord invite. It should look like https://discord.gg/your-code'
+      : (culprit === onboardingStepsEl ? 'Joining steps: keep it to 5 lines or fewer.' : reason);
+    showToast(friendly || 'Failed to update community profile. Please try again.', 4000, 'error');
   })
   .finally(() => {
     // Reset button state
