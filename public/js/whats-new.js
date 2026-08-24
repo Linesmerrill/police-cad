@@ -17,7 +17,13 @@
  * across devices/reinstalls.
  */
 (function () {
-  if (window.__whatsNewInit) return;
+  // Note this does NOT return early. This file is pulled in by footer.ejs and
+  // last-dashboard-tracker.ejs on nearly every page, so a browser almost always
+  // holds a cached copy. If an older copy runs first it sets this flag and
+  // returns before exporting anything; a newer copy loaded afterwards would then
+  // no-op and leave window.whatsNewPreview undefined forever. The flag now
+  // guards only the one thing that must not happen twice: the auto-load.
+  var alreadyInitialized = window.__whatsNewInit;
   window.__whatsNewInit = true;
 
   var dbUser = window.dbUser;
@@ -318,6 +324,7 @@
     show([post], { preview: true, actions: actions || {} });
   };
 
+  if (alreadyInitialized) return; // another copy already armed the auto-load
   if (!userId) return; // unauthenticated — nothing to auto-show
 
   // Small delay so dbUser and the page have settled before we overlay anything.

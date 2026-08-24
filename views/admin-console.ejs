@@ -4598,7 +4598,7 @@
          draft through the same modal users get. This page defines no
          window.dbUser, so the script's own auto-show is inert here — an admin
          does not want the changelog popping up while authoring one. -->
-    <script src="/static/js/whats-new.js"></script>
+    <script src="/static/js/whats-new.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
       if (typeof io === 'undefined') {
@@ -4803,17 +4803,38 @@
        * withPublish=false previews only; true adds a Publish button to the
        * preview's action bar.
        */
+      // Recover from a stale cached copy of whats-new.js rather than dead-ending.
+      // That file is pulled in by the footer on nearly every page, so a browser
+      // can be holding a build that predates the preview export. Refetch once,
+      // cache-busted, before giving up.
+      function ensureWhatsNewPreview(done) {
+        if (typeof window.whatsNewPreview === 'function') { done(true); return; }
+        var s = document.createElement('script');
+        s.src = '/static/js/whats-new.js?reload=' + Date.now();
+        s.onload = function () { done(typeof window.whatsNewPreview === 'function'); };
+        s.onerror = function () { done(false); };
+        document.head.appendChild(s);
+      }
+
       function previewChangelogPost(withPublish) {
         var draft = readChangelogDraft();
         if (!draft) return;
-
         var errEl = document.getElementById('changelogFormError');
-        if (typeof window.whatsNewPreview !== 'function') {
-          // Never silently fall through to publishing something unpreviewed.
-          errEl.textContent = 'Preview is unavailable (whats-new.js failed to load). Reload the page and try again.';
-          errEl.style.display = 'block';
-          return;
-        }
+
+        ensureWhatsNewPreview(function (ready) {
+          if (!ready) {
+            // Never silently fall through to publishing something unpreviewed:
+            // a changelog post cannot be un-shown.
+            errEl.textContent = 'Preview could not load. Hard-refresh the page (Ctrl/Cmd + Shift + R) and try again.';
+            errEl.style.display = 'block';
+            return;
+          }
+          showChangelogPreview(draft, withPublish);
+        });
+      }
+
+      function showChangelogPreview(draft, withPublish) {
+        var errEl = document.getElementById('changelogFormError');
 
         var surfaceNote = draft.surfaces.indexOf('mobile') !== -1
           ? ' Mobile renders the body as plain text, so check it reads without the HTML.'
