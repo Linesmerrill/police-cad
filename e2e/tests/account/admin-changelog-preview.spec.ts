@@ -27,8 +27,11 @@ async function loginAsOwner(page: Page) {
   await page.goto('/admin');
   await page.locator('input[name="email"]').fill(TEST_CONSOLE_OWNER_EMAIL);
   await page.locator('input[name="password"]').fill(TEST_CONSOLE_OWNER_PASSWORD);
+  // 30s rather than the 15s the other console specs use: this file logs in for
+  // each of its thirteen tests, and under parallel load that was enough to make
+  // the login itself flake.
   await Promise.all([
-    page.waitForURL('**/admin/console**', { timeout: 15_000 }),
+    page.waitForURL('**/admin/console**', { timeout: 30_000 }),
     page.locator('button[type="submit"]').click(),
   ]);
 }
