@@ -1473,8 +1473,11 @@
                     <span class="badge badge-member">
                       <i class="fa fa-check-circle mr-1"></i>Member<% if (memberSinceYear) { %> since '<%= memberSinceYear %><% } %>
                     </span>
-                  <% } else if (isMemberPending) { %>
-                    <span class="badge badge-pending">
+                  <% } else if (user) { %>
+                    <%# Rendered for any non-approved member and shown/hidden by
+                        setJoinPendingState, so requesting or cancelling is a
+                        class toggle rather than a page reload. %>
+                    <span class="badge badge-pending" id="joinPendingBadge"<%= isMemberPending ? '' : ' hidden' %>>
                       <i class="fa fa-clock mr-1"></i>Pending Approval
                     </span>
                   <% } %>
@@ -1535,13 +1538,16 @@
               </div>
             </div>
 
-            <% if (user && !isMemberApproved && !isMemberPending) { %>
-              <div class="mt-4 pt-4" style="border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <%# Both states are rendered for a non-approved member and toggled by
+                setJoinPendingState. Reloading the page to swap them meant a full
+                repaint on every request and every cancel, and it left the page
+                briefly contradicting itself in between. %>
+            <% if (user && !isMemberApproved) { %>
+              <div id="joinPromptBlock" class="mt-4 pt-4" style="border-top: 1px solid rgba(255, 255, 255, 0.1);"<%= isMemberPending ? ' hidden' : '' %>>
                 <button id="requestJoinBtn" onclick="openRequestJoinModal()" class="btn-primary w-full text-center">
                   <i class="fa fa-user-plus mr-2"></i>Request to Join Community
                 </button>
               </div>
-            <% } else if (user && !isMemberApproved && isMemberPending) { %>
               <%
                 // Owner-authored onboarding, resolved by the API: the owner's own
                 // field, else their most recent RP promotion, else an invite found
@@ -1550,7 +1556,7 @@
                 var onbInvite = community.community.discordInviteUrl || '';
                 var onbSteps = Array.isArray(community.community.onboardingSteps) ? community.community.onboardingSteps : [];
               %>
-              <div class="mt-4 pt-4" style="border-top: 1px solid rgba(255, 255, 255, 0.1);">
+              <div id="joinPendingBlock" class="mt-4 pt-4" style="border-top: 1px solid rgba(255, 255, 255, 0.1);"<%= isMemberPending ? '' : ' hidden' %>>
                 <div class="onb-panel">
                   <div class="onb-title"><i class="fa fa-paper-plane"></i>Request sent. Here's what to do next</div>
                   <ol class="onb-steps">
@@ -1795,12 +1801,12 @@
                 <a href="/login-civ?redirect=<%= encodeURIComponent('/community/' + hash) %>" class="btn-primary inline-block">
                   Sign In to Join
                 </a>
-              <% } else if (!isMemberPending) { %>
-                <button onclick="openRequestJoinModal()" class="btn-primary">
+              <% } else { %>
+                <%# Both rendered and toggled alongside the panel above. %>
+                <button id="deptJoinBtn" onclick="openRequestJoinModal()" class="btn-primary"<%= isMemberPending ? ' hidden' : '' %>>
                   Request to Join
                 </button>
-              <% } else { %>
-                <button onclick="cancelJoinRequest()" class="btn-secondary" style="border-color: rgba(239, 68, 68, 0.5); color: #ef4444;">
+                <button id="deptCancelBtn" onclick="cancelJoinRequest()" class="btn-secondary" style="border-color: rgba(239, 68, 68, 0.5); color: #ef4444;"<%= isMemberPending ? '' : ' hidden' %>>
                   <i class="fa fa-times mr-1"></i>Cancel Request
                 </button>
               <% } %>

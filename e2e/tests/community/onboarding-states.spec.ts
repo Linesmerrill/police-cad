@@ -65,6 +65,34 @@ test.describe('Community onboarding states', { tag: '@auth' }, () => {
     await expect(page.getByText("You're in. Here's how to start playing")).toHaveCount(0);
   });
 
+  test('both join states ship together so switching needs no reload', async ({ page }) => {
+    await requireCommunityPage(page, pendingUrl());
+
+    // Pending: the panel is showing and the request prompt is hidden.
+    await expect(page.locator('#joinPendingBlock')).toBeVisible();
+    await expect(page.locator('#joinPromptBlock')).toBeHidden();
+    await expect(page.locator('#joinPendingBadge')).toBeVisible();
+
+    // Flip via the same function the cancel path calls. Done directly rather
+    // than by cancelling for real, so this asserts the mechanism without
+    // mutating the membership other tests in this file depend on.
+    await page.evaluate(() => (window as unknown as { setJoinPendingState: (p: boolean) => void }).setJoinPendingState(false));
+
+    await expect(page.locator('#joinPendingBlock')).toBeHidden();
+    await expect(page.locator('#joinPromptBlock')).toBeVisible();
+    await expect(page.locator('#joinPendingBadge')).toBeHidden();
+    // The departments card has to move with it, or the page contradicts itself.
+    await expect(page.locator('#deptJoinBtn')).toBeVisible();
+    await expect(page.locator('#deptCancelBtn')).toBeHidden();
+  });
+
+  test('an approved member gets neither join state at all', async ({ page }) => {
+    await requireCommunityPage(page, approvedUrl());
+
+    await expect(page.locator('#joinPromptBlock')).toHaveCount(0);
+    await expect(page.locator('#joinPendingBlock')).toHaveCount(0);
+  });
+
   test('an approved member with no department is told how to start', async ({ page }) => {
     await requireCommunityPage(page, approvedUrl());
 

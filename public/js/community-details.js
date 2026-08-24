@@ -392,168 +392,26 @@ document.addEventListener('DOMContentLoaded', function() {
 // Global variables for join request functionality
 let joinRequestLoading = false;
 
-(function() {
-  // Get relevant DOM elements
-  const requestJoinModal = document.getElementById('requestJoinModal');
-  const requestJoinModalClose = document.getElementById('requestJoinModalClose');
-  const requestJoinModalCancel = document.getElementById('requestJoinModalCancel');
-  const requestJoinModalConfirm = document.getElementById('requestJoinModalConfirm');
-  const requestJoinError = document.getElementById('requestJoinError');
-  const toast = document.getElementById('toast');
-  const toastMsg = document.getElementById('toast-message');
-
-  // Get user and community IDs from EJS globals
-  const userId = window.dbUser && window.dbUser._id ? window.dbUser._id : null;
-  const communityId = window?.communityId || (typeof COMMUNITY_ID !== 'undefined' ? COMMUNITY_ID : null) || (window.community && window.community._id) || null;
-  const API_URL = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1';
-
-  // Helper: Show toast
-  function showToast(message, duration = 2500) {
-    if (!toast || !toastMsg) return;
-    toastMsg.textContent = message;
-    toast.style.display = 'block';
-    setTimeout(() => {
-      toast.style.display = 'none';
-    }, duration);
-  }
-
-  // Helper: Update all Request to Join buttons to pending state
-  function updateAllJoinButtons() {
-    // Update the main button (with ID)
-    const mainJoinBtn = document.getElementById('requestJoinBtn');
-    if (mainJoinBtn) {
-      mainJoinBtn.disabled = true;
-      mainJoinBtn.textContent = 'Pending';
-      mainJoinBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-      mainJoinBtn.classList.add('bg-gray-500', 'cursor-not-allowed');
-    }
-
-    // Update the secondary button in departments section
-    // Look for button with "Request to Join Here" text that's not the main button
-    const allButtons = document.querySelectorAll('button');
-    const secondaryJoinBtn = Array.from(allButtons).find(btn => 
-      btn.textContent.trim() === 'Request to Join Here' && 
-      btn.id !== 'requestJoinBtn'
-    );
-    
-    if (secondaryJoinBtn) {
-      secondaryJoinBtn.disabled = true;
-      secondaryJoinBtn.textContent = 'Pending';
-      secondaryJoinBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-      secondaryJoinBtn.classList.add('bg-gray-500', 'cursor-not-allowed');
-      // Remove the onclick handler
-      secondaryJoinBtn.removeAttribute('onclick');
-    }
-  }
-
-  // Open/close modal logic
-  if (requestJoinModalClose) requestJoinModalClose.onclick = closeModal;
-  if (requestJoinModalCancel) requestJoinModalCancel.onclick = closeModal;
-  function closeModal() {
-    if (requestJoinModal) requestJoinModal.style.display = 'none';
-    if (requestJoinError) {
-      requestJoinError.style.display = 'none';
-      requestJoinError.textContent = '';
-    }
-  }
-
-  // Confirm join request
-  if (requestJoinModalConfirm) {
-    requestJoinModalConfirm.onclick = handleJoinRequest;
-  }
-
-  // Expose openRequestJoinModal globally
-  window.openRequestJoinModal = function() {
-    if (requestJoinModal) requestJoinModal.style.display = 'flex';
-  };
-
-  // Main join request logic
-  async function handleJoinRequest() {
-    if (joinRequestLoading) return;
-    joinRequestLoading = true;
-    if (requestJoinModalConfirm) {
-      requestJoinModalConfirm.disabled = true;
-      requestJoinModalConfirm.textContent = 'Requesting...';
-    }
-    if (requestJoinError) {
-      requestJoinError.style.display = 'none';
-      requestJoinError.textContent = '';
-    }
-    try {
-      // Optimistically update UI: hide modal, show pending message
-      closeModal();
-      showToast('Request sent! Your request to join is pending approval.', 2500);
-      
-      // Update all join buttons to pending state immediately
-      updateAllJoinButtons();
-      
-      // Send join request to backend
-      const res = await fetch(`${API_URL}/api/v1/user/${userId}/pending-community-request`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ communityId: communityId })
-      });
-      
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to send join request.');
-      }
-      
-      // Handle the new response format
-      if (data.status === 'joined') {
-        showToast('Successfully joined community!', 2500);
-        // Redirect to communities page
-        setTimeout(() => {
-          window.location.href = '/communities?success=true';
-        }, 1000);
-        return;
-      }
-      
-      // Send notifications to admins/managers
-      await sendJoinRequestNotification(communityId, window.dbUser);
-      
-      // Optionally: update UI to show pending state (reload or update DOM)
-      // setTimeout(() => window.location.reload(), 1200);
-    } catch (err) {
-      if (requestJoinError) {
-        requestJoinError.textContent = err.message || 'Failed to send join request.';
-        requestJoinError.style.display = 'block';
-      }
-      showToast('Error: ' + (err.message || 'Failed to send join request.'), 3000);
-      
-      // Revert button states on error
-      const mainJoinBtn = document.getElementById('requestJoinBtn');
-      if (mainJoinBtn) {
-        mainJoinBtn.disabled = false;
-        mainJoinBtn.textContent = 'Request to Join';
-        mainJoinBtn.classList.remove('bg-gray-500', 'cursor-not-allowed');
-        mainJoinBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-      }
-      
-      // Look for button with "Request to Join Here" text that's not the main button
-      const allButtons = document.querySelectorAll('button');
-      const secondaryJoinBtn = Array.from(allButtons).find(btn => 
-        btn.textContent.trim() === 'Request to Join Here' && 
-        btn.id !== 'requestJoinBtn'
-      );
-      
-      if (secondaryJoinBtn) {
-        secondaryJoinBtn.disabled = false;
-        secondaryJoinBtn.textContent = 'Request to Join Here';
-        secondaryJoinBtn.classList.remove('bg-gray-500', 'cursor-not-allowed');
-        secondaryJoinBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-        secondaryJoinBtn.setAttribute('onclick', 'openRequestJoinModal()');
-      }
-    } finally {
-      joinRequestLoading = false;
-      if (requestJoinModalConfirm) {
-        requestJoinModalConfirm.disabled = false;
-        requestJoinModalConfirm.textContent = 'Request to Join';
-      }
-    }
-  }
-})();
+// Toggling between "can request" and "pending" used to be a full page reload,
+// which repainted everything twice per request/cancel cycle. Both states are now
+// rendered by community-details.ejs and this just flips which one is visible.
+//
+// Nothing here rebuilds the next-steps panel: it is server-rendered, branching on
+// the resolved Discord invite and the owner's joining steps, and duplicating that
+// in JS is what the reload was avoiding in the first place.
+function setJoinPendingState(pending) {
+  [
+    ['joinPromptBlock', !pending],
+    ['joinPendingBlock', pending],
+    ['joinPendingBadge', pending],
+    ['deptJoinBtn', !pending],
+    ['deptCancelBtn', pending],
+  ].forEach(function (pair) {
+    var el = document.getElementById(pair[0]);
+    if (el) el.hidden = !pair[1];
+  });
+}
+window.setJoinPendingState = setJoinPendingState;
 
 // Cancel a pending community join request
 async function cancelJoinRequest() {
@@ -585,40 +443,11 @@ async function cancelJoinRequest() {
       setTimeout(() => { toast.style.display = 'none'; }, 2500);
     }
 
-    // Swap primary cancel button back to "Request to Join"
-    const cancelBtn = document.getElementById('cancelJoinBtn');
-    if (cancelBtn) {
-      cancelBtn.id = 'requestJoinBtn';
-      cancelBtn.className = 'btn-primary w-full text-center';
-      cancelBtn.removeAttribute('style');
-      cancelBtn.setAttribute('onclick', 'openRequestJoinModal()');
-      cancelBtn.innerHTML = '<i class="fa fa-user-plus mr-2"></i>Request to Join Community';
-    }
-
-    // Swap secondary cancel button (departments locked section) back to "Request to Join"
-    const deptLockedBtns = document.querySelectorAll('button[onclick="cancelJoinRequest()"]');
-    deptLockedBtns.forEach(btn => {
-      btn.className = 'btn-primary';
-      btn.removeAttribute('style');
-      btn.setAttribute('onclick', 'openRequestJoinModal()');
-      btn.innerHTML = 'Request to Join';
-    });
-
-    // Clear the rest of the pending state too. Swapping the buttons alone left
-    // the "Pending Approval" badge and the next-steps panel on screen, which the
-    // server can never render alongside a "Request to Join" button -- the page
-    // ended up contradicting itself, telling the member to go join a Discord and
-    // wait for a request they had just cancelled.
-    //
-    // Done explicitly rather than leaning on the reload below: a reload can be
-    // slow, blocked, or simply absent if the browser is running an older cached
-    // copy of this file, and a self-contradictory page is worse than a stale one.
-    var pendingPanel = document.querySelector('.onb-panel:not(.onb-approved)');
-    if (pendingPanel) pendingPanel.remove();
-    document.querySelectorAll('.badge-pending').forEach(function (b) { b.remove(); });
-
-    // Then re-render from the server so anything not patched above is correct.
-    setTimeout(() => { window.location.reload(); }, 800);
+    // One toggle instead of hand-patching buttons and reloading. The previous
+    // version swapped the two buttons but left the pending badge and next-steps
+    // panel on screen, so until the reload landed the page told the member to go
+    // join a Discord and wait for a request they had just cancelled.
+    setJoinPendingState(false);
   } catch (err) {
     alert('Error: ' + (err.message || 'Failed to cancel request.'));
   } finally {

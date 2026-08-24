@@ -1559,56 +1559,21 @@
           showToast('Join request submitted successfully!', 2500, 'success');
           closeRequestJoinModal();
 
-          // Patch what we can immediately so the click feels instant, then
-          // re-render from the server.
-          //
-          // The reload is not laziness: the next-steps panel is server-rendered
-          // and branches on the community's Discord invite, the owner's own
-          // joining steps, and whether either exists. Rebuilding that in JS would
-          // duplicate the logic in two places and drift. Since the panel *is* the
-          // point of requesting to join, showing a stale page without it is worse
-          // than an 800ms refresh. The "already joined" path above navigates for
-          // the same reason.
-          updateUIAfterJoinRequest();
-          setTimeout(() => { window.location.reload(); }, 800);
+          // Both states are server-rendered; this just flips which is visible.
+          // No reload, so the panel appears immediately instead of after a full
+          // repaint, and the page is never briefly self-contradictory.
+          if (typeof window.setJoinPendingState === 'function') {
+            window.setJoinPendingState(true);
+          } else {
+            // community-details.js failed to load; fall back to a reload rather
+            // than leaving the member on a page that still says "Request to Join"
+            // after they just requested.
+            setTimeout(() => { window.location.reload(); }, 800);
+          }
 
         } catch (error) {
           console.error('Error submitting join request:', error);
           showToast('Error submitting join request: ' + error.message, 3000, 'error');
-        }
-      }
-
-      function updateUIAfterJoinRequest() {
-        // Hide the "Request to Join" button in the top card
-        const requestJoinBtn = document.getElementById('requestJoinBtn');
-        if (requestJoinBtn) {
-          requestJoinBtn.parentElement.style.display = 'none';
-        }
-
-        // Add "Pending Approval" badge to the badges container
-        const badgesContainer = document.querySelector('.flex.flex-wrap.justify-center.sm\\:justify-start.gap-2.mb-3');
-        if (badgesContainer) {
-          // Check if pending badge already exists
-          if (!badgesContainer.querySelector('.badge-pending')) {
-            const pendingBadge = document.createElement('span');
-            pendingBadge.className = 'badge badge-pending';
-            pendingBadge.innerHTML = '<i class="fa fa-clock mr-1"></i>Pending Approval';
-            // Insert at the beginning of the badges
-            badgesContainer.insertBefore(pendingBadge, badgesContainer.firstChild);
-          }
-        }
-
-        // Update the Departments Locked section - replace "Request to Join" with "Request Pending"
-        const deptLockedCard = document.querySelector('.dashboard-card.text-center.py-12');
-        if (deptLockedCard) {
-          const deptJoinBtn = deptLockedCard.querySelector('button.btn-primary');
-          if (deptJoinBtn && deptJoinBtn.textContent.trim().includes('Request to Join')) {
-            const pendingBtn = document.createElement('button');
-            pendingBtn.disabled = true;
-            pendingBtn.className = 'btn-secondary opacity-50 cursor-not-allowed';
-            pendingBtn.textContent = 'Request Pending';
-            deptJoinBtn.replaceWith(pendingBtn);
-          }
         }
       }
 
