@@ -7,6 +7,7 @@
  * (window.whatsNewPreview, exported by whats-new.js) rather than a lookalike, so
  * what an owner approves is the same DOM and stylesheet users get.
  */
+import path from 'path';
 import { test, expect, Page } from '@playwright/test';
 import {
   seedConsoleOwner,
@@ -15,9 +16,11 @@ import {
   TEST_CONSOLE_OWNER_PASSWORD,
 } from '../../helpers/admin-users';
 
-// The panel is owner-only, so this suite logs in as its own owner rather than
-// reusing the shared authenticated state.
-test.use({ storageState: { cookies: [], origins: [] } });
+// The panel is owner-only, so this suite signs in as its own owner rather than
+// reusing the shared authenticated state. It signs in ONCE in beforeAll and
+// every test reuses that session: logging in per test meant thirteen logins,
+// which under parallel CI load flaked against the 30s per-test budget.
+const OWNER_STATE = path.join(__dirname, '../../.auth/console-owner.json');
 
 const DRAFT_TITLE = 'Joining a community, made clear';
 const DRAFT_BODY =
@@ -31,13 +34,14 @@ async function loginAsOwner(page: Page) {
   // each of its thirteen tests, and under parallel load that was enough to make
   // the login itself flake.
   await Promise.all([
-    page.waitForURL('**/admin/console**', { timeout: 30_000 }),
+    page.waitForURL('**/admin/console**', { timeout: 15_000 }),
     page.locator('button[type="submit"]').click(),
   ]);
 }
 
+// The session comes from OWNER_STATE, so this is just a navigation.
 async function openChangelogPanel(page: Page) {
-  await loginAsOwner(page);
+  await page.goto('/admin/console');
   await page.locator('#changelog-tab').click();
   await expect(page.locator('#changelogTitle')).toBeVisible();
 }
@@ -73,8 +77,17 @@ function audienceBtn(page: Page, key: string) {
 }
 
 test.describe("Admin console — What's New preview", { tag: '@auth' }, () => {
-  test.beforeAll(async () => {
+  test.use({ storageState: OWNER_STATE });
+
+  test.beforeAll(async ({ browser }) => {
     await seedConsoleOwner();
+    // One sign-in for the whole file; every test then starts already
+    // authenticated as the owner.
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const page = await context.newPage();
+    await loginAsOwner(page);
+    await context.storageState({ path: OWNER_STATE });
+    await context.close();
   });
 
   test.afterAll(async () => {
