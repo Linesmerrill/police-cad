@@ -1039,9 +1039,9 @@
       </div>
     </div>
 
-    <script src="/static/js/jquery.min.js"></script>
-    <script src="/static/js/bootstrap.min.js"></script>
-    <script src="/static/js/cloudinary-upload.js"></script>
+    <script src="/static/js/jquery.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+    <script src="/static/js/bootstrap.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+    <script src="/static/js/cloudinary-upload.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <script>
       // Cloudinary config
       window.CLOUDINARY_CLOUD_NAME = <%- JSON.stringify(CLOUDINARY_CLOUD_NAME || '') %>;

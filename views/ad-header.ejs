@@ -1,6 +1,6 @@
 <!-- Always include app prompt and Google Analytics -->
-<script src="/static/js/app-prompt-modal.js"></script>
-<script src="/static/js/online-status.js" defer></script>
+<script src="/static/js/app-prompt-modal.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+<script src="/static/js/online-status.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>" defer></script>
 
 <!-- Google tag (gtag.js) - Google Analytics GA4 -->
 <script

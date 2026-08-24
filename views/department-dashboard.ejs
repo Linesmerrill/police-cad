@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <script src="/static/js/jquery.min.js"></script>
+  <script src="/static/js/jquery.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <style>
     /* ═══════════════════════════════════════════════════
        DEPARTMENT DASHBOARD — Frosted Glass Command Center
@@ -7462,21 +7462,21 @@ $('#dd-loading').hide();
     window.CLOUDINARY_API_KEY = '<%= process.env.CLOUDINARY_API_KEY || "" %>';
     window.CLOUDINARY_UPLOAD_PRESET = '<%= process.env.CLOUDINARY_UPLOAD_PRESET || "" %>';
   </script>
-  <script src="/static/js/cloudinary-upload.js"></script>
+  <script src="/static/js/cloudinary-upload.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <!-- Shared utilities -->
-  <script src="/static/js/dd-limits.js"></script>
+  <script src="/static/js/dd-limits.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <!-- Civilian template component scripts -->
-  <script src="/static/js/vehicle-flags.js"></script>
-  <script src="/static/js/dd-civilians.js"></script>
-  <script src="/static/js/dd-vehicles.js"></script>
-  <script src="/static/js/dd-firearms.js"></script>
+  <script src="/static/js/vehicle-flags.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/dd-civilians.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/dd-vehicles.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/dd-firearms.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <!-- Utility scripts -->
-  <script src="/static/js/dd-911.js"></script>
-  <script src="/static/js/dd-notifications.js"></script>
+  <script src="/static/js/dd-911.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/dd-notifications.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
   <!-- Manage Ranks (shared partial + module) — used by dd-settings.js Ranks tab -->
   <template id="manage-ranks-tpl"><%- include('partials/manage-ranks', { rkmEmbedded: true }) %></template>
-  <script src="/static/js/manage-ranks.js"></script>
+  <script src="/static/js/manage-ranks.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script>
     // Refresh the sidebar Settings badge + Ranks tab pill with the current
     // pending-promotions count for the active department. Exposed as a
@@ -7538,9 +7538,9 @@ $('#dd-loading').hide();
       }
     };
   </script>
-  <script src="/static/js/dd-settings.js"></script>
-  <script src="/static/js/dd-economy.js"></script>
-  <script src="/static/js/rank-progress.js"></script>
+  <script src="/static/js/dd-settings.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/dd-economy.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/rank-progress.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script>if (typeof loadMyRankProgress === 'function') loadMyRankProgress();</script>
   <%- include('partials/last-dashboard-tracker') %>
   <%- include('partials/pending-deletion-gate') %>

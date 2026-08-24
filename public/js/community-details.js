@@ -604,10 +604,20 @@ async function cancelJoinRequest() {
       btn.innerHTML = 'Request to Join';
     });
 
-    // Then re-render from the server. Swapping the buttons alone leaves the
-    // "Pending Approval" badge and the server-rendered next-steps panel on
-    // screen, so a cancelled request still told the member to go join a Discord
-    // and wait to be approved.
+    // Clear the rest of the pending state too. Swapping the buttons alone left
+    // the "Pending Approval" badge and the next-steps panel on screen, which the
+    // server can never render alongside a "Request to Join" button -- the page
+    // ended up contradicting itself, telling the member to go join a Discord and
+    // wait for a request they had just cancelled.
+    //
+    // Done explicitly rather than leaning on the reload below: a reload can be
+    // slow, blocked, or simply absent if the browser is running an older cached
+    // copy of this file, and a self-contradictory page is worse than a stale one.
+    var pendingPanel = document.querySelector('.onb-panel:not(.onb-approved)');
+    if (pendingPanel) pendingPanel.remove();
+    document.querySelectorAll('.badge-pending').forEach(function (b) { b.remove(); });
+
+    // Then re-render from the server so anything not patched above is correct.
     setTimeout(() => { window.location.reload(); }, 800);
   } catch (err) {
     alert('Error: ' + (err.message || 'Failed to cancel request.'));

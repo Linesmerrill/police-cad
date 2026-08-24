@@ -11083,7 +11083,7 @@ async function saveEditEvent() {
 <script src="https://cdn.jsdelivr.net/npm/linkifyjs@4.3.2/dist/linkify.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/linkify-html@4.3.2/dist/linkify-html.min.js"></script>
     <!-- Include announcements.js for announcement functionality -->
-<script src="/static/js/announcements.js"></script>
+<script src="/static/js/announcements.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
 
     <% if (user && user._doc) { %>
       
@@ -16478,7 +16478,7 @@ async function saveEditEvent() {
 <div id="rankManagementModal" class="rkm-overlay" onclick="if(event.target===this)closeRankManagementModal()">
   <%- include('partials/manage-ranks') %>
 </div>
-<script src="/static/js/manage-ranks.js"></script>
+<script src="/static/js/manage-ranks.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
 <script>
   // Configure the shared rank module with this page's community + user IDs.
   // Inline handlers in the partial (and elsewhere on this page) call into

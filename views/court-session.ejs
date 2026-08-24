@@ -1031,7 +1031,7 @@ function jdConfirm(opts) {
   });
 }
 </script>
-<script src="/static/js/court-session.js"></script>
+<script src="/static/js/court-session.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
 
 <script>
   // Smart back: store the page the user arrived from so the strip's

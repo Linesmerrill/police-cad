@@ -4603,8 +4603,8 @@
       </div>
     </div>
 
-    <script src="/static/js/jquery.min.js"></script>
-    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/jquery.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+    <script src="/static/js/bootstrap.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <!-- Exports window.whatsNewPreview so the What's New panel can render a
          draft through the same modal users get. This page defines no
          window.dbUser, so the script's own auto-show is inert here — an admin
