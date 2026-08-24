@@ -246,6 +246,9 @@ test.describe("Admin console — What's New preview", { tag: '@auth' }, () => {
       await openChangelogPanel(page);
       await fillDraft(page);
 
+      // Wait for the count to reflect the draft before clicking, so this cannot
+      // race the re-render that runs on every keystroke.
+      await expect(audienceBtn(page, 'existing')).toContainText('(4)');
       await audienceBtn(page, 'existing').click();
       await expect(page.locator('.wn-card')).toBeVisible();
       // No publish affordance on an audience preview — it is a rehearsal.

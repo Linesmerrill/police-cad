@@ -4881,21 +4881,32 @@
         var surface = surfaces.indexOf('web') !== -1 ? 'web' : (surfaces[0] || '');
         var draft = changelogDraftAsPost();
 
-        wrap.innerHTML = '';
+        // Build once, then only update the counts. This runs on every keystroke
+        // in the title and body, and rebuilding the buttons each time detaches
+        // the node mid-interaction -- a click can land on an element that has
+        // already been replaced and do nothing.
+        if (!wrap.getAttribute('data-built')) {
+          wrap.innerHTML = '';
+          CHANGELOG_AUDIENCES.forEach(function (aud) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ac-btn';
+            btn.setAttribute('data-audience', aud.key);
+            btn.innerHTML = '<i class="fas fa-user"></i> ' + aud.label +
+              ' <span class="changelog-aud-count" style="opacity:.75;"></span>';
+            btn.addEventListener('click', function () { previewChangelogAudience(aud.key); });
+            wrap.appendChild(btn);
+          });
+          wrap.setAttribute('data-built', '1');
+        }
+
         CHANGELOG_AUDIENCES.forEach(function (aud) {
+          var btn = wrap.querySelector('button[data-audience="' + aud.key + '"]');
+          if (!btn) return;
           var count = aud.queue(surface, draft).length;
-          var btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'ac-btn';
-          btn.setAttribute('data-audience', aud.key);
-          btn.innerHTML = '<i class="fas fa-user"></i> ' + aud.label +
-            ' <span style="opacity:.75;">(' + count + ')</span>';
-          if (!count) {
-            btn.style.opacity = '0.55';
-            btn.title = aud.label + ' would see nothing right now.';
-          }
-          btn.addEventListener('click', function () { previewChangelogAudience(aud.key); });
-          wrap.appendChild(btn);
+          btn.querySelector('.changelog-aud-count').textContent = '(' + count + ')';
+          btn.style.opacity = count ? '' : '0.55';
+          btn.title = count ? '' : aud.label + ' would see nothing right now.';
         });
 
         var existing = CHANGELOG_AUDIENCES[1].queue(surface, draft).length;
