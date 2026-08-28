@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <% include ad-header %>
+    <%- include('ad-header') %>
     <meta charset="utf-8">
     <title>LPC - Map</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -72,7 +72,7 @@
         <hr class="margin-top-3 margin-bottom-3" style="width: 88%;max-width: 100rem;">
         
     </div>
-    <% include footer-index %>
+    <%- include('footer-index') %>
     <!--scripts loaded here -->
     <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
     <script src="/static/js/jquery.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>

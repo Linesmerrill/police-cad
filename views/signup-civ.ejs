@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <% include ad-header %>
+    <%- include('ad-header') %>
     <meta charset="utf-8">
     <title>LPC - Sign up as Civilian</title>
     <meta name="description" content="Lines Roleplay Police CAD (Computer Aided Dispatch). Built to facilitate the needs of roleplay police and civilians." />
@@ -195,7 +195,7 @@
       </div>
     </header>
     <div class="google-ad"></div>
-    <% include footer %>
+    <%- include('footer') %>
     <script src="/static/js/jquery.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <script src="/static/js/bootstrap.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <script src="/static/js/jquery.easing.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>

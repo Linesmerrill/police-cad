@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <% include ad-header %>
+  <%- include('ad-header') %>
   <title>LPC - <%= departmentName || 'Police' %> Dashboard</title>
   <meta charset="utf-8">
   <meta name="description"
@@ -591,7 +591,7 @@
               <button type="button" style="background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:5px; padding:0.35rem 1rem; font-size:0.9rem; cursor:pointer;" onclick="cancelSidebarCallSignEdit()">Cancel</button>
             </div>
           </div>
-          <% include partials/rank-sidebar-badge %>
+          <%- include('partials/rank-sidebar-badge') %>
           <h5>Logged in as: Police Officer</h5>
         </div>
       </div>
@@ -662,9 +662,9 @@
           </li>
         </div>
 
-        <% include departments-sidebar %>
-        <% include community-sidebar %>
-        <% include other-sidebar %>
+        <%- include('departments-sidebar') %>
+        <%- include('community-sidebar') %>
+        <%- include('other-sidebar') %>
       </ul>
 
     </nav>
@@ -805,7 +805,7 @@
                                   <%}%>
 
                                 <!-- imports the community specific alerts -->
-                                <% include community-alerts %>
+                                <%- include('community-alerts') %>
 
                                 <!-- Command Dashboard opt-in banner -->
                                 <style>
@@ -1386,11 +1386,11 @@
       %>
       <% if (!isPremiumPlus && !(isPremium && Math.random() >= 0.5)) { %>
       <div class="adsbygoogle">
-        <% include ad-body %>
+        <%- include('ad-body') %>
       </div>
       <% } %>
-      <% include partials/rank-modals %>
-      <% include partials/rank-progress-card %>
+      <%- include('partials/rank-modals') %>
+      <%- include('partials/rank-progress-card') %>
       <section style='background-image: url("/static/images/blue-clouds.jpg"); padding:0'>
         <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
         <div class="container">
@@ -1417,7 +1417,7 @@
       </section>
 
       <div class="google-ad"></div>
-      <% include partials/footer %>
+      <%- include('partials/footer') %>
     </div>
   </div>
 
@@ -1436,8 +1436,8 @@
     </div>
   </div>
 
-  <% include search-database %>
-  <% include details-modal %>
+  <%- include('search-database') %>
+  <%- include('details-modal') %>
 
   <!-- JavaScript Disabled Alert Modal -->
   <div id="javascriptDisabledModal" class="heroui-modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.85); align-items:center; justify-content:center;">
@@ -1503,7 +1503,7 @@
               <label class="col-md-3 control-label" for="license-type">License Type:</label>
               <div class="col-md-5">
                 <select id="license-type-details" name="licenseType" class="form-control disabled-color" required="" readonly="readonly">
-                  <% include license-list %>
+                  <%- include('license-list') %>
                 </select>
               </div>
             </div>
@@ -1978,7 +1978,7 @@
                 <div class="col-md-4">
 
                   <select id="ticket-select" name="fines" class="select-move" multiple required>
-                    <% include citation-list %>
+                    <%- include('citation-list') %>
                       <optgroup label="Crime not listed">
                         <option id="ticket-option-other">Other</option>
                       </optgroup>
@@ -2079,7 +2079,7 @@
     </div>
   </div>
 
-  <% include arrest-modal %>
+  <%- include('arrest-modal') %>
 
   <div id="createWarrantModal" class="modal fade" style="z-index: 9000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -2633,7 +2633,7 @@
     </div>
   </div>
 
-  <% include account-management %>
+  <%- include('account-management') %>
 
   <div id="panicDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -3359,9 +3359,9 @@
   })();
   </script>
 
-  <% include partials/notificationModal %>
-  <!-- <% include 10-codes %> -->
-  <% include notepad %>
+  <%- include('partials/notificationModal') %>
+  <!-- <%- include('10-codes') %> -->
+  <%- include('notepad') %>
 
   <!-- Toast Container for Notifications -->
   <div id="toast-container"></div>

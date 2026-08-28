@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <% include ad-header %>
+  <%- include('ad-header') %>
   <title>LPC - Civilian Dashboard</title>
   <meta charset="utf-8">
   <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
@@ -1139,7 +1139,7 @@
         <i class="fa fa-crown"></i>
         <span id="subscription-text">Premium</span>
       </div>
-      <% include partials/rank-sidebar-badge %>
+      <%- include('partials/rank-sidebar-badge') %>
     </div>
 
     <!-- Navigation -->
@@ -1332,7 +1332,7 @@
     </style>
 
     <!-- Community Alerts -->
-    <% include community-alerts %>
+    <%- include('community-alerts') %>
     
     <!-- 911 Call Alert -->
     <div id="911CallCreatedAlert" class="alert alert-success alert-dismissible hide" role="alert">
@@ -1417,8 +1417,8 @@
       </div>
       <% } %>
 
-      <% include partials/rank-modals %>
-      <% include partials/rank-progress-card %>
+      <%- include('partials/rank-modals') %>
+      <%- include('partials/rank-progress-card') %>
 
       <!-- Civilians Section -->
       <div class="content-section" id="civiliansSection">
@@ -3146,7 +3146,7 @@
     </div>
   </div>
 
-  <% include notepad %>
+  <%- include('notepad') %>
 
   <!-- Emergency Services Department Selection Modal -->
   <div id="emergencyServicesModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">

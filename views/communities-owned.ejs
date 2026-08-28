@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <% include ad-header %>
+    <%- include('ad-header') %>
     <meta charset="utf-8">
     <title>LPC - Communities</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -145,8 +145,8 @@
       </div>
       <div class="google-ad"></div>
     </div>
-    <% include account-management %>
-    <% include footer %>
+    <%- include('account-management') %>
+    <%- include('footer') %>
     <div id="alertModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">

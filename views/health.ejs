@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <% include ad-header %>
+    <%- include('ad-header') %>
     <meta charset="utf-8">
     <title>LPC - Health</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,7 +32,7 @@
                     <img style="display: inline; margin-top: -9px; vertical-align: text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD</a>
             </div>
             <div class="navbar-collapse collapse" id="bs-navbar">
-                <% include index-navbar %>
+                <%- include('index-navbar') %>
             </div>
         </div>
     </nav>
@@ -48,7 +48,7 @@
         <section>
         </section>
     </div>
-    <% include footer %>
+    <%- include('footer') %>
     <div id="alertModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">

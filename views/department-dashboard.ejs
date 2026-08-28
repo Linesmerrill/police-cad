@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <% include ad-header %>
+  <%- include('ad-header') %>
   <title>LPC - <%= departmentName || 'Department' %> Dashboard</title>
   <meta charset="utf-8">
   <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
@@ -3155,7 +3155,7 @@
           <div class="dd-user-info">
             <div class="dd-user-name"><%= username %></div>
             <div id="dd-user-role"><span class="dd-user-role-default">Department Member</span></div>
-            <% include partials/rank-sidebar-badge %>
+            <%- include('partials/rank-sidebar-badge') %>
           </div>
         </div>
       </a>
@@ -3191,7 +3191,7 @@
 
       <!-- Rank Progress (styled to match DD) -->
       <div id="dd-rank-wrap" style="margin-bottom:1rem;">
-        <% include partials/rank-progress-card %>
+        <%- include('partials/rank-progress-card') %>
       </div>
       <style>
         #dd-rank-wrap #myRankStatsCard {
@@ -3290,7 +3290,7 @@
   <!-- Toast -->
   <div class="dd-toast" id="dd-toast"></div>
 
-  <% include partials/rank-modals %>
+  <%- include('partials/rank-modals') %>
 
   <!-- Unified Modal -->
   <div class="dd-modal-overlay" id="dd-modal-overlay">

@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-  <% include ad-header %>
+  <%- include('ad-header') %>
     <meta charset="utf-8">
     <title>LPC - Communities</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -166,7 +166,7 @@
                   <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
                   <strong>Success!</strong> Copied to your clipboard
                 </div>
-                <% include community-alerts %>
+                <%- include('community-alerts') %>
                 <h2 class="text-center">Community Dashboard</h2>
                 <hr style="width: 88%;max-width: 100rem;">
                 <!-- Active Community Display -->
@@ -202,11 +202,11 @@
             </div>
         </div>
     </header>
-    <% include account-management %>
-    <% include partials/notificationModal %>
+    <%- include('account-management') %>
+    <%- include('partials/notificationModal') %>
     <%- include('partials/dd-modal') %>
     <%- include('partials/community-delete-loading') %>
-    <% include footer %>
+    <%- include('footer') %>
 
     <!-- Tutorial Modal -->
     <div id="tutorialModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">

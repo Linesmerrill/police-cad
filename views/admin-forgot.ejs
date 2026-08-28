@@ -71,7 +71,7 @@
       </div>
     </section>
 
-    <% include footer %>
+    <%- include('footer') %>
     <script src="/static/js/jquery.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <script src="/static/js/bootstrap.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <script>

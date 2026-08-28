@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <% include ad-header %>
+  <%- include('ad-header') %>
   <title>LPC - <%= departmentName || 'Command' %> Dashboard</title>
   <meta charset="utf-8">
   <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
@@ -811,7 +811,7 @@
         <!-- Shared rank partial — hidden, kept in DOM so rank-progress.js
              keeps populating #sidebar-rank-text. The script block below
              mirrors that text into #cd-rank-value. -->
-        <div class="cd-rank-mirror" aria-hidden="true"><% include partials/rank-sidebar-badge %></div>
+        <div class="cd-rank-mirror" aria-hidden="true"><%- include('partials/rank-sidebar-badge') %></div>
 
       </div>
     </div>
@@ -890,7 +890,7 @@
       <div id="dd-loading" class="cd-spinner"></div>
       <div id="dd-panels" style="display:none;"></div>
       <div id="dd-rank-wrap" style="margin-bottom:1rem;">
-        <% include partials/rank-progress-card %>
+        <%- include('partials/rank-progress-card') %>
       </div>
     </div>
   </main>

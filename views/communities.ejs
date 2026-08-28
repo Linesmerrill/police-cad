@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <% include ad-header %>
+    <%- include('ad-header') %>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0a0a0f" />
@@ -369,7 +369,7 @@
          first on a page people arrive at in discovery mode. Renders nothing
          unless the route supplied an active countdown. -->
     <div class="mx-3 mt-3">
-      <% include partials/gta6-countdown %>
+      <%- include('partials/gta6-countdown') %>
     </div>
     <!-- Promo Bar - Compact version with home page styling -->
     <div id="promo-bar" class="mx-3 mt-3 rounded-xl relative" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(59, 130, 246, 0.2); color: #fff; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); padding: 0.75rem 2.5rem 0.75rem 1rem;">
@@ -506,7 +506,7 @@
 
     <% if (user && user._doc) { %>
       <!-- Notification Modal -->
-      <% include partials/notificationModal %>
+      <%- include('partials/notificationModal') %>
       
       <!-- Include notifications.js for notification functionality -->
       <script src="/static/js/notifications.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>

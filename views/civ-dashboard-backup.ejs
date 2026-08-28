@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <% include ad-header %>
+  <%- include('ad-header') %>
   <title>LPC - Civilian Dashboard</title>
   <meta charset="utf-8">
   <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
@@ -405,9 +405,9 @@ a:not([href]):not([tabindex]):not(.pager a) {
           </li>
         </div>
 
-        <% include departments-sidebar %>
-        <% include community-sidebar %>
-        <% include other-sidebar %>
+        <%- include('departments-sidebar') %>
+        <%- include('community-sidebar') %>
+        <%- include('other-sidebar') %>
       </ul>
 
     </nav>
@@ -428,7 +428,7 @@ a:not([href]):not([tabindex]):not(.pager a) {
           </div>
         </div>
         <!-- imports the community specific alerts -->
-        <% include community-alerts %>
+        <%- include('community-alerts') %>
         <div id="911CallCreatedAlert" class="alert alert-success alert-dismissible hide" role="alert">
           <strong>Success!</strong> 911 Call has been placed
           <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -545,7 +545,7 @@ a:not([href]):not([tabindex]):not(.pager a) {
       <div class="google-ad"></div>
       
     </div>
-    <% include footer %>
+    <%- include('footer') %>
   </div>
 
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
@@ -1849,9 +1849,9 @@ a:not([href]):not([tabindex]):not(.pager a) {
     </div>
   </div>
 
-  <% include account-management %>
-  <% include partials/notificationModal %>
-  <!-- <% include notification-modal %> -->
+  <%- include('account-management') %>
+  <%- include('partials/notificationModal') %>
+  <!-- <%- include('notification-modal') %> -->
 
   <!--scripts loaded here -->
   <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
