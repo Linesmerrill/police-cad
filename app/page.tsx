@@ -1,5 +1,6 @@
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
+import Gta6Countdown from '@/components/Gta6Countdown';
 import Stats from '@/components/Stats';
 import WhatWeDo from '@/components/WhatWeDo';
 import Features from '@/components/Features';
@@ -25,6 +26,7 @@ export default function Home() {
     >
       <Navbar />
       <Hero />
+      <Gta6Countdown />
       <Stats />
       <WhatWeDo />
       <Features />
