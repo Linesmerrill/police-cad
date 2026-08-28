@@ -62,4 +62,49 @@ describe("ejs views", function () {
       "use <%- include('name') %> instead:\n  " + offenders.join("\n  ")
     );
   });
+
+  /*
+   * Every include() path resolves relative to the file that CONTAINS it.
+   *
+   * This one is easy to get wrong and compiles clean: while a partial was
+   * inlined by the legacy form it inherited the parent's directory, so a path
+   * written from the parent's perspective worked. Compiled separately it does
+   * not. community-details-modals.ejs had exactly this — include('partials/
+   * manage-ranks') from inside views/partials/, which only ever resolved
+   * because it was being inlined into a file in views/.
+   */
+  it("resolves every include() path relative to its own file", function () {
+    var unresolved = [];
+    files.forEach(function (file) {
+      var src = fs.readFileSync(file, "utf8");
+      var re = /include\(\s*['"]([^'"]+)['"]/g;
+      var m;
+      while ((m = re.exec(src))) {
+        var spec = m[1];
+        var target = path.resolve(
+          path.dirname(file),
+          spec.endsWith(".ejs") ? spec : spec + ".ejs"
+        );
+        if (!fs.existsSync(target)) {
+          unresolved.push(path.relative(VIEWS, file) + " -> include('" + spec + "')");
+        }
+      }
+    });
+    assert.deepEqual(unresolved, [], "include paths that do not resolve:\n  " + unresolved.join("\n  "));
+  });
 });
+
+/*
+ * What these tests do NOT cover, learned the hard way:
+ *
+ * A template can compile and still throw at render time. The legacy
+ * `<% include %>` form inlined the partial, so it could read variables from
+ * the parent's scriptlets; include() compiles it separately and passes only
+ * locals, so those become ReferenceErrors. community-details.ejs hit this —
+ * its modals partial reads userId and two permission flags declared at the top
+ * of the parent, and they now have to be passed explicitly.
+ *
+ * Nothing above catches that class. The E2E suite does, by actually rendering
+ * the pages, and that is how it was found. If you touch includes, do not treat
+ * a green unit run as sufficient.
+ */

@@ -2379,7 +2379,17 @@
     </script>
 
     <!-- Include all modals and remaining scripts from partial -->
-    <%- include('partials/community-details-modals') %>
+    <%# The legacy include form inlined this partial, so it could see the
+    variables declared in the scriptlet at the top of this file.
+    include() compiles the partial separately, so the three it actually
+    uses in EJS scope have to be handed over. Its other cross-file
+    references (members, isMemberApproved) are client-side JS resolved
+    in the browser, not EJS locals. %>
+    <%- include('partials/community-details-modals', {
+      userId: userId,
+      canManageDepartments: canManageDepartments,
+      canManageAnnouncements: canManageAnnouncements,
+    }) %>
     <%- include('partials/community-delete-loading') %>
     <%- include('partials/pending-deletion-gate') %>
   </body>
