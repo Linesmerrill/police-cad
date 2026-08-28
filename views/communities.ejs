@@ -365,6 +365,12 @@
         <% } %>
       </div>
     </nav>
+    <!-- Launch countdown. Sits above the promo bar so the hype element reads
+         first on a page people arrive at in discovery mode. Renders nothing
+         unless the route supplied an active countdown. -->
+    <div class="mx-3 mt-3">
+      <% include partials/gta6-countdown %>
+    </div>
     <!-- Promo Bar - Compact version with home page styling -->
     <div id="promo-bar" class="mx-3 mt-3 rounded-xl relative" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(59, 130, 246, 0.2); color: #fff; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); padding: 0.75rem 2.5rem 0.75rem 1rem;">
       <div style="display: flex; align-items: center; gap: 0.75rem;">

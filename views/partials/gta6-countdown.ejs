@@ -1,0 +1,76 @@
+<%
+  /* Launch countdown strip. Rendered only when the route supplied a countdown
+     (see getActiveCountdown in app/routes.js). The server hands over the
+     target; public/js/countdown.js does the ticking and the retirement.
+
+     Styling is shared with the Next.js landing page via
+     /static/css/gta6-countdown.css — keep the class names in sync. */
+%>
+<% if (typeof countdown !== "undefined" && countdown) { %>
+<link rel="stylesheet" href="/static/css/gta6-countdown.css?v=2" />
+<aside
+  class="gta6-strip gta6-strip--inset"
+  data-gta6-countdown
+  data-slug="<%= countdown.slug %>"
+  data-mode="<%= countdown.mode || 'localMidnight' %>"
+  data-launch-date="<%= countdown.launchDate || '' %>"
+  data-launches-at="<%= countdown.launchesAt || '' %>"
+  data-post-launch-hours="<%= countdown.postLaunchHours || 72 %>"
+  aria-label="<%= countdown.title %> launch countdown"
+  hidden
+>
+  <span class="gta6-strip__sun" aria-hidden="true"></span>
+  <span class="gta6-strip__grain" aria-hidden="true"></span>
+
+  <div class="gta6-strip__inner">
+    <div class="gta6-strip__lede">
+      <p class="gta6-strip__eyebrow">Countdown</p>
+      <h2 class="gta6-strip__title"><%= countdown.title %></h2>
+      <% if (countdown.subtitle) { %>
+        <p class="gta6-strip__subtitle"><%= countdown.subtitle %></p>
+      <% } %>
+    </div>
+
+    <ol class="gta6-clock" aria-hidden="true">
+      <li class="gta6-unit">
+        <span class="gta6-unit__value" data-gta6-days>--</span>
+        <span class="gta6-unit__label">Days</span>
+      </li>
+      <li class="gta6-sep" aria-hidden="true">:</li>
+      <li class="gta6-unit">
+        <span class="gta6-unit__value" data-gta6-hours>--</span>
+        <span class="gta6-unit__label">Hrs</span>
+      </li>
+      <li class="gta6-sep" aria-hidden="true">:</li>
+      <li class="gta6-unit">
+        <span class="gta6-unit__value" data-gta6-minutes>--</span>
+        <span class="gta6-unit__label">Min</span>
+      </li>
+      <li class="gta6-sep" aria-hidden="true">:</li>
+      <li class="gta6-unit" data-gta6-seconds-unit>
+        <span class="gta6-unit__value" data-gta6-seconds>--</span>
+        <span class="gta6-unit__label">Sec</span>
+      </li>
+    </ol>
+
+    <p class="gta6-strip__out">Out now</p>
+
+    <div class="gta6-strip__meta">
+      <p class="gta6-strip__local">
+        <span data-gta6-local></span>
+        <span class="gta6-strip__zone" data-gta6-zone></span>
+      </p>
+      <% if (countdown.ctaUrl && countdown.ctaLabel) { %>
+        <a class="gta6-strip__cta" href="<%= countdown.ctaUrl %>" rel="noopener noreferrer" target="_blank"><%= countdown.ctaLabel %></a>
+      <% } %>
+    </div>
+
+    <p class="gta6-sr-only" role="status" data-gta6-sr></p>
+  </div>
+
+  <button type="button" class="gta6-strip__dismiss" data-gta6-dismiss aria-label="Hide the <%= countdown.title %> countdown">&times;</button>
+
+  <span class="gta6-strip__horizon" aria-hidden="true"></span>
+</aside>
+<script src="/static/js/countdown.js?v=2"></script>
+<% } %>

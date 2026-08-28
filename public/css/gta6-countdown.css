@@ -1,0 +1,447 @@
+/* ==========================================================================
+   Launch countdown — "Sunset Strip"
+   --------------------------------------------------------------------------
+   Shared by the Next.js landing page (components/Gta6Countdown.tsx) and the
+   EJS pages (views/partials/gta6-countdown.ejs + public/js/countdown.js).
+   Both load it over HTTP from /static/css/gta6-countdown.css, so the markup
+   and class names must stay identical on both surfaces.
+
+   The idea: the strip is the horizon. A hairline gradient rule runs its full
+   width with a slatted sun bleeding up from behind it, and the numerals sit on
+   top like a skyline. The field stays near-black — all the colour is light.
+   Evokes a Miami dusk without borrowing anyone's artwork.
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Archivo+Black&display=swap");
+
+.gta6-strip {
+  --gta-magenta: #ff2d8e;
+  --gta-rose: #ff5c7a;
+  --gta-orange: #ff7a2f;
+  --gta-amber: #ffb03a;
+  --gta-gold: #ffd86b;
+  --gta-night: #0b0410;
+  --gta-ink: #07030b;
+  --gta-bone: #fff3e6;
+  --gta-sweep: linear-gradient(
+    90deg,
+    var(--gta-magenta),
+    var(--gta-rose),
+    var(--gta-orange),
+    var(--gta-amber),
+    var(--gta-gold)
+  );
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1.15rem clamp(1rem, 4vw, 2.5rem) 1.35rem;
+  background:
+    radial-gradient(120% 180% at 18% 130%, rgba(255, 45, 142, 0.16), transparent 62%),
+    linear-gradient(180deg, var(--gta-ink), var(--gta-night));
+  border-top: 1px solid rgba(255, 122, 47, 0.12);
+  font-family: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  color: var(--gta-bone);
+}
+
+/* Rounded variant for the /communities promo slot, which sits inside a
+   padded container rather than spanning the viewport. */
+.gta6-strip--inset {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 122, 47, 0.16);
+}
+
+.gta6-strip[hidden] {
+  display: none !important;
+}
+
+/* --- the sun ------------------------------------------------------------ */
+/* Sits low and off-centre so the strip's bottom edge cuts it in half. The
+   slats are the giveaway motif of a retro sunset; they do more work here than
+   any amount of gradient would. */
+.gta6-strip__sun {
+  position: absolute;
+  z-index: -2;
+  left: clamp(-3.5rem, 2vw, 1.5rem);
+  bottom: -5.5rem;
+  width: 11rem;
+  height: 11rem;
+  pointer-events: none;
+  /* Deliberately faint. At full strength the slats read as a sticker pasted
+     over the copy; at this weight they read as light behind it. */
+  opacity: 0.34;
+  filter: blur(2.5px);
+  animation: gta6-breathe 7s ease-in-out infinite;
+}
+
+.gta6-strip__sun::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--gta-gold) 0%,
+    var(--gta-amber) 32%,
+    var(--gta-orange) 55%,
+    var(--gta-magenta) 76%,
+    rgba(255, 45, 142, 0) 79%
+  );
+  filter: blur(1px);
+}
+
+/* Venetian slats, thickening toward the bottom the way the real motif does.
+   The mask fades the disc out at its edges so it reads as light rather than a
+   sticker pasted on the background. */
+.gta6-strip__sun::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 9px,
+    var(--gta-ink) 9px 11px,
+    transparent 11px 20px,
+    var(--gta-ink) 20px 23px,
+    transparent 23px 32px,
+    var(--gta-ink) 32px 37px
+  );
+  background-position: 0 55%;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 62%, transparent 79%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 62%, transparent 79%);
+}
+
+/* --- grain -------------------------------------------------------------- */
+/* Just enough tooth that the gradients do not look like flat vector fills. */
+.gta6-strip__grain {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* --- the horizon -------------------------------------------------------- */
+/* Warm haze rising off the rule. This is what makes the strip read as a
+   horizon at dusk rather than a black bar with a coloured border. */
+.gta6-strip::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 55%;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(255, 122, 47, 0.16),
+    rgba(255, 45, 142, 0.07) 45%,
+    transparent 100%
+  );
+}
+
+.gta6-strip__horizon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.5px;
+  background: var(--gta-sweep);
+  background-size: 220% 100%;
+  animation: gta6-drift 16s linear infinite;
+  /* Three stacked blooms: a tight hot core, a mid falloff, and a wide wash.
+     One shadow reads as a glowing border; three read as a light source. */
+  box-shadow:
+    0 0 4px rgba(255, 216, 107, 0.75),
+    0 0 14px rgba(255, 122, 47, 0.6),
+    0 0 40px rgba(255, 45, 142, 0.35);
+}
+
+/* --- layout ------------------------------------------------------------- */
+.gta6-strip__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(0.9rem, 3vw, 2.25rem);
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-right: 2rem; /* room for the dismiss control */
+}
+
+.gta6-strip__lede {
+  min-width: 0;
+}
+
+.gta6-strip__eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--gta-amber);
+}
+
+.gta6-strip__title {
+  margin: 0;
+  font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--gta-bone);
+  white-space: nowrap;
+}
+
+.gta6-strip__subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: rgba(255, 243, 230, 0.52);
+}
+
+/* --- the clock ---------------------------------------------------------- */
+.gta6-clock {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(0.35rem, 1vw, 0.8rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* drop-shadow rather than text-shadow: the numerals are gradient-clipped
+     text, which cannot take a text-shadow. */
+  filter: drop-shadow(0 0 16px rgba(255, 45, 142, 0.34));
+}
+
+.gta6-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 2.4ch;
+}
+
+.gta6-unit__value {
+  font-family: "Archivo Black", "Archivo", ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(1.6rem, 3.4vw, 2.3rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  background: var(--gta-sweep);
+  background-size: 340% 100%;
+  background-position: var(--gta-unit-pos, 0%) 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* Browsers without background-clip:text still get readable numerals. */
+  -webkit-text-fill-color: transparent;
+}
+
+/* Each unit samples a different slice of the sweep, so the row reads
+   magenta on the left through gold on the right rather than four
+   identical gradients. */
+.gta6-unit:nth-child(1) .gta6-unit__value { --gta-unit-pos: 0%; }
+.gta6-unit:nth-child(3) .gta6-unit__value { --gta-unit-pos: 33%; }
+.gta6-unit:nth-child(5) .gta6-unit__value { --gta-unit-pos: 66%; }
+.gta6-unit:nth-child(7) .gta6-unit__value { --gta-unit-pos: 100%; }
+
+.gta6-unit__label {
+  margin-top: 0.35rem;
+  font-size: 0.54rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 243, 230, 0.4);
+}
+
+.gta6-sep {
+  align-self: flex-start;
+  margin-top: 0.05em;
+  font-family: "Archivo Black", "Archivo", sans-serif;
+  font-size: clamp(1.2rem, 2.6vw, 1.7rem);
+  line-height: 1;
+  color: rgba(255, 122, 47, 0.34);
+}
+
+/* The seconds column gets a heartbeat on each tick. Only the seconds — a pulse
+   on every unit would read as jitter. */
+.gta6-unit--tick .gta6-unit__value {
+  animation: gta6-tick 420ms ease-out;
+}
+
+/* --- local time + CTA --------------------------------------------------- */
+.gta6-strip__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-left: auto;
+  text-align: right;
+}
+
+.gta6-strip__local {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(255, 243, 230, 0.62);
+  font-variant-numeric: tabular-nums;
+}
+
+.gta6-strip__zone {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 176, 58, 0.62);
+}
+
+.gta6-strip__cta {
+  align-self: flex-end;
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 122, 47, 0.4);
+  background: rgba(255, 45, 142, 0.1);
+  color: var(--gta-gold);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.gta6-strip__cta:hover,
+.gta6-strip__cta:focus-visible {
+  background: rgba(255, 45, 142, 0.2);
+  border-color: rgba(255, 216, 107, 0.7);
+  transform: translateY(-1px);
+}
+
+/* --- launched state ----------------------------------------------------- */
+.gta6-strip__out {
+  display: none;
+  margin: 0;
+  font-family: "Archivo Black", "Archivo", sans-serif;
+  font-size: clamp(1.5rem, 3.2vw, 2.1rem);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: var(--gta-sweep);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 20px rgba(255, 45, 142, 0.45));
+  animation: gta6-drift 6s linear infinite;
+}
+
+.gta6-strip[data-phase="launched"] .gta6-clock { display: none; }
+.gta6-strip[data-phase="launched"] .gta6-strip__out { display: block; }
+
+/* --- dismiss ------------------------------------------------------------ */
+.gta6-strip__dismiss {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.6rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 243, 230, 0.32);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.gta6-strip__dismiss:hover,
+.gta6-strip__dismiss:focus-visible {
+  color: var(--gta-gold);
+  background: rgba(255, 122, 47, 0.14);
+}
+
+/* Screen readers get a summary that updates once a minute instead of the
+   per-second digits, which would be unusable read aloud. */
+.gta6-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- motion ------------------------------------------------------------- */
+@keyframes gta6-drift {
+  from { background-position: 0% 0; }
+  to { background-position: 200% 0; }
+}
+
+@keyframes gta6-breathe {
+  0%, 100% { opacity: 0.28; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.035); }
+}
+
+@keyframes gta6-tick {
+  0% { transform: translateY(0.06em) scale(0.97); opacity: 0.6; }
+  60% { transform: translateY(0) scale(1.03); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes gta6-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.gta6-strip--enter {
+  animation: gta6-rise 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* --- responsive --------------------------------------------------------- */
+@media (max-width: 860px) {
+  .gta6-strip__inner {
+    gap: 0.75rem 1.1rem;
+  }
+  .gta6-strip__meta {
+    margin-left: 0;
+    width: 100%;
+    text-align: left;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .gta6-strip__cta { align-self: center; }
+  .gta6-strip__title { white-space: normal; }
+}
+
+@media (max-width: 560px) {
+  .gta6-strip { padding-bottom: 1.15rem; }
+  .gta6-strip__sun { width: 10rem; height: 10rem; bottom: -3rem; }
+  .gta6-strip__subtitle { display: none; }
+  .gta6-unit { min-width: 2.1ch; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gta6-strip__horizon,
+  .gta6-strip__sun,
+  .gta6-strip__out,
+  .gta6-strip--enter,
+  .gta6-unit--tick .gta6-unit__value {
+    animation: none;
+  }
+}

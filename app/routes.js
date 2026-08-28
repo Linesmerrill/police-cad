@@ -94,6 +94,62 @@ function renderPendingDeletionIfApplicable(req, res, error) {
   return true;
 }
 
+// Platform launch countdown (GTA 6 and whatever comes after it).
+//
+// The date lives in Mongo so a slipped launch can be corrected without a
+// deploy anywhere. This is the EJS side; the Next.js landing page has its own
+// proxy at app/api/countdown/route.ts. The ticking itself is
+// public/js/countdown.js — the server only supplies the target.
+//
+// GTA6_COUNTDOWN_FALLBACK matches lib/countdown.ts and
+// police-cad-app/utils/countdown.js. Change one, change all three.
+var GTA6_COUNTDOWN_FALLBACK = {
+  slug: "gta6",
+  title: "Grand Theft Auto VI",
+  subtitle: "Back to Vice City.",
+  launchDate: "2026-11-19",
+  launchesAt: "2026-11-18T23:00:00Z",
+  mode: "localMidnight",
+  theme: "gta6",
+  postLaunchHours: 72,
+  active: true,
+};
+
+// The ceiling here is the delay between fixing a date in Mongo and the site
+// showing it. Without the cache every page load would add an API round-trip.
+var COUNTDOWN_CACHE_TTL_MS = 5 * 60 * 1000;
+var countdownCache = { value: null, at: 0, valid: false };
+
+// Resolves the countdown to render, never throwing and never blocking a page:
+// a failed lookup falls back to the constant above rather than taking the
+// page down with it.
+async function getActiveCountdown(surface) {
+  var now = Date.now();
+  if (countdownCache.valid && now - countdownCache.at < COUNTDOWN_CACHE_TTL_MS) {
+    return countdownCache.value;
+  }
+  if (!policeCadApiUrl) return GTA6_COUNTDOWN_FALLBACK;
+
+  try {
+    var response = await axios.get(
+      `${policeCadApiUrl}/api/v1/countdowns?surface=${encodeURIComponent(surface)}`,
+      Object.assign({}, config, { timeout: 4000 })
+    );
+    var list = Array.isArray(response.data) ? response.data : [];
+    // Only consider records that are still worth showing. A deliberately
+    // deactivated countdown is a real answer, so null gets cached too.
+    var active = list.filter(function (c) {
+      return c && c.active !== false && c.slug === "gta6";
+    });
+    countdownCache = { value: active[0] || null, at: now, valid: true };
+    return countdownCache.value;
+  } catch (err) {
+    // Deliberately not cached: the next request should retry rather than sit
+    // on a stale date for five minutes after a blip.
+    return GTA6_COUNTDOWN_FALLBACK;
+  }
+}
+
 module.exports = function (app, passport, server, nextApp, handle) {
   // Root route - use Next.js if available, otherwise fall back to EJS
   app.get("/", function (req, res) {
@@ -1408,13 +1464,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
    *   Users can 'copy' the community code or 'edit' the community name.
    *   Also community admins can 'kick' members from their community.
    */
-  app.get("/communities", function (req, res) {
+  app.get("/communities", async function (req, res) {
     req.app.locals.specialContext = null;
     return res.render("communities", {
       members: null,
       communities: null,
       userID: null,
       user: req.user,
+      countdown: await getActiveCountdown("web"),
       referer: encodeURIComponent("/communities"),
       redirect: encodeURIComponent(redirect),
     });
