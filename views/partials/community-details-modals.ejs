@@ -16441,7 +16441,10 @@ async function saveEditEvent() {
 
 <!-- ===================== Rank Management Modal (shared partial) ===================== -->
 <div id="rankManagementModal" class="rkm-overlay" onclick="if(event.target===this)closeRankManagementModal()">
-  <%- include('partials/manage-ranks') %>
+  <%# Sibling, not 'partials/manage-ranks': include() resolves relative to
+    THIS file. The old path only worked while this partial was inlined
+    into community-details.ejs and inherited its directory. %>
+  <%- include('manage-ranks') %>
 </div>
 <script src="/static/js/manage-ranks.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
 <script>

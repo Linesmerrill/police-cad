@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <% include ad-header %>
+    <%- include('ad-header') %>
     <style data-rc-order="prepend" rc-util-key="@ant-design-icons">
       .anticon {
         display: inline-block;
@@ -12000,7 +12000,7 @@
   </head>
 
   <body>
-    <% include global-status %> <% if(message != undefined && message != null)
+    <%- include('global-status') %> <% if(message != undefined && message != null)
     {%> <% if ( message.length > 0) { %>
     <div
       class="toast"

@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <% include ad-header %>
+  <%- include('ad-header') %>
   <title>LPC - <%= departmentName || 'Fire/EMS' %> Dashboard</title>
   <meta charset="utf-8">
   <meta name="description"
@@ -1987,7 +1987,7 @@
               <button type="button" style="background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:5px; padding:0.35rem 1rem; font-size:0.9rem; cursor:pointer;" onclick="cancelSidebarCallSignEdit()">Cancel</button>
             </div>
           </div>
-          <% include partials/rank-sidebar-badge %>
+          <%- include('partials/rank-sidebar-badge') %>
           <h5>Logged in as: Fire/EMS</h5>
         </div>
       </div>
@@ -2041,9 +2041,9 @@
             <a href="/court-cases<%= encodedCommunityId ? '?c=' + encodedCommunityId : '' %>" id="sidebar-court-cases"><span class="fa fa-gavel ml-3 mr-3"></span> Court Cases</a>
           </li>
         </div>
-        <% include departments-sidebar %>
-        <% include community-sidebar %>
-        <% include other-sidebar %>
+        <%- include('departments-sidebar') %>
+        <%- include('community-sidebar') %>
+        <%- include('other-sidebar') %>
       </ul>
 
     </nav>
@@ -2122,7 +2122,7 @@
         <div class="header-content">
           <div class="inner">
             <!-- imports the community specific alerts -->
-            <% include community-alerts %>
+            <%- include('community-alerts') %>
 
             <div class="col-lg-10 col-lg-offset-1 text-center">
               <button data-toggle="modal" href="#medicalDatabaseModal" class="btn btn-primary btn-lg" style="margin: 5px;">Medical
@@ -2135,7 +2135,7 @@
           </div>
         </div>
       </header>
-      <% include partials/rank-modals %>
+      <%- include('partials/rank-modals') %>
       <section style='background-image: url("/static/images/blue-clouds.jpg");'>
         <div class="container">
 
@@ -2202,7 +2202,7 @@
 
           <!-- Rank Progress Card -->
           <div class="col-md-12 col-md-offset-0.75">
-            <% include partials/rank-progress-card %>
+            <%- include('partials/rank-progress-card') %>
           </div>
 
           <!--Table for Personas  -->
@@ -2274,14 +2274,14 @@
       </section>
       
       <div class="google-ad"></div>
-      <% include partials/footer %>
+      <%- include('partials/footer') %>
 </div>
   </div>
 
 
   <!-- Include all the modals and scripts -->
-  <% include account-management %>
-          <% include partials/notificationModal %>
+  <%- include('account-management') %>
+          <%- include('partials/notificationModal') %>
 
     <!-- Delete Confirmation Modal for Medical Reports -->
     <div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true" style="z-index: 9999;">
@@ -2367,7 +2367,7 @@
       </div>
     </div>
     
-    <% include notepad %>
+    <%- include('notepad') %>
 
   <!-- EMS Dashboard Modals -->
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">

@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <% include ad-header %>
+  <%- include('ad-header') %>
   <title>LPC - Release Log</title>
   <meta charset="utf-8">
   <meta name="description"
@@ -34,7 +34,7 @@
         <a class="navbar-brand page-scroll" href="/"><img style="display: inline; margin-top: -9px; vertical-align: text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD</a>
       </div>
       <div class="navbar-collapse collapse" id="bs-navbar">
-        <% include index-navbar %>
+        <%- include('index-navbar') %>
       </div>
     </div>
   </nav>
@@ -1931,7 +1931,7 @@
     </div>
   </section>
 
-  <% include footer %>
+  <%- include('footer') %>
   <div id="alertModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-sm">
       <div class="modal-content">

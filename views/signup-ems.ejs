@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <% include ad-header %>
+    <%- include('ad-header') %>
     <meta charset="utf-8">
     <title>LPC - Sign up as Fire/EMS</title>
     <meta name="description" content="Lines Roleplay Police CAD (Computer Aided Dispatch). Built to facilitate the needs of roleplay police and civilians." />
@@ -107,12 +107,12 @@
                 <button type="submit" value="SignUp" class="btn btn-primary btn-xl margin-top-2" >Create</button>
               </form>
             </div>
-            <% include already-signed-up %>
+            <%- include('already-signed-up') %>
         </div>
 
     </header>
     <div class="google-ad"></div>
-    <% include footer %>    
+    <%- include('footer') %>    
     <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg">
         <div class="modal-content">

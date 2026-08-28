@@ -1,7 +1,7 @@
 <!DOCTYPE html>
   <html lang="en">
   <head>
-    <% include ad-header %>
+    <%- include('ad-header') %>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>LPC - Departments</title>
@@ -258,9 +258,9 @@
         </div>
       </div>
     </header>
-    <% include account-management %>
-    <% include partials/notificationModal %>
-    <% include footer %>
+    <%- include('account-management') %>
+    <%- include('partials/notificationModal') %>
+    <%- include('footer') %>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.js"></script>

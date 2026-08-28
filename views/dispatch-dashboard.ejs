@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <% include ad-header %>
+  <%- include('ad-header') %>
   <title>LPC - <%= departmentName || 'Dispatch' %> Dashboard</title>
   <meta charset="utf-8">
   <meta name="description"
@@ -643,7 +643,7 @@
               <button type="button" style="background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:5px; padding:0.35rem 1rem; font-size:0.9rem; cursor:pointer;" onclick="cancelSidebarCallSignEdit()">Cancel</button>
             </div>
           </div>
-          <% include partials/rank-sidebar-badge %>
+          <%- include('partials/rank-sidebar-badge') %>
           <h5>Logged in as: Dispatch</h5>
         </div>
       </div>
@@ -722,9 +722,9 @@
             <a href="/court-cases<%= encodedCommunityId ? '?c=' + encodedCommunityId : '' %>" id="sidebar-court-cases"><span class="fa fa-gavel ml-3 mr-3"></span> Court Cases</a>
           </li>
         </div>
-        <% include departments-sidebar %>
-        <% include community-sidebar %>
-        <% include other-sidebar %>
+        <%- include('departments-sidebar') %>
+        <%- include('community-sidebar') %>
+        <%- include('other-sidebar') %>
       </ul>
 
     </nav>
@@ -814,7 +814,7 @@
         </div>
       </div>
 
-      <% include partials/rank-modals %>
+      <%- include('partials/rank-modals') %>
 
       <!-- Command Bridge (dispatch) opt-in banner ─ rendered as a DIRECT
            child of header#second (sibling of .header-content), not nested
@@ -946,7 +946,7 @@
                       <%}%>
 
                         <!-- imports the community specific alerts -->
-                        <% include community-alerts %>
+                        <%- include('community-alerts') %>
                           <!-- <div class="col-md-10 col-md-offset-1 text-center">
                             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
                               <button type="button" class="btn btn-danger btn-lg margin-top-2 margin-bottom-1"
@@ -2193,7 +2193,7 @@
         </div>
       </header>
 
-      <% include partials/rank-progress-card %>
+      <%- include('partials/rank-progress-card') %>
 
       <%
         var subPlan = (user && user.user && user.user.subscription && user.user.subscription.plan) || 'free';
@@ -2203,7 +2203,7 @@
       %>
       <% if (!isPremiumPlus && !(isPremium && Math.random() >= 0.5)) { %>
       <div class="adsbygoogle">
-        <% include ad-body %>
+        <%- include('ad-body') %>
       </div>
       <% } %>
       <section style='background-image: url("/static/images/blue-clouds.jpg"); padding: 0;'>
@@ -2288,7 +2288,7 @@
         </div>
       </section>
       <div class="google-ad"></div>
-      <% include partials/footer %>
+      <%- include('partials/footer') %>
     </div>
   </div>
 
@@ -2309,8 +2309,8 @@
     </div>
   </div>
 
- <% include search-database %>
-  <% include details-modal %>
+ <%- include('search-database') %>
+  <%- include('details-modal') %>
   
   <div id="viewLicense" class="modal fade" style="z-index: 9000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -2328,7 +2328,7 @@
               <label class="col-md-3 control-label" for="license-type">License Type:</label>
               <div class="col-md-5">
                 <select id="license-type-details" name="licenseType" class="form-control disabled-color" required="" readonly="readonly">
-                  <% include license-list %>
+                  <%- include('license-list') %>
                 </select>
               </div>
             </div>
@@ -2701,7 +2701,7 @@
     </div>
   </div>
 
-  <% include arrest-modal %>
+  <%- include('arrest-modal') %>
 
   <div id="boloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -3275,7 +3275,7 @@
     </div>
   </div>
 
-  <% include account-management %>
+  <%- include('account-management') %>
 
     <div id="manageUserDispatchStatusModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog">
@@ -3547,9 +3547,9 @@
       </div>
     </div>
 
-     <% include partials/notificationModal %>
-    <% include 10-codes %>
-    <% include notepad %>
+     <%- include('partials/notificationModal') %>
+    <%- include('10-codes') %>
+    <%- include('notepad') %>
 
   <!-- ══════════════════════════════════════════ -->
   <!-- Warrant Database Overlay System          -->
