@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import VerificationPanel, { codeRemovalSentence, DEFAULT_MIN_FOLLOWERS } from './VerificationPanel';
+import VerificationPanel, { DEFAULT_MIN_FOLLOWERS } from './VerificationPanel';
 import ProfileSetupChecklist from './ProfileSetupChecklist';
 import ApplicationProgress, { Stage } from './ApplicationProgress';
 import {
@@ -314,16 +314,16 @@ function buildStages(app: Application): Stage[] {
   // is coming — showing one would just be a countdown to a foregone answer.
   if (!belowMinimum) {
     const inReview = allVerified && !failed;
-    // "Nothing for you to do" is true but wasted: the one thing they can now do
-    // is undo the edit we asked them to make. Only ever say it about a platform
-    // we read through an API — a TikTok code stays until a human has seen it.
-    const removal = codeRemovalSentence(platforms);
+    // The "you can take the code out" line used to be tacked onto the end of
+    // this sentence as well as the verification panel's. Two trailing clauses
+    // in two paragraphs, and creators still left the code in place for weeks.
+    // It has one home now: the callout in VerificationPanel, which renders
+    // under the same conditions as this timeline and sits next to the code
+    // itself.
     stages.push({
       title: 'Review by our team',
       detail: inReview
-        ? `A member of our team is reviewing your application. This usually takes 3 to 5 business days.${
-            removal ? ` ${removal} We already have what we need.` : ' There is nothing for you to do in the meantime.'
-          }`
+        ? 'A member of our team is reviewing your application. This usually takes 3 to 5 business days. There is nothing for you to do in the meantime.'
         : 'Once your channels are verified, a member of our team reviews your application. This usually takes 3 to 5 business days.',
       state: inReview ? 'active' : 'upcoming',
     });
