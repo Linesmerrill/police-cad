@@ -687,11 +687,135 @@
       .admin-actions-container { display:flex; flex-wrap:wrap; gap:0.75rem; align-items:stretch; }
       .admin-actions-container .btn { flex:1; min-width:140px; display:flex; align-items:center; justify-content:center; gap:0.5rem; white-space:nowrap; }
 
-      /* ── CC status buttons ── */
-      body.ac-body .cc-status-btn { margin-right:0.25rem; padding:0.5rem 1rem; }
-      body.ac-body .cc-status-btn.active { background:var(--ac-accent) !important; border-color:var(--ac-accent) !important; color:#fff !important; }
-      body.ac-body .btn-group .cc-status-btn:first-child { border-radius:var(--ac-radius-sm) 0 0 var(--ac-radius-sm); }
-      body.ac-body .btn-group .cc-status-btn:last-child { border-radius:0 var(--ac-radius-sm) var(--ac-radius-sm) 0; margin-right:0; }
+      /* ── Content Creators queue ──────────────────────────────────────────
+         This panel is a triage worklist, not a search-results page: the only
+         question it answers is which applications need an admin right now. So
+         state is carried by a colour spine down the left edge of each card and
+         one row of pills, the counts live on the filters that act on them, and
+         everything else stays quiet. Deliberately the same visual language as
+         the review page each card hands off to. */
+
+      /* Chips, not a Bootstrap button group: five segments welded together
+         could not carry counts without getting wide enough to overflow, and
+         had nowhere to go on a phone but wrap into a ragged block. */
+      .cc-rail {
+        display:flex; gap:0.5rem; margin-bottom:1rem;
+        overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
+      }
+      .cc-rail::-webkit-scrollbar { display:none; }
+      body.ac-body .cc-status-btn {
+        flex:0 0 auto; display:inline-flex; align-items:center; gap:0.4rem;
+        background:var(--ac-glass); border:1px solid var(--ac-glass-border);
+        color:var(--ac-text-muted); border-radius:99px;
+        padding:0.45rem 0.9rem; font-size:0.8125rem; font-weight:600;
+        font-family:'Outfit',sans-serif; cursor:pointer; white-space:nowrap;
+        transition:background 0.15s, border-color 0.15s, color 0.15s;
+      }
+      body.ac-body .cc-status-btn:hover { background:var(--ac-glass-hover); color:var(--ac-text); }
+      body.ac-body .cc-status-btn.active {
+        background:var(--ac-accent-glow); border-color:rgba(139,92,246,0.45); color:#fff;
+      }
+      body.ac-body .cc-status-btn i { font-size:0.75rem; opacity:0.8; }
+      .cc-chip-count {
+        font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums;
+        font-size:0.75rem; font-weight:700; color:var(--ac-text);
+        background:rgba(0,0,0,0.28); border-radius:99px; padding:0.05rem 0.4rem; min-width:1.5rem;
+        text-align:center;
+      }
+      /* A queue that needs somebody says so. An empty one is an answer too, so
+         the zero stays on screen rather than the badge vanishing. */
+      .cc-status-btn[data-status="submitted"] .cc-chip-count { color:#f87171; }
+      .cc-status-btn[data-status="under_review"] .cc-chip-count { color:#fbbf24; }
+      .cc-chip-count.is-zero { color:var(--ac-text-dim) !important; }
+
+      .cc-search { display:flex; gap:0.625rem; align-items:stretch; }
+      .cc-search .ac-input { flex:1; min-width:0; }
+      .cc-search .ac-btn { flex:0 0 auto; white-space:nowrap; }
+
+      /* Creators in the programme, not applications in the queue -- a different
+         noun, so it does not get to look like one of the filters. */
+      .cc-active-line {
+        display:flex; align-items:center; gap:0.5rem; margin:0.875rem 0 0.25rem;
+        font-size:0.8125rem; color:var(--ac-text-muted);
+      }
+      .cc-active-line i { font-size:0.5rem; color:var(--ac-green); }
+      .cc-active-line strong {
+        color:var(--ac-text); font-family:'JetBrains Mono',monospace;
+        font-variant-numeric:tabular-nums; font-weight:700;
+      }
+
+      .cc-list { margin-top:1.25rem; }
+      .cc-app {
+        position:relative; overflow:hidden;
+        background:var(--ac-glass); border:1px solid var(--ac-glass-border);
+        border-radius:var(--ac-radius); padding:1.25rem 1.25rem 1.25rem 1.5rem;
+        margin-bottom:0.875rem; transition:background 0.15s, border-color 0.15s;
+        animation:ac-fadeUp 0.35s ease both;
+      }
+      .cc-app:hover { background:var(--ac-glass-hover); border-color:rgba(139,92,246,0.25); }
+      /* The spine is the scan. Status is legible down the left edge of the
+         whole list before a single word is read. */
+      .cc-app::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--ac-text-dim); }
+      .cc-app[data-status="submitted"]::before    { background:#3b82f6; }
+      .cc-app[data-status="under_review"]::before { background:var(--ac-amber); }
+      .cc-app[data-status="approved"]::before     { background:var(--ac-green); }
+      .cc-app[data-status="rejected"]::before     { background:var(--ac-red); }
+
+      .cc-app-top { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
+      .cc-app-id { min-width:0; flex:1; }
+      .cc-app-name {
+        display:flex; align-items:center; gap:0.625rem; flex-wrap:wrap;
+        font-size:1.0625rem; font-weight:700; color:#fff; line-height:1.3;
+      }
+      .cc-app-signals { display:flex; gap:0.375rem; flex-wrap:wrap; margin-top:0.5rem; }
+      .cc-app-meta {
+        margin-top:0.5rem; font-size:0.75rem; color:var(--ac-text-muted);
+        display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;
+      }
+      .cc-app-meta .sep { color:var(--ac-text-dim); }
+      .cc-app-meta b { color:var(--ac-text); font-weight:600; font-variant-numeric:tabular-nums; }
+      .cc-app-actions { display:flex; gap:0.5rem; flex-wrap:wrap; flex-shrink:0; }
+      .cc-app-actions .ac-btn { padding:0.5rem 0.9rem; font-size:0.8125rem; }
+      .cc-app-actions .ac-btn:disabled { opacity:0.5; cursor:not-allowed; background:var(--ac-glass); }
+      .cc-btn-danger { color:var(--ac-red); background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.3); }
+      .cc-btn-danger:hover { color:#fca5a5; background:rgba(239,68,68,0.2); border-color:rgba(239,68,68,0.45); }
+
+      .cc-pill {
+        display:inline-flex; align-items:center; gap:0.3rem; border-radius:99px;
+        padding:0.2rem 0.6rem; font-size:0.6875rem; font-weight:700;
+        text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap;
+      }
+      .cc-pill-submitted    { color:#60a5fa; background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); }
+      .cc-pill-under_review { color:#fbbf24; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); }
+      .cc-pill-approved     { color:#4ade80; background:rgba(34,197,94,0.12);  border:1px solid rgba(34,197,94,0.3); }
+      .cc-pill-rejected     { color:#f87171; background:rgba(239,68,68,0.12);  border:1px solid rgba(239,68,68,0.3); }
+      .cc-pill-neutral      { color:var(--ac-text-muted); background:rgba(255,255,255,0.05); border:1px solid var(--ac-glass-border); }
+      .cc-pill-pass         { color:#4ade80; background:rgba(34,197,94,0.12);  border:1px solid rgba(34,197,94,0.3); }
+      .cc-pill-fail         { color:#f87171; background:rgba(239,68,68,0.12);  border:1px solid rgba(239,68,68,0.3); }
+      .cc-pill-wait         { color:#fbbf24; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); }
+      .cc-pill-approval     { color:#c4b5fd; background:rgba(139,92,246,0.14); border:1px solid rgba(139,92,246,0.32); }
+
+      .cc-app-answer { margin-top:0.875rem; padding-top:0.875rem; border-top:1px solid var(--ac-glass-border); }
+      .cc-app-answer-q {
+        font-size:0.6875rem; text-transform:uppercase; letter-spacing:0.06em;
+        color:var(--ac-text-dim); font-weight:600; margin-bottom:0.375rem;
+      }
+      /* Two lines, then a real ellipsis. The old rule was a fixed max-height
+         with overflow:hidden, which chops mid-word and gives no sign there is
+         more to read -- and the rest of it was nowhere else on the site. It is
+         on the review page now, one click away. */
+      .cc-app-answer-a {
+        margin:0; font-size:0.875rem; line-height:1.6; color:var(--ac-text-muted);
+        display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+        overflow:hidden; overflow-wrap:anywhere;
+      }
+      .cc-empty {
+        text-align:center; padding:3rem 1.5rem; color:var(--ac-text-muted);
+        border:1px dashed var(--ac-glass-border); border-radius:var(--ac-radius);
+      }
+      .cc-empty i { font-size:1.5rem; color:var(--ac-text-dim); display:block; margin-bottom:0.75rem; }
+      .cc-empty strong { display:block; color:var(--ac-text); font-size:0.9375rem; margin-bottom:0.25rem; }
+      .cc-empty span { font-size:0.8125rem; }
       .cc-pending-badge { background:linear-gradient(135deg,var(--ac-red),#dc2626); color:#fff; font-size:11px; font-weight:600; padding:2px 7px; border-radius:10px; min-width:18px; text-align:center; animation:ac-pulse 2s ease-in-out infinite; }
       @keyframes ac-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
 
@@ -797,8 +921,16 @@
         .info-grid { grid-template-columns:1fr !important; }
         .result-header { flex-direction:column; gap:0.75rem; }
         .action-buttons { width:100%; }
-        body.ac-body .cc-status-btn { font-size:0.75rem; padding:0.4rem 0.6rem; }
         body.ac-body .btn-group { display:flex; flex-wrap:wrap; }
+        /* The rail scrolls sideways rather than wrapping, so the chips keep
+           their tap target instead of shrinking to fit five across. */
+        .cc-rail { margin-left:-1rem; margin-right:-1rem; padding:0 1rem 0.25rem; }
+        .cc-search { flex-direction:column; }
+        .cc-search .ac-btn { width:100%; }
+        .cc-app { padding:1rem 1rem 1rem 1.25rem; }
+        .cc-app-top { flex-direction:column; gap:0.875rem; }
+        .cc-app-actions { width:100%; }
+        .cc-app-actions .ac-btn { flex:1; min-height:38px; }
       }
     </style>
   </head>
@@ -2700,54 +2832,40 @@
         <div class="ac-panel" id="panel-content-creators">
           <div class="ac-card">
             <div class="ac-card-body">
-              <div style="margin-bottom: 1rem;">
-                <div class="btn-group" role="group" id="ccStatusFilter">
-                  <button type="button" class="btn btn-secondary cc-status-btn active" data-status="">All</button>
-                  <button type="button" class="btn btn-secondary cc-status-btn" data-status="submitted">
-                    <i class="fas fa-inbox" style="margin-right: 4px;"></i>Submitted <span id="ccSubmittedCount" class="badge" style="background: #ef4444; margin-left: 4px; display: none;"></span>
-                  </button>
-                  <button type="button" class="btn btn-secondary cc-status-btn" data-status="under_review">
-                    <i class="fas fa-search" style="margin-right: 4px;"></i>Under Review <span id="ccUnderReviewCount" class="badge" style="background: #f59e0b; margin-left: 4px; display: none;"></span>
-                  </button>
-                  <button type="button" class="btn btn-secondary cc-status-btn" data-status="approved">
-                    <i class="fas fa-check-circle" style="margin-right: 4px;"></i>Approved
-                  </button>
-                  <button type="button" class="btn btn-secondary cc-status-btn" data-status="rejected">
-                    <i class="fas fa-times-circle" style="margin-right: 4px;"></i>Rejected
-                  </button>
-                </div>
+              <!-- The filters carry their own counts. This panel used to print
+                   the same four numbers again directly beneath, as stat cards
+                   in a second visual language -- one set of numbers, on the
+                   control that acts on them. -->
+              <div class="cc-rail" id="ccStatusFilter">
+                <button type="button" class="cc-status-btn active" data-status="">All</button>
+                <button type="button" class="cc-status-btn" data-status="submitted">
+                  <i class="fas fa-inbox"></i> Submitted <span class="cc-chip-count" id="ccStatPending">&mdash;</span>
+                </button>
+                <button type="button" class="cc-status-btn" data-status="under_review">
+                  <i class="fas fa-hourglass-half"></i> Under review <span class="cc-chip-count" id="ccStatUnderReview">&mdash;</span>
+                </button>
+                <button type="button" class="cc-status-btn" data-status="approved">
+                  <i class="fas fa-circle-check"></i> Approved <span class="cc-chip-count" id="ccStatApproved">&mdash;</span>
+                </button>
+                <button type="button" class="cc-status-btn" data-status="rejected">
+                  <i class="fas fa-circle-xmark"></i> Rejected <span class="cc-chip-count" id="ccStatRejected">&mdash;</span>
+                </button>
               </div>
-              <div class="row">
-                <div class="col-md-8">
-                  <input type="text" id="ccSearch" class="form-control ac-input" placeholder="Search applications by display name..." />
-                </div>
-                <div class="col-md-4">
-                  <button type="button" id="searchCCBtn" class="ac-btn ac-btn-accent ac-btn-block">
-                    <i class="fas fa-search"></i> Search Applications
-                  </button>
-                </div>
+
+              <div class="cc-search">
+                <input type="text" id="ccSearch" class="form-control ac-input" placeholder="Search applications by display name..." />
+                <button type="button" id="searchCCBtn" class="ac-btn">
+                  <i class="fas fa-search"></i> Search
+                </button>
               </div>
-              <div style="display: flex; gap: 0.75rem; margin-top: 1rem;" id="ccStatsRow">
-                <div style="flex: 1; min-width: 0;">
-                  <div class="stat-card" style="padding: 0.75rem 0.5rem;"><div class="stat-number" id="ccStatPending" style="font-size: 1.25rem;">-</div><div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">SUBMITTED</div></div>
-                </div>
-                <div style="flex: 1; min-width: 0;">
-                  <div class="stat-card" style="padding: 0.75rem 0.5rem;"><div class="stat-number" id="ccStatUnderReview" style="color: #f59e0b; font-size: 1.25rem;">-</div><div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">UNDER REVIEW</div></div>
-                </div>
-                <div style="flex: 1; min-width: 0;">
-                  <div class="stat-card" style="padding: 0.75rem 0.5rem;"><div class="stat-number" id="ccStatApproved" style="font-size: 1.25rem;">-</div><div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">APPROVED</div></div>
-                </div>
-                <div style="flex: 1; min-width: 0;">
-                  <div class="stat-card" style="padding: 0.75rem 0.5rem;"><div class="stat-number" id="ccStatRejected" style="font-size: 1.25rem;">-</div><div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">REJECTED</div></div>
-                </div>
-                <div style="flex: 1; min-width: 0;">
-                  <div class="stat-card" style="padding: 0.75rem 0.5rem;"><div class="stat-number" id="ccStatActive" style="font-size: 1.25rem;">-</div><div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">ACTIVE</div></div>
-                </div>
+
+              <div class="cc-active-line">
+                <i class="fas fa-circle"></i>
+                <span><strong id="ccStatActive">&mdash;</strong> active in the creator program</span>
               </div>
-              <div id="ccApplicationResults">
-                <div class="loading" style="text-align: center; padding: 2rem; color: #9aa0b4;">
-                  <i class="fas fa-spinner fa-spin"></i> Loading applications...
-                </div>
+
+              <div class="cc-list" id="ccApplicationResults">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading applications...</div>
               </div>
               <div id="ccPagination" style="margin-top: 1rem; display: none;">
                 <nav><ul class="pagination justify-content-center" id="ccPaginationList"></ul></nav>
@@ -10436,66 +10554,28 @@
         }
       });
 
+      // Counts sit on the filter chips, so an empty queue shows a zero rather
+      // than the number disappearing -- "nothing waiting" is the answer an
+      // admin opens this panel for, and a blank chip does not say it.
+      function ccSetCount(sel, n) {
+        $(sel).text(n).toggleClass('is-zero', !n);
+      }
+
       function loadCCStats() {
-        // Load submitted count
-        $.ajax({
-          url: `${API_BASE}/api/v1/admin/content-creator-applications?status=submitted&limit=1`,
-          method: 'GET',
-          success: function(data) {
-            const count = data.pagination?.totalItems || 0;
-            $('#ccStatPending').text(count);
-            // Update filter badge
-            if (count > 0) {
-              $('#ccSubmittedCount').text(count).show();
-            } else {
-              $('#ccSubmittedCount').hide();
-            }
-          }
+        const counts = [
+          ['#ccStatPending',     'content-creator-applications?status=submitted'],
+          ['#ccStatUnderReview', 'content-creator-applications?status=under_review'],
+          ['#ccStatApproved',    'content-creator-applications?status=approved'],
+          ['#ccStatRejected',    'content-creator-applications?status=rejected'],
+          ['#ccStatActive',      'content-creators?status=active'],
+        ];
+        counts.forEach(function(pair) {
+          $.ajax({
+            url: `${API_BASE}/api/v1/admin/${pair[1]}&limit=1`,
+            method: 'GET',
+            success: function(data) { ccSetCount(pair[0], data.pagination?.totalItems || 0); }
+          });
         });
-
-        // Load under_review count
-        $.ajax({
-          url: `${API_BASE}/api/v1/admin/content-creator-applications?status=under_review&limit=1`,
-          method: 'GET',
-          success: function(data) {
-            const count = data.pagination?.totalItems || 0;
-            $('#ccStatUnderReview').text(count);
-            // Update filter badge
-            if (count > 0) {
-              $('#ccUnderReviewCount').text(count).show();
-            } else {
-              $('#ccUnderReviewCount').hide();
-            }
-          }
-        });
-
-        // Load approved count
-        $.ajax({
-          url: `${API_BASE}/api/v1/admin/content-creator-applications?status=approved&limit=1`,
-          method: 'GET',
-          success: function(data) {
-            $('#ccStatApproved').text(data.pagination?.totalItems || 0);
-          }
-        });
-
-        // Load rejected count
-        $.ajax({
-          url: `${API_BASE}/api/v1/admin/content-creator-applications?status=rejected&limit=1`,
-          method: 'GET',
-          success: function(data) {
-            $('#ccStatRejected').text(data.pagination?.totalItems || 0);
-          }
-        });
-
-        // Load active creators count
-        $.ajax({
-          url: `${API_BASE}/api/v1/admin/content-creators?status=active&limit=1`,
-          method: 'GET',
-          success: function(data) {
-            $('#ccStatActive').text(data.pagination?.totalItems || 0);
-          }
-        });
-
       }
 
       function loadCCPendingCount() {
@@ -10508,17 +10588,10 @@
           method: 'GET',
           success: function(data) {
             submittedCount = data.pagination?.totalItems || 0;
-            if (submittedCount > 0) {
-              $('#ccSubmittedCount').text(submittedCount).show();
-            } else {
-              $('#ccSubmittedCount').hide();
-            }
+            ccSetCount('#ccStatPending', submittedCount);
             updateTabBadge();
           },
-          error: function() {
-            $('#ccSubmittedCount').hide();
-            updateTabBadge();
-          }
+          error: updateTabBadge
         });
 
         // Load under_review count
@@ -10527,17 +10600,10 @@
           method: 'GET',
           success: function(data) {
             underReviewCount = data.pagination?.totalItems || 0;
-            if (underReviewCount > 0) {
-              $('#ccUnderReviewCount').text(underReviewCount).show();
-            } else {
-              $('#ccUnderReviewCount').hide();
-            }
+            ccSetCount('#ccStatUnderReview', underReviewCount);
             updateTabBadge();
           },
-          error: function() {
-            $('#ccUnderReviewCount').hide();
-            updateTabBadge();
-          }
+          error: updateTabBadge
         });
 
         // Update tab badge to show submitted (red) or under_review (yellow) count
@@ -10582,15 +10648,35 @@
         });
       }
 
+      // Backend state names are not English. "under_review" is a database
+      // value, not something to show a person -- the review page this list
+      // hands off to draws the same distinction.
+      const CC_STATUS_LABELS = {
+        submitted: 'Submitted', under_review: 'Under review',
+        approved: 'Approved', rejected: 'Rejected', withdrawn: 'Withdrawn',
+      };
+      const CC_PILL_CLASS = {
+        submitted: 'cc-pill-submitted', under_review: 'cc-pill-under_review',
+        approved: 'cc-pill-approved', rejected: 'cc-pill-rejected',
+      };
+      const CC_PLATFORM_LABELS = {
+        youtube: 'YouTube', twitch: 'Twitch', tiktok: 'TikTok', other: 'Other',
+      };
+
+      // Escaped for a single-quoted JS string first, then by escapeHtml for the
+      // attribute carrying it. The parser undoes the outer layer before the
+      // inner one is ever read as code, so the two compose in that order.
+      function ccJsStr(v) {
+        return String(v == null ? '' : v).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      }
+
       function displayCCApplications(applications, pagination) {
         if (applications.length === 0) {
           $('#ccApplicationResults').html(`
-            <div class="no-users-found">
-              <div class="no-users-message">
-                <i class="fas fa-inbox" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i>
-                <h4 style="color: #e5e7eb;">No Applications Found</h4>
-                <p style="color: #9aa0b4;">There are no applications matching your criteria.</p>
-              </div>
+            <div class="cc-empty">
+              <i class="fas fa-inbox"></i>
+              <strong>Nothing in this queue</strong>
+              <span>No applications match the filter you have selected.</span>
             </div>
           `);
           $('#ccPagination').hide();
@@ -10600,12 +10686,15 @@
         let html = '';
         const currentAdminId = getCurrentAdminId();
 
-        applications.forEach(app => {
+        applications.forEach((app, i) => {
           const appId = app._id || app.id;
           const displayName = app.displayName || 'Unknown';
           const status = app.status || 'unknown';
+          const statusLabel = CC_STATUS_LABELS[status] || status;
+          const pillClass = CC_PILL_CLASS[status] || 'cc-pill-neutral';
           const createdAt = app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'Unknown';
-          const primaryPlatform = app.primaryPlatform || 'Unknown';
+          const platform = CC_PLATFORM_LABELS[(app.primaryPlatform || '').toLowerCase()]
+            || app.primaryPlatform || 'Unknown';
 
           // Calculate total followers
           let totalFollowers = 0;
@@ -10616,85 +10705,76 @@
           // Check if current admin already approved
           const currentAdminAlreadyApproved = app.firstApprovalBy && app.firstApprovalBy === currentAdminId;
 
-          // Status badge styling
-          const statusColors = {
-            'submitted': { bg: '#3b82f6', label: 'Submitted' },
-            'under_review': { bg: '#f59e0b', label: 'Under Review' },
-            'approved': { bg: '#10b981', label: 'Approved' },
-            'rejected': { bg: '#ef4444', label: 'Rejected' },
-            'withdrawn': { bg: '#6b7280', label: 'Withdrawn' }
-          };
-          const statusStyle = statusColors[status] || { bg: '#6b7280', label: status };
-
-          // Build approval progress badge
-          let approvalBadgeHtml = '';
-          if (status === 'under_review' && app.firstApprovalBy) {
-            approvalBadgeHtml = `<span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; font-size: 0.85rem; padding: 0.2rem 0.6rem; border-radius: 10px; margin-left: 6px; font-weight: 600;"><i class="fas fa-user-check" style="margin-right: 3px;"></i>1/2</span>`;
-          }
-
-          // Automated screening state, so the list answers "which of these
-          // actually need me?" without opening each one. Approval is blocked
-          // until checks pass, so an admin clicking Approve on a card without
-          // this badge would just get refused.
-          let checksBadgeHtml = '';
+          // Signal pills: everything that answers "does this one need me?".
+          // They sit on their own row rather than trailing the display name,
+          // which used to push them onto a second line and out of the scan.
+          //
+          // Automated screening state matters here because approval is blocked
+          // until checks pass -- an admin opening a card without that badge is
+          // opening something they cannot action yet.
+          const pills = [];
           if (status === 'submitted' || status === 'under_review') {
             if (app.checksPassed) {
-              checksBadgeHtml = `<span style="background: rgba(34,197,94,0.18); color: #4ade80; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 10px; margin-left: 6px; font-weight: 700;" title="Automated checks passed - ready for review"><i class="fas fa-shield-halved" style="margin-right: 4px;"></i>CHECKS PASSED</span>`;
+              pills.push(`<span class="cc-pill cc-pill-pass" title="Automated checks passed - ready for human review"><i class="fas fa-shield-halved"></i> Checks passed</span>`);
             } else {
               const failed = (app.checks || []).filter(c => c.status === 'failed').length;
-              checksBadgeHtml = failed
-                ? `<span style="background: rgba(239,68,68,0.18); color: #f87171; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 10px; margin-left: 6px; font-weight: 700;" title="Automated checks failed - open Review to see why"><i class="fas fa-circle-exclamation" style="margin-right: 4px;"></i>${failed} CHECK${failed === 1 ? '' : 'S'} FAILED</span>`
-                : `<span style="background: rgba(251,191,36,0.18); color: #fbbf24; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 10px; margin-left: 6px; font-weight: 700;" title="Automated checks still running"><i class="fas fa-hourglass-half" style="margin-right: 4px;"></i>CHECKS PENDING</span>`;
+              pills.push(failed
+                ? `<span class="cc-pill cc-pill-fail" title="Open Review to see which checks failed and why"><i class="fas fa-circle-exclamation"></i> ${failed} check${failed === 1 ? '' : 's'} failed</span>`
+                : `<span class="cc-pill cc-pill-wait" title="Automated checks are still running"><i class="fas fa-hourglass-half"></i> Checks pending</span>`);
+            }
+            if (app.firstApprovalBy) {
+              pills.push(`<span class="cc-pill cc-pill-approval" title="One of the two approvals this needs has been given"><i class="fas fa-user-check"></i> 1 of 2${currentAdminAlreadyApproved ? ' &middot; you' : ''}</span>`);
             }
           }
 
-          // Build first approval info line
-          let firstApprovalInfoHtml = '';
-          if (app.firstApprovalBy && (status === 'under_review' || status === 'submitted')) {
-            const approvalTime = app.firstApprovalAt ? new Date(app.firstApprovalAt).toLocaleString([], { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
-            firstApprovalInfoHtml = `<span style="color: #f59e0b; font-size: 0.95rem; margin-left: 8px;"><i class="fas fa-user-check" style="margin-right: 4px;"></i>1st approval${approvalTime ? ' on ' + approvalTime : ''}${currentAdminAlreadyApproved ? ' (you)' : ''}</span>`;
+          // Facts, not state. Numbers are emphasised because they are what gets
+          // compared across rows.
+          const meta = [`Applied <b>${escapeHtml(createdAt)}</b>`, escapeHtml(platform)];
+          meta.push(`<b>${escapeHtml(totalFollowers.toLocaleString())}</b> follower${totalFollowers === 1 ? '' : 's'}`);
+          if (app.firstApprovalBy && app.firstApprovalAt && (status === 'submitted' || status === 'under_review')) {
+            meta.push(`1st approval <b>${escapeHtml(new Date(app.firstApprovalAt).toLocaleDateString())}</b>`);
+          }
+
+          // Their answer, clamped to two lines. Every application carries one --
+          // it is required at 50 characters minimum -- so an empty block means
+          // a record from before the question existed, and gets left off rather
+          // than printing "No description" under a heading.
+          const answer = String(app.description || '').trim();
+          const answerHtml = answer ? `
+              <div class="cc-app-answer">
+                <div class="cc-app-answer-q">How they use LPC</div>
+                <p class="cc-app-answer-a">${escapeHtml(answer)}</p>
+              </div>` : '';
+
+          let removeBtn = '';
+          if (status === 'approved' && app.creatorId) {
+            removeBtn = app.creatorStatus === 'removed'
+              ? `<button class="ac-btn" disabled><i class="fas fa-user-slash"></i> Removed</button>`
+              : `<button class="ac-btn cc-btn-danger" onclick="showRemoveModal('${escapeHtml(ccJsStr(app.creatorId))}', '${escapeHtml(ccJsStr(displayName))}')"><i class="fas fa-user-slash"></i> Remove</button>`;
           }
 
           html += `
-            <div class="result-card">
-              <div class="result-header">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <div>
-                    <h5 class="result-title" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                      ${displayName}
-                      <span class="status-badge" style="background: ${statusStyle.bg}; color: #fff; font-size: 0.7rem; padding: 0.2rem 0.6rem;">${statusStyle.label}</span>
-                      ${approvalBadgeHtml}
-                      ${checksBadgeHtml}
-                    </h5>
-                    <p class="result-subtitle">Applied: ${createdAt} | Platform: ${primaryPlatform} | Followers: ${totalFollowers.toLocaleString()}${firstApprovalInfoHtml}</p>
+            <div class="cc-app" data-status="${escapeHtml(status)}" style="animation-delay:${Math.min(i, 8) * 35}ms;">
+              <div class="cc-app-top">
+                <div class="cc-app-id">
+                  <div class="cc-app-name">
+                    ${escapeHtml(displayName)}
+                    <span class="cc-pill ${pillClass}">${escapeHtml(statusLabel)}</span>
                   </div>
+                  ${pills.length ? `<div class="cc-app-signals">${pills.join('')}</div>` : ''}
+                  <div class="cc-app-meta">${meta.join('<span class="sep">&middot;</span>')}</div>
                 </div>
-                <div class="action-buttons">
+                <div class="cc-app-actions">
                   <!-- Review is the only way in. Approving from a list row meant
                        deciding without seeing the verification state, the
-                       follower reality or the reviewer checklist — all of which
+                       follower reality or the reviewer checklist - all of which
                        live on the review page. -->
-                  <a class="btn btn-primary btn-sm" href="/admin/creator-application/${appId}" style="text-decoration: none;" title="Open the full review page for this application">
+                  <a class="ac-btn ac-btn-accent" href="/admin/creator-application/${encodeURIComponent(String(appId))}" title="Open the full review page for this application">
                     <i class="fas fa-clipboard-check"></i> Review
                   </a>
-                  ${status === 'approved' && app.creatorId ? (
-                    app.creatorStatus === 'removed' ? `
-                    <button class="btn btn-danger btn-sm" disabled style="opacity: 0.5; cursor: not-allowed;">
-                      <i class="fas fa-user-slash"></i> Removed
-                    </button>
-                  ` : `
-                    <button class="btn btn-danger btn-sm" onclick="showRemoveModal('${app.creatorId}', '${displayName.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')">
-                      <i class="fas fa-user-slash"></i> Remove
-                    </button>
-                  `) : ''}
+                  ${removeBtn}
                 </div>
-              </div>
-              <div class="info-grid">
-                <div class="info-item">
-                  <div class="info-label">Description</div>
-                  <div class="info-value" style="max-height: 60px; overflow: hidden; text-overflow: ellipsis;">${app.description || 'No description'}</div>
-                </div>
-              </div>
+              </div>${answerHtml}
             </div>
           `;
         });

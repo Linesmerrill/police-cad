@@ -88,6 +88,16 @@
        checkbox out from under a click already on its way. */
     .checklist-meta { min-height: 1.05rem; }
     .empty { color: var(--ac-text-dim); font-size: 0.9rem; }
+    /* The applicant's own words. This is the only thing on the page they
+       actually wrote, and the two judgement calls on the checklist -- is this
+       roleplay content, is it content we would point players at -- are made
+       from it. So it gets prose width and line breaks rather than a value slot
+       in the summary grid. */
+    .answer { background: var(--ac-glass); border: 1px solid var(--ac-glass-border); border-radius: 10px; padding: 15px 16px; }
+    .answer + .answer { margin-top: 12px; }
+    .answer-q { font-size: 0.78rem; font-weight: 700; color: var(--ac-text-muted); margin-bottom: 9px; }
+    .answer-a { font-size: 0.95rem; line-height: 1.65; color: var(--ac-text); white-space: pre-wrap; overflow-wrap: anywhere; }
+    .answer-a a { text-decoration: underline; text-underline-offset: 2px; }
     .toast {
       position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
       background: var(--ac-surface); border: 1px solid var(--ac-glass-border);
@@ -141,6 +151,11 @@
     <div class="card">
       <h2>Applicant</h2>
       <div class="grid" id="summary"><div class="empty">Loading...</div></div>
+    </div>
+
+    <div class="card">
+      <h2>In their own words</h2>
+      <div id="answers"><div class="empty">Loading...</div></div>
     </div>
 
     <div class="card">
@@ -267,6 +282,26 @@
 
     function esc(s) { return $('<div>').text(s == null ? '' : s).html(); }
 
+    // The application form asks creators to paste links to specific videos and
+    // timestamps, so most answers contain URLs -- and an unclickable URL on a
+    // review page means selecting and copying it by hand, every time.
+    //
+    // Escape first, then match over the escaped string: `<` only survives as
+    // `&lt;` so no markup can be injected, `"` only as `&quot;` so nothing can
+    // break out of the href, and an `&amp;` inside the href is decoded back to
+    // `&` by the parser. Only http(s) is matched, so there is no javascript:
+    // scheme to smuggle in.
+    function linkify(text) {
+      return esc(text).replace(/https?:\/\/[^\s<]+/g, function (url) {
+        // Trailing punctuation belongs to the sentence, not the link. `;` is
+        // left alone -- it is the tail of an escaped entity far more often
+        // than it is the end of a URL.
+        const trail = (url.match(/[.,:!?)\]]+$/) || [''])[0];
+        const clean = trail ? url.slice(0, -trail.length) : url;
+        return '<a href="' + clean + '" target="_blank" rel="noopener noreferrer">' + clean + '</a>' + trail;
+      });
+    }
+
     function toast(msg) {
       const $t = $('#toast').text(msg).fadeIn(120);
       setTimeout(() => $t.fadeOut(200), 2600);
@@ -325,7 +360,7 @@
       })
         .done(function (resp) { render(resp.application || resp.data || resp); })
         .fail(function () {
-          $('#summary,#checks,#platforms').html('<div class="empty">Could not load this application.</div>');
+          $('#summary,#answers,#checks,#platforms').html('<div class="empty">Could not load this application.</div>');
         });
     }
 
@@ -378,6 +413,23 @@
             (app.firstApprovalAt ? '<div class="kv-label" style="margin-top:2px;">' + esc(fmtDate(app.firstApprovalAt)) + '</div>' : '')
           : '<span class="kv-label">none yet</span>')
       );
+
+      // What the applicant actually wrote. Nothing above this point is theirs --
+      // the summary is metadata and the checks are ours -- and the fastest
+      // route to their content is usually a link they pasted in here.
+      const answers = [
+        ['How do you use Lines Police CAD?', app.description],
+        ['Public profile bio', app.bio],
+      ].filter(function (pair) { return String(pair[1] || '').trim(); });
+
+      $('#answers').html(!answers.length
+        ? '<div class="empty">Nothing written on this application.</div>'
+        : answers.map(function (pair) {
+            return '<div class="answer">' +
+              '<div class="answer-q">' + esc(pair[0]) + '</div>' +
+              '<div class="answer-a">' + linkify(pair[1]) + '</div>' +
+            '</div>';
+          }).join(''));
 
       // The banner answers the only question a reviewer opens this page with:
       // can I approve this yet?
