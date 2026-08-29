@@ -266,25 +266,19 @@ function derivePanelState(
   }
 
   if (allOwned) {
-    const removal = codeRemovalSentence(platforms);
     return {
       tone: 'good',
       headline: platforms.length === 1 ? 'Channel verified' : 'All channels verified',
-      sub: `Nothing left for you to do. Your application is with our team.${
-        removal ? ` ${removal}` : ''
-      }`,
+      sub: 'Nothing left for you to do. Your application is with our team.',
     };
   }
 
   if (someOwned) {
     const left = platforms.filter((p) => !ownershipProven(p)).length;
-    const removal = codeRemovalSentence(platforms);
     return {
       tone: 'neutral',
       headline: `${left} channel${left === 1 ? '' : 's'} left to verify`,
-      sub: `Add the code to the remaining channel${left === 1 ? '' : 's'} and press Check.${
-        removal ? ` ${removal}` : ''
-      }`,
+      sub: `Add the code to the remaining channel${left === 1 ? '' : 's'} and press Check.`,
     };
   }
 
@@ -321,6 +315,12 @@ export default function VerificationPanel({
   const [expanded, setExpanded] = useState(false);
 
   const state = derivePanelState(platforms, checks, minFollowers);
+  // Used to be a trailing clause on the sub-line above, which meant it appeared
+  // exactly when the panel folds itself away and nobody read it: creators were
+  // leaving the code in their description long after it had done its job. It is
+  // its own line now, and it is rendered outside the header so the collapsed
+  // state still carries it.
+  const removal = codeRemovalSentence(platforms);
   const tone = TONE[state.tone];
   const qualifies = applicationQualifies(platforms, minFollowers);
   const allSettled =
@@ -394,6 +394,15 @@ export default function VerificationPanel({
           margin-bottom: 24px;
         }
         .vp-head { margin-bottom: 18px; }
+        .vp-code-out {
+          display: flex; align-items: flex-start; gap: 10px;
+          background: rgba(74, 222, 128, 0.07);
+          border: 1px solid rgba(74, 222, 128, 0.22);
+          border-radius: 10px; padding: 12px 14px; margin-bottom: 18px;
+        }
+        .vp-code-out svg { width: 18px; height: 18px; color: #4ade80; flex-shrink: 0; margin-top: 1px; }
+        .vp-code-out p { margin: 0; color: #e5e7eb; font-size: 14px; line-height: 1.55; }
+        .vp-code-out strong { color: #fff; }
         .vp-hide {
           margin-top: 10px; background: transparent; border: none; padding: 0;
           color: rgba(255,255,255,0.45); font-size: 13px; font-weight: 600;
@@ -506,6 +515,16 @@ export default function VerificationPanel({
           {allSettled && (
             <button className="vp-hide" onClick={() => setExpanded(false)}>Hide details</button>
           )}
+        </div>
+      )}
+
+      {removal && (
+        <div className="vp-code-out">
+          <CheckCircleIcon />
+          <p>
+            <strong>Verified.</strong> {removal} We have everything we need from it, and nothing
+            reads it again.
+          </p>
         </div>
       )}
 
