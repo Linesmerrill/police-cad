@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import Script from 'next/script';
+import AdSense from '@/components/AdSense';
 
 export const metadata: Metadata = {
   title: 'LPC - Lines Police CAD',
@@ -45,6 +46,10 @@ export default function RootLayout({
             gtag('config', 'G-1L40PLRXWM');
           `}
         </Script>
+        {/* The AdSense base tag. Every page migrated from EJS to Next.js lost
+            its ads because nothing here replaced views/ad-header.ejs. It sits
+            in the root layout so a new page cannot miss it the same way. */}
+        <AdSense />
         {children}
       </body>
     </html>
