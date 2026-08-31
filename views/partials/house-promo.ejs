@@ -1,0 +1,26 @@
+<%
+  // House promo payload for public/js/house-promo.js.
+  //
+  // Server-rendered rather than fetched, so the page makes no extra request and
+  // the card is ready the moment an ad slot turns out to be empty. Emits
+  // nothing at all when no promo is running, which is the steady state.
+  //
+  // The script fills any .heroui-ad-container whose AdSense <ins> came back
+  // unfilled. It never touches a slot Google filled.
+  var _hp = typeof housePromo !== 'undefined' ? housePromo : null;
+%>
+<% if (_hp && _hp.title && _hp.ctaUrl) { %>
+  <link rel="stylesheet" href="/static/css/house-promo.css?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>">
+  <%# JSON in a script tag rather than data- attributes: the body is a sentence
+      and would need escaping twice. type="application/json" is inert. %>
+  <script id="hp-source" type="application/json"><%- JSON.stringify({
+    slug: _hp.slug,
+    eyebrow: _hp.eyebrow,
+    title: _hp.title,
+    body: _hp.body,
+    ctaLabel: _hp.ctaLabel,
+    ctaUrl: _hp.ctaUrl,
+    mark: _hp.mark,
+  }).replace(/</g, '\\u003c') %></script>
+  <script src="/static/js/house-promo.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+<% } %>
