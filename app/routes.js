@@ -1420,27 +1420,23 @@ module.exports = function (app, passport, server, nextApp, handle) {
   //   res.render("penal-code");
   // });
 
-  app.get("/ads.txt", (req, res) => {
-    res.set("Content-Type", "text");
-    let message = "google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0";
-    return res.send(
-      new Buffer.alloc(
-        message.length,
-        "google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0"
-      )
-    );
-  });
+  // ads.txt / app-ads.txt. Google's crawler wants text/plain; the header here
+  // used to be the bare string "text", which is not a valid media type.
+  //
+  // The body was also built with Buffer.alloc(message.length, message), which
+  // only produced the right output because the fill string happened to be
+  // exactly as long as the buffer. Change the publisher ID to one of a
+  // different length and it would have silently truncated the line, which is
+  // the kind of thing that shows up as an AdSense earnings warning rather than
+  // as an error anyone would see.
+  const ADS_TXT = "google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0\n";
 
-  app.get("/app-ads.txt", (req, res) => {
-    res.set("Content-Type", "text");
-    let message = "google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0";
-    return res.send(
-      new Buffer.alloc(
-        message.length,
-        "google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0"
-      )
-    );
-  });
+  const serveAdsTxt = (req, res) => {
+    res.type("text/plain").send(ADS_TXT);
+  };
+
+  app.get("/ads.txt", serveAdsTxt);
+  app.get("/app-ads.txt", serveAdsTxt);
 
   // Login page is now handled by Next.js at app/login/page.tsx
   
