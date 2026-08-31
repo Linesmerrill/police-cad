@@ -150,6 +150,51 @@ async function getActiveCountdown(surface) {
   }
 }
 
+// Internal promotions, rendered by the clients into an ad slot Google did not
+// fill (see public/js/house-promo.js). The server only supplies the payload.
+//
+// No fallback constant, deliberately, and this is the one place this differs
+// from the countdown above: a countdown showing a known date while the API is
+// unreachable is useful, whereas a promo that keeps running when it cannot be
+// switched off is a liability. If the lookup fails, no promo renders and the ad
+// slot collapses exactly as it does today.
+var HOUSE_PROMO_CACHE_TTL_MS = 5 * 60 * 1000;
+var housePromoCache = { value: null, at: 0, valid: false };
+
+async function getActiveHousePromo(surface) {
+  var now = Date.now();
+  if (housePromoCache.valid && now - housePromoCache.at < HOUSE_PROMO_CACHE_TTL_MS) {
+    return housePromoCache.value;
+  }
+  if (!policeCadApiUrl) return null;
+
+  try {
+    var response = await axios.get(
+      `${policeCadApiUrl}/api/v1/house-promos?surface=${encodeURIComponent(surface)}`,
+      Object.assign({}, config, { timeout: 4000 })
+    );
+    var list = Array.isArray(response.data) ? response.data : [];
+    var live = list.filter(function (p) {
+      if (!p || p.active === false || !p.title || !p.ctaUrl) return false;
+      // The API filters on endsAt too. Re-checking here means a cached
+      // response cannot outlive the campaign by up to the cache TTL.
+      if (p.endsAt) {
+        var ends = new Date(p.endsAt).getTime();
+        if (!isNaN(ends) && ends <= now) return false;
+      }
+      return true;
+    });
+    // Having no promo running is a real answer, so null is cached too --
+    // otherwise switching one off would cost an API round-trip per page load.
+    housePromoCache = { value: live[0] || null, at: now, valid: true };
+    return housePromoCache.value;
+  } catch (err) {
+    // Not cached: the next request retries rather than sitting on a blip for
+    // five minutes. Returns null, so the slot just stays empty.
+    return null;
+  }
+}
+
 module.exports = function (app, passport, server, nextApp, handle) {
   // Root route - use Next.js if available, otherwise fall back to EJS
   app.get("/", function (req, res) {
@@ -1748,6 +1793,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           departmentId: departmentId,
           departmentComponents: departmentComponents,
           apiUrl: policeCadApiUrl,
+          housePromo: await getActiveHousePromo("web"),
         });
       } catch (error) {
         console.error('Error in civ-dashboard route:', error);

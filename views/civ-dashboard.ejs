@@ -2373,11 +2373,20 @@
   <script src="/static/js/modern-dashboard.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/cloudinary-upload.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
 
+  <%# Puts one of our own messages into an ad slot Google did not fill. Emits
+      nothing at all when no promo is running, and never touches a slot that an
+      ad filled. Must come before the collapse script below. %>
+  <%- include('partials/house-promo') %>
+
   <!-- Hide ad containers if ads don't fill -->
   <script>
   (function() {
     function checkAds() {
       document.querySelectorAll('.heroui-ad-container').forEach(function(c) {
+        // A container house-promo.js has filled is no longer empty, whichever
+        // of the two scripts got here first. Without this the promo is injected
+        // and then immediately hidden again by the class this adds.
+        if (c.getAttribute('data-hp-filled') === '1') return;
         var ins = c.querySelector('ins.adsbygoogle');
         if (!ins) { c.classList.add('ad-unfilled'); return; }
         var status = ins.getAttribute('data-ad-status');
