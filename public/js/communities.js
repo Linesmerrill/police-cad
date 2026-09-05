@@ -1831,22 +1831,21 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
 
   useEffect(() => {
     if (isOpen && dbUser?._id) {
-      fetch(`${API_URL}/api/v1/communities/${dbUser._id}`)
-        .then(res => res.json())
+      // Ask for the count, not the communities. v1 returns a bare array capped
+      // at its default page size of 10, so counting its elements under-reported
+      // for anyone owning more than that -- this modal would enable the button
+      // and the server would then refuse the create against its own correct
+      // count. v2 reports the real total, so limit=1 is all we need to fetch.
+      fetch(`${API_URL}/api/v2/communities/${dbUser._id}?limit=1&page=1`)
+        .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
         .then(data => {
-          // Count every community this user owns. Filtering on
-          // `community.visibility` used to drop legacy communities that predate
-          // that field, so the count came back low, this modal happily enabled
-          // the button, and the server then rejected the create against its own
-          // (correct) count. The endpoint already excludes pending-deletion
-          // communities, which is exactly what the server's cap check counts.
-          const owned = (data || []).filter(item => item && item.community);
-          setOwnedCount(owned.length);
+          setOwnedCount(typeof data?.totalCount === "number" ? data.totalCount : 0);
           setUserPlan(planFromUser(dbUser));
         })
         .catch(() => {
-          // Unknown count: let the server be the authority rather than
-          // pre-emptively blocking someone who is under their cap.
+          // Unknown count -- v2 not deployed yet, or the request failed. Let the
+          // server be the authority rather than pre-emptively blocking someone
+          // who is under their cap; it answers with the real limit either way.
           setOwnedCount(0);
           setUserPlan(planFromUser(dbUser));
         });
@@ -2374,9 +2373,22 @@ const App = () => {
     try {
       let response;
       if (filter === "owned") {
-        // Fetch communities owned by the user
-        // API returns raw array: [{ _id, community: { name, ownerID, imageLink, membersCount, subscription: { active } } }]
-        response = await axios.get(`${API_URL}/api/v1/communities/${dbUser._id}?limit=6&page=${page}`);
+        // Fetch communities owned by the user.
+        //
+        // v2, not v1, because v1 returns a bare array with no total. Without one
+        // this used to fall back to the length of the page it had just received,
+        // which pinned the count at the page size and made `page * 6 < total`
+        // permanently false -- the next-page control never enabled and anything
+        // past the first six communities, including one just created, could not
+        // be reached. Element shape is unchanged: { _id, community: {...} }.
+        //
+        // v1 is kept as a fallback so this page works whichever side deploys
+        // first. It restores the old capped-count behaviour, not an empty list.
+        try {
+          response = await axios.get(`${API_URL}/api/v2/communities/${dbUser._id}?limit=6&page=${page}`);
+        } catch (v2Error) {
+          response = await axios.get(`${API_URL}/api/v1/communities/${dbUser._id}?limit=6&page=${page}`);
+        }
         const rawData = (Array.isArray(response.data) ? response.data : (response.data.data || [])).filter(it => it && typeof it === "object");
         const communities = rawData.map(item => {
           const img = item.community?.imageLink || item.imageLink;
@@ -2391,7 +2403,11 @@ const App = () => {
           };
         });
         setUserCommunities(communities);
-        setUserTotalCount(communities.length);
+        setUserTotalCount(
+          typeof response.data?.totalCount === "number"
+            ? response.data.totalCount
+            : communities.length
+        );
       } else {
         // Fetch joined or pending communities
         const statusFilter = filter === "pending" ? "pending" : "approved";
