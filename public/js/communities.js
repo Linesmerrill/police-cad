@@ -4,6 +4,26 @@ const API_URL = window.API_URL || "https://police-cad-app-api-bc6d659b60b3.herok
 
 // Safely pull the community array out of a v2 list response. The API may return
 // `{ data: [...] }` or a bare array; never throw on an unexpected shape.
+// Reads the reason out of an API error response.
+//
+// The Go API answers with `{response: {message, error}}`, while this site's own
+// Express routes answer with a top-level `{message}` / `{error}`, so both
+// shapes have to be tried. Returns a bare reason with no prefix of its own so
+// callers add their own context exactly once. Never throws: a non-JSON body
+// (gateway or proxy error page) degrades to the status rather than leaking
+// "Unexpected token '<'" into a toast.
+async function apiErrorReason(response) {
+  try {
+    const data = await response.json();
+    return (data && data.response && data.response.message)
+      || (data && data.message)
+      || (data && data.error)
+      || `HTTP ${response.status}`;
+  } catch (parseError) {
+    return `HTTP ${response.status}`;
+  }
+}
+
 function communityArrayFrom(response) {
   const d = response && response.data;
   if (Array.isArray(d)) return d;
@@ -1796,21 +1816,38 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
   const [ownedCount, setOwnedCount] = useState(0);
   const [userPlan, setUserPlan] = useState("free");
 
-  const PLAN_LIMITS = { base: 5, premium: 10, premium_plus: Infinity };
+  // Mirrors models.PlanFromUser / models.CommunityCap in the API. The server is
+  // the authority -- this only decides whether to show the upgrade hint before
+  // the user types a name. It used to read subscription.plan while ignoring
+  // subscription.active, so a lapsed premium subscriber was shown a limit of 10
+  // while the server capped them at 1 and rejected every attempt.
+  const PLAN_LIMITS = { free: 1, base: 5, premium: 10, premium_plus: Infinity };
+  const planFromUser = (u) => {
+    const sub = u?.user?.subscription;
+    if (!sub?.active) return "free";
+    return String(sub.plan || "").trim().toLowerCase() || "free";
+  };
   const getCommunityLimit = (plan) => PLAN_LIMITS[plan] ?? 1;
 
   useEffect(() => {
     if (isOpen && dbUser?._id) {
-      fetch(`${API_URL}/api/v1/communities/${dbUser._id}`)
-        .then(res => res.json())
+      // Ask for the count, not the communities. v1 returns a bare array capped
+      // at its default page size of 10, so counting its elements under-reported
+      // for anyone owning more than that -- this modal would enable the button
+      // and the server would then refuse the create against its own correct
+      // count. v2 reports the real total, so limit=1 is all we need to fetch.
+      fetch(`${API_URL}/api/v2/communities/${dbUser._id}?limit=1&page=1`)
+        .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
         .then(data => {
-          const newFormatCommunities = (data || []).filter(item => item.community?.visibility);
-          setOwnedCount(newFormatCommunities.length);
-          setUserPlan(dbUser?.user?.subscription?.plan || "free");
+          setOwnedCount(typeof data?.totalCount === "number" ? data.totalCount : 0);
+          setUserPlan(planFromUser(dbUser));
         })
         .catch(() => {
+          // Unknown count -- v2 not deployed yet, or the request failed. Let the
+          // server be the authority rather than pre-emptively blocking someone
+          // who is under their cap; it answers with the real limit either way.
           setOwnedCount(0);
-          setUserPlan("free");
+          setUserPlan(planFromUser(dbUser));
         });
       document.body.style.overflow = 'hidden';
     } else {
@@ -1836,6 +1873,14 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
   const handleSubmit = async () => {
     if (!formData.name.trim()) { setError("Name is required"); return; }
     if (!formData.description.trim()) { setError("Description is required"); return; }
+
+    // /communities renders for signed-out visitors too, so dbUser can be empty
+    // if the session lapsed while the page was open. Without this the request
+    // went out with no ownerID and came back as a bare "failed".
+    if (!dbUser?._id) {
+      setError("Your session has expired. Refresh the page and sign in again.");
+      return;
+    }
 
     const limit = getCommunityLimit(userPlan);
     if (limit !== Infinity && ownedCount >= limit) {
@@ -1865,15 +1910,19 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
         })
       });
 
-      if (!response.ok) throw new Error("Failed");
+      // The API explains itself -- the cap rejection names the plan, the limit
+      // and how to resolve it. Throwing that away and showing a flat "Failed to
+      // create community" is what made this look like an outage.
+      if (!response.ok) throw new Error(await apiErrorReason(response));
 
       setToast({ message: `"${formData.name}" created!`, type: "success", isVisible: true });
       setFormData({ name: "", description: "", visibility: "public", tags: [], imageLink: "", discordInviteUrl: "" });
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
-      setError("Failed to create community");
-      setToast({ message: "Failed to create community", type: "error", isVisible: true });
+      const reason = error?.message || "Please try again.";
+      setError(reason);
+      setToast({ message: reason, type: "error", isVisible: true });
     } finally {
       setIsLoading(false);
     }
@@ -2324,9 +2373,22 @@ const App = () => {
     try {
       let response;
       if (filter === "owned") {
-        // Fetch communities owned by the user
-        // API returns raw array: [{ _id, community: { name, ownerID, imageLink, membersCount, subscription: { active } } }]
-        response = await axios.get(`${API_URL}/api/v1/communities/${dbUser._id}?limit=6&page=${page}`);
+        // Fetch communities owned by the user.
+        //
+        // v2, not v1, because v1 returns a bare array with no total. Without one
+        // this used to fall back to the length of the page it had just received,
+        // which pinned the count at the page size and made `page * 6 < total`
+        // permanently false -- the next-page control never enabled and anything
+        // past the first six communities, including one just created, could not
+        // be reached. Element shape is unchanged: { _id, community: {...} }.
+        //
+        // v1 is kept as a fallback so this page works whichever side deploys
+        // first. It restores the old capped-count behaviour, not an empty list.
+        try {
+          response = await axios.get(`${API_URL}/api/v2/communities/${dbUser._id}?limit=6&page=${page}`);
+        } catch (v2Error) {
+          response = await axios.get(`${API_URL}/api/v1/communities/${dbUser._id}?limit=6&page=${page}`);
+        }
         const rawData = (Array.isArray(response.data) ? response.data : (response.data.data || [])).filter(it => it && typeof it === "object");
         const communities = rawData.map(item => {
           const img = item.community?.imageLink || item.imageLink;
@@ -2341,7 +2403,11 @@ const App = () => {
           };
         });
         setUserCommunities(communities);
-        setUserTotalCount(communities.length);
+        setUserTotalCount(
+          typeof response.data?.totalCount === "number"
+            ? response.data.totalCount
+            : communities.length
+        );
       } else {
         // Fetch joined or pending communities
         const statusFilter = filter === "pending" ? "pending" : "approved";

@@ -867,6 +867,21 @@ function showMigrateStepTwo(communityId) {
     //   return;
     // }
 
+    // Reads the reason out of a jQuery error response. The Go API answers with
+    // {response: {message, error}}, this site's own Express routes answer with a
+    // top-level {message} / {error}, and a gateway page is not JSON at all --
+    // which is why the raw responseText was never fit to show a user.
+    function xhrErrorReason(xhr, fallback) {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        const reason = (data && data.response && data.response.message)
+          || (data && data.message)
+          || (data && data.error);
+        if (typeof reason === 'string' && reason.trim()) return reason.trim();
+      } catch (parseError) { /* not JSON -- fall through */ }
+      return fallback || ('HTTP ' + xhr.status);
+    }
+
     // Create new community
     const communityData = {
         community: {
@@ -946,7 +961,10 @@ function showMigrateStepTwo(communityId) {
       error: function(xhr, status, error) {
         console.error('Error creating new community:', { status: xhr.status, responseText: xhr.responseText, error });
         $('#loadingOverlay').modal('hide');
-        $('#successCopyMessage').html('<strong>Error!</strong> Failed to migrate community: ' + (xhr.responseText || error) + '.').show().delay(2000).fadeOut();
+        // This shares the create-community endpoint, so it gets the same
+        // explanations -- the cap rejection names the plan and the limit.
+        // Dumping raw responseText showed the user a JSON blob instead.
+        $('#successCopyMessage').html('<strong>Error!</strong> Failed to migrate community: ' + xhrErrorReason(xhr, error) + '.').show().delay(2000).fadeOut();
       }
     });
   }
