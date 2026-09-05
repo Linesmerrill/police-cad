@@ -24,6 +24,53 @@ async function apiErrorReason(response) {
   }
 }
 
+// Cloudinary serves whatever was uploaded unless the URL asks for something
+// smaller. The upload preset caps banners at 1000px, and we then render them
+// into a 380px card, a 352px carousel or a 44px search tile -- so a phone was
+// downloading and decoding up to 500x the pixels it could show, a dozen times
+// per screen.
+//
+// Deliberately NOT ImageCompress.withCloudinaryDelivery. That helper is a no-op
+// on purpose: community maps get zoomed to full screen, where q_auto's
+// re-compression of an already-compressed JPEG is visible, and the contract
+// there is "what you previewed is what gets served". A thumbnail has no such
+// problem, so these get the full f_auto,q_auto treatment.
+const CLOUDINARY_HOST = "res.cloudinary.com";
+const CLOUDINARY_UPLOAD = "/image/upload/";
+
+// Leading components of a transform already present in the URL. Matching these
+// rather than "anything with an underscore" avoids mistaking a public_id such
+// as `my_folder/banner.jpg` for a transform and skipping the resize.
+const CLOUDINARY_TRANSFORM_RE =
+  /^(c|w|h|ar|f|q|g|e|dpr|fl|l|b|r|o|x|y|z|a|t|co|bo|du|so|vc|br)_[^/,]+([,/])/;
+
+// Returns a delivery URL cropped to `aspect` and capped at `width` px.
+// Anything that is not a Cloudinary asset -- the local default banner, or a
+// link someone pasted -- is handed back untouched.
+function cloudinaryThumb(url, width, aspect) {
+  if (typeof url !== "string" || !url.includes(CLOUDINARY_HOST)) return url;
+  const at = url.indexOf(CLOUDINARY_UPLOAD);
+  if (at === -1) return url;
+
+  const head = url.slice(0, at + CLOUDINARY_UPLOAD.length);
+  const rest = url.slice(at + CLOUDINARY_UPLOAD.length);
+  // Already carries a transform: don't stack a second one on top of it.
+  if (CLOUDINARY_TRANSFORM_RE.test(rest)) return url;
+
+  return `${head}c_fill,ar_${aspect},w_${width},f_auto,q_auto/${rest}`;
+}
+
+// Candidate widths for the browser to choose from, given `sizes`. Returns
+// undefined when we cannot actually produce distinct widths -- a non-Cloudinary
+// URL, or one that already carries its own transform -- so the attribute is
+// omitted rather than listing the same URL four times.
+function cloudinarySrcSet(url, widths, aspect) {
+  if (typeof url !== "string" || !url.includes(CLOUDINARY_HOST)) return undefined;
+  if (url.indexOf(CLOUDINARY_UPLOAD) === -1) return undefined;
+  if (cloudinaryThumb(url, widths[0], aspect) === url) return undefined;
+  return widths.map((w) => `${cloudinaryThumb(url, w, aspect)} ${w}w`).join(", ");
+}
+
 function communityArrayFrom(response) {
   const d = response && response.data;
   if (Array.isArray(d)) return d;
@@ -281,10 +328,14 @@ const CommunityCard = ({ community, isActive, actionText = "View", onAction }) =
           thing on it, since most communities never set one. */}
       <div className="relative aspect-[2/1] overflow-hidden" style={{ background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 100%)' }}>
         <img
-          src={community?.imageLink || "/static/images/default-logo.png"}
+          src={cloudinaryThumb(community?.imageLink, 800, "2:1") || "/static/images/default-logo.png"}
+          srcSet={cloudinarySrcSet(community?.imageLink, [240, 400, 600, 800], "2:1")}
+          /* Widths track the grid: 2 up below lg, 3 up to xl, 4 beyond. */
+          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
           alt={community?.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
+          decoding="async"
           onError={(e) => { e.target.src = "/static/images/default-logo.png"; }}
         />
         {/* Badges. Two-up in a 173px-wide card on a phone, so the plan badge
@@ -461,9 +512,12 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
             {/* Image — fixed square, same physical size mobile & desktop */}
             <div className="relative aspect-square rounded-2xl overflow-hidden mt-2 mb-4 md:mb-0 md:mt-0 md:flex-shrink-0 md:w-80 lg:w-[22rem]" style={{ background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 100%)' }}>
               <img
-                src={community.imageLink || "/static/images/default-logo.png"}
+                src={cloudinaryThumb(community.imageLink, 800, "1:1") || "/static/images/default-logo.png"}
+                srcSet={cloudinarySrcSet(community.imageLink, [400, 800], "1:1")}
+                sizes="(min-width: 768px) 22rem, 100vw"
                 alt={community.name}
                 className="w-full h-full object-cover"
+                decoding="async"
                 onError={(e) => { e.target.src = "/static/images/default-logo.png"; }}
               />
               {/* Purple breathing glow behind image */}
@@ -1748,10 +1802,13 @@ const WelcomeModal = ({ isOpen, onClose, onCreateCommunity }) => {
                         style={tile}
                       >
                         <img
-                          src={details.imageLink || '/static/images/default-logo.png'}
+                          /* 44px on screen, so 144 covers a 3x display. */
+                          src={cloudinaryThumb(details.imageLink, 144, "1:1") || '/static/images/default-logo.png'}
                           alt=""
                           className="w-11 h-11 rounded-lg flex-shrink-0"
                           style={{ objectFit: 'cover', background: 'rgba(255,255,255,0.05)' }}
+                          loading="lazy"
+                          decoding="async"
                           onError={(e) => { e.target.src = '/static/images/default-logo.png'; }}
                         />
                         <span className="min-w-0 flex-1">

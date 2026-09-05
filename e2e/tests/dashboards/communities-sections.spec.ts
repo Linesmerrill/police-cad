@@ -81,6 +81,64 @@ async function mockCommunityApis(page: Page, data: SectionData) {
   );
 }
 
+test.describe('Community card density', () => {
+  // Guards the fix for "the cards take up more than a third of the screen and
+  // you only ever see about three". The numbers here are the grid contract:
+  // two up on a phone, four up on a wide screen, banner at 2:1.
+  const cardGrid = (page: Page) => page.locator('#your-communities .grid').first();
+
+  async function columnCount(page: Page) {
+    return page.evaluate(() => {
+      const grid = document.querySelector('#your-communities .grid');
+      if (!grid) return 0;
+      const kids = [...grid.children];
+      if (!kids.length) return 0;
+      const top = Math.round(kids[0].getBoundingClientRect().top);
+      return kids.filter((k) => Math.round(k.getBoundingClientRect().top) === top).length;
+    });
+  }
+
+  test('is two up on a phone and four up on a wide screen', { tag: '@auth' }, async ({ page }) => {
+    await mockCommunityApis(page, {
+      elite: [], discover: [], browse: [],
+      joined: Array.from({ length: 6 }, (_, i) => comm(`QA Density ${i + 1}`)),
+    });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/communities');
+    await expect(cardGrid(page).locator('> *').first()).toBeVisible({ timeout: 15_000 });
+    expect(await columnCount(page)).toBe(2);
+
+    await page.setViewportSize({ width: 1600, height: 1000 });
+    await expect.poll(() => columnCount(page), { timeout: 10_000 }).toBe(4);
+  });
+
+  test('renders the banner at 2:1 and never ships a full-size image', { tag: '@auth' }, async ({ page }) => {
+    await mockCommunityApis(page, {
+      elite: [], discover: [], browse: [],
+      joined: [comm('QA Banner')],
+    });
+
+    await page.goto('/communities');
+    const img = cardGrid(page).locator('img').first();
+    await expect(img).toBeVisible({ timeout: 15_000 });
+
+    // The banner frame matches the "Add Banner" preview in the create modal.
+    const box = await img.locator('xpath=..').boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.width / box!.height).toBeCloseTo(2, 1);
+
+    // A Cloudinary-hosted banner must ask for a bounded width, never the
+    // original. Local defaults carry no srcset, which is also correct.
+    const srcset = await img.getAttribute('srcset');
+    if (srcset) {
+      for (const candidate of srcset.split(', ')) {
+        expect(candidate).toMatch(/\/image\/upload\/[^/]*w_\d{2,3},/);
+      }
+    }
+  });
+});
+
 test.describe('Communities page sections', () => {
   test('every section populates from a normal response', { tag: '@auth' }, async ({ page }) => {
     await mockCommunityApis(page, {
