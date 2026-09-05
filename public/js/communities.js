@@ -4,6 +4,26 @@ const API_URL = window.API_URL || "https://police-cad-app-api-bc6d659b60b3.herok
 
 // Safely pull the community array out of a v2 list response. The API may return
 // `{ data: [...] }` or a bare array; never throw on an unexpected shape.
+// Reads the reason out of an API error response.
+//
+// The Go API answers with `{response: {message, error}}`, while this site's own
+// Express routes answer with a top-level `{message}` / `{error}`, so both
+// shapes have to be tried. Returns a bare reason with no prefix of its own so
+// callers add their own context exactly once. Never throws: a non-JSON body
+// (gateway or proxy error page) degrades to the status rather than leaking
+// "Unexpected token '<'" into a toast.
+async function apiErrorReason(response) {
+  try {
+    const data = await response.json();
+    return (data && data.response && data.response.message)
+      || (data && data.message)
+      || (data && data.error)
+      || `HTTP ${response.status}`;
+  } catch (parseError) {
+    return `HTTP ${response.status}`;
+  }
+}
+
 function communityArrayFrom(response) {
   const d = response && response.data;
   if (Array.isArray(d)) return d;
@@ -1796,7 +1816,17 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
   const [ownedCount, setOwnedCount] = useState(0);
   const [userPlan, setUserPlan] = useState("free");
 
-  const PLAN_LIMITS = { base: 5, premium: 10, premium_plus: Infinity };
+  // Mirrors models.PlanFromUser / models.CommunityCap in the API. The server is
+  // the authority -- this only decides whether to show the upgrade hint before
+  // the user types a name. It used to read subscription.plan while ignoring
+  // subscription.active, so a lapsed premium subscriber was shown a limit of 10
+  // while the server capped them at 1 and rejected every attempt.
+  const PLAN_LIMITS = { free: 1, base: 5, premium: 10, premium_plus: Infinity };
+  const planFromUser = (u) => {
+    const sub = u?.user?.subscription;
+    if (!sub?.active) return "free";
+    return String(sub.plan || "").trim().toLowerCase() || "free";
+  };
   const getCommunityLimit = (plan) => PLAN_LIMITS[plan] ?? 1;
 
   useEffect(() => {
@@ -1804,13 +1834,21 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
       fetch(`${API_URL}/api/v1/communities/${dbUser._id}`)
         .then(res => res.json())
         .then(data => {
-          const newFormatCommunities = (data || []).filter(item => item.community?.visibility);
-          setOwnedCount(newFormatCommunities.length);
-          setUserPlan(dbUser?.user?.subscription?.plan || "free");
+          // Count every community this user owns. Filtering on
+          // `community.visibility` used to drop legacy communities that predate
+          // that field, so the count came back low, this modal happily enabled
+          // the button, and the server then rejected the create against its own
+          // (correct) count. The endpoint already excludes pending-deletion
+          // communities, which is exactly what the server's cap check counts.
+          const owned = (data || []).filter(item => item && item.community);
+          setOwnedCount(owned.length);
+          setUserPlan(planFromUser(dbUser));
         })
         .catch(() => {
+          // Unknown count: let the server be the authority rather than
+          // pre-emptively blocking someone who is under their cap.
           setOwnedCount(0);
-          setUserPlan("free");
+          setUserPlan(planFromUser(dbUser));
         });
       document.body.style.overflow = 'hidden';
     } else {
@@ -1836,6 +1874,14 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
   const handleSubmit = async () => {
     if (!formData.name.trim()) { setError("Name is required"); return; }
     if (!formData.description.trim()) { setError("Description is required"); return; }
+
+    // /communities renders for signed-out visitors too, so dbUser can be empty
+    // if the session lapsed while the page was open. Without this the request
+    // went out with no ownerID and came back as a bare "failed".
+    if (!dbUser?._id) {
+      setError("Your session has expired. Refresh the page and sign in again.");
+      return;
+    }
 
     const limit = getCommunityLimit(userPlan);
     if (limit !== Infinity && ownedCount >= limit) {
@@ -1865,15 +1911,19 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
         })
       });
 
-      if (!response.ok) throw new Error("Failed");
+      // The API explains itself -- the cap rejection names the plan, the limit
+      // and how to resolve it. Throwing that away and showing a flat "Failed to
+      // create community" is what made this look like an outage.
+      if (!response.ok) throw new Error(await apiErrorReason(response));
 
       setToast({ message: `"${formData.name}" created!`, type: "success", isVisible: true });
       setFormData({ name: "", description: "", visibility: "public", tags: [], imageLink: "", discordInviteUrl: "" });
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
-      setError("Failed to create community");
-      setToast({ message: "Failed to create community", type: "error", isVisible: true });
+      const reason = error?.message || "Please try again.";
+      setError(reason);
+      setToast({ message: reason, type: "error", isVisible: true });
     } finally {
       setIsLoading(false);
     }
