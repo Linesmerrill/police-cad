@@ -113,6 +113,43 @@ test.describe('Community card density', () => {
     await expect.poll(() => columnCount(page), { timeout: 10_000 }).toBe(4);
   });
 
+  test('asks for a whole number of rows and leaves none ragged', { tag: '@auth' }, async ({ page }) => {
+    // The page size used to be a hardcoded 6 against a responsive grid, so four
+    // columns gave a full row of four and a stranded row of two — which reads
+    // as "that is everything" when there are more pages behind it.
+    await mockCommunityApis(page, { elite: [], discover: [], browse: [], joined: [] });
+
+    // Registered after mockCommunityApis so this handler wins: it honours the
+    // limit the client asked for, which is the thing under test.
+    const requestedLimits: number[] = [];
+    await page.route('**/api/v2/user/*/communities**', (route) => {
+      const limit = Number(new URL(route.request().url()).searchParams.get('limit') || 0);
+      requestedLimits.push(limit);
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: Array.from({ length: limit }, (_, i) => comm(`QA Row ${i + 1}`)),
+          totalCount: 40,
+        }),
+      });
+    });
+
+    await page.setViewportSize({ width: 1600, height: 1000 });
+    await page.goto('/communities');
+    await expect(cardGrid(page).locator('> *').first()).toBeVisible({ timeout: 15_000 });
+
+    // Four columns at this width, so a page must be a multiple of four.
+    await expect.poll(() => columnCount(page), { timeout: 10_000 }).toBe(4);
+    const shown = await cardGrid(page).locator('> *').count();
+    expect(shown).toBeGreaterThan(0);
+    expect(shown % 4).toBe(0);
+
+    // And the client must have asked the API for exactly that, not a fixed 6.
+    expect(requestedLimits.length).toBeGreaterThan(0);
+    for (const limit of requestedLimits) expect(limit % 4).toBe(0);
+  });
+
   test('renders the banner at 2:1 and never ships a full-size image', { tag: '@auth' }, async ({ page }) => {
     await mockCommunityApis(page, {
       elite: [], discover: [], browse: [],

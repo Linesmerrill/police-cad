@@ -24,6 +24,73 @@ async function apiErrorReason(response) {
   }
 }
 
+// How many cards fit across, and therefore how many to ask the API for.
+//
+// The page size used to be a hardcoded 6 while the grid was responsive, so at
+// four columns you got a full row of four and then a stranded row of two. Two
+// empty slots at the end of a section reads as "that is everything", which is
+// exactly wrong when there are three pages behind it.
+//
+// The ramp below is the single source of truth: the Tailwind classes on the
+// grid and the column count used for paging are both derived from it, so they
+// cannot drift apart. minWidth values are Tailwind's own lg and xl.
+const GRID_RAMP = [
+  { minWidth: 0, cols: 2, cls: "grid-cols-2" },
+  { minWidth: 1024, cols: 3, cls: "lg:grid-cols-3" },
+  { minWidth: 1280, cols: 4, cls: "xl:grid-cols-4" },
+];
+
+const COMMUNITY_GRID_CLASS =
+  "grid gap-3 sm:gap-4 " + GRID_RAMP.map((r) => r.cls).join(" ");
+
+// Roughly how many cards a section should show. Rows round up from this, so
+// the number actually requested is always a whole number of rows.
+const TARGET_PER_PAGE = 6;
+const MIN_ROWS = 2;
+
+function columnsForWidth(width) {
+  return GRID_RAMP.reduce(
+    (cols, step) => (width >= step.minWidth ? step.cols : cols),
+    GRID_RAMP[0].cols
+  );
+}
+
+// Always a multiple of the column count, so every row on screen is full.
+//   2 cols -> 6 (3 rows)   3 cols -> 6 (2 rows)   4 cols -> 8 (2 rows)
+function pageSizeForWidth(width) {
+  const cols = columnsForWidth(width);
+  return cols * Math.max(MIN_ROWS, Math.ceil(TARGET_PER_PAGE / cols));
+}
+
+// Recomputes on resize, but only produces a new value when the number actually
+// changes -- dragging a window edge crosses hundreds of pixels and should not
+// fire hundreds of refetches.
+function usePageSize() {
+  const read = () =>
+    pageSizeForWidth(typeof window === "undefined" ? 1280 : window.innerWidth);
+  const [pageSize, setPageSize] = useState(read);
+
+  useEffect(() => {
+    let timer;
+    const onResize = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        setPageSize((prev) => {
+          const next = read();
+          return next === prev ? prev : next;
+        });
+      }, 150);
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
+
+  return pageSize;
+}
+
 // Cloudinary serves whatever was uploaded unless the URL asks for something
 // smaller. The upload preset caps banners at 1000px, and we then render them
 // into a 380px card, a 352px carousel or a 44px search tile -- so a phone was
@@ -687,9 +754,12 @@ const CommunitySection = ({
   isLoading,
   emptyMessage,
   emptyIcon,
-  showLoginPrompt
+  showLoginPrompt,
+  pageSize
 }) => {
-  const itemsPerPage = 6;
+  // Must match what the fetch actually asked for, or Next/Prev will offer
+  // pages that do not exist (or hide ones that do).
+  const itemsPerPage = pageSize || TARGET_PER_PAGE;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   if (showLoginPrompt) {
@@ -747,8 +817,10 @@ const CommunitySection = ({
 
       {/* Loading State */}
       {isLoading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-          {Array.from({ length: 3 }).map((_, i) => <CommunityCardSkeleton key={i} />)}
+        <div className={COMMUNITY_GRID_CLASS}>
+          {/* One skeleton per card we are about to show, so the layout does not
+              jump when the real cards land. */}
+          {Array.from({ length: itemsPerPage }).map((_, i) => <CommunityCardSkeleton key={i} />)}
         </div>
       ) : communities.length === 0 ? (
         <div className="rounded-2xl p-8 text-center" style={{
@@ -768,7 +840,7 @@ const CommunitySection = ({
       ) : (
         <>
           {/* Community Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+          <div className={COMMUNITY_GRID_CLASS}>
             {communities.map((community) => (
               <CommunityCard
                 key={community._id}
@@ -2325,6 +2397,9 @@ const App = () => {
   const [eliteTotalCount, setEliteTotalCount] = useState(0);
   const [userPage, setUserPage] = useState(1);
   const [userTotalCount, setUserTotalCount] = useState(0);
+  // How many cards fill whole rows at this viewport. Drives every list
+  // request on the page as well as the Next/Prev arithmetic.
+  const pageSize = usePageSize();
   const [recommendedPage, setRecommendedPage] = useState(0);
   const [recommendedTotalCount, setRecommendedTotalCount] = useState(0);
   const [allCommunitiesPage, setAllCommunitiesPage] = useState(0);
@@ -2389,7 +2464,7 @@ const App = () => {
   useEffect(() => {
     if (!dbUser?._id) { setIsRecommendedLoading(false); return; }
     const timer = setTimeout(() => {
-      axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=6&page=0`)
+      axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=${pageSize}&page=0`)
         .then(response => {
           const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
           setRecommendedCommunities(communities);
@@ -2404,7 +2479,7 @@ const App = () => {
   // Fetch All Communities
   useEffect(() => {
     const timer = setTimeout(() => {
-      axios.get(`${API_URL}/api/v2/communities/tag/all?limit=6&page=0`)
+      axios.get(`${API_URL}/api/v2/communities/tag/all?limit=${pageSize}&page=0`)
         .then(response => {
           const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
           setAllCommunities(communities);
@@ -2433,7 +2508,7 @@ const App = () => {
         //
         // v2, not v1, because v1 returns a bare array with no total. Without one
         // this used to fall back to the length of the page it had just received,
-        // which pinned the count at the page size and made `page * 6 < total`
+        // which pinned the count at the page size and made `page * size < total`
         // permanently false -- the next-page control never enabled and anything
         // past the first six communities, including one just created, could not
         // be reached. Element shape is unchanged: { _id, community: {...} }.
@@ -2441,9 +2516,9 @@ const App = () => {
         // v1 is kept as a fallback so this page works whichever side deploys
         // first. It restores the old capped-count behaviour, not an empty list.
         try {
-          response = await axios.get(`${API_URL}/api/v2/communities/${dbUser._id}?limit=6&page=${page}`);
+          response = await axios.get(`${API_URL}/api/v2/communities/${dbUser._id}?limit=${pageSize}&page=${page}`);
         } catch (v2Error) {
-          response = await axios.get(`${API_URL}/api/v1/communities/${dbUser._id}?limit=6&page=${page}`);
+          response = await axios.get(`${API_URL}/api/v1/communities/${dbUser._id}?limit=${pageSize}&page=${page}`);
         }
         const rawData = (Array.isArray(response.data) ? response.data : (response.data.data || [])).filter(it => it && typeof it === "object");
         const communities = rawData.map(item => {
@@ -2467,7 +2542,7 @@ const App = () => {
       } else {
         // Fetch joined or pending communities
         const statusFilter = filter === "pending" ? "pending" : "approved";
-        response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:${statusFilter}&limit=6&page=${page}`);
+        response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:${statusFilter}&limit=${pageSize}&page=${page}`);
         const communities = (response.data.data || []).filter(it => it && typeof it === "object").map(item => {
           const img = item.imageLink;
           return {
@@ -2496,7 +2571,7 @@ const App = () => {
   const fetchRecommendedPage = async (page) => {
     setIsRecommendedLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=6&page=${page}`);
+      const response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=${pageSize}&page=${page}`);
       const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
       setRecommendedCommunities(communities);
       setRecommendedPage(page);
@@ -2510,7 +2585,7 @@ const App = () => {
   const fetchAllCommunitiesPage = async (tag, page) => {
     setIsAllCommunitiesLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/v2/communities/tag/${tag}?limit=6&page=${page}`);
+      const response = await axios.get(`${API_URL}/api/v2/communities/tag/${tag}?limit=${pageSize}&page=${page}`);
       const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
       setAllCommunities(communities);
       setAllCommunitiesTotalCount(response.data.totalCount || 0);
@@ -2521,6 +2596,24 @@ const App = () => {
       setIsAllCommunitiesLoading(false);
     }
   };
+
+  // Crossing a breakpoint changes how many cards fill a row, so the pages we
+  // already fetched are the wrong length. Refill from the first page rather
+  // than leaving a half-empty row behind. Skipped on mount: the initial
+  // fetches above already ran with the correct size, since usePageSize reads
+  // the viewport synchronously on its first render.
+  const didMountPageSize = useRef(false);
+  useEffect(() => {
+    if (!didMountPageSize.current) {
+      didMountPageSize.current = true;
+      return;
+    }
+    if (dbUser?._id) {
+      fetchUserPage(userFilter, 1);
+      fetchRecommendedPage(0);
+    }
+    fetchAllCommunitiesPage(currentTag, 0);
+  }, [pageSize]);
 
   return (
     <div className="min-h-screen relative" style={{ 
@@ -2615,10 +2708,11 @@ const App = () => {
         <YourCommunities
           communities={userCommunities}
           totalCount={userTotalCount}
+          pageSize={pageSize}
           currentFilter={userFilter}
           onFilterChange={(filter, page) => fetchUserPage(filter, page)}
           onPrevPage={() => userPage > 1 && fetchUserPage(userFilter, userPage - 1)}
-          onNextPage={() => userPage * 6 < userTotalCount && fetchUserPage(userFilter, userPage + 1)}
+          onNextPage={() => userPage * pageSize < userTotalCount && fetchUserPage(userFilter, userPage + 1)}
           currentPage={userPage}
           isLoading={isUserLoading}
           showLoginPrompt={!dbUser?._id}
@@ -2634,9 +2728,10 @@ const App = () => {
           communities={recommendedCommunities}
           actionText="Explore"
           onPrevPage={() => recommendedPage > 0 && fetchRecommendedPage(recommendedPage - 1)}
-          onNextPage={() => (recommendedPage + 1) * 6 < recommendedTotalCount && fetchRecommendedPage(recommendedPage + 1)}
+          onNextPage={() => (recommendedPage + 1) * pageSize < recommendedTotalCount && fetchRecommendedPage(recommendedPage + 1)}
           currentPage={recommendedPage + 1}
           totalCount={recommendedTotalCount}
+          pageSize={pageSize}
           isLoading={isRecommendedLoading}
           showLoginPrompt={!dbUser?._id}
           emptyMessage="Sign in for personalized recommendations"
@@ -2649,10 +2744,11 @@ const App = () => {
         <BrowseCommunities
           communities={allCommunities}
           totalCount={allCommunitiesTotalCount}
+          pageSize={pageSize}
           currentTag={currentTag}
           setCurrentTag={setCurrentTag}
           onPrevPage={() => allCommunitiesPage > 0 && fetchAllCommunitiesPage(currentTag, allCommunitiesPage - 1)}
-          onNextPage={() => (allCommunitiesPage + 1) * 6 < allCommunitiesTotalCount && fetchAllCommunitiesPage(currentTag, allCommunitiesPage + 1)}
+          onNextPage={() => (allCommunitiesPage + 1) * pageSize < allCommunitiesTotalCount && fetchAllCommunitiesPage(currentTag, allCommunitiesPage + 1)}
           currentPage={allCommunitiesPage}
           fetchAllCommunitiesPage={fetchAllCommunitiesPage}
           isLoading={isAllCommunitiesLoading}
