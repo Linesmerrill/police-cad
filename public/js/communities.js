@@ -131,15 +131,10 @@ const CommunityCardSkeleton = () => (
     background: 'rgba(255, 255, 255, 0.05)',
     border: '1px solid rgba(59, 130, 246, 0.2)'
   }}>
-    <div className="aspect-[4/3]" style={{ background: 'rgba(255, 255, 255, 0.03)' }}></div>
-    <div className="p-4">
-      <div className="h-5 rounded-lg mb-3 w-3/4" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
-      <div className="flex gap-2 mb-3">
-        <div className="h-5 rounded-full w-14" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
-        <div className="h-5 rounded-full w-16" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
-      </div>
-      <div className="h-4 rounded mb-2" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
-      <div className="h-4 rounded w-2/3 mb-4" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+    <div className="aspect-[2/1]" style={{ background: 'rgba(255, 255, 255, 0.03)' }}></div>
+    <div className="p-3 sm:p-4">
+      <div className="h-4 rounded-lg mb-2 w-3/4" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+      <div className="h-3 rounded w-1/3 mb-3" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
       <div className="h-11 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
     </div>
   </div>
@@ -258,14 +253,15 @@ const CommunityCard = ({ community, isActive, actionText = "View", onAction }) =
 
     if (!isActive && !community?.promotionalText) return null;
 
+    const planBadge = "px-2 sm:px-2.5 text-[10px] sm:text-xs";
     if (plan === "elite" || community?.promotionalText) {
-      return <Badge variant="elite"><i className="fa fa-crown mr-1"></i>ELITE</Badge>;
+      return <Badge variant="elite" className={planBadge}><i className="fa fa-crown mr-1"></i>ELITE</Badge>;
     } else if (plan === "premium") {
-      return <Badge variant="premium"><i className="fa fa-star mr-1"></i>PREMIUM</Badge>;
+      return <Badge variant="premium" className={planBadge}><i className="fa fa-star mr-1"></i>PREMIUM</Badge>;
     } else if (plan === "standard") {
-      return <Badge variant="standard"><i className="fa fa-check-circle mr-1"></i>STANDARD</Badge>;
+      return <Badge variant="standard" className={planBadge}><i className="fa fa-check-circle mr-1"></i>STANDARD</Badge>;
     } else if (plan === "basic") {
-      return <Badge variant="basic"><i className="fa fa-user mr-1"></i>BASIC</Badge>;
+      return <Badge variant="basic" className={planBadge}><i className="fa fa-user mr-1"></i>BASIC</Badge>;
     }
     return null;
   };
@@ -277,8 +273,13 @@ const CommunityCard = ({ community, isActive, actionText = "View", onAction }) =
       border: '1px solid rgba(59, 130, 246, 0.2)',
       boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
     }}>
-      {/* Image */}
-      <div className="relative aspect-[4/3] overflow-hidden" style={{ background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 100%)' }}>
+      {/* Banner.
+          2:1, matching the "Add Banner" preview in the create modal, which is
+          the frame an owner composes their image in. The card used to show it
+          at 4:3, so object-cover ate the sides of every banner anyone uploaded.
+          It also made the image 75% of the card -- the least distinguishing
+          thing on it, since most communities never set one. */}
+      <div className="relative aspect-[2/1] overflow-hidden" style={{ background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 100%)' }}>
         <img
           src={community?.imageLink || "/static/images/default-logo.png"}
           alt={community?.name}
@@ -286,37 +287,35 @@ const CommunityCard = ({ community, isActive, actionText = "View", onAction }) =
           loading="lazy"
           onError={(e) => { e.target.src = "/static/images/default-logo.png"; }}
         />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10, 10, 15, 0.9) 0%, transparent 50%)' }}></div>
-
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+        {/* Badges. Two-up in a 173px-wide card on a phone, so the plan badge
+            keeps its wording and the active marker collapses to its dot --
+            at full width they would overlap. */}
+        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-wrap gap-2">
           {getSubscriptionBadge()}
         </div>
 
         {isActive && (
-          <div className="absolute top-3 right-3">
-            <Badge variant="active"><i className="fa fa-circle mr-1 text-[8px]"></i>Active</Badge>
+          <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+            <Badge variant="active" className="px-1.5 sm:px-2.5">
+              <i className="fa fa-circle text-[8px]"></i>
+              <span className="hidden sm:inline ml-1">Active</span>
+            </Badge>
           </div>
         )}
-
-        {/* Member Count */}
-        <div className="absolute bottom-3 left-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-300" style={{
-            background: 'rgba(0, 0, 0, 0.6)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)'
-          }}>
-            <i className="fa fa-users"></i>
-            <span>{community?.membersCount || 0} members</span>
-          </div>
-        </div>
       </div>
 
       {/* Content */}
-      <div className="p-4 flex flex-col flex-grow">
-        <h3 className="text-base font-bold text-white mb-2 line-clamp-2 leading-tight" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.1)' }}>
+      <div className="p-3 sm:p-4 flex flex-col flex-grow">
+        <h3 className="text-sm sm:text-base font-bold text-white line-clamp-2 leading-tight" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.1)' }}>
           {community?.name}
         </h3>
+
+        {/* Member count reads better here than as a pill over the banner: it
+            sits next to the name people compare it against, it survives a
+            173px-wide card, and it needs no scrim to stay legible. */}
+        <p className="text-[11px] text-slate-400 mt-0.5 mb-2">
+          {community?.membersCount || 0} {(community?.membersCount || 0) === 1 ? 'member' : 'members'}
+        </p>
 
         {/* Tags */}
         {community?.tags?.length > 0 && (
@@ -348,8 +347,8 @@ const CommunityCard = ({ community, isActive, actionText = "View", onAction }) =
         {/* Action Button */}
         <Button
           onClick={() => onAction(community)}
-          className="w-full mt-auto"
-          size="md"
+          className="w-full mt-auto min-h-[44px]"
+          size="sm"
         >
           <span>{actionText || "View"}</span>
           <i className="fa fa-arrow-right ml-2 text-xs"></i>
@@ -694,7 +693,7 @@ const CommunitySection = ({
 
       {/* Loading State */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
           {Array.from({ length: 3 }).map((_, i) => <CommunityCardSkeleton key={i} />)}
         </div>
       ) : communities.length === 0 ? (
@@ -715,7 +714,7 @@ const CommunitySection = ({
       ) : (
         <>
           {/* Community Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
             {communities.map((community) => (
               <CommunityCard
                 key={community._id}
