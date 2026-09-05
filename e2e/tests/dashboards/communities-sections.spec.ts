@@ -52,6 +52,18 @@ interface SectionData {
 }
 
 async function mockCommunityApis(page: Page, data: SectionData) {
+  // Owned communities and the create modal's owned count. Registered FIRST on
+  // purpose: Playwright gives precedence to the most recently registered
+  // matching route, so the narrower elite/tag/recommended stubs below win over
+  // this broader one. Envelope shape, since the owned list reads totalCount to
+  // decide whether a next page exists.
+  await page.route('**/api/v2/communities/*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: [], totalCount: 0, page: 1, limit: 6 }),
+    }),
+  );
   // Elite carousel
   await page.route('**/api/v2/communities/elite**', (route) => jsonList(route, data.elite));
   // Browse / "All" (tag/all and tag/{tag})
@@ -62,7 +74,8 @@ async function mockCommunityApis(page: Page, data: SectionData) {
   );
   // Your Communities (joined/pending) — initial load uses the "joined" filter
   await page.route('**/api/v2/user/*/communities**', (route) => jsonList(route, data.joined));
-  // Owned-count / owned filter returns a bare array — keep it empty & harmless
+  // v1 owned list: still the fallback path when v2 is unavailable, and a bare
+  // array rather than an envelope. Keep it empty & harmless.
   await page.route('**/api/v1/communities/**', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
   );
