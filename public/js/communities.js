@@ -282,11 +282,23 @@ const CarouselSkeleton = () => (
 const Badge = ({ children, variant = "default", className = "" }) => {
   const variants = {
     default: "bg-slate-700/50 text-slate-300 border border-slate-600/30",
-    elite: "bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-900 font-bold shadow-lg shadow-amber-500/30",
-    premium: "bg-gradient-to-r from-violet-500 to-purple-500 text-white font-bold shadow-lg shadow-violet-500/30",
-    standard: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold shadow-lg shadow-blue-500/30",
-    basic: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold shadow-lg shadow-emerald-500/30",
-    active: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
+    // Solid, for a badge sitting on our own background rather than on a
+    // community's cover photo. The carousel uses these.
+    eliteSolid: "bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-900 font-bold shadow-lg shadow-amber-500/30",
+    // Over a cover photo. A solid pill was blocking a third of the banner on
+    // a 173px card -- real estate the owner uploaded an image to use. These
+    // read as tinted glass instead: a dark scrim for legibility over any
+    // photo, the tier's colour in the text and hairline, and a blur so the
+    // image stays visible through it. Same idiom as `active` and `tag` below,
+    // which were already translucent; the plan badges were the odd ones out.
+    // 60%, not less: a cover photo can be pure white, and at 40% the amber
+    // measured 1.98:1 against it -- below the 3:1 floor for bold text. At 60%
+    // it measures ~4:1 over white while the photo still reads through.
+    elite: "bg-black/60 backdrop-blur-md text-amber-300 border border-amber-400/40 font-bold",
+    premium: "bg-black/60 backdrop-blur-md text-violet-300 border border-violet-400/40 font-bold",
+    standard: "bg-black/60 backdrop-blur-md text-blue-300 border border-blue-400/40 font-bold",
+    basic: "bg-black/60 backdrop-blur-md text-emerald-300 border border-emerald-400/40 font-bold",
+    active: "bg-black/60 backdrop-blur-md text-emerald-300 border border-emerald-400/40",
     tag: "bg-blue-500/10 text-blue-400 border border-blue-500/30"
   };
 
@@ -512,10 +524,14 @@ const CommunityCard = ({ community, isActive, actionText = "View", onAction }) =
           and in the Elite carousel, which is the paid placement; the ELITE
           badge still marks the card. */}
       <div className="p-3 sm:p-4 flex flex-col">
-        {/* Two lines reserved whether the name needs them or not. 1.25em is
-            leading-tight, so this holds at both font sizes. */}
+        {/* Exactly two lines, whether the name needs them or not.
+            h-, not min-h-: a minimum still lets the box grow, and with the
+            site's own font two wrapped lines came out taller than 2.5em, which
+            pushed the meta row and the action 5px down on any card with a
+            wrapping name. leading-tight is 1.25, so two lines is 2.5em by
+            construction and the height is exact rather than a guess. */}
         <h3
-          className="text-sm sm:text-base font-bold text-white line-clamp-2 leading-tight min-h-[2.5em]"
+          className="text-sm sm:text-base font-bold text-white line-clamp-2 leading-tight h-[2.5em] overflow-hidden"
           style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.1)' }}
           title={community?.name}
         >
@@ -652,7 +668,7 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
         }}>
           {/* Elite Badge */}
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-            <Badge variant="elite" className="px-4 py-1.5 shadow-lg">
+            <Badge variant="eliteSolid" className="px-4 py-1.5 shadow-lg">
               <i className="fa fa-crown mr-1.5"></i>ELITE
             </Badge>
           </div>
@@ -2615,7 +2631,14 @@ const App = () => {
             membersCount: item.community?.membersCount || item.membersCount || 0,
             isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
             imageLink: (typeof img === "string" && img.includes("file:///")) ? "/static/images/default-logo.png" : (img || "/static/images/default-logo.png"),
-            subscription: item.community?.subscription?.active || item.subscription,
+            // The subscription object, not a boolean: getSubscriptionBadge
+            // reads `.plan` off it, and `?.active || item.subscription`
+            // collapsed the whole thing to true/false, so the plan badge could
+            // never resolve a tier here.
+            subscription: item.community?.subscription || item.subscription,
+            tags: item.community?.tags || item.tags,
+            promotionalText: item.community?.promotionalText || item.promotionalText,
+            promotionalDescription: item.community?.promotionalDescription || item.promotionalDescription,
             isOwned: true
           };
         });
@@ -2638,6 +2661,12 @@ const App = () => {
             isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
             imageLink: (typeof img === "string" && img.includes("file:///")) ? "/static/images/default-logo.png" : (img || "/static/images/default-logo.png"),
             subscription: item.subscription,
+            // Carried through so an elite community's promo panel and plan
+            // badge render here too. Dropping these meant Your Communities
+            // never showed what an elite owner paid for.
+            tags: item.tags,
+            promotionalText: item.promotionalText,
+            promotionalDescription: item.promotionalDescription,
             isPending: filter === "pending"
           };
         });

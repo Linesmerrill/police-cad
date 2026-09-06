@@ -277,7 +277,17 @@ test.describe('Community card consistency', () => {
           const el = c.querySelector(sel);
           return el ? Math.round(el.getBoundingClientRect().top - top) : -1;
         };
-        return { height: Math.round(c.getBoundingClientRect().height), title: at('h3'), action: at('button') };
+        const h3 = c.querySelector('h3');
+        return {
+          height: Math.round(c.getBoundingClientRect().height),
+          title: at('h3'),
+          // The title box must be a fixed two lines. When it was only a
+          // minimum it grew on wrapping names and pushed everything below it
+          // down, which surfaced as a drifting action and nothing else.
+          titleHeight: h3 ? Math.round(h3.getBoundingClientRect().height) : -1,
+          meta: at('.h-6'),
+          action: at('button'),
+        };
       });
     });
 
@@ -285,8 +295,32 @@ test.describe('Community card consistency', () => {
     for (const o of offsets) {
       expect(o.height).toBe(offsets[0].height);
       expect(o.title).toBe(offsets[0].title);
+      expect(o.titleHeight).toBe(offsets[0].titleHeight);
+      expect(o.meta).toBe(offsets[0].meta);
       expect(o.action).toBe(offsets[0].action);
     }
+  });
+});
+
+test.describe('Plan badge over the cover photo', () => {
+  test('is translucent, so it does not black out the banner', { tag: '@auth' }, async ({ page }) => {
+    await mockCommunityApis(page, {
+      elite: [], discover: [], browse: [],
+      joined: [{ ...comm('QA Elite'), subscription: { active: true, plan: 'elite' } }],
+    });
+
+    await page.goto('/communities');
+    await cardsSettled(page, '#your-communities');
+
+    const badge = page.locator('#your-communities .grid .absolute span').first();
+    await expect(badge).toBeVisible();
+
+    const bg = await badge.evaluate((el) => getComputedStyle(el).backgroundColor);
+    // A solid gradient pill used to cover a third of the banner at 173px. Any
+    // opaque fill here is a regression: rgb() with no alpha, or alpha of 1.
+    const alpha = Number(bg.match(/[\d.]+/g)?.[3] ?? 1);
+    expect(alpha).toBeLessThan(1);
+    expect(alpha).toBeGreaterThan(0.3); // still dark enough to read against a light photo
   });
 });
 
