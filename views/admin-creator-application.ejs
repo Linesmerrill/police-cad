@@ -83,6 +83,27 @@
     .btn-primary { background: var(--ac-accent); border-color: var(--ac-accent); }
     .actions { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
     .mismatch { color: var(--ac-amber); font-size: 0.8rem; margin-top: 4px; }
+    /* The verification code an applicant was told to put in their bio.
+       Without it on this page there is no way to do the manual check the
+       page itself asks for. Monospace because it is transcribed by eye and
+       O/0 and I/1 have to be distinguishable. */
+    .verify-code {
+      display: inline-flex; align-items: center; gap: 8px; margin-top: 6px;
+      padding: 4px 9px; border-radius: 7px;
+      background: rgba(251, 191, 36, 0.08);
+      border: 1px solid rgba(251, 191, 36, 0.28);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.78rem; letter-spacing: 0.04em; color: var(--ac-amber);
+    }
+    .verify-code button {
+      border: 0; background: transparent; color: inherit; cursor: pointer;
+      font: inherit; opacity: 0.75; padding: 0;
+    }
+    .verify-code button:hover { opacity: 1; }
+    .verify-code .verify-where {
+      font-family: inherit; letter-spacing: normal;
+      color: var(--ac-text-dim); font-size: 0.72rem;
+    }
     /* The confirmed-by line appears only once a box is ticked. Reserving its
        height means the row cannot grow under the cursor and shove the next
        checkbox out from under a click already on its way. */
@@ -479,6 +500,18 @@
         }).join(''));
       }
 
+      // Where the applicant was told to put the code. Naming the right field
+      // matters: "description" sends a reviewer hunting through a TikTok
+      // profile that has no such thing.
+      function codeLocation(type) {
+        switch (String(type || '').toLowerCase()) {
+          case 'tiktok': return 'bio';
+          case 'youtube': return 'channel description';
+          case 'twitch': return 'About panel';
+          default: return 'profile';
+        }
+      }
+
       const platforms = app.platforms || [];
       $('#platforms').html(!platforms.length
         ? '<div class="empty">No platforms on this application.</div>'
@@ -504,6 +537,18 @@
                     esc(followers(actual)) +
                     (p.verificationMethod ? ' &middot; verified by ' + esc(p.verificationMethod) : '') +
                   '</div>' +
+                  // Always shown while a code exists, verified or not. On the
+                  // platforms we cannot read automatically this is the whole
+                  // manual check, and a reviewer previously had no way to know
+                  // what they were looking for.
+                  (p.verificationCode
+                    ? '<div class="verify-code">' +
+                        '<span class="verify-where">Look for</span>' +
+                        '<span class="js-code-text">' + esc(p.verificationCode) + '</span>' +
+                        '<button type="button" class="js-copy-code" data-code="' + esc(p.verificationCode) + '" title="Copy code">Copy</button>' +
+                        '<span class="verify-where">in their ' + esc(codeLocation(p.type)) + '</span>' +
+                      '</div>'
+                    : '') +
                   mismatch +
                 '</div>' +
                 '<div class="actions">' +
@@ -672,6 +717,30 @@
           reason: reason,
         }, 'Check marked ' + status + '.');
       });
+    });
+
+    // Copy rather than retype: these codes are transcribed by eye against a
+    // profile page, and a mistyped character reads as a failed check.
+    $('#platforms').on('click', '.js-copy-code', function () {
+      const $b = $(this);
+      const code = String($b.data('code') || '');
+      if (!code) return;
+      const done = function () {
+        const original = $b.text();
+        $b.text('Copied');
+        setTimeout(function () { $b.text(original); }, 1200);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(done).catch(function () {});
+        return;
+      }
+      // Older browsers, and any page not served over https.
+      const el = document.createElement('textarea');
+      el.value = code;
+      document.body.appendChild(el);
+      el.select();
+      try { document.execCommand('copy'); done(); } catch (e) { /* nothing to do */ }
+      document.body.removeChild(el);
     });
 
     $('#platforms').on('click', '.js-vouch', function () {
