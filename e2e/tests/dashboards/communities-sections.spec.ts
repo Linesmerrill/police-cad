@@ -137,13 +137,25 @@ test.describe('Community card density', () => {
 
     await page.setViewportSize({ width: 1600, height: 1000 });
     await page.goto('/communities');
-    await expect(cardGrid(page).locator('> *').first()).toBeVisible({ timeout: 15_000 });
+    await cardsSettled(page, '#your-communities');
+
+    // Columns and card count read together in one evaluate: taken separately
+    // the grid can re-render between the two calls, which made this flaky.
+    const layout = await page.evaluate(() => {
+      const grid = document.querySelector('#your-communities .grid');
+      if (!grid) return { cols: 0, cards: 0 };
+      const cards = [...grid.children];
+      const top = Math.round(cards[0].getBoundingClientRect().top);
+      return {
+        cols: cards.filter((c) => Math.round(c.getBoundingClientRect().top) === top).length,
+        cards: cards.length,
+      };
+    });
 
     // Four columns at this width, so a page must be a multiple of four.
-    await expect.poll(() => columnCount(page), { timeout: 10_000 }).toBe(4);
-    const shown = await cardGrid(page).locator('> *').count();
-    expect(shown).toBeGreaterThan(0);
-    expect(shown % 4).toBe(0);
+    expect(layout.cols).toBe(4);
+    expect(layout.cards).toBeGreaterThan(0);
+    expect(layout.cards % layout.cols).toBe(0);
 
     // And the client must have asked the API for exactly that, not a fixed 6.
     expect(requestedLimits.length).toBeGreaterThan(0);
@@ -157,6 +169,7 @@ test.describe('Community card density', () => {
     });
 
     await page.goto('/communities');
+    await cardsSettled(page, '#your-communities');
     const img = cardGrid(page).locator('img').first();
     await expect(img).toBeVisible({ timeout: 15_000 });
 
@@ -175,6 +188,22 @@ test.describe('Community card density', () => {
     }
   });
 });
+
+// Skeletons render into the same grid as real cards and carry no <h3>, so an
+// assertion that runs while they are up either races a re-render or passes
+// vacuously. Every check below waits for real cards first.
+async function cardsSettled(page: Page, section: string) {
+  await expect
+    .poll(
+      () =>
+        page.evaluate((sel) => {
+          const cards = [...document.querySelectorAll(`${sel} .grid > *`)];
+          return cards.length > 0 && cards.every((c) => !!c.querySelector('h3')) ? cards.length : 0;
+        }, section),
+      { timeout: 15_000 }
+    )
+    .toBeGreaterThan(0);
+}
 
 test.describe('Community card consistency', () => {
   // Both of these shipped broken once. CommunitySection carried its own
@@ -205,7 +234,7 @@ test.describe('Community card consistency', () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/communities');
-    await expect(page.locator('#your-communities .grid > *').first()).toBeVisible({ timeout: 15_000 });
+    for (const section of sections) await cardsSettled(page, section);
 
     const widths = await firstCardWidths(page);
     const values = Object.values(widths);
@@ -227,7 +256,7 @@ test.describe('Community card consistency', () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/communities');
-    await expect(page.locator('#your-communities .grid > *').first()).toBeVisible({ timeout: 15_000 });
+    await cardsSettled(page, '#your-communities');
 
     const offsets = await page.evaluate(() => {
       const cards = [...document.querySelectorAll('#your-communities .grid > *')];
