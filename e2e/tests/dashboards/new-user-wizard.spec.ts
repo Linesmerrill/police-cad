@@ -100,12 +100,18 @@ test.describe('New-user wizard', { tag: '@auth' }, () => {
 
     await openWizard(page);
     await chooseJoin(page);
+
+    // The Discover section now calls this same endpoint on page load with
+    // tag=all, so the first captured request is no longer necessarily the
+    // wizard's. Only what the platform choice triggers counts here.
+    urls.length = 0;
     await choosePlatform(page, 'Xbox');
 
     await expect.poll(() => urls.length).toBeGreaterThan(0);
-    expect(urls[0]).toContain('tag=Xbox');
+    const wizardUrl = urls[urls.length - 1];
+    expect(wizardUrl).toContain('tag=Xbox');
     // Without userId the wizard would recommend servers they already asked to join.
-    expect(urls[0]).toContain('userId=');
+    expect(wizardUrl).toContain('userId=');
   });
 
   test('an empty result offers a way forward rather than a dead end', async ({ page }) => {
