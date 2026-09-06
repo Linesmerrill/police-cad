@@ -422,47 +422,48 @@ const CommunityCard = ({ community, isActive, actionText = "View", onAction }) =
         )}
       </div>
 
-      {/* Content */}
+      {/* Content.
+          Every card gets the same three slots in the same places -- title,
+          one meta row, action -- so names and buttons line up across the grid
+          the way they do on a YouTube card. Previously the title could be one
+          or two lines and the tag row could be present or absent, so no two
+          cards agreed on where anything sat.
+
+          Promotional text and description used to render here and made elite
+          cards taller than their neighbours. They belong on the community page
+          and in the Elite carousel, which is the paid placement; the ELITE
+          badge still marks the card. */}
       <div className="p-3 sm:p-4 flex flex-col flex-grow">
-        <h3 className="text-sm sm:text-base font-bold text-white line-clamp-2 leading-tight" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.1)' }}>
+        {/* Two lines reserved whether the name needs them or not. 1.25em is
+            leading-tight, so this holds at both font sizes. */}
+        <h3
+          className="text-sm sm:text-base font-bold text-white line-clamp-2 leading-tight min-h-[2.5em]"
+          style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.1)' }}
+          title={community?.name}
+        >
           {community?.name}
         </h3>
 
-        {/* Member count reads better here than as a pill over the banner: it
-            sits next to the name people compare it against, it survives a
-            173px-wide card, and it needs no scrim to stay legible. */}
-        <p className="text-[11px] text-slate-400 mt-0.5 mb-2">
-          {community?.membersCount || 0} {(community?.membersCount || 0) === 1 ? 'member' : 'members'}
-        </p>
+        {/* One meta row, always present. Member count carries it, so the row
+            never collapses; the first tag rides along on the right rather than
+            claiming a row of its own that would be empty on most cards.
+            Fixed height, because a tag badge is taller than bare text and
+            items-center would otherwise re-centre the member count 4px lower
+            on any card that has one. */}
+        <div className="flex items-center justify-between gap-2 mt-1 mb-3 min-w-0 h-6">
+          {/* The count never gives way; the tag is secondary, so it is the
+              one that shrinks and truncates. At 320px a fixed-width tag used
+              to push the row past the edge of the card. */}
+          <span className="text-[11px] text-slate-400 whitespace-nowrap shrink-0">
+            {community?.membersCount || 0} {(community?.membersCount || 0) === 1 ? 'member' : 'members'}
+          </span>
+          {community?.tags?.length > 0 && (
+            <Badge variant="tag" className="min-w-0 overflow-hidden whitespace-nowrap text-ellipsis block">
+              {community.tags[0]}
+            </Badge>
+          )}
+        </div>
 
-        {/* Tags */}
-        {community?.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {community.tags.slice(0, 2).map((tag) => (
-              <Badge key={tag} variant="tag">{tag}</Badge>
-            ))}
-            {community.tags.length > 2 && (
-              <Badge variant="default">+{community.tags.length - 2}</Badge>
-            )}
-          </div>
-        )}
-
-        {/* Promotional Text */}
-        {community?.promotionalText && (
-          <p className="text-xs font-medium mb-2 flex items-start gap-1.5" style={{ color: '#fbbf24' }}>
-            <i className="fa fa-star mt-0.5 flex-shrink-0" style={{ color: '#fbbf24' }}></i>
-            <span className="line-clamp-1">{community.promotionalText}</span>
-          </p>
-        )}
-
-        {/* Description */}
-        {community?.promotionalDescription && (
-          <p className="text-slate-400 text-xs line-clamp-2 mb-4 flex-grow">
-            {community.promotionalDescription}
-          </p>
-        )}
-
-        {/* Action Button */}
         <Button
           onClick={() => onAction(community)}
           className="w-full mt-auto min-h-[44px]"
@@ -764,7 +765,7 @@ const CommunitySection = ({
 
   if (showLoginPrompt) {
     return (
-      <section className="py-6 px-4">
+      <div>
         <div className="text-center">
           {icon && <div className="inline-flex items-center gap-2 mb-2" style={{ color: '#fbbf24' }}><i className={icon}></i><span className="font-semibold">{title}</span></div>}
         </div>
@@ -789,12 +790,14 @@ const CommunitySection = ({
             Sign In
           </Button>
         </div>
-      </section>
+      </div>
     );
   }
 
+  // No padding of its own: callers own their section chrome. See the note on
+  // the login-prompt branch above.
   return (
-    <section className="py-6 px-4">
+    <div>
       {/* Section Header */}
       {title && (
         <div className="flex items-center justify-between mb-4">
@@ -878,7 +881,7 @@ const CommunitySection = ({
           )}
         </>
       )}
-    </section>
+    </div>
   );
 };
 
@@ -2721,7 +2724,7 @@ const App = () => {
       </div>
 
       {/* Discover Communities */}
-      <div id="discover-communities">
+      <div id="discover-communities" className="py-6 px-4">
         <CommunitySection
           title="Discover"
           icon="fa fa-compass"

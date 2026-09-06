@@ -176,6 +176,80 @@ test.describe('Community card density', () => {
   });
 });
 
+test.describe('Community card consistency', () => {
+  // Both of these shipped broken once. CommunitySection carried its own
+  // `py-6 px-4` while YourCommunities and BrowseCommunities already supplied
+  // theirs, so those two sections inset twice and their cards came out 157px
+  // wide against Discover's 173px. And the card had optional blocks — a title
+  // that ran to one or two lines, a tag row that might not be there — so no
+  // two cards agreed on where the name, the member count or the button sat.
+
+  const sections = ['#your-communities', '#discover-communities', '#browse-communities'];
+
+  async function firstCardWidths(page: Page) {
+    return page.evaluate((ids) => {
+      const out: Record<string, number> = {};
+      for (const id of ids) {
+        const card = document.querySelector(`${id} .grid > *`);
+        if (card) out[id] = Math.round(card.getBoundingClientRect().width);
+      }
+      return out;
+    }, sections);
+  }
+
+  test('cards are the same width in every section', { tag: '@auth' }, async ({ page }) => {
+    const many = (label: string) => Array.from({ length: 6 }, (_, i) => comm(`${label} ${i + 1}`));
+    await mockCommunityApis(page, {
+      elite: [], discover: many('QA Discover'), browse: many('QA Browse'), joined: many('QA Joined'),
+    });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/communities');
+    await expect(page.locator('#your-communities .grid > *').first()).toBeVisible({ timeout: 15_000 });
+
+    const widths = await firstCardWidths(page);
+    const values = Object.values(widths);
+    expect(values.length).toBeGreaterThan(1);
+    for (const w of values) expect(w).toBe(values[0]);
+  });
+
+  test('name, meta and action sit at the same place on every card', { tag: '@auth' }, async ({ page }) => {
+    // Mixed on purpose: with and without a tag, short and wrapping names.
+    await mockCommunityApis(page, {
+      elite: [], discover: [], browse: [],
+      joined: [
+        comm('QA Short'),
+        { ...comm('QA A Much Longer Community Name That Wraps'), tags: ['Xbox'] },
+        comm('QA Another'),
+        { ...comm('QA Tagged'), tags: ['PC'] },
+      ],
+    });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/communities');
+    await expect(page.locator('#your-communities .grid > *').first()).toBeVisible({ timeout: 15_000 });
+
+    const offsets = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll('#your-communities .grid > *')];
+      return cards.map((c) => {
+        const top = c.getBoundingClientRect().top;
+        const at = (sel: string) => {
+          const el = c.querySelector(sel);
+          return el ? Math.round(el.getBoundingClientRect().top - top) : -1;
+        };
+        return { height: Math.round(c.getBoundingClientRect().height), title: at('h3'), action: at('button') };
+      });
+    });
+
+    expect(offsets.length).toBeGreaterThan(1);
+    for (const o of offsets) {
+      expect(o.height).toBe(offsets[0].height);
+      expect(o.title).toBe(offsets[0].title);
+      expect(o.action).toBe(offsets[0].action);
+    }
+  });
+});
+
 test.describe('Communities page sections', () => {
   test('every section populates from a normal response', { tag: '@auth' }, async ({ page }) => {
     await mockCommunityApis(page, {
