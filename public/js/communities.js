@@ -372,6 +372,14 @@ const Toast = ({ message, type, isVisible, onClose }) => {
 // COMMUNITY CARD COMPONENT
 // ============================================================================
 
+// Read once. This page gets Tailwind from the play CDN rather than a compiled
+// stylesheet, so the panel's height transition is set inline instead of through
+// an arbitrary-property class, and reduced motion is honoured here in JS.
+const PREFERS_REDUCED_MOTION =
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 // What an elite community paid to say, in its own words.
 //
 // This used to render inline between the member count and the button, which
@@ -437,8 +445,11 @@ const CommunityPromo = ({ text, description }) => {
       {/* 0fr -> 1fr animates to the content's own height, which max-height
           cannot do without guessing a number that will one day be too small. */}
       <div
-        className="grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none"
-        style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
+        className="grid"
+        style={{
+          gridTemplateRows: open ? '1fr' : '0fr',
+          transition: PREFERS_REDUCED_MOTION ? 'none' : 'grid-template-rows 200ms ease-out',
+        }}
       >
         <div className="overflow-hidden">
           <p className="px-2.5 pb-2 text-[11px] leading-relaxed text-slate-300">

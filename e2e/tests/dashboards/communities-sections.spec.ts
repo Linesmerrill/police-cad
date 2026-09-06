@@ -193,16 +193,24 @@ test.describe('Community card density', () => {
 // assertion that runs while they are up either races a re-render or passes
 // vacuously. Every check below waits for real cards first.
 async function cardsSettled(page: Page, section: string) {
+  // Reports what it actually saw, so a timeout says which state the section
+  // was stuck in rather than just "0".
   await expect
     .poll(
       () =>
         page.evaluate((sel) => {
-          const cards = [...document.querySelectorAll(`${sel} .grid > *`)];
-          return cards.length > 0 && cards.every((c) => !!c.querySelector('h3')) ? cards.length : 0;
+          const root = document.querySelector(sel);
+          if (!root) return `no ${sel} on the page`;
+          const grid = root.querySelector('.grid');
+          if (!grid) return `${sel}: no .grid (empty state or login prompt: ${root.textContent?.trim().slice(0, 60)})`;
+          const kids = [...grid.children];
+          const withH3 = kids.filter((c) => !!c.querySelector('h3')).length;
+          if (kids.length > 0 && withH3 === kids.length) return 'ready';
+          return `${sel}: ${kids.length} children, ${withH3} are cards (rest still skeletons)`;
         }, section),
       { timeout: 15_000 }
     )
-    .toBeGreaterThan(0);
+    .toBe('ready');
 }
 
 // comm() gives every fixture promotionalText, which means a grid built only
@@ -329,6 +337,9 @@ test.describe('Elite promo panel', () => {
   const DETAIL = 'Three whitelisted servers and a full court system.';
 
   test('expands in place, and tapping it does not navigate away', { tag: '@auth' }, async ({ page }) => {
+    const pageErrors: string[] = [];
+    page.on('pageerror', (err) => pageErrors.push(err.message));
+
     await mockCommunityApis(page, {
       elite: [], discover: [], browse: [],
       joined: [
@@ -338,6 +349,9 @@ test.describe('Elite promo panel', () => {
     });
 
     await page.goto('/communities');
+    // A render crash here would empty the section, which reads identically to
+    // a slow load; name it instead.
+    await expect.poll(() => pageErrors.join(' | '), { timeout: 5_000 }).toBe('');
     await cardsSettled(page, '#your-communities');
 
     // Only the community with promo copy gets a panel.
