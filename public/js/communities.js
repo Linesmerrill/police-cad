@@ -24,6 +24,120 @@ async function apiErrorReason(response) {
   }
 }
 
+// How many cards fit across, and therefore how many to ask the API for.
+//
+// The page size used to be a hardcoded 6 while the grid was responsive, so at
+// four columns you got a full row of four and then a stranded row of two. Two
+// empty slots at the end of a section reads as "that is everything", which is
+// exactly wrong when there are three pages behind it.
+//
+// The ramp below is the single source of truth: the Tailwind classes on the
+// grid and the column count used for paging are both derived from it, so they
+// cannot drift apart. minWidth values are Tailwind's own lg and xl.
+const GRID_RAMP = [
+  { minWidth: 0, cols: 2, cls: "grid-cols-2" },
+  { minWidth: 1024, cols: 3, cls: "lg:grid-cols-3" },
+  { minWidth: 1280, cols: 4, cls: "xl:grid-cols-4" },
+];
+
+const COMMUNITY_GRID_CLASS =
+  "grid gap-3 sm:gap-4 " + GRID_RAMP.map((r) => r.cls).join(" ");
+
+// Roughly how many cards a section should show. Rows round up from this, so
+// the number actually requested is always a whole number of rows.
+const TARGET_PER_PAGE = 6;
+const MIN_ROWS = 2;
+
+function columnsForWidth(width) {
+  return GRID_RAMP.reduce(
+    (cols, step) => (width >= step.minWidth ? step.cols : cols),
+    GRID_RAMP[0].cols
+  );
+}
+
+// Always a multiple of the column count, so every row on screen is full.
+//   2 cols -> 6 (3 rows)   3 cols -> 6 (2 rows)   4 cols -> 8 (2 rows)
+function pageSizeForWidth(width) {
+  const cols = columnsForWidth(width);
+  return cols * Math.max(MIN_ROWS, Math.ceil(TARGET_PER_PAGE / cols));
+}
+
+// Recomputes on resize, but only produces a new value when the number actually
+// changes -- dragging a window edge crosses hundreds of pixels and should not
+// fire hundreds of refetches.
+function usePageSize() {
+  const read = () =>
+    pageSizeForWidth(typeof window === "undefined" ? 1280 : window.innerWidth);
+  const [pageSize, setPageSize] = useState(read);
+
+  useEffect(() => {
+    let timer;
+    const onResize = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        setPageSize((prev) => {
+          const next = read();
+          return next === prev ? prev : next;
+        });
+      }, 150);
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
+
+  return pageSize;
+}
+
+// Cloudinary serves whatever was uploaded unless the URL asks for something
+// smaller. The upload preset caps banners at 1000px, and we then render them
+// into a 380px card, a 352px carousel or a 44px search tile -- so a phone was
+// downloading and decoding up to 500x the pixels it could show, a dozen times
+// per screen.
+//
+// Deliberately NOT ImageCompress.withCloudinaryDelivery. That helper is a no-op
+// on purpose: community maps get zoomed to full screen, where q_auto's
+// re-compression of an already-compressed JPEG is visible, and the contract
+// there is "what you previewed is what gets served". A thumbnail has no such
+// problem, so these get the full f_auto,q_auto treatment.
+const CLOUDINARY_HOST = "res.cloudinary.com";
+const CLOUDINARY_UPLOAD = "/image/upload/";
+
+// Leading components of a transform already present in the URL. Matching these
+// rather than "anything with an underscore" avoids mistaking a public_id such
+// as `my_folder/banner.jpg` for a transform and skipping the resize.
+const CLOUDINARY_TRANSFORM_RE =
+  /^(c|w|h|ar|f|q|g|e|dpr|fl|l|b|r|o|x|y|z|a|t|co|bo|du|so|vc|br)_[^/,]+([,/])/;
+
+// Returns a delivery URL cropped to `aspect` and capped at `width` px.
+// Anything that is not a Cloudinary asset -- the local default banner, or a
+// link someone pasted -- is handed back untouched.
+function cloudinaryThumb(url, width, aspect) {
+  if (typeof url !== "string" || !url.includes(CLOUDINARY_HOST)) return url;
+  const at = url.indexOf(CLOUDINARY_UPLOAD);
+  if (at === -1) return url;
+
+  const head = url.slice(0, at + CLOUDINARY_UPLOAD.length);
+  const rest = url.slice(at + CLOUDINARY_UPLOAD.length);
+  // Already carries a transform: don't stack a second one on top of it.
+  if (CLOUDINARY_TRANSFORM_RE.test(rest)) return url;
+
+  return `${head}c_fill,ar_${aspect},w_${width},f_auto,q_auto/${rest}`;
+}
+
+// Candidate widths for the browser to choose from, given `sizes`. Returns
+// undefined when we cannot actually produce distinct widths -- a non-Cloudinary
+// URL, or one that already carries its own transform -- so the attribute is
+// omitted rather than listing the same URL four times.
+function cloudinarySrcSet(url, widths, aspect) {
+  if (typeof url !== "string" || !url.includes(CLOUDINARY_HOST)) return undefined;
+  if (url.indexOf(CLOUDINARY_UPLOAD) === -1) return undefined;
+  if (cloudinaryThumb(url, widths[0], aspect) === url) return undefined;
+  return widths.map((w) => `${cloudinaryThumb(url, w, aspect)} ${w}w`).join(", ");
+}
+
 function communityArrayFrom(response) {
   const d = response && response.data;
   if (Array.isArray(d)) return d;
@@ -131,15 +245,10 @@ const CommunityCardSkeleton = () => (
     background: 'rgba(255, 255, 255, 0.05)',
     border: '1px solid rgba(59, 130, 246, 0.2)'
   }}>
-    <div className="aspect-[4/3]" style={{ background: 'rgba(255, 255, 255, 0.03)' }}></div>
-    <div className="p-4">
-      <div className="h-5 rounded-lg mb-3 w-3/4" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
-      <div className="flex gap-2 mb-3">
-        <div className="h-5 rounded-full w-14" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
-        <div className="h-5 rounded-full w-16" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
-      </div>
-      <div className="h-4 rounded mb-2" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
-      <div className="h-4 rounded w-2/3 mb-4" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+    <div className="aspect-[2/1]" style={{ background: 'rgba(255, 255, 255, 0.03)' }}></div>
+    <div className="p-3 sm:p-4">
+      <div className="h-4 rounded-lg mb-2 w-3/4" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+      <div className="h-3 rounded w-1/3 mb-3" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
       <div className="h-11 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
     </div>
   </div>
@@ -173,11 +282,23 @@ const CarouselSkeleton = () => (
 const Badge = ({ children, variant = "default", className = "" }) => {
   const variants = {
     default: "bg-slate-700/50 text-slate-300 border border-slate-600/30",
-    elite: "bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-900 font-bold shadow-lg shadow-amber-500/30",
-    premium: "bg-gradient-to-r from-violet-500 to-purple-500 text-white font-bold shadow-lg shadow-violet-500/30",
-    standard: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold shadow-lg shadow-blue-500/30",
-    basic: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold shadow-lg shadow-emerald-500/30",
-    active: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
+    // Solid, for a badge sitting on our own background rather than on a
+    // community's cover photo. The carousel uses these.
+    eliteSolid: "bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-900 font-bold shadow-lg shadow-amber-500/30",
+    // Over a cover photo. A solid pill was blocking a third of the banner on
+    // a 173px card -- real estate the owner uploaded an image to use. These
+    // read as tinted glass instead: a dark scrim for legibility over any
+    // photo, the tier's colour in the text and hairline, and a blur so the
+    // image stays visible through it. Same idiom as `active` and `tag` below,
+    // which were already translucent; the plan badges were the odd ones out.
+    // 60%, not less: a cover photo can be pure white, and at 40% the amber
+    // measured 1.98:1 against it -- below the 3:1 floor for bold text. At 60%
+    // it measures ~4:1 over white while the photo still reads through.
+    elite: "bg-black/60 backdrop-blur-md text-amber-300 border border-amber-400/40 font-bold",
+    premium: "bg-black/60 backdrop-blur-md text-violet-300 border border-violet-400/40 font-bold",
+    standard: "bg-black/60 backdrop-blur-md text-blue-300 border border-blue-400/40 font-bold",
+    basic: "bg-black/60 backdrop-blur-md text-emerald-300 border border-emerald-400/40 font-bold",
+    active: "bg-black/60 backdrop-blur-md text-emerald-300 border border-emerald-400/40",
     tag: "bg-blue-500/10 text-blue-400 border border-blue-500/30"
   };
 
@@ -251,6 +372,108 @@ const Toast = ({ message, type, isVisible, onClose }) => {
 // COMMUNITY CARD COMPONENT
 // ============================================================================
 
+// Read once. This page gets Tailwind from the play CDN rather than a compiled
+// stylesheet, so the panel's height transition is set inline instead of through
+// an arbitrary-property class, and reduced motion is honoured here in JS.
+const PREFERS_REDUCED_MOTION =
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// What an elite community paid to say, in its own words.
+//
+// This used to render inline between the member count and the button, which
+// made elite cards taller than their neighbours and left nothing on the grid
+// lining up. It now hangs below the action, last in the card -- the same place
+// YouTube puts its product panel, and the only position where a block that
+// exists on some cards and not others leaves the common slots aligned.
+//
+// Amber, from the same family as the ELITE badge, so it reads as the
+// community's voice rather than more of our chrome. Everything else on the
+// card is blue-grey glass; this is the one warm thing on it.
+const CommunityPromo = ({ text, description }) => {
+  const [open, setOpen] = useState(false);
+  if (!text) return null;
+
+  // Nothing to reveal: render the line, but do not pretend it is a control.
+  const expandable = Boolean(description && description.trim());
+
+  const shell = {
+    background: 'rgba(251, 191, 36, 0.07)',
+    border: '1px solid rgba(251, 191, 36, 0.22)',
+  };
+
+  // One line closed, at most two open. Letting it run to its full length on a
+  // 173px card turned the summary into a four-line block with the chevron
+  // stranded halfway down it; the detail belongs in the body, not the header.
+  const summary = (
+    <span className="flex items-start gap-1.5 min-w-0 text-left">
+      <i className="fa fa-bullhorn text-[10px] flex-shrink-0 mt-[3px]" style={{ color: '#fbbf24' }}></i>
+      <span
+        className={`text-[11px] leading-snug min-w-0 ${open ? 'line-clamp-2' : 'truncate'}`}
+        style={{ color: '#fcd34d' }}
+      >
+        {linkifyText(text)}
+      </span>
+    </span>
+  );
+
+  if (!expandable) {
+    return (
+      <div className="mt-3 rounded-lg px-2.5 py-1.5" style={shell}>
+        {summary}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 rounded-lg overflow-hidden" style={shell}>
+      <button
+        type="button"
+        aria-expanded={open}
+        // The whole card navigates; this must not.
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        className="w-full flex items-start justify-between gap-2 px-2.5 py-1.5 transition-colors hover:bg-amber-400/5"
+      >
+        {summary}
+        <i
+          className="fa fa-chevron-down text-[9px] flex-shrink-0 mt-[5px] transition-transform duration-200 motion-reduce:transition-none"
+          style={{ color: '#fbbf24', transform: open ? 'rotate(180deg)' : 'none' }}
+        ></i>
+      </button>
+
+      {/* 0fr -> 1fr animates to the content's own height, which max-height
+          cannot do without guessing a number that will one day be too small. */}
+      <div
+        className="grid"
+        style={{
+          gridTemplateRows: open ? '1fr' : '0fr',
+          transition: PREFERS_REDUCED_MOTION ? 'none' : 'grid-template-rows 200ms ease-out',
+        }}
+      >
+        {/* Clipping to zero height hides the text from eyes but not from
+            assistive technology, which still reads it and can still land focus
+            in it. visibility:hidden takes it out of the tree properly. The 200ms
+            delay on the way down keeps it on screen while the row collapses, so
+            it does not blink out before the animation finishes. */}
+        <div
+          className="overflow-hidden"
+          style={{
+            visibility: open ? 'visible' : 'hidden',
+            transition: PREFERS_REDUCED_MOTION
+              ? 'none'
+              : `visibility 0s linear ${open ? '0s' : '200ms'}`,
+          }}
+        >
+          <p className="px-2.5 pb-2 text-[11px] leading-relaxed text-slate-300">
+            {linkifyText(description)}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CommunityCard = ({ community, isActive, actionText = "View", onAction }) => {
   const getSubscriptionBadge = () => {
     const plan = community?.subscription?.plan;
@@ -258,14 +481,15 @@ const CommunityCard = ({ community, isActive, actionText = "View", onAction }) =
 
     if (!isActive && !community?.promotionalText) return null;
 
+    const planBadge = "px-2 sm:px-2.5 text-[10px] sm:text-xs";
     if (plan === "elite" || community?.promotionalText) {
-      return <Badge variant="elite"><i className="fa fa-crown mr-1"></i>ELITE</Badge>;
+      return <Badge variant="elite" className={planBadge}><i className="fa fa-crown mr-1"></i>ELITE</Badge>;
     } else if (plan === "premium") {
-      return <Badge variant="premium"><i className="fa fa-star mr-1"></i>PREMIUM</Badge>;
+      return <Badge variant="premium" className={planBadge}><i className="fa fa-star mr-1"></i>PREMIUM</Badge>;
     } else if (plan === "standard") {
-      return <Badge variant="standard"><i className="fa fa-check-circle mr-1"></i>STANDARD</Badge>;
+      return <Badge variant="standard" className={planBadge}><i className="fa fa-check-circle mr-1"></i>STANDARD</Badge>;
     } else if (plan === "basic") {
-      return <Badge variant="basic"><i className="fa fa-user mr-1"></i>BASIC</Badge>;
+      return <Badge variant="basic" className={planBadge}><i className="fa fa-user mr-1"></i>BASIC</Badge>;
     }
     return null;
   };
@@ -277,83 +501,100 @@ const CommunityCard = ({ community, isActive, actionText = "View", onAction }) =
       border: '1px solid rgba(59, 130, 246, 0.2)',
       boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
     }}>
-      {/* Image */}
-      <div className="relative aspect-[4/3] overflow-hidden" style={{ background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 100%)' }}>
+      {/* Banner.
+          2:1, matching the "Add Banner" preview in the create modal, which is
+          the frame an owner composes their image in. The card used to show it
+          at 4:3, so object-cover ate the sides of every banner anyone uploaded.
+          It also made the image 75% of the card -- the least distinguishing
+          thing on it, since most communities never set one. */}
+      <div className="relative aspect-[2/1] overflow-hidden" style={{ background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 100%)' }}>
         <img
-          src={community?.imageLink || "/static/images/default-logo.png"}
+          src={cloudinaryThumb(community?.imageLink, 800, "2:1") || "/static/images/default-logo.png"}
+          srcSet={cloudinarySrcSet(community?.imageLink, [240, 400, 600, 800], "2:1")}
+          /* Widths track the grid: 2 up below lg, 3 up to xl, 4 beyond. */
+          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
           alt={community?.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
+          decoding="async"
           onError={(e) => { e.target.src = "/static/images/default-logo.png"; }}
         />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10, 10, 15, 0.9) 0%, transparent 50%)' }}></div>
-
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+        {/* Badges. Two-up in a 173px-wide card on a phone, so the plan badge
+            keeps its wording and the active marker collapses to its dot --
+            at full width they would overlap. */}
+        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-wrap gap-2">
           {getSubscriptionBadge()}
         </div>
 
         {isActive && (
-          <div className="absolute top-3 right-3">
-            <Badge variant="active"><i className="fa fa-circle mr-1 text-[8px]"></i>Active</Badge>
+          <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+            <Badge variant="active" className="px-1.5 sm:px-2.5">
+              <i className="fa fa-circle text-[8px]"></i>
+              <span className="hidden sm:inline ml-1">Active</span>
+            </Badge>
           </div>
         )}
-
-        {/* Member Count */}
-        <div className="absolute bottom-3 left-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-300" style={{
-            background: 'rgba(0, 0, 0, 0.6)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)'
-          }}>
-            <i className="fa fa-users"></i>
-            <span>{community?.membersCount || 0} members</span>
-          </div>
-        </div>
       </div>
 
-      {/* Content */}
-      <div className="p-4 flex flex-col flex-grow">
-        <h3 className="text-base font-bold text-white mb-2 line-clamp-2 leading-tight" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.1)' }}>
+      {/* Content.
+          Every card gets the same three slots in the same places -- title,
+          one meta row, action -- so names and buttons line up across the grid
+          the way they do on a YouTube card. Previously the title could be one
+          or two lines and the tag row could be present or absent, so no two
+          cards agreed on where anything sat.
+
+          Promotional text and description used to render here and made elite
+          cards taller than their neighbours. They belong on the community page
+          and in the Elite carousel, which is the paid placement; the ELITE
+          badge still marks the card. */}
+      <div className="p-3 sm:p-4 flex flex-col">
+        {/* Exactly two lines, whether the name needs them or not.
+            h-, not min-h-: a minimum still lets the box grow, and with the
+            site's own font two wrapped lines came out taller than 2.5em, which
+            pushed the meta row and the action 5px down on any card with a
+            wrapping name. leading-tight is 1.25, so two lines is 2.5em by
+            construction and the height is exact rather than a guess. */}
+        <h3
+          className="text-sm sm:text-base font-bold text-white line-clamp-2 leading-tight h-[2.5em] overflow-hidden"
+          style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.1)' }}
+          title={community?.name}
+        >
           {community?.name}
         </h3>
 
-        {/* Tags */}
-        {community?.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {community.tags.slice(0, 2).map((tag) => (
-              <Badge key={tag} variant="tag">{tag}</Badge>
-            ))}
-            {community.tags.length > 2 && (
-              <Badge variant="default">+{community.tags.length - 2}</Badge>
-            )}
-          </div>
-        )}
+        {/* One meta row, always present. Member count carries it, so the row
+            never collapses; the first tag rides along on the right rather than
+            claiming a row of its own that would be empty on most cards.
+            Fixed height, because a tag badge is taller than bare text and
+            items-center would otherwise re-centre the member count 4px lower
+            on any card that has one. */}
+        <div className="flex items-center justify-between gap-2 mt-1 mb-3 min-w-0 h-6">
+          {/* The count never gives way; the tag is secondary, so it is the
+              one that shrinks and truncates. At 320px a fixed-width tag used
+              to push the row past the edge of the card. */}
+          <span className="text-[11px] text-slate-400 whitespace-nowrap shrink-0">
+            {community?.membersCount || 0} {(community?.membersCount || 0) === 1 ? 'member' : 'members'}
+          </span>
+          {community?.tags?.length > 0 && (
+            <Badge variant="tag" className="min-w-0 overflow-hidden whitespace-nowrap text-ellipsis block">
+              {community.tags[0]}
+            </Badge>
+          )}
+        </div>
 
-        {/* Promotional Text */}
-        {community?.promotionalText && (
-          <p className="text-xs font-medium mb-2 flex items-start gap-1.5" style={{ color: '#fbbf24' }}>
-            <i className="fa fa-star mt-0.5 flex-shrink-0" style={{ color: '#fbbf24' }}></i>
-            <span className="line-clamp-1">{community.promotionalText}</span>
-          </p>
-        )}
-
-        {/* Description */}
-        {community?.promotionalDescription && (
-          <p className="text-slate-400 text-xs line-clamp-2 mb-4 flex-grow">
-            {community.promotionalDescription}
-          </p>
-        )}
-
-        {/* Action Button */}
         <Button
           onClick={() => onAction(community)}
-          className="w-full mt-auto"
-          size="md"
+          className="w-full min-h-[44px]"
+          size="sm"
         >
           <span>{actionText || "View"}</span>
           <i className="fa fa-arrow-right ml-2 text-xs"></i>
         </Button>
+
+        <CommunityPromo
+          text={community?.promotionalText}
+          description={community?.promotionalDescription}
+        />
       </div>
     </div>
   );
@@ -451,7 +692,7 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
         }}>
           {/* Elite Badge */}
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-            <Badge variant="elite" className="px-4 py-1.5 shadow-lg">
+            <Badge variant="eliteSolid" className="px-4 py-1.5 shadow-lg">
               <i className="fa fa-crown mr-1.5"></i>ELITE
             </Badge>
           </div>
@@ -462,9 +703,12 @@ const EliteCarousel = ({ communities, totalCount, isLoading }) => {
             {/* Image — fixed square, same physical size mobile & desktop */}
             <div className="relative aspect-square rounded-2xl overflow-hidden mt-2 mb-4 md:mb-0 md:mt-0 md:flex-shrink-0 md:w-80 lg:w-[22rem]" style={{ background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 100%)' }}>
               <img
-                src={community.imageLink || "/static/images/default-logo.png"}
+                src={cloudinaryThumb(community.imageLink, 800, "1:1") || "/static/images/default-logo.png"}
+                srcSet={cloudinarySrcSet(community.imageLink, [400, 800], "1:1")}
+                sizes="(min-width: 768px) 22rem, 100vw"
                 alt={community.name}
                 className="w-full h-full object-cover"
+                decoding="async"
                 onError={(e) => { e.target.src = "/static/images/default-logo.png"; }}
               />
               {/* Purple breathing glow behind image */}
@@ -634,14 +878,17 @@ const CommunitySection = ({
   isLoading,
   emptyMessage,
   emptyIcon,
-  showLoginPrompt
+  showLoginPrompt,
+  pageSize
 }) => {
-  const itemsPerPage = 6;
+  // Must match what the fetch actually asked for, or Next/Prev will offer
+  // pages that do not exist (or hide ones that do).
+  const itemsPerPage = pageSize || TARGET_PER_PAGE;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   if (showLoginPrompt) {
     return (
-      <section className="py-6 px-4">
+      <div>
         <div className="text-center">
           {icon && <div className="inline-flex items-center gap-2 mb-2" style={{ color: '#fbbf24' }}><i className={icon}></i><span className="font-semibold">{title}</span></div>}
         </div>
@@ -666,12 +913,14 @@ const CommunitySection = ({
             Sign In
           </Button>
         </div>
-      </section>
+      </div>
     );
   }
 
+  // No padding of its own: callers own their section chrome. See the note on
+  // the login-prompt branch above.
   return (
-    <section className="py-6 px-4">
+    <div>
       {/* Section Header */}
       {title && (
         <div className="flex items-center justify-between mb-4">
@@ -694,8 +943,10 @@ const CommunitySection = ({
 
       {/* Loading State */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 3 }).map((_, i) => <CommunityCardSkeleton key={i} />)}
+        <div className={COMMUNITY_GRID_CLASS}>
+          {/* One skeleton per card we are about to show, so the layout does not
+              jump when the real cards land. */}
+          {Array.from({ length: itemsPerPage }).map((_, i) => <CommunityCardSkeleton key={i} />)}
         </div>
       ) : communities.length === 0 ? (
         <div className="rounded-2xl p-8 text-center" style={{
@@ -715,7 +966,7 @@ const CommunitySection = ({
       ) : (
         <>
           {/* Community Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className={COMMUNITY_GRID_CLASS}>
             {communities.map((community) => (
               <CommunityCard
                 key={community._id}
@@ -753,7 +1004,7 @@ const CommunitySection = ({
           )}
         </>
       )}
-    </section>
+    </div>
   );
 };
 
@@ -1749,10 +2000,13 @@ const WelcomeModal = ({ isOpen, onClose, onCreateCommunity }) => {
                         style={tile}
                       >
                         <img
-                          src={details.imageLink || '/static/images/default-logo.png'}
+                          /* 44px on screen, so 144 covers a 3x display. */
+                          src={cloudinaryThumb(details.imageLink, 144, "1:1") || '/static/images/default-logo.png'}
                           alt=""
                           className="w-11 h-11 rounded-lg flex-shrink-0"
                           style={{ objectFit: 'cover', background: 'rgba(255,255,255,0.05)' }}
+                          loading="lazy"
+                          decoding="async"
                           onError={(e) => { e.target.src = '/static/images/default-logo.png'; }}
                         />
                         <span className="min-w-0 flex-1">
@@ -2269,6 +2523,9 @@ const App = () => {
   const [eliteTotalCount, setEliteTotalCount] = useState(0);
   const [userPage, setUserPage] = useState(1);
   const [userTotalCount, setUserTotalCount] = useState(0);
+  // How many cards fill whole rows at this viewport. Drives every list
+  // request on the page as well as the Next/Prev arithmetic.
+  const pageSize = usePageSize();
   const [recommendedPage, setRecommendedPage] = useState(0);
   const [recommendedTotalCount, setRecommendedTotalCount] = useState(0);
   const [allCommunitiesPage, setAllCommunitiesPage] = useState(0);
@@ -2333,7 +2590,7 @@ const App = () => {
   useEffect(() => {
     if (!dbUser?._id) { setIsRecommendedLoading(false); return; }
     const timer = setTimeout(() => {
-      axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=6&page=0`)
+      axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=${pageSize}&page=0`)
         .then(response => {
           const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
           setRecommendedCommunities(communities);
@@ -2348,7 +2605,7 @@ const App = () => {
   // Fetch All Communities
   useEffect(() => {
     const timer = setTimeout(() => {
-      axios.get(`${API_URL}/api/v2/communities/tag/all?limit=6&page=0`)
+      axios.get(`${API_URL}/api/v2/communities/tag/all?limit=${pageSize}&page=0`)
         .then(response => {
           const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
           setAllCommunities(communities);
@@ -2377,7 +2634,7 @@ const App = () => {
         //
         // v2, not v1, because v1 returns a bare array with no total. Without one
         // this used to fall back to the length of the page it had just received,
-        // which pinned the count at the page size and made `page * 6 < total`
+        // which pinned the count at the page size and made `page * size < total`
         // permanently false -- the next-page control never enabled and anything
         // past the first six communities, including one just created, could not
         // be reached. Element shape is unchanged: { _id, community: {...} }.
@@ -2385,9 +2642,9 @@ const App = () => {
         // v1 is kept as a fallback so this page works whichever side deploys
         // first. It restores the old capped-count behaviour, not an empty list.
         try {
-          response = await axios.get(`${API_URL}/api/v2/communities/${dbUser._id}?limit=6&page=${page}`);
+          response = await axios.get(`${API_URL}/api/v2/communities/${dbUser._id}?limit=${pageSize}&page=${page}`);
         } catch (v2Error) {
-          response = await axios.get(`${API_URL}/api/v1/communities/${dbUser._id}?limit=6&page=${page}`);
+          response = await axios.get(`${API_URL}/api/v1/communities/${dbUser._id}?limit=${pageSize}&page=${page}`);
         }
         const rawData = (Array.isArray(response.data) ? response.data : (response.data.data || [])).filter(it => it && typeof it === "object");
         const communities = rawData.map(item => {
@@ -2398,7 +2655,14 @@ const App = () => {
             membersCount: item.community?.membersCount || item.membersCount || 0,
             isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
             imageLink: (typeof img === "string" && img.includes("file:///")) ? "/static/images/default-logo.png" : (img || "/static/images/default-logo.png"),
-            subscription: item.community?.subscription?.active || item.subscription,
+            // The subscription object, not a boolean: getSubscriptionBadge
+            // reads `.plan` off it, and `?.active || item.subscription`
+            // collapsed the whole thing to true/false, so the plan badge could
+            // never resolve a tier here.
+            subscription: item.community?.subscription || item.subscription,
+            tags: item.community?.tags || item.tags,
+            promotionalText: item.community?.promotionalText || item.promotionalText,
+            promotionalDescription: item.community?.promotionalDescription || item.promotionalDescription,
             isOwned: true
           };
         });
@@ -2411,7 +2675,7 @@ const App = () => {
       } else {
         // Fetch joined or pending communities
         const statusFilter = filter === "pending" ? "pending" : "approved";
-        response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:${statusFilter}&limit=6&page=${page}`);
+        response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:${statusFilter}&limit=${pageSize}&page=${page}`);
         const communities = (response.data.data || []).filter(it => it && typeof it === "object").map(item => {
           const img = item.imageLink;
           return {
@@ -2421,6 +2685,12 @@ const App = () => {
             isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
             imageLink: (typeof img === "string" && img.includes("file:///")) ? "/static/images/default-logo.png" : (img || "/static/images/default-logo.png"),
             subscription: item.subscription,
+            // Carried through so an elite community's promo panel and plan
+            // badge render here too. Dropping these meant Your Communities
+            // never showed what an elite owner paid for.
+            tags: item.tags,
+            promotionalText: item.promotionalText,
+            promotionalDescription: item.promotionalDescription,
             isPending: filter === "pending"
           };
         });
@@ -2440,7 +2710,7 @@ const App = () => {
   const fetchRecommendedPage = async (page) => {
     setIsRecommendedLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=6&page=${page}`);
+      const response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=${pageSize}&page=${page}`);
       const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
       setRecommendedCommunities(communities);
       setRecommendedPage(page);
@@ -2454,7 +2724,7 @@ const App = () => {
   const fetchAllCommunitiesPage = async (tag, page) => {
     setIsAllCommunitiesLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/v2/communities/tag/${tag}?limit=6&page=${page}`);
+      const response = await axios.get(`${API_URL}/api/v2/communities/tag/${tag}?limit=${pageSize}&page=${page}`);
       const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
       setAllCommunities(communities);
       setAllCommunitiesTotalCount(response.data.totalCount || 0);
@@ -2465,6 +2735,24 @@ const App = () => {
       setIsAllCommunitiesLoading(false);
     }
   };
+
+  // Crossing a breakpoint changes how many cards fill a row, so the pages we
+  // already fetched are the wrong length. Refill from the first page rather
+  // than leaving a half-empty row behind. Skipped on mount: the initial
+  // fetches above already ran with the correct size, since usePageSize reads
+  // the viewport synchronously on its first render.
+  const didMountPageSize = useRef(false);
+  useEffect(() => {
+    if (!didMountPageSize.current) {
+      didMountPageSize.current = true;
+      return;
+    }
+    if (dbUser?._id) {
+      fetchUserPage(userFilter, 1);
+      fetchRecommendedPage(0);
+    }
+    fetchAllCommunitiesPage(currentTag, 0);
+  }, [pageSize]);
 
   return (
     <div className="min-h-screen relative" style={{ 
@@ -2559,10 +2847,11 @@ const App = () => {
         <YourCommunities
           communities={userCommunities}
           totalCount={userTotalCount}
+          pageSize={pageSize}
           currentFilter={userFilter}
           onFilterChange={(filter, page) => fetchUserPage(filter, page)}
           onPrevPage={() => userPage > 1 && fetchUserPage(userFilter, userPage - 1)}
-          onNextPage={() => userPage * 6 < userTotalCount && fetchUserPage(userFilter, userPage + 1)}
+          onNextPage={() => userPage * pageSize < userTotalCount && fetchUserPage(userFilter, userPage + 1)}
           currentPage={userPage}
           isLoading={isUserLoading}
           showLoginPrompt={!dbUser?._id}
@@ -2571,16 +2860,17 @@ const App = () => {
       </div>
 
       {/* Discover Communities */}
-      <div id="discover-communities">
+      <div id="discover-communities" className="py-6 px-4">
         <CommunitySection
           title="Discover"
           icon="fa fa-compass"
           communities={recommendedCommunities}
           actionText="Explore"
           onPrevPage={() => recommendedPage > 0 && fetchRecommendedPage(recommendedPage - 1)}
-          onNextPage={() => (recommendedPage + 1) * 6 < recommendedTotalCount && fetchRecommendedPage(recommendedPage + 1)}
+          onNextPage={() => (recommendedPage + 1) * pageSize < recommendedTotalCount && fetchRecommendedPage(recommendedPage + 1)}
           currentPage={recommendedPage + 1}
           totalCount={recommendedTotalCount}
+          pageSize={pageSize}
           isLoading={isRecommendedLoading}
           showLoginPrompt={!dbUser?._id}
           emptyMessage="Sign in for personalized recommendations"
@@ -2593,10 +2883,11 @@ const App = () => {
         <BrowseCommunities
           communities={allCommunities}
           totalCount={allCommunitiesTotalCount}
+          pageSize={pageSize}
           currentTag={currentTag}
           setCurrentTag={setCurrentTag}
           onPrevPage={() => allCommunitiesPage > 0 && fetchAllCommunitiesPage(currentTag, allCommunitiesPage - 1)}
-          onNextPage={() => (allCommunitiesPage + 1) * 6 < allCommunitiesTotalCount && fetchAllCommunitiesPage(currentTag, allCommunitiesPage + 1)}
+          onNextPage={() => (allCommunitiesPage + 1) * pageSize < allCommunitiesTotalCount && fetchAllCommunitiesPage(currentTag, allCommunitiesPage + 1)}
           currentPage={allCommunitiesPage}
           fetchAllCommunitiesPage={fetchAllCommunitiesPage}
           isLoading={isAllCommunitiesLoading}
