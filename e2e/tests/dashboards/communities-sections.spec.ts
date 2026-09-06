@@ -205,6 +205,15 @@ async function cardsSettled(page: Page, section: string) {
     .toBeGreaterThan(0);
 }
 
+// comm() gives every fixture promotionalText, which means a grid built only
+// from it has a promo panel on every card. The alignment checks need cards
+// without one too, or they never exercise the case that broke.
+function plainComm(name: string): Comm {
+  const c = comm(name);
+  delete (c as { promotionalText?: string }).promotionalText;
+  return c;
+}
+
 test.describe('Community card consistency', () => {
   // Both of these shipped broken once. CommunitySection carried its own
   // `py-6 px-4` while YourCommunities and BrowseCommunities already supplied
@@ -246,10 +255,12 @@ test.describe('Community card consistency', () => {
     // Mixed on purpose: with and without a tag, short and wrapping names.
     await mockCommunityApis(page, {
       elite: [], discover: [], browse: [],
+      // Mixed on every axis that used to shift things: tag or no tag, name
+      // that wraps or does not, promo panel or none.
       joined: [
-        comm('QA Short'),
+        plainComm('QA Short'),
         { ...comm('QA A Much Longer Community Name That Wraps'), tags: ['Xbox'] },
-        comm('QA Another'),
+        plainComm('QA Another'),
         { ...comm('QA Tagged'), tags: ['PC'] },
       ],
     });
@@ -276,6 +287,57 @@ test.describe('Community card consistency', () => {
       expect(o.title).toBe(offsets[0].title);
       expect(o.action).toBe(offsets[0].action);
     }
+  });
+});
+
+test.describe('Elite promo panel', () => {
+  const PROMO = 'QA Promo Community — promo text';
+  const DETAIL = 'Three whitelisted servers and a full court system.';
+
+  test('expands in place, and tapping it does not navigate away', { tag: '@auth' }, async ({ page }) => {
+    await mockCommunityApis(page, {
+      elite: [], discover: [], browse: [],
+      joined: [
+        { ...comm('QA Promo Community'), promotionalDescription: DETAIL },
+        plainComm('QA Plain Community'),
+      ],
+    });
+
+    await page.goto('/communities');
+    await cardsSettled(page, '#your-communities');
+
+    // Only the community with promo copy gets a panel.
+    const panels = page.locator('#your-communities .grid button[aria-expanded]');
+    await expect(panels).toHaveCount(1);
+
+    const detail = page.getByText(DETAIL);
+    await expect(panels.first()).toHaveAttribute('aria-expanded', 'false');
+    await expect(detail).not.toBeVisible();
+
+    const urlBefore = page.url();
+    await panels.first().click();
+
+    await expect(panels.first()).toHaveAttribute('aria-expanded', 'true');
+    await expect(detail).toBeVisible();
+    // The whole card navigates on click; the panel must not.
+    expect(page.url()).toBe(urlBefore);
+
+    await panels.first().click();
+    await expect(panels.first()).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('promo copy without a description is not a control', { tag: '@auth' }, async ({ page }) => {
+    await mockCommunityApis(page, {
+      elite: [], discover: [], browse: [],
+      joined: [comm('QA Promo Community')],
+    });
+
+    await page.goto('/communities');
+    await cardsSettled(page, '#your-communities');
+
+    // The line still shows, but there is nothing behind it to open.
+    await expect(page.getByText(PROMO).first()).toBeVisible();
+    await expect(page.locator('#your-communities .grid button[aria-expanded]')).toHaveCount(0);
   });
 });
 

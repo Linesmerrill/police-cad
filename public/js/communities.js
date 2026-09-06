@@ -360,6 +360,84 @@ const Toast = ({ message, type, isVisible, onClose }) => {
 // COMMUNITY CARD COMPONENT
 // ============================================================================
 
+// What an elite community paid to say, in its own words.
+//
+// This used to render inline between the member count and the button, which
+// made elite cards taller than their neighbours and left nothing on the grid
+// lining up. It now hangs below the action, last in the card -- the same place
+// YouTube puts its product panel, and the only position where a block that
+// exists on some cards and not others leaves the common slots aligned.
+//
+// Amber, from the same family as the ELITE badge, so it reads as the
+// community's voice rather than more of our chrome. Everything else on the
+// card is blue-grey glass; this is the one warm thing on it.
+const CommunityPromo = ({ text, description }) => {
+  const [open, setOpen] = useState(false);
+  if (!text) return null;
+
+  // Nothing to reveal: render the line, but do not pretend it is a control.
+  const expandable = Boolean(description && description.trim());
+
+  const shell = {
+    background: 'rgba(251, 191, 36, 0.07)',
+    border: '1px solid rgba(251, 191, 36, 0.22)',
+  };
+
+  // One line closed, at most two open. Letting it run to its full length on a
+  // 173px card turned the summary into a four-line block with the chevron
+  // stranded halfway down it; the detail belongs in the body, not the header.
+  const summary = (
+    <span className="flex items-start gap-1.5 min-w-0 text-left">
+      <i className="fa fa-bullhorn text-[10px] flex-shrink-0 mt-[3px]" style={{ color: '#fbbf24' }}></i>
+      <span
+        className={`text-[11px] leading-snug min-w-0 ${open ? 'line-clamp-2' : 'truncate'}`}
+        style={{ color: '#fcd34d' }}
+      >
+        {linkifyText(text)}
+      </span>
+    </span>
+  );
+
+  if (!expandable) {
+    return (
+      <div className="mt-3 rounded-lg px-2.5 py-1.5" style={shell}>
+        {summary}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 rounded-lg overflow-hidden" style={shell}>
+      <button
+        type="button"
+        aria-expanded={open}
+        // The whole card navigates; this must not.
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        className="w-full flex items-start justify-between gap-2 px-2.5 py-1.5 transition-colors hover:bg-amber-400/5"
+      >
+        {summary}
+        <i
+          className="fa fa-chevron-down text-[9px] flex-shrink-0 mt-[5px] transition-transform duration-200 motion-reduce:transition-none"
+          style={{ color: '#fbbf24', transform: open ? 'rotate(180deg)' : 'none' }}
+        ></i>
+      </button>
+
+      {/* 0fr -> 1fr animates to the content's own height, which max-height
+          cannot do without guessing a number that will one day be too small. */}
+      <div
+        className="grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none"
+        style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
+      >
+        <div className="overflow-hidden">
+          <p className="px-2.5 pb-2 text-[11px] leading-relaxed text-slate-300">
+            {linkifyText(description)}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CommunityCard = ({ community, isActive, actionText = "View", onAction }) => {
   const getSubscriptionBadge = () => {
     const plan = community?.subscription?.plan;
@@ -433,7 +511,7 @@ const CommunityCard = ({ community, isActive, actionText = "View", onAction }) =
           cards taller than their neighbours. They belong on the community page
           and in the Elite carousel, which is the paid placement; the ELITE
           badge still marks the card. */}
-      <div className="p-3 sm:p-4 flex flex-col flex-grow">
+      <div className="p-3 sm:p-4 flex flex-col">
         {/* Two lines reserved whether the name needs them or not. 1.25em is
             leading-tight, so this holds at both font sizes. */}
         <h3
@@ -466,12 +544,17 @@ const CommunityCard = ({ community, isActive, actionText = "View", onAction }) =
 
         <Button
           onClick={() => onAction(community)}
-          className="w-full mt-auto min-h-[44px]"
+          className="w-full min-h-[44px]"
           size="sm"
         >
           <span>{actionText || "View"}</span>
           <i className="fa fa-arrow-right ml-2 text-xs"></i>
         </Button>
+
+        <CommunityPromo
+          text={community?.promotionalText}
+          description={community?.promotionalDescription}
+        />
       </div>
     </div>
   );
