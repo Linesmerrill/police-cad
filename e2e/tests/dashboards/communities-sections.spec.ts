@@ -68,8 +68,10 @@ async function mockCommunityApis(page: Page, data: SectionData) {
   await page.route('**/api/v2/communities/elite**', (route) => jsonList(route, data.elite));
   // Browse / "All" (tag/all and tag/{tag})
   await page.route('**/api/v2/communities/tag/**', (route) => jsonList(route, data.browse));
-  // Discover (prioritized recommendations)
-  await page.route('**/api/v2/user/*/prioritized-communities**', (route) =>
+  // Discover. Registered after the broad /api/v2/communities/* stub above so
+  // this narrower one wins; Playwright gives precedence to the most recently
+  // registered match.
+  await page.route('**/api/v2/communities/recommended**', (route) =>
     jsonList(route, data.discover),
   );
   // Your Communities (joined/pending) — initial load uses the "joined" filter
@@ -307,6 +309,38 @@ test.describe('Community card consistency', () => {
       expect(o.meta).toBe(offsets[0].meta);
       expect(o.action).toBe(offsets[0].action);
     }
+  });
+});
+
+test.describe('Discover source', () => {
+  test('asks the recommender, not the alphabetical list', { tag: '@auth' }, async ({ page }) => {
+    // /user/{id}/prioritized-communities ignores the user in its own path,
+    // ranks on a possibly-lapsed subscription plan and then sorts by name, over
+    // every public community with no member floor. Discover opened on
+    // punctuation-prefixed one-member servers because of it.
+    const requested: string[] = [];
+    page.on('request', (req) => {
+      const url = req.url();
+      if (url.includes('/prioritized-communities') || url.includes('/communities/recommended')) {
+        requested.push(url);
+      }
+    });
+
+    await mockCommunityApis(page, {
+      elite: [], browse: [], joined: [],
+      discover: [comm('QA Discover One')],
+    });
+
+    await page.goto('/communities');
+    await expect(page.getByText('QA Discover One').first()).toBeVisible({ timeout: 15_000 });
+
+    const recommended = requested.filter((u) => u.includes('/communities/recommended'));
+    expect(recommended.length).toBeGreaterThan(0);
+    expect(requested.filter((u) => u.includes('/prioritized-communities'))).toEqual([]);
+
+    // userId drives the "already joined" exclusion; without it the endpoint
+    // cannot filter out communities the viewer is already in.
+    expect(recommended[0]).toContain('userId=');
   });
 });
 

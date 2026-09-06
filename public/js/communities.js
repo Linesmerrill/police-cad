@@ -138,6 +138,32 @@ function cloudinarySrcSet(url, widths, aspect) {
   return widths.map((w) => `${cloudinaryThumb(url, w, aspect)} ${w}w`).join(", ");
 }
 
+// Discover used to call /user/{id}/prioritized-communities, which takes a user
+// id in the path and never reads it. It ranked by subscription.plan without
+// checking the boost was still active, then sorted alphabetically by name, over
+// every public community with no member floor. That is why Discover opened on
+// punctuation-prefixed names and one-member servers: sorted by name, "$Tack
+// City" and "(DOLS)" come first, and 3,533 of ~5,800 public communities have
+// exactly one member, the owner who created it and never came back.
+//
+// /communities/recommended is the endpoint built for this. It drops anything
+// you have already joined or applied to, requires at least two members, honours
+// a boost only above ten members so a 2-member elite cannot outrank a
+// 1,600-member free server, ignores lapsed subscriptions, and excludes our own
+// demo communities. Same {data, totalCount, page, limit} envelope and the same
+// 0-based paging, so only the URL changes here.
+function recommendedCommunitiesUrl(apiUrl, userId, limit, page) {
+  const params = new URLSearchParams({
+    tag: "all",
+    limit: String(limit),
+    page: String(page),
+  });
+  // Drives the "already joined" exclusion. Without it the endpoint still works,
+  // it just cannot filter out communities you are already in.
+  if (userId) params.set("userId", userId);
+  return `${apiUrl}/api/v2/communities/recommended?${params.toString()}`;
+}
+
 function communityArrayFrom(response) {
   const d = response && response.data;
   if (Array.isArray(d)) return d;
@@ -2590,7 +2616,7 @@ const App = () => {
   useEffect(() => {
     if (!dbUser?._id) { setIsRecommendedLoading(false); return; }
     const timer = setTimeout(() => {
-      axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=${pageSize}&page=0`)
+      axios.get(recommendedCommunitiesUrl(API_URL, dbUser._id, pageSize, 0))
         .then(response => {
           const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
           setRecommendedCommunities(communities);
@@ -2710,7 +2736,7 @@ const App = () => {
   const fetchRecommendedPage = async (page) => {
     setIsRecommendedLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=${pageSize}&page=${page}`);
+      const response = await axios.get(recommendedCommunitiesUrl(API_URL, dbUser._id, pageSize, page));
       const communities = communityArrayFrom(response).map(mapPromoCommunity).filter(Boolean);
       setRecommendedCommunities(communities);
       setRecommendedPage(page);
