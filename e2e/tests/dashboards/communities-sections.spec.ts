@@ -332,6 +332,22 @@ test.describe('Plan badge over the cover photo', () => {
   });
 });
 
+// The first-run welcome wizard renders as a fixed inset-0 overlay on
+// /communities and swallows pointer events. Tests that only read the DOM are
+// unaffected, which is why every other spec here passes with it up; a test that
+// clicks is not. Suppressed by its own localStorage flag rather than by closing
+// it, so the test exercises the promo panel and nothing else. The user id is
+// part of the key and is not known here, hence the prefix match.
+async function suppressWelcomeWizard(page: Page) {
+  await page.addInitScript(() => {
+    const real = Storage.prototype.getItem;
+    Storage.prototype.getItem = function (key: string) {
+      if (typeof key === 'string' && key.startsWith('lpc_welcome_modal_seen')) return 'true';
+      return real.call(this, key);
+    };
+  });
+}
+
 test.describe('Elite promo panel', () => {
   const PROMO = 'QA Promo Community — promo text';
   const DETAIL = 'Three whitelisted servers and a full court system.';
@@ -340,6 +356,7 @@ test.describe('Elite promo panel', () => {
     const pageErrors: string[] = [];
     page.on('pageerror', (err) => pageErrors.push(err.message));
 
+    await suppressWelcomeWizard(page);
     await mockCommunityApis(page, {
       elite: [], discover: [], browse: [],
       joined: [
@@ -353,6 +370,10 @@ test.describe('Elite promo panel', () => {
     // a slow load; name it instead.
     await expect.poll(() => pageErrors.join(' | '), { timeout: 5_000 }).toBe('');
     await cardsSettled(page, '#your-communities');
+
+    // Nothing should be covering the grid; a timeout inside click() names the
+    // overlay only in the call log, which is easy to misread as a slow render.
+    await expect(page.locator('.fixed.inset-0.z-50')).toHaveCount(0);
 
     // Only the community with promo copy gets a panel.
     const panels = page.locator('#your-communities .grid button[aria-expanded]');
