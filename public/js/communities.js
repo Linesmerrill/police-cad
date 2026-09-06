@@ -451,7 +451,20 @@ const CommunityPromo = ({ text, description }) => {
           transition: PREFERS_REDUCED_MOTION ? 'none' : 'grid-template-rows 200ms ease-out',
         }}
       >
-        <div className="overflow-hidden">
+        {/* Clipping to zero height hides the text from eyes but not from
+            assistive technology, which still reads it and can still land focus
+            in it. visibility:hidden takes it out of the tree properly. The 200ms
+            delay on the way down keeps it on screen while the row collapses, so
+            it does not blink out before the animation finishes. */}
+        <div
+          className="overflow-hidden"
+          style={{
+            visibility: open ? 'visible' : 'hidden',
+            transition: PREFERS_REDUCED_MOTION
+              ? 'none'
+              : `visibility 0s linear ${open ? '0s' : '200ms'}`,
+          }}
+        >
           <p className="px-2.5 pb-2 text-[11px] leading-relaxed text-slate-300">
             {linkifyText(description)}
           </p>
