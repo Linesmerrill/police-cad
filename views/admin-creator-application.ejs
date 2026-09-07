@@ -344,13 +344,75 @@
 
     // Reason prompt. The text is audited or sent to the applicant, so it is
     // required — an empty one stops here rather than filing a blank record.
+    // Preformatted rejection reasons.
+    //
+    // The reason is emailed to the applicant verbatim, so it is applicant-facing
+    // copy, not an internal note. Leaving that as a blank textarea meant every
+    // rejection was written from scratch by whichever admin happened to be
+    // looking, under time pressure, to a real person who had put work in. These
+    // cover the cases we actually see; "Other" stays for the ones we do not.
+    //
+    // Each one is still editable after it is picked. The dropdown is a starting
+    // point, not a lock.
+    //
+    // Written to say what happened and, where there is one, the way back in.
+    // "Apply again" wording matches the automated rejection emails so the
+    // program reads consistently. No blame, no apology, no "reply to this
+    // email" -- these are sent from a no-reply address.
+    var REJECTION_PRESETS = [
+      {
+        label: 'No Lines Police CAD content on the channel',
+        text: 'We could not find any Lines Police CAD content on the channels you listed. ' +
+              'The program is for creators already making content about the CAD. ' +
+              'You are very welcome to apply again once you have some published.',
+      },
+      {
+        label: 'Channel ownership could not be confirmed',
+        text: 'We could not confirm that you own the channel you listed, because the ' +
+              'verification code never appeared on it. You are very welcome to apply ' +
+              'again once the code is in place.',
+      },
+      {
+        label: 'Channel could not be found',
+        text: 'We could not find a channel at the link you gave us. Check the link is ' +
+              'correct and apply again.',
+      },
+      {
+        label: 'Below the follower requirement',
+        text: 'Your largest channel is below the follower requirement for the program. ' +
+              'You are very welcome to apply again once you are over it.',
+      },
+      {
+        label: 'Content is not a fit for the program',
+        text: 'Your content is not a fit for the program at the moment. This is not a ' +
+              'reflection on your channel, and you are welcome to apply again in future.',
+      },
+      {
+        label: 'Not enough recent activity',
+        text: 'The channels you listed have not posted recently enough for the program. ' +
+              'You are very welcome to apply again once you are posting regularly.',
+      },
+      // Always last, and always present: the cases these do not cover.
+      { label: 'Other (write it yourself)', text: '' },
+    ];
+
     function askReason(opts, onReason) {
       window.ddModal({
         type: opts.type || 'confirm',
         icon: opts.icon || 'fa-pen',
         title: opts.title,
         message: opts.message +
-          '<textarea id="ddm-reason" rows="3" style="width:100%;margin-top:10px;padding:10px 12px;' +
+          (opts.presets
+            ? '<select id="ddm-preset" style="width:100%;margin-top:10px;padding:10px 12px;' +
+              'border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.35);' +
+              'color:#fff;font-family:inherit;font-size:14px;">' +
+              '<option value="">Pick a reason...</option>' +
+              opts.presets.map(function (p, i) {
+                return '<option value="' + i + '">' + esc(p.label) + '</option>';
+              }).join('') +
+              '</select>'
+            : '') +
+          '<textarea id="ddm-reason" rows="4" style="width:100%;margin-top:10px;padding:10px 12px;' +
           'border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.35);' +
           'color:#fff;font-family:inherit;font-size:14px;resize:vertical;" placeholder="' +
           esc(opts.placeholder || 'Reason') + '"></textarea>',
@@ -361,7 +423,23 @@
           onReason(reason);
         },
       });
-      setTimeout(function () { $('#ddm-reason').trigger('focus'); }, 60);
+      setTimeout(function () {
+        if (opts.presets) {
+          $('#ddm-preset').on('change', function () {
+            var i = $(this).val();
+            if (i === '') return;
+            var preset = opts.presets[Number(i)];
+            if (!preset) return;
+            // Overwrites whatever is there. Picking a reason is a deliberate
+            // act, and appending would quietly send two reasons to one person.
+            $('#ddm-reason').val(preset.text).trigger('focus');
+          });
+          // The dropdown is the 99% path, so it gets focus rather than the box.
+          $('#ddm-preset').trigger('focus');
+          return;
+        }
+        $('#ddm-reason').trigger('focus');
+      }, 60);
     }
 
     function pill(status) {
@@ -815,9 +893,11 @@
         type: 'danger',
         icon: 'fa-circle-xmark',
         title: 'Reject this application',
-        message: 'Your reason is <strong>emailed to the applicant</strong>, so write it for them.',
-        placeholder: 'e.g. We could not find LPC content on the channels you listed.',
+        message: 'Your reason is <strong>emailed to the applicant</strong>, so write it for them. ' +
+                 'Pick a reason below, then edit it if you need to.',
+        placeholder: 'Pick a reason above, or write your own.',
         confirmText: 'Reject',
+        presets: REJECTION_PRESETS,
       }, function (reason) {
         post(API_BASE + '/api/v1/admin/content-creator-applications/' + APPLICATION_ID + '/reject',
           { rejectionReason: reason }, 'Rejection recorded.');
