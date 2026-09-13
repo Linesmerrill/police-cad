@@ -11856,7 +11856,9 @@ async function saveEditEvent() {
               '<div class="pcm-cat-body open">' +
                 '<table class="pcm-table">' +
                   '<thead><tr>' +
-                    '<th>Violation</th><th>Jail Time</th><th>Fine</th><th>Explanation</th><th></th>' +
+                    '<th class="pcm-v-name">Violation</th><th class="pcm-v-jail">Jail Time</th>' +
+                    '<th class="pcm-v-fine">Fine</th><th class="pcm-v-expl">Explanation</th>' +
+                    '<th class="pcm-v-actions"></th>' +
                   '</tr></thead>' +
                   '<tbody>' + tbody + '</tbody>' +
                 '</table>' +
@@ -14372,7 +14374,12 @@ async function saveEditEvent() {
       }
 
       .pcm-cat-body { display: none; border-top: 1px solid rgba(255,255,255,0.04); }
-      .pcm-cat-body.open { display: block; }
+      /*
+       * Scrolls at every width, not just on mobile. .pcm-cat clips with
+       * overflow: hidden, so without a scroller here anything past the
+       * container edge is unreachable rather than merely off screen.
+       */
+      .pcm-cat-body.open { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
       /* Name edit input (inline, looks like text until focused) */
       .pcm-cat-name-input {
@@ -14389,7 +14396,35 @@ async function saveEditEvent() {
       }
 
       /* Violations table */
-      .pcm-table { width: 100%; border-collapse: collapse; font-family: 'Outfit', sans-serif; }
+      /*
+       * table-layout: fixed is load-bearing, not cosmetic. Under the default
+       * auto layout the browser sizes columns from content, and max-width on a
+       * <td> is ignored — so .pcm-v-expl below grew to its full nowrap width
+       * instead of ellipsising at 220px. That gave this table a ~629px floor it
+       * could not shrink past, and .pcm-cat's overflow: hidden then cut the
+       * actions column clean off with no scroller (the only overflow-x: auto
+       * lived in the 640px media query). The edit and delete buttons were both
+       * invisible and unreachable.
+       *
+       * It only showed on some categories because it is driven by content
+       * length: Felonies ships the longest default names and explanations, so
+       * its table hit the floor while Traffic Violations still fit.
+       *
+       * Fixed layout pins the table to its container, so the columns below are
+       * honored, the ellipsis works, and nothing can push the actions out.
+       * min-width plus the scroller keeps them reachable when the container is
+       * narrower than the columns need.
+       */
+      .pcm-table {
+        width: 100%; min-width: 520px; table-layout: fixed;
+        border-collapse: collapse; font-family: 'Outfit', sans-serif;
+      }
+      .pcm-table th.pcm-v-name,    .pcm-table td.pcm-v-name    { width: 24%; }
+      .pcm-table th.pcm-v-jail,    .pcm-table td.pcm-v-jail    { width: 17%; }
+      .pcm-table th.pcm-v-fine,    .pcm-table td.pcm-v-fine    { width: 14%; }
+      .pcm-table th.pcm-v-actions, .pcm-table td.pcm-v-actions { width: 60px; }
+      /* Explanation takes whatever is left. */
+      .pcm-table th.pcm-v-expl,    .pcm-table td.pcm-v-expl    { max-width: none; }
       .pcm-table thead th {
         padding: 0.4375rem 0.75rem; font-size: 0.6875rem; font-weight: 600;
         color: #475569; text-transform: uppercase; letter-spacing: 0.05em;
@@ -14404,14 +14439,19 @@ async function saveEditEvent() {
       .pcm-table tbody tr:hover { background: rgba(255,255,255,0.025); }
       .pcm-table td { padding: 0.4375rem 0.75rem; vertical-align: middle; font-size: 0.8125rem; }
 
-      .pcm-v-name { color: #e2e8f0; font-weight: 500; }
+      .pcm-v-name {
+        color: #e2e8f0; font-weight: 500;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
       .pcm-v-jail {
         font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
         color: #fbbf24; white-space: nowrap;
+        overflow: hidden; text-overflow: ellipsis;
       }
       .pcm-v-fine {
         font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
         color: #34d399; white-space: nowrap;
+        overflow: hidden; text-overflow: ellipsis;
       }
       .pcm-v-expl {
         color: #64748b; max-width: 220px; overflow: hidden;
@@ -14591,9 +14631,6 @@ async function saveEditEvent() {
         .pcm-toolbar { padding: 0.625rem 1rem; gap: 0.5rem; }
         .pcm-body { padding: 0.75rem; }
         .pcm-footer { padding: 0.75rem 1rem; }
-
-        .pcm-cat-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .pcm-table { min-width: 520px; }
 
         .pcm-cat-header { flex-wrap: wrap; gap: 0.5rem; }
         .pcm-cat-left { min-width: 0; }
