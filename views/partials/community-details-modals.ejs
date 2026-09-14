@@ -11936,11 +11936,12 @@ async function saveEditEvent() {
         if (titleSpan) titleSpan.textContent = 'Add Violation';
         document.getElementById('pcViolationSubmitText').textContent = 'Add Violation';
         document.getElementById('pcVioName').value = '';
-        document.getElementById('pcVioJailTime').value = '';
+        document.getElementById('pcVioJailMinutes').value = '';
+        document.getElementById('pcVioJailSeconds').value = '';
         document.getElementById('pcVioFine').value = '';
         document.getElementById('pcVioExplanation').value = '';
         document.getElementById('pcVioName').classList.remove('pcm-input-error');
-        document.getElementById('pcVioJailTime').classList.remove('pcm-input-error');
+        clearPcJailError();
         document.getElementById('pcViolationModal').style.display = 'flex';
 
         pcSettingsViolationCallback = function(data) {
@@ -11959,11 +11960,16 @@ async function saveEditEvent() {
         if (titleSpan) titleSpan.textContent = 'Edit Violation';
         document.getElementById('pcViolationSubmitText').textContent = 'Update Violation';
         document.getElementById('pcVioName').value = v.name || '';
-        document.getElementById('pcVioJailTime').value = v.jailTime || '';
+        // Stored as free text, so read it tolerantly. An unparseable value
+        // leaves both boxes empty and the author retypes it, which is better
+        // than silently persisting something we misread.
+        var parsedJail = window.JailTime.parse(v.jailTime || '');
+        document.getElementById('pcVioJailMinutes').value = parsedJail.minutes || '';
+        document.getElementById('pcVioJailSeconds').value = parsedJail.seconds || '';
         document.getElementById('pcVioFine').value = v.fine || '';
         document.getElementById('pcVioExplanation').value = v.explanation || '';
         document.getElementById('pcVioName').classList.remove('pcm-input-error');
-        document.getElementById('pcVioJailTime').classList.remove('pcm-input-error');
+        clearPcJailError();
         document.getElementById('pcViolationModal').style.display = 'flex';
 
         pcSettingsViolationCallback = function(data) {
@@ -11986,17 +11992,39 @@ async function saveEditEvent() {
         );
       }
 
+      function pcJailInputs() {
+        return [
+          document.getElementById('pcVioJailMinutes'),
+          document.getElementById('pcVioJailSeconds'),
+        ];
+      }
+
+      function clearPcJailError() {
+        pcJailInputs().forEach(function (el) { el.classList.remove('pcm-input-error'); });
+      }
+
       function submitPcViolation() {
         var nameEl = document.getElementById('pcVioName');
-        var jailEl = document.getElementById('pcVioJailTime');
+        var minEl = document.getElementById('pcVioJailMinutes');
+        var secEl = document.getElementById('pcVioJailSeconds');
         var name = nameEl.value.trim();
-        var jailTime = jailEl.value.trim();
+        // Written canonically ("3 minutes 30 seconds") so an edited violation
+        // is spelled the same as an untouched one. 90 seconds carries into
+        // 1 minute 30 seconds rather than being stored as typed.
+        var jailTime = window.JailTime.format({
+          minutes: parseInt(minEl.value, 10) || 0,
+          seconds: parseInt(secEl.value, 10) || 0,
+        });
         var valid = true;
 
         nameEl.classList.remove('pcm-input-error');
-        jailEl.classList.remove('pcm-input-error');
+        clearPcJailError();
         if (!name) { nameEl.classList.add('pcm-input-error'); valid = false; }
-        if (!jailTime) { jailEl.classList.add('pcm-input-error'); valid = false; }
+        // Empty means zero, which formats to "", so this still requires a time.
+        if (!jailTime) {
+          pcJailInputs().forEach(function (el) { el.classList.add('pcm-input-error'); });
+          valid = false;
+        }
         if (!valid) return;
 
         var data = {
@@ -14605,6 +14633,12 @@ async function saveEditEvent() {
         font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em;
         color: #64748b; margin-bottom: 0.25rem;
       }
+      /* Sub-label under the paired minutes/seconds inputs. */
+      .pcm-field-hint {
+        font-family: 'Outfit', sans-serif; font-size: 0.625rem;
+        color: #475569; margin-top: 0.25rem; text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
       .pcm-field input, .pcm-field textarea {
         width: 100%; padding: 0.5rem 0.625rem;
         background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06);
@@ -14730,7 +14764,16 @@ async function saveEditEvent() {
         </div>
         <div class="pcm-field">
           <label>Jail Time *</label>
-          <input type="text" id="pcVioJailTime" placeholder="e.g. 30 seconds, 5 minutes">
+          <div style="display:flex; gap:0.75rem;">
+            <div style="flex:1;">
+              <input type="number" id="pcVioJailMinutes" min="0" step="1" placeholder="0" aria-label="Jail time minutes">
+              <div class="pcm-field-hint">Minutes</div>
+            </div>
+            <div style="flex:1;">
+              <input type="number" id="pcVioJailSeconds" min="0" max="59" step="1" placeholder="0" aria-label="Jail time seconds">
+              <div class="pcm-field-hint">Seconds</div>
+            </div>
+          </div>
         </div>
         <div style="display:flex; gap:0.75rem;">
           <div class="pcm-field" style="flex:1;">
