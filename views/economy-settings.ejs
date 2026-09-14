@@ -274,6 +274,37 @@
     </div>
   </div>
 
+  <div class="es-section-divider">Courts</div>
+
+  <div class="es-card">
+    <div class="es-card-head">
+      <div class="es-card-head-icon"><i class="fa fa-gavel"></i></div>
+      <div>
+        <div class="es-card-head-title">Unanswered citations and arrests</div>
+        <div class="es-card-head-sub">What happens when a civilian never responds.</div>
+      </div>
+    </div>
+    <div class="es-field es-toggle-row">
+      <div>
+        <div>File unanswered cases for a judge</div>
+        <div class="es-toggle-desc">A citation or arrest only reaches your judges today if the civilian contests it, so anyone who ignores one never shows up in court at all. Turn this on and unanswered items are filed automatically once the response window passes, so a judge can see them. Nothing is decided for you: no licence is suspended and no warrant is issued, a judge still rules on the case.</div>
+      </div>
+      <label class="es-switch">
+        <input type="checkbox" id="es-court-autofile">
+        <span class="es-switch-track"></span>
+      </label>
+    </div>
+    <div class="es-field">
+      <label class="es-label" for="es-respond-days">Response window (days)</label>
+      <input type="number" min="1" max="365" step="1" class="es-input" id="es-respond-days" value="3">
+      <div class="es-toggle-desc" style="margin-top:0.3rem;">How long a civilian has to contest before the case is filed for them. Defaults to 3 days.</div>
+    </div>
+    <div class="es-card-actions">
+      <span class="es-status" id="es-court-status"></span>
+      <button class="es-btn" id="es-court-save">Save court settings</button>
+    </div>
+  </div>
+
   <div class="es-section-divider">Per-department</div>
 
   <div class="es-card">
@@ -300,6 +331,13 @@
   const COMMUNITY_ID = "<%- communityId %>";
   const USER_ID = "<%- userId %>";
 
+  function setCourtStatus(kind, msg) {
+    const el = document.getElementById('es-court-status');
+    el.className = 'es-status ' + (kind || '');
+    el.textContent = msg || '';
+    if (kind === 'saved') setTimeout(() => { if (el.textContent === msg) { el.textContent = ''; el.className = 'es-status'; } }, 2000);
+  }
+
   function setStatus(kind, msg) {
     const el = document.getElementById('es-status');
     el.className = 'es-status ' + (kind || '');
@@ -319,6 +357,12 @@
       document.getElementById('es-due-days').value = (typeof econ.defaultDueDays === 'number' && econ.defaultDueDays > 0) ? econ.defaultDueDays : 14;
       document.getElementById('es-contest-days').value = (typeof econ.contestExtensionDays === 'number' && econ.contestExtensionDays > 0) ? econ.contestExtensionDays : 30;
       document.getElementById('es-allow-neg').checked = !!econ.allowNegativeBalance;
+      const court = (data.community && data.community.courtProcessing) || {};
+      document.getElementById('es-court-autofile').checked = !!court.autoFileUnanswered;
+      // 0 or absent means unset, so show the default rather than a 0 that is
+      // not the window actually in force.
+      document.getElementById('es-respond-days').value =
+        (typeof court.respondDays === 'number' && court.respondDays > 0) ? court.respondDays : 3;
     } catch (err) {
       console.error(err);
       setStatus('error', 'Could not load settings');
@@ -351,7 +395,30 @@
     }
   }
 
+  async function saveCourt() {
+    const body = {
+      courtProcessing: {
+        autoFileUnanswered: document.getElementById('es-court-autofile').checked,
+        respondDays: parseInt(document.getElementById('es-respond-days').value, 10) || 3,
+      }
+    };
+    setCourtStatus('saving', 'Saving…');
+    try {
+      const res = await fetch(`${API_URL}/api/v1/community/${COMMUNITY_ID}?userId=${encodeURIComponent(USER_ID)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`save failed: ${res.status}`);
+      setCourtStatus('saved', 'Saved');
+    } catch (err) {
+      console.error(err);
+      setCourtStatus('error', 'Save failed');
+    }
+  }
+
   document.getElementById('es-save').addEventListener('click', save);
+  document.getElementById('es-court-save').addEventListener('click', saveCourt);
   load();
 
   // ---------- Per-department economy ----------
