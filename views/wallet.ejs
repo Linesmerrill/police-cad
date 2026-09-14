@@ -1913,7 +1913,12 @@
   // Hard-blocks insufficient balance inline (red banner) so the user
   // understands why send is disabled — explicit per UX requirement.
   (function initSendMoney() {
-    const SEND_MAX_CENTS = 10_000_00; // $10,000, also enforced server-side
+    // Per-community, from economy settings, and genuinely enforced server-side
+    // (TransferHandler re-checks against the same setting). This was hardcoded
+    // to $10,000 with a comment claiming it matched the server, while the
+    // server's own default was $100,000 — so the page refused transfers the API
+    // would have accepted, and a $600,000 property sale was impossible.
+    const SEND_MAX_CENTS = Number('<%= typeof maxTransferCents !== "undefined" ? maxTransferCents : 100000 * 100 %>') || 100_000_00;
     const SEND_MAX_MSG = 140;
 
     const openBtn = document.getElementById('sendMoneyBtn');

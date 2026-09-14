@@ -1990,6 +1990,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
     // we can't say economy is off, and falling through to the normal empty
     // states is safer than wrongly showing the "disabled" banner.
     let economyEnabled = true;
+    // Per-transfer send cap. 0 or absent means the community has not set one,
+    // so the API's default applies. Kept in sync with DefaultTransferMaxCents
+    // in the API — the wallet previously hardcoded $10,000 here while the API
+    // allowed $100,000, so the site was ten times stricter than the server it
+    // talks to and nobody could send a realistic property price.
+    let maxTransferCents = 100000 * 100;
     if (communityId) {
       try {
         const r = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, config);
@@ -1998,6 +2004,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         currencyCode = cur.code;
         currencySymbol = cur.symbol;
         economyEnabled = resolveCommunityEconomyEnabled(r.data);
+        const configuredMax = r.data?.community?.economy?.maxTransferCents;
+        if (typeof configuredMax === "number" && configuredMax > 0) {
+          maxTransferCents = configuredMax;
+        }
       } catch (e) {}
     }
     return {
@@ -2015,6 +2025,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       currencyCode,
       currencySymbol,
       economyEnabled,
+      maxTransferCents,
     };
   }
 

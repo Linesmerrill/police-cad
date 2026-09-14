@@ -254,6 +254,11 @@
       <input type="number" min="1" step="1" class="es-input" id="es-due-days" value="14">
     </div>
     <div class="es-field">
+      <label class="es-label" for="es-max-transfer">Maximum single transfer ($)</label>
+      <input type="number" min="0" step="0.01" class="es-input" id="es-max-transfer" value="100000.00">
+      <div class="es-toggle-desc" style="margin-top:0.3rem;">The most a civilian can send another civilian in one go. Raise it if your community trades property or runs businesses. Leave at 0 to use the default of $100,000. The cap exists to limit the damage of a mistyped amount or a stolen account, so it cannot be removed entirely.</div>
+    </div>
+    <div class="es-field">
       <label class="es-label" for="es-contest-days">Contest extension (days)</label>
       <input type="number" min="1" step="1" class="es-input" id="es-contest-days" value="30">
       <div class="es-toggle-desc" style="margin-top:0.3rem;">When a civilian contests a fine, the due date is pushed out by this many days while a judge reviews it.</div>
@@ -318,6 +323,9 @@
       document.getElementById('es-fine-mode').value = econ.fineMode === 'auto_debit' ? 'auto_debit' : 'inbox';
       document.getElementById('es-due-days').value = (typeof econ.defaultDueDays === 'number' && econ.defaultDueDays > 0) ? econ.defaultDueDays : 14;
       document.getElementById('es-contest-days').value = (typeof econ.contestExtensionDays === 'number' && econ.contestExtensionDays > 0) ? econ.contestExtensionDays : 30;
+      // 0 or absent means "unset" — show the default so the number on screen is
+      // the limit actually in force, not a misleading zero.
+      document.getElementById('es-max-transfer').value = ((typeof econ.maxTransferCents === 'number' && econ.maxTransferCents > 0) ? econ.maxTransferCents / 100 : 100000).toFixed(2);
       document.getElementById('es-allow-neg').checked = !!econ.allowNegativeBalance;
     } catch (err) {
       console.error(err);
@@ -333,6 +341,7 @@
         fineMode: document.getElementById('es-fine-mode').value === 'auto_debit' ? 'auto_debit' : 'inbox',
         defaultDueDays: parseInt(document.getElementById('es-due-days').value, 10) || 14,
         contestExtensionDays: parseInt(document.getElementById('es-contest-days').value, 10) || 30,
+        maxTransferCents: Math.round((parseFloat(document.getElementById('es-max-transfer').value) || 0) * 100),
         allowNegativeBalance: document.getElementById('es-allow-neg').checked,
       }
     };
