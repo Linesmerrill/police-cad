@@ -102,4 +102,44 @@ describe("jail-time", function () {
       assert.strictEqual(JailTime.toSeconds({ minutes: 0, seconds: 90 }), 90);
     });
   });
+
+  describe("validate", function () {
+    it("accepts minutes, seconds, or both", function () {
+      assert.deepStrictEqual(JailTime.validate("3", "30"), { ok: true, minutes: 3, seconds: 30 });
+      assert.deepStrictEqual(JailTime.validate("5", ""), { ok: true, minutes: 5, seconds: 0 });
+      assert.deepStrictEqual(JailTime.validate("", "45"), { ok: true, minutes: 0, seconds: 45 });
+    });
+
+    it("requires some jail time", function () {
+      var r = JailTime.validate("", "");
+      assert.strictEqual(r.ok, false);
+      r = JailTime.validate("0", "0");
+      assert.strictEqual(r.ok, false);
+    });
+
+    it("reports a negative instead of clamping it to zero", function () {
+      var r = JailTime.validate("-5", "0");
+      assert.strictEqual(r.ok, false);
+      assert.strictEqual(r.field, "minutes");
+    });
+
+    it("caps minutes at the maximum", function () {
+      assert.strictEqual(JailTime.validate(String(JailTime.MAX_MINUTES), "0").ok, true);
+      var r = JailTime.validate(String(JailTime.MAX_MINUTES + 1), "0");
+      assert.strictEqual(r.ok, false);
+      assert.strictEqual(r.field, "minutes");
+      assert.strictEqual(JailTime.validate("4000000000", "0").ok, false);
+    });
+
+    it("reports seconds over 59 on the seconds field", function () {
+      var r = JailTime.validate("1", "60");
+      assert.strictEqual(r.ok, false);
+      assert.strictEqual(r.field, "seconds");
+    });
+
+    it("rejects decimals and words", function () {
+      assert.strictEqual(JailTime.validate("2.5", "0").ok, false);
+      assert.strictEqual(JailTime.validate("two", "0").ok, false);
+    });
+  });
 });
