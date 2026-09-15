@@ -4818,6 +4818,36 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   }
 
+  // Admin balance adjustment (proxy to Go backend).
+  //
+  // This runs server-side on purpose, and must stay that way. The API trusts the
+  // userId it receives here only because the request also carries the shared
+  // X-API-Key, which the axios interceptor attaches and which never reaches the
+  // browser. The userId comes from the logged-in session, so a visitor cannot
+  // adjust someone's money while pretending to be the community owner. Moving
+  // this call into the browser would reopen exactly that hole.
+  app.post("/api/v1/economy/civilian/:civilianId/adjust", apiAuthCheck, async function (req, res) {
+    try {
+      const civilianId = req.params.civilianId;
+      if (!isValidObjectId(civilianId)) {
+        return res.status(400).json({ error: "Invalid civilian ID" });
+      }
+      const userId = req.user._doc ? req.user._doc._id : req.user._id;
+      const response = await axios.post(
+        `${policeCadApiUrl}/api/v2/economy/civilian/${civilianId}/adjust?userId=${userId}`,
+        { amountCents: req.body.amountCents, reason: req.body.reason },
+        { headers: { ...config.headers, "Content-Type": "application/json" } }
+      );
+      res.json(response.data);
+    } catch (error) {
+      console.error("[economy-adjust] Error adjusting balance:", error.message);
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      }
+      res.status(500).json({ error: "Failed to adjust balance" });
+    }
+  });
+
   // Update community map link (proxy to Go backend)
   app.post("/api/v1/community/:id/map", apiAuthCheck, async function (req, res) {
     try {

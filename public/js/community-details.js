@@ -1747,6 +1747,11 @@ function updateDepartmentJoinButton(departmentId, status) {
     // Always access the nested civilian object
     const civ = civilian.civilian;
 
+    // Wallet balance, and the adjust control for owners and administrators.
+    if (typeof window.loadEditCivilianWallet === 'function') {
+      window.loadEditCivilianWallet(civilianId);
+    }
+
     // Populate form fields
     document.getElementById('editName').value = civ.name || '';
     document.getElementById('editBirthday').value = civ.birthday ? new Date(civ.birthday).toISOString().split('T')[0] : '';
@@ -1854,6 +1859,156 @@ function updateDepartmentJoinButton(departmentId, status) {
   };
 
   // Save civilian changes
+  // ── Wallet: view and adjust a civilian's balance ──────────────────────────
+  //
+  // The balance is read straight from the API, which is fine because a read
+  // creates nothing. The adjustment goes through the website's own server route
+  // instead, never the API directly: only that route can vouch for who is making
+  // the change, because the website never holds an API token in the browser.
+  let balanceAdjustDirection = 'add';
+  let balanceAdjustConfirming = false;
+
+  function walletEl(id) { return document.getElementById(id); }
+
+  function clearBalanceAdjustError() {
+    const err = walletEl('editWalletError');
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
+    ['editWalletAmount', 'editWalletReason'].forEach(function(id) {
+      const el = walletEl(id);
+      if (el) el.style.borderColor = '#4a5568';
+    });
+  }
+
+  function showBalanceAdjustError(message, fieldId) {
+    const err = walletEl('editWalletError');
+    if (err) { err.textContent = message; err.style.display = 'block'; }
+    if (fieldId) {
+      const el = walletEl(fieldId);
+      if (el) { el.style.borderColor = '#f87171'; el.focus(); }
+    }
+  }
+
+  function resetBalanceAdjustForm() {
+    balanceAdjustConfirming = false;
+    const amount = walletEl('editWalletAmount');
+    const reason = walletEl('editWalletReason');
+    const btn = walletEl('editWalletSubmit');
+    if (amount) amount.value = '';
+    if (reason) reason.value = '';
+    if (btn) { btn.textContent = 'Apply'; btn.disabled = false; }
+    clearBalanceAdjustError();
+    window.setBalanceAdjustDirection('add');
+  }
+
+  window.setBalanceAdjustDirection = function(direction) {
+    balanceAdjustDirection = direction === 'remove' ? 'remove' : 'add';
+    balanceAdjustConfirming = false;
+    const add = walletEl('editWalletAdd');
+    const remove = walletEl('editWalletRemove');
+    const btn = walletEl('editWalletSubmit');
+    const on = function(el, color) { el.style.background = color; el.style.borderColor = color; el.style.color = '#fff'; };
+    const off = function(el) { el.style.background = 'transparent'; el.style.borderColor = '#4a5568'; el.style.color = '#a0aec0'; };
+    if (add && remove) {
+      if (balanceAdjustDirection === 'add') { on(add, '#10b981'); off(remove); }
+      else { on(remove, '#ef4444'); off(add); }
+    }
+    if (btn) {
+      btn.textContent = 'Apply';
+      btn.style.background = balanceAdjustDirection === 'remove' ? '#ef4444' : '#10b981';
+    }
+  };
+
+  window.loadEditCivilianWallet = async function(civilianId) {
+    const section = walletEl('editWalletSection');
+    const adjust = walletEl('editWalletAdjust');
+    const balanceEl = walletEl('editWalletBalance');
+    if (!section || !balanceEl) return;
+
+    section.style.display = 'block';
+    if (adjust) adjust.style.display = window.CAN_ADJUST_BALANCES ? 'block' : 'none';
+    resetBalanceAdjustForm();
+    balanceEl.textContent = 'Loading...';
+
+    try {
+      const res = await fetch(`${API_URL}/api/v2/economy/wallet/${civilianId}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      balanceEl.textContent = window.BalanceAdjust.formatCents(Number(data.balance) || 0);
+    } catch (error) {
+      console.error('Error loading wallet:', error);
+      balanceEl.textContent = 'Unavailable';
+    }
+  };
+
+  window.submitBalanceAdjust = async function() {
+    const record = currentEditingCivilian;
+    if (!record) return;
+    const amountEl = walletEl('editWalletAmount');
+    const reasonEl = walletEl('editWalletReason');
+    const btn = walletEl('editWalletSubmit');
+    clearBalanceAdjustError();
+
+    const check = window.BalanceAdjust.validateAmount(amountEl.value);
+    if (!check.ok) {
+      balanceAdjustConfirming = false;
+      btn.textContent = 'Apply';
+      showBalanceAdjustError(check.message, 'editWalletAmount');
+      return;
+    }
+    const cents = check.cents;
+    const reason = reasonEl.value.trim();
+    if (!reason) {
+      balanceAdjustConfirming = false;
+      btn.textContent = 'Apply';
+      showBalanceAdjustError('Add a reason, so this change is traceable later.', 'editWalletReason');
+      return;
+    }
+
+    const signed = window.BalanceAdjust.signed(cents, balanceAdjustDirection);
+    const pretty = window.BalanceAdjust.formatCents(cents);
+    const name = (record.civilian && record.civilian.name) || 'this civilian';
+
+    // Two steps, so a stray click cannot move money. The button states exactly
+    // what will happen before it happens.
+    if (!balanceAdjustConfirming) {
+      balanceAdjustConfirming = true;
+      btn.textContent = balanceAdjustDirection === 'remove'
+        ? `Confirm: remove ${pretty} from ${name}`
+        : `Confirm: add ${pretty} to ${name}`;
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Applying...';
+    try {
+      const res = await fetch(`/api/v1/economy/civilian/${record._id}/adjust`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amountCents: signed, reason: reason }),
+      });
+      const data = await res.json().catch(function() { return {}; });
+      if (!res.ok) {
+        // The Go API answers {response: {message}}; the website's own routes use
+        // a top-level message or error. Read both, prose first.
+        const message = (data.response && data.response.message) || data.message || data.error || `HTTP ${res.status}`;
+        throw new Error(message);
+      }
+      const newBalance = Number(data.balance) || 0;
+      walletEl('editWalletBalance').textContent = window.BalanceAdjust.formatCents(newBalance);
+      if (record.civilian) record.civilian.balance = newBalance;
+      showCustomToast(balanceAdjustDirection === 'remove' ? `Removed ${pretty} from ${name}` : `Added ${pretty} to ${name}`, 'success');
+      resetBalanceAdjustForm();
+    } catch (error) {
+      console.error('Error adjusting balance:', error);
+      balanceAdjustConfirming = false;
+      btn.textContent = 'Apply';
+      showBalanceAdjustError(error.message || 'Could not adjust the balance. Please try again.', null);
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
   window.saveCivilian = async function() {
     if (!currentEditingCivilian) {
       showCustomToast('No civilian selected for editing', 'error');

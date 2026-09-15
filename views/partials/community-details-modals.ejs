@@ -398,10 +398,28 @@
             </div>
           <% } %>
 
+          <%
+            // Adjusting money is owner or administrator only, narrower than
+            // canManageCivilians, which also admits "manage members". The API
+            // enforces the same rule; this only decides whether to show the control.
+            let canAdjustBalances = !!(userId && community.community && community.community.ownerID === userId);
+            if (!canAdjustBalances && userId && community.community && Array.isArray(community.community.roles)) {
+              community.community.roles.forEach(function(role) {
+                if (Array.isArray(role.members) && role.members.includes(userId) && Array.isArray(role.permissions)) {
+                  role.permissions.forEach(function(perm) {
+                    if (perm.name === "administrator" && perm.enabled === true) canAdjustBalances = true;
+                  });
+                }
+              });
+            }
+          %>
+          <script>window.CAN_ADJUST_BALANCES = <%= canAdjustBalances ? 'true' : 'false' %>;</script>
           <!-- Civilians Management -->
           <%
             // Permission logic for managing civilians
-            let canManageCivilians = false;
+            // The owner always can. Without this an owner who holds no role could
+            // not open the civilians modal at all.
+            let canManageCivilians = !!(userId && community.community && community.community.ownerID === userId);
             if (userId && community.community && Array.isArray(community.community.roles)) {
               community.community.roles.forEach(function(role) {
                 if (Array.isArray(role.members) && role.members.includes(userId)) {
@@ -15306,6 +15324,31 @@ async function saveEditEvent() {
             </div>
           </form>
           
+          <!-- Wallet Section -->
+          <div id="editWalletSection" style="margin-top:2rem; padding-top:2rem; border-top:1px solid #4a5568; display:none;">
+            <h4 style="color:#fff; margin:0 0 1rem 0; font-size:1.2rem; font-weight:600;">Wallet</h4>
+            <div style="display:flex; align-items:baseline; gap:0.75rem; margin-bottom:1rem;">
+              <span style="color:#a0aec0; font-size:0.875rem;">Current balance</span>
+              <span id="editWalletBalance" style="color:#fff; font-size:1.5rem; font-weight:700;">&mdash;</span>
+            </div>
+            <div id="editWalletAdjust" style="display:none;">
+              <div style="display:flex; gap:0.5rem; margin-bottom:1rem;" role="group" aria-label="Add or remove money">
+                <button type="button" id="editWalletAdd" onclick="setBalanceAdjustDirection('add')" style="flex:1; padding:0.6rem; border-radius:8px; border:1px solid #10b981; background:#10b981; color:#fff; font-weight:600; cursor:pointer;">Add money</button>
+                <button type="button" id="editWalletRemove" onclick="setBalanceAdjustDirection('remove')" style="flex:1; padding:0.6rem; border-radius:8px; border:1px solid #4a5568; background:transparent; color:#a0aec0; font-weight:600; cursor:pointer;">Remove money</button>
+              </div>
+              <div style="margin-bottom:1rem;">
+                <label for="editWalletAmount" style="display:block; color:#fff; font-weight:500; margin-bottom:0.5rem;">Amount ($)</label>
+                <input type="text" inputmode="decimal" id="editWalletAmount" placeholder="0.00" style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+              </div>
+              <div style="margin-bottom:1rem;">
+                <label for="editWalletReason" style="display:block; color:#fff; font-weight:500; margin-bottom:0.5rem;">Reason</label>
+                <input type="text" id="editWalletReason" maxlength="280" placeholder="Why are you changing this balance?" style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+              </div>
+              <div id="editWalletError" role="alert" style="color:#f87171; font-size:0.85rem; margin-bottom:0.75rem; display:none;"></div>
+              <button type="button" id="editWalletSubmit" onclick="submitBalanceAdjust()" style="padding:0.7rem 1.25rem; border-radius:8px; border:none; background:#10b981; color:#fff; font-weight:600; cursor:pointer;">Apply</button>
+            </div>
+          </div>
+
           <!-- Height and Weight Section -->
           <div style="margin-top:2rem; padding-top:2rem; border-top:1px solid #4a5568;">
             <h4 style="color:#fff; margin:0 0 1rem 0; font-size:1.2rem; font-weight:600;">Physical Characteristics</h4>
