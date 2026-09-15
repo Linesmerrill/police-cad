@@ -40,6 +40,30 @@
       return null;
     },
 
+    /** The most one adjustment can move, matching the API's adjustBalanceMaxCents. */
+    MAX_CENTS: 10000000000,
+
+    /**
+     * Validate a typed amount, telling "not an amount" apart from "too large" so
+     * the message says what is actually wrong. The API enforces the same cap;
+     * this stops a mistyped 4000000000 before it is sent.
+     *
+     * @returns {{ok:true, cents:number} | {ok:false, message:string}}
+     */
+    validateAmount: function (text) {
+      var cents = BalanceAdjust.parseCents(text);
+      if (cents === null) {
+        return { ok: false, message: 'Enter an amount greater than zero, like 250 or 250.50.' };
+      }
+      if (cents > BalanceAdjust.MAX_CENTS) {
+        return {
+          ok: false,
+          message: 'The most you can adjust in one go is ' + BalanceAdjust.formatCents(BalanceAdjust.MAX_CENTS) + '.',
+        };
+      }
+      return { ok: true, cents: cents };
+    },
+
     /** Render cents as dollars with thousands separators. */
     formatCents: function (cents) {
       var n = Math.round(Number(cents) || 0);

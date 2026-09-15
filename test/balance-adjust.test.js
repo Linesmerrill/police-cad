@@ -73,4 +73,32 @@ describe("balance-adjust", function () {
       assert.strictEqual(BalanceAdjust.formatCents(-1999), "-$19.99");
     });
   });
+
+  describe("validateAmount", function () {
+    it("accepts an ordinary amount", function () {
+      assert.deepStrictEqual(BalanceAdjust.validateAmount("600,000"), { ok: true, cents: 60000000 });
+    });
+
+    it("accepts exactly the maximum", function () {
+      assert.strictEqual(BalanceAdjust.validateAmount("100,000,000").ok, true);
+    });
+
+    it("refuses anything over the maximum, with a message naming it", function () {
+      var r = BalanceAdjust.validateAmount("4000000000");
+      assert.strictEqual(r.ok, false);
+      assert.ok(/\$100,000,000\.00/.test(r.message), r.message);
+      assert.strictEqual(BalanceAdjust.validateAmount("100000000.01").ok, false);
+    });
+
+    it("tells a non-amount apart from a too-large amount", function () {
+      var notAmount = BalanceAdjust.validateAmount("-20");
+      var tooLarge = BalanceAdjust.validateAmount("4000000000");
+      assert.strictEqual(notAmount.ok, false);
+      assert.notStrictEqual(notAmount.message, tooLarge.message);
+    });
+
+    it("refuses zero", function () {
+      assert.strictEqual(BalanceAdjust.validateAmount("0").ok, false);
+    });
+  });
 });

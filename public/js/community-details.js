@@ -1948,13 +1948,14 @@ function updateDepartmentJoinButton(departmentId, status) {
     const btn = walletEl('editWalletSubmit');
     clearBalanceAdjustError();
 
-    const cents = window.BalanceAdjust.parseCents(amountEl.value);
-    if (cents === null) {
+    const check = window.BalanceAdjust.validateAmount(amountEl.value);
+    if (!check.ok) {
       balanceAdjustConfirming = false;
       btn.textContent = 'Apply';
-      showBalanceAdjustError('Enter an amount greater than zero, like 250 or 250.50.', 'editWalletAmount');
+      showBalanceAdjustError(check.message, 'editWalletAmount');
       return;
     }
+    const cents = check.cents;
     const reason = reasonEl.value.trim();
     if (!reason) {
       balanceAdjustConfirming = false;
