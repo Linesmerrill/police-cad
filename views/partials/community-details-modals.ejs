@@ -12001,6 +12001,8 @@ async function saveEditEvent() {
 
       function clearPcJailError() {
         pcJailInputs().forEach(function (el) { el.classList.remove('pcm-input-error'); });
+        var errEl = document.getElementById('pcVioJailError');
+        if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
       }
 
       function submitPcViolation() {
@@ -12008,22 +12010,25 @@ async function saveEditEvent() {
         var minEl = document.getElementById('pcVioJailMinutes');
         var secEl = document.getElementById('pcVioJailSeconds');
         var name = nameEl.value.trim();
-        // Written canonically ("3 minutes 30 seconds") so an edited violation
-        // is spelled the same as an untouched one. 90 seconds carries into
-        // 1 minute 30 seconds rather than being stored as typed.
-        var jailTime = window.JailTime.format({
-          minutes: parseInt(minEl.value, 10) || 0,
-          seconds: parseInt(secEl.value, 10) || 0,
-        });
         var valid = true;
 
         nameEl.classList.remove('pcm-input-error');
         clearPcJailError();
         if (!name) { nameEl.classList.add('pcm-input-error'); valid = false; }
-        // Empty means zero, which formats to "", so this still requires a time.
-        if (!jailTime) {
-          pcJailInputs().forEach(function (el) { el.classList.add('pcm-input-error'); });
+
+        // Validated, not coerced: a negative, a minute count over the maximum, or
+        // seconds over 59 is reported rather than clamped or quietly carried.
+        var jail = window.JailTime.validate(minEl.value, secEl.value);
+        var jailTime = '';
+        if (!jail.ok) {
+          (jail.field === 'seconds' ? secEl : minEl).classList.add('pcm-input-error');
+          var errEl = document.getElementById('pcVioJailError');
+          if (errEl) { errEl.textContent = jail.message; errEl.style.display = 'block'; }
           valid = false;
+        } else {
+          // Written canonically ("3 minutes 30 seconds") so an edited violation
+          // is spelled the same as an untouched one.
+          jailTime = window.JailTime.format({ minutes: jail.minutes, seconds: jail.seconds });
         }
         if (!valid) return;
 
@@ -14633,6 +14638,7 @@ async function saveEditEvent() {
         font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em;
         color: #64748b; margin-bottom: 0.25rem;
       }
+      .pcm-field-error { color: #f87171; font-size: 0.75rem; margin-top: 0.35rem; }
       /* Sub-label under the paired minutes/seconds inputs. */
       .pcm-field-hint {
         font-family: 'Outfit', sans-serif; font-size: 0.625rem;
@@ -14766,7 +14772,7 @@ async function saveEditEvent() {
           <label>Jail Time *</label>
           <div style="display:flex; gap:0.75rem;">
             <div style="flex:1;">
-              <input type="number" id="pcVioJailMinutes" min="0" step="1" placeholder="0" aria-label="Jail time minutes">
+              <input type="number" id="pcVioJailMinutes" min="0" max="999" step="1" placeholder="0" aria-label="Jail time minutes">
               <div class="pcm-field-hint">Minutes</div>
             </div>
             <div style="flex:1;">
@@ -14774,6 +14780,7 @@ async function saveEditEvent() {
               <div class="pcm-field-hint">Seconds</div>
             </div>
           </div>
+          <div id="pcVioJailError" class="pcm-field-error" role="alert" style="display:none;"></div>
         </div>
         <div style="display:flex; gap:0.75rem;">
           <div class="pcm-field" style="flex:1;">

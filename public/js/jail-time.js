@@ -87,6 +87,43 @@
       return parts.join(' ');
     },
 
+    /** The most minutes a single violation can carry. */
+    MAX_MINUTES: 999,
+
+    /**
+     * Validate what an admin typed into the minutes and seconds boxes. Either
+     * box may be empty, but not both. Nothing is clamped or carried silently: a
+     * negative, a minute count over MAX_MINUTES, or seconds over 59 is reported
+     * instead.
+     *
+     * @returns {{ok:true, minutes:number, seconds:number} |
+     *           {ok:false, field:'minutes'|'seconds', message:string}}
+     */
+    validate: function (minutesRaw, secondsRaw) {
+      var raw = { minutes: minutesRaw, seconds: secondsRaw };
+      var out = {};
+      var names = ['minutes', 'seconds'];
+      for (var i = 0; i < names.length; i++) {
+        var name = names[i];
+        var v = raw[name] === null || raw[name] === undefined ? '' : String(raw[name]).trim();
+        if (v === '') { out[name] = 0; continue; }
+        if (!/^\d+$/.test(v)) {
+          return { ok: false, field: name, message: 'Enter a whole number of ' + name + '.' };
+        }
+        out[name] = parseInt(v, 10);
+      }
+      if (out.minutes > JailTime.MAX_MINUTES) {
+        return { ok: false, field: 'minutes', message: 'Enter at most ' + JailTime.MAX_MINUTES + ' minutes.' };
+      }
+      if (out.seconds > 59) {
+        return { ok: false, field: 'seconds', message: 'Enter 0 to 59 seconds.' };
+      }
+      if (out.minutes === 0 && out.seconds === 0) {
+        return { ok: false, field: 'minutes', message: 'Enter a jail time.' };
+      }
+      return { ok: true, minutes: out.minutes, seconds: out.seconds };
+    },
+
     /** Total seconds, for sorting or sentence maths. */
     toSeconds: function (v) {
       var n = JailTime.normalize(v);
