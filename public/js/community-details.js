@@ -3157,9 +3157,17 @@ function updateDepartmentJoinButton(departmentId, status) {
       const htmlCode = code.code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
       const htmlDesc = code.description.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
+      // What the code means to dispatch, when the community has said. Shown
+      // beside the wording so it is obvious which code marks a unit available.
+      const MEANS = { available: 'Available', busy: 'Busy', emergency: 'Emergency', 'off-duty': 'Off duty' };
+      const meansLabel = MEANS[code.category] || '';
+      const meansChip = meansLabel
+        ? ` <span class="tcm-v-means" data-means="${code.category}">${meansLabel}</span>`
+        : '';
+
       html += `<tr>
         <td class="tcm-v-code">${htmlCode}</td>
-        <td class="tcm-v-desc">${htmlDesc}</td>
+        <td class="tcm-v-desc">${htmlDesc}${meansChip}</td>
         <td class="tcm-v-actions">
           <button class="tcm-icon-btn" onclick="editTenCode('${code._id}', '${escapedCode}', '${escapedDescription}')" title="Edit"><i class="fa fa-pen"></i></button>
           <button class="tcm-icon-btn danger" onclick="deleteTenCode('${code._id}', '${escapedCode}')" title="Delete"><i class="fa fa-trash"></i></button>
@@ -3175,6 +3183,7 @@ function updateDepartmentJoinButton(departmentId, status) {
     document.getElementById('addEditTenCodeTitle').textContent = 'Add 10-Code';
     document.getElementById('addEditTenCodeSubmitText').textContent = 'Add 10-Code';
     document.getElementById('addEditTenCodeForm').reset();
+    document.getElementById('addEditTenCodeForm').removeAttribute('data-edit-id');
     document.getElementById('addEditTenCodeModal').style.display = 'flex';
   };
 
@@ -3187,6 +3196,11 @@ function updateDepartmentJoinButton(departmentId, status) {
     document.getElementById('addEditTenCodeSubmitText').textContent = 'Update 10-Code';
     document.getElementById('tenCodeCode').value = code;
     document.getElementById('tenCodeDescription').value = description;
+    const categoryEl = document.getElementById('tenCodeCategory');
+    if (categoryEl) {
+      const existing = (window.allTenCodes || []).find(tc => tc._id === id);
+      categoryEl.value = (existing && existing.category) || '';
+    }
     
     // Store the ID for updating
     document.getElementById('addEditTenCodeForm').setAttribute('data-edit-id', id);
@@ -3239,6 +3253,8 @@ function updateDepartmentJoinButton(departmentId, status) {
         
         const code = document.getElementById('tenCodeCode').value.trim();
         const description = document.getElementById('tenCodeDescription').value.trim();
+        const categoryEl = document.getElementById('tenCodeCategory');
+        const category = categoryEl ? categoryEl.value : '';
         const editId = this.getAttribute('data-edit-id');
         
         if (!code || !description) {
@@ -3248,17 +3264,17 @@ function updateDepartmentJoinButton(departmentId, status) {
         
         if (editId) {
           // Update existing 10-code
-          updateTenCode(editId, code, description);
+          updateTenCode(editId, code, description, category);
         } else {
           // Add new 10-code
-          addTenCode(code, description);
+          addTenCode(code, description, category);
         }
       });
     }
   });
 
   // Add new 10-code
-  async function addTenCode(code, description) {
+  async function addTenCode(code, description, category) {
     try {
       const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes?userId=${userId}`, {
         method: 'POST',
@@ -3269,6 +3285,7 @@ function updateDepartmentJoinButton(departmentId, status) {
         body: JSON.stringify({
           code: code,
           description: description,
+          category: category || '',
           isActive: true
         })
       });
@@ -3289,6 +3306,7 @@ function updateDepartmentJoinButton(departmentId, status) {
         _id: responseData.tenCode._id,
         code: responseData.tenCode.code,
         description: responseData.tenCode.description,
+        category: responseData.tenCode.category || '',
         isActive: true
       };
       
@@ -3340,20 +3358,29 @@ function updateDepartmentJoinButton(departmentId, status) {
 
   function exportTenCodesJSON() {
     var tenCodes = (window.allTenCodes || []).map(function(tc) {
-      return { code: tc.code, description: tc.description };
+      return { code: tc.code, description: tc.description, category: tc.category || '' };
     });
     tcTriggerDownload(JSON.stringify(tenCodes, null, 2), 'ten-codes.json', 'application/json');
     showCustomToast('10-Codes exported as JSON', 'success');
   }
 
+  // The categories the API accepts. Anything else in an imported file is
+  // dropped rather than sent, so one bad cell cannot fail the whole import.
+  var TEN_CODE_CATEGORIES = ['available', 'busy', 'emergency', 'off-duty'];
+  function tcCategory(raw) {
+    var value = String(raw || '').trim().toLowerCase();
+    return TEN_CODE_CATEGORIES.indexOf(value) !== -1 ? value : '';
+  }
+
   function exportTenCodesCSV() {
-    var rows = [['code', 'description']];
+    var rows = [['code', 'description', 'category']];
     (window.allTenCodes || []).forEach(function(tc) {
       var code = String(tc.code || '').replace(/"/g, '""');
       var desc = String(tc.description || '').replace(/"/g, '""');
       rows.push([
         (code.indexOf(',') >= 0 || code.indexOf('"') >= 0) ? '"' + code + '"' : code,
-        (desc.indexOf(',') >= 0 || desc.indexOf('"') >= 0) ? '"' + desc + '"' : desc
+        (desc.indexOf(',') >= 0 || desc.indexOf('"') >= 0) ? '"' + desc + '"' : desc,
+        tcCategory(tc.category)
       ]);
     });
     var csv = rows.map(function(r) { return r.join(','); }).join('\n');
@@ -3427,7 +3454,7 @@ function updateDepartmentJoinButton(departmentId, status) {
       var code = (item.code || '').trim();
       var description = (item.description || '').trim();
       if (!code || !description) throw new Error('Item at index ' + i + ' has empty code or description');
-      result.push({ code: code, description: description });
+      result.push({ code: code, description: description, category: tcCategory(item.category) });
     });
     if (result.length === 0) throw new Error('No valid 10-codes found in file');
     return result;
@@ -3441,6 +3468,7 @@ function updateDepartmentJoinButton(departmentId, status) {
     var header = lines[0].map(function(h) { return h.trim().toLowerCase(); });
     var codeIdx = header.indexOf('code');
     var descIdx = header.indexOf('description');
+    var categoryIdx = header.indexOf('category');
     // Fallback: if no recognized header, treat as 2-column (code, description)
     if (codeIdx < 0) codeIdx = 0;
     if (descIdx < 0) descIdx = 1;
@@ -3453,7 +3481,8 @@ function updateDepartmentJoinButton(departmentId, status) {
       var description = (descIdx < row.length ? row[descIdx] : '').trim();
 
       if (code && description) {
-        result.push({ code: code, description: description });
+        var category = categoryIdx >= 0 && categoryIdx < row.length ? row[categoryIdx] : '';
+        result.push({ code: code, description: description, category: tcCategory(category) });
       }
     }
 
@@ -3504,7 +3533,7 @@ function updateDepartmentJoinButton(departmentId, status) {
   }
 
   // Update existing 10-code
-  async function updateTenCode(id, code, description) {
+  async function updateTenCode(id, code, description, category) {
     try {
       const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes/${id}?userId=${userId}`, {
         method: 'PUT',
@@ -3515,7 +3544,7 @@ function updateDepartmentJoinButton(departmentId, status) {
         body: JSON.stringify({
           code: code,
           description: description,
-          isActive: true
+          category: category || ''
         })
       });
 
@@ -3532,6 +3561,7 @@ function updateDepartmentJoinButton(departmentId, status) {
         _id: id,
         code: code,
         description: description,
+        category: category || '',
         isActive: true
       };
       

@@ -15790,6 +15790,16 @@ async function saveEditEvent() {
         color: #fbbf24; font-weight: 600; white-space: nowrap;
       }
       .tcm-v-desc { color: #e2e8f0; }
+      /* What a code means to dispatch, when the community has set it. */
+      .tcm-v-means {
+        display: inline-block; margin-left: 0.4rem; padding: 1px 7px; border-radius: 999px;
+        font-size: 10px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+        border: 1px solid rgba(148,163,184,0.3); color: #cbd5e1; background: rgba(148,163,184,0.12);
+        vertical-align: middle;
+      }
+      .tcm-v-means[data-means="available"] { color: #4ade80; border-color: rgba(34,197,94,0.35); background: rgba(34,197,94,0.12); }
+      .tcm-v-means[data-means="busy"]      { color: #fbbf24; border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.12); }
+      .tcm-v-means[data-means="emergency"] { color: #f87171; border-color: rgba(239,68,68,0.35); background: rgba(239,68,68,0.12); }
       .tcm-v-actions { text-align: right; white-space: nowrap; }
       .tcm-v-actions .tcm-icon-btn {
         width: 24px; height: 24px; border: none; background: transparent;
@@ -15978,6 +15988,19 @@ async function saveEditEvent() {
             <div class="tcm-field">
               <label>Description</label>
               <textarea id="tenCodeDescription" placeholder="e.g., HOLD ALL BUT EMERGENCY" required rows="3"></textarea>
+            </div>
+            <div class="tcm-field">
+              <label>What it means to dispatch</label>
+              <select id="tenCodeCategory">
+                <option value="">Nothing in particular</option>
+                <option value="available">Available</option>
+                <option value="busy">Busy</option>
+                <option value="emergency">Emergency</option>
+                <option value="off-duty">Off duty</option>
+              </select>
+              <small style="display:block; margin-top:0.35rem; color:#94a3b8;">
+                Dispatch uses this to colour the unit and to answer who is available. Set it on your own wording and dispatch will follow it.
+              </small>
             </div>
           </div>
           <div class="tcm-edit-footer">

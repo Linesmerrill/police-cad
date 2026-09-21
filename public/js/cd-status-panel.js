@@ -61,15 +61,27 @@
      Code Category Colors
      ─────────────────────────────────────────── */
 
-  function codeCategory(code, description) {
+  // A category the community set on the ten-code is the answer. The text
+  // matching below it is an English-only guess and finds nothing in a community
+  // that renamed its codes to plain words or another language, which is why
+  // those units all came out blue.
+  function codeCategory(code, description, category) {
+    switch (category) {
+      case 'emergency': return 'red';
+      case 'busy':
+      case 'off-duty':  return 'amber';
+      case 'available': return 'green';
+    }
+
     var c = (code || '').toLowerCase();
     var d = (description || '').toLowerCase();
+    var text = c + ' ' + d;
 
-    if (c.indexOf('signal 100') !== -1 || d.indexOf('emergency') !== -1) return 'red';
+    if (c.indexOf('signal 100') !== -1 || text.indexOf('emergency') !== -1) return 'red';
     if (c.indexOf('10-6') === 0 || c.indexOf('10-7') === 0 ||
-        d.indexOf('out of service') !== -1 || d.indexOf('busy') !== -1 || d.indexOf('off duty') !== -1) return 'amber';
-    if (c.indexOf('10-8') === 0 || d.indexOf('in service') !== -1 || d.indexOf('available') !== -1 ||
-        d.indexOf('under control') !== -1 || d.indexOf('code 4') !== -1) return 'green';
+        text.indexOf('out of service') !== -1 || text.indexOf('busy') !== -1 || text.indexOf('off duty') !== -1) return 'amber';
+    if (c.indexOf('10-8') === 0 || text.indexOf('in service') !== -1 || text.indexOf('available') !== -1 ||
+        text.indexOf('under control') !== -1 || text.indexOf('code 4') !== -1) return 'green';
     return 'blue';
   }
 
@@ -350,7 +362,7 @@
   function renderCodeCard(tc) {
     var id = tc._id;
     if (id && typeof id === 'object' && id.$oid) id = id.$oid;
-    var cat = codeCategory(tc.code, tc.description);
+    var cat = codeCategory(tc.code, tc.description, tc.category);
     var isActive = String(id) === String(state.activeTenCodeID);
     var isLoading = String(id) === String(state.settingCode);
 
@@ -373,7 +385,7 @@
 
     var tc = findCodeById(state.activeTenCodeID);
     if (tc) {
-      var cat = codeCategory(tc.code, tc.description);
+      var cat = codeCategory(tc.code, tc.description, tc.category);
       $badge.text('Current: ' + tc.code)
         .css({ background: categoryBg(cat), color: categoryColor(cat) });
     } else {
