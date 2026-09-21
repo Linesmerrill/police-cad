@@ -467,6 +467,14 @@
       var communityId = <%- JSON.stringify(typeof communityId !== 'undefined' ? communityId : '') %>;
       var communityIdEncoded = <%- JSON.stringify(typeof communityIdEncoded !== 'undefined' ? communityIdEncoded : '') %>;
       var currentUser = <%- JSON.stringify(typeof currentUser !== 'undefined' ? currentUser : null) %>;
+
+      // Who is asking. The API checks the "manage forms" permission on every
+      // write, and this page has no bearer token, so the id travels as a query
+      // parameter the way it does everywhere else on the site.
+      function uidQ(joiner) {
+        var id = (currentUser && currentUser.id) || '';
+        return id ? (joiner || '?') + 'userId=' + encodeURIComponent(id) : '';
+      }
       var blocked = <%- JSON.stringify(typeof blocked !== 'undefined' ? !!blocked : false) %>;
 
       // Propagate the dashboard entry-point through to /reports. The
@@ -716,14 +724,14 @@
       }
 
       function toggleHide(slug, hidden) {
-        fetch(apiUrl + '/api/v1/form-template/community/' + encodeURIComponent(communityId) + '/default/' + encodeURIComponent(slug) + '/hide?hidden=' + (hidden ? 'true' : 'false'), { method: 'PUT' })
+        fetch(apiUrl + '/api/v1/form-template/community/' + encodeURIComponent(communityId) + '/default/' + encodeURIComponent(slug) + '/hide?hidden=' + (hidden ? 'true' : 'false') + uidQ('&'), { method: 'PUT' })
           .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
           .then(function () { toast(hidden ? 'Default hidden for this community' : 'Default restored', 'success'); loadTemplates(); })
           .catch(function (e) { toast('Failed: ' + (e && e.message), 'error'); });
       }
 
       function archiveTemplate(id, archived) {
-        fetch(apiUrl + '/api/v1/form-template/' + encodeURIComponent(id), {
+        fetch(apiUrl + '/api/v1/form-template/' + encodeURIComponent(id) + uidQ(), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ isArchived: archived })
@@ -1396,7 +1404,7 @@
         var url, method;
         var body;
         if (state.isNew) {
-          url = apiUrl + '/api/v1/form-template';
+          url = apiUrl + '/api/v1/form-template' + uidQ();
           method = 'POST';
           body = {
             communityID: communityId,
@@ -1412,7 +1420,7 @@
             sections: t.sections,
           };
         } else {
-          url = apiUrl + '/api/v1/form-template/' + encodeURIComponent(t._id);
+          url = apiUrl + '/api/v1/form-template/' + encodeURIComponent(t._id) + uidQ();
           method = 'PUT';
           body = {
             name: t.name,

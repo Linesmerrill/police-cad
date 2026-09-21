@@ -3777,17 +3777,20 @@ function renderPermissionsList() {
     );
   }
   
-  // Group permissions into categories
+  // Group permissions into categories. Anything the buckets do not name falls
+  // into Feature Permissions rather than vanishing: these filters were an
+  // allow-list, so manage ranks, view audit logs and manage forms existed on
+  // every role and were never shown to anyone.
   const generalPermissions = filteredPermissions.filter(p =>
     p.name.includes('manage community') || p.name.includes('manage departments')
   );
 
-  const featurePermissions = filteredPermissions.filter(p =>
-    p.name.includes('manage most wanted') || p.name.includes('manage bans') || p.name.includes('manage records')
-  );
-
   const advancedPermissions = filteredPermissions.filter(p =>
     p.name === 'administrator' || p.name.includes('manage roles') || p.name.includes('manage members')
+  );
+
+  const featurePermissions = filteredPermissions.filter(p =>
+    !generalPermissions.includes(p) && !advancedPermissions.includes(p)
   );
 
   let html = '';
