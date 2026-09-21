@@ -10163,6 +10163,12 @@ function loadAddMemberPage(page) {
     // Use v2 members endpoint for browsing
     url = API_URL + '/api/v2/community/' + communityId + '/members?page=' + page + '&limit=' + addMemberLimit;
   }
+  // Let the API leave out everyone the department already has. Filtering here
+  // could only ever see the one page of members on screen, so every existing
+  // member past that page was offered and came back as "Failed to add member".
+  if (currentEditDepartment) {
+    url += '&exclude_dept_id=' + encodeURIComponent(currentEditDepartment);
+  }
 
   fetch(url)
     .then(function(res) { return res.json(); })
@@ -10175,10 +10181,7 @@ function loadAddMemberPage(page) {
         };
       });
 
-      // Filter out members already in the department
-      var existingIds = {};
-      editDeptMembersData.forEach(function(m) { existingIds[m.userID] = true; });
-      addMemberCurrentData = members.filter(function(m) { return !existingIds[m.userId]; });
+      addMemberCurrentData = members;
 
       var pagination = data.pagination || {};
       addMemberTotalPages = pagination.totalPages || Math.ceil((pagination.totalCount || members.length) / addMemberLimit) || 1;
@@ -10242,18 +10245,21 @@ function addMemberToDept(userId) {
     body: JSON.stringify({ members: [userId] })
   })
   .then(function(res) {
-    if (!res.ok) throw new Error('Failed to add member');
+    if (!res.ok) return apiErrorReason(res).then(function(reason) { throw new Error(reason); });
     return res.json();
   })
-  .then(function() {
-    if (typeof showToast === 'function') showToast('Member added', 2000);
+  .then(function(data) {
+    var alreadyThere = data && data.skipped && data.skipped.indexOf(userId) !== -1;
+    if (typeof showToast === 'function') {
+      showToast(alreadyThere ? 'Already in this department' : 'Member added', 2000);
+    }
     // Refresh department members list, then reload add-member page
     loadEditDeptMembers(departmentId, editDeptMembersPage);
     setTimeout(function() { loadAddMemberPage(addMemberPage); }, 500);
   })
   .catch(function(err) {
     console.error('Add member error:', err);
-    if (typeof showToast === 'function') showToast('Failed to add member', 2500, 'error');
+    if (typeof showToast === 'function') showToast('Failed to add member: ' + err.message, 3000, 'error');
   });
 }
 </script>
