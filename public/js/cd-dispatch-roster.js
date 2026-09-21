@@ -59,8 +59,8 @@
   // common "10-" / "10 " / "signal-" / "signal " prefix variants so a
   // dispatcher who set "Signal-42" still classifies correctly.
   //
-  // TODO(community-config): let community admins designate which codes
-  // mean on-duty / off-duty per community when they configure ten-codes.
+  // Communities can now categorise each ten-code, and isOffDuty honours that
+  // first. What follows is only for codes with no category set.
   var OFF_DUTY_CODE_SUFFIXES = { '42': 1, '7': 1 };
   var OFF_DUTY_DESC_FRAGMENTS = [
     'off duty', 'off-duty', 'end of', 'end-of', 'out of service',
@@ -84,20 +84,26 @@
   // Resolve the description for a tenCode by looking it up in the
   // community's cached ten-code list (the /units endpoint only returns
   // {id, code} on the tenCode object).
-  function unitCodeDesc(tenCode) {
-    if (!tenCode) return '';
+  function cachedTenCode(tenCode) {
+    if (!tenCode) return {};
     var cache = (cfg().communityData || {}).tenCodes || [];
     for (var i = 0; i < cache.length; i++) {
-      if (cache[i]._id === tenCode.id || cache[i]._id === tenCode._id) {
-        return (cache[i].description || '').toLowerCase();
-      }
+      if (cache[i]._id === tenCode.id || cache[i]._id === tenCode._id) return cache[i];
     }
-    return '';
+    return {};
+  }
+
+  function unitCodeDesc(tenCode) {
+    return (cachedTenCode(tenCode).description || '').toLowerCase();
   }
 
   function isOffDuty(u) {
     var code = unitCode(u);
     if (!code) return true; // no code yet = hasn't started a shift
+    // A category the community set is the answer; the guessing below it only
+    // runs for codes nobody has categorised.
+    var category = cachedTenCode(u && u.tenCode).category || '';
+    if (category) return category === 'off-duty';
     if (OFF_DUTY_CODE_SUFFIXES[codeSuffix(code)]) return true;
     var desc = unitCodeDesc(u && u.tenCode);
     for (var i = 0; i < OFF_DUTY_DESC_FRAGMENTS.length; i++) {
@@ -314,13 +320,9 @@
   // tenCodes (the /units endpoint only returns {id, code}, not description).
   function toneFor(tenCode) {
     if (!tenCode || !tenCode.code) return 'other';
-    var desc = '';
-    var cache = (cfg().communityData || {}).tenCodes || [];
-    for (var i = 0; i < cache.length; i++) {
-      if (cache[i]._id === tenCode.id || cache[i]._id === tenCode._id) { desc = cache[i].description || ''; break; }
-    }
+    var configured = cachedTenCode(tenCode);
     return typeof window.cdStatusColor === 'function'
-      ? window.cdStatusColor(tenCode.code, desc)
+      ? window.cdStatusColor(tenCode.code, configured.description || '', configured.category || '')
       : 'other';
   }
 

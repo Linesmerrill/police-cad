@@ -135,16 +135,13 @@
     return arr.map(flatten).filter(Boolean);
   }
 
-  /** Compute age from birthday string */
+  /**
+   * Compute age from a birthday string. A birthday is a calendar date, so it is
+   * read as year, month and day rather than as an instant — parsing it with
+   * `new Date()` lands on UTC midnight and reads a day early west of UTC.
+   */
   function calcAge(birthday) {
-    if (!birthday) return '';
-    var d = new Date(birthday);
-    if (isNaN(d)) return '';
-    var now = new Date();
-    var age = now.getFullYear() - d.getFullYear();
-    var m = now.getMonth() - d.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
-    return age > 0 ? age : '';
+    return window.dateOnly.age(birthday);
   }
 
   /** Build initials from a name string */

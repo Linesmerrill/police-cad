@@ -2163,11 +2163,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
     };
   }
 
-  // Returns true when the user is the community owner OR has the
-  // 'administrator' permission via community roles. Mirrors the gating
-  // used elsewhere in routes.js. Failures are non-fatal: a network blip
+  // Returns true when the user is the community owner OR holds one of the given
+  // permissions via community roles ('administrator' always counts). Mirrors the
+  // gating used elsewhere in routes.js. Failures are non-fatal: a network blip
   // returns false (no UI shown) rather than 500-ing the page.
-  async function userCanManageCommunity(req, communityId) {
+  async function userCanManageCommunity(req, communityId, ...permissionNames) {
     if (!req.user || !communityId) return false;
     const userId = req.user._id ? String(req.user._id) : null;
     if (!userId) return false;
@@ -2185,7 +2185,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!Array.isArray(role.members) || !role.members.includes(userId)) continue;
         if (!Array.isArray(role.permissions)) continue;
         for (const perm of role.permissions) {
-          if (perm?.name === 'administrator' && perm.enabled === true) return true;
+          if (perm?.enabled !== true) continue;
+          if (perm.name === 'administrator') return true;
+          if (permissionNames.includes(perm.name)) return true;
         }
       }
     } catch (e) {
@@ -2207,7 +2209,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       console.error('Error fetching community for /reports:', err.message);
     }
 
-    const canManageForms = await userCanManageCommunity(req, communityId);
+    const canManageForms = await userCanManageCommunity(req, communityId, 'manage forms');
 
     res.render("reports-list", {
       user: req.user,
@@ -2254,7 +2256,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     const slug = (req.query.slug || 'incident-report').replace(/[^a-z0-9-_]/gi, '');
     const departmentId = req.user?.user?.lastAccessedCommunity?.activeDepartmentID || '';
 
-    const canManageForms = await userCanManageCommunity(req, communityId);
+    const canManageForms = await userCanManageCommunity(req, communityId, 'manage forms');
     const accessibleDepartments = await listAccessibleDepartments(req, communityId, canManageForms);
 
     res.render("report-edit", {
@@ -2283,7 +2285,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     const departmentId = req.user?.user?.lastAccessedCommunity?.activeDepartmentID || '';
     const readOnly = req.query.view === '1';
 
-    const canManageForms = await userCanManageCommunity(req, communityId);
+    const canManageForms = await userCanManageCommunity(req, communityId, 'manage forms');
     const accessibleDepartments = await listAccessibleDepartments(req, communityId, canManageForms);
 
     res.render("report-edit", {
@@ -2361,7 +2363,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     if (!communityId) return res.redirect('/communities');
     const communityIdEncoded = req.params.hash;
 
-    const canManageForms = await userCanManageCommunity(req, communityId);
+    const canManageForms = await userCanManageCommunity(req, communityId, 'manage forms');
 
     let communityName = null;
     try {

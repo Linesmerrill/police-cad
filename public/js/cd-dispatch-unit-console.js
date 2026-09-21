@@ -457,7 +457,7 @@
     var grid = visible.length
       ? '<div class="cd-unit-console-codes">' + visible.map(function (c) {
           var id = c._id || c.id;
-          var tone = (typeof window.cdStatusColor === 'function') ? window.cdStatusColor(c.code, c.description) : 'other';
+          var tone = (typeof window.cdStatusColor === 'function') ? window.cdStatusColor(c.code, c.description, c.category) : 'other';
           var active = id === currentCodeId;
           return (
             '<button type="button" class="cd-unit-console-code-btn' + (active ? ' is-active' : '') + '" data-ten-code-id="' + esc(id) + '" data-tone="' + esc(tone) + '">' +

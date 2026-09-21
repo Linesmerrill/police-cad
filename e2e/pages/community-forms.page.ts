@@ -92,7 +92,9 @@ export class CommunityFormsPage {
    */
   async captureCreatePayload(): Promise<() => any> {
     let captured: any = null;
-    await this.page.route('**/api/v1/form-template', async (route) => {
+    // A regex, not a glob: the builder appends ?userId=... so the API can check
+    // the "manage forms" permission, and a glob ending at the path misses that.
+    await this.page.route(/\/api\/v1\/form-template(\?|$)/, async (route) => {
       if (route.request().method() !== 'POST') return route.continue();
       try {
         captured = JSON.parse(route.request().postData() || '{}');

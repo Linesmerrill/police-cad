@@ -1915,17 +1915,30 @@
       }
     };
 
-    // Maps a 10-code + description to a semantic status tone used across command-dashboard
+    // Maps a ten-code to a semantic status tone used across command-dashboard
     // widgets (MDT badge, dispatch roster chip, assigned pills). Returns one of
-    // 'emergency' | 'available' | 'busy' | 'other'. Text matching is intentionally
-    // permissive (English substrings) to accommodate community-defined codes; future
-    // work can let communities map codes to tones explicitly.
-    window.cdStatusColor = window.cdStatusColor || function(code, desc) {
+    // 'emergency' | 'available' | 'busy' | 'other'.
+    //
+    // A community can set a category on each of its ten-codes, and that is the
+    // answer when it is there. Only when it is not do we fall back to reading the
+    // text, which is guesswork in English: a community that renamed its codes to
+    // plain words, or runs in another language, has nothing here to match, so
+    // every unit came out 'other' and dispatch looked broken. The text fallback
+    // now reads the code as well as the description, so a code literally named
+    // "Available" is recognised without any configuration.
+    window.cdStatusColor = window.cdStatusColor || function(code, desc, category) {
+      switch (category) {
+        case 'emergency': return 'emergency';
+        case 'available': return 'available';
+        case 'busy':      return 'busy';
+        case 'off-duty':  return 'busy';
+      }
       var c = (code || '').toLowerCase();
       var d = (desc || '').toLowerCase();
-      if (c.indexOf('signal 100') !== -1 || d.indexOf('emergency') !== -1) return 'emergency';
-      if (c.indexOf('10-8') !== -1 || c.indexOf('code 4') !== -1 || d.indexOf('available') !== -1 || d.indexOf('in service') !== -1 || d.indexOf('under control') !== -1) return 'available';
-      if (c.indexOf('10-7') !== -1 || c.indexOf('10-6') !== -1 || d.indexOf('out of service') !== -1 || d.indexOf('busy') !== -1) return 'busy';
+      var text = c + ' ' + d;
+      if (c.indexOf('signal 100') !== -1 || text.indexOf('emergency') !== -1) return 'emergency';
+      if (c.indexOf('10-8') !== -1 || c.indexOf('code 4') !== -1 || text.indexOf('available') !== -1 || text.indexOf('in service') !== -1 || text.indexOf('under control') !== -1) return 'available';
+      if (c.indexOf('10-7') !== -1 || c.indexOf('10-6') !== -1 || text.indexOf('out of service') !== -1 || text.indexOf('busy') !== -1) return 'busy';
       return 'other';
     };
     window.cdStatusToneStyle = window.cdStatusToneStyle || function(tone) {
@@ -2538,6 +2551,7 @@
   <script src="/static/js/cd-beta-feedback.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <!-- Police command components -->
   <script src="/static/js/vehicle-flags.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+<script src="/static/js/date-only.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/cd-person-search.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/cd-vehicle-search.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/cd-firearm-search.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>

@@ -869,7 +869,7 @@
             url: `${API_URL}/api/v1/community/${communityId}/departments/${departmentId}/members`,
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ memberIds: selectedMembers.map(m => m._id) }),
+            data: JSON.stringify({ members: selectedMembers.map(m => m._id) }),
             success: function() {
               $('.modal').modal('hide');
               $('.modal').remove();
@@ -958,7 +958,7 @@
               url: `${API_URL}/api/v1/community/${communityId}/departments/${departmentId}/members`,
               method: 'POST',
               contentType: 'application/json',
-              data: JSON.stringify({ memberIds: selectedMembers.map(m => m._id) }),
+              data: JSON.stringify({ members: selectedMembers.map(m => m._id) }),
               success: function() {
                 $('.modal').modal('hide');
                 $('.modal').remove();

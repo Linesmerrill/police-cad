@@ -43,22 +43,14 @@
   function esc(s) { return window.esc ? window.esc(s) : String(s || '').replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function toast(msg, type) { if (window.ddToast) window.ddToast(msg, type); }
 
+  // Dates of birth and the like are calendar dates, not instants. Reading them
+  // through `new Date()` renders the day before for anyone behind UTC.
   function fmtDate(d) {
-    if (!d) return 'N/A';
-    var dt = new Date(d);
-    if (isNaN(dt.getTime()) || dt.getFullYear() <= 1970) return 'N/A';
-    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return window.dateOnly.format(d);
   }
 
   function calcAge(birthday) {
-    if (!birthday) return '';
-    var d = new Date(birthday);
-    if (isNaN(d.getTime())) return '';
-    var now = new Date();
-    var age = now.getFullYear() - d.getFullYear();
-    var m = now.getMonth() - d.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
-    return age > 0 ? String(age) : '';
+    return window.dateOnly.age(birthday);
   }
 
   /** Normalize boolean-ish API values. */
