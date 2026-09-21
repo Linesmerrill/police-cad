@@ -3,6 +3,7 @@
 <head>
   <% include ad-header %>
   <title>LPC - Most Wanted</title>
+  <script src="/static/js/date-only.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <meta charset="utf-8">
   <meta name="description" content="Lines Roleplay Police CAD - Most Wanted List" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1942,7 +1943,9 @@
       for (var f = 0; f < standardFields.length; f++) {
         var key = standardFields[f];
         if (visibleFields.indexOf(key) !== -1 && civ[key]) {
-          var val = key === 'birthday' ? formatDate(civ[key]) : civ[key];
+          // A birthday is a calendar date, not an instant: formatting it through
+          // new Date() shows the day before for viewers behind UTC.
+          var val = key === 'birthday' ? window.dateOnly.format(civ[key], { fallback: '' }) : civ[key];
           fieldsHtml += '<div class="mw-field"><span class="mw-field-label">' + escapeHtml(fieldLabel(key)) + '</span><span class="mw-field-value">' + escapeHtml(String(val)) + '</span></div>';
           hasFields = true;
         }
