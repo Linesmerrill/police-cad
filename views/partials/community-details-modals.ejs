@@ -13204,6 +13204,12 @@ async function saveEditEvent() {
         document.querySelectorAll('#memberStatusFilters .member-status-chip').forEach(function(chip) {
           chip.classList.toggle('is-active', chip.getAttribute('data-status') === status);
         });
+        // A search already on screen stays on screen: re-run it against the
+        // group just picked rather than dropping the term and listing everyone.
+        if (communityCurrentSearchTerm) {
+          performMemberSearch(communityCurrentSearchTerm, 1);
+          return;
+        }
         loadMembers(1);
       }
 
@@ -13605,7 +13611,10 @@ async function saveEditEvent() {
           const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
           
           // Use the new search API endpoint
-          const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/members/search?q=${encodeURIComponent(searchTerm)}&page=${page}&limit=${communityMembersLimit}`);
+          // Search the group the list is showing. Without the status, searching
+          // while on "Waiting to join" searched members instead and found
+          // nobody, which reads as the search being broken.
+          const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/members/search?q=${encodeURIComponent(searchTerm)}&page=${page}&limit=${communityMembersLimit}&status=${encodeURIComponent(communityMemberStatus)}`);
           
           if (!response.ok) {
             let errorMessage = 'Search failed';
