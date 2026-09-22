@@ -279,12 +279,17 @@
 
       if (state.reporterStats) {
         var s = state.reporterStats;
-        html += '<div class="card"><h2>The reporter</h2><dl class="kv">';
+        // Named in the heading so it is clear whose record this is without
+        // scrolling back up to "Reported by".
+        var reporterLabel = r.reporterName ? ' <span style="text-transform:none; letter-spacing:0; color:var(--ac-text);">(' + esc(r.reporterName) + ')</span>' : '';
+        html += '<div class="card"><h2>The reporter' + reporterLabel + '</h2><dl class="kv">';
         html += '<dt>Reports filed</dt><dd>' + (s.filed || 0) + '</dd>';
         html += '<dt>Upheld</dt><dd>' + (s.upheld || 0) + '</dd>';
         html += '<dt>Dismissed</dt><dd>' + (s.dismissed || 0) + '</dd>';
         html += '</dl>';
-        if ((s.filed || 0) >= 3 && (s.upheld || 0) === 0) {
+        // Only a record that has actually been judged says anything. Three
+        // reports nobody has looked at yet are not a pattern of bad reports.
+        if ((s.dismissed || 0) >= 3 && (s.upheld || 0) === 0) {
           html += '<p class="muted" style="margin:10px 0 0;">Nothing this person has reported has been upheld. Worth a look before acting on this one.</p>';
         }
         html += '</div>';
