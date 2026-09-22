@@ -13195,6 +13195,39 @@ async function saveEditEvent() {
       let communityMembersTotal = 0;
       let communityFilteredMembers = [];
       let communityCurrentSearchTerm = '';
+      // Which group the members list is showing: approved, pending or declined.
+      let communityMemberStatus = 'approved';
+
+      function setMemberStatusFilter(status) {
+        if (communityMemberStatus === status) return;
+        communityMemberStatus = status;
+        document.querySelectorAll('#memberStatusFilters .member-status-chip').forEach(function(chip) {
+          chip.classList.toggle('is-active', chip.getAttribute('data-status') === status);
+        });
+        loadMembers(1);
+      }
+
+      // The counts label the filters before anyone picks one, which is the whole
+      // point: a waiting request nobody can see is a request nobody works.
+      async function refreshMemberStatusCounts() {
+        try {
+          const communityId = '<%= community._id %>';
+          const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+          const res = await fetch(`${apiUrl}/api/v2/community/${communityId}/member-status-counts`);
+          if (!res.ok) return;
+          const counts = await res.json();
+          const set = function(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value || 0;
+          };
+          set('memberCountApproved', counts.approved);
+          set('memberCountPending', counts.pending);
+          set('memberCountDeclined', counts.declined);
+        } catch (e) {
+          // Counts are a label, never a blocker.
+          console.error('Failed to load member counts:', e);
+        }
+      }
 
       function openMembersModal() {
         // Show loading state on the card
@@ -13275,7 +13308,7 @@ async function saveEditEvent() {
           const communityId = '<%= community._id %>';
           const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
           
-          const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/members?limit=${communityMembersLimit}&page=${page}`);
+          const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/members?limit=${communityMembersLimit}&page=${page}&status=${encodeURIComponent(communityMemberStatus)}`);
           
           if (!response.ok) {
             throw new Error(`Failed to fetch members: ${response.status}`);
@@ -13291,6 +13324,7 @@ async function saveEditEvent() {
           
           renderMembersList();
           updatePagination();
+          refreshMemberStatusCounts();
           
           // Hide pagination loading state after new page is loaded
           hidePaginationLoading();
@@ -13333,8 +13367,13 @@ async function saveEditEvent() {
           return;
         }
         
+        // A person in the list is either a member, or someone waiting on a
+        // decision. Opening the member actions sheet for the second makes no
+        // sense — there is nothing to kick — so they get the decision instead.
+        const isDecisionList = communityMemberStatus !== 'approved';
+
         const membersHtml = communityMembersData.map(member => `
-          <div class="member-item" style="background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:1rem; margin-bottom:0.75rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;" onclick="openMemberActions('${member._id}')">
+          <div class="member-item" style="background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:1rem; margin-bottom:0.75rem; cursor:${isDecisionList ? 'default' : 'pointer'}; transition:all 0.2s;" ${isDecisionList ? '' : `onclick="openMemberActions('${member._id}')"`}>
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <div style="flex:1;">
                 <div style="display:flex; align-items:center; gap:0.75rem;">
@@ -13355,19 +13394,116 @@ async function saveEditEvent() {
                 </div>
               </div>
               <div style="text-align:right;">
-                <div style="color:#10b981; font-size:0.875rem; font-weight:500; margin-bottom:0.25rem;">
-                  ${getMemberRole(member) || 'Member'}
-                </div>
-                <div style="color:#a0aec0; font-size:0.75rem;">
-                  Member since ${getMemberJoinDate(member)}
-                </div>
-                ${member.user?.isOnline ? '<div style="color:#10b981; font-size:0.75rem;"><i class="fa fa-circle"></i> Online</div>' : ''}
+                ${isDecisionList ? `
+                  <div style="color:#fbbf24; font-size:0.8rem; font-weight:600;">
+                    ${communityMemberStatus === 'pending' ? 'Waiting to join' : 'Declined'}
+                  </div>
+                ` : `
+                  <div style="color:#10b981; font-size:0.875rem; font-weight:500; margin-bottom:0.25rem;">
+                    ${getMemberRole(member) || 'Member'}
+                  </div>
+                  <div style="color:#a0aec0; font-size:0.75rem;">
+                    Member since ${getMemberJoinDate(member)}
+                  </div>
+                  ${member.user?.isOnline ? '<div style="color:#10b981; font-size:0.75rem;"><i class="fa fa-circle"></i> Online</div>' : ''}
+                `}
               </div>
             </div>
+            ${isDecisionList ? `
+              <div class="member-pending-actions" data-member-actions="${member._id}">
+                <button type="button" class="member-pending-btn" data-action="approve" onclick="decideMemberRequest('${member._id}', 'approved', '${escapeMemberName(member.user?.username)}')">
+                  <i class="fa fa-check"></i> Approve
+                </button>
+                ${communityMemberStatus === 'pending' ? `
+                  <button type="button" class="member-pending-btn" data-action="decline" onclick="decideMemberRequest('${member._id}', 'declined', '${escapeMemberName(member.user?.username)}')">
+                    <i class="fa fa-times"></i> Decline
+                  </button>
+                ` : ''}
+                <button type="button" class="member-pending-btn" data-action="block" onclick="blockMemberRequest('${member._id}', '${escapeMemberName(member.user?.username)}')">
+                  <i class="fa fa-ban"></i> Block
+                </button>
+              </div>
+            ` : ''}
           </div>
         `).join('');
         
         listContainer.innerHTML = membersHtml;
+      }
+
+      // A username goes into an inline onclick, so quotes and backslashes in it
+      // would break the handler.
+      function escapeMemberName(name) {
+        return String(name || 'this person').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      }
+
+      function setMemberDecisionBusy(memberId, busy) {
+        const row = document.querySelector(`[data-member-actions="${memberId}"]`);
+        if (!row) return;
+        row.querySelectorAll('button').forEach(function(btn) { btn.disabled = busy; });
+      }
+
+      // Approve or decline someone's request to join the community. This is the
+      // same call the notification screen makes; the point of having it here is
+      // that the people waiting are visible in the first place.
+      async function decideMemberRequest(memberId, status, username) {
+        setMemberDecisionBusy(memberId, true);
+        try {
+          const communityId = '<%= community._id %>';
+          const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+
+          const response = await fetch(`${apiUrl}/api/v1/user/${memberId}/communities?migration=false&userId=${window.dbUser?._id || ''}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ communityId, status })
+          });
+
+          if (!response.ok) {
+            throw new Error(await apiErrorReason(response));
+          }
+
+          showToast(status === 'approved' ? `${username} is now a member` : `Request from ${username} declined`, 3000, 'success');
+          loadMembers(communityMembersPage);
+        } catch (error) {
+          setMemberDecisionBusy(memberId, false);
+          showToast(`Could not update ${username}: ${error.message}`, 4000, 'error');
+        }
+      }
+
+      // Blocking is the one that cannot be walked back by the person: they are
+      // banned from the community and cannot ask again, so it gets a confirm.
+      function blockMemberRequest(memberId, username) {
+        showCustomConfirm(
+          'Block this person',
+          `<strong>${username}</strong> will be banned from this community and will not be able to request to join again.`,
+          function() { performBlockMemberRequest(memberId, username); },
+          null,
+          'Block',
+          'Cancel'
+        );
+      }
+
+      async function performBlockMemberRequest(memberId, username) {
+        setMemberDecisionBusy(memberId, true);
+        try {
+          const communityId = '<%= community._id %>';
+          const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+
+          const response = await fetch(`${apiUrl}/api/v1/user/${memberId}/ban-community?userId=${window.dbUser?._id || ''}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ communityId })
+          });
+
+          if (!response.ok) {
+            throw new Error(await apiErrorReason(response));
+          }
+
+          showToast(`${username} was blocked`, 3000, 'success');
+          loadMembers(communityMembersPage);
+        } catch (error) {
+          setMemberDecisionBusy(memberId, false);
+          showToast(`Could not block ${username}: ${error.message}`, 4000, 'error');
+        }
       }
 
       function updatePagination() {
@@ -14011,6 +14147,21 @@ async function saveEditEvent() {
                   <input type="text" id="memberSearchInput" placeholder="Search by username, email, or role..." 
                          style="width:100%; padding:0.75rem 1rem; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; font-size:1rem; box-sizing:border-box;"
                          oninput="searchMembers(this.value)">
+                </div>
+
+                <!-- Which group of people this list is showing. Waiting join
+                     requests used to live only in notifications, where they had
+                     to be caught as they went past. -->
+                <div id="memberStatusFilters" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.25rem;">
+                  <button type="button" class="member-status-chip is-active" data-status="approved" onclick="setMemberStatusFilter('approved')">
+                    Members <span class="member-status-count" id="memberCountApproved">0</span>
+                  </button>
+                  <button type="button" class="member-status-chip" data-status="pending" onclick="setMemberStatusFilter('pending')">
+                    Waiting to join <span class="member-status-count" id="memberCountPending">0</span>
+                  </button>
+                  <button type="button" class="member-status-chip" data-status="declined" onclick="setMemberStatusFilter('declined')">
+                    Declined <span class="member-status-count" id="memberCountDeclined">0</span>
+                  </button>
                 </div>
 
                 <!-- Members List -->
@@ -15810,6 +15961,28 @@ async function saveEditEvent() {
         color: #fbbf24; font-weight: 600; white-space: nowrap;
       }
       .tcm-v-desc { color: #e2e8f0; }
+      /* Members modal: which group of people the list is showing. */
+      .member-status-chip {
+        padding: 0.4rem 0.9rem; border-radius: 9999px; border: 1px solid #4a5568;
+        background: #2d3748; color: #a0aec0; font-size: 0.8rem; font-weight: 500;
+        cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem;
+      }
+      .member-status-chip:hover { border-color: #3b82f6; color: #fff; }
+      .member-status-chip.is-active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+      .member-status-count {
+        min-width: 1.25rem; padding: 0 0.35rem; border-radius: 9999px;
+        background: rgba(0,0,0,0.25); font-size: 0.7rem; font-weight: 700; text-align: center;
+      }
+      .member-status-chip.is-active .member-status-count { background: rgba(255,255,255,0.22); }
+      .member-pending-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+      .member-pending-btn {
+        border: none; border-radius: 6px; padding: 0.45rem 0.9rem;
+        font-size: 0.8rem; font-weight: 600; cursor: pointer; color: #fff;
+      }
+      .member-pending-btn[data-action="approve"] { background: #16a34a; }
+      .member-pending-btn[data-action="decline"] { background: #4a5568; }
+      .member-pending-btn[data-action="block"]   { background: #b91c1c; }
+      .member-pending-btn:disabled { opacity: 0.5; cursor: default; }
       /* Someone waiting on a decision, in the Add Members list. */
       .edm-request-chip {
         margin-left: 0.5rem; padding: 1px 7px; border-radius: 999px;
