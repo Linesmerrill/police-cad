@@ -1595,6 +1595,31 @@
               </div>
             <% } %>
 
+            <%
+              // Owner and settings staff are told when their community has been
+              // delisted, on the page itself, not only inside settings.
+              var dlPage = community.community && community.community.listingSuspension;
+              var dlPageUntil = dlPage && dlPage.until ? new Date(dlPage.until) : null;
+              var dlPageInForce = !!dlPage && (!dlPageUntil || dlPageUntil.getTime() > Date.now());
+              var dlCanSee = isOwner;
+              if (!dlCanSee && userId && Array.isArray(community.community.roles)) {
+                community.community.roles.forEach(function (role) {
+                  if (Array.isArray(role.members) && role.members.includes(userId) && Array.isArray(role.permissions)) {
+                    role.permissions.forEach(function (perm) {
+                      if (perm.enabled === true && (perm.name === 'administrator' || perm.name === 'manage community settings')) dlCanSee = true;
+                    });
+                  }
+                });
+              }
+            %>
+            <% if (dlPageInForce && dlCanSee) { %>
+              <div id="delistedBanner" role="status" class="mt-4" style="background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.35); border-radius:10px; padding:0.75rem 0.9rem; color:#fde68a; font-size:0.85rem; line-height:1.45;">
+                <strong style="color:#fef3c7;"><i class="fa fa-eye-slash mr-1"></i>Hidden from public listings<%= dlPageUntil ? ' until ' + dlPageUntil.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '' %></strong><br>
+                <% if (dlPage.categoryPhrase) { %>We reviewed reports of <%= dlPage.categoryPhrase %> about this community. <% } %>Members aren't affected; it just won't show in search or browse until then. Only you and your admins see this.
+                <a href="/contact-us" target="_blank" rel="noopener noreferrer" style="color:#fbbf24; text-decoration:underline;">Think this is a mistake?</a>
+              </div>
+            <% } %>
+
             <%# Reporting sits at the foot of the card, quiet on purpose: it has to
                 be findable by anyone who needs it without reading as an invitation.
                 Hidden from the owner, who has nothing to report their own
