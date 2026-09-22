@@ -104,6 +104,20 @@
       </p>
     </div>
 
+    <%# Checking whether they already reported it %>
+    <div class="rcm-body" id="rcmStep0" hidden>
+      <div class="rcm-done"><i class="fa fa-spinner fa-spin" aria-hidden="true"></i><p>One moment…</p></div>
+    </div>
+
+    <%# Already reported: one open report per person per community %>
+    <div class="rcm-body" id="rcmStep4" hidden>
+      <div class="rcm-done">
+        <i class="fa fa-flag" aria-hidden="true"></i>
+        <h4>Already reported</h4>
+        <p>You've already reported this community. Our team will review it, and you can report it again once they have.</p>
+      </div>
+    </div>
+
     <%# Done %>
     <div class="rcm-body" id="rcmStep3" hidden>
       <div class="rcm-done">
@@ -130,7 +144,11 @@
     var title = document.getElementById('rcmTitle');
     var back = document.getElementById('rcmBack');
     var cancel = document.getElementById('rcmCancel');
-    var steps = [null, document.getElementById('rcmStep1'), document.getElementById('rcmStep2'), document.getElementById('rcmStep3')];
+    // 0 checking, 1 reason, 2 review, 3 submitted, 4 already reported
+    var steps = [document.getElementById('rcmStep0'), document.getElementById('rcmStep1'), document.getElementById('rcmStep2'),
+                 document.getElementById('rcmStep3'), document.getElementById('rcmStep4')];
+    // The end screens carry their own heading, so the header does not repeat it.
+    var TITLES = ['Report community', 'Select a reason', 'Review Report', 'Report community', 'Report community'];
     var primary = document.getElementById('rcmPrimary');
     var errorEl = document.getElementById('rcmError');
     var details = document.getElementById('rcmDetails');
@@ -138,18 +156,33 @@
     var selectedEl = document.getElementById('rcmSelected');
     var options = Array.prototype.slice.call(modal.querySelectorAll('.rcm-option'));
 
-    var state = { step: 1, reason: '', submitting: false, lastFocus: null };
+    var state = { step: 1, reason: '', submitting: false, lastFocus: null, checkSeq: 0 };
 
     function showStep(n) {
       state.step = n;
-      for (var i = 1; i <= 3; i++) steps[i].hidden = i !== n;
-      title.textContent = n === 1 ? 'Select a reason' : n === 2 ? 'Review Report' : 'Report Submitted';
+      for (var i = 0; i < steps.length; i++) steps[i].hidden = i !== n;
+      title.textContent = TITLES[n];
       back.hidden = n !== 2;
-      cancel.textContent = n === 3 ? 'Close' : 'Cancel';
+      cancel.textContent = n >= 3 ? 'Close' : 'Cancel';
       errorEl.hidden = true;
+      if (n === 0) { primary.textContent = 'Next'; primary.disabled = true; }
       if (n === 1) { primary.textContent = 'Next'; primary.disabled = !state.reason; }
       if (n === 2) { primary.textContent = 'Submit Report'; primary.disabled = false; selectedEl.textContent = state.reason; }
-      if (n === 3) { primary.textContent = 'Done'; primary.disabled = false; }
+      if (n >= 3) { primary.textContent = 'Done'; primary.disabled = false; }
+    }
+
+    // Ask before showing the form. A failed check falls through to the form:
+    // the API still discards a duplicate on submit, and says so.
+    function checkAlreadyReported() {
+      var seq = ++state.checkSeq;
+      return fetch('/community/' + encodeURIComponent(COMMUNITY_ID) + '/report/status', { credentials: 'same-origin' })
+        .then(function (res) { return res.ok ? res.json() : { open: false }; })
+        .catch(function () { return { open: false }; })
+        .then(function (body) {
+          if (seq !== state.checkSeq || modal.hidden) return;
+          showStep(body && body.open ? 4 : 1);
+          if (!(body && body.open)) (options[0] || cancel).focus();
+        });
     }
 
     function open() {
@@ -159,13 +192,14 @@
       updateCount();
       options.forEach(function (o) { o.setAttribute('aria-checked', 'false'); });
       state.lastFocus = document.activeElement;
-      showStep(1);
+      showStep(0);
       modal.hidden = false;
       // Lock the page behind the modal, so scrolling the list does not scroll it.
       document.body.classList.add('modal-open');
       document.body.style.overflow = 'hidden';
       steps[1].scrollTop = 0;
-      (options[0] || cancel).focus();
+      cancel.focus();
+      checkAlreadyReported();
     }
 
     function close() {
@@ -199,7 +233,8 @@
         if (state.reason) showStep(2);
         return;
       }
-      if (state.step === 3) { close(); return; }
+      if (state.step >= 3) { close(); return; }
+      if (state.step === 0) return;
       if (state.submitting) return;
 
       state.submitting = true;
@@ -219,7 +254,9 @@
             return body;
           });
         })
-        .then(function () { showStep(3); })
+        // A duplicate is not stored, so it must not be announced as a new
+        // report: say it was already reported, same as when the form opens.
+        .then(function (body) { showStep(body && body.duplicate ? 4 : 3); })
         .catch(function (err) {
           errorEl.textContent = err.message || 'Failed to submit report. Please try again.';
           errorEl.hidden = false;
