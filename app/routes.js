@@ -758,6 +758,103 @@ module.exports = function (app, passport, server, nextApp, handle) {
     });
   });
 
+  // Moderation queue for user-submitted reports.
+  //
+  // Every other admin panel calls the API straight from browser JS, which the
+  // API allows on the Origin header alone. These reports are named accusations
+  // against real accounts, including allegations about children, so they are
+  // proxied here instead: the browser never talks to the API for them, the
+  // request carries the gateway secret (attached by the axios interceptor, so
+  // it stays server-side), and the acting admin comes from the session rather
+  // than from anything the page can set.
+  const reportsApiBase = () => `${process.env.POLICE_CAD_API_URL}/api/v1/admin`;
+
+  const { reportActionPath, adminActor, buildActionBody } = require("./admin-reports-proxy");
+
+  function reportsProxyError(res, err) {
+    const status = (err.response && err.response.status) || 500;
+    const data = (err.response && err.response.data) || { message: err.message };
+    return res.status(status).json(data);
+  }
+
+  app.get("/admin/api/reports", requireAdminSession, async function (req, res) {
+    try {
+      const params = new URLSearchParams();
+      ["status", "tier", "itemType", "q", "group", "page", "limit"].forEach((key) => {
+        if (req.query[key]) params.set(key, String(req.query[key]));
+      });
+      params.set("roles", adminActor(req).roles.join(","));
+      const response = await axios.get(`${reportsApiBase()}/reports?${params.toString()}`, { timeout: 10000 });
+      return res.json(response.data);
+    } catch (err) {
+      return reportsProxyError(res, err);
+    }
+  });
+
+  app.get("/admin/api/reports/:id", requireAdminSession, async function (req, res) {
+    const id = String(req.params.id || "");
+    if (!/^[a-f0-9]{24}$/i.test(id)) return res.status(400).json({ message: "invalid report id" });
+    try {
+      const roles = encodeURIComponent(adminActor(req).roles.join(","));
+      const response = await axios.get(`${reportsApiBase()}/reports/${id}?roles=${roles}`, { timeout: 10000 });
+      return res.json(response.data);
+    } catch (err) {
+      return reportsProxyError(res, err);
+    }
+  });
+
+  // uphold/preview, uphold, dismiss and escalate all take the same body shape,
+  // so one handler covers them.
+
+  app.post("/admin/api/reports/:id/:action", requireAdminSession, async function (req, res) {
+    const id = String(req.params.id || "");
+    if (!/^[a-f0-9]{24}$/i.test(id)) return res.status(400).json({ message: "invalid report id" });
+
+    const path = reportActionPath(req.params.action);
+    if (!path) return res.status(404).json({ message: "unknown action" });
+
+    try {
+      const response = await axios.post(`${reportsApiBase()}/reports/${id}/${path}`, buildActionBody(req), {
+        headers: { "Content-Type": "application/json" },
+        timeout: 15000,
+      });
+      return res.json(response.data);
+    } catch (err) {
+      return reportsProxyError(res, err);
+    }
+  });
+
+  app.post("/admin/api/offenses/:id/reverse", requireAdminSession, async function (req, res) {
+    const id = String(req.params.id || "");
+    if (!/^[a-f0-9]{24}$/i.test(id)) return res.status(400).json({ message: "invalid offense id" });
+    try {
+      const response = await axios.post(`${reportsApiBase()}/offenses/${id}/reverse`, {
+        currentUser: adminActor(req),
+        reason: (req.body && typeof req.body.reason === "string") ? req.body.reason : "",
+      }, { headers: { "Content-Type": "application/json" }, timeout: 10000 });
+      return res.json(response.data);
+    } catch (err) {
+      return reportsProxyError(res, err);
+    }
+  });
+
+  // A real URL per report, so one can be handed to another staff member and
+  // its history stays addressable.
+  app.get("/admin/report/:id", requireAdminSession, function (req, res) {
+    const id = String(req.params.id || "");
+    if (!/^[a-f0-9]{24}$/i.test(id)) {
+      return res.status(400).render("error", {
+        message: "That is not a valid report id.",
+        error: { status: 400 },
+      });
+    }
+    res.render("admin-report", {
+      user: req.user || null,
+      admin: req.session.admin,
+      reportId: id,
+    });
+  });
+
   app.get("/admin/console", requireAdminSession, function (req, res) {
     const success = req.query.success || null;
     const error = req.query.error || null;
