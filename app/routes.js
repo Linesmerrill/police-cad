@@ -769,7 +769,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // than from anything the page can set.
   const reportsApiBase = () => `${process.env.POLICE_CAD_API_URL}/api/v1/admin`;
 
-  const { reportActionPath, isObjectId, adminActor, buildActionBody } = require("./admin-reports-proxy");
+  const { reportActionPath, adminActor, buildActionBody } = require("./admin-reports-proxy");
 
   function reportsProxyError(res, err) {
     const status = (err.response && err.response.status) || 500;
@@ -793,7 +793,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   app.get("/admin/api/reports/:id", requireAdminSession, async function (req, res) {
     const id = String(req.params.id || "");
-    if (!isObjectId(id)) return res.status(400).json({ message: "invalid report id" });
+    if (!/^[a-f0-9]{24}$/i.test(id)) return res.status(400).json({ message: "invalid report id" });
     try {
       const roles = encodeURIComponent(adminActor(req).roles.join(","));
       const response = await axios.get(`${reportsApiBase()}/reports/${id}?roles=${roles}`, { timeout: 10000 });
@@ -808,7 +808,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   app.post("/admin/api/reports/:id/:action", requireAdminSession, async function (req, res) {
     const id = String(req.params.id || "");
-    if (!isObjectId(id)) return res.status(400).json({ message: "invalid report id" });
+    if (!/^[a-f0-9]{24}$/i.test(id)) return res.status(400).json({ message: "invalid report id" });
 
     const path = reportActionPath(req.params.action);
     if (!path) return res.status(404).json({ message: "unknown action" });
@@ -826,7 +826,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   app.post("/admin/api/offenses/:id/reverse", requireAdminSession, async function (req, res) {
     const id = String(req.params.id || "");
-    if (!isObjectId(id)) return res.status(400).json({ message: "invalid offense id" });
+    if (!/^[a-f0-9]{24}$/i.test(id)) return res.status(400).json({ message: "invalid offense id" });
     try {
       const response = await axios.post(`${reportsApiBase()}/offenses/${id}/reverse`, {
         currentUser: adminActor(req),
@@ -842,7 +842,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // its history stays addressable.
   app.get("/admin/report/:id", requireAdminSession, function (req, res) {
     const id = String(req.params.id || "");
-    if (!isObjectId(id)) {
+    if (!/^[a-f0-9]{24}$/i.test(id)) {
       return res.status(400).render("error", {
         message: "That is not a valid report id.",
         error: { status: 400 },
