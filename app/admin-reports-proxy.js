@@ -7,13 +7,15 @@
 // acting admin is always read from the session and anything the page posts in
 // its place is ignored.
 
-// The actions the page may ask for, mapped to the API path. Whitelisted rather
+// The actions the page may ask for, mapped to the API path. All five take the
+// same body: a reason or note from the page, the actor from the session. Whitelisted rather
 // than interpolated, so a crafted action segment cannot reach another endpoint.
 const REPORT_ACTIONS = Object.freeze({
   preview: "uphold/preview",
   uphold: "uphold",
   dismiss: "dismiss",
   escalate: "escalate",
+  reopen: "reopen",
 });
 
 const OBJECT_ID = /^[a-f0-9]{24}$/i;

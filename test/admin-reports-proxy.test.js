@@ -86,11 +86,12 @@ describe("admin-reports-proxy", function () {
   });
 
   describe("reportActionPath", function () {
-    it("resolves each of the four actions", function () {
+    it("resolves each of the five actions", function () {
       assert.equal(proxy.reportActionPath("preview"), "uphold/preview");
       assert.equal(proxy.reportActionPath("uphold"), "uphold");
       assert.equal(proxy.reportActionPath("dismiss"), "dismiss");
       assert.equal(proxy.reportActionPath("escalate"), "escalate");
+      assert.equal(proxy.reportActionPath("reopen"), "reopen");
     });
 
     // A crafted action segment must not reach another endpoint. "constructor"

@@ -125,6 +125,10 @@
       serious:  { label: 'Serious',      color: '#fbbf24', bg: 'rgba(251,191,36,0.12)' },
       minor:    { label: 'Minor',        color: '#94a3b8', bg: 'rgba(148,163,184,0.12)' }
     };
+    var HISTORY_LABELS = {
+      'resolved': 'Upheld', 'dismissed': 'Dismissed', 'welfare': 'Closed as read',
+      'escalated': 'Escalated', 'reopened': 'Reopened'
+    };
     var STATUS_LABELS = {
       'new': 'New', 'under_review': 'Under review', 'resolved': 'Resolved',
       'dismissed': 'Dismissed', 'escalated': 'Escalated', 'welfare': 'Welfare'
@@ -286,6 +290,33 @@
         html += '</div>';
       }
 
+      // History: every decision and reopen, oldest first. Reports decided before
+      // history was kept have none, and the "Decided by" line covers them.
+      var history = r.history || [];
+      if (history.length) {
+        html += '<div class="card"><h2>History</h2>';
+        history.forEach(function (e) {
+          var label = HISTORY_LABELS[e.action] || e.action;
+          html += '<div class="list-item"><strong>' + esc(label) + '</strong> <span class="muted">by ' + esc(e.by || 'Staff') + ' on ' + esc(fmtDate(e.at)) + '</span>';
+          if (e.reason) html += '<div class="muted" style="margin-top:4px;">' + esc(e.reason) + '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+
+      if (r.effectiveStatus === 'dismissed' || r.effectiveStatus === 'welfare') {
+        html += '<div class="card"><h2>Reopen</h2>';
+        html += '<p class="muted" style="margin:0 0 10px;">Closed by mistake? Reopening puts it back in the queue as new'
+          + ' along with any other reports this same decision closed. Your name and reason are recorded.</p>';
+        html += '<label for="reopenReason">Why are you reopening it?</label>';
+        html += '<textarea id="reopenReason" rows="2" placeholder="Dismissed the wrong case, new information, ..."></textarea>';
+        html += '<div id="reopenError" class="muted" style="color:var(--ac-red); display:none; margin-top:6px;">Give a reason of at least 3 characters.</div>';
+        html += '<div class="actions" style="margin-top:12px;"><button class="btn btn-accent" onclick="reopenReport()"><i class="fas fa-rotate-left"></i> Reopen</button></div>';
+        html += '</div>';
+      } else if (r.effectiveStatus === 'resolved') {
+        html += '<p class="muted">Upheld reports are not reopened. If the strike was wrong, reverse it under Strike history.</p>';
+      }
+
       if (open) {
         html += '<div class="card"><h2>Decide</h2>';
         html += '<label for="reason">Reason (recorded on the strike, never shown to the reported account)</label>';
@@ -422,6 +453,28 @@
 
     // The page has its own modal, so no native prompt: the admin console does
     // not load ddModal and a browser dialog looks like a bug here.
+    function reopenReport() {
+      var el = document.getElementById('reopenReason');
+      var why = el ? el.value.trim() : '';
+      var errEl = document.getElementById('reopenError');
+      if (why.length < 3) {
+        // Flag the field itself, not just a message somewhere on the page.
+        // Outline too: focusing the field draws the browser's focus ring over
+        // the border, which would hide the red.
+        el.style.borderColor = 'var(--ac-red)';
+        el.style.outline = '2px solid var(--ac-red)';
+        errEl.style.display = '';
+        el.focus();
+        return;
+      }
+      el.style.borderColor = '';
+      el.style.outline = '';
+      errEl.style.display = 'none';
+      post('/admin/api/reports/' + REPORT_ID + '/reopen', { reason: why })
+        .then(function () { window.location.reload(); })
+        .catch(function (err) { openModal('<p>' + esc(err.message) + '</p><div class="actions"><button class="btn" onclick="closeModal()">Close</button></div>'); });
+    }
+
     function reverseOffense(offenseId) {
       var html = '<h2 style="font-size:1.15rem; margin:0 0 6px;">Reverse this strike</h2>';
       html += '<p class="muted" style="margin:0 0 12px;">It stops being enforced and stops counting toward the next rung, so the next strike starts one step lower.</p>';
