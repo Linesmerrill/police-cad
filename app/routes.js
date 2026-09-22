@@ -780,7 +780,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.get("/admin/api/reports", requireAdminSession, async function (req, res) {
     try {
       const params = new URLSearchParams();
-      ["status", "tier", "itemType", "page", "limit"].forEach((key) => {
+      ["status", "tier", "itemType", "q", "group", "page", "limit"].forEach((key) => {
         if (req.query[key]) params.set(key, String(req.query[key]));
       });
       params.set("roles", adminActor(req).roles.join(","));

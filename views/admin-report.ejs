@@ -155,6 +155,19 @@
 
     var state = { report: null, offenses: [], otherReports: [], reporterStats: null };
 
+    // Mirrors the API. A decision closes every open report about the same
+    // target on the same track, and no other: dismissing spam never closes a
+    // child safety report about the same account.
+    function trackOf(tier) {
+      if (tier === 'escalate') return 'escalate';
+      if (tier === 'welfare') return 'welfare';
+      return 'ladder';
+    }
+    function isOpenStatus(status) {
+      return !status || status === 'new' || status === 'under_review';
+    }
+    function tierOf(r) { return r.effectiveTier || r.tier || 'minor'; }
+
     function load() {
       fetch('/admin/api/reports/' + encodeURIComponent(REPORT_ID))
         .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
@@ -195,7 +208,10 @@
       }
 
       html += '<div class="card"><h2>Report</h2><dl class="kv">';
-      html += '<dt>' + (r.itemType === 'community' ? 'Community' : 'Reported user') + '</dt><dd><strong>' + esc(r.targetName || r.itemId) + '</strong></dd>';
+      var targetHtml = r.targetMissing
+        ? '<span class="muted">Deleted ' + (r.itemType === 'community' ? 'community' : 'user') + '</span> <span class="muted" style="font-size:0.75rem;">' + esc(r.itemId) + '</span>'
+        : '<strong>' + esc(r.targetName || r.itemId) + '</strong>';
+      html += '<dt>' + (r.itemType === 'community' ? 'Community' : 'Reported user') + '</dt><dd>' + targetHtml + '</dd>';
       html += '<dt>Reported by</dt><dd>' + esc(r.reporterName || r.reportedById || 'unknown') + '</dd>';
       html += '<dt>Category</dt><dd>' + esc(r.reportedIssue) + '</dd>';
       if (r.reviewedByName) html += '<dt>Decided by</dt><dd>' + esc(r.reviewedByName) + ' on ' + esc(fmtDate(r.reviewedAt)) + '</dd>';
@@ -204,9 +220,32 @@
       html += '<div class="evidence">' + (r.additionalDetails ? esc(r.additionalDetails) : '<span class="muted">They picked a category but wrote nothing.</span>') + '</div></div>';
       html += '</div>';
 
-      if (r.targetReportCount > 1 || state.otherReports.length) {
-        html += '<div class="card"><h2>Other reports against this ' + (r.itemType === 'community' ? 'community' : 'account') + ' (' + (state.otherReports.length) + ')</h2>';
-        state.otherReports.forEach(function (o) {
+      var myTrack = trackOf(r.effectiveTier);
+      var caseMates = state.otherReports.filter(function (o) { return isOpenStatus(o.status) && trackOf(tierOf(o)) === myTrack; });
+      var openEscalations = state.otherReports.filter(function (o) { return isOpenStatus(o.status) && trackOf(tierOf(o)) === 'escalate'; });
+      var elsewhere = state.otherReports.filter(function (o) { return caseMates.indexOf(o) < 0; });
+      var kindWord = r.itemType === 'community' ? 'community' : 'account';
+
+      if (open && caseMates.length) {
+        html += '<div class="card"><h2>Decided together (' + (caseMates.length + 1) + ' reports)</h2>';
+        html += '<p class="muted" style="margin:0 0 10px;">Whatever you decide here applies to all of these. '
+          + (myTrack === 'ladder' ? 'Upholding issues one strike for the lot, under the most severe of them.' : '') + '</p>';
+        caseMates.forEach(function (o) {
+          html += '<div class="list-item"><strong>' + esc(o.reportedIssue) + '</strong> <span class="muted">' + esc(fmtDate(o.createdAt)) + '</span>';
+          if (o.additionalDetails) html += '<div class="evidence" style="margin-top:6px;">' + esc(o.additionalDetails) + '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+
+      if (open && myTrack === 'ladder' && openEscalations.length) {
+        html += '<div class="notice notice-danger"><strong>This ' + kindWord + ' also has an open child safety report.</strong> Escalate that one first; upholding is blocked until it is decided. '
+          + '<a href="/admin/report/' + encodeURIComponent(openEscalations[0].id) + '">Open it</a></div>';
+      }
+
+      if (elsewhere.length) {
+        html += '<div class="card"><h2>Other reports against this ' + kindWord + ' (' + elsewhere.length + ')</h2>';
+        elsewhere.forEach(function (o) {
           html += '<div class="list-item"><strong>' + esc(o.reportedIssue) + '</strong> <span class="muted">' + esc(fmtDate(o.createdAt)) + ' &middot; ' + esc(STATUS_LABELS[o.status || 'new'] || o.status) + '</span>'
             + ' <a href="/admin/report/' + encodeURIComponent(o.id) + '">open</a></div>';
         });
@@ -215,7 +254,7 @@
 
       html += '<div class="card"><h2>Strike history</h2>';
       if (!state.offenses.length) {
-        html += '<p class="muted" style="margin:0;">No offences recorded. Upholding this report would be the first.</p>';
+        html += '<p class="muted" style="margin:0;">No offences recorded' + (open && r.effectiveTier !== 'escalate' && r.effectiveTier !== 'welfare' ? '. Upholding this report would be the first.' : '.') + '</p>';
       } else {
         state.offenses.forEach(function (o) {
           var reversed = o.status === 'reversed';
@@ -291,6 +330,11 @@
       post('/admin/api/reports/' + REPORT_ID + '/preview', { reason: reason() })
         .then(function (res) {
           var plan = res.plan || {};
+          if (res.blockedByEscalation) {
+            openModal('<h2>Escalate the child safety report first</h2><p>This account has an open child safety report. Upholding anything else against it now would put a routine ban ahead of that. Escalate it, then come back to this one.</p>'
+              + '<div class="actions"><button class="btn" onclick="closeModal()">Close</button></div>');
+            return;
+          }
           if (plan.alreadyInForce) {
             openModal('<h2>Already serving a penalty</h2><p>This target is still under an earlier restriction'
               + (plan.alreadyInForceUntil ? ' until ' + esc(fmtDate(plan.alreadyInForceUntil)) : '')
@@ -306,6 +350,9 @@
               : 'Suspended for ' + esc(plan.penaltyLabel) + ', lifting ' + esc(fmtDate(plan.expiresAt)) + '.')
             + (plan.nextPenalty ? ' A further breach would be ' + esc(plan.nextPenalty) + '.' : '')
             + '</p>';
+          if ((res.reportCount || 1) > 1) {
+            html += '<p class="muted" style="margin:0 0 12px;">One strike for all <strong>' + res.reportCount + '</strong> reports in this case, issued as <strong>' + esc(res.issue) + '</strong>, the most severe of them. All of them close.</p>';
+          }
 
           if (res.email) {
             html += '<p class="muted" style="margin:0 0 4px;">This goes to <strong>' + esc(res.contactEmail || 'nobody: no email on file') + '</strong> from ' + esc(res.email.from) + '</p>';

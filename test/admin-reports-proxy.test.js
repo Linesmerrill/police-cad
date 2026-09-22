@@ -14,7 +14,7 @@ describe("admin-reports-proxy", function () {
         { admin: { email: "staff@example.com", roles: ["admin"] } },
         { currentUser: { email: "owner@example.com", roles: ["owner"] }, reason: "confirmed" }
       ));
-      assert.deepEqual(out.currentUser, { email: "staff@example.com", name: "", roles: ["admin"] });
+      assert.deepEqual(out.currentUser, { id: "", name: "", roles: ["admin"] });
       assert.equal(out.reason, "confirmed");
     });
 
@@ -42,6 +42,31 @@ describe("admin-reports-proxy", function () {
   });
 
   describe("adminActor", function () {
+    // Every admin who opens a report sees who decided it. That must be a name,
+    // never a staff member's email address.
+    it("never carries an email address", function () {
+      var actor = proxy.adminActor(req({ admin: {
+        id: "abc", email: "linesmerrill@gmail.com", name: "linesmerrill",
+        firstName: "Merrill", lastName: "Lines", roles: ["owner"],
+      } }));
+      assert.equal(actor.name, "Merrill Lines");
+      assert.equal(actor.id, "abc");
+      assert.equal("email" in actor, false);
+      assert.equal(JSON.stringify(actor).indexOf("@"), -1);
+    });
+
+    // session.admin.name falls back to the part of the email before the @.
+    it("does not fall back to the session name when no first or last name is set", function () {
+      var actor = proxy.adminActor(req({ admin: { email: "someone@example.com", name: "someone", roles: ["admin"] } }));
+      assert.equal(actor.name, "");
+    });
+
+    it("uses whichever of first and last name is set", function () {
+      assert.equal(proxy.adminDisplayName({ firstName: " Merrill " }), "Merrill");
+      assert.equal(proxy.adminDisplayName({ lastName: "Lines" }), "Lines");
+      assert.equal(proxy.adminDisplayName({ firstName: "a@b.com" }), "");
+    });
+
     it("falls back to the single role field older admin records use", function () {
       var actor = proxy.adminActor(req({ admin: { email: "a@b.c", role: "owner" } }));
       assert.deepEqual(actor.roles, ["owner"]);

@@ -30,6 +30,19 @@ function isObjectId(value) {
   return OBJECT_ID.test(String(value || ""));
 }
 
+// adminDisplayName is what a decision is attributed to on screen: the first and
+// last name on the admin account. Deliberately not session.admin.name, which
+// falls back to the part of the email before the @ when no name is set, and
+// never the email itself: every admin who opens a report sees this, and a staff
+// member's personal address does not belong there. With no name on the account
+// the API shows "Staff".
+function adminDisplayName(admin) {
+  const first = typeof admin.firstName === "string" ? admin.firstName.trim() : "";
+  const last = typeof admin.lastName === "string" ? admin.lastName.trim() : "";
+  const full = (first + " " + last).trim();
+  return full.includes("@") ? "" : full;
+}
+
 // adminActor is the identity the API records against an action, taken from the
 // admin session and nothing else.
 function adminActor(req) {
@@ -40,7 +53,11 @@ function adminActor(req) {
   } else if (typeof admin.role === "string" && admin.role) {
     roles = [admin.role];
   }
-  return { email: admin.email || "", name: admin.name || "", roles: roles };
+  return {
+    id: typeof admin.id === "string" ? admin.id : "",
+    name: adminDisplayName(admin),
+    roles: roles,
+  };
 }
 
 // buildActionBody is what gets forwarded for an uphold, preview, dismiss or
@@ -59,4 +76,4 @@ function buildActionBody(req) {
   return out;
 }
 
-module.exports = { REPORT_ACTIONS, reportActionPath, isObjectId, adminActor, buildActionBody };
+module.exports = { REPORT_ACTIONS, reportActionPath, isObjectId, adminActor, adminDisplayName, buildActionBody };

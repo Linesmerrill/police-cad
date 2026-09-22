@@ -728,6 +728,43 @@
       .cc-status-btn[data-status="under_review"] .cc-chip-count { color:#fbbf24; }
       .cc-chip-count.is-zero { color:var(--ac-text-dim) !important; }
 
+      /* ── Reports queue ── */
+      /* Wiki links in the Reports section. The wiki styles no links of its
+         own, and browser blue is unreadable on this background. */
+      .aw-subsection[id^="rep-"] a { color:#a78bfa; text-decoration:underline; text-underline-offset:2px; }
+      .rep-toolbar { display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; margin-bottom:0.875rem; }
+      .rep-type-tabs { display:inline-flex; background:rgba(0,0,0,0.25); border:1px solid var(--ac-glass-border); border-radius:10px; padding:3px; }
+      body.ac-body .rep-type-tab {
+        display:inline-flex; align-items:center; gap:0.45rem; border:0; background:transparent;
+        color:var(--ac-text-muted); font-family:'Outfit',sans-serif; font-weight:600; font-size:0.8125rem;
+        padding:0.45rem 0.85rem; border-radius:7px; cursor:pointer; white-space:nowrap;
+      }
+      body.ac-body .rep-type-tab.active { background:var(--ac-accent-glow); color:#fff; }
+      .rep-search { position:relative; flex:1 1 220px; min-width:0; }
+      .rep-search i { position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--ac-text-dim); font-size:0.8rem; pointer-events:none; }
+      /* The console's form override sets padding with !important, so this has
+         to as well, or the icon sits on top of the placeholder. */
+      body.ac-body .rep-search .ac-input { padding-left:2.4rem !important; width:100%; }
+      /* A case is every report about one account or community. The first report
+         carries the header; the rest sit indented beneath it so they read as
+         part of one thing to decide, not separate rows. */
+      .rep-case { margin-bottom:0.75rem; }
+      .rep-case-head { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
+      .rep-case-count {
+        font-size:0.72rem; font-weight:700; color:#fbbf24; background:rgba(251,191,36,0.12);
+        border-radius:99px; padding:0.1rem 0.5rem;
+      }
+      .rep-case-more { margin:0.75rem 0 0 0.35rem; padding-left:0.9rem; border-left:2px solid var(--ac-glass-border); }
+      .rep-case-item { display:flex; gap:0.6rem; align-items:baseline; flex-wrap:wrap; font-size:0.8125rem; color:var(--ac-text-muted); padding:0.2rem 0; }
+      .rep-case-item strong { color:var(--ac-text); font-weight:600; }
+      .rep-missing { color:var(--ac-text-muted); font-style:italic; }
+      @media (max-width: 640px) {
+        .rep-toolbar { flex-direction:column; align-items:stretch; }
+        .rep-type-tabs { align-self:flex-start; }
+        .rep-case-head { flex-direction:column; gap:0.75rem; }
+        .rep-case-head .ac-btn { align-self:flex-start; }
+      }
+
       .cc-search { display:flex; gap:0.625rem; align-items:stretch; }
       .cc-search .ac-input { flex:1; min-width:0; }
       .cc-search .ac-btn { flex:0 0 auto; white-space:nowrap; }
@@ -1506,6 +1543,16 @@
               <a class="aw-nav-link" href="#rp-remove-post">Removing a Post</a>
               <a class="aw-nav-link" href="#rp-issue-ban">Issuing a Ban</a>
               <a class="aw-nav-link" href="#rp-reverse">Reversing an Offense</a>
+
+              <div class="aw-nav-group-title">Reports</div>
+              <a class="aw-nav-link" href="#rep-overview">How the Queue Works</a>
+              <a class="aw-nav-link" href="#rep-tiers">Tiers &amp; What Happens</a>
+              <a class="aw-nav-link" href="#rep-review">Reviewing a Case</a>
+              <a class="aw-nav-link" href="#rep-uphold">Upholding &amp; Strikes</a>
+              <a class="aw-nav-link" href="#rep-dismiss">Dismissing &amp; Welfare</a>
+              <a class="aw-nav-link" href="#rep-child-safety">Child Safety Reports</a>
+              <a class="aw-nav-link" href="#rep-reverse">Reversing a Strike</a>
+              <a class="aw-nav-link" href="#rep-player">What the Player Sees</a>
             </div>
 
             <!-- Main Content -->
@@ -2828,6 +2875,279 @@
                 </div>
               </section>
 
+
+              <!-- ════════════════════════════════════════════ -->
+              <!-- REPORTS                                      -->
+              <!-- ════════════════════════════════════════════ -->
+              <section class="aw-section">
+                <div class="aw-section-header">
+                  <div class="aw-section-icon"><i class="fas fa-flag"></i></div>
+                  <div>
+                    <div class="aw-section-title">Reports</div>
+                    <div style="font-size:0.8rem; color:var(--ac-text-muted);">Working the report queue, issuing strikes, and handling child safety reports</div>
+                  </div>
+                </div>
+
+                <!-- How the Queue Works -->
+                <div class="aw-subsection" id="rep-overview">
+                  <h3 class="aw-subsection-title">How the Queue Works</h3>
+                  <p class="aw-text">Players report another player from their profile, or a community from its promoted card, in the mobile app. They pick a category and can add a note. Every one of those lands in the <strong>Reports</strong> panel.</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Users and Communities</div>
+                        <div class="aw-text">Two tabs at the top. Reports about a player are under <strong>Users</strong>; reports about a community are under <strong>Communities</strong>. Each tab shows how many it holds.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Status chips</div>
+                        <div class="aw-text"><strong>New</strong> is what nobody has looked at yet, and where you should start. The other chips hold what has already been decided, so you can look something up later.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Ordered by severity</div>
+                        <div class="aw-text">Child safety reports are always at the top, then self-harm, then serious, then minor. Within each, the oldest comes first. You never have to go looking for the urgent ones.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">4</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Cases, not rows</div>
+                        <div class="aw-text">Every report about the same player or community is shown as <strong>one case</strong>. The most severe report is on top and the rest are indented beneath it. You review and decide them together.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-search"></i></div>
+                    <div class="aw-tip-text"><strong>Search</strong> finds a report by the username or email of either the person who reported it or the person reported, by a community's name, or by pasting an id. Use it when someone contacts support about a report they filed.</div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">A red badge on <strong>Reports</strong> in the sidebar counts new reports. While you have the console open you also get a toast when a new one comes in; click it to jump to the queue.</div>
+                  </div>
+                </div>
+
+                <!-- Tiers -->
+                <div class="aw-subsection" id="rep-tiers">
+                  <h3 class="aw-subsection-title">Tiers &amp; What Happens</h3>
+                  <p class="aw-text">The category the player picked decides the tier, and the tier decides what you are allowed to do.</p>
+                  <div style="overflow-x:auto;">
+                  <table style="width:100%; border-collapse:collapse; font-size:0.85rem; color:var(--ac-text);">
+                    <thead><tr><th style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); text-align:left; color:var(--ac-text-muted); font-weight:600;">Tier</th><th style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); text-align:left; color:var(--ac-text-muted); font-weight:600;">Categories</th><th style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); text-align:left; color:var(--ac-text-muted); font-weight:600;">What you do</th></tr></thead>
+                    <tbody>
+                      <tr><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;"><span style="color:#f87171; background:rgba(248,113,113,0.12); padding:0.1rem 0.45rem; border-radius:4px; font-size:0.75rem; font-weight:700; white-space:nowrap;">Child safety</span></td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">Child Safety</td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">Escalate. Never uphold. See <a href="#rep-child-safety">Child Safety Reports</a>.</td></tr>
+                      <tr><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;"><span style="color:#c084fc; background:rgba(192,132,252,0.12); padding:0.1rem 0.45rem; border-radius:4px; font-size:0.75rem; font-weight:700; white-space:nowrap;">Welfare</span></td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">Suicide or Self-Harm</td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">Read it, then close it. No penalty and no email, ever.</td></tr>
+                      <tr><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;"><span style="color:#fbbf24; background:rgba(251,191,36,0.12); padding:0.1rem 0.45rem; border-radius:4px; font-size:0.75rem; font-weight:700; white-space:nowrap;">Serious</span></td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">Hate, Abuse &amp; Harassment, Violent Speech, Violent &amp; Hateful Entities, Illegal &amp; Regulated Behavior, Privacy</td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">Uphold or dismiss. First strike is a 7 day suspension.</td></tr>
+                      <tr><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;"><span style="color:#94a3b8; background:rgba(148,163,184,0.12); padding:0.1rem 0.45rem; border-radius:4px; font-size:0.75rem; font-weight:700; white-space:nowrap;">Minor</span></td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">Spam, Impersonation, Sensitive or Disturbing Media</td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">Uphold or dismiss. First strike is a warning only.</td></tr>
+                    </tbody>
+                  </table>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Privacy is Serious, not Minor, because it covers sharing intimate images without consent.</div>
+                  </div>
+                </div>
+
+                <!-- Reviewing -->
+                <div class="aw-subsection" id="rep-review">
+                  <h3 class="aw-subsection-title">Reviewing a Case</h3>
+                  <p class="aw-text">Click <strong>Review</strong> on a case. The page shows everything you need to decide:</p>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">The report</div>
+                        <div class="aw-text">Who was reported, who reported them, the category, and exactly what the reporter wrote.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Decided together</div>
+                        <div class="aw-text">The other open reports about the same player that your decision will also close. Upholding issues one strike for all of them.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Strike history</div>
+                        <div class="aw-text">Every strike this player or community already has. The next strike depends on how many they have.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">4</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">The reporter</div>
+                        <div class="aw-text">How many reports this person has filed, and how many were upheld or dismissed. Someone whose reports are never upheld is flagged.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-triangle-exclamation"></i></div>
+                    <div class="aw-tip-text">A report is an accusation from another player, often someone in an argument with the person they reported. Read the note, check the history, and look at who filed it before acting. A group of friends reporting one person to get them banned looks exactly like this.</div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Nothing is recorded against a player just because they were reported. A strike only exists once you uphold.</div>
+                  </div>
+                </div>
+
+                <!-- Upholding -->
+                <div class="aw-subsection" id="rep-uphold">
+                  <h3 class="aw-subsection-title">Upholding &amp; Strikes</h3>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Write a reason</div>
+                        <div class="aw-text">One sentence on what you found. It is stored with the strike for other staff. The player never sees it.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click Uphold</div>
+                        <div class="aw-text">Nothing happens yet. You get a preview: which strike this is, what penalty it carries, when it lifts, and the exact email the player will receive.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Confirm</div>
+                        <div class="aw-text">The strike is recorded, the penalty applies, the email goes out, and every report in the case closes.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="aw-text" style="margin-top:1rem;"><strong style="color:#fff;">Players</strong></p>
+                  <div style="overflow-x:auto;">
+                  <table style="width:100%; border-collapse:collapse; font-size:0.85rem; color:var(--ac-text);">
+                    <thead><tr><th style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); text-align:left; color:var(--ac-text-muted); font-weight:600;">Strike</th><th style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); text-align:left; color:var(--ac-text-muted); font-weight:600;"><span style="color:#94a3b8; background:rgba(148,163,184,0.12); padding:0.1rem 0.45rem; border-radius:4px; font-size:0.75rem; font-weight:700; white-space:nowrap;">Minor</span></th><th style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); text-align:left; color:var(--ac-text-muted); font-weight:600;"><span style="color:#fbbf24; background:rgba(251,191,36,0.12); padding:0.1rem 0.45rem; border-radius:4px; font-size:0.75rem; font-weight:700; white-space:nowrap;">Serious</span></th></tr></thead>
+                    <tbody>
+                      <tr><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">1st</td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">Warning, no restriction</td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">7 day suspension</td></tr>
+                      <tr><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">2nd</td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">7 day suspension</td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">30 day suspension</td></tr>
+                      <tr><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">3rd</td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">30 day suspension</td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">1 year suspension</td></tr>
+                      <tr><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">4th</td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">Permanent</td><td style="padding:0.5rem 0.75rem; border-bottom:1px solid var(--ac-glass-border); vertical-align:top;">Permanent</td></tr>
+                    </tbody>
+                  </table>
+                  </div>
+                  <p class="aw-text" style="margin-top:1rem;"><strong style="color:#fff;">Communities</strong> are removed from search and browse, never shut down. Members keep playing as normal. 1st: 7 days. 2nd: 30 days. 3rd: permanently delisted.</p>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">A case of four reports is <strong>one strike</strong>, issued under the most severe category in it, not four strikes.</div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">If the player is still serving a suspension, you cannot add another strike on top. Reverse the existing one first if it was wrong.</div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lock"></i></div>
+                    <div class="aw-tip-text">Uphold is blocked while the same player has an open child safety report. Escalate that first.</div>
+                  </div>
+                </div>
+
+                <!-- Dismissing -->
+                <div class="aw-subsection" id="rep-dismiss">
+                  <h3 class="aw-subsection-title">Dismissing &amp; Welfare</h3>
+                  <p class="aw-text"><strong style="color:#fff;">Dismiss</strong> when there is nothing to act on: a false report, a joke, a duplicate, or not enough to go on. It closes the case and leaves nothing on the player's record.</p>
+                  <p class="aw-text">A <strong style="color:#fff;">self-harm</strong> report is not an offence. It usually means someone is worried about a friend. Read it, then click <strong>Close as read</strong>. Never uphold it, and never contact the player about it through a moderation email.</p>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Dismissing only closes reports of the same kind. Dismissing spam about a player never closes a child safety or self-harm report about the same player; those stay open for their own review.</div>
+                  </div>
+                </div>
+
+                <!-- Child safety -->
+                <div class="aw-subsection" id="rep-child-safety">
+                  <h3 class="aw-subsection-title">Child Safety Reports</h3>
+                  <p class="aw-text">These are allegations that a child is at risk, including grooming and sexual exploitation. Most of our players are young. Treat every one seriously.</p>
+                  <div class="aw-tip" style="border-color:rgba(248,113,113,0.35); background:rgba(248,113,113,0.08);">
+                    <div class="aw-tip-icon" style="color:#f87171;"><i class="fas fa-ban"></i></div>
+                    <div class="aw-tip-text"><strong>Never go looking for images or messages yourself</strong>, and never download anything a report points to. Read what the reporter wrote, and nothing more.</div>
+                  </div>
+                  <div class="aw-tip" style="border-color:rgba(248,113,113,0.35); background:rgba(248,113,113,0.08);">
+                    <div class="aw-tip-icon" style="color:#f87171;"><i class="fas fa-ban"></i></div>
+                    <div class="aw-tip-text"><strong>Never contact the reported player.</strong> No message, no email, no Discord ping. Escalating sends nothing to them on purpose.</div>
+                  </div>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Read the report</div>
+                        <div class="aw-text">Decide whether it describes a real risk to a child. If you are unsure, ask an owner before doing anything.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click Escalate and hold</div>
+                        <div class="aw-text">The account is suspended with no end date, and its data is put under a <strong>legal hold</strong> for one year so nothing can delete it. Every open child safety report about the same player is included.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Copy the package</div>
+                        <div class="aw-text">A block of text with the account details and every report, word for word, ready to paste.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">4</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">File it with NCMEC</div>
+                        <div class="aw-text">Open <a href="https://report.cybertip.org" target="_blank" rel="noopener noreferrer">report.cybertip.org</a> and file a report using the package. It is the national center for missing and exploited children.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip" style="border-color:rgba(248,113,113,0.35); background:rgba(248,113,113,0.08);">
+                    <div class="aw-tip-icon" style="color:#f87171;"><i class="fas fa-lock"></i></div>
+                    <div class="aw-tip-text">Do not delete or deactivate an escalated account, and do not delete its community. The legal hold blocks automatic deletion, but the data must be kept for a year after filing.</div>
+                  </div>
+                </div>
+
+                <!-- Reversing -->
+                <div class="aw-subsection" id="rep-reverse">
+                  <h3 class="aw-subsection-title">Reversing a Strike</h3>
+                  <p class="aw-text">Players appeal through our contact page. If an appeal holds up, or a strike was a mistake, open any report about that player and click <strong>Reverse</strong> next to the strike in <strong>Strike history</strong>. Give a reason.</p>
+                  <p class="aw-text">Reversing lifts the suspension or delisting straight away and removes the strike from their count, so their next genuine one starts lower. A strike that simply ran out still counts; only reversing removes it.</p>
+                </div>
+
+                <!-- What the player sees -->
+                <div class="aw-subsection" id="rep-player">
+                  <h3 class="aw-subsection-title">What the Player Sees</h3>
+                  <div class="aw-steps">
+                    <div class="aw-step">
+                      <div class="aw-step-number">1</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">An email</div>
+                        <div class="aw-text">From the <strong>Content Resolution Team</strong>. It says what kind of behavior was reported, what we did, when it lifts, and what happens next time. It never quotes the report and never says who filed it.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">2</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">At sign-in</div>
+                        <div class="aw-text">A suspended player is told their account is suspended until a date, and that access comes back on its own. Nothing for them to do.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">3</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">For a community</div>
+                        <div class="aw-text">The owner is emailed that the community was removed from public listings until a date, and that members are unaffected.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="aw-tip-text">Your name is shown on decisions to other admins, never your email.</div>
+                  </div>
+                </div>
+              </section>
             </div><!-- /.aw-content -->
           </div><!-- /.aw-layout -->
         </div>
@@ -2988,6 +3308,21 @@
 
           <div class="ac-card">
             <div class="ac-card-body">
+              <div class="rep-toolbar">
+                <div class="rep-type-tabs" role="tablist" aria-label="Report type">
+                  <button type="button" class="rep-type-tab active" data-type="user" onclick="setReportType('user')">
+                    <i class="fas fa-user"></i> Users <span class="cc-chip-count" id="repTypeCountUser">0</span>
+                  </button>
+                  <button type="button" class="rep-type-tab" data-type="community" onclick="setReportType('community')">
+                    <i class="fas fa-users"></i> Communities <span class="cc-chip-count" id="repTypeCountCommunity">0</span>
+                  </button>
+                </div>
+                <div class="rep-search">
+                  <i class="fas fa-search"></i>
+                  <input type="search" id="reportsSearch" class="form-control ac-input" autocomplete="off"
+                         placeholder="Username, email, community or id" aria-label="Search reports" />
+                </div>
+              </div>
               <!-- Inside the card like the Content Creators rail: its mobile
                    full-bleed is sized to a card's padding, not the panel's. -->
               <div class="cc-rail" id="reportsRail"></div>
@@ -5266,6 +5601,7 @@
           $('#dash-qa-cc').show();
           $('#rp-promos-tab').show();
           $('#reports-tab').show();
+          if (typeof startReportsPolling === 'function') startReportsPolling();
         } else {
           $('#content-creators-tab').hide();
           $('#dash-qa-cc').hide();
@@ -5273,6 +5609,7 @@
           $('#panel-rp-promos').hide();
           $('#reports-tab').hide();
           $('#panel-reports').hide();
+          if (typeof stopReportsPolling === 'function') stopReportsPolling();
         }
 
         if (roles.includes('owner')) {
@@ -5344,7 +5681,9 @@
       // secret and the acting admin is read from the session rather than sent
       // by this page.
 
-      var reportsState = { status: 'new', page: 0, limit: 25 };
+      var reportsState = { status: 'new', itemType: 'user', q: '', page: 0, limit: 20 };
+      var reportsSearchTimer = null;
+      var reportsRequestSeq = 0;
 
       var REPORT_STATUS_LABELS = {
         'new': 'New',
@@ -5366,8 +5705,22 @@
 
       function initReportsPanel() {
         var hash = window.location.hash.replace('#', '');
-        var statusMatch = hash.match(/[?&]status=([^&]+)/);
-        if (statusMatch) reportsState.status = decodeURIComponent(statusMatch[1]);
+        var params = new URLSearchParams(hash.indexOf('?') >= 0 ? hash.slice(hash.indexOf('?') + 1) : '');
+        if (params.has('status')) reportsState.status = params.get('status');
+        if (params.get('type') === 'community') reportsState.itemType = 'community';
+        if (params.get('q')) reportsState.q = params.get('q');
+        $('#reportsSearch').val(reportsState.q);
+
+        $('#reportsSearch').off('input.reports').on('input.reports', function() {
+          var value = this.value;
+          clearTimeout(reportsSearchTimer);
+          // Debounced so a search is one request per pause, not one per key.
+          reportsSearchTimer = setTimeout(function() {
+            reportsState.q = value.trim();
+            reportsState.page = 0;
+            loadReports();
+          }, 300);
+        });
         loadReports();
       }
 
@@ -5377,28 +5730,53 @@
         loadReports();
       }
 
+      function setReportType(type) {
+        reportsState.itemType = type === 'community' ? 'community' : 'user';
+        reportsState.page = 0;
+        loadReports();
+      }
+
       function changeReportsPage(page) {
         reportsState.page = Math.max(0, page);
         loadReports();
       }
 
+      function syncReportsHash() {
+        var params = new URLSearchParams();
+        if (reportsState.status) params.set('status', reportsState.status);
+        if (reportsState.itemType === 'community') params.set('type', 'community');
+        if (reportsState.q) params.set('q', reportsState.q);
+        var qs = params.toString();
+        history.replaceState(null, null, '#reports' + (qs ? '?' + qs : ''));
+      }
+
       function loadReports() {
         var params = new URLSearchParams();
         if (reportsState.status) params.set('status', reportsState.status);
+        params.set('itemType', reportsState.itemType);
+        if (reportsState.q) params.set('q', reportsState.q);
+        params.set('group', 'target');
         params.set('page', String(reportsState.page));
         params.set('limit', String(reportsState.limit));
 
-        history.replaceState(null, null, '#reports' + (reportsState.status ? '?status=' + encodeURIComponent(reportsState.status) : ''));
+        syncReportsHash();
+        $('.rep-type-tab').removeClass('active');
+        $('.rep-type-tab[data-type="' + reportsState.itemType + '"]').addClass('active');
         $('#reportsResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading reports…</div>');
 
+        // Typing fires several searches; only the newest one may paint.
+        var seq = ++reportsRequestSeq;
         $.ajax({
           url: '/admin/api/reports?' + params.toString(),
           method: 'GET',
           success: function(data) {
+            if (seq !== reportsRequestSeq) return;
             renderReportsRail(data.counts || {});
-            renderReports(data.data || [], data.totalCount || 0);
+            renderReportTypeCounts(data.typeCounts || {});
+            renderReportCases(data.groups || [], data.totalCount || 0, data.reportCount || 0);
           },
           error: function(xhr) {
+            if (seq !== reportsRequestSeq) return;
             $('#reportsResults').html('<div class="loading">Failed to load reports</div>');
             $('#reportsPager').html('');
             showInfoModal('Error', 'Could not load reports: ' + ((xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.error)) || 'unknown error'));
@@ -5419,15 +5797,11 @@
         });
         html += '<button type="button" class="cc-status-btn' + (reportsState.status === '' ? ' active' : '') + '" onclick="setReportStatus(\'\')">All</button>';
         $('#reportsRail').html(html);
+      }
 
-        // The sidebar badge is the unread count. An empty queue shows nothing;
-        // a non-empty one should be visible without opening the tab.
-        var outstanding = counts['new'] || 0;
-        if (outstanding > 0) {
-          $('#reportsBadge').text(outstanding).show();
-        } else {
-          $('#reportsBadge').hide();
-        }
+      function renderReportTypeCounts(typeCounts) {
+        $('#repTypeCountUser').text(typeCounts.user || 0).toggleClass('is-zero', !typeCounts.user);
+        $('#repTypeCountCommunity').text(typeCounts.community || 0).toggleClass('is-zero', !typeCounts.community);
       }
 
       function reportTierBadge(tier) {
@@ -5436,53 +5810,137 @@
           + escapeHtml(style.label) + '</span>';
       }
 
-      function renderReports(reports, totalCount) {
-        if (!reports.length) {
-          $('#reportsResults').html('<p style="color: var(--ac-text-muted); text-align: center; padding: 2rem;">Nothing here.</p>');
+      function reportDate(v) {
+        return v ? new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+      }
+
+      function reportTargetLabel(group) {
+        var kind = group.itemType === 'community' ? 'community' : 'user';
+        if (group.targetMissing) {
+          // The account or community is gone. Say so; a bare id reads as a bug.
+          return '<span class="rep-missing">Deleted ' + kind + '</span>';
+        }
+        return '<strong>' + escapeHtml(group.targetName || group.itemId || 'Unknown') + '</strong>';
+      }
+
+      // One card per case. The first report is the most severe (the API sorts
+      // the case that way) and carries the header; the rest are listed beneath
+      // it, indented, because they are decided together.
+      function renderReportCases(groups, caseCount, reportCount) {
+        if (!groups.length) {
+          var empty = reportsState.q
+            ? 'No reports match <strong>' + escapeHtml(reportsState.q) + '</strong>.'
+            : 'Nothing here.';
+          $('#reportsResults').html('<p style="color: var(--ac-text-muted); text-align: center; padding: 2rem;">' + empty + '</p>');
           $('#reportsPager').html('');
           return;
         }
 
         var html = '';
-        reports.forEach(function(r) {
-          var tier = r.effectiveTier || 'minor';
-          var created = r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-          var target = r.targetName || r.itemId || 'Unknown';
-          var repeat = (r.targetReportCount || 0) > 1
-            ? '<span style="color:#fbbf24; font-size:0.75rem; font-weight:600;">' + r.targetReportCount + ' reports against this ' + escapeHtml(r.itemType === 'community' ? 'community' : 'user') + '</span>'
-            : '';
-          var unclassified = r.issueKnown === false
-            ? '<span style="color:#94a3b8; font-size:0.75rem;">unclassified issue</span>'
-            : '';
+        groups.forEach(function(g) {
+          var reports = g.reports || [];
+          var first = reports[0] || {};
+          var kind = g.itemType === 'community' ? 'Community' : 'User';
 
-          html += '<div class="result-card" style="margin-bottom: 0.75rem;">';
-          html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">';
-          html += '<div style="flex:1; min-width:0;">';
+          html += '<div class="result-card rep-case">';
+          html += '<div class="rep-case-head"><div style="flex:1; min-width:0;">';
           html += '<div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.4rem; flex-wrap:wrap;">';
-          html += reportTierBadge(tier);
-          html += '<strong style="color:#fff;">' + escapeHtml(r.reportedIssue || 'No category') + '</strong>';
-          html += '<span style="color:var(--ac-text-muted); font-size:0.8rem;">' + escapeHtml(created) + '</span>';
-          html += '</div>';
-          html += '<div style="color:var(--ac-text); font-size:0.875rem; margin-bottom:0.3rem;">';
-          html += (r.itemType === 'community' ? 'Community: ' : 'User: ') + '<strong>' + escapeHtml(target) + '</strong>';
-          html += '</div>';
-          if (repeat || unclassified) {
-            html += '<div style="display:flex; gap:0.75rem; flex-wrap:wrap;">' + repeat + unclassified + '</div>';
+          html += reportTierBadge(g.tier || first.effectiveTier);
+          html += '<strong style="color:#fff;">' + escapeHtml(first.reportedIssue || 'No category') + '</strong>';
+          html += '<span style="color:var(--ac-text-muted); font-size:0.8rem;">' + escapeHtml(reportDate(first.createdAt)) + '</span>';
+          if (reports.length > 1) {
+            html += '<span class="rep-case-count">' + reports.length + ' reports, reviewed together</span>';
+          }
+          if (first.issueKnown === false) {
+            html += '<span style="color:#94a3b8; font-size:0.75rem;">unclassified issue</span>';
           }
           html += '</div>';
-          html += '<a class="ac-btn ac-btn-accent" href="/admin/report/' + encodeURIComponent(r.id) + '"><i class="fas fa-eye"></i> Review</a>';
-          html += '</div></div>';
+          html += '<div style="color:var(--ac-text); font-size:0.875rem;">' + kind + ': ' + reportTargetLabel(g) + '</div>';
+          if ((g.totalAgainst || 0) > reports.length) {
+            html += '<div style="color:var(--ac-text-muted); font-size:0.75rem; margin-top:0.25rem;">'
+              + g.totalAgainst + ' reports against this ' + kind.toLowerCase() + ' in total</div>';
+          }
+          html += '</div>';
+          html += '<a class="ac-btn ac-btn-accent" href="/admin/report/' + encodeURIComponent(first.id) + '"><i class="fas fa-eye"></i> Review</a>';
+          html += '</div>';
+
+          if (reports.length > 1) {
+            html += '<div class="rep-case-more">';
+            reports.slice(1).forEach(function(r) {
+              html += '<div class="rep-case-item">'
+                + '<strong>' + escapeHtml(r.reportedIssue || 'No category') + '</strong>'
+                + '<span>' + escapeHtml(reportDate(r.createdAt)) + '</span>'
+                + (r.reporterName ? '<span>from ' + escapeHtml(r.reporterName) + '</span>' : '')
+                + '</div>';
+            });
+            html += '</div>';
+          }
+          html += '</div>';
         });
         $('#reportsResults').html(html);
 
-        var pages = Math.max(1, Math.ceil(totalCount / reportsState.limit));
-        var pager = '<span style="color:var(--ac-text-muted); font-size:0.8125rem;">' + totalCount + ' report' + (totalCount === 1 ? '' : 's') + '</span>';
+        var pages = Math.max(1, Math.ceil(caseCount / reportsState.limit));
+        var summary = caseCount + ' case' + (caseCount === 1 ? '' : 's');
+        if (reportCount !== caseCount) summary += ', ' + reportCount + ' reports';
+        var pager = '<span style="color:var(--ac-text-muted); font-size:0.8125rem;">' + summary + '</span>';
         pager += '<span>';
         pager += '<button class="ac-btn" ' + (reportsState.page <= 0 ? 'disabled' : '') + ' onclick="changeReportsPage(' + (reportsState.page - 1) + ')">Prev</button> ';
         pager += '<span style="color:var(--ac-text-muted); font-size:0.8125rem; margin:0 0.5rem;">Page ' + (reportsState.page + 1) + ' of ' + pages + '</span>';
         pager += '<button class="ac-btn" ' + (reportsState.page + 1 >= pages ? 'disabled' : '') + ' onclick="changeReportsPage(' + (reportsState.page + 1) + ')">Next</button>';
         pager += '</span>';
         $('#reportsPager').html(pager);
+      }
+
+      // ---- New report toasts --------------------------------------------
+      //
+      // Same pattern as the content creator poller. It watches the total number
+      // of reports rather than the "new" count: an admin dismissing one while
+      // another arrives in the same 30 seconds leaves "new" unchanged and the
+      // arrival would go unannounced, but the total only ever goes up.
+      var reportsPollInterval = null;
+      var lastKnownReportTotal = null;
+
+      function pollNewReports() {
+        $.ajax({
+          url: '/admin/api/reports?limit=1',
+          method: 'GET',
+          success: function(data) {
+            var counts = (data && data.counts) || {};
+            var total = 0;
+            Object.keys(counts).forEach(function(k) { total += counts[k] || 0; });
+            var outstanding = counts['new'] || 0;
+
+            if (outstanding > 0) $('#reportsBadge').text(outstanding).show();
+            else $('#reportsBadge').hide();
+
+            if (lastKnownReportTotal !== null && total > lastKnownReportTotal) {
+              var diff = total - lastKnownReportTotal;
+              showLiveToast(diff === 1 ? 'A new report was submitted.' : diff + ' new reports were submitted.', {
+                title: 'Reports',
+                icon: 'fa-flag',
+                onClick: function() {
+                  reportsState.status = 'new';
+                  reportsState.page = 0;
+                  acNavTo('reports');
+                  loadReports();
+                }
+              });
+              // Already looking at the queue: show the new ones without a reload.
+              if ($('#panel-reports').hasClass('active')) loadReports();
+            }
+            lastKnownReportTotal = total;
+          }
+        });
+      }
+
+      function startReportsPolling() {
+        if (reportsPollInterval) return;
+        pollNewReports();
+        reportsPollInterval = setInterval(pollNewReports, 30000);
+      }
+
+      function stopReportsPolling() {
+        if (reportsPollInterval) { clearInterval(reportsPollInterval); reportsPollInterval = null; }
       }
 
       function initRpPromosPanel() {
@@ -6126,19 +6584,31 @@
         });
       }
 
-      function showLiveToast(message) {
-        var id = 'live-toast-' + Date.now();
-        var html = '<div id="' + id + '" class="ac-live-toast">' +
-          '<div class="ac-live-toast-icon"><i class="fas fa-video"></i></div>' +
+      // opts: { title, icon, onClick }. With no opts it is the content creator
+      // toast it always was.
+      function showLiveToast(message, opts) {
+        opts = opts || {};
+        var title = opts.title || 'Content Creator';
+        var icon = opts.icon || 'fa-video';
+        var id = 'live-toast-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+        var html = '<div id="' + id + '" class="ac-live-toast"' + (opts.onClick ? ' style="cursor:pointer;"' : '') + '>' +
+          '<div class="ac-live-toast-icon"><i class="fas ' + escapeHtml(icon) + '"></i></div>' +
           '<div class="ac-live-toast-body">' +
-            '<strong>Content Creator</strong>' +
-            '<span>' + message + '</span>' +
+            '<strong>' + escapeHtml(title) + '</strong>' +
+            '<span>' + escapeHtml(message) + '</span>' +
           '</div>' +
-          '<button onclick="$(\'#' + id + '\').fadeOut(function(){$(this).remove()})"><i class="fas fa-times"></i></button>' +
+          '<button class="ac-live-toast-close"><i class="fas fa-times"></i></button>' +
         '</div>';
 
         $('body').append(html);
         var el = $('#' + id);
+        el.find('.ac-live-toast-close').on('click', function(e) {
+          e.stopPropagation();
+          el.fadeOut(function() { el.remove(); });
+        });
+        if (opts.onClick) {
+          el.on('click', function() { opts.onClick(); el.fadeOut(function() { el.remove(); }); });
+        }
         // Trigger animation after append
         setTimeout(function() { el.addClass('show'); }, 10);
         // Auto-dismiss after 8 seconds
