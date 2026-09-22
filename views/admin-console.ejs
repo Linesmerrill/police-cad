@@ -1000,6 +1000,10 @@
             <i class="fas fa-bullhorn"></i> Server Promos
             <span id="rpPromosBadge" class="ac-nav-badge" style="display: none;"></span>
           </div>
+          <div class="ac-nav-item" id="reports-tab" data-panel="reports" style="display: none;">
+            <i class="fas fa-flag"></i> Reports
+            <span id="reportsBadge" class="ac-nav-badge" style="display: none;"></span>
+          </div>
           <div class="ac-nav-item" data-panel="wiki">
             <i class="fas fa-book"></i> Wiki
           </div>
@@ -2976,6 +2980,23 @@
           </div>
         </div>
 
+        <!-- Panel: Reports (user-submitted report moderation) -->
+        <div class="ac-panel" id="panel-reports">
+          <p style="color:#9aa0b4; font-size:14px; margin:0 0 16px; max-width:760px;">
+            Reports submitted from the app. Ordered by severity, oldest first, so the ones that matter surface on their own. Upholding a report records a strike and emails the account; child safety and self-harm reports never take an automated action and are handled by a person.
+          </p>
+
+          <div class="ac-card">
+            <div class="ac-card-body">
+              <!-- Inside the card like the Content Creators rail: its mobile
+                   full-bleed is sized to a card's padding, not the panel's. -->
+              <div class="cc-rail" id="reportsRail"></div>
+              <div id="reportsResults" data-testid="reports-results"><div class="loading">Loading reports…</div></div>
+              <div id="reportsPager" style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Panel: Server Promos (RP promotion moderation) -->
         <div class="ac-panel" id="panel-rp-promos">
           <p style="color:#9aa0b4; font-size:14px; margin:0 0 16px; max-width:760px;">
@@ -4762,6 +4783,7 @@
         'wiki': 'Wiki',
         'subscriptions': 'Subscriptions',
         'rp-promos': 'Server Promos',
+        'reports': 'Reports',
         'changelog': "What's New"
       };
 
@@ -4786,7 +4808,8 @@
           loadCases(status);
         },
         'wiki': function() { initAdminWiki(); },
-        'rp-promos': function() { if (typeof initRpPromosPanel === 'function') initRpPromosPanel(); }
+        'rp-promos': function() { if (typeof initRpPromosPanel === 'function') initRpPromosPanel(); },
+        'reports': function() { if (typeof initReportsPanel === 'function') initReportsPanel(); }
       };
 
       // Track which panels have been loaded
@@ -5242,11 +5265,14 @@
           $('#content-creators-tab').show();
           $('#dash-qa-cc').show();
           $('#rp-promos-tab').show();
+          $('#reports-tab').show();
         } else {
           $('#content-creators-tab').hide();
           $('#dash-qa-cc').hide();
           $('#rp-promos-tab').hide();
           $('#panel-rp-promos').hide();
+          $('#reports-tab').hide();
+          $('#panel-reports').hide();
         }
 
         if (roles.includes('owner')) {
@@ -5308,6 +5334,155 @@
             badge.hide();
           }
         });
+      }
+
+      // ---- Reports (user-submitted report moderation) ----------------------
+      //
+      // Everything here goes through /admin/api/reports on our own server, not
+      // the API directly. These records name real accounts in accusations,
+      // including about children, so the browser never holds the gateway
+      // secret and the acting admin is read from the session rather than sent
+      // by this page.
+
+      var reportsState = { status: 'new', page: 0, limit: 25 };
+
+      var REPORT_STATUS_LABELS = {
+        'new': 'New',
+        'under_review': 'Under review',
+        'resolved': 'Resolved',
+        'dismissed': 'Dismissed',
+        'escalated': 'Escalated',
+        'welfare': 'Welfare'
+      };
+
+      // Tier drives the colour, because severity is the thing an admin needs to
+      // read off the row before anything else.
+      var REPORT_TIER_STYLE = {
+        escalate: { label: 'Child safety', color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
+        welfare:  { label: 'Welfare',      color: '#c084fc', bg: 'rgba(192,132,252,0.12)' },
+        serious:  { label: 'Serious',      color: '#fbbf24', bg: 'rgba(251,191,36,0.12)' },
+        minor:    { label: 'Minor',        color: '#94a3b8', bg: 'rgba(148,163,184,0.12)' }
+      };
+
+      function initReportsPanel() {
+        var hash = window.location.hash.replace('#', '');
+        var statusMatch = hash.match(/[?&]status=([^&]+)/);
+        if (statusMatch) reportsState.status = decodeURIComponent(statusMatch[1]);
+        loadReports();
+      }
+
+      function setReportStatus(status) {
+        reportsState.status = status;
+        reportsState.page = 0;
+        loadReports();
+      }
+
+      function changeReportsPage(page) {
+        reportsState.page = Math.max(0, page);
+        loadReports();
+      }
+
+      function loadReports() {
+        var params = new URLSearchParams();
+        if (reportsState.status) params.set('status', reportsState.status);
+        params.set('page', String(reportsState.page));
+        params.set('limit', String(reportsState.limit));
+
+        history.replaceState(null, null, '#reports' + (reportsState.status ? '?status=' + encodeURIComponent(reportsState.status) : ''));
+        $('#reportsResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading reports…</div>');
+
+        $.ajax({
+          url: '/admin/api/reports?' + params.toString(),
+          method: 'GET',
+          success: function(data) {
+            renderReportsRail(data.counts || {});
+            renderReports(data.data || [], data.totalCount || 0);
+          },
+          error: function(xhr) {
+            $('#reportsResults').html('<div class="loading">Failed to load reports</div>');
+            $('#reportsPager').html('');
+            showInfoModal('Error', 'Could not load reports: ' + ((xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.error)) || 'unknown error'));
+          }
+        });
+      }
+
+      function renderReportsRail(counts) {
+        var order = ['new', 'under_review', 'escalated', 'welfare', 'resolved', 'dismissed'];
+        var html = '';
+        order.forEach(function(status) {
+          var n = counts[status] || 0;
+          var active = reportsState.status === status ? ' active' : '';
+          html += '<button type="button" class="cc-status-btn' + active + '" data-status="' + status + '" onclick="setReportStatus(\'' + status + '\')">'
+            + escapeHtml(REPORT_STATUS_LABELS[status] || status)
+            + '<span class="cc-chip-count' + (n === 0 ? ' is-zero' : '') + '">' + n + '</span>'
+            + '</button>';
+        });
+        html += '<button type="button" class="cc-status-btn' + (reportsState.status === '' ? ' active' : '') + '" onclick="setReportStatus(\'\')">All</button>';
+        $('#reportsRail').html(html);
+
+        // The sidebar badge is the unread count. An empty queue shows nothing;
+        // a non-empty one should be visible without opening the tab.
+        var outstanding = counts['new'] || 0;
+        if (outstanding > 0) {
+          $('#reportsBadge').text(outstanding).show();
+        } else {
+          $('#reportsBadge').hide();
+        }
+      }
+
+      function reportTierBadge(tier) {
+        var style = REPORT_TIER_STYLE[tier] || REPORT_TIER_STYLE.minor;
+        return '<span style="color:' + style.color + '; background:' + style.bg + '; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:700;">'
+          + escapeHtml(style.label) + '</span>';
+      }
+
+      function renderReports(reports, totalCount) {
+        if (!reports.length) {
+          $('#reportsResults').html('<p style="color: var(--ac-text-muted); text-align: center; padding: 2rem;">Nothing here.</p>');
+          $('#reportsPager').html('');
+          return;
+        }
+
+        var html = '';
+        reports.forEach(function(r) {
+          var tier = r.effectiveTier || 'minor';
+          var created = r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+          var target = r.targetName || r.itemId || 'Unknown';
+          var repeat = (r.targetReportCount || 0) > 1
+            ? '<span style="color:#fbbf24; font-size:0.75rem; font-weight:600;">' + r.targetReportCount + ' reports against this ' + escapeHtml(r.itemType === 'community' ? 'community' : 'user') + '</span>'
+            : '';
+          var unclassified = r.issueKnown === false
+            ? '<span style="color:#94a3b8; font-size:0.75rem;">unclassified issue</span>'
+            : '';
+
+          html += '<div class="result-card" style="margin-bottom: 0.75rem;">';
+          html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">';
+          html += '<div style="flex:1; min-width:0;">';
+          html += '<div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.4rem; flex-wrap:wrap;">';
+          html += reportTierBadge(tier);
+          html += '<strong style="color:#fff;">' + escapeHtml(r.reportedIssue || 'No category') + '</strong>';
+          html += '<span style="color:var(--ac-text-muted); font-size:0.8rem;">' + escapeHtml(created) + '</span>';
+          html += '</div>';
+          html += '<div style="color:var(--ac-text); font-size:0.875rem; margin-bottom:0.3rem;">';
+          html += (r.itemType === 'community' ? 'Community: ' : 'User: ') + '<strong>' + escapeHtml(target) + '</strong>';
+          html += '</div>';
+          if (repeat || unclassified) {
+            html += '<div style="display:flex; gap:0.75rem; flex-wrap:wrap;">' + repeat + unclassified + '</div>';
+          }
+          html += '</div>';
+          html += '<a class="ac-btn ac-btn-accent" href="/admin/report/' + encodeURIComponent(r.id) + '"><i class="fas fa-eye"></i> Review</a>';
+          html += '</div></div>';
+        });
+        $('#reportsResults').html(html);
+
+        var pages = Math.max(1, Math.ceil(totalCount / reportsState.limit));
+        var pager = '<span style="color:var(--ac-text-muted); font-size:0.8125rem;">' + totalCount + ' report' + (totalCount === 1 ? '' : 's') + '</span>';
+        pager += '<span>';
+        pager += '<button class="ac-btn" ' + (reportsState.page <= 0 ? 'disabled' : '') + ' onclick="changeReportsPage(' + (reportsState.page - 1) + ')">Prev</button> ';
+        pager += '<span style="color:var(--ac-text-muted); font-size:0.8125rem; margin:0 0.5rem;">Page ' + (reportsState.page + 1) + ' of ' + pages + '</span>';
+        pager += '<button class="ac-btn" ' + (reportsState.page + 1 >= pages ? 'disabled' : '') + ' onclick="changeReportsPage(' + (reportsState.page + 1) + ')">Next</button>';
+        pager += '</span>';
+        $('#reportsPager').html(pager);
       }
 
       function initRpPromosPanel() {
