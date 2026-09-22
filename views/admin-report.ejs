@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Report Review - Lines Police CAD</title>
+  <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
+  <link rel="manifest" href="/static/images/site.webmanifest">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --ac-bg: #0a0a0f;
+      --ac-surface: #12121f;
+      --ac-glass: rgba(255,255,255,0.04);
+      --ac-glass-border: rgba(255,255,255,0.08);
+      --ac-text: #e5e7eb;
+      --ac-text-muted: rgba(255,255,255,0.55);
+      --ac-text-dim: rgba(255,255,255,0.35);
+      --ac-accent: #8b5cf6;
+      --ac-green: #4ade80;
+      --ac-red: #f87171;
+      --ac-amber: #fbbf24;
+      --ac-radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--ac-bg); color: var(--ac-text);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      /* standalone-utility is position:fixed at 36px tall and pages must clear it. */
+      padding-top: 36px;
+      -webkit-text-size-adjust: 100%;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 24px 20px 80px; }
+    a { color: var(--ac-accent); text-decoration: none; }
+    .back { display:inline-flex; align-items:center; gap:8px; font-size:0.9rem; color:var(--ac-text-muted); margin-bottom:18px; }
+    h1 { font-size: 1.5rem; margin: 0 0 4px; }
+    .card {
+      background: var(--ac-surface); border: 1px solid var(--ac-glass-border);
+      border-radius: var(--ac-radius); padding: 20px; margin-bottom: 16px;
+    }
+    .card h2 { font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--ac-text-muted); margin: 0 0 12px; font-weight: 700; }
+    .badge { padding: 0.2rem 0.55rem; border-radius: 5px; font-size: 0.75rem; font-weight: 700; }
+    .rowline { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 8px 16px; font-size: 0.9rem; }
+    .kv dt { color: var(--ac-text-muted); }
+    .kv dd { margin: 0; word-break: break-word; }
+    /* The report text is evidence. It is shown verbatim, wrapped, never trimmed. */
+    .evidence {
+      white-space: pre-wrap; word-break: break-word;
+      background: rgba(0,0,0,0.3); border: 1px solid var(--ac-glass-border);
+      border-radius: 10px; padding: 14px; font-size: 0.9rem; line-height: 1.55;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+      background: var(--ac-glass); border: 1px solid var(--ac-glass-border);
+      color: var(--ac-text); border-radius: 9px; padding: 0.55rem 0.95rem;
+      font-family: 'Outfit', sans-serif; font-size: 0.875rem; font-weight: 600;
+    }
+    .btn:hover { background: rgba(255,255,255,0.08); }
+    .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+    .btn-accent { background: rgba(139,92,246,0.18); border-color: rgba(139,92,246,0.45); color: #fff; }
+    .btn-danger { background: rgba(248,113,113,0.14); border-color: rgba(248,113,113,0.4); color: #fecaca; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    textarea, input[type=text] {
+      width: 100%; background: rgba(0,0,0,0.3); color: var(--ac-text);
+      border: 1px solid var(--ac-glass-border); border-radius: 9px; padding: 10px 12px;
+      font-family: 'Outfit', sans-serif; font-size: 0.9rem; resize: vertical;
+    }
+    label { display: block; font-size: 0.8125rem; color: var(--ac-text-muted); margin: 0 0 6px; }
+    .muted { color: var(--ac-text-muted); font-size: 0.85rem; }
+    .list-item {
+      border-top: 1px solid var(--ac-glass-border); padding: 10px 0; font-size: 0.875rem;
+    }
+    .list-item:first-child { border-top: none; }
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.72); display: none;
+      align-items: center; justify-content: center; padding: 20px; z-index: 60;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: var(--ac-surface); border: 1px solid var(--ac-glass-border);
+      border-radius: var(--ac-radius); max-width: 720px; width: 100%;
+      max-height: 86vh; overflow: auto; padding: 22px;
+    }
+    .preview {
+      background: #fff; border-radius: 10px; overflow: hidden; margin: 12px 0;
+    }
+    .preview iframe { width: 100%; height: 420px; border: 0; display: block; }
+    .notice {
+      border-radius: 10px; padding: 12px 14px; font-size: 0.875rem; margin-bottom: 14px;
+    }
+    .notice-warn { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35); color: #fde68a; }
+    .notice-danger { background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.35); color: #fecaca; }
+    @media (max-width: 640px) {
+      .kv { grid-template-columns: 1fr; gap: 2px 0; }
+      .kv dt { margin-top: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/standalone-utility') %>
+
+  <div class="wrap">
+    <a class="back" href="/admin/console#reports"><i class="fas fa-arrow-left"></i> Back to reports</a>
+
+    <div id="loading" class="muted">Loading report…</div>
+    <div id="content" style="display:none;"></div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="modal" id="modal"></div>
+  </div>
+
+  <script>
+    var REPORT_ID = <%- JSON.stringify(reportId) %>;
+
+    var TIER_STYLE = {
+      escalate: { label: 'Child safety', color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
+      welfare:  { label: 'Welfare',      color: '#c084fc', bg: 'rgba(192,132,252,0.12)' },
+      serious:  { label: 'Serious',      color: '#fbbf24', bg: 'rgba(251,191,36,0.12)' },
+      minor:    { label: 'Minor',        color: '#94a3b8', bg: 'rgba(148,163,184,0.12)' }
+    };
+    var HISTORY_LABELS = {
+      'resolved': 'Upheld', 'dismissed': 'Dismissed', 'welfare': 'Closed as read',
+      'escalated': 'Escalated', 'reopened': 'Reopened'
+    };
+    var STATUS_LABELS = {
+      'new': 'New', 'under_review': 'Under review', 'resolved': 'Resolved',
+      'dismissed': 'Dismissed', 'escalated': 'Escalated', 'welfare': 'Welfare'
+    };
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function fmtDate(v) {
+      if (!v) return '';
+      var d = new Date(v);
+      return isNaN(d) ? '' : d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+    function openModal(html) {
+      document.getElementById('modal').innerHTML = html;
+      document.getElementById('overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      document.getElementById('overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('overlay').addEventListener('click', function (e) {
+      if (e.target === this) closeModal();
+    });
+
+    var state = { report: null, offenses: [], otherReports: [], reporterStats: null };
+
+    // Mirrors the API. A decision closes every open report about the same
+    // target on the same track, and no other: dismissing spam never closes a
+    // child safety report about the same account.
+    function trackOf(tier) {
+      if (tier === 'escalate') return 'escalate';
+      if (tier === 'welfare') return 'welfare';
+      return 'ladder';
+    }
+    function isOpenStatus(status) {
+      return !status || status === 'new' || status === 'under_review';
+    }
+    function tierOf(r) { return r.effectiveTier || r.tier || 'minor'; }
+
+    function load() {
+      fetch('/admin/api/reports/' + encodeURIComponent(REPORT_ID))
+        .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error((res.body && (res.body.message || res.body.error)) || 'failed to load');
+          state.report = res.body.report;
+          state.offenses = res.body.offenses || [];
+          state.otherReports = res.body.otherReports || [];
+          state.reporterStats = res.body.reporterStats;
+          render();
+        })
+        .catch(function (err) {
+          document.getElementById('loading').textContent = 'Could not load this report: ' + err.message;
+        });
+    }
+
+    function render() {
+      var r = state.report;
+      var tier = TIER_STYLE[r.effectiveTier] || TIER_STYLE.minor;
+      var open = r.effectiveStatus === 'new' || r.effectiveStatus === 'under_review';
+
+      var html = '';
+      html += '<h1>' + esc(r.reportedIssue || 'Report') + '</h1>';
+      html += '<div class="rowline">';
+      html += '<span class="badge" style="color:' + tier.color + '; background:' + tier.bg + ';">' + esc(tier.label) + '</span>';
+      html += '<span class="muted">' + esc(STATUS_LABELS[r.effectiveStatus] || r.effectiveStatus) + '</span>';
+      html += '<span class="muted">Filed ' + esc(fmtDate(r.createdAt)) + '</span>';
+      if (r.issueKnown === false) html += '<span class="muted">unclassified issue, treated as minor</span>';
+      html += '</div>';
+
+      // Escalate and welfare reports never take the automated path, and the
+      // page says so rather than just hiding the button.
+      if (r.effectiveTier === 'escalate' && open) {
+        html += '<div class="notice notice-danger"><strong>This is a child safety report.</strong> It does not take an automated penalty. Escalating suspends the account, places a legal hold on its data so nothing can delete it, and builds the CyberTipline submission for you to file. Do not go looking for any content yourself.</div>';
+      }
+      if (r.effectiveTier === 'welfare' && open) {
+        html += '<div class="notice notice-warn"><strong>This is a self-harm report.</strong> It is a wellbeing flag, not an offence. No penalty and no email will be sent. Close it once a person has read it.</div>';
+      }
+
+      html += '<div class="card"><h2>Report</h2><dl class="kv">';
+      var targetHtml = r.targetMissing
+        ? '<span class="muted">Deleted ' + (r.itemType === 'community' ? 'community' : 'user') + '</span> <span class="muted" style="font-size:0.75rem;">' + esc(r.itemId) + '</span>'
+        : '<strong>' + esc(r.targetName || r.itemId) + '</strong>';
+      html += '<dt>' + (r.itemType === 'community' ? 'Community' : 'Reported user') + '</dt><dd>' + targetHtml + '</dd>';
+      html += '<dt>Reported by</dt><dd>' + esc(r.reporterName || r.reportedById || 'unknown') + '</dd>';
+      html += '<dt>Category</dt><dd>' + esc(r.reportedIssue) + '</dd>';
+      if (r.reviewedByName) html += '<dt>Decided by</dt><dd>' + esc(r.reviewedByName) + ' on ' + esc(fmtDate(r.reviewedAt)) + '</dd>';
+      html += '</dl>';
+      html += '<div style="margin-top:14px;"><h2>What the reporter wrote</h2>';
+      html += '<div class="evidence">' + (r.additionalDetails ? esc(r.additionalDetails) : '<span class="muted">They picked a category but wrote nothing.</span>') + '</div></div>';
+      html += '</div>';
+
+      var myTrack = trackOf(r.effectiveTier);
+      var caseMates = state.otherReports.filter(function (o) { return isOpenStatus(o.status) && trackOf(tierOf(o)) === myTrack; });
+      var openEscalations = state.otherReports.filter(function (o) { return isOpenStatus(o.status) && trackOf(tierOf(o)) === 'escalate'; });
+      var elsewhere = state.otherReports.filter(function (o) { return caseMates.indexOf(o) < 0; });
+      var kindWord = r.itemType === 'community' ? 'community' : 'account';
+
+      if (open && caseMates.length) {
+        html += '<div class="card"><h2>Decided together (' + (caseMates.length + 1) + ' reports)</h2>';
+        html += '<p class="muted" style="margin:0 0 10px;">Whatever you decide here applies to all of these. '
+          + (myTrack === 'ladder' ? 'Upholding issues one strike for the lot, under the most severe of them.' : '') + '</p>';
+        caseMates.forEach(function (o) {
+          html += '<div class="list-item"><strong>' + esc(o.reportedIssue) + '</strong> <span class="muted">' + esc(fmtDate(o.createdAt)) + '</span>';
+          if (o.additionalDetails) html += '<div class="evidence" style="margin-top:6px;">' + esc(o.additionalDetails) + '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+
+      if (open && myTrack === 'ladder' && openEscalations.length) {
+        html += '<div class="notice notice-danger"><strong>This ' + kindWord + ' also has an open child safety report.</strong> Escalate that one first; upholding is blocked until it is decided. '
+          + '<a href="/admin/report/' + encodeURIComponent(openEscalations[0].id) + '">Open it</a></div>';
+      }
+
+      if (elsewhere.length) {
+        html += '<div class="card"><h2>Other reports against this ' + kindWord + ' (' + elsewhere.length + ')</h2>';
+        elsewhere.forEach(function (o) {
+          html += '<div class="list-item"><strong>' + esc(o.reportedIssue) + '</strong> <span class="muted">' + esc(fmtDate(o.createdAt)) + ' &middot; ' + esc(STATUS_LABELS[o.status || 'new'] || o.status) + '</span>'
+            + ' <a href="/admin/report/' + encodeURIComponent(o.id) + '">open</a></div>';
+        });
+        html += '</div>';
+      }
+
+      html += '<div class="card"><h2>Strike history</h2>';
+      if (!state.offenses.length) {
+        html += '<p class="muted" style="margin:0;">No offences recorded' + (open && r.effectiveTier !== 'escalate' && r.effectiveTier !== 'welfare' ? '. Upholding this report would be the first.' : '.') + '</p>';
+      } else {
+        state.offenses.forEach(function (o) {
+          var reversed = o.status === 'reversed';
+          html += '<div class="list-item">';
+          html += '<strong>#' + o.offenseNumber + ' ' + esc(o.penalty) + '</strong> ';
+          html += '<span class="muted">' + esc(o.reportedIssue) + ' &middot; ' + esc(fmtDate(o.issuedAt)) + ' by ' + esc(o.issuedBy) + '</span>';
+          if (o.expiresAt) html += ' <span class="muted">until ' + esc(fmtDate(o.expiresAt)) + '</span>';
+          if (reversed) {
+            html += ' <span class="badge" style="color:var(--ac-green); background:rgba(74,222,128,0.12);">reversed</span>';
+          } else {
+            html += ' <button class="btn" style="margin-left:8px;" onclick="reverseOffense(\'' + esc(o._id) + '\')">Reverse</button>';
+          }
+          if (!o.emailSentAt) html += '<div class="muted">No email was sent for this one.</div>';
+          html += '</div>';
+        });
+      }
+      html += '</div>';
+
+      if (state.reporterStats) {
+        var s = state.reporterStats;
+        html += '<div class="card"><h2>The reporter</h2><dl class="kv">';
+        html += '<dt>Reports filed</dt><dd>' + (s.filed || 0) + '</dd>';
+        html += '<dt>Upheld</dt><dd>' + (s.upheld || 0) + '</dd>';
+        html += '<dt>Dismissed</dt><dd>' + (s.dismissed || 0) + '</dd>';
+        html += '</dl>';
+        if ((s.filed || 0) >= 3 && (s.upheld || 0) === 0) {
+          html += '<p class="muted" style="margin:10px 0 0;">Nothing this person has reported has been upheld. Worth a look before acting on this one.</p>';
+        }
+        html += '</div>';
+      }
+
+      // History: every decision and reopen, oldest first. Reports decided before
+      // history was kept have none, and the "Decided by" line covers them.
+      var history = r.history || [];
+      if (history.length) {
+        html += '<div class="card"><h2>History</h2>';
+        history.forEach(function (e) {
+          var label = HISTORY_LABELS[e.action] || e.action;
+          html += '<div class="list-item"><strong>' + esc(label) + '</strong> <span class="muted">by ' + esc(e.by || 'Staff') + ' on ' + esc(fmtDate(e.at)) + '</span>';
+          if (e.reason) html += '<div class="muted" style="margin-top:4px;">' + esc(e.reason) + '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+
+      if (r.effectiveStatus === 'dismissed' || r.effectiveStatus === 'welfare') {
+        html += '<div class="card"><h2>Reopen</h2>';
+        html += '<p class="muted" style="margin:0 0 10px;">Closed by mistake? Reopening puts it back in the queue as new'
+          + ' along with any other reports this same decision closed. Your name and reason are recorded.</p>';
+        html += '<label for="reopenReason">Why are you reopening it?</label>';
+        html += '<textarea id="reopenReason" rows="2" placeholder="Dismissed the wrong case, new information, ..."></textarea>';
+        html += '<div id="reopenError" class="muted" style="color:var(--ac-red); display:none; margin-top:6px;">Give a reason of at least 3 characters.</div>';
+        html += '<div class="actions" style="margin-top:12px;"><button class="btn btn-accent" onclick="reopenReport()"><i class="fas fa-rotate-left"></i> Reopen</button></div>';
+        html += '</div>';
+      } else if (r.effectiveStatus === 'resolved') {
+        html += '<p class="muted">Upheld reports are not reopened. If the strike was wrong, reverse it under Strike history.</p>';
+      }
+
+      if (open) {
+        html += '<div class="card"><h2>Decide</h2>';
+        html += '<label for="reason">Reason (recorded on the strike, never shown to the reported account)</label>';
+        html += '<textarea id="reason" rows="3" placeholder="What you found, in a sentence."></textarea>';
+        html += '<div class="actions" style="margin-top:14px;">';
+        if (r.effectiveTier === 'escalate') {
+          html += '<button class="btn btn-danger" onclick="escalate()"><i class="fas fa-triangle-exclamation"></i> Escalate and hold</button>';
+        } else if (r.effectiveTier !== 'welfare') {
+          html += '<button class="btn btn-accent" onclick="previewUphold()"><i class="fas fa-gavel"></i> Uphold…</button>';
+        }
+        html += '<button class="btn" onclick="dismiss()"><i class="fas fa-xmark"></i> ' + (r.effectiveTier === 'welfare' ? 'Close as read' : 'Dismiss') + '</button>';
+        html += '</div></div>';
+      }
+
+      document.getElementById('loading').style.display = 'none';
+      var content = document.getElementById('content');
+      content.innerHTML = html;
+      content.style.display = '';
+    }
+
+    function reason() {
+      var el = document.getElementById('reason');
+      return el ? el.value.trim() : '';
+    }
+
+    function post(path, body) {
+      return fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {})
+      }).then(function (r) {
+        return r.json().then(function (b) {
+          if (!r.ok) throw new Error((b && (b.message || b.error)) || 'request failed');
+          return b;
+        });
+      });
+    }
+
+    // Preview first, always. The ladder decides the rung and renders the exact
+    // email; a person confirms it. Nothing about a report fires on its own.
+    function previewUphold() {
+      post('/admin/api/reports/' + REPORT_ID + '/preview', { reason: reason() })
+        .then(function (res) {
+          var plan = res.plan || {};
+          if (res.blockedByEscalation) {
+            openModal('<h2>Escalate the child safety report first</h2><p>This account has an open child safety report. Upholding anything else against it now would put a routine ban ahead of that. Escalate it, then come back to this one.</p>'
+              + '<div class="actions"><button class="btn" onclick="closeModal()">Close</button></div>');
+            return;
+          }
+          if (plan.alreadyInForce) {
+            openModal('<h2>Already serving a penalty</h2><p>This target is still under an earlier restriction'
+              + (plan.alreadyInForceUntil ? ' until ' + esc(fmtDate(plan.alreadyInForceUntil)) : '')
+              + '. Issuing another would stack a strike for behaviour that has already been actioned. Reverse the existing one first if it was wrong.</p>'
+              + '<div class="actions"><button class="btn" onclick="closeModal()">Close</button></div>');
+            return;
+          }
+
+          var html = '<h2 style="font-size:1.15rem; margin:0 0 4px;">Strike #' + plan.offenseNumber + ': ' + esc(plan.action) + '</h2>';
+          html += '<p class="muted" style="margin:0 0 12px;">'
+            + (plan.action === 'warning' ? 'No restriction is placed on the account.'
+              : plan.action === 'permanent' ? 'The account is removed permanently.'
+              : 'Suspended for ' + esc(plan.penaltyLabel) + ', lifting ' + esc(fmtDate(plan.expiresAt)) + '.')
+            + (plan.nextPenalty ? ' A further breach would be ' + esc(plan.nextPenalty) + '.' : '')
+            + '</p>';
+          if ((res.reportCount || 1) > 1) {
+            html += '<p class="muted" style="margin:0 0 12px;">One strike for all <strong>' + res.reportCount + '</strong> reports in this case, issued as <strong>' + esc(res.issue) + '</strong>, the most severe of them. All of them close.</p>';
+          }
+
+          if (res.email) {
+            html += '<p class="muted" style="margin:0 0 4px;">This goes to <strong>' + esc(res.contactEmail || 'nobody: no email on file') + '</strong> from ' + esc(res.email.from) + '</p>';
+            html += '<p style="margin:0 0 6px;"><strong>' + esc(res.email.subject) + '</strong></p>';
+            html += '<div class="preview"><iframe id="emailPreview" sandbox=""></iframe></div>';
+            html += '<label style="display:flex; align-items:center; gap:8px; margin:10px 0;"><input type="checkbox" id="sendEmail" checked> Send this email</label>';
+          } else {
+            html += '<p class="muted">No email will be sent.</p>';
+          }
+
+          html += '<div class="actions" style="margin-top:12px;">';
+          html += '<button class="btn btn-accent" onclick="confirmUphold()">Confirm</button>';
+          html += '<button class="btn" onclick="closeModal()">Cancel</button>';
+          html += '</div>';
+          openModal(html);
+
+          // srcdoc on a sandboxed frame, so the rendered email cannot run
+          // anything or reach this page.
+          if (res.email) {
+            document.getElementById('emailPreview').srcdoc = res.email.html;
+          }
+        })
+        .catch(function (err) { openModal('<p>' + esc(err.message) + '</p><div class="actions"><button class="btn" onclick="closeModal()">Close</button></div>'); });
+    }
+
+    function confirmUphold() {
+      var box = document.getElementById('sendEmail');
+      post('/admin/api/reports/' + REPORT_ID + '/uphold', {
+        reason: reason(),
+        sendEmail: box ? box.checked : false
+      }).then(function () {
+        window.location.href = '/admin/console#reports';
+      }).catch(function (err) {
+        openModal('<p>' + esc(err.message) + '</p><div class="actions"><button class="btn" onclick="closeModal()">Close</button></div>');
+      });
+    }
+
+    function dismiss() {
+      post('/admin/api/reports/' + REPORT_ID + '/dismiss', { note: reason() })
+        .then(function () { window.location.href = '/admin/console#reports'; })
+        .catch(function (err) { openModal('<p>' + esc(err.message) + '</p><div class="actions"><button class="btn" onclick="closeModal()">Close</button></div>'); });
+    }
+
+    function escalate() {
+      post('/admin/api/reports/' + REPORT_ID + '/escalate', { note: reason() })
+        .then(function (res) {
+          var pkg = res['package'] || {};
+          var html = '<h2 style="font-size:1.15rem; margin:0 0 6px;">Account suspended and held</h2>';
+          html += '<p class="muted" style="margin:0 0 12px;">Its data is now excluded from every deletion path until '
+            + esc(fmtDate(res.holdExpiry)) + '. File the submission below at <a href="https://report.cybertip.org" target="_blank" rel="noopener noreferrer">report.cybertip.org</a>. Do not open or download any content yourself.</p>';
+          html += '<textarea id="pkgText" rows="16" readonly>' + esc(pkg.plainText || '') + '</textarea>';
+          html += '<div class="actions" style="margin-top:12px;">';
+          html += '<button class="btn btn-accent" onclick="copyPackage()"><i class="fas fa-copy"></i> Copy</button>';
+          html += '<a class="btn" href="https://report.cybertip.org" target="_blank" rel="noopener noreferrer">Open CyberTipline</a>';
+          html += '<button class="btn" onclick="window.location.href=\'/admin/console#reports\'">Done</button>';
+          html += '</div>';
+          openModal(html);
+        })
+        .catch(function (err) { openModal('<p>' + esc(err.message) + '</p><div class="actions"><button class="btn" onclick="closeModal()">Close</button></div>'); });
+    }
+
+    function copyPackage() {
+      var el = document.getElementById('pkgText');
+      el.select();
+      try { document.execCommand('copy'); } catch (e) { /* the textarea is selected either way */ }
+    }
+
+    // The page has its own modal, so no native prompt: the admin console does
+    // not load ddModal and a browser dialog looks like a bug here.
+    function reopenReport() {
+      var el = document.getElementById('reopenReason');
+      var why = el ? el.value.trim() : '';
+      var errEl = document.getElementById('reopenError');
+      if (why.length < 3) {
+        // Flag the field itself, not just a message somewhere on the page.
+        // Outline too: focusing the field draws the browser's focus ring over
+        // the border, which would hide the red.
+        el.style.borderColor = 'var(--ac-red)';
+        el.style.outline = '2px solid var(--ac-red)';
+        errEl.style.display = '';
+        el.focus();
+        return;
+      }
+      el.style.borderColor = '';
+      el.style.outline = '';
+      errEl.style.display = 'none';
+      post('/admin/api/reports/' + REPORT_ID + '/reopen', { reason: why })
+        .then(function () { window.location.reload(); })
+        .catch(function (err) { openModal('<p>' + esc(err.message) + '</p><div class="actions"><button class="btn" onclick="closeModal()">Close</button></div>'); });
+    }
+
+    function reverseOffense(offenseId) {
+      var html = '<h2 style="font-size:1.15rem; margin:0 0 6px;">Reverse this strike</h2>';
+      html += '<p class="muted" style="margin:0 0 12px;">It stops being enforced and stops counting toward the next rung, so the next strike starts one step lower.</p>';
+      html += '<label for="reverseReason">Why</label>';
+      html += '<textarea id="reverseReason" rows="3" placeholder="Appeal upheld, issued in error, ..."></textarea>';
+      html += '<div class="actions" style="margin-top:12px;">';
+      html += '<button class="btn btn-accent" onclick="confirmReverse(\'' + esc(offenseId) + '\')">Reverse</button>';
+      html += '<button class="btn" onclick="closeModal()">Cancel</button>';
+      html += '</div>';
+      openModal(html);
+    }
+
+    function confirmReverse(offenseId) {
+      var el = document.getElementById('reverseReason');
+      var why = el ? el.value.trim() : '';
+      if (why.length < 3) {
+        el.focus();
+        return;
+      }
+      post('/admin/api/offenses/' + encodeURIComponent(offenseId) + '/reverse', { reason: why })
+        .then(function () { window.location.reload(); })
+        .catch(function (err) { openModal('<p>' + esc(err.message) + '</p><div class="actions"><button class="btn" onclick="closeModal()">Close</button></div>'); });
+    }
+
+    load();
+  </script>
+</body>
+</html>
