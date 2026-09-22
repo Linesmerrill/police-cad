@@ -284,6 +284,8 @@
       '.dds-add-check{width:18px;height:18px;border:2px solid rgba(255,255,255,0.2);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;font-size:0.625rem;color:transparent;}' +
       '.dds-add-check.checked{background:var(--dd-accent);border-color:var(--dd-accent);color:#fff;}' +
       '.dds-add-item-name{font-size:0.8125rem;color:var(--dd-text);font-weight:500;}' +
+      '.dds-add-request{margin-left:auto;padding:1px 7px;border-radius:999px;font-size:0.625rem;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;white-space:nowrap;color:#fbbf24;border:1px solid rgba(245,158,11,0.35);background:rgba(245,158,11,0.12);}' +
+      '.dds-add-request[data-request="denied"]{color:#f87171;border-color:rgba(239,68,68,0.35);background:rgba(239,68,68,0.12);}' +
       '.dds-add-empty{font-size:0.8125rem;color:var(--dd-text-muted);text-align:center;padding:1.5rem 0;}' +
       '.dds-add-loading{font-size:0.8125rem;color:var(--dd-text-muted);text-align:center;padding:1.5rem 0;}' +
 
@@ -1501,6 +1503,7 @@
   var communityMembersLoading = false;
   var communityMembersHasMore = false;
   var communityMembersRequestId = 0;
+  var communityMemberRequests = {};
   var communityMembersSearchTimer = null;
 
   function openAddMembersModal() {
@@ -1608,6 +1611,12 @@
         if (requestId !== communityMembersRequestId) return; // drop stale
         communityMembersLoading = false;
         var members = res.members || res.data || [];
+        // Who has already asked to join this department. A name waiting on a
+        // decision otherwise looks the same as one that never asked.
+        communityMemberRequests = Object.assign(
+          communityMembersPage === 1 ? {} : communityMemberRequests,
+          res.departmentRequests || {}
+        );
         if (res.pagination && typeof res.pagination.totalCount === 'number') {
           communityMembersTotal = res.pagination.totalCount;
         } else if (typeof res.totalUsers === 'number') {
@@ -1655,10 +1664,17 @@
       if (uid && typeof uid === 'object' && uid.$oid) uid = uid.$oid;
       var name = user.username || m.username || 'Unknown';
       var checked = selectedMemberIds.indexOf(uid) !== -1;
+      var request = communityMemberRequests[uid] || '';
+      var requestLabel = request === 'pending' ? 'Requested to join'
+        : (request === 'denied' ? 'Request declined' : '');
+      var requestChip = requestLabel
+        ? '<span class="dds-add-request" data-request="' + esc(request) + '">' + esc(requestLabel) + '</span>'
+        : '';
 
       html += '<div class="dds-add-item" data-uid="' + esc(uid) + '">' +
         '<div class="dds-add-check' + (checked ? ' checked' : '') + '"><i class="fa fa-check"></i></div>' +
         '<span class="dds-add-item-name">' + esc(name) + '</span>' +
+        requestChip +
       '</div>';
     });
 
@@ -1701,8 +1717,15 @@
       method: 'POST',
       contentType: 'application/json',
       data: JSON.stringify({ members: selectedMemberIds }),
-      success: function () {
-        toast(selectedMemberIds.length + ' member' + (selectedMemberIds.length > 1 ? 's' : '') + ' added', 'success');
+      success: function (res) {
+        var approvedCount = (res && res.approved && res.approved.length) || 0;
+        var addedCount = selectedMemberIds.length;
+        toast(
+          approvedCount === addedCount && approvedCount > 0
+            ? approvedCount + ' request' + (approvedCount > 1 ? 's' : '') + ' approved'
+            : addedCount + ' member' + (addedCount > 1 ? 's' : '') + ' added',
+          'success'
+        );
         closeAddMembersModal();
         membersPage = 1;
         membersData = [];

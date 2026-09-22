@@ -10176,11 +10176,16 @@ function loadAddMemberPage(page) {
   fetch(url)
     .then(function(res) { return res.json(); })
     .then(function(data) {
+      // Who has already asked to join this department. Without it, a name that
+      // is waiting on a decision looks exactly like a name that never asked,
+      // and adding them does two different things.
+      var requests = data.departmentRequests || {};
       var members = (data.members || []).map(function(m) {
         return {
           userId: m.id,
           username: m.username || 'Unknown',
-          profilePicture: m.profilePicture || ''
+          profilePicture: m.profilePicture || '',
+          requestStatus: requests[m.id] || ''
         };
       });
 
@@ -10209,12 +10214,19 @@ function renderAddMemberRows() {
     var avatar = m.profilePicture
       ? '<img src="' + m.profilePicture + '" alt="" style="width:100%;height:100%;object-fit:cover;">'
       : '<i class="fa fa-user"></i>';
+    var requestLabel = m.requestStatus === 'pending' ? 'Requested to join'
+      : (m.requestStatus === 'denied' ? 'Request declined' : '');
+    var requestChip = requestLabel
+      ? '<span class="edm-request-chip" data-request="' + m.requestStatus + '">' + requestLabel + '</span>'
+      : '';
+    var addTitle = m.requestStatus === 'pending' ? 'Approve request' : 'Add to department';
     return '<div class="edm-add-member-row">'
       + '<div class="edm-member-info">'
       + '<div class="edm-member-avatar">' + avatar + '</div>'
       + '<span class="edm-member-name">' + m.username + '</span>'
+      + requestChip
       + '</div>'
-      + '<button type="button" class="edm-add-btn" onclick="addMemberToDept(\'' + m.userId + '\')" title="Add to department"><i class="fa fa-plus"></i></button>'
+      + '<button type="button" class="edm-add-btn" onclick="addMemberToDept(\'' + m.userId + '\')" title="' + addTitle + '"><i class="fa fa-plus"></i></button>'
       + '</div>';
   }).join('');
 }
@@ -10253,8 +10265,13 @@ function addMemberToDept(userId) {
   })
   .then(function(data) {
     var alreadyThere = data && data.skipped && data.skipped.indexOf(userId) !== -1;
+    var wasApproved = data && data.approved && data.approved.indexOf(userId) !== -1;
     if (typeof showToast === 'function') {
-      showToast(alreadyThere ? 'Already in this department' : 'Member added', 2000);
+      showToast(
+        alreadyThere ? 'Already in this department'
+          : (wasApproved ? 'Request approved' : 'Member added'),
+        2000
+      );
     }
     // Refresh department members list, then reload add-member page
     loadEditDeptMembers(departmentId, editDeptMembersPage);
@@ -15793,6 +15810,16 @@ async function saveEditEvent() {
         color: #fbbf24; font-weight: 600; white-space: nowrap;
       }
       .tcm-v-desc { color: #e2e8f0; }
+      /* Someone waiting on a decision, in the Add Members list. */
+      .edm-request-chip {
+        margin-left: 0.5rem; padding: 1px 7px; border-radius: 999px;
+        font-size: 10px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+        color: #fbbf24; border: 1px solid rgba(245,158,11,0.35); background: rgba(245,158,11,0.12);
+        white-space: nowrap;
+      }
+      .edm-request-chip[data-request="denied"] {
+        color: #f87171; border-color: rgba(239,68,68,0.35); background: rgba(239,68,68,0.12);
+      }
       /* What a code means to dispatch, when the community has set it. */
       .tcm-v-means {
         display: inline-block; margin-left: 0.4rem; padding: 1px 7px; border-radius: 999px;
