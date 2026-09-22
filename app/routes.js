@@ -1,3 +1,4 @@
+const communityReport = require("./community-report");
 var rateLimit = require("express-rate-limit");
 var User = require("../app/models/user");
 var Civilian = require("../app/models/civilian");
@@ -363,6 +364,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
         hash,
         referer: encodeURIComponent(`/community/${hash}`),
         redirect: encodeURIComponent(redirect),
+        reportReasons: communityReport.REPORT_REASONS,
+        reportDetailsMax: communityReport.MAX_REPORT_DETAILS,
       });
     } catch (error) {
       if (renderPendingDeletionIfApplicable(req, res, error)) return;
@@ -3457,6 +3460,38 @@ module.exports = function (app, passport, server, nextApp, handle) {
       return res.status(500).render("error", {
         message: "An error occurred while processing the invite.",
       });
+    }
+  });
+
+  // Report a community from its page. Same reasons and flow as the mobile app
+  // (app/community-report.js). Filed through our server so the reporter is the
+  // logged-in session user: the page cannot choose who is reporting, and the
+  // browser has no API token to prove it anyway.
+  app.post("/community/:communityId/report", async function (req, res) {
+    // JSON only. There is no CSRF token on this site, and a plain form on
+    // another site could otherwise post here with a player's cookie and file a
+    // report in their name. A cross-site JSON request needs a CORS preflight,
+    // which this server does not grant.
+    if (!req.is("application/json")) {
+      return res.status(415).json({ message: "Unsupported request." });
+    }
+    const built = communityReport.buildCommunityReport(req, req.params.communityId);
+    if (built.error) {
+      return res.status(built.status || 400).json({ message: built.error });
+    }
+    try {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/report`, built.report, {
+        headers: { "Content-Type": "application/json" },
+        timeout: 10000,
+      });
+      return res.json({
+        message: "Report submitted",
+        duplicate: !!(response.data && response.data.duplicate),
+      });
+    } catch (err) {
+      const status = (err.response && err.response.status) || 500;
+      console.error("[community-report] failed to submit", status, err.message);
+      return res.status(status >= 500 ? 502 : status).json({ message: "Failed to submit report. Please try again." });
     }
   });
 

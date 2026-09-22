@@ -1595,6 +1595,24 @@
               </div>
             <% } %>
 
+            <%# Reporting sits at the foot of the card, quiet on purpose: it has to
+                be findable by anyone who needs it without reading as an invitation.
+                Hidden from the owner, who has nothing to report their own
+                community to. %>
+            <% if (!isOwner) { %>
+              <div class="mt-3 flex justify-end">
+                <% if (user) { %>
+                  <button type="button" class="report-community-link" onclick="openReportCommunityModal()">
+                    <i class="fa fa-flag"></i> Report community
+                  </button>
+                <% } else { %>
+                  <a class="report-community-link" href="/login-civ?redirect=<%= encodeURIComponent('/community/' + hash) %>">
+                    <i class="fa fa-flag"></i> Log in to report this community
+                  </a>
+                <% } %>
+              </div>
+            <% } %>
+
             <% if (isMemberApproved) { %>
               <div class="mt-4 pt-4 flex flex-wrap gap-2 justify-center sm:justify-end" style="border-top: 1px solid rgba(255, 255, 255, 0.1);">
                 <% if (isOwner) { %>
@@ -2384,5 +2402,10 @@
     <% include partials/community-details-modals %>
     <%- include('partials/community-delete-loading') %>
     <%- include('partials/pending-deletion-gate') %>
+    <%- include('partials/community-report-modal', {
+      reportReasons: reportReasons,
+      reportDetailsMax: reportDetailsMax,
+      reportCommunityId: String(community.community._id || community._id || '')
+    }) %>
   </body>
 </html>

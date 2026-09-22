@@ -1,0 +1,234 @@
+<%#
+  Report a community. The same two steps, reasons and copy as the mobile app
+  (Select a reason -> Review Report -> Submit Report), so a player sees the same
+  thing wherever they report from. Reasons come from app/community-report.js.
+
+  Locals: reportReasons, reportDetailsMax, reportCommunityId.
+%>
+<style>
+  .rcm-overlay { position:fixed; inset:0; z-index:2100; background:rgba(5,10,18,0.72); display:flex; align-items:center; justify-content:center; padding:16px; }
+  .rcm-overlay[hidden] { display:none; }
+  .rcm-dialog {
+    width:100%; max-width:540px; max-height:min(86vh, 760px); display:flex; flex-direction:column;
+    background:#101826; border:1px solid rgba(255,255,255,0.08); border-radius:16px; color:#e2e8f0;
+    box-shadow:0 24px 64px rgba(0,0,0,0.5);
+  }
+  .rcm-head { display:grid; grid-template-columns:72px 1fr 72px; align-items:center; padding:16px 18px; border-bottom:1px solid rgba(255,255,255,0.06); }
+  .rcm-head h3 { margin:0; text-align:center; font-size:1.05rem; font-weight:700; color:#fff; }
+  .rcm-link { background:none; border:0; color:#94a3b8; font:inherit; font-size:0.9rem; cursor:pointer; padding:4px 0; }
+  .rcm-link:hover { color:#e2e8f0; }
+  .rcm-link.rcm-right { text-align:right; }
+  .rcm-link[hidden] { visibility:hidden; display:block; }
+  .rcm-body { overflow-y:auto; padding:16px 18px; flex:1; }
+  .rcm-foot { padding:14px 18px 18px; border-top:1px solid rgba(255,255,255,0.06); }
+  .rcm-option {
+    width:100%; display:flex; align-items:flex-start; gap:12px; text-align:left; cursor:pointer;
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px;
+    padding:14px; margin-bottom:10px; color:inherit; font:inherit;
+  }
+  .rcm-option:hover { background:rgba(255,255,255,0.05); }
+  .rcm-option[aria-checked="true"] { border-color:rgba(56,189,248,0.6); background:rgba(56,189,248,0.08); }
+  .rcm-option-title { font-weight:600; color:#fff; margin-bottom:4px; }
+  .rcm-option[aria-checked="true"] .rcm-option-title { color:#38bdf8; }
+  .rcm-option-sub { font-size:0.82rem; color:#94a3b8; line-height:1.45; }
+  .rcm-check { margin-left:auto; flex:0 0 auto; color:#38bdf8; visibility:hidden; font-size:1.2rem; }
+  .rcm-option[aria-checked="true"] .rcm-check { visibility:visible; }
+  .rcm-label-row { display:flex; justify-content:space-between; align-items:baseline; margin:0 0 8px; }
+  .rcm-label { font-size:0.72rem; letter-spacing:0.08em; font-weight:700; color:#94a3b8; }
+  .rcm-hint { font-size:0.75rem; color:#64748b; }
+  .rcm-selected { background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.35); border-radius:12px; padding:14px; color:#fff; font-weight:600; margin-bottom:18px; }
+  .rcm-textarea {
+    width:100%; min-height:120px; resize:vertical; box-sizing:border-box; background:rgba(0,0,0,0.25); color:#e2e8f0;
+    border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px 14px; font:inherit; font-size:0.92rem;
+  }
+  .rcm-textarea:focus { outline:none; border-color:rgba(56,189,248,0.6); }
+  .rcm-disclaimer { font-size:0.8rem; color:#94a3b8; line-height:1.5; margin:14px 0 0; }
+  .rcm-disclaimer a { color:#38bdf8; }
+  .rcm-primary {
+    width:100%; border:0; border-radius:12px; padding:13px 16px; font:inherit; font-weight:700; cursor:pointer; color:#fff;
+    background:linear-gradient(90deg, #0ea5e9, #38bdf8);
+  }
+  .rcm-primary:disabled { background:#475569; cursor:not-allowed; opacity:0.7; }
+  .rcm-error { color:#f87171; font-size:0.85rem; margin:0 0 10px; text-align:center; }
+  .rcm-error[hidden] { display:none; }
+  .rcm-done { text-align:center; padding:28px 8px 8px; }
+  .rcm-done i { font-size:2.4rem; color:#38bdf8; margin-bottom:12px; display:block; }
+  .rcm-done h4 { margin:0 0 6px; color:#fff; font-size:1.15rem; }
+  .rcm-done p { margin:0; color:#94a3b8; }
+  .report-community-link {
+    display:inline-flex; align-items:center; gap:6px; background:none; border:0; padding:4px 0; cursor:pointer;
+    color:#64748b; font:inherit; font-size:0.8rem; text-decoration:none;
+  }
+  .report-community-link:hover { color:#f87171; }
+  @media (max-width: 640px) {
+    .rcm-overlay { padding:0; align-items:flex-end; }
+    .rcm-dialog { max-width:none; max-height:92vh; border-radius:16px 16px 0 0; }
+  }
+</style>
+
+<div id="reportCommunityModal" class="rcm-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="rcmTitle">
+  <div class="rcm-dialog">
+    <div class="rcm-head">
+      <button type="button" class="rcm-link" id="rcmBack" hidden><i class="fa fa-chevron-left"></i> Back</button>
+      <h3 id="rcmTitle">Select a reason</h3>
+      <button type="button" class="rcm-link rcm-right" id="rcmCancel">Cancel</button>
+    </div>
+
+    <%# Step 1: Select a reason %>
+    <div class="rcm-body" id="rcmStep1" role="radiogroup" aria-labelledby="rcmTitle">
+      <% reportReasons.forEach(function (reason) { %>
+        <button type="button" class="rcm-option" role="radio" aria-checked="false" data-reason="<%= reason.title %>">
+          <span>
+            <div class="rcm-option-title"><%= reason.title %></div>
+            <div class="rcm-option-sub"><%= reason.subtext %></div>
+          </span>
+          <i class="fa fa-circle-check rcm-check" aria-hidden="true"></i>
+        </button>
+      <% }); %>
+    </div>
+
+    <%# Step 2: Review Report %>
+    <div class="rcm-body" id="rcmStep2" hidden>
+      <div class="rcm-label-row"><span class="rcm-label">REPORTED ISSUE</span></div>
+      <div class="rcm-selected" id="rcmSelected"></div>
+
+      <div class="rcm-label-row">
+        <label class="rcm-label" for="rcmDetails">ADDITIONAL INFORMATION</label>
+        <span class="rcm-hint" id="rcmCount">optional</span>
+      </div>
+      <textarea id="rcmDetails" class="rcm-textarea" maxlength="<%= reportDetailsMax %>" placeholder="Provide more details if needed..."></textarea>
+
+      <p class="rcm-disclaimer">
+        We take all reports seriously. By submitting this report, you agree that this content goes against our
+        <a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer">Terms of Service</a>.
+      </p>
+    </div>
+
+    <%# Done %>
+    <div class="rcm-body" id="rcmStep3" hidden>
+      <div class="rcm-done">
+        <i class="fa fa-circle-check" aria-hidden="true"></i>
+        <h4>Report Submitted</h4>
+        <p>Thank you for helping keep our community safe.</p>
+      </div>
+    </div>
+
+    <div class="rcm-foot">
+      <p class="rcm-error" id="rcmError" hidden role="alert"></p>
+      <button type="button" class="rcm-primary" id="rcmPrimary" disabled>Next</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var COMMUNITY_ID = <%- JSON.stringify(String(reportCommunityId || '')) %>;
+    var MAX = <%- JSON.stringify(Number(reportDetailsMax) || 2000) %>;
+
+    var modal = document.getElementById('reportCommunityModal');
+    if (!modal) return;
+    var title = document.getElementById('rcmTitle');
+    var back = document.getElementById('rcmBack');
+    var cancel = document.getElementById('rcmCancel');
+    var steps = [null, document.getElementById('rcmStep1'), document.getElementById('rcmStep2'), document.getElementById('rcmStep3')];
+    var primary = document.getElementById('rcmPrimary');
+    var errorEl = document.getElementById('rcmError');
+    var details = document.getElementById('rcmDetails');
+    var count = document.getElementById('rcmCount');
+    var selectedEl = document.getElementById('rcmSelected');
+    var options = Array.prototype.slice.call(modal.querySelectorAll('.rcm-option'));
+
+    var state = { step: 1, reason: '', submitting: false, lastFocus: null };
+
+    function showStep(n) {
+      state.step = n;
+      for (var i = 1; i <= 3; i++) steps[i].hidden = i !== n;
+      title.textContent = n === 1 ? 'Select a reason' : n === 2 ? 'Review Report' : 'Report Submitted';
+      back.hidden = n !== 2;
+      cancel.textContent = n === 3 ? 'Close' : 'Cancel';
+      errorEl.hidden = true;
+      if (n === 1) { primary.textContent = 'Next'; primary.disabled = !state.reason; }
+      if (n === 2) { primary.textContent = 'Submit Report'; primary.disabled = false; selectedEl.textContent = state.reason; }
+      if (n === 3) { primary.textContent = 'Done'; primary.disabled = false; }
+    }
+
+    function open() {
+      state.reason = '';
+      state.submitting = false;
+      details.value = '';
+      updateCount();
+      options.forEach(function (o) { o.setAttribute('aria-checked', 'false'); });
+      state.lastFocus = document.activeElement;
+      showStep(1);
+      modal.hidden = false;
+      // Lock the page behind the modal, so scrolling the list does not scroll it.
+      document.body.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+      steps[1].scrollTop = 0;
+      (options[0] || cancel).focus();
+    }
+
+    function close() {
+      modal.hidden = true;
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      if (state.lastFocus && state.lastFocus.focus) state.lastFocus.focus();
+    }
+
+    function updateCount() {
+      var n = details.value.length;
+      count.textContent = n > 0 ? n + '/' + MAX : 'optional';
+    }
+
+    options.forEach(function (o) {
+      o.addEventListener('click', function () {
+        state.reason = o.getAttribute('data-reason');
+        options.forEach(function (x) { x.setAttribute('aria-checked', x === o ? 'true' : 'false'); });
+        primary.disabled = false;
+      });
+    });
+
+    details.addEventListener('input', updateCount);
+    back.addEventListener('click', function () { showStep(1); });
+    cancel.addEventListener('click', close);
+    modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+    document.addEventListener('keydown', function (e) { if (!modal.hidden && e.key === 'Escape') close(); });
+
+    primary.addEventListener('click', function () {
+      if (state.step === 1) {
+        if (state.reason) showStep(2);
+        return;
+      }
+      if (state.step === 3) { close(); return; }
+      if (state.submitting) return;
+
+      state.submitting = true;
+      primary.disabled = true;
+      primary.textContent = 'Submitting…';
+      errorEl.hidden = true;
+
+      fetch('/community/' + encodeURIComponent(COMMUNITY_ID) + '/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ reason: state.reason, details: details.value })
+      })
+        .then(function (res) {
+          return res.json().catch(function () { return {}; }).then(function (body) {
+            if (!res.ok) throw new Error((body && body.message) || 'Failed to submit report. Please try again.');
+            return body;
+          });
+        })
+        .then(function () { showStep(3); })
+        .catch(function (err) {
+          errorEl.textContent = err.message || 'Failed to submit report. Please try again.';
+          errorEl.hidden = false;
+          primary.disabled = false;
+          primary.textContent = 'Submit Report';
+        })
+        .then(function () { state.submitting = false; });
+    });
+
+    window.openReportCommunityModal = open;
+  })();
+</script>
