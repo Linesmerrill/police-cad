@@ -35,6 +35,7 @@ describe("community-report", function () {
         reportedIssue: "Hate", additionalDetails: "slurs all over the description",
         reportedById: "507f1f77bcf86cd799439082",
         location: "in_app", impersonatedName: "",
+        target: { kind: "community", id: COMMUNITY, fields: [] },
       });
     });
 
@@ -142,5 +143,42 @@ describe("community-report", function () {
       var out = cr.buildCommunityReport(req(player, { reason: "Spam", details: "scam links in the description" }), COMMUNITY);
       assert.equal(out.report.impersonatedName, "");
     });
+  });
+});
+
+describe("community-report targets", function () {
+  var COMMUNITY = "507f1f77bcf86cd799439081";
+  var player = { _doc: { _id: "507f1f77bcf86cd799439082" } };
+  function req(body) {
+    return { user: player, body: Object.assign({ location: "in_app", details: "slurs all through the description" }, body) };
+  }
+
+  // The report says what is wrong, and the server then reads the community and
+  // copies those fields. Nothing about the content is sent from the browser.
+  it("carries a target the server can resolve", function () {
+    var out = cr.buildCommunityReport(req({ reason: "Hate", fields: ["description", "imageLink"] }), COMMUNITY);
+    assert.deepEqual(out.report.target, {
+      kind: "community", id: COMMUNITY, fields: ["description", "imageLink"],
+    });
+    assert.equal("snapshot" in out.report, false, "the browser never sends the content itself");
+  });
+
+  // Someone who cannot pin down which part is wrong still has a real
+  // complaint; the server snapshots the whole profile.
+  it("allows no fields at all", function () {
+    var out = cr.buildCommunityReport(req({ reason: "Hate" }), COMMUNITY);
+    assert.deepEqual(out.report.target.fields, []);
+  });
+
+  // The field list is the allowlist. A report must not be able to name an
+  // owner id, which would then be handed to the takedown action.
+  it("refuses anything that is not part of a community profile", function () {
+    ["ownerID", "subscription", "banList", "listingSuspension", "__proto__"].forEach(function (field) {
+      var out = cr.buildCommunityReport(req({ reason: "Hate", fields: [field] }), COMMUNITY);
+      assert.equal(out.status, 400, field);
+    });
+    assert.equal(cr.areCommunityFields(["description"]), true);
+    assert.equal(cr.areCommunityFields([]), false);
+    assert.equal(cr.areCommunityFields("description"), false);
   });
 });
