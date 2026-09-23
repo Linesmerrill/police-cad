@@ -237,6 +237,9 @@
             '<i class="fa ' + (isStolen ? 'fa-check' : 'fa-flag') + '"></i> ' +
             (isStolen ? 'Mark as Not Stolen' : 'Report Stolen') +
           '</button>' +
+          // Distinct from "Report Stolen" above, which is roleplay. This one
+          // reaches LPC staff, for a plate or a photo written to offend.
+          (window.reportRecordButtonHTML ? ' ' + window.reportRecordButtonHTML('vehicle', veh._id, veh.userID) : '') +
         '</div>' +
       '</div>'
     );
