@@ -1148,7 +1148,7 @@
       <div class="nav-section">
         <div class="nav-section-title">Main</div>
         <div class="nav-item">
-          <a href="/" class="nav-link active">
+          <a href="<%= typeof civDashboardUrl !== 'undefined' && civDashboardUrl ? civDashboardUrl : '/civ-dashboard' %>" class="nav-link active">
             <i class="fa fa-home nav-icon"></i>
             <span class="nav-text">Dashboard</span>
           </a>
@@ -1288,7 +1288,7 @@
     <!-- Top Navigation -->
     <nav class="top-nav">
       <div class="container-fluid">
-        <h1><a href="/civ-dashboard"><i class="fa fa-user"></i> <span id="main-dashboard-title"><%= departmentName || 'Civilian Dashboard' %></span></a> • <a href="<%= civEncodedCommunityId ? '/community/' + civEncodedCommunityId : '/community-dashboard' %>"><span id="community-name" style="background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600;"></span></a></h1>
+        <h1><a href="<%= typeof civDashboardUrl !== 'undefined' && civDashboardUrl ? civDashboardUrl : '/civ-dashboard' %>"><i class="fa fa-user"></i> <span id="main-dashboard-title"><%= departmentName || 'Civilian Dashboard' %></span></a> • <a href="<%= civEncodedCommunityId ? '/community/' + civEncodedCommunityId : '/community-dashboard' %>"><span id="community-name" style="background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600;"></span></a></h1>
               </div>
     </nav>
 

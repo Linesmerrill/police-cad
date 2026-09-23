@@ -1,4 +1,5 @@
 const communityReport = require("./community-report");
+const civDepartment = require("./civ-department");
 const contentReport = require("./content-report");
 var rateLimit = require("express-rate-limit");
 var User = require("../app/models/user");
@@ -1780,6 +1781,32 @@ module.exports = function (app, passport, server, nextApp, handle) {
     // new unified dashboard if opted in, otherwise render classic civ-dashboard.
     app.get("/civ-dashboard", authCheck, async function (req, res) {
       try {
+        // A bare /civ-dashboard names no department. Find the player's civilian
+        // department in the community they're in and go there, rather than
+        // back to the community page most of these links are clicked from.
+        // Done before the beta check so beta users land on a department too.
+        if (!req.query.d && !req.query.dept) {
+          const lastCommunityId = (req.user && req.user.user && (req.user.user.lastAccessedCommunity && req.user.user.lastAccessedCommunity.communityID)) || (req.user && req.user.user && req.user.user.activeCommunity);
+          if (lastCommunityId && /^[a-fA-F0-9]{24}$/.test(String(lastCommunityId))) {
+            try {
+              const limit = 100;
+              const civ = await civDepartment.findCivilianDepartment(async function (page) {
+                const r = await axios.get(
+                  `${policeCadApiUrl}/api/v2/community/${lastCommunityId}/departments?userId=${req.user._id}&page=${page}&limit=${limit}`,
+                  config
+                );
+                return r.data;
+              }, limit);
+              if (civ) {
+                return res.redirect(civDepartment.civDashboardPath(civ, lastCommunityId, encodeId));
+              }
+            } catch (resolveErr) {
+              // Fall through to the community page, as before.
+              console.error('civ-dashboard: could not resolve civilian department:', resolveErr.message);
+            }
+          }
+        }
+
         // Check if user opted into the beta civilian dashboard
         try {
           const prefsRes = await axios.get(
@@ -1892,6 +1919,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         res.render("civ-dashboard", {
           user: req.user,
           context: context,
+          // The sidebar "Dashboard" link and the title reload this dashboard.
+          // They used to point at the marketing home page and at a bare
+          // /civ-dashboard.
+          civDashboardUrl: req.originalUrl,
           referer: encodeURIComponent("/civ-dashboard"),
           redirect: encodeURIComponent(redirect),
           departmentName: departmentName,
