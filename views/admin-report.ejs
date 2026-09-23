@@ -73,6 +73,15 @@
     }
     label { display: block; font-size: 0.8125rem; color: var(--ac-text-muted); margin: 0 0 6px; }
     .muted { color: var(--ac-text-muted); font-size: 0.85rem; }
+    /* Written by an admin, read by admins. Never shown to the community,
+       its owner, or the reported player. */
+    .staff-note {
+      margin-top: 6px; padding: 8px 10px; border-radius: 8px; font-size: 0.85rem; line-height: 1.45;
+      background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.22); color: var(--ac-text);
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .staff-note-label { color: var(--ac-accent); font-weight: 600; margin-right: 4px; }
+    .kv dd .staff-note { margin-top: 0; }
     .list-item {
       border-top: 1px solid var(--ac-glass-border); padding: 10px 0; font-size: 0.875rem;
     }
@@ -172,6 +181,11 @@
     }
     function tierOf(r) { return r.effectiveTier || r.tier || 'minor'; }
 
+    function staffNote(label, text) {
+      if (!text) return '';
+      return '<div class="staff-note"><span class="staff-note-label"><i class="fas fa-lock" style="font-size:0.7rem; margin-right:3px;"></i>' + esc(label) + '</span>' + esc(text) + '</div>';
+    }
+
     function load() {
       fetch('/admin/api/reports/' + encodeURIComponent(REPORT_ID))
         .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
@@ -219,6 +233,9 @@
       html += '<dt>Reported by</dt><dd>' + esc(r.reporterName || r.reportedById || 'unknown') + '</dd>';
       html += '<dt>Category</dt><dd>' + esc(r.reportedIssue) + '</dd>';
       if (r.reviewedByName) html += '<dt>Decided by</dt><dd>' + esc(r.reviewedByName) + ' on ' + esc(fmtDate(r.reviewedAt)) + '</dd>';
+      if (r.internalNote) {
+        html += '<dt>Staff notes</dt><dd>' + staffNote('Admins only:', r.internalNote) + '</dd>';
+      }
       html += '</dl>';
       html += '<div style="margin-top:14px;"><h2>What the reporter wrote</h2>';
       html += '<div class="evidence">' + (r.additionalDetails ? esc(r.additionalDetails) : '<span class="muted">They picked a category but wrote nothing.</span>') + '</div></div>';
@@ -271,6 +288,10 @@
           } else {
             html += ' <button class="btn" style="margin-left:8px;" onclick="reverseOffense(\'' + esc(o._id) + '\')">Reverse</button>';
           }
+          html += staffNote('Staff note:', o.reason);
+          if (reversed && o.reversalReason) {
+            html += staffNote('Reversed' + (o.reversedBy ? ' by ' + o.reversedBy : '') + ':', o.reversalReason);
+          }
           if (!o.emailSentAt) html += '<div class="muted">No email was sent for this one.</div>';
           html += '</div>';
         });
@@ -303,7 +324,7 @@
         history.forEach(function (e) {
           var label = HISTORY_LABELS[e.action] || e.action;
           html += '<div class="list-item"><strong>' + esc(label) + '</strong> <span class="muted">by ' + esc(e.by || 'Staff') + ' on ' + esc(fmtDate(e.at)) + '</span>';
-          if (e.reason) html += '<div class="muted" style="margin-top:4px;">' + esc(e.reason) + '</div>';
+          html += staffNote('Note:', e.reason);
           html += '</div>';
         });
         html += '</div>';
@@ -324,7 +345,7 @@
 
       if (open) {
         html += '<div class="card"><h2>Decide</h2>';
-        html += '<label for="reason">Reason (recorded on the strike, never shown to the reported account)</label>';
+        html += '<label for="reason">Staff note (admins only: kept on the report and the strike, never shown to the reported account or community)</label>';
         html += '<textarea id="reason" rows="3" placeholder="What you found, in a sentence."></textarea>';
         html += '<div class="actions" style="margin-top:14px;">';
         if (r.effectiveTier === 'escalate') {
