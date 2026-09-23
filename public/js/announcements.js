@@ -569,6 +569,13 @@
                 <span style="font-weight: 500; font-size: 0.75rem; color: ${userColor};">${escapeHtml(comment.user.username)}</span>
                 <div class="flex items-center gap-2">
                   <span style="font-size: 0.625rem; color: #64748b;">${formatDate(comment.timestamp)}</span>
+                  ${!isCurrentUserComment ? `
+                    <button onclick="reportContent({ kind: 'announcement_comment', id: '${comment._id}', parentId: '${announcementId}', communityId: window.communityId })"
+                            title="Report this comment"
+                            style="color: #64748b; font-size: 0.625rem; background: none; border: none; cursor: pointer; padding: 0;">
+                      <i class="fas fa-flag"></i>
+                    </button>
+                  ` : ''}
                   ${isCurrentUserComment ? `
                     <button onclick="markAnnouncementAsSeen('${announcementId}'); openEditCommentModal('${announcementId}', '${comment._id}', '${escapeHtml(comment.content)}')"
                             style="color: #60a5fa; font-size: 0.625rem; background: none; border: none; cursor: pointer; padding: 0;">
@@ -613,6 +620,12 @@
              <span class="text-slate-500 text-xs flex items-center gap-1" title="Interactions">
                <i class="fas fa-chart-simple"></i>${safeAnnouncement.viewCount}
              </span>
+             ${safeAnnouncement.creator._id !== window.dbUser._id ? `
+               <button onclick="reportContent({ kind: 'announcement', id: '${safeAnnouncement._id}', communityId: window.communityId })"
+                       class="announcement-action-btn" title="Report this announcement">
+                 <i class="fas fa-flag text-xs"></i>
+               </button>
+             ` : ''}
              ${(safeAnnouncement.creator._id === window.dbUser._id || window.canManageAnnouncements) ? `
                <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openEditAnnouncementModal('${safeAnnouncement._id}')"
                        class="announcement-action-btn" title="Edit">

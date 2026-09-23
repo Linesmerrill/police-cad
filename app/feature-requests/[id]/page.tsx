@@ -261,10 +261,11 @@ async function uploadImageToCloudinary(file: File): Promise<string> {
 }
 
 // ── Comment Component ─────────────────────────────────────────────
-function Comment({ comment, currentUserId, isAdmin, onEdit, onDelete, onImageClick }: {
+function Comment({ comment, currentUserId, isAdmin, requestId, onEdit, onDelete, onImageClick }: {
   comment: FeatureComment;
   currentUserId: string | null;
   isAdmin: boolean;
+  requestId: string;
   onEdit: (commentId: string, content: string) => void;
   onDelete: (commentId: string) => void;
   onImageClick: (images: string[], index: number) => void;
@@ -368,6 +369,27 @@ function Comment({ comment, currentUserId, isAdmin, onEdit, onDelete, onImageCli
               </span>
             )}
           </div>
+
+          {!isOwner && !editing && currentUserId && (
+            // Reporting this comment. Loaded from the footer on every page.
+            <button
+              type="button"
+              title="Report this comment"
+              onClick={() => (window as unknown as { reportContent?: (t: unknown) => void }).reportContent?.({
+                kind: 'feature_request_comment',
+                id: comment._id,
+                parentId: requestId,
+              })}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer', padding: '0.2rem',
+                borderRadius: '0.3rem', color: '#64748b', display: 'flex', alignItems: 'center',
+              }}
+            >
+              <svg style={{ width: '14px', height: '14px' }} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18M3 4h13l-2 4 2 4H3" />
+              </svg>
+            </button>
+          )}
 
           {canModify && !editing && (
             <div ref={menuRef} style={{ position: 'relative' }}>
@@ -2244,6 +2266,7 @@ export default function FeatureRequestDetail() {
                           comment={comment}
                           currentUserId={currentUser?._id || null}
                           isAdmin={isAdmin}
+                          requestId={id}
                           onEdit={handleEditComment}
                           onDelete={handleDeleteComment}
                           onImageClick={openLightbox}
