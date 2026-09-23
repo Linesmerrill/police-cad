@@ -50,6 +50,11 @@ export default function RootLayout({
             its ads because nothing here replaced views/ad-header.ejs. It sits
             in the root layout so a new page cannot miss it the same way. */}
         <AdSense />
+        {/* Reporting content. The EJS pages load this from their footer
+            partial; Next.js pages have no such partial, and a page that shows
+            what someone wrote without a way to report it is the gap this
+            whole change exists to close. */}
+        <Script src="/static/js/report-content.js" strategy="afterInteractive" />
         {children}
       </body>
     </html>

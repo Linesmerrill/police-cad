@@ -85,3 +85,6 @@
 </script>
 
 <script src="/static/js/whats-new.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+<%# Reporting content, available from every page that shows what someone wrote.
+    Versioned like the other shared scripts so a change reaches people. %>
+<script src="/static/js/report-content.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
