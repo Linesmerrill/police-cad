@@ -772,10 +772,9 @@
 
     // Send notification to the sender about the action result
     if (requests.length > 0) {
-      var deptSuffix = n.data4 ? '\'s department ' + n.data4 : '';
-      var emoji = action === 'approved' ? '\u2705' : '\u274C';
-      var message = emoji + ' Your request to join ' + (n.data2 || '') + deptSuffix + ' has been ' + action + '.';
-
+      // The sentence is written by the API from these fields. It used to be
+      // built here and sent as free text, which made this endpoint a way to
+      // send anyone any message at all.
       requests.push($.ajax({
         url: c.API_URL + '/api/v1/users/notifications',
         method: 'POST',
@@ -783,8 +782,9 @@
         data: JSON.stringify({
           sentFromID: c.userId,
           sentToID: n.sentFromID,
-          type: 'notification',
-          message: message
+          type: action === 'approved' ? 'request_approved' : 'request_declined',
+          data2: n.data2 || '',
+          data4: n.data4 || ''
         })
       }));
     }

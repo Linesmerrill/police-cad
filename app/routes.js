@@ -1,4 +1,5 @@
 const communityReport = require("./community-report");
+const contentReport = require("./content-report");
 var rateLimit = require("express-rate-limit");
 var User = require("../app/models/user");
 var Civilian = require("../app/models/civilian");
@@ -365,7 +366,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
         referer: encodeURIComponent(`/community/${hash}`),
         redirect: encodeURIComponent(redirect),
         reportReasons: communityReport.REPORT_REASONS,
+        reportLocations: communityReport.REPORT_LOCATIONS,
+        reportFields: communityReport.COMMUNITY_FIELDS,
+        offPlatformHelp: communityReport.OFF_PLATFORM_HELP,
         reportDetailsMax: communityReport.MAX_REPORT_DETAILS,
+        reportDetailsMin: communityReport.MIN_REPORT_DETAILS,
       });
     } catch (error) {
       if (renderPendingDeletionIfApplicable(req, res, error)) return;
@@ -3564,6 +3569,38 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // (app/community-report.js). Filed through our server so the reporter is the
   // logged-in session user: the page cannot choose who is reporting, and the
   // browser has no API token to prove it anyway.
+  // Report any piece of content, from wherever it is shown. The community
+  // form has its own route above; this is the same thing for announcements,
+  // comments, events and feature requests.
+  app.post("/report/content", async function (req, res) {
+    if (!req.is("application/json")) {
+      return res.status(415).json({ message: "Unsupported request." });
+    }
+    const built = contentReport.buildContentReport(req);
+    if (built.error) {
+      return res.status(built.status || 400).json({ message: built.error });
+    }
+    try {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/report`, built.report, {
+        headers: { "Content-Type": "application/json" },
+        timeout: 10000,
+      });
+      return res.json({
+        message: "Report submitted",
+        duplicate: !!(response.data && response.data.duplicate),
+      });
+    } catch (err) {
+      const status = (err.response && err.response.status) || 500;
+      const reason = (err.response && err.response.data && (err.response.data.message || err.response.data.error)) || "";
+      console.error("[content-report] failed to submit", status, err.message);
+      // The API's reason is worth passing on: "you can only report things you
+      // can see" tells someone something useful.
+      return res.status(status >= 500 ? 502 : status).json({
+        message: reason || "Failed to submit report. Please try again.",
+      });
+    }
+  });
+
   // Whether the logged-in user already has an open report about this
   // community, so the report modal can say so before they fill it in. Asked
   // through our server, which names the session user with the gateway secret.

@@ -289,14 +289,9 @@ function handleNotificationAction(notificationId, action) {
   }
 
   if (requests.length > 0) {
-    const message =
-      action === "approved"
-        ? `✅ Your request to join ${notification.data2}${
-            notification.data4 ? "'s department " + notification.data4 : ""
-          } has been ${action}.`
-        : `❌ Your request to join ${notification.data2}${
-            notification.data4 ? "'s department " + notification.data4 : ""
-          } has been ${action}.`;
+    // The sentence is written by the API from these fields. It used to be
+    // built here and sent as free text, which made this endpoint a way to send
+    // anyone any message at all.
     requests.push(
       $.ajax({
         url: `${API_URL}/api/v1/users/notifications`,
@@ -305,8 +300,9 @@ function handleNotificationAction(notificationId, action) {
         data: JSON.stringify({
           sentFromID: dbUser._id,
           sentToID: notification.sentFromID,
-          type: "notification",
-          message,
+          type: action === "approved" ? "request_approved" : "request_declined",
+          data2: notification.data2 || "",
+          data4: notification.data4 || "",
         }),
       })
     );

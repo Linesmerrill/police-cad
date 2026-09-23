@@ -287,6 +287,10 @@
           '<button class="cd-ps-action-btn cd-ps-action-danger" onclick="cdPsArrest(\'' + pid + '\')"><i class="fa fa-handcuffs"></i> Arrest</button>' +
           '<button class="cd-ps-action-btn cd-ps-action-accent" onclick="cdPsRequestWarrant(\'' + pid + '\')"><i class="fa fa-gavel"></i> Warrant</button>' +
           '<button class="cd-ps-action-btn" style="background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.25);color:#818cf8;" onclick="event.stopPropagation();cdPsViewId(\'' + pid + '\')"><i class="fa fa-id-card"></i> View ID</button>' +
+          // Reporting the character itself: a name written to be a slur, or a
+          // real photograph used as a face. Nothing else on the record is
+          // reportable, and this shows nothing on your own.
+          (window.reportRecordButtonHTML ? window.reportRecordButtonHTML('civilian', pid, person.userID) : '') +
         '</div>' +
         // Status badges
         '<div class="cd-ps-status-row">' +

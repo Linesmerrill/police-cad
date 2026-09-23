@@ -16,6 +16,7 @@ const REPORT_ACTIONS = Object.freeze({
   dismiss: "dismiss",
   escalate: "escalate",
   reopen: "reopen",
+  "remove-content": "remove-content",
 });
 
 const OBJECT_ID = /^[a-f0-9]{24}$/i;
@@ -74,6 +75,10 @@ function buildActionBody(req) {
   };
   if (typeof body.sendEmail === "boolean") {
     out.sendEmail = body.sendEmail;
+  }
+  // "It did not happen here" is its own dismissal outcome.
+  if (body.outcome === "off_platform") {
+    out.outcome = "off_platform";
   }
   return out;
 }
