@@ -272,6 +272,9 @@
         '<i class="fa ' + (isStolen ? 'fa-check' : 'fa-flag') + '"></i> ' +
         (isStolen ? 'Mark as Not Stolen' : 'Report Stolen') +
       '</button>' +
+      // Distinct from "Report Stolen" above, which is roleplay. This one
+      // reaches LPC staff, for a name or a photo written to offend.
+      (window.reportRecordButtonHTML ? ' ' + window.reportRecordButtonHTML('firearm', firearm._id, firearm.userID) : '') +
     '</div>';
 
     html += '</div>';
