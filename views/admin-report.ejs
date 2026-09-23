@@ -90,11 +90,21 @@
     .snap-empty { color: var(--ac-text-dim); font-style: italic; }
     .snap-images { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
     .snap-img { max-width: 220px; max-height: 160px; border-radius: 8px; border: 1px solid var(--ac-glass-border); }
-    /* A reported image on a child safety report is never rendered. Staff do not
-       go looking at that content; they escalate it. */
-    .snap-withheld {
-      border: 1px dashed rgba(248,113,113,0.5); background: rgba(248,113,113,0.06); color: #fecaca;
-      border-radius: 10px; padding: 14px; font-size: 0.875rem;
+    /* A reported image on a child safety report is blurred until a staff
+       member chooses to look. They have to be able to check whether a report is
+       real, but nobody should meet that image by scrolling past it. */
+    .snap-shield { position: relative; display: inline-block; }
+    .snap-shield .snap-img { filter: blur(22px); }
+    .snap-shield.is-shown .snap-img { filter: none; }
+    .snap-reveal {
+      position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 6px; cursor: pointer; border: 0; border-radius: 8px;
+      background: rgba(10,10,15,0.55); color: #fecaca; font: inherit; font-size: 0.8rem; text-align: center; padding: 8px;
+    }
+    .snap-shield.is-shown .snap-reveal { display: none; }
+    .snap-warn {
+      border: 1px solid rgba(248,113,113,0.35); background: rgba(248,113,113,0.06); color: #fecaca;
+      border-radius: 10px; padding: 12px 14px; font-size: 0.85rem; margin-bottom: 10px; line-height: 1.5;
     }
     .snap-gone { color: var(--ac-amber); font-size: 0.8rem; margin-top: 8px; }
     .kv dd .staff-note { margin-top: 0; }
@@ -199,6 +209,19 @@
     }
     function tierOf(r) { return r.effectiveTier || r.tier || 'minor'; }
 
+    function revealImage(btn) {
+      btn.parentElement.classList.add('is-shown');
+    }
+
+    // The registry's labels are written for the reporter ticking a box ("Its
+    // description"), which reads oddly as a heading here.
+    function snapshotFieldLabel(f) {
+      var label = f.label || f.field;
+      return label.replace(/^(Its|Their|What it says)\s*/i, function (m) {
+        return m.trim().toLowerCase() === 'what it says' ? 'Wording ' : '';
+      }).replace(/^./, function (c) { return c.toUpperCase(); });
+    }
+
     function staffNote(label, text) {
       if (!text) return '';
       return '<div class="staff-note"><span class="staff-note-label"><i class="fas fa-lock" style="font-size:0.7rem; margin-right:3px;"></i>' + esc(label) + '</span>' + esc(text) + '</div>';
@@ -282,12 +305,12 @@
       if (snap) {
         var isChildSafety = r.effectiveTier === 'escalate';
         html += '<div class="card"><h2>' + esc(snap.label || 'Reported content') + '</h2>';
-        html += '<p class="muted" style="margin:0 0 12px;">Copied when the report was filed'
+        html += '<p class="muted" style="margin:0 0 12px;">Saved when the report was filed'
           + (snap.capturedAt ? ' on ' + esc(fmtDate(snap.capturedAt)) : '') + '. '
-          + 'This is what it said then, whatever it says now.</p>';
+          + 'This is what it said then, even if it has changed since.</p>';
 
         (snap.text || []).forEach(function (f) {
-          html += '<div class="snap-field"><div class="snap-label">' + esc(f.label || f.field) + '</div>';
+          html += '<div class="snap-field"><div class="snap-label">' + esc(snapshotFieldLabel(f)) + '</div>';
           html += f.value
             ? '<div class="snap-value">' + esc(f.value) + '</div>'
             : '<div class="snap-value snap-empty">(empty)</div>';
@@ -297,11 +320,21 @@
         if ((snap.imageUrls || []).length) {
           html += '<div class="snap-field"><div class="snap-label">Images</div>';
           if (isChildSafety) {
-            // Never rendered. Looking is not staff's job here: escalate, and
-            // NCMEC handles the content.
-            html += '<div class="snap-withheld"><strong>' + snap.imageUrls.length + ' image'
-              + (snap.imageUrls.length === 1 ? '' : 's') + ' withheld.</strong> '
-              + 'Do not open them. Escalate this report and the package carries them for NCMEC.</div>';
+            // Blurred, not hidden. Staff have to be able to tell a real report
+            // from the spam most of these turn out to be, but nobody should
+            // meet the image by scrolling past it.
+            html += '<div class="snap-warn"><strong>Child safety report.</strong> '
+              + 'Blurred so you do not see it by accident. Open it only to check whether the report is real. '
+              + 'Do not download or share it. If it is real, escalate and let NCMEC handle the content.</div>';
+            html += '<div class="snap-images">';
+            snap.imageUrls.forEach(function (u) {
+              html += '<span class="snap-shield">'
+                + '<img class="snap-img" src="' + esc(u) + '" alt="Reported image" loading="lazy">'
+                + '<button type="button" class="snap-reveal" onclick="revealImage(this)">'
+                + '<i class="fas fa-eye-slash"></i><span>Blurred. Click to check.</span></button>'
+                + '</span>';
+            });
+            html += '</div>';
           } else {
             html += '<div class="snap-images">';
             snap.imageUrls.forEach(function (u) {
