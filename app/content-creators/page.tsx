@@ -85,12 +85,17 @@ function CreatorCard({ creator, index }: { creator: ContentCreator; index: numbe
       style={{
         animationDelay: `${index * 100}ms`,
         animation: 'fadeSlideUp 0.6s ease-out forwards',
-        opacity: 0
+        opacity: 0,
+        // Fill the grid row, so every card in a row is as tall as the tallest.
+        height: '100%'
       }}
     >
       <div
         style={{
           position: 'relative',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
           background: isHovered
             ? 'linear-gradient(135deg, rgba(20, 20, 30, 0.95) 0%, rgba(30, 30, 50, 0.95) 100%)'
             : 'linear-gradient(135deg, rgba(15, 15, 22, 0.9) 0%, rgba(20, 20, 35, 0.9) 100%)',
@@ -218,11 +223,13 @@ function CreatorCard({ creator, index }: { creator: ContentCreator; index: numbe
           </p>
         </div>
 
-        {/* Bio */}
-        <div style={{ padding: '0 24px 16px' }}>
+        {/* Bio: always two lines tall, and it takes up any spare height, so
+            the platforms row sits at the bottom of every card. */}
+        <div style={{ padding: '0 24px 16px', flex: 1 }}>
           <p style={{
             fontSize: '14px',
             lineHeight: '1.6',
+            minHeight: '3.2em',
             color: 'rgba(255, 255, 255, 0.7)',
             textAlign: 'center',
             display: '-webkit-box',
