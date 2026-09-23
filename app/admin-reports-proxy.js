@@ -75,6 +75,10 @@ function buildActionBody(req) {
   if (typeof body.sendEmail === "boolean") {
     out.sendEmail = body.sendEmail;
   }
+  // "It did not happen here" is its own dismissal outcome.
+  if (body.outcome === "off_platform") {
+    out.outcome = "off_platform";
+  }
   return out;
 }
 

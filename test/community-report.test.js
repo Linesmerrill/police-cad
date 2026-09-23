@@ -3,7 +3,10 @@ var cr = require("../app/community-report");
 
 describe("community-report", function () {
   var COMMUNITY = "507f1f77bcf86cd799439081";
-  function req(user, body) { return { user: user, body: body }; }
+  // Every report now says where it happened; only in_app is filed.
+  function req(user, body) {
+    return { user: user, body: Object.assign({ location: "in_app", details: "they keep posting scam links" }, body) };
+  }
   var player = { _doc: { _id: "507f1f77bcf86cd799439082" } };
 
   describe("REPORT_REASONS", function () {
@@ -26,11 +29,12 @@ describe("community-report", function () {
 
   describe("buildCommunityReport", function () {
     it("builds a community report filed by the session user", function () {
-      var out = cr.buildCommunityReport(req(player, { reason: "Hate", details: "  slurs in the description  " }), COMMUNITY);
+      var out = cr.buildCommunityReport(req(player, { reason: "Hate", details: "  slurs all over the description  " }), COMMUNITY);
       assert.deepEqual(out.report, {
         itemId: COMMUNITY, itemType: "community", reportType: "COMMUNITY_REPORT",
-        reportedIssue: "Hate", additionalDetails: "slurs in the description",
+        reportedIssue: "Hate", additionalDetails: "slurs all over the description",
         reportedById: "507f1f77bcf86cd799439082",
+        location: "in_app", impersonatedName: "",
       });
     });
 
@@ -73,9 +77,70 @@ describe("community-report", function () {
       assert.equal(tooLong.status, 400);
     });
 
-    it("treats non-string details as empty rather than forwarding them", function () {
+    it("treats non-string details as empty, which then fails the length check", function () {
       var out = cr.buildCommunityReport(req(player, { reason: "Hate", details: { $gt: "" } }), COMMUNITY);
-      assert.equal(out.report.additionalDetails, "");
+      assert.equal(out.status, 400);
+      assert.match(out.error, /at least 20 characters/);
+    });
+  });
+
+  // Every Child Safety report filed so far described something on Discord,
+  // Xbox or in a game. We cannot see it, cannot verify it, and the platform
+  // that could never hears about it.
+  describe("location", function () {
+    it("files only in-app reports", function () {
+      ["discord", "xbox", "playstation", "in_game", "elsewhere"].forEach(function (loc) {
+        var out = cr.buildCommunityReport(req(player, { reason: "Child Safety", location: loc }), COMMUNITY);
+        assert.equal(out.status, 400, loc);
+        assert.match(out.error, /posted in Lines Police CAD/);
+      });
+    });
+
+    it("refuses a missing or invented location", function () {
+      ["", "somewhere", undefined, 7].forEach(function (loc) {
+        assert.equal(cr.buildCommunityReport(req(player, { reason: "Hate", location: loc }), COMMUNITY).status, 400, String(loc));
+      });
+    });
+
+    it("offers the six locations, in-app first, with somewhere to send each", function () {
+      assert.equal(cr.REPORT_LOCATIONS[0].id, "in_app");
+      assert.deepEqual(cr.REPORT_LOCATIONS.map(function (l) { return l.id; }),
+        ["in_app", "discord", "xbox", "playstation", "in_game", "elsewhere"]);
+      ["discord", "xbox", "playstation"].forEach(function (id) {
+        assert.ok(cr.OFF_PLATFORM_HELP[id].url.startsWith("https://"), id);
+      });
+      assert.equal(Object.isFrozen(cr.REPORT_LOCATIONS), true);
+    });
+  });
+
+  describe("details and impersonation", function () {
+    // A category with no detail is not actionable, and that is most of the
+    // backlog.
+    it("needs a real description", function () {
+      ["", "   ", "spam", "he is bad"].forEach(function (details) {
+        var out = cr.buildCommunityReport(req(player, { reason: "Spam", details: details }), COMMUNITY);
+        assert.equal(out.status, 400, JSON.stringify(details));
+        assert.match(out.error, /at least 20 characters/);
+      });
+    });
+
+    it("needs to know who is being impersonated", function () {
+      var out = cr.buildCommunityReport(req(player, {
+        reason: "Impersonation", details: "this is a copy of the real community",
+      }), COMMUNITY);
+      assert.equal(out.status, 400);
+      assert.match(out.error, /pretending to be/);
+
+      out = cr.buildCommunityReport(req(player, {
+        reason: "Impersonation", details: "this is a copy of the real community",
+        impersonatedName: "  TROPICAL RP  ",
+      }), COMMUNITY);
+      assert.equal(out.report.impersonatedName, "TROPICAL RP");
+    });
+
+    it("only asks for that name on impersonation", function () {
+      var out = cr.buildCommunityReport(req(player, { reason: "Spam", details: "scam links in the description" }), COMMUNITY);
+      assert.equal(out.report.impersonatedName, "");
     });
   });
 });

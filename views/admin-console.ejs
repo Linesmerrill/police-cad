@@ -5702,6 +5702,7 @@
         'under_review': 'Under review',
         'resolved': 'Resolved',
         'dismissed': 'Dismissed',
+        'off_platform': 'Not on LPC',
         'escalated': 'Escalated',
         'welfare': 'Welfare'
       };
@@ -5797,7 +5798,7 @@
       }
 
       function renderReportsRail(counts) {
-        var order = ['new', 'under_review', 'escalated', 'welfare', 'resolved', 'dismissed'];
+        var order = ['new', 'under_review', 'escalated', 'welfare', 'resolved', 'dismissed', 'off_platform'];
         var html = '';
         order.forEach(function(status) {
           var n = counts[status] || 0;
@@ -5865,6 +5866,11 @@
           }
           if (first.issueKnown === false) {
             html += '<span style="color:#94a3b8; font-size:0.75rem;">unclassified issue</span>';
+          }
+          // Filed by an app build that never asked where it happened, so
+          // there is no context to judge it by.
+          if (!first.location) {
+            html += '<span style="color:#94a3b8; font-size:0.75rem;">older app, no location</span>';
           }
           html += '</div>';
           html += '<div style="color:var(--ac-text); font-size:0.875rem;">' + kind + ': ' + reportTargetLabel(g) + '</div>';

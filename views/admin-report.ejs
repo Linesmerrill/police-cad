@@ -136,11 +136,12 @@
     };
     var HISTORY_LABELS = {
       'resolved': 'Upheld', 'dismissed': 'Dismissed', 'welfare': 'Closed as read',
-      'escalated': 'Escalated', 'reopened': 'Reopened'
+      'escalated': 'Escalated', 'reopened': 'Reopened', 'off_platform': 'Closed, not on LPC'
     };
     var STATUS_LABELS = {
       'new': 'New', 'under_review': 'Under review', 'resolved': 'Resolved',
-      'dismissed': 'Dismissed', 'escalated': 'Escalated', 'welfare': 'Welfare'
+      'dismissed': 'Dismissed', 'escalated': 'Escalated', 'welfare': 'Welfare',
+      'off_platform': 'Not on LPC'
     };
 
     function esc(s) {
@@ -232,6 +233,14 @@
       html += '<dt>' + (r.itemType === 'community' ? 'Community' : 'Reported user') + '</dt><dd>' + targetHtml + '</dd>';
       html += '<dt>Reported by</dt><dd>' + esc(r.reporterName || r.reportedById || 'unknown') + '</dd>';
       html += '<dt>Category</dt><dd>' + esc(r.reportedIssue) + '</dd>';
+      if (r.impersonatedName) {
+        html += '<dt>Pretending to be</dt><dd>' + esc(r.impersonatedName) + '</dd>';
+      }
+      // A report with no location came from an app build that never asked.
+      // Nothing to verify it against, which is what most of the backlog is.
+      html += '<dt>Where</dt><dd>' + (r.location === 'in_app'
+        ? 'In Lines Police CAD'
+        : '<span class="muted">Not stated. Filed by an older app build.</span>') + '</dd>';
       if (r.reviewedByName) html += '<dt>Decided by</dt><dd>' + esc(r.reviewedByName) + ' on ' + esc(fmtDate(r.reviewedAt)) + '</dd>';
       if (r.internalNote) {
         html += '<dt>Staff notes</dt><dd>' + staffNote('Admins only:', r.internalNote) + '</dd>';
@@ -354,6 +363,9 @@
           html += '<button class="btn btn-accent" onclick="previewUphold()"><i class="fas fa-gavel"></i> Uphold…</button>';
         }
         html += '<button class="btn" onclick="dismiss()"><i class="fas fa-xmark"></i> ' + (r.effectiveTier === 'welfare' ? 'Close as read' : 'Dismiss') + '</button>';
+        // One click for the commonest outcome in the backlog: it happened on
+        // Discord or in a game, so there is nothing here to act on.
+        html += '<button class="btn" onclick="dismiss(\'off_platform\')"><i class="fas fa-arrow-right-from-bracket"></i> Not on LPC</button>';
         html += '</div></div>';
       }
 
@@ -447,8 +459,8 @@
       });
     }
 
-    function dismiss() {
-      post('/admin/api/reports/' + REPORT_ID + '/dismiss', { note: reason() })
+    function dismiss(outcome) {
+      post('/admin/api/reports/' + REPORT_ID + '/dismiss', { note: reason(), outcome: outcome })
         .then(function () { window.location.href = '/admin/console#reports'; })
         .catch(function (err) { openModal('<p>' + esc(err.message) + '</p><div class="actions"><button class="btn" onclick="closeModal()">Close</button></div>'); });
     }

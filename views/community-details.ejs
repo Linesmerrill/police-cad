@@ -2429,7 +2429,10 @@
     <%- include('partials/pending-deletion-gate') %>
     <%- include('partials/community-report-modal', {
       reportReasons: reportReasons,
+      reportLocations: reportLocations,
+      offPlatformHelp: offPlatformHelp,
       reportDetailsMax: reportDetailsMax,
+      reportDetailsMin: reportDetailsMin,
       reportCommunityId: String(community.community._id || community._id || '')
     }) %>
   </body>

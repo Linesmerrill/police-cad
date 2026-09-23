@@ -365,7 +365,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         referer: encodeURIComponent(`/community/${hash}`),
         redirect: encodeURIComponent(redirect),
         reportReasons: communityReport.REPORT_REASONS,
+        reportLocations: communityReport.REPORT_LOCATIONS,
+        offPlatformHelp: communityReport.OFF_PLATFORM_HELP,
         reportDetailsMax: communityReport.MAX_REPORT_DETAILS,
+        reportDetailsMin: communityReport.MIN_REPORT_DETAILS,
       });
     } catch (error) {
       if (renderPendingDeletionIfApplicable(req, res, error)) return;

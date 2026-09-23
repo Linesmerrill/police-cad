@@ -3,7 +3,8 @@
   (Select a reason -> Review Report -> Submit Report), so a player sees the same
   thing wherever they report from. Reasons come from app/community-report.js.
 
-  Locals: reportReasons, reportDetailsMax, reportCommunityId.
+  Locals: reportReasons, reportLocations, reportDetailsMax, reportDetailsMin,
+  offPlatformHelp, reportCommunityId.
 %>
 <style>
   .rcm-overlay { position:fixed; inset:0; z-index:2100; background:rgba(5,10,18,0.72); display:flex; align-items:center; justify-content:center; padding:16px; }
@@ -42,6 +43,20 @@
     border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px 14px; font:inherit; font-size:0.92rem;
   }
   .rcm-textarea:focus { outline:none; border-color:rgba(56,189,248,0.6); }
+  .rcm-lede { font-size:0.85rem; color:#94a3b8; line-height:1.5; margin:0 0 14px; }
+  .rcm-input {
+    width:100%; box-sizing:border-box; background:rgba(0,0,0,0.25); color:#e2e8f0;
+    border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px 14px; font:inherit; font-size:0.92rem;
+  }
+  .rcm-input:focus { outline:none; border-color:rgba(56,189,248,0.6); }
+  .rcm-off-links { display:flex; flex-direction:column; gap:10px; margin-top:4px; }
+  .rcm-off-link {
+    display:flex; align-items:center; justify-content:space-between; gap:12px; text-decoration:none;
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:12px;
+    padding:14px; color:#e2e8f0; font-weight:600;
+  }
+  .rcm-off-link:hover { background:rgba(255,255,255,0.06); }
+  .rcm-off-link small { display:block; font-weight:400; color:#94a3b8; margin-top:3px; }
   .rcm-disclaimer { font-size:0.8rem; color:#94a3b8; line-height:1.5; margin:14px 0 0; }
   .rcm-disclaimer a { color:#38bdf8; }
   .rcm-primary {
@@ -74,6 +89,33 @@
       <button type="button" class="rcm-link rcm-right" id="rcmCancel">Cancel</button>
     </div>
 
+    <%# Step L: Where did this happen? Asked first, because a report about a
+        Discord call is not something we can see, verify or act on, and the
+        platform that could never hears about it. %>
+    <div class="rcm-body" id="rcmStepLoc" hidden role="radiogroup" aria-labelledby="rcmTitle">
+      <p class="rcm-lede">We can only look at things posted in Lines Police CAD. If it happened somewhere else, we will point you to who can help.</p>
+      <% reportLocations.forEach(function (loc) { %>
+        <button type="button" class="rcm-option" role="radio" aria-checked="false" data-location="<%= loc.id %>">
+          <span>
+            <div class="rcm-option-title"><%= loc.label %></div>
+            <div class="rcm-option-sub"><%= loc.subtext %></div>
+          </span>
+          <i class="fa fa-circle-check rcm-check" aria-hidden="true"></i>
+        </button>
+      <% }); %>
+    </div>
+
+    <%# Step O: it did not happen here. No report is filed. %>
+    <div class="rcm-body" id="rcmStepOff" hidden>
+      <div class="rcm-done">
+        <i class="fa fa-circle-info" aria-hidden="true"></i>
+        <h4>We cannot act on this one</h4>
+        <p id="rcmOffLede">This did not happen in Lines Police CAD, so we cannot see it or verify it.</p>
+      </div>
+      <div id="rcmOffLinks" class="rcm-off-links"></div>
+      <p class="rcm-disclaimer">If someone is in immediate danger, call 911.</p>
+    </div>
+
     <%# Step 1: Select a reason %>
     <div class="rcm-body" id="rcmStep1" role="radiogroup" aria-labelledby="rcmTitle">
       <% reportReasons.forEach(function (reason) { %>
@@ -97,6 +139,13 @@
         <span class="rcm-hint" id="rcmCount">optional</span>
       </div>
       <textarea id="rcmDetails" class="rcm-textarea" maxlength="<%= reportDetailsMax %>" placeholder="Provide more details if needed..."></textarea>
+
+      <div id="rcmImpersonationGroup" hidden>
+        <div class="rcm-label-row">
+          <label class="rcm-label" for="rcmImpersonated">WHO ARE THEY PRETENDING TO BE?</label>
+        </div>
+        <input type="text" id="rcmImpersonated" class="rcm-input" maxlength="<%= reportDetailsMax %>" placeholder="The real community or person's name" />
+      </div>
 
       <p class="rcm-disclaimer">
         We take all reports seriously. By submitting this report, you agree that this content goes against our
@@ -138,6 +187,10 @@
   (function () {
     var COMMUNITY_ID = <%- JSON.stringify(String(reportCommunityId || '')) %>;
     var MAX = <%- JSON.stringify(Number(reportDetailsMax) || 2000) %>;
+    var MIN = <%- JSON.stringify(Number(reportDetailsMin) || 20) %>;
+    var OFF_HELP = <%- JSON.stringify(offPlatformHelp || {}) %>;
+    var CHILD_SAFETY = 'Child Safety';
+    var IMPERSONATION = 'Impersonation';
 
     var modal = document.getElementById('reportCommunityModal');
     if (!modal) return;
@@ -145,30 +198,74 @@
     var back = document.getElementById('rcmBack');
     var cancel = document.getElementById('rcmCancel');
     // 0 checking, 1 reason, 2 review, 3 submitted, 4 already reported
+    // 5 where did this happen, 6 it did not happen here
     var steps = [document.getElementById('rcmStep0'), document.getElementById('rcmStep1'), document.getElementById('rcmStep2'),
-                 document.getElementById('rcmStep3'), document.getElementById('rcmStep4')];
+                 document.getElementById('rcmStep3'), document.getElementById('rcmStep4'),
+                 document.getElementById('rcmStepLoc'), document.getElementById('rcmStepOff')];
+    var STEP_LOCATION = 5, STEP_OFF = 6;
     // The end screens carry their own heading, so the header does not repeat it.
-    var TITLES = ['Report community', 'Select a reason', 'Review Report', 'Report community', 'Report community'];
+    var TITLES = ['Report community', 'Select a reason', 'Review Report', 'Report community', 'Report community',
+                  'Where did this happen?', 'Report community'];
     var primary = document.getElementById('rcmPrimary');
     var errorEl = document.getElementById('rcmError');
     var details = document.getElementById('rcmDetails');
     var count = document.getElementById('rcmCount');
     var selectedEl = document.getElementById('rcmSelected');
-    var options = Array.prototype.slice.call(modal.querySelectorAll('.rcm-option'));
+    // Reason buttons only: the location step uses the same class.
+    var options = Array.prototype.slice.call(document.querySelectorAll('#rcmStep1 .rcm-option'));
+    var locationOptions = Array.prototype.slice.call(document.querySelectorAll('#rcmStepLoc [data-location]'));
+    var impersonated = document.getElementById('rcmImpersonated');
+    var impersonationGroup = document.getElementById('rcmImpersonationGroup');
 
-    var state = { step: 1, reason: '', submitting: false, lastFocus: null, checkSeq: 0 };
+    var state = { step: 1, reason: '', location: '', submitting: false, lastFocus: null, checkSeq: 0 };
 
     function showStep(n) {
       state.step = n;
       for (var i = 0; i < steps.length; i++) steps[i].hidden = i !== n;
       title.textContent = TITLES[n];
-      back.hidden = n !== 2;
-      cancel.textContent = n >= 3 ? 'Close' : 'Cancel';
+      back.hidden = !(n === 1 || n === 2);
+      cancel.textContent = (n === 3 || n === 4 || n === STEP_OFF) ? 'Close' : 'Cancel';
       errorEl.hidden = true;
       if (n === 0) { primary.textContent = 'Next'; primary.disabled = true; }
+      if (n === STEP_LOCATION) { primary.textContent = 'Next'; primary.disabled = !state.location; }
       if (n === 1) { primary.textContent = 'Next'; primary.disabled = !state.reason; }
-      if (n === 2) { primary.textContent = 'Submit Report'; primary.disabled = false; selectedEl.textContent = state.reason; }
-      if (n >= 3) { primary.textContent = 'Done'; primary.disabled = false; }
+      if (n === 2) {
+        primary.textContent = 'Submit Report';
+        primary.disabled = false;
+        selectedEl.textContent = state.reason;
+        // Without a name, an impersonation claim cannot be checked at all.
+        impersonationGroup.hidden = state.reason !== IMPERSONATION;
+        if (impersonationGroup.hidden) impersonated.value = '';
+      }
+      if (n === 3 || n === 4 || n === STEP_OFF) { primary.textContent = 'Done'; primary.disabled = false; }
+    }
+
+    function escapeText(v) {
+      return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Where to send someone whose report is not about this product. Child
+    // safety goes to NCMEC wherever it happened: they take reports from anyone,
+    // about any platform.
+    function showOffPlatform() {
+      var help = OFF_HELP[state.location];
+      document.getElementById('rcmOffLede').textContent =
+        'This did not happen in Lines Police CAD, so we cannot see it or verify it. '
+        + (help ? 'Report it to ' + help.name + ', who can.' : 'Report it to whoever runs the app or site it happened on.');
+
+      var html = '';
+      if (help) {
+        html += '<a class="rcm-off-link" href="' + escapeText(help.url) + '" target="_blank" rel="noopener noreferrer">'
+          + '<span>Report to ' + escapeText(help.name) + '<small>' + escapeText(help.url) + '</small></span>'
+          + '<i class="fa fa-arrow-up-right-from-square" aria-hidden="true"></i></a>';
+      }
+      if (state.reason === CHILD_SAFETY || !state.reason) {
+        html += '<a class="rcm-off-link" href="https://report.cybertip.org" target="_blank" rel="noopener noreferrer">'
+          + '<span>Child safety, anywhere: NCMEC CyberTipline<small>report.cybertip.org</small></span>'
+          + '<i class="fa fa-arrow-up-right-from-square" aria-hidden="true"></i></a>';
+      }
+      document.getElementById('rcmOffLinks').innerHTML = html;
+      showStep(STEP_OFF);
     }
 
     // Ask before showing the form. A failed check falls through to the form:
@@ -180,15 +277,18 @@
         .catch(function () { return { open: false }; })
         .then(function (body) {
           if (seq !== state.checkSeq || modal.hidden) return;
-          showStep(body && body.open ? 4 : 1);
-          if (!(body && body.open)) (options[0] || cancel).focus();
+          showStep(body && body.open ? 4 : STEP_LOCATION);
+          if (!(body && body.open)) (locationOptions[0] || cancel).focus();
         });
     }
 
     function open() {
       state.reason = '';
+      state.location = '';
       state.submitting = false;
       details.value = '';
+      impersonated.value = '';
+      locationOptions.forEach(function (o) { o.setAttribute('aria-checked', 'false'); });
       updateCount();
       options.forEach(function (o) { o.setAttribute('aria-checked', 'false'); });
       state.lastFocus = document.activeElement;
@@ -222,20 +322,53 @@
       });
     });
 
+    locationOptions.forEach(function (o) {
+      o.addEventListener('click', function () {
+        state.location = o.getAttribute('data-location');
+        locationOptions.forEach(function (x) { x.setAttribute('aria-checked', x === o ? 'true' : 'false'); });
+        primary.disabled = false;
+      });
+    });
+
     details.addEventListener('input', updateCount);
-    back.addEventListener('click', function () { showStep(1); });
+    back.addEventListener('click', function () { showStep(state.step === 1 ? STEP_LOCATION : 1); });
     cancel.addEventListener('click', close);
     modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
     document.addEventListener('keydown', function (e) { if (!modal.hidden && e.key === 'Escape') close(); });
 
     primary.addEventListener('click', function () {
+      if (state.step === STEP_LOCATION) {
+        if (!state.location) return;
+        // Nothing is filed for another platform. We point them at it instead.
+        if (state.location !== 'in_app') { showOffPlatform(); return; }
+        showStep(1);
+        return;
+      }
       if (state.step === 1) {
         if (state.reason) showStep(2);
         return;
       }
-      if (state.step >= 3) { close(); return; }
+      if (state.step === 3 || state.step === 4 || state.step === STEP_OFF) { close(); return; }
       if (state.step === 0) return;
       if (state.submitting) return;
+
+      // Flag the field rather than only toasting.
+      if (details.value.trim().length < MIN) {
+        details.style.borderColor = '#f87171';
+        errorEl.textContent = 'Please describe what you saw, in at least ' + MIN + ' characters.';
+        errorEl.hidden = false;
+        details.focus();
+        return;
+      }
+      details.style.borderColor = '';
+      if (state.reason === IMPERSONATION && !impersonated.value.trim()) {
+        impersonated.style.borderColor = '#f87171';
+        errorEl.textContent = 'Tell us who this community is pretending to be.';
+        errorEl.hidden = false;
+        impersonated.focus();
+        return;
+      }
+      impersonated.style.borderColor = '';
 
       state.submitting = true;
       primary.disabled = true;
@@ -246,7 +379,12 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ reason: state.reason, details: details.value })
+        body: JSON.stringify({
+          reason: state.reason,
+          details: details.value,
+          location: state.location,
+          impersonatedName: impersonated.value
+        })
       })
         .then(function (res) {
           return res.json().catch(function () { return {}; }).then(function (body) {
