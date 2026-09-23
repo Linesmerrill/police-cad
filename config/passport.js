@@ -107,6 +107,13 @@ module.exports = function (passport) {
                 );
               }
               
+              // The API could not check the password at all (a database
+              // hiccup, a deploy, rate limiting). Telling the player their
+              // password is wrong sent them to reset a password that was fine.
+              if (apiResponse.status >= 500 || apiResponse.status === 429) {
+                return done(null, false, req.flash("error", "service_unavailable"));
+              }
+
               return done(
                 null,
                 false,
@@ -114,12 +121,9 @@ module.exports = function (passport) {
               );
             }
           }).catch(function(apiError) {
-            // API authentication failed
-            return done(
-              null,
-              false,
-              req.flash("error", "email address or password")
-            );
+            // The request never got an answer (timeout, network), so nothing
+            // is known about the password.
+            return done(null, false, req.flash("error", "service_unavailable"));
           });
         });
       }

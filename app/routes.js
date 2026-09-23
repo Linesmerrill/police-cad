@@ -4862,6 +4862,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
       let errorValue = 'authentication_failed';
       if (errorMessage === 'account_deactivated') {
         errorValue = 'account_deactivated';
+      } else if (errorMessage === 'service_unavailable') {
+        errorValue = 'service_unavailable';
       } else if (errorMessage === 'email address or password' || errorMessage.includes('password') || errorMessage.includes('email')) {
         errorValue = 'authentication_failed';
       }

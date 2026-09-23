@@ -26,6 +26,8 @@ function LoginForm() {
       if (errorParam) {
         if (errorParam === 'account_deactivated') {
           setError('deactivated');
+        } else if (errorParam === 'service_unavailable') {
+          setError("We couldn't reach sign-in just now. Your password is fine, so please try again in a minute.");
         } else if (errorParam === 'authentication_failed' || errorParam === 'email address or password' || errorParam.includes('password') || errorParam.includes('email')) {
           setError('Invalid email or password. Please check your credentials and try again.');
         } else {
