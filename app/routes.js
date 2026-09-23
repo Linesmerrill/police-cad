@@ -366,6 +366,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         redirect: encodeURIComponent(redirect),
         reportReasons: communityReport.REPORT_REASONS,
         reportLocations: communityReport.REPORT_LOCATIONS,
+        reportFields: communityReport.COMMUNITY_FIELDS,
         offPlatformHelp: communityReport.OFF_PLATFORM_HELP,
         reportDetailsMax: communityReport.MAX_REPORT_DETAILS,
         reportDetailsMin: communityReport.MIN_REPORT_DETAILS,

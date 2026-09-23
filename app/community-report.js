@@ -84,6 +84,27 @@ const REPORT_LOCATIONS = Object.freeze([
 
 const IN_APP = "in_app";
 
+// Which parts of a community profile a reporter can point at. Mirrors the
+// community entry in the API's registry (models/report_targets.go): a report
+// has to say what is wrong, not just that something is.
+const COMMUNITY_FIELDS = Object.freeze([
+  { name: "name", label: "Its name" },
+  { name: "description", label: "Its description" },
+  { name: "promotionalText", label: "Its promo text" },
+  { name: "promotionalDescription", label: "Its promo description" },
+  { name: "imageLink", label: "Its logo or banner" },
+].map(Object.freeze));
+
+const COMMUNITY_FIELD_NAMES = Object.freeze(COMMUNITY_FIELDS.map((f) => f.name));
+
+function areCommunityFields(fields) {
+  return (
+    Array.isArray(fields) &&
+    fields.length > 0 &&
+    fields.every((f) => typeof f === "string" && COMMUNITY_FIELD_NAMES.indexOf(f) >= 0)
+  );
+}
+
 // Where to send someone whose report is not about this product. The
 // CyberTipline takes child-safety reports from anyone, about anywhere.
 const OFF_PLATFORM_HELP = Object.freeze({
@@ -148,6 +169,14 @@ function buildCommunityReport(req, communityId) {
     return { error: "Tell us who this community is pretending to be.", status: 400 };
   }
 
+  // What exactly is wrong. Optional: someone who cannot pin it down still has
+  // a real complaint, and the server then snapshots the whole profile.
+  const rawFields = Array.isArray(body.fields) ? body.fields : [];
+  const fields = rawFields.filter((f) => COMMUNITY_FIELD_NAMES.indexOf(f) >= 0);
+  if (rawFields.length && !areCommunityFields(rawFields)) {
+    return { error: "That is not part of a community profile.", status: 400 };
+  }
+
   return {
     report: {
       itemId: id,
@@ -158,6 +187,9 @@ function buildCommunityReport(req, communityId) {
       reportedById: reporter,
       location: location,
       impersonatedName: impersonatedName,
+      // The server loads the community and copies what these fields say. It
+      // never trusts a copy sent from here.
+      target: { kind: "community", id: id, fields: fields },
     },
   };
 }
@@ -165,6 +197,8 @@ function buildCommunityReport(req, communityId) {
 module.exports = {
   REPORT_REASONS,
   REPORT_LOCATIONS,
+  COMMUNITY_FIELDS,
+  areCommunityFields,
   OFF_PLATFORM_HELP,
   MAX_REPORT_DETAILS,
   MIN_REPORT_DETAILS,

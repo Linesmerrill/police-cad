@@ -81,6 +81,22 @@
       white-space: pre-wrap; word-break: break-word;
     }
     .staff-note-label { color: var(--ac-accent); font-weight: 600; margin-right: 4px; }
+    /* What the content said when it was reported, copied by the server. It is
+       the evidence, so it is shown even after the content is edited or gone. */
+    .snap-field { border-top: 1px solid var(--ac-glass-border); padding: 10px 0; }
+    .snap-field:first-child { border-top: none; padding-top: 0; }
+    .snap-label { font-size: 0.75rem; color: var(--ac-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .snap-value { white-space: pre-wrap; word-break: break-word; font-size: 0.92rem; }
+    .snap-empty { color: var(--ac-text-dim); font-style: italic; }
+    .snap-images { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .snap-img { max-width: 220px; max-height: 160px; border-radius: 8px; border: 1px solid var(--ac-glass-border); }
+    /* A reported image on a child safety report is never rendered. Staff do not
+       go looking at that content; they escalate it. */
+    .snap-withheld {
+      border: 1px dashed rgba(248,113,113,0.5); background: rgba(248,113,113,0.06); color: #fecaca;
+      border-radius: 10px; padding: 14px; font-size: 0.875rem;
+    }
+    .snap-gone { color: var(--ac-amber); font-size: 0.8rem; margin-top: 8px; }
     .kv dd .staff-note { margin-top: 0; }
     .list-item {
       border-top: 1px solid var(--ac-glass-border); padding: 10px 0; font-size: 0.875rem;
@@ -136,7 +152,8 @@
     };
     var HISTORY_LABELS = {
       'resolved': 'Upheld', 'dismissed': 'Dismissed', 'welfare': 'Closed as read',
-      'escalated': 'Escalated', 'reopened': 'Reopened', 'off_platform': 'Closed, not on LPC'
+      'escalated': 'Escalated', 'reopened': 'Reopened', 'off_platform': 'Closed, not on LPC',
+      'content_removed': 'Content removed'
     };
     var STATUS_LABELS = {
       'new': 'New', 'under_review': 'Under review', 'resolved': 'Resolved',
@@ -238,6 +255,11 @@
       }
       // A report with no location came from an app build that never asked.
       // Nothing to verify it against, which is what most of the backlog is.
+      if (r.target) {
+        html += '<dt>What was reported</dt><dd>' + esc((r.snapshot && r.snapshot.label) || r.target.kind)
+          + ((r.target.fields || []).length ? ' <span class="muted">(' + esc(r.target.fields.join(', ')) + ')</span>' : '')
+          + '</dd>';
+      }
       html += '<dt>Where</dt><dd>' + (r.location === 'in_app'
         ? 'In Lines Police CAD'
         : '<span class="muted">Not stated. Filed by an older app build.</span>') + '</dd>';
@@ -255,6 +277,46 @@
       var openEscalations = state.otherReports.filter(function (o) { return isOpenStatus(o.status) && trackOf(tierOf(o)) === 'escalate'; });
       var elsewhere = state.otherReports.filter(function (o) { return caseMates.indexOf(o) < 0; });
       var kindWord = r.itemType === 'community' ? 'community' : 'account';
+
+      var snap = r.snapshot;
+      if (snap) {
+        var isChildSafety = r.effectiveTier === 'escalate';
+        html += '<div class="card"><h2>' + esc(snap.label || 'Reported content') + '</h2>';
+        html += '<p class="muted" style="margin:0 0 12px;">Copied when the report was filed'
+          + (snap.capturedAt ? ' on ' + esc(fmtDate(snap.capturedAt)) : '') + '. '
+          + 'This is what it said then, whatever it says now.</p>';
+
+        (snap.text || []).forEach(function (f) {
+          html += '<div class="snap-field"><div class="snap-label">' + esc(f.label || f.field) + '</div>';
+          html += f.value
+            ? '<div class="snap-value">' + esc(f.value) + '</div>'
+            : '<div class="snap-value snap-empty">(empty)</div>';
+          html += '</div>';
+        });
+
+        if ((snap.imageUrls || []).length) {
+          html += '<div class="snap-field"><div class="snap-label">Images</div>';
+          if (isChildSafety) {
+            // Never rendered. Looking is not staff's job here: escalate, and
+            // NCMEC handles the content.
+            html += '<div class="snap-withheld"><strong>' + snap.imageUrls.length + ' image'
+              + (snap.imageUrls.length === 1 ? '' : 's') + ' withheld.</strong> '
+              + 'Do not open them. Escalate this report and the package carries them for NCMEC.</div>';
+          } else {
+            html += '<div class="snap-images">';
+            snap.imageUrls.forEach(function (u) {
+              html += '<img class="snap-img" src="' + esc(u) + '" alt="Reported image" loading="lazy">';
+            });
+            html += '</div>';
+          }
+          html += '</div>';
+        }
+
+        if (r.contentRemovedAt) {
+          html += '<p class="snap-gone">Taken down on ' + esc(fmtDate(r.contentRemovedAt)) + '.</p>';
+        }
+        html += '</div>';
+      }
 
       if (open && caseMates.length) {
         html += '<div class="card"><h2>Decided together (' + (caseMates.length + 1) + ' reports)</h2>';
@@ -362,6 +424,9 @@
         } else if (r.effectiveTier !== 'welfare') {
           html += '<button class="btn btn-accent" onclick="previewUphold()"><i class="fas fa-gavel"></i> Uphold…</button>';
         }
+        if (r.target && (r.target.fields || []).length && !r.contentRemovedAt && r.effectiveTier !== 'escalate') {
+          html += '<button class="btn btn-danger" onclick="removeContent()"><i class="fas fa-eraser"></i> Remove content</button>';
+        }
         html += '<button class="btn" onclick="dismiss()"><i class="fas fa-xmark"></i> ' + (r.effectiveTier === 'welfare' ? 'Close as read' : 'Dismiss') + '</button>';
         // One click for the commonest outcome in the backlog: it happened on
         // Discord or in a game, so there is nothing here to act on.
@@ -457,6 +522,22 @@
       }).catch(function (err) {
         openModal('<p>' + esc(err.message) + '</p><div class="actions"><button class="btn" onclick="closeModal()">Close</button></div>');
       });
+    }
+
+    // Clears the reported fields and nothing else. The snapshot above stays:
+    // it is the record of what was there and the evidence for any appeal.
+    function removeContent() {
+      var why = reason();
+      if (why.length < 3) {
+        openModal('<h2>Say why</h2><p>Write a reason in the staff note first. It is kept with the report.</p>'
+          + '<div class="actions"><button class="btn" onclick="closeModal()">Close</button></div>');
+        return;
+      }
+      post('/admin/api/reports/' + REPORT_ID + '/remove-content', { reason: why })
+        .then(function () { window.location.reload(); })
+        .catch(function (err) {
+          openModal('<p>' + esc(err.message) + '</p><div class="actions"><button class="btn" onclick="closeModal()">Close</button></div>');
+        });
     }
 
     function dismiss(outcome) {

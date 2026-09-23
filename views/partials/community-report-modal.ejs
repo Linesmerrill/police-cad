@@ -49,6 +49,14 @@
     border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px 14px; font:inherit; font-size:0.92rem;
   }
   .rcm-input:focus { outline:none; border-color:rgba(56,189,248,0.6); }
+  .rcm-fields { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+  .rcm-field {
+    display:inline-flex; align-items:center; gap:7px; cursor:pointer;
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:10px;
+    padding:9px 12px; font-size:0.85rem; color:#e2e8f0;
+  }
+  .rcm-field:hover { background:rgba(255,255,255,0.06); }
+  .rcm-field input { accent-color:#38bdf8; margin:0; }
   .rcm-off-links { display:flex; flex-direction:column; gap:10px; margin-top:4px; }
   .rcm-off-link {
     display:flex; align-items:center; justify-content:space-between; gap:12px; text-decoration:none;
@@ -140,6 +148,19 @@
       </div>
       <textarea id="rcmDetails" class="rcm-textarea" maxlength="<%= reportDetailsMax %>" placeholder="Provide more details if needed..."></textarea>
 
+      <div class="rcm-label-row">
+        <span class="rcm-label">WHICH PART IS THE PROBLEM?</span>
+        <span class="rcm-hint">optional</span>
+      </div>
+      <div class="rcm-fields" id="rcmFields">
+        <% reportFields.forEach(function (field) { %>
+          <label class="rcm-field">
+            <input type="checkbox" value="<%= field.name %>" />
+            <span><%= field.label %></span>
+          </label>
+        <% }); %>
+      </div>
+
       <div id="rcmImpersonationGroup" hidden>
         <div class="rcm-label-row">
           <label class="rcm-label" for="rcmImpersonated">WHO ARE THEY PRETENDING TO BE?</label>
@@ -214,6 +235,7 @@
     // Reason buttons only: the location step uses the same class.
     var options = Array.prototype.slice.call(document.querySelectorAll('#rcmStep1 .rcm-option'));
     var locationOptions = Array.prototype.slice.call(document.querySelectorAll('#rcmStepLoc [data-location]'));
+    var fieldBoxes = Array.prototype.slice.call(document.querySelectorAll('#rcmFields input[type=checkbox]'));
     var impersonated = document.getElementById('rcmImpersonated');
     var impersonationGroup = document.getElementById('rcmImpersonationGroup');
 
@@ -288,6 +310,7 @@
       state.submitting = false;
       details.value = '';
       impersonated.value = '';
+      fieldBoxes.forEach(function (b) { b.checked = false; });
       locationOptions.forEach(function (o) { o.setAttribute('aria-checked', 'false'); });
       updateCount();
       options.forEach(function (o) { o.setAttribute('aria-checked', 'false'); });
@@ -383,7 +406,10 @@
           reason: state.reason,
           details: details.value,
           location: state.location,
-          impersonatedName: impersonated.value
+          impersonatedName: impersonated.value,
+          // Which parts are wrong. The server reads the community and copies
+          // what they say; nothing about the content is sent from here.
+          fields: fieldBoxes.filter(function (b) { return b.checked; }).map(function (b) { return b.value; })
         })
       })
         .then(function (res) {
