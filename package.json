@@ -38,6 +38,7 @@
     "minimist": "^1.2.6",
     "mocha": "^7.2.0",
     "mongo-sanitize": "^1.1.0",
+    "mongodb": "^7.1.1",
     "mongoose": "^5.13.14",
     "mpromise": "^0.5.5",
     "mquery": "^3.2.3",
@@ -59,8 +60,7 @@
     "socket.io-client": "^4.8.3",
     "stream": "^0.0.2",
     "svg-captcha": "^1.4.0",
-    "tail.select": "^0.5.15",
-    "mongodb": "^7.1.1"
+    "tail.select": "^0.5.15"
   },
   "scripts": {
     "start": "node server.js",
