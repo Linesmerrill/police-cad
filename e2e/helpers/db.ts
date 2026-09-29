@@ -607,7 +607,13 @@ export const PENDING_DELETION_TEST_COMMUNITY_ID = 'b0b0b0b0b0b0b0b0b0b0b0b0';
  *
  * IMPORTANT: This helper deliberately does NOT touch the shared TEST_USER's
  * `user.communities` array. Other parallel workers run dashboards/wallet/etc.
- * tests against TEST_USER and break if an extra community is injected. The
+ * tests against TEST_USER and break if an extra community is injected.
+ *
+ * That is also why the owner is NOT the test user. An owner is always a member
+ * of their own community: loading it makes the API add the owner's membership
+ * entry, and the page records it as their last-accessed community. With the
+ * test user as owner, the baseline test below moved every later dashboard,
+ * wallet and search test onto this community. The
  * pending-deletion 410 gate runs at the route middleware layer BEFORE any
  * membership check, so the test user does not need to be a member for the
  * pending tests to hit 410. The baseline (non-pending) test only asserts
@@ -628,7 +634,7 @@ export async function ensurePendingDeletionTestCommunity(): Promise<void> {
           _id: cID,
           community: {
             name: 'pending-deletion test community',
-            ownerID: TEST_USER_ID,
+            ownerID: 'ffffffffffffffffffffffff', // deliberately not the test user; see above
             code: 'PDTEST1',
             activeSignal100: false,
             activeHoldTraffic: false,
