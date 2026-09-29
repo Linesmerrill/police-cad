@@ -701,6 +701,15 @@
         if (user && user._doc && community.community && community.community.ownerID) {
           isOwner = String(community.community.ownerID) === String(user._doc._id);
         }
+        // The owner is always a member, whatever their communities list says.
+        // Pre-2025 owners have no entry for their own community until the API
+        // heals it on this same load, after the session user was read, so
+        // without this they were offered "Request to Join" on their own
+        // community.
+        if (isOwner) {
+          isMemberApproved = true;
+          isMemberPending = false;
+        }
       %>
 
       <script>

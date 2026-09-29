@@ -318,6 +318,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         });
       }
+      // The owner is always a member. Pre-2025 owners have no communities entry
+      // for their own community; the API adds it when the community is loaded
+      // just above, but req.user was read before that.
+      if (req.user && req.user._doc && community && community.community &&
+          String(community.community.ownerID) === String(req.user._doc._id)) {
+        isMemberApproved = true;
+      }
       // Update lastAccessedCommunity when the user is an approved member
       if (isMemberApproved && userId && community && community._id) {
         User.findOneAndUpdate(
