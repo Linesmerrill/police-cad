@@ -3320,13 +3320,37 @@
         <!-- Panel: Finance (owner-only P&L dashboard) -->
         <div class="ac-panel" id="panel-finance">
           <p style="color:#9aa0b4; font-size:14px; margin:0 0 16px; max-width:760px;">
-            Monthly profit &amp; loss across every revenue stream and tracked expense. Income is
-            aggregated server-side from Stripe and RevenueCat webhook events; ad revenue appears
-            once AdSense/AdMob are connected below. All finance calls go through owner-gated
-            server proxies &mdash; nothing financial is ever fetched with browser credentials.
+            Monthly profit &amp; loss on a cash basis: income and expenses synced from the
+            connected bank account via Plaid. Subscription revenue (Stripe and app-store
+            purchases) is shown alongside as an earned-revenue complement. All finance
+            calls go through owner-gated server proxies &mdash; nothing financial is ever
+            fetched with browser credentials.
           </p>
 
           <div id="financeError" data-testid="finance-error" style="display:none; margin-bottom:16px; padding:12px 14px; border-radius:10px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:13px;"></div>
+
+          <div class="ac-card" style="margin-bottom:20px;" data-testid="finance-bank-card">
+            <div class="ac-card-body">
+              <h3 style="color:#e8ecf4; font-size:15px; font-weight:600; margin:0 0 8px;">Bank connection</h3>
+              <p style="color:#9aa0b4; font-size:13px; margin:0 0 12px; max-width:720px;">
+                Connect the business bank account so the P&amp;L reflects real money in and out.
+                Connecting opens Plaid's secure bank picker; the bank login is handled by Plaid
+                and your bank, never by this site.
+              </p>
+              <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <button type="button" id="finPlaidConnectBtn" class="ac-btn ac-btn-accent" data-testid="finance-plaid-connect">
+                  <i class="fas fa-plug"></i> Connect bank
+                </button>
+                <button type="button" id="finPlaidSyncBtn" class="ac-btn" data-testid="finance-plaid-sync">
+                  <i class="fas fa-sync"></i> Sync now
+                </button>
+                <span id="finPlaidStatus" style="font-size:13px; color:#9aa0b4;" data-testid="finance-plaid-status"></span>
+              </div>
+              <div id="finPlaidAccounts" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;" data-testid="finance-plaid-accounts"></div>
+              <div id="finPlaidLastSync" style="margin-top:8px; font-size:12px; color:#9aa0b4;" data-testid="finance-plaid-last-sync"></div>
+              <div id="finPlaidToken" data-testid="finance-plaid-token" style="display:none; margin-top:12px; padding:12px 14px; border-radius:10px; background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.35); font-size:13px; color:#fcd34d;"></div>
+            </div>
+          </div>
 
           <div class="ac-card" style="margin-bottom:20px;">
             <div class="ac-card-body">
@@ -3350,26 +3374,50 @@
             </div>
           </div>
 
+          <div id="finBankEmpty" data-testid="finance-bank-empty" style="display:none; margin-bottom:20px; padding:14px 16px; border-radius:10px; background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.35); color:#bfdbfe; font-size:13px;">
+            <strong>Connect your bank to see expenses and true profit.</strong>
+            Until a bank account is connected, income shows subscription earned revenue only
+            and expenses show $0.00.
+          </div>
+
           <div class="ac-card" style="margin-bottom:20px;">
             <div class="ac-card-body">
-              <h3 style="color:#e8ecf4; font-size:15px; font-weight:600; margin:0 0 12px;">Monthly P&amp;L</h3>
+              <h3 style="color:#e8ecf4; font-size:15px; font-weight:600; margin:0 0 4px;">Monthly P&amp;L</h3>
+              <p style="color:#9aa0b4; font-size:12px; margin:0 0 12px;">Cash basis &mdash; bank feed</p>
               <div style="overflow-x:auto;">
                 <table class="rp-table" style="width:100%; border-collapse:collapse;" data-testid="finance-table">
+                  <thead>
+                    <tr>
+                      <th>Month</th>
+                      <th style="text-align:right;">Bank income</th>
+                      <th style="text-align:right;">Bank expenses</th>
+                      <th style="text-align:right;">Profit</th>
+                    </tr>
+                  </thead>
+                  <tbody id="finTableBody">
+                    <tr><td colspan="4" style="color:#6b7280;">Loading&hellip;</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="ac-card" style="margin-bottom:20px;">
+            <div class="ac-card-body">
+              <h3 style="color:#e8ecf4; font-size:15px; font-weight:600; margin:0 0 4px;">Earned revenue</h3>
+              <p style="color:#9aa0b4; font-size:12px; margin:0 0 12px;">Subscriptions complement &mdash; Stripe and app-store purchases from webhook events</p>
+              <div style="overflow-x:auto;">
+                <table class="rp-table" style="width:100%; border-collapse:collapse;" data-testid="finance-earned-table">
                   <thead>
                     <tr>
                       <th>Month</th>
                       <th style="text-align:right;">Stripe</th>
                       <th style="text-align:right;">IAP gross</th>
                       <th style="text-align:right;">IAP net</th>
-                      <th style="text-align:right;">AdSense</th>
-                      <th style="text-align:right;">AdMob</th>
-                      <th style="text-align:right;">Total income</th>
-                      <th style="text-align:right;">Expenses</th>
-                      <th style="text-align:right;">Profit</th>
                     </tr>
                   </thead>
-                  <tbody id="finTableBody">
-                    <tr><td colspan="9" style="color:#6b7280;">Loading&hellip;</td></tr>
+                  <tbody id="finEarnedTableBody">
+                    <tr><td colspan="4" style="color:#6b7280;">Loading&hellip;</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -3417,79 +3465,6 @@
             </div>
           </div>
 
-          <div class="ac-card" style="margin-bottom:20px;">
-            <div class="ac-card-body">
-              <h3 style="color:#e8ecf4; font-size:15px; font-weight:600; margin:0 0 12px;">Expenses</h3>
-              <form id="finExpenseForm" data-testid="finance-expense-form" style="margin-bottom:16px;">
-                <input type="hidden" id="finExpId" />
-                <div class="row">
-                  <div class="col-md-2">
-                    <label class="ac-label" for="finExpDate">Date</label>
-                    <input type="date" id="finExpDate" class="form-control ac-input" required data-testid="finance-expense-date" />
-                  </div>
-                  <div class="col-md-2">
-                    <label class="ac-label" for="finExpAmount">Amount (USD)</label>
-                    <input type="number" id="finExpAmount" class="form-control ac-input" step="0.01" min="0.01" required data-testid="finance-expense-amount" />
-                  </div>
-                  <div class="col-md-2">
-                    <label class="ac-label" for="finExpCategory">Category</label>
-                    <input type="text" id="finExpCategory" class="form-control ac-input" placeholder="e.g. hosting" required data-testid="finance-expense-category" />
-                  </div>
-                  <div class="col-md-2">
-                    <label class="ac-label" for="finExpVendor">Vendor</label>
-                    <input type="text" id="finExpVendor" class="form-control ac-input" placeholder="optional" data-testid="finance-expense-vendor" />
-                  </div>
-                  <div class="col-md-4">
-                    <label class="ac-label" for="finExpNotes">Notes</label>
-                    <input type="text" id="finExpNotes" class="form-control ac-input" placeholder="optional" data-testid="finance-expense-notes" />
-                  </div>
-                </div>
-                <div style="display:flex; gap:10px; margin-top:12px;">
-                  <button type="submit" id="finExpSubmitBtn" class="ac-btn ac-btn-accent" data-testid="finance-expense-submit">
-                    <i class="fas fa-plus"></i> Add expense
-                  </button>
-                  <button type="button" id="finExpCancelBtn" class="ac-btn" style="display:none;" data-testid="finance-expense-cancel">
-                    Cancel
-                  </button>
-                </div>
-              </form>
-              <div style="overflow-x:auto;">
-                <table class="rp-table" style="width:100%; border-collapse:collapse;" data-testid="finance-expenses-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Category</th>
-                      <th>Vendor</th>
-                      <th>Notes</th>
-                      <th style="text-align:right;">Amount</th>
-                      <th style="text-align:right;">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="finExpenseTableBody">
-                    <tr><td colspan="6" style="color:#6b7280;">Loading&hellip;</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <div class="ac-card">
-            <div class="ac-card-body">
-              <h3 style="color:#e8ecf4; font-size:15px; font-weight:600; margin:0 0 8px;">Ad revenue connections</h3>
-              <p style="color:#9aa0b4; font-size:13px; margin:0 0 12px; max-width:720px;">
-                Connect AdSense so the P&amp;L can pull ad revenue automatically. Clicking connect opens
-                Google's consent screen in a new tab; after approving, paste the refresh token into the
-                API's Heroku config (<code>ADSENSE_REFRESH_TOKEN</code>) and reload this tab &mdash; the
-                badge flips to connected on the next load.
-              </p>
-              <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                <button type="button" id="finAdsenseConnectBtn" class="ac-btn ac-btn-accent" data-testid="finance-adsense-connect">
-                  <i class="fas fa-plug"></i> Connect AdSense
-                </button>
-                <span id="finAdsenseStatus" style="font-size:13px; color:#9aa0b4;" data-testid="finance-adsense-status"></span>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Panel: Reports (user-submitted report moderation) -->
@@ -13391,10 +13366,10 @@
         return { from: from, to: to };
       }
 
-      function finMonthEndDay(yyyymm) {
-        var parts = String(yyyymm).split('-');
-        var y = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
-        return new Date(y, m, 0).getDate();
+      function finEsc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       }
 
       function initFinancePanel() {
@@ -13404,16 +13379,15 @@
         document.getElementById('finFrom').value = range.from;
         document.getElementById('finTo').value = range.to;
         document.getElementById('finRefreshBtn').addEventListener('click', loadFinanceAll);
-        document.getElementById('finAdsenseConnectBtn').addEventListener('click', finConnectAdsense);
-        document.getElementById('finExpenseForm').addEventListener('submit', finSubmitExpense);
-        document.getElementById('finExpCancelBtn').addEventListener('click', finResetExpenseForm);
+        document.getElementById('finPlaidConnectBtn').addEventListener('click', finConnectBank);
+        document.getElementById('finPlaidSyncBtn').addEventListener('click', finSyncBank);
         loadFinanceAll();
       }
 
       function loadFinanceAll() {
         finShowError(null);
         loadFinanceSummary();
-        loadFinanceExpenses();
+        loadBankStatus();
       }
 
       function loadFinanceSummary() {
@@ -13423,34 +13397,63 @@
           .done(function(res) {
             financeLastMonths = (res && res.months) || [];
             renderFinanceTable(financeLastMonths);
+            renderFinanceEarned(financeLastMonths);
             renderFinanceCharts(financeLastMonths);
             renderFinanceSources(financeLastMonths);
             renderFinanceWarnings(res && res.warnings);
+            renderBankEmptyState(res && res.bank_connected);
           })
           .fail(finAjaxFailed);
+      }
+
+      // The P&L is cash basis from the bank feed. When no bank is connected
+      // (bank_connected=false) the API reports subscription earned revenue as
+      // income and 0 expenses — surface the empty state so the owner knows
+      // the profit figure is not real cash-basis profit yet.
+      function renderBankEmptyState(bankConnected) {
+        var el = document.getElementById('finBankEmpty');
+        if (!el) return;
+        el.style.display = bankConnected ? 'none' : '';
       }
 
       function renderFinanceTable(months) {
         var tbody = document.getElementById('finTableBody');
         if (!months.length) {
-          tbody.innerHTML = '<tr><td colspan="9" style="color:#6b7280;">No data for this range.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="4" style="color:#6b7280;">No data for this range.</td></tr>';
+          return;
+        }
+        var html = '';
+        months.forEach(function(m) {
+          var income = Number((m.income && m.income.total) || 0);
+          var expenses = Number(m.expenses) || 0;
+          var profit = Number(m.profit) || 0;
+          var profitColor = profit >= 0 ? '#4ade80' : '#f87171';
+          html += '<tr>'
+            + '<td style="white-space:nowrap; font-weight:600;">' + finMonthLabel(m.month) + '</td>'
+            + '<td style="text-align:right;">' + finMoney(income) + '</td>'
+            + '<td style="text-align:right;">' + finMoney(expenses) + '</td>'
+            + '<td style="text-align:right; font-weight:700; color:' + profitColor + ';" data-testid="finance-profit-' + m.month + '">' + finMoney(profit) + '</td>'
+            + '</tr>';
+        });
+        tbody.innerHTML = html;
+      }
+
+      // Earned-revenue complement: subscription income from Stripe and
+      // app-store webhook events (gross + net), regardless of bank state.
+      function renderFinanceEarned(months) {
+        var tbody = document.getElementById('finEarnedTableBody');
+        if (!months.length) {
+          tbody.innerHTML = '<tr><td colspan="4" style="color:#6b7280;">No data for this range.</td></tr>';
           return;
         }
         var html = '';
         months.forEach(function(m) {
           var inc = m.income || {};
-          var profit = Number(m.profit) || 0;
-          var profitColor = profit >= 0 ? '#4ade80' : '#f87171';
           html += '<tr>'
             + '<td style="white-space:nowrap; font-weight:600;">' + finMonthLabel(m.month) + '</td>'
             + '<td style="text-align:right;">' + finMoney(inc.stripe) + '</td>'
             + '<td style="text-align:right;">' + finMoney(inc.iap_gross) + '</td>'
             + '<td style="text-align:right;">' + finMoney(inc.iap_net) + '</td>'
-            + '<td style="text-align:right;">' + finMoney(inc.adsense) + '</td>'
-            + '<td style="text-align:right;">' + finMoney(inc.admob) + '</td>'
-            + '<td style="text-align:right; font-weight:600;">' + finMoney(inc.total) + '</td>'
-            + '<td style="text-align:right;">' + finMoney(m.expenses) + '</td>'
-            + '<td style="text-align:right; font-weight:700; color:' + profitColor + ';" data-testid="finance-profit-' + m.month + '">' + finMoney(profit) + '</td>'
             + '</tr>';
         });
         tbody.innerHTML = html;
@@ -13483,18 +13486,10 @@
         var el = document.getElementById('finSources');
         var latest = months.length ? months[months.length - 1] : null;
         var s = (latest && latest.sources) || {};
-        var html = finSourceBadge('Stripe', s.stripe && s.stripe.connected)
-          + finSourceBadge('RevenueCat', s.revenuecat && s.revenuecat.connected)
-          + finSourceBadge('AdSense', s.adsense && s.adsense.connected)
-          + finSourceBadge('AdMob', s.admob && s.admob.connected);
+        var html = finSourceBadge('Stripe', !!(s.stripe && s.stripe.connected))
+          + finSourceBadge('RevenueCat', !!(s.revenuecat && s.revenuecat.connected))
+          + finSourceBadge('Bank', !!(s.bank && s.bank.connected));
         el.innerHTML = html;
-        var adsenseConnected = !!(s.adsense && s.adsense.connected);
-        var statusEl = document.getElementById('finAdsenseStatus');
-        if (statusEl) {
-          statusEl.textContent = adsenseConnected
-            ? 'AdSense is connected — ad revenue is included above.'
-            : 'AdSense is not connected — ad revenue shows $0.00 until it is.';
-        }
       }
 
       function renderFinanceWarnings(warnings) {
@@ -13509,116 +13504,127 @@
         }
       }
 
-      function loadFinanceExpenses() {
-        var from = document.getElementById('finFrom').value;
-        var to = document.getElementById('finTo').value;
-        var params = {};
-        if (/^\d{4}-\d{2}$/.test(from)) params.from = from + '-01';
-        if (/^\d{4}-\d{2}$/.test(to)) params.to = to + '-' + String(finMonthEndDay(to)).padStart(2, '0');
-        $.ajax({ url: '/admin/api/finance/expenses', type: 'GET', data: params })
-          .done(renderFinanceExpenses)
-          .fail(finAjaxFailed);
-      }
-
-      function finEsc(s) {
-        return String(s == null ? '' : s)
-          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-      }
-
-      // Client-side copy of the last expense list, for the edit form.
-      var financeExpenseCache = {};
-
-      function renderFinanceExpenses(res) {
-        var tbody = document.getElementById('finExpenseTableBody');
-        var expenses = (res && res.expenses) || [];
-        financeExpenseCache = {};
-        expenses.forEach(function(e) { financeExpenseCache[e.id] = e; });
-        if (!expenses.length) {
-          tbody.innerHTML = '<tr><td colspan="6" style="color:#6b7280;">No expenses recorded for this range.</td></tr>';
-          return;
-        }
-        var html = '';
-        expenses.forEach(function(e) {
-          html += '<tr data-expense-id="' + finEsc(e.id) + '">'
-            + '<td style="white-space:nowrap;">' + finEsc(e.date) + '</td>'
-            + '<td>' + finEsc(e.category) + '</td>'
-            + '<td>' + finEsc(e.vendor || '') + '</td>'
-            + '<td>' + finEsc(e.notes || '') + '</td>'
-            + '<td style="text-align:right;">' + finMoney(e.amount) + '</td>'
-            + '<td style="text-align:right; white-space:nowrap;">'
-            + '<button type="button" class="ac-btn ac-btn-sm" onclick="finEditExpense(\'' + finEsc(e.id) + '\')" data-testid="finance-expense-edit-' + finEsc(e.id) + '"><i class="fas fa-pen"></i></button> '
-            + '<button type="button" class="ac-btn ac-btn-sm" onclick="finDeleteExpense(\'' + finEsc(e.id) + '\')" data-testid="finance-expense-delete-' + finEsc(e.id) + '"><i class="fas fa-trash"></i></button>'
-            + '</td></tr>';
+      // ---- Plaid bank connection ----
+      // Plaid Link is loaded from the Plaid CDN on demand — only on this
+      // owner-only Finance panel, never globally. The bank login happens
+      // inside Plaid's iframe; this site never sees bank credentials.
+      function finLoadPlaidLink() {
+        return new Promise(function(resolve, reject) {
+          if (window.Plaid && window.Plaid.create) { resolve(window.Plaid); return; }
+          var script = document.createElement('script');
+          script.src = 'https://cdn.plaid.com/link/v2/stable/link-initialize.js';
+          script.async = true;
+          script.onload = function() {
+            if (window.Plaid && window.Plaid.create) resolve(window.Plaid);
+            else reject(new Error('Plaid Link failed to initialize.'));
+          };
+          script.onerror = function() { reject(new Error('Could not load Plaid Link from the Plaid CDN.')); };
+          document.head.appendChild(script);
         });
-        tbody.innerHTML = html;
       }
 
-      function finResetExpenseForm() {
-        document.getElementById('finExpenseForm').reset();
-        document.getElementById('finExpId').value = '';
-        document.getElementById('finExpSubmitBtn').innerHTML = '<i class="fas fa-plus"></i> Add expense';
-        document.getElementById('finExpCancelBtn').style.display = 'none';
-      }
-
-      function finEditExpense(id) {
-        var e = financeExpenseCache[id];
-        if (!e) return;
-        document.getElementById('finExpId').value = e.id;
-        document.getElementById('finExpDate').value = String(e.date || '').slice(0, 10);
-        document.getElementById('finExpAmount').value = e.amount;
-        document.getElementById('finExpCategory').value = e.category || '';
-        document.getElementById('finExpVendor').value = e.vendor || '';
-        document.getElementById('finExpNotes').value = e.notes || '';
-        document.getElementById('finExpSubmitBtn').innerHTML = '<i class="fas fa-save"></i> Save changes';
-        document.getElementById('finExpCancelBtn').style.display = '';
-        document.getElementById('finExpDate').focus();
-      }
-
-      function finDeleteExpense(id) {
-        if (!window.confirm('Delete this expense? This cannot be undone.')) return;
-        $.ajax({ url: '/admin/api/finance/expenses/' + encodeURIComponent(id), type: 'DELETE' })
-          .done(function() { loadFinanceExpenses(); loadFinanceSummary(); })
-          .fail(finAjaxFailed);
-      }
-
-      function finSubmitExpense(ev) {
-        ev.preventDefault();
-        var id = document.getElementById('finExpId').value;
-        var payload = {
-          date: document.getElementById('finExpDate').value,
-          amount: parseFloat(document.getElementById('finExpAmount').value),
-          category: document.getElementById('finExpCategory').value.trim(),
-          vendor: document.getElementById('finExpVendor').value.trim(),
-          notes: document.getElementById('finExpNotes').value.trim(),
-          source: 'manual'
-        };
-        var method = id ? 'PUT' : 'POST';
-        var url = '/admin/api/finance/expenses' + (id ? '/' + encodeURIComponent(id) : '');
-        $.ajax({ url: url, type: method, contentType: 'application/json', data: JSON.stringify(payload) })
-          .done(function() {
-            finResetExpenseForm();
-            loadFinanceExpenses();
-            loadFinanceSummary();
-          })
-          .fail(finAjaxFailed);
-      }
-
-      function finConnectAdsense() {
-        var btn = document.getElementById('finAdsenseConnectBtn');
+      function finConnectBank() {
+        var btn = document.getElementById('finPlaidConnectBtn');
         btn.disabled = true;
-        $.ajax({ url: '/admin/api/finance/adsense/oauth/start', type: 'GET' })
+        finShowError(null);
+        $.ajax({ url: '/admin/api/finance/plaid/link-token', type: 'POST', contentType: 'application/json', data: '{}' })
           .done(function(res) {
-            btn.disabled = false;
-            var url = res && res.url;
-            if (url) {
-              window.open(url, '_blank', 'noopener');
-            } else {
-              finShowError('The API did not return an AdSense authorization URL.');
+            var linkToken = res && res.link_token;
+            if (!linkToken) {
+              btn.disabled = false;
+              finShowError('The API did not return a Plaid link token.');
+              return;
             }
+            finLoadPlaidLink().then(function(Plaid) {
+              var handler = Plaid.create({
+                token: linkToken,
+                onSuccess: function(publicToken) {
+                  finExchangePlaidToken(publicToken, btn);
+                },
+                onExit: function() {
+                  btn.disabled = false;
+                }
+              });
+              handler.open();
+            }).catch(function(err) {
+              btn.disabled = false;
+              finShowError(err && err.message ? err.message : 'Could not load Plaid Link.');
+            });
           })
           .fail(function(jqXHR) { btn.disabled = false; finAjaxFailed(jqXHR); });
       }
+
+      function finExchangePlaidToken(publicToken, btn) {
+        $.ajax({
+          url: '/admin/api/finance/plaid/exchange',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ public_token: publicToken })
+        })
+          .done(function(res) {
+            btn.disabled = false;
+            var accessToken = res && res.access_token;
+            if (!accessToken) {
+              finShowError('The API did not return an access token.');
+              return;
+            }
+            // Displayed ONCE: never logged, never stored anywhere on this
+            // page. The owner pastes it into the PLAID_ACCESS_TOKEN Heroku
+            // config var on the API app and it vanishes on reload.
+            var el = document.getElementById('finPlaidToken');
+            el.style.display = '';
+            el.innerHTML = '<strong>Bank linked.</strong> Save this access token as the Heroku config var '
+              + '<code>PLAID_ACCESS_TOKEN</code> on the API app, then press <strong>Sync now</strong>. '
+              + 'It will not be shown again.<br><br><code style="word-break:break-all; color:#fff;">'
+              + finEsc(accessToken) + '</code>';
+            loadBankStatus();
+            loadFinanceSummary();
+          })
+          .fail(function(jqXHR) { btn.disabled = false; finAjaxFailed(jqXHR); });
+      }
+
+      function finSyncBank() {
+        var btn = document.getElementById('finPlaidSyncBtn');
+        btn.disabled = true;
+        finShowError(null);
+        $.ajax({ url: '/admin/api/finance/plaid/sync', type: 'POST', contentType: 'application/json', data: '{}' })
+          .done(function() {
+            btn.disabled = false;
+            loadBankStatus();
+            loadFinanceSummary();
+          })
+          .fail(function(jqXHR) { btn.disabled = false; finAjaxFailed(jqXHR); });
+      }
+
+      function loadBankStatus() {
+        $.ajax({ url: '/admin/api/finance/plaid/status', type: 'GET' })
+          .done(renderBankStatus)
+          .fail(function() {
+            var statusEl = document.getElementById('finPlaidStatus');
+            if (statusEl) statusEl.textContent = 'Bank status unavailable.';
+          });
+      }
+
+      function renderBankStatus(res) {
+        res = res || {};
+        var connected = !!res.connected;
+        var statusEl = document.getElementById('finPlaidStatus');
+        if (statusEl) statusEl.textContent = connected ? 'Bank connected.' : 'No bank connected yet.';
+        var accountsEl = document.getElementById('finPlaidAccounts');
+        var accounts = Array.isArray(res.accounts) ? res.accounts : [];
+        if (accountsEl) {
+          accountsEl.innerHTML = accounts.map(function(a) {
+            var label = String(a.name || 'Account');
+            if (a.mask) label += ' \u2022\u2022\u2022\u2022' + String(a.mask);
+            if (a.type) label += ' (' + String(a.type) + ')';
+            return '<span style="display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; color:#4ade80; background:rgba(74,222,128,0.12);">'
+              + '<i class="fas fa-building-columns" style="font-size:10px;"></i>' + finEsc(label) + '</span>';
+          }).join('');
+        }
+        var syncEl = document.getElementById('finPlaidLastSync');
+        if (syncEl) syncEl.textContent = res.last_sync ? 'Last synced: ' + String(res.last_sync) : '';
+      }
+
 
     </script>
 

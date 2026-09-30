@@ -1,13 +1,15 @@
 /**
  * Owner-only Finance P&L dashboard (admin console "Finance" tab).
  *
- * Covers:
+ * The P&L is cash basis from the Plaid bank feed. Covers:
  *  - owner sees the Finance tab and the monthly P&L table (summary mocked at
  *    the website proxy level: /admin/api/finance/*);
- *  - expense add / edit / delete flows against the proxy CRUD routes;
- *  - the AdSense "Connect" button opens the OAuth URL from oauth/start;
+ *  - the bank empty state when no bank is connected (income shows earned
+ *    subscription revenue only, expenses 0);
+ *  - the Plaid "Connect bank" flow (link token -> Link onSuccess -> exchange
+ *    -> access token shown once) and "Sync now";
  *  - a non-owner admin neither sees the Finance tab nor reaches the proxy
- *    routes (403 — server-side requireOwnerSession);
+ *    routes (403 — server-side requireOwnerSession), same for anonymous;
  *  - the POLICE_CAD_API_TOKEN leak fix: most-wanted.ejs must not render the
  *    server API token into client JS anymore.
  *
@@ -36,63 +38,75 @@ const STAFF_STATE = path.join(__dirname, '../../.auth/console-staff-finance.json
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const SUMMARY_FIXTURE = {
+const SUMMARY_BANK_FIXTURE = {
   months: [
     {
       month: '2026-08',
-      income: { stripe: 100, iap_gross: 50, iap_net: 35, adsense: 0, admob: 0, total: 135 },
-      expenses: 40,
-      profit: 95,
+      income: { stripe: 100, iap_gross: 50, iap_net: 35, total: 900 },
+      expenses: 320,
+      profit: 580,
+      bank: { connected: true, income: 900, expenses: 320 },
       sources: {
         stripe: { connected: true },
         revenuecat: { connected: true },
-        adsense: { connected: false },
-        admob: { connected: false },
+        bank: { connected: true },
       },
     },
     {
       month: '2026-09',
-      income: { stripe: 200, iap_gross: 100, iap_net: 70, adsense: 0, admob: 0, total: 270 },
-      expenses: 60,
-      profit: 210,
+      income: { stripe: 200, iap_gross: 100, iap_net: 70, total: 1200 },
+      expenses: 450,
+      profit: 750,
+      bank: { connected: true, income: 1200, expenses: 450 },
       sources: {
         stripe: { connected: true },
         revenuecat: { connected: true },
-        adsense: { connected: false },
-        admob: { connected: false },
+        bank: { connected: true },
       },
     },
   ],
-  warnings: ['AdSense is not connected — ad revenue shows $0.00.'],
+  bank_connected: true,
+  warnings: ['One bank transaction could not be categorized.'],
 };
 
-const EXPENSE_ID = '60f6a1b2c3d4e5f60718293a';
-const EXPENSE_FIXTURE = {
-  expenses: [
+const SUMMARY_NO_BANK_FIXTURE = {
+  months: [
     {
-      id: EXPENSE_ID,
-      date: '2026-09-15',
-      amount: 49.99,
-      currency: 'USD',
-      category: 'hosting',
-      vendor: 'Heroku',
-      notes: 'dyno hours',
-      source: 'manual',
-      createdBy: 'console-owner@test.com',
-      createdAt: '2026-09-15T12:00:00.000Z',
+      month: '2026-09',
+      income: { stripe: 200, iap_gross: 100, iap_net: 70, total: 300 },
+      expenses: 0,
+      profit: 300,
+      bank: { connected: false, income: 0, expenses: 0 },
+      sources: {
+        stripe: { connected: true },
+        revenuecat: { connected: true },
+        bank: { connected: false },
+      },
     },
   ],
-  total: 49.99,
+  bank_connected: false,
+  warnings: ['No bank account connected — showing subscription revenue only.'],
 };
 
-interface ExpenseMocks {
+const PLAID_STATUS_CONNECTED = {
+  connected: true,
+  last_sync: '2026-09-30T10:00:00Z',
+  accounts: [{ name: 'Business Checking', mask: '1234', type: 'depository' }],
+};
+
+const PLAID_STATUS_DISCONNECTED = {
+  connected: false,
+  last_sync: null,
+  accounts: [],
+};
+
+interface FinanceMocks {
   summary?: unknown;
   summaryStatus?: number;
-  list?: unknown;
-  onPost?: (body: unknown) => unknown;
-  onPut?: (id: string, body: unknown) => unknown;
-  onDelete?: (id: string) => unknown;
-  oauthUrl?: string;
+  plaidStatus?: unknown;
+  onLinkToken?: () => unknown;
+  onExchange?: (body: unknown) => unknown;
+  onSync?: () => unknown;
 }
 
 /**
@@ -100,8 +114,8 @@ interface ExpenseMocks {
  * Playwright's last-registered-wins precedence and the
  * continue()-vs-fallback() footgun when several mocks share a URL prefix.
  */
-async function mockFinance(page: Page, mocks: ExpenseMocks = {}) {
-  const listBody = mocks.list === undefined ? EXPENSE_FIXTURE : mocks.list;
+async function mockFinance(page: Page, mocks: FinanceMocks = {}) {
+  const plaidStatus = mocks.plaidStatus === undefined ? PLAID_STATUS_DISCONNECTED : mocks.plaidStatus;
   await page.route('**/admin/api/finance/**', (route: Route) => {
     const req = route.request();
     const method = req.method();
@@ -116,22 +130,18 @@ async function mockFinance(page: Page, mocks: ExpenseMocks = {}) {
       }
       return route.fallback();
     }
-    if (method === 'GET' && path === '/admin/api/finance/expenses') {
-      return json(200, listBody);
+    if (method === 'GET' && path === '/admin/api/finance/plaid/status') {
+      return json(200, plaidStatus);
     }
-    if (method === 'POST' && path === '/admin/api/finance/expenses' && mocks.onPost) {
-      const created = mocks.onPost(req.postDataJSON());
-      return json(201, created);
+    if (method === 'POST' && path === '/admin/api/finance/plaid/link-token') {
+      return json(200, mocks.onLinkToken ? mocks.onLinkToken() : { link_token: 'link-sandbox-test' });
     }
-    const idMatch = path.match(/^\/admin\/api\/finance\/expenses\/([a-f0-9]{24})$/i);
-    if (idMatch && method === 'PUT' && mocks.onPut) {
-      return json(200, mocks.onPut(idMatch[1], req.postDataJSON()));
+    if (method === 'POST' && path === '/admin/api/finance/plaid/exchange') {
+      const body = req.postDataJSON();
+      return json(200, mocks.onExchange ? mocks.onExchange(body) : { access_token: 'access-sandbox-test' });
     }
-    if (idMatch && method === 'DELETE' && mocks.onDelete) {
-      return json(200, mocks.onDelete(idMatch[1]));
-    }
-    if (method === 'GET' && path === '/admin/api/finance/adsense/oauth/start' && mocks.oauthUrl) {
-      return json(200, { url: mocks.oauthUrl });
+    if (method === 'POST' && path === '/admin/api/finance/plaid/sync') {
+      return json(200, mocks.onSync ? mocks.onSync() : { ok: true });
     }
     return route.fallback();
   });
@@ -167,8 +177,8 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await removeConsoleOwner();
   });
 
-  test('owner sees the Finance tab and the monthly P&L table', async ({ page }) => {
-    await mockFinance(page, { summary: SUMMARY_FIXTURE, list: { expenses: [], total: 0 } });
+  test('owner sees the Finance tab and the cash-basis P&L table', async ({ page }) => {
+    await mockFinance(page, { summary: SUMMARY_BANK_FIXTURE, plaidStatus: PLAID_STATUS_CONNECTED });
 
     const finance = new AdminFinancePage(page);
     await finance.open();
@@ -176,35 +186,66 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     // The tab is visible only for owners (client-side), and the panel loads.
     await expect(finance.financeTab).toBeVisible();
     await expect(finance.plTable).toBeVisible();
+    await expect(finance.bankEmpty).toBeHidden();
 
-    // Table renders both fixture months with exact money formatting.
+    // Headline P&L is cash basis: Month | Bank income | Bank expenses | Profit.
     await expect(finance.plTableBody).toContainText('Sep 2026');
-    await expect(finance.plTableBody).toContainText('$200.00');
-    await expect(finance.plTableBody).toContainText('$100.00'); // IAP gross
-    await expect(finance.plTableBody).toContainText('$70.00'); // IAP net
-    await expect(finance.plTableBody).toContainText('$270.00'); // total income
-    await expect(finance.plTableBody).toContainText('$60.00'); // expenses
-    await expect(finance.profitCell('2026-09')).toHaveText('$210.00');
-    await expect(finance.profitCell('2026-08')).toHaveText('$95.00');
+    await expect(finance.plTableBody).toContainText('$1,200.00'); // bank income
+    await expect(finance.plTableBody).toContainText('$450.00'); // bank expenses
+    await expect(finance.profitCell('2026-09')).toHaveText('$750.00');
+    await expect(finance.profitCell('2026-08')).toHaveText('$580.00');
+
+    // Earned-revenue complement: Stripe / IAP gross / IAP net.
+    await expect(finance.earnedTable).toBeVisible();
+    await expect(finance.earnedTableBody).toContainText('$200.00'); // Stripe
+    await expect(finance.earnedTableBody).toContainText('$100.00'); // IAP gross
+    await expect(finance.earnedTableBody).toContainText('$70.00'); // IAP net
 
     // Source badges reflect connectivity from the latest month.
     await expect(finance.sources).toContainText('Stripe: Connected');
-    await expect(finance.sources).toContainText('AdSense: Not connected');
+    await expect(finance.sources).toContainText('Bank: Connected');
 
     // Warnings surface.
-    await expect(page.locator('#finWarnings')).toContainText('AdSense is not connected');
+    await expect(page.locator('#finWarnings')).toContainText('could not be categorized');
 
-    // Charts rendered through the console's shared SVG chart helper.
+    // Charts are wired to the bank series.
     await expect(page.locator('#chart-fin-income-svg path')).not.toHaveCount(0);
     await expect(page.locator('#chart-fin-expenses-svg path')).not.toHaveCount(0);
-    await expect(page.locator('#chart-fin-income-total')).toHaveText('$405.00');
+    await expect(page.locator('#chart-fin-income-total')).toHaveText('$2,100.00');
+
+    // Bank status card: accounts + last sync.
+    await expect(finance.plaidStatus).toContainText('Bank connected.');
+    await expect(finance.plaidAccounts).toContainText('Business Checking');
+    await expect(finance.plaidAccounts).toContainText('1234');
+    await expect(finance.plaidLastSync).toContainText('Last synced:');
+  });
+
+  test('owner sees the connect-bank empty state when no bank is connected', async ({ page }) => {
+    await mockFinance(page, {
+      summary: SUMMARY_NO_BANK_FIXTURE,
+      plaidStatus: PLAID_STATUS_DISCONNECTED,
+    });
+
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    // Empty state explains what is missing.
+    await expect(finance.bankEmpty).toBeVisible();
+    await expect(finance.bankEmpty).toContainText('Connect your bank to see expenses and true profit');
+
+    // Income shows subscription earned revenue only, expenses are 0.
+    await expect(finance.plTableBody).toContainText('$300.00');
+    await expect(finance.plTableBody).toContainText('$0.00');
+    await expect(finance.profitCell('2026-09')).toHaveText('$300.00');
+
+    await expect(finance.sources).toContainText('Bank: Not connected');
+    await expect(finance.plaidStatus).toContainText('No bank connected yet.');
   });
 
   test('owner sees a clear error when the API session is missing', async ({ page }) => {
     await mockFinance(page, {
       summaryStatus: 401,
       summary: { message: 'API session not established. Please log out and log in again.' },
-      list: { expenses: [], total: 0 },
     });
 
     const finance = new AdminFinancePage(page);
@@ -214,122 +255,78 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await expect(finance.errorBox).toContainText('API session not established');
   });
 
-  test('owner can add an expense', async ({ page }) => {
-    let postedBody: unknown = null;
+  test('owner can connect a bank via Plaid Link and sees the access token once', async ({ page }) => {
+    let exchangedBody: unknown = null;
     await mockFinance(page, {
-      summary: SUMMARY_FIXTURE,
-      list: { expenses: [], total: 0 },
-      onPost: (body) => {
-        postedBody = body;
-        return {
-          id: 'new-expense-id',
-          date: '2026-09-20',
-          amount: 12.5,
-          currency: 'USD',
-          category: 'tools',
-          vendor: '',
-          notes: '',
-          source: 'manual',
-        };
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: PLAID_STATUS_CONNECTED,
+      onLinkToken: () => ({ link_token: 'link-sandbox-test' }),
+      onExchange: (body) => {
+        exchangedBody = body;
+        return { access_token: 'access-sandbox-shown-once' };
       },
     });
 
     const finance = new AdminFinancePage(page);
     await finance.open();
 
-    await finance.expenseDate.fill('2026-09-20');
-    await finance.expenseAmount.fill('12.50');
-    await finance.expenseCategory.fill('tools');
-    await finance.expenseSubmit.click();
-
-    // The proxy receives exactly the whitelisted payload shape.
-    expect(postedBody).toMatchObject({
-      date: '2026-09-20',
-      amount: 12.5,
-      category: 'tools',
-      source: 'manual',
-    });
-    // The form resets after a successful save.
-    await expect(finance.expenseAmount).toHaveValue('');
-  });
-
-  test('owner can edit an expense', async ({ page }) => {
-    let putId = '';
-    let putBody: unknown = null;
-    await mockFinance(page, {
-      summary: SUMMARY_FIXTURE,
-      onPut: (id, body) => {
-        putId = id;
-        putBody = body;
-        return { id };
-      },
+    // Stub Plaid Link (the real script loads from the Plaid CDN only when the
+    // button is clicked; the stub skips that network load entirely).
+    await page.evaluate(() => {
+      const w = window as unknown as {
+        __plaidCreateArgs?: { token: string; onSuccess: (t: string) => void };
+        Plaid?: { create: (opts: unknown) => { open: () => void } };
+      };
+      w.Plaid = {
+        create: (opts: unknown) => {
+          w.__plaidCreateArgs = opts as { token: string; onSuccess: (t: string) => void };
+          return { open: () => undefined };
+        },
+      };
     });
 
-    const finance = new AdminFinancePage(page);
-    await finance.open();
-    await expect(finance.expenseRow(EXPENSE_ID)).toBeVisible();
+    await finance.plaidConnectBtn.click();
 
-    // Edit pre-fills the form from the row.
-    await page.getByTestId(`finance-expense-edit-${EXPENSE_ID}`).click();
-    await expect(finance.expenseCategory).toHaveValue('hosting');
-    await expect(finance.expenseAmount).toHaveValue('49.99');
-    await expect(finance.expenseSubmit).toContainText('Save changes');
+    // The page requested a link token and opened Link with it.
+    await page.waitForFunction(
+      () => !!(window as unknown as { __plaidCreateArgs?: unknown }).__plaidCreateArgs,
+      null,
+      { timeout: 10_000 }
+    );
+    const linkToken = await page.evaluate(
+      () => (window as unknown as { __plaidCreateArgs: { token: string } }).__plaidCreateArgs.token
+    );
+    expect(linkToken).toBe('link-sandbox-test');
 
-    await finance.expenseAmount.fill('59.99');
-    await finance.expenseSubmit.click();
+    // Simulate the user approving their bank in the Link iframe.
+    await page.evaluate(() =>
+      (window as unknown as { __plaidCreateArgs: { onSuccess: (t: string) => void } }).__plaidCreateArgs.onSuccess('public-token-abc')
+    );
 
-    expect(putId).toBe(EXPENSE_ID);
-    expect(putBody).toMatchObject({ amount: 59.99, category: 'hosting' });
+    // The public token is exchanged server-side, and the access token is
+    // shown once with instructions to set the Heroku config var.
+    expect(exchangedBody).toMatchObject({ public_token: 'public-token-abc' });
+    await expect(finance.plaidToken).toBeVisible();
+    await expect(finance.plaidToken).toContainText('access-sandbox-shown-once');
+    await expect(finance.plaidToken).toContainText('PLAID_ACCESS_TOKEN');
   });
 
-  test('owner can delete an expense', async ({ page }) => {
-    let deletedId = '';
+  test('owner can trigger a bank sync', async ({ page }) => {
+    let syncCalls = 0;
     await mockFinance(page, {
-      summary: SUMMARY_FIXTURE,
-      onDelete: (id) => {
-        deletedId = id;
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: PLAID_STATUS_CONNECTED,
+      onSync: () => {
+        syncCalls += 1;
         return { ok: true };
       },
     });
-    page.on('dialog', (dialog) => dialog.accept());
-
-    const finance = new AdminFinancePage(page);
-    await finance.open();
-    await expect(finance.expenseRow(EXPENSE_ID)).toBeVisible();
-
-    await page.getByTestId(`finance-expense-delete-${EXPENSE_ID}`).click();
-
-    expect(deletedId).toBe(EXPENSE_ID);
-  });
-
-  test('Connect AdSense opens the OAuth URL in a new tab', async ({ page }) => {
-    const oauthUrl = 'https://accounts.google.com/o/oauth2/auth?test=finance';
-    await mockFinance(page, {
-      summary: SUMMARY_FIXTURE,
-      list: { expenses: [], total: 0 },
-      oauthUrl,
-    });
 
     const finance = new AdminFinancePage(page);
     await finance.open();
 
-    // Stub window.open to capture the URL instead of opening a tab.
-    await page.evaluate(() => {
-      (window as unknown as { __openedUrls: string[] }).__openedUrls = [];
-      window.open = (url?: string | URL | null) => {
-        (window as unknown as { __openedUrls: string[] }).__openedUrls.push(String(url));
-        return null;
-      };
-    });
-    await finance.adsenseConnectBtn.click();
-
-    const opened = await page.evaluate(
-      () => (window as unknown as { __openedUrls: string[] }).__openedUrls
-    );
-    expect(opened).toEqual([oauthUrl]);
-
-    // Badge copy reflects the not-connected fixture.
-    await expect(finance.adsenseStatus).toContainText('AdSense is not connected');
+    await finance.plaidSyncBtn.click();
+    await expect.poll(() => syncCalls, { timeout: 10_000 }).toBe(1);
   });
 });
 
@@ -355,9 +352,10 @@ test.describe('Admin console — Finance tab (non-owner staff)', { tag: '@auth' 
 
   test('staff does not see the Finance tab', async ({ page }) => {
     await page.goto('/admin/console');
-    // Owner-only tabs stay display:none for staff.
+    // Owner-only tabs stay display:none for staff — including Connect bank.
     await expect(page.locator('#finance-tab')).toBeHidden();
     await expect(page.locator('#panel-finance')).toBeHidden();
+    await expect(page.getByTestId('finance-plaid-connect')).toBeHidden();
   });
 
   test('staff is forbidden from the finance proxy routes', async ({ page }) => {
@@ -366,31 +364,30 @@ test.describe('Admin console — Finance tab (non-owner staff)', { tag: '@auth' 
     const summary = await page.request.get('/admin/api/finance/summary?from=2026-09&to=2026-09');
     expect(summary.status()).toBe(403);
 
-    const expensesGet = await page.request.get('/admin/api/finance/expenses');
-    expect(expensesGet.status()).toBe(403);
+    const linkToken = await page.request.post('/admin/api/finance/plaid/link-token');
+    expect(linkToken.status()).toBe(403);
 
-    const expensesPost = await page.request.post('/admin/api/finance/expenses', {
-      data: { date: '2026-09-01', amount: 1, category: 'x' },
+    const exchange = await page.request.post('/admin/api/finance/plaid/exchange', {
+      data: { public_token: 'public-sandbox-xyz' },
     });
-    expect(expensesPost.status()).toBe(403);
+    expect(exchange.status()).toBe(403);
 
-    const expensesPut = await page.request.put(`/admin/api/finance/expenses/${EXPENSE_ID}`, {
-      data: { date: '2026-09-01', amount: 1, category: 'x' },
-    });
-    expect(expensesPut.status()).toBe(403);
+    const sync = await page.request.post('/admin/api/finance/plaid/sync');
+    expect(sync.status()).toBe(403);
 
-    const expensesDelete = await page.request.delete(`/admin/api/finance/expenses/${EXPENSE_ID}`);
-    expect(expensesDelete.status()).toBe(403);
-
-    const oauthStart = await page.request.get('/admin/api/finance/adsense/oauth/start');
-    expect(oauthStart.status()).toBe(403);
+    const status = await page.request.get('/admin/api/finance/plaid/status');
+    expect(status.status()).toBe(403);
 
     // And an unauthenticated caller gets the same 403 (no session at all).
     const anonRequest = await playwrightRequest.newContext({
       baseURL: process.env.BASE_URL || 'http://localhost:8080',
     });
-    const anon = await anonRequest.get('/admin/api/finance/summary');
-    expect(anon.status()).toBe(403);
+    const anonSummary = await anonRequest.get('/admin/api/finance/summary');
+    expect(anonSummary.status()).toBe(403);
+    const anonStatus = await anonRequest.get('/admin/api/finance/plaid/status');
+    expect(anonStatus.status()).toBe(403);
+    const anonLinkToken = await anonRequest.post('/admin/api/finance/plaid/link-token');
+    expect(anonLinkToken.status()).toBe(403);
     await anonRequest.dispose();
   });
 });

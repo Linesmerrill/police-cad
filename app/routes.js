@@ -941,7 +941,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
   }
 
   const financeMonthParam = /^\d{4}-(0[1-9]|1[0-2])$/;
-  const financeDateParam = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
   app.get("/admin/api/finance/summary", requireOwnerSession, async function (req, res) {
     if (!requireFinanceJwt(req, res)) return;
@@ -959,15 +958,17 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
-  app.get("/admin/api/finance/expenses", requireOwnerSession, async function (req, res) {
+  // Plaid bank sync. The API holds the Plaid client_id/secret and the bank
+  // access token; the website only proxies. The browser never sees any Plaid
+  // credential — except the access token returned by /exchange, which the
+  // Finance tab shows the owner ONCE so they can paste it into the Heroku
+  // config var PLAID_ACCESS_TOKEN. It is never logged or stored here.
+  app.post("/admin/api/finance/plaid/link-token", requireOwnerSession, async function (req, res) {
     if (!requireFinanceJwt(req, res)) return;
     try {
-      const params = new URLSearchParams();
-      if (financeDateParam.test(String(req.query.from || ""))) params.set("from", String(req.query.from));
-      if (financeDateParam.test(String(req.query.to || ""))) params.set("to", String(req.query.to));
-      const response = await axios.get(`${financeApiBase()}/expenses?${params.toString()}`, {
+      const response = await axios.post(`${financeApiBase()}/plaid/link-token`, {}, {
         headers: financeAuthHeaders(req),
-        timeout: 15000,
+        timeout: 20000,
       });
       return res.json(response.data);
     } catch (err) {
@@ -975,28 +976,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
-  // Whitelist the expense fields the panel may set. createdBy/createdAt are
-  // assigned by the API; anything else in the body is dropped.
-  function financeExpensePayload(body) {
-    const b = body || {};
-    const payload = {
-      date: typeof b.date === "string" ? b.date : "",
-      amount: b.amount,
-    };
-    if (typeof b.currency === "string" && b.currency) payload.currency = b.currency;
-    if (typeof b.category === "string" && b.category) payload.category = b.category;
-    if (typeof b.vendor === "string" && b.vendor) payload.vendor = b.vendor;
-    if (typeof b.notes === "string" && b.notes) payload.notes = b.notes;
-    if (typeof b.source === "string" && b.source) payload.source = b.source;
-    return payload;
-  }
-
-  app.post("/admin/api/finance/expenses", requireOwnerSession, async function (req, res) {
+  app.post("/admin/api/finance/plaid/exchange", requireOwnerSession, async function (req, res) {
     if (!requireFinanceJwt(req, res)) return;
+    const publicToken = req.body && req.body.public_token;
+    if (typeof publicToken !== "string" || !publicToken.trim()) {
+      return res.status(400).json({ message: "public_token is required" });
+    }
     try {
-      const response = await axios.post(`${financeApiBase()}/expenses`, financeExpensePayload(req.body), {
+      const response = await axios.post(`${financeApiBase()}/plaid/exchange`, { public_token: publicToken.trim() }, {
         headers: financeAuthHeaders(req),
-        timeout: 15000,
+        timeout: 20000,
       });
       return res.status(response.status).json(response.data);
     } catch (err) {
@@ -1004,43 +993,23 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
-  app.put("/admin/api/finance/expenses/:id", requireOwnerSession, async function (req, res) {
+  app.post("/admin/api/finance/plaid/sync", requireOwnerSession, async function (req, res) {
     if (!requireFinanceJwt(req, res)) return;
-    const id = String(req.params.id || "");
-    if (!/^[a-f0-9]{24}$/i.test(id)) return res.status(400).json({ message: "invalid expense id" });
     try {
-      const response = await axios.put(`${financeApiBase()}/expenses/${id}`, financeExpensePayload(req.body), {
+      const response = await axios.post(`${financeApiBase()}/plaid/sync`, {}, {
         headers: financeAuthHeaders(req),
-        timeout: 15000,
+        timeout: 60000,
       });
-      return res.status(response.status).json(response.data);
+      return res.json(response.data);
     } catch (err) {
       return financeProxyError(req, res, err);
     }
   });
 
-  app.delete("/admin/api/finance/expenses/:id", requireOwnerSession, async function (req, res) {
-    if (!requireFinanceJwt(req, res)) return;
-    const id = String(req.params.id || "");
-    if (!/^[a-f0-9]{24}$/i.test(id)) return res.status(400).json({ message: "invalid expense id" });
-    try {
-      const response = await axios.delete(`${financeApiBase()}/expenses/${id}`, {
-        headers: financeAuthHeaders(req),
-        timeout: 15000,
-      });
-      return res.status(response.status).json(response.data);
-    } catch (err) {
-      return financeProxyError(req, res, err);
-    }
-  });
-
-  // AdSense OAuth: the API returns the Google consent URL; the panel opens it
-  // in a new tab. (The OAuth callback lands on the API directly — Google
-  // redirects to the API's registered callback URL, not here.)
-  app.get("/admin/api/finance/adsense/oauth/start", requireOwnerSession, async function (req, res) {
+  app.get("/admin/api/finance/plaid/status", requireOwnerSession, async function (req, res) {
     if (!requireFinanceJwt(req, res)) return;
     try {
-      const response = await axios.get(`${financeApiBase()}/adsense/oauth/start`, {
+      const response = await axios.get(`${financeApiBase()}/plaid/status`, {
         headers: financeAuthHeaders(req),
         timeout: 15000,
       });

@@ -1,15 +1,16 @@
 # Finance P&L Dashboard (owner-only)
 
 The admin console's **Finance** tab gives the owner a monthly profit-and-loss
-view: income broken down by source (Stripe, app-store IAP gross + net,
-AdSense, AdMob), manual expenses, and profit. It lives entirely in the
-website repo (`police-cad`); the Go API (`police-cad-api`) owns the data
-layer (`models/finance.go`, `databases/finance.go`, HTTP handlers).
+view on a **cash basis from the bank feed** (Plaid bank sync): bank income,
+bank expenses, and profit per month, plus subscription earned revenue (Stripe,
+app-store IAP gross + net) as a complement. It lives entirely in the website
+repo (`police-cad`); the Go API (`police-cad-api`) owns the data layer
+(`models/finance.go`, `databases/finance.go`, HTTP handlers).
 
 ## Architecture
 
 ```
-Browser ──► Express proxy (/admin/api/finance/*) ──► Go API (/api/v1/finance/*)
+Browser ──► Express proxy (/admin/api/finance/*) ──► Go API (/api/v1/admin/finance/*)
                 ▲ requireOwnerSession                    ▲ Bearer JWT (admin scope)
                 │                                        │
                 └── JWT lives ONLY in the server session ─┘
@@ -17,7 +18,10 @@ Browser ──► Express proxy (/admin/api/finance/*) ──► Go API (/api/v1
 
 The browser never talks to the Go API for finance and never sees any API
 credential. All finance traffic goes through same-origin Express proxies
-that attach the owner's API JWT server-side.
+that attach the owner's API JWT server-side. The Plaid access token is the
+one exception: after a successful Link exchange the tab shows it to the owner
+**once** so they can paste it into the Heroku config var — it is never
+logged, never stored in the page, and vanishes on reload.
 
 ## Owner gating (two layers)
 
@@ -46,44 +50,76 @@ with the same email + password. On success the returned JWT is stashed in
   a clear error instead of silently empty data.
 - If the API ever returns 401 on a proxied call, the stale JWT is cleared
   from the session and the client gets 401 (re-login prompt).
-- The JWT is never rendered into a view, never logged, and never sent to
-  the browser. Error paths never leak it.
+- The JWT is never rendered into a view, never logged, and never sent to the
+  browser. Error paths never leak it.
 
 No new environment variables were added. The proxies reuse the existing
-`POLICE_CAD_API_URL`.
+`POLICE_CAD_API_URL`. All Plaid credentials (client id/secret, access token)
+live on the API side.
 
 ## Proxy routes (`app/routes.js`)
 
 | Method | Website route | API route |
 |---|---|---|
-| GET | `/admin/api/finance/summary?from=YYYY-MM&to=YYYY-MM` | `GET /api/v1/finance/summary?from=&to=` |
-| GET | `/admin/api/finance/expenses?from=YYYY-MM-DD&to=YYYY-MM-DD` | `GET /api/v1/finance/expenses?from=&to=` |
-| POST | `/admin/api/finance/expenses` | `POST /api/v1/finance/expenses` |
-| PUT | `/admin/api/finance/expenses/:id` | `PUT /api/v1/finance/expenses/:id` |
-| DELETE | `/admin/api/finance/expenses/:id` | `DELETE /api/v1/finance/expenses/:id` |
-| GET | `/admin/api/finance/adsense/oauth/start` | `GET /api/v1/finance/adsense/oauth/start` |
+| GET | `/admin/api/finance/summary?from=YYYY-MM&to=YYYY-MM` | `GET /api/v1/admin/finance/summary?from=&to=` |
+| POST | `/admin/api/finance/plaid/link-token` | `POST /api/v1/admin/finance/plaid/link-token` |
+| POST | `/admin/api/finance/plaid/exchange` (`{public_token}`) | `POST /api/v1/admin/finance/plaid/exchange` |
+| POST | `/admin/api/finance/plaid/sync` | `POST /api/v1/admin/finance/plaid/sync` |
+| GET | `/admin/api/finance/plaid/status` | `GET /api/v1/admin/finance/plaid/status` |
 
-Input hygiene: `from`/`to`/`date` are regex-validated (`YYYY-MM`,
-`YYYY-MM-DD`); expense IDs must be 24-hex; POST/PUT bodies are whitelisted
-to `{date, amount, currency, category, vendor, notes, receiptUrl, source}` —
-`createdBy` is always set server-side from the session, never from the
-client.
+Input hygiene: `from`/`to` are regex-validated (`YYYY-MM`); the exchange
+proxy requires `public_token` to be a non-empty string (400 otherwise) and
+forwards only that field.
+
+### Summary shape (consumed defensively — the API is a separate workstream)
+
+```json
+{
+  "months": [
+    {
+      "month": "2026-09",
+      "income": { "stripe": n, "iap_gross": n, "iap_net": n, "total": n },
+      "expenses": n,
+      "profit": n,
+      "bank": { "connected": true, "income": n, "expenses": n },
+      "sources": { "stripe": { "connected": true }, "revenuecat": { "connected": true }, "bank": { "connected": true } }
+    }
+  ],
+  "bank_connected": true,
+  "warnings": ["..."]
+}
+```
+
+Semantics: `bank_connected: true` → `income.total` / `expenses` / `profit`
+are bank cash-basis numbers. `bank_connected: false` → `income.total` is
+subscription earned revenue, `expenses` is 0. There are no ad-revenue fields
+and no manual expenses; the tab renders from `income.total` / `expenses` /
+`profit` directly so both modes work.
 
 ## UI (`views/admin-console.ejs`, `#panel-finance`)
 
-- **P&L table:** one row per month — Stripe, IAP gross, IAP net, AdSense,
-  AdMob, Total income, Expenses, Profit. Profit cells carry
-  `data-testid="finance-profit-<YYYY-MM>"`.
-- **Charts:** two SVG cards (income vs expenses, expenses over time) reusing
-  the console's shared `renderLineChart` (extended with an optional 7th
-  `opts` param: `{formatValue, noDataText}` — backwards compatible).
-- **Source badges:** per-source `connected` flags from the latest month
-  (`Stripe: Connected`, `AdSense: Not connected`, …) plus API warnings.
-- **Expense manager:** add/edit/delete form + table. Edit pre-fills from the
-  row; delete asks for confirmation.
-- **AdSense connect card:** status badge + "Connect AdSense" button. Opens
-  the OAuth URL returned by `oauth/start` in a new tab (`window.open(url,
-  '_blank', 'noopener')`).
+- **Bank connection card** (`data-testid="finance-bank-card"`): "Connect
+  bank" + "Sync now" buttons, connection status, connected accounts list
+  (name, mask, type) and last-sync timestamp from the status proxy.
+- **Connect-bank flow:** "Connect bank" → `POST plaid/link-token` → Plaid
+  Link is loaded from `https://cdn.plaid.com/link/v2/stable/link-initialize.js`
+  **on demand, only on this owner-only page** (never globally) →
+  `Plaid.create({ token, onSuccess })` → onSuccess posts `{public_token}` to
+  `POST plaid/exchange` → the returned `access_token` is displayed **once** in
+  a callout with instructions to set the Heroku config var
+  `PLAID_ACCESS_TOKEN` (never logged, never persisted).
+- **Empty state** (`data-testid="finance-bank-empty"`): shown when
+  `bank_connected` is false — "Connect your bank to see expenses and true
+  profit". Income then shows subscription earned revenue only, expenses $0.00.
+- **P&L table** (`data-testid="finance-table"`): one row per month —
+  Bank income, Bank expenses, Profit — under a "Cash basis — bank feed"
+  heading. Profit cells carry `data-testid="finance-profit-<YYYY-MM>"`.
+- **Earned revenue table** (`data-testid="finance-earned-table"`):
+  per-month Stripe / IAP gross / IAP net complement.
+- **Charts:** two SVG cards (income vs expenses) reuse the console's shared
+  `renderLineChart`, wired to the bank series (`income.total`, `expenses`).
+- **Source badges:** Stripe / RevenueCat / Bank `connected` flags from the
+  latest month, plus API warnings.
 
 All finance element hooks use `data-testid="finance-*"` selectors (see
 `e2e/pages/admin-finance.page.ts`).
@@ -106,15 +142,18 @@ browser. It now calls same-origin proxies (`/mw/api/*` in `app/routes.js`):
 ## E2E tests
 
 - Page object: `e2e/pages/admin-finance.page.ts`
-- Spec: `e2e/tests/account/admin-finance.spec.ts` (10 tests)
-  - Owner: P&L table renders from mocked summary; 401-without-API-session
-    error; expense add/edit/delete (asserting request payloads/URLs);
-    AdSense connect opens the OAuth URL.
-  - Non-owner staff: Finance tab hidden; all six proxy routes return 403
-    (real proxies, no mocks); anonymous caller also 403.
+- Spec: `e2e/tests/account/admin-finance.spec.ts` (8 tests)
+  - Owner: cash-basis P&L table renders from mocked summary; bank empty
+    state in `bank_connected=false` mode (earned revenue only, expenses $0);
+    401-without-API-session error; Plaid connect flow (stubbed
+    `window.Plaid`, link token → onSuccess → exchange payload → access
+    token shown once); "Sync now" hits the sync proxy.
+  - Non-owner staff: Finance tab (incl. Connect bank) hidden; summary and
+    all four plaid proxy routes return 403 (real proxies, no mocks);
+    anonymous caller also 403.
   - Token-leak regression: `/most-wanted` HTML contains no `var apiToken`,
     no `POLICE_CAD_API_TOKEN`, and not the configured token value.
-- Finance API calls are mocked at the website proxy level with
+- Finance calls are mocked at the website proxy level with
   `page.route` — the Go API finance HTTP handlers are a separate
   workstream, so the spec must not depend on them. Run:
   `npx playwright test e2e/tests/account/admin-finance.spec.ts --project=chromium`
@@ -122,12 +161,14 @@ browser. It now calls same-origin proxies (`/mw/api/*` in `app/routes.js`):
   `admin-changelog-preview.spec.ts` login-once-per-describe pattern and uses
   dedicated storage-state files to avoid parallel-worker races).
 
-## Deferred to v2
+## End-to-end owner steps (Plaid bank sync)
 
-- **Plaid auto-sync:** bank as automated ground truth for money in/out
-  (covers Stripe/AdSense/Apple payouts + all expenses in one connection).
-- **AdMob UI:** API exposes AdMob; the tab shows the column but there is no
-  connect flow yet (AdMob has no OAuth connect like AdSense).
-- **CSV import** for historical expenses.
-- **AdSense OAuth callback wiring** on the API side (the website proxy for
-  `oauth/start` exists; token storage/refresh lives in the API).
+1. Sign up at the Plaid dashboard and create an app (Sandbox to test).
+2. Set the API app's Heroku config vars: `PLAID_CLIENT_ID`,
+   `PLAID_SECRET`, `PLAID_ENV` (`sandbox` / `production`).
+3. Open the admin console → Finance tab → **Connect bank**; approve the
+   account in Plaid Link.
+4. Copy the one-time access token from the callout and set it as the
+   `PLAID_ACCESS_TOKEN` Heroku config var on the API app.
+5. Press **Sync now** (or wait for the scheduled sync) — the P&L flips to
+   cash basis and the empty state clears.
