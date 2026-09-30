@@ -639,6 +639,37 @@ module.exports = function (app, passport, server, nextApp, handle) {
       // Store login time for session duration calculation
       req.session.loginTime = new Date();
 
+      // Owner sessions: fetch a Go API admin JWT so owner-only server-side
+      // proxies (e.g. /admin/api/finance/*) can call the API as this admin.
+      // The JWT lives ONLY in the server-side session — it is never rendered
+      // into a view or sent to the browser. Non-owner admins skip this; they
+      // simply don't get API credentials. A failed API login is non-fatal:
+      // the local console session is already established, and the finance
+      // proxies will report a clear "not established" error instead.
+      const isOwnerLogin = adminUser.role === "owner" ||
+        (adminUser.roles && adminUser.roles.includes("owner"));
+      req.session.isOwner = !!isOwnerLogin;
+      if (isOwnerLogin) {
+        try {
+          const apiLoginResp = await axios.post(
+            `${apiUrl}/api/v1/admin/login`,
+            { email: email, password: password },
+            {
+              headers: { "Content-Type": "application/json" },
+              timeout: 8000,
+              validateStatus: function (status) { return status < 600; }
+            }
+          );
+          if (apiLoginResp.status === 200 && apiLoginResp.data && apiLoginResp.data.token) {
+            req.session.apiAdminJwt = apiLoginResp.data.token;
+          } else {
+            console.log("Owner API login did not return a token (status " + apiLoginResp.status + "); finance features will be unavailable until the API is reachable.");
+          }
+        } catch (apiLoginErr) {
+          console.log("Owner API login failed (finance unavailable):", apiLoginErr.message);
+        }
+      }
+
       // Log login activity to backend API (reuse apiToken and apiUrl from above)
       if (apiToken) {
         // Get roles from adminUser for the currentUser object
@@ -713,6 +744,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
   function requireAdminSession(req, res, next) {
     if (!req.session || !req.session.adminToken) {
       return res.redirect("/admin");
+    }
+    return next();
+  }
+
+  // Owner-only gate for financial / elevated server routes. The isOwner flag
+  // is set server-side at login from the admin_users document — the client
+  // can neither set nor forge it. Owner-only console TABS are also hidden
+  // client-side in admin-console.ejs, but that is cosmetic; this middleware
+  // is the real enforcement for anything financial.
+  function requireOwnerSession(req, res, next) {
+    if (!req.session || !req.session.adminToken || !req.session.isOwner) {
+      return res.status(403).json({ message: "forbidden: owner access required" });
     }
     return next();
   }
@@ -854,6 +897,159 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // ---------------------------------------------------------------------------
+  // Owner-only finance proxies (Financial P&L dashboard).
+  //
+  // The browser never talks to the Go API directly: these routes attach the
+  // API admin JWT (fetched at owner login via POST /api/v1/admin/login and
+  // stored server-side in req.session.apiAdminJwt) as
+  // `Authorization: Bearer ...` and forward the JSON response. The JWT never
+  // reaches the client — the error paths below deliberately strip it.
+  //
+  // Gated by requireOwnerSession (session adminToken + server-set isOwner
+  // flag); the client-side tab hiding in admin-console.ejs is cosmetic only.
+  // ---------------------------------------------------------------------------
+  const financeApiBase = () => `${process.env.POLICE_CAD_API_URL}/api/v1/admin/finance`;
+
+  function financeAuthHeaders(req) {
+    const jwt = req.session && req.session.apiAdminJwt;
+    if (!jwt) return null;
+    return { "Content-Type": "application/json", "Authorization": `Bearer ${jwt}` };
+  }
+
+  // No JWT in the session (API login failed or API unreachable at login).
+  // Report it plainly so the panel can show a useful message.
+  function requireFinanceJwt(req, res) {
+    if (!financeAuthHeaders(req)) {
+      res.status(401).json({ message: "API session not established. Please log out and log in again." });
+      return false;
+    }
+    return true;
+  }
+
+  function financeProxyError(req, res, err) {
+    const status = (err.response && err.response.status) || 500;
+    if (status === 401) {
+      // API admin JWT expired (24h) or revoked — drop it so the next attempt
+      // doesn't keep failing, and tell the owner to log in again.
+      if (req.session) delete req.session.apiAdminJwt;
+      return res.status(401).json({ message: "API session expired. Please log out and log in again." });
+    }
+    // Never leak the JWT: forward only the API's status/body.
+    const data = (err.response && err.response.data) || { message: err.message };
+    return res.status(status).json(data);
+  }
+
+  const financeMonthParam = /^\d{4}-(0[1-9]|1[0-2])$/;
+  const financeDateParam = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+
+  app.get("/admin/api/finance/summary", requireOwnerSession, async function (req, res) {
+    if (!requireFinanceJwt(req, res)) return;
+    try {
+      const params = new URLSearchParams();
+      if (financeMonthParam.test(String(req.query.from || ""))) params.set("from", String(req.query.from));
+      if (financeMonthParam.test(String(req.query.to || ""))) params.set("to", String(req.query.to));
+      const response = await axios.get(`${financeApiBase()}/summary?${params.toString()}`, {
+        headers: financeAuthHeaders(req),
+        timeout: 20000,
+      });
+      return res.json(response.data);
+    } catch (err) {
+      return financeProxyError(req, res, err);
+    }
+  });
+
+  app.get("/admin/api/finance/expenses", requireOwnerSession, async function (req, res) {
+    if (!requireFinanceJwt(req, res)) return;
+    try {
+      const params = new URLSearchParams();
+      if (financeDateParam.test(String(req.query.from || ""))) params.set("from", String(req.query.from));
+      if (financeDateParam.test(String(req.query.to || ""))) params.set("to", String(req.query.to));
+      const response = await axios.get(`${financeApiBase()}/expenses?${params.toString()}`, {
+        headers: financeAuthHeaders(req),
+        timeout: 15000,
+      });
+      return res.json(response.data);
+    } catch (err) {
+      return financeProxyError(req, res, err);
+    }
+  });
+
+  // Whitelist the expense fields the panel may set. createdBy/createdAt are
+  // assigned by the API; anything else in the body is dropped.
+  function financeExpensePayload(body) {
+    const b = body || {};
+    const payload = {
+      date: typeof b.date === "string" ? b.date : "",
+      amount: b.amount,
+    };
+    if (typeof b.currency === "string" && b.currency) payload.currency = b.currency;
+    if (typeof b.category === "string" && b.category) payload.category = b.category;
+    if (typeof b.vendor === "string" && b.vendor) payload.vendor = b.vendor;
+    if (typeof b.notes === "string" && b.notes) payload.notes = b.notes;
+    if (typeof b.source === "string" && b.source) payload.source = b.source;
+    return payload;
+  }
+
+  app.post("/admin/api/finance/expenses", requireOwnerSession, async function (req, res) {
+    if (!requireFinanceJwt(req, res)) return;
+    try {
+      const response = await axios.post(`${financeApiBase()}/expenses`, financeExpensePayload(req.body), {
+        headers: financeAuthHeaders(req),
+        timeout: 15000,
+      });
+      return res.status(response.status).json(response.data);
+    } catch (err) {
+      return financeProxyError(req, res, err);
+    }
+  });
+
+  app.put("/admin/api/finance/expenses/:id", requireOwnerSession, async function (req, res) {
+    if (!requireFinanceJwt(req, res)) return;
+    const id = String(req.params.id || "");
+    if (!/^[a-f0-9]{24}$/i.test(id)) return res.status(400).json({ message: "invalid expense id" });
+    try {
+      const response = await axios.put(`${financeApiBase()}/expenses/${id}`, financeExpensePayload(req.body), {
+        headers: financeAuthHeaders(req),
+        timeout: 15000,
+      });
+      return res.status(response.status).json(response.data);
+    } catch (err) {
+      return financeProxyError(req, res, err);
+    }
+  });
+
+  app.delete("/admin/api/finance/expenses/:id", requireOwnerSession, async function (req, res) {
+    if (!requireFinanceJwt(req, res)) return;
+    const id = String(req.params.id || "");
+    if (!/^[a-f0-9]{24}$/i.test(id)) return res.status(400).json({ message: "invalid expense id" });
+    try {
+      const response = await axios.delete(`${financeApiBase()}/expenses/${id}`, {
+        headers: financeAuthHeaders(req),
+        timeout: 15000,
+      });
+      return res.status(response.status).json(response.data);
+    } catch (err) {
+      return financeProxyError(req, res, err);
+    }
+  });
+
+  // AdSense OAuth: the API returns the Google consent URL; the panel opens it
+  // in a new tab. (The OAuth callback lands on the API directly — Google
+  // redirects to the API's registered callback URL, not here.)
+  app.get("/admin/api/finance/adsense/oauth/start", requireOwnerSession, async function (req, res) {
+    if (!requireFinanceJwt(req, res)) return;
+    try {
+      const response = await axios.get(`${financeApiBase()}/adsense/oauth/start`, {
+        headers: financeAuthHeaders(req),
+        timeout: 15000,
+      });
+      return res.json(response.data);
+    } catch (err) {
+      return financeProxyError(req, res, err);
+    }
+  });
+
   // A real URL per report, so one can be handed to another staff member and
   // its history stays addressable.
   app.get("/admin/report/:id", requireAdminSession, function (req, res) {
@@ -878,7 +1074,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
     res.render("admin-console", {
       admin: req.session.admin,
       POLICE_CAD_API_URL: process.env.POLICE_CAD_API_URL,
-      POLICE_CAD_API_TOKEN: process.env.POLICE_CAD_API_TOKEN,
       success: success,
       error: error
     });
@@ -1020,7 +1215,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
       admin: adminData,
       setup: setup,
       POLICE_CAD_API_URL: process.env.POLICE_CAD_API_URL,
-      POLICE_CAD_API_TOKEN: process.env.POLICE_CAD_API_TOKEN,
       CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
       CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
       CLOUDINARY_UPLOAD_PRESET: process.env.CLOUDINARY_UPLOAD_PRESET
@@ -2749,6 +2943,169 @@ module.exports = function (app, passport, server, nextApp, handle) {
     });
   });
 
+  // ---------------------------------------------------------------------------
+  // Most Wanted client API proxy.
+  //
+  // most-wanted.ejs used to render the server API bearer token
+  // (POLICE_CAD_API_TOKEN) into client-side JS — a secret leak. The page now
+  // calls these same-origin routes instead; the token stays server-side
+  // (attached to API calls via the axios api-key interceptor /
+  // Authorization header, both server-only).
+  //
+  // Reads require a logged-in user (authCheck). Mutations additionally
+  // require the "manage most wanted" permission, which the /most-wanted page
+  // render computes server-side and stores in the session per community —
+  // the client is never trusted for this. The acting user id is likewise
+  // taken from the session, not from client query params.
+  // ---------------------------------------------------------------------------
+  function mwResolveCommunityId(req) {
+    const fromParams = req.params && req.params.cid;
+    const fromQuery = req.query && (req.query.communityId || req.query.communityID);
+    const fromBody = req.body && (req.body.communityId || req.body.communityID);
+    const cid = fromParams || fromQuery || fromBody;
+    return typeof cid === "string" ? cid : "";
+  }
+
+  function mwCanManage(req, communityId) {
+    const perms = (req.session && req.session.mwPerms) || {};
+    const entry = perms[String(communityId)];
+    return !!(entry && entry.canManage);
+  }
+
+  function mwActorId(req) {
+    return String((req.user && req.user._id) || "");
+  }
+
+  function requireMwManage(req, res, next) {
+    const cid = mwResolveCommunityId(req);
+    if (!isValidObjectId(cid)) return res.status(400).json({ message: "invalid community id" });
+    if (!mwCanManage(req, cid)) {
+      return res.status(403).json({ message: "forbidden: managing the most wanted list requires the manage most wanted permission" });
+    }
+    return next();
+  }
+
+  function mwProxyError(res, err) {
+    const status = (err.response && err.response.status) || 500;
+    const data = (err.response && err.response.data) || { message: err.message };
+    return res.status(status).json(data);
+  }
+
+  async function mwForward(req, res, method, apiPath, body) {
+    const apiUrl = process.env.POLICE_CAD_API_URL;
+    try {
+      const response = await axios({
+        method: method,
+        url: `${apiUrl}${apiPath}`,
+        data: body,
+        headers: { "Content-Type": "application/json" },
+        timeout: 15000,
+        validateStatus: function () { return true; },
+      });
+      if (typeof response.data === "string") {
+        return res.status(response.status).send(response.data);
+      }
+      return res.status(response.status).json(response.data);
+    } catch (err) {
+      return mwProxyError(res, err);
+    }
+  }
+
+  // Read: paginated most-wanted list for a community
+  app.get("/mw/api/community/:cid/most-wanted", authCheck, async function (req, res) {
+    const cid = String(req.params.cid || "");
+    if (!isValidObjectId(cid)) return res.status(400).json({ message: "invalid community id" });
+    const params = new URLSearchParams();
+    ["page", "limit", "status"].forEach(function (k) {
+      if (req.query[k] !== undefined && req.query[k] !== "") params.set(k, String(req.query[k]));
+    });
+    return mwForward(req, res, "get", `/api/v2/community/${cid}/most-wanted?${params.toString()}`);
+  });
+
+  // Read: civilian search for the add-entry picker
+  app.post("/mw/api/civilians/search", authCheck, async function (req, res) {
+    const body = req.body || {};
+    const cid = String(body.communityId || body.communityID || "");
+    if (!isValidObjectId(cid)) return res.status(400).json({ message: "invalid community id" });
+    const payload = {
+      query: String(body.query || ""),
+      communityId: cid,
+      page: Number(body.page) || 0,
+      limit: Math.min(Number(body.limit) || 20, 50),
+    };
+    return mwForward(req, res, "post", "/api/v2/civilians/search", payload);
+  });
+
+  // Read: community (settings display)
+  app.get("/mw/api/community/:cid", authCheck, async function (req, res) {
+    const cid = String(req.params.cid || "");
+    if (!isValidObjectId(cid)) return res.status(400).json({ message: "invalid community id" });
+    return mwForward(req, res, "get", `/api/v1/community/${cid}`);
+  });
+
+  // Mutation: reorder the list
+  app.put("/mw/api/reorder", authCheck, requireMwManage, async function (req, res) {
+    const body = req.body || {};
+    return mwForward(
+      req, res, "put",
+      `/api/v1/most-wanted/reorder?userId=${encodeURIComponent(mwActorId(req))}`,
+      { communityID: mwResolveCommunityId(req), order: Array.isArray(body.order) ? body.order : [] }
+    );
+  });
+
+  // Mutation: add an entry
+  app.post("/mw/api/entries", authCheck, requireMwManage, async function (req, res) {
+    const body = req.body || {};
+    return mwForward(req, res, "post", "/api/v1/most-wanted", {
+      communityID: mwResolveCommunityId(req),
+      civilianID: String(body.civilianID || ""),
+      charges: Array.isArray(body.charges) ? body.charges : [],
+      description: String(body.description || ""),
+      addedByUserID: mwActorId(req),
+      customFields: Array.isArray(body.customFields) ? body.customFields : [],
+      stars: Number(body.stars) || 5,
+    });
+  });
+
+  // Mutation: update an entry
+  app.put("/mw/api/entries/:id", authCheck, requireMwManage, async function (req, res) {
+    const id = String(req.params.id || "");
+    if (!isValidObjectId(id)) return res.status(400).json({ message: "invalid entry id" });
+    const body = req.body || {};
+    return mwForward(
+      req, res, "put",
+      `/api/v1/most-wanted/${id}?userId=${encodeURIComponent(mwActorId(req))}`,
+      {
+        charges: Array.isArray(body.charges) ? body.charges : [],
+        description: String(body.description || ""),
+        customFields: Array.isArray(body.customFields) ? body.customFields : [],
+        stars: Number(body.stars) || 5,
+      }
+    );
+  });
+
+  // Mutation: delete an entry
+  app.delete("/mw/api/entries/:id", authCheck, requireMwManage, async function (req, res) {
+    const id = String(req.params.id || "");
+    if (!isValidObjectId(id)) return res.status(400).json({ message: "invalid entry id" });
+    return mwForward(
+      req, res, "delete",
+      `/api/v1/most-wanted/${id}?userId=${encodeURIComponent(mwActorId(req))}`
+    );
+  });
+
+  // Mutation: most-wanted display settings on the community
+  app.patch("/mw/api/community/:cid/settings", authCheck, requireMwManage, async function (req, res) {
+    const cid = String(req.params.cid || "");
+    if (!isValidObjectId(cid)) return res.status(400).json({ message: "invalid community id" });
+    const body = req.body || {};
+    return mwForward(req, res, "patch", `/api/v1/community/${cid}`, {
+      mostWantedSidebarName: String(body.mostWantedSidebarName || ""),
+      mostWantedVisibleFields: Array.isArray(body.mostWantedVisibleFields) ? body.mostWantedVisibleFields : [],
+      mostWantedCustomFields: Array.isArray(body.mostWantedCustomFields) ? body.mostWantedCustomFields : [],
+    });
+  });
+
   app.get("/most-wanted", authCheck, async function (req, res) {
     try {
       // Decode the community ID from URL param if present
@@ -2852,6 +3209,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
           isDepartmentMember = canManage;
         }
       }
+
+      // Server-side record of this user's most-wanted permissions for this
+      // community, so the /mw/api mutation proxies can enforce them without
+      // trusting the client. (Previously the bearer token lived in page JS
+      // and mutations were gated client-side only.)
+      try {
+        req.session.mwPerms = req.session.mwPerms || {};
+        req.session.mwPerms[communityId] = {
+          canManage: !!(isAdmin || isDepartmentMember),
+          at: Date.now(),
+        };
+      } catch (e) { /* session write is best-effort */ }
 
       return res.render("most-wanted", {
         user: req.user,

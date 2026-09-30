@@ -479,6 +479,7 @@
       .ac-btn-block { width:100%; }
       .ac-btn-link { background:none; border:none; color:var(--ac-text-muted); cursor:pointer; font-size:0.8125rem; padding:0; }
       .ac-btn-link:hover { color:var(--ac-text); }
+      .ac-btn-sm { padding:0.3rem 0.6rem; font-size:0.75rem; border-radius:6px; }
       body.ac-body .btn { font-family:'Outfit',sans-serif; border-radius:var(--ac-radius-sm); transition:all 0.15s; }
       body.ac-body .btn-gradient, body.ac-body .btn-primary {
         background:var(--ac-accent) !important; border-color:var(--ac-accent) !important; color:#fff !important;
@@ -1058,6 +1059,10 @@
           </div>
           <div class="ac-nav-item" id="changelog-tab" data-panel="changelog" style="display: none;">
             <i class="fas fa-bullhorn"></i> What's New
+            <span class="ac-nav-sub"><span class="ac-nav-sub-pill">Owner only</span></span>
+          </div>
+          <div class="ac-nav-item" id="finance-tab" data-panel="finance" style="display: none;">
+            <i class="fas fa-coins"></i> Finance
             <span class="ac-nav-sub"><span class="ac-nav-sub-pill">Owner only</span></span>
           </div>
         </div>
@@ -3312,6 +3317,181 @@
           </div>
         </div>
 
+        <!-- Panel: Finance (owner-only P&L dashboard) -->
+        <div class="ac-panel" id="panel-finance">
+          <p style="color:#9aa0b4; font-size:14px; margin:0 0 16px; max-width:760px;">
+            Monthly profit &amp; loss across every revenue stream and tracked expense. Income is
+            aggregated server-side from Stripe and RevenueCat webhook events; ad revenue appears
+            once AdSense/AdMob are connected below. All finance calls go through owner-gated
+            server proxies &mdash; nothing financial is ever fetched with browser credentials.
+          </p>
+
+          <div id="financeError" data-testid="finance-error" style="display:none; margin-bottom:16px; padding:12px 14px; border-radius:10px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:13px;"></div>
+
+          <div class="ac-card" style="margin-bottom:20px;">
+            <div class="ac-card-body">
+              <div class="row" style="align-items:flex-end;">
+                <div class="col-md-3">
+                  <label class="ac-label" for="finFrom">From (month)</label>
+                  <input type="month" id="finFrom" class="form-control ac-input" data-testid="finance-from" />
+                </div>
+                <div class="col-md-3">
+                  <label class="ac-label" for="finTo">To (month)</label>
+                  <input type="month" id="finTo" class="form-control ac-input" data-testid="finance-to" />
+                </div>
+                <div class="col-md-3">
+                  <button type="button" id="finRefreshBtn" class="ac-btn ac-btn-accent" data-testid="finance-refresh">
+                    <i class="fas fa-sync"></i> Refresh
+                  </button>
+                </div>
+              </div>
+              <div id="finSources" style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;" data-testid="finance-sources"></div>
+              <div id="finWarnings" style="margin-top:8px; font-size:12px; color:#fbbf24;"></div>
+            </div>
+          </div>
+
+          <div class="ac-card" style="margin-bottom:20px;">
+            <div class="ac-card-body">
+              <h3 style="color:#e8ecf4; font-size:15px; font-weight:600; margin:0 0 12px;">Monthly P&amp;L</h3>
+              <div style="overflow-x:auto;">
+                <table class="rp-table" style="width:100%; border-collapse:collapse;" data-testid="finance-table">
+                  <thead>
+                    <tr>
+                      <th>Month</th>
+                      <th style="text-align:right;">Stripe</th>
+                      <th style="text-align:right;">IAP gross</th>
+                      <th style="text-align:right;">IAP net</th>
+                      <th style="text-align:right;">AdSense</th>
+                      <th style="text-align:right;">AdMob</th>
+                      <th style="text-align:right;">Total income</th>
+                      <th style="text-align:right;">Expenses</th>
+                      <th style="text-align:right;">Profit</th>
+                    </tr>
+                  </thead>
+                  <tbody id="finTableBody">
+                    <tr><td colspan="9" style="color:#6b7280;">Loading&hellip;</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="ac-charts-row" style="margin-bottom:20px;">
+            <div class="ac-chart-card" style="--chart-accent:#22c55e;">
+              <div class="ac-chart-header">
+                <div>
+                  <div class="ac-chart-title">Total Income</div>
+                  <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
+                    <span class="ac-chart-value" id="chart-fin-income-total">&mdash;</span>
+                  </div>
+                </div>
+                <span style="font-size:0.625rem;color:var(--ac-text-dim);font-weight:500;">Selected range</span>
+              </div>
+              <div class="ac-chart-svg-wrap" id="chart-fin-income-wrap">
+                <svg class="ac-chart-svg" id="chart-fin-income-svg" preserveAspectRatio="none"></svg>
+                <div class="ac-chart-tooltip" id="chart-fin-income-tooltip">
+                  <div class="ac-chart-tooltip-date"></div>
+                  <div class="ac-chart-tooltip-value"></div>
+                </div>
+              </div>
+              <div class="ac-chart-labels" id="chart-fin-income-labels"></div>
+            </div>
+            <div class="ac-chart-card" style="--chart-accent:#ef4444;">
+              <div class="ac-chart-header">
+                <div>
+                  <div class="ac-chart-title">Expenses</div>
+                  <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
+                    <span class="ac-chart-value" id="chart-fin-expenses-total">&mdash;</span>
+                  </div>
+                </div>
+                <span style="font-size:0.625rem;color:var(--ac-text-dim);font-weight:500;">Selected range</span>
+              </div>
+              <div class="ac-chart-svg-wrap" id="chart-fin-expenses-wrap">
+                <svg class="ac-chart-svg" id="chart-fin-expenses-svg" preserveAspectRatio="none"></svg>
+                <div class="ac-chart-tooltip" id="chart-fin-expenses-tooltip">
+                  <div class="ac-chart-tooltip-date"></div>
+                  <div class="ac-chart-tooltip-value"></div>
+                </div>
+              </div>
+              <div class="ac-chart-labels" id="chart-fin-expenses-labels"></div>
+            </div>
+          </div>
+
+          <div class="ac-card" style="margin-bottom:20px;">
+            <div class="ac-card-body">
+              <h3 style="color:#e8ecf4; font-size:15px; font-weight:600; margin:0 0 12px;">Expenses</h3>
+              <form id="finExpenseForm" data-testid="finance-expense-form" style="margin-bottom:16px;">
+                <input type="hidden" id="finExpId" />
+                <div class="row">
+                  <div class="col-md-2">
+                    <label class="ac-label" for="finExpDate">Date</label>
+                    <input type="date" id="finExpDate" class="form-control ac-input" required data-testid="finance-expense-date" />
+                  </div>
+                  <div class="col-md-2">
+                    <label class="ac-label" for="finExpAmount">Amount (USD)</label>
+                    <input type="number" id="finExpAmount" class="form-control ac-input" step="0.01" min="0.01" required data-testid="finance-expense-amount" />
+                  </div>
+                  <div class="col-md-2">
+                    <label class="ac-label" for="finExpCategory">Category</label>
+                    <input type="text" id="finExpCategory" class="form-control ac-input" placeholder="e.g. hosting" required data-testid="finance-expense-category" />
+                  </div>
+                  <div class="col-md-2">
+                    <label class="ac-label" for="finExpVendor">Vendor</label>
+                    <input type="text" id="finExpVendor" class="form-control ac-input" placeholder="optional" data-testid="finance-expense-vendor" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="ac-label" for="finExpNotes">Notes</label>
+                    <input type="text" id="finExpNotes" class="form-control ac-input" placeholder="optional" data-testid="finance-expense-notes" />
+                  </div>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:12px;">
+                  <button type="submit" id="finExpSubmitBtn" class="ac-btn ac-btn-accent" data-testid="finance-expense-submit">
+                    <i class="fas fa-plus"></i> Add expense
+                  </button>
+                  <button type="button" id="finExpCancelBtn" class="ac-btn" style="display:none;" data-testid="finance-expense-cancel">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+              <div style="overflow-x:auto;">
+                <table class="rp-table" style="width:100%; border-collapse:collapse;" data-testid="finance-expenses-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Category</th>
+                      <th>Vendor</th>
+                      <th>Notes</th>
+                      <th style="text-align:right;">Amount</th>
+                      <th style="text-align:right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="finExpenseTableBody">
+                    <tr><td colspan="6" style="color:#6b7280;">Loading&hellip;</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="ac-card">
+            <div class="ac-card-body">
+              <h3 style="color:#e8ecf4; font-size:15px; font-weight:600; margin:0 0 8px;">Ad revenue connections</h3>
+              <p style="color:#9aa0b4; font-size:13px; margin:0 0 12px; max-width:720px;">
+                Connect AdSense so the P&amp;L can pull ad revenue automatically. Clicking connect opens
+                Google's consent screen in a new tab; after approving, paste the refresh token into the
+                API's Heroku config (<code>ADSENSE_REFRESH_TOKEN</code>) and reload this tab &mdash; the
+                badge flips to connected on the next load.
+              </p>
+              <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <button type="button" id="finAdsenseConnectBtn" class="ac-btn ac-btn-accent" data-testid="finance-adsense-connect">
+                  <i class="fas fa-plug"></i> Connect AdSense
+                </button>
+                <span id="finAdsenseStatus" style="font-size:13px; color:#9aa0b4;" data-testid="finance-adsense-status"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Panel: Reports (user-submitted report moderation) -->
         <div class="ac-panel" id="panel-reports">
           <p style="color:#9aa0b4; font-size:14px; margin:0 0 16px; max-width:760px;">
@@ -5131,7 +5311,8 @@
         'subscriptions': 'Subscriptions',
         'rp-promos': 'Server Promos',
         'reports': 'Reports',
-        'changelog': "What's New"
+        'changelog': "What's New",
+        'finance': 'Finance'
       };
 
       // Data-load callbacks for lazy-loaded panels
@@ -5156,7 +5337,8 @@
         },
         'wiki': function() { initAdminWiki(); },
         'rp-promos': function() { if (typeof initRpPromosPanel === 'function') initRpPromosPanel(); },
-        'reports': function() { if (typeof initReportsPanel === 'function') initReportsPanel(); }
+        'reports': function() { if (typeof initReportsPanel === 'function') initReportsPanel(); },
+        'finance': function() { if (typeof initFinancePanel === 'function') initFinancePanel(); }
       };
 
       // Track which panels have been loaded
@@ -5629,6 +5811,7 @@
           $('#add-admin-section').show();
           $('#email-tab').show();
           $('#changelog-tab').show();
+          $('#finance-tab').show();
           $('#ac-nav-section-elevated').show();
         } else {
           $('#admin-management-tab').hide();
@@ -5638,6 +5821,8 @@
           $('#panel-email').hide();
           $('#changelog-tab').hide();
           $('#panel-changelog').hide();
+          $('#finance-tab').hide();
+          $('#panel-finance').hide();
           $('#ac-nav-section-elevated').hide();
 
           // Clear any admin data that might be displayed
@@ -12456,7 +12641,12 @@
         }
       }
 
-      function renderLineChart(prefix, values, labels, fullLabels, color1, color2) {
+      // renderLineChart draws a single-series SVG line chart into the
+      // {prefix}-svg / {prefix}-wrap / {prefix}-tooltip / {prefix}-labels
+      // elements. opts is optional: { formatValue: fn(v)->string } overrides
+      // the tooltip value text, { noDataText: string } overrides the empty
+      // overlay copy.
+      function renderLineChart(prefix, values, labels, fullLabels, color1, color2, opts) {
         var svg = document.getElementById(prefix + '-svg');
         var wrap = document.getElementById(prefix + '-wrap');
         var tooltip = document.getElementById(prefix + '-tooltip');
@@ -12478,7 +12668,7 @@
           var overlay = document.createElement('div');
           overlay.className = 'ac-chart-no-data';
           overlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ac-text-dim);font-size:0.8rem;font-weight:500;';
-          overlay.textContent = 'No activity in the last 7 days';
+          overlay.textContent = (opts && opts.noDataText) || 'No activity in the last 7 days';
           wrap.style.position = 'relative';
           wrap.appendChild(overlay);
         }
@@ -12566,7 +12756,8 @@
             tooltip.style.left = p.x + 'px';
             tooltip.style.top = (p.y - 10) + 'px';
             tooltip.querySelector('.ac-chart-tooltip-date').textContent = fullLabels[i];
-            tooltip.querySelector('.ac-chart-tooltip-value').textContent = p.val.toLocaleString();
+            tooltip.querySelector('.ac-chart-tooltip-value').textContent =
+              (opts && typeof opts.formatValue === 'function') ? opts.formatValue(p.val) : p.val.toLocaleString();
             tooltip.classList.add('visible');
           });
           hitArea.addEventListener('mouseleave', function() {
@@ -13147,6 +13338,286 @@
 
         window.addEventListener('scroll', onScroll);
         onScroll();
+      }
+
+      // ============================================================
+      // FINANCE (owner-only P&L dashboard)
+      // ============================================================
+      // All data flows through the owner-gated server proxies at
+      // /admin/api/finance/* (see app/routes.js): the browser never holds
+      // the Go API admin JWT. A 401 from any call means the API session
+      // expired or was never established — surface it plainly.
+      var financeWired = false;
+      var financeLastMonths = [];
+
+      function finMoney(v) {
+        var n = Number(v) || 0;
+        return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function finMonthLabel(yyyymm) {
+        var parts = String(yyyymm || '').split('-');
+        if (parts.length !== 2) return String(yyyymm || '');
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var idx = parseInt(parts[1], 10) - 1;
+        return (months[idx] || parts[1]) + ' ' + parts[0];
+      }
+
+      function finShowError(msg) {
+        var el = document.getElementById('financeError');
+        if (!el) return;
+        if (!msg) { el.style.display = 'none'; el.textContent = ''; return; }
+        el.textContent = msg;
+        el.style.display = '';
+      }
+
+      function finAjaxFailed(jqXHR) {
+        var msg = 'Could not load finance data.';
+        if (jqXHR && jqXHR.status === 401) {
+          msg = (jqXHR.responseJSON && jqXHR.responseJSON.message) || 'API session expired. Please log out and log in again.';
+        } else if (jqXHR && jqXHR.status === 403) {
+          msg = 'Forbidden: owner access required.';
+        } else if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.message) {
+          msg = jqXHR.responseJSON.message;
+        }
+        finShowError(msg);
+      }
+
+      function finDefaultRange() {
+        var now = new Date();
+        var to = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+        var fromDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+        var from = fromDate.getFullYear() + '-' + String(fromDate.getMonth() + 1).padStart(2, '0');
+        return { from: from, to: to };
+      }
+
+      function finMonthEndDay(yyyymm) {
+        var parts = String(yyyymm).split('-');
+        var y = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
+        return new Date(y, m, 0).getDate();
+      }
+
+      function initFinancePanel() {
+        if (financeWired) { loadFinanceAll(); return; }
+        financeWired = true;
+        var range = finDefaultRange();
+        document.getElementById('finFrom').value = range.from;
+        document.getElementById('finTo').value = range.to;
+        document.getElementById('finRefreshBtn').addEventListener('click', loadFinanceAll);
+        document.getElementById('finAdsenseConnectBtn').addEventListener('click', finConnectAdsense);
+        document.getElementById('finExpenseForm').addEventListener('submit', finSubmitExpense);
+        document.getElementById('finExpCancelBtn').addEventListener('click', finResetExpenseForm);
+        loadFinanceAll();
+      }
+
+      function loadFinanceAll() {
+        finShowError(null);
+        loadFinanceSummary();
+        loadFinanceExpenses();
+      }
+
+      function loadFinanceSummary() {
+        var from = document.getElementById('finFrom').value;
+        var to = document.getElementById('finTo').value;
+        $.ajax({ url: '/admin/api/finance/summary', type: 'GET', data: { from: from, to: to } })
+          .done(function(res) {
+            financeLastMonths = (res && res.months) || [];
+            renderFinanceTable(financeLastMonths);
+            renderFinanceCharts(financeLastMonths);
+            renderFinanceSources(financeLastMonths);
+            renderFinanceWarnings(res && res.warnings);
+          })
+          .fail(finAjaxFailed);
+      }
+
+      function renderFinanceTable(months) {
+        var tbody = document.getElementById('finTableBody');
+        if (!months.length) {
+          tbody.innerHTML = '<tr><td colspan="9" style="color:#6b7280;">No data for this range.</td></tr>';
+          return;
+        }
+        var html = '';
+        months.forEach(function(m) {
+          var inc = m.income || {};
+          var profit = Number(m.profit) || 0;
+          var profitColor = profit >= 0 ? '#4ade80' : '#f87171';
+          html += '<tr>'
+            + '<td style="white-space:nowrap; font-weight:600;">' + finMonthLabel(m.month) + '</td>'
+            + '<td style="text-align:right;">' + finMoney(inc.stripe) + '</td>'
+            + '<td style="text-align:right;">' + finMoney(inc.iap_gross) + '</td>'
+            + '<td style="text-align:right;">' + finMoney(inc.iap_net) + '</td>'
+            + '<td style="text-align:right;">' + finMoney(inc.adsense) + '</td>'
+            + '<td style="text-align:right;">' + finMoney(inc.admob) + '</td>'
+            + '<td style="text-align:right; font-weight:600;">' + finMoney(inc.total) + '</td>'
+            + '<td style="text-align:right;">' + finMoney(m.expenses) + '</td>'
+            + '<td style="text-align:right; font-weight:700; color:' + profitColor + ';" data-testid="finance-profit-' + m.month + '">' + finMoney(profit) + '</td>'
+            + '</tr>';
+        });
+        tbody.innerHTML = html;
+      }
+
+      function renderFinanceCharts(months) {
+        var labels = months.map(function(m) { return finMonthLabel(m.month); });
+        var fullLabels = labels.slice();
+        var income = months.map(function(m) { return Number((m.income && m.income.total) || 0); });
+        var expenses = months.map(function(m) { return Number(m.expenses || 0); });
+        var incomeSum = income.reduce(function(a, b) { return a + b; }, 0);
+        var expenseSum = expenses.reduce(function(a, b) { return a + b; }, 0);
+        document.getElementById('chart-fin-income-total').textContent = finMoney(incomeSum);
+        document.getElementById('chart-fin-expenses-total').textContent = finMoney(expenseSum);
+        var chartOpts = { formatValue: finMoney, noDataText: 'No data for this range' };
+        // The chart card must be visible for the SVG to measure its width.
+        renderLineChart('chart-fin-income', income, labels, fullLabels, '#22c55e', '#4ade80', chartOpts);
+        renderLineChart('chart-fin-expenses', expenses, labels, fullLabels, '#ef4444', '#f87171', chartOpts);
+      }
+
+      function finSourceBadge(name, connected) {
+        var color = connected ? '#4ade80' : '#6b7280';
+        var bg = connected ? 'rgba(74,222,128,0.12)' : 'rgba(107,114,128,0.12)';
+        var text = connected ? 'Connected' : 'Not connected';
+        return '<span style="display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; color:' + color + '; background:' + bg + ';">'
+          + '<i class="fas fa-circle" style="font-size:8px;"></i>' + name + ': ' + text + '</span>';
+      }
+
+      function renderFinanceSources(months) {
+        var el = document.getElementById('finSources');
+        var latest = months.length ? months[months.length - 1] : null;
+        var s = (latest && latest.sources) || {};
+        var html = finSourceBadge('Stripe', s.stripe && s.stripe.connected)
+          + finSourceBadge('RevenueCat', s.revenuecat && s.revenuecat.connected)
+          + finSourceBadge('AdSense', s.adsense && s.adsense.connected)
+          + finSourceBadge('AdMob', s.admob && s.admob.connected);
+        el.innerHTML = html;
+        var adsenseConnected = !!(s.adsense && s.adsense.connected);
+        var statusEl = document.getElementById('finAdsenseStatus');
+        if (statusEl) {
+          statusEl.textContent = adsenseConnected
+            ? 'AdSense is connected — ad revenue is included above.'
+            : 'AdSense is not connected — ad revenue shows $0.00 until it is.';
+        }
+      }
+
+      function renderFinanceWarnings(warnings) {
+        var el = document.getElementById('finWarnings');
+        if (!el) return;
+        if (warnings && warnings.length) {
+          el.innerHTML = warnings.map(function(w) {
+            return '<div><i class="fas fa-triangle-exclamation"></i> ' + String(w).replace(/</g, '&lt;') + '</div>';
+          }).join('');
+        } else {
+          el.innerHTML = '';
+        }
+      }
+
+      function loadFinanceExpenses() {
+        var from = document.getElementById('finFrom').value;
+        var to = document.getElementById('finTo').value;
+        var params = {};
+        if (/^\d{4}-\d{2}$/.test(from)) params.from = from + '-01';
+        if (/^\d{4}-\d{2}$/.test(to)) params.to = to + '-' + String(finMonthEndDay(to)).padStart(2, '0');
+        $.ajax({ url: '/admin/api/finance/expenses', type: 'GET', data: params })
+          .done(renderFinanceExpenses)
+          .fail(finAjaxFailed);
+      }
+
+      function finEsc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      // Client-side copy of the last expense list, for the edit form.
+      var financeExpenseCache = {};
+
+      function renderFinanceExpenses(res) {
+        var tbody = document.getElementById('finExpenseTableBody');
+        var expenses = (res && res.expenses) || [];
+        financeExpenseCache = {};
+        expenses.forEach(function(e) { financeExpenseCache[e.id] = e; });
+        if (!expenses.length) {
+          tbody.innerHTML = '<tr><td colspan="6" style="color:#6b7280;">No expenses recorded for this range.</td></tr>';
+          return;
+        }
+        var html = '';
+        expenses.forEach(function(e) {
+          html += '<tr data-expense-id="' + finEsc(e.id) + '">'
+            + '<td style="white-space:nowrap;">' + finEsc(e.date) + '</td>'
+            + '<td>' + finEsc(e.category) + '</td>'
+            + '<td>' + finEsc(e.vendor || '') + '</td>'
+            + '<td>' + finEsc(e.notes || '') + '</td>'
+            + '<td style="text-align:right;">' + finMoney(e.amount) + '</td>'
+            + '<td style="text-align:right; white-space:nowrap;">'
+            + '<button type="button" class="ac-btn ac-btn-sm" onclick="finEditExpense(\'' + finEsc(e.id) + '\')" data-testid="finance-expense-edit-' + finEsc(e.id) + '"><i class="fas fa-pen"></i></button> '
+            + '<button type="button" class="ac-btn ac-btn-sm" onclick="finDeleteExpense(\'' + finEsc(e.id) + '\')" data-testid="finance-expense-delete-' + finEsc(e.id) + '"><i class="fas fa-trash"></i></button>'
+            + '</td></tr>';
+        });
+        tbody.innerHTML = html;
+      }
+
+      function finResetExpenseForm() {
+        document.getElementById('finExpenseForm').reset();
+        document.getElementById('finExpId').value = '';
+        document.getElementById('finExpSubmitBtn').innerHTML = '<i class="fas fa-plus"></i> Add expense';
+        document.getElementById('finExpCancelBtn').style.display = 'none';
+      }
+
+      function finEditExpense(id) {
+        var e = financeExpenseCache[id];
+        if (!e) return;
+        document.getElementById('finExpId').value = e.id;
+        document.getElementById('finExpDate').value = String(e.date || '').slice(0, 10);
+        document.getElementById('finExpAmount').value = e.amount;
+        document.getElementById('finExpCategory').value = e.category || '';
+        document.getElementById('finExpVendor').value = e.vendor || '';
+        document.getElementById('finExpNotes').value = e.notes || '';
+        document.getElementById('finExpSubmitBtn').innerHTML = '<i class="fas fa-save"></i> Save changes';
+        document.getElementById('finExpCancelBtn').style.display = '';
+        document.getElementById('finExpDate').focus();
+      }
+
+      function finDeleteExpense(id) {
+        if (!window.confirm('Delete this expense? This cannot be undone.')) return;
+        $.ajax({ url: '/admin/api/finance/expenses/' + encodeURIComponent(id), type: 'DELETE' })
+          .done(function() { loadFinanceExpenses(); loadFinanceSummary(); })
+          .fail(finAjaxFailed);
+      }
+
+      function finSubmitExpense(ev) {
+        ev.preventDefault();
+        var id = document.getElementById('finExpId').value;
+        var payload = {
+          date: document.getElementById('finExpDate').value,
+          amount: parseFloat(document.getElementById('finExpAmount').value),
+          category: document.getElementById('finExpCategory').value.trim(),
+          vendor: document.getElementById('finExpVendor').value.trim(),
+          notes: document.getElementById('finExpNotes').value.trim(),
+          source: 'manual'
+        };
+        var method = id ? 'PUT' : 'POST';
+        var url = '/admin/api/finance/expenses' + (id ? '/' + encodeURIComponent(id) : '');
+        $.ajax({ url: url, type: method, contentType: 'application/json', data: JSON.stringify(payload) })
+          .done(function() {
+            finResetExpenseForm();
+            loadFinanceExpenses();
+            loadFinanceSummary();
+          })
+          .fail(finAjaxFailed);
+      }
+
+      function finConnectAdsense() {
+        var btn = document.getElementById('finAdsenseConnectBtn');
+        btn.disabled = true;
+        $.ajax({ url: '/admin/api/finance/adsense/oauth/start', type: 'GET' })
+          .done(function(res) {
+            btn.disabled = false;
+            var url = res && res.url;
+            if (url) {
+              window.open(url, '_blank', 'noopener');
+            } else {
+              finShowError('The API did not return an AdSense authorization URL.');
+            }
+          })
+          .fail(function(jqXHR) { btn.disabled = false; finAjaxFailed(jqXHR); });
       }
 
     </script>
