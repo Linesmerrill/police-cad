@@ -32,6 +32,10 @@ export class AdminFinancePage {
   readonly plaidSyncBtn: Locator;
   readonly plaidToken: Locator;
 
+  // Transactions and tagging.
+  readonly txRows: Locator;
+  readonly tagPicker: Locator;
+
   constructor(page: Page) {
     this.page = page;
 
@@ -52,6 +56,14 @@ export class AdminFinancePage {
     this.plaidConnectBtn = page.getByTestId('finance-plaid-connect');
     this.plaidSyncBtn = page.getByTestId('finance-plaid-sync');
     this.plaidToken = page.getByTestId('finance-plaid-token');
+
+    this.txRows = page.getByTestId('finance-tx-row');
+    this.tagPicker = page.getByTestId('finance-tag-picker');
+  }
+
+  /** A quick-range chip: 'this-month', 'last-month', '3', '6', '12' or 'ytd'. */
+  preset(name: string): Locator {
+    return this.page.getByTestId(`finance-preset-${name}`);
   }
 
   /** The profit cell for one month of the P&L, e.g. profitCell('2026-09'). */

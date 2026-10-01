@@ -1012,6 +1012,88 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Transactions, tags and merchant rules (owner-only; see FINANCE.md in the
+  // API). Every id is checked inline before it reaches the API URL.
+  async function financeForward(req, res, method, path, body, timeout) {
+    if (!requireFinanceJwt(req, res)) return;
+    try {
+      const response = await axios({
+        method: method,
+        url: `${financeApiBase()}${path}`,
+        data: body,
+        headers: financeAuthHeaders(req),
+        timeout: timeout || 20000,
+      });
+      return res.status(response.status).json(response.data);
+    } catch (err) {
+      return financeProxyError(req, res, err);
+    }
+  }
+
+  app.get("/admin/api/finance/transactions", requireOwnerSession, async function (req, res) {
+    const params = new URLSearchParams();
+    if (financeMonthParam.test(String(req.query.from || ""))) params.set("from", String(req.query.from));
+    if (financeMonthParam.test(String(req.query.to || ""))) params.set("to", String(req.query.to));
+    const page = parseInt(req.query.page, 10);
+    const limit = parseInt(req.query.limit, 10);
+    if (page > 0) params.set("page", String(page));
+    if (limit > 0 && limit <= 100) params.set("limit", String(limit));
+    const tag = String(req.query.tag || "");
+    if (tag === "untagged" || /^[a-f0-9]{24}$/.test(tag)) params.set("tag", tag);
+    if (["include", "exclude", "only"].includes(String(req.query.hidden || ""))) params.set("hidden", String(req.query.hidden));
+    const search = String(req.query.search || "").slice(0, 100);
+    if (search.trim()) params.set("search", search);
+    return financeForward(req, res, "get", `/transactions?${params.toString()}`);
+  });
+
+  app.patch("/admin/api/finance/transactions/:txId", requireOwnerSession, async function (req, res) {
+    const txId = String(req.params.txId || "");
+    if (!/^[A-Za-z0-9_-]{1,128}$/.test(txId)) return res.status(400).json({ message: "invalid transaction id" });
+    const body = {};
+    if (typeof req.body.hidden === "boolean") body.hidden = req.body.hidden;
+    if (typeof req.body.tag_id === "string") {
+      if (req.body.tag_id !== "" && !/^[a-f0-9]{24}$/.test(req.body.tag_id)) return res.status(400).json({ message: "invalid tag id" });
+      body.tag_id = req.body.tag_id;
+    }
+    if (req.body.apply_to_merchant === true) body.apply_to_merchant = true;
+    return financeForward(req, res, "patch", `/transactions/${encodeURIComponent(txId)}`, body);
+  });
+
+  app.get("/admin/api/finance/tags", requireOwnerSession, async function (req, res) {
+    return financeForward(req, res, "get", "/tags", undefined, 15000);
+  });
+
+  app.post("/admin/api/finance/tags", requireOwnerSession, async function (req, res) {
+    const body = { name: String((req.body && req.body.name) || "").slice(0, 80) };
+    if (typeof req.body.color === "string") body.color = req.body.color;
+    return financeForward(req, res, "post", "/tags", body);
+  });
+
+  app.patch("/admin/api/finance/tags/:id", requireOwnerSession, async function (req, res) {
+    const id = String(req.params.id || "");
+    if (!/^[a-f0-9]{24}$/.test(id)) return res.status(400).json({ message: "invalid tag id" });
+    const body = {};
+    if (typeof req.body.name === "string") body.name = req.body.name.slice(0, 80);
+    if (typeof req.body.color === "string") body.color = req.body.color;
+    return financeForward(req, res, "patch", `/tags/${id}`, body);
+  });
+
+  app.delete("/admin/api/finance/tags/:id", requireOwnerSession, async function (req, res) {
+    const id = String(req.params.id || "");
+    if (!/^[a-f0-9]{24}$/.test(id)) return res.status(400).json({ message: "invalid tag id" });
+    return financeForward(req, res, "delete", `/tags/${id}`);
+  });
+
+  app.get("/admin/api/finance/tag-rules", requireOwnerSession, async function (req, res) {
+    return financeForward(req, res, "get", "/tag-rules", undefined, 15000);
+  });
+
+  app.delete("/admin/api/finance/tag-rules/:id", requireOwnerSession, async function (req, res) {
+    const id = String(req.params.id || "");
+    if (!/^[a-f0-9]{24}$/.test(id)) return res.status(400).json({ message: "invalid rule id" });
+    return financeForward(req, res, "delete", `/tag-rules/${id}`);
+  });
+
   app.get("/admin/api/finance/plaid/status", requireOwnerSession, async function (req, res) {
     if (!requireFinanceJwt(req, res)) return;
     try {
