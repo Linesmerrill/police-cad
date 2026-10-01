@@ -13346,14 +13346,29 @@
         el.style.display = '';
       }
 
+      // The server's own message from a failed request. The console loads
+      // jQuery 1.9, which has no jqXHR.responseJSON, so read responseText:
+      // relying on responseJSON showed a generic message for every error.
+      function finServerMessage(jqXHR) {
+        if (!jqXHR) return '';
+        if (jqXHR.responseJSON && jqXHR.responseJSON.message) return jqXHR.responseJSON.message;
+        try {
+          var body = JSON.parse(jqXHR.responseText || '');
+          return (body && (body.message || body.error)) || '';
+        } catch (e) {
+          return '';
+        }
+      }
+
       function finAjaxFailed(jqXHR) {
+        var serverMsg = finServerMessage(jqXHR);
         var msg = 'Could not load finance data.';
         if (jqXHR && jqXHR.status === 401) {
-          msg = (jqXHR.responseJSON && jqXHR.responseJSON.message) || 'API session expired. Please log out and log in again.';
+          msg = serverMsg || 'API session expired. Please log out and log in again.';
         } else if (jqXHR && jqXHR.status === 403) {
           msg = 'Forbidden: owner access required.';
-        } else if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.message) {
-          msg = jqXHR.responseJSON.message;
+        } else if (serverMsg) {
+          msg = serverMsg;
         }
         finShowError(msg);
       }

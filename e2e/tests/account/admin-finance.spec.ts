@@ -305,7 +305,9 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
 
     // The public token is exchanged server-side, and the access token is
     // shown once with instructions to set the Heroku config var.
-    expect(exchangedBody).toMatchObject({ public_token: 'public-token-abc' });
+    // The exchange request goes out asynchronously after onSuccess, so wait
+    // for it rather than checking straight away.
+    await expect.poll(() => exchangedBody, { timeout: 10_000 }).toMatchObject({ public_token: 'public-token-abc' });
     await expect(finance.plaidToken).toBeVisible();
     await expect(finance.plaidToken).toContainText('access-sandbox-shown-once');
     await expect(finance.plaidToken).toContainText('PLAID_ACCESS_TOKEN');
