@@ -754,6 +754,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // client-side in admin-console.ejs, but that is cosmetic; this middleware
   // is the real enforcement for anything financial.
   function requireOwnerSession(req, res, next) {
+    // A console session from before owner checks existed has adminToken but
+    // no isOwner at all. That is not a refusal; it just needs a fresh login,
+    // which also fetches the API session the finance routes use.
+    if (req.session && req.session.adminToken && req.session.isOwner === undefined) {
+      return res.status(401).json({ message: "Your admin session is out of date. Please log out and log in again." });
+    }
     if (!req.session || !req.session.adminToken || !req.session.isOwner) {
       return res.status(403).json({ message: "forbidden: owner access required" });
     }
@@ -2971,8 +2977,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
         timeout: 15000,
         validateStatus: function () { return true; },
       });
+      // A non-JSON body is passed on as plain text, never as HTML: it comes
+      // from the API, and sending it with the default type would let markup
+      // in it render on our origin.
       if (typeof response.data === "string") {
-        return res.status(response.status).send(response.data);
+        return res.status(response.status).type("text/plain").send(response.data);
       }
       return res.status(response.status).json(response.data);
     } catch (err) {
