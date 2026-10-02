@@ -1728,7 +1728,8 @@
 
   <script>
     // ========== STATE ==========
-    var API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+    // NOTE: all API calls go through same-origin /mw/api/* proxies (see
+    // app/routes.js). No API secrets are rendered into this page.
     var communityId = '<%= communityId %>';
     var isAdmin = <%= isAdmin %>;
     var isDepartmentMember = <%= isDepartmentMember %>;
@@ -1740,8 +1741,6 @@
       communityPenalCodes.currencies.forEach(function(c) { penalCodesKnownCurrencies[c.code] = c.symbol; });
     }
     function getCurrencySymbol(code) { return penalCodesKnownCurrencies[code] || code || '$'; }
-    var apiToken = '<%= process.env.POLICE_CAD_API_TOKEN || "" %>';
-    var currentUserId = '<%= user._id %>';
 
     var currentPage = 0;
     var totalPages = 0;
@@ -1761,9 +1760,10 @@
 
     // ========== HELPERS ==========
     function getHeaders() {
+      // Same-origin proxy: the server attaches API credentials. Nothing
+      // secret is sent from (or readable in) the browser.
       return {
-        'Content-Type': 'application/json',
-        'Authorization': apiToken
+        'Content-Type': 'application/json'
       };
     }
 
@@ -1854,7 +1854,7 @@
       entriesEl.innerHTML = '';
       paginationEl.style.display = 'none';
 
-      fetch(API_URL + '/api/v2/community/' + communityId + '/most-wanted?page=' + page + '&limit=10&status=active', {
+      fetch('/mw/api/community/' + communityId + '/most-wanted?page=' + page + '&limit=10&status=active', {
         method: 'GET',
         headers: getHeaders()
       })
@@ -2067,7 +2067,7 @@
       renderEntries(entries);
 
       // Persist to API
-      fetch(API_URL + '/api/v1/most-wanted/reorder?userId=' + encodeURIComponent(currentUserId), {
+      fetch('/mw/api/reorder', {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify({
@@ -2201,7 +2201,7 @@
         return;
       }
 
-      fetch(API_URL + '/api/v2/civilians/search', {
+      fetch('/mw/api/civilians/search', {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({ query: query, communityId: communityId, page: 0, limit: 20 })
@@ -2526,7 +2526,7 @@
           stars: currentStars
         };
 
-        fetch(API_URL + '/api/v1/most-wanted/' + editingEntryId + '?userId=' + encodeURIComponent(currentUserId), {
+        fetch('/mw/api/entries/' + editingEntryId, {
           method: 'PUT',
           headers: getHeaders(),
           body: JSON.stringify(updateBody)
@@ -2552,12 +2552,11 @@
           civilianID: civilianID,
           charges: currentCharges,
           description: description,
-          addedByUserID: currentUserId,
           customFields: customFields,
           stars: currentStars
         };
 
-        fetch(API_URL + '/api/v1/most-wanted', {
+        fetch('/mw/api/entries', {
           method: 'POST',
           headers: getHeaders(),
           body: JSON.stringify(createBody)
@@ -2599,7 +2598,7 @@
       var btn = document.getElementById('btn-delete-confirm');
       btn.disabled = true;
 
-      fetch(API_URL + '/api/v1/most-wanted/' + deleteTargetId + '?userId=' + encodeURIComponent(currentUserId), {
+      fetch('/mw/api/entries/' + deleteTargetId, {
         method: 'DELETE',
         headers: getHeaders()
       })
@@ -2751,7 +2750,7 @@
         mostWantedCustomFields: settingsCustomFields
       };
 
-      fetch(API_URL + '/api/v1/community/' + communityId, {
+      fetch('/mw/api/community/' + communityId + '/settings', {
         method: 'PATCH',
         headers: getHeaders(),
         body: JSON.stringify(body)
