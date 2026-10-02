@@ -14503,9 +14503,46 @@
           .fail(function(jqXHR) { btn.disabled = false; finAjaxFailed(jqXHR); });
       }
 
+      // Opening Finance pulls new bank transactions on its own, at most once
+      // per page load and only when the last sync is older than
+      // FIN_AUTO_SYNC_MS. Plaid itself refreshes from the bank a few times a
+      // day, so syncing more often than this would find nothing new. The
+      // totals reload only if the sync brought changes; a failure is shown
+      // on the bank line, not as a page error, since the data on screen is
+      // still valid.
+      var FIN_AUTO_SYNC_MS = 15 * 60 * 1000;
+      var finAutoSyncDone = false;
+
+      function finMaybeAutoSync(status) {
+        if (finAutoSyncDone || !status || !status.connected) return;
+        var last = Date.parse(status.last_sync || '');
+        if (last && Date.now() - last < FIN_AUTO_SYNC_MS) return;
+        finAutoSyncDone = true;
+        var btn = document.getElementById('finPlaidSyncBtn');
+        var summaryEl = document.getElementById('finBankSummary');
+        btn.disabled = true;
+        summaryEl.textContent = 'Syncing\u2026';
+        $.ajax({ url: '/admin/api/finance/plaid/sync', type: 'POST', contentType: 'application/json', data: '{}' })
+          .done(function(res) {
+            res = res || {};
+            if ((res.added || 0) + (res.modified || 0) + (res.removed || 0) > 0) {
+              loadFinanceSummary();
+              loadFinanceTransactions();
+            }
+            loadBankStatus();
+          })
+          .fail(function() {
+            summaryEl.textContent = 'Automatic sync failed. Use Sync now to retry.';
+          })
+          .always(function() { btn.disabled = false; });
+      }
+
       function loadBankStatus() {
         $.ajax({ url: '/admin/api/finance/plaid/status', type: 'GET' })
-          .done(renderBankStatus)
+          .done(function(res) {
+            renderBankStatus(res);
+            finMaybeAutoSync(res);
+          })
           .fail(function() {
             var statusEl = document.getElementById('finPlaidStatus');
             if (statusEl) statusEl.textContent = 'Bank status unavailable.';

@@ -132,9 +132,10 @@ const SUMMARY_NO_BANK_FIXTURE = {
   warnings: ['No bank account connected — showing subscription revenue only.'],
 };
 
+// Synced just now, so opening Finance doesn't trigger the automatic sync.
 const PLAID_STATUS_CONNECTED = {
   connected: true,
-  last_sync: '2026-09-30T10:00:00Z',
+  last_sync: new Date().toISOString(),
   accounts: [{ name: 'Business Checking', mask: '1234', type: 'depository' }],
 };
 
@@ -424,6 +425,48 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
 
     await finance.plaidSyncBtn.click();
     await expect.poll(() => syncCalls, { timeout: 10_000 }).toBe(1);
+  });
+
+  test('opening Finance syncs the bank once when the last sync is stale', async ({ page }) => {
+    let syncCalls = 0;
+    let summaryCalls = 0;
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: { ...PLAID_STATUS_CONNECTED, last_sync: '2026-09-30T10:00:00Z' },
+      onSummary: () => { summaryCalls += 1; },
+      onSync: () => {
+        syncCalls += 1;
+        return { added: 2, modified: 0, removed: 0, has_more: false };
+      },
+    });
+
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    await expect.poll(() => syncCalls, { timeout: 10_000 }).toBe(1);
+    // New transactions arrived, so the totals reload after the sync.
+    await expect.poll(() => summaryCalls, { timeout: 10_000 }).toBeGreaterThanOrEqual(2);
+    // The status still reads stale (static mock): no second sync this page load.
+    await page.waitForTimeout(1500);
+    expect(syncCalls).toBe(1);
+  });
+
+  test('opening Finance skips the sync when it ran recently', async ({ page }) => {
+    let syncCalls = 0;
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: PLAID_STATUS_CONNECTED,
+      onSync: () => {
+        syncCalls += 1;
+        return { added: 0, modified: 0, removed: 0, has_more: false };
+      },
+    });
+
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+    await expect(finance.profitCell('2026-09')).toHaveText('$750.00');
+    await page.waitForTimeout(1500);
+    expect(syncCalls).toBe(0);
   });
 
   test('quick ranges set the months and reload', async ({ page }) => {
