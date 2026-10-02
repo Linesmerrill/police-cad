@@ -27,6 +27,10 @@ import {
   removeConsoleStaff,
   TEST_CONSOLE_STAFF_EMAIL,
   TEST_CONSOLE_STAFF_PASSWORD,
+  seedDeactivatedAdmin,
+  removeDeactivatedAdmin,
+  TEST_DEACTIVATED_ADMIN_EMAIL,
+  TEST_DEACTIVATED_ADMIN_PASSWORD,
 } from '../../helpers/admin-users';
 import { encodeIdForUrl, TEST_COMMUNITY_ID } from '../../helpers/db';
 import { AdminFinancePage } from '../../pages/admin-finance.page';
@@ -680,6 +684,25 @@ test.describe('Admin console — Finance tab (non-owner staff)', { tag: '@auth' 
     const anonLinkToken = await anonRequest.post('/admin/api/finance/plaid/link-token');
     expect(anonLinkToken.status()).toBe(403);
     await anonRequest.dispose();
+  });
+});
+
+test.describe('Admin console — deactivated admins', () => {
+  test.beforeAll(async () => { await seedDeactivatedAdmin(); });
+  test.afterAll(async () => { await removeDeactivatedAdmin(); });
+
+  test('a deactivated admin cannot sign in', async ({ browser }) => {
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const page = await context.newPage();
+    await page.goto('/admin');
+    await page.locator('input[name="email"]').fill(TEST_DEACTIVATED_ADMIN_EMAIL);
+    await page.locator('input[name="password"]').fill(TEST_DEACTIVATED_ADMIN_PASSWORD);
+    await page.locator('button[type="submit"]').click();
+    await expect(page).toHaveURL(/\/admin\?error=/);
+    await expect(page.locator('.alert-danger')).toContainText('Invalid credentials');
+    await page.goto('/admin/console');
+    await expect(page).toHaveURL(/\/admin(\?|$)/);
+    await context.close();
   });
 });
 

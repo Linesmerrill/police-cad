@@ -198,3 +198,36 @@ export async function removeConsoleStaff(): Promise<void> {
     await db.collection('admin_users').deleteOne({ _id: TEST_CONSOLE_STAFF_ID });
   });
 }
+
+// A staff admin that has been deactivated (active: false). Its own id so the
+// deactivation test can't disturb specs using the active staff fixture.
+export const TEST_DEACTIVATED_ADMIN_ID = new ObjectId('a6a6a6a6a6a6a6a6a6a6a6a6');
+export const TEST_DEACTIVATED_ADMIN_EMAIL = 'console-deactivated@test.com';
+export const TEST_DEACTIVATED_ADMIN_PASSWORD = 'console-deactivated-pw-1';
+
+export async function seedDeactivatedAdmin(): Promise<void> {
+  const hash = bcrypt.hashSync(TEST_DEACTIVATED_ADMIN_PASSWORD);
+  await withDb(async (db) => {
+    await db.collection('admin_users').replaceOne(
+      { _id: TEST_DEACTIVATED_ADMIN_ID },
+      {
+        _id: TEST_DEACTIVATED_ADMIN_ID,
+        email: TEST_DEACTIVATED_ADMIN_EMAIL,
+        password: hash,
+        firstName: 'Former',
+        lastName: 'Staff',
+        role: 'admin',
+        roles: ['admin'],
+        active: false,
+        createdAt: new Date(),
+      },
+      { upsert: true }
+    );
+  });
+}
+
+export async function removeDeactivatedAdmin(): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('admin_users').deleteOne({ _id: TEST_DEACTIVATED_ADMIN_ID });
+  });
+}

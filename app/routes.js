@@ -760,7 +760,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       try {
         const mongoose = require("mongoose");
         const adminUser = await mongoose.connection.db.collection("admin_users").findOne({ email: pending.email });
-        if (!adminUser) return restartAdminLogin(req, res, "Invalid credentials");
+        if (!adminUser || adminUser.active === false) return restartAdminLogin(req, res, "Invalid credentials");
         delete req.session.adminMfaPending;
         return await finishAdminLogin(req, res, adminUser, pending.email, { apiJwt: data.token });
       } catch (err) {
@@ -790,7 +790,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
       const mongoose = require("mongoose");
       const adminUser = await mongoose.connection.db.collection("admin_users").findOne({ email: email });
       
-      if (!adminUser) {
+      // Deactivated admins can't sign in (missing "active" = legacy, allowed).
+      if (!adminUser || adminUser.active === false) {
         return res.redirect("/admin?error=" + encodeURIComponent("Invalid credentials"));
       }
 
@@ -841,9 +842,56 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
-  function requireAdminSession(req, res, next) {
+  // Removing or deactivating an admin must cut off sessions they already
+  // have, not just future logins. Re-read the admin_users document at most
+  // once a minute per session. A database error lets the request through
+  // without marking the session checked, so the next request retries.
+  const ADMIN_RECHECK_MS = 60 * 1000;
+
+  async function adminSessionRevoked(req) {
+    const s = req.session;
+    if (!s || !s.admin || !s.admin.id) return false;
+    if (s.adminCheckedAt && Date.now() - s.adminCheckedAt < ADMIN_RECHECK_MS) return false;
+    let doc;
+    try {
+      const mongoose = require("mongoose");
+      doc = await mongoose.connection.db.collection("admin_users").findOne(
+        { _id: new mongoose.Types.ObjectId(String(s.admin.id)) },
+        { projection: { active: 1, role: 1, roles: 1 } }
+      );
+    } catch (err) {
+      console.log("Admin session re-check failed:", err.message);
+      return false;
+    }
+    if (!doc || doc.active === false) return true;
+    // Keep the owner flag in step with the document: a demoted owner loses
+    // Finance and its API session straight away.
+    const isOwner = doc.role === "owner" || (Array.isArray(doc.roles) && doc.roles.includes("owner"));
+    if (s.isOwner && !isOwner) {
+      s.isOwner = false;
+      delete s.apiAdminJwt;
+    }
+    s.adminCheckedAt = Date.now();
+    return false;
+  }
+
+  function endRevokedAdminSession(req, done) {
+    delete req.session.adminToken;
+    delete req.session.admin;
+    delete req.session.isOwner;
+    delete req.session.apiAdminJwt;
+    delete req.session.adminCheckedAt;
+    req.session.save(function () { done(); });
+  }
+
+  async function requireAdminSession(req, res, next) {
     if (!req.session || !req.session.adminToken) {
       return res.redirect("/admin");
+    }
+    if (await adminSessionRevoked(req)) {
+      return endRevokedAdminSession(req, function () {
+        res.redirect("/admin?error=" + encodeURIComponent("Your admin access has been removed."));
+      });
     }
     return next();
   }
@@ -853,12 +901,17 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // can neither set nor forge it. Owner-only console TABS are also hidden
   // client-side in admin-console.ejs, but that is cosmetic; this middleware
   // is the real enforcement for anything financial.
-  function requireOwnerSession(req, res, next) {
+  async function requireOwnerSession(req, res, next) {
     // A console session from before owner checks existed has adminToken but
     // no isOwner at all. That is not a refusal; it just needs a fresh login,
     // which also fetches the API session the finance routes use.
     if (req.session && req.session.adminToken && req.session.isOwner === undefined) {
       return res.status(401).json({ message: "Your admin session is out of date. Please log out and log in again." });
+    }
+    if (req.session && req.session.adminToken && await adminSessionRevoked(req)) {
+      return endRevokedAdminSession(req, function () {
+        res.status(401).json({ message: "Your admin access has been removed." });
+      });
     }
     if (!req.session || !req.session.adminToken || !req.session.isOwner) {
       return res.status(403).json({ message: "forbidden: owner access required" });
