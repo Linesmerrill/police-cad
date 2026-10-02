@@ -13926,9 +13926,21 @@
           var picker = document.getElementById('finTagPicker');
           if (!picker.hidden && !picker.contains(e.target)) finCloseTagPicker();
         }).on('keydown.finpicker', function(e) {
-          if (e.key === 'Escape') finCloseTagPicker();
+          if (e.key === 'Escape') finCloseTagPicker(true);
         });
-        $(window).on('scroll.finpicker resize.finpicker', finCloseTagPicker);
+        // Follow the chip while the page scrolls (clicking a chip near the edge
+        // scrolls it into view, and that scroll can still be settling after
+        // the picker opens). Close only once the chip has left the screen.
+        $(window).on('scroll.finpicker resize.finpicker', function() {
+          var picker = document.getElementById('finTagPicker');
+          if (picker.hidden || !picker._anchor) return;
+          var r = picker._anchor.getBoundingClientRect();
+          if (r.bottom < 0 || r.top > window.innerHeight || !document.body.contains(picker._anchor)) {
+            finCloseTagPicker();
+          } else {
+            finPlacePicker(picker, picker._anchor);
+          }
+        });
       }
 
       function loadFinanceTransactions() {
@@ -14027,13 +14039,25 @@
       }
 
       // ---- Tag picker ----
-      function finCloseTagPicker() {
+      // returnFocus puts keyboard focus back on the chip, for Escape. Not
+      // after scrolling away or clicking elsewhere: focusing the chip would
+      // scroll the page back to it, or steal focus from what was clicked.
+      function finCloseTagPicker(returnFocus) {
         var picker = document.getElementById('finTagPicker');
         if (picker && !picker.hidden) {
           picker.hidden = true;
           picker.innerHTML = '';
-          if (picker._anchor && picker._anchor.focus) picker._anchor.focus();
+          if (returnFocus === true && picker._anchor && picker._anchor.focus) picker._anchor.focus();
         }
+      }
+
+      // Below the chip, or above it when there is no room below.
+      function finPlacePicker(picker, anchor) {
+        var r = anchor.getBoundingClientRect();
+        var top = r.bottom + 6, left = Math.min(r.left, window.innerWidth - 270);
+        if (top + picker.offsetHeight > window.innerHeight - 8) top = Math.max(8, r.top - picker.offsetHeight - 6);
+        picker.style.top = top + 'px';
+        picker.style.left = Math.max(8, left) + 'px';
       }
 
       function finOpenTagPicker(anchor, txId) {
@@ -14053,11 +14077,7 @@
           + '<button type="submit" class="ac-btn ac-btn-sm">Add</button></form>'
           + (merchant ? '<label class="fin-check"><input type="checkbox" data-merchant> Also tag future transactions from ' + finEsc(merchant) + '</label>' : '');
         picker.hidden = false;
-        var r = anchor.getBoundingClientRect();
-        var top = r.bottom + 6, left = Math.min(r.left, window.innerWidth - 270);
-        if (top + picker.offsetHeight > window.innerHeight - 8) top = Math.max(8, r.top - picker.offsetHeight - 6);
-        picker.style.top = top + 'px';
-        picker.style.left = Math.max(8, left) + 'px';
+        finPlacePicker(picker, anchor);
 
         function choose(tagId) {
           var body = { tag_id: tagId };
