@@ -231,3 +231,35 @@ export async function removeDeactivatedAdmin(): Promise<void> {
     await db.collection('admin_users').deleteOne({ _id: TEST_DEACTIVATED_ADMIN_ID });
   });
 }
+
+// A staff admin used only by the report-page specs, so its lifecycle can't
+// collide with other specs that seed and remove the shared staff fixture.
+export const TEST_REPORT_REVIEWER_ID = new ObjectId('a7a7a7a7a7a7a7a7a7a7a7a7');
+export const TEST_REPORT_REVIEWER_EMAIL = 'report-reviewer@test.com';
+export const TEST_REPORT_REVIEWER_PASSWORD = 'report-reviewer-pw-1';
+
+export async function seedReportReviewer(): Promise<void> {
+  const hash = bcrypt.hashSync(TEST_REPORT_REVIEWER_PASSWORD);
+  await withDb(async (db) => {
+    await db.collection('admin_users').replaceOne(
+      { _id: TEST_REPORT_REVIEWER_ID },
+      {
+        _id: TEST_REPORT_REVIEWER_ID,
+        email: TEST_REPORT_REVIEWER_EMAIL,
+        password: hash,
+        firstName: 'Report',
+        lastName: 'Reviewer',
+        role: 'admin',
+        roles: ['admin'],
+        createdAt: new Date(),
+      },
+      { upsert: true }
+    );
+  });
+}
+
+export async function removeReportReviewer(): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('admin_users').deleteOne({ _id: TEST_REPORT_REVIEWER_ID });
+  });
+}
