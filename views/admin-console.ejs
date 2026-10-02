@@ -3431,8 +3431,22 @@
 
             /* Manage tags */
             .fin-tags-list { display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1rem; }
-            .fin-tags-row { display:grid; grid-template-columns:36px minmax(0,1fr) auto; gap:0.5rem; align-items:center; }
-            .fin-tags-row input[type=color] { width:36px; height:34px; padding:0; border:1px solid var(--ac-glass-border); border-radius:6px; background:none; cursor:pointer; }
+            /* Tag colour, GitHub-label style: the swatch button shuffles to a new
+               colour, the hex field takes an exact one, and focusing the row
+               shows a few presets to pick from. */
+            .fin-tags-row { display:grid; grid-template-columns:34px 92px minmax(0,1fr) auto; gap:0.5rem; align-items:center; }
+            .fin-color-btn { width:34px; height:34px; border:0; border-radius:6px; cursor:pointer; color:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; font-size:0.8125rem; }
+            .fin-color-btn:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+            .fin-color-btn i { opacity:0; transition:opacity 0.15s, transform 0.3s; }
+            .fin-color-btn:hover i, .fin-color-btn:focus-visible i { opacity:1; }
+            .fin-color-btn:active i { transform:rotate(180deg); }
+            .fin-tags-row .fin-hex { font-family:'JetBrains Mono',monospace; text-transform:lowercase; }
+            .fin-tags-row .fin-hex[aria-invalid="true"] { border-color:#f87171 !important; box-shadow:0 0 0 2px rgba(248,113,113,0.25); }
+            .fin-swatches { grid-column:1 / -1; display:none; flex-wrap:wrap; gap:6px; padding:2px 0 4px; }
+            .fin-tags-row:focus-within .fin-swatches { display:flex; }
+            .fin-swatch { width:22px; height:22px; border-radius:5px; border:0; cursor:pointer; padding:0; }
+            .fin-swatch:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+            @media (prefers-reduced-motion: reduce) { .fin-color-btn i { transition:none; } .fin-color-btn:active i { transform:none; } }
             .fin-tags-row .ac-input { padding:0.4rem 0.7rem !important; font-size:0.875rem !important; }
             .fin-rules { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.375rem; }
             .fin-rules li { display:flex; align-items:center; gap:0.5rem; font-size:0.8125rem; color:var(--ac-text); }
@@ -3749,9 +3763,11 @@
                 <div class="modal-body">
                   <div class="fin-tags-list" id="finTagsList" data-testid="finance-tags-list"></div>
                   <form class="fin-tags-row" id="finTagAddForm" style="margin-bottom:1.25rem;">
-                    <input type="color" id="finTagAddColor" value="#38bdf8" aria-label="New tag colour">
+                    <button type="button" class="fin-color-btn" id="finTagAddSwatch" style="background:#38bdf8;" aria-label="Pick a random colour" title="Pick a random colour" data-testid="finance-tag-shuffle"><i class="fas fa-sync" aria-hidden="true"></i></button>
+                    <input type="text" id="finTagAddColor" class="form-control ac-input fin-hex" value="#38bdf8" maxlength="7" spellcheck="false" aria-label="New tag colour, hex" data-testid="finance-tag-add-color">
                     <input type="text" id="finTagAddName" class="form-control ac-input" placeholder="New tag, e.g. Steam" maxlength="40" aria-label="New tag name" data-testid="finance-tag-add-name">
                     <button type="submit" class="ac-btn ac-btn-sm ac-btn-accent">Add</button>
+                    <div class="fin-swatches" data-swatches></div>
                   </form>
                   <div class="fin-section-head" style="margin-bottom:0.5rem;"><h3 style="font-size:0.875rem;">Merchant rules</h3></div>
                   <p class="fin-muted" style="font-size:0.8125rem; margin:0 0 0.5rem;">New transactions from these merchants are tagged automatically.</p>
@@ -14351,7 +14367,7 @@
           e.preventDefault();
           var name = $.trim(this.querySelector('input').value);
           if (!name) return;
-          finCreateTag(name, null, function(tag) { choose(tag._id); });
+          finCreateTag(name, finRandomColor(), function(tag) { choose(tag._id); });
         });
         var first = picker.querySelector('.fin-picker-opt.is-current') || picker.querySelector('.fin-picker-opt');
         if (first) first.focus();
@@ -14371,6 +14387,53 @@
           .fail(finAjaxFailed);
       }
 
+      // ---- Tag colours ----
+      // Presets, plus a shuffle that picks a random colour bright enough to
+      // read as a dot on the dark console.
+      var FIN_TAG_PRESETS = ['#f87171', '#fb923c', '#fbbf24', '#a3e635', '#4ade80', '#2dd4bf',
+        '#38bdf8', '#60a5fa', '#818cf8', '#a78bfa', '#e879f9', '#f472b6', '#94a3b8', '#d6d3d1'];
+
+      function finRandomColor() {
+        var h = Math.floor(Math.random() * 360) / 360;
+        var sat = 0.6 + Math.random() * 0.25;
+        var l = 0.52 + Math.random() * 0.12;
+        function hue2rgb(p, q, t) {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1 / 6) return p + (q - p) * 6 * t;
+          if (t < 1 / 2) return q;
+          if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+          return p;
+        }
+        var q = l < 0.5 ? l * (1 + sat) : l + sat - l * sat;
+        var p = 2 * l - q;
+        return '#' + [h + 1 / 3, h, h - 1 / 3].map(function(t) {
+          return ('0' + Math.round(hue2rgb(p, q, t) * 255).toString(16)).slice(-2);
+        }).join('');
+      }
+
+      // "#ABC", "abc123" and "#aabbcc" all come back as "#aabbcc"; anything
+      // else is null.
+      function finNormalizeHex(v) {
+        var m = String(v || '').trim().replace(/^#/, '').toLowerCase();
+        if (/^[0-9a-f]{3}$/.test(m)) m = m.replace(/(.)/g, '$1$1');
+        return /^[0-9a-f]{6}$/.test(m) ? '#' + m : null;
+      }
+
+      function finSwatchesHtml() {
+        return FIN_TAG_PRESETS.map(function(c) {
+          return '<button type="button" class="fin-swatch" style="background:' + c + ';" data-swatch="' + c + '" aria-label="Use ' + c + '"></button>';
+        }).join('');
+      }
+
+      // Show a colour on a row's swatch and hex field.
+      function finSetRowColor(row, color) {
+        row.querySelector('.fin-color-btn').style.background = color;
+        var hex = row.querySelector('.fin-hex');
+        hex.value = color;
+        hex.removeAttribute('aria-invalid');
+      }
+
       // ---- Manage tags ----
       function finWireTagsModal() {
         // Bootstrap puts the modal's backdrop straight on <body>, so a modal
@@ -14380,6 +14443,7 @@
         $('#finTagsModal').appendTo(document.body);
         $('#finTagPicker').appendTo(document.body);
         $('#finManageTagsBtn').on('click', function() {
+          finSetRowColor(document.getElementById('finTagAddForm'), finRandomColor());
           finRenderTagsModal();
           $('#finTagsModal').modal('show');
         });
@@ -14388,11 +14452,49 @@
           var nameEl = document.getElementById('finTagAddName');
           var name = $.trim(nameEl.value);
           if (!name) { nameEl.focus(); return; }
-          finCreateTag(name, document.getElementById('finTagAddColor').value, function() { nameEl.value = ''; });
+          var hexEl = document.getElementById('finTagAddColor');
+          var color = finNormalizeHex(hexEl.value);
+          if (!color) {
+            hexEl.setAttribute('aria-invalid', 'true');
+            hexEl.focus();
+            return;
+          }
+          finCreateTag(name, color, function() {
+            nameEl.value = '';
+            finSetRowColor(document.getElementById('finTagAddForm'), finRandomColor());
+          });
         });
-        $('#finTagsList').on('change', 'input[type=color]', function() {
-          finUpdateTag(this.getAttribute('data-tag'), { color: this.value });
-        }).on('change', 'input[type=text]', function() {
+        document.querySelector('#finTagAddForm [data-swatches]').innerHTML = finSwatchesHtml();
+
+        // Colour controls, for the add form and every existing tag. Changes to
+        // an existing tag save after a short pause, so shuffling a few times
+        // in a row sends one update.
+        var colorTimers = {};
+        function colorChanged(row, color) {
+          finSetRowColor(row, color);
+          var id = row.getAttribute('data-tag-row');
+          if (!id) return;
+          clearTimeout(colorTimers[id]);
+          colorTimers[id] = setTimeout(function() { finUpdateTag(id, { color: color }); }, 600);
+        }
+        $('#finTagsModal').on('click', '.fin-color-btn', function() {
+          colorChanged(this.closest('.fin-tags-row'), finRandomColor());
+        }).on('mousedown', '.fin-swatch', function(e) {
+          // Keep focus in the row so the presets stay open.
+          e.preventDefault();
+        }).on('click', '.fin-swatch', function() {
+          colorChanged(this.closest('.fin-tags-row'), this.getAttribute('data-swatch'));
+        }).on('input', '.fin-hex', function() {
+          var color = finNormalizeHex(this.value);
+          if (color) this.closest('.fin-tags-row').querySelector('.fin-color-btn').style.background = color;
+          this.removeAttribute('aria-invalid');
+        }).on('change', '.fin-hex', function() {
+          var row = this.closest('.fin-tags-row');
+          var color = finNormalizeHex(this.value);
+          if (!color) { this.setAttribute('aria-invalid', 'true'); return; }
+          colorChanged(row, color);
+        });
+        $('#finTagsList').on('change', 'input[data-tag-name]', function() {
           var name = $.trim(this.value);
           if (name) finUpdateTag(this.getAttribute('data-tag'), { name: name });
         }).on('click', '[data-delete]', function() {
@@ -14425,10 +14527,13 @@
       function finRenderTagsModal() {
         var list = document.getElementById('finTagsList');
         list.innerHTML = finTags.length ? finTags.map(function(t) {
-          return '<div class="fin-tags-row">'
-            + '<input type="color" value="' + finEsc(t.color) + '" data-tag="' + finEsc(t._id) + '" aria-label="Colour for ' + finEsc(t.name) + '">'
-            + '<input type="text" class="form-control ac-input" value="' + finEsc(t.name) + '" maxlength="40" data-tag="' + finEsc(t._id) + '" aria-label="Name">'
-            + '<button type="button" class="btn btn-secondary btn-sm" data-delete="' + finEsc(t._id) + '">Delete</button></div>';
+          var color = finNormalizeHex(t.color) || '#64748b';
+          return '<div class="fin-tags-row" data-tag-row="' + finEsc(t._id) + '">'
+            + '<button type="button" class="fin-color-btn" style="background:' + color + ';" aria-label="Random colour for ' + finEsc(t.name) + '" title="Pick a random colour"><i class="fas fa-sync" aria-hidden="true"></i></button>'
+            + '<input type="text" class="form-control ac-input fin-hex" value="' + color + '" maxlength="7" spellcheck="false" aria-label="Colour for ' + finEsc(t.name) + ', hex">'
+            + '<input type="text" class="form-control ac-input" value="' + finEsc(t.name) + '" maxlength="40" data-tag="' + finEsc(t._id) + '" data-tag-name aria-label="Name">'
+            + '<button type="button" class="btn btn-secondary btn-sm" data-delete="' + finEsc(t._id) + '">Delete</button>'
+            + '<div class="fin-swatches">' + finSwatchesHtml() + '</div></div>';
         }).join('') : '<p class="fin-muted" style="font-size:0.8125rem; margin:0;">No tags yet. Add one below, or from any transaction\'s tag button.</p>';
 
         var rules = document.getElementById('finRulesList');

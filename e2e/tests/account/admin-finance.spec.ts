@@ -152,6 +152,7 @@ interface FinanceMocks {
   plaidStatus?: unknown;
   onPatchTransaction?: (id: string, body: unknown) => void;
   onCreateTag?: (body: unknown) => void;
+  onPatchTag?: (id: string, body: unknown) => void;
   onLinkToken?: () => unknown;
   onExchange?: (body: unknown) => unknown;
   onSync?: () => unknown;
@@ -212,6 +213,11 @@ async function mockFinance(page: Page, mocks: FinanceMocks = {}) {
       const body = req.postDataJSON();
       if (mocks.onCreateTag) mocks.onCreateTag(body);
       return json(201, { tag: { _id: 'aaaaaaaaaaaaaaaaaaaaaaa9', name: body.name, color: body.color || '#38bdf8' } });
+    }
+    if (method === 'PATCH' && path.startsWith('/admin/api/finance/tags/')) {
+      const id = decodeURIComponent(path.split('/').pop() || '');
+      if (mocks.onPatchTag) mocks.onPatchTag(id, req.postDataJSON());
+      return json(200, { tag: {} });
     }
     if (method === 'GET' && path === '/admin/api/finance/tag-rules') {
       return json(200, { rules: [] });
@@ -589,6 +595,50 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await page.keyboard.type('Hosting');
     await page.keyboard.press('Enter');
     await expect.poll(() => created).toEqual([expect.objectContaining({ name: 'Hosting' })]);
+  });
+
+  test('tag colours: shuffle, presets and a typed hex', async ({ page }) => {
+    const created: Array<{ name?: string; color?: string }> = [];
+    const patched: Array<{ id: string; body: { color?: string } }> = [];
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: PLAID_STATUS_CONNECTED,
+      onCreateTag: (body) => created.push(body as { name?: string; color?: string }),
+      onPatchTag: (id, body) => patched.push({ id, body: body as { color?: string } }),
+    });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+    await page.getByTestId('finance-manage-tags').click();
+
+    const hex = page.getByTestId('finance-tag-add-color');
+    const before = await hex.inputValue();
+    expect(before).toMatch(/^#[0-9a-f]{6}$/);
+
+    // Shuffle picks a new valid colour (retry: a random repeat is possible).
+    await expect.poll(async () => {
+      await page.getByTestId('finance-tag-shuffle').click();
+      return hex.inputValue();
+    }).not.toBe(before);
+    await expect(hex).toHaveValue(/^#[0-9a-f]{6}$/);
+
+    // A bad hex is flagged on the field and nothing is sent.
+    await hex.fill('#12');
+    await page.getByTestId('finance-tag-add-name').fill('Hosting');
+    await page.getByTestId('finance-tag-add-name').press('Enter');
+    await expect(hex).toHaveAttribute('aria-invalid', 'true');
+    expect(created).toEqual([]);
+
+    // Short hex is expanded, and the tag is created with it.
+    await hex.fill('#0af');
+    await page.getByTestId('finance-tag-add-name').press('Enter');
+    await expect.poll(() => created).toEqual([{ name: 'Hosting', color: '#00aaff' }]);
+
+    // An existing tag: focusing its row shows the presets; picking one saves.
+    const steamRow = page.locator('#finTagsList .fin-tags-row').first();
+    await steamRow.locator('.fin-hex').focus();
+    await steamRow.locator('[data-swatch="#a78bfa"]').click();
+    await expect.poll(() => patched, { timeout: 5_000 })
+      .toEqual([{ id: 'aaaaaaaaaaaaaaaaaaaaaaa1', body: { color: '#a78bfa' } }]);
   });
 
   test('tagging a transaction can tag the whole merchant', async ({ page }) => {
