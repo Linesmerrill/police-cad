@@ -36,6 +36,9 @@ export class AdminFinancePage {
   readonly txRows: Locator;
   readonly tagPicker: Locator;
 
+  // Two-factor gate shown instead of the panel until the session passed it.
+  readonly mfaGate: Locator;
+
   constructor(page: Page) {
     this.page = page;
 
@@ -59,6 +62,7 @@ export class AdminFinancePage {
 
     this.txRows = page.getByTestId('finance-tx-row');
     this.tagPicker = page.getByTestId('finance-tag-picker');
+    this.mfaGate = page.getByTestId('finance-mfa-gate');
   }
 
   /** A quick-range chip: 'this-month', 'last-month', '3', '6', '12' or 'ytd'. */

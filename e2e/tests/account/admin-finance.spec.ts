@@ -27,6 +27,10 @@ import {
   removeConsoleStaff,
   TEST_CONSOLE_STAFF_EMAIL,
   TEST_CONSOLE_STAFF_PASSWORD,
+  seedDeactivatedAdmin,
+  removeDeactivatedAdmin,
+  TEST_DEACTIVATED_ADMIN_EMAIL,
+  TEST_DEACTIVATED_ADMIN_PASSWORD,
 } from '../../helpers/admin-users';
 import { encodeIdForUrl, TEST_COMMUNITY_ID } from '../../helpers/db';
 import { AdminFinancePage } from '../../pages/admin-finance.page';
@@ -150,7 +154,12 @@ interface FinanceMocks {
   onLinkToken?: () => unknown;
   onExchange?: (body: unknown) => unknown;
   onSync?: () => unknown;
+  /** GET /admin/api/mfa. Defaults to two-factor on and passed this session. */
+  mfa?: unknown;
+  onMfaEnable?: (body: { code?: string }) => { status: number; body: unknown };
 }
+
+const MFA_VERIFIED = { enabled: true, sessionVerified: true, backupCodesRemaining: 10 };
 
 /**
  * Single dispatching mock for /admin/api/finance*. One handler avoids
@@ -159,6 +168,27 @@ interface FinanceMocks {
  */
 async function mockFinance(page: Page, mocks: FinanceMocks = {}) {
   const plaidStatus = mocks.plaidStatus === undefined ? PLAID_STATUS_DISCONNECTED : mocks.plaidStatus;
+  await page.route('**/admin/api/mfa**', (route: Route) => {
+    const req = route.request();
+    const path = new URL(req.url()).pathname;
+    const json = (status: number, body: unknown) =>
+      route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+    if (req.method() === 'GET' && path === '/admin/api/mfa') {
+      return json(200, mocks.mfa === undefined ? MFA_VERIFIED : mocks.mfa);
+    }
+    if (req.method() === 'POST' && path === '/admin/api/mfa/setup') {
+      return json(200, {
+        secret: 'JBSWY3DPEHPK3PXP',
+        otpauthUrl: 'otpauth://totp/test',
+        qrCode: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+      });
+    }
+    if (req.method() === 'POST' && path === '/admin/api/mfa/enable' && mocks.onMfaEnable) {
+      const result = mocks.onMfaEnable(req.postDataJSON());
+      return json(result.status, result.body);
+    }
+    return route.fallback();
+  });
   await page.route('**/admin/api/finance/**', (route: Route) => {
     const req = route.request();
     const method = req.method();
@@ -510,6 +540,76 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     ]);
     await expect(finance.tagPicker).toBeHidden();
   });
+
+  test('Finance stays locked until two-factor is set up', async ({ page }) => {
+    let mfaState: unknown = { enabled: false, sessionVerified: false, backupCodesRemaining: 0 };
+    const enableCodes: string[] = [];
+    let summaryCalls = 0;
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: PLAID_STATUS_CONNECTED,
+      onSummary: () => { summaryCalls += 1; },
+      onMfaEnable: (body) => {
+        enableCodes.push(String(body.code));
+        if (body.code !== '123456') {
+          return { status: 401, body: { message: 'That code is not valid.', code: 'MFA_INVALID' } };
+        }
+        mfaState = MFA_VERIFIED;
+        return { status: 200, body: { backupCodes: ['aaaaa-bbbbb', 'ccccc-ddddd'] } };
+      },
+    });
+    // Status follows the setup: off until enable succeeds. Registered after
+    // mockFinance, so it takes precedence for GET /admin/api/mfa.
+    await page.route('**/admin/api/mfa', (route: Route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mfaState) }));
+
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    await expect(finance.mfaGate).toBeVisible();
+    await expect(finance.mfaGate).toContainText('Turn on two-factor authentication');
+    await expect(finance.plTable).toBeHidden();
+    await expect(finance.plaidConnectBtn).toBeHidden();
+    expect(summaryCalls).toBe(0);
+
+    await page.getByTestId('finance-mfa-start').click();
+    await expect(page.getByTestId('finance-mfa-secret')).toHaveText('JBSWY3DPEHPK3PXP');
+
+    // A wrong code keeps the owner on the scan step with the reason.
+    await page.getByTestId('finance-mfa-enable-code').fill('000000');
+    await page.getByTestId('finance-mfa-enable').click();
+    await expect(page.locator('#finMfaEnableMsg')).toContainText('not valid');
+
+    await page.getByTestId('finance-mfa-enable-code').fill('123456');
+    await page.getByTestId('finance-mfa-enable').click();
+    await expect(page.getByTestId('finance-mfa-backup-codes')).toContainText('aaaaa-bbbbb');
+    expect(enableCodes).toEqual(['000000', '123456']);
+
+    await page.getByTestId('finance-mfa-done').click();
+    await expect(finance.mfaGate).toBeHidden();
+    await expect(finance.profitCell('2026-09')).toHaveText('$750.00');
+    await expect(page.getByTestId('finance-mfa-settings')).toContainText('10 backup codes left');
+  });
+
+  test('a session without the code is asked to sign in again', async ({ page }) => {
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      mfa: { enabled: true, sessionVerified: false, backupCodesRemaining: 9 },
+    });
+
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    await expect(finance.mfaGate).toContainText('Sign in again with your code');
+    await expect(finance.plTable).toBeHidden();
+  });
+
+  test('the two-factor code page needs a password step first', async ({ page }) => {
+    await page.context().clearCookies();
+    await page.goto('/admin/mfa');
+    await expect(page).toHaveURL(/\/admin\?error=/);
+    await expect(page.locator('.alert-danger')).toContainText('sign-in expired');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -568,6 +668,11 @@ test.describe('Admin console — Finance tab (non-owner staff)', { tag: '@auth' 
     expect((await page.request.delete('/admin/api/finance/tags/aaaaaaaaaaaaaaaaaaaaaaa1')).status()).toBe(403);
     expect((await page.request.get('/admin/api/finance/tag-rules')).status()).toBe(403);
 
+    // Two-factor management is owner-only as well.
+    expect((await page.request.get('/admin/api/mfa')).status()).toBe(403);
+    expect((await page.request.post('/admin/api/mfa/setup')).status()).toBe(403);
+    expect((await page.request.post('/admin/api/mfa/disable', { data: { code: '123456' } })).status()).toBe(403);
+
     // And an unauthenticated caller gets the same 403 (no session at all).
     const anonRequest = await playwrightRequest.newContext({
       baseURL: process.env.BASE_URL || 'http://localhost:8080',
@@ -579,6 +684,25 @@ test.describe('Admin console — Finance tab (non-owner staff)', { tag: '@auth' 
     const anonLinkToken = await anonRequest.post('/admin/api/finance/plaid/link-token');
     expect(anonLinkToken.status()).toBe(403);
     await anonRequest.dispose();
+  });
+});
+
+test.describe('Admin console — deactivated admins', () => {
+  test.beforeAll(async () => { await seedDeactivatedAdmin(); });
+  test.afterAll(async () => { await removeDeactivatedAdmin(); });
+
+  test('a deactivated admin cannot sign in', async ({ browser }) => {
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const page = await context.newPage();
+    await page.goto('/admin');
+    await page.locator('input[name="email"]').fill(TEST_DEACTIVATED_ADMIN_EMAIL);
+    await page.locator('input[name="password"]').fill(TEST_DEACTIVATED_ADMIN_PASSWORD);
+    await page.locator('button[type="submit"]').click();
+    await expect(page).toHaveURL(/\/admin\?error=/);
+    await expect(page.locator('.alert-danger')).toContainText('Invalid credentials');
+    await page.goto('/admin/console');
+    await expect(page).toHaveURL(/\/admin(\?|$)/);
+    await context.close();
   });
 });
 
