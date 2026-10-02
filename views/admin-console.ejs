@@ -3479,9 +3479,16 @@
             .fin-mfa-codes { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0.375rem 1rem; font-family:'JetBrains Mono',monospace; font-size:0.9375rem; color:var(--ac-text); background:rgba(255,255,255,0.04); border:1px solid var(--ac-glass-border); border-radius:10px; padding:0.875rem 1rem; margin-bottom:1rem; }
             .fin-mfa-msg { font-size:0.8125rem; margin-top:0.625rem; min-height:1em; }
             .fin-mfa-msg.is-error { color:#f87171; }
-            .fin-mfa-settings { display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; }
-            .fin-mfa-settings .fin-mfa-form { margin-left:auto; }
-            .fin-mfa-settings[hidden], .fin-mfa [hidden] { display:none; }
+            /* Two-factor settings: a quiet footer line, details on demand. */
+            .fin-mfa-settings { margin-top:0.5rem; font-size:0.8125rem; color:var(--ac-text-muted); }
+            .fin-mfa-line { display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
+            .fin-mfa-line .fin-bank-dot { width:6px; height:6px; background:var(--ac-green); }
+            .fin-mfa-line .fin-bank-toggle { font:inherit; color:var(--ac-text-muted); text-decoration:underline; text-underline-offset:2px; }
+            .fin-mfa-manage { margin-top:0.625rem; padding:0.75rem 1rem; background:var(--ac-surface); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius); max-width:560px; }
+            .fin-mfa-manage p { margin:0 0 0.5rem; }
+            .fin-mfa-manage .fin-mfa-msg:empty { display:none; }
+            .fin-mfa-manage .fin-mfa-codes { margin:0.75rem 0 0; }
+            .fin-mfa-settings[hidden], .fin-mfa-settings [hidden], .fin-mfa [hidden] { display:none; }
             #panel-finance.fin-locked > :not(style):not(#financeError):not(#finMfaGate) { display:none !important; }
             @media (prefers-reduced-motion: reduce) {
               .fin-bank-toggle i, .fin-pie-svg path { transition:none; }
@@ -3712,17 +3719,22 @@
             </div>
           </div>
 
-          <div class="fin-bank fin-mfa-settings" id="finMfaSettings" hidden data-testid="finance-mfa-settings">
-            <span class="fin-bank-dot" style="background:var(--ac-green);" aria-hidden="true"></span>
-            <span class="fin-bank-status">Two-factor is on</span>
-            <span class="fin-bank-summary" id="finMfaSettingsSummary"></span>
-            <form class="fin-mfa-form" id="finMfaManageForm">
-              <input type="text" class="form-control ac-input input-sm" id="finMfaManageCode" autocomplete="one-time-code" maxlength="11" placeholder="Current code" aria-label="Current authenticator code">
-              <button type="submit" class="ac-btn ac-btn-sm" data-action="backup-codes">New backup codes</button>
-              <button type="submit" class="ac-btn ac-btn-sm" data-action="disable" data-testid="finance-mfa-disable">Turn off</button>
-            </form>
-            <div class="fin-mfa-msg" id="finMfaManageMsg" role="status" style="flex-basis:100%;"></div>
-            <div class="fin-mfa-codes" id="finMfaNewCodes" hidden style="flex-basis:100%;"></div>
+          <div class="fin-mfa-settings" id="finMfaSettings" hidden data-testid="finance-mfa-settings">
+            <div class="fin-mfa-line">
+              <span class="fin-bank-dot" aria-hidden="true"></span>
+              <span>Two-factor is on, <span id="finMfaSettingsSummary"></span>.</span>
+              <button type="button" class="fin-bank-toggle" id="finMfaManageToggle" aria-expanded="false" aria-controls="finMfaManage" data-testid="finance-mfa-manage">Manage</button>
+            </div>
+            <div class="fin-mfa-manage" id="finMfaManage" hidden>
+              <p>Enter a code from your authenticator app to get new backup codes or turn two-factor off.</p>
+              <form class="fin-mfa-form" id="finMfaManageForm">
+                <input type="text" class="form-control ac-input input-sm" id="finMfaManageCode" autocomplete="one-time-code" maxlength="11" placeholder="Current code" aria-label="Current authenticator code">
+                <button type="submit" class="ac-btn ac-btn-sm" data-action="backup-codes">New backup codes</button>
+                <button type="submit" class="ac-btn ac-btn-sm" data-action="disable" data-testid="finance-mfa-disable">Turn off</button>
+              </form>
+              <div class="fin-mfa-msg" id="finMfaManageMsg" role="status"></div>
+              <div class="fin-mfa-codes" id="finMfaNewCodes" hidden></div>
+            </div>
           </div>
 
           <div class="fin-picker" id="finTagPicker" hidden role="dialog" aria-label="Choose a tag" data-testid="finance-tag-picker"></div>
@@ -13809,6 +13821,13 @@
           lastCodes = [];
           document.getElementById('finMfaCodeList').innerHTML = '';
           loadFinanceAll();
+        });
+
+        $('#finMfaManageToggle').on('click', function() {
+          var open = this.getAttribute('aria-expanded') !== 'true';
+          this.setAttribute('aria-expanded', open ? 'true' : 'false');
+          document.getElementById('finMfaManage').hidden = !open;
+          if (open) document.getElementById('finMfaManageCode').focus();
         });
 
         // Which submit button was used; jQuery 1.9 has no event.submitter.
