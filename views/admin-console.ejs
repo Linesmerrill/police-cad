@@ -13909,13 +13909,18 @@
         });
       }
 
-      // A month with no money in, out or earned has no data yet (the current
-      // month before anything lands, or months before the first sale). Leave
-      // it out of the tables, charts and profit rather than showing $0.00.
+      // The current month (or a later one picked by hand) has nothing in it
+      // until money moves, so an empty one reads as "$0.00 so far" rather than
+      // a real zero. Leave those out; a past month at $0.00 is a real zero and
+      // stays.
       function finMonthHasData(m) {
         var inc = (m && m.income) || {};
         return [inc.total, inc.stripe, inc.iap_gross, m && m.expenses]
           .some(function(v) { return Number(v) !== 0 && !isNaN(Number(v)); });
+      }
+
+      function finKeepMonth(m) {
+        return m.month < finYm(new Date()) || finMonthHasData(m);
       }
 
       function loadFinanceSummary() {
@@ -13923,7 +13928,7 @@
         var to = document.getElementById('finTo').value;
         $.ajax({ url: '/admin/api/finance/summary', type: 'GET', data: { from: from, to: to } })
           .done(function(res) {
-            financeLastMonths = ((res && res.months) || []).filter(finMonthHasData);
+            financeLastMonths = ((res && res.months) || []).filter(finKeepMonth);
             renderFinanceProfit(financeLastMonths);
             renderFinanceTable(financeLastMonths);
             renderFinanceEarned(financeLastMonths);

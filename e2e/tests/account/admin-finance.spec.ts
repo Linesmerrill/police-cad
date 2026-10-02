@@ -495,26 +495,33 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await expect.poll(() => ranges).toContain(`${thisMonth}..${thisMonth}`);
   });
 
-  test('months with no data are left out', async ({ page }) => {
-    const emptyOctober = {
-      month: '2026-10',
+  test('the current month is hidden until it has data, past zeros stay', async ({ page }) => {
+    const ym = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = (d: Date) => d.toLocaleString('en-US', { month: 'short' }) + ' ' + d.getFullYear();
+    const now = new Date();
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const empty = (month: string) => ({
+      month,
       income: { stripe: 0, iap_gross: 0, iap_net: 0, total: 0 },
       expenses: 0,
       profit: 0,
       bank: { connected: true, income: 0, expenses: 0 },
-    };
+    });
     await mockFinance(page, {
-      summary: { ...SUMMARY_BANK_FIXTURE, months: [...SUMMARY_BANK_FIXTURE.months, emptyOctober] },
+      summary: { ...SUMMARY_BANK_FIXTURE, months: [empty(ym(lastMonth)), empty(ym(thisMonth))] },
       plaidStatus: PLAID_STATUS_CONNECTED,
     });
 
     const finance = new AdminFinancePage(page);
     await finance.open();
 
-    await expect(finance.profitCell('2026-09')).toHaveText('$750.00');
-    await expect(finance.profitCell('2026-10')).toHaveCount(0);
-    await expect(finance.plTableBody).not.toContainText('Oct 2026');
-    await expect(finance.earnedTableBody).not.toContainText('Oct 2026');
+    // Last month really was $0: it stays.
+    await expect(finance.profitCell(ym(lastMonth))).toHaveText('$0.00');
+    await expect(finance.earnedTableBody).toContainText(label(lastMonth));
+    // This month just hasn't had anything land yet: no row.
+    await expect(finance.profitCell(ym(thisMonth))).toHaveCount(0);
+    await expect(finance.earnedTableBody).not.toContainText(label(thisMonth));
   });
 
   test('a loss reads -$, not $-', async ({ page }) => {
