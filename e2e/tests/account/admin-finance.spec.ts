@@ -146,6 +146,7 @@ interface FinanceMocks {
   onSummary?: (url: URL) => void;
   plaidStatus?: unknown;
   onPatchTransaction?: (id: string, body: unknown) => void;
+  onCreateTag?: (body: unknown) => void;
   onLinkToken?: () => unknown;
   onExchange?: (body: unknown) => unknown;
   onSync?: () => unknown;
@@ -175,6 +176,11 @@ async function mockFinance(page: Page, mocks: FinanceMocks = {}) {
     }
     if (method === 'GET' && path === '/admin/api/finance/tags') {
       return json(200, TAGS_FIXTURE);
+    }
+    if (method === 'POST' && path === '/admin/api/finance/tags') {
+      const body = req.postDataJSON();
+      if (mocks.onCreateTag) mocks.onCreateTag(body);
+      return json(201, { tag: { _id: 'aaaaaaaaaaaaaaaaaaaaaaa9', name: body.name, color: body.color || '#38bdf8' } });
     }
     if (method === 'GET' && path === '/admin/api/finance/tag-rules') {
       return json(200, { rules: [] });
@@ -459,6 +465,28 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
 
     await expect.poll(() => patches).toEqual([{ id: 'tx-heroku-1', body: { hidden: true } }]);
     await expect.poll(() => summaries).toBeGreaterThan(before);
+  });
+
+  // Regression: the modal sat inside the panel while Bootstrap's backdrop
+  // went on <body>, so the backdrop covered it and nothing could be clicked.
+  test('the tags modal can be used', async ({ page }) => {
+    const created: unknown[] = [];
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: PLAID_STATUS_CONNECTED,
+      onCreateTag: (body) => created.push(body),
+    });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    await page.getByTestId('finance-manage-tags').click();
+    const modal = page.locator('#finTagsModal');
+    await expect(modal).toBeVisible();
+    // A real click: Playwright refuses it if another element covers the input.
+    await page.getByTestId('finance-tag-add-name').click();
+    await page.keyboard.type('Hosting');
+    await page.keyboard.press('Enter');
+    await expect.poll(() => created).toEqual([expect.objectContaining({ name: 'Hosting' })]);
   });
 
   test('tagging a transaction can tag the whole merchant', async ({ page }) => {
