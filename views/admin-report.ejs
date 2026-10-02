@@ -131,8 +131,18 @@
     }
     .notice-warn { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35); color: #fde68a; }
     .notice-danger { background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.35); color: #fecaca; }
+    /* Who's who: the reported account and the reporter side by side, so a
+       claim like "they copied my community" can be checked on the spot. */
+    .people { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .person h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ac-text-muted); margin: 0 0 6px; font-weight: 700; }
+    .person-name { font-weight: 700; font-size: 1rem; }
+    .person ul { list-style: none; margin: 6px 0 0; padding: 0; font-size: 0.875rem; }
+    .person li { padding: 4px 0; border-top: 1px solid var(--ac-glass-border); }
+    .person li:first-child { border-top: none; }
+    .name-hit { background: rgba(251,191,36,0.16); color: #fde68a; border-radius: 4px; padding: 0 4px; }
     @media (max-width: 640px) {
       .kv { grid-template-columns: 1fr; gap: 2px 0; }
+      .people { grid-template-columns: 1fr; }
       .kv dt { margin-top: 8px; }
     }
   </style>
@@ -194,7 +204,7 @@
       if (e.target === this) closeModal();
     });
 
-    var state = { report: null, offenses: [], otherReports: [], reporterStats: null };
+    var state = { report: null, offenses: [], otherReports: [], reporterStats: null, people: null };
 
     // Mirrors the API. A decision closes every open report about the same
     // target on the same track, and no other: dismissing spam never closes a
@@ -227,6 +237,79 @@
       return '<div class="staff-note"><span class="staff-note-label"><i class="fas fa-lock" style="font-size:0.7rem; margin-right:3px;"></i>' + esc(label) + '</span>' + esc(text) + '</div>';
     }
 
+    function fmtDay(v) {
+      if (!v) return '';
+      var d = new Date(v);
+      return isNaN(d) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // Both people on the report: when each joined, what they own and where
+    // they are members, with look-alike names highlighted. Impersonation
+    // reports are mostly "they copied my name", and the dates usually show
+    // who came first.
+    function renderPeople(people, r) {
+      if (!people || (!people.reporter && !people.reported)) return '';
+      var matches = people.nameMatches || [];
+      var hit = {};
+      matches.forEach(function (m) { hit[m.reporterName] = true; hit[m.reportedName] = true; });
+      var kindWord = { username: 'username', community: 'community', claimed: 'name they say is being copied' };
+
+      function communityLine(c) {
+        var name = hit[c.name] ? '<span class="name-hit">' + esc(c.name) + '</span>' : esc(c.name);
+        var bits = [];
+        if (typeof c.members === 'number') bits.push(c.members + (c.members === 1 ? ' member' : ' members'));
+        if (c.createdAt) bits.push('created ' + fmtDay(c.createdAt));
+        return '<li>' + name + (bits.length ? ' <span class="muted">' + esc(bits.join(', ')) + '</span>' : '') + '</li>';
+      }
+
+      function personHtml(title, p) {
+        var out = '<div class="person"><h3>' + esc(title) + '</h3>';
+        if (!p) return out + '<p class="muted" style="margin:0;">Account not found.</p></div>';
+        var uname = p.username || p.id;
+        out += '<div class="person-name">' + (hit[p.username] ? '<span class="name-hit">' + esc(uname) + '</span>' : esc(uname)) + '</div>';
+        if (p.createdAt) out += '<div class="muted">Joined ' + esc(fmtDay(p.createdAt)) + '</div>';
+        out += '<div style="margin-top:10px;" class="muted">Owns ' + (p.owned || []).length + '</div>';
+        if ((p.owned || []).length) out += '<ul>' + p.owned.map(communityLine).join('') + '</ul>';
+        out += '<div style="margin-top:10px;" class="muted">Member of ' + (p.joinedTotal || 0) + '</div>';
+        if ((p.joined || []).length) {
+          out += '<ul>' + p.joined.map(communityLine).join('') + '</ul>';
+          if (p.joinedTotal > p.joined.length) out += '<div class="muted">and ' + (p.joinedTotal - p.joined.length) + ' more</div>';
+        }
+        return out + '</div>';
+      }
+
+      var html = '<div class="card"><h2>Who\'s who</h2>';
+      if (matches.length) {
+        html += '<div class="notice notice-warn"><strong>Names that look alike.</strong><ul style="margin:6px 0 0; padding-left:18px;">';
+        matches.forEach(function (m) {
+          html += '<li>Reporter\'s ' + esc(kindWord[m.reporterKind] || m.reporterKind) + ' <strong>' + esc(m.reporterName) + '</strong>'
+            + ' and the reported ' + (r.itemType === 'community' ? 'owner' : 'user') + '\'s ' + esc(kindWord[m.reportedKind] || m.reportedKind) + ' <strong>' + esc(m.reportedName) + '</strong></li>';
+        });
+        html += '</ul><div style="margin-top:6px;">Check the dates: whoever had the name first is usually the original.</div></div>';
+      }
+
+      // A member of the other side's community has seen it, which matters
+      // when deciding who copied whom.
+      var crossNotes = [];
+      function memberOfOthers(a, b, aLabel, bLabel) {
+        if (!a || !b) return;
+        var ownedIds = {};
+        (b.owned || []).forEach(function (c) { ownedIds[c.id] = c.name; });
+        (a.joined || []).forEach(function (c) {
+          if (ownedIds[c.id]) crossNotes.push(aLabel + ' is a member of ' + bLabel + '\'s community <strong>' + esc(c.name) + '</strong>.');
+        });
+      }
+      memberOfOthers(people.reporter, people.reported, 'The reporter', 'the reported user');
+      memberOfOthers(people.reported, people.reporter, 'The reported user', 'the reporter');
+      if (crossNotes.length) html += '<p style="margin:0 0 12px; font-size:0.875rem;">' + crossNotes.join(' ') + '</p>';
+
+      html += '<div class="people">'
+        + personHtml(r.itemType === 'community' ? 'Community owner' : 'Reported user', people.reported)
+        + personHtml('Reporter', people.reporter)
+        + '</div></div>';
+      return html;
+    }
+
     function load() {
       fetch('/admin/api/reports/' + encodeURIComponent(REPORT_ID))
         .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
@@ -236,6 +319,7 @@
           state.offenses = res.body.offenses || [];
           state.otherReports = res.body.otherReports || [];
           state.reporterStats = res.body.reporterStats;
+          state.people = res.body.people || null;
           render();
         })
         .catch(function (err) {
@@ -294,6 +378,8 @@
       html += '<div style="margin-top:14px;"><h2>What the reporter wrote</h2>';
       html += '<div class="evidence">' + (r.additionalDetails ? esc(r.additionalDetails) : '<span class="muted">They picked a category but wrote nothing.</span>') + '</div></div>';
       html += '</div>';
+
+      html += renderPeople(state.people, r);
 
       var myTrack = trackOf(r.effectiveTier);
       var caseMates = state.otherReports.filter(function (o) { return isOpenStatus(o.status) && trackOf(tierOf(o)) === myTrack; });

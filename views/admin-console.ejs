@@ -13909,12 +13909,26 @@
         });
       }
 
+      // The current month (or a later one picked by hand) has nothing in it
+      // until money moves, so an empty one reads as "$0.00 so far" rather than
+      // a real zero. Leave those out; a past month at $0.00 is a real zero and
+      // stays.
+      function finMonthHasData(m) {
+        var inc = (m && m.income) || {};
+        return [inc.total, inc.stripe, inc.iap_gross, m && m.expenses]
+          .some(function(v) { return Number(v) !== 0 && !isNaN(Number(v)); });
+      }
+
+      function finKeepMonth(m) {
+        return m.month < finYm(new Date()) || finMonthHasData(m);
+      }
+
       function loadFinanceSummary() {
         var from = document.getElementById('finFrom').value;
         var to = document.getElementById('finTo').value;
         $.ajax({ url: '/admin/api/finance/summary', type: 'GET', data: { from: from, to: to } })
           .done(function(res) {
-            financeLastMonths = (res && res.months) || [];
+            financeLastMonths = ((res && res.months) || []).filter(finKeepMonth);
             renderFinanceProfit(financeLastMonths);
             renderFinanceTable(financeLastMonths);
             renderFinanceEarned(financeLastMonths);
@@ -14049,7 +14063,7 @@
         var sub = months.length
           ? months.length + (months.length === 1 ? ' month' : ' months')
             + (losing ? ', ' + losing + ' at a loss' : '')
-          : 'No months in this range';
+          : 'No data for this range';
         document.getElementById('finProfitSub').textContent = sub;
 
         var maxAbs = months.reduce(function(m, x) { return Math.max(m, Math.abs(Number(x.profit) || 0)); }, 0) || 1;
