@@ -495,6 +495,28 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await expect.poll(() => ranges).toContain(`${thisMonth}..${thisMonth}`);
   });
 
+  test('months with no data are left out', async ({ page }) => {
+    const emptyOctober = {
+      month: '2026-10',
+      income: { stripe: 0, iap_gross: 0, iap_net: 0, total: 0 },
+      expenses: 0,
+      profit: 0,
+      bank: { connected: true, income: 0, expenses: 0 },
+    };
+    await mockFinance(page, {
+      summary: { ...SUMMARY_BANK_FIXTURE, months: [...SUMMARY_BANK_FIXTURE.months, emptyOctober] },
+      plaidStatus: PLAID_STATUS_CONNECTED,
+    });
+
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    await expect(finance.profitCell('2026-09')).toHaveText('$750.00');
+    await expect(finance.profitCell('2026-10')).toHaveCount(0);
+    await expect(finance.plTableBody).not.toContainText('Oct 2026');
+    await expect(finance.earnedTableBody).not.toContainText('Oct 2026');
+  });
+
   test('a loss reads -$, not $-', async ({ page }) => {
     const losing = JSON.parse(JSON.stringify(SUMMARY_BANK_FIXTURE));
     losing.months[1].profit = -10645.24;
