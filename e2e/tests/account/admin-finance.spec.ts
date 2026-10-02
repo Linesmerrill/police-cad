@@ -66,7 +66,47 @@ const SUMMARY_BANK_FIXTURE = {
     },
   ],
   bank_connected: true,
+  sources: {
+    stripe: { connected: true, events: 3 },
+    revenuecat: { connected: false },
+    bank: { connected: true },
+  },
+  by_tag: {
+    income: [
+      { tag_id: 'aaaaaaaaaaaaaaaaaaaaaaa1', name: 'Steam', color: '#38bdf8', amount: 1500 },
+      { tag_id: '', name: 'Untagged', color: '#64748b', amount: 600 },
+    ],
+    expenses: [
+      { tag_id: 'aaaaaaaaaaaaaaaaaaaaaaa2', name: 'Google Ads', color: '#fbbf24', amount: 500 },
+      { tag_id: '', name: 'Untagged', color: '#64748b', amount: 270 },
+    ],
+  },
   warnings: ['One bank transaction could not be categorized.'],
+};
+
+const TAGS_FIXTURE = {
+  tags: [
+    { _id: 'aaaaaaaaaaaaaaaaaaaaaaa1', name: 'Steam', color: '#38bdf8' },
+    { _id: 'aaaaaaaaaaaaaaaaaaaaaaa2', name: 'Google Ads', color: '#fbbf24' },
+  ],
+};
+
+const TRANSACTIONS_FIXTURE = {
+  data: [
+    {
+      transaction_id: 'tx-steam-1', account_name: 'Business Checking', account_mask: '1234',
+      name: 'STEAM PAYOUT 8812', merchant_name: 'Steam', amount: -500, date: '2026-09-12T00:00:00Z',
+      pending: false, hidden: false, tag_id: 'aaaaaaaaaaaaaaaaaaaaaaa1', internal_transfer: false,
+    },
+    {
+      transaction_id: 'tx-heroku-1', account_name: 'Business Checking', account_mask: '1234',
+      name: 'HEROKU*BILLING', merchant_name: 'Heroku', amount: 85.5, date: '2026-09-10T00:00:00Z',
+      pending: false, hidden: false, internal_transfer: false,
+    },
+  ],
+  totalCount: 2,
+  page: 1,
+  limit: 25,
 };
 
 const SUMMARY_NO_BANK_FIXTURE = {
@@ -103,7 +143,9 @@ const PLAID_STATUS_DISCONNECTED = {
 interface FinanceMocks {
   summary?: unknown;
   summaryStatus?: number;
+  onSummary?: (url: URL) => void;
   plaidStatus?: unknown;
+  onPatchTransaction?: (id: string, body: unknown) => void;
   onLinkToken?: () => unknown;
   onExchange?: (body: unknown) => unknown;
   onSync?: () => unknown;
@@ -125,10 +167,25 @@ async function mockFinance(page: Page, mocks: FinanceMocks = {}) {
       route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 
     if (method === 'GET' && path === '/admin/api/finance/summary') {
+      if (mocks.onSummary) mocks.onSummary(url);
       if (mocks.summary !== undefined) {
         return json(mocks.summaryStatus || 200, mocks.summary);
       }
       return route.fallback();
+    }
+    if (method === 'GET' && path === '/admin/api/finance/tags') {
+      return json(200, TAGS_FIXTURE);
+    }
+    if (method === 'GET' && path === '/admin/api/finance/tag-rules') {
+      return json(200, { rules: [] });
+    }
+    if (method === 'GET' && path === '/admin/api/finance/transactions') {
+      return json(200, TRANSACTIONS_FIXTURE);
+    }
+    if (method === 'PATCH' && path.startsWith('/admin/api/finance/transactions/')) {
+      const id = decodeURIComponent(path.split('/').pop() || '');
+      if (mocks.onPatchTransaction) mocks.onPatchTransaction(id, req.postDataJSON());
+      return json(200, { transaction: {}, also_tagged: 0 });
     }
     if (method === 'GET' && path === '/admin/api/finance/plaid/status') {
       return json(200, plaidStatus);
@@ -202,7 +259,9 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await expect(finance.earnedTableBody).toContainText('$70.00'); // IAP net
 
     // Source badges reflect connectivity from the latest month.
-    await expect(finance.sources).toContainText('Stripe: Connected');
+    // Badges say what each source delivered, not just that it exists.
+    await expect(finance.sources).toContainText('Stripe: 3 payments');
+    await expect(finance.sources).toContainText('App stores: nothing received yet');
     await expect(finance.sources).toContainText('Bank: Connected');
 
     // Warnings surface.
@@ -330,6 +389,99 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await finance.plaidSyncBtn.click();
     await expect.poll(() => syncCalls, { timeout: 10_000 }).toBe(1);
   });
+
+  test('quick ranges set the months and reload', async ({ page }) => {
+    const ranges: string[] = [];
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: PLAID_STATUS_CONNECTED,
+      onSummary: (url) => ranges.push(`${url.searchParams.get('from')}..${url.searchParams.get('to')}`),
+    });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    const now = new Date();
+    const ym = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const thisMonth = ym(now);
+    const threeBack = ym(new Date(now.getFullYear(), now.getMonth() - 2, 1));
+
+    await finance.preset('3').click();
+    await expect(page.getByTestId('finance-from')).toHaveValue(threeBack);
+    await expect(page.getByTestId('finance-to')).toHaveValue(thisMonth);
+    await expect(finance.preset('3')).toHaveAttribute('aria-pressed', 'true');
+    await expect.poll(() => ranges).toContain(`${threeBack}..${thisMonth}`);
+
+    await finance.preset('this-month').click();
+    await expect(page.getByTestId('finance-from')).toHaveValue(thisMonth);
+    await expect.poll(() => ranges).toContain(`${thisMonth}..${thisMonth}`);
+  });
+
+  test('a loss reads -$, not $-', async ({ page }) => {
+    const losing = JSON.parse(JSON.stringify(SUMMARY_BANK_FIXTURE));
+    losing.months[1].profit = -10645.24;
+    await mockFinance(page, { summary: losing, plaidStatus: PLAID_STATUS_CONNECTED });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    await expect(finance.profitCell('2026-09')).toHaveText('-$10,645.24');
+    await expect(page.getByTestId('finance-profit-total')).toHaveText('-$10,065.24');
+  });
+
+  test('the donuts show each tag from by_tag', async ({ page }) => {
+    await mockFinance(page, { summary: SUMMARY_BANK_FIXTURE, plaidStatus: PLAID_STATUS_CONNECTED });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    const income = page.getByTestId('finance-pie-income');
+    await expect(income.locator('svg path')).toHaveCount(2);
+    await expect(income.locator('.fin-pie-legend')).toContainText('Steam');
+    await expect(income.locator('.fin-pie-legend')).toContainText('$1,500.00');
+    await expect(income.locator('.fin-pie-legend')).toContainText('71.4%');
+    await expect(page.getByTestId('finance-pie-expenses').locator('.fin-pie-legend')).toContainText('Google Ads');
+  });
+
+  test('hiding a transaction sends hidden and reloads the totals', async ({ page }) => {
+    const patches: Array<{ id: string; body: unknown }> = [];
+    let summaries = 0;
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: PLAID_STATUS_CONNECTED,
+      onSummary: () => { summaries += 1; },
+      onPatchTransaction: (id, body) => patches.push({ id, body }),
+    });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    await expect(finance.txRows).toHaveCount(2);
+    await expect(finance.txRows.first()).toContainText('Steam');
+    const before = summaries;
+    await page.getByRole('button', { name: 'Hide transaction' }).nth(1).click();
+
+    await expect.poll(() => patches).toEqual([{ id: 'tx-heroku-1', body: { hidden: true } }]);
+    await expect.poll(() => summaries).toBeGreaterThan(before);
+  });
+
+  test('tagging a transaction can tag the whole merchant', async ({ page }) => {
+    const patches: Array<{ id: string; body: unknown }> = [];
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: PLAID_STATUS_CONNECTED,
+      onPatchTransaction: (id, body) => patches.push({ id, body }),
+    });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    // The Heroku row is untagged.
+    await finance.txRows.nth(1).getByRole('button', { name: 'Add a tag' }).click();
+    await expect(finance.tagPicker).toBeVisible();
+    await finance.tagPicker.getByLabel(/Also tag future transactions from Heroku/).check();
+    await finance.tagPicker.getByRole('button', { name: 'Google Ads' }).click();
+
+    await expect.poll(() => patches).toEqual([
+      { id: 'tx-heroku-1', body: { tag_id: 'aaaaaaaaaaaaaaaaaaaaaaa2', apply_to_merchant: true } },
+    ]);
+    await expect(finance.tagPicker).toBeHidden();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -379,6 +531,14 @@ test.describe('Admin console — Finance tab (non-owner staff)', { tag: '@auth' 
 
     const status = await page.request.get('/admin/api/finance/plaid/status');
     expect(status.status()).toBe(403);
+
+    // Transactions, tags and rules are owner-only too.
+    expect((await page.request.get('/admin/api/finance/transactions')).status()).toBe(403);
+    expect((await page.request.patch('/admin/api/finance/transactions/tx-1', { data: { hidden: true } })).status()).toBe(403);
+    expect((await page.request.get('/admin/api/finance/tags')).status()).toBe(403);
+    expect((await page.request.post('/admin/api/finance/tags', { data: { name: 'Steam' } })).status()).toBe(403);
+    expect((await page.request.delete('/admin/api/finance/tags/aaaaaaaaaaaaaaaaaaaaaaa1')).status()).toBe(403);
+    expect((await page.request.get('/admin/api/finance/tag-rules')).status()).toBe(403);
 
     // And an unauthenticated caller gets the same 403 (no session at all).
     const anonRequest = await playwrightRequest.newContext({
