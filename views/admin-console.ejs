@@ -3466,12 +3466,67 @@
               .fin-tx-table td[colspan] { grid-column:1 / -1; }
               .fin-tx-raw { max-width:100%; }
             }
+            /* Two-factor: the gate that stands in for the panel until this
+               session has passed it, and the small settings card. */
+            .fin-mfa { background:var(--ac-surface); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius); padding:1.5rem; max-width:560px; }
+            .fin-mfa h3 { font-size:1.0625rem; font-weight:700; color:var(--ac-text); margin:0 0 0.375rem; }
+            .fin-mfa p { color:var(--ac-text-muted); font-size:0.875rem; margin:0 0 1rem; line-height:1.5; }
+            .fin-mfa-qr { display:flex; gap:1.25rem; align-items:flex-start; flex-wrap:wrap; margin-bottom:1rem; }
+            .fin-mfa-qr img { width:168px; height:168px; border-radius:10px; background:#fff; padding:8px; }
+            .fin-mfa-secret { font-family:'JetBrains Mono',monospace; font-size:0.8125rem; color:var(--ac-text); word-break:break-all; background:rgba(255,255,255,0.04); border:1px solid var(--ac-glass-border); border-radius:8px; padding:0.5rem 0.625rem; }
+            .fin-mfa-form { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
+            .fin-mfa-form input { max-width:180px; font-family:'JetBrains Mono',monospace; letter-spacing:0.1em; }
+            .fin-mfa-codes { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0.375rem 1rem; font-family:'JetBrains Mono',monospace; font-size:0.9375rem; color:var(--ac-text); background:rgba(255,255,255,0.04); border:1px solid var(--ac-glass-border); border-radius:10px; padding:0.875rem 1rem; margin-bottom:1rem; }
+            .fin-mfa-msg { font-size:0.8125rem; margin-top:0.625rem; min-height:1em; }
+            .fin-mfa-msg.is-error { color:#f87171; }
+            .fin-mfa-settings { display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; }
+            .fin-mfa-settings .fin-mfa-form { margin-left:auto; }
+            .fin-mfa-settings[hidden], .fin-mfa [hidden] { display:none; }
+            #panel-finance.fin-locked > :not(style):not(#financeError):not(#finMfaGate) { display:none !important; }
             @media (prefers-reduced-motion: reduce) {
               .fin-bank-toggle i, .fin-pie-svg path { transition:none; }
             }
           </style>
 
           <div id="financeError" data-testid="finance-error" role="alert" style="display:none; margin-bottom:1rem; padding:12px 14px; border-radius:10px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:13px;"></div>
+
+          <div class="fin-mfa" id="finMfaGate" hidden data-testid="finance-mfa-gate">
+            <div id="finMfaIntro">
+              <h3>Turn on two-factor authentication</h3>
+              <p>Finance shows your bank data, so it needs a code from an authenticator app (Google Authenticator, 1Password, Authy) each time you sign in.</p>
+              <button type="button" class="ac-btn ac-btn-accent" id="finMfaStartBtn" data-testid="finance-mfa-start">Set up two-factor</button>
+            </div>
+            <div id="finMfaRelogin" hidden>
+              <h3>Sign in again with your code</h3>
+              <p>Two-factor is on, but this session started without it. Log out and sign back in with your authenticator code to open Finance.</p>
+              <a class="ac-btn ac-btn-accent" href="/admin/logout">Log out</a>
+            </div>
+            <div id="finMfaScan" hidden>
+              <h3>Scan this QR code</h3>
+              <p>Open your authenticator app, add an account, and scan the code. Then enter the 6-digit code it shows.</p>
+              <div class="fin-mfa-qr">
+                <img id="finMfaQr" alt="QR code for your authenticator app">
+                <div style="flex:1; min-width:200px;">
+                  <p style="margin-bottom:0.375rem;">Can't scan it? Enter this key instead:</p>
+                  <div class="fin-mfa-secret" id="finMfaSecret" data-testid="finance-mfa-secret"></div>
+                </div>
+              </div>
+              <form class="fin-mfa-form" id="finMfaEnableForm">
+                <input type="text" class="form-control ac-input" id="finMfaEnableCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" aria-label="6-digit code" data-testid="finance-mfa-enable-code">
+                <button type="submit" class="ac-btn ac-btn-accent" data-testid="finance-mfa-enable">Turn on</button>
+              </form>
+              <div class="fin-mfa-msg" id="finMfaEnableMsg" role="status"></div>
+            </div>
+            <div id="finMfaCodes" hidden>
+              <h3>Save your backup codes</h3>
+              <p>Each code works once if you lose your phone. Store them somewhere safe, like your password manager. You won't see them again.</p>
+              <div class="fin-mfa-codes" id="finMfaCodeList" data-testid="finance-mfa-backup-codes"></div>
+              <div class="fin-mfa-form">
+                <button type="button" class="ac-btn" id="finMfaCopyBtn">Copy codes</button>
+                <button type="button" class="ac-btn ac-btn-accent" id="finMfaDoneBtn" data-testid="finance-mfa-done">I saved them</button>
+              </div>
+            </div>
+          </div>
 
           <div class="fin-bank" id="finBank" data-testid="finance-bank-card">
             <div class="fin-bank-row">
@@ -3655,6 +3710,19 @@
                 </table>
               </div>
             </div>
+          </div>
+
+          <div class="fin-bank fin-mfa-settings" id="finMfaSettings" hidden data-testid="finance-mfa-settings">
+            <span class="fin-bank-dot" style="background:var(--ac-green);" aria-hidden="true"></span>
+            <span class="fin-bank-status">Two-factor is on</span>
+            <span class="fin-bank-summary" id="finMfaSettingsSummary"></span>
+            <form class="fin-mfa-form" id="finMfaManageForm">
+              <input type="text" class="form-control ac-input input-sm" id="finMfaManageCode" autocomplete="one-time-code" maxlength="11" placeholder="Current code" aria-label="Current authenticator code">
+              <button type="submit" class="ac-btn ac-btn-sm" data-action="backup-codes">New backup codes</button>
+              <button type="submit" class="ac-btn ac-btn-sm" data-action="disable" data-testid="finance-mfa-disable">Turn off</button>
+            </form>
+            <div class="fin-mfa-msg" id="finMfaManageMsg" role="status" style="flex-basis:100%;"></div>
+            <div class="fin-mfa-codes" id="finMfaNewCodes" hidden style="flex-basis:100%;"></div>
           </div>
 
           <div class="fin-picker" id="finTagPicker" hidden role="dialog" aria-label="Choose a tag" data-testid="finance-tag-picker"></div>
@@ -13582,6 +13650,9 @@
         var msg = 'Could not load finance data.';
         if (jqXHR && jqXHR.status === 401) {
           msg = serverMsg || 'API session expired. Please log out and log in again.';
+        } else if (jqXHR && jqXHR.status === 403 && finResponseCode(jqXHR) === 'MFA_REQUIRED') {
+          finCheckMfa(function() {});
+          return;
         } else if (jqXHR && jqXHR.status === 403) {
           msg = 'Forbidden: owner access required.';
         } else if (serverMsg) {
@@ -13628,6 +13699,153 @@
           .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       }
 
+      // ---- Two-factor -------------------------------------------------------
+      // Finance only opens for a session that passed two-factor. Until then
+      // the gate stands in for the panel: set up (QR, confirm, backup codes)
+      // or, when it's already on, sign in again with a code.
+
+      function finResponseCode(jqXHR) {
+        try {
+          var body = JSON.parse((jqXHR && jqXHR.responseText) || '');
+          return (body && body.code) || '';
+        } catch (e) {
+          return '';
+        }
+      }
+
+      function finShowMfaGate(view) {
+        var panel = document.getElementById('panel-finance');
+        var gate = document.getElementById('finMfaGate');
+        panel.classList.toggle('fin-locked', !!view);
+        gate.hidden = !view;
+        ['intro', 'relogin', 'scan', 'codes'].forEach(function(name) {
+          var el = document.getElementById('finMfa' + name.charAt(0).toUpperCase() + name.slice(1));
+          if (el) el.hidden = name !== view;
+        });
+      }
+
+      function finCheckMfa(done) {
+        $.ajax({ url: '/admin/api/mfa', type: 'GET' })
+          .done(function(status) {
+            status = status || {};
+            if (status.sessionVerified) {
+              finShowMfaGate(null);
+              var left = Number(status.backupCodesRemaining) || 0;
+              document.getElementById('finMfaSettingsSummary').textContent =
+                left + (left === 1 ? ' backup code left' : ' backup codes left');
+              document.getElementById('finMfaSettings').hidden = false;
+              done(true);
+            } else {
+              document.getElementById('finMfaSettings').hidden = true;
+              finShowMfaGate(status.enabled ? 'relogin' : 'intro');
+              done(false);
+            }
+          })
+          .fail(function(jqXHR) {
+            finAjaxFailed(jqXHR);
+            done(false);
+          });
+      }
+
+      function finMfaMessage(id, msg, isError) {
+        var el = document.getElementById(id);
+        el.textContent = msg || '';
+        el.classList.toggle('is-error', !!isError);
+      }
+
+      function finRenderCodes(el, codes) {
+        el.innerHTML = (codes || []).map(function(c) { return '<span>' + finEsc(c) + '</span>'; }).join('');
+      }
+
+      function finWireMfa() {
+        var lastCodes = [];
+
+        $('#finMfaStartBtn').on('click', function() {
+          var btn = this;
+          btn.disabled = true;
+          $.ajax({ url: '/admin/api/mfa/setup', type: 'POST', contentType: 'application/json', data: '{}' })
+            .done(function(res) {
+              document.getElementById('finMfaQr').src = res.qrCode;
+              document.getElementById('finMfaSecret').textContent = res.secret;
+              document.getElementById('finMfaEnableCode').value = '';
+              finMfaMessage('finMfaEnableMsg', '');
+              finShowMfaGate('scan');
+              document.getElementById('finMfaEnableCode').focus();
+            })
+            .fail(finAjaxFailed)
+            .always(function() { btn.disabled = false; });
+        });
+
+        $('#finMfaEnableForm').on('submit', function(e) {
+          e.preventDefault();
+          var input = document.getElementById('finMfaEnableCode');
+          var code = input.value.replace(/\s/g, '');
+          if (!/^\d{6}$/.test(code)) {
+            finMfaMessage('finMfaEnableMsg', 'Enter the 6-digit code from your app.', true);
+            input.focus();
+            return;
+          }
+          $.ajax({ url: '/admin/api/mfa/enable', type: 'POST', contentType: 'application/json', data: JSON.stringify({ code: code }) })
+            .done(function(res) {
+              lastCodes = (res && res.backupCodes) || [];
+              finRenderCodes(document.getElementById('finMfaCodeList'), lastCodes);
+              finShowMfaGate('codes');
+            })
+            .fail(function(jqXHR) {
+              finMfaMessage('finMfaEnableMsg', finServerMessage(jqXHR) || 'That code did not work. Try the newest one.', true);
+              input.select();
+            });
+        });
+
+        $('#finMfaCopyBtn').on('click', function() {
+          var btn = this;
+          if (!navigator.clipboard) return;
+          navigator.clipboard.writeText(lastCodes.join('\n')).then(function() {
+            btn.textContent = 'Copied';
+          });
+        });
+
+        $('#finMfaDoneBtn').on('click', function() {
+          lastCodes = [];
+          document.getElementById('finMfaCodeList').innerHTML = '';
+          loadFinanceAll();
+        });
+
+        // Which submit button was used; jQuery 1.9 has no event.submitter.
+        var manageAction = '';
+        $('#finMfaManageForm').on('click', 'button[type=submit]', function() {
+          manageAction = this.getAttribute('data-action');
+        });
+        $('#finMfaManageForm').on('submit', function(e) {
+          e.preventDefault();
+          var input = document.getElementById('finMfaManageCode');
+          var code = input.value.trim();
+          if (!code) {
+            finMfaMessage('finMfaManageMsg', 'Enter a code from your authenticator app first.', true);
+            input.focus();
+            return;
+          }
+          var action = manageAction === 'disable' ? 'disable' : 'backup-codes';
+          $.ajax({ url: '/admin/api/mfa/' + action, type: 'POST', contentType: 'application/json', data: JSON.stringify({ code: code }) })
+            .done(function(res) {
+              input.value = '';
+              if (action === 'disable') {
+                finMfaMessage('finMfaManageMsg', '');
+                loadFinanceAll();
+                return;
+              }
+              var list = document.getElementById('finMfaNewCodes');
+              finRenderCodes(list, res && res.backupCodes);
+              list.hidden = false;
+              finMfaMessage('finMfaManageMsg', 'New backup codes. Your old ones no longer work. Save these now; they are shown once.');
+              document.getElementById('finMfaSettingsSummary').textContent = ((res && res.backupCodes) || []).length + ' backup codes left';
+            })
+            .fail(function(jqXHR) {
+              finMfaMessage('finMfaManageMsg', finServerMessage(jqXHR) || 'That code did not work.', true);
+            });
+        });
+      }
+
       function initFinancePanel() {
         if (financeWired) { loadFinanceAll(); return; }
         financeWired = true;
@@ -13650,11 +13868,19 @@
         $('#finFrom, #finTo').on('change', function() { finTxState.page = 1; loadFinanceAll(); });
         finWireTransactions();
         finWireTagsModal();
+        finWireMfa();
         loadFinanceAll();
       }
 
       function loadFinanceAll() {
         finShowError(null);
+        // Nothing loads until this session has passed two-factor.
+        finCheckMfa(function(verified) {
+          if (verified) loadFinanceData();
+        });
+      }
+
+      function loadFinanceData() {
         finSyncPresetButtons();
         loadBankStatus();
         // Tags first: the summary's pies and the transaction rows show them.

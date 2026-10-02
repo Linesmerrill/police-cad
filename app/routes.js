@@ -519,6 +519,263 @@ module.exports = function (app, passport, server, nextApp, handle) {
     res.render("admin-login", { error: errorToPass, success });
   });
 
+  // Everything after the credentials (and, with two-factor on, the code)
+  // check out: record the login, build the console session, and for owners
+  // attach the API admin JWT. opts.apiJwt is the token from the two-factor
+  // step; without it, owners log in to the API with opts.password.
+  async function finishAdminLogin(req, res, adminUser, email, opts) {
+    const mongoose = require("mongoose");
+    // Update lastLoginAt directly in MongoDB
+    try {
+      await mongoose.connection.db.collection("admin_users").updateOne(
+        { _id: adminUser._id },
+        { $set: { lastLoginAt: new Date() } }
+      );
+    } catch (err) {
+      console.log("Failed to update lastLoginAt in MongoDB:", err.message);
+    }
+
+    // Also update lastLoginAt in backend API if API token is configured
+    const apiToken = process.env.POLICE_CAD_API_TOKEN;
+    const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+    
+    if (apiToken) {
+      // Try to find admin in backend API and update lastLoginAt
+      const axios = require("axios");
+      
+      // Get roles from adminUser for the currentUser object
+      const adminRoles = adminUser.roles || (adminUser.role ? [adminUser.role] : ['admin']);
+      
+      axios.post(`${apiUrl}/api/v1/admin/search/admins`, 
+        { 
+          query: email,
+          currentUser: {
+            email: email,
+            roles: adminRoles
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiToken}`
+          },
+          timeout: 5000,
+          validateStatus: function (status) {
+            return status < 600; // Don't throw on any status code
+          }
+        }
+      ).then(function(searchResponse) {
+        if (searchResponse.status === 200 && searchResponse.data.admins && searchResponse.data.admins.length > 0) {
+          const adminId = searchResponse.data.admins[0].id || searchResponse.data.admins[0]._id;
+          
+          // Update lastLoginAt via API
+          axios.patch(`${apiUrl}/api/v1/admin/admins/${adminId}`, 
+            { lastLoginAt: new Date().toISOString() },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiToken}`
+              },
+              timeout: 5000,
+              validateStatus: function (status) {
+                return status < 600;
+              }
+            }
+          ).catch(function(err) {
+            // Silently fail - lastLoginAt update is not critical
+          });
+        }
+      }).catch(function(err) {
+        // Silently fail - lastLoginAt update is not critical for login flow
+      });
+    }
+
+    // Check if profile is complete (has firstName and lastName)
+    const profileComplete = adminUser.firstName && adminUser.lastName;
+
+    // Create admin session with profile fields
+    req.session.adminToken = "local-admin-" + Date.now();
+    req.session.admin = {
+      email: adminUser.email,
+      name: adminUser.firstName && adminUser.lastName
+        ? `${adminUser.firstName} ${adminUser.lastName}`
+        : (adminUser.name || adminUser.email.split('@')[0]),
+      firstName: adminUser.firstName || '',
+      lastName: adminUser.lastName || '',
+      profilePicture: adminUser.profilePicture || '',
+      id: adminUser._id.toString(), // Ensure ID is a string for API calls
+      role: adminUser.role,
+      roles: adminUser.roles
+    };
+
+    // Store login time for session duration calculation
+    req.session.loginTime = new Date();
+
+    // Owner sessions: fetch a Go API admin JWT so owner-only server-side
+    // proxies (e.g. /admin/api/finance/*) can call the API as this admin.
+    // The JWT lives ONLY in the server-side session — it is never rendered
+    // into a view or sent to the browser. Non-owner admins skip this; they
+    // simply don't get API credentials. A failed API login is non-fatal:
+    // the local console session is already established, and the finance
+    // proxies will report a clear "not established" error instead.
+    const isOwnerLogin = adminUser.role === "owner" ||
+      (adminUser.roles && adminUser.roles.includes("owner"));
+    req.session.isOwner = !!isOwnerLogin;
+    if (isOwnerLogin && opts.apiJwt) {
+      req.session.apiAdminJwt = opts.apiJwt;
+    } else if (isOwnerLogin) {
+      try {
+        const apiLoginResp = await axios.post(
+          `${apiUrl}/api/v1/admin/login`,
+          { email: email, password: opts.password },
+          {
+            headers: { "Content-Type": "application/json" },
+            timeout: 8000,
+            validateStatus: function (status) { return status < 600; }
+          }
+        );
+        if (apiLoginResp.status === 200 && apiLoginResp.data && apiLoginResp.data.token) {
+          req.session.apiAdminJwt = apiLoginResp.data.token;
+        } else {
+          console.log("Owner API login did not return a token (status " + apiLoginResp.status + "); finance features will be unavailable until the API is reachable.");
+        }
+      } catch (apiLoginErr) {
+        console.log("Owner API login failed (finance unavailable):", apiLoginErr.message);
+      }
+    }
+
+    // Log login activity to backend API (reuse apiToken and apiUrl from above)
+    if (apiToken) {
+      // Get roles from adminUser for the currentUser object
+      const adminRoles = adminUser.roles || (adminUser.role ? [adminUser.role] : ['admin']);
+
+      // First find admin ID in backend API
+      axios.post(`${apiUrl}/api/v1/admin/search/admins`,
+        {
+          query: email,
+          currentUser: {
+            email: email,
+            roles: adminRoles
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiToken}`
+          },
+          timeout: 5000,
+          validateStatus: function (status) {
+            return status < 600;
+          }
+        }
+      ).then(function(searchResponse) {
+        if (searchResponse.status === 200 && searchResponse.data.admins && searchResponse.data.admins.length > 0) {
+          const adminId = searchResponse.data.admins[0].id || searchResponse.data.admins[0]._id;
+
+          // Log login activity
+          axios.post(`${apiUrl}/api/v1/admin/activity/log`,
+            {
+              adminId: adminId,
+              type: 'login',
+              title: 'Admin logged in',
+              details: 'Admin user logged into the system',
+              timestamp: new Date().toISOString(),
+              currentUser: {
+                email: email,
+                roles: adminRoles
+              }
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiToken}`
+              },
+              timeout: 5000,
+              validateStatus: function (status) {
+                return status < 600;
+              }
+            }
+          ).catch(function(err) {
+            // Silently fail - activity logging is not critical
+          });
+        }
+      }).catch(function(err) {
+        // Silently fail - activity logging is not critical
+      });
+    }
+
+    // Redirect based on profile completeness
+    if (!profileComplete) {
+      return res.redirect("/admin/profile?setup=true");
+    }
+    return res.redirect("/admin/console");
+  }
+
+  // Second step of an admin login with two-factor on (see POST /admin).
+  const ADMIN_MFA_PENDING_MS = 5 * 60 * 1000;
+  const ADMIN_MFA_MAX_ATTEMPTS = 5;
+
+  function adminMfaPending(req) {
+    const pending = req.session && req.session.adminMfaPending;
+    if (!pending || Date.now() - pending.startedAt > ADMIN_MFA_PENDING_MS) return null;
+    return pending;
+  }
+
+  function restartAdminLogin(req, res, message) {
+    if (req.session) delete req.session.adminMfaPending;
+    return res.redirect("/admin?error=" + encodeURIComponent(message));
+  }
+
+  app.get("/admin/mfa", function (req, res) {
+    if (req.session && req.session.adminToken) return res.redirect("/admin/console");
+    if (!adminMfaPending(req)) return restartAdminLogin(req, res, "Your sign-in expired. Enter your password again.");
+    res.render("admin-mfa", { error: null });
+  });
+
+  app.post("/admin/mfa", async function (req, res) {
+    const pending = adminMfaPending(req);
+    if (!pending) return restartAdminLogin(req, res, "Your sign-in expired. Enter your password again.");
+    const code = String((req.body && req.body.code) || "").trim();
+    if (!code) return res.render("admin-mfa", { error: "Enter the code from your authenticator app." });
+    if (pending.attempts >= ADMIN_MFA_MAX_ATTEMPTS) {
+      return restartAdminLogin(req, res, "Too many incorrect codes. Enter your password again.");
+    }
+    pending.attempts += 1;
+
+    const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+    let resp;
+    try {
+      resp = await axios.post(`${apiUrl}/api/v1/admin/login/mfa`, { challenge: pending.challenge, code: code }, {
+        headers: { "Content-Type": "application/json" },
+        timeout: 8000,
+        validateStatus: function (status) { return status < 600; },
+      });
+    } catch (err) {
+      console.log("Admin two-factor verify failed:", err.message);
+      return res.render("admin-mfa", { error: "Two-factor sign-in is unavailable right now. Try again in a minute." });
+    }
+
+    const data = resp.data || {};
+    if (resp.status === 200 && data.token) {
+      try {
+        const mongoose = require("mongoose");
+        const adminUser = await mongoose.connection.db.collection("admin_users").findOne({ email: pending.email });
+        if (!adminUser) return restartAdminLogin(req, res, "Invalid credentials");
+        delete req.session.adminMfaPending;
+        return await finishAdminLogin(req, res, adminUser, pending.email, { apiJwt: data.token });
+      } catch (err) {
+        return restartAdminLogin(req, res, "Authentication failed. Please try again.");
+      }
+    }
+    if (data.code === "MFA_CHALLENGE_EXPIRED") {
+      return restartAdminLogin(req, res, "Your sign-in expired. Enter your password again.");
+    }
+    if (resp.status === 429) {
+      return restartAdminLogin(req, res, data.error || "Too many incorrect codes. Try again in 15 minutes.");
+    }
+    return res.render("admin-mfa", { error: "That code is not valid. Try the newest code from your app." });
+  });
+
   app.post("/admin", async function (req, res) {
     try {
       const email = (req.body && req.body.email) || "";
@@ -553,188 +810,31 @@ module.exports = function (app, passport, server, nextApp, handle) {
         return res.redirect("/admin?error=" + encodeURIComponent("Invalid credentials"));
       }
 
-      // Update lastLoginAt directly in MongoDB
-      try {
-        await mongoose.connection.db.collection("admin_users").updateOne(
-          { _id: adminUser._id },
-          { $set: { lastLoginAt: new Date() } }
-        );
-      } catch (err) {
-        console.log("Failed to update lastLoginAt in MongoDB:", err.message);
-      }
-
-      // Also update lastLoginAt in backend API if API token is configured
-      const apiToken = process.env.POLICE_CAD_API_TOKEN;
-      const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
-      
-      if (apiToken) {
-        // Try to find admin in backend API and update lastLoginAt
-        const axios = require("axios");
-        
-        // Get roles from adminUser for the currentUser object
-        const adminRoles = adminUser.roles || (adminUser.role ? [adminUser.role] : ['admin']);
-        
-        axios.post(`${apiUrl}/api/v1/admin/search/admins`, 
-          { 
-            query: email,
-            currentUser: {
-              email: email,
-              roles: adminRoles
-            }
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${apiToken}`
-            },
-            timeout: 5000,
-            validateStatus: function (status) {
-              return status < 600; // Don't throw on any status code
-            }
-          }
-        ).then(function(searchResponse) {
-          if (searchResponse.status === 200 && searchResponse.data.admins && searchResponse.data.admins.length > 0) {
-            const adminId = searchResponse.data.admins[0].id || searchResponse.data.admins[0]._id;
-            
-            // Update lastLoginAt via API
-            axios.patch(`${apiUrl}/api/v1/admin/admins/${adminId}`, 
-              { lastLoginAt: new Date().toISOString() },
-              {
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${apiToken}`
-                },
-                timeout: 5000,
-                validateStatus: function (status) {
-                  return status < 600;
-                }
-              }
-            ).catch(function(err) {
-              // Silently fail - lastLoginAt update is not critical
-            });
-          }
-        }).catch(function(err) {
-          // Silently fail - lastLoginAt update is not critical for login flow
-        });
-      }
-
-      // Check if profile is complete (has firstName and lastName)
-      const profileComplete = adminUser.firstName && adminUser.lastName;
-
-      // Create admin session with profile fields
-      req.session.adminToken = "local-admin-" + Date.now();
-      req.session.admin = {
-        email: adminUser.email,
-        name: adminUser.firstName && adminUser.lastName
-          ? `${adminUser.firstName} ${adminUser.lastName}`
-          : (adminUser.name || adminUser.email.split('@')[0]),
-        firstName: adminUser.firstName || '',
-        lastName: adminUser.lastName || '',
-        profilePicture: adminUser.profilePicture || '',
-        id: adminUser._id.toString(), // Ensure ID is a string for API calls
-        role: adminUser.role,
-        roles: adminUser.roles
-      };
-
-      // Store login time for session duration calculation
-      req.session.loginTime = new Date();
-
-      // Owner sessions: fetch a Go API admin JWT so owner-only server-side
-      // proxies (e.g. /admin/api/finance/*) can call the API as this admin.
-      // The JWT lives ONLY in the server-side session — it is never rendered
-      // into a view or sent to the browser. Non-owner admins skip this; they
-      // simply don't get API credentials. A failed API login is non-fatal:
-      // the local console session is already established, and the finance
-      // proxies will report a clear "not established" error instead.
-      const isOwnerLogin = adminUser.role === "owner" ||
-        (adminUser.roles && adminUser.roles.includes("owner"));
-      req.session.isOwner = !!isOwnerLogin;
-      if (isOwnerLogin) {
+      // Two-factor on: the API checks the code. The password only earns a
+      // short-lived challenge, kept in the server-side session until the
+      // code step (never sent to the browser). Fail closed if the API is
+      // unreachable rather than skipping the second factor.
+      if (adminUser.mfa && adminUser.mfa.enabled) {
+        const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+        let challengeResp = null;
         try {
-          const apiLoginResp = await axios.post(
-            `${apiUrl}/api/v1/admin/login`,
-            { email: email, password: password },
-            {
-              headers: { "Content-Type": "application/json" },
-              timeout: 8000,
-              validateStatus: function (status) { return status < 600; }
-            }
-          );
-          if (apiLoginResp.status === 200 && apiLoginResp.data && apiLoginResp.data.token) {
-            req.session.apiAdminJwt = apiLoginResp.data.token;
-          } else {
-            console.log("Owner API login did not return a token (status " + apiLoginResp.status + "); finance features will be unavailable until the API is reachable.");
-          }
-        } catch (apiLoginErr) {
-          console.log("Owner API login failed (finance unavailable):", apiLoginErr.message);
+          challengeResp = await axios.post(`${apiUrl}/api/v1/admin/login`, { email: email, password: password }, {
+            headers: { "Content-Type": "application/json" },
+            timeout: 8000,
+            validateStatus: function (status) { return status < 600; },
+          });
+        } catch (mfaErr) {
+          console.log("Admin two-factor challenge failed:", mfaErr.message);
         }
+        const data = challengeResp && challengeResp.data;
+        if (!challengeResp || challengeResp.status !== 401 || !data || data.code !== "MFA_REQUIRED" || !data.challenge) {
+          return res.redirect("/admin?error=" + encodeURIComponent("Two-factor sign-in is unavailable right now. Try again in a minute."));
+        }
+        req.session.adminMfaPending = { email: adminUser.email, challenge: data.challenge, startedAt: Date.now(), attempts: 0 };
+        return req.session.save(function () { res.redirect("/admin/mfa"); });
       }
 
-      // Log login activity to backend API (reuse apiToken and apiUrl from above)
-      if (apiToken) {
-        // Get roles from adminUser for the currentUser object
-        const adminRoles = adminUser.roles || (adminUser.role ? [adminUser.role] : ['admin']);
-
-        // First find admin ID in backend API
-        axios.post(`${apiUrl}/api/v1/admin/search/admins`,
-          {
-            query: email,
-            currentUser: {
-              email: email,
-              roles: adminRoles
-            }
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${apiToken}`
-            },
-            timeout: 5000,
-            validateStatus: function (status) {
-              return status < 600;
-            }
-          }
-        ).then(function(searchResponse) {
-          if (searchResponse.status === 200 && searchResponse.data.admins && searchResponse.data.admins.length > 0) {
-            const adminId = searchResponse.data.admins[0].id || searchResponse.data.admins[0]._id;
-
-            // Log login activity
-            axios.post(`${apiUrl}/api/v1/admin/activity/log`,
-              {
-                adminId: adminId,
-                type: 'login',
-                title: 'Admin logged in',
-                details: 'Admin user logged into the system',
-                timestamp: new Date().toISOString(),
-                currentUser: {
-                  email: email,
-                  roles: adminRoles
-                }
-              },
-              {
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${apiToken}`
-                },
-                timeout: 5000,
-                validateStatus: function (status) {
-                  return status < 600;
-                }
-              }
-            ).catch(function(err) {
-              // Silently fail - activity logging is not critical
-            });
-          }
-        }).catch(function(err) {
-          // Silently fail - activity logging is not critical
-        });
-      }
-
-      // Redirect based on profile completeness
-      if (!profileComplete) {
-        return res.redirect("/admin/profile?setup=true");
-      }
-      return res.redirect("/admin/console");
+      return finishAdminLogin(req, res, adminUser, email, { password: password });
     } catch (err) {
       const message = "Authentication failed. Please try again.";
       return res.redirect("/admin?error=" + encodeURIComponent(message));
@@ -1029,6 +1129,56 @@ module.exports = function (app, passport, server, nextApp, handle) {
       return financeProxyError(req, res, err);
     }
   }
+
+  // Owner two-factor management. The API answers enable/disable with a fresh
+  // access token (with or without the mfa claim); it replaces the session's
+  // JWT here and is never passed on to the browser.
+  async function mfaForward(req, res, method, path, body) {
+    if (!requireFinanceJwt(req, res)) return;
+    try {
+      const response = await axios({
+        method: method,
+        url: `${process.env.POLICE_CAD_API_URL}${path}`,
+        data: body,
+        headers: financeAuthHeaders(req),
+        timeout: 15000,
+      });
+      const data = Object.assign({}, response.data);
+      if (data.token) {
+        req.session.apiAdminJwt = data.token;
+        delete data.token;
+      }
+      return res.status(response.status).json(data);
+    } catch (err) {
+      // A wrong code is a 401 from the API too, but the session is fine:
+      // pass it through instead of treating it as an expired JWT.
+      const data = err.response && err.response.data;
+      if (data && typeof data.code === "string" && data.code.indexOf("MFA_") === 0) {
+        return res.status(err.response.status).json({ message: data.error || "That code is not valid.", code: data.code });
+      }
+      return financeProxyError(req, res, err);
+    }
+  }
+
+  function mfaCodeBody(req) {
+    return { code: String((req.body && req.body.code) || "").trim().slice(0, 20) };
+  }
+
+  app.get("/admin/api/mfa", requireOwnerSession, function (req, res) {
+    return mfaForward(req, res, "get", "/api/v1/admin/mfa");
+  });
+  app.post("/admin/api/mfa/setup", requireOwnerSession, function (req, res) {
+    return mfaForward(req, res, "post", "/api/v1/admin/mfa/setup", {});
+  });
+  app.post("/admin/api/mfa/enable", requireOwnerSession, function (req, res) {
+    return mfaForward(req, res, "post", "/api/v1/admin/mfa/enable", mfaCodeBody(req));
+  });
+  app.post("/admin/api/mfa/backup-codes", requireOwnerSession, function (req, res) {
+    return mfaForward(req, res, "post", "/api/v1/admin/mfa/backup-codes", mfaCodeBody(req));
+  });
+  app.post("/admin/api/mfa/disable", requireOwnerSession, function (req, res) {
+    return mfaForward(req, res, "post", "/api/v1/admin/mfa/disable", mfaCodeBody(req));
+  });
 
   app.get("/admin/api/finance/transactions", requireOwnerSession, async function (req, res) {
     const params = new URLSearchParams();
