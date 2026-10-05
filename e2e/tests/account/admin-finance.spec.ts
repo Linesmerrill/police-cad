@@ -855,7 +855,7 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await page.route('**/admin/api/finance/transactions/*', (route: Route) => {
       if (route.request().method() !== 'PATCH') return route.fallback();
       return route.fulfill({ status: 400, contentType: 'application/json',
-        body: JSON.stringify({ response: { message: 'nothing to change' } }) });
+        body: JSON.stringify({ error: 'nothing to change' }) }); // the finance API's error shape
     });
     const finance = new AdminFinancePage(page);
     await finance.open();
