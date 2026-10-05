@@ -156,6 +156,7 @@ interface FinanceMocks {
   onLinkToken?: (body: unknown) => unknown;
   onUpdateComplete?: () => void;
   onSandboxWebhook?: (body: unknown) => void;
+  onDisconnect?: (body: unknown) => unknown;
   onExchange?: (body: unknown) => unknown;
   onSync?: () => unknown;
   /** GET /admin/api/mfa. Defaults to two-factor on and passed this session. */
@@ -242,6 +243,10 @@ async function mockFinance(page: Page, mocks: FinanceMocks = {}) {
     if (method === 'POST' && path === '/admin/api/finance/plaid/update-complete') {
       if (mocks.onUpdateComplete) mocks.onUpdateComplete();
       return json(200, { status: 'ok' });
+    }
+    if (method === 'POST' && path === '/admin/api/finance/plaid/disconnect') {
+      const body = req.postDataJSON();
+      return json(200, mocks.onDisconnect ? mocks.onDisconnect(body) : { disconnected: true, deleted_transactions: 0 });
     }
     if (method === 'POST' && path === '/admin/api/finance/plaid/sandbox-webhook') {
       if (mocks.onSandboxWebhook) mocks.onSandboxWebhook(req.postDataJSON());
@@ -531,6 +536,47 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await page.locator('#finBankToggle').click();
     await page.getByTestId('finance-plaid-test-webhook').click();
     await expect.poll(() => fired).toEqual([{ code: 'NEW_ACCOUNTS_AVAILABLE' }]);
+  });
+
+  test('Disconnect bank removes the connection and deletes the data by default', async ({ page }) => {
+    const bodies: unknown[] = [];
+    let status: Record<string, unknown> = { ...PLAID_STATUS_CONNECTED, item_status: 'ok' };
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      onDisconnect: (body) => {
+        bodies.push(body);
+        status = { ...PLAID_STATUS_DISCONNECTED };
+        return { disconnected: true, deleted_transactions: 48 };
+      },
+    });
+    await page.route('**/admin/api/finance/plaid/status', (route: Route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(status) }));
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+    await expect(finance.plaidStatus).toHaveText('Bank connected.');
+
+    await page.locator('#finBankToggle').click();
+    await page.getByTestId('finance-plaid-disconnect').click();
+    await page.getByTestId('finance-plaid-disconnect-confirm').click();
+    await expect.poll(() => bodies).toEqual([{ delete_data: true }]);
+    await expect(finance.plaidStatus).toHaveText('No bank connected yet.');
+    await expect(page.locator('#finBankSummary')).toContainText('48 transactions deleted');
+  });
+
+  test('Disconnect can keep the transactions', async ({ page }) => {
+    const bodies: unknown[] = [];
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: { ...PLAID_STATUS_CONNECTED, item_status: 'ok' },
+      onDisconnect: (body) => { bodies.push(body); return { disconnected: true, deleted_transactions: 0 }; },
+    });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+    await page.locator('#finBankToggle').click();
+    await page.getByTestId('finance-plaid-disconnect').click();
+    await page.locator('#finPlaidDeleteData').uncheck();
+    await page.getByTestId('finance-plaid-disconnect-confirm').click();
+    await expect.poll(() => bodies).toEqual([{ delete_data: false }]);
   });
 
   test('production hides the test webhook button', async ({ page }) => {
