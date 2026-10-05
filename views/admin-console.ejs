@@ -3343,6 +3343,11 @@
             .fin-bank-toggle[aria-expanded="true"] i { transform:rotate(180deg); }
             .fin-bank-details { margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--ac-glass-border); }
             .fin-bank-details[hidden] { display:none; }
+            /* The connection needs the owner: amber dot and a one-line prompt. */
+            .fin-bank.needs-attention .fin-bank-dot { background:#fbbf24; box-shadow:0 0 0 3px rgba(251,191,36,0.18); }
+            .fin-bank-alert { margin-top:0.75rem; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; padding:10px 12px; border-radius:10px; background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.3); color:#fde68a; font-size:0.8125rem; }
+            .fin-bank-alert[hidden] { display:none; }
+            .fin-bank-alert span { flex:1 1 220px; }
             .fin-bank-note { color:var(--ac-text-muted); font-size:0.8125rem; margin:0 0 0.625rem; max-width:62ch; }
 
             /* Range: presets first, a custom month range after. */
@@ -3566,10 +3571,19 @@
                 </button>
               </div>
             </div>
+            <div class="fin-bank-alert" id="finBankAlert" hidden role="status" data-testid="finance-bank-alert">
+              <span id="finBankAlertText"></span>
+              <button type="button" id="finBankFixBtn" class="ac-btn ac-btn-sm ac-btn-accent" data-testid="finance-plaid-fix"></button>
+            </div>
             <div class="fin-bank-details" id="finBankDetails">
               <p class="fin-bank-note" id="finBankNote">Connect the business bank account so profit reflects real money in and out. Plaid handles the bank login; this site never sees it.</p>
               <div id="finPlaidAccounts" style="display:flex; gap:0.5rem; flex-wrap:wrap;" data-testid="finance-plaid-accounts"></div>
               <div id="finPlaidLastSync" class="fin-muted" style="margin-top:0.5rem; font-size:0.75rem;" data-testid="finance-plaid-last-sync"></div>
+              <div id="finPlaidSandbox" hidden style="margin-top:0.75rem; font-size:0.75rem;" class="fin-muted">
+                Plaid Sandbox.
+                <button type="button" id="finPlaidTestWebhookBtn" class="ac-btn ac-btn-sm" data-testid="finance-plaid-test-webhook">Send test webhook</button>
+                <span id="finPlaidTestWebhookMsg" role="status"></span>
+              </div>
             </div>
             <div id="finPlaidToken" data-testid="finance-plaid-token" style="display:none; margin-top:0.75rem; padding:12px 14px; border-radius:10px; background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.35); font-size:13px; color:#fcd34d;"></div>
           </div>
@@ -13890,6 +13904,12 @@
         document.getElementById('finRefreshBtn').addEventListener('click', loadFinanceAll);
         document.getElementById('finPlaidConnectBtn').addEventListener('click', finConnectBank);
         document.getElementById('finPlaidSyncBtn').addEventListener('click', finSyncBank);
+        document.getElementById('finBankFixBtn').addEventListener('click', function() {
+          var mode = this.getAttribute('data-mode');
+          if (mode === 'connect') finConnectBank();
+          else finOpenUpdateMode(mode);
+        });
+        document.getElementById('finPlaidTestWebhookBtn').addEventListener('click', finSendTestWebhook);
         document.getElementById('finBankToggle').addEventListener('click', function() {
           finSetBankExpanded(this.getAttribute('aria-expanded') !== 'true');
         });
@@ -14707,13 +14727,104 @@
         return days + (days === 1 ? ' day ago' : ' days ago');
       }
 
+      // What, if anything, the bank connection needs from the owner, from the
+      // API's item_status (set by Plaid's webhooks and the status check).
+      function finBankIssue(res) {
+        if (!res || !res.connected) return null;
+        switch (res.item_status) {
+          case 'login_required':
+            return { mode: 'update', label: 'Fix connection', text: 'Your bank needs you to sign in again before it can sync.' };
+          case 'pending_expiration':
+            var when = res.consent_expires_at ? new Date(res.consent_expires_at).toLocaleDateString() : 'soon';
+            return { mode: 'update', label: 'Renew access', text: 'Your bank access expires ' + when + '. Renew it to keep syncing.' };
+          case 'pending_disconnect':
+            return { mode: 'update', label: 'Fix connection', text: 'Your bank is about to disconnect. Fix it to keep syncing.' };
+          case 'revoked':
+            return { mode: 'connect', label: 'Connect bank', text: 'Access to your bank was turned off. Connect it again to resume syncing.' };
+        }
+        if (res.new_accounts_available) {
+          return { mode: 'new_accounts', label: 'Add accounts', text: 'New accounts are available at your bank.' };
+        }
+        return null;
+      }
+
+      // Plaid Link in update mode on the existing connection: repairs it (or
+      // adds accounts) without creating a second connection or a new token.
+      function finOpenUpdateMode(mode) {
+        var btn = document.getElementById('finBankFixBtn');
+        btn.disabled = true;
+        finShowError(null);
+        function done() {
+          $.ajax({ url: '/admin/api/finance/plaid/update-complete', type: 'POST', contentType: 'application/json', data: '{}' })
+            .done(function() {
+              document.getElementById('finBankAlert').hidden = true;
+              loadBankStatus();
+              // The API syncs in the background; pick up what it finds.
+              setTimeout(function() { loadFinanceSummary(); loadFinanceTransactions(); }, 4000);
+            })
+            .fail(function(jqXHR) { btn.disabled = false; finAjaxFailed(jqXHR); });
+        }
+        $.ajax({ url: '/admin/api/finance/plaid/link-token', type: 'POST', contentType: 'application/json', data: JSON.stringify({ mode: mode }) })
+          .done(function(res) {
+            var linkToken = res && res.link_token;
+            if (!linkToken) {
+              btn.disabled = false;
+              finShowError('The API did not return a Plaid link token.');
+              return;
+            }
+            finLoadPlaidLink().then(function(Plaid) {
+              Plaid.create({
+                token: linkToken,
+                onSuccess: done,
+                onExit: function(err) {
+                  // Opening update mode on a connection that's already fine
+                  // ends with ITEM_NO_ERROR: nothing to repair, so clear it.
+                  if (err && err.error_code === 'ITEM_NO_ERROR') { done(); return; }
+                  btn.disabled = false;
+                }
+              }).open();
+            }).catch(function(err) {
+              btn.disabled = false;
+              finShowError(err && err.message ? err.message : 'Could not load Plaid Link.');
+            });
+          })
+          .fail(function(jqXHR) { btn.disabled = false; finAjaxFailed(jqXHR); });
+      }
+
+      function finSendTestWebhook() {
+        var btn = document.getElementById('finPlaidTestWebhookBtn');
+        var msg = document.getElementById('finPlaidTestWebhookMsg');
+        btn.disabled = true;
+        msg.textContent = '';
+        $.ajax({ url: '/admin/api/finance/plaid/sandbox-webhook', type: 'POST', contentType: 'application/json', data: JSON.stringify({ code: 'NEW_ACCOUNTS_AVAILABLE' }) })
+          .done(function() {
+            msg.textContent = 'Sent. Plaid delivers it in a few seconds.';
+            setTimeout(loadBankStatus, 5000);
+          })
+          .fail(function(jqXHR) { msg.textContent = finServerMessage(jqXHR) || 'Could not send the test webhook.'; })
+          .always(function() { btn.disabled = false; });
+      }
+
       function renderBankStatus(res) {
         res = res || {};
         var connected = !!res.connected;
+        var issue = finBankIssue(res);
+        var needsFix = !!(issue && issue.mode !== 'new_accounts');
         var statusEl = document.getElementById('finPlaidStatus');
-        if (statusEl) statusEl.textContent = connected ? 'Bank connected.' : 'No bank connected yet.';
+        if (statusEl) statusEl.textContent = !connected ? 'No bank connected yet.' : needsFix ? 'Bank needs attention.' : 'Bank connected.';
         document.getElementById('finBank').classList.toggle('is-connected', connected);
-        document.getElementById('finPlaidConnectLabel').textContent = connected ? 'Reconnect' : 'Connect bank';
+        document.getElementById('finBank').classList.toggle('needs-attention', needsFix);
+        var alertEl = document.getElementById('finBankAlert');
+        alertEl.hidden = !issue;
+        if (issue) {
+          document.getElementById('finBankAlertText').textContent = issue.text;
+          var fixBtn = document.getElementById('finBankFixBtn');
+          fixBtn.textContent = issue.label;
+          fixBtn.setAttribute('data-mode', issue.mode);
+          fixBtn.disabled = false;
+        }
+        document.getElementById('finPlaidSandbox').hidden = !(connected && res.sandbox);
+        document.getElementById('finPlaidConnectLabel').textContent = connected ? 'Switch bank' : 'Connect bank';
         document.getElementById('finPlaidSyncBtn').style.display = connected ? '' : 'none';
         document.getElementById('finBankNote').style.display = connected ? 'none' : '';
         var nAccounts = Array.isArray(res.accounts) ? res.accounts.length : 0;
