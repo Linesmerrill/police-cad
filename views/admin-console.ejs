@@ -3380,6 +3380,11 @@
             .fin-bar-half { flex:1 1 0; display:flex; }
             .fin-bar-half.top { align-items:flex-end; }
             .fin-bar-half.bottom { align-items:flex-start; border-top:1px solid var(--ac-glass-border); }
+            .fin-bar { cursor:default; outline:none; border-radius:4px; transition:opacity 0.15s; }
+            .fin-bar:focus-visible { box-shadow:0 0 0 2px var(--ac-accent); }
+            .fin-bars.is-hovering .fin-bar:not(.is-active) { opacity:0.35; }
+            .fin-bar-labels span { transition:color 0.15s; }
+            .fin-bar-labels span.is-active { color:var(--ac-text); }
 
             /* Donuts: where it came from, where it went. */
             .fin-pies { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem; }
@@ -14264,18 +14269,46 @@
         document.getElementById('finProfitSub').textContent = sub;
 
         var maxAbs = months.reduce(function(m, x) { return Math.max(m, Math.abs(Number(x.profit) || 0)); }, 0) || 1;
-        document.getElementById('finProfitBars').innerHTML = months.map(function(m) {
+        var bars = document.getElementById('finProfitBars');
+        bars.innerHTML = months.map(function(m, i) {
           var p = Number(m.profit) || 0;
           var pct = Math.max(p === 0 ? 0 : 3, Math.round(Math.abs(p) / maxAbs * 100));
           var label = finMonthLabel(m.month) + ': ' + finMoney(p);
-          return '<div class="fin-bar" title="' + finEsc(label) + '">'
+          return '<div class="fin-bar" data-i="' + i + '" tabindex="0" aria-label="' + finEsc(label) + '">'
             + '<div class="fin-bar-half top">' + (p > 0 ? '<div class="fin-bar-pos" style="height:' + pct + '%"></div>' : '') + '</div>'
             + '<div class="fin-bar-half bottom">' + (p < 0 ? '<div class="fin-bar-neg" style="height:' + pct + '%"></div>' : '') + '</div>'
             + '</div>';
         }).join('');
-        document.getElementById('finProfitBarLabels').innerHTML = months.map(function(m) {
+        var labels = document.getElementById('finProfitBarLabels');
+        labels.innerHTML = months.map(function(m) {
           return '<span>' + finEsc(finMonthLabel(m.month).split(' ')[0]) + '</span>';
         }).join('');
+
+        // Hovering (or focusing) a bar swaps the headline for that month:
+        // its profit, and what came in and went out.
+        var head = document.getElementById('finProfitLabel');
+        function pick(i) {
+          var m = i != null ? months[i] : null;
+          bars.classList.toggle('is-hovering', !!m);
+          $(bars).children().each(function(j) { this.classList.toggle('is-active', j === i); });
+          $(labels).children().each(function(j) { this.classList.toggle('is-active', j === i); });
+          if (!m) {
+            head.textContent = 'Profit';
+            el.textContent = months.length ? finMoney(total) : '—';
+            el.className = 'fin-profit-value fin-num' + (!months.length ? '' : total < 0 ? ' fin-out' : ' fin-in');
+            document.getElementById('finProfitSub').textContent = sub;
+            return;
+          }
+          var p = Number(m.profit) || 0;
+          head.textContent = 'Profit in ' + finMonthLabel(m.month);
+          el.textContent = finMoney(p);
+          el.className = 'fin-profit-value fin-num' + (p < 0 ? ' fin-out' : ' fin-in');
+          document.getElementById('finProfitSub').textContent = finMoney(Number((m.income && m.income.total) || 0)) + ' in, '
+            + finMoney(Number(m.expenses) || 0) + ' out';
+        }
+        $(bars).off('.finbar')
+          .on('mouseenter.finbar focusin.finbar', '.fin-bar', function() { pick(parseInt(this.getAttribute('data-i'), 10)); })
+          .on('mouseleave.finbar focusout.finbar', '.fin-bar', function() { pick(null); });
       }
 
       // ---- Donut charts ----

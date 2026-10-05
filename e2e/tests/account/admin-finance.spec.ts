@@ -757,6 +757,23 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await expect(page.getByTestId('finance-earned-note')).toContainText('Stripe since Sep 2026');
   });
 
+  test('hovering a profit bar shows that month', async ({ page }) => {
+    await mockFinance(page, { summary: SUMMARY_BANK_FIXTURE, plaidStatus: PLAID_STATUS_CONNECTED });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    const total = page.getByTestId('finance-profit-total');
+    await expect(total).toHaveText('$1,330.00');
+    await page.locator('#finProfitBars .fin-bar').nth(1).hover();
+    await expect(page.locator('#finProfitLabel')).toHaveText('Profit in Sep 2026');
+    await expect(total).toHaveText('$750.00');
+    await expect(page.locator('#finProfitSub')).toHaveText('$1,200.00 in, $450.00 out');
+
+    await page.mouse.move(0, 0);
+    await expect(page.locator('#finProfitLabel')).toHaveText('Profit');
+    await expect(total).toHaveText('$1,330.00');
+  });
+
   test('a loss reads -$, not $-', async ({ page }) => {
     const losing = JSON.parse(JSON.stringify(SUMMARY_BANK_FIXTURE));
     losing.months[1].profit = -10645.24;
