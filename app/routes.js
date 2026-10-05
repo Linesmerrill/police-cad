@@ -623,6 +623,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     req.session.isOwner = !!isOwnerLogin;
     if (isOwnerLogin && opts.apiJwt) {
       req.session.apiAdminJwt = opts.apiJwt;
+      if (opts.apiRefresh) req.session.apiAdminRefresh = opts.apiRefresh;
     } else if (isOwnerLogin) {
       try {
         const apiLoginResp = await axios.post(
@@ -636,6 +637,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         );
         if (apiLoginResp.status === 200 && apiLoginResp.data && apiLoginResp.data.token) {
           req.session.apiAdminJwt = apiLoginResp.data.token;
+          if (apiLoginResp.data.refreshToken) req.session.apiAdminRefresh = apiLoginResp.data.refreshToken;
         } else {
           console.log("Owner API login did not return a token (status " + apiLoginResp.status + "); finance features will be unavailable until the API is reachable.");
         }
@@ -762,7 +764,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         const adminUser = await mongoose.connection.db.collection("admin_users").findOne({ email: pending.email });
         if (!adminUser || adminUser.active === false) return restartAdminLogin(req, res, "Invalid credentials");
         delete req.session.adminMfaPending;
-        return await finishAdminLogin(req, res, adminUser, pending.email, { apiJwt: data.token });
+        return await finishAdminLogin(req, res, adminUser, pending.email, { apiJwt: data.token, apiRefresh: data.refreshToken });
       } catch (err) {
         return restartAdminLogin(req, res, "Authentication failed. Please try again.");
       }
@@ -870,6 +872,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     if (s.isOwner && !isOwner) {
       s.isOwner = false;
       delete s.apiAdminJwt;
+      delete s.apiAdminRefresh;
     }
     s.adminCheckedAt = Date.now();
     return false;
@@ -880,6 +883,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     delete req.session.admin;
     delete req.session.isOwner;
     delete req.session.apiAdminJwt;
+    delete req.session.apiAdminRefresh;
     delete req.session.adminCheckedAt;
     req.session.save(function () { done(); });
   }
@@ -1076,6 +1080,15 @@ module.exports = function (app, passport, server, nextApp, handle) {
     return { "Content-Type": "application/json", "Authorization": `Bearer ${jwt}` };
   }
 
+  // Renews the API's 24-hour admin token from the session's refresh token
+  // and retries once on a 401 (app/admin-api-session.js).
+  const adminApiClient = require("./admin-api-session").createAdminApiClient(axios, function () {
+    return process.env.POLICE_CAD_API_URL;
+  });
+  function adminApiRequest(req, config) {
+    return adminApiClient.request(req, config);
+  }
+
   // No JWT in the session (API login failed or API unreachable at login).
   // Report it plainly so the panel can show a useful message.
   function requireFinanceJwt(req, res) {
@@ -1107,8 +1120,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       const params = new URLSearchParams();
       if (financeMonthParam.test(String(req.query.from || ""))) params.set("from", String(req.query.from));
       if (financeMonthParam.test(String(req.query.to || ""))) params.set("to", String(req.query.to));
-      const response = await axios.get(`${financeApiBase()}/summary?${params.toString()}`, {
-        headers: financeAuthHeaders(req),
+      const response = await adminApiRequest(req, {
+        method: "get",
+        url: `${financeApiBase()}/summary?${params.toString()}`,
         timeout: 20000,
       });
       return res.json(response.data);
@@ -1128,8 +1142,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
       // mode: update (repair the existing connection) or new_accounts.
       const mode = req.body && req.body.mode;
       const body = mode === "update" || mode === "new_accounts" ? { mode: mode } : {};
-      const response = await axios.post(`${financeApiBase()}/plaid/link-token`, body, {
-        headers: financeAuthHeaders(req),
+      const response = await adminApiRequest(req, {
+        method: "post",
+        url: `${financeApiBase()}/plaid/link-token`,
+        data: body,
         timeout: 20000,
       });
       return res.json(response.data);
@@ -1157,8 +1173,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
       return res.status(400).json({ message: "public_token is required" });
     }
     try {
-      const response = await axios.post(`${financeApiBase()}/plaid/exchange`, { public_token: publicToken.trim() }, {
-        headers: financeAuthHeaders(req),
+      const response = await adminApiRequest(req, {
+        method: "post",
+        url: `${financeApiBase()}/plaid/exchange`,
+        data: { public_token: publicToken.trim() },
         timeout: 20000,
       });
       return res.status(response.status).json(response.data);
@@ -1170,8 +1188,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.post("/admin/api/finance/plaid/sync", requireOwnerSession, async function (req, res) {
     if (!requireFinanceJwt(req, res)) return;
     try {
-      const response = await axios.post(`${financeApiBase()}/plaid/sync`, {}, {
-        headers: financeAuthHeaders(req),
+      const response = await adminApiRequest(req, {
+        method: "post",
+        url: `${financeApiBase()}/plaid/sync`,
+        data: {},
         timeout: 60000,
       });
       return res.json(response.data);
@@ -1185,11 +1205,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
   async function financeForward(req, res, method, path, body, timeout) {
     if (!requireFinanceJwt(req, res)) return;
     try {
-      const response = await axios({
+      const response = await adminApiRequest(req, {
         method: method,
         url: `${financeApiBase()}${path}`,
         data: body,
-        headers: financeAuthHeaders(req),
         timeout: timeout || 20000,
       });
       return res.status(response.status).json(response.data);
@@ -1204,17 +1223,20 @@ module.exports = function (app, passport, server, nextApp, handle) {
   async function mfaForward(req, res, method, path, body) {
     if (!requireFinanceJwt(req, res)) return;
     try {
-      const response = await axios({
+      const response = await adminApiRequest(req, {
         method: method,
         url: `${process.env.POLICE_CAD_API_URL}${path}`,
         data: body,
-        headers: financeAuthHeaders(req),
         timeout: 15000,
       });
       const data = Object.assign({}, response.data);
       if (data.token) {
         req.session.apiAdminJwt = data.token;
         delete data.token;
+      }
+      if (data.refreshToken) {
+        req.session.apiAdminRefresh = data.refreshToken;
+        delete data.refreshToken;
       }
       return res.status(response.status).json(data);
     } catch (err) {
@@ -1315,8 +1337,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.get("/admin/api/finance/plaid/status", requireOwnerSession, async function (req, res) {
     if (!requireFinanceJwt(req, res)) return;
     try {
-      const response = await axios.get(`${financeApiBase()}/plaid/status`, {
-        headers: financeAuthHeaders(req),
+      const response = await adminApiRequest(req, {
+        method: "get",
+        url: `${financeApiBase()}/plaid/status`,
         timeout: 15000,
       });
       return res.json(response.data);
