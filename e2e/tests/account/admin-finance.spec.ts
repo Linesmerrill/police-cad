@@ -71,7 +71,7 @@ const SUMMARY_BANK_FIXTURE = {
   ],
   bank_connected: true,
   sources: {
-    stripe: { connected: true, events: 3 },
+    stripe: { connected: true, events: 3, since: '2026-01' },
     revenuecat: { connected: false },
     bank: { connected: true },
   },
@@ -331,8 +331,9 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     // Earned-revenue complement: Stripe / IAP gross / IAP net.
     await expect(finance.earnedTable).toBeVisible();
     await expect(finance.earnedTableBody).toContainText('$200.00'); // Stripe
-    await expect(finance.earnedTableBody).toContainText('$100.00'); // IAP gross
-    await expect(finance.earnedTableBody).toContainText('$70.00'); // IAP net
+    // App stores have never sent a sale: a dash, not $0.00 or a stray total.
+    await expect(finance.earnedTableBody).not.toContainText('$100.00');
+    await expect(page.getByTestId('finance-earned-note')).toContainText('app stores not yet');
 
     // Source badges reflect connectivity from the latest month.
     // Badges say what each source delivered, not just that it exists.
@@ -724,6 +725,30 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     // This month just hasn't had anything land yet: no row.
     await expect(finance.profitCell(ym(thisMonth))).toHaveCount(0);
     await expect(finance.earnedTableBody).not.toContainText(label(thisMonth));
+  });
+
+  test('months before a source was tracked show a dash, not $0.00', async ({ page }) => {
+    await mockFinance(page, {
+      summary: {
+        ...SUMMARY_BANK_FIXTURE,
+        sources: {
+          stripe: { connected: true, events: 3, since: '2026-09' },
+          revenuecat: { connected: true, events: 2, since: '2026-09' },
+          bank: { connected: true },
+        },
+      },
+      plaidStatus: PLAID_STATUS_CONNECTED,
+    });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    const aug = finance.earnedTableBody.locator('tr', { hasText: 'Aug 2026' });
+    const sep = finance.earnedTableBody.locator('tr', { hasText: 'Sep 2026' });
+    await expect(aug.locator('td').nth(1)).toHaveText('\u2013');
+    await expect(aug.locator('td').nth(2)).toHaveText('\u2013');
+    await expect(sep.locator('td').nth(1)).toHaveText('$200.00');
+    await expect(sep.locator('td').nth(2)).toHaveText('$100.00');
+    await expect(page.getByTestId('finance-earned-note')).toContainText('Stripe since Sep 2026');
   });
 
   test('a loss reads -$, not $-', async ({ page }) => {

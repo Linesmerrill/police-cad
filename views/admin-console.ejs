@@ -3761,6 +3761,7 @@
                   </tbody>
                 </table>
               </div>
+              <p class="fin-muted" id="finEarnedNote" style="font-size:0.75rem; margin:0.5rem 0 0;" data-testid="finance-earned-note"></p>
             </div>
           </div>
 
@@ -14091,7 +14092,7 @@
             financeLastMonths = ((res && res.months) || []).filter(finKeepMonth);
             renderFinanceProfit(financeLastMonths);
             renderFinanceTable(financeLastMonths);
-            renderFinanceEarned(financeLastMonths);
+            renderFinanceEarned(financeLastMonths, res && res.sources);
             renderFinanceCharts(financeLastMonths);
             renderFinanceSources(res || {}, financeLastMonths);
             renderFinanceWarnings(res && res.warnings);
@@ -14137,23 +14138,44 @@
 
       // Earned-revenue complement: subscription income from Stripe and
       // app-store webhook events (gross + net), regardless of bank state.
-      function renderFinanceEarned(months) {
+      // Months before a source's first recorded sale weren't tracked: show a
+      // dash rather than $0.00, which would read as no sales. sources.*.since
+      // is that first month (YYYY-MM), empty when the source has none yet.
+      function renderFinanceEarned(months, sources) {
         var tbody = document.getElementById('finEarnedTableBody');
+        var note = document.getElementById('finEarnedNote');
         if (!months.length) {
           tbody.innerHTML = '<tr><td colspan="4" style="color:#6b7280;">No data for this range.</td></tr>';
+          note.textContent = '';
           return;
         }
+        sources = sources || {};
+        var stripeSince = (sources.stripe && sources.stripe.since) || '';
+        var storeSince = (sources.revenuecat && sources.revenuecat.since) || '';
+        var untracked = '<span class="fin-muted" title="Not tracked yet">&ndash;</span>';
+        function cell(month, since, value) {
+          var tracked = since && month >= since;
+          return '<td style="text-align:right;">' + (tracked ? finMoney(value) : untracked) + '</td>';
+        }
         var html = '';
+        var anyUntracked = false;
         months.forEach(function(m) {
           var inc = m.income || {};
+          if (!stripeSince || m.month < stripeSince || !storeSince || m.month < storeSince) anyUntracked = true;
           html += '<tr>'
             + '<td style="white-space:nowrap; font-weight:600;">' + finMonthLabel(m.month) + '</td>'
-            + '<td style="text-align:right;">' + finMoney(inc.stripe) + '</td>'
-            + '<td style="text-align:right;">' + finMoney(inc.iap_gross) + '</td>'
-            + '<td style="text-align:right;">' + finMoney(inc.iap_net) + '</td>'
+            + cell(m.month, stripeSince, inc.stripe)
+            + cell(m.month, storeSince, inc.iap_gross)
+            + cell(m.month, storeSince, inc.iap_net)
             + '</tr>';
         });
         tbody.innerHTML = html;
+        function since(label, ym) {
+          return label + (ym ? ' since ' + finMonthLabel(ym) : ' not yet');
+        }
+        note.textContent = anyUntracked
+          ? 'A dash means not tracked yet: ' + since('Stripe', stripeSince) + ', ' + since('app stores', storeSince) + '.'
+          : '';
       }
 
       function renderFinanceCharts(months) {
