@@ -15,7 +15,7 @@ const CIVILIANS = [
   { status: 'no_status', name: 'Justen Smithen' },
   { status: 'requested_review', name: 'Pat Pending' },
   { status: 'requires_edits', name: 'Eddie Edits' },
-  { status: 'rejected', name: 'Rita Rejected' },
+  { status: 'rejected', name: 'Rita Ross' },
   { status: 'approved', name: 'Andy Approved' },
   { status: undefined, name: 'Old Timer' },
 ].map((c, i) => ({
@@ -60,6 +60,6 @@ test.describe('Manage Civilians: approval badges', { tag: '@auth' }, () => {
     await expect(badgeFor('Eddie Edits')).toHaveText(/needs edits/i);
     await expect(badgeFor('Andy Approved')).toHaveText(/approved/i);
     await expect(list.locator('[data-civ-status="rejected"]')).toHaveCount(1);
-    await expect(badgeFor('Rita Rejected')).toHaveText(/rejected/i);
+    await expect(badgeFor('Rita Ross')).toHaveText(/rejected/i);
   });
 });
