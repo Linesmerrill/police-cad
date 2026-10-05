@@ -23,6 +23,10 @@ services:
       LOG_LEVEL: warn
       STRIPE_SECRET_KEY: sk_test_placeholder_for_e2e_tests
       ENV: local
+      # Admin tokens and passkeys (e2e/tests/account/admin-passkeys.spec.ts).
+      JWT_SECRET: e2e-jwt-secret
+      WEBAUTHN_RP_ID: localhost
+      WEBAUTHN_ORIGINS: http://localhost:8080
     depends_on:
       mongo-test:
         condition: service_healthy

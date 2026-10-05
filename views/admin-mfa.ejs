@@ -57,19 +57,24 @@
               <div class="text-center" style="margin-bottom:1rem;">
                 <img src="/static/images/dispatch-logo-512.png" alt="Admin" style="width:56px; height:56px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.35);" />
               </div>
-              <h2 class="admin-title text-center">Two-factor code</h2>
-              <p class="admin-subtitle text-center">Enter the 6-digit code from your authenticator app, or one of your backup codes.</p>
+              <h2 class="admin-title text-center"><%= hasPasskey ? 'Confirm it\'s you' : 'Two-factor code' %></h2>
+              <p class="admin-subtitle text-center" id="adminMfaSubtitle"><%= hasPasskey ? 'Use your passkey, or a code from your authenticator app.' : 'Enter the 6-digit code from your authenticator app, or one of your backup codes.' %></p>
 
-              <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
-                <div class="alert alert-danger alert-compact" role="alert" data-testid="admin-mfa-error">
-                  <%= error %>
+              <div class="alert alert-danger alert-compact" role="alert" data-testid="admin-mfa-error" id="adminMfaError" <% if (!(typeof error !== 'undefined' && error && error.length > 0)) { %>style="display:none;"<% } %>><%= typeof error !== 'undefined' && error ? error : '' %></div>
+
+              <% if (hasPasskey) { %>
+              <div id="adminPasskeyBlock">
+                <button type="button" id="adminPasskeyBtn" class="btn btn-gradient btn-block btn-lg" style="border-radius:10px;" data-testid="admin-mfa-passkey">Use passkey</button>
+                <div class="text-center" style="margin-top:0.75rem;">
+                  <a href="#" class="link-muted" id="adminUseCodeLink">Use a code instead</a>
                 </div>
+              </div>
               <% } %>
 
-              <form action="/admin/mfa" method="post" autocomplete="off" novalidate>
+              <form action="/admin/mfa" method="post" autocomplete="off" novalidate id="adminMfaCodeForm" <% if (hasPasskey) { %>style="display:none;"<% } %>>
                 <div class="form-group">
                   <label for="adminMfaCode">Code</label>
-                  <input id="adminMfaCode" type="text" name="code" class="form-control input-lg" inputmode="numeric" autocomplete="one-time-code" maxlength="11" placeholder="123456" required autofocus data-testid="admin-mfa-code" />
+                  <input id="adminMfaCode" type="text" name="code" class="form-control input-lg" inputmode="numeric" autocomplete="one-time-code" maxlength="11" placeholder="123456" required <% if (!hasPasskey) { %>autofocus<% } %> data-testid="admin-mfa-code" />
                 </div>
                 <button type="submit" class="btn btn-gradient btn-block btn-lg" style="border-radius:10px;" data-testid="admin-mfa-submit">Verify</button>
               </form>
@@ -87,6 +92,53 @@
 
     <script src="/static/js/jquery.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <script src="/static/js/bootstrap.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+    <% if (hasPasskey) { %>
+    <script src="/static/js/admin-passkeys.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+    <script>
+      (function () {
+        var btn = document.getElementById('adminPasskeyBtn');
+        var errorEl = document.getElementById('adminMfaError');
+        function showError(msg) { errorEl.textContent = msg; errorEl.style.display = ''; }
+        function showCodeForm() {
+          document.getElementById('adminMfaCodeForm').style.display = '';
+          document.getElementById('adminPasskeyBlock').style.display = 'none';
+          document.getElementById('adminMfaSubtitle').textContent = 'Enter the 6-digit code from your authenticator app, or one of your backup codes.';
+          document.getElementById('adminMfaCode').focus();
+        }
+        document.getElementById('adminUseCodeLink').addEventListener('click', function (e) { e.preventDefault(); showCodeForm(); });
+        if (!window.lpcPasskeys || !window.lpcPasskeys.supported) {
+          showCodeForm();
+          return;
+        }
+        function postJSON(url, body) {
+          return fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+        }
+        function fail(res) {
+          return res.json().catch(function () { return {}; }).then(function (data) {
+            if (data.restart) { window.location = '/admin?error=' + encodeURIComponent(data.message || 'Your sign-in expired. Enter your password again.'); return; }
+            throw new Error(data.message || 'Passkey sign-in is unavailable right now. Use a code instead.');
+          });
+        }
+        btn.addEventListener('click', function () {
+          btn.disabled = true;
+          errorEl.style.display = 'none';
+          postJSON('/admin/mfa/passkey/options')
+            .then(function (res) { return res.ok ? res.json() : fail(res); })
+            .then(function (options) {
+              if (!options) return;
+              return window.lpcPasskeys.get(options).then(function (credential) {
+                return postJSON('/admin/mfa/passkey', { credential: credential });
+              }).then(function (res) {
+                if (res.ok) { window.location = res.redirected ? res.url : '/admin/console'; return; }
+                return fail(res);
+              }, function (err) { throw new Error(window.lpcPasskeys.describeError(err)); });
+            })
+            .catch(function (err) { showError(err.message); })
+            .then(function () { btn.disabled = false; });
+        });
+      })();
+    </script>
+    <% } %>
   </body>
  </html>
 
