@@ -331,8 +331,10 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     // Earned-revenue complement: Stripe / IAP gross / IAP net.
     await expect(finance.earnedTable).toBeVisible();
     await expect(finance.earnedTableBody).toContainText('$200.00'); // Stripe
-    // App stores have never sent a sale: a dash, not $0.00 or a stray total.
-    await expect(finance.earnedTableBody).not.toContainText('$100.00');
+    // App stores have never sent a sale: dashes in both app-store columns.
+    const sepEarned = finance.earnedTableBody.locator('tr', { hasText: 'Sep 2026' });
+    await expect(sepEarned.locator('td').nth(2)).toHaveText('\u2013');
+    await expect(sepEarned.locator('td').nth(3)).toHaveText('\u2013');
     await expect(page.getByTestId('finance-earned-note')).toContainText('app stores not yet');
 
     // Source badges reflect connectivity from the latest month.
