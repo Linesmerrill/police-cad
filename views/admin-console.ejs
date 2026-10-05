@@ -3380,6 +3380,11 @@
             .fin-bar-half { flex:1 1 0; display:flex; }
             .fin-bar-half.top { align-items:flex-end; }
             .fin-bar-half.bottom { align-items:flex-start; border-top:1px solid var(--ac-glass-border); }
+            .fin-bar { cursor:default; outline:none; border-radius:4px; transition:opacity 0.15s; }
+            .fin-bar:focus-visible { box-shadow:0 0 0 2px var(--ac-accent); }
+            .fin-bars.is-hovering .fin-bar:not(.is-active) { opacity:0.35; }
+            .fin-bar-labels span { transition:color 0.15s; }
+            .fin-bar-labels span.is-active { color:var(--ac-text); }
 
             /* Donuts: where it came from, where it went. */
             .fin-pies { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem; }
@@ -3388,7 +3393,11 @@
             .fin-pie-body { display:flex; gap:1.25rem; align-items:center; }
             .fin-pie-svg { width:140px; height:140px; flex:0 0 auto; }
             .fin-pie-svg path { cursor:default; transition:opacity 0.15s; }
-            .fin-pie-svg.is-hovering path:not(.is-active) { opacity:0.35; }
+            .fin-pie-svg.is-hovering path:not(.is-active) { opacity:0.3; }
+            .fin-pie-legend li { border-radius:6px; padding:0.125rem 0.375rem; margin:0 -0.375rem; transition:opacity 0.15s, background 0.15s; cursor:default; outline:none; }
+            .fin-pie-legend.is-hovering li:not(.is-active) { opacity:0.45; }
+            .fin-pie-legend li.is-active { background:rgba(148,163,184,0.12); }
+            .fin-pie-legend li:focus-visible { box-shadow:0 0 0 2px var(--ac-accent, #38bdf8); }
             .fin-pie-legend { list-style:none; margin:0; padding:0; flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:0.375rem; }
             .fin-pie-legend li { display:grid; grid-template-columns:10px minmax(0,1fr) auto auto; gap:0.5rem; align-items:center; font-size:0.8125rem; }
             .fin-pie-legend .sw { width:10px; height:10px; border-radius:3px; }
@@ -13730,6 +13739,17 @@
         finShowError(msg);
       }
 
+      // A change that didn't save. The banner sits at the top of the panel,
+      // usually scrolled out of view by then, so also toast where the owner is.
+      function finSaveFailed(jqXHR) {
+        finAjaxFailed(jqXHR);
+        var status = jqXHR && jqXHR.status;
+        if (status === 401 || (status === 403 && finResponseCode(jqXHR) === 'MFA_REQUIRED')) return;
+        if (typeof showToast === 'function') {
+          showToast('error', finEsc('Could not save: ' + (finServerMessage(jqXHR) || 'please try again.')));
+        }
+      }
+
       function finYm(d) {
         return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
       }
@@ -14249,18 +14269,46 @@
         document.getElementById('finProfitSub').textContent = sub;
 
         var maxAbs = months.reduce(function(m, x) { return Math.max(m, Math.abs(Number(x.profit) || 0)); }, 0) || 1;
-        document.getElementById('finProfitBars').innerHTML = months.map(function(m) {
+        var bars = document.getElementById('finProfitBars');
+        bars.innerHTML = months.map(function(m, i) {
           var p = Number(m.profit) || 0;
           var pct = Math.max(p === 0 ? 0 : 3, Math.round(Math.abs(p) / maxAbs * 100));
           var label = finMonthLabel(m.month) + ': ' + finMoney(p);
-          return '<div class="fin-bar" title="' + finEsc(label) + '">'
+          return '<div class="fin-bar" data-i="' + i + '" tabindex="0" aria-label="' + finEsc(label) + '">'
             + '<div class="fin-bar-half top">' + (p > 0 ? '<div class="fin-bar-pos" style="height:' + pct + '%"></div>' : '') + '</div>'
             + '<div class="fin-bar-half bottom">' + (p < 0 ? '<div class="fin-bar-neg" style="height:' + pct + '%"></div>' : '') + '</div>'
             + '</div>';
         }).join('');
-        document.getElementById('finProfitBarLabels').innerHTML = months.map(function(m) {
+        var labels = document.getElementById('finProfitBarLabels');
+        labels.innerHTML = months.map(function(m) {
           return '<span>' + finEsc(finMonthLabel(m.month).split(' ')[0]) + '</span>';
         }).join('');
+
+        // Hovering (or focusing) a bar swaps the headline for that month:
+        // its profit, and what came in and went out.
+        var head = document.getElementById('finProfitLabel');
+        function pick(i) {
+          var m = i != null ? months[i] : null;
+          bars.classList.toggle('is-hovering', !!m);
+          $(bars).children().each(function(j) { this.classList.toggle('is-active', j === i); });
+          $(labels).children().each(function(j) { this.classList.toggle('is-active', j === i); });
+          if (!m) {
+            head.textContent = 'Profit';
+            el.textContent = months.length ? finMoney(total) : '—';
+            el.className = 'fin-profit-value fin-num' + (!months.length ? '' : total < 0 ? ' fin-out' : ' fin-in');
+            document.getElementById('finProfitSub').textContent = sub;
+            return;
+          }
+          var p = Number(m.profit) || 0;
+          head.textContent = 'Profit in ' + finMonthLabel(m.month);
+          el.textContent = finMoney(p);
+          el.className = 'fin-profit-value fin-num' + (p < 0 ? ' fin-out' : ' fin-in');
+          document.getElementById('finProfitSub').textContent = finMoney(Number((m.income && m.income.total) || 0)) + ' in, '
+            + finMoney(Number(m.expenses) || 0) + ' out';
+        }
+        $(bars).off('.finbar')
+          .on('mouseenter.finbar focusin.finbar', '.fin-bar', function() { pick(parseInt(this.getAttribute('data-i'), 10)); })
+          .on('mouseleave.finbar focusout.finbar', '.fin-bar', function() { pick(null); });
       }
 
       // ---- Donut charts ----
@@ -14287,12 +14335,11 @@
           var span = (Number(x.amount) || 0) / total * Math.PI * 2;
           var d = finArc(70, 70, 66, 42, a, a + span);
           a += span;
-          return '<path d="' + d + '" fill="' + finEsc(x.color || '#64748b') + '" data-i="' + i + '"><title>'
-            + finEsc((x.name || 'Untagged') + ': ' + finMoney(x.amount)) + '</title></path>';
+          return '<path d="' + d + '" fill="' + finEsc(x.color || '#64748b') + '" data-i="' + i + '"></path>';
         }).join('');
         var legend = slices.map(function(x, i) {
           var pct = Math.round((Number(x.amount) || 0) / total * 1000) / 10;
-          return '<li data-i="' + i + '"><span class="sw" style="background:' + finEsc(x.color || '#64748b') + '"></span>'
+          return '<li data-i="' + i + '" tabindex="0"><span class="sw" style="background:' + finEsc(x.color || '#64748b') + '"></span>'
             + '<span class="nm">' + finEsc(x.name || 'Untagged') + '</span>'
             + '<span class="fin-num">' + finMoney(x.amount) + '</span>'
             + '<span class="pc fin-num">' + pct + '%</span></li>';
@@ -14300,18 +14347,34 @@
         el.innerHTML = '<svg class="fin-pie-svg" viewBox="0 0 140 140" role="img" aria-label="'
           + finEsc(slices.map(function(x) { return (x.name || 'Untagged') + ' ' + finMoney(x.amount); }).join(', ')) + '">'
           + paths
-          + '<text x="70" y="66" text-anchor="middle" fill="#64748b" font-size="9" font-family="Outfit,sans-serif">Total</text>'
-          + '<text x="70" y="82" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="700" font-family="JetBrains Mono,Outfit,monospace">' + finEsc(finMoney(total)) + '</text>'
+          + '<text class="fin-pie-lbl" x="70" y="62" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="Outfit,sans-serif">Total</text>'
+          + '<text class="fin-pie-val" x="70" y="78" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="700" font-family="JetBrains Mono,Outfit,monospace">' + finEsc(finMoney(total)) + '</text>'
+          + '<text class="fin-pie-pct" x="70" y="91" text-anchor="middle" fill="#64748b" font-size="9" font-family="JetBrains Mono,Outfit,monospace"></text>'
           + '</svg><ul class="fin-pie-legend">' + legend + '</ul>';
-        // Hovering a legend row or a slice picks out that slice.
+        // Hovering (or focusing) a slice or a legend row picks out both, and
+        // the centre swaps the total for that slice's name, amount and share.
         var svg = el.querySelector('svg');
-        $(el).off('.finpie').on('mouseenter.finpie', '[data-i]', function() {
-          var i = this.getAttribute('data-i');
-          svg.classList.add('is-hovering');
-          $(svg).find('path').each(function() { this.classList.toggle('is-active', this.getAttribute('data-i') === i); });
-        }).on('mouseleave.finpie', '[data-i]', function() {
-          svg.classList.remove('is-hovering');
-        });
+        var list = el.querySelector('.fin-pie-legend');
+        var lbl = svg.querySelector('.fin-pie-lbl'), val = svg.querySelector('.fin-pie-val'), pctEl = svg.querySelector('.fin-pie-pct');
+        function pick(i) {
+          var on = i != null && slices[i];
+          svg.classList.toggle('is-hovering', !!on);
+          list.classList.toggle('is-hovering', !!on);
+          $(el).find('[data-i]').each(function() { this.classList.toggle('is-active', on && this.getAttribute('data-i') === String(i)); });
+          if (!on) {
+            lbl.textContent = 'Total';
+            val.textContent = finMoney(total);
+            pctEl.textContent = '';
+            return;
+          }
+          var name = slices[i].name || 'Untagged';
+          lbl.textContent = name.length > 16 ? name.slice(0, 15) + '\u2026' : name;
+          val.textContent = finMoney(slices[i].amount);
+          pctEl.textContent = (Math.round((Number(slices[i].amount) || 0) / total * 1000) / 10) + '%';
+        }
+        $(el).off('.finpie')
+          .on('mouseenter.finpie focusin.finpie', '[data-i]', function() { pick(parseInt(this.getAttribute('data-i'), 10)); })
+          .on('mouseleave.finpie focusout.finpie', '[data-i]', function() { pick(null); });
       }
 
       // ---- Tags ----
@@ -14418,12 +14481,27 @@
           + '<span class="dot" style="background:' + finEsc(tag.color) + '"></span>' + finEsc(tag.name) + '</button>';
       }
 
+      // Describes the From/To range the list covers, in the preset's words when one matches.
+      function finRangePhrase() {
+        var from = document.getElementById('finFrom').value;
+        var to = document.getElementById('finTo').value;
+        if (!from || !to) return '';
+        var words = { 'this-month': 'this month', 'last-month': 'last month', '3': 'in the last 3 months',
+          '6': 'in the last 6 months', '12': 'in the last 12 months', 'ytd': 'year to date' };
+        for (var key in words) {
+          var r = finPresetRange(key);
+          if (r.from === from && r.to === to) return words[key];
+        }
+        if (from === to) return 'in ' + finMonthLabel(from);
+        return 'from ' + finMonthLabel(from) + ' to ' + finMonthLabel(to);
+      }
+
       function finRenderTransactions(res) {
         var rows = res.data || [];
         var total = Number(res.totalCount) || 0;
         var body = document.getElementById('finTxBody');
         finTxRows = {};
-        document.getElementById('finTxCount').textContent = total ? '(' + total + ')' : '';
+        document.getElementById('finTxCount').textContent = ((total ? '(' + total + ') ' : '') + finRangePhrase()).trim();
         if (!rows.length) {
           var filtered = finTxState.tag || finTxState.search;
           body.innerHTML = '<tr><td colspan="6" class="fin-muted">'
@@ -14461,9 +14539,11 @@
         }).join('');
         var pages = Math.max(1, Math.ceil(total / finTxState.limit));
         var p = finTxState.page;
+        // Only offer the directions that lead somewhere; one page needs no buttons.
         document.getElementById('finTxPager').innerHTML = '<span>Page ' + p + ' of ' + pages + '</span><span style="display:flex; gap:0.375rem;">'
-          + '<button type="button" class="ac-btn ac-btn-sm" data-page="' + (p - 1) + '"' + (p <= 1 ? ' disabled' : '') + '>Previous</button>'
-          + '<button type="button" class="ac-btn ac-btn-sm" data-page="' + (p + 1) + '"' + (p >= pages ? ' disabled' : '') + '>Next</button></span>';
+          + (p > 1 ? '<button type="button" class="ac-btn ac-btn-sm" data-page="' + (p - 1) + '">Previous</button>' : '')
+          + (p < pages ? '<button type="button" class="ac-btn ac-btn-sm" data-page="' + (p + 1) + '">Next</button>' : '')
+          + '</span>';
         if (finTxScrollToTop) {
           finTxScrollToTop = false;
           var card = document.getElementById('finTxCard');
@@ -14487,7 +14567,7 @@
             loadFinanceTransactions();
             loadFinanceSummary();
           })
-          .fail(finAjaxFailed);
+          .fail(finSaveFailed);
       }
 
       // ---- Tag picker ----
@@ -14594,7 +14674,7 @@
               if (tag && done) done(tag);
             });
           })
-          .fail(finAjaxFailed);
+          .fail(finSaveFailed);
       }
 
       // ---- Tag colours ----
@@ -14718,13 +14798,13 @@
           var id = this.getAttribute('data-delete');
           $.ajax({ url: '/admin/api/finance/tags/' + encodeURIComponent(id), type: 'DELETE' })
             .done(function() { finLoadTags(function() { finRenderTagsModal(); loadFinanceSummary(); loadFinanceTransactions(); }); })
-            .fail(finAjaxFailed);
+            .fail(finSaveFailed);
         });
         $('#finRulesList').on('click', '[data-rule]', function() {
           var id = this.getAttribute('data-rule');
           $.ajax({ url: '/admin/api/finance/tag-rules/' + encodeURIComponent(id), type: 'DELETE' })
             .done(finRenderTagsModal)
-            .fail(finAjaxFailed);
+            .fail(finSaveFailed);
         });
       }
 

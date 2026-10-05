@@ -1054,6 +1054,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   const reportsApiBase = () => `${process.env.POLICE_CAD_API_URL}/api/v1/admin`;
 
   const { reportActionPath, adminActor, buildActionBody } = require("./admin-reports-proxy");
+  const financeProxy = require("./finance-proxy");
 
   function reportsProxyError(res, err) {
     const status = (err.response && err.response.status) || 500;
@@ -1372,14 +1373,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.patch("/admin/api/finance/transactions/:txId", requireOwnerSession, async function (req, res) {
     const txId = String(req.params.txId || "");
     if (!/^[A-Za-z0-9_-]{1,128}$/.test(txId)) return res.status(400).json({ message: "invalid transaction id" });
-    const body = {};
-    if (typeof req.body.hidden === "boolean") body.hidden = req.body.hidden;
-    if (typeof req.body.tag_id === "string") {
-      if (req.body.tag_id !== "" && !/^[a-f0-9]{24}$/.test(req.body.tag_id)) return res.status(400).json({ message: "invalid tag id" });
-      body.tag_id = req.body.tag_id;
-    }
-    if (req.body.apply_to_merchant === true) body.apply_to_merchant = true;
-    return financeForward(req, res, "patch", `/transactions/${encodeURIComponent(txId)}`, body);
+    const patch = financeProxy.buildTransactionPatch(req.body);
+    if (patch.error) return res.status(400).json({ message: patch.error });
+    return financeForward(req, res, "patch", `/transactions/${encodeURIComponent(txId)}`, patch.body);
   });
 
   app.get("/admin/api/finance/tags", requireOwnerSession, async function (req, res) {

@@ -688,8 +688,11 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     const ym = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const thisMonth = ym(now);
     const threeBack = ym(new Date(now.getFullYear(), now.getMonth() - 2, 1));
+    const txCount = page.locator('#finTxCount');
+    await expect(txCount).toContainText('in the last 6 months');
 
     await finance.preset('3').click();
+    await expect(txCount).toContainText('in the last 3 months');
     await expect(page.getByTestId('finance-from')).toHaveValue(threeBack);
     await expect(page.getByTestId('finance-to')).toHaveValue(thisMonth);
     await expect(finance.preset('3')).toHaveAttribute('aria-pressed', 'true');
@@ -698,6 +701,7 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await finance.preset('this-month').click();
     await expect(page.getByTestId('finance-from')).toHaveValue(thisMonth);
     await expect.poll(() => ranges).toContain(`${thisMonth}..${thisMonth}`);
+    await expect(txCount).toContainText('this month');
   });
 
   test('the current month is hidden until it has data, past zeros stay', async ({ page }) => {
@@ -753,6 +757,23 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await expect(page.getByTestId('finance-earned-note')).toContainText('Stripe since Sep 2026');
   });
 
+  test('hovering a profit bar shows that month', async ({ page }) => {
+    await mockFinance(page, { summary: SUMMARY_BANK_FIXTURE, plaidStatus: PLAID_STATUS_CONNECTED });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    const total = page.getByTestId('finance-profit-total');
+    await expect(total).toHaveText('$1,330.00');
+    await page.locator('#finProfitBars .fin-bar').nth(1).hover();
+    await expect(page.locator('#finProfitLabel')).toHaveText('Profit in Sep 2026');
+    await expect(total).toHaveText('$750.00');
+    await expect(page.locator('#finProfitSub')).toHaveText('$1,200.00 in, $450.00 out');
+
+    await page.mouse.move(0, 0);
+    await expect(page.locator('#finProfitLabel')).toHaveText('Profit');
+    await expect(total).toHaveText('$1,330.00');
+  });
+
   test('a loss reads -$, not $-', async ({ page }) => {
     const losing = JSON.parse(JSON.stringify(SUMMARY_BANK_FIXTURE));
     losing.months[1].profit = -10645.24;
@@ -775,6 +796,26 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await expect(income.locator('.fin-pie-legend')).toContainText('$1,500.00');
     await expect(income.locator('.fin-pie-legend')).toContainText('71.4%');
     await expect(page.getByTestId('finance-pie-expenses').locator('.fin-pie-legend')).toContainText('Google Ads');
+
+    // Hovering a slice names it in the centre and picks out its legend row.
+    await expect(income.locator('.fin-pie-lbl')).toHaveText('Total');
+    // The first slice starts at 12 o'clock; point just clockwise of that, mid-ring.
+    const box = await income.locator('svg').boundingBox();
+    if (!box) throw new Error('donut not rendered');
+    const k = box.width / 140, ang = -Math.PI / 2 + 0.3;
+    await page.mouse.move(box.x + (70 + 54 * Math.cos(ang)) * k, box.y + (70 + 54 * Math.sin(ang)) * k);
+    await expect(income.locator('.fin-pie-lbl')).toHaveText('Steam');
+    await expect(income.locator('.fin-pie-val')).toHaveText('$1,500.00');
+    await expect(income.locator('.fin-pie-pct')).toHaveText('71.4%');
+    await expect(income.locator('.fin-pie-legend li').first()).toHaveClass(/is-active/);
+    // And back to the total when the pointer leaves.
+    await page.mouse.move(0, 0);
+    await expect(income.locator('.fin-pie-lbl')).toHaveText('Total');
+
+    // Hovering a legend row does the same.
+    await income.locator('.fin-pie-legend li').nth(1).hover();
+    await expect(income.locator('svg path').nth(1)).toHaveClass(/is-active/);
+    await expect(income.locator('.fin-pie-lbl')).not.toHaveText('Total');
   });
 
   test('hiding a transaction sends hidden and reloads the totals', async ({ page }) => {
@@ -813,11 +854,16 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     const finance = new AdminFinancePage(page);
     await finance.open();
     await expect(finance.txRows).toHaveCount(25);
+    // The first page offers only Next.
+    await expect(page.locator('#finTxPager').getByRole('button', { name: 'Previous' })).toHaveCount(0);
 
     // Scroll to the pager at the bottom of a full page, then go to the short page 2.
     await page.locator('#finTxPager').getByRole('button', { name: 'Next' }).scrollIntoViewIfNeeded();
     await page.locator('#finTxPager').getByRole('button', { name: 'Next' }).click();
     await expect(finance.txRows).toHaveCount(2);
+    // The last page offers only Previous.
+    await expect(page.locator('#finTxPager').getByRole('button', { name: 'Next' })).toHaveCount(0);
+    await expect(page.locator('#finTxPager').getByRole('button', { name: 'Previous' })).toBeVisible();
     await expect.poll(async () => page.locator('#finTxCard').evaluate((el) => el.getBoundingClientRect().top))
       .toBeGreaterThanOrEqual(0);
     await expect(finance.txRows.first()).toBeInViewport();
@@ -833,10 +879,28 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     const finance = new AdminFinancePage(page);
     await finance.open();
     await expect(finance.txRows).toHaveCount(2);
+    // A single page needs no paging buttons.
+    await expect(page.locator('#finTxPager').getByRole('button')).toHaveCount(0);
 
     await page.getByRole('button', { name: 'Hide transaction' }).nth(1).click();
     await finance.tagPicker.getByRole('menuitem', { name: /Hide all from Heroku/ }).click();
     await expect.poll(() => patches).toEqual([{ id: 'tx-heroku-1', body: { hide_merchant: true } }]);
+  });
+
+  test('a change that fails to save shows a toast', async ({ page }) => {
+    await mockFinance(page, { summary: SUMMARY_BANK_FIXTURE, plaidStatus: PLAID_STATUS_CONNECTED });
+    await page.route('**/admin/api/finance/transactions/*', (route: Route) => {
+      if (route.request().method() !== 'PATCH') return route.fallback();
+      return route.fulfill({ status: 400, contentType: 'application/json',
+        body: JSON.stringify({ error: 'nothing to change' }) }); // the finance API's error shape
+    });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+    await expect(finance.txRows).toHaveCount(2);
+
+    await page.getByRole('button', { name: 'Hide transaction' }).nth(1).click();
+    await finance.tagPicker.getByRole('menuitem', { name: /Hide all from Heroku/ }).click();
+    await expect(page.locator('.toast-notification')).toContainText('Could not save: nothing to change');
   });
 
   test('a transaction hidden by a rule can stop the rule', async ({ page }) => {
