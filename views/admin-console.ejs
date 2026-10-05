@@ -14461,9 +14461,11 @@
         }).join('');
         var pages = Math.max(1, Math.ceil(total / finTxState.limit));
         var p = finTxState.page;
+        // Only offer the directions that lead somewhere; one page needs no buttons.
         document.getElementById('finTxPager').innerHTML = '<span>Page ' + p + ' of ' + pages + '</span><span style="display:flex; gap:0.375rem;">'
-          + '<button type="button" class="ac-btn ac-btn-sm" data-page="' + (p - 1) + '"' + (p <= 1 ? ' disabled' : '') + '>Previous</button>'
-          + '<button type="button" class="ac-btn ac-btn-sm" data-page="' + (p + 1) + '"' + (p >= pages ? ' disabled' : '') + '>Next</button></span>';
+          + (p > 1 ? '<button type="button" class="ac-btn ac-btn-sm" data-page="' + (p - 1) + '">Previous</button>' : '')
+          + (p < pages ? '<button type="button" class="ac-btn ac-btn-sm" data-page="' + (p + 1) + '">Next</button>' : '')
+          + '</span>';
         if (finTxScrollToTop) {
           finTxScrollToTop = false;
           var card = document.getElementById('finTxCard');

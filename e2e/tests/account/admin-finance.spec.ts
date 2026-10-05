@@ -813,11 +813,16 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     const finance = new AdminFinancePage(page);
     await finance.open();
     await expect(finance.txRows).toHaveCount(25);
+    // The first page offers only Next.
+    await expect(page.locator('#finTxPager').getByRole('button', { name: 'Previous' })).toHaveCount(0);
 
     // Scroll to the pager at the bottom of a full page, then go to the short page 2.
     await page.locator('#finTxPager').getByRole('button', { name: 'Next' }).scrollIntoViewIfNeeded();
     await page.locator('#finTxPager').getByRole('button', { name: 'Next' }).click();
     await expect(finance.txRows).toHaveCount(2);
+    // The last page offers only Previous.
+    await expect(page.locator('#finTxPager').getByRole('button', { name: 'Next' })).toHaveCount(0);
+    await expect(page.locator('#finTxPager').getByRole('button', { name: 'Previous' })).toBeVisible();
     await expect.poll(async () => page.locator('#finTxCard').evaluate((el) => el.getBoundingClientRect().top))
       .toBeGreaterThanOrEqual(0);
     await expect(finance.txRows.first()).toBeInViewport();
@@ -833,6 +838,8 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     const finance = new AdminFinancePage(page);
     await finance.open();
     await expect(finance.txRows).toHaveCount(2);
+    // A single page needs no paging buttons.
+    await expect(page.locator('#finTxPager').getByRole('button')).toHaveCount(0);
 
     await page.getByRole('button', { name: 'Hide transaction' }).nth(1).click();
     await finance.tagPicker.getByRole('menuitem', { name: /Hide all from Heroku/ }).click();
