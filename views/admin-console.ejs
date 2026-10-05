@@ -3584,6 +3584,7 @@
               <div id="finPlaidAccounts" style="display:flex; gap:0.5rem; flex-wrap:wrap;" data-testid="finance-plaid-accounts"></div>
               <div id="finPlaidLastSync" class="fin-muted" style="margin-top:0.5rem; font-size:0.75rem;" data-testid="finance-plaid-last-sync"></div>
               <div id="finPlaidDisconnect" hidden style="margin-top:0.75rem;">
+                <button type="button" class="ac-btn ac-btn-sm" id="finPlaidChooseAccountsBtn" data-testid="finance-plaid-choose-accounts">Choose accounts</button>
                 <button type="button" class="ac-btn ac-btn-sm" id="finPlaidDisconnectBtn" data-testid="finance-plaid-disconnect">Disconnect bank</button>
                 <div class="fin-mfa-manage" id="finPlaidDisconnectConfirm" hidden style="max-width:none;">
                   <p>Disconnecting removes the connection at Plaid, so it stops syncing and stops being billed.</p>
@@ -14019,6 +14020,11 @@
           else finOpenUpdateMode(mode);
         });
         document.getElementById('finPlaidTestWebhookBtn').addEventListener('click', finSendTestWebhook);
+        // Update mode with account selection: pick which accounts Plaid
+        // shares. Transactions from unticked accounts are removed afterwards.
+        document.getElementById('finPlaidChooseAccountsBtn').addEventListener('click', function() {
+          finOpenUpdateMode('new_accounts');
+        });
         document.getElementById('finPlaidDisconnectBtn').addEventListener('click', function() {
           document.getElementById('finPlaidDisconnectConfirm').hidden = false;
           this.hidden = true;
@@ -14874,7 +14880,9 @@
         finShowError(null);
         function done() {
           $.ajax({ url: '/admin/api/finance/plaid/update-complete', type: 'POST', contentType: 'application/json', data: '{}' })
-            .done(function() {
+            .done(function(res) {
+              var removed = Number(res && res.removed_transactions) || 0;
+              if (removed) finBankNotice = removed + (removed === 1 ? ' transaction' : ' transactions') + ' from unselected accounts removed.';
               document.getElementById('finBankAlert').hidden = true;
               loadBankStatus();
               // The API syncs in the background; pick up what it finds.
