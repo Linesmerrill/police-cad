@@ -13730,6 +13730,17 @@
         finShowError(msg);
       }
 
+      // A change that didn't save. The banner sits at the top of the panel,
+      // usually scrolled out of view by then, so also toast where the owner is.
+      function finSaveFailed(jqXHR) {
+        finAjaxFailed(jqXHR);
+        var status = jqXHR && jqXHR.status;
+        if (status === 401 || (status === 403 && finResponseCode(jqXHR) === 'MFA_REQUIRED')) return;
+        if (typeof showToast === 'function') {
+          showToast('error', finEsc('Could not save: ' + (finServerMessage(jqXHR) || 'please try again.')));
+        }
+      }
+
       function finYm(d) {
         return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
       }
@@ -14504,7 +14515,7 @@
             loadFinanceTransactions();
             loadFinanceSummary();
           })
-          .fail(finAjaxFailed);
+          .fail(finSaveFailed);
       }
 
       // ---- Tag picker ----
@@ -14611,7 +14622,7 @@
               if (tag && done) done(tag);
             });
           })
-          .fail(finAjaxFailed);
+          .fail(finSaveFailed);
       }
 
       // ---- Tag colours ----
@@ -14735,13 +14746,13 @@
           var id = this.getAttribute('data-delete');
           $.ajax({ url: '/admin/api/finance/tags/' + encodeURIComponent(id), type: 'DELETE' })
             .done(function() { finLoadTags(function() { finRenderTagsModal(); loadFinanceSummary(); loadFinanceTransactions(); }); })
-            .fail(finAjaxFailed);
+            .fail(finSaveFailed);
         });
         $('#finRulesList').on('click', '[data-rule]', function() {
           var id = this.getAttribute('data-rule');
           $.ajax({ url: '/admin/api/finance/tag-rules/' + encodeURIComponent(id), type: 'DELETE' })
             .done(finRenderTagsModal)
-            .fail(finAjaxFailed);
+            .fail(finSaveFailed);
         });
       }
 

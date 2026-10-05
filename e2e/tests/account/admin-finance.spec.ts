@@ -850,6 +850,22 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await expect.poll(() => patches).toEqual([{ id: 'tx-heroku-1', body: { hide_merchant: true } }]);
   });
 
+  test('a change that fails to save shows a toast', async ({ page }) => {
+    await mockFinance(page, { summary: SUMMARY_BANK_FIXTURE, plaidStatus: PLAID_STATUS_CONNECTED });
+    await page.route('**/admin/api/finance/transactions/*', (route: Route) => {
+      if (route.request().method() !== 'PATCH') return route.fallback();
+      return route.fulfill({ status: 400, contentType: 'application/json',
+        body: JSON.stringify({ response: { message: 'nothing to change' } }) });
+    });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+    await expect(finance.txRows).toHaveCount(2);
+
+    await page.getByRole('button', { name: 'Hide transaction' }).nth(1).click();
+    await finance.tagPicker.getByRole('menuitem', { name: /Hide all from Heroku/ }).click();
+    await expect(page.locator('.toast-notification')).toContainText('Could not save: nothing to change');
+  });
+
   test('a transaction hidden by a rule can stop the rule', async ({ page }) => {
     const patches: Array<{ id: string; body: unknown }> = [];
     await mockFinance(page, {
