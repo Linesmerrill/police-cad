@@ -3686,7 +3686,7 @@
             </div>
           </div>
 
-          <div role="region" class="ac-card" data-testid="finance-transactions">
+          <div role="region" class="ac-card" id="finTxCard" data-testid="finance-transactions" style="scroll-margin-top:72px;">
             <div class="ac-card-body">
               <div class="fin-section-head">
                 <h3>Transactions <span class="fin-muted" id="finTxCount" style="font-weight:400; font-size:0.875rem;"></span></h3>
@@ -14342,6 +14342,9 @@
       var finTxState = { page: 1, limit: 25, tag: '', hidden: false, search: '' };
       var finTxRows = {};
       var finSearchTimer = null;
+      // Set by Previous/Next: the new page can be much shorter, which would
+      // leave the reader scrolled past it, so bring the card's top back.
+      var finTxScrollToTop = false;
 
       function finWireTransactions() {
         $('#finTxTag').on('change', function() { finTxState.tag = this.value; finTxState.page = 1; loadFinanceTransactions(); });
@@ -14353,6 +14356,7 @@
         });
         $('#finTxPager').on('click', '[data-page]', function() {
           finTxState.page = parseInt(this.getAttribute('data-page'), 10) || 1;
+          finTxScrollToTop = true;
           loadFinanceTransactions();
         });
         $('#finTxBody').on('click', '.fin-tag', function(e) {
@@ -14460,6 +14464,14 @@
         document.getElementById('finTxPager').innerHTML = '<span>Page ' + p + ' of ' + pages + '</span><span style="display:flex; gap:0.375rem;">'
           + '<button type="button" class="ac-btn ac-btn-sm" data-page="' + (p - 1) + '"' + (p <= 1 ? ' disabled' : '') + '>Previous</button>'
           + '<button type="button" class="ac-btn ac-btn-sm" data-page="' + (p + 1) + '"' + (p >= pages ? ' disabled' : '') + '>Next</button></span>';
+        if (finTxScrollToTop) {
+          finTxScrollToTop = false;
+          var card = document.getElementById('finTxCard');
+          if (card && card.getBoundingClientRect().top < 72) {
+            var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            card.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+          }
+        }
       }
 
       // Hide/unhide or tag one transaction, then refresh what depends on it.

@@ -799,6 +799,30 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await expect.poll(() => summaries).toBeGreaterThan(before);
   });
 
+  test('paging the transactions brings the card back into view', async ({ page }) => {
+    const many = Array.from({ length: 25 }, (_, i) => ({
+      ...TRANSACTIONS_FIXTURE.data[1], transaction_id: `tx-p${i}`, name: `Row ${i}`,
+    }));
+    await mockFinance(page, { summary: SUMMARY_BANK_FIXTURE, plaidStatus: PLAID_STATUS_CONNECTED });
+    await page.route('**/admin/api/finance/transactions?**', (route: Route) => {
+      const pageNum = new URL(route.request().url()).searchParams.get('page');
+      const data = pageNum === '2' ? many.slice(0, 2) : many;
+      return route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ data, totalCount: 27, page: Number(pageNum || 1), limit: 25 }) });
+    });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+    await expect(finance.txRows).toHaveCount(25);
+
+    // Scroll to the pager at the bottom of a full page, then go to the short page 2.
+    await page.locator('#finTxPager').getByRole('button', { name: 'Next' }).scrollIntoViewIfNeeded();
+    await page.locator('#finTxPager').getByRole('button', { name: 'Next' }).click();
+    await expect(finance.txRows).toHaveCount(2);
+    await expect.poll(async () => page.locator('#finTxCard').evaluate((el) => el.getBoundingClientRect().top))
+      .toBeGreaterThanOrEqual(0);
+    await expect(finance.txRows.first()).toBeInViewport();
+  });
+
   test('hide all from a merchant sends hide_merchant', async ({ page }) => {
     const patches: Array<{ id: string; body: unknown }> = [];
     await mockFinance(page, {
