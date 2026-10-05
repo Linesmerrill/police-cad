@@ -688,8 +688,11 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     const ym = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const thisMonth = ym(now);
     const threeBack = ym(new Date(now.getFullYear(), now.getMonth() - 2, 1));
+    const txCount = page.locator('#finTxCount');
+    await expect(txCount).toContainText('in the last 6 months');
 
     await finance.preset('3').click();
+    await expect(txCount).toContainText('in the last 3 months');
     await expect(page.getByTestId('finance-from')).toHaveValue(threeBack);
     await expect(page.getByTestId('finance-to')).toHaveValue(thisMonth);
     await expect(finance.preset('3')).toHaveAttribute('aria-pressed', 'true');
@@ -698,6 +701,7 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await finance.preset('this-month').click();
     await expect(page.getByTestId('finance-from')).toHaveValue(thisMonth);
     await expect.poll(() => ranges).toContain(`${thisMonth}..${thisMonth}`);
+    await expect(txCount).toContainText('this month');
   });
 
   test('the current month is hidden until it has data, past zeros stay', async ({ page }) => {

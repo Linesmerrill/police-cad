@@ -14418,12 +14418,27 @@
           + '<span class="dot" style="background:' + finEsc(tag.color) + '"></span>' + finEsc(tag.name) + '</button>';
       }
 
+      // Describes the From/To range the list covers, in the preset's words when one matches.
+      function finRangePhrase() {
+        var from = document.getElementById('finFrom').value;
+        var to = document.getElementById('finTo').value;
+        if (!from || !to) return '';
+        var words = { 'this-month': 'this month', 'last-month': 'last month', '3': 'in the last 3 months',
+          '6': 'in the last 6 months', '12': 'in the last 12 months', 'ytd': 'year to date' };
+        for (var key in words) {
+          var r = finPresetRange(key);
+          if (r.from === from && r.to === to) return words[key];
+        }
+        if (from === to) return 'in ' + finMonthLabel(from);
+        return 'from ' + finMonthLabel(from) + ' to ' + finMonthLabel(to);
+      }
+
       function finRenderTransactions(res) {
         var rows = res.data || [];
         var total = Number(res.totalCount) || 0;
         var body = document.getElementById('finTxBody');
         finTxRows = {};
-        document.getElementById('finTxCount').textContent = total ? '(' + total + ')' : '';
+        document.getElementById('finTxCount').textContent = ((total ? '(' + total + ') ' : '') + finRangePhrase()).trim();
         if (!rows.length) {
           var filtered = finTxState.tag || finTxState.search;
           body.innerHTML = '<tr><td colspan="6" class="fin-muted">'
