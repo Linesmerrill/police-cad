@@ -15451,7 +15451,7 @@ async function saveEditEvent() {
         </div>
 
         <!-- Civilians List -->
-        <div id="civiliansList" style="background:#2d3748; border-radius:12px; border:1px solid #4a5568; min-height:300px; max-height:500px; overflow-y:auto;">
+        <div id="civiliansList" data-approval-enabled="<%= community && community.community && community.community.civilianApprovalSystemEnabled ? 'true' : 'false' %>" style="background:#2d3748; border-radius:12px; border:1px solid #4a5568; min-height:300px; max-height:500px; overflow-y:auto;">
           <!-- Civilians will be loaded here -->
         </div>
 
