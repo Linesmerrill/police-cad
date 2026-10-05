@@ -14358,10 +14358,9 @@
         $('#finTxBody').on('click', '.fin-tag', function(e) {
           e.stopPropagation();
           finOpenTagPicker(this, this.getAttribute('data-tx'));
-        }).on('click', '[data-hide]', function() {
-          var id = this.getAttribute('data-hide');
-          var tx = finTxRows[id];
-          if (tx) finPatchTransaction(id, { hidden: !tx.hidden });
+        }).on('click', '[data-hide]', function(e) {
+          e.stopPropagation();
+          finOpenHideMenu(this, this.getAttribute('data-hide'));
         });
         $(document).on('click.finpicker', function(e) {
           var picker = document.getElementById('finTagPicker');
@@ -14444,7 +14443,7 @@
             + '<td class="fin-td-desc"><div class="fin-tx-desc"><span class="fin-tx-merchant">' + finEsc(merchant)
             + (tx.pending ? '<span class="fin-pill">Pending</span>' : '')
             + (tx.internal_transfer ? '<span class="fin-pill" title="Moved between your own accounts; not counted">Transfer</span>' : '')
-            + (tx.hidden ? '<span class="fin-pill">Hidden</span>' : '')
+            + (tx.hidden ? '<span class="fin-pill">' + (tx.merchant_hidden ? 'Hidden by rule' : 'Hidden') + '</span>' : '')
             + '</span>' + (raw ? '<span class="fin-tx-raw" title="' + finEsc(raw) + '">' + finEsc(raw) + '</span>' : '') + '</div></td>'
             + '<td class="fin-tx-col-account fin-muted" style="white-space:nowrap;">' + finEsc(tx.account_name || '')
             + (tx.account_mask ? ' ••' + finEsc(tx.account_mask) : '') + '</td>'
@@ -14483,6 +14482,39 @@
       // returnFocus puts keyboard focus back on the chip, for Escape. Not
       // after scrolling away or clicking elsewhere: focusing the chip would
       // scroll the page back to it, or steal focus from what was clicked.
+      // The eye button's menu: hide or unhide just this transaction, or every
+      // transaction from its merchant, now and as new ones sync (a hide rule).
+      function finOpenHideMenu(anchor, txId) {
+        var tx = finTxRows[txId];
+        if (!tx) return;
+        var picker = document.getElementById('finTagPicker');
+        picker._anchor = anchor;
+        var merchant = tx.merchant_name || tx.name || '';
+        var opts = [];
+        if (!tx.hidden) {
+          opts.push({ label: 'Hide this transaction', body: { hidden: true } });
+          if (merchant) opts.push({ label: 'Hide all from ' + merchant, sub: 'Now and as new ones arrive', body: { hide_merchant: true } });
+        } else {
+          opts.push({ label: 'Unhide this transaction', body: { hidden: false } });
+          if (tx.merchant_hidden && merchant) opts.push({ label: 'Stop hiding ' + merchant, sub: 'Unhides all of them', body: { hide_merchant: false } });
+        }
+        picker.innerHTML = '<div class="fin-picker-list" role="menu">' + opts.map(function(o, i) {
+          return '<button type="button" class="fin-picker-opt" role="menuitem" data-hide-opt="' + i + '" style="flex-direction:column; align-items:flex-start; gap:0;">'
+            + '<span>' + finEsc(o.label) + '</span>'
+            + (o.sub ? '<span class="fin-muted" style="font-size:0.75rem;">' + finEsc(o.sub) + '</span>' : '')
+            + '</button>';
+        }).join('') + '</div>';
+        picker.hidden = false;
+        finPlacePicker(picker, anchor);
+        $(picker).off('.finpick').on('click.finpick', '[data-hide-opt]', function() {
+          var o = opts[parseInt(this.getAttribute('data-hide-opt'), 10)];
+          finCloseTagPicker();
+          if (o) finPatchTransaction(txId, o.body);
+        });
+        var first = picker.querySelector('[data-hide-opt]');
+        if (first) first.focus();
+      }
+
       function finCloseTagPicker(returnFocus) {
         var picker = document.getElementById('finTagPicker');
         if (picker && !picker.hidden) {
