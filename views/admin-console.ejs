@@ -3519,12 +3519,16 @@
           <div class="fin-mfa" id="finMfaGate" hidden data-testid="finance-mfa-gate">
             <div id="finMfaIntro">
               <h3>Turn on two-factor authentication</h3>
-              <p>Finance shows your bank data, so it needs a code from an authenticator app (Google Authenticator, 1Password, Authy) each time you sign in.</p>
-              <button type="button" class="ac-btn ac-btn-accent" id="finMfaStartBtn" data-testid="finance-mfa-start">Set up two-factor</button>
+              <p>Finance shows your bank data, so signing in needs a second step: a passkey (Face ID or Touch ID, synced with iCloud Keychain) or a code from an authenticator app.</p>
+              <div class="fin-mfa-form">
+                <button type="button" class="ac-btn ac-btn-accent" id="finMfaPasskeyStartBtn" data-testid="finance-mfa-passkey-start" hidden>Use a passkey</button>
+                <button type="button" class="ac-btn" id="finMfaStartBtn" data-testid="finance-mfa-start">Use an authenticator app</button>
+              </div>
+              <div class="fin-mfa-msg" id="finMfaIntroMsg" role="status"></div>
             </div>
             <div id="finMfaRelogin" hidden>
-              <h3>Sign in again with your code</h3>
-              <p>Two-factor is on, but this session started without it. Log out and sign back in with your authenticator code to open Finance.</p>
+              <h3>Sign in again with two-factor</h3>
+              <p>Two-factor is on, but this session started without it. Log out and sign back in with your passkey or authenticator code to open Finance.</p>
               <a class="ac-btn ac-btn-accent" href="/admin/logout">Log out</a>
             </div>
             <div id="finMfaScan" hidden>
@@ -3754,7 +3758,15 @@
               <button type="button" class="fin-bank-toggle" id="finMfaManageToggle" aria-expanded="false" aria-controls="finMfaManage" data-testid="finance-mfa-manage">Manage</button>
             </div>
             <div class="fin-mfa-manage" id="finMfaManage" hidden>
-              <p>Enter a code from your authenticator app to get new backup codes or turn two-factor off.</p>
+              <div id="finPasskeyManage" data-testid="finance-passkeys">
+                <p style="margin-bottom:0.375rem;">Passkeys</p>
+                <ul class="fin-rules" id="finPasskeyList" style="margin-bottom:0.5rem;"></ul>
+                <div class="fin-mfa-form" style="margin-bottom:0.75rem;">
+                  <button type="button" class="ac-btn ac-btn-sm" id="finPasskeyAddBtn" data-testid="finance-passkey-add">Add a passkey</button>
+                </div>
+                <div class="fin-mfa-msg" id="finPasskeyMsg" role="status"></div>
+              </div>
+              <p>Enter a code from your authenticator app, or a backup code, to get new backup codes or turn two-factor off.</p>
               <form class="fin-mfa-form" id="finMfaManageForm">
                 <input type="text" class="form-control ac-input input-sm" id="finMfaManageCode" autocomplete="one-time-code" maxlength="11" placeholder="Current code" aria-label="Current authenticator code">
                 <button type="submit" class="ac-btn ac-btn-sm" data-action="backup-codes">New backup codes</button>
@@ -5576,6 +5588,7 @@
          window.dbUser, so the script's own auto-show is inert here — an admin
          does not want the changelog popping up while authoring one. -->
     <script src="/static/js/whats-new.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+    <script src="/static/js/admin-passkeys.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
       if (typeof io === 'undefined') {
@@ -13776,10 +13789,12 @@
               document.getElementById('finMfaSettingsSummary').textContent =
                 left + (left === 1 ? ' backup code left' : ' backup codes left');
               document.getElementById('finMfaSettings').hidden = false;
+              finRenderPasskeys(status.passkeys || []);
               done(true);
             } else {
               document.getElementById('finMfaSettings').hidden = true;
               finShowMfaGate(status.enabled ? 'relogin' : 'intro');
+              document.getElementById('finMfaPasskeyStartBtn').hidden = !(window.lpcPasskeys && window.lpcPasskeys.supported);
               done(false);
             }
           })
@@ -13799,8 +13814,90 @@
         el.innerHTML = (codes || []).map(function(c) { return '<span>' + finEsc(c) + '</span>'; }).join('');
       }
 
+      // ---- Passkeys ----
+      // The device names its own passkey ("iPhone", "Mac"); the browser
+      // can't tell us which, so suggest one from the platform.
+      function finPasskeyDefaultName() {
+        var ua = navigator.userAgent || '';
+        if (/iPhone/.test(ua)) return 'iPhone';
+        if (/iPad/.test(ua)) return 'iPad';
+        if (/Macintosh/.test(ua)) return 'Mac';
+        if (/Android/.test(ua)) return 'Android';
+        if (/Windows/.test(ua)) return 'Windows';
+        return 'Passkey';
+      }
+
+      function finRenderPasskeys(passkeys) {
+        var list = document.getElementById('finPasskeyList');
+        list.innerHTML = passkeys.length ? passkeys.map(function(p) {
+          var used = p.lastUsedAt ? 'last used ' + finAgo(p.lastUsedAt) : 'never used';
+          return '<li><span style="flex:1 1 auto;">' + finEsc(p.name) + ' <span class="fin-muted">(' + finEsc(used) + ')</span></span>'
+            + '<button type="button" class="fin-icon-btn" data-passkey="' + finEsc(p.id) + '" aria-label="Remove passkey ' + finEsc(p.name) + '"><i class="fas fa-xmark" aria-hidden="true"></i></button></li>';
+        }).join('') : '<li class="fin-muted">None yet.</li>';
+        document.getElementById('finPasskeyAddBtn').hidden = !(window.lpcPasskeys && window.lpcPasskeys.supported);
+      }
+
+      // Register a passkey on this device. Returns the API's answer: when it
+      // turned two-factor on, it includes backup codes.
+      function finCreatePasskey() {
+        return new Promise(function(resolve, reject) {
+          $.ajax({ url: '/admin/api/mfa/passkeys/register/begin', type: 'POST', contentType: 'application/json', data: '{}' })
+            .done(function(options) {
+              window.lpcPasskeys.create(options).then(function(credential) {
+                $.ajax({
+                  url: '/admin/api/mfa/passkeys/register/finish', type: 'POST', contentType: 'application/json',
+                  data: JSON.stringify({ name: finPasskeyDefaultName(), credential: credential })
+                }).done(resolve).fail(function(jqXHR) { reject(new Error(finServerMessage(jqXHR) || 'The passkey could not be saved.')); });
+              }, function(err) { reject(new Error(window.lpcPasskeys.describeError(err))); });
+            })
+            .fail(function(jqXHR) { reject(new Error(finServerMessage(jqXHR) || 'Passkey setup is unavailable.')); });
+        });
+      }
+
       function finWireMfa() {
         var lastCodes = [];
+
+        $('#finMfaPasskeyStartBtn').on('click', function() {
+          var btn = this;
+          btn.disabled = true;
+          finMfaMessage('finMfaIntroMsg', '');
+          finCreatePasskey().then(function(res) {
+            lastCodes = (res && res.backupCodes) || [];
+            if (lastCodes.length) {
+              finRenderCodes(document.getElementById('finMfaCodeList'), lastCodes);
+              finShowMfaGate('codes');
+            } else {
+              loadFinanceAll();
+            }
+          }, function(err) {
+            finMfaMessage('finMfaIntroMsg', err.message, true);
+          }).then(function() { btn.disabled = false; });
+        });
+
+        $('#finPasskeyAddBtn').on('click', function() {
+          var btn = this;
+          btn.disabled = true;
+          finMfaMessage('finPasskeyMsg', '');
+          finCreatePasskey().then(function() {
+            finMfaMessage('finPasskeyMsg', 'Passkey added.');
+            finCheckMfa(function() {});
+          }, function(err) {
+            finMfaMessage('finPasskeyMsg', err.message, true);
+          }).then(function() { btn.disabled = false; });
+        });
+
+        $('#finPasskeyList').on('click', '[data-passkey]', function() {
+          // Two steps, in place: the first click asks, the second removes.
+          if (this.getAttribute('data-armed') !== 'true') {
+            this.setAttribute('data-armed', 'true');
+            this.innerHTML = 'Remove?';
+            return;
+          }
+          var id = this.getAttribute('data-passkey');
+          $.ajax({ url: '/admin/api/mfa/passkeys/' + encodeURIComponent(id), type: 'DELETE' })
+            .done(function() { finMfaMessage('finPasskeyMsg', 'Passkey removed.'); finCheckMfa(function() {}); })
+            .fail(function(jqXHR) { finMfaMessage('finPasskeyMsg', finServerMessage(jqXHR) || 'Could not remove the passkey.', true); });
+        });
 
         $('#finMfaStartBtn').on('click', function() {
           var btn = this;

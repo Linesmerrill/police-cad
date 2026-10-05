@@ -263,3 +263,36 @@ export async function removeReportReviewer(): Promise<void> {
     await db.collection('admin_users').deleteOne({ _id: TEST_REPORT_REVIEWER_ID });
   });
 }
+
+// An owner with no two-factor yet, for the passkey spec. Active, because the
+// API's admin login only accepts active admins.
+export const TEST_PASSKEY_OWNER_ID = new ObjectId('a8a8a8a8a8a8a8a8a8a8a8a8');
+export const TEST_PASSKEY_OWNER_EMAIL = 'passkey-owner@test.com';
+export const TEST_PASSKEY_OWNER_PASSWORD = 'passkey-owner-pw-1';
+
+export async function seedPasskeyOwner(): Promise<void> {
+  const hash = bcrypt.hashSync(TEST_PASSKEY_OWNER_PASSWORD);
+  await withDb(async (db) => {
+    await db.collection('admin_users').replaceOne(
+      { _id: TEST_PASSKEY_OWNER_ID },
+      {
+        _id: TEST_PASSKEY_OWNER_ID,
+        email: TEST_PASSKEY_OWNER_EMAIL,
+        password: hash,
+        firstName: 'Passkey',
+        lastName: 'Owner',
+        role: 'owner',
+        roles: ['owner', 'admin'],
+        active: true,
+        createdAt: new Date(),
+      },
+      { upsert: true }
+    );
+  });
+}
+
+export async function removePasskeyOwner(): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('admin_users').deleteOne({ _id: TEST_PASSKEY_OWNER_ID });
+  });
+}

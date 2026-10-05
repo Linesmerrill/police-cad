@@ -856,7 +856,7 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     const finance = new AdminFinancePage(page);
     await finance.open();
 
-    await expect(finance.mfaGate).toContainText('Sign in again with your code');
+    await expect(finance.mfaGate).toContainText('Sign in again with two-factor');
     await expect(finance.plTable).toBeHidden();
   });
 

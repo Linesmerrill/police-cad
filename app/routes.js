@@ -728,17 +728,24 @@ module.exports = function (app, passport, server, nextApp, handle) {
     return res.redirect("/admin?error=" + encodeURIComponent(message));
   }
 
+  // The code page, offering a passkey first when the admin has one.
+  function renderAdminMfa(req, res, error) {
+    const pending = req.session && req.session.adminMfaPending;
+    const methods = (pending && pending.methods) || [];
+    return res.render("admin-mfa", { error: error || null, hasPasskey: methods.indexOf("passkey") >= 0 });
+  }
+
   app.get("/admin/mfa", function (req, res) {
     if (req.session && req.session.adminToken) return res.redirect("/admin/console");
     if (!adminMfaPending(req)) return restartAdminLogin(req, res, "Your sign-in expired. Enter your password again.");
-    res.render("admin-mfa", { error: null });
+    renderAdminMfa(req, res, null);
   });
 
   app.post("/admin/mfa", async function (req, res) {
     const pending = adminMfaPending(req);
     if (!pending) return restartAdminLogin(req, res, "Your sign-in expired. Enter your password again.");
     const code = String((req.body && req.body.code) || "").trim();
-    if (!code) return res.render("admin-mfa", { error: "Enter the code from your authenticator app." });
+    if (!code) return renderAdminMfa(req, res, "Enter the code from your authenticator app.");
     if (pending.attempts >= ADMIN_MFA_MAX_ATTEMPTS) {
       return restartAdminLogin(req, res, "Too many incorrect codes. Enter your password again.");
     }
@@ -754,7 +761,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       });
     } catch (err) {
       console.log("Admin two-factor verify failed:", err.message);
-      return res.render("admin-mfa", { error: "Two-factor sign-in is unavailable right now. Try again in a minute." });
+      return renderAdminMfa(req, res, "Two-factor sign-in is unavailable right now. Try again in a minute.");
     }
 
     const data = resp.data || {};
@@ -775,7 +782,56 @@ module.exports = function (app, passport, server, nextApp, handle) {
     if (resp.status === 429) {
       return restartAdminLogin(req, res, data.error || "Too many incorrect codes. Try again in 15 minutes.");
     }
-    return res.render("admin-mfa", { error: "That code is not valid. Try the newest code from your app." });
+    return renderAdminMfa(req, res, "That code is not valid. Try the newest code from your app.");
+  });
+
+  // Passkey instead of the code: the page asks for options, the browser signs
+  // with the passkey, and the signed response goes back through here to the
+  // API, which checks it against the pending challenge.
+  app.post("/admin/mfa/passkey/options", async function (req, res) {
+    const pending = adminMfaPending(req);
+    if (!pending) return res.status(401).json({ message: "Your sign-in expired. Enter your password again.", restart: true });
+    try {
+      const resp = await axios.post(`${process.env.POLICE_CAD_API_URL}/api/v1/admin/login/passkey/begin`,
+        { challenge: pending.challenge },
+        { timeout: 10000, validateStatus: function (status) { return status < 600; } });
+      if (resp.status === 200) return res.json(resp.data);
+      return res.status(resp.status).json({ message: (resp.data && resp.data.error) || "Passkey sign-in is unavailable.", restart: resp.status === 401 });
+    } catch (err) {
+      return res.status(503).json({ message: "Passkey sign-in is unavailable right now. Use a code instead." });
+    }
+  });
+
+  app.post("/admin/mfa/passkey", async function (req, res) {
+    const pending = adminMfaPending(req);
+    if (!pending) return res.status(401).json({ message: "Your sign-in expired. Enter your password again.", restart: true });
+    const credential = req.body && req.body.credential;
+    if (!credential || typeof credential !== "object") return res.status(400).json({ message: "Missing passkey response." });
+    let resp;
+    try {
+      resp = await axios.post(`${process.env.POLICE_CAD_API_URL}/api/v1/admin/login/passkey/finish`,
+        { challenge: pending.challenge, credential: credential },
+        { timeout: 10000, validateStatus: function (status) { return status < 600; } });
+    } catch (err) {
+      return res.status(503).json({ message: "Passkey sign-in is unavailable right now. Use a code instead." });
+    }
+    const data = resp.data || {};
+    if (resp.status !== 200 || !data.token) {
+      return res.status(resp.status === 200 ? 502 : resp.status).json({
+        message: data.error || "That passkey didn't work. Try again or use a code.",
+        restart: data.code === "MFA_CHALLENGE_EXPIRED" || resp.status === 429,
+      });
+    }
+    try {
+      const mongoose = require("mongoose");
+      const adminUser = await mongoose.connection.db.collection("admin_users").findOne({ email: pending.email });
+      if (!adminUser || adminUser.active === false) return res.status(401).json({ message: "Invalid credentials", restart: true });
+      delete req.session.adminMfaPending;
+      // finishAdminLogin answers with a redirect; the page follows it.
+      return await finishAdminLogin(req, res, adminUser, pending.email, { apiJwt: data.token, apiRefresh: data.refreshToken });
+    } catch (err) {
+      return res.status(500).json({ message: "Authentication failed. Please try again.", restart: true });
+    }
   });
 
   app.post("/admin", async function (req, res) {
@@ -833,7 +889,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (!challengeResp || challengeResp.status !== 401 || !data || data.code !== "MFA_REQUIRED" || !data.challenge) {
           return res.redirect("/admin?error=" + encodeURIComponent("Two-factor sign-in is unavailable right now. Try again in a minute."));
         }
-        req.session.adminMfaPending = { email: adminUser.email, challenge: data.challenge, startedAt: Date.now(), attempts: 0 };
+        req.session.adminMfaPending = {
+          email: adminUser.email,
+          challenge: data.challenge,
+          methods: Array.isArray(data.methods) ? data.methods.filter(function (m) { return typeof m === "string"; }) : [],
+          startedAt: Date.now(),
+          attempts: 0,
+        };
         return req.session.save(function () { res.redirect("/admin/mfa"); });
       }
 
@@ -1268,6 +1330,20 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
   app.post("/admin/api/mfa/disable", requireOwnerSession, function (req, res) {
     return mfaForward(req, res, "post", "/api/v1/admin/mfa/disable", mfaCodeBody(req));
+  });
+  app.post("/admin/api/mfa/passkeys/register/begin", requireOwnerSession, function (req, res) {
+    return mfaForward(req, res, "post", "/api/v1/admin/mfa/passkeys/register/begin", {});
+  });
+  app.post("/admin/api/mfa/passkeys/register/finish", requireOwnerSession, function (req, res) {
+    const credential = req.body && req.body.credential;
+    if (!credential || typeof credential !== "object") return res.status(400).json({ message: "Missing passkey response." });
+    const name = String((req.body && req.body.name) || "").trim().slice(0, 40);
+    return mfaForward(req, res, "post", "/api/v1/admin/mfa/passkeys/register/finish", { name: name, credential: credential });
+  });
+  app.delete("/admin/api/mfa/passkeys/:id", requireOwnerSession, function (req, res) {
+    const id = String(req.params.id || "");
+    if (!/^[A-Za-z0-9_-]{8,200}$/.test(id)) return res.status(400).json({ message: "invalid passkey id" });
+    return mfaForward(req, res, "delete", `/api/v1/admin/mfa/passkeys/${id}`);
   });
 
   app.get("/admin/api/finance/transactions", requireOwnerSession, async function (req, res) {
