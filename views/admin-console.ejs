@@ -3583,6 +3583,18 @@
               <p class="fin-bank-note" id="finBankNote">Connect the business bank account so profit reflects real money in and out. Plaid handles the bank login; this site never sees it.</p>
               <div id="finPlaidAccounts" style="display:flex; gap:0.5rem; flex-wrap:wrap;" data-testid="finance-plaid-accounts"></div>
               <div id="finPlaidLastSync" class="fin-muted" style="margin-top:0.5rem; font-size:0.75rem;" data-testid="finance-plaid-last-sync"></div>
+              <div id="finPlaidDisconnect" hidden style="margin-top:0.75rem;">
+                <button type="button" class="ac-btn ac-btn-sm" id="finPlaidDisconnectBtn" data-testid="finance-plaid-disconnect">Disconnect bank</button>
+                <div class="fin-mfa-manage" id="finPlaidDisconnectConfirm" hidden style="max-width:none;">
+                  <p>Disconnecting removes the connection at Plaid, so it stops syncing and stops being billed.</p>
+                  <label class="fin-check" style="margin-bottom:0.5rem;"><input type="checkbox" id="finPlaidDeleteData" checked> Also delete the synced bank transactions</label>
+                  <div class="fin-mfa-form">
+                    <button type="button" class="ac-btn ac-btn-sm btn-danger" id="finPlaidDisconnectConfirmBtn" data-testid="finance-plaid-disconnect-confirm">Disconnect</button>
+                    <button type="button" class="ac-btn ac-btn-sm" id="finPlaidDisconnectCancelBtn">Cancel</button>
+                  </div>
+                </div>
+                <div class="fin-mfa-msg" id="finPlaidDisconnectMsg" role="status"></div>
+              </div>
               <div id="finPlaidSandbox" hidden style="margin-top:0.75rem; font-size:0.75rem;" class="fin-muted">
                 Plaid Sandbox.
                 <button type="button" id="finPlaidTestWebhookBtn" class="ac-btn ac-btn-sm" data-testid="finance-plaid-test-webhook">Send test webhook</button>
@@ -14007,6 +14019,15 @@
           else finOpenUpdateMode(mode);
         });
         document.getElementById('finPlaidTestWebhookBtn').addEventListener('click', finSendTestWebhook);
+        document.getElementById('finPlaidDisconnectBtn').addEventListener('click', function() {
+          document.getElementById('finPlaidDisconnectConfirm').hidden = false;
+          this.hidden = true;
+        });
+        document.getElementById('finPlaidDisconnectCancelBtn').addEventListener('click', function() {
+          document.getElementById('finPlaidDisconnectConfirm').hidden = true;
+          document.getElementById('finPlaidDisconnectBtn').hidden = false;
+        });
+        document.getElementById('finPlaidDisconnectConfirmBtn').addEventListener('click', finDisconnectBank);
         document.getElementById('finBankToggle').addEventListener('click', function() {
           finSetBankExpanded(this.getAttribute('aria-expanded') !== 'true');
         });
@@ -14888,6 +14909,30 @@
           .fail(function(jqXHR) { btn.disabled = false; finAjaxFailed(jqXHR); });
       }
 
+      var finBankNotice = null;
+
+      function finDisconnectBank() {
+        var btn = document.getElementById('finPlaidDisconnectConfirmBtn');
+        var msg = document.getElementById('finPlaidDisconnectMsg');
+        btn.disabled = true;
+        msg.textContent = '';
+        var deleteData = document.getElementById('finPlaidDeleteData').checked;
+        $.ajax({ url: '/admin/api/finance/plaid/disconnect', type: 'POST', contentType: 'application/json', data: JSON.stringify({ delete_data: deleteData }) })
+          .done(function(res) {
+            document.getElementById('finPlaidDisconnectConfirm').hidden = true;
+            document.getElementById('finPlaidDisconnectBtn').hidden = false;
+            var n = Number(res && res.deleted_transactions) || 0;
+            finShowError(null);
+            // Shown on the bank line by the next status render.
+            finBankNotice = deleteData
+              ? 'Disconnected; ' + n + (n === 1 ? ' transaction' : ' transactions') + ' deleted.'
+              : 'Disconnected; transactions kept.';
+            loadFinanceAll();
+          })
+          .fail(function(jqXHR) { msg.textContent = finServerMessage(jqXHR) || 'Could not disconnect the bank.'; msg.classList.add('is-error'); })
+          .always(function() { btn.disabled = false; });
+      }
+
       function finSendTestWebhook() {
         var btn = document.getElementById('finPlaidTestWebhookBtn');
         var msg = document.getElementById('finPlaidTestWebhookMsg');
@@ -14921,6 +14966,7 @@
           fixBtn.disabled = false;
         }
         document.getElementById('finPlaidSandbox').hidden = !(connected && res.sandbox);
+        document.getElementById('finPlaidDisconnect').hidden = !connected;
         document.getElementById('finPlaidConnectLabel').textContent = connected ? 'Switch bank' : 'Connect bank';
         document.getElementById('finPlaidSyncBtn').style.display = connected ? '' : 'none';
         document.getElementById('finBankNote').style.display = connected ? 'none' : '';
@@ -14928,7 +14974,8 @@
         var summaryBits = [];
         if (connected && nAccounts) summaryBits.push(nAccounts + (nAccounts === 1 ? ' account' : ' accounts'));
         if (connected && res.last_sync) summaryBits.push('synced ' + finAgo(res.last_sync));
-        document.getElementById('finBankSummary').textContent = summaryBits.join(', ');
+        document.getElementById('finBankSummary').textContent = finBankNotice || summaryBits.join(', ');
+        finBankNotice = null;
         // Once a bank is connected the details fold away; open them on demand.
         finSetBankExpanded(!connected);
         var accountsEl = document.getElementById('finPlaidAccounts');

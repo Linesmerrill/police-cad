@@ -1216,6 +1216,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Disconnect the bank: /item/remove at Plaid, and by default delete the
+  // synced transactions.
+  app.post("/admin/api/finance/plaid/disconnect", requireOwnerSession, function (req, res) {
+    const deleteData = !!(req.body && req.body.delete_data === true);
+    return financeForward(req, res, "post", "/plaid/disconnect", { delete_data: deleteData }, 30000);
+  });
+
   // Link in update mode finished: clear the prompts and sync.
   app.post("/admin/api/finance/plaid/update-complete", requireOwnerSession, function (req, res) {
     return financeForward(req, res, "post", "/plaid/update-complete", {});
