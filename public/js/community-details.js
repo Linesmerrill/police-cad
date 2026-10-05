@@ -1490,6 +1490,29 @@ function updateDepartmentJoinButton(departmentId, status) {
     }
   }
 
+  // The badge for a civilian's approval status, or null for none. Only an
+  // explicit rejection reads as Rejected: no_status and empty are civilians
+  // nobody has sent for review, requested_review is waiting, and
+  // requires_edits went back to the player.
+  function civilianStatusBadge(status, approvalEnabled) {
+    if (!approvalEnabled) return null;
+    switch (status) {
+      case 'approved':
+        return { key: 'approved', label: 'Approved', color: '#10b981' };
+      case 'pending':
+      case 'requested_review':
+        return { key: 'pending', label: 'Pending', color: '#f59e0b' };
+      case 'requires_edits':
+      case 'require_edits':
+        return { key: 'requires_edits', label: 'Needs edits', color: '#d97706' };
+      case 'rejected':
+      case 'denied':
+        return { key: 'rejected', label: 'Rejected', color: '#ef4444' };
+      default:
+        return { key: 'not_submitted', label: 'Not submitted', color: '#4b5563' };
+    }
+  }
+
   // Display civilians in the list
   function displayCivilians() {
     const civiliansList = document.getElementById('civiliansList');
@@ -1506,16 +1529,17 @@ function updateDepartmentJoinButton(departmentId, status) {
       return;
     }
 
+    // Statuses only mean something when the community reviews civilians.
+    // With approvals off, every civilian sits at no_status and none of them
+    // should look rejected.
+    const approvalEnabled = civiliansList.getAttribute('data-approval-enabled') === 'true';
+
     let html = '';
     filteredCivilians.forEach(civilian => {
       // Always access the nested civilian object
       const civ = civilian.civilian;
       
-      const approvalStatus = civ.approvalStatus || 'approved';
-      const statusColor = approvalStatus === 'approved' ? '#10b981' : 
-                         approvalStatus === 'pending' ? '#f59e0b' : '#ef4444';
-      const statusText = approvalStatus === 'approved' ? 'Approved' : 
-                        approvalStatus === 'pending' ? 'Pending' : 'Rejected';
+      const badge = civilianStatusBadge(civ.approvalStatus, approvalEnabled);
 
       // Use the name field directly since that's what the API provides
       const displayName = civ.name || 'Unknown Civilian';
@@ -1542,9 +1566,9 @@ function updateDepartmentJoinButton(departmentId, status) {
               </div>
             </div>
             <div style="text-align:right;">
-              <span style="background:${statusColor}; color:#fff; padding:0.25rem 0.75rem; border-radius:20px; font-size:0.75rem; font-weight:600; text-transform:uppercase;">
-                ${statusText}
-              </span>
+              ${badge ? `<span style="background:${badge.color}; color:#fff; padding:0.25rem 0.75rem; border-radius:20px; font-size:0.75rem; font-weight:600; text-transform:uppercase;" data-civ-status="${badge.key}">
+                ${badge.label}
+              </span>` : ''}
             </div>
           </div>
           

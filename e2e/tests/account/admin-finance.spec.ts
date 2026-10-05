@@ -634,9 +634,13 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await expect.poll(() => created).toEqual([{ name: 'Hosting', color: '#00aaff' }]);
 
     // An existing tag: focusing its row shows the presets; picking one saves.
+    // Creating the tag above re-renders the list once its reload lands, which
+    // can drop focus mid-click, so focus and pick together until it sticks.
     const steamRow = page.locator('#finTagsList .fin-tags-row').first();
-    await steamRow.locator('.fin-hex').focus();
-    await steamRow.locator('[data-swatch="#a78bfa"]').click();
+    await expect(async () => {
+      await steamRow.locator('.fin-hex').click();
+      await steamRow.locator('[data-swatch="#a78bfa"]').click({ timeout: 2_000 });
+    }).toPass({ timeout: 15_000 });
     await expect.poll(() => patched, { timeout: 5_000 })
       .toEqual([{ id: 'aaaaaaaaaaaaaaaaaaaaaaa1', body: { color: '#a78bfa' } }]);
   });
