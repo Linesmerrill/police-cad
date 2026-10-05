@@ -154,7 +154,7 @@ interface FinanceMocks {
   onCreateTag?: (body: unknown) => void;
   onPatchTag?: (id: string, body: unknown) => void;
   onLinkToken?: (body: unknown) => unknown;
-  onUpdateComplete?: () => void;
+  onUpdateComplete?: () => unknown;
   onSandboxWebhook?: (body: unknown) => void;
   onDisconnect?: (body: unknown) => unknown;
   onExchange?: (body: unknown) => unknown;
@@ -241,8 +241,8 @@ async function mockFinance(page: Page, mocks: FinanceMocks = {}) {
       return json(200, mocks.onLinkToken ? mocks.onLinkToken(body) : { link_token: 'link-sandbox-test' });
     }
     if (method === 'POST' && path === '/admin/api/finance/plaid/update-complete') {
-      if (mocks.onUpdateComplete) mocks.onUpdateComplete();
-      return json(200, { status: 'ok' });
+      const out = mocks.onUpdateComplete ? mocks.onUpdateComplete() : undefined;
+      return json(200, out || { status: 'ok' });
     }
     if (method === 'POST' && path === '/admin/api/finance/plaid/disconnect') {
       const body = req.postDataJSON();
@@ -561,6 +561,26 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await expect.poll(() => bodies).toEqual([{ delete_data: true }]);
     await expect(finance.plaidStatus).toHaveText('No bank connected yet.');
     await expect(page.locator('#finBankSummary')).toContainText('48 transactions deleted');
+  });
+
+  test('Choose accounts opens account selection and reports removed transactions', async ({ page }) => {
+    const linkBodies: unknown[] = [];
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: { ...PLAID_STATUS_CONNECTED, item_status: 'ok' },
+      onLinkToken: (body) => { linkBodies.push(body); return { link_token: 'link-choose' }; },
+      onUpdateComplete: () => ({ status: 'ok', removed_transactions: 12 }),
+    });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+    await stubPlaidLink(page);
+    await page.locator('#finBankToggle').click();
+    await page.getByTestId('finance-plaid-choose-accounts').click();
+    await page.waitForFunction(() => !!(window as unknown as { __plaidCreateArgs?: unknown }).__plaidCreateArgs);
+    expect(linkBodies).toEqual([{ mode: 'new_accounts' }]);
+    await page.evaluate(() =>
+      (window as unknown as { __plaidCreateArgs: { onSuccess: () => void } }).__plaidCreateArgs.onSuccess());
+    await expect(page.locator('#finBankSummary')).toContainText('12 transactions from unselected accounts removed');
   });
 
   test('Disconnect can keep the transactions', async ({ page }) => {
