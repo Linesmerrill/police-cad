@@ -3388,7 +3388,11 @@
             .fin-pie-body { display:flex; gap:1.25rem; align-items:center; }
             .fin-pie-svg { width:140px; height:140px; flex:0 0 auto; }
             .fin-pie-svg path { cursor:default; transition:opacity 0.15s; }
-            .fin-pie-svg.is-hovering path:not(.is-active) { opacity:0.35; }
+            .fin-pie-svg.is-hovering path:not(.is-active) { opacity:0.3; }
+            .fin-pie-legend li { border-radius:6px; padding:0.125rem 0.375rem; margin:0 -0.375rem; transition:opacity 0.15s, background 0.15s; cursor:default; outline:none; }
+            .fin-pie-legend.is-hovering li:not(.is-active) { opacity:0.45; }
+            .fin-pie-legend li.is-active { background:rgba(148,163,184,0.12); }
+            .fin-pie-legend li:focus-visible { box-shadow:0 0 0 2px var(--ac-accent, #38bdf8); }
             .fin-pie-legend { list-style:none; margin:0; padding:0; flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:0.375rem; }
             .fin-pie-legend li { display:grid; grid-template-columns:10px minmax(0,1fr) auto auto; gap:0.5rem; align-items:center; font-size:0.8125rem; }
             .fin-pie-legend .sw { width:10px; height:10px; border-radius:3px; }
@@ -14298,12 +14302,11 @@
           var span = (Number(x.amount) || 0) / total * Math.PI * 2;
           var d = finArc(70, 70, 66, 42, a, a + span);
           a += span;
-          return '<path d="' + d + '" fill="' + finEsc(x.color || '#64748b') + '" data-i="' + i + '"><title>'
-            + finEsc((x.name || 'Untagged') + ': ' + finMoney(x.amount)) + '</title></path>';
+          return '<path d="' + d + '" fill="' + finEsc(x.color || '#64748b') + '" data-i="' + i + '"></path>';
         }).join('');
         var legend = slices.map(function(x, i) {
           var pct = Math.round((Number(x.amount) || 0) / total * 1000) / 10;
-          return '<li data-i="' + i + '"><span class="sw" style="background:' + finEsc(x.color || '#64748b') + '"></span>'
+          return '<li data-i="' + i + '" tabindex="0"><span class="sw" style="background:' + finEsc(x.color || '#64748b') + '"></span>'
             + '<span class="nm">' + finEsc(x.name || 'Untagged') + '</span>'
             + '<span class="fin-num">' + finMoney(x.amount) + '</span>'
             + '<span class="pc fin-num">' + pct + '%</span></li>';
@@ -14311,18 +14314,34 @@
         el.innerHTML = '<svg class="fin-pie-svg" viewBox="0 0 140 140" role="img" aria-label="'
           + finEsc(slices.map(function(x) { return (x.name || 'Untagged') + ' ' + finMoney(x.amount); }).join(', ')) + '">'
           + paths
-          + '<text x="70" y="66" text-anchor="middle" fill="#64748b" font-size="9" font-family="Outfit,sans-serif">Total</text>'
-          + '<text x="70" y="82" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="700" font-family="JetBrains Mono,Outfit,monospace">' + finEsc(finMoney(total)) + '</text>'
+          + '<text class="fin-pie-lbl" x="70" y="62" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="Outfit,sans-serif">Total</text>'
+          + '<text class="fin-pie-val" x="70" y="78" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="700" font-family="JetBrains Mono,Outfit,monospace">' + finEsc(finMoney(total)) + '</text>'
+          + '<text class="fin-pie-pct" x="70" y="91" text-anchor="middle" fill="#64748b" font-size="9" font-family="JetBrains Mono,Outfit,monospace"></text>'
           + '</svg><ul class="fin-pie-legend">' + legend + '</ul>';
-        // Hovering a legend row or a slice picks out that slice.
+        // Hovering (or focusing) a slice or a legend row picks out both, and
+        // the centre swaps the total for that slice's name, amount and share.
         var svg = el.querySelector('svg');
-        $(el).off('.finpie').on('mouseenter.finpie', '[data-i]', function() {
-          var i = this.getAttribute('data-i');
-          svg.classList.add('is-hovering');
-          $(svg).find('path').each(function() { this.classList.toggle('is-active', this.getAttribute('data-i') === i); });
-        }).on('mouseleave.finpie', '[data-i]', function() {
-          svg.classList.remove('is-hovering');
-        });
+        var list = el.querySelector('.fin-pie-legend');
+        var lbl = svg.querySelector('.fin-pie-lbl'), val = svg.querySelector('.fin-pie-val'), pctEl = svg.querySelector('.fin-pie-pct');
+        function pick(i) {
+          var on = i != null && slices[i];
+          svg.classList.toggle('is-hovering', !!on);
+          list.classList.toggle('is-hovering', !!on);
+          $(el).find('[data-i]').each(function() { this.classList.toggle('is-active', on && this.getAttribute('data-i') === String(i)); });
+          if (!on) {
+            lbl.textContent = 'Total';
+            val.textContent = finMoney(total);
+            pctEl.textContent = '';
+            return;
+          }
+          var name = slices[i].name || 'Untagged';
+          lbl.textContent = name.length > 16 ? name.slice(0, 15) + '\u2026' : name;
+          val.textContent = finMoney(slices[i].amount);
+          pctEl.textContent = (Math.round((Number(slices[i].amount) || 0) / total * 1000) / 10) + '%';
+        }
+        $(el).off('.finpie')
+          .on('mouseenter.finpie focusin.finpie', '[data-i]', function() { pick(parseInt(this.getAttribute('data-i'), 10)); })
+          .on('mouseleave.finpie focusout.finpie', '[data-i]', function() { pick(null); });
       }
 
       // ---- Tags ----

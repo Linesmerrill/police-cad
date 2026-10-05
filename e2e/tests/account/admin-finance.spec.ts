@@ -779,6 +779,26 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await expect(income.locator('.fin-pie-legend')).toContainText('$1,500.00');
     await expect(income.locator('.fin-pie-legend')).toContainText('71.4%');
     await expect(page.getByTestId('finance-pie-expenses').locator('.fin-pie-legend')).toContainText('Google Ads');
+
+    // Hovering a slice names it in the centre and picks out its legend row.
+    await expect(income.locator('.fin-pie-lbl')).toHaveText('Total');
+    // The first slice starts at 12 o'clock; point just clockwise of that, mid-ring.
+    const box = await income.locator('svg').boundingBox();
+    if (!box) throw new Error('donut not rendered');
+    const k = box.width / 140, ang = -Math.PI / 2 + 0.3;
+    await page.mouse.move(box.x + (70 + 54 * Math.cos(ang)) * k, box.y + (70 + 54 * Math.sin(ang)) * k);
+    await expect(income.locator('.fin-pie-lbl')).toHaveText('Steam');
+    await expect(income.locator('.fin-pie-val')).toHaveText('$1,500.00');
+    await expect(income.locator('.fin-pie-pct')).toHaveText('71.4%');
+    await expect(income.locator('.fin-pie-legend li').first()).toHaveClass(/is-active/);
+    // And back to the total when the pointer leaves.
+    await page.mouse.move(0, 0);
+    await expect(income.locator('.fin-pie-lbl')).toHaveText('Total');
+
+    // Hovering a legend row does the same.
+    await income.locator('.fin-pie-legend li').nth(1).hover();
+    await expect(income.locator('svg path').nth(1)).toHaveClass(/is-active/);
+    await expect(income.locator('.fin-pie-lbl')).not.toHaveText('Total');
   });
 
   test('hiding a transaction sends hidden and reloads the totals', async ({ page }) => {
