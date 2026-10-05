@@ -1125,7 +1125,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.post("/admin/api/finance/plaid/link-token", requireOwnerSession, async function (req, res) {
     if (!requireFinanceJwt(req, res)) return;
     try {
-      const response = await axios.post(`${financeApiBase()}/plaid/link-token`, {}, {
+      // mode: update (repair the existing connection) or new_accounts.
+      const mode = req.body && req.body.mode;
+      const body = mode === "update" || mode === "new_accounts" ? { mode: mode } : {};
+      const response = await axios.post(`${financeApiBase()}/plaid/link-token`, body, {
         headers: financeAuthHeaders(req),
         timeout: 20000,
       });
@@ -1133,6 +1136,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
     } catch (err) {
       return financeProxyError(req, res, err);
     }
+  });
+
+  // Link in update mode finished: clear the prompts and sync.
+  app.post("/admin/api/finance/plaid/update-complete", requireOwnerSession, function (req, res) {
+    return financeForward(req, res, "post", "/plaid/update-complete", {});
+  });
+
+  // Sandbox only (the API refuses in production): fire a test webhook.
+  app.post("/admin/api/finance/plaid/sandbox-webhook", requireOwnerSession, function (req, res) {
+    const code = String((req.body && req.body.code) || "NEW_ACCOUNTS_AVAILABLE");
+    if (!/^[A-Z_]{3,40}$/.test(code)) return res.status(400).json({ message: "invalid webhook code" });
+    return financeForward(req, res, "post", "/plaid/sandbox-webhook", { code: code }, 30000);
   });
 
   app.post("/admin/api/finance/plaid/exchange", requireOwnerSession, async function (req, res) {

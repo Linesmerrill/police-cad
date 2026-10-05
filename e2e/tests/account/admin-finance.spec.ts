@@ -153,7 +153,9 @@ interface FinanceMocks {
   onPatchTransaction?: (id: string, body: unknown) => void;
   onCreateTag?: (body: unknown) => void;
   onPatchTag?: (id: string, body: unknown) => void;
-  onLinkToken?: () => unknown;
+  onLinkToken?: (body: unknown) => unknown;
+  onUpdateComplete?: () => void;
+  onSandboxWebhook?: (body: unknown) => void;
   onExchange?: (body: unknown) => unknown;
   onSync?: () => unknown;
   /** GET /admin/api/mfa. Defaults to two-factor on and passed this session. */
@@ -234,7 +236,16 @@ async function mockFinance(page: Page, mocks: FinanceMocks = {}) {
       return json(200, plaidStatus);
     }
     if (method === 'POST' && path === '/admin/api/finance/plaid/link-token') {
-      return json(200, mocks.onLinkToken ? mocks.onLinkToken() : { link_token: 'link-sandbox-test' });
+      const body = req.postData() ? req.postDataJSON() : {};
+      return json(200, mocks.onLinkToken ? mocks.onLinkToken(body) : { link_token: 'link-sandbox-test' });
+    }
+    if (method === 'POST' && path === '/admin/api/finance/plaid/update-complete') {
+      if (mocks.onUpdateComplete) mocks.onUpdateComplete();
+      return json(200, { status: 'ok' });
+    }
+    if (method === 'POST' && path === '/admin/api/finance/plaid/sandbox-webhook') {
+      if (mocks.onSandboxWebhook) mocks.onSandboxWebhook(req.postDataJSON());
+      return json(200, { status: 'fired' });
     }
     if (method === 'POST' && path === '/admin/api/finance/plaid/exchange') {
       const body = req.postDataJSON();
@@ -244,6 +255,23 @@ async function mockFinance(page: Page, mocks: FinanceMocks = {}) {
       return json(200, mocks.onSync ? mocks.onSync() : { ok: true });
     }
     return route.fallback();
+  });
+}
+
+// Stub Plaid Link so no CDN load happens; captures Plaid.create's options.
+async function stubPlaidLink(page: Page) {
+  await page.evaluate(() => {
+    const w = window as unknown as {
+      __plaidCreateArgs?: unknown;
+      Plaid?: { create: (opts: unknown) => { open: () => void } };
+    };
+    w.__plaidCreateArgs = undefined;
+    w.Plaid = {
+      create: (opts: unknown) => {
+        w.__plaidCreateArgs = opts;
+        return { open: () => undefined };
+      },
+    };
   });
 }
 
@@ -413,6 +441,108 @@ test.describe('Admin console — Finance tab (owner)', { tag: '@auth' }, () => {
     await expect(finance.plaidToken).toBeVisible();
     await expect(finance.plaidToken).toContainText('access-sandbox-shown-once');
     await expect(finance.plaidToken).toContainText('PLAID_ACCESS_TOKEN');
+  });
+
+  test('a broken connection offers Fix connection, which repairs it in update mode', async ({ page }) => {
+    const linkBodies: unknown[] = [];
+    let completed = 0;
+    let status: Record<string, unknown> = { ...PLAID_STATUS_CONNECTED, item_status: 'login_required' };
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      onLinkToken: (body) => { linkBodies.push(body); return { link_token: 'link-update' }; },
+      onUpdateComplete: () => { completed += 1; status = { ...PLAID_STATUS_CONNECTED, item_status: 'ok' }; },
+    });
+    // Status changes once the repair completes, so serve it from a variable.
+    await page.route('**/admin/api/finance/plaid/status', (route: Route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(status) }));
+
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+    await stubPlaidLink(page);
+
+    const alert = page.getByTestId('finance-bank-alert');
+    await expect(alert).toBeVisible();
+    await expect(alert).toContainText('sign in again');
+    await expect(finance.plaidStatus).toHaveText('Bank needs attention.');
+
+    await page.getByTestId('finance-plaid-fix').click();
+    await page.waitForFunction(() => !!(window as unknown as { __plaidCreateArgs?: unknown }).__plaidCreateArgs);
+    expect(linkBodies).toEqual([{ mode: 'update' }]);
+
+    await page.evaluate(() =>
+      (window as unknown as { __plaidCreateArgs: { onSuccess: () => void } }).__plaidCreateArgs.onSuccess());
+    await expect.poll(() => completed).toBe(1);
+    await expect(alert).toBeHidden();
+    await expect(finance.plaidStatus).toHaveText('Bank connected.');
+  });
+
+  test('new accounts at the bank offer Add accounts with account selection', async ({ page }) => {
+    const linkBodies: unknown[] = [];
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: { ...PLAID_STATUS_CONNECTED, item_status: 'ok', new_accounts_available: true },
+      onLinkToken: (body) => { linkBodies.push(body); return { link_token: 'link-accounts' }; },
+    });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+    await stubPlaidLink(page);
+
+    await expect(page.getByTestId('finance-bank-alert')).toContainText('New accounts are available');
+    // Not broken, so the dot stays green and the status reads connected.
+    await expect(finance.plaidStatus).toHaveText('Bank connected.');
+    await page.getByTestId('finance-plaid-fix').click();
+    await expect.poll(() => linkBodies).toEqual([{ mode: 'new_accounts' }]);
+  });
+
+  test('expiring access names the date; revoked access starts a new connection', async ({ page }) => {
+    const linkBodies: unknown[] = [];
+    let status: Record<string, unknown> = { ...PLAID_STATUS_CONNECTED, item_status: 'pending_expiration', consent_expires_at: '2026-11-01T12:00:00Z' };
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      onLinkToken: (body) => { linkBodies.push(body); return { link_token: 'link-new' }; },
+    });
+    await page.route('**/admin/api/finance/plaid/status', (route: Route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(status) }));
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+
+    const expected = await page.evaluate(() => new Date('2026-11-01T12:00:00Z').toLocaleDateString());
+    await expect(page.getByTestId('finance-bank-alert')).toContainText(`expires ${expected}`);
+    await expect(page.getByTestId('finance-plaid-fix')).toHaveText('Renew access');
+
+    status = { ...PLAID_STATUS_CONNECTED, item_status: 'revoked' };
+    await page.locator('#finRefreshBtn').click();
+    await expect(page.getByTestId('finance-plaid-fix')).toHaveText('Connect bank');
+    await stubPlaidLink(page);
+    await page.getByTestId('finance-plaid-fix').click();
+    // A revoked connection can't be repaired: a normal connect, no mode.
+    await expect.poll(() => linkBodies).toEqual([{}]);
+  });
+
+  test('Sandbox shows a test webhook button that fires NEW_ACCOUNTS_AVAILABLE', async ({ page }) => {
+    const fired: unknown[] = [];
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: { ...PLAID_STATUS_CONNECTED, item_status: 'ok', sandbox: true },
+      onSandboxWebhook: (body) => fired.push(body),
+    });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+    await page.locator('#finBankToggle').click();
+    await page.getByTestId('finance-plaid-test-webhook').click();
+    await expect.poll(() => fired).toEqual([{ code: 'NEW_ACCOUNTS_AVAILABLE' }]);
+  });
+
+  test('production hides the test webhook button', async ({ page }) => {
+    await mockFinance(page, {
+      summary: SUMMARY_BANK_FIXTURE,
+      plaidStatus: { ...PLAID_STATUS_CONNECTED, item_status: 'ok', sandbox: false },
+    });
+    const finance = new AdminFinancePage(page);
+    await finance.open();
+    await expect(finance.plaidStatus).toHaveText('Bank connected.');
+    await expect(page.getByTestId('finance-plaid-test-webhook')).toBeHidden();
+    await expect(page.getByTestId('finance-bank-alert')).toBeHidden();
   });
 
   test('owner can trigger a bank sync', async ({ page }) => {
