@@ -1345,6 +1345,15 @@ function updateDepartmentJoinButton(departmentId, status) {
   let currentEditingCivilian = null;
   let pendingDeleteCivilianId = null;
   let pendingDeleteCivilianName = null;
+  // Civilians ticked for a bulk delete. Kept across pages of the same list and
+  // cleared when the list itself changes (a new search, or the modal closes).
+  let selectedCivilianIds = new Set();
+  // Ids waiting on the confirm dialog when it is a bulk delete; null for single.
+  let pendingBulkDeleteCivilianIds = null;
+  // The search on screen, so an action can re-run it instead of dropping it.
+  let civiliansSearchQuery = '';
+  // Matches the API's cap on one bulk request.
+  const CIVILIAN_BULK_MAX = 100;
 
   // Open civilians modal
   window.openCiviliansModal = function() {
@@ -1355,6 +1364,7 @@ function updateDepartmentJoinButton(departmentId, status) {
   // Close civilians modal
   window.closeCiviliansModal = function() {
     document.getElementById('civiliansModal').style.display = 'none';
+    selectedCivilianIds.clear();
     // Clear search
     const searchInput = document.getElementById('civiliansSearchInput');
     if (searchInput) {
@@ -1526,6 +1536,7 @@ function updateDepartmentJoinButton(departmentId, status) {
           <p style="margin:0.5rem 0 0 0; font-size:0.875rem; opacity:0.7;">Try adjusting your search or check back later</p>
         </div>
       `;
+      updateCiviliansBulkBar();
       return;
     }
 
@@ -1551,9 +1562,12 @@ function updateDepartmentJoinButton(departmentId, status) {
         civ.name ? civ.name.charAt(0).toUpperCase() : '?';
 
       html += `
-        <div style="background:#1e2028; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; margin-bottom:1rem; transition:all 0.2s; hover:border-color:#10b981; cursor:pointer;" onclick="editCivilian('${civilian._id}')">
+        <div class="civilian-item${selectedCivilianIds.has(civilian._id) ? ' is-selected' : ''}" data-civilian-id="${civilian._id}" style="background:#1e2028; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; margin-bottom:1rem; transition:all 0.2s; hover:border-color:#10b981; cursor:pointer;" onclick="editCivilian('${civilian._id}')">
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
             <div style="display:flex; align-items:center; gap:1rem;">
+              <label class="bulk-select-box" onclick="event.stopPropagation();">
+                <input type="checkbox" class="civilian-select" data-civilian-id="${civilian._id}" ${selectedCivilianIds.has(civilian._id) ? 'checked' : ''} onchange="toggleCivilianSelection('${civilian._id}', this.checked)" aria-label="Select civilian">
+              </label>
               <div style="width:48px; height:48px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#10b981 0%,#059669 100%);">
                 ${civ.image ? 
                   `<img src="${civ.image}" alt="${displayName}" style="width:100%; height:100%; object-fit:cover;" />` :
@@ -1605,6 +1619,181 @@ function updateDepartmentJoinButton(departmentId, status) {
     });
 
     civiliansList.innerHTML = html;
+    updateCiviliansBulkBar();
+  }
+
+  // ---- Bulk delete ---------------------------------------------------------
+  // Everyone who can open this modal can delete civilians (the card is gated on
+  // the same permission), so every row gets a checkbox.
+  window.toggleCivilianSelection = function(civilianId, checked) {
+    if (checked) {
+      if (selectedCivilianIds.size >= CIVILIAN_BULK_MAX) {
+        showCustomToast(`You can delete up to ${CIVILIAN_BULK_MAX} characters at a time`, 'error');
+        const box = document.querySelector(`.civilian-select[data-civilian-id="${civilianId}"]`);
+        if (box) box.checked = false;
+        return;
+      }
+      selectedCivilianIds.add(civilianId);
+    } else {
+      selectedCivilianIds.delete(civilianId);
+    }
+    const row = document.querySelector(`.civilian-item[data-civilian-id="${civilianId}"]`);
+    if (row) row.classList.toggle('is-selected', checked);
+    updateCiviliansBulkBar();
+  };
+
+  window.toggleSelectAllCiviliansOnPage = function(checked) {
+    const ids = filteredCivilians.map(c => c._id);
+    if (checked) {
+      let capped = false;
+      ids.forEach(function(id) {
+        if (selectedCivilianIds.has(id)) return;
+        if (selectedCivilianIds.size >= CIVILIAN_BULK_MAX) { capped = true; return; }
+        selectedCivilianIds.add(id);
+      });
+      if (capped) showCustomToast(`You can delete up to ${CIVILIAN_BULK_MAX} characters at a time`, 'error');
+    } else {
+      ids.forEach(function(id) { selectedCivilianIds.delete(id); });
+    }
+    displayCivilians();
+  };
+
+  window.clearCivilianSelection = function() {
+    selectedCivilianIds.clear();
+    displayCivilians();
+  };
+
+  function updateCiviliansBulkBar() {
+    const bar = document.getElementById('civiliansBulkBar');
+    if (!bar) return;
+    const pageIds = filteredCivilians.map(c => c._id);
+    if (pageIds.length === 0 && selectedCivilianIds.size === 0) {
+      bar.style.display = 'none';
+      return;
+    }
+    bar.style.display = 'flex';
+    const selectedOnPage = pageIds.filter(id => selectedCivilianIds.has(id)).length;
+    const all = document.getElementById('civiliansSelectAll');
+    if (all) {
+      all.checked = pageIds.length > 0 && selectedOnPage === pageIds.length;
+      all.indeterminate = selectedOnPage > 0 && selectedOnPage < pageIds.length;
+      all.disabled = pageIds.length === 0;
+    }
+    const n = selectedCivilianIds.size;
+    const count = document.getElementById('civiliansSelectedCount');
+    if (count) count.textContent = n > 0 ? `${n} selected` : 'Select all on page';
+    const actions = document.getElementById('civiliansBulkActions');
+    if (actions) actions.style.display = n > 0 ? 'flex' : 'none';
+    const btn = document.getElementById('civiliansBulkDeleteBtn');
+    if (btn) btn.textContent = `Delete ${n}`;
+  }
+
+  // Refetch the list the admin is looking at: the same search if one is on
+  // screen, otherwise the same page; and put the scroll back where it was. If
+  // the page emptied out, step back to the last page that still has anyone.
+  async function reloadCiviliansView() {
+    const list = document.getElementById('civiliansList');
+    const modal = document.getElementById('civiliansModal');
+    const panel = modal ? modal.firstElementChild : null;
+    const listScroll = list ? list.scrollTop : 0;
+    const panelScroll = panel ? panel.scrollTop : 0;
+
+    if (civiliansSearchQuery) {
+      await performCiviliansSearch(civiliansSearchQuery);
+    } else {
+      const page = currentCiviliansPage;
+      await loadCivilians(page);
+      if (civiliansData.length === 0 && page > 1) {
+        const lastPage = Math.max(1, civiliansPagination.totalPages || 1);
+        await loadCivilians(Math.min(page - 1, lastPage));
+      }
+    }
+
+    if (list) list.scrollTop = listScroll;
+    if (panel) panel.scrollTop = panelScroll;
+  }
+
+  window.confirmBulkDeleteCivilians = function() {
+    const ids = Array.from(selectedCivilianIds);
+    if (ids.length === 0) return;
+    pendingBulkDeleteCivilianIds = ids;
+    pendingDeleteCivilianId = null;
+    pendingDeleteCivilianName = null;
+    const noun = ids.length === 1 ? 'character' : 'characters';
+    setDeleteCivilianConfirmCopy(
+      'Delete characters',
+      // The dialog's own red line already says it cannot be undone.
+      `Delete <strong style="color:#fff;">${ids.length} ${noun}</strong>?`,
+      `Delete ${ids.length}`
+    );
+    document.getElementById('deleteCivilianConfirmModal').style.display = 'flex';
+  };
+
+  // The delete confirm serves one civilian or many; this sets its words.
+  function setDeleteCivilianConfirmCopy(title, messageHtml, confirmLabel) {
+    const titleEl = document.getElementById('deleteCivilianTitle');
+    const messageEl = document.getElementById('deleteCivilianMessage');
+    const btn = document.getElementById('deleteCivilianConfirmBtn');
+    if (titleEl) titleEl.textContent = title;
+    if (messageEl) messageEl.innerHTML = messageHtml;
+    if (btn) btn.textContent = confirmLabel;
+  }
+
+  function escapeCivilianHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  async function performBulkDeleteCivilians(ids) {
+    const btn = document.getElementById('civiliansBulkDeleteBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Deleting...'; }
+    try {
+      const communityId = window?.communityId || (typeof COMMUNITY_ID !== 'undefined' ? COMMUNITY_ID : null) || (window.community && window.community._id) || null;
+      if (!communityId) {
+        throw new Error('Community ID not found');
+      }
+      // Through the website server, which vouches for who is asking. See
+      // proxyCommunityBulkAction in app/routes.js.
+      const response = await fetch(`/api/v1/community/${communityId}/civilians/bulk-delete`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ civilianIds: ids })
+      });
+      const data = await response.json().catch(function() { return {}; });
+      if (!response.ok) {
+        // The Go API answers {response: {message}}; the website's own routes use
+        // a top-level message or error. Read both.
+        throw new Error((data.response && data.response.message) || data.message || data.error || `HTTP ${response.status}`);
+      }
+      const results = Array.isArray(data.results) ? data.results : [];
+      const deleted = new Set(results.filter(r => r.ok).map(r => r.id));
+      const failed = results.filter(r => !r.ok);
+
+      // Take the deleted rows off the screen now, then refresh in place.
+      deleted.forEach(function(id) { selectedCivilianIds.delete(id); });
+      civiliansData = civiliansData.filter(c => !deleted.has(c._id));
+      filteredCivilians = filteredCivilians.filter(c => !deleted.has(c._id));
+      civiliansPagination.totalCount = Math.max(0, (civiliansPagination.totalCount || 0) - deleted.size);
+      updateCiviliansCount();
+      displayCivilians();
+
+      if (failed.length === 0) {
+        showCustomToast(`Deleted ${deleted.size} ${deleted.size === 1 ? 'character' : 'characters'}`, 'info');
+      } else if (deleted.size === 0) {
+        showCustomToast(`Could not delete ${failed.length === 1 ? 'that character' : 'those characters'}: ${failed[0].error || 'unknown error'}`, 'error');
+      } else {
+        showCustomToast(`Deleted ${deleted.size}. ${failed.length} could not be deleted: ${failed[0].error || 'unknown error'}`, 'error');
+      }
+      await reloadCiviliansView();
+    } catch (error) {
+      console.error('Error bulk deleting civilians:', error);
+      showCustomToast(`Failed to delete characters: ${error.message}`, 'error');
+    } finally {
+      if (btn) btn.disabled = false;
+      updateCiviliansBulkBar();
+    }
   }
 
   // Create pagination controls
@@ -1660,6 +1849,10 @@ function updateDepartmentJoinButton(departmentId, status) {
       clearTimeout(searchTimeout);
     }
     
+    if (query.trim() !== civiliansSearchQuery) {
+      selectedCivilianIds.clear();
+    }
+
     if (query.trim()) {
       clearBtn.style.display = 'block';
       
@@ -1669,6 +1862,7 @@ function updateDepartmentJoinButton(departmentId, status) {
       }, 300);
     } else {
       clearBtn.style.display = 'none';
+      civiliansSearchQuery = '';
       // Reset to show all civilians
       loadCivilians(1);
     }
@@ -1676,6 +1870,7 @@ function updateDepartmentJoinButton(departmentId, status) {
 
   // Perform the actual search using the new API endpoint
   async function performCiviliansSearch(query) {
+    civiliansSearchQuery = query.trim();
     try {
       // Show loading state
       showCiviliansLoading();
@@ -1734,6 +1929,7 @@ function updateDepartmentJoinButton(departmentId, status) {
       showCustomToast(`Failed to search civilians: ${error.message}`, 'error');
       
       // Reset to show all civilians on error
+      civiliansSearchQuery = '';
       loadCivilians(1);
     }
   }
@@ -1755,6 +1951,8 @@ function updateDepartmentJoinButton(departmentId, status) {
       clearTimeout(searchTimeout);
     }
     
+    civiliansSearchQuery = '';
+    selectedCivilianIds.clear();
     // Reset to show all civilians with pagination
     loadCivilians(1);
   };
@@ -2122,7 +2320,7 @@ function updateDepartmentJoinButton(departmentId, status) {
       
       showCustomToast('Civilian updated successfully', 'info');
       closeEditCivilianModal();
-      loadCivilians(currentCiviliansPage);
+      reloadCiviliansView();
       
     } catch (error) {
       console.error('Error saving civilian:', error);
@@ -2134,8 +2332,13 @@ function updateDepartmentJoinButton(departmentId, status) {
   window.deleteCivilian = function(civilianId, civilianName) {
     pendingDeleteCivilianId = civilianId;
     pendingDeleteCivilianName = civilianName;
+    pendingBulkDeleteCivilianIds = null;
     
-    document.getElementById('deleteCivilianName').textContent = civilianName;
+    setDeleteCivilianConfirmCopy(
+      'Delete Civilian',
+      `Are you sure you want to delete civilian <strong style="color:#fff;">"${escapeCivilianHtml(civilianName)}"</strong>?`,
+      'Delete'
+    );
     document.getElementById('deleteCivilianConfirmModal').style.display = 'flex';
   };
 
@@ -2144,19 +2347,28 @@ function updateDepartmentJoinButton(departmentId, status) {
     document.getElementById('deleteCivilianConfirmModal').style.display = 'none';
     pendingDeleteCivilianId = null;
     pendingDeleteCivilianName = null;
+    pendingBulkDeleteCivilianIds = null;
   };
 
 
   // Confirm delete civilian
   window.confirmDeleteCivilian = async function() {
+    if (pendingBulkDeleteCivilianIds) {
+      const ids = pendingBulkDeleteCivilianIds;
+      closeDeleteCivilianConfirmModal();
+      await performBulkDeleteCivilians(ids);
+      return;
+    }
     if (!pendingDeleteCivilianId) {
       showCustomToast('No civilian selected for deletion', 'error');
       return;
     }
 
     try {
-      const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
-      const response = await fetch(`${apiUrl}/api/v1/civilian/${pendingDeleteCivilianId}`, {
+      // Read at call time: this file loads before the page sets window.API_URL.
+      const apiUrl = window.API_URL || API_URL;
+      const deletedId = pendingDeleteCivilianId;
+      const response = await fetch(`${apiUrl}/api/v1/civilian/${deletedId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -2172,8 +2384,14 @@ function updateDepartmentJoinButton(departmentId, status) {
       showCustomToast(`Civilian "${pendingDeleteCivilianName}" deleted successfully`, 'info');
       closeDeleteCivilianConfirmModal();
       
-      // Reload civilians to update the list
-      loadCivilians(currentCiviliansPage);
+      // Take the row off now, then refresh the same page or search in place.
+      selectedCivilianIds.delete(deletedId);
+      civiliansData = civiliansData.filter(c => c._id !== deletedId);
+      filteredCivilians = filteredCivilians.filter(c => c._id !== deletedId);
+      civiliansPagination.totalCount = Math.max(0, (civiliansPagination.totalCount || 0) - 1);
+      updateCiviliansCount();
+      displayCivilians();
+      reloadCiviliansView();
       
     } catch (error) {
       console.error('Error deleting civilian:', error);
