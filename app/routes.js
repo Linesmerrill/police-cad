@@ -5828,6 +5828,80 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Bulk kick members / bulk delete civilians (proxy to Go backend).
+  //
+  // Server-side for the same reason as the balance adjustment above: the API
+  // believes the session userId only because this request carries the shared
+  // X-API-Key, so a browser cannot claim to be a community admin. The API
+  // checks the permission, caps the batch and answers per id.
+  function proxyCommunityBulkAction(apiPath, bodyKey) {
+    return async function (req, res) {
+      try {
+        const communityId = req.params.communityId;
+        if (!isValidObjectId(communityId)) {
+          return res.status(400).json({ error: "Invalid community ID" });
+        }
+        const ids = req.body && req.body[bodyKey];
+        if (!Array.isArray(ids) || ids.length === 0) {
+          return res.status(400).json({ error: "Select at least one item" });
+        }
+        const userId = req.user._doc ? req.user._doc._id : req.user._id;
+        const response = await axios.post(
+          `${policeCadApiUrl}/api/v1/community/${communityId}/${apiPath}?userId=${userId}`,
+          { [bodyKey]: ids.map(String) },
+          { headers: { ...config.headers, "Content-Type": "application/json" } }
+        );
+        res.json(response.data);
+      } catch (error) {
+        console.error(`[community-bulk] ${apiPath} failed:`, error.message);
+        if (error.response) {
+          return res.status(error.response.status).json(error.response.data);
+        }
+        res.status(500).json({ error: "Something went wrong. Please try again." });
+      }
+    };
+  }
+  app.post("/api/v1/community/:communityId/members/bulk-remove", apiAuthCheck, proxyCommunityBulkAction("members/bulk-remove", "userIds"));
+  app.post("/api/v1/community/:communityId/civilians/bulk-delete", apiAuthCheck, proxyCommunityBulkAction("civilians/bulk-delete", "civilianIds"));
+
+  // Bulk unit status (proxy to Go backend).
+  //
+  // Server-side for the same reason as the balance adjustment above: the API
+  // decides whether the caller is a dispatcher, and it only trusts the userId
+  // when the request carries the X-API-Key that never reaches the browser. The
+  // userId comes from the logged-in session.
+  app.put("/api/v1/community/:communityId/members/tenCode/bulk", apiAuthCheck, async function (req, res) {
+    try {
+      const communityId = req.params.communityId;
+      if (!isValidObjectId(communityId)) {
+        return res.status(400).json({ error: "Invalid community ID" });
+      }
+      const body = req.body || {};
+      if (!Array.isArray(body.userIds)) {
+        return res.status(400).json({ error: "userIds must be a list" });
+      }
+      const userId = req.user._doc ? req.user._doc._id : req.user._id;
+      const response = await axios.put(
+        `${policeCadApiUrl}/api/v1/community/${communityId}/members/tenCode/bulk?userId=${userId}`,
+        {
+          userIds: body.userIds,
+          departmentId: body.departmentId,
+          tenCodeId: body.tenCodeId,
+          activeDepartmentId: body.activeDepartmentId,
+          activeDepartmentName: body.activeDepartmentName,
+        },
+        { headers: { ...config.headers, "Content-Type": "application/json" } }
+      );
+      res.json(response.data);
+    } catch (error) {
+      console.error("[bulk-unit-status] Error setting unit statuses:", error.message);
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      }
+      res.status(500).json({ error: "Failed to update unit statuses" });
+    }
+  });
+
   // Update community map link (proxy to Go backend)
   app.post("/api/v1/community/:id/map", apiAuthCheck, async function (req, res) {
     try {

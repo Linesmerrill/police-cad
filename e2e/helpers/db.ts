@@ -745,3 +745,44 @@ export async function deleteArrestReportsByArresteeId(civilianId: string): Promi
     });
   });
 }
+
+// ---------------------------------------------------------------------------
+// Civilian record deletion setting
+// ---------------------------------------------------------------------------
+
+/** Give a seeded civilian one citation so its Records tab has a deletable row. */
+export async function addTestCitation(civilianId: string): Promise<string> {
+  const citationId = new ObjectId();
+  const now = new Date();
+  await withDb(async (db) => {
+    await db.collection('civilians').updateOne(
+      { _id: new ObjectId(civilianId) },
+      {
+        $push: {
+          'civilian.criminalHistory': {
+            _id: citationId,
+            officerID: TEST_USER_ID,
+            type: 'Citation',
+            fines: [{ fineType: 'E2E Speeding', fineAmount: 125, category: 'Infraction' }],
+            redacted: false,
+            notes: 'E2E record deletion citation',
+            status: '',
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+      }
+    );
+  });
+  return citationId.toHexString();
+}
+
+/** Return the seeded community to "never set" (allowed). */
+export async function unsetAllowCivilianRecordDeletion(): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('communities').updateOne(
+      { _id: new ObjectId(TEST_COMMUNITY_ID) },
+      { $unset: { 'community.allowCivilianRecordDeletion': '' } }
+    );
+  });
+}

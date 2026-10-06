@@ -4,90 +4,35 @@ function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-// Civilian record-deletion gate (per-issuing-department).
-// Returns true when the current user is allowed to delete the given record
-// (citation / written warning / arrest report). Mirrors the server-side check:
-//   1. If the issuing department's restrictCivilianRecordDeletion is unset or
-//      false → allow (legacy default; preserves prior behavior).
-//   2. Otherwise allow only when the user is the community owner, or holds a
-//      role with "administrator" or "manage records" enabled.
-// 'manage community settings' does NOT bypass this gate.
+// Civilian record-deletion gate. The community setting "Allow civilians to
+// delete their own records" only ever hides the delete button from the
+// character's OWNER (unless they are the community owner or hold
+// administrator / manage records). Officers looking up someone else's
+// character are unaffected. Rule lives in record-deletion.js.
 //
-// Args:
-//   record: object with at least { departmentId } — pass the criminal-history
-//           item or arrest report. If departmentId is missing (legacy data),
-//           we fall through to the legacy "allow" default.
-window.canDeleteCivilianRecords = function (record) {
-  var deptId = record && (record.departmentId || record.departmentID);
-  var deptList = window.communityDepartmentsCached || [];
-  // Find the issuing department's toggle.
-  var restricted = false;
-  if (deptId) {
-    for (var i = 0; i < deptList.length; i++) {
-      var d = deptList[i];
-      if (!d) continue;
-      var dId = d._id || d.id;
-      if (dId === deptId) {
-        restricted = d.restrictCivilianRecordDeletion === true;
-        break;
-      }
-    }
-  }
-  if (!restricted) return true;
+// The dashboards cache the community in window.recordDeletionCommunityCached.
+// Name-search results remember each character's owner below so the record
+// loaders, which only get a civilian id, can look it up.
+window.civilianOwnerByIdCached = window.civilianOwnerByIdCached || {};
 
-  var user = window.dbUser;
-  var uid = user && user._id;
-  if (!uid) return false;
-
-  if (window.communityOwnerIDCached && window.communityOwnerIDCached === uid) return true;
-
-  var roles = window.communityRolesCached || [];
-  for (var r = 0; r < roles.length; r++) {
-    var role = roles[r];
-    if (!role || !role.members || role.members.indexOf(uid) === -1) continue;
-    var perms = role.permissions || [];
-    for (var p = 0; p < perms.length; p++) {
-      var perm = perms[p];
-      if (perm && perm.enabled === true && (perm.name === 'administrator' || perm.name === 'manage records')) {
-        return true;
-      }
-    }
-  }
-  return false;
-};
-
-// Show the friendly "deletion is restricted" warning when the API returns 403
-// with code "record_deletion_restricted". Falls back to a generic toast.
-function showRecordDeletionRestrictedModal() {
-  if (window.ddModal) {
-    window.ddModal({
-      type: 'warning',
-      icon: 'fa-lock',
-      title: 'Record deletion is restricted',
-      message: "Civilians can't delete their own citations, written warnings, or arrest reports in this community.",
-      detail: "Contact a community admin or a user with the 'manage records' role permission to remove this record.",
-      buttons: [
-        { label: 'Got it', class: 'dd-modal-btn-primary' },
-      ],
-    });
-  } else if (typeof window.ddToast === 'function') {
-    window.ddToast('Record deletion is restricted in this community', 'warning');
-  } else {
-    console.warn('Record deletion is restricted in this community.');
-  }
+function rememberCivilianOwner(civDoc) {
+  if (!civDoc || !civDoc._id) return;
+  var owner = civDoc.civilian && (civDoc.civilian.userID || civDoc.civilian.userId);
+  if (owner) window.civilianOwnerByIdCached[civDoc._id] = String(owner);
 }
 
-// Inspect a jqXHR for the API's record_deletion_restricted error code.
+window.canDeleteCivilianRecords = function (civilianOwnerId) {
+  if (!window.RecordDeletion) return true;
+  var viewer = window.dbUser && window.dbUser._id;
+  return window.RecordDeletion.canDelete(window.recordDeletionCommunityCached, civilianOwnerId, viewer);
+};
+
+function showRecordDeletionRestrictedModal() {
+  if (window.RecordDeletion) window.RecordDeletion.showRestricted();
+}
+
 function isRecordDeletionRestrictedError(xhr) {
-  if (!xhr || xhr.status !== 403) return false;
-  var body = xhr.responseJSON;
-  if (!body && typeof xhr.responseText === 'string') {
-    try { body = JSON.parse(xhr.responseText); } catch (e) { body = null; }
-  }
-  if (!body) return false;
-  return body.error === 'record_deletion_restricted'
-      || body.code === 'record_deletion_restricted'
-      || body.errorCode === 'record_deletion_restricted';
+  return !!(window.RecordDeletion && window.RecordDeletion.isRestrictedError(xhr));
 }
 
 function nameSearchPoliceForm() {
@@ -128,6 +73,7 @@ function nameSearchPoliceForm() {
         $("#no-civilians-message").hide();
         $("#search-results-personas-thumbnail").empty();
         for (i = 0; i < res.length; i++) {
+          rememberCivilianOwner(res[i]);
           $("#search-results-personas-thumbnail").append(
             `<div id="search-results-personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
                 <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
@@ -212,6 +158,7 @@ function getPrevCivPage() {
     // load content on page
     $("#search-results-personas-thumbnail").empty();
     for (i = 0; i < res.length; i++) {
+      rememberCivilianOwner(res[i]);
       $("#search-results-personas-thumbnail").append(
         `<div id="search-results-personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
                 <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
@@ -247,6 +194,7 @@ function getNextCivPage() {
     // load content on page
     $("#search-results-personas-thumbnail").empty();
     for (i = 0; i < res.length; i++) {
+      rememberCivilianOwner(res[i]);
       $("#search-results-personas-thumbnail").append(
         `<div id="search-results-personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
                 <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
@@ -417,14 +365,11 @@ function loadTicketsAndWarnings(index) {
     civID: index,
   };
   $.get("/tickets", parameters, function (data) {
-    var canDeleteFor = function (rec) {
-      return (typeof window.canDeleteCivilianRecords === "function")
-        ? window.canDeleteCivilianRecords(rec)
-        : true;
-    };
+    var canDelete = (typeof window.canDeleteCivilianRecords === "function")
+      ? window.canDeleteCivilianRecords(window.civilianOwnerByIdCached[index])
+      : true;
     data.forEach(function (e) {
       var rec = e.ticket || {};
-      var canDelete = canDeleteFor(rec);
       if (rec.isWarning) {
         var warningDeleteCell = canDelete
           ? `<td class="text-align-center"><a class='clickable' onclick="deleteWarning('${e._id}', '${rec.civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
@@ -457,11 +402,11 @@ function loadArrests(index) {
     civID: index,
   };
   $.get("/arrests", parameters, function (data) {
+    var canDelete = (typeof window.canDeleteCivilianRecords === "function")
+      ? window.canDeleteCivilianRecords(window.civilianOwnerByIdCached[index])
+      : true;
     data.forEach(function (e) {
       var ar = e.arrestReport || {};
-      var canDelete = (typeof window.canDeleteCivilianRecords === "function")
-        ? window.canDeleteCivilianRecords(ar)
-        : true;
       var arrestDeleteCell = canDelete
         ? `<td class="text-align-center"><a class='clickable' onclick="deleteArrest('${e._id}', '${ar.accusedID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>`
         : `<td class="text-align-center"></td>`;

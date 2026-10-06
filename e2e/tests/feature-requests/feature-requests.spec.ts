@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { ObjectId } from 'mongodb';
 import {
   seedFeatureRequest,
   cleanupSeededFeatureRequests,
@@ -13,6 +14,10 @@ const OPEN_TITLE = `${TEST_FR_PREFIX} an open request for the default list`;
 const RELEASED_TITLE = `${TEST_FR_PREFIX} a released request for the carousel`;
 const BETA_TITLE = `${TEST_FR_PREFIX} a request currently in beta testing`;
 const DECLINED_TITLE = `${TEST_FR_PREFIX} a declined request that should be hidden by default`;
+const OLD_RELEASED_TITLE = `${TEST_FR_PREFIX} an old request released today`;
+// Hex ObjectIds for the Recently Shipped ordering seeds (prefix-cleaned by title).
+const OLD_RELEASED_ID = new ObjectId('e2efe2efe2efe2efe2ef0100');
+const FILLER_IDS = Array.from({ length: 8 }, (_, i) => new ObjectId(`e2efe2efe2efe2efe2ef02${String(i).padStart(2, '0')}`));
 
 // Wait for the listing fetch to settle. We watch for the response so the test
 // is decoupled from arbitrary timing/`networkidle` quirks.
@@ -72,6 +77,31 @@ test.describe('Feature Requests — listing page', { tag: '@auth' }, () => {
       createdAt: oneHourAgo,
       updatedAt: oneHourAgo,
     });
+
+    // Recently Shipped orders by release date, not creation date: a request
+    // filed long ago and released today must beat eight released requests
+    // that were created more recently but shipped a while back.
+    const yearAgo = new Date(now.getTime() - 400 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    await seedFeatureRequest({
+      _id: OLD_RELEASED_ID,
+      title: OLD_RELEASED_TITLE,
+      description: 'E2E released long after it was filed',
+      status: 'released',
+      createdAt: yearAgo,
+      updatedAt: now,
+      releasedAt: now,
+    });
+    for (let i = 0; i < FILLER_IDS.length; i++) {
+      await seedFeatureRequest({
+        _id: FILLER_IDS[i],
+        title: `${TEST_FR_PREFIX} filler shipped a month ago ${i}`,
+        description: 'E2E filler',
+        status: 'released',
+        createdAt: oneHourAgo,
+        updatedAt: monthAgo,
+      });
+    }
   });
 
   test.afterAll(async () => {
@@ -123,6 +153,16 @@ test.describe('Feature Requests — listing page', { tag: '@auth' }, () => {
 
     // The seeded released item lands inside the carousel
     await expect(carousel.getByText(RELEASED_TITLE)).toBeVisible();
+  });
+
+  test('Recently Shipped orders by release date, not creation date', async ({ page }) => {
+    await page.goto('/feature-requests');
+    await expect(page).not.toHaveURL(/\/login/);
+    await waitForListingFetch(page);
+
+    const carousel = page.getByRole('region', { name: /Recently shipped feature requests/i });
+    await expect(carousel).toBeVisible({ timeout: 10_000 });
+    await expect(carousel.getByText(OLD_RELEASED_TITLE).first()).toBeVisible();
   });
 
   test('default browse hides released items but they appear when filter is Released', async ({ page }) => {
